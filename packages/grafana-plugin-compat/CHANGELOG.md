@@ -1,3 +1,7 @@
+# 0.6.0 (2026-10-22)
+
+Add `useDataSourceInstanceList` and the `GetDataSourceInstanceListFilters` type to `@grafana/plugin-compat/datasources`. The hook uses the host's stable `@grafana/runtime` hook when available, then `@grafana/runtime/unstable`, then fetches through `getDataSourceInstanceList`, so it works on hosts without the async data source hooks.
+
 # 0.5.0 (2026-10-12)
 
 `getPluginSettings` and `updateAppPluginSettings` now use the host's stable `@grafana/runtime` exports when available, then `@grafana/runtime/unstable`, then the legacy `getBackendSrv()` plugin-settings endpoints, so they keep working once the host removes them from `unstable`.
