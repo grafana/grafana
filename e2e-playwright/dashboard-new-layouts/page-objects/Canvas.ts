@@ -22,6 +22,14 @@ export class Canvas extends PageObject {
   }
 
   /**
+   * Returns the "Paste panel" button
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  getPastePanelButton(scope?: Locator): Locator {
+    return (scope ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.pastePanel);
+  }
+
+  /**
    * Adds a panel by clicking the "Add panel" button, scrolling to the bottom of the canvas first
    * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
    */
@@ -93,12 +101,20 @@ export class Canvas extends PageObject {
   }
 
   /**
+   * Returns the "Paste tab" button
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  getPasteTabButton(scope?: Locator): Locator {
+    return (scope ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.pasteTab);
+  }
+
+  /**
    * Pastes a copied tab via the "Paste tab" add action
    * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
    */
   async pasteTab(scope?: Locator) {
     await test.step('Paste tab from canvas', async () => {
-      await (scope ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.pasteTab).click();
+      await this.getPasteTabButton(scope).click();
     });
   }
 
@@ -131,12 +147,20 @@ export class Canvas extends PageObject {
   }
 
   /**
+   * Returns the "Paste row" button
+   * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
+   */
+  getPasteRowButton(scope?: Locator): Locator {
+    return (scope ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.pasteRow);
+  }
+
+  /**
    * Pastes a copied row via the "Paste row" add action
    * @param scope container to search within (e.g. `rows.getContent(...)`), defaults to the whole edit canvas
    */
   async pasteRow(scope?: Locator) {
     await test.step('Paste row from canvas', async () => {
-      await (scope ?? this.getContainer()).getByTestId(this.selectors.components.CanvasGridAddActions.pasteRow).click();
+      await this.getPasteRowButton(scope).click();
     });
   }
 
