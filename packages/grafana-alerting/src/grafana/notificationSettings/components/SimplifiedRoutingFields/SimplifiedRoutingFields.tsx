@@ -22,6 +22,8 @@ export interface SimplifiedRoutingFieldsProps {
   /** When set, the section stays expandable but every field is disabled and shows this as the
    * reason (e.g. "Select a contact point first"). `undefined` means enabled. */
   disabledReason?: string;
+  /** Disables every field without a reason. Combines with `disabledReason`. */
+  disabled?: boolean;
 }
 
 /** The "Muting, grouping and timings (optional)" section. Excludes `receiver`, which
@@ -31,10 +33,11 @@ export function SimplifiedRoutingFields({
   onChange,
   inheritedTimings,
   disabledReason,
+  disabled: isDisabled,
 }: SimplifiedRoutingFieldsProps) {
   const styles = useStyles2(getStyles);
   const { isError: isTimeIntervalsError } = useListTimeIntervals();
-  const disabled = Boolean(disabledReason);
+  const disabled = isDisabled || Boolean(disabledReason);
 
   const hasRouteSettings = Boolean(
     value.groupBy?.length ||

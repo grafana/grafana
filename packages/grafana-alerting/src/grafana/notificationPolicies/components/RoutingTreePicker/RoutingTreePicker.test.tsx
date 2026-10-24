@@ -189,3 +189,18 @@ describe('preview', () => {
     expect(screen.getByText(defaultTree.spec.defaults.receiver!)).toBeInTheDocument();
   });
 });
+
+describe('disabled', () => {
+  it('disables Change on the default policy', () => {
+    render(<RoutingTreePicker value={null} onChange={jest.fn()} disabled />);
+
+    expect(screen.getByRole('button', { name: /change notification policy/i })).toBeDisabled();
+  });
+
+  it('disables the selector and the Reset button for an explicit tree', async () => {
+    render(<RoutingTreePicker value={customTree} onChange={jest.fn()} disabled />);
+
+    expect(await screen.findByRole('combobox', { name: /select notification policy/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /reset to default policy/i })).toBeDisabled();
+  });
+});

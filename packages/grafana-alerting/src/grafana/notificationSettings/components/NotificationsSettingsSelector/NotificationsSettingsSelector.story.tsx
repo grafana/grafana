@@ -97,3 +97,12 @@ export const WithModeToggle: Story = {
   },
   render: UncontrolledModeRenderFn,
 };
+
+export const Disabled: Story = {
+  args: {
+    manageContactPointsHref: '/alerting/notifications',
+    disabled: true,
+    value: { type: 'SimplifiedRouting', receiver: 'slack-oncall', groupWait: '1m' },
+  },
+  render: UncontrolledModeRenderFn,
+};
