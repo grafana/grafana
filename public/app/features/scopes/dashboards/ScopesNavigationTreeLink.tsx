@@ -8,7 +8,7 @@ import { Icon, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
-import { isCurrentPath, normalizePath, serializeFolderPath } from './scopeNavgiationUtils';
+import { isCrossOriginUrl, isCurrentPath, normalizePath, serializeFolderPath } from './scopeNavgiationUtils';
 
 export interface ScopesNavigationTreeLinkProps {
   subScope?: string;
@@ -20,7 +20,8 @@ export interface ScopesNavigationTreeLinkProps {
 
 export function ScopesNavigationTreeLink({ subScope, to, title, id, subScopePath }: ScopesNavigationTreeLinkProps) {
   const styles = useStyles2(getStyles);
-  const linkIcon = useMemo(() => getLinkIcon(to), [to]);
+  const isCrossOrigin = useMemo(() => isCrossOriginUrl(to), [to]);
+  const linkIcon = useMemo(() => (isCrossOrigin ? 'external-link-alt' : getLinkIcon(to)), [isCrossOrigin, to]);
   const locPathname = useLocation().pathname;
   const services = useScopesServices();
   // Ignore query params
@@ -73,16 +74,26 @@ export function ScopesNavigationTreeLink({ subScope, to, title, id, subScopePath
     }
   };
 
+  const linkProps = {
+    'aria-current': isCurrent ? ('page' as const) : undefined,
+    className: cx(styles.container, isCurrent && styles.current),
+    'data-testid': `scopes-dashboards-${id}`,
+    onClick: handleClick,
+    role: 'treeitem',
+  };
+
+  // Only same-origin paths go to the router. Anything that resolves elsewhere, including backslash
+  // paths such as `/\example.com`, is a plain anchor so the router never handles it.
+  if (isCrossOrigin) {
+    return (
+      <a href={to} {...linkProps} key={id}>
+        <Icon name={linkIcon} /> {title}
+      </a>
+    );
+  }
+
   return (
-    <Link
-      to={to}
-      aria-current={isCurrent ? 'page' : undefined}
-      className={cx(styles.container, isCurrent && styles.current)}
-      data-testid={`scopes-dashboards-${id}`}
-      onClick={handleClick}
-      role="treeitem"
-      key={id}
-    >
+    <Link to={to} {...linkProps} key={id}>
       <Icon name={linkIcon} /> {title}
     </Link>
   );
