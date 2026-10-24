@@ -51,4 +51,6 @@ type FSFrontendSettings struct {
 	ReportingStaticContext           map[string]string `json:"reportingStaticContext,omitempty"`
 
 	LoginError string `json:"loginError,omitempty"`
+
+	Navigation dtos.FrontendSettingsNavigationDTO `json:"navigation,omitempty"`
 }
