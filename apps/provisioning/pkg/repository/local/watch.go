@@ -134,8 +134,10 @@ func (f *fileWatcher) Watch(ctx context.Context, events chan<- string) {
 	}
 }
 
-// stop all pending timers and close the event channel
+// stop all pending timers, close the watcher and the event channel
 func (f *fileWatcher) cleanup(events chan<- string) {
+	_ = f.watcher.Close()
+
 	f.timersMu.Lock()
 	defer f.timersMu.Unlock()
 
