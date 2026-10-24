@@ -164,6 +164,37 @@ describe('discoverDataSourceFeatures', () => {
     });
   });
 
+  describe('When the data source is VictoriaLogs', () => {
+    it('Should return Prometheus with ruler API disabled without calling buildinfo or probing the ruler', async () => {
+      mocks.fetchRules.mockResolvedValue([]);
+
+      const response = await discoverDataSourceFeatures({
+        url: '/datasource/proxy',
+        name: 'VictoriaLogs',
+        type: 'victoriametrics-logs-datasource',
+      });
+
+      expect(response.application).toBe(PromApplication.Prometheus);
+      expect(response.features.rulerApiEnabled).toBe(false);
+      expect(mocks.fetchRules).toHaveBeenCalledTimes(1);
+      expect(mocks.fetchRules).toHaveBeenCalledWith('VictoriaLogs');
+      expect(fetch).not.toHaveBeenCalled();
+      expect(mocks.fetchTestRulerRulesGroup).not.toHaveBeenCalled();
+    });
+
+    it('Should throw when rules cannot be fetched', async () => {
+      mocks.fetchRules.mockRejectedValue(new Error('for accessing vmalert flag -vmalert.proxyURL must be configured'));
+
+      await expect(
+        discoverDataSourceFeatures({
+          url: '/datasource/proxy',
+          name: 'VictoriaLogs',
+          type: 'victoriametrics-logs-datasource',
+        })
+      ).rejects.toThrow('Unable to fetch alert rules. Is the VictoriaLogs data source properly configured?');
+    });
+  });
+
   describe('When buildinfo returns 404 error', () => {
     it('Should return cortex with ruler API disabled when prom rules works and ruler api returns not avaiable errors', async () => {
       fetch.mockReturnValue(

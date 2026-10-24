@@ -4,6 +4,7 @@ export const SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES = [
   'prometheus',
   'grafana-amazonprometheus-datasource',
   'grafana-azureprometheus-datasource',
+  'victoriametrics-metrics-datasource',
 ] as const;
 
 export type SupportedExternalPrometheusFlavoredRulesSourceType =
