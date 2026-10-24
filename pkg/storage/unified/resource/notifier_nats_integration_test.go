@@ -62,7 +62,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 		// interest, so re-publish until one lands.
 		var got Event
 		require.Eventually(t, func() bool {
-			backend.publishWatchNotification(ctx, event)
+			backend.publishWatchNotification(ctx, event, nil)
 			select {
 			case got = <-out:
 				return true
@@ -94,7 +94,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 				Action:          action,
 				PreviousRV:      1,
 				PreviousAction:  action,
-			})
+			}, nil)
 			// Watch subscribes to the whole change stream, so a late warm-up
 			// duplicate (establishInterest publishes many and drains only on a
 			// timeout) can still be queued ahead of ours. Skip anything that is not
@@ -139,7 +139,7 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 		}
 
 		require.Eventually(t, func() bool {
-			backend.publishWatchNotification(ctx, event)
+			backend.publishWatchNotification(ctx, event, nil)
 			select {
 			case subj := <-got:
 				require.Equal(t, subject, subj)
@@ -237,7 +237,7 @@ func establishInterest(t *testing.T, ctx context.Context, out <-chan Event, back
 		Action:          DataActionCreated,
 	}
 	require.Eventually(t, func() bool {
-		backend.publishWatchNotification(ctx, warmup)
+		backend.publishWatchNotification(ctx, warmup, nil)
 		select {
 		case <-out:
 			return true
