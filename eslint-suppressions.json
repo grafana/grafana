@@ -2873,19 +2873,9 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/piechart/migrations.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
   "public/app/plugins/panel/stat/StatMigrations.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/plugins/panel/state-timeline/migrations.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
     }
   },
   "public/app/plugins/panel/table/migrations.ts": {
