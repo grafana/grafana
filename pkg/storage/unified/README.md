@@ -329,6 +329,25 @@ enable_search = true
 The dashboard search page has been set up to search unified storage. Additionally, all legacy search calls (e.g. `/api/search`) will go to
 unified storage when the dual writer mode is set to 3 or greater. When <= 2, the legacy search api calls will go to legacy storage.
 
+### Restrict external collection searches to service identities
+
+In `custom.ini`, set `vector_allowed_read_services` to a JSON map of external vector-store `group/resource` collections and allowed service identities:
+
+```ini
+[unified_storage]
+vector_allowed_read_services = {"example.ext.grafana.app/records":["example-service"]}
+```
+
+For a configured collection, `HybridSearch` accepts only authenticated access-policy tokens with exactly one matching service identity.
+User and on-behalf-of tokens are denied.
+The check covers every target before vector or lexical search; one denied target rejects the whole request.
+Existing tenant and resource `get` checks still apply.
+If your service acts for a user, filter returned records for that user because service grants can authorize tenant records without user-specific filtering.
+
+An unset value or `{}` leaves `HybridSearch` unchanged; invalid values prevent server startup.
+Deploy support to every serving storage and search server before setting the restriction because older versions ignore it.
+Before rolling back server support, disable the collection on every serving route.
+
 ## Running load tests
 Load tests and instructions can be found [here](https://github.com/grafana/grafana-api-tests/tree/main/simulation/src/unified_storage).
 

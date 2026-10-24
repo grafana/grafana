@@ -536,6 +536,7 @@ type searchServer struct {
 	rateLimitPerTenant     int
 	rateLimitWindow        time.Duration
 	collectionAllowlist    vector.CollectionAllowlist
+	allowedReadServices    map[string][]string
 	embeddingBuilders      embed.BuilderProvider
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
@@ -682,6 +683,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rateLimitPerTenant:     opts.RateLimitPerTenant,
 		rateLimitWindow:        opts.RateLimitWindow,
 		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
+		allowedReadServices:    opts.AllowedReadServices,
 		embeddingBuilders:      opts.EmbeddingBuilders,
 	}
 
