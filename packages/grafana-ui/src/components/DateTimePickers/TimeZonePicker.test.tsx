@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type ReactNode } from 'react';
 
-import { DefaultTimeZone, setTimeZoneResolver } from '@grafana/data';
+import { createTheme, DefaultTimeZone, setTimeZoneResolver, ThemeContext } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { TimeZonePicker } from './TimeZonePicker';
@@ -22,6 +23,35 @@ describe('TimeZonePicker', () => {
   it('displays the title of the selected time zone', () => {
     render(<TimeZonePicker value="America/Chicago" onChange={jest.fn()} />);
     expect(screen.getByText('Chicago')).toBeInTheDocument();
+  });
+
+  describe('selected option check icon', () => {
+    const refreshTheme = { ...createTheme(), flags: { visualDesignRefresh: true } };
+    const RefreshThemeWrapper = ({ children }: { children: ReactNode }) => (
+      <ThemeContext.Provider value={refreshTheme}>{children}</ThemeContext.Provider>
+    );
+
+    it.each([
+      ['wide', undefined],
+      ['compact', 40],
+    ])('shows a check on the selected zone in the %s option with the visual refresh enabled', async (_, width) => {
+      render(<TimeZonePicker value="America/Chicago" width={width} onChange={jest.fn()} />, {
+        wrapper: RefreshThemeWrapper,
+      });
+
+      await userEvent.type(screen.getByRole('combobox'), 'chicago');
+
+      expect(await screen.findByTestId('icon-check')).toBeInTheDocument();
+    });
+
+    it('shows no check with the visual refresh disabled', async () => {
+      render(<TimeZonePicker value="America/Chicago" onChange={jest.fn()} />);
+
+      await userEvent.type(screen.getByRole('combobox'), 'chicago');
+
+      await screen.findByTestId(selectors.components.Select.option);
+      expect(screen.queryByTestId('icon-check')).not.toBeInTheDocument();
+    });
   });
 
   it('filters by city name and renders abbreviation and offset for the match', async () => {

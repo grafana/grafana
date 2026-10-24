@@ -4,7 +4,8 @@ import { type PropsWithChildren, type RefCallback, type JSX } from 'react';
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { Icon } from '../../Icon/Icon';
 import { getSelectStyles } from '../../Select/getSelectStyles';
 
 import { TimeZoneDescription } from './TimeZoneDescription';
@@ -32,6 +33,7 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const { children, innerProps, innerRef, data, isSelected, isFocused, selectProps } = props;
   const styles = useStyles2(getStyles);
   const selectStyles = useStyles2(getSelectStyles);
+  const visualRefreshEnabled = useTheme2().flags.visualDesignRefresh;
   const containerStyles = cx(
     selectStyles.option,
     isFocused && selectStyles.optionFocused,
@@ -52,6 +54,7 @@ export const WideTimeZoneOption = (props: PropsWithChildren<Props>) => {
           <TimeZoneOffset offset={`UTC${data.info.offset}`} />
         </div>
       </div>
+      {visualRefreshEnabled && isSelected && <Icon name="check" className={selectStyles.optionSelectedIcon} />}
     </div>
   );
 };
@@ -60,6 +63,7 @@ export const CompactTimeZoneOption = (props: PropsWithChildren<Props>) => {
   const { children, innerProps, innerRef, data, isSelected, isFocused, selectProps } = props;
   const styles = useStyles2(getStyles);
   const selectStyles = useStyles2(getSelectStyles);
+  const visualRefreshEnabled = useTheme2().flags.visualDesignRefresh;
   const containerStyles = cx(
     selectStyles.option,
     isFocused && selectStyles.optionFocused,
@@ -85,6 +89,7 @@ export const CompactTimeZoneOption = (props: PropsWithChildren<Props>) => {
           </div>
         </div>
       </div>
+      {visualRefreshEnabled && isSelected && <Icon name="check" className={selectStyles.optionSelectedIcon} />}
     </div>
   );
 };

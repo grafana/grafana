@@ -313,6 +313,7 @@ export const SelectMenuOptions = ({
         {data.description && <div className={styles.optionDescription}>{data.description}</div>}
         {data.component && <data.component />}
       </div>
+      {theme.flags.visualDesignRefresh && isSelected && <Icon name="check" className={styles.optionSelectedIcon} />}
     </div>
   );
 };

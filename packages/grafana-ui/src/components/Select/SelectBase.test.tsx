@@ -1,9 +1,9 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { select } from 'react-select-event';
 
-import { type SelectableValue } from '@grafana/data';
+import { createTheme, type SelectableValue, ThemeContext } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Drawer } from '../Drawer/Drawer';
@@ -409,6 +409,51 @@ describe('SelectBase', () => {
 
       await userEvent.keyboard('{Escape}');
       expect(onClose).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('selected option check icon', () => {
+    const refreshTheme = { ...createTheme(), flags: { visualDesignRefresh: true } };
+    const RefreshThemeWrapper = ({ children }: { children: ReactNode }) => (
+      <ThemeContext.Provider value={refreshTheme}>{children}</ThemeContext.Provider>
+    );
+
+    describe('with the visual refresh enabled', () => {
+      it('shows a check only on the selected option', async () => {
+        render(<SelectBase onChange={onChangeHandler} options={options} value={1} />, {
+          wrapper: RefreshThemeWrapper,
+        });
+        await userEvent.click(screen.getByRole('combobox'));
+
+        const [first, second] = screen.getAllByTestId(selectors.components.Select.option);
+        expect(within(first).getByTestId('icon-check')).toBeInTheDocument();
+        expect(within(second).queryByTestId('icon-check')).not.toBeInTheDocument();
+      });
+
+      it('shows a check on every selected option in multi-select', async () => {
+        render(
+          <SelectBase
+            onChange={onChangeHandler}
+            options={options}
+            value={[1, 2]}
+            isMulti
+            hideSelectedOptions={false}
+          />,
+          { wrapper: RefreshThemeWrapper }
+        );
+        await userEvent.click(screen.getByRole('combobox'));
+
+        const menuOptions = screen.getAllByTestId(selectors.components.Select.option);
+        menuOptions.forEach((option) => expect(within(option).getByTestId('icon-check')).toBeInTheDocument());
+      });
+    });
+
+    it('shows no check with the visual refresh disabled', async () => {
+      render(<SelectBase onChange={onChangeHandler} options={options} value={1} />);
+      await userEvent.click(screen.getByRole('combobox'));
+
+      await screen.findAllByTestId(selectors.components.Select.option);
+      expect(screen.queryByTestId('icon-check')).not.toBeInTheDocument();
     });
   });
 });

@@ -4,10 +4,12 @@ import { memo, useId } from 'react';
 import { type GrafanaTheme2, type TimeOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
+import { Icon } from '../../Icon/Icon';
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     container: css({
       display: 'flex',
@@ -34,18 +36,26 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     labelSelected: css({
       background: theme.colors.action.selected,
-
-      '&::before': {
-        backgroundImage: theme.colors.gradients.brandVertical,
-        borderRadius: theme.shape.radius.default,
-        content: '" "',
-        display: 'block',
-        height: '100%',
-        position: 'absolute',
-        width: theme.spacing(0.5),
-        left: 0,
-        top: 0,
-      },
+      ...(visualRefreshEnabled
+        ? {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: theme.spacing(1),
+          }
+        : {
+            '&::before': {
+              backgroundImage: theme.colors.gradients.brandVertical,
+              borderRadius: theme.shape.radius.default,
+              content: '" "',
+              display: 'block',
+              height: '100%',
+              position: 'absolute',
+              width: theme.spacing(0.5),
+              left: 0,
+              top: 0,
+            },
+          }),
     }),
   };
 };
@@ -62,6 +72,7 @@ interface Props {
 
 export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false, name }) => {
   const styles = useStyles2(getStyles);
+  const visualRefreshEnabled = useTheme2().flags.visualDesignRefresh;
   // In case there are more of the same timerange in the list
   const id = useId();
 
@@ -82,6 +93,7 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
       />
       <label className={cx(styles.label, selected && styles.labelSelected)} htmlFor={id}>
         {value.display}
+        {visualRefreshEnabled && selected && <Icon name="check" />}
       </label>
     </li>
   );

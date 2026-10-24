@@ -2,6 +2,8 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import React from 'react';
 
+import { createTheme, ThemeContext } from '@grafana/data';
+
 import { mockComboboxRect } from '../../test-utils/mockDom';
 import { Drawer } from '../Drawer/Drawer';
 import { Modal } from '../Modal/Modal';
@@ -266,6 +268,25 @@ describe('MultiCombobox', () => {
 
     expect(screen.getByRole('listbox')).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+  });
+
+  it('does not show a check icon on selected options', async () => {
+    const options = [
+      { label: 'A', value: 'a' },
+      { label: 'B', value: 'b' },
+    ];
+
+    const refreshTheme = { ...createTheme(), flags: { visualDesignRefresh: true } };
+
+    render(
+      <ThemeContext.Provider value={refreshTheme}>
+        <MultiCombobox options={options} value={['a']} onChange={jest.fn()} />
+      </ThemeContext.Provider>
+    );
+    await user.click(screen.getByRole('combobox'));
+
+    await screen.findAllByRole('option');
+    expect(screen.queryByTestId('icon-check')).not.toBeInTheDocument();
   });
 
   describe('all option', () => {
