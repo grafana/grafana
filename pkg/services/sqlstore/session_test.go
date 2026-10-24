@@ -13,6 +13,25 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+func TestSessionFromContext(t *testing.T) {
+	sess := &DBSession{}
+	for _, tc := range []struct {
+		name string
+		ctx  context.Context
+		want *DBSession
+	}{
+		{name: "no session", ctx: context.Background()},
+		{name: "typed nil session", ctx: context.WithValue(context.Background(), ContextSessionKey{}, (*DBSession)(nil))},
+		{name: "other value type", ctx: context.WithValue(context.Background(), ContextSessionKey{}, "session")},
+		{name: "session", ctx: context.WithValue(context.Background(), ContextSessionKey{}, sess), want: sess},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Same(t, tc.want, SessionFromContext(tc.ctx))
+			require.Equal(t, tc.want != nil, IsInTransaction(tc.ctx))
+		})
+	}
+}
+
 func TestIntegration_RetryingDisabled(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

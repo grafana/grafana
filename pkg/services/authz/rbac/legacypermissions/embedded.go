@@ -57,7 +57,7 @@ func (c *embeddedTransactionCall) wait() {
 type embeddedClient struct{ legacyclient.Service }
 
 func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
-	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+	if sqlstore.IsInTransaction(ctx) {
 		call := &embeddedTransactionCall{done: make(chan struct{})}
 		ctx = context.WithValue(ctx, embeddedTransactionCallKey{}, call)
 		defer call.wait()
@@ -90,10 +90,9 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
 			ctx = trace.ContextWithSpanContext(ctx, trace.SpanContextFromContext(clientCtx))
 			// Legacy callers can refresh before committing permission mutations.
 			// Preserve their SQL session without forwarding unrelated context values.
-			// TODO: Before routing these callers to remote AuthZ, move permission
-			// refreshes (including receiver permission copying) after the outermost
-			// transaction commits. SQL sessions cannot be shared over remote gRPC.
-			if sess, ok := clientCtx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+			// Receiver renames refresh permissions after the outermost transaction commits.
+			// No other caller is known to read permissions inside a transaction.
+			if sess := sqlstore.SessionFromContext(clientCtx); sess != nil {
 				call, ok := clientCtx.Value(embeddedTransactionCallKey{}).(*embeddedTransactionCall)
 				if !ok || !call.start() {
 					return status.Error(codes.Canceled, "embedded transaction call already returned")

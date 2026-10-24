@@ -158,6 +158,7 @@ type ServiceAccountPermissionsService interface {
 type ReceiverPermissionsService interface {
 	PermissionsService
 	SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, uid string)
+	// CopyPermissions schedules a best-effort permission refresh for user after the outermost SQL transaction commits.
 	CopyPermissions(ctx context.Context, orgID int64, user identity.Requester, oldUID, newUID string) (int, error)
 }
 

@@ -365,12 +365,11 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 
+	renamed := newReceiver != nil && oldReceiver.UID != newReceiver.UID
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		renamed := newReceiver != nil && oldReceiver.UID != newReceiver.UID
 		if renamed {
 			if newReceiverCreated {
-				// Copy receiver permissions
-				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, nil, string(oldReceiver.UID), string(newReceiver.UID))
+				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, user, string(oldReceiver.UID), string(newReceiver.UID))
 				if err != nil {
 					return err
 				}
@@ -378,7 +377,6 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 					ecp.log.FromContext(ctx).Debug("Moved custom receiver permissions", "oldName", oldReceiver.Name, "newName", newReceiver.Name, "count", permissionsUpdated)
 				}
 			}
-
 			if fullRemoval {
 				if err := ecp.receiverService.RenameReceiverInDependentResources(ctx, orgID, revision, oldReceiver.Name, newReceiver.Name, provenance); err != nil {
 					return err
