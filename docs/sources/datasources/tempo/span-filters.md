@@ -13,6 +13,7 @@ labels:
 menuTitle: Span filters
 title: Span filters
 weight: 600
+review_date: 2026-09-10
 ---
 
 # Span filters
@@ -25,7 +26,7 @@ Whether you're looking to identify spans from a certain service, those exceeding
 The more filters you add, the more specific the results become.
 
 {{< admonition type="tip" >}}
-If you arrived from the [Service Graph](../service-graph/), use **service.name** and **status = error** filters to drill into the specific service nodes showing errors.
+If you arrived from the [Service Graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/), use **service.name** and **status = error** filters to drill into the specific service nodes showing errors.
 {{< /admonition >}}
 
 ![The Filters section in the trace timeline viewer showing the filter drop-down, quick filter pills for Critical path, Errors, and High latency, navigation arrows, match count, and Show all spans toggle.](/media/docs/grafana/data-sources/tempo/screenshot-tempo-datasource-span-filters.png)
@@ -47,7 +48,7 @@ Available filter keys include:
 For most attribute keys, the available operators are `=`, `!=`, `=~` (regular expression match), and `!~` (regular expression not match).
 
 {{< admonition type="note" >}}
-The same attributes available as filter keys (for example, `span.name`, `service.name`, `duration`) can be used directly in [TraceQL queries](../query-editor/traceql-editor/).
+The same attributes available as filter keys (for example, `span.name`, `service.name`, `duration`) can be used directly in [TraceQL queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-editor/).
 {{< /admonition >}}
 
 ## Quick filter pills
@@ -101,6 +102,6 @@ To narrow to the critical path only, click the **Critical path** pill, then turn
 
 ## Next steps
 
-- [Service Graph](../service-graph/): Visualize service relationships and identify error-producing nodes.
-- [Query editor](../query-editor/): Build TraceQL queries using the same attributes available as span filter keys.
-- [Configure the Tempo data source](../configure-tempo-data-source/): Set up your Tempo data source and trace correlations.
+- [Service Graph](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/service-graph/): Visualize service relationships and identify error-producing nodes.
+- [Query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/): Build TraceQL queries using the same attributes available as span filter keys.
+- [Configure the Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/): Set up your Tempo data source and trace correlations.
