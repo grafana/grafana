@@ -16,6 +16,9 @@ const DEV_SERVER_URL = 'http://localhost:8095/';
 /** The source id the Protomaps style generator gives every layer */
 const SOURCE_ID = 'protomaps';
 
+/** Improve city-label contrast against the dark Protomaps basemap. */
+const DARK_LOCALITY_LABEL_COLOR = '#e6e6e6';
+
 /** Protomaps planet builds stop at zoom 15; OpenLayers overzooms the last level beyond that */
 const MAX_TILE_ZOOM = 15;
 
@@ -50,8 +53,10 @@ const defaultProtomapsConfig: ProtomapsConfig = {
 };
 
 interface GlLayer {
+  id?: string;
   type: string;
   layout?: Record<string, unknown>;
+  paint?: Record<string, unknown>;
 }
 
 interface GlStyle {
@@ -131,14 +136,33 @@ export function isProtomapsBasemapEnabled() {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaGeomapProtomapsBasemap, false);
 }
 
-function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean): T {
+function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean, flavor: ProtomapsFlavor): T {
   const layers = glStyle.layers
     .filter((layer) => showLabels || layer.type !== 'symbol')
-    .map((layer) =>
-      layer.layout?.['text-font']
-        ? { ...layer, layout: { ...layer.layout, 'text-font': toGrafanaFonts(layer.layout['text-font']) } }
-        : layer
-    );
+    .map((layer) => {
+      const adaptedLayer = layer.layout?.['text-font']
+        ? {
+            ...layer,
+            layout: {
+              ...layer.layout,
+              'text-font': toGrafanaFonts(layer.layout['text-font']),
+            },
+          }
+        : layer;
+
+      if (flavor === ProtomapsFlavor.Dark && layer.id === 'places_locality') {
+        return {
+          ...adaptedLayer,
+          paint: {
+            ...adaptedLayer.paint,
+            'text-color': DARK_LOCALITY_LABEL_COLOR,
+          },
+        };
+      }
+
+      return adaptedLayer;
+    });
+
   return { ...glStyle, layers };
 }
 
@@ -164,7 +188,8 @@ function createHandler(config: ProtomapsConfig | undefined, theme: GrafanaTheme2
     init: () => {
       const cfg = { ...defaultProtomapsConfig, ...config };
       const server = resolveServer(cfg.server);
-      const styleUrl = new URL(`styles/${resolveFlavor(cfg.flavor, theme)}.json`, server).href;
+      const flavor = resolveFlavor(cfg.flavor, theme);
+      const styleUrl = new URL(`styles/${flavor}.json`, server).href;
       // A null style draws nothing, so tiles can load alongside the style request without flashing
       // OpenLayers' default blue.
       const layer = new VectorTileLayer({ declutter: true, source: createSource(cfg.delivery, server), style: null });
@@ -178,7 +203,10 @@ function createHandler(config: ProtomapsConfig | undefined, theme: GrafanaTheme2
         })
         .then((glStyle: GlStyle) => {
           // ol-mapbox-style caches paint functions per style id, and the generated styles carry none
-          const style = { ...adaptStyle(glStyle, !!cfg.showLabels), id: styleUrl };
+          const style = {
+            ...adaptStyle(glStyle, !!cfg.showLabels, flavor),
+            id: styleUrl,
+          };
           return Promise.all([
             applyStyle(layer, style, { source: SOURCE_ID, updateSource: false, styleUrl }),
             applyBackground(layer, style),
