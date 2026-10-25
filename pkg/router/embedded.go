@@ -95,7 +95,7 @@ func (l *embeddedLoader) embeddedBackends(ctx context.Context) ([]Backend, error
 	if handler == nil {
 		return nil, errEmbeddedNotStarted
 	}
-	client := &http.Client{Transport: handlerTransport(responsewriter.WrapHandler(handler))}
+	client := &http.Client{Transport: handlerTransport{handler}}
 	// The embedded server authenticates the requester in the context; listing
 	// its groups is the router's own request.
 	discovered, err := discoverGroupResources(identity.WithServiceIdentityContext(ctx, 1), client, embeddedBaseURL)
@@ -120,9 +120,11 @@ func (l *embeddedLoader) embeddedBackends(ctx context.Context) ([]Backend, error
 }
 
 // handlerTransport is an http.RoundTripper that calls an in-process handler.
-type handlerTransport func(*http.Request) (*http.Response, error)
+type handlerTransport struct{ handler http.Handler }
 
-func (t handlerTransport) RoundTrip(req *http.Request) (*http.Response, error) { return t(req) }
+func (t handlerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return responsewriter.WrapHandler(t.handler)(req)
+}
 
 // embeddedBackend serves one of the embedded API server's groups through the
 // server's own handler, in process.

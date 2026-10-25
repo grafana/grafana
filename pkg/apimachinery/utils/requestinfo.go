@@ -75,20 +75,7 @@ func NewRequestInfo(req *http.Request) (*request.RequestInfo, error) {
 		info.Verb = parts[0]
 		parts = parts[1:]
 	} else {
-		switch req.Method {
-		case http.MethodPost:
-			info.Verb = VerbCreate
-		case http.MethodGet, http.MethodHead:
-			info.Verb = VerbGet
-		case http.MethodPut:
-			info.Verb = VerbUpdate
-		case http.MethodPatch:
-			info.Verb = VerbPatch
-		case http.MethodDelete:
-			info.Verb = VerbDelete
-		default:
-			info.Verb = ""
-		}
+		info.Verb = resourceVerb(req.Method)
 	}
 
 	// /namespaces/{namespace}/{resource}/..., unless what follows the
@@ -120,9 +107,34 @@ func NewRequestInfo(req *http.Request) (*request.RequestInfo, error) {
 	// Only a collection request reads the query: a get or delete without a
 	// name is a list, watch or deletecollection, and those take selectors.
 	// Parsing it allocates, so other requests skip it.
-	if info.Name != "" || (info.Verb != VerbGet && info.Verb != VerbDelete) {
-		return info, nil
+	if info.Name == "" && (info.Verb == VerbGet || info.Verb == VerbDelete) {
+		parseCollectionRequest(info, req)
 	}
+	return info, nil
+}
+
+// resourceVerb is the verb of a resource request made with method, before a
+// request without a name is read as a collection request.
+func resourceVerb(method string) string {
+	switch method {
+	case http.MethodPost:
+		return VerbCreate
+	case http.MethodGet, http.MethodHead:
+		return VerbGet
+	case http.MethodPut:
+		return VerbUpdate
+	case http.MethodPatch:
+		return VerbPatch
+	case http.MethodDelete:
+		return VerbDelete
+	}
+	return ""
+}
+
+// parseCollectionRequest reads a get or delete without a name, which addresses
+// a collection: its verb, its selectors, and the object a metadata.name field
+// selector names.
+func parseCollectionRequest(info *request.RequestInfo, req *http.Request) {
 	var query url.Values
 	if req.URL.RawQuery != "" {
 		query = req.URL.Query()
@@ -148,7 +160,6 @@ func NewRequestInfo(req *http.Request) (*request.RequestInfo, error) {
 	if values := query["labelSelector"]; len(values) > 0 {
 		info.LabelSelector = values[0]
 	}
-	return info, nil
 }
 
 // LowerMethod returns method in lower case, as a non-resource request's verb.

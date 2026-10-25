@@ -32,6 +32,12 @@ func metricsService(t *testing.T, group, upstream string) *Service {
 
 // The helpers below read the request's group as the router's callers do.
 
+// withRequestOutcome gives req an outcome to record, as instrument does.
+func withRequestOutcome(req *http.Request) (*http.Request, *requestOutcome) {
+	outcome := &requestOutcome{}
+	return req.WithContext(context.WithValue(req.Context(), requestOutcomeKey{}, outcome)), outcome
+}
+
 // requestVerb returns the verb instrument labels req with.
 func requestVerb(req *http.Request) string {
 	if info, err := utils.NewRequestInfo(req); err == nil && info.Verb != "" {

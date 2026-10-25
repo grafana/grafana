@@ -95,7 +95,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 - **Authenticate, then check the namespace, before any dispatch.** Every `/apis` and `/openapi/v3`
   request needs a requester: one Grafana's middleware set, or one from a verified `X-Access-Token`
   (`authenticate`), or it gets a 401. A request whose path names a namespace
-  (`/apis/<g>/<v>/namespaces/<ns>[/...]`, read by `namespaceFromPath`) then gets a 403 `Status`
+  (`/apis/<g>/<v>/namespaces/<ns>[/...]`, the request info's `Namespace`) then gets a 403 `Status`
   unless its requester may use that namespace (`authorizeNamespace`), so no backend, stack or
   fallback ever sees it. Allowed: the requester's own namespace, any namespace for `*`, and any for
   Grafana admins. Anonymous users get only their own. Backends still authorize everything else.

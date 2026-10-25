@@ -184,7 +184,9 @@ type GrafanaRouter struct {
 	// are not DiscoveryProviders, shared across callers.
 	discoveryCache discoveryCache
 
-	// Set before serving by the standalone target; middleware keeps its delegate.
+	// unregisteredGroupHandler serves groups no backend serves: the
+	// single-tenant fallback, set before serving by the standalone target.
+	// nil otherwise, and such groups are not found.
 	unregisteredGroupHandler http.Handler
 
 	// reconciles and reconcileErrors count completed reconciles, and

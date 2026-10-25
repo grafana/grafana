@@ -46,11 +46,6 @@ type requestOutcome struct {
 	info *request.RequestInfo
 }
 
-func withRequestOutcome(req *http.Request) (*http.Request, *requestOutcome) {
-	outcome := &requestOutcome{}
-	return req.WithContext(context.WithValue(req.Context(), requestOutcomeKey{}, outcome)), outcome
-}
-
 // withoutRequestOutcome detaches ctx from its request's outcome, for the
 // router's own sub-requests, which may run concurrently and must not be
 // attributed to the request that caused them.
