@@ -158,22 +158,6 @@ func newPluginGRPCRequestRetries(reg prometheus.Registerer, source string) *prom
 	return c
 }
 
-// apiGroup returns the group of an /apis/<group>[/...] path, or "" when there
-// is none or it is not a valid group name (see utils.IsAPIGroup). Unlike
-// utils.APIGroupFromRequest it reads only the first segment: the router
-// rejects a non-canonical path before it routes by group.
-func apiGroup(path string) string {
-	rest, ok := strings.CutPrefix(path, apisPrefix+"/")
-	if !ok {
-		return ""
-	}
-	group, _, _ := strings.Cut(rest, "/")
-	if !utils.IsAPIGroup(group) {
-		return ""
-	}
-	return group
-}
-
 // statusCodeLabels holds the status_code label of each valid HTTP status, so
 // counting a request doesn't format one.
 var statusCodeLabels = func() (labels [600]string) {
@@ -220,11 +204,6 @@ func namesGroup(path string) bool {
 // instrument serves req through handle with request metrics, then logs the
 // outcome.
 func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, handle http.HandlerFunc, parseInfo bool) {
-	group := requestGroup(req.URL.Path, apiGroup(req.URL.Path))
-	metricGroup := group
-	if group != "" && !gr.KnownGroup(group) || group == "" && namesGroup(req.URL.Path) {
-		metricGroup = unknownGroupLabel
-	}
 	start := time.Now()
 	// The recorder and the outcome live as long as the request, so they are
 	// allocated together.
@@ -239,8 +218,10 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 	// what the parse would give for a path outside /apis.
 	ctx := context.WithValue(req.Context(), requestOutcomeKey{}, outcome)
 	verb := utils.LowerMethod(req.Method)
+	var info *request.RequestInfo
 	if parseInfo {
-		if info, err := utils.NewRequestInfo(req); err == nil {
+		if parsed, err := utils.NewRequestInfo(req); err == nil {
+			info = parsed
 			outcome.info = info
 			ctx = request.WithRequestInfo(ctx, info)
 			if info.Verb != "" {
@@ -250,6 +231,16 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 	}
 	req = req.WithContext(ctx)
 	verb = metricVerb(verb)
+	// A request that parsed names a valid group, or none.
+	var apiGroup string
+	if info != nil {
+		apiGroup = info.APIGroup
+	}
+	group := requestGroup(req.URL.Path, apiGroup)
+	metricGroup := group
+	if group != "" && !gr.KnownGroup(group) || group == "" && namesGroup(req.URL.Path) {
+		metricGroup = unknownGroupLabel
+	}
 	route := func() string {
 		if outcome.route == "" {
 			return routeNotFound

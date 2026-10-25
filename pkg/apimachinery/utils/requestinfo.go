@@ -30,6 +30,9 @@ import (
 //   - A path in the /apis tree that is not canonical (see IsCanonicalAPIPath)
 //     is a BadRequest error, since what it was parsed as may not be what a
 //     backend serves.
+//   - A group that is not a valid API group name (see IsAPIGroup) is a
+//     BadRequest error, so a request that parses always names a valid group,
+//     or none.
 //
 // As with RequestInfoFactory, when err is not nil the RequestInfo holds what
 // was parsed before the failure.
@@ -53,6 +56,11 @@ func NewRequestInfo(req *http.Request) (*request.RequestInfo, error) {
 	}
 	info.APIPrefix = parts[0]
 	info.APIGroup = parts[1]
+	// Canonical parts are never empty, so there is always a group to check.
+	if !IsAPIGroup(info.APIGroup) {
+		return info, errors.NewBadRequest("invalid api group")
+	}
+
 	if len(parts) < 3 {
 		return info, nil
 	}

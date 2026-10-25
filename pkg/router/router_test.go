@@ -433,7 +433,8 @@ func TestRouterFallbackOnlyForUnregisteredGroups(t *testing.T) {
 		{"/openapi/v3/apis/unknown/v1/extra", false, http.StatusNotFound},
 		{"/apis//v1/namespaces/stacks-123/widgets", false, http.StatusBadRequest},
 		// Not a valid group name, so no backend or fallback could serve it.
-		{"/apis/Not_A.Group/v1/namespaces/stacks-123/widgets", false, http.StatusNotFound},
+		// Not a valid group name, so not a request the router can route.
+		{"/apis/Not_A.Group/v1/namespaces/stacks-123/widgets", false, http.StatusBadRequest},
 		{"/apisfoo/unknown", false, http.StatusNotFound},
 		{"/healthz", false, http.StatusNotFound},
 	} {

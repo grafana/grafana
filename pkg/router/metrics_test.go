@@ -52,7 +52,11 @@ func (m *routerMetrics) instrumentRequest(gr *GrafanaRouter, w http.ResponseWrit
 }
 
 func requestGroupOf(req *http.Request) string {
-	return requestGroup(req.URL.Path, apiGroup(req.URL.Path))
+	// As instrument does, a request that didn't parse names no group.
+	if info, err := utils.NewRequestInfo(req); err == nil {
+		return requestGroup(req.URL.Path, info.APIGroup)
+	}
+	return requestGroup(req.URL.Path, "")
 }
 
 func instrumented(svc *Service, target string) int {

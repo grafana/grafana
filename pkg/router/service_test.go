@@ -329,10 +329,11 @@ func TestServiceMiddlewareCapturesAPITrees(t *testing.T) {
 	for _, tc := range []struct {
 		target string
 		next   bool
+		status int // not found, unless set
 	}{
 		{target: "/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"},
 		{target: "/apis/dashboard.grafana.app"},
-		{target: "/apis/Not_A.Group/v1/things"},
+		{target: "/apis/Not_A.Group/v1/things", status: http.StatusBadRequest},
 		{target: "/openapi/v3/apis/dashboard.grafana.app/v1"},
 		{target: "/openapi/v3/apis/owned.grafana.app"},
 		{target: "/api/dashboards/uid/abc", next: true},
@@ -346,9 +347,12 @@ func TestServiceMiddlewareCapturesAPITrees(t *testing.T) {
 			rec := httptest.NewRecorder()
 			svc.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, tc.target, nil), next)
 			require.Equal(t, tc.next, called)
-			if tc.next {
+			switch {
+			case tc.next:
 				require.Equal(t, http.StatusTeapot, rec.Code)
-			} else {
+			case tc.status != 0:
+				require.Equal(t, tc.status, rec.Code)
+			default:
 				require.Equal(t, http.StatusNotFound, rec.Code)
 			}
 		})

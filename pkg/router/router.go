@@ -313,12 +313,9 @@ func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// An invalid group name gets no group, so it is not found: no backend
-	// can serve it.
+	// Parsing rejects an invalid group name, so a group no backend serves is
+	// one that could exist: the unregistered-group handler may serve it.
 	group := info.APIGroup
-	if !utils.IsAPIGroup(group) {
-		group = ""
-	}
 	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {

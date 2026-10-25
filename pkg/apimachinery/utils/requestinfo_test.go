@@ -105,6 +105,34 @@ func TestNewRequestInfoProxyNames(t *testing.T) {
 	}
 }
 
+// A group that is not a valid API group name is rejected, from the group
+// discovery path on. A request that parses always names a valid group.
+func TestNewRequestInfoRejectsInvalidGroups(t *testing.T) {
+	for _, target := range []string{
+		"/apis/Not_A.Group/v1/namespaces/default/widgets",
+		"/apis/UPPER.grafana.app/v1",
+		"/apis/-leading.grafana.app",
+		"/apis/trailing-.grafana.app/v1/widgets",
+		"/apis/under_score/v1",
+		"/apis/double..dot/v1",
+	} {
+		_, err := NewRequestInfo(httptest.NewRequest(http.MethodGet, target, nil))
+		require.True(t, apierrors.IsBadRequest(err), target)
+	}
+
+	// Dotted API groups and hyphenated plugin IDs are both valid.
+	for target, group := range map[string]string{
+		"/apis/dashboard.grafana.app/v1/namespaces/default/dashboards": "dashboard.grafana.app",
+		"/apis/example-app/v1":               "example-app",
+		"/apis/discovery/v1alpha2/manifests": "discovery",
+		"/apis/apiregistration.k8s.io":       "apiregistration.k8s.io",
+	} {
+		info, err := NewRequestInfo(httptest.NewRequest(http.MethodGet, target, nil))
+		require.NoError(t, err, target)
+		require.Equal(t, group, info.APIGroup, target)
+	}
+}
+
 // Group and version discovery stay non-resource requests, but name their
 // group and version, unlike the apiserver's.
 func TestNewRequestInfoGroupDiscovery(t *testing.T) {
