@@ -80,6 +80,12 @@ type RequestRouter interface {
 	HandleFunc(http.ResponseWriter, *http.Request, http.Handler)
 }
 
+// localGroupsWatcher is implemented by a RequestRouter that needs to know which
+// groups the embedded API server serves, through its loopback config.
+type localGroupsWatcher interface {
+	WatchLocalGroups(ctx context.Context, cfg *clientrest.Config) error
+}
+
 type service struct {
 	services.NamedService
 
@@ -650,6 +656,12 @@ func (s *service) start(ctx context.Context) error {
 	s.handler = runningServer.Handler
 	// used by local clients to make requests to the server
 	s.restConfig = runningServer.LoopbackClientConfig
+
+	if watcher, ok := s.requestRouter.(localGroupsWatcher); ok {
+		if err := watcher.WatchLocalGroups(ctx, s.restConfig); err != nil {
+			return err
+		}
+	}
 
 	for _, installer := range s.appInstallers {
 		err := installer.InitializeApp(*s.restConfig)

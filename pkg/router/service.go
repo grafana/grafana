@@ -37,6 +37,10 @@ type Service struct {
 	standalone bool
 	middleware bool
 
+	// mtRoutes is the loader's source of the multi-tenant router's groups, set
+	// on a cloud stack that configures mt_router_address.
+	mtRoutes *mtRoutes
+
 	// loaderLifecycle is the routes loader's own background lifecycle (such as
 	// cloudLoader's poll loops), which this service starts, stops and watches.
 	// Both are nil for a loader without one; a nil watcher's channel never fires.
@@ -73,6 +77,10 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 	s := newService(router, reg)
 	s.standalone = standaloneRouter(cfg)
 	s.middleware = middlewareEnabled(cfg, features)
+	if routes, ok := loader.(*mtRoutes); ok && s.middleware && !s.standalone {
+		s.mtRoutes = routes
+		router.discoveryRules = append(router.discoveryRules, mtDiscoveryRule())
+	}
 	if lifecycle, ok := loader.(services.Service); ok {
 		s.loaderLifecycle = lifecycle
 		s.loaderFailures = services.NewFailureWatcher()
@@ -96,6 +104,7 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 	// The standalone router is never middleware, so the fallback always applies.
 	if st, ok := s.router.loader.(loaderWithSingleTenantFallback); ok {
 		s.router.unregisteredGroupHandler = st.SingleTenantFallback()
+		s.router.discoveryRules = append(s.router.discoveryRules, singleTenantDiscoveryRule())
 	}
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

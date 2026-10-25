@@ -269,6 +269,7 @@ type routerCollector struct {
 	polls           *prometheus.Desc
 	stackLookups    *prometheus.Desc
 	stackDiscovery  *prometheus.Desc
+	stackRefused    *prometheus.Desc
 }
 
 func newRouterCollector(router *GrafanaRouter) *routerCollector {
@@ -299,13 +300,15 @@ func newRouterCollector(router *GrafanaRouter) *routerCollector {
 			"Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.", []string{"result"}, nil),
 		stackDiscovery: prometheus.NewDesc(name("stack_discovery_cache_total"),
 			"Single-tenant discovery requests looked up in the cache shared by each stack's callers, by result: hit or miss.", []string{"result"}, nil),
+		stackRefused: prometheus.NewDesc(name("stack_fallback_refused_total"),
+			"Requests the single-tenant fallback refused with a 404 because a stack had already forwarded them to the router.", nil, nil),
 	}
 }
 
 func (c *routerCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, d := range []*prometheus.Desc{
 		c.ready, c.lastReconcile, c.reconciles, c.reconcileErrors, c.groups, c.breaker,
-		c.shadowed, c.skipped, c.lastSuccess, c.polls, c.stackLookups, c.stackDiscovery,
+		c.shadowed, c.skipped, c.lastSuccess, c.polls, c.stackLookups, c.stackDiscovery, c.stackRefused,
 	} {
 		ch <- d
 	}
@@ -369,5 +372,8 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 	for result, n := range status.stackDiscoveryCache() {
 		ch <- prometheus.MustNewConstMetric(c.stackDiscovery, prometheus.CounterValue, float64(n), result)
+	}
+	if n, ok := status.stackFallbackRefused(); ok {
+		ch <- prometheus.MustNewConstMetric(c.stackRefused, prometheus.CounterValue, float64(n))
 	}
 }

@@ -36,31 +36,40 @@ var discoveryCodecs = func() serializer.CodecFactory {
 
 func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	w.Header().Set("Vary", "Accept")
-	r.setRootDiscoveryCacheControl(w, next)
+	r.varyOnDiscoveryRules(w)
+	view := r.discoveryView(req)
+	r.setRootDiscoveryCacheControl(w, next, view)
 	mediaType, _ := negotiation.NegotiateMediaTypeOptions(req.Header.Get("Accept"), discoveryCodecs.SupportedMediaTypes(), aggregated.DiscoveryEndpointRestrictions)
 	if aggregated.IsAggregatedDiscoveryGVK(mediaType.Convert) {
-		r.serveAggregatedDiscovery(w, req, next)
+		r.serveAggregatedDiscovery(w, req, next, view)
 		return
 	}
 
 	var fallback metav1.APIGroupList
-	scoped, err := r.readRootDiscovery(req, next, apisPrefix, "application/json", &fallback)
+	scoped, err := r.readRootDiscovery(req, next, apisPrefix, "application/json", &fallback, view)
 	if err != nil || fallback.Kind != "APIGroupList" {
-		serveCachedDoc(w, req, r.apiGroupList.Load())
-		return
+		if !view.active {
+			serveCachedDoc(w, req, r.apiGroupList.Load())
+			return
+		}
+		// The cached document is the full view, so a narrower one is built.
+		fallback, scoped = metav1.APIGroupList{TypeMeta: metav1.TypeMeta{Kind: "APIGroupList", APIVersion: "v1"}}, false
 	}
-	r.serveMergedAPIGroupList(w, req, fallback, scoped)
+	r.serveMergedAPIGroupList(w, req, fallback, scoped, view)
 }
 
 // serveMergedAPIGroupList serves the source's APIGroupList with the router's
 // groups added. When scoped, the source's answer replaces the caller-scoped
 // defaults.
-func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http.Request, fallback metav1.APIGroupList, scoped bool) {
+func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http.Request, fallback metav1.APIGroupList, scoped bool, view discoveryView) {
 	groups := make(map[string]metav1.APIGroup, len(fallback.Groups))
 	for _, group := range fallback.Groups {
 		groups[group.Name] = group
 	}
 	for name, entry := range *r.snapshot.Load() {
+		if view.excludes(entry) {
+			continue
+		}
 		// The source answered for this caller, so it replaces the defaults.
 		if !entry.callerScoped || !scoped {
 			groups[name] = entry.group
@@ -75,11 +84,11 @@ func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http
 	serveDiscoveryJSON(w, req, fallback)
 }
 
-func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *http.Request, next http.Handler) {
+func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *http.Request, next http.Handler, view discoveryView) {
 	groups := map[string]apidiscoveryv2.APIGroupDiscovery{}
 	var raw json.RawMessage
 	var fallback apidiscoveryv2.APIGroupDiscoveryList
-	callerScoped, err := r.readRootDiscovery(req, next, apisPrefix, aggregatedDiscoveryJSON, &raw)
+	callerScoped, err := r.readRootDiscovery(req, next, apisPrefix, aggregatedDiscoveryJSON, &raw, view)
 	if err == nil && json.Unmarshal(raw, &fallback) != nil {
 		fallback = apidiscoveryv2.APIGroupDiscoveryList{} // anything undecodable has no Kind, and is ignored
 	}
@@ -95,7 +104,7 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 		// as kube-apiserver does, rather than with defaults that may not be the
 		// caller's: the client then reads each group version itself.
 		if callerScoped {
-			r.serveLegacyInsteadOfAggregated(w, req, raw)
+			r.serveLegacyInsteadOfAggregated(w, req, raw, view)
 			return
 		}
 	}
@@ -111,7 +120,7 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 	fetches := make([]*fetch, 0, len(snapshot))
 	var wg sync.WaitGroup
 	for name, entry := range snapshot {
-		if entry.callerScoped && scoped {
+		if view.excludes(entry) || entry.callerScoped && scoped {
 			continue
 		}
 		if entry.discovery != nil {
@@ -138,7 +147,7 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 		groups[f.name] = f.result
 	}
 	groups[discoveryGroup] = discoveryAggregated
-	if _, callerScoped := r.discoverySource(next); callerScoped {
+	if _, callerScoped := r.discoverySource(next); callerScoped && !view.skipSource {
 		w = &privateCacheWriter{ResponseWriter: w}
 	}
 	writeAggregatedDiscovery(w, req, groups)
@@ -237,24 +246,30 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ api
 }
 
 func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Request, next http.Handler) {
-	r.setRootDiscoveryCacheControl(w, next)
+	r.varyOnDiscoveryRules(w)
+	view := r.discoveryView(req)
+	r.setRootDiscoveryCacheControl(w, next, view)
 	var fallback handler3.OpenAPIV3Discovery
-	scoped, err := r.readRootDiscovery(req, next, openapiV3Prefix, "application/json", &fallback)
+	scoped, err := r.readRootDiscovery(req, next, openapiV3Prefix, "application/json", &fallback, view)
 	if err != nil || fallback.Paths == nil {
-		serveCachedDoc(w, req, r.openapiIndex.Load())
-		return
+		if !view.active {
+			serveCachedDoc(w, req, r.openapiIndex.Load())
+			return
+		}
+		// The cached index is the full view, so a narrower one is built.
+		fallback, scoped = handler3.OpenAPIV3Discovery{Paths: map[string]handler3.OpenAPIV3DiscoveryGroupVersion{}}, false
 	}
 	handlers := *r.snapshot.Load()
 	discoveryPath, discoveryURL := discoveryOpenAPIEntry()
 	fallback.Paths[discoveryPath] = handler3.OpenAPIV3DiscoveryGroupVersion{ServerRelativeURL: discoveryURL}
 	for path := range fallback.Paths {
 		group, _, ok := parseOpenAPIGroupVersionPath(openapiV3Prefix + "/" + path)
-		if entry, owned := handlers[group]; ok && owned && (!entry.callerScoped || !scoped) {
+		if entry, owned := handlers[group]; ok && owned && !view.excludes(entry) && (!entry.callerScoped || !scoped) {
 			delete(fallback.Paths, path)
 		}
 	}
 	for _, entry := range handlers {
-		if entry.callerScoped && scoped {
+		if view.excludes(entry) || entry.callerScoped && scoped {
 			continue
 		}
 		for _, gv := range entry.group.Versions {
@@ -269,7 +284,7 @@ func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Reque
 
 // serveLegacyInsteadOfAggregated answers an aggregated discovery request with
 // the source's legacy APIGroupList, if the client accepts plain JSON.
-func (r *GrafanaRouter) serveLegacyInsteadOfAggregated(w http.ResponseWriter, req *http.Request, raw json.RawMessage) {
+func (r *GrafanaRouter) serveLegacyInsteadOfAggregated(w http.ResponseWriter, req *http.Request, raw json.RawMessage, view discoveryView) {
 	var list metav1.APIGroupList
 	if err := json.Unmarshal(raw, &list); err != nil {
 		http.Error(w, "invalid discovery from the caller's stack", http.StatusBadGateway)
@@ -280,21 +295,24 @@ func (r *GrafanaRouter) serveLegacyInsteadOfAggregated(w http.ResponseWriter, re
 		http.Error(w, "the caller's stack serves only legacy discovery", http.StatusNotAcceptable)
 		return
 	}
-	r.serveMergedAPIGroupList(w, req, list, true)
+	r.serveMergedAPIGroupList(w, req, list, true, view)
 }
 
 // setRootDiscoveryCacheControl keeps root discovery out of shared caches when
 // it depends on the caller: credentials may arrive in X-Access-Token, which a
 // cache keyed on Authorization would not tell apart.
-func (r *GrafanaRouter) setRootDiscoveryCacheControl(w http.ResponseWriter, next http.Handler) {
-	if _, scoped := r.discoverySource(next); scoped {
+func (r *GrafanaRouter) setRootDiscoveryCacheControl(w http.ResponseWriter, next http.Handler, view discoveryView) {
+	if _, scoped := r.discoverySource(next); scoped && !view.skipSource {
 		w.Header().Set("Cache-Control", "private")
 	}
 }
 
 // readRootDiscovery reads root discovery from the source of unserved groups.
 // scoped reports whether the answer replaces the caller-scoped defaults.
-func (r *GrafanaRouter) readRootDiscovery(req *http.Request, next http.Handler, path, accept string, into any) (scoped bool, err error) {
+func (r *GrafanaRouter) readRootDiscovery(req *http.Request, next http.Handler, path, accept string, into any, view discoveryView) (scoped bool, err error) {
+	if view.skipSource {
+		return false, errDiscoverySourceSkipped
+	}
 	source, scoped := r.discoverySource(next)
 	if scoped {
 		// The fallback forwards to the caller's stack, and a slow stack must

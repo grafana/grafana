@@ -48,6 +48,10 @@ type loaderStatus interface {
 	// stackDiscoveryCache counts single-tenant discovery cache lookups by
 	// result; nil without a single-tenant fallback or its discovery cache.
 	stackDiscoveryCache() map[string]uint64
+	// stackFallbackRefused counts requests the single-tenant fallback refused
+	// because a stack had already forwarded them to the router. ok is false
+	// when there is no single-tenant fallback.
+	stackFallbackRefused() (n uint64, ok bool)
 }
 
 // pollStatus records the outcome of a source's loads. Safe for concurrent use.

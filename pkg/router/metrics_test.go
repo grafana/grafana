@@ -193,6 +193,7 @@ func (l *statusLoader) stackLookups() map[string]uint64 {
 func (l *statusLoader) stackDiscoveryCache() map[string]uint64 {
 	return map[string]uint64{"hit": 5, "miss": 2}
 }
+func (l *statusLoader) stackFallbackRefused() (uint64, bool) { return 7, true }
 
 func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Registry) {
 	t.Helper()
@@ -272,6 +273,9 @@ grafana_router_source_polls_total{result="success",source="single-tenant"} 0
 # TYPE grafana_router_stack_discovery_cache_total counter
 grafana_router_stack_discovery_cache_total{result="hit"} 5
 grafana_router_stack_discovery_cache_total{result="miss"} 2
+# HELP grafana_router_stack_fallback_refused_total Requests the single-tenant fallback refused with a 404 because a stack had already forwarded them to the router.
+# TYPE grafana_router_stack_fallback_refused_total counter
+grafana_router_stack_fallback_refused_total 7
 # HELP grafana_router_stack_lookups_total Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.
 # TYPE grafana_router_stack_lookups_total counter
 grafana_router_stack_lookups_total{result="cache_hit"} 3
@@ -281,7 +285,7 @@ grafana_router_stack_lookups_total{result="resolved"} 1
 		"grafana_router_breaker_state", "grafana_router_breaker_transitions_total", "grafana_router_groups",
 		"grafana_router_ready", "grafana_router_reconcile_errors_total", "grafana_router_reconciles_total",
 		"grafana_router_shadowed_groups", "grafana_router_skipped_backends", "grafana_router_source_last_success_timestamp_seconds",
-		"grafana_router_source_polls_total", "grafana_router_stack_discovery_cache_total", "grafana_router_stack_lookups_total"))
+		"grafana_router_source_polls_total", "grafana_router_stack_discovery_cache_total", "grafana_router_stack_fallback_refused_total", "grafana_router_stack_lookups_total"))
 	require.Equal(t, 1, testutil.CollectAndCount(reg, "grafana_router_last_reconcile_timestamp_seconds"))
 }
 
