@@ -270,6 +270,16 @@ describe('v2 dashboard API', () => {
       );
     });
 
+    it('should create a dashboard under the name given when the command asks to create it', async () => {
+      const api = new K8sDashboardV2API();
+
+      await api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s: { name: 'reserved-uid' }, create: true });
+
+      expect(mockPut).not.toHaveBeenCalled();
+      expect(mockPost).toHaveBeenCalledTimes(1);
+      expect(mockPost.mock.calls[0][1].metadata.name).toBe('reserved-uid');
+    });
+
     it('should suppress the global error toast when the caller sets showErrorAlert false', async () => {
       const api = new K8sDashboardV2API();
 

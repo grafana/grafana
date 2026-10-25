@@ -165,7 +165,7 @@ func (b *kvStorageBackend) blobReferenced(ctx context.Context, blob kv.BlobKey) 
 		if err != nil {
 			return false, err
 		}
-		value, err := readAndClose(reader)
+		value, err := kv.ReadAllAndClose(reader)
 		if err != nil {
 			return false, err
 		}

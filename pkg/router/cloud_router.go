@@ -5,12 +5,14 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"maps"
 	"net/http"
 	"net/url"
 	"os"
 	"slices"
+	"strings"
 	"sync/atomic"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -55,10 +57,7 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 		return nil, nil, err
 	}
 	if pluginsURL != "" {
-		patterns, err := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
-		if err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
-		}
+		patterns := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
 		client, err := newPluginManifestsClient(section, "plugins")
 		if err != nil {
 			return nil, nil, err
@@ -67,6 +66,9 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 			patterns, client, grpcConfig, deps)
 		if err != nil {
 			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+		}
+		if pluginsTarget.cooldown, err = pluginManifestsCooldown(section, "plugins"); err != nil {
+			return nil, nil, err
 		}
 	}
 	if coreURL != "" {
@@ -79,8 +81,22 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 		if err != nil {
 			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
+		if coreTarget.cooldown, err = pluginManifestsCooldown(section, "core"); err != nil {
+			return nil, nil, err
+		}
 	}
 	return pluginsTarget, coreTarget, nil
+}
+
+// pluginManifestsCooldown paces a plugin manifests source by its
+// <prefix>_poll_interval key, with the same default and backoff as an
+// aggregate target.
+func pluginManifestsCooldown(section *setting.DynamicSection, prefix string) (*cooldown, error) {
+	interval, err := parsePositiveDurationKey(section, prefix+"_poll_interval", defaultAggregatePollInterval)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+	}
+	return newCooldown(interval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff), nil
 }
 
 // newPluginManifestsClient builds the client that polls a plugin manifests
@@ -193,21 +209,10 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 	}
 
 	var singleTenantFallback *singleTenantFallback
-	var singleTenantResources map[string][]singleTenantResource
 	if singleTenantDiscoveryURL != "" {
 		discoURL, err := url.Parse(singleTenantDiscoveryURL)
 		if err != nil {
 			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
-		}
-
-		// An explicitly empty st_resources disables the defaults.
-		rawResources := defaultSingleTenantResources
-		if section.HasKey("st_resources") {
-			rawResources = section.Key("st_resources").String()
-		}
-		singleTenantResources, err = parseSingleTenantResources(rawResources)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
 
 		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
@@ -224,12 +229,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		}
 	}
 
-	loader, err := newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
-	if err != nil {
-		return nil, err
-	}
-	loader.singleTenantResources = singleTenantResources
-	return loader, nil
+	return newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
 }
 
 // cloudLoader is a RoutesLoader and a dskit service. It merges the configured
@@ -253,10 +253,6 @@ type cloudLoader struct {
 
 	// Until all requests are moved to MT, we can fallback to ST instances
 	singleTenantFallback *singleTenantFallback
-
-	// singleTenantResources are, by group, the resources that stay on the
-	// single-tenant stacks when another source serves the rest of the group.
-	singleTenantResources map[string][]singleTenantResource
 
 	shadowed atomic.Pointer[[]shadowedGroup]
 }
@@ -316,7 +312,24 @@ func (l *cloudLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 	return l.dirty, nil // the poll loops push to this channel
 }
 
+// errFirstPollPending keeps the cloud loader from serving before each of its
+// sources has polled once.
+var errFirstPollPending = errors.New("router: waiting for the first poll of")
+
 func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
+	// Until every source has polled once, the snapshots of those that haven't
+	// are empty but not failed. Serving then would report ready with groups
+	// missing from discovery, so wait. A failed first poll ends the wait too.
+	var pending []string
+	for _, status := range l.sourceStatuses() {
+		if status.Successes+status.Failures == 0 {
+			pending = append(pending, status.Source)
+		}
+	}
+	if len(pending) > 0 {
+		return nil, fmt.Errorf("%w: %s", errFirstPollPending, strings.Join(pending, ", "))
+	}
+
 	lookup := make(map[string]Backend)
 	var discoveryErr error
 	var shadowed []shadowedGroup
@@ -365,10 +378,8 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	l.recordShadowed(ctx, shadowed)
 
 	if l.singleTenantFallback != nil {
-		for group, resources := range l.singleTenantResources {
-			if b, ok := lookup[group]; ok && b.Source() != sourceSingleTenant {
-				lookup[group] = &singleTenantResourcesBackend{Backend: b, resources: resources, st: l.singleTenantFallback}
-			}
+		if b, ok := lookup[singleTenantResourcesGroup]; ok && b.Source() != sourceSingleTenant {
+			lookup[singleTenantResourcesGroup] = &singleTenantResourcesBackend{Backend: b, st: l.singleTenantFallback}
 		}
 	}
 

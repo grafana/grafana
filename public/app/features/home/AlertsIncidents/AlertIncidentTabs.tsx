@@ -7,15 +7,16 @@ import { useStoredString } from 'app/core/hooks/useStored';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 
 import { DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN } from '../DashboardTabs/types';
+import { CardFooter } from '../FooterActions';
 import { HomeSection } from '../HomeSection';
 import { tabChanged } from '../analytics/main';
 
-import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
-import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
+import { ViewAllAlertsAction } from './CreateAndViewAlertsButtons';
+import { ViewAllIncidentsAction } from './DeclareAndViewIncidentsButtons';
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
 import { LabelFilterCombobox } from './LabelFilterCombobox';
-import { OnCallCard, ViewSchedulesButton } from './OnCallCard';
+import { OnCallCard, ViewSchedulesAction } from './OnCallCard';
 import { type FilterSelection } from './filterSelection';
 import { useAlertFilterOptions } from './useAlertFilterOptions';
 import { type FiringAlertsData } from './useFiringAlerts';
@@ -47,9 +48,10 @@ interface TabDefinition {
   // Undefined while loading so the counter doesn't flash 0 before the data arrives.
   counter?: number;
   counterCappedAt?: number;
+  // Sits at the footer's left; stays through loading and errors so the scope can still be changed.
   filter?: ComponentProps<typeof LabelFilterCombobox>;
   content: ReactNode;
-  // Each tab gates this on its own data state; false renders nothing.
+  // The footer's right-hand action. Each tab gates this on its own data state; false renders nothing.
   footer: ReactNode;
 }
 
@@ -75,14 +77,13 @@ export function AlertIncidentTabs({
 
   const [storedTab, setActiveTab] = useStoredString(ALERTS_INCIDENTS_TAB_STORAGE_KEY, '');
   const onCall = useMyShifts();
-  const { count, hasAlerts, hasTeams, teamsLoading, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
+  const { count, hasAlerts, hasTeams, teamsLoading, loading, viewAllHref, error } = alertsData;
   const {
     loading: incidentsLoading,
     error: incidentsError,
     count: incidentsCount,
     hasMore: incidentsHasMore,
     pluginId: incidentsPluginId,
-    canDeclare: incidentsCanDeclare,
     canAccess: incidentsCanAccess,
   } = incidentsData;
   // Kept here rather than in the dropdown, which only renders for the active tab.
@@ -124,14 +125,7 @@ export function AlertIncidentTabs({
         ariaLabel: t('home.alerts-incidents.alert-filter-label', 'Filter alerts by label'),
       },
       content: <FiringAlertsCard data={alertsData} hideFooterActions />,
-      footer: !loading && !error && (
-        <CreateAndViewAlertsButtons
-          hasAlerts={hasAlerts}
-          canCreate={canCreate}
-          newRuleHref={newRuleHref}
-          viewAllHref={viewAllHref}
-        />
-      ),
+      footer: !loading && !error && <ViewAllAlertsAction hasAlerts={hasAlerts} viewAllHref={viewAllHref} />,
     },
     isOffered(INCIDENTS_TAB_ID, incidentsData.enabled) && {
       id: INCIDENTS_TAB_ID,
@@ -151,12 +145,7 @@ export function AlertIncidentTabs({
       },
       content: <IncidentsCard data={incidentsData} hideFooterActions />,
       footer: !incidentsLoading && !incidentsError && (
-        <DeclareAndViewIncidentsButtons
-          pluginId={incidentsPluginId}
-          hasIncidents={incidentsCount > 0}
-          canDeclare={incidentsCanDeclare}
-          canAccess={incidentsCanAccess}
-        />
+        <ViewAllIncidentsAction pluginId={incidentsPluginId} canAccess={incidentsCanAccess} />
       ),
     },
     isOffered(ON_CALL_TAB_ID, onCall.enabled) && {
@@ -165,7 +154,7 @@ export function AlertIncidentTabs({
       // Shares the header's clock, so a shift boundary flips badge and row in the same render.
       content: <OnCallCard now={onCall.now} />,
       // A static link to the plugin page: it needs no load state, only the page access check.
-      footer: onCall.canAccess && <ViewSchedulesButton href={onCall.schedulesHref} />,
+      footer: onCall.canAccess && <ViewSchedulesAction href={onCall.schedulesHref} />,
     },
   ].filter(isTruthy);
 
@@ -210,18 +199,15 @@ export function AlertIncidentTabs({
           ))}
         </TabsBar>
         <TabContent id={PANEL_ID} role="tabpanel" aria-labelledby={tabElementId(activeTab.id)}>
-          {/* Fixed height so the section doesn't jump between tabs; the list fills whatever the filter row leaves. */}
+          {/* Fixed list height and a footer of one height, so switching tabs or loading never moves the card. */}
           <Box display="flex" direction="column" height={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}>
-            {activeTab.filter && (
-              <Box paddingTop={2}>
-                <LabelFilterCombobox {...activeTab.filter} />
-              </Box>
-            )}
             <ScrollContainer showScrollIndicators>{activeTab.content}</ScrollContainer>
           </Box>
 
           <Box padding={1} paddingTop={1.5}>
-            {activeTab.footer}
+            <CardFooter filter={activeTab.filter && <LabelFilterCombobox {...activeTab.filter} />}>
+              {activeTab.footer}
+            </CardFooter>
           </Box>
         </TabContent>
       </HomeSection>
