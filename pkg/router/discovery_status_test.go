@@ -70,7 +70,6 @@ func TestRouterStatus(t *testing.T) {
 	r := NewGrafanaRouter(staticLoader{backends: []Backend{plugin, provided, failing, broken, st}}, nil)
 	before := time.Now().UTC()
 	require.NoError(t, r.reconcile(t.Context()))
-	r.storeServing(t.Context(), nil)
 	failBreaker(t, r.served["failing.ext.grafana.app"].breaker, 2)
 	failBreaker(t, r.served["broken.ext.grafana.app"].breaker, breakerOpenAfter)
 

@@ -376,7 +376,7 @@ func (erroringLoader) Notify(context.Context) (<-chan struct{}, error) {
 // clients an empty discovery document instead of waiting for a real load.
 func TestReadyFailsAfterTotallyFailedInitialReconcile(t *testing.T) {
 	r := NewGrafanaRouter(erroringLoader{}, nil)
-	r.storeServing(context.Background(), r.reconcile(context.Background()))
+	_ = r.reconcile(context.Background())
 
 	if err := r.Ready(context.Background()); err == nil {
 		t.Error("Ready() = nil after totally failed initial reconcile, want error (nothing has ever been served)")
@@ -405,7 +405,7 @@ func TestReadyOKWithPartialLoadFailureGivenAtLeastOneServedGroup(t *testing.T) {
 		failingBackend{group: "bad.grafana.app", key: "1"},
 	}}
 	r := NewGrafanaRouter(loader, nil)
-	r.storeServing(context.Background(), r.reconcile(context.Background()))
+	_ = r.reconcile(context.Background())
 
 	if err := r.Ready(context.Background()); err != nil {
 		t.Errorf("Ready() = %v, want nil (one group succeeded, so last-known-good exists)", err)

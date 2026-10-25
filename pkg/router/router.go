@@ -589,7 +589,6 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 		var retryC <-chan time.Time
 		run := func() {
 			err := r.reconcile(ctx)
-			r.storeServing(ctx, err)
 			now := time.Now()
 			if err == nil {
 				retry.OnSuccess(now)
@@ -708,8 +707,9 @@ func (r *GrafanaRouter) Alive(context.Context) error {
 // reconcile re-reads the full desired route set and converges served to it:
 // rebuild changed/new groups, leave unchanged ones (key match) untouched, drop
 // groups that disappeared, then publish a fresh snapshot. Level-triggered, so
-// it is safe to run on any wake.
-func (r *GrafanaRouter) reconcile(ctx context.Context) error {
+// it is safe to run on any wake. It records its outcome, which Ready reports.
+func (r *GrafanaRouter) reconcile(ctx context.Context) (err error) {
+	defer func() { r.storeServing(ctx, err) }()
 	rawBackends, err := r.loader.Load(ctx)
 	if err != nil {
 		// Keep serving last-known-good; Run retries with backoff.

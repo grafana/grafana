@@ -348,6 +348,13 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   trees, the embedded server's groups through its handler (see "Serving and discovery"), and passes
   every other path (`/openapi/v2`, `/version`, `/livez`, ...) to `next`, the regular API server
   handler. The cloud loader, and with it the ST fallback, is not used in this mode.
+  The embedded server's in-process clients go through `HandleFunc` too (`serveRouted` in
+  `pkg/services/apiserver`): the direct rest config and `DirectlyServeHTTP`, which the legacy `/api`
+  handlers fall back to, and the loopback config for requests that carry a Grafana requester. So a
+  group the router serves is the router's for them as well. Kubernetes' own loopback clients
+  authenticate with the loopback token instead, which the router would refuse, so they go straight
+  to the server. Until the router is `Ready` it hasn't loaded the embedded server's groups, so
+  `HandleFunc` leaves middleware requests to `next`: in-process clients start before the router.
   `appplugins.registerAPIServer` turns middleware mode on too: app plugin settings are only served
   by the router. Both flags are read once, at startup (`middlewareEnabled`, `settingsEnabled`), so
   settings are served exactly when middleware mode can reach them. The standalone router is never

@@ -183,3 +183,24 @@ func TestEmbeddedGroupsBypassTheBreaker(t *testing.T) {
 	}
 	require.Equal(t, int32(10), server.served.Load(), "every request reaches the server")
 }
+
+// Until the router has loaded the embedded server's groups, the server keeps
+// serving them: in-process clients start before the router does.
+func TestMiddlewareLeavesRequestsToTheServerUntilReady(t *testing.T) {
+	server := &fakeEmbeddedAPIServer{groups: []string{"dashboard.grafana.app"}, status: http.StatusNoContent}
+	svc := newService(NewGrafanaRouter(&mutableLoader{}, nil), prometheus.NewRegistry())
+	svc.middleware = true
+	svc.router.loader = newEmbeddedLoader(svc.router.loader, &svc.upstream)
+	serve := func() int {
+		rec := httptest.NewRecorder()
+		svc.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/namespaces/default/things", nil),
+			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) }))
+		return rec.Code
+	}
+	require.Equal(t, http.StatusTeapot, serve(), "not ready: the server's")
+
+	svc.SetUpstream(server)
+	require.NoError(t, svc.router.reconcile(t.Context()))
+	require.Equal(t, http.StatusNoContent, serve(), "ready: the router's, through the server's handler")
+	require.Equal(t, int32(1), server.served.Load())
+}

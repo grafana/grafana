@@ -225,14 +225,14 @@ func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Regist
 	}
 	reg := prometheus.NewRegistry()
 	svc := newService(NewGrafanaRouter(loader, nil), reg)
-	svc.router.storeServing(t.Context(), svc.router.reconcile(t.Context()))
+	_ = svc.router.reconcile(t.Context())
 	return svc, loader, reg
 }
 
 func TestRouterCollector(t *testing.T) {
 	svc, loader, reg := newStatusService(t)
 	loader.err = errors.New("load failed")
-	svc.router.storeServing(t.Context(), svc.router.reconcile(t.Context()))
+	_ = svc.router.reconcile(t.Context())
 	for range 6 { // the default breaker opens after more than five consecutive failures
 		tripBreaker(svc.router.served["second.ext.grafana.app"].breaker)
 	}

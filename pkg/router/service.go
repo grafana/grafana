@@ -145,11 +145,18 @@ func newService(router *GrafanaRouter, reg prometheus.Registerer) *Service {
 }
 
 // HandleFunc serves through the router when enabled and otherwise delegates.
-// When enabled, the router serves the whole /apis and /openapi/v3 trees,
-// so groups only the embedded API server serves are not found. The
-// /apis/discovery tree is the router's own, so it is served either way.
+// When enabled, the router serves the whole /apis and /openapi/v3 trees, the
+// embedded API server's groups included. The /apis/discovery tree is the
+// router's own, so it is served either way.
+//
+// Until the router is ready, it hasn't loaded the embedded server's groups,
+// so next, the embedded server, keeps serving them. In-process clients start
+// before the router does, such as app installers, and the router's own
+// loading calls the server through them.
 func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
-	if handle, parseInfo := s.router.handlerFor(req.URL.Path); handle != nil && (s.middleware || isDiscoveryPath(req.URL.Path)) {
+	path := req.URL.Path
+	if handle, parseInfo := s.router.handlerFor(path); handle != nil &&
+		(isDiscoveryPath(path) || s.middleware && s.router.Ready(req.Context()) == nil) {
 		s.metrics.instrument(s.router, w, req, handle, parseInfo)
 		return
 	}
