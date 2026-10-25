@@ -47,11 +47,10 @@ function getDevServerOrigin(): { hostname: string; port: number } {
   const raw = getEnvConfig(grafanaRoot).frontend_dev_server_url;
 
   if (typeof raw !== 'string' || raw === '') {
-    // Note that blanking the key is not a way to turn HMR off: this side honours the blank but
-    // Grafana does not, so it would still point the browser at the dev server. Run
-    // `yarn start:rspack:noHmr` instead.
+    // Throw rather than build without a dev server: Grafana ignores a blank value and would
+    // still point the browser here.
     throw new Error(
-      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini. To build without a dev server, run `yarn start:rspack:noHmr`.'
+      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini. To build without a dev server, run `yarn start:noHmr`.'
     );
   }
 
@@ -143,8 +142,8 @@ function getDevServer(): DevServerConfiguration {
     devMiddleware: {
       publicPath: `/${PUBLIC_PATH}`,
 
-      // Nothing is written to disk. The backend reads the manifest from this server over HTTP,
-      // and falls back to whatever `yarn build:rspack` last left in public/build/rspack.
+      // The backend reads the manifest from this server over HTTP, and falls back to the last
+      // build on disk.
       writeToDisk: false,
     },
   };

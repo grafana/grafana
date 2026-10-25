@@ -1438,6 +1438,11 @@
         "no-rules": "",
         "rules-error": ""
       },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
       "result-count": {
         "alert-rules_other": "",
         "recording-rules_other": ""
@@ -2153,14 +2158,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Titik data maksimum",
-      "tooltip-max-data-points": "Titik data maksimum per rangkaian. Digunakan langsung oleh beberapa sumber data dan digunakan dalam perhitungan interval otomatis. Dengan data streaming, nilai ini digunakan untuk rolling buffer."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "baru"
     },
     "min-interval-option": {
       "label-interval": "Interval",
-      "tooltip-interval": "Interval dikirim ke sumber data. Sebaiknya atur ke frekuensi penulisan, misalnya <1>1m</1> jika data Anda ditulis setiap menit."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4105,6 +4110,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Lewati ke konten utama",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Masuk"
     }
@@ -4567,8 +4577,7 @@
       "delete-warning": "Ini akan menghapus folder ini dan semua subfoldernya.",
       "folder-empty": "Folder yang dipilih kosong",
       "folder-not-empty": "Folder yang dipilih berisi sumber daya yang akan dihapus",
-      "missing-info": "Bidang wajib tidak ada",
-      "success-message": "Folder berhasil dihapus"
+      "missing-info": "Bidang wajib tidak ada"
     },
     "empty-state": {
       "button-title": "Buat dasbor",
@@ -7199,8 +7208,7 @@
       "delete-error": "Gagal menghapus dasbor",
       "deleting": "Menghapus...",
       "drawer-title": "Hapus Dasbor yang Disediakan",
-      "no-repository-selected": "Repositori wajib untuk penghapusan tidak ada",
-      "success-message": "Dasbor berhasil dihapus"
+      "no-repository-selected": "Repositori wajib untuk penghapusan tidak ada"
     },
     "description-label": {
       "description": "Deskripsi"
@@ -7477,14 +7485,10 @@
       "already-in-folder": "Dasbor sudah ada di folder yang dipilih.",
       "api-error": "Gagal memindahkan dasbor",
       "cancel-action": "Batalkan",
-      "current-file-not-found": "File dasbor saat ini tidak dapat ditemukan",
       "drawer-title": "Pindahkan Dasbor yang Disediakan",
-      "file-load-error": "Kesalahan saat memuat dasbor",
-      "loading-dashboard-data": "Memuat data dasbor",
       "move-action": "Pindahkan dasbor",
       "move-read-only-message": "Dasbor ini tidak dapat dipindahkan langsung dari Grafana karena repositori bersifat baca-saja. Untuk memindahkan dasbor ini, pindahkan file di repositori Git Anda.",
       "moving": "Memindahkan...",
-      "success-message": "Dasbor berhasil dipindahkan",
       "target-path-label": "Jalur target",
       "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca"
     },
@@ -13056,7 +13060,8 @@
         "close": "Tutup {{title}}",
         "open": "Buka {{title}}",
         "open-all": "Buka asisten AI dan aplikasi bilah sisi"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Masuk ke Ruang Kerja",
@@ -14211,6 +14216,7 @@
       "description-folder": "Folder di dalam repositori. Biarkan kosong untuk root repositori.",
       "description-folder-path": "Jalur folder di dalam repositori",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "Push ke cabang yang dikonfigurasi dinonaktifkan",
       "label-branch": "Cabang",
       "label-comment": "Komentar",
@@ -15731,6 +15737,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "Pilih sumber data untuk kueri ini untuk melanjutkan.",
     "datasource-load-error-title": "Gagal memuat sumber data untuk kueri ini",
     "loading-datasource": "Memuat sumber data",

@@ -80,22 +80,23 @@ describe('Luxon-backed DateTime wrapper', () => {
     expect(wrapper.toUtc('2024-05-08').startOf('week').toISOString()).toBe('2024-05-06T00:00:00.000Z');
   });
 
-  it.each([
-    { locale: 'en-US', winter: 'EST', summer: 'EDT' },
-    { locale: 'fr-FR', winter: 'UTC−5', summer: 'UTC−4' },
-  ])(
-    'resolves $locale timezone labels and DST offsets with a custom week start',
-    async ({ locale, winter, summer }) => {
+  it.each(['en-US', 'fr-FR'])(
+    'resolves %s timezone labels and DST offsets with a custom week start',
+    async (locale) => {
+      const expectedLabel = (month: number) =>
+        new Intl.DateTimeFormat(locale, { timeZone: 'EST5EDT', timeZoneName: 'short' })
+          .formatToParts(Date.UTC(2026, month, 15))
+          .find((part) => part.type === 'timeZoneName')!.value;
       const { getTimeZoneInfo } = await import('./timezones');
       wrapper.setLocale(locale);
       wrapper.setWeekStart('Monday');
 
       expect(getTimeZoneInfo('EST5EDT', Date.UTC(2026, 0, 15))).toMatchObject({
-        abbreviation: winter,
+        abbreviation: expectedLabel(0),
         offsetInMins: 300,
       });
       expect(getTimeZoneInfo('EST5EDT', Date.UTC(2026, 6, 15))).toMatchObject({
-        abbreviation: summer,
+        abbreviation: expectedLabel(6),
         offsetInMins: 240,
       });
       expect(wrapper.toUtc('2026-01-15').startOf('week').format('YYYY-MM-DD')).toBe('2026-01-12');

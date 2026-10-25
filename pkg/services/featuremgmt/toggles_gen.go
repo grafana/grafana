@@ -239,6 +239,10 @@ const (
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
 
+	// FlagGrafanaSavedDashboardViews
+	// Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
+	FlagGrafanaSavedDashboardViews = "grafana.savedDashboardViews"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
@@ -507,17 +511,9 @@ const (
 	// Guard embedded Team LBAC rules against external datasource Kubernetes API writes
 	FlagDatasourcesTeamHttpHeadersWriteGuard = "datasources.teamHttpHeadersWriteGuard"
 
-	// FlagTeamLBACApiReadFromAppPlatform
-	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
-	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
-
 	// FlagTeamlbacUsageFromAppPlatform
 	// Collect Team LBAC usage through the IAM API instead of legacy datasource JSON
 	FlagTeamlbacUsageFromAppPlatform = "teamlbac.usageFromAppPlatform"
-
-	// FlagTeamLBACApiWriteFromAppPlatform
-	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
-	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
 
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
@@ -1005,10 +1001,6 @@ const (
 	// FlagGrafanaPluginPathNesting
 	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
 	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
-
-	// FlagGrafanaRspackBuild
-	// Switches the backend to load frontend assets built with rspack instead of webpack
-	FlagGrafanaRspackBuild = "grafana.rspackBuild"
 
 	// FlagPluginsForceTls13
 	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client

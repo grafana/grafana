@@ -8,6 +8,7 @@ import { usePluginComponents } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 
 import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import { FloatingWidthHandle } from './FloatingWidthHandle';
 import {
   canCollapseFloatingExtensionSidebar,
   collapseFloatingExtensionSidebar,
@@ -30,7 +31,14 @@ type ExtensionSidebarComponentProps = {
 export function ExtensionSidebar() {
   const theme = useTheme2();
   const styles = getStyles(theme);
-  const { dockedComponentId, presentation, extensionSidebarWidth, props = {} } = useExtensionSidebarContext();
+  const {
+    dockedComponentId,
+    presentation,
+    extensionSidebarWidth,
+    floatingExtensionSidebarWidth,
+    setFloatingExtensionSidebarWidth,
+    props = {},
+  } = useExtensionSidebarContext();
   const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null);
   const floating = presentation === 'floating';
   const edgeActionPreview = useFloatingDrag(floating ? wrapper : null, {
@@ -71,6 +79,9 @@ export function ExtensionSidebar() {
         {/* The presentation is a prop, not a key: changing it re-renders the same instance. */}
         <ExtensionComponent {...props} extensionSidebarPresentation={presentation} />
       </div>
+      {floating && (
+        <FloatingWidthHandle width={floatingExtensionSidebarWidth} onWidthChange={setFloatingExtensionSidebarWidth} />
+      )}
       {/* Portalled: the floating container's transform would otherwise position it. */}
       {edgeActionPreview &&
         createPortal(
@@ -133,6 +144,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     ),
     // The extension draws the floating surface itself; core adds no background, border or shadow.
     sidebarWrapperFloating: css({
+      // Positions the width handle on its edge.
+      position: 'relative',
+      // The extension rounds its surface by this, so the width handle's line can follow the corners.
+      '--extension-sidebar-floating-radius': theme.shape.radius.lg,
       // The container around it ignores the pointer, so only the sidebar itself takes clicks where it is.
       pointerEvents: 'auto',
       [`& [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grab', touchAction: 'none' },
