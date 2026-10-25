@@ -202,6 +202,11 @@ describe('formatted string parsing', () => {
     );
   });
 
+  it('parses one-digit hours for HH like moment', () => {
+    expect(moment.utc('2026-10-24 9:00:00', 'YYYY-MM-DD HH:mm:ss').toISOString()).toBe('2026-10-24T09:00:00.000Z');
+    expect(moment.utc('2026-10-24 09:00:00', 'YYYY-MM-DD HH:mm:ss').toISOString()).toBe('2026-10-24T09:00:00.000Z');
+  });
+
   it('parses GG as the two-digit ISO week-year', () => {
     expect(moment.utc('20-53-5', 'GG-WW-E').toISOString()).toBe('2021-01-01T00:00:00.000Z');
   });

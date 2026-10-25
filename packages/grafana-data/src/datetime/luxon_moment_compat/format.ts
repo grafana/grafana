@@ -62,6 +62,7 @@ const TOKEN_MAP: Record<string, string> = {
 
 const PARSING_TOKEN_MAP: Record<string, string> = {
   ...TOKEN_MAP,
+  HH: 'H',
   dd: 'ccc',
   d: 'c',
   kk: 'HH',
@@ -76,7 +77,7 @@ const PARSING_TOKEN_MAP: Record<string, string> = {
 };
 
 const TOKEN_PATTERN = new RegExp(
-  `\\[([^\\]]+)\\]|'|Do|${Object.keys(TOKEN_MAP)
+  `\\[([^\\]]+)\\]|'|Do|${Object.keys(PARSING_TOKEN_MAP)
     .sort((a, b) => b.length - a.length)
     .join('|')}`,
   'g'
