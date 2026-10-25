@@ -96,6 +96,20 @@ describe('spanAncestorIdsSpy', () => {
     expect(spanAncestorIdsSpy(spanWithSomeEmptyReferences as TraceSpan)).toEqual(expectedAncestorIds);
   });
 
+  it('returns the ancestors stored on the span instead of following references', () => {
+    const spanWithAncestors = { ...span, ancestorSpanIds: ['storedParent', 'storedRoot'] };
+
+    expect(spanAncestorIdsSpy(spanWithAncestors as unknown as TraceSpan)).toEqual(['storedParent', 'storedRoot']);
+  });
+
+  it('returns a copy of the stored ancestors', () => {
+    const ancestorSpanIds = ['storedParent'];
+    const ancestors = spanAncestorIdsSpy({ spanID: 'a', references: [], ancestorSpanIds } as unknown as TraceSpan);
+    ancestors.push('root');
+
+    expect(ancestorSpanIds).toEqual(['storedParent']);
+  });
+
   describe('cyclic references', () => {
     const makeSpan = (spanID: string) => ({ spanID, references: [] as unknown[] });
     const asSpan = (span: { spanID: string }) => span as unknown as TraceSpan;
