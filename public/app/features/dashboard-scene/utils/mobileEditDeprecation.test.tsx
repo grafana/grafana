@@ -1,9 +1,17 @@
 import { cleanup, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
+import { AppEvents } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
 
-import { isMobileEditDeprecated, useIsMobileEditDeprecated } from './mobileEditDeprecation';
+import {
+  isMobileEditDeprecated,
+  notifyMobileEditNotAvailable,
+  redirectAwayFromMobileEdit,
+  useIsMobileEditDeprecated,
+} from './mobileEditDeprecation';
 
 const mockUseMediaQueryMinWidth = jest.fn();
 
@@ -72,5 +80,31 @@ describe('useIsMobileEditDeprecated', () => {
     setup({ flag: false, isAtLeastSm: false });
 
     expect(screen.getByText('allowed')).toBeInTheDocument();
+  });
+});
+
+describe('notifyMobileEditNotAvailable', () => {
+  it('emits a warning toast explaining dashboard editing is unavailable on small screens', () => {
+    const emitSpy = jest.spyOn(appEvents, 'emit');
+
+    notifyMobileEditNotAvailable();
+
+    expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+      'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+    ]);
+  });
+});
+
+describe('redirectAwayFromMobileEdit', () => {
+  it('warns and redirects to /dashboards', () => {
+    const emitSpy = jest.spyOn(appEvents, 'emit');
+    const replaceSpy = jest.spyOn(locationService, 'replace').mockImplementation(() => {});
+
+    redirectAwayFromMobileEdit();
+
+    expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+      'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+    ]);
+    expect(replaceSpy).toHaveBeenCalledWith('/dashboards');
   });
 });

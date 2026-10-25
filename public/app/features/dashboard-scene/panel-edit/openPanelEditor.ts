@@ -16,6 +16,8 @@ export async function openPanelEditor(dashboard: DashboardScene, panel: VizPanel
   if (!canManuallyEditDashboard(dashboard.state)) {
     return;
   }
-  dashboard.openFullEditor();
+  if (!dashboard.openFullEditor()) {
+    return;
+  }
   await dashboard.loadView(dashboardViews.editPanel(panel, isNewPanel));
 }

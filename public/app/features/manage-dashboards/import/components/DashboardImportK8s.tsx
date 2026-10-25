@@ -13,6 +13,10 @@ import {
   isDashboardV1Resource,
   isDashboardV2Resource,
 } from 'app/features/dashboard/api/utils';
+import {
+  redirectAwayFromMobileEdit,
+  useIsMobileEditDeprecated,
+} from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 
 import { type DashboardInputs, DashboardSource } from '../../types';
 import { detectExportFormat, extractV1Inputs, extractV2Inputs } from '../utils/inputs';
@@ -50,6 +54,15 @@ const initialState: ImportState = {
 export function DashboardImportK8s({ queryParams }: Props) {
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const [state, setState] = useState<ImportState>(initialState);
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
+
+  // Importing a dashboard requires edit mode, which is unavailable on mobile.
+  // Redirect away rather than land on a page that can never complete.
+  useEffect(() => {
+    if (isMobileEditDeprecated) {
+      redirectAwayFromMobileEdit();
+    }
+  }, [isMobileEditDeprecated]);
 
   // Handle gcom dashboard ID from query params on mount
   useEffect(() => {
