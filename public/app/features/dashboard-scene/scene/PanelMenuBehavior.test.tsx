@@ -1333,6 +1333,70 @@ describe('panelMenuBehavior', () => {
       expect(texts.slice(-4)).toEqual(['---', 'Add to notebook', '---', 'Remove']);
     });
   });
+
+  describe('Copy, blocked on mobile', () => {
+    afterEach(() => {
+      setTestFlags({});
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+    });
+
+    it('offers Copy in the More... submenu outside edit mode when not blocked on mobile', async () => {
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreMenu = menu.state.items?.find((item) => item.text === 'More...');
+      expect(moreMenu?.subMenu?.find((item) => item.text === 'Copy')).toEqual(
+        expect.objectContaining({ shortcut: 'p c' })
+      );
+    });
+
+    it('drops Copy from the More... submenu when blocked on mobile', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreMenu = menu.state.items?.find((item) => item.text === 'More...');
+      expect(moreMenu?.subMenu?.find((item) => item.text === 'Copy')).toBeUndefined();
+    });
+  });
+
+  describe('Edit, blocked on mobile', () => {
+    afterEach(() => {
+      setTestFlags({});
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+    });
+
+    it('offers Edit when not blocked on mobile', async () => {
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeDefined();
+    });
+
+    it('drops Edit from the menu when blocked on mobile', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      const { scene, menu, panel } = await buildTestScene({});
+      scene.setState({ editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      expect(menu.state.items?.find((item) => item.text === 'Edit')).toBeUndefined();
+    });
+  });
 });
 
 interface SceneOptions {

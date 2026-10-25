@@ -90,6 +90,7 @@ import {
 } from '../utils/crossDashboardVariablesSelection';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 import { DashboardInteractions } from '../utils/interactions';
+import { isMobileEditDeprecated, redirectAwayFromMobileEdit } from '../utils/mobileEditDeprecation';
 import { fetchPredefinedVariables } from '../utils/predefinedVariables';
 
 import { processQueryParamsForDashboardLoad, updateNavModel } from './utils';
@@ -697,9 +698,14 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           config.featureToggles.dashboardTemplates) &&
         options.route === DashboardRoutes.Template
       ) {
-        scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
-        scene.onEnterEditMode();
-        scene.setState({ isDirty: true });
+        if (isMobileEditDeprecated()) {
+          // Building a dashboard from a template requires edit mode, which is unavailable on mobile.
+          redirectAwayFromMobileEdit();
+        } else {
+          scene.setInitialSaveModel(rsp.dashboard, rsp.meta);
+          scene.onEnterEditMode();
+          scene.setState({ isDirty: true });
+        }
       }
 
       // We don't want to cache temporary dashboards (e.g from Explore) or public dashboards
@@ -1198,24 +1204,29 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) &&
         options.route === DashboardRoutes.Template
       ) {
-        const editMode = !!options.editTemplate;
+        if (isMobileEditDeprecated()) {
+          // Building or editing a dashboard template requires edit mode, which is unavailable on mobile.
+          redirectAwayFromMobileEdit();
+        } else {
+          const editMode = !!options.editTemplate;
 
-        if (options.dashboardTemplateUid && editMode) {
-          scene.setState({
-            meta: {
-              ...scene.state.meta,
-              isDashboardTemplate: true,
-              dashboardTemplateUid: options.dashboardTemplateUid,
-            },
-          });
-        }
+          if (options.dashboardTemplateUid && editMode) {
+            scene.setState({
+              meta: {
+                ...scene.state.meta,
+                isDashboardTemplate: true,
+                dashboardTemplateUid: options.dashboardTemplateUid,
+              },
+            });
+          }
 
-        scene.onEnterEditMode();
+          scene.onEnterEditMode();
 
-        // Use-template flow forces isDirty so Save-As is primed. Edit-template flow
-        // starts clean — dirtiness should reflect real user edits.
-        if (!editMode) {
-          scene.setState({ isDirty: true });
+          // Use-template flow forces isDirty so Save-As is primed. Edit-template flow
+          // starts clean — dirtiness should reflect real user edits.
+          if (!editMode) {
+            scene.setState({ isDirty: true });
+          }
         }
       }
 

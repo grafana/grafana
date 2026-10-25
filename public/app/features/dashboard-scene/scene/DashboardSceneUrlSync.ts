@@ -83,20 +83,21 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // check, the branch below calls onEnterEditMode() unconditionally when not already editing,
     // undoing the invariant a plan preview depends on (see refuseWhilePlanning).
     if (typeof values.editview === 'string' && this._scene.canEditDashboard() && !refuseWhilePlanning(this._scene)) {
+      const editViewKey = values.editview;
+
       if (isEditing) {
         this._scene.openFullEditor();
-      }
-      update.editview = createDashboardEditViewFor(values.editview);
-
-      // If we are not in editing (for example after full page reload)
-      if (!isEditing) {
-        if (this._scene.state.editable) {
-          // Not sure what is best to do here.
-          // The reason for the timeout is for this change to happen after the url sync has completed
-          setTimeout(() => this._scene.onEnterEditMode());
-        } else {
-          update.editview = undefined;
-        }
+        update.editview = createDashboardEditViewFor(editViewKey);
+      } else if (this._scene.state.editable) {
+        // Not sure what is best to do here.
+        // The reason for the timeout is for this change to happen after the url sync has completed.
+        // onEnterEditMode can no-op (e.g. blocked on mobile) without throwing -- only open the
+        // editview pane once it's confirmed edit mode was actually entered.
+        setTimeout(() => {
+          if (this._scene.onEnterEditMode()) {
+            this._scene.setState({ editview: createDashboardEditViewFor(editViewKey) });
+          }
+        });
       }
     } else if (editview && values.hasOwnProperty('editview')) {
       update.editview = undefined;

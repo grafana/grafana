@@ -4,6 +4,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import { NewSceneObjectAddedEvent, SceneQueryRunner, UrlSyncManager, VizPanel } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import * as libraryPanels from 'app/features/library-panels/state/api';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
@@ -388,6 +389,45 @@ describe('DashboardSceneUrlSync', () => {
       expect(scene.urlSync?.getUrlState().editview).toBe('variables');
 
       await waitFor(() => expect(scene.state.editview?.getUrlKey()).toBe('variables'));
+    });
+
+    describe('direct ?editview= url load, not already editing', () => {
+      afterEach(() => {
+        setTestFlags({});
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
+      });
+
+      it('enters edit mode and opens the editview pane once onEnterEditMode succeeds', async () => {
+        const scene = buildTestScene();
+        scene.setState({
+          editable: true,
+          isEditing: false,
+          meta: { ...scene.state.meta, canEdit: true },
+        });
+
+        scene.urlSync?.updateFromUrl({ editview: 'links' });
+
+        await waitFor(() => expect(scene.state.isEditing).toBe(true));
+        expect(scene.state.editview?.getUrlKey()).toBe('links');
+      });
+
+      it('does not open the editview pane when onEnterEditMode is blocked on mobile', async () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+        const scene = buildTestScene();
+        scene.setState({
+          editable: true,
+          isEditing: false,
+          meta: { ...scene.state.meta, canEdit: true },
+        });
+        const onEnterEditMode = jest.spyOn(scene, 'onEnterEditMode');
+
+        scene.urlSync?.updateFromUrl({ editview: 'links' });
+
+        await waitFor(() => expect(onEnterEditMode).toHaveBeenCalled());
+        expect(scene.state.isEditing).toBe(false);
+        expect(scene.state.editview).toBeUndefined();
+      });
     });
 
     it('opens the editor when the same URL update closes panel view and already-closed settings', async () => {
