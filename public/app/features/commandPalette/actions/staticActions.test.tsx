@@ -1,3 +1,4 @@
+import { cleanup } from '@testing-library/react';
 import { type ActionImpl } from 'kbar';
 import { type ReactNode } from 'react';
 import { getWrapper, renderHook } from 'test/test-utils';
@@ -187,5 +188,45 @@ describe('useStaticActions - new notebook action', () => {
     const { result } = renderStaticActions([{ ...notebooksNavItem, children: [] }]);
     expect(result.current).toEqual(expect.arrayContaining([expect.objectContaining({ id: 'navModel.notebooks' })]));
     expect(result.current.some((action) => action.name === 'New notebook')).toBe(false);
+  });
+});
+
+const dashboardsNavTree: NavModelItem[] = [
+  {
+    text: 'Dashboards',
+    id: 'dashboards/browse',
+    url: '/dashboards',
+    children: [
+      { text: 'New dashboard', id: 'dashboards/new', url: '/dashboard/new' },
+      { text: 'Import dashboard', id: 'dashboards/import', url: '/dashboard/import' },
+      { text: 'Browse', id: 'dashboards-browse', url: '/dashboards' },
+    ],
+  },
+];
+
+const hasAction = (actions: CommandPaletteAction[], id: string) => actions.some((action) => action.id === id);
+
+describe('useStaticActions - dashboard creation nav items, blocked on mobile', () => {
+  afterEach(() => {
+    cleanup();
+    setTestFlags({});
+  });
+
+  it('includes the New/Import dashboard actions when not blocked on mobile', () => {
+    const { result } = renderStaticActions(dashboardsNavTree);
+
+    expect(hasAction(result.current, 'navModel.dashboards/new')).toBe(true);
+    expect(hasAction(result.current, 'navModel.dashboards/import')).toBe(true);
+    expect(hasAction(result.current, 'navModel.dashboards/browse')).toBe(true);
+  });
+
+  it('excludes only the New/Import dashboard actions when blocked on mobile', () => {
+    setTestFlags({ 'grafana.mobileEditDeprecation': true });
+
+    const { result } = renderStaticActions(dashboardsNavTree);
+
+    expect(hasAction(result.current, 'navModel.dashboards/new')).toBe(false);
+    expect(hasAction(result.current, 'navModel.dashboards/import')).toBe(false);
+    expect(hasAction(result.current, 'navModel.dashboards/browse')).toBe(true);
   });
 });
