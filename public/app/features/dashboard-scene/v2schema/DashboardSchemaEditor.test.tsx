@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { draft07Config } from 'json-schema-library';
 import { useState } from 'react';
@@ -52,34 +52,146 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
     jest.mocked(useAsync).mockImplementation(jest.requireActual('react-use').useAsync);
   });
 
-  it.each(['JSON', 'YAML'])('validates %s once after typing pauses and blocks saving while pending', async (format) => {
-    const onValidationChange = jest.fn();
-    render(<ControlledEditor onValidationChange={onValidationChange} />);
-    await screen.findByRole('textbox', { name: 'Dashboard schema' });
-    if (format === 'YAML') {
-      await userEvent.setup().click(screen.getByRole('radio', { name: 'YAML' }));
-    }
-    await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
-    jest.useFakeTimers();
-    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-    const validate = jest.spyOn(draft07Config, 'validate');
-    try {
-      await replaceBuffer(user, format === 'JSON' ? '{"spec":{"title":123}}' : 'spec:\n  title: 123');
-      await replaceBuffer(user, format === 'JSON' ? '{"spec":{"title":"Edited"}}' : 'spec:\n  title: Edited');
+  describe('buffer validation', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      cleanup();
+      jest.runOnlyPendingTimers();
+      jest.restoreAllMocks();
+      jest.useRealTimers();
+    });
+
+    it.each([
+      { format: 'json', invalid: '{"spec":{"title":123}}', valid: '{"spec":{"title":"Edited"}}' },
+      { format: 'yaml', invalid: 'spec:\n  title: 123', valid: 'spec:\n  title: Edited' },
+    ] as const)('validates $format edits once after typing pauses', async ({ format, invalid, valid }) => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const onValidationChange = jest.fn();
+      render(<ControlledEditor initialFormat={format} onValidationChange={onValidationChange} />);
+      await screen.findByRole('textbox', { name: 'Dashboard schema' });
+      await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
+      await act(async () => jest.advanceTimersByTime(100));
+      const validate = jest.spyOn(draft07Config, 'validate');
+
+      await replaceBuffer(user, invalid);
+      await act(async () => jest.advanceTimersByTime(5));
+      await replaceBuffer(user, valid);
       expect(onValidationChange).toHaveBeenLastCalledWith(true);
       expect(validate).not.toHaveBeenCalled();
 
-      await act(async () => jest.advanceTimersByTime(99));
+      // CodeMirror's linter allows a 10 ms scheduling tolerance.
+      await act(async () => jest.advanceTimersByTime(85));
       expect(validate).not.toHaveBeenCalled();
-      await act(async () => jest.advanceTimersByTime(1));
-      expect(validate.mock.calls.filter(([, , , pointer]) => pointer === '#')).toHaveLength(1);
+      await act(async () => jest.advanceTimersByTime(15));
       expect(onValidationChange).toHaveBeenLastCalledWith(false);
       await act(async () => jest.advanceTimersByTime(200));
       expect(validate.mock.calls.filter(([, , , pointer]) => pointer === '#')).toHaveLength(1);
-    } finally {
-      validate.mockRestore();
-      jest.useRealTimers();
-    }
+    });
+
+    it('reports current JSON edits and blocks YAML for JSON syntax errors', async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const onChange = jest.fn();
+      const onValidationChange = jest.fn();
+      render(<ControlledEditor onChange={onChange} onValidationChange={onValidationChange} />);
+      await screen.findByRole('textbox', { name: 'Dashboard schema' });
+      await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
+
+      await replaceBuffer(user, initialValue);
+      expect(onValidationChange).toHaveBeenLastCalledWith(false);
+
+      await replaceBuffer(user, '{"spec":{"title":123}}');
+      expect(onChange).toHaveBeenLastCalledWith('{"spec":{"title":123}}');
+      // Check the completed result independently of the pending notification.
+      onValidationChange.mockClear();
+      await act(async () => jest.advanceTimersByTime(100));
+      expect(onValidationChange).toHaveBeenLastCalledWith(true);
+      expect(screen.getByRole('radio', { name: 'YAML' })).toBeEnabled();
+
+      await replaceBuffer(user, '{');
+      expect(onChange).toHaveBeenLastCalledWith('{');
+      onValidationChange.mockClear();
+      await act(async () => jest.advanceTimersByTime(100));
+      expect(onValidationChange).toHaveBeenLastCalledWith(true);
+      expect(screen.getByRole('radio', { name: 'YAML' })).toBeDisabled();
+
+      await replaceBuffer(user, '{"spec":{"title":"Edited"}}');
+      expect(onChange).toHaveBeenLastCalledWith('{"spec":{"title":"Edited"}}');
+      await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
+      expect(screen.getByRole('radio', { name: 'YAML' })).toBeEnabled();
+    });
+
+    it('preserves the YAML draft, emits JSON, and recovers from invalid YAML', async () => {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const onChange = jest.fn();
+      const onValidationChange = jest.fn();
+      const onParseErrorChange = jest.fn();
+      render(
+        <ControlledEditor
+          onChange={onChange}
+          onValidationChange={onValidationChange}
+          onParseErrorChange={onParseErrorChange}
+        />
+      );
+      await screen.findByRole('textbox', { name: 'Dashboard schema' });
+      await user.click(screen.getByRole('radio', { name: 'YAML' }));
+
+      const draft = '# My comment\nspec:\n  title: Edited';
+      await replaceBuffer(user, draft);
+      expect(onChange).toHaveBeenLastCalledWith('{\n  "spec": {\n    "title": "Edited"\n  }\n}');
+      expect(screen.getByRole('textbox', { name: 'Dashboard schema' })).toHaveTextContent('# My comment');
+      await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
+
+      onChange.mockClear();
+      await replaceBuffer(user, 'spec: [');
+      onValidationChange.mockClear();
+      await act(async () => jest.advanceTimersByTime(100));
+      expect(onValidationChange).toHaveBeenLastCalledWith(true);
+      expect(onParseErrorChange).toHaveBeenLastCalledWith(true);
+      expect(screen.getByRole('radio', { name: 'JSON' })).toBeDisabled();
+      expect(onChange).not.toHaveBeenCalled();
+
+      await replaceBuffer(user, 'spec:\n  title: 123');
+      expect(onChange).toHaveBeenLastCalledWith('{\n  "spec": {\n    "title": 123\n  }\n}');
+      onValidationChange.mockClear();
+      await act(async () => jest.advanceTimersByTime(100));
+      expect(onValidationChange).toHaveBeenLastCalledWith(true);
+      expect(onParseErrorChange).toHaveBeenLastCalledWith(false);
+      expect(screen.getByRole('radio', { name: 'JSON' })).toBeEnabled();
+
+      await replaceBuffer(user, draft);
+      await user.click(screen.getByRole('radio', { name: 'JSON' }));
+      expect(screen.getByRole('textbox', { name: 'Dashboard schema' })).toHaveTextContent('"title": "Edited"');
+      await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
+    });
+
+    it('validates external values while a diff replaces the editor', async () => {
+      const onValidationChange = jest.fn();
+      const { rerender } = render(
+        <DashboardSchemaEditor
+          value={initialValue}
+          contentOverride={<div>Dashboard diff</div>}
+          onValidationChange={onValidationChange}
+        />
+      );
+      expect(await screen.findByText('Dashboard diff')).toBeInTheDocument();
+      await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
+
+      rerender(
+        <DashboardSchemaEditor
+          value='{"spec":{"title":123}}'
+          contentOverride={<div>Dashboard diff</div>}
+          onValidationChange={onValidationChange}
+        />
+      );
+      expect(screen.getByText('Dashboard diff')).toBeInTheDocument();
+      onValidationChange.mockClear();
+      await act(async () => jest.advanceTimersByTime(100));
+      expect(onValidationChange).toHaveBeenLastCalledWith(true);
+      expect(screen.queryByRole('textbox', { name: 'Dashboard schema' })).not.toBeInTheDocument();
+    });
   });
 
   it('shows a read-only buffer and an error when schema support fails to load', async () => {
@@ -98,97 +210,6 @@ describe('DashboardSchemaEditor with CodeMirror', () => {
     expect(editor).toHaveTextContent(initialValue);
     expect(onChange).not.toHaveBeenCalled();
     expect(onValidationChange).toHaveBeenLastCalledWith(true);
-  });
-
-  it('reports current JSON edits and blocks YAML for JSON syntax errors', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    const onValidationChange = jest.fn();
-    render(<ControlledEditor onChange={onChange} onValidationChange={onValidationChange} />);
-    await screen.findByRole('textbox', { name: 'Dashboard schema' });
-    await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
-
-    await replaceBuffer(user, initialValue);
-    expect(onValidationChange).toHaveBeenLastCalledWith(false);
-
-    await replaceBuffer(user, '{"spec":{"title":123}}');
-    expect(onChange).toHaveBeenLastCalledWith('{"spec":{"title":123}}');
-    expect(onValidationChange).toHaveBeenLastCalledWith(true);
-    expect(screen.getByRole('radio', { name: 'YAML' })).toBeEnabled();
-
-    await replaceBuffer(user, '{');
-    expect(onChange).toHaveBeenLastCalledWith('{');
-    expect(onValidationChange).toHaveBeenLastCalledWith(true);
-    expect(screen.getByRole('radio', { name: 'YAML' })).toBeDisabled();
-
-    await replaceBuffer(user, '{"spec":{"title":"Edited"}}');
-    expect(onChange).toHaveBeenLastCalledWith('{"spec":{"title":"Edited"}}');
-    await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
-    expect(screen.getByRole('radio', { name: 'YAML' })).toBeEnabled();
-  });
-
-  it('preserves the YAML draft, emits JSON, and recovers from invalid YAML', async () => {
-    const user = userEvent.setup();
-    const onChange = jest.fn();
-    const onValidationChange = jest.fn();
-    const onParseErrorChange = jest.fn();
-    render(
-      <ControlledEditor
-        onChange={onChange}
-        onValidationChange={onValidationChange}
-        onParseErrorChange={onParseErrorChange}
-      />
-    );
-    await screen.findByRole('textbox', { name: 'Dashboard schema' });
-    await user.click(screen.getByRole('radio', { name: 'YAML' }));
-
-    const draft = '# My comment\nspec:\n  title: Edited';
-    await replaceBuffer(user, draft);
-    expect(onChange).toHaveBeenLastCalledWith('{\n  "spec": {\n    "title": "Edited"\n  }\n}');
-    expect(screen.getByRole('textbox', { name: 'Dashboard schema' })).toHaveTextContent('# My comment');
-    await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
-
-    onChange.mockClear();
-    await replaceBuffer(user, 'spec: [');
-    expect(onValidationChange).toHaveBeenLastCalledWith(true);
-    expect(onParseErrorChange).toHaveBeenLastCalledWith(true);
-    expect(screen.getByRole('radio', { name: 'JSON' })).toBeDisabled();
-    expect(onChange).not.toHaveBeenCalled();
-
-    await replaceBuffer(user, 'spec:\n  title: 123');
-    expect(onChange).toHaveBeenLastCalledWith('{\n  "spec": {\n    "title": 123\n  }\n}');
-    expect(onValidationChange).toHaveBeenLastCalledWith(true);
-    expect(onParseErrorChange).toHaveBeenLastCalledWith(false);
-    expect(screen.getByRole('radio', { name: 'JSON' })).toBeEnabled();
-
-    await replaceBuffer(user, draft);
-    await user.click(screen.getByRole('radio', { name: 'JSON' }));
-    expect(screen.getByRole('textbox', { name: 'Dashboard schema' })).toHaveTextContent('"title": "Edited"');
-    await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
-  });
-
-  it('validates external values while a diff replaces the editor', async () => {
-    const onValidationChange = jest.fn();
-    const { rerender } = render(
-      <DashboardSchemaEditor
-        value={initialValue}
-        contentOverride={<div>Dashboard diff</div>}
-        onValidationChange={onValidationChange}
-      />
-    );
-    expect(await screen.findByText('Dashboard diff')).toBeInTheDocument();
-    await waitFor(() => expect(onValidationChange).toHaveBeenLastCalledWith(false));
-
-    rerender(
-      <DashboardSchemaEditor
-        value='{"spec":{"title":123}}'
-        contentOverride={<div>Dashboard diff</div>}
-        onValidationChange={onValidationChange}
-      />
-    );
-    expect(screen.getByText('Dashboard diff')).toBeInTheDocument();
-    expect(onValidationChange).toHaveBeenLastCalledWith(true);
-    expect(screen.queryByRole('textbox', { name: 'Dashboard schema' })).not.toBeInTheDocument();
   });
 
   it('keeps a read-only buffer unchanged during typing', async () => {

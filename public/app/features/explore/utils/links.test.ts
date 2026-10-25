@@ -659,6 +659,44 @@ describe('explore links utils', () => {
         )}`
       );
     });
+
+    // Regression test for a field with nothing to link on a wide dataFrame (e.g. a log line with
+    // thousands of structured-metadata fields): this must resolve to no links without erroring.
+    it('returns no links and does not scan the dataFrame fields when the field has no links to resolve', () => {
+      const dataFrame: DataFrame = toDataFrame({
+        fields: [
+          { name: 'field1', type: FieldType.string, values: ['a'] },
+          { name: 'field2', type: FieldType.string, values: ['b'] },
+          { name: 'field3', type: FieldType.string, values: ['c'] },
+        ],
+      });
+
+      const range: TimeRange = {
+        from: dateTime('2020-10-14T00:00:00'),
+        to: dateTime('2020-10-14T01:00:00'),
+        raw: { from: 'now-1h', to: 'now' },
+      };
+
+      const links = getFieldLinksForExplore({
+        field: dataFrame.fields[0],
+        rowIndex: 0,
+        range,
+        dataFrame,
+      });
+
+      expect(links).toEqual([]);
+    });
+
+    it('still scans the dataFrame fields to resolve links when the field does have links configured', () => {
+      const { field, range, dataFrame } = setup({
+        title: 'external',
+        url: 'http://regionalhost',
+      });
+
+      const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
+
+      expect(links).toHaveLength(1);
+    });
   });
 
   describe('getVariableUsageInfo', () => {

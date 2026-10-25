@@ -56,6 +56,12 @@ export interface ExtensionSidebarAPI {
   canFloat(): boolean;
   /** Sets the layout. `floating` is ignored while `canFloat()` is false. */
   setPresentation(presentation: 'docked' | 'floating'): void;
+  /**
+   * Calls `listener` when the user asks to collapse the floating sidebar, by dragging it to the bottom edge of the
+   * page. The extension owns what collapsed means. Core offers the drag only while a listener is subscribed, so
+   * subscribe only while there is something to collapse. Returns the unsubscribe.
+   */
+  subscribeToCollapse(listener: () => void): () => void;
 }
 
 interface RestrictedGrafanaApisContextTypeInternal {
