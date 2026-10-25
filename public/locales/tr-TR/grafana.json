@@ -13165,7 +13165,8 @@
         "close": "{{title}} bölümünü kapat",
         "open": "{{title}} bölümünü aç",
         "open-all": "Yapay Zeka asistanlarını ve yan menü uygulamalarını aç"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Çalışma alanına gir",

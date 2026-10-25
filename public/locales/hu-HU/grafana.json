@@ -13165,7 +13165,8 @@
         "close": "{{title}} bezárása",
         "open": "{{title}} megnyitása",
         "open-all": "MI-asszisztensek és oldalsáv-alkalmazások megnyitása"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Belépés a munkaterületre",

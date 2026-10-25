@@ -13060,7 +13060,8 @@
         "close": "關閉 {{title}}",
         "open": "開啟 {{title}}",
         "open-all": "開啟 AI 助理和側邊欄應用程式"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "進入工作區",

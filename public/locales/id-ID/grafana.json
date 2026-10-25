@@ -13060,7 +13060,8 @@
         "close": "Tutup {{title}}",
         "open": "Buka {{title}}",
         "open-all": "Buka asisten AI dan aplikasi bilah sisi"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Masuk ke Ruang Kerja",

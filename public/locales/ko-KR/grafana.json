@@ -13060,7 +13060,8 @@
         "close": "{{title}} 닫기",
         "open": "{{title}} 열기",
         "open-all": "AI 어시스턴트 및 사이드바 앱 열기"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "워크스페이스로 이동",
