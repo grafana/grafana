@@ -49,8 +49,6 @@ func TestNewRequestInfoMatchesAPIServer(t *testing.T) {
 		{http.MethodDelete, "/apis/example.grafana.app/v1/namespaces/default/widgets/foo"},
 		{http.MethodDelete, "/apis/example.grafana.app/v1/namespaces/default/widgets?labelSelector=a%3Db"},
 		{http.MethodOptions, "/apis/example.grafana.app/v1/namespaces/default/widgets"},
-		{http.MethodGet, "/apis/example.grafana.app/v1/proxy/namespaces/default/widgets/foo/a/b"},
-		{http.MethodGet, "/apis/example.grafana.app/v1/proxy"},
 		{http.MethodGet, "/apis/example.grafana.app/v1/widgets/"},
 	} {
 		t.Run(tc.method+" "+tc.target, func(t *testing.T) {
@@ -62,13 +60,16 @@ func TestNewRequestInfoMatchesAPIServer(t *testing.T) {
 	}
 }
 
-// The deprecated /watch/ path form is rejected, where the apiserver would
-// parse it as a watch.
-func TestNewRequestInfoRejectsLegacyWatch(t *testing.T) {
+// The deprecated /watch/ and the /proxy/ path forms are rejected, where the
+// apiserver would parse them as the watch and proxy verbs.
+func TestNewRequestInfoRejectsVerbPaths(t *testing.T) {
 	for _, target := range []string{
 		"/apis/example.grafana.app/v1/watch/namespaces/default/widgets?labelSelector=a%3Db",
 		"/apis/example.grafana.app/v1/watch/widgets/foo",
 		"/apis/example.grafana.app/v1/watch",
+		"/apis/example.grafana.app/v1/proxy/namespaces/other/widgets/foo",
+		"/apis/example.grafana.app/v1/proxy/widgets/foo",
+		"/apis/example.grafana.app/v1/proxy",
 	} {
 		t.Run(target, func(t *testing.T) {
 			_, err := NewRequestInfo(httptest.NewRequest(http.MethodGet, target, nil))
@@ -84,6 +85,23 @@ func TestNewRequestInfoRejectsLegacyWatch(t *testing.T) {
 		info, err := NewRequestInfo(httptest.NewRequest(http.MethodGet, target, nil))
 		require.NoError(t, err, target)
 		require.True(t, info.IsResourceRequest, target)
+	}
+}
+
+// Only the /proxy/ path form is rejected: in a namespace, proxy is a resource,
+// object or subresource name like any other.
+func TestNewRequestInfoProxyNames(t *testing.T) {
+	for target, want := range map[string]struct{ verb, resource, name, subresource string }{
+		"/apis/example.grafana.app/v1/namespaces/default/proxy":           {verb: VerbList, resource: "proxy"},
+		"/apis/example.grafana.app/v1/namespaces/default/widgets/proxy":   {verb: VerbGet, resource: "widgets", name: "proxy"},
+		"/apis/example.grafana.app/v1/namespaces/default/widgets/a/proxy": {verb: VerbGet, resource: "widgets", name: "a", subresource: "proxy"},
+	} {
+		info, err := NewRequestInfo(httptest.NewRequest(http.MethodGet, target, nil))
+		require.NoError(t, err, target)
+		require.Equal(t, want.verb, info.Verb, target)
+		require.Equal(t, want.resource, info.Resource, target)
+		require.Equal(t, want.name, info.Name, target)
+		require.Equal(t, want.subresource, info.Subresource, target)
 	}
 }
 
@@ -214,7 +232,7 @@ func FuzzIsCanonicalAPIPath(f *testing.F) {
 			t.Fatalf("Path=%q RawPath=%q: got %v, want %v", decoded, raw, got, want)
 		}
 		// NewRequestInfo checks the segments while splitting them.
-		if _, got := canonicalPathParts(u); got != want {
+		if _, got := canonicalPathParts(u, nil); got != want {
 			t.Fatalf("canonicalPathParts(Path=%q RawPath=%q): got %v, want %v", decoded, raw, got, want)
 		}
 	})

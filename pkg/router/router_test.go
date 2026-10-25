@@ -125,7 +125,7 @@ func TestHandleFuncRequestInfo(t *testing.T) {
 func TestHandleFuncInvalidRequestInfo(t *testing.T) {
 	router := withGroups("example")
 	rec := httptest.NewRecorder()
-	router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/example/v1/proxy", nil))
+	router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/example/v1/watch", nil))
 	require.Equal(t, http.StatusBadRequest, rec.Code)
 }
 

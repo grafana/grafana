@@ -60,10 +60,11 @@ func IsCanonicalAPIPath(u *url.URL) bool {
 	return true
 }
 
-// canonicalPathParts is the segments of u's path, or false when it is not
-// canonical (see IsCanonicalAPIPath). It checks the segments as it returns
-// them, for callers that need them anyway.
-func canonicalPathParts(u *url.URL) ([]string, bool) {
+// canonicalPathParts appends the segments of u's path to parts, or reports
+// false when it is not canonical (see IsCanonicalAPIPath). It checks the
+// segments as it splits them, for callers that need them anyway, and splits
+// into parts so a caller can provide the room for them.
+func canonicalPathParts(u *url.URL, parts []string) ([]string, bool) {
 	if hasEncodedSlash(u) {
 		return nil, false
 	}
@@ -72,15 +73,19 @@ func canonicalPathParts(u *url.URL) ([]string, bool) {
 		return nil, false
 	}
 	if rest == "" {
-		return nil, true
+		return parts, true
 	}
-	parts := strings.Split(rest, "/")
-	for _, part := range parts {
+	for {
+		part, tail, more := strings.Cut(rest, "/")
 		if !isPathSegment(part) {
 			return nil, false
 		}
+		parts = append(parts, part)
+		if !more {
+			return parts, true
+		}
+		rest = tail
 	}
-	return parts, true
 }
 
 // hasEncodedSlash reports whether u's path encodes a slash. Escaping Path

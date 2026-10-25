@@ -1,26 +1,26 @@
 package utils
 
 import (
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/validate/content"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 // NewRequestInfo parses a request in the /apis tree as the apiserver's
 // RequestInfoFactory does, so routing can match on the resource and verb
-// before any apiserver sees the request. It differs in four ways:
+// before any apiserver sees the request. It differs in these ways:
 //
 //   - Only /apis/<group>/<version>/... is a resource path; there is no
 //     groupless /api prefix.
 //   - The deprecated /apis/<group>/<version>/watch/... form is a BadRequest
 //     error rather than a watch; clients watch with ?watch=true.
+//   - The /apis/<group>/<version>/proxy/... form is a BadRequest error rather
+//     than the proxy verb, which nothing here serves.
 //   - /apis/<group> and /apis/<group>/<version> are still non-resource
 //     requests, but report their APIGroup and APIVersion, so group discovery
 //     can be routed by group.
@@ -34,16 +34,17 @@ import (
 // As with RequestInfoFactory, when err is not nil the RequestInfo holds what
 // was parsed before the failure.
 func NewRequestInfo(req *http.Request) (*request.RequestInfo, error) {
-	info := &request.RequestInfo{
+	alloc := &requestInfoWithParts{info: request.RequestInfo{
 		Path: req.URL.Path,
 		Verb: LowerMethod(req.Method),
-	}
+	}}
+	info := &alloc.info
 
 	// Checked before splitting, which allocates.
 	if !strings.HasPrefix(strings.TrimLeft(req.URL.Path, "/"), apisPrefix[1:]) {
 		return info, nil
 	}
-	parts, ok := canonicalPathParts(req.URL)
+	parts, ok := canonicalPathParts(req.URL, alloc.parts[:0])
 	if !ok {
 		return info, errors.NewBadRequest("non-canonical API path")
 	}
@@ -63,38 +64,26 @@ func NewRequestInfo(req *http.Request) (*request.RequestInfo, error) {
 	parts = parts[3:]
 
 	// Legacy watch is not supported
-	if parts[0] == VerbWatch {
+	switch parts[0] {
+	case "watch":
 		return info, errors.NewBadRequest("legacy watch not supported")
-	}
-
-	// /proxy/...
-	if parts[0] == "proxy" {
-		if len(parts) < 2 {
-			return info, fmt.Errorf("unable to determine kind and namespace from url, %v", req.URL)
-		}
-		info.Verb = parts[0]
-		parts = parts[1:]
-	} else {
-		info.Verb = resourceVerb(req.Method)
-	}
-
-	// /namespaces/{namespace}/{resource}/..., unless what follows the
-	// namespace is one of the namespace's own subresources.
-	if parts[0] == "namespaces" {
+	case "proxy":
+		return info, errors.NewBadRequest("proxy not supported")
+	case "namespaces":
+		// /namespaces/{namespace}/{resource}/..., unless what follows the
+		// namespace is one of the namespace's own subresources.
 		if len(parts) > 1 {
 			info.Namespace = parts[1]
 			if len(parts) > 2 && parts[2] != "status" && parts[2] != "finalize" {
 				parts = parts[2:]
 			}
 		}
-	} else {
-		info.Namespace = metav1.NamespaceNone
 	}
 
-	// {resource}/{name}/{subresource}/...
-	info.Parts = parts
+	info.Verb = resourceVerb(req.Method)
+	info.Parts = parts // {resource}/{name}/{subresource}/...
 	switch {
-	case len(parts) >= 3 && info.Verb != "proxy":
+	case len(parts) >= 3:
 		info.Subresource = parts[2]
 		fallthrough
 	case len(parts) >= 2:
@@ -111,6 +100,14 @@ func NewRequestInfo(req *http.Request) (*request.RequestInfo, error) {
 		parseCollectionRequest(info, req)
 	}
 	return info, nil
+}
+
+// requestInfoWithParts is a RequestInfo with room for its Parts, which hold
+// the path's segments: a Kubernetes resource path has up to 8, so it needs no
+// second allocation. A longer path's parts are allocated as needed.
+type requestInfoWithParts struct {
+	info  request.RequestInfo
+	parts [8]string
 }
 
 // resourceVerb is the verb of a resource request made with method, before a

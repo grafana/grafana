@@ -226,12 +226,17 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 		metricGroup = unknownGroupLabel
 	}
 	start := time.Now()
-	rec := newStatusRecorder(w)
+	// The recorder and the outcome live as long as the request, so they are
+	// allocated together.
+	state := &struct {
+		rec     statusRecorder
+		outcome requestOutcome
+	}{rec: statusRecorder{ResponseWriter: w, status: http.StatusOK}}
+	rec, outcome := &state.rec, &state.outcome
 	// When the handler reads request info, it is parsed here for the verb
 	// label, and kept on the outcome and in the context so the handler doesn't
 	// parse the request again. Otherwise the verb is the HTTP method, which is
 	// what the parse would give for a path outside /apis.
-	outcome := &requestOutcome{}
 	ctx := context.WithValue(req.Context(), requestOutcomeKey{}, outcome)
 	verb := utils.LowerMethod(req.Method)
 	if parseInfo {
@@ -287,7 +292,7 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 // lowercased HTTP methods that paths outside the resource API report.
 var metricVerbs = map[string]bool{
 	"get": true, "list": true, "watch": true, "create": true, "update": true, "patch": true,
-	"delete": true, "deletecollection": true, "proxy": true,
+	"delete": true, "deletecollection": true,
 	"head": true, "options": true, "post": true, "put": true, "connect": true, "trace": true,
 }
 
