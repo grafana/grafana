@@ -222,6 +222,25 @@ export function TableFlat(props: TableNGProps) {
   const canHideAnotherColumn =
     (columnCatalog ?? preparedFields.map(getDisplayName)).filter((name) => !hiddenColumns.has(name)).length > 1;
 
+  // Shared state updates for hiding a column; no focus management. Used by
+  // both the header menu (which then also moves focus) and the sidebar
+  // (which must keep focus on the sidebar checkbox the user clicked).
+  const hideColumnStateUpdates = useCallback(
+    (displayName: string) => {
+      setHiddenColumns(new Set(hiddenColumns).add(displayName));
+      setFilter((current) => {
+        if (!(displayName in current)) {
+          return current;
+        }
+        const next = { ...current };
+        delete next[displayName];
+        return next;
+      });
+      setSortColumns((current) => current.filter((sort) => sort.columnKey !== displayName));
+    },
+    [hiddenColumns, setFilter, setHiddenColumns, setSortColumns]
+  );
+
   const handleHideColumn = useCallback(
     (displayName: string) => {
       if (!canHideAnotherColumn) {
@@ -236,8 +255,7 @@ export function TableFlat(props: TableNGProps) {
       const visibleBefore = catalog.filter((name) => !hiddenColumns.has(name));
       const hideIdx = visibleBefore.indexOf(displayName);
 
-      setHiddenColumns(new Set(hiddenColumns).add(displayName));
-      setSortColumns((current) => current.filter((sort) => sort.columnKey !== displayName));
+      hideColumnStateUpdates(displayName);
 
       const visibleAfter = visibleBefore.filter((name) => name !== displayName);
       const focusIdx = Math.min(hideIdx, visibleAfter.length - 1);
@@ -245,20 +263,24 @@ export function TableFlat(props: TableNGProps) {
         setPendingHeaderFocusIdx(focusIdx);
       }
     },
-    [canHideAnotherColumn, hiddenColumns, setHiddenColumns, setSortColumns, columnCatalog, preparedFields]
+    [canHideAnotherColumn, hiddenColumns, columnCatalog, preparedFields, hideColumnStateUpdates]
   );
 
+  // Sidebar-driven visibility toggle: hides through the shared state updates
+  // only, so focus stays on the sidebar checkbox the user interacted with.
   const handleToggleColumnVisibility = useCallback(
     (displayName: string, visible: boolean) => {
       if (!visible) {
-        handleHideColumn(displayName);
+        if (canHideAnotherColumn) {
+          hideColumnStateUpdates(displayName);
+        }
         return;
       }
       const next = new Set(hiddenColumns);
       next.delete(displayName);
       setHiddenColumns(next);
     },
-    [handleHideColumn, hiddenColumns, setHiddenColumns]
+    [canHideAnotherColumn, hideColumnStateUpdates, hiddenColumns, setHiddenColumns]
   );
 
   // Also filter controlled data during the render before its transformed frame arrives.
