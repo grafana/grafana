@@ -76,6 +76,24 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
   const sortable = isSortableField(field);
   const styles = useStyles2(getStyles, headerCellWrap, sortable, tableRefreshEnabled);
+
+  // react-data-grid omits aria-sort on sortable-but-unsorted columns, so a
+  // screen reader announces only the column name with no hint that activating
+  // the header sorts it. Set aria-sort="none" on the closest columnheader
+  // (the rdg cell wrapper) for those columns; sorted columns already get
+  // "ascending"/"descending" from the grid and non-sortable ones have no
+  // business carrying the attribute at all.
+  useEffect(() => {
+    const columnheader = ref.current?.closest('[role="columnheader"]');
+    if (!(columnheader instanceof HTMLElement)) {
+      return;
+    }
+    if (sortable && !direction) {
+      columnheader.setAttribute('aria-sort', 'none');
+    } else if (!sortable) {
+      columnheader.removeAttribute('aria-sort');
+    }
+  }, [sortable, direction]);
   const controlAlignment = headerCellWrap ? 'flex-end' : 'center';
   const displayName = getDisplayName(field);
   const filterable = isFieldFilterable(field);
