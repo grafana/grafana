@@ -149,7 +149,7 @@ export const RouterStatusPage = () => {
   );
 };
 
-export const RouterStatusView = ({ status }: { status: RouterStatus }) => {
+const RouterStatusView = ({ status }: { status: RouterStatus }) => {
   const { reconciler, breakers } = status;
   const [query, setQuery] = useState('');
   const [source, setSource] = useState<string>();
