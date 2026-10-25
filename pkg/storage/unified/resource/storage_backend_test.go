@@ -149,49 +149,9 @@ func TestKVStorageBackendListResourceLastImportTimesSkipsMalformedKeys(t *testin
 	require.Equal(t, expected, times, "valid imports before and after malformed keys are returned")
 }
 
-func TestKVStorageBackendPendingDeleteStoreDefaultsToMainKV(t *testing.T) {
-	tests := []struct {
-		name           string
-		experimentalKV func(KV) *ExperimentalKVOptions
-	}{
-		{
-			name: "nil experimental options",
-		},
-		{
-			name: "tenant metadata disabled",
-			experimentalKV: func(kv KV) *ExperimentalKVOptions {
-				return &ExperimentalKVOptions{KV: kv}
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mainKV := setupBadgerKV(t)
-			experimentalKV := setupBadgerKV(t)
-			backend := setupTestStorageBackend(t, withKV(mainKV), func(opts *KVBackendOptions) {
-				if tt.experimentalKV != nil {
-					opts.ExperimentalKV = tt.experimentalKV(experimentalKV)
-				}
-				opts.TenantDeleterConfig = &TenantDeleterConfig{
-					Interval: time.Hour,
-					Log:      log.NewNopLogger(),
-				}
-			})
-
-			require.Same(t, mainKV, backend.tenantDeleter.pendingDeleteStore.kv)
-		})
-	}
-}
-
-func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
+func TestKVStorageBackendTenantDeletionUsesMainKV(t *testing.T) {
 	mainKV := setupBadgerKV(t)
-	experimentalKV := setupBadgerKV(t)
 	backend := setupTestStorageBackend(t, withKV(mainKV), func(opts *KVBackendOptions) {
-		opts.ExperimentalKV = &ExperimentalKVOptions{
-			KV:             experimentalKV,
-			TenantMetadata: true,
-		}
 		opts.TenantWatcherConfig = &TenantWatcherConfig{
 			TenantAPIServerURL: "http://127.0.0.1:1",
 			Token:              "test-token",
@@ -213,11 +173,9 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 
 	// The watcher and deleter must share the exact store so records cannot be
 	// written to one KV and scanned from another.
-	require.Same(t, experimentalKV, backend.tenantWatcher.pendingDeleteStore.kv)
+	require.Same(t, mainKV, backend.tenantWatcher.pendingDeleteStore.kv)
 	require.Same(t, backend.tenantWatcher.pendingDeleteStore, backend.tenantDeleter.pendingDeleteStore)
 
-	// Reconciling a tenant writes its pending-delete record to the experimental
-	// KV while the resource label update goes through the main backend.
 	previousRV := requireGeneratedResourceVersion(t, backend.resourceVersions)
 	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", previousRV, nil)
 	backend.tenantWatcher.handleTenant(t.Context(), pendingDeleteTenant(testStacksNS1, pastTime()))
@@ -225,8 +183,9 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 	record, err := backend.tenantWatcher.pendingDeleteStore.Get(t.Context(), testStacksNS1)
 	require.NoError(t, err)
 	require.True(t, record.LabelingComplete)
-	_, err = newPendingDeleteStore(mainKV).Get(t.Context(), testStacksNS1)
-	require.ErrorIs(t, err, kv.ErrNotFound)
+	storedRecord, err := newPendingDeleteStore(mainKV).Get(t.Context(), testStacksNS1)
+	require.NoError(t, err)
+	require.Equal(t, record, storedRecord)
 
 	latest, err := backend.dataStore.GetLatestResourceKey(t.Context(), GetRequestKey{
 		Namespace: testStacksNS1,
@@ -257,19 +216,6 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 	require.Equal(t, DataActionCreated, event.PreviousAction)
 	require.Empty(t, event.PreviousFolder)
 
-	// The experimental KV is metadata-only: resource data and events remain in
-	// the main KV even when tenant metadata routing is enabled.
-	for _, err := range experimentalKV.Keys(t.Context(), dataSection, ListOptions{}) {
-		require.NoError(t, err)
-		require.Fail(t, "resource data must not be written to the experimental KV")
-	}
-	for _, err := range experimentalKV.Keys(t.Context(), eventsSection, ListOptions{}) {
-		require.NoError(t, err)
-		require.Fail(t, "resource events must not be written to the experimental KV")
-	}
-
-	// The deleter finds the watcher's record in the shared experimental store
-	// and uses it to purge the resource from the main KV.
 	backend.tenantDeleter.runDeletionPass(t.Context())
 
 	_, err = backend.dataStore.GetLatestResourceKey(t.Context(), GetRequestKey{
@@ -705,6 +651,50 @@ func TestKvStorageBackend_WatchWriteEvents(t *testing.T) {
 
 // countingKV counts data and event reads so tests can verify storage round trips
 // and detect per-event lookups.
+// closeTrackingKV hands out data values as plain readers, like the streaming
+// gRPC KV client, and counts how many of them get closed.
+type closeTrackingKV struct {
+	KV
+	closed atomic.Int32
+}
+
+type closeTrackingReader struct {
+	io.Reader
+	closed *atomic.Int32
+}
+
+func (r closeTrackingReader) Close() error {
+	r.closed.Add(1)
+	return nil
+}
+
+func (k *closeTrackingKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
+	r, err := k.KV.Get(ctx, section, key)
+	if err != nil {
+		return nil, err
+	}
+	return closeTrackingReader{Reader: r, closed: &k.closed}, nil
+}
+
+func TestKvStorageBackend_GetValueFromDataStoreClosesReader(t *testing.T) {
+	store := &closeTrackingKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(store))
+	_, rv := createAndWriteTestObject(t, backend)
+
+	store.closed.Store(0)
+	value, err := backend.getValueFromDataStore(context.Background(), DataKey{
+		Namespace:       "default",
+		Group:           "apps",
+		Resource:        "resources",
+		Name:            "test-resource",
+		ResourceVersion: rv,
+		Action:          DataActionCreated,
+	})
+	require.NoError(t, err)
+	require.NotEmpty(t, value)
+	require.Equal(t, int32(1), store.closed.Load())
+}
+
 type countingKV struct {
 	KV
 	mu         sync.Mutex

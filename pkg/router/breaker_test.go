@@ -6,13 +6,16 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sony/gobreaker/v2"
+	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
@@ -571,4 +574,79 @@ func TestHandleFuncBreakerIgnoresCanceledRequests(t *testing.T) {
 	if got := calls.Load(); got != 20 {
 		t.Fatalf("handler called %d times, want 20 (breaker must never open on canceled-context requests)", got)
 	}
+}
+
+// Only the caller leaving, or the caller's own deadline, keeps a request out
+// of breaker accounting. A deadline the router set means the backend was too
+// slow.
+func TestCallerGone(t *testing.T) {
+	canceled, cancel := context.WithCancel(t.Context())
+	cancel()
+	require.ErrorIs(t, callerGone(canceled), errCallerGone)
+
+	callerDeadline, cancel := context.WithTimeout(t.Context(), -time.Second)
+	defer cancel()
+	require.ErrorIs(t, callerGone(callerDeadline), errCallerGone)
+
+	routerDeadline, cancel := context.WithTimeoutCause(t.Context(), -time.Second, errRouterDeadline)
+	defer cancel()
+	require.NoError(t, callerGone(routerDeadline))
+
+	require.NoError(t, callerGone(t.Context()))
+}
+
+// A backend that never answers a discovery fetch misses the router's
+// deadline, and that counts against its breaker.
+func TestDiscoveryFetchDeadlineCountsAgainstTheBreaker(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		base, err := url.Parse("https://backend.invalid")
+		require.NoError(t, err)
+		hanging := fallbackRoundTripper(func(req *http.Request) (*http.Response, error) {
+			<-req.Context().Done()
+			return nil, req.Context().Err()
+		})
+		backend, err := newAggregateBackend("slow", metav1.APIGroup{
+			Name:     cachedGroup,
+			Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: cachedGroup + "/v1", Version: "v1"}},
+		}, base, hanging)
+		require.NoError(t, err)
+		router := NewGrafanaRouter(&mutableLoader{backends: []Backend{backend}}, nil)
+		require.NoError(t, router.reconcile(t.Context()))
+
+		aggregatedDiscovery(t, router)
+		synctest.Wait()
+		require.EqualValues(t, 1, router.served[cachedGroup].breaker.Counts().ConsecutiveFailures)
+	})
+}
+
+// An older backend's per-version discovery that hangs misses the deadline
+// once. The versions after it are not read on the expired context, so the
+// one fetch counts one failure, not one per version.
+func TestDiscoveryFetchDeadlineCountsOnceForPerVersionDiscovery(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		base, err := url.Parse("https://backend.invalid")
+		require.NoError(t, err)
+		hanging := fallbackRoundTripper(func(req *http.Request) (*http.Response, error) {
+			if req.URL.Path == apisPrefix {
+				return &http.Response{StatusCode: http.StatusNotFound, Header: http.Header{}, Body: http.NoBody, Request: req}, nil
+			}
+			<-req.Context().Done()
+			return nil, req.Context().Err()
+		})
+		names := []string{"v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"}
+		versions := make([]metav1.GroupVersionForDiscovery, 0, len(names))
+		for _, v := range names {
+			versions = append(versions, metav1.GroupVersionForDiscovery{GroupVersion: cachedGroup + "/" + v, Version: v})
+		}
+		backend, err := newAggregateBackend("older", metav1.APIGroup{Name: cachedGroup, Versions: versions}, base, hanging)
+		require.NoError(t, err)
+		router := NewGrafanaRouter(&mutableLoader{backends: []Backend{backend}}, nil)
+		require.NoError(t, router.reconcile(t.Context()))
+
+		group := aggregatedDiscovery(t, router)[cachedGroup]
+		synctest.Wait()
+		require.Len(t, group.Versions, len(versions), "every version is still listed, as stale")
+		require.Equal(t, "closed", router.served[cachedGroup].breakerView.State().String(), "one fetch must not open the breaker")
+		require.EqualValues(t, 1, router.served[cachedGroup].breaker.Counts().ConsecutiveFailures)
+	})
 }

@@ -19,6 +19,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
+
 # Builds the following artifacts:
 #
 # targz:grafana:* (via make build-targz)
@@ -293,7 +297,7 @@ jobs:
 
   build-targz:
     name: targz / ${{ matrix.name }}
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64-small
     continue-on-error: ${{ matrix.allow-failure == true }}
     needs:
       - setup
@@ -388,7 +392,7 @@ jobs:
 
   build-deb-rpm:
     name: deb / rpm / ${{ matrix.name }}
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64-small
     continue-on-error: ${{ matrix.allow-failure == true }}
     needs:
       - setup
@@ -489,7 +493,7 @@ jobs:
 
   verify-rpm-stig:
     name: verify rpm stig (linux-amd64)
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64-small
     needs:
       - build-deb-rpm
     permissions:
@@ -601,7 +605,7 @@ jobs:
       docker-ubuntu-artifact-name: artifacts-docker-ubuntu-linux-amd64
 
   build-windows:
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64-small
     needs:
       - setup
       - build-targz
@@ -929,7 +933,7 @@ jobs:
   run-meticulous-tests:
     if: github.repository == 'grafana/grafana' && needs.setup.outputs.run-meticulous == 'true'
     name: Run Meticulous tests
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64
     continue-on-error: true
     needs:
       - setup
