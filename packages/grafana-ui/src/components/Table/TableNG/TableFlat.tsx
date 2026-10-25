@@ -227,10 +227,25 @@ export function TableFlat(props: TableNGProps) {
       if (!canHideAnotherColumn) {
         return;
       }
+
+      // Determine which visible column should receive focus after this one is
+      // hidden: the next sibling, or the previous one when hiding the last.
+      // Without this the unmounted header cell's focus falls to <body> and the
+      // next Tab restarts from the top of the page.
+      const catalog = columnCatalog ?? preparedFields.map(getDisplayName);
+      const visibleBefore = catalog.filter((name) => !hiddenColumns.has(name));
+      const hideIdx = visibleBefore.indexOf(displayName);
+
       setHiddenColumns(new Set(hiddenColumns).add(displayName));
       setSortColumns((current) => current.filter((sort) => sort.columnKey !== displayName));
+
+      const visibleAfter = visibleBefore.filter((name) => name !== displayName);
+      const focusIdx = Math.min(hideIdx, visibleAfter.length - 1);
+      if (focusIdx >= 0) {
+        setPendingHeaderFocusIdx(focusIdx);
+      }
     },
-    [canHideAnotherColumn, hiddenColumns, setHiddenColumns, setSortColumns]
+    [canHideAnotherColumn, hiddenColumns, setHiddenColumns, setSortColumns, columnCatalog, preparedFields]
   );
 
   const handleToggleColumnVisibility = useCallback(
@@ -273,6 +288,11 @@ export function TableFlat(props: TableNGProps) {
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
   const [sidebarFocusRequest, setSidebarFocusRequest] = useState(0);
   const columnSidebarOpener = useRef<string | null>(null);
+
+  // Column index to focus in the header row after a hide-column re-render.
+  // Set by handleHideColumn; consumed and cleared by the effect near gridRef
+  // (below) so the grid has already re-rendered without the hidden column.
+  const [pendingHeaderFocusIdx, setPendingHeaderFocusIdx] = useState<number | null>(null);
   const restoreFocusOnSidebarClose = useRef(false);
   const openColumnSidebar = useCallback((columnKey: string) => {
     columnSidebarOpener.current = columnKey;
@@ -340,6 +360,18 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const gridRef = useRef<DataGridHandle>(null);
+
+  // Move focus to the header of the column that took the hidden column's
+  // position. Runs after re-render (the hidden column's DOM is gone) so the
+  // grid indices are current. Without this, the unmounted header cell drops
+  // focus to <body> and the next Tab restarts from the top of the page.
+  useEffect(() => {
+    if (pendingHeaderFocusIdx !== null && gridRef.current) {
+      gridRef.current.setActivePosition({ rowIdx: -1, idx: pendingHeaderFocusIdx });
+      setPendingHeaderFocusIdx(null);
+    }
+  }, [pendingHeaderFocusIdx]);
+
   const columnVisibilityPanelAllocation =
     hasColumnSidebar && hasHeader && isColumnVisibilityPanelOpen
       ? sidebarWidth + COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH + COLUMN_VISIBILITY_TABLE_BORDER_WIDTH
