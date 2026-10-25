@@ -3,6 +3,9 @@ package utils
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"path"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -130,5 +133,105 @@ func BenchmarkNewRequestInfo(b *testing.B) {
 				_, _ = NewRequestInfo(req)
 			}
 		})
+	}
+}
+
+func TestLowerMethod(t *testing.T) {
+	for _, method := range []string{
+		http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut, http.MethodPatch,
+		http.MethodDelete, http.MethodOptions, http.MethodConnect, http.MethodTrace,
+		"PROPFIND", "get", "",
+	} {
+		require.Equal(t, strings.ToLower(method), LowerMethod(method), method)
+	}
+	require.Zero(t, testing.AllocsPerRun(100, func() { _ = LowerMethod(http.MethodGet) }))
+}
+
+func TestIsCanonicalAPIPath(t *testing.T) {
+	for target, want := range map[string]bool{
+		"/apis":                           true,
+		"/apis/":                          true,
+		"/apis/g/v1/":                     true,
+		"/apis/g/v1/namespaces/ns/things": true,
+		"/apis/g/v1/namespaces/ns/things?watch=1": true,
+		"/openapi/v3/apis/g/v1?hash=abc":          true,
+		"/apis/g/v1/namespaces/ns/things/a%20b":   true,
+		"/apis//v1/things":                        false,
+		"/apis/g/./v1/things":                     false,
+		"/apis/g/../other/v1/things":              false,
+		"/apis/g/v1/..":                           false,
+		"/apis/g%2Fother/v1/things":               false,
+		"/apis/g%2fother/v1/things":               false,
+		"/openapi/v3/apis/g/../other/v1":          false,
+		"/apis/g//":                               false,
+		"/apis/g/v1/.":                            false,
+		"/apis/g/v1/.hidden":                      true,
+		"/apis/g/v1/a..b":                         true,
+		"/apis/g/v1/a%252fb":                      true,
+		"/apis/g/v1/%2e%2e/x":                     false,
+		"/openapi/v3/":                            true,
+	} {
+		require.Equal(t, want, IsCanonicalAPIPath(httptest.NewRequest(http.MethodGet, target, nil).URL), target)
+	}
+}
+
+// isCanonicalAPIPathReference is the definition canonicalAPIPath implements
+// without building a cleaned path or lowercasing the escaped one.
+func isCanonicalAPIPathReference(u *url.URL) bool {
+	p := strings.TrimSuffix(u.Path, "/")
+	if path.Clean(p) != p {
+		return false
+	}
+	return !strings.Contains(strings.ToLower(u.EscapedPath()), "%2f")
+}
+
+func TestCanonicalAPIPathStaleRawPath(t *testing.T) {
+	// RawPath is ignored when it no longer encodes Path, as after a rewrite.
+	u := &url.URL{Path: "/apis/g/v1/things", RawPath: "/apis/other%2Fv1/things"}
+	require.True(t, IsCanonicalAPIPath(u))
+	require.Equal(t, isCanonicalAPIPathReference(u), IsCanonicalAPIPath(u))
+}
+
+func FuzzIsCanonicalAPIPath(f *testing.F) {
+	for _, target := range []string{
+		"/apis", "/apis/", "/apis/g/v1/things", "/apis//v1", "/apis/g/./v1", "/apis/g/../v1", "/apis/g/v1/..",
+		"/apis/g//", "/apis/g%2Fv1", "/apis/g/v1/a%252fb", "/openapi/v3/apis/g/v1", "/apis/g/v1/.hidden",
+	} {
+		u, err := url.Parse(target)
+		if err != nil {
+			f.Fatal(err)
+		}
+		f.Add(u.Path, u.RawPath)
+	}
+	f.Fuzz(func(t *testing.T, decoded, raw string) {
+		// Paths reaching the router are absolute.
+		if !strings.HasPrefix(decoded, "/") {
+			return
+		}
+		u := &url.URL{Path: decoded, RawPath: raw}
+		want := isCanonicalAPIPathReference(u)
+		if got := IsCanonicalAPIPath(u); got != want {
+			t.Fatalf("Path=%q RawPath=%q: got %v, want %v", decoded, raw, got, want)
+		}
+		// NewRequestInfo checks the segments while splitting them.
+		if _, got := canonicalPathParts(u); got != want {
+			t.Fatalf("canonicalPathParts(Path=%q RawPath=%q): got %v, want %v", decoded, raw, got, want)
+		}
+	})
+}
+
+// A path in the /apis tree that isn't canonical is rejected, since a backend
+// could serve another group or namespace than the one it parses as.
+func TestNewRequestInfoRejectsNonCanonicalPaths(t *testing.T) {
+	for _, target := range []string{
+		"/apis/g/../other/v1/things",
+		"/apis/g/v1/namespaces/allowed/../other/things",
+		"/apis/g%2Fother/v1/things",
+		"/apis/g/v1/namespaces//things",
+		"/apis/g/./v1/things",
+		"/apis/g/v1/things//",
+	} {
+		_, err := NewRequestInfo(httptest.NewRequest(http.MethodGet, target, nil))
+		require.True(t, apierrors.IsBadRequest(err), target)
 	}
 }

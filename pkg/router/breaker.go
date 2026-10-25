@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/sony/gobreaker/v2"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // statusRecorder is a passthrough http.ResponseWriter that records the status
@@ -26,6 +27,11 @@ type statusRecorder struct {
 	breakerReq  *http.Request
 	breakerCall *backendCall
 	reportOnce  sync.Once
+
+	// span and spanCtx are the router span traceRouterRequest started, which
+	// endSpan ends.
+	span    trace.Span
+	spanCtx context.Context
 }
 
 func newStatusRecorder(w http.ResponseWriter) *statusRecorder {
@@ -61,6 +67,15 @@ func (r *statusRecorder) Write(body []byte) (int, error) {
 func (r *statusRecorder) FlushError() error {
 	if !r.wroteHeader {
 		r.WriteHeader(http.StatusOK)
+	}
+	// A watch flushes after every event, so skip building a controller when
+	// the writer flushes itself.
+	switch w := r.ResponseWriter.(type) {
+	case interface{ FlushError() error }:
+		return w.FlushError()
+	case http.Flusher:
+		w.Flush()
+		return nil
 	}
 	return http.NewResponseController(r.ResponseWriter).Flush()
 }
@@ -249,8 +264,8 @@ func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.
 		h.ServeHTTP(w, req)
 		return
 	}
-	rec, req, call, endSpan := traceRouterRequest(w, req, "router.backend", group)
-	defer endSpan()
+	rec, req, call := traceRouterRequest(w, req, "router.backend", group)
+	defer rec.endSpan()
 	w = rec.writer()
 	// Client-scoped breakers leave requests that do not call the client available.
 	if _, clientScoped := h.(interface{ breaksOnClientCalls() }); clientScoped {

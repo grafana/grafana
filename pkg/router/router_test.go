@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
@@ -549,4 +550,33 @@ func TestStoreOpenAPIDocRevalidatesTheBackend(t *testing.T) {
 	require.False(t, stored("served/v2"))
 	router.storeOpenAPIDoc("removed", "removed/v1", openapiCacheEntry{key: current})
 	require.False(t, stored("removed/v1"))
+}
+
+// parseOpenAPIGroupVersionPath splits with strings.Cut instead of
+// strings.Split, and must answer as the strings.Split version did.
+func TestParseOpenAPIGroupVersionPathMatchesStringsSplit(t *testing.T) {
+	split := func(path string) (string, string, bool) {
+		rest, ok := strings.CutPrefix(path, openapiV3Prefix+"/")
+		if !ok || rest == "" {
+			return "", "", false
+		}
+		rest, ok = strings.CutPrefix(rest, "apis/")
+		if !ok || rest == "" {
+			return "", "", false
+		}
+		parts := strings.Split(rest, "/")
+		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+			return "", "", false
+		}
+		return parts[0], parts[1], true
+	}
+	for _, path := range []string{
+		"", "/", "/apis/g/v1", "/openapi/v3", "/openapi/v3/", "/openapi/v3/apis", "/openapi/v3/apis/",
+		"/openapi/v3/apis/g", "/openapi/v3/apis/g/", "/openapi/v3/apis/g/v1", "/openapi/v3/apis/g/v1/",
+		"/openapi/v3/apis//v1", "/openapi/v3/apis/g/v1/extra", "/openapi/v3/apis/g//", "/openapi/v3/api/g/v1",
+	} {
+		g, v, ok := parseOpenAPIGroupVersionPath(path)
+		wg, wv, wok := split(path)
+		require.Equal(t, []any{wg, wv, wok}, []any{g, v, ok}, path)
+	}
 }

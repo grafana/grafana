@@ -359,12 +359,12 @@ func TestBackendTracingPanic(t *testing.T) {
 // inside it reaches the outer call's breaker outcome.
 func TestNestedBackendCallSharesBreakerState(t *testing.T) {
 	cb := newGroupBreaker("test.grafana.app")
-	_, outerReq, outer, endOuter := traceRouterRequest(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/test.grafana.app/v1", nil), "router.backend", "test.grafana.app")
-	defer endOuter()
+	outerRec, outerReq, outer := traceRouterRequest(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/test.grafana.app/v1", nil), "router.backend", "test.grafana.app")
+	defer outerRec.endSpan()
 	outer.breaker = cb
 
-	_, innerReq, inner, endInner := traceRouterRequest(httptest.NewRecorder(), outerReq, "router.plugin", "test.grafana.app")
-	defer endInner()
+	innerRec, innerReq, inner := traceRouterRequest(httptest.NewRecorder(), outerReq, "router.plugin", "test.grafana.app")
+	defer innerRec.endSpan()
 	require.Same(t, inner, backendCallFrom(innerReq.Context()))
 	require.Same(t, cb, inner.breaker)
 

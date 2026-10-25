@@ -27,20 +27,26 @@ import (
 //   - Watches are read from the watch parameter alone, and a field selector
 //     names an object whenever it parses, whatever the other list options
 //     hold, so a malformed list option is never logged.
+//   - A path in the /apis tree that is not canonical (see IsCanonicalAPIPath)
+//     is a BadRequest error, since what it was parsed as may not be what a
+//     backend serves.
 //
 // As with RequestInfoFactory, when err is not nil the RequestInfo holds what
 // was parsed before the failure.
 func NewRequestInfo(req *http.Request) (*request.RequestInfo, error) {
 	info := &request.RequestInfo{
 		Path: req.URL.Path,
-		Verb: strings.ToLower(req.Method),
+		Verb: LowerMethod(req.Method),
 	}
 
 	// Checked before splitting, which allocates.
 	if !strings.HasPrefix(strings.TrimLeft(req.URL.Path, "/"), apisPrefix[1:]) {
 		return info, nil
 	}
-	parts := splitPath(req.URL.Path)
+	parts, ok := canonicalPathParts(req.URL)
+	if !ok {
+		return info, errors.NewBadRequest("non-canonical API path")
+	}
 	if len(parts) < 2 || parts[0] != strings.Trim(apisPrefix, "/") {
 		return info, nil
 	}
@@ -145,17 +151,36 @@ func NewRequestInfo(req *http.Request) (*request.RequestInfo, error) {
 	return info, nil
 }
 
+// LowerMethod returns method in lower case, as a non-resource request's verb.
+// The standard methods return constants, since lowercasing builds a new
+// string and every request reads its verb.
+func LowerMethod(method string) string {
+	switch method {
+	case http.MethodGet:
+		return "get"
+	case http.MethodHead:
+		return "head"
+	case http.MethodPost:
+		return "post"
+	case http.MethodPut:
+		return "put"
+	case http.MethodPatch:
+		return "patch"
+	case http.MethodDelete:
+		return "delete"
+	case http.MethodOptions:
+		return "options"
+	case http.MethodConnect:
+		return "connect"
+	case http.MethodTrace:
+		return "trace"
+	}
+	return strings.ToLower(method)
+}
+
 // isWatch reads the watch parameter as the apiserver decodes a bool list
 // option: anything but "0" or "false" is true.
 func isWatch(query map[string][]string) bool {
 	values := query["watch"]
 	return len(values) > 0 && values[0] != "0" && !strings.EqualFold(values[0], "false")
-}
-
-func splitPath(path string) []string {
-	path = strings.Trim(path, "/")
-	if path == "" {
-		return nil
-	}
-	return strings.Split(path, "/")
 }

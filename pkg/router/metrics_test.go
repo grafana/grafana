@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -36,7 +37,7 @@ func requestVerb(req *http.Request) string {
 	if info, err := utils.NewRequestInfo(req); err == nil && info.Verb != "" {
 		return info.Verb
 	}
-	return strings.ToLower(req.Method)
+	return utils.LowerMethod(req.Method)
 }
 
 func (m *routerMetrics) instrumentRequest(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request) {
@@ -74,7 +75,7 @@ func TestRequestMetricsRouteLabel(t *testing.T) {
 		{"/apis/test-app/v1/namespaces/ns/things", "test-app", "list", routeBackend, "204"},
 		{"/apis/other-app/v1/namespaces/ns/things", unknownGroupLabel, "list", routeNotFound, "404"},
 		{"/apis", "", "get", routeDiscovery, "200"},
-		{"/apis//v1/things", "", "list", routeInvalid, "400"},
+		{"/apis//v1/things", "", "get", routeInvalid, "400"}, // rejected, so labeled by its method
 		{"/openapi/v3/apis/test-app/v1", "test-app", "get", routeBackend, "204"},
 		{"/openapi/v3/apis/other-app/v1", unknownGroupLabel, "get", routeNotFound, "404"},
 		{"/version", "", "get", routeNotFound, "404"},
@@ -401,4 +402,11 @@ func TestServicesShareOneRegistry(t *testing.T) {
 		newPluginGRPCRequestRetries(reg, sourcePluginsURL)
 		newPluginGRPCRequestRetries(reg, sourcePluginsURL)
 	})
+}
+
+func TestStatusCodeLabel(t *testing.T) {
+	for _, status := range []int{0, 99, 100, 200, 404, 599, 600, 999} {
+		require.Equal(t, strconv.Itoa(status), statusCodeLabel(status), status)
+	}
+	require.Zero(t, testing.AllocsPerRun(100, func() { _ = statusCodeLabel(http.StatusOK) }))
 }

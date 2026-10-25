@@ -242,7 +242,7 @@ func serveNotFound(w http.ResponseWriter, req *http.Request) {
 // handleOpenAPIv3 serves the OpenAPI v3 discovery index and per-group-version
 // documents.
 func (r *GrafanaRouter) handleOpenAPIv3(w http.ResponseWriter, req *http.Request) {
-	if !canonicalAPIPath(req.URL) {
+	if !utils.IsCanonicalAPIPath(req.URL) {
 		setRoute(req, routeInvalid)
 		http.Error(w, "non-canonical API path", http.StatusBadRequest)
 		return
@@ -257,12 +257,9 @@ func (r *GrafanaRouter) handleOpenAPIv3(w http.ResponseWriter, req *http.Request
 // proxied to its backend.
 func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
-	if !canonicalAPIPath(req.URL) {
-		setRoute(req, routeInvalid)
-		http.Error(w, "non-canonical API path", http.StatusBadRequest)
-		return
-	}
-	// The request metrics have usually parsed it already.
+	// The request metrics have usually parsed it already. Parsing rejects a
+	// path that is not canonical, so a backend serves the group and
+	// namespace the request was routed and authorized by.
 	var info *request.RequestInfo
 	if outcome := outcomeOf(req); outcome != nil && outcome.info != nil {
 		info = outcome.info
@@ -557,11 +554,11 @@ func parseOpenAPIGroupVersionPath(path string) (group, version string, ok bool) 
 	if !hasAPIs || rest == "" {
 		return "", "", false
 	}
-	parts := strings.Split(rest, "/")
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+	group, version, ok = strings.Cut(rest, "/")
+	if !ok || group == "" || version == "" || strings.Contains(version, "/") {
 		return "", "", false
 	}
-	return parts[0], parts[1], true
+	return group, version, true
 }
 
 // Run does an initial load, then reconciles on every coalesced wake from the

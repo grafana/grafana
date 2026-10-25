@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -150,7 +151,7 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 	setRoute(req, routeDiscovery)
 	if req.Method != http.MethodGet && req.Method != http.MethodHead {
 		w.Header().Set("Allow", "GET, HEAD")
-		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, strings.ToLower(req.Method)), w)
+		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, utils.LowerMethod(req.Method)), w)
 		return
 	}
 	// The documents are static, so there is nothing to watch; a list body

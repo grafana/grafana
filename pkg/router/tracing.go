@@ -84,42 +84,57 @@ func newBackendTransport(base http.RoundTripper) http.RoundTripper {
 	}))
 }
 
-func traceRouterRequest(w http.ResponseWriter, req *http.Request, name, group string, attributes ...attribute.KeyValue) (*statusRecorder, *http.Request, *backendCall, func()) {
+// internalSpanKind is the router's span kind option, built once: an option
+// value allocates each time it is made.
+var internalSpanKind = trace.WithSpanKind(trace.SpanKindInternal)
+
+// traceRouterRequest starts a router span for req, and returns the recorder
+// to write the response through, the request carrying the span, and the
+// backend call it is for. The caller defers rec.endSpan(), which ends the
+// span with the outcome.
+func traceRouterRequest(w http.ResponseWriter, req *http.Request, name, group string, attributes ...attribute.KeyValue) (*statusRecorder, *http.Request, *backendCall) {
 	ctx := routerTraceContext(req)
 	attributes = append(attributes,
 		attribute.String("grafana.router.group", group),
 		semconv.HTTPRequestMethodKey.String(traceHTTPMethod(req.Method)))
-	ctx, span := routerTracer().Start(ctx, name,
-		trace.WithSpanKind(trace.SpanKindInternal), trace.WithAttributes(attributes...))
+	ctx, span := routerTracer().Start(ctx, name, internalSpanKind, trace.WithAttributes(attributes...))
 	call := &backendCall{span: span.SpanContext()}
 	if outer := backendCallFrom(ctx); outer != nil {
 		call.breaker, call.outer = outer.breaker, outer
 	}
 	ctx = context.WithValue(ctx, backendCallKey{}, call)
 	rec := newStatusRecorder(w)
-	return rec, req.WithContext(ctx), call, func() {
-		panicked := recover()
-		if panicked != nil {
-			defer func() { panic(panicked) }()
-		}
-		// End before re-panicking so the SDK does not record arbitrary panic payloads.
-		defer span.End()
-		// A canceled or panicking handler may never have sent a response.
-		if rec.wroteHeader || (panicked == nil && req.Context().Err() == nil) {
-			span.SetAttributes(semconv.HTTPResponseStatusCode(rec.status))
-		}
-		if err := req.Context().Err(); err == context.Canceled {
-			span.SetAttributes(attribute.Bool("grafana.router.canceled", true))
-		} else if err != nil {
-			span.SetAttributes(semconv.ErrorTypeKey.String("timeout"))
-			span.SetStatus(codes.Error, "")
-		} else if panicked != nil {
-			span.SetAttributes(semconv.ErrorTypeKey.String("panic"))
-			span.SetStatus(codes.Error, "")
-		} else if rec.status >= http.StatusInternalServerError {
-			span.SetAttributes(semconv.ErrorTypeKey.String(strconv.Itoa(rec.status)))
-			span.SetStatus(codes.Error, "")
-		}
+	rec.span, rec.spanCtx = span, ctx
+	return rec, req.WithContext(ctx), call
+}
+
+// endSpan ends the span traceRouterRequest started, with the response's
+// outcome. It must be deferred directly, since it recovers a panic to record
+// it, and then re-panics.
+func (r *statusRecorder) endSpan() {
+	panicked := recover()
+	if panicked != nil {
+		defer func() { panic(panicked) }()
+	}
+	span := r.span
+	// End before re-panicking so the SDK does not record arbitrary panic payloads.
+	defer span.End()
+	err := r.spanCtx.Err()
+	// A canceled or panicking handler may never have sent a response.
+	if r.wroteHeader || (panicked == nil && err == nil) {
+		span.SetAttributes(semconv.HTTPResponseStatusCode(r.status))
+	}
+	if err == context.Canceled {
+		span.SetAttributes(attribute.Bool("grafana.router.canceled", true))
+	} else if err != nil {
+		span.SetAttributes(semconv.ErrorTypeKey.String("timeout"))
+		span.SetStatus(codes.Error, "")
+	} else if panicked != nil {
+		span.SetAttributes(semconv.ErrorTypeKey.String("panic"))
+		span.SetStatus(codes.Error, "")
+	} else if r.status >= http.StatusInternalServerError {
+		span.SetAttributes(semconv.ErrorTypeKey.String(strconv.Itoa(r.status)))
+		span.SetStatus(codes.Error, "")
 	}
 }
 
