@@ -33,6 +33,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { PanelEditControls } from '../panel-edit/PanelEditControls';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { usePanelEditDirty } from '../panel-edit/usePanelEditDirty';
+import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
@@ -307,6 +308,7 @@ function DashboardControlActions({
   const { isPlaying } = playlistSrv.useState();
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   if (kioskMode === KioskMode.Full) {
     return null;
@@ -328,7 +330,8 @@ function DashboardControlActions({
     isEditing && (canSave || canSaveAs) && !isEditingLibraryPanel && getDashboardMode(dashboard.state) !== 'view';
   // A draft (a new dashboard proposed as pending changes) has no uid until it's saved.
   const isDraft = Boolean(meta.newDashboardUid);
-  const showEditButton = (hasUid || isDraft) && !isPlaying && canEditDashboard && isEditable && !editPanel;
+  const showEditButton =
+    (hasUid || isDraft) && !isPlaying && canEditDashboard && isEditable && !editPanel && !isMobileEditDeprecated;
   const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
   const showPanelEditButtons = Boolean(editPanel);
 
