@@ -46,6 +46,7 @@ declare module "@openfeature/core" {
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
     | "grafana.dashboardComposer"
+    | "grafana.savedDashboardViews"
     | "grafana.dashboardPreviewMode"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
@@ -161,6 +162,7 @@ declare module "@openfeature/core" {
     | "grafana.vectorSearchCmdk"
     | "grafana.cmdkHybridSearch"
     | "assistant.fullscreenWorkspace"
+    | "assistant.dashboard.artifacts"
     | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
@@ -199,7 +201,8 @@ declare module "@openfeature/core" {
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"
-    | "grafana.geomapProtomapsBasemap";
+    | "grafana.geomapProtomapsBasemap"
+    | "reporting.removeLogoUrlField";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

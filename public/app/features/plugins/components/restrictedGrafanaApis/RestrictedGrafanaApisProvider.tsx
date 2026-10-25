@@ -1,20 +1,12 @@
 import { ProviderEvents } from '@openfeature/react-sdk';
 import { useMemo, useSyncExternalStore, type PropsWithChildren, type ReactElement } from 'react';
 
-import { RestrictedGrafanaApisContextProvider, type RestrictedGrafanaApisContextType } from '@grafana/data';
+import { RestrictedGrafanaApisContextProvider } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
-import { composerApi } from './composer/composerApi';
 import { createDashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
-import { extensionSidebarApi } from './extensionSidebar/extensionSidebarApi';
-
-const restrictedGrafanaApis: RestrictedGrafanaApisContextType = {
-  alertingAlertRuleFormSchema: alertingAlertRuleFormSchemaApi.alertingAlertRuleFormSchema,
-  // Always present; `canFloat()` reports whether grafana.extensionSidebarFloating lets it float.
-  extensionSidebar: extensionSidebarApi,
-};
+import { getRestrictedGrafanaApis, isComposerEnabled } from './restrictedGrafanaApis';
 
 // This Provider is a wrapper around `RestrictedGrafanaApisContextProvider` from `@grafana/data`.
 // The reason for this is that like this we only need to define the configuration once (here) and can use it in multiple places (app root page, extensions).
@@ -23,14 +15,11 @@ export function RestrictedGrafanaApisProvider({
   pluginId,
 }: PropsWithChildren<{ pluginId: string }>): ReactElement {
   const mutationApi = useMemo(() => createDashboardMutationApi(pluginId), [pluginId]);
-  // Composer exists only while its flag is on; flipping it off removes the API (and ends open sessions).
+  // Composer exists only while one of its flags is on; flipping it off removes the API (and ends open
+  // sessions). Each resource still checks its own flag.
   const composerEnabled = useComposerEnabled();
   const apis = useMemo(
-    () => ({
-      ...restrictedGrafanaApis,
-      dashboardMutationAPI: mutationApi,
-      ...(composerEnabled ? { composer: composerApi } : {}),
-    }),
+    () => getRestrictedGrafanaApis({ composerEnabled, dashboardMutationAPI: mutationApi }),
     [mutationApi, composerEnabled]
   );
   return (
@@ -46,16 +35,12 @@ export function RestrictedGrafanaApisProvider({
 }
 
 /**
- * Whether Composer's flag is on, kept current. Read from the flag client rather than the React OpenFeature
- * hooks: extension components get this provider wherever they render, and not every place they render has an
- * OpenFeatureProvider above it.
+ * Whether one of Composer's flags is on, kept current. Read from the flag client rather than the React
+ * OpenFeature hooks: extension components get this provider wherever they render, and not every place they
+ * render has an OpenFeatureProvider above it.
  */
 function useComposerEnabled(): boolean {
   return useSyncExternalStore(subscribeToFlagChanges, isComposerEnabled);
-}
-
-function isComposerEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardComposer, false);
 }
 
 const FLAG_CHANGE_EVENTS = [ProviderEvents.Ready, ProviderEvents.ConfigurationChanged] as const;

@@ -32,10 +32,10 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const [isCaretMenuOpen, setIsCaretMenuOpen] = useState(false);
   const mode = getDashboardMode(state);
   const composer = useComposerOption(dashboard);
-  const nextMode = mode === 'edit' ? 'view' : 'edit';
+  const nextMode = mode === 'view' ? 'edit' : 'view';
   // From Viewing, the main button goes to Composer where it can start; otherwise it toggles Viewing and Editing.
   const requestComposer = mode === 'view' && composer?.disabledReason === undefined ? composer?.request : undefined;
-  const viewingDisabled = isNewDashboard(state);
+  const saveRequired = isNewDashboard(state);
   const disabled = dashboard.managedResourceCannotBeEdited();
   const hidden =
     !dashboardModesEnabled() ||
@@ -60,7 +60,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
     {
       value: 'view',
       label: t('dashboard.modes.view', 'Viewing'),
-      description: viewingDisabled
+      description: saveRequired
         ? saveBeforeViewing
         : t('dashboard.modes.view-description', 'View and explore the dashboard.'),
       icon: 'eye',
@@ -93,7 +93,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             icon={option.icon}
             role="menuitemradio"
             ariaChecked={mode === option.value}
-            disabled={(viewingDisabled && option.value === 'view') || (!state.editable && option.value !== 'view')}
+            disabled={!state.editable && option.value !== 'view'}
             className={styles.item}
             component={mode === option.value ? SelectedMode : undefined}
             onClick={() => choose(option.value === 'view' ? 'view' : 'edit')}
@@ -134,16 +134,13 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
           tooltip={
             requestComposer
               ? t('dashboard.modes.switch-to-composer', 'Switch to Composer')
-              : viewingDisabled && nextMode === 'view'
+              : saveRequired && nextMode === 'view'
                 ? saveBeforeViewing
                 : nextMode === 'view'
                   ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
                   : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
           }
-          disabled={
-            disabled ||
-            (!requestComposer && ((viewingDisabled && nextMode === 'view') || (!state.editable && nextMode === 'edit')))
-          }
+          disabled={disabled || (!requestComposer && !state.editable && nextMode === 'edit')}
           onClick={() => (requestComposer ? requestComposer() : choose(nextMode))}
         >
           {current.label}
@@ -164,8 +161,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             icon={isCaretMenuOpen ? 'angle-up' : 'angle-down'}
             aria-label={t('dashboard.modes.change-mode', 'Change dashboard mode')}
             aria-haspopup="menu"
-            disabled={disabled || viewingDisabled}
-            tooltip={viewingDisabled ? saveBeforeViewing : undefined}
+            disabled={disabled}
           />
         </Dropdown>
       </ButtonGroup>
