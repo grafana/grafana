@@ -17,6 +17,7 @@ import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
@@ -39,10 +40,22 @@ function idForNavItem(navItem: NavModelItem) {
   return 'navModel.' + (navItem.id ?? navItem.url ?? navItem.text ?? navItem.subTitle);
 }
 
-function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = []): CommandPaletteAction[] {
+// Every current nav item under these ids creates a dashboard, which requires edit mode --
+// unavailable on mobile, so they're excluded rather than left as dead command-palette actions.
+const DASHBOARD_CREATION_NAV_IDS = new Set(['dashboards/new', 'dashboards/import']);
+
+function navTreeToActions(
+  navTree: NavModelItem[],
+  parents: NavModelItem[] = [],
+  excludedIds?: Set<string>
+): CommandPaletteAction[] {
   const navActions: CommandPaletteAction[] = [];
 
   for (let navItem of navTree) {
+    if (navItem.id && excludedIds?.has(navItem.id)) {
+      continue;
+    }
+
     // help node needs enriching with the frontend links
     if (navItem.id === 'help') {
       navItem = getEnrichedHelpItem({ ...navItem });
@@ -93,7 +106,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
     navActions.push(action);
 
     if (children?.length) {
-      const childActions = navTreeToActions(children, [...parents, navItem]);
+      const childActions = navTreeToActions(children, [...parents, navItem], excludedIds);
       navActions.push(...childActions);
     }
   }
@@ -167,13 +180,18 @@ export function useStaticActions(): CommandPaletteAction[] {
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const { queryLibraryEnabled, openDrawer } = useQueryLibraryContext();
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   return useMemo(() => {
-    let navBarActions = navTreeToActions(navBarTree);
+    let navBarActions = navTreeToActions(
+      navBarTree,
+      [],
+      isMobileEditDeprecated ? DASHBOARD_CREATION_NAV_IDS : undefined
+    );
 
     const canCreateDashboard = contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
 
-    if (isTemplateDashboardsAvailable && canCreateDashboard) {
+    if (isTemplateDashboardsAvailable && canCreateDashboard && !isMobileEditDeprecated) {
       const navBarActionsWithoutActions = navBarActions.filter((action) => action.priority !== ACTIONS_PRIORITY);
       const navBarActionsWithActions = navBarActions.filter((action) => action.priority === ACTIONS_PRIORITY);
 
@@ -237,6 +255,7 @@ export function useStaticActions(): CommandPaletteAction[] {
     isAnalyticsFrameworkEnabled,
     isCustomDashboardTemplatesEnabled,
     isTemplateDashboardsAvailable,
+    isMobileEditDeprecated,
     navBarTree,
     queryLibraryEnabled,
     openDrawer,
