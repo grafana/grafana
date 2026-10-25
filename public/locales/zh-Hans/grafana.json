@@ -13060,7 +13060,8 @@
         "close": "关闭 {{title}}",
         "open": "打开 {{title}}",
         "open-all": "打开 AI 助手和侧边栏应用"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "进入工作区",

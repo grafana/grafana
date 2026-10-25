@@ -13165,7 +13165,8 @@
         "close": "{{title}} sluiten",
         "open": "{{title}} openen",
         "open-all": "AI-assistenten en zijbalk-apps openen"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Werkruimte openen",

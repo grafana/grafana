@@ -13060,7 +13060,8 @@
         "close": "{{title}}を閉じる",
         "open": "{{title}}を開く",
         "open-all": "AIアシスタントとサイドバーアプリを開く"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "ワークスペースに入る",

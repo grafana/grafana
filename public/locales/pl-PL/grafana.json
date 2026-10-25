@@ -13375,7 +13375,8 @@
         "close": "Zamknij: {{title}}",
         "open": "Otwórz: {{title}}",
         "open-all": "Otwórz asystentów AI i aplikacje na pasku bocznym"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Otwórz obszar roboczy",

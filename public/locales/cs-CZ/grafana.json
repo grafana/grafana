@@ -13375,7 +13375,8 @@
         "close": "Zavřít {{title}}",
         "open": "Otevřít {{title}}",
         "open-all": "Asistenti Open AI a aplikace postranních panelů"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Vstoupit do pracovního prostoru",

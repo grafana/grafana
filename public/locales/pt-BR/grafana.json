@@ -13165,7 +13165,8 @@
         "close": "Fechar {{title}}",
         "open": "Abrir {{title}}",
         "open-all": "Abrir assistentes de IA e aplicativos da barra lateral"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Entrar no espaço de trabalho",
