@@ -3,8 +3,6 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { FLOATING_EXTENSION_SIDEBAR_MAX_WIDTH } from './constants';
-
 /**
  * Put this attribute on an element inside the extension sidebar to make it the handle that moves it. Floating,
  * it moves the container (pointer drag, arrow keys, Home or double-click to reset); docked, dragging it onto the
@@ -344,13 +342,19 @@ export function useFloatingDrag(
  * Floats the docked extension sidebar by its drag handle. The docked sidebar stays put while the drag goes on; once
  * the pointer is pulled a little left of where it was grabbed, or past the sidebar's left edge, the returned preview
  * shows the floating container at the pointer, and letting go then calls `onFloat`, after which the floating
- * container mounts where the preview was. Letting go short of that does nothing. The keyboard path is the
- * extension's own layout control.
+ * container mounts where the preview was, `floatingWidth` wide. Letting go short of that does nothing. The keyboard
+ * path is the extension's own layout control.
  */
-export function useDockedDrag(element: HTMLElement | null, onFloat: () => void): EdgeActionPreview | null {
+export function useDockedDrag(
+  element: HTMLElement | null,
+  floatingWidth: number,
+  onFloat: () => void
+): EdgeActionPreview | null {
   const [preview, setPreview] = useState<EdgeActionPreview | null>(null);
   const onFloatRef = useRef(onFloat);
   onFloatRef.current = onFloat;
+  const floatingWidthRef = useRef(floatingWidth);
+  floatingWidthRef.current = floatingWidth;
 
   useEffect(() => {
     if (!element) {
@@ -381,7 +385,7 @@ export function useDockedDrag(element: HTMLElement | null, onFloat: () => void):
       }
       drag.dragging = true;
       element.setAttribute('data-dragging', '');
-      const next = floatPreviewAt(element, event, drag);
+      const next = floatPreviewAt(element, event, drag, floatingWidthRef.current);
       if (next || drag.preview) {
         drag.preview = next;
         setPreview(next);
@@ -438,7 +442,8 @@ export function useDockedDrag(element: HTMLElement | null, onFloat: () => void):
 function floatPreviewAt(
   sidebar: HTMLElement,
   pointer: { clientX: number; clientY: number },
-  start: { x: number }
+  start: { x: number },
+  floatingWidth: number
 ): EdgeActionPreview | null {
   const pulled = start.x - pointer.clientX >= FLOAT_PULL_DISTANCE;
   if (!pulled && pointer.clientX > sidebar.getBoundingClientRect().left) {
@@ -446,7 +451,7 @@ function floatPreviewAt(
   }
   const content = contentEdges();
   const right = Math.max(content.right, sidebar.getBoundingClientRect().right);
-  const width = Math.max(0, Math.min(FLOATING_EXTENSION_SIDEBAR_MAX_WIDTH, right - content.left - 2 * GUTTER));
+  const width = Math.max(0, Math.min(floatingWidth, right - content.left - 2 * GUTTER));
   const height = DROP_PREVIEW_HEIGHT;
   const clamp = (value: number, low: number, high: number) => Math.round(Math.max(low, Math.min(value, high)));
   return {

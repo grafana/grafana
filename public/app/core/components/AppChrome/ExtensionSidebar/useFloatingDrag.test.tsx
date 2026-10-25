@@ -461,11 +461,11 @@ describe('dragged from the docked sidebar', () => {
   const onFloat = jest.fn();
 
   /** The sidebar docked until a drag floats it; the same element, as in ExtensionSidebar. */
-  function Sidebar() {
+  function Sidebar({ floatingWidth = 480 }: { floatingWidth?: number }) {
     const [element, setElement] = useState<HTMLDivElement | null>(null);
     const [isFloating, setIsFloating] = useState(false);
     useFloatingDrag(isFloating ? element : null, { dockWidth: 360, onDock, canCollapse: () => false, onCollapse });
-    const preview = useDockedDrag(isFloating ? null : element, () => {
+    const preview = useDockedDrag(isFloating ? null : element, floatingWidth, () => {
       onFloat();
       natural = floatingBox;
       setIsFloating(true);
@@ -505,6 +505,15 @@ describe('dragged from the docked sidebar', () => {
     // Held by its header: the pointer 16px below its top.
     fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300 });
     expect(preview()).toEqual({ action: 'float', left: 60, top: 284, width: 480, height: 168 });
+  });
+
+  it('previews the floating width the user resized it to', () => {
+    render(<Sidebar floatingWidth={400} />);
+
+    fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0 });
+    fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300 });
+
+    expect(preview()).toEqual({ action: 'float', left: 100, top: 284, width: 400, height: 168 });
   });
 
   it('previews as soon as the pointer is past its left edge, when grabbed near it', () => {

@@ -21,11 +21,7 @@ import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
-import {
-  FLOATING_EXTENSION_SIDEBAR_MAX_WIDTH,
-  MAX_EXTENSION_SIDEBAR_WIDTH,
-  MIN_EXTENSION_SIDEBAR_WIDTH,
-} from './ExtensionSidebar/constants';
+import { MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar/constants';
 import { LazyFeatureControlFloating } from './FeatureControl/LazyFeatureControl';
 import { FullscreenWorkspacePlatformBar } from './FullscreenWorkspace/FullscreenWorkspacePlatformBar';
 import { FullscreenWorkspaceShell } from './FullscreenWorkspace/FullscreenWorkspaceShell';
@@ -52,6 +48,7 @@ export function AppChrome({ children }: Props) {
     isOpen: isExtensionSidebarOpen,
     extensionSidebarWidth,
     setExtensionSidebarWidth,
+    floatingExtensionSidebarWidth,
     presentation: extensionSidebarPresentation,
     floatingHidden: isExtensionSidebarFloatingHidden,
   } = useExtensionSidebarContext();
@@ -92,7 +89,7 @@ export function AppChrome({ children }: Props) {
 
   const headerLevels = useChromeHeaderLevels();
   const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight(), visualRefreshEnabled);
-  const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
+  const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth, floatingExtensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
 
@@ -219,7 +216,7 @@ export function AppChrome({ children }: Props) {
               <div
                 className={cx(
                   styles.sidebarContainerFloating,
-                  isExtensionSidebarFloating && styles.sidebarContainerFloatingBar,
+                  isExtensionSidebarFloating && [styles.sidebarContainerFloatingBar, contentSizeStyles.floatingWidth],
                   isExtensionSidebarFloatingHidden && styles.sidebarContainerHidden
                 )}
                 data-testid={EXTENSION_SIDEBAR_FLOATING_TESTID}
@@ -233,13 +230,15 @@ export function AppChrome({ children }: Props) {
               <Resizable
                 className={cx(styles.sidebarContainer, {
                   [styles.sidebarContainerFloatingBar]: isExtensionSidebarFloating,
+                  [contentSizeStyles.floatingWidth]: isExtensionSidebarFloating,
                   [styles.sidebarContainerHidden]: isExtensionSidebarFloatingHidden,
                 })}
                 defaultSize={{ width: extensionSidebarWidth }}
                 enable={isExtensionSidebarFloating ? false : { left: true }}
                 onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
                 handleClasses={{ left: dragStyles.dragHandleBaseVertical }}
-                minWidth={MIN_EXTENSION_SIDEBAR_WIDTH}
+                // Floating has its own, lower minimum; an inline min-width would override `floatingWidth`.
+                minWidth={isExtensionSidebarFloating ? undefined : MIN_EXTENSION_SIDEBAR_WIDTH}
                 maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
                 {...floatingSidebarAttributes}
               >
@@ -408,10 +407,9 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       right: 0,
     }),
     // A panel anchored to the bottom right: content-driven height, no chrome of its own.
+    // Its width comes from `getContentSizeStyles`.
     sidebarContainerFloatingBar: css({
       // `Resizable` sets width and height inline.
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      width: `min(${FLOATING_EXTENSION_SIDEBAR_MAX_WIDTH}px, calc(100% - ${theme.spacing(4)})) !important` as 'auto',
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       height: 'auto !important' as 'auto',
       top: 'auto',
@@ -444,10 +442,15 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
   };
 };
 
-const getContentSizeStyles = (_: GrafanaTheme2, extensionSidebarWidth = 0) => {
+const getContentSizeStyles = (theme: GrafanaTheme2, extensionSidebarWidth = 0, floatingExtensionSidebarWidth = 0) => {
   return {
     contentWidth: css({
       maxWidth: `calc(100% - ${extensionSidebarWidth}px) !important`,
+    }),
+    floatingWidth: css({
+      // `Resizable` sets width inline.
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      width: `min(${floatingExtensionSidebarWidth}px, calc(100% - ${theme.spacing(4)})) !important` as 'auto',
     }),
   };
 };
