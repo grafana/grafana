@@ -21,6 +21,7 @@ import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
+import { isMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
@@ -154,24 +155,26 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   });
 
   // Copy panel (available outside edit mode so it can be pasted into another dashboard)
-  keybindings.addBinding({
-    key: 'p c',
-    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(vizPanel), 'keyboard');
-      scene.copyPanel(vizPanel);
-      const panelName = vizPanel.state.title || '';
-      dispatch(
-        notifyApp(
-          createSuccessNotification(
-            t('panel.header-menu.panel-copy-success', 'Panel "{{panelName}}" copied to clipboard', {
-              panelName,
-              interpolation: { escapeValue: false },
-            })
+  if (!isMobileEditDeprecated()) {
+    keybindings.addBinding({
+      key: 'p c',
+      onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+        DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(vizPanel), 'keyboard');
+        scene.copyPanel(vizPanel);
+        const panelName = vizPanel.state.title || '';
+        dispatch(
+          notifyApp(
+            createSuccessNotification(
+              t('panel.header-menu.panel-copy-success', 'Panel "{{panelName}}" copied to clipboard', {
+                panelName,
+                interpolation: { escapeValue: false },
+              })
+            )
           )
-        )
-      );
-    }),
-  });
+        );
+      }),
+    });
+  }
 
   // Refresh
   keybindings.addBinding({
@@ -245,7 +248,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     },
   });
 
-  if (canEdit) {
+  if (canEdit && !isMobileEditDeprecated()) {
     // Panel edit
     keybindings.addBinding({
       key: 'e',
