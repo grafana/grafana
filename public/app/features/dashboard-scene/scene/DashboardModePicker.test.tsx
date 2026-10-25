@@ -63,6 +63,8 @@ function sidebarContext(assistant: 'available' | 'missing', docked = false): Ext
         : new Map(),
     extensionSidebarWidth: 300,
     setExtensionSidebarWidth: jest.fn(),
+    floatingExtensionSidebarWidth: 480,
+    setFloatingExtensionSidebarWidth: jest.fn(),
     presentation: 'docked',
     floatingHidden: false,
   };
