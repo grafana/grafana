@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -88,24 +89,24 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 	}
 
 	s.ready = ready
-	next := httpRouter.NotFoundHandler
-	if next == nil {
-		next = http.NotFoundHandler()
-	}
 
 	// The standalone router is never middleware, so the fallback always applies.
 	if st, ok := s.router.loader.(loaderWithSingleTenantFallback); ok {
 		s.router.unregisteredGroupHandler = st.SingleTenantFallback()
 	}
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		s.metrics.instrument(s.router, w, req, next, apiGroup(req.URL.Path))
-	})
 	for _, path := range []string{apisPrefix, openapiV3Prefix} {
+		handler := s.instrumented(s.router.handlerFor(path))
 		httpRouter.Handle(path, handler)
 		httpRouter.PathPrefix(path + "/").Handler(handler)
 	}
 	return nil
+}
+
+func (s *Service) instrumented(handle http.HandlerFunc, parseInfo bool) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		s.metrics.instrument(s.router, w, req, handle, parseInfo)
+	}
 }
 
 func newService(router *GrafanaRouter, reg prometheus.Registerer) *Service {
@@ -127,22 +128,29 @@ func newService(router *GrafanaRouter, reg prometheus.Registerer) *Service {
 }
 
 // HandleFunc serves through the router when enabled and otherwise delegates.
-// The /apis/discovery tree is the router's own, so it is served either way.
+// When enabled, the router serves the whole /apis and /openapi/v3 trees,
+// so groups only the embedded API server serves are not found. The
+// /apis/discovery tree is the router's own, so it is served either way.
 func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
-	if s.middleware || isDiscoveryPath(req.URL.Path) {
-		// Requests for groups the router doesn't serve belong to the embedded
-		// API server, which has its own metrics; don't count them as the router's.
-		group := apiGroup(req.URL.Path)
-		if !s.router.owns(req, group) {
-			// Only the standalone router has a single-tenant fallback, and it
-			// never calls HandleFunc, so this passes the request on.
-			next.ServeHTTP(w, req)
-			return
-		}
-		s.metrics.instrument(s.router, w, req, next, group)
+	if handle, parseInfo := s.router.handlerFor(req.URL.Path); handle != nil && (s.middleware || isDiscoveryPath(req.URL.Path)) {
+		s.metrics.instrument(s.router, w, req, handle, parseInfo)
 		return
 	}
 	next.ServeHTTP(w, req)
+}
+
+// handlerFor returns the router's handler for the tree path is in, or nil
+// when it is in neither. parseInfo reports whether the handler reads the
+// request info, so the request metrics parse it for the handler: only /apis
+// does.
+func (r *GrafanaRouter) handlerFor(path string) (handle http.HandlerFunc, parseInfo bool) {
+	switch {
+	case path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/"):
+		return r.HandleAPIs(), true
+	case path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/"):
+		return r.HandleOpenAPIv3(), false
+	}
+	return nil, false
 }
 
 // Run adapts Service to the full server's background-service lifecycle.

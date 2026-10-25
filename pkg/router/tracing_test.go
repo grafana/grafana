@@ -199,7 +199,7 @@ func TestOpenAPIBackendTracing(t *testing.T) {
 			for range 2 {
 				response := httptest.NewRecorder()
 				req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/test.grafana.app/v1?hash=revision", nil)
-				router.HandleFunc(response, req, http.NotFoundHandler())
+				router.HandleFunc(response, req)
 				require.Equal(t, status, response.Code)
 			}
 			if status == http.StatusOK {
@@ -250,7 +250,7 @@ func TestDiscoveryBackendTracing(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/apis", nil).WithContext(authenticatedTestContext(ctx))
 			req.Header.Set("Accept", aggregatedDiscoveryJSON)
 			response := httptest.NewRecorder()
-			router.HandleFunc(response, req, http.NotFoundHandler())
+			router.HandleFunc(response, req)
 			require.Equal(t, http.StatusOK, response.Code)
 			expected := 1
 			if mode == "legacy" {
@@ -352,4 +352,25 @@ func TestBackendTracingPanic(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A call nested in another, such as a plugin's own span inside the router's
+// backend span, keeps the outer call's client breaker, and a proxy failure
+// inside it reaches the outer call's breaker outcome.
+func TestNestedBackendCallSharesBreakerState(t *testing.T) {
+	cb := newGroupBreaker("test.grafana.app")
+	_, outerReq, outer, endOuter := traceRouterRequest(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/test.grafana.app/v1", nil), "router.backend", "test.grafana.app")
+	defer endOuter()
+	outer.breaker = cb
+
+	_, innerReq, inner, endInner := traceRouterRequest(httptest.NewRecorder(), outerReq, "router.plugin", "test.grafana.app")
+	defer endInner()
+	require.Same(t, inner, backendCallFrom(innerReq.Context()))
+	require.Same(t, cb, inner.breaker)
+
+	failure := io.ErrUnexpectedEOF
+	proxyErrorHandler(httptest.NewRecorder(), innerReq, failure)
+	require.ErrorIs(t, inner.proxyErr, failure)
+	require.ErrorIs(t, outer.proxyErr, failure)
+	require.ErrorIs(t, breakerOutcome(outerReq, http.StatusOK, outer), failure)
 }

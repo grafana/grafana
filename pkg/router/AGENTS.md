@@ -121,12 +121,12 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - Every proxy flushes after each write (`streamingFlushInterval`).
   - A watch runs through `serveWatch`: it ends when its group's backend is replaced or removed, and
     when the service stops (`closeWatches`), so clients re-watch and shutdown never waits on it.
-  - Watches are long-running requests, identified with the apiserver's `RequestInfoFactory`: they
-    count in `grafana_router_http_requests_total` and `grafana_router_longrunning_requests`, not in
-    the duration histogram or in-flight gauge.
+  - Watches are long-running requests, identified with `utils.NewRequestInfo`
+    (`pkg/apimachinery/utils`): they count in `grafana_router_http_requests_total` and
+    `grafana_router_longrunning_requests`, not in the duration histogram or in-flight gauge.
   - Upgrades are rejected with a 400 (`rejectUpgrade`): watch over WebSocket is not supported. The
-    deprecated `/apis/<g>/<v>/watch/...` path form gets a 404 and is not counted as a watch
-    (`isDeprecatedWatchPath`).
+    deprecated `/apis/<g>/<v>/watch/...` path form gets a 400 from `utils.NewRequestInfo` and is not
+    counted as a watch.
 
 ## Package layout
 

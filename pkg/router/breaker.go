@@ -19,8 +19,13 @@ type statusRecorder struct {
 	status      int
 	wroteHeader bool
 
-	// onStatus, when set, is called once with the final status as soon as it is written.
-	onStatus func(status int)
+	// Set by serveThroughBreaker: the breaker's done, called once with the
+	// call's outcome as soon as the final status is written, and what that
+	// outcome is read from.
+	breakerDone func(error)
+	breakerReq  *http.Request
+	breakerCall *backendCall
+	reportOnce  sync.Once
 }
 
 func newStatusRecorder(w http.ResponseWriter) *statusRecorder {
@@ -34,11 +39,16 @@ func (r *statusRecorder) WriteHeader(code int) {
 	if code >= 200 || code == http.StatusSwitchingProtocols {
 		r.status = code
 		r.wroteHeader = true
-		if r.onStatus != nil {
-			r.onStatus(code)
+		if r.breakerDone != nil {
+			r.reportBreaker(breakerOutcome(r.breakerReq, code, r.breakerCall))
 		}
 	}
 	r.ResponseWriter.WriteHeader(code)
+}
+
+// reportBreaker gives the breaker the call's outcome, once.
+func (r *statusRecorder) reportBreaker(outcome error) {
+	r.reportOnce.Do(func() { r.breakerDone(outcome) })
 }
 
 func (r *statusRecorder) Write(body []byte) (int, error) {
@@ -105,10 +115,6 @@ type recorderFlushNotifyHijacker struct {
 func isBackendFailure(status int) bool {
 	return status == http.StatusBadGateway || status == http.StatusServiceUnavailable || status == http.StatusGatewayTimeout
 }
-
-// clientBreakerKey carries the group breaker to handlers that gate individual
-// client calls instead of the entire HTTP request.
-type clientBreakerKey struct{}
 
 // groupBreaker is two-step, so an outcome can be reported when the response
 // status is known rather than when the handler returns.
@@ -203,15 +209,15 @@ func newObservedGroupBreaker(group string, onChange func(group string, to gobrea
 // ended (checked first, so a disconnect is never counted against the
 // backend), the recorded proxy failure, a backend-failure error for
 // isBackendFailure statuses, or nil.
-func breakerOutcome(req *http.Request, status int, failure *proxyFailure) error {
+func breakerOutcome(req *http.Request, status int, call *backendCall) error {
 	if err := callerGone(req.Context()); err != nil {
 		return err
 	}
-	if failure.err != nil {
-		if errors.Is(failure.err, errBackendRedirect) {
+	if call.proxyErr != nil {
+		if errors.Is(call.proxyErr, errBackendRedirect) {
 			return nil // the backend answered; the router refused to relay it
 		}
-		return fmt.Errorf("router: proxy failed: %w", failure.err)
+		return fmt.Errorf("router: proxy failed: %w", call.proxyErr)
 	}
 	if isBackendFailure(status) {
 		return fmt.Errorf("router: backend returned status %d", status)
@@ -243,12 +249,13 @@ func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.
 		h.ServeHTTP(w, req)
 		return
 	}
-	rec, req, endSpan := traceRouterRequest(w, req, "router.backend", group)
+	rec, req, call, endSpan := traceRouterRequest(w, req, "router.backend", group)
 	defer endSpan()
 	w = rec.writer()
 	// Client-scoped breakers leave requests that do not call the client available.
 	if _, clientScoped := h.(interface{ breaksOnClientCalls() }); clientScoped {
-		h.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), clientBreakerKey{}, cb)))
+		call.breaker = cb
+		h.ServeHTTP(w, req)
 		return
 	}
 	done, err := cb.Allow()
@@ -257,22 +264,19 @@ func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.
 		http.Error(w, "backend unavailable", http.StatusServiceUnavailable)
 		return
 	}
-	req, failure := withProxyFailure(req)
-	var once sync.Once
-	report := func(outcome error) { once.Do(func() { done(outcome) }) }
-	rec.onStatus = func(status int) { report(breakerOutcome(req, status, failure)) }
+	rec.breakerDone, rec.breakerReq, rec.breakerCall = done, req, call
 	defer func() {
 		if p := recover(); p != nil {
-			outcome := breakerOutcome(req, rec.status, failure)
+			outcome := breakerOutcome(req, rec.status, call)
 			if outcome == nil {
 				outcome = fmt.Errorf("router: backend handler panicked: %v", p)
 			}
-			report(outcome)
+			rec.reportBreaker(outcome)
 			panic(p)
 		}
-		report(breakerOutcome(req, rec.status, failure))
-		if failure.err != nil {
-			if reason := failureReason(req, failure.err); reason != "" {
+		rec.reportBreaker(breakerOutcome(req, rec.status, call))
+		if call.proxyErr != nil {
+			if reason := failureReason(req, call.proxyErr); reason != "" {
 				setFailure(req, reason)
 			}
 		}

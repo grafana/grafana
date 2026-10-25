@@ -10,6 +10,9 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sony/gobreaker/v2"
+	"k8s.io/apiserver/pkg/endpoints/request"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // unknownGroupLabel replaces groups the router does not serve, so arbitrary
@@ -50,7 +53,7 @@ func newRouterMetrics(reg prometheus.Registerer) *routerMetrics {
 			Namespace: "grafana",
 			Subsystem: "router",
 			Name:      "http_requests_total",
-			Help:      "Requests served by the router, watches included, by group, verb, route (backend, fallback, discovery, next, invalid or unauthenticated) and status code.",
+			Help:      "Requests served by the router, watches included, by group, verb, route (backend, fallback, discovery, not_found, invalid, unauthenticated or forbidden) and status code.",
 		}, []string{"group", "verb", "route", "status_code"}),
 		// No status code, as in Kubernetes: it would multiply the histogram's
 		// series, and grafana_router_http_requests_total carries it.
@@ -58,7 +61,7 @@ func newRouterMetrics(reg prometheus.Registerer) *routerMetrics {
 			Namespace:                       "grafana",
 			Subsystem:                       "router",
 			Name:                            "http_request_duration_seconds",
-			Help:                            "Latency of requests, other than watches, served by the router, by group, verb and route (backend, fallback, discovery, next, invalid or unauthenticated).",
+			Help:                            "Latency of requests, other than watches, served by the router, by group, verb and route (backend, fallback, discovery, not_found, invalid, unauthenticated or forbidden).",
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
@@ -155,6 +158,22 @@ func newPluginGRPCRequestRetries(reg prometheus.Registerer, source string) *prom
 	return c
 }
 
+// apiGroup returns the group of an /apis/<group>[/...] path, or "" when there
+// is none or it is not a valid group name (see utils.IsAPIGroup). Unlike
+// utils.APIGroupFromRequest it reads only the first segment: the router
+// rejects a non-canonical path before it routes by group.
+func apiGroup(path string) string {
+	rest, ok := strings.CutPrefix(path, apisPrefix+"/")
+	if !ok {
+		return ""
+	}
+	group, _, _ := strings.Cut(rest, "/")
+	if !utils.IsAPIGroup(group) {
+		return ""
+	}
+	return group
+}
+
 // requestGroup returns the group a request is for: the group of an
 // /apis/<group>/... path, as apiGroup reads it, or of an
 // /openapi/v3/apis/<group>/<version> document, which is served by the same
@@ -182,23 +201,37 @@ func namesGroup(path string) bool {
 	return ok && segment != "" && !isDiscoveryPath(path)
 }
 
-// instrument serves req through gr.handle with request metrics, then logs
-// the outcome. next and apiGroup, the request's apiGroup, are forwarded to
-// handle unchanged.
-func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, next http.Handler, apiGroup string) {
-	group := requestGroup(req.URL.Path, apiGroup)
+// instrument serves req through handle with request metrics, then logs the
+// outcome.
+func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req *http.Request, handle http.HandlerFunc, parseInfo bool) {
+	group := requestGroup(req.URL.Path, apiGroup(req.URL.Path))
 	metricGroup := group
 	if group != "" && !gr.KnownGroup(group) || group == "" && namesGroup(req.URL.Path) {
 		metricGroup = unknownGroupLabel
 	}
 	start := time.Now()
 	rec := newStatusRecorder(w)
-	req, outcome := withRequestOutcome(req)
-	// Recorded on outcome, so the router doesn't parse the request again.
-	verb := metricVerb(requestVerb(req))
+	// When the handler reads request info, it is parsed here for the verb
+	// label, and kept on the outcome and in the context so the handler doesn't
+	// parse the request again. Otherwise the verb is the HTTP method, which is
+	// what the parse would give for a path outside /apis.
+	outcome := &requestOutcome{}
+	ctx := context.WithValue(req.Context(), requestOutcomeKey{}, outcome)
+	verb := strings.ToLower(req.Method)
+	if parseInfo {
+		if info, err := utils.NewRequestInfo(req); err == nil {
+			outcome.info = info
+			ctx = request.WithRequestInfo(ctx, info)
+			if info.Verb != "" {
+				verb = info.Verb
+			}
+		}
+	}
+	req = req.WithContext(ctx)
+	verb = metricVerb(verb)
 	route := func() string {
 		if outcome.route == "" {
-			return routeNext
+			return routeNotFound
 		}
 		return outcome.route
 	}
@@ -222,13 +255,13 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 		m.longRunning.WithLabelValues(metricGroup).Inc()
 		defer m.longRunning.WithLabelValues(metricGroup).Dec()
 		defer func() { finish(time.Since(start)) }()
-		gr.handle(rec.writer(), req, next, apiGroup)
+		handle(rec.writer(), req)
 		return
 	}
 
 	m.inFlight.Inc()
 	defer m.inFlight.Dec()
-	gr.handle(rec.writer(), req, next, apiGroup)
+	handle(rec.writer(), req)
 	duration := time.Since(start)
 	m.duration.WithLabelValues(resultGroup(), verb, route()).Observe(duration.Seconds())
 	finish(duration)

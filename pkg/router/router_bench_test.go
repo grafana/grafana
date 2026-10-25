@@ -31,9 +31,6 @@ func BenchmarkGrafanaRouter(b *testing.B) {
 		if err := router.reconcile(b.Context()); err != nil {
 			b.Fatal(err)
 		}
-		next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-			w.WriteHeader(http.StatusNoContent)
-		})
 		group := groups[len(groups)-1]
 		for _, tc := range []struct {
 			name string
@@ -42,19 +39,19 @@ func BenchmarkGrafanaRouter(b *testing.B) {
 		}{
 			{"resource", "/apis/" + group + "/v0alpha1/namespaces/default/widgets", http.StatusOK},
 			{"group_discovery", "/apis/" + group, http.StatusOK},
-			{"unknown_group", "/apis/unknown.grafana.app/v0alpha1/widgets", http.StatusNoContent},
-			{"outside_apis", "/healthz", http.StatusNoContent},
+			{"unknown_group", "/apis/unknown.grafana.app/v0alpha1/widgets", http.StatusNotFound},
+			{"outside_apis", "/healthz", http.StatusNotFound},
 			{"api_discovery", "/apis", http.StatusOK},
 			{"openapi_index", "/openapi/v3", http.StatusOK},
 			{"openapi_cached", "/openapi/v3/apis/" + group + "/v0alpha1", http.StatusOK},
-			{"openapi_unknown_group", "/openapi/v3/apis/unknown.grafana.app/v0alpha1", http.StatusNoContent},
-			{"openapi_invalid_path", "/openapi/v3/apis/" + group, http.StatusNoContent},
+			{"openapi_unknown_group", "/openapi/v3/apis/unknown.grafana.app/v0alpha1", http.StatusNotFound},
+			{"openapi_invalid_path", "/openapi/v3/apis/" + group, http.StatusNotFound},
 		} {
 			b.Run(tc.name, func(b *testing.B) {
 				req := newAuthenticatedRequest(http.MethodGet, tc.path, nil)
 				rec := httptest.NewRecorder()
 				// Validate dispatch and warm the OpenAPI cache before timing.
-				router.HandleFunc(rec, req, next)
+				router.HandleFunc(rec, req)
 				if rec.Code != tc.code {
 					b.Fatalf("got status %d, want %d", rec.Code, tc.code)
 				}
@@ -62,7 +59,7 @@ func BenchmarkGrafanaRouter(b *testing.B) {
 				b.ReportAllocs()
 				for b.Loop() {
 					clear(w.header)
-					router.HandleFunc(w, req, next)
+					router.HandleFunc(w, req)
 				}
 			})
 		}
@@ -105,19 +102,18 @@ func BenchmarkServiceMiddleware(b *testing.B) {
 
 func BenchmarkGrafanaRouterConditional(b *testing.B) {
 	router := newBenchmarkRouter(b)
-	next := http.NotFoundHandler()
 	for _, path := range []string{"/apis", "/openapi/v3", "/openapi/v3/apis/app-0.grafana.app/v0alpha1"} {
 		b.Run(path, func(b *testing.B) {
 			req := newAuthenticatedRequest(http.MethodGet, path, nil)
 			rec := httptest.NewRecorder()
-			router.HandleFunc(rec, req, next)
+			router.HandleFunc(rec, req)
 			etag := rec.Header().Get("ETag")
 			if rec.Code != http.StatusOK || etag == "" {
 				b.Fatalf("expected 200 with ETag, got %d with %q", rec.Code, etag)
 			}
 			req.Header.Set("If-None-Match", etag)
 			rec = httptest.NewRecorder()
-			router.HandleFunc(rec, req, next)
+			router.HandleFunc(rec, req)
 			if rec.Code != http.StatusNotModified {
 				b.Fatalf("got status %d, want 304", rec.Code)
 			}
@@ -125,7 +121,7 @@ func BenchmarkGrafanaRouterConditional(b *testing.B) {
 			b.ReportAllocs()
 			for b.Loop() {
 				clear(w.header)
-				router.HandleFunc(w, req, next)
+				router.HandleFunc(w, req)
 			}
 		})
 	}
@@ -137,7 +133,6 @@ func BenchmarkGrafanaRouterOpenAPICacheMiss(b *testing.B) {
 			router := newBenchmarkRouter(b)
 			const cacheKey = "app-0.grafana.app/v0alpha1"
 			req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/"+cacheKey, nil)
-			next := http.NotFoundHandler()
 			w := &benchmarkResponseWriter{header: make(http.Header)}
 			b.ReportAllocs()
 			for b.Loop() {
@@ -149,7 +144,7 @@ func BenchmarkGrafanaRouterOpenAPICacheMiss(b *testing.B) {
 					router.openapiDocs.Delete(cacheKey)
 				}
 				clear(w.header)
-				router.HandleFunc(w, req, next)
+				router.HandleFunc(w, req)
 			}
 			cached, ok := router.openapiDocs.Load(cacheKey)
 			if !ok || cached.(openapiCacheEntry).key != "static" {
@@ -168,9 +163,6 @@ func BenchmarkGrafanaRouterParallel(b *testing.B) {
 				requests[i] = newAuthenticatedRequest(http.MethodGet,
 					fmt.Sprintf("/apis/app-%d.grafana.app/v0alpha1/namespaces/default/widgets", i), nil)
 			}
-			next := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
-				b.Error("unexpected fallthrough")
-			})
 			b.ReportAllocs()
 			b.ResetTimer()
 			b.RunParallel(func(pb *testing.PB) {
@@ -179,7 +171,7 @@ func BenchmarkGrafanaRouterParallel(b *testing.B) {
 				i := 0
 				for pb.Next() {
 					clear(w.header)
-					router.HandleFunc(w, requests[i], next)
+					router.HandleFunc(w, requests[i])
 					i = (i + 1) % len(requests)
 				}
 			})

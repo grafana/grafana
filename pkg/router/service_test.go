@@ -101,7 +101,7 @@ func TestServiceRegistersTargetPathPrefixes(t *testing.T) {
 	}
 }
 
-func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
+func TestServiceMiddlewareServesTheAPITree(t *testing.T) {
 	cfg := setting.NewCfg()
 	httpRouter := mux.NewRouter()
 	httpRouter.HandleFunc("/apis/legacy.grafana.app/v1", func(w http.ResponseWriter, _ *http.Request) {
@@ -130,16 +130,23 @@ func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
 		require.Equal(t, "dummy backend for group: dummy-backend-1.ext.grafana.app", recorder.Body.String())
 	})
 
-	t.Run("existing route falls through", func(t *testing.T) {
+	t.Run("embedded route is not found", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/legacy.grafana.app/v1", nil), httpRouter)
 
-		require.Equal(t, http.StatusNoContent, recorder.Code)
+		require.Equal(t, http.StatusNotFound, recorder.Code)
 	})
 
-	t.Run("unknown route preserves not found handler", func(t *testing.T) {
+	t.Run("unknown route is not found", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/unknown.grafana.app/v1", nil), httpRouter)
+
+		require.Equal(t, http.StatusNotFound, recorder.Code)
+	})
+
+	t.Run("other paths go to next", func(t *testing.T) {
+		recorder := httptest.NewRecorder()
+		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/api/health", nil), httpRouter)
 
 		require.Equal(t, http.StatusTeapot, recorder.Code)
 	})
@@ -213,7 +220,7 @@ func TestRouterTargetCloudFallback(t *testing.T) {
 		if enabled {
 			require.Equal(t, http.StatusNoContent, recorder.Code)
 		} else {
-			require.Equal(t, http.StatusTeapot, recorder.Code)
+			require.Equal(t, http.StatusNotFound, recorder.Code)
 		}
 	}
 }
@@ -242,7 +249,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 	require.Contains(t, recorder.Body.String(), "fallback.example.com")
 }
 
-func TestRouterMiddlewarePreservesDelegateWithSTLoader(t *testing.T) {
+func TestRouterMiddlewareDoesNotUseSTFallback(t *testing.T) {
 	cfg := setting.NewCfg()
 	loader := &cloudLoader{BasicService: services.NewIdleService(nil, nil), singleTenantFallback: newTestSingleTenantFallback(t)}
 	svc, err := provideTestService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader)
@@ -252,7 +259,7 @@ func TestRouterMiddlewarePreservesDelegateWithSTLoader(t *testing.T) {
 	svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/unknown/v1/namespaces/stacks-123/widgets", nil), http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusTeapot)
 	}))
-	require.Equal(t, http.StatusTeapot, recorder.Code)
+	require.Equal(t, http.StatusNotFound, recorder.Code)
 }
 
 // lifecycleLoader is a routes loader with its own background lifecycle, like
@@ -311,34 +318,35 @@ func TestServiceStopsLoaderWhenStartingFails(t *testing.T) {
 	require.Equal(t, services.Terminated, loader.State())
 }
 
-func TestServiceMiddlewarePassesRequestsItDoesNotOwnToNext(t *testing.T) {
+func TestServiceMiddlewareCapturesAPITrees(t *testing.T) {
 	svc := newService(NewGrafanaRouter(dummyRoutesLoader{groups: []string{"owned.grafana.app"}}, nil), prometheus.NewRegistry())
 	svc.middleware = true
 	require.NoError(t, svc.router.reconcile(t.Context()))
 
-	for _, target := range []string{
-		"/apis/dashboard.grafana.app/v1/namespaces/default/dashboards",
-		"/apis/dashboard.grafana.app",
-		"/apis/Not_A.Group/v1/things",
-		"/openapi/v3/apis/dashboard.grafana.app/v1",
-		"/openapi/v3/apis/owned.grafana.app",
-		"/api/dashboards/uid/abc",
+	for _, tc := range []struct {
+		target string
+		next   bool
+	}{
+		{target: "/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"},
+		{target: "/apis/dashboard.grafana.app"},
+		{target: "/apis/Not_A.Group/v1/things"},
+		{target: "/openapi/v3/apis/dashboard.grafana.app/v1"},
+		{target: "/openapi/v3/apis/owned.grafana.app"},
+		{target: "/api/dashboards/uid/abc", next: true},
 	} {
-		t.Run(target, func(t *testing.T) {
-			// The shortcut must answer as the router would: through next.
-			for name, serve := range map[string]func(http.ResponseWriter, *http.Request, http.Handler){
-				"service": svc.HandleFunc,
-				"router":  svc.router.HandleFunc,
-			} {
-				var called bool
-				next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					called = true
-					w.WriteHeader(http.StatusTeapot)
-				})
-				rec := httptest.NewRecorder()
-				serve(rec, newAuthenticatedRequest(http.MethodGet, target, nil), next)
-				require.True(t, called, "%s did not call next", name)
-				require.Equal(t, http.StatusTeapot, rec.Code, name)
+		t.Run(tc.target, func(t *testing.T) {
+			var called bool
+			next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				called = true
+				w.WriteHeader(http.StatusTeapot)
+			})
+			rec := httptest.NewRecorder()
+			svc.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, tc.target, nil), next)
+			require.Equal(t, tc.next, called)
+			if tc.next {
+				require.Equal(t, http.StatusTeapot, rec.Code)
+			} else {
+				require.Equal(t, http.StatusNotFound, rec.Code)
 			}
 		})
 	}

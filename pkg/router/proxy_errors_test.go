@@ -90,7 +90,7 @@ func TestHandleFuncRejectsNonCanonicalPaths(t *testing.T) {
 	}))
 	for _, target := range []string{"/apis/g/../other/v1/things", "/apis/g%2Fother/v1/things", "/openapi/v3/apis/g/./v1"} {
 		recorder := httptest.NewRecorder()
-		router.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, target, nil), http.NotFoundHandler())
+		router.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, target, nil))
 		require.Equal(t, http.StatusBadRequest, recorder.Code, target)
 	}
 	require.Zero(t, calls.Load())
@@ -106,7 +106,7 @@ func proxiedRouter(t *testing.T, upstream string, transport *http.Transport) *Gr
 
 func serveRouter(router *GrafanaRouter, target string) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
-	router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, target, nil), http.NotFoundHandler())
+	router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, target, nil))
 	return recorder
 }
 

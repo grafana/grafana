@@ -12,6 +12,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 // stubLoader satisfies RoutesLoader; the routing tests seed the snapshot
@@ -38,13 +39,99 @@ func withGroups(groups ...string) *GrafanaRouter {
 	return s
 }
 
+// HandleFunc serves req with the handler for its tree.
+func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request) {
+	r.handleTree(w, req)
+}
+
+// handleTree serves req with the handler for its tree, and answers a request
+// in neither tree as not found.
+func (r *GrafanaRouter) handleTree(w http.ResponseWriter, req *http.Request) {
+	handle, _ := r.handlerFor(req.URL.Path)
+	if handle == nil {
+		serveNotFound(w, req)
+		return
+	}
+	handle(w, req)
+}
+
+func TestHandleTrees(t *testing.T) {
+	s := withGroups("example")
+	s.served["example"].handler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+	s.publish(context.Background())
+
+	for _, tc := range []struct {
+		name    string
+		handler http.Handler
+		path    string
+		code    int
+	}{
+		{name: "apis serves a group", handler: s.HandleAPIs(), path: "/apis/example/v1", code: http.StatusNoContent},
+		{name: "apis serves root discovery", handler: s.HandleAPIs(), path: "/apis", code: http.StatusOK},
+		{name: "apis rejects openapi", handler: s.HandleAPIs(), path: "/openapi/v3", code: http.StatusNotFound},
+		{name: "apis rejects a lookalike prefix", handler: s.HandleAPIs(), path: "/apisx/example/v1", code: http.StatusNotFound},
+		{name: "openapi serves the index", handler: s.HandleOpenAPIv3(), path: "/openapi/v3", code: http.StatusOK},
+		{name: "openapi rejects apis", handler: s.HandleOpenAPIv3(), path: "/apis/example/v1", code: http.StatusNotFound},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			tc.handler.ServeHTTP(rec, newAuthenticatedRequest(http.MethodGet, tc.path, nil))
+			require.Equal(t, tc.code, rec.Code)
+		})
+	}
+}
+
+func TestHandleFuncRequestInfo(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		path string
+		verb string
+	}{
+		{name: "get", path: "/apis/example/v1/namespaces/default/widgets/foo/status", verb: "get"},
+		{name: "list", path: "/apis/example/v1/namespaces/default/widgets", verb: "list"},
+		{name: "watch", path: "/apis/example/v1/namespaces/default/widgets?watch=true", verb: "watch"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			router := withGroups("example")
+			called := false
+			router.served["example"].handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				called = true
+				info, ok := request.RequestInfoFrom(req.Context())
+				require.True(t, ok)
+				require.True(t, info.IsResourceRequest)
+				require.Equal(t, "example", info.APIGroup)
+				require.Equal(t, "v1", info.APIVersion)
+				require.Equal(t, "default", info.Namespace)
+				require.Equal(t, "widgets", info.Resource)
+				require.Equal(t, tc.verb, info.Verb)
+				if tc.name == "get" {
+					require.Equal(t, "foo", info.Name)
+					require.Equal(t, "status", info.Subresource)
+				}
+				w.WriteHeader(http.StatusNoContent)
+			})
+			router.publish(context.Background())
+			rec := httptest.NewRecorder()
+			router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, tc.path, nil))
+			require.True(t, called)
+			require.Equal(t, http.StatusNoContent, rec.Code)
+		})
+	}
+}
+
+func TestHandleFuncInvalidRequestInfo(t *testing.T) {
+	router := withGroups("example")
+	rec := httptest.NewRecorder()
+	router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/example/v1/proxy", nil))
+	require.Equal(t, http.StatusBadRequest, rec.Code)
+}
+
 func TestHandleFuncRoutesByGroup(t *testing.T) {
 	s := withGroups("dashboard.grafana.app", "folder.grafana.app")
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusTeapot) // sentinel for "fell through to next"
-	})
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		s.HandleFunc(w, req, next)
+		s.HandleFunc(w, req)
 	})
 
 	cases := []struct {
@@ -56,12 +143,9 @@ func TestHandleFuncRoutesByGroup(t *testing.T) {
 		{"/apis/dashboard.grafana.app", "dashboard.grafana.app", http.StatusOK},
 		{"/apis/dashboard.grafana.app/v1alpha1/dashboards", "dashboard.grafana.app", http.StatusOK},
 		{"/apis/folder.grafana.app/v0alpha1", "folder.grafana.app", http.StatusOK},
-		// unknown group falls through to next (primacy to group, not 404)
-		{"/apis/unknown.grafana.app/v1/x", "", http.StatusTeapot},
-		// paths outside the /apis tree fall through to next
-		{"/healthz", "", http.StatusTeapot},
-		// /openapi/v3 root is served router-side via HandleFunc (not
-		// fallthrough); now router-synthesized. Body/ETag checked separately
+		{"/apis/unknown.grafana.app/v1/x", "", http.StatusNotFound},
+		{"/healthz", "", http.StatusNotFound},
+		// /openapi/v3 root is router-synthesized. Body/ETag checked separately
 		// in TestServeRootDocsWithETag. The per-group-version subpath isn't
 		// covered here — withGroups' fake handlers don't serve real OpenAPI
 		// bytes, so there's nothing meaningful to assert on that path with
@@ -81,21 +165,18 @@ func TestHandleFuncRoutesByGroup(t *testing.T) {
 }
 
 // TestHandleFuncRootDiscoveryNotProxied pins that the /apis root is synthesized
-// router-side (not dispatched to any group and not fallen through to next).
+// router-side, not dispatched to any group.
 func TestHandleFuncRootDiscoveryNotProxied(t *testing.T) {
 	s := withGroups("dashboard.grafana.app")
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusTeapot)
-	})
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		s.HandleFunc(w, req, next)
+		s.HandleFunc(w, req)
 	})
 
 	for _, path := range []string{"/apis", "/apis/"} {
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, newAuthenticatedRequest(http.MethodGet, path, nil))
-		if rec.Code == http.StatusTeapot {
-			t.Errorf("path %q fell through to next; root discovery must be router-owned", path)
+		if rec.Code != http.StatusOK {
+			t.Errorf("path %q: got code %d, want 200; root discovery must be router-owned", path, rec.Code)
 		}
 	}
 }
@@ -104,11 +185,8 @@ func TestHandleFuncRootDiscoveryNotProxied(t *testing.T) {
 // (/apis and /openapi/v3) set an ETag and honor conditional GET with 304.
 func TestServeRootDocsWithETag(t *testing.T) {
 	s := withGroups("dashboard.grafana.app")
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusTeapot)
-	})
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		s.HandleFunc(w, req, next)
+		s.HandleFunc(w, req)
 	})
 
 	for _, path := range []string{"/apis", "/openapi/v3"} {
@@ -213,21 +291,18 @@ func TestParseOpenAPIGroupVersionPath(t *testing.T) {
 	}
 }
 
-// TestOpenAPIV3MalformedSubpathFallsThrough: a subpath that doesn't parse as
-// apis/<group>/<version> isn't ours; it must fall through to next, same
-// primacy rule as an unknown /apis group.
-func TestOpenAPIV3MalformedSubpathFallsThrough(t *testing.T) {
+// TestOpenAPIV3MalformedSubpathIsNotFound: a subpath that doesn't parse as
+// apis/<group>/<version> names no document, as an unknown /apis group names
+// no backend.
+func TestOpenAPIV3MalformedSubpathIsNotFound(t *testing.T) {
 	s := withGroups("dashboard.grafana.app")
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusTeapot)
-	})
 	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		s.HandleFunc(w, req, next)
+		s.HandleFunc(w, req)
 	})
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/dashboard.grafana.app", nil))
-	if rec.Code != http.StatusTeapot {
-		t.Errorf("got code %d, want 418 (fell through to next)", rec.Code)
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("got code %d, want 404", rec.Code)
 	}
 }
 
@@ -371,7 +446,7 @@ func TestRouterFallbackOnlyForUnregisteredGroups(t *testing.T) {
 				w.WriteHeader(http.StatusAccepted)
 			})
 			recorder := httptest.NewRecorder()
-			router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, tc.path, nil), http.NotFoundHandler())
+			router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, tc.path, nil))
 			if recorder.Code != tc.status {
 				t.Errorf("status = %d, want %d", recorder.Code, tc.status)
 			}

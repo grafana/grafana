@@ -471,12 +471,16 @@ add those first (F12).
   (`logging.go`). Return early for statuses below 400 when Debug isn't enabled. Measured: 80 → 4 ns,
   0 allocs.
 
-- [ ] **F7. One request-state context value.**
+- [x] **F7. One request-state context value.**
   - `withRequestOutcome`, the tracing span value, `withProxyFailure` and the client breaker each call
     `WithContext`. `serveThroughBreaker` also allocates a `sync.Once` and two closures.
   - `Request.WithContext` is 36% of the bytes allocated in the middleware path.
   - Carry one struct instead, and move the report state onto `statusRecorder`. Breaker semantics must
     not change. Expected: about 6–8 allocs per request.
+  - Done: `backendCall` carries the span, client breaker and proxy error under one key; a nested call
+    shares its outer call's breaker and proxy error. The request outcome also carries the request
+    info. Measured: resource 26 → 20 allocs (843 → 782 ns), middleware resource 37 → 31 allocs
+    (1.24 → 1.15 µs).
 
 - [ ] **F8. Cache request-metric observers.** `WithLabelValues` is about 9% of middleware CPU, and
   `strconv.Itoa(status)` allocates. Cache an observer per (group, verb, route), and precompute the

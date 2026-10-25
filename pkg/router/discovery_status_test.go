@@ -37,7 +37,7 @@ func failBreaker(t *testing.T, cb *groupBreaker, n int) {
 func readStatus(t *testing.T, r *GrafanaRouter) (routerStatusDoc, map[string]groupStatusDoc) {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/status", nil), http.NotFoundHandler())
+	r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/status", nil))
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 	require.Equal(t, "no-store", rec.Header().Get("Cache-Control"))
 	var doc routerStatusDoc
@@ -116,7 +116,7 @@ func TestRouterStatus(t *testing.T) {
 		go func() {
 			defer close(done)
 			rec := httptest.NewRecorder()
-			r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/"+manifestTestGroup+"/v1/widgets?watch=true", nil), http.NotFoundHandler())
+			r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/"+manifestTestGroup+"/v1/widgets?watch=true", nil))
 		}()
 		<-watched
 		_, groups := readStatus(t, r)
@@ -185,7 +185,7 @@ func TestStatusReadsDoNotMoveBreakers(t *testing.T) {
 		require.Equal(t, []string{"open"}, transitions, "reads move nothing")
 
 		rec := httptest.NewRecorder()
-		r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/"+group+"/v1/things", nil), http.NotFoundHandler())
+		r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/"+group+"/v1/things", nil))
 		require.Equal(t, []string{"open", "half-open", "closed"}, transitions, "the request is the trial, and it succeeded")
 		_, groups := readStatus(t, r)
 		require.Equal(t, "ok", groups[group].Health)

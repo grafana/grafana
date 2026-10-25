@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apiserver/pkg/endpoints"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -154,7 +155,7 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 	}
 	// The documents are static, so there is nothing to watch; a list body
 	// would be misread as a stream of events.
-	if requestVerb(req) == "watch" {
+	if info, ok := request.RequestInfoFrom(req.Context()); ok && info.Verb == "watch" {
 		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, "watch"), w)
 		return
 	}

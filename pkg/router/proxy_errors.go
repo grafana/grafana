@@ -1,7 +1,6 @@
 package router
 
 import (
-	"context"
 	"errors"
 	"net"
 	"net/http"
@@ -42,24 +41,11 @@ func (p *proxyBufferPool) Put(buf []byte) { p.pool.Put(&buf) }
 // It is a policy decision, not evidence that the backend is unhealthy.
 var errBackendRedirect = errors.New("router: backend redirect rejected")
 
-type proxyFailureKey struct{}
-
-// proxyFailure records why a proxy could not relay a backend response, so the
-// breaker classifies the failure itself rather than inferring it from a 502.
-type proxyFailure struct{ err error }
-
-func withProxyFailure(req *http.Request) (*http.Request, *proxyFailure) {
-	failure := &proxyFailure{}
-	return req.WithContext(context.WithValue(req.Context(), proxyFailureKey{}, failure)), failure
-}
-
 // proxyErrorHandler is the ReverseProxy ErrorHandler for every proxy. It
 // records the failure for the breaker and answers 504 for a timeout and 502
 // otherwise, as the default handler does.
 func proxyErrorHandler(w http.ResponseWriter, req *http.Request, err error) {
-	if failure, ok := req.Context().Value(proxyFailureKey{}).(*proxyFailure); ok {
-		failure.err = err
-	}
+	backendCallFrom(req.Context()).setProxyErr(err)
 	status := http.StatusBadGateway
 	var netErr net.Error
 	if errors.As(err, &netErr) && netErr.Timeout() {

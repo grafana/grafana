@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha512"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -34,17 +35,17 @@ var discoveryCodecs = func() serializer.CodecFactory {
 	return serializer.NewCodecFactory(scheme)
 }()
 
-func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Request, next http.Handler) {
+func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Vary", "Accept")
-	r.setRootDiscoveryCacheControl(w, next)
+	r.setRootDiscoveryCacheControl(w)
 	mediaType, _ := negotiation.NegotiateMediaTypeOptions(req.Header.Get("Accept"), discoveryCodecs.SupportedMediaTypes(), aggregated.DiscoveryEndpointRestrictions)
 	if aggregated.IsAggregatedDiscoveryGVK(mediaType.Convert) {
-		r.serveAggregatedDiscovery(w, req, next)
+		r.serveAggregatedDiscovery(w, req)
 		return
 	}
 
 	var fallback metav1.APIGroupList
-	scoped, err := r.readRootDiscovery(req, next, apisPrefix, "application/json", &fallback)
+	scoped, err := r.readRootDiscovery(req, apisPrefix, "application/json", &fallback)
 	if err != nil || fallback.Kind != "APIGroupList" {
 		serveCachedDoc(w, req, r.apiGroupList.Load())
 		return
@@ -75,11 +76,11 @@ func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http
 	serveDiscoveryJSON(w, req, fallback)
 }
 
-func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *http.Request, next http.Handler) {
+func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *http.Request) {
 	groups := map[string]apidiscoveryv2.APIGroupDiscovery{}
 	var raw json.RawMessage
 	var fallback apidiscoveryv2.APIGroupDiscoveryList
-	callerScoped, err := r.readRootDiscovery(req, next, apisPrefix, aggregatedDiscoveryJSON, &raw)
+	callerScoped, err := r.readRootDiscovery(req, apisPrefix, aggregatedDiscoveryJSON, &raw)
 	if err == nil && json.Unmarshal(raw, &fallback) != nil {
 		fallback = apidiscoveryv2.APIGroupDiscoveryList{} // anything undecodable has no Kind, and is ignored
 	}
@@ -138,7 +139,7 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 		groups[f.name] = f.result
 	}
 	groups[discoveryGroup] = discoveryAggregated
-	if _, callerScoped := r.discoverySource(next); callerScoped {
+	if r.discoverySource() != nil {
 		w = &privateCacheWriter{ResponseWriter: w}
 	}
 	writeAggregatedDiscovery(w, req, groups)
@@ -236,10 +237,10 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ api
 	return group, complete
 }
 
-func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Request, next http.Handler) {
-	r.setRootDiscoveryCacheControl(w, next)
+func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Request) {
+	r.setRootDiscoveryCacheControl(w)
 	var fallback handler3.OpenAPIV3Discovery
-	scoped, err := r.readRootDiscovery(req, next, openapiV3Prefix, "application/json", &fallback)
+	scoped, err := r.readRootDiscovery(req, openapiV3Prefix, "application/json", &fallback)
 	if err != nil || fallback.Paths == nil {
 		serveCachedDoc(w, req, r.openapiIndex.Load())
 		return
@@ -286,26 +287,29 @@ func (r *GrafanaRouter) serveLegacyInsteadOfAggregated(w http.ResponseWriter, re
 // setRootDiscoveryCacheControl keeps root discovery out of shared caches when
 // it depends on the caller: credentials may arrive in X-Access-Token, which a
 // cache keyed on Authorization would not tell apart.
-func (r *GrafanaRouter) setRootDiscoveryCacheControl(w http.ResponseWriter, next http.Handler) {
-	if _, scoped := r.discoverySource(next); scoped {
+func (r *GrafanaRouter) setRootDiscoveryCacheControl(w http.ResponseWriter) {
+	if r.discoverySource() != nil {
 		w.Header().Set("Cache-Control", "private")
 	}
 }
 
 // readRootDiscovery reads root discovery from the source of unserved groups.
-// scoped reports whether the answer replaces the caller-scoped defaults.
-func (r *GrafanaRouter) readRootDiscovery(req *http.Request, next http.Handler, path, accept string, into any) (scoped bool, err error) {
-	source, scoped := r.discoverySource(next)
-	if scoped {
-		// The fallback forwards to the caller's stack, and a slow stack must
-		// not hold discovery open when the defaults are available.
-		ctx, cancel := context.WithTimeoutCause(req.Context(), discoveryFetchTimeout, errRouterDeadline)
-		defer cancel()
-		req = req.WithContext(ctx)
+// scoped reports whether the answer replaces the caller-scoped defaults; it
+// is always true when there is a source, and err is set when there is none.
+func (r *GrafanaRouter) readRootDiscovery(req *http.Request, path, accept string, into any) (scoped bool, err error) {
+	source := r.discoverySource()
+	if source == nil {
+		return false, errNoDiscoverySource
 	}
-	_, err = readDiscovery(req, source, path, accept, into)
-	return scoped, err
+	// The fallback forwards to the caller's stack, and a slow stack must
+	// not hold discovery open when the defaults are available.
+	ctx, cancel := context.WithTimeoutCause(req.Context(), discoveryFetchTimeout, errRouterDeadline)
+	defer cancel()
+	_, err = readDiscovery(req.WithContext(ctx), source, path, accept, into)
+	return true, err
 }
+
+var errNoDiscoverySource = errors.New("no source for groups the router does not serve")
 
 func readDiscovery(req *http.Request, handler http.Handler, path, accept string, into any) (int, error) {
 	proxyReq := req.Clone(withoutRequestOutcome(req.Context()))

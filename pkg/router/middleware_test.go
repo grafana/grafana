@@ -44,9 +44,8 @@ func TestReconcileRecoversFromBackendPanic(t *testing.T) {
 	require.True(t, router.KnownGroup("grafana-example-app"))
 }
 
-// The router gradually takes over groups from the embedded API server, so in
-// middleware mode a group it serves replaces the embedded server's, core
-// groups included.
+// In middleware mode the router serves the whole /apis tree in place of the
+// embedded API server, so a group it has no backend for is not found.
 func TestMiddlewareReplacesEmbeddedGroups(t *testing.T) {
 	served := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
 	loader := &mutableLoader{backends: []Backend{
@@ -66,7 +65,7 @@ func TestMiddlewareReplacesEmbeddedGroups(t *testing.T) {
 		return recorder.Code
 	}
 	require.Equal(t, http.StatusNoContent, serve("/apis/playlist.grafana.app/v0alpha1/namespaces/default/playlists"))
-	require.Equal(t, http.StatusTeapot, serve("/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"))
+	require.Equal(t, http.StatusNotFound, serve("/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"))
 }
 
 func TestNewPluginBackendRejectsInvalidManifestGroups(t *testing.T) {
