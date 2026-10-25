@@ -797,20 +797,20 @@ func (l *LibraryElementService) PatchLibraryElement(c context.Context, signedInU
 
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser identity.Requester, folderUID string) error {
-	if err := l.requireEditPermissionsOnFolderUID(c, signedInUser, folderUID); err != nil {
-		if errors.Is(err, dashboards.ErrDashboardNotFound) {
-			return dashboards.ErrFolderNotFound
-		}
+	if err := l.RequireEditPermissionsOnFolder(c, signedInUser, folderUID); err != nil {
 		return err
 	}
-	// Attach the requester so a routed LegacyDatabaseProvider can resolve the target database.
-	return l.deleteLibraryElementsInFolderUIDUnchecked(identity.WithRequester(c, signedInUser), signedInUser.GetOrgID(), folderUID)
+	// Reaching here means the edit-permission check above passed.
+	orgID := signedInUser.GetOrgID()
+	return l.DeleteLibraryElementsInFolderUnchecked(folder.WithUncheckedDeleteAuthorized(c, orgID, signedInUser, []string{folderUID}, true), orgID, signedInUser, folderUID)
 }
 
-// deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without
-// checking folder permissions; callers must have already confirmed the folder is gone. Elements
-// still connected to a dashboard are kept and block the delete (as in the permission-checked path).
+// deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without checking folder permissions; elements still connected to a dashboard are kept and block the delete.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c context.Context, orgID int64, folderUID string) error {
+	if l.ConnectedDashboardsFinder == nil {
+		return model.ErrConnectedDashboardsFinderNotConfigured
+	}
+
 	conn := l.SQLStore
 	libraryElementTable := "library_element"
 	ctx := c
@@ -836,7 +836,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c cont
 
 	serviceCtx, _ := identity.WithServiceIdentity(c, orgID)
 	for _, elem := range elements {
-		connectedDashboards, err := l.dashboardsService.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, orgID)
+		connectedDashboards, err := l.ConnectedDashboardsFinder.GetDashboardsByLibraryPanelUID(serviceCtx, elem.UID, orgID)
 		if err != nil {
 			return err
 		}

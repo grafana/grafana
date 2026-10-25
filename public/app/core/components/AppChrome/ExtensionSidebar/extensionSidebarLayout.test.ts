@@ -3,9 +3,11 @@ import { reportInteraction } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
+  canCollapseFloatingExtensionSidebar,
   canFloatExtensionSidebar,
   claimFloatingExtensionSidebar,
   getEffectiveExtensionSidebarPresentation,
+  collapseFloatingExtensionSidebar,
   getRequestedExtensionSidebarPresentation,
   holdFloatingExtensionSidebar,
   isFloatingExtensionSidebarHeld,
@@ -15,6 +17,7 @@ import {
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarPresentation,
   subscribeToExtensionSidebarPresentation,
+  subscribeToFloatingExtensionSidebarCollapse,
 } from './extensionSidebarLayout';
 
 jest.mock('@grafana/runtime', () => ({
@@ -218,6 +221,23 @@ describe('extensionSidebarLayout', () => {
 
     unsubscribe();
     notifyExtensionSidebarClosed();
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers to collapse the floating sidebar only while someone listens, and reports each collapse', () => {
+    expect(canCollapseFloatingExtensionSidebar()).toBe(false);
+
+    const listener = jest.fn();
+    const unsubscribe = subscribeToFloatingExtensionSidebarCollapse(listener);
+    expect(canCollapseFloatingExtensionSidebar()).toBe(true);
+
+    collapseFloatingExtensionSidebar();
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(reportInteraction).toHaveBeenCalledWith('grafana_extension_sidebar_floating_collapsed', { method: 'drag' });
+
+    unsubscribe();
+    expect(canCollapseFloatingExtensionSidebar()).toBe(false);
+    collapseFloatingExtensionSidebar();
     expect(listener).toHaveBeenCalledTimes(1);
   });
 });

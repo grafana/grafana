@@ -668,13 +668,35 @@ audience = second
 		require.Equal(t, "aggregate:"+name, backends[0].Source())
 		require.Equal(t, []metav1.GroupVersionForDiscovery{{GroupVersion: "shared.ext.grafana.app/" + version, Version: version}}, backends[0].Group().Versions)
 	}
-	// Poll completion order must not determine priority or merge group versions.
+	// Poll completion order must not determine priority or merge group
+	// versions. The loader serves nothing until every target has polled once.
 	loader.aggregateTargets[1].poll(t.Context(), dirty)
-	assertWinner("a_second", "v2")
+	_, err = loader.Load(t.Context())
+	require.ErrorIs(t, err, errFirstPollPending)
 	loader.aggregateTargets[0].poll(t.Context(), dirty)
 	assertWinner("z_first", "v1")
 	require.Equal(t, []shadowedGroup{{Group: "shared.ext.grafana.app", Source: "aggregate:a_second", By: "aggregate:z_first"}}, loader.shadowedGroups())
 	first.Close()
 	loader.aggregateTargets[0].poll(t.Context(), dirty)
 	assertWinner("z_first", "v1")
+}
+
+func TestPluginManifestsPollInterval(t *testing.T) {
+	section := func(t *testing.T, kv map[string]string) *setting.DynamicSection {
+		return cfgWithCloudRouterSection(t, kv).SectionWithEnvOverrides(cloudRouterSection)
+	}
+	plugins, core, err := newPluginManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+		"plugins_url":           "https://plugins.invalid/plugins",
+		"core_url":              "https://core.invalid/plugins",
+		"plugins_poll_interval": "5m",
+	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	require.Equal(t, 5*time.Minute, plugins.cooldown.steady)
+	require.Equal(t, defaultAggregatePollInterval, core.cooldown.steady)
+
+	_, _, err = newPluginManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+		"core_url":           "https://core.invalid/plugins",
+		"core_poll_interval": "0s",
+	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.ErrorContains(t, err, "core_poll_interval must be a positive duration")
 }
