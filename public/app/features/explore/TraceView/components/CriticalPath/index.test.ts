@@ -33,3 +33,9 @@ describe.each([[test1], [test2], [test3], [test4], [test5], [test6], [test7], [t
     });
   }
 );
+
+describe('Trace without spans', () => {
+  it('should return an empty critical path', () => {
+    expect(TraceCriticalPath({ ...test1.trace, spans: [] })).toStrictEqual([]);
+  });
+});

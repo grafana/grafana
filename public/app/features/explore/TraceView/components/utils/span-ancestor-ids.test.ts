@@ -95,4 +95,39 @@ describe('spanAncestorIdsSpy', () => {
     };
     expect(spanAncestorIdsSpy(spanWithSomeEmptyReferences as TraceSpan)).toEqual(expectedAncestorIds);
   });
+
+  describe('cyclic references', () => {
+    const makeSpan = (spanID: string) => ({ spanID, references: [] as unknown[] });
+    const asSpan = (span: { spanID: string }) => span as unknown as TraceSpan;
+
+    // a -> b -> c -> a
+    const makeCycle = () => {
+      const a = makeSpan('a');
+      const b = makeSpan('b');
+      const c = makeSpan('c');
+      a.references = [{ refType: 'CHILD_OF', span: b }];
+      b.references = [{ refType: 'CHILD_OF', span: c }];
+      c.references = [{ refType: 'FOLLOWS_FROM', span: a }];
+      return { a, b, c };
+    };
+
+    it('stops when the references lead back to the span itself', () => {
+      expect(spanAncestorIdsSpy(asSpan(makeCycle().a))).toEqual(['b', 'c']);
+    });
+
+    it('stops when a span references itself', () => {
+      const span = makeSpan('a');
+      span.references = [{ refType: 'FOLLOWS_FROM', span }];
+
+      expect(spanAncestorIdsSpy(asSpan(span))).toEqual([]);
+    });
+
+    it('stops when the cycle does not include the span itself', () => {
+      const { b } = makeCycle();
+      const child = makeSpan('child');
+      child.references = [{ refType: 'CHILD_OF', span: b }];
+
+      expect(spanAncestorIdsSpy(asSpan(child))).toEqual(['b', 'c', 'a']);
+    });
+  });
 });
