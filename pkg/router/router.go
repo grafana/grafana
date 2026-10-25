@@ -186,7 +186,10 @@ type GrafanaRouter struct {
 
 	// unregisteredGroupHandler serves groups no backend serves: the
 	// single-tenant fallback, set before serving by the standalone target.
-	// nil otherwise, and such groups are not found.
+	// Root discovery also reads the groups the router doesn't serve from it;
+	// it answers for the caller, so its view replaces the defaults of
+	// caller-scoped backends. nil otherwise: such groups are not found, and
+	// root discovery lists only the router's groups.
 	unregisteredGroupHandler http.Handler
 
 	// reconciles and reconcileErrors count completed reconciles, and
@@ -233,6 +236,20 @@ func (r *GrafanaRouter) HandleAPIs() http.HandlerFunc {
 // HandleOpenAPIv3 serves the /openapi/v3 tree.
 func (r *GrafanaRouter) HandleOpenAPIv3() http.HandlerFunc {
 	return r.handleOpenAPIv3
+}
+
+// handlerFor returns the router's handler for the tree path is in, or nil
+// when it is in neither. parseInfo reports whether the handler reads the
+// request info, so the request metrics parse it for the handler: only /apis
+// does.
+func (r *GrafanaRouter) handlerFor(path string) (handle http.HandlerFunc, parseInfo bool) {
+	switch {
+	case path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/"):
+		return r.handleAPIs, true
+	case path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/"):
+		return r.handleOpenAPIv3, false
+	}
+	return nil, false
 }
 
 // serveNotFound answers a request the router has nothing to serve for.
@@ -414,14 +431,6 @@ func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.
 		return
 	}
 	serveNotFound(w, req)
-}
-
-// discoverySource is where root discovery reads the groups the router does
-// not serve: the unregistered-group handler, which answers for the caller, so
-// its answer replaces the defaults of caller-scoped backends. It is nil when
-// none is set, and root discovery lists only the router's groups.
-func (r *GrafanaRouter) discoverySource() http.Handler {
-	return r.unregisteredGroupHandler
 }
 
 // breakerState is the group breaker's state, read without changing it:

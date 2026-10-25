@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -161,20 +160,6 @@ func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http
 		return
 	}
 	next.ServeHTTP(w, req)
-}
-
-// handlerFor returns the router's handler for the tree path is in, or nil
-// when it is in neither. parseInfo reports whether the handler reads the
-// request info, so the request metrics parse it for the handler: only /apis
-// does.
-func (r *GrafanaRouter) handlerFor(path string) (handle http.HandlerFunc, parseInfo bool) {
-	switch {
-	case path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/"):
-		return r.HandleAPIs(), true
-	case path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/"):
-		return r.HandleOpenAPIv3(), false
-	}
-	return nil, false
 }
 
 // Run adapts Service to the full server's background-service lifecycle.
