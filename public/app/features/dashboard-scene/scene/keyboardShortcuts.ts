@@ -21,7 +21,7 @@ import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
-import { isMobileEditDeprecated } from '../utils/mobileEditDeprecation';
+import { isMobileEditDeprecated, notifyMobileEditNotAvailable } from '../utils/mobileEditDeprecation';
 import { findVizPanelByPathId } from '../utils/pathId';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
@@ -155,26 +155,28 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   });
 
   // Copy panel (available outside edit mode so it can be pasted into another dashboard)
-  if (!isMobileEditDeprecated()) {
-    keybindings.addBinding({
-      key: 'p c',
-      onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-        DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(vizPanel), 'keyboard');
-        scene.copyPanel(vizPanel);
-        const panelName = vizPanel.state.title || '';
-        dispatch(
-          notifyApp(
-            createSuccessNotification(
-              t('panel.header-menu.panel-copy-success', 'Panel "{{panelName}}" copied to clipboard', {
-                panelName,
-                interpolation: { escapeValue: false },
-              })
-            )
+  keybindings.addBinding({
+    key: 'p c',
+    onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+      if (isMobileEditDeprecated()) {
+        notifyMobileEditNotAvailable();
+        return;
+      }
+      DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(vizPanel), 'keyboard');
+      scene.copyPanel(vizPanel);
+      const panelName = vizPanel.state.title || '';
+      dispatch(
+        notifyApp(
+          createSuccessNotification(
+            t('panel.header-menu.panel-copy-success', 'Panel "{{panelName}}" copied to clipboard', {
+              panelName,
+              interpolation: { escapeValue: false },
+            })
           )
-        );
-      }),
-    });
-  }
+        )
+      );
+    }),
+  });
 
   // Refresh
   keybindings.addBinding({
@@ -248,11 +250,15 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     },
   });
 
-  if (canEdit && !isMobileEditDeprecated()) {
+  if (canEdit) {
     // Panel edit
     keybindings.addBinding({
       key: 'e',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        if (isMobileEditDeprecated()) {
+          notifyMobileEditNotAvailable();
+          return;
+        }
         if (!enterEditingForShortcut()) {
           return;
         }
@@ -303,6 +309,10 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p r',
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+        if (isMobileEditDeprecated()) {
+          notifyMobileEditNotAvailable();
+          return;
+        }
         if (isFullDashboardEditing(scene.state)) {
           const panelId = getPanelIdForVizPanel(vizPanel);
           DashboardInteractions.panelActionClicked('delete', panelId, 'keyboard');
@@ -315,6 +325,10 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p d',
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
+        if (isMobileEditDeprecated()) {
+          notifyMobileEditNotAvailable();
+          return;
+        }
         DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(vizPanel), 'keyboard');
         if (isFullDashboardEditing(scene.state)) {
           duplicatePanel(vizPanel);
@@ -322,19 +336,39 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       }),
     });
 
-    // paste panel (not panel-scoped: adds the copied panel to the dashboard)
-    keybindings.addBinding({
-      key: 'p v',
-      onTrigger: () => {
-        if (isFullDashboardEditing(scene.state) && store.exists(LS_PANEL_COPY_KEY)) {
-          const sidebar = scene.state.sidebar;
-          const selectedObj = sidebar.getSelectedObject();
-          sidebar.pastePanel(selectedObj);
+    if (!isMobileEditDeprecated()) {
+      // Dashboard settings
+      keybindings.addBinding({
+        key: 'd s',
+        onTrigger: () => {
+          if (enterEditingForShortcut()) {
+            scene.onOpenSettings();
+          }
+        },
+      });
 
-          DashboardInteractions.trackPastePanelClick('keyboard', getLayoutType(selectedObj), 'keyboard');
-        }
-      },
-    });
+      // Open save drawer
+      if (canSave) {
+        keybindings.addBinding({
+          key: 'mod+s',
+          onTrigger: () => scene.openSaveDrawer({}),
+        });
+      }
+
+      // paste panel (not panel-scoped: adds the copied panel to the dashboard)
+      keybindings.addBinding({
+        key: 'p v',
+        onTrigger: () => {
+          if (isFullDashboardEditing(scene.state) && store.exists(LS_PANEL_COPY_KEY)) {
+            const sidebar = scene.state.sidebar;
+            const selectedObj = sidebar.getSelectedObject();
+            sidebar.pastePanel(selectedObj);
+
+            DashboardInteractions.trackPastePanelClick('keyboard', getLayoutType(selectedObj), 'keyboard');
+          }
+        },
+      });
+    }
   }
 
   // collapse all rows

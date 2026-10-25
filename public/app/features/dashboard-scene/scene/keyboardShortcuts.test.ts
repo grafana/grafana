@@ -1,6 +1,12 @@
 import { createBrowserHistory } from 'history';
 
-import { type GrafanaConfig, LegacyGraphHoverClearEvent, locationUtil, SetPanelAttentionEvent } from '@grafana/data';
+import {
+  AppEvents,
+  type GrafanaConfig,
+  LegacyGraphHoverClearEvent,
+  locationUtil,
+  SetPanelAttentionEvent,
+} from '@grafana/data';
 import { config, HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
 import { behaviors, sceneGraph, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
@@ -26,6 +32,7 @@ jest.mock('app/core/app_events', () => ({
   appEvents: {
     subscribe: jest.fn(() => ({ unsubscribe: jest.fn() })),
     publish: jest.fn(),
+    emit: jest.fn(),
   },
 }));
 jest.mock('app/core/services/KeybindingSet');
@@ -511,7 +518,7 @@ describe('setupKeyboardShortcuts', () => {
       Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
-    it('does not set up the e/mod+s/d s shortcuts when blocked on mobile, even if canEditDashboard', () => {
+    it('blocks the mod+s/d s shortcuts', () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
       Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
@@ -519,12 +526,34 @@ describe('setupKeyboardShortcuts', () => {
 
       setupKeyboardShortcuts(mockScene);
 
-      expect(getBinding('e')).toBeUndefined();
       expect(getBinding('mod+s')).toBeUndefined();
       expect(getBinding('d s')).toBeUndefined();
     });
 
-    it('sets up the e/mod+s/d s shortcuts normally when not blocked on mobile', () => {
+    it('blocks e shortcut and warns instead of entering edit mode', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
+      mockScene.setState({ meta: { ...mockScene.state.meta, canSave: true } });
+      jest.mocked(findVizPanelByPathId).mockReturnValue(new VizPanel({ pluginId: 'timeseries' }));
+      const emitSpy = jest.spyOn(appEvents, 'emit');
+      const pushSpy = jest.spyOn(locationService, 'push');
+
+      setupKeyboardShortcuts(mockScene);
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+
+      const eBinding = getBinding('e');
+      expect(eBinding).toBeDefined();
+      await eBinding!.onTrigger();
+
+      expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+        'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+      ]);
+      expect(pushSpy).not.toHaveBeenCalled();
+    });
+
+    it('sets up the e/mod+s/d s shortcuts', () => {
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
       mockScene.setState({ meta: { ...mockScene.state.meta, canSave: true } });
 
@@ -534,6 +563,50 @@ describe('setupKeyboardShortcuts', () => {
       expect(getBinding('mod+s')).toBeDefined();
       expect(getBinding('d s')).toBeDefined();
     });
+
+    it('blocks the p r (delete) shortcut and warns instead of deleting', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
+      jest.mocked(findVizPanelByPathId).mockReturnValue(new VizPanel({ pluginId: 'timeseries' }));
+      jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+      const emitSpy = jest.spyOn(appEvents, 'emit');
+
+      setupKeyboardShortcuts(mockScene);
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+
+      const prBinding = getBinding('p r');
+      expect(prBinding).toBeDefined();
+      prBinding!.onTrigger();
+
+      expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+        'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+      ]);
+      expect(DashboardInteractions.panelActionClicked).not.toHaveBeenCalled();
+    });
+
+    it('blocks the p d (duplicate) shortcut and warns instead of duplicating', async () => {
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
+      jest.mocked(findVizPanelByPathId).mockReturnValue(new VizPanel({ pluginId: 'timeseries' }));
+      jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+      const emitSpy = jest.spyOn(appEvents, 'emit');
+
+      setupKeyboardShortcuts(mockScene);
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+
+      const pdBinding = getBinding('p d');
+      expect(pdBinding).toBeDefined();
+      pdBinding!.onTrigger();
+
+      expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+        'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+      ]);
+      expect(DashboardInteractions.panelActionClicked).not.toHaveBeenCalled();
+    });
   });
 
   describe('p c shortcut (copy panel), blocked on mobile', () => {
@@ -541,19 +614,31 @@ describe('setupKeyboardShortcuts', () => {
       Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
-    it('sets up the copy-panel shortcut when not blocked on mobile', () => {
+    it('sets up the p c shortcut', () => {
       setupKeyboardShortcuts(mockScene);
 
       expect(getBinding('p c')).toBeDefined();
     });
 
-    it('does not set up the copy-panel shortcut when blocked on mobile', () => {
+    it('blocks the copy-panel shortcut on mobile and warns instead of copying', async () => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
       Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      jest.mocked(findVizPanelByPathId).mockReturnValue(new VizPanel({ pluginId: 'timeseries' }));
+      jest.spyOn(mockScene, 'copyPanel').mockImplementation();
+      const emitSpy = jest.spyOn(appEvents, 'emit');
 
       setupKeyboardShortcuts(mockScene);
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
 
-      expect(getBinding('p c')).toBeUndefined();
+      const pcBinding = getBinding('p c');
+      expect(pcBinding).toBeDefined();
+      await pcBinding!.onTrigger();
+
+      expect(emitSpy).toHaveBeenCalledWith(AppEvents.alertWarning, [
+        'Dashboard editing is not available on small screens. Switch to a larger screen to continue.',
+      ]);
+      expect(mockScene.copyPanel).not.toHaveBeenCalled();
     });
   });
 
