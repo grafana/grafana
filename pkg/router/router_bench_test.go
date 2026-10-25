@@ -76,6 +76,9 @@ func BenchmarkServiceMiddleware(b *testing.B) {
 	}
 	svc := newService(NewGrafanaRouter(dummyRoutesLoader{groups: groups}, nil), prometheus.NewRegistry())
 	svc.middleware = true
+	// The embedded API server's groups are served through its handler.
+	svc.router.loader = newEmbeddedLoader(svc.router.loader, &svc.upstream)
+	svc.SetUpstream(&fakeEmbeddedAPIServer{groups: []string{"dashboard.grafana.app"}, status: http.StatusNoContent})
 	if err := svc.router.reconcile(b.Context()); err != nil {
 		b.Fatal(err)
 	}
@@ -350,35 +353,24 @@ func BenchmarkServiceMiddlewareRootDiscovery(b *testing.B) {
 	for i := range backends {
 		backends[i] = newBenchmarkAggregateBackend(b, fmt.Sprintf("app-%d.ext.grafana.app", i), benchmarkRoundTripper{})
 	}
-	groups := make([]metav1.APIGroup, 50)
-	paths := map[string]any{}
-	for i := range groups {
-		group := fmt.Sprintf("core-%d.grafana.app", i)
-		version := metav1.GroupVersionForDiscovery{GroupVersion: group + "/v1", Version: "v1"}
-		groups[i] = metav1.APIGroup{Name: group, Versions: []metav1.GroupVersionForDiscovery{version}, PreferredVersion: version}
-		paths["apis/"+group+"/v1"] = map[string]string{"serverRelativeURL": "/openapi/v3/apis/" + group + "/v1?hash=ABC"}
+	// In middleware mode the embedded API server's groups are served alongside.
+	core := make([]string, 50)
+	for i := range core {
+		core[i] = fmt.Sprintf("core-%d.grafana.app", i)
 	}
-	apis, err := json.Marshal(metav1.APIGroupList{TypeMeta: metav1.TypeMeta{Kind: "APIGroupList", APIVersion: "v1"}, Groups: groups})
-	if err != nil {
-		b.Fatal(err)
-	}
-	index, err := json.Marshal(map[string]any{"paths": paths})
-	if err != nil {
-		b.Fatal(err)
-	}
-	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		if r.URL.Path == apisPrefix {
-			_, _ = w.Write(apis)
-			return
-		}
-		_, _ = w.Write(index)
-	})
 	svc := newService(NewGrafanaRouter(&statusLoader{backends: backends}, nil), prometheus.NewRegistry())
 	svc.middleware = true
+	svc.router.loader = newEmbeddedLoader(svc.router.loader, &svc.upstream)
+	svc.SetUpstream(&fakeEmbeddedAPIServer{groups: core, status: http.StatusNoContent})
 	if err := svc.router.reconcile(b.Context()); err != nil {
 		b.Fatal(err)
 	}
+	if got := len(*svc.router.snapshot.Load()); got != len(backends)+len(core) {
+		b.Fatalf("serving %d groups, want %d", got, len(backends)+len(core))
+	}
+	next := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+		b.Error("root discovery is the router's")
+	})
 	for _, path := range []string{apisPrefix, openapiV3Prefix} {
 		b.Run(path, func(b *testing.B) {
 			req := newAuthenticatedRequest(http.MethodGet, path, nil)

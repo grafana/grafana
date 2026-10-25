@@ -114,6 +114,7 @@ func TestServiceMiddlewareServesTheAPITree(t *testing.T) {
 
 	svc, err := provideTestService(cfg, features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}})
 	require.NoError(t, err)
+	svc.SetUpstream(&fakeEmbeddedAPIServer{groups: []string{"legacy.grafana.app"}, status: http.StatusNoContent})
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
 	t.Cleanup(func() {
 		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc))
@@ -130,11 +131,11 @@ func TestServiceMiddlewareServesTheAPITree(t *testing.T) {
 		require.Equal(t, "dummy backend for group: dummy-backend-1.ext.grafana.app", recorder.Body.String())
 	})
 
-	t.Run("embedded route is not found", func(t *testing.T) {
+	t.Run("embedded group is served by the embedded server", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/legacy.grafana.app/v1", nil), httpRouter)
 
-		require.Equal(t, http.StatusNotFound, recorder.Code)
+		require.Equal(t, http.StatusNoContent, recorder.Code)
 	})
 
 	t.Run("unknown route is not found", func(t *testing.T) {

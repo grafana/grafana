@@ -78,6 +78,10 @@ type Service interface {
 // RequestRouter routes API groups before the embedded API server.
 type RequestRouter interface {
 	HandleFunc(http.ResponseWriter, *http.Request, http.Handler)
+
+	// SetUpstream gives the router the started server's handler, so it can
+	// serve the server's groups.
+	SetUpstream(http.Handler)
 }
 
 type service struct {
@@ -648,6 +652,9 @@ func (s *service) start(ctx context.Context) error {
 
 	// used by the proxy wrapper registered in ProvideService
 	s.handler = runningServer.Handler
+	if s.requestRouter != nil {
+		s.requestRouter.SetUpstream(s.handler)
+	}
 	// used by local clients to make requests to the server
 	s.restConfig = runningServer.LoopbackClientConfig
 

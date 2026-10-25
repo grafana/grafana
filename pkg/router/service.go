@@ -38,6 +38,10 @@ type Service struct {
 	standalone bool
 	middleware bool
 
+	// upstream is the embedded API server, whose groups the router serves in
+	// middleware mode.
+	upstream embeddedUpstream
+
 	// loaderLifecycle is the routes loader's own background lifecycle (such as
 	// cloudLoader's poll loops), which this service starts, stops and watches.
 	// Both are nil for a loader without one; a nil watcher's channel never fires.
@@ -79,7 +83,20 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 		s.loaderFailures = services.NewFailureWatcher()
 		s.loaderFailures.WatchService(lifecycle)
 	}
+	// In middleware mode the router serves the whole /apis tree, so it serves
+	// the embedded API server's groups too.
+	if s.middleware {
+		router.loader = newEmbeddedLoader(loader, &s.upstream)
+	}
 	return s, nil
+}
+
+// SetUpstream gives the router the embedded API server's handler, once the
+// server has started. In middleware mode the router serves the server's groups
+// through it. The router starts after the server, so it is set before the
+// router's first reconcile.
+func (s *Service) SetUpstream(handler http.Handler) {
+	s.upstream.set(handler)
 }
 
 // RegisterTargetRoutes enables the service and mounts it on the dskit module server.
