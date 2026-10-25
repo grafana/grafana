@@ -7,6 +7,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
@@ -222,6 +223,11 @@ func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthToken
 		middlewares = append(middlewares, clientmiddleware.NewHostedGrafanaACHeaderMiddleware(cfg))
 	}
 
+	//nolint:staticcheck // Deprecated, kept for backwards compatibility of datasources moved out of core
+	middlewares = append(middlewares, clientmiddleware.NewDataProxyTimeoutMiddleware(
+		httpclientprovider.TimeoutOptionsFromConfig(cfg),
+		httpclientprovider.SDKDefaultTimeoutOptions(),
+	))
 	middlewares = append(middlewares, clientmiddleware.NewHTTPCaptureMiddleware())
 	middlewares = append(middlewares, clientmiddleware.NewHTTPClientMiddleware())
 

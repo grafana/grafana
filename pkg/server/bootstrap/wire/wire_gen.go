@@ -45,7 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/registry/apis"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/registry/apis/collections"
 	legacy2 "github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard"
@@ -559,10 +558,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	experimentalKVOptions, err := sql.ProvideExperimentalKV(cfg)
-	if err != nil {
-		return nil, err
-	}
 	subscriberService := nats.ProvideSubscriber(config, registerer)
 	watchExpiry := resource.NewWatchExpiry()
 	grafanaRouter, err := router.ProvideGrafanaRouter(cfg)
@@ -584,7 +579,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		DashboardStats:    ossDashboardStats,
 		KV:                kv,
 		EDB:               dbProvider,
-		ExperimentalKV:    experimentalKVOptions,
 		Publisher:         publisherService,
 		Subscriber:        subscriberService,
 		WatchExpiry:       watchExpiry,
@@ -1029,15 +1023,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	appPluginAPIBuilder, err := appplugin.RegisterAPIService(apiserverService, middlewareHandler, plugincontextProvider, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg)
-	if err != nil {
-		return nil, err
-	}
 	provisioningDependencyRegisterer, err := provisioning3.RegisterDependencies(cfg, acimplService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, provisioningAPIBuilder, appPluginAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, provisioningAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, features, accessControl, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return nil, err
@@ -1360,10 +1350,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	experimentalKVOptions, err := sql.ProvideExperimentalKV(cfg)
-	if err != nil {
-		return nil, err
-	}
 	subscriberService := nats.ProvideSubscriber(config, registerer)
 	watchExpiry := resource.NewWatchExpiry()
 	grafanaRouter, err := router.ProvideGrafanaRouter(cfg)
@@ -1385,7 +1371,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		DashboardStats:    ossDashboardStats,
 		KV:                kv,
 		EDB:               dbProvider,
-		ExperimentalKV:    experimentalKVOptions,
 		Publisher:         publisherService,
 		Subscriber:        subscriberService,
 		WatchExpiry:       watchExpiry,
@@ -1832,15 +1817,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	appPluginAPIBuilder, err := appplugin.RegisterAPIService(apiserverService, middlewareHandler, plugincontextProvider, pluginsourcesService, service12, acimplService, accessControl, decryptService, tracingService, featureToggles, cfg)
-	if err != nil {
-		return nil, err
-	}
 	provisioningDependencyRegisterer, err := provisioning3.RegisterDependencies(cfg, acimplService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, provisioningAPIBuilder, appPluginAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, provisioningAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, features, accessControl, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return nil, err

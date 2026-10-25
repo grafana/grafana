@@ -116,6 +116,7 @@ func hybridSearchResults(res *resourcepb.HybridSearchResponse, kind kindRef) *se
 			Title:       hit.GetTitle(),
 			Folder:      hit.GetFolder(),
 			FolderTitle: hit.GetFolderTitle(),
+			Tags:        hit.GetTags(),
 			Chunks:      chunks,
 		}
 		if hit.GetManagedByKind() != "" || hit.GetManagedById() != "" {

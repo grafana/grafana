@@ -118,6 +118,7 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest, n
 			correlationID: item.GetCorrelationId(),
 			resource:      resource,
 			relation:      relation,
+			resolved:      isLegacyPermissionDelegation(item.GetGroup(), item.GetResource(), item.GetSubresource()),
 		}
 	}
 
