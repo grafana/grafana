@@ -21,6 +21,7 @@ import 'swagger-ui-react/swagger-ui.css';
 
 import { createRoot } from 'react-dom/client';
 
+import { RouterStatusPage } from './RouterStatusPage';
 import { Page } from './SwaggerPage';
 
 window.onload = () => {
@@ -37,5 +38,6 @@ window.onload = () => {
     return;
   }
   const root = createRoot(rootElement);
-  root.render(<Page />);
+  const router = new URLSearchParams(window.location.search).get('router');
+  root.render(router === 'status' ? <RouterStatusPage /> : <Page />);
 };
