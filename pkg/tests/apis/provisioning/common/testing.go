@@ -1835,13 +1835,32 @@ func isTransientDeleteError(err error) bool {
 		apierrors.IsServiceUnavailable(err)
 }
 
+// isManagerRepositoryNotFound reports whether a NotFound names the repository that manages item.
+// A managed resource is deleted through its repository, so the NotFound can be about the
+// repository, not the resource. The resource is then still there.
+func isManagerRepositoryNotFound(err error, item unstructured.Unstructured) bool {
+	statusErr, ok := errors.AsType[*apierrors.StatusError](err)
+	if !ok || statusErr.ErrStatus.Reason != metav1.StatusReasonNotFound {
+		return false
+	}
+	details := statusErr.ErrStatus.Details
+	repo := provisioning.RepositoryResourceInfo.GroupResource()
+	return details != nil &&
+		details.Group == repo.Group &&
+		details.Kind == repo.Resource &&
+		details.Name == item.GetAnnotations()[utils.AnnoKeyManagerIdentity]
+}
+
 // deleteAndWait deletes all resources from a dynamic client and polls until none remain.
+// A NotFound counts as deleted, unless it names the repository that manages the resource.
 func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeout time.Duration, deleteOpts metav1.DeleteOptions) error {
 	var lastTransient error
 	deleteAll := func(items []unstructured.Unstructured) error {
 		for _, item := range items {
 			err := client.Delete(ctx, item.GetName(), deleteOpts)
 			switch {
+			case err != nil && isManagerRepositoryNotFound(err, item):
+				return fmt.Errorf("deleteAndWait: delete %q: its repository no longer exists: %w", item.GetName(), err)
 			case err == nil, apierrors.IsNotFound(err):
 			case isTransientDeleteError(err):
 				lastTransient = fmt.Errorf("delete %q: %w", item.GetName(), err)

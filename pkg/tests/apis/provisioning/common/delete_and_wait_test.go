@@ -13,6 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // fakeResourceClient lists and deletes named items. deleteErrs holds, per name, the errors the
@@ -22,11 +25,12 @@ type fakeResourceClient struct {
 	mu         sync.Mutex
 	items      map[string]bool
 	deleteErrs map[string][]error
+	managers   map[string]string
 	deletes    int
 }
 
 func newFakeResourceClient(names ...string) *fakeResourceClient {
-	f := &fakeResourceClient{items: map[string]bool{}, deleteErrs: map[string][]error{}}
+	f := &fakeResourceClient{items: map[string]bool{}, deleteErrs: map[string][]error{}, managers: map[string]string{}}
 	for _, name := range names {
 		f.items[name] = true
 	}
@@ -40,6 +44,9 @@ func (f *fakeResourceClient) List(context.Context, metav1.ListOptions) (*unstruc
 	for name := range f.items {
 		item := unstructured.Unstructured{}
 		item.SetName(name)
+		if manager, ok := f.managers[name]; ok {
+			item.SetAnnotations(map[string]string{utils.AnnoKeyManagerIdentity: manager})
+		}
 		list.Items = append(list.Items, item)
 	}
 	return list, nil
@@ -136,6 +143,29 @@ func TestDeleteAndWait(t *testing.T) {
 	t.Run("an item that is already gone is not an error", func(t *testing.T) {
 		client := newFakeResourceClient("gone")
 		client.deleteErrs["gone"] = []error{apierrors.NewNotFound(gr, "gone")}
+
+		require.NoError(t, deleteAndWait(t.Context(), client, time.Minute, metav1.DeleteOptions{}))
+	})
+
+	t.Run("a not found that names the managing repository is returned at once", func(t *testing.T) {
+		client := newFakeResourceClient("orphan")
+		client.managers["orphan"] = "gone-repo"
+		client.deleteErrs["orphan"] = []error{apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), "gone-repo")}
+
+		start := time.Now()
+		err := deleteAndWait(t.Context(), client, time.Minute, metav1.DeleteOptions{})
+
+		require.Error(t, err)
+		require.True(t, apierrors.IsNotFound(err), "got: %v", err)
+		require.Contains(t, err.Error(), `"orphan"`)
+		require.Less(t, time.Since(start), 5*time.Second)
+		require.Equal(t, 1, client.deletes, "it must not retry")
+	})
+
+	t.Run("a not found for a repository other than the manager is an item that is already gone", func(t *testing.T) {
+		client := newFakeResourceClient("raw-file")
+		client.managers["raw-file"] = "live-repo"
+		client.deleteErrs["raw-file"] = []error{apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), "README.md")}
 
 		require.NoError(t, deleteAndWait(t.Context(), client, time.Minute, metav1.DeleteOptions{}))
 	})
