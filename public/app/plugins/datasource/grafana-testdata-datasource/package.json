@@ -42,6 +42,5 @@
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
-  },
-  "packageManager": "yarn@4.18.1"
+  }
 }

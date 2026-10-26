@@ -64,6 +64,8 @@ const extensionSidebarContextMock: ExtensionSidebarContextType = {
   availableComponents: new Map(),
   extensionSidebarWidth: 300,
   setExtensionSidebarWidth: jest.fn(),
+  floatingExtensionSidebarWidth: 480,
+  setFloatingExtensionSidebarWidth: jest.fn(),
   presentation: 'docked',
   floatingHidden: false,
 };
@@ -185,6 +187,15 @@ describe('ExtensionSidebar', () => {
         isLoading: false,
       });
       mockUseExtensionSidebarContext.mockReturnValue({ ...extensionSidebarContextMock, presentation: 'floating' });
+    });
+
+    it('puts the width handle on the moved sidebar, never on the docked one', () => {
+      const { container, rerender } = render(<ExtensionSidebar />);
+      expect(screen.getByRole('separator', { name: 'Resize sidebar width' }).parentElement).toBe(container.firstChild);
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...extensionSidebarContextMock, presentation: 'docked' });
+      rerender(<ExtensionSidebar />);
+      expect(screen.queryByRole('separator', { name: 'Resize sidebar width' })).not.toBeInTheDocument();
     });
 
     it('docks when the drag asks it to', () => {

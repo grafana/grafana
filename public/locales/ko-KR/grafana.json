@@ -1438,6 +1438,11 @@
         "no-rules": "",
         "rules-error": ""
       },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
       "result-count": {
         "alert-rules_other": "",
         "recording-rules_other": ""
@@ -2153,14 +2158,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "최대 데이터 포인트",
-      "tooltip-max-data-points": "시리즈당 최대 데이터 포인트. 일부 데이터 소스에 바로 사용하며 자동 간격 계산에 사용합니다. 스트리밍 데이터를 사용하면 이 값이 롤링 버퍼에 사용됩니다."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "신규"
     },
     "min-interval-option": {
       "label-interval": "간격",
-      "tooltip-interval": "데이터 소스로 전송된 간격입니다. 데이터 기록 빈도에 맞춰 설정하는 것이 좋습니다. 예를 들어, 데이터가 1분마다 기록된다면 <1>1분</1>으로 설정하세요."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4105,6 +4110,11 @@
   },
   "app-chrome": {
     "skip-content-button": "주요 콘텐츠로 건너뛰기",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "로그인"
     }
@@ -4567,8 +4577,7 @@
       "delete-warning": "이 작업을 수행하면 이 폴더와 모든 하위 폴더가 삭제됩니다. ",
       "folder-empty": "선택한 폴더가 비어 있습니다",
       "folder-not-empty": "선택한 폴더에 삭제될 리소스가 포함되어 있습니다",
-      "missing-info": "필수 입력 항목 누락",
-      "success-message": "폴더가 삭제되었습니다"
+      "missing-info": "필수 입력 항목 누락"
     },
     "empty-state": {
       "button-title": "대시보드 생성",
@@ -7199,8 +7208,7 @@
       "delete-error": "대시보드 삭제 실패",
       "deleting": "삭제 중…",
       "drawer-title": "프로비저닝된 대시보드 삭제",
-      "no-repository-selected": "삭제에 필요한 리포지토리 누락",
-      "success-message": "대시보드가 성공적으로 삭제되었습니다"
+      "no-repository-selected": "삭제에 필요한 리포지토리 누락"
     },
     "description-label": {
       "description": "설명"
@@ -7477,14 +7485,10 @@
       "already-in-folder": "대시보드가 이미 선택한 폴더에 있습니다.",
       "api-error": "대시보드를 이동하지 못했습니다",
       "cancel-action": "취소",
-      "current-file-not-found": "현재 대시보드 파일을 찾을 수 없습니다",
       "drawer-title": "프로비저닝된 대시보드 이동",
-      "file-load-error": "대시보드 로딩 중 오류 발생",
-      "loading-dashboard-data": "대시보드 데이터 로딩 중",
       "move-action": "대시보드 이동",
       "move-read-only-message": "리포지토리가 읽기 전용이므로 이 대시보드를 Grafana에서 직접 이동할 수 없습니다. 이 대시보드를 이동하려면 Git 리포지토리에서 파일을 이동하세요.",
       "moving": "이동 중...",
-      "success-message": "대시보드가 성공적으로 이동되었습니다",
       "target-path-label": "대상 경로",
       "title-this-repository-is-read-only": "이 리포지토리는 읽기 전용입니다"
     },
@@ -13056,7 +13060,8 @@
         "close": "{{title}} 닫기",
         "open": "{{title}} 열기",
         "open-all": "AI 어시스턴트 및 사이드바 앱 열기"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "워크스페이스로 이동",
@@ -14211,6 +14216,7 @@
       "description-folder": "리포지토리 내부의 폴더. 리포지토리 루트의 경우 비워 둡니다.",
       "description-folder-path": "리포지토리 내 폴더 경로",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "구성된 브랜치로 푸시가 비활성화되었습니다",
       "label-branch": "브랜치",
       "label-comment": "댓글",
@@ -15731,6 +15737,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "계속하려면 이 쿼리에 대한 데이터 소스를 선택하세요.",
     "datasource-load-error-title": "이 쿼리에 대한 데이터 소스 로딩 실패",
     "loading-datasource": "데이터 소스 로딩 중",
