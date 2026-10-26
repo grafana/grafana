@@ -221,6 +221,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 		return v1.TimeInterval{}, err
 	}
 
+	mt.Manager = models.PreserveStoredManager(existing.Manager, mt.Manager)
 	updated := revision.SetTimeInterval(mt)
 
 	// TODO add diff and noop detection

@@ -104,3 +104,50 @@ func TestProvenanceMatchesManager(t *testing.T) {
 		})
 	}
 }
+
+func TestPreserveStoredManager(t *testing.T) {
+	terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "workspace-x"}
+	kubectl := utils.ManagerProperties{Kind: utils.ManagerKindKubectl, Identity: "ns/name"}
+	tests := []struct {
+		name     string
+		stored   utils.ManagerProperties
+		incoming utils.ManagerProperties
+		want     utils.ManagerProperties
+	}{
+		{
+			name:     "classic api write keeps stored terraform",
+			stored:   terraform,
+			incoming: ProvenanceToManagerProperties(ProvenanceAPI),
+			want:     terraform,
+		},
+		{
+			name:     "classic file write replaces stored terraform",
+			stored:   terraform,
+			incoming: ProvenanceToManagerProperties(ProvenanceFile),
+			want:     ProvenanceToManagerProperties(ProvenanceFile),
+		},
+		{
+			name:     "write without a manager replaces stored terraform",
+			stored:   terraform,
+			incoming: utils.ManagerProperties{},
+			want:     utils.ManagerProperties{},
+		},
+		{
+			name:     "specific manager replaces stored terraform",
+			stored:   terraform,
+			incoming: kubectl,
+			want:     kubectl,
+		},
+		{
+			name:     "classic api write on unmanaged resource",
+			stored:   utils.ManagerProperties{},
+			incoming: ProvenanceToManagerProperties(ProvenanceAPI),
+			want:     ProvenanceToManagerProperties(ProvenanceAPI),
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, PreserveStoredManager(tc.stored, tc.incoming))
+		})
+	}
+}

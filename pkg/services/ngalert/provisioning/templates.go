@@ -280,6 +280,7 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 		return v1.TemplateGroup{}, err
 	}
 
+	tmpl.Manager = models.PreserveStoredManager(existing.Manager, tmpl.Manager)
 	updated := revision.SetTemplate(tmpl)
 
 	err = t.xact.InTransaction(ctx, func(ctx context.Context) error {
