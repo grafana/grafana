@@ -70,7 +70,8 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 | D2–D4, D6–D9, D11 (partly): the dead-code sweep | #135744 |
 | R1, R2: retired plugin handlers are destroyed once they drain, and managed plugin connections close with their last handler | #135809 |
 | R4, O4: a failing backend backs off per group, reconcile warnings are logged once, and the status page lists load failures | #135818 |
-| C7, C8: docs and specs caught up with #135946 and #135949, `mdCode` bounded, `cooldown.go` | `router-docs-c7-c8` (unmerged) |
+| C7, C8: docs and specs caught up with #135946 and #135949, `mdCode` bounded, `cooldown.go` | #136005 |
+| A2, A5, A8: one `polledSource`, an ordered source list with a `mergeStep` for the dashboard split, teardown on stop, one `wrappedBackend` | `router/a2-sources` (unmerged) |
 | O5–O9: 4xx at Debug, no panic on a second registration, ready only after each source's first poll, `plugins_poll_interval` and `core_poll_interval`, no `plugin_id=""` | #135820 |
 | P14, P17, P20, P21: the `/watch/` path rejected, router deadlines counted against the breaker, the ST discovery cache bounded, partial discovery kept | #135823 |
 | F7, F8, F9 (partly), F11 (partly), F12 (partly): one request-state value, a `status_code` table, one ST transport, a cheaper flush, `strings.Cut`, streamed ETag hashing, an ST forward benchmark | #135946, #135827 |
@@ -258,7 +259,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
     `pkg/router/sources/{aggregate,pluginmanifests,stfallback}`.
   - `st_resources.go` and the settings backends now add to the source-specific side.
 
-- [ ] **A2. Replace `cloudLoader`'s hardcoded merge with an ordered list of sources.**
+- [x] **A2. Replace `cloudLoader`'s hardcoded merge with an ordered list of sources.**
   - **Problem:**
     - `cloudLoader.Load` writes the priority order out by hand, and now ends with a post-merge step
       that wraps `dashboard.grafana.app`.
@@ -281,7 +282,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
     example as `newCloudRoutesLoader`. Rename it in `2026-09-25-router-design-notes.md` ("Two
     transports per aggregate target") in the same change.
 
-- [ ] **A5. A source teardown contract.** With A2, the loader tears down each source on shutdown.
+- [x] **A5. A source teardown contract.** With A2, the loader tears down each source on shutdown.
   That replaces `defer t.closeConnections()` in `pluginManifestsTarget.run`.
 
 - [ ] **A6. Keep ST knowledge out of the engine.**
@@ -305,7 +306,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
     into `st_poll.go`.
   - `discovery_manifests.go` (789 lines): index rendering into `discovery_index.go` (D5 keeps it).
 
-- [ ] **A8. One backend wrapper.**
+- [x] **A8. One backend wrapper.**
   - `pluginDeploymentBackend` (`plugin_manifests.go`) and `singleTenantResourcesBackend`
     (`st_resources.go`) each forward the optional interfaces by hand: `Manifest`, `PluginStatus` and
     `DiscoveryProvider`.

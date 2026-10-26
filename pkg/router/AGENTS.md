@@ -144,7 +144,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Watch handling, upgrade rejection, verb classification | `watch.go` |
 | Outbound header policy, proxy failure labels, request outcomes | `outbound.go`, `proxy_errors.go`, `request_outcome.go` |
 | Metrics, access logs, tracing | `metrics.go`, `logging.go`, `tracing.go`, `plugin_tracing.go` |
-| Source names and loader status | `sources.go` |
+| Source names, loader status, the shared poll loop (`polledSource`) and backend wrapper (`wrappedBackend`) | `sources.go` |
 | Loader selection | `loader_factory.go` |
 | Cloud loader: settings, source priority | `cloud_router.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
@@ -171,6 +171,12 @@ The cloud loader serves nothing until each of its sources has polled once, succe
 (`errFirstPollPending`), so the router doesn't go ready with groups missing from discovery. A
 source's first attempt wakes the router either way, even when it finds nothing. A source records a
 poll only after storing its snapshot, so a `Load` that sees the poll also sees its groups.
+
+Every cloud source is a `polledSource`: one poll loop, paced by its cooldown, that keeps the last
+backends it found when a poll fails. The loader holds them in one ordered list (`newCloudLoader`),
+which drives its poll loops, `Load`, status and teardown: each source is torn down once the loader
+stops, which closes the managed plugin connections. Add a source there, never as a special case.
+A change to the merged result, such as the `dashboard.grafana.app` split, is a `mergeStep`.
 
 The cloud loader merges its sources by group. When sources conflict, later entries override
 earlier ones:
@@ -346,7 +352,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - New backends must name their source (`Backend.Source`), and new sources should report through
     `loaderStatus`, or their loads don't appear in the metrics. A source that skips a backend logs
     why, counts it, and stores the count once per load (`pollStatus.recordSkipped`).
-  - Managed plugin connections (`pluginManifestsTarget.pluginClients`) use dskit's gRPC client
+  - Managed plugin connections (`pluginConnections.pluginClients`) use dskit's gRPC client
     instrumentation interceptors and `otelgrpc`, which propagates the caller's trace to the plugin.
     The instrumentation wraps the retries (`plugin_grpc.go`), so a call is recorded once, and
     `grafana_router_plugin_grpc_request_retries_total` counts the retries.

@@ -153,13 +153,9 @@ func TestSingleTenantDiscoveryNotificationsCoalesceAndStop(t *testing.T) {
 			dirty, err := fallbackLoader{st}.Notify(ctx)
 			require.NoError(t, err)
 			synctest.Wait()
-			if configured {
-				// The first successful poll always wakes the router.
-				require.Len(t, dirty, 1)
-				<-dirty
-			} else {
-				require.Empty(t, dirty)
-			}
+			// The first poll always wakes the router, even when it finds nothing.
+			require.Len(t, dirty, 1)
+			<-dirty
 
 			// Unchanged discovery polls on schedule but never wakes the router.
 			time.Sleep(3 * singleTenantDiscoveryInterval)

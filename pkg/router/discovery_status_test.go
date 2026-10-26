@@ -150,11 +150,11 @@ func TestPluginBackendStatus(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, want, got)
 
-	got, ok = (&pluginDeploymentBackend{Backend: backend}).PluginStatus()
-	require.True(t, ok, "the deployment wrapper forwards it")
+	got, ok = (&wrappedBackend{Backend: backend}).PluginStatus()
+	require.True(t, ok, "a wrapper forwards it")
 	require.Equal(t, want, got)
 
-	_, ok = (&pluginDeploymentBackend{Backend: &fakeBackend{}}).PluginStatus()
+	_, ok = (&wrappedBackend{Backend: &fakeBackend{}}).PluginStatus()
 	require.False(t, ok, "no plugin, so no plugin property")
 }
 

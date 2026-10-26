@@ -22,7 +22,6 @@ import (
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -101,22 +100,15 @@ func (c *stackLookupCounts) byResult() map[string]uint64 {
 // errStackLookupThrottled means the lookup rate limit was reached. It is never cached.
 var errStackLookupThrottled = errors.New("router: stack lookup throttled")
 
-// errSingleTenantDiscoveryPending keeps the router unready until the first discovery attempt.
-var errSingleTenantDiscoveryPending = errors.New("router: single-tenant discovery has not run yet")
-
-// singleTenantDiscovery is the result of the latest discovery poll: the
-// last-known-good backends, and the error if that poll failed.
-type singleTenantDiscovery struct {
-	backends []Backend
-	err      error
-}
-
 // singleTenantFallback forwards requests without a matching multi-tenant route to
 // the single-tenant stack identified by the request namespace, or for
 // cluster-scoped requests and discovery, by the requester's namespace. Although this is
 // not an ideal routing path, it gives clients a single entry point that will
 // resolve ALL /apis requests regardless where they live (MT, or ST)
 type singleTenantFallback struct {
+	// polledSource polls the default discovery from discoveryHost.
+	polledSource
+
 	cache         *lru.Cache[int64, singleTenantHost]
 	breakerMu     sync.Mutex
 	breakers      *lru.Cache[string, *groupBreaker]
@@ -129,10 +121,6 @@ type singleTenantFallback struct {
 	// transport it wraps instead of on every request.
 	tracedTransport atomic.Pointer[tracedTransport]
 
-	// discovery is written only by run's goroutine; nil until the first poll.
-	discovery atomic.Pointer[singleTenantDiscovery]
-	cooldown  *cooldown
-	status    pollStatus
 	lookupsBy stackLookupCounts
 
 	// discoveryDocs is nil when discovery is not cached. discoveryFetches
@@ -217,7 +205,7 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 		opts.transport.MaxIdleConns = singleTenantMaxIdleConns
 	}
 
-	return &singleTenantFallback{
+	st := &singleTenantFallback{
 		breakers:      breakers,
 		cache:         cache,
 		lookupLimiter: limiter,
@@ -225,8 +213,14 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 		resolveHost:   opts.resolveHost,
 		discoveryHost: opts.discoveryHost,
 		transport:     opts.transport,
-		cooldown:      newCooldown(singleTenantDiscoveryInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
-	}, nil
+	}
+	st.polledSource = polledSource{
+		source:   sourceSingleTenant,
+		fetcher:  st,
+		fallback: true,
+		cooldown: newCooldown(singleTenantDiscoveryInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
+	}
+	return st, nil
 }
 
 func (st *singleTenantFallback) cachedHost(stackID int64) (*singleTenantTarget, bool) {
@@ -541,32 +535,23 @@ func (st *singleTenantFallback) breakerForDestination(host *url.URL, group strin
 	return breaker
 }
 
-// Backends returns the last-known-good discovered backends, and the error from
-// the latest poll if it failed.
-func (st *singleTenantFallback) Backends() ([]Backend, error) {
+// fetch implements [sourceFetcher]: one discovery request to discoveryHost.
+func (st *singleTenantFallback) fetch(ctx context.Context) ([]Backend, int, error) {
 	if st.discoveryHost == nil {
-		return nil, nil
+		return nil, 0, nil
 	}
-	d := st.discovery.Load()
-	if d == nil {
-		return nil, errSingleTenantDiscoveryPending
-	}
-	return d.backends, d.err
-}
-
-func (st *singleTenantFallback) discover(ctx context.Context) ([]Backend, error) {
 	client := &http.Client{Transport: st.transport, Timeout: singleTenantLookupTimeout}
 
 	groups, err := discoverGroupResources(ctx, client, st.discoveryHost.String())
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	backends := make([]Backend, 0, len(groups))
 	for _, discovered := range groups {
 		key, err := discoveredGroupKey(discovered)
 		if err != nil {
-			return nil, fmt.Errorf("fingerprinting single-tenant discovery: %w", err)
+			return nil, 0, fmt.Errorf("fingerprinting single-tenant discovery: %w", err)
 		}
 		backends = append(backends, &fallbackBackend{
 			group:     discovered.group,
@@ -575,69 +560,7 @@ func (st *singleTenantFallback) discover(ctx context.Context) ([]Backend, error)
 			st:        st,
 		})
 	}
-	return backends, nil
-}
-
-// run polls discovery until ctx is done, paced only by st.cooldown, the same
-// way as aggregateTarget.run.
-func (st *singleTenantFallback) run(ctx context.Context, dirty chan<- struct{}) {
-	if st.discoveryHost == nil {
-		<-ctx.Done()
-		return
-	}
-	timer := time.NewTimer(0)
-	defer timer.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-			st.poll(ctx, dirty)
-			timer.Reset(st.cooldown.Until(time.Now()))
-		}
-	}
-}
-
-// poll runs one discovery attempt. It wakes the router only when the result
-// can change what Load returns: the first success, a success after a
-// failure, or a change in the discovered groups.
-func (st *singleTenantFallback) poll(ctx context.Context, dirty chan<- struct{}) {
-	now := time.Now()
-	prev := st.discovery.Load()
-
-	backends, err := st.discover(ctx)
-	if err != nil {
-		st.cooldown.OnFailure(now)
-		logging.FromContext(ctx).Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
-		next := &singleTenantDiscovery{err: err}
-		if prev != nil {
-			next.backends = prev.backends
-		}
-		st.discovery.Store(next)
-		if st.status.recordFailure() {
-			wake(dirty)
-		}
-		return
-	}
-	st.cooldown.OnSuccess(now)
-	st.discovery.Store(&singleTenantDiscovery{backends: backends})
-	st.status.recordSuccess(now)
-
-	if prev != nil && prev.err == nil && sameKeySet(backendKeys(prev.backends), backendKeys(backends)) {
-		return
-	}
-	select {
-	case dirty <- struct{}{}:
-	default: // already pending; coalesce
-	}
-}
-
-func backendKeys(backends []Backend) map[string]struct{} {
-	keys := make(map[string]struct{}, len(backends))
-	for _, b := range backends {
-		keys[b.Key()] = struct{}{}
-	}
-	return keys
+	return backends, 0, nil
 }
 
 var (
