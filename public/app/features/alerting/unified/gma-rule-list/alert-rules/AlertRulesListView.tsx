@@ -52,7 +52,7 @@ export function AlertRulesListView({ filter }: ListViewProps) {
       <ResultCount kind="alert" total={total} />
       <RuleRowList>
         {items.map((searchHit) => (
-          <AlertRuleListEntry key={searchHit.uid} searchHit={searchHit} />
+          <AlertRuleListEntry key={searchHit.uid} searchHit={searchHit} showFolderPath />
         ))}
       </RuleRowList>
       <LoadMoreFooter

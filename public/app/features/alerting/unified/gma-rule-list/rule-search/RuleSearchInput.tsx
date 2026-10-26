@@ -1,7 +1,7 @@
-import { type KeyboardEvent, useEffect, useState } from 'react';
+import { type KeyboardEvent, type ReactNode, useEffect, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Divider, FilterInput, Grid, Icon, Label, Stack, Text } from '@grafana/ui';
+import { Box, Divider, FilterInput, Grid, Icon, Label, Stack, Text } from '@grafana/ui';
 
 import { PopupCard } from '../../components/HoverCard';
 
@@ -15,13 +15,15 @@ export interface RuleSearchInputProps {
   onApply: (query: string) => void;
   filters: FilterDefinition[];
   issues?: FilterIssue[];
+  /** Rendered beside the input box, so it stays aligned with the box however many issue messages show below. */
+  trailing?: ReactNode;
 }
 
 const INPUT_ID = 'rule-search-input';
 const ISSUES_DESCRIPTION_ID = 'rule-search-input-issues';
 
 /** The typed text is a draft until it is applied. A change to the applied query, such as Back/Forward, replaces it. */
-export function RuleSearchInput({ query, onApply, filters, issues = [] }: RuleSearchInputProps) {
+export function RuleSearchInput({ query, onApply, filters, issues = [], trailing }: RuleSearchInputProps) {
   const [draft, setDraft] = useState(query);
 
   useEffect(() => {
@@ -65,17 +67,22 @@ export function RuleSearchInput({ query, onApply, filters, issues = [] }: RuleSe
           </PopupCard>
         </Stack>
       </Label>
-      <FilterInput
-        id={INPUT_ID}
-        value={draft}
-        escapeRegex={false}
-        placeholder={t('alerting.gma-rule-list.search.placeholder', 'Search by name or enter filter query...')}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        onBlur={handleBlur}
-        aria-invalid={hasIssues || undefined}
-        aria-describedby={hasIssues ? ISSUES_DESCRIPTION_ID : undefined}
-      />
+      <Stack direction="row" gap={2} alignItems="center">
+        <Box grow={1} minWidth={0}>
+          <FilterInput
+            id={INPUT_ID}
+            value={draft}
+            escapeRegex={false}
+            placeholder={t('alerting.gma-rule-list.search.placeholder', 'Search by name or enter filter query...')}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            aria-invalid={hasIssues || undefined}
+            aria-describedby={hasIssues ? ISSUES_DESCRIPTION_ID : undefined}
+          />
+        </Box>
+        {trailing && <Box shrink={0}>{trailing}</Box>}
+      </Stack>
       {hasIssues && (
         <div id={ISSUES_DESCRIPTION_ID}>
           {issueMessages.map((message) => (
