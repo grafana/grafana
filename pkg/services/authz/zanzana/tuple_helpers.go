@@ -205,6 +205,11 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 			continue
 		}
 
+		if tuple := serviceAccountRolePermissionTuple(subject, perm); tuple != nil {
+			tupleMap[tuple.String()] = tuple
+			continue
+		}
+
 		if tuples := datasourceRolePermissionTuples(subject, perm); len(tuples) > 0 {
 			for _, tuple := range tuples {
 				tupleMap[tuple.String()] = tuple
@@ -245,6 +250,35 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 	}
 
 	return tuples, nil
+}
+
+// Only wildcard service-account grants are supported here. Legacy instance scopes
+// can contain numeric IDs, while the FGA type uses UIDs and does not support
+// per-instance permission management. Do not broaden those grants to all accounts.
+func serviceAccountRolePermissionTuple(subject string, perm RolePermission) *openfgav1.TupleKey {
+	if perm.Action == "serviceaccounts:create" {
+		return NewGroupResourceTuple(subject, RelationCreate, iamGroup, common.KindServiceAccounts, "")
+	}
+	if perm.Kind != common.KindServiceAccounts || perm.Identifier != "*" {
+		return nil
+	}
+
+	var relation string
+	switch perm.Action {
+	case "serviceaccounts:read":
+		relation = RelationGet
+	case "serviceaccounts:write":
+		relation = RelationUpdate
+	case "serviceaccounts:delete":
+		relation = RelationDelete
+	case "serviceaccounts.permissions:read":
+		relation = RelationGetPermissions
+	case "serviceaccounts.permissions:write":
+		relation = RelationSetPermissions
+	default:
+		return nil
+	}
+	return NewGroupResourceTuple(subject, relation, iamGroup, common.KindServiceAccounts, "")
 }
 
 // Datasource action sets and caching writes each grant multiple operations.
