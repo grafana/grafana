@@ -665,6 +665,28 @@ export function TableFlat(props: TableNGProps) {
         if (disableKeyboardEvents) {
           event.preventGridDefault();
         }
+        // Plain Tab would otherwise move to the next cell (the grid's default),
+        // leaving the cell's "Cell actions" button unreachable by keyboard even
+        // though it carries tabIndex 0. When the active cell has that button,
+        // hand focus to it instead and let the browser continue tabbing from there.
+        if (event.key === 'Tab' && !event.shiftKey && !event.defaultPrevented) {
+          const target = event.target as HTMLElement | null;
+          const actionsButton = target
+            ?.closest('[role="gridcell"]')
+            ?.querySelector<HTMLElement>(
+              `[data-testid="${selectors.components.Panels.Visualization.TableNG.cellActions.triggerButton}"]`
+            );
+          // Only intercept when focus is still on the cell itself. Once the button
+          // holds focus the browser must continue tabbing normally, or the next Tab
+          // would re-enter this branch and trap focus on the button.
+          if (actionsButton && target !== actionsButton && !actionsButton.contains(target)) {
+            // preventGridDefault() only stops react-data-grid navigation; the browser
+            // would still process this Tab and move focus past the button.
+            event.preventGridDefault();
+            event.preventDefault();
+            actionsButton.focus();
+          }
+        }
       }}
       sortColumns={sortColumns}
       setSortColumns={setSortColumns}
