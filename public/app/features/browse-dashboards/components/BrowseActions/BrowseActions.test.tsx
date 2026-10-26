@@ -79,10 +79,12 @@ describe('browse-dashboards BrowseActions', () => {
       expect(store!.getState().browseDashboards.selectedItems.dashboard['dash-1']).toBe(true);
     });
 
-    it('clears the selection as soon as a job exists; the drawer keeps the selection it was opened with', async () => {
-      const { user, store } = setup();
+    it('clears the selection once a job exists; the drawer keeps the selection and folder it was opened with', async () => {
+      const { user, store, rerender } = setup();
 
       await user.click(screen.getByRole('button', { name: 'Delete' }));
+      // The page navigates (browser back) while the drawer is open.
+      rerender(<BrowseActions folderDTO={mockFolderDTO(2, { uid: 'folder-b' })} />);
       await user.click(await screen.findByRole('button', { name: 'Create job' }));
 
       expect(store!.getState().browseDashboards.selectedItems.dashboard['dash-1']).toBe(false);
@@ -91,17 +93,6 @@ describe('browse-dashboards BrowseActions', () => {
 
       await user.click(screen.getByTestId(selectors.components.Drawer.General.close));
       expect(screen.queryByText('1 selected in folder-a')).not.toBeInTheDocument();
-    });
-
-    it('keeps the folder it was opened in when the page navigates elsewhere', async () => {
-      const { user, rerender } = setup();
-
-      await user.click(screen.getByRole('button', { name: 'Delete' }));
-      expect(await screen.findByText('1 selected in folder-a')).toBeInTheDocument();
-
-      rerender(<BrowseActions folderDTO={mockFolderDTO(2, { uid: 'folder-b' })} />);
-
-      expect(screen.getByText('1 selected in folder-a')).toBeInTheDocument();
     });
   });
 });

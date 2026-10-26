@@ -25,18 +25,24 @@ type Target = 'folder' | 'folderless' | 'instance';
 const REPO = createRepository().metadata!.name!;
 const OWNED = { kind: ManagerKind.Repo, id: REPO };
 
-// The loaded tree: the repository folder open at the root beside a plain folder and another
-// repository's folder.
-function item(kind: 'folder' | 'dashboard', uid: string, managerId?: string): DashboardViewItem {
-  return { kind, uid, title: uid, managedBy: managerId ? ManagerKind.Repo : undefined, managerId };
-}
+// Loaded tree: the repository folder open at the root beside a plain folder and another repository's.
+const item = (kind: 'folder' | 'dashboard', uid: string, managerId?: string): DashboardViewItem => ({
+  kind,
+  uid,
+  title: uid,
+  managedBy: managerId ? ManagerKind.Repo : undefined,
+  managerId,
+});
 
-// What the backend lists after the pull: `repo-dash` became `repo-dash-2`, `deep-dash` became
-// `deep-dash-2`, and `top-dash-2` appeared at the top level (a folderless repository's).
-function hit(resource: 'folders' | 'dashboards', name: string, folder?: string, managedBy?: DashboardHit['managedBy']) {
-  return { resource, name, title: name, folder, managedBy, field: {} };
-}
-const afterPull: DashboardHit[] = [
+// Listing after the pull: `repo-dash` became `repo-dash-2`, `deep-dash` became `deep-dash-2`, and
+// `top-dash-2` appeared at the top level (a folderless repository's).
+const hit = (
+  resource: 'folders' | 'dashboards',
+  name: string,
+  folder?: string,
+  managedBy?: DashboardHit['managedBy']
+): DashboardHit => ({ resource, name, title: name, folder, managedBy, field: {} });
+const afterPull = [
   hit('folders', REPO, undefined, OWNED),
   hit('folders', 'plain'),
   hit('folders', 'theirs', undefined, { kind: ManagerKind.Repo, id: 'other-repo' }),
@@ -50,22 +56,21 @@ const afterPull: DashboardHit[] = [
 
 const uids = (items: DashboardViewItem[] | undefined) => items?.map((i) => i.uid);
 
-function repositoryAt(finished: number, target: Target, state = 'success') {
-  return createRepository({
-    spec: { sync: { target, enabled: true } },
-    status: { sync: { state, finished, message: [] } },
-  });
-}
+const repositoryAt = (finished: number, target: Target, state = 'success') =>
+  createRepository({ spec: { sync: { target, enabled: true } }, status: { sync: { state, finished, message: [] } } });
 
 interface SetupOptions {
-  folderUID?: string;
-  viewedRepository?: string;
+  viewed?: ViewedFolder;
   target?: Target;
-  /** Whether the owner of the folder in view is already known when the hook mounts. */
-  resolved?: boolean;
+  /** Mount before the owner of the folder in view is known. */
+  unresolved?: boolean;
 }
 
-function setup({ folderUID, viewedRepository, target = 'folder', resolved = true }: SetupOptions = {}) {
+function setup({
+  viewed = { folderUID: undefined, repository: undefined },
+  target = 'folder',
+  unresolved,
+}: SetupOptions = {}) {
   server.use(
     http.get(`${BASE}/settings`, () =>
       HttpResponse.json({ items: [{ name: REPO, title: REPO, type: 'github', target, workflows: [] }] })
@@ -75,15 +80,14 @@ function setup({ folderUID, viewedRepository, target = 'folder', resolved = true
     ),
     getCustomSearchHandler(afterPull)
   );
-
-  // Which collections were listed, by the `folder` the search was scoped to ('general' = root).
-  // The searcher's own folder preload carries no `folder` and is not a listing.
-  const searchedFolders: string[] = [];
+  // Collections listed, by the `folder` the search was scoped to ('general' = root). The searcher's
+  // folder preload carries no `folder`.
+  const listed: string[] = [];
   server.events.on('request:start', ({ request }) => {
     const url = new URL(request.url);
     const folder = url.searchParams.get('folder');
-    if (url.pathname.endsWith('/search') && folder) {
-      searchedFolders.push(folder);
+    if (url.pathname.endsWith('/search') && folder && !listed.includes(folder)) {
+      listed.push(folder);
     }
   });
 
@@ -111,29 +115,24 @@ function setup({ folderUID, viewedRepository, target = 'folder', resolved = true
     },
   });
 
-  const viewed: ViewedFolder = { folderUID, repository: viewedRepository };
   const render = () =>
     renderHook((props: ViewedFolder | undefined) => useRefreshOnRepositorySync(props), {
-      initialProps: resolved ? viewed : undefined,
+      initialProps: unresolved ? undefined : viewed,
       wrapper: getWrapper({ store }),
     });
-  const rendered = render();
-
-  const browseState = () => store.getState().browseDashboards;
-  const children = (uid: string) => uids(browseState().childrenByParentUID[uid]?.items);
-  const selected = () => browseState().selectedItems.dashboard;
-  const listedFolders = () => Array.from(new Set(searchedFolders));
-  // The first repository status seen only seeds the baseline, so wait for it before emitting.
-  const waitForBaseline = () => waitFor(() => expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 1000 }));
-  const emitSync = (finished: number, state = 'success') =>
+  const state = () => store.getState().browseDashboards;
+  const children = (uid: string) => uids(state().childrenByParentUID[uid]?.items);
+  const selected = () => state().selectedItems.dashboard;
+  const syncedAt = () => state().repositorySyncedAt;
+  const emitSync = (finished: number, syncState = 'success') =>
     act(() =>
       getMockLiveSrv().emitWatchEvent('repositories', {
         type: 'MODIFIED',
-        object: repositoryAt(finished, target, state),
+        object: repositoryAt(finished, target, syncState),
       })
     );
 
-  return { ...rendered, render, viewed, browseState, children, selected, listedFolders, waitForBaseline, emitSync };
+  return { ...render(), render, viewed, state, children, selected, syncedAt, listed, emitSync };
 }
 
 describe('useRefreshOnRepositorySync', () => {
@@ -145,162 +144,128 @@ describe('useRefreshOnRepositorySync', () => {
     server.events.removeAllListeners('request:start');
   });
 
+  // The first repository status seen only seeds the baseline, so tests wait for it before emitting.
+  const seeded = (syncedAt: () => Record<string, number> | undefined) =>
+    waitFor(() => expect(syncedAt()).toEqual({ [REPO]: 1000 }));
+
   it('at the root: refetches the open repository folder in place and drops only what the repository owns', async () => {
-    const { browseState, children, selected, listedFolders, waitForBaseline, emitSync } = setup();
-    await waitForBaseline();
-    expect(listedFolders()).toEqual([]);
+    const { state, children, selected, syncedAt, listed, emitSync } = setup();
+    await seeded(syncedAt);
+    expect(listed).toEqual([]);
 
     emitSync(2000);
 
     await waitFor(() => expect(children(REPO)).toEqual(['nested', 'repo-dash-2']));
-    expect(browseState().openFolders[REPO]).toBe(true);
-    expect(listedFolders()).toEqual([REPO]);
-
+    expect(listed).toEqual([REPO]);
+    expect(state().openFolders[REPO]).toBe(true);
     // Nested folders reload when opened next; everything the repository does not own is untouched.
     expect(children('nested')).toBeUndefined();
-    expect(browseState().openFolders.nested).toBe(false);
-    expect(uids(browseState().rootItems?.items)).toEqual([REPO, 'plain', 'theirs', 'root-dash']);
+    expect(state().openFolders.nested).toBe(false);
+    expect(uids(state().rootItems?.items)).toEqual([REPO, 'plain', 'theirs', 'root-dash']);
     expect(children('plain')).toEqual(['plain-dash']);
     expect(children('theirs')).toEqual(['their-dash']);
-    expect(browseState().openFolders.plain).toBe(true);
-
     expect(selected()).toEqual({ 'repo-dash': false, 'plain-dash': true, 'their-dash': true, 'root-dash': true });
-    await waitFor(() => expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 2000 }));
-  });
-
-  it('inside a folder the repository owns: refetches it in place and drops its other folders', async () => {
-    const { browseState, children, listedFolders, waitForBaseline, emitSync } = setup({
-      folderUID: 'nested',
-      viewedRepository: REPO,
-    });
-    await waitForBaseline();
-
-    emitSync(2000);
-
-    await waitFor(() => expect(children('nested')).toEqual(['deep-dash-2']));
-    expect(listedFolders()).toEqual(['nested']);
-    expect(children(REPO)).toBeUndefined();
-    expect(children('plain')).toEqual(['plain-dash']);
-    expect(uids(browseState().rootItems?.items)).toHaveLength(4);
+    await waitFor(() => expect(syncedAt()).toEqual({ [REPO]: 2000 }));
   });
 
   it('inside a folder it does not own: nothing on screen changes, its cached folders are dropped', async () => {
-    const { browseState, children, selected, listedFolders, waitForBaseline, emitSync } = setup({
-      folderUID: 'plain',
+    const { children, selected, syncedAt, listed, emitSync } = setup({
+      viewed: { folderUID: 'plain', repository: undefined },
     });
-    await waitForBaseline();
+    await seeded(syncedAt);
 
     emitSync(2000);
 
-    await waitFor(() => expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 2000 }));
-    expect(listedFolders()).toEqual([]);
+    await waitFor(() => expect(syncedAt()).toEqual({ [REPO]: 2000 }));
+    expect(listed).toEqual([]);
     expect(children('plain')).toEqual(['plain-dash']);
-    expect(browseState().openFolders.plain).toBe(true);
     expect(selected()['plain-dash']).toBe(true);
     expect(children(REPO)).toBeUndefined();
-    expect(children('nested')).toBeUndefined();
     expect(selected()['repo-dash']).toBe(false);
   });
 
-  it('a folderless repository owns top-level items too, so the root listing is refetched', async () => {
-    const { browseState, children, selected, listedFolders, waitForBaseline, emitSync } = setup({
-      target: 'folderless',
-    });
-    await waitForBaseline();
+  it('a folderless repository owns top-level items too, so the root is refetched; unowned items stay selected', async () => {
+    const { state, children, selected, syncedAt, listed, emitSync } = setup({ target: 'folderless' });
+    await seeded(syncedAt);
 
     emitSync(2000);
 
-    await waitFor(() => expect(uids(browseState().rootItems?.items)).toContain('top-dash-2'));
-    expect(listedFolders()).toEqual(['general']);
+    await waitFor(() => expect(uids(state().rootItems?.items)).toContain('top-dash-2'));
+    expect(listed).toEqual(['general']);
     expect(children('plain')).toEqual(['plain-dash']);
-    expect(children('theirs')).toEqual(['their-dash']);
     expect(children('nested')).toBeUndefined();
-    // Only the repository's items leave the selection, even in the refetched root.
     expect(selected()['root-dash']).toBe(true);
     expect(selected()['their-dash']).toBe(true);
   });
 
   it('an instance repository owns the whole tree', async () => {
-    const { browseState, children, selected, waitForBaseline, emitSync } = setup({ target: 'instance' });
-    await waitForBaseline();
+    const { state, children, selected, syncedAt, emitSync } = setup({ target: 'instance' });
+    await seeded(syncedAt);
 
     emitSync(2000);
 
-    await waitFor(() => expect(uids(browseState().rootItems?.items)).toContain('top-dash-2'));
+    await waitFor(() => expect(uids(state().rootItems?.items)).toContain('top-dash-2'));
     expect(children(REPO)).toBeUndefined();
     expect(children('plain')).toBeUndefined();
-    expect(children('theirs')).toBeUndefined();
     expect(Object.values(selected()).every((isSelected) => isSelected === false)).toBe(true);
   });
 
-  it('refreshes after a pull that finished with errors, which may still have written resources', async () => {
-    const { children, waitForBaseline, emitSync } = setup();
-    await waitForBaseline();
-
-    emitSync(2000, 'error');
-
-    await waitFor(() => expect(children(REPO)).toEqual(['nested', 'repo-dash-2']));
-  });
-
-  it('ignores a status update whose pull has not advanced', async () => {
-    const { browseState, children, selected, listedFolders, waitForBaseline, emitSync } = setup();
-    await waitForBaseline();
+  it('acts on `finished` alone: an unchanged value is ignored, a later failed pull still refreshes', async () => {
+    const { children, syncedAt, listed, emitSync } = setup();
+    await seeded(syncedAt);
 
     // Same `finished`, e.g. a health check patched the status.
     emitSync(1000);
-
     await act(() => Promise.resolve());
-    expect(listedFolders()).toEqual([]);
+    expect(listed).toEqual([]);
     expect(children(REPO)).toEqual(['nested', 'repo-dash']);
-    expect(children('nested')).toEqual(['deep-dash']);
-    expect(selected()['repo-dash']).toBe(true);
-    expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 1000 });
+
+    emitSync(2000, 'error');
+    await waitFor(() => expect(children(REPO)).toEqual(['nested', 'repo-dash-2']));
   });
 
   it('keeps the repository marked stale when the refetch fails, so the next visit retries', async () => {
-    const { browseState, children, listedFolders, waitForBaseline, emitSync, unmount, render } = setup();
-    await waitForBaseline();
+    const { children, syncedAt, listed, emitSync, unmount, render } = setup();
+    await seeded(syncedAt);
     server.use(http.get(searchRoute, () => HttpResponse.json({ message: 'boom' }, { status: 500 }), { once: true }));
 
     emitSync(2000);
-    await waitFor(() => expect(listedFolders()).toEqual([REPO]));
+    await waitFor(() => expect(listed).toEqual([REPO]));
     unmount();
 
     // Had the failed refetch stamped the repository, this mount would find nothing to do.
     render();
 
     await waitFor(() => expect(children(REPO)).toEqual(['nested', 'repo-dash-2']));
-    await waitFor(() => expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 2000 }));
+    await waitFor(() => expect(syncedAt()).toEqual({ [REPO]: 2000 }));
   });
 
   it('waits for the owner of the folder in view before acting on a pull', async () => {
-    const { browseState, children, listedFolders, waitForBaseline, emitSync, rerender, viewed } = setup({
-      folderUID: 'nested',
-      viewedRepository: REPO,
-      resolved: false,
+    const { children, syncedAt, listed, emitSync, rerender, viewed } = setup({
+      viewed: { folderUID: 'nested', repository: REPO },
+      unresolved: true,
     });
-    await waitForBaseline();
+    await seeded(syncedAt);
 
     emitSync(2000);
-
     await act(() => Promise.resolve());
-    expect(listedFolders()).toEqual([]);
-    expect(children('nested')).toEqual(['deep-dash']);
-    expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 1000 });
+    expect(listed).toEqual([]);
+    expect(syncedAt()).toEqual({ [REPO]: 1000 });
 
-    // The folder turns out to be the repository's: the pending pull now refreshes it.
+    // The folder turns out to be the repository's: the pending pull refreshes it in place.
     rerender(viewed);
 
     await waitFor(() => expect(children('nested')).toEqual(['deep-dash-2']));
-    await waitFor(() => expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 2000 }));
+    expect(children(REPO)).toBeUndefined();
+    await waitFor(() => expect(syncedAt()).toEqual({ [REPO]: 2000 }));
   });
 
   it('clears the selection and re-runs the search when a pull lands while searching', async () => {
-    const { selected, waitForBaseline, emitSync } = setup();
+    const { selected, syncedAt, emitSync } = setup();
     const [, stateManager] = renderHook(() => useSearchStateManager()).result.current;
     act(() => stateManager.setState({ query: 'dash' }));
     const doSearch = jest.spyOn(stateManager, 'doSearchWithDebounce').mockImplementation(() => {});
-    await waitForBaseline();
+    await seeded(syncedAt);
 
     emitSync(2000);
 

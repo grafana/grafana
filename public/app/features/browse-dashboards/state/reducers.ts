@@ -25,7 +25,7 @@ export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: R
   const { parentUID } = action.meta.arg;
   const key = collectionKeyOf(parentUID);
 
-  // Started against an older listing than the one now in place; a newer load has superseded it.
+  // Started against an older listing than the one now in place; a newer load superseded it.
   if (generation !== collectionGeneration(state, key)) {
     return;
   }
@@ -59,7 +59,7 @@ export function fetchNextChildrenPageFulfilled(
   const { children, page, kind, lastPageOfKind, generation } = payload;
   const { parentUID, excludeKinds = [] } = action.meta.arg;
 
-  // The thunk reloads when its collection changed under it; this guards the last gap before dispatch.
+  // A page of a listing that was dropped or replaced meanwhile; appending it would resurrect it.
   if (generation !== collectionGeneration(state, collectionKeyOf(parentUID))) {
     return;
   }
@@ -225,12 +225,10 @@ export function clearFolders(state: BrowseDashboardsState, action: PayloadAction
 }
 
 /**
- * Drops the collections a pull may have changed that are off screen; the ones on screen are
- * refetched in place by the thunk and have their generation bumped here, so a load of theirs that
- * is still in flight is already obsolete. Items the repository owns leave the selection with
- * them: it was made against the old listing, and once an item is gone so is its metadata, so a
- * kept selection would route the next action through the wrong flow or at UIDs that no longer
- * exist.
+ * Drops the off-screen collections a pull may have changed; on-screen ones are refetched by the
+ * thunk and only get their generation bumped, so their in-flight loads are obsolete. Items the
+ * repository owns leave the selection: once gone, so is the metadata that routes them to the
+ * right flow.
  */
 export function refreshTreePending(state: BrowseDashboardsState, action: RefreshTreePendingAction) {
   const { repository, viewed } = action.meta.arg;

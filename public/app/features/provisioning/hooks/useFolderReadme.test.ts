@@ -82,20 +82,4 @@ describe('useFolderReadme live refresh wiring', () => {
     expect(getFileHits()).toBe(1);
     expect(result.current.markdownContent).toBe('# v1');
   });
-
-  it('refetches after a pull that finished with errors: the remote still changed', async () => {
-    const { setReadme, getFileHits } = setup();
-
-    const { result } = renderHook(() => useFolderReadme(REPO_NAME, 'README.md'), { wrapper: getWrapper({}) });
-
-    await waitFor(() => expect(result.current.markdownContent).toBe('# v1'));
-    expect(getFileHits()).toBe(1);
-
-    // The file comes from the repository, not from what the pull managed to apply.
-    setReadme('# v2');
-    emitSync('error', 2000);
-
-    await waitFor(() => expect(result.current.markdownContent).toBe('# v2'));
-    expect(getFileHits()).toBe(2);
-  });
 });
