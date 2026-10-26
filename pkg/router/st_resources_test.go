@@ -150,7 +150,7 @@ func TestRouterServesSingleTenantResourcesFromStack(t *testing.T) {
 
 	serveMethod := func(method, path string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil), http.NotFoundHandler())
+		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil))
 		return rec
 	}
 	serve := func(path string) *httptest.ResponseRecorder {

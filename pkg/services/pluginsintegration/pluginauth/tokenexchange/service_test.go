@@ -35,7 +35,7 @@ func TestPolicyFor(t *testing.T) {
 	policy := policyFor("example-app", []string{"grafana"}, testManifest)
 	require.Equal(t, v3.LocalAccessPolicy{
 		PluginID:  "example-app",
-		Audiences: []string{"grafana", "example.ext.grafana.app", "dashboard.grafana.app", "folder.grafana.app"},
+		Audiences: []string{"grafana", "example.ext.grafana.app", "apiextensions.k8s.io", "dashboard.grafana.app", "folder.grafana.app"},
 		Permissions: []string{
 			"example.ext.grafana.app:*",
 			"dashboard.grafana.app/dashboards:get",
@@ -60,6 +60,7 @@ func TestPolicyFor(t *testing.T) {
 
 	core := policyFor("example-app", []string{"grafana"}, &app.ManifestData{Group: "dashboard.grafana.app"})
 	require.NotContains(t, core.Permissions, "dashboard.grafana.app:*", "a manifest does not own a core group")
+	require.NotContains(t, core.Audiences, "apiextensions.k8s.io", "only plugin groups are served behind that audience")
 }
 
 // newTestServer serves the token exchange as Grafana's HTTP server would.
@@ -99,7 +100,7 @@ func TestSignAccessToken(t *testing.T) {
 	grafana := authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{AllowedAudiences: []string{"grafana"}}, keys)
 
 	t.Run("signs the plugin's token", func(t *testing.T) {
-		token, err := exchange(capToken, authnlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"example.ext.grafana.app", "grafana"}})
+		token, err := exchange(capToken, authnlib.TokenExchangeRequest{Namespace: "*", Audiences: []string{"example.ext.grafana.app", "grafana", "apiextensions.k8s.io"}})
 		require.NoError(t, err)
 		claims, err := grafana.Verify(context.Background(), token)
 		require.NoError(t, err)
