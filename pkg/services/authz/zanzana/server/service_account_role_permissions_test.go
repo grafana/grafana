@@ -65,7 +65,7 @@ func TestIntegrationServiceAccountScopedGrantsDoNotAuthorizeAllAccounts(t *testi
 	for _, scope := range []string{"serviceaccounts:id:42", "serviceaccounts:uid:sa1", "users:*", ""} {
 		t.Run(scope, func(t *testing.T) {
 			srv := setupOpenFGAServer(t)
-			var permissions []*authzextv1.RolePermission
+			permissions := make([]*authzextv1.RolePermission, 0, 5)
 			for _, action := range []string{"serviceaccounts:read", "serviceaccounts:write", "serviceaccounts:delete", "serviceaccounts.permissions:read", "serviceaccounts.permissions:write"} {
 				permissions = append(permissions, &authzextv1.RolePermission{Action: action, Scope: scope})
 			}
