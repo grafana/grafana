@@ -1,13 +1,13 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 import { useCallback, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { type FieldPathValues, useFormContext } from 'react-hook-form';
 import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
 import { type GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { previewAlertRule } from '../../api/preview';
@@ -18,7 +18,10 @@ import { isDataSourceManagedRuleByType } from '../../utils/rules';
 
 import { PreviewRuleResult } from './PreviewRuleResult';
 
-const fields: Array<keyof RuleFormValues> = ['type', 'dataSourceName', 'condition', 'queries', 'expression'];
+const fields = ['type', 'dataSourceName', 'condition', 'queries', 'expression'] as const satisfies ReadonlyArray<
+  keyof RuleFormValues
+>;
+type PreviewRuleValues = FieldPathValues<RuleFormValues, typeof fields>;
 
 export function PreviewRule(): React.ReactElement | null {
   const styles = useStyles2(getStyles);
@@ -64,14 +67,14 @@ export function PreviewRule(): React.ReactElement | null {
   );
 }
 
-export function usePreview(): [PreviewRuleResponse | undefined, () => void] {
+export function usePreview(): [PreviewRuleResponse | undefined, () => Promise<void>] {
   const [preview, setPreview] = useState<PreviewRuleResponse | undefined>();
   const { getValues } = useFormContext<RuleFormValues>();
   const isMounted = useMountedState();
 
-  const onPreview = useCallback(() => {
+  const onPreview = useCallback(async () => {
     const values = getValues(fields);
-    const request = createPreviewRequest(values);
+    const request = await createPreviewRequest(values);
 
     previewAlertRule(request)
       .pipe(takeWhile((response) => !isCompleted(response), true))
@@ -86,9 +89,10 @@ export function usePreview(): [PreviewRuleResponse | undefined, () => void] {
   return [preview, onPreview];
 }
 
-function createPreviewRequest(values: any[]): PreviewRuleRequest {
+async function createPreviewRequest(values: PreviewRuleValues): Promise<PreviewRuleRequest> {
   const [type, dataSourceName, condition, queries, expression] = values;
-  const dsSettings = getDataSourceSrv().getInstanceSettings(dataSourceName);
+
+  const dsSettings = await getDataSourceInstanceSettings(dataSourceName);
   if (!dsSettings) {
     throw new Error(`Cannot find data source settings for ${dataSourceName}`);
   }
@@ -97,14 +101,14 @@ function createPreviewRequest(values: any[]): PreviewRuleRequest {
     case RuleFormType.cloudAlerting:
       return {
         dataSourceUid: dsSettings.uid,
-        dataSourceName,
+        dataSourceName: dataSourceName!,
         expr: expression,
       };
 
     case RuleFormType.grafana:
       return {
         grafana_condition: {
-          condition,
+          condition: condition!,
           data: queries,
           now: dateTimeFormatISO(Date.now()),
         },
