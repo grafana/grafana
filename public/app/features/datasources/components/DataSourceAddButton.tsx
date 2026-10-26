@@ -1,6 +1,6 @@
 import { type JSX } from 'react';
 
-import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
+import { useAssistant } from '@grafana/assistant';
 import { Pages } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -31,12 +31,6 @@ export function DataSourceAddButton(): JSX.Element | null {
     openAssistant({
       origin: 'grafana/datasources-list/add-data-source',
       mode: 'assistant',
-      context: [
-        createAssistantContextItem('structured', {
-          title: t('data-sources.datasource-add-button.assistant-context', 'Add a new data source'),
-          data: {},
-        }),
-      ],
       prompt: 'Help me set up a new data source.',
       autoSend: true,
     });

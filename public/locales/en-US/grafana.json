@@ -8277,7 +8277,6 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "assistant-context": "Add a new data source",
       "label": "Add new data source",
       "setup-assistant": "Set up with assistant",
       "setup-assistant-description": "Guided configuration",
