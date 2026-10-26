@@ -88,19 +88,17 @@ export const refreshParents = createAsyncThunk(
 
 /**
  * Brings the tree back in step with a completed pull of one repository: the pending reducer drops
- * the collections it may have changed that are off screen; the loaded ones on screen are refetched
- * here. One still loading its first page is left to the tree's loader: the pending reducer made
- * that page obsolete, so the loader fetches it again. The fulfilled reducer stamps the repository,
- * so a failed refetch leaves it stale and retried.
+ * the collections it may have changed that are off screen; the ones on screen are refetched here,
+ * loaded or not. One still loading its first page cannot be left to that page: it may predate the
+ * pull and is discarded, and an open nested folder shows no placeholders that would ask again.
+ * The fulfilled reducer stamps the repository, so a failed refetch leaves it stale and retried.
  */
 export const refreshTree = createAsyncThunk(
   'browseDashboards/refreshTree',
   async ({ repository, viewed }: RefreshTreeArgs, { getState, dispatch }) => {
-    const { rootItems, childrenByParentUID } = getState().browseDashboards;
     const { refetch } = planRepositoryRefresh(getState().browseDashboards, repository, viewed);
-    const loaded = refetch.filter((key) => (key ? childrenByParentUID[key] : rootItems) !== undefined);
     await Promise.all(
-      loaded.map((parentUID) => dispatch(refetchChildren({ parentUID, pageSize: PAGE_SIZE })).unwrap())
+      refetch.map((parentUID) => dispatch(refetchChildren({ parentUID, pageSize: PAGE_SIZE })).unwrap())
     );
   }
 );

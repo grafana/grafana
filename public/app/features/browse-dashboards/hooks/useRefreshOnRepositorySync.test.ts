@@ -14,6 +14,7 @@ import { type DashboardViewItem } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
 
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
+import { fetchNextChildrenPage } from '../state/actions';
 import { useLoadNextChildrenPage } from '../state/hooks';
 import { type ViewedFolder } from '../state/utils';
 
@@ -65,15 +66,15 @@ interface SetupOptions {
   target?: Target;
   /** Mount before the owner of the folder in view is known. */
   unresolved?: boolean;
-  /** Leave `nested` without a collection, as while its first page is loading. */
-  nestedLoaded?: boolean;
+  /** Open folders left without a collection, as while their first page is loading. */
+  loading?: string[];
 }
 
 function setup({
   viewed = { folderUID: undefined, repository: undefined },
   target = 'folder',
   unresolved,
-  nestedLoaded = true,
+  loading = [],
 }: SetupOptions = {}) {
   server.use(
     http.get(`${BASE}/settings`, () =>
@@ -104,8 +105,12 @@ function setup({
         item('dashboard', 'root-dash'),
       ]),
       childrenByParentUID: {
-        [REPO]: fullyLoadedViewItemCollection([item('folder', 'nested', REPO), item('dashboard', 'repo-dash', REPO)]),
-        nested: nestedLoaded ? fullyLoadedViewItemCollection([item('dashboard', 'deep-dash', REPO)]) : undefined,
+        [REPO]: loading.includes(REPO)
+          ? undefined
+          : fullyLoadedViewItemCollection([item('folder', 'nested', REPO), item('dashboard', 'repo-dash', REPO)]),
+        nested: loading.includes('nested')
+          ? undefined
+          : fullyLoadedViewItemCollection([item('dashboard', 'deep-dash', REPO)]),
         plain: fullyLoadedViewItemCollection([item('dashboard', 'plain-dash')]),
         theirs: fullyLoadedViewItemCollection([item('dashboard', 'their-dash', 'other-repo')]),
       },
@@ -281,34 +286,56 @@ describe('useRefreshOnRepositorySync', () => {
     doSearch.mockRestore();
   });
 
-  it('makes a first page still in flight for the viewed folder obsolete, so the fresh one wins', async () => {
-    const { store, children, syncedAt, emitSync } = setup({
-      viewed: { folderUID: 'nested', repository: REPO },
-      nestedLoaded: false,
-    });
-    await seeded(syncedAt);
-    // The first page was requested before the pull and still lists `deep-dash`.
-    let releaseOldPage!: () => void;
+  /** Holds the first dashboards page of `folder` until released; it still lists the pre-pull item. */
+  function holdFirstPage(folder: string, stale: DashboardHit) {
+    let release!: () => void;
     let held = false;
     server.use(
       http.get(searchRoute, async ({ request }) => {
         const url = new URL(request.url);
-        if (held || url.searchParams.get('folder') !== 'nested' || url.searchParams.get('type') !== 'dashboard') {
+        if (held || url.searchParams.get('folder') !== folder || url.searchParams.get('type') !== 'dashboard') {
           return;
         }
         held = true;
-        await new Promise<void>((resolve) => (releaseOldPage = resolve));
-        return HttpResponse.json({ totalHits: 1, hits: [hit('dashboards', 'deep-dash', 'nested', OWNED)] });
+        await new Promise<void>((resolve) => (release = resolve));
+        return HttpResponse.json({ totalHits: 1, hits: [stale] });
       })
     );
+    return { release: () => release(), isHeld: () => held };
+  }
+
+  it('makes a first page still in flight for the viewed folder obsolete, so the fresh one wins', async () => {
+    const { store, children, syncedAt, emitSync } = setup({
+      viewed: { folderUID: 'nested', repository: REPO },
+      loading: ['nested'],
+    });
+    await seeded(syncedAt);
+    const oldPage = holdFirstPage('nested', hit('dashboards', 'deep-dash', 'nested', OWNED));
     const loader = renderHook(() => useLoadNextChildrenPage(), { wrapper: getWrapper({ store }) });
     loader.result.current('nested');
-    await waitFor(() => expect(releaseOldPage).toBeDefined());
+    await waitFor(() => expect(oldPage.isHeld()).toBe(true));
 
     emitSync(2000);
     await waitFor(() => expect(syncedAt()).toEqual({ [REPO]: 2000 }));
-    releaseOldPage();
+    oldPage.release();
 
     await waitFor(() => expect(children('nested')).toEqual(['deep-dash-2']));
+  });
+
+  it('loads the open repository folder at the root fresh when its first page was in flight', async () => {
+    // Expanding dispatches the first page directly, outside the tree loader.
+    const { store, children, state, syncedAt, emitSync } = setup({ loading: [REPO] });
+    await seeded(syncedAt);
+    const oldPage = holdFirstPage(REPO, hit('dashboards', 'repo-dash', REPO, OWNED));
+    store.dispatch(fetchNextChildrenPage({ parentUID: REPO, pageSize: 50 }));
+    await waitFor(() => expect(oldPage.isHeld()).toBe(true));
+
+    emitSync(2000);
+    await waitFor(() => expect(children(REPO)).toEqual(['nested', 'repo-dash-2']));
+    oldPage.release();
+
+    await waitFor(() => expect(syncedAt()).toEqual({ [REPO]: 2000 }));
+    expect(children(REPO)).toEqual(['nested', 'repo-dash-2']);
+    expect(state().openFolders[REPO]).toBe(true);
   });
 });
