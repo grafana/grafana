@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -174,6 +175,11 @@ type GrafanaRouter struct {
 	manifestDocs        atomic.Pointer[manifestDocs]
 	manifestFingerprint string
 	manifestCache       map[string]*cachedDoc
+	// builtinManifests are the app manifests compiled into this binary, by
+	// group: a fallback, published only for a served group whose backend
+	// advertises no manifest of its own (see publishedManifests). Set before
+	// the router serves, and never changed.
+	builtinManifests map[string]*app.ManifestData
 
 	// openapiDocs caches per-group-version OpenAPI v3 documents, keyed by
 	// "group/version". Serving goroutines write it on cache misses, so it is a
@@ -418,6 +424,23 @@ func authorizeNamespace(w http.ResponseWriter, req *http.Request, ns string) boo
 	return false
 }
 
+// pathParts splits path, without its leading "/", into parts, up to the
+// capacity of parts. Callers pass a slice of a local array, so splitting a
+// request's path doesn't allocate. Beyond that capacity the path is not split:
+// callers read no part past it.
+func pathParts(path string, parts []string) []string {
+	path = strings.TrimPrefix(path, "/")
+	for len(parts) < cap(parts) {
+		part, rest, more := strings.Cut(path, "/")
+		parts = append(parts, part)
+		if !more {
+			break
+		}
+		path = rest
+	}
+	return parts
+}
+
 func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, group, verb string) {
 	if group != "" && r.unregisteredGroupHandler != nil {
 		setRoute(req, routeFallback)
@@ -541,7 +564,7 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	// Private schemas pass through authorization on every request. Honor their
 	// private/no-cache responses instead of bypassing that check on a cache hit.
 	if rec.statusCode == http.StatusOK && cacheableRequest && cacheableOpenAPIResponse(rec.header) {
-		etag := quoteETag(hashHex(entry.key + "\x00" + rec.body.String()))
+		etag := quoteETag(hashHexBytes([]byte(entry.key), []byte{0}, rec.body.Bytes()))
 		r.storeOpenAPIDoc(group, cacheKey, openapiCacheEntry{
 			key: entry.key, etag: etag, body: rec.body.Bytes(), header: openAPICacheHeaders(rec.header),
 			accept: req.Header.Get("Accept"), encoding: req.Header.Get("Accept-Encoding"),

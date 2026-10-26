@@ -245,6 +245,18 @@ type requestRouter interface {
 	handlerFor(*http.Request) http.Handler
 }
 
+// withoutGroupBreaker reports whether h is served without the group breaker:
+// it keeps a breaker per destination itself (managesCircuitBreaking, the
+// single-tenant fallback), which must not also share a group-wide one, or it
+// has none (hasNoCircuitBreaker, the embedded API server, in process).
+func withoutGroupBreaker(h http.Handler) bool {
+	switch h.(type) {
+	case interface{ managesCircuitBreaking() }, interface{ hasNoCircuitBreaker() }:
+		return true
+	}
+	return false
+}
+
 // serveThroughBreaker proxies one request to h through cb, streaming the
 // response straight to w. An open breaker (or a half-open one already running
 // its trial request) fails fast with a local 503, unless h gates its own client
@@ -259,8 +271,7 @@ func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.
 	if router, ok := h.(requestRouter); ok {
 		h = router.handlerFor(req)
 	}
-	// A handler spanning multiple destinations must not also share a group-wide breaker.
-	if _, ownsBreakers := h.(interface{ managesCircuitBreaking() }); ownsBreakers {
+	if withoutGroupBreaker(h) {
 		h.ServeHTTP(w, req)
 		return
 	}
