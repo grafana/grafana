@@ -71,9 +71,9 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 | R1, R2: retired plugin handlers are destroyed once they drain, and managed plugin connections close with their last handler | #135809 |
 | R4, O4: a failing backend backs off per group, reconcile warnings are logged once, and the status page lists load failures | #135818 |
 | C7, C8: docs and specs caught up with #135946 and #135949, `mdCode` bounded, `cooldown.go` | #136005 |
-| A2, A5, A8: one `polledSource`, an ordered source list with a `mergeStep` for the dashboard split, teardown on stop, one `wrappedBackend` | `router/a2-sources` (unmerged) |
-| A6: generic loader counters, the unregistered-group handler named generically, breaker scope recorded once in `publish` and seen through the dashboard split | `router/a6-st-out-of-engine` (unmerged) |
-| A7: `router.go` split into `reconcile.go`, `auth.go` and `openapi_cache.go`; `st_fallback.go` into `st_stacks.go` and `st_poll.go`; the index into `discovery_index.go` | `router/a7-split-files` (unmerged) |
+| A2, A5, A8: one `polledSource`, an ordered source list with a `mergeStep` for the dashboard split, teardown on stop, one `wrappedBackend` | #136088 |
+| A6: generic loader counters, the unregistered-group handler named generically, breaker scope recorded once in `publish` and seen through the dashboard split | #136088 |
+| A7: `router.go` split into `reconcile.go`, `auth.go` and `openapi_cache.go`; `st_fallback.go` into `st_stacks.go` and `st_poll.go`; the index into `discovery_index.go` | #136088 |
 | O5–O9: 4xx at Debug, no panic on a second registration, ready only after each source's first poll, `plugins_poll_interval` and `core_poll_interval`, no `plugin_id=""` | #135820 |
 | P14, P17, P20, P21: the `/watch/` path rejected, router deadlines counted against the breaker, the ST discovery cache bounded, partial discovery kept | #135823 |
 | F7, F8, F9 (partly), F11 (partly), F12 (partly): one request-state value, a `status_code` table, one ST transport, a cheaper flush, `strings.Cut`, streamed ETag hashing, an ST forward benchmark | #135946, #135827 |
