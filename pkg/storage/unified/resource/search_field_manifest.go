@@ -100,24 +100,28 @@ func ManifestBackedProvider(manifests ...*app.ManifestData) (SearchFieldsProvide
 }
 
 // ManifestKinds names the kind of each resource a manifest declares, with the
-// version it is taken from: the manifest's preferred version, or else the first
-// version that declares the resource. A kind renamed between versions then has
-// one name, whatever order the versions are in. include, when set, limits the
-// versions and kinds considered.
+// version it is taken from: the manifest's preferred version, or else the last
+// version that declares the resource, as the app SDK does and as
+// ManifestBackedProvider does for search fields. A kind renamed between
+// versions then has one name in every place that uses this. include, when set,
+// limits the versions and kinds considered.
 func ManifestKinds(m *app.ManifestData, include func(app.ManifestVersion, app.ManifestVersionKind) bool) map[schema.GroupResource]schema.GroupVersionKind {
 	kinds := map[schema.GroupResource]schema.GroupVersionKind{}
 	if m == nil {
 		return kinds
 	}
+	preferred := map[schema.GroupResource]bool{}
 	for _, version := range m.Versions {
 		for _, kind := range version.Kinds {
 			if include != nil && !include(version, kind) {
 				continue
 			}
 			gr := schema.GroupResource{Group: m.Group, Resource: ManifestResourceName(kind)}
-			if _, ok := kinds[gr]; !ok || version.Name == m.PreferredVersion {
-				kinds[gr] = schema.GroupVersionKind{Group: m.Group, Version: version.Name, Kind: kind.Kind}
+			if preferred[gr] {
+				continue
 			}
+			kinds[gr] = schema.GroupVersionKind{Group: m.Group, Version: version.Name, Kind: kind.Kind}
+			preferred[gr] = version.Name == m.PreferredVersion
 		}
 	}
 	return kinds

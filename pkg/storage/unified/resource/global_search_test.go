@@ -463,7 +463,7 @@ func TestGlobalSearchCoverageOf(t *testing.T) {
 }
 
 // A kind renamed between versions is named from the preferred version, or else
-// the first version that declares it, not from whichever version comes last.
+// the last version that declares it, as the app SDK does.
 func TestGlobalSearchCoverageOfNamesRenamedKinds(t *testing.T) {
 	yes := true
 	widgets := schema.GroupResource{Group: "a.grafana.app", Resource: "widgets"}
@@ -471,7 +471,7 @@ func TestGlobalSearchCoverageOfNamesRenamedKinds(t *testing.T) {
 		preferred string
 		want      string
 	}{
-		{preferred: "", want: "Widget"},
+		{preferred: "", want: "Gadget"},
 		{preferred: "v1", want: "Widget"},
 		{preferred: "v2", want: "Gadget"},
 	} {
