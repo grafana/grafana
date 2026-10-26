@@ -7,7 +7,7 @@ import { type BrowseDashboardsState } from '../types';
 import { isNonSelectableVirtualFolder } from '../utils/dashboards';
 
 import { type fetchNextChildrenPage, type refetchChildren, type refreshTree } from './actions';
-import { ancestorsOf } from './utils';
+import { ancestorsOf, isOwnedByRepository, planRepositoryRefresh } from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
 type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
@@ -207,31 +207,45 @@ export function clearFolders(state: BrowseDashboardsState, action: PayloadAction
 }
 
 /**
- * A pull can touch any folder in a repository and the frontend does not learn which, so every
- * collection but the one in view is dropped and reloads when opened or visited next. The viewed
- * one is refetched by the thunk instead of blanking.
- *
- * The selection goes with it: it was made against the old listing, and once items leave the
- * tree their metadata is gone too, so a kept selection would route the next action through the
- * wrong flow or at UIDs that no longer exist.
+ * Drops the collections a pull may have changed that are off screen; the ones on screen are
+ * refetched in place by the thunk. Items the repository owns leave the selection with them: it
+ * was made against the old listing, and once an item is gone so is its metadata, so a kept
+ * selection would route the next action through the wrong flow or at UIDs that no longer exist.
  */
 export function refreshTreePending(state: BrowseDashboardsState, action: RefreshTreePendingAction) {
-  const { folderUID } = action.meta.arg;
+  const { repository, viewed } = action.meta.arg;
+  const { refetch, evict } = planRepositoryRefresh(state, repository, viewed);
 
-  for (const uid of [undefined, ...Object.keys(state.childrenByParentUID)]) {
-    if (uid !== folderUID) {
-      clearFolder(state, uid);
-    }
+  for (const uid of evict) {
+    unselectItemsOf(state, uid, () => true);
+    clearFolder(state, uid);
   }
-  state.selectedItems = { $all: false, dashboard: {}, folder: {}, panel: {} };
+  for (const uid of refetch) {
+    unselectItemsOf(state, uid, (item) => isOwnedByRepository(item, repository));
+  }
 }
 
 export function refreshTreeFulfilled(state: BrowseDashboardsState, action: RefreshTreeFulfilledAction) {
-  state.repositorySyncedAt = action.meta.arg.syncedAt;
+  const { repository, syncedAt } = action.meta.arg;
+  (state.repositorySyncedAt ??= {})[repository.name] = syncedAt;
 }
 
-export function setRepositorySyncedAt(state: BrowseDashboardsState, action: PayloadAction<number>) {
-  state.repositorySyncedAt = action.payload;
+export function setRepositorySyncedAt(state: BrowseDashboardsState, action: PayloadAction<Record<string, number>>) {
+  Object.assign((state.repositorySyncedAt ??= {}), action.payload);
+}
+
+function unselectItemsOf(
+  state: BrowseDashboardsState,
+  folderUID: string | undefined,
+  shouldUnselect: (item: DashboardViewItem) => boolean
+) {
+  const collection = folderUID ? state.childrenByParentUID[folderUID] : state.rootItems;
+  for (const item of collection?.items ?? []) {
+    if (state.selectedItems[item.kind][item.uid] && shouldUnselect(item)) {
+      state.selectedItems[item.kind][item.uid] = false;
+      state.selectedItems.$all = false;
+    }
+  }
 }
 
 function clearFolder(state: BrowseDashboardsState, folderUID: string | undefined) {

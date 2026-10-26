@@ -61,7 +61,7 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
 
-  useRefreshOnRepositorySync(folderUID);
+  useRefreshOnRepositorySync(folderUID, repository?.name);
 
   // CUJ-only signal: silent so it doesn't create analytics noise
   useEffect(() => {

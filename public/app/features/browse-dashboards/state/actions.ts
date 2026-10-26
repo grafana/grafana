@@ -7,7 +7,7 @@ import { listDashboards, listFolders, listStarredFolders, listTeamFolders } from
 import { type DashboardViewItemWithUIItems, type UIDashboardViewItem } from '../types';
 import { reapplyVirtualFolderPrefix, stripVirtualFolderPrefix } from '../utils/dashboards';
 
-import { findItem } from './utils';
+import { findItem, planRepositoryRefresh, type PulledRepository, type ViewedFolder } from './utils';
 
 async function listSafe(label: string, load: () => Promise<DashboardViewItem[]>): Promise<DashboardViewItem[]> {
   try {
@@ -51,8 +51,9 @@ interface RefreshParentsArgs {
 }
 
 interface RefreshTreeArgs {
-  folderUID: string | undefined;
-  /** `finished` of the repository pull the refreshed tree will reflect; stamped on success. */
+  repository: PulledRepository;
+  viewed: ViewedFolder;
+  /** `finished` of the pull; stamped for the repository on success. */
   syncedAt: number;
 }
 
@@ -76,19 +77,18 @@ export const refreshParents = createAsyncThunk(
 );
 
 /**
- * Brings the tree back in step with a repository pull, which may have touched any folder: the
- * pending reducer drops every collection but the viewed one, which is refetched here. The fulfilled
- * reducer records `syncedAt`, so a failed refetch leaves the tree marked stale and the next visit
- * tries again. A viewed collection that is still loading gets fresh data from its own first page.
+ * Brings the tree back in step with a completed pull of one repository: the pending reducer drops
+ * the collections the pull may have changed that are off screen, and the ones on screen are
+ * refetched here in place. The fulfilled reducer stamps the repository, so a failed refetch
+ * leaves the tree marked stale and the next visit tries again.
  */
 export const refreshTree = createAsyncThunk(
   'browseDashboards/refreshTree',
-  async ({ folderUID }: RefreshTreeArgs, { getState, dispatch }) => {
-    const { rootItems, childrenByParentUID } = getState().browseDashboards;
-    const viewed = folderUID ? childrenByParentUID[folderUID] : rootItems;
-    if (viewed) {
-      await dispatch(refetchChildren({ parentUID: folderUID, pageSize: PAGE_SIZE })).unwrap();
-    }
+  async ({ repository, viewed }: RefreshTreeArgs, { getState, dispatch }) => {
+    const { refetch } = planRepositoryRefresh(getState().browseDashboards, repository, viewed);
+    await Promise.all(
+      refetch.map((parentUID) => dispatch(refetchChildren({ parentUID, pageSize: PAGE_SIZE })).unwrap())
+    );
   }
 );
 

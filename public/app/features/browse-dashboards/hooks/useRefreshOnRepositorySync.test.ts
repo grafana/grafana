@@ -4,6 +4,7 @@ import { getWrapper } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
+import { ManagerKind } from 'app/features/apiserver/types';
 import { createRepository } from 'app/features/provisioning/mocks/factories';
 import { getMockLiveSrv, setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 import { type DashboardViewItem } from 'app/features/search/types';
@@ -25,57 +26,87 @@ setupProvisioningMswServer();
 const mockListFolders = jest.mocked(listFolders);
 const mockListDashboards = jest.mocked(listDashboards);
 
-function dashboard(uid: string): DashboardViewItem {
-  return { kind: 'dashboard', uid, title: uid };
+type Target = 'folder' | 'folderless' | 'instance';
+
+const REPO = createRepository().metadata!.name!;
+
+function item(kind: 'folder' | 'dashboard', uid: string, managerId?: string): DashboardViewItem {
+  return { kind, uid, title: uid, managedBy: managerId ? ManagerKind.Repo : undefined, managerId };
 }
 
-const dash1 = dashboard('dash-1');
-const dash2 = dashboard('dash-2');
-const dash3 = dashboard('dash-3');
+const uids = (items: DashboardViewItem[] | undefined) => items?.map((i) => i.uid);
 
-function repositoryAt(finished: number, state = 'success') {
-  return createRepository({ status: { sync: { state, finished, message: [] } } });
+function repositoryAt(finished: number, target: Target, state = 'success') {
+  return createRepository({
+    spec: { sync: { target, enabled: true } },
+    status: { sync: { state, finished, message: [] } },
+  });
 }
 
-function emitSync(finished: number, state = 'success') {
-  act(() =>
-    getMockLiveSrv().emitWatchEvent('repositories', { type: 'MODIFIED', object: repositoryAt(finished, state) })
-  );
+interface SetupOptions {
+  folderUID?: string;
+  viewedRepository?: string;
+  target?: Target;
 }
 
-function setup(folderUID?: string) {
-  const repository = repositoryAt(1000);
+/**
+ * The repository folder is open at the root beside a plain folder and another repository's folder.
+ * Upstream replaced `repo-dash` with `repo-dash-2`; every refetch of dashboards returns that.
+ */
+function setup({ folderUID, viewedRepository, target = 'folder' }: SetupOptions = {}) {
   server.use(
     http.get(`${BASE}/settings`, () =>
-      HttpResponse.json({
-        items: [{ name: repository.metadata?.name, title: 'Repo', type: 'github', target: 'folder', workflows: [] }],
-      })
+      HttpResponse.json({ items: [{ name: REPO, title: REPO, type: 'github', target, workflows: [] }] })
     ),
     http.get(`${BASE}/repositories`, () =>
-      HttpResponse.json({ items: [repository], metadata: { resourceVersion: '1' } })
+      HttpResponse.json({ items: [repositoryAt(1000, target)], metadata: { resourceVersion: '1' } })
     )
   );
-  // Remote deleted dash-1; the next fetch of the root no longer returns it.
   mockListFolders.mockResolvedValue([]);
-  mockListDashboards.mockResolvedValue([dash2]);
+  mockListDashboards.mockResolvedValue([item('dashboard', 'repo-dash-2', REPO)]);
 
   const store = configureStore({
     browseDashboards: {
-      rootItems: fullyLoadedViewItemCollection([dash1, dash2]),
-      childrenByParentUID: { 'folder-a': fullyLoadedViewItemCollection([dash3]) },
-      openFolders: { 'folder-a': true },
-      selectedItems: { $all: false, folder: {}, dashboard: { 'dash-3': true }, panel: {} },
+      rootItems: fullyLoadedViewItemCollection([
+        item('folder', REPO, REPO),
+        item('folder', 'plain'),
+        item('folder', 'theirs', 'other-repo'),
+        item('dashboard', 'root-dash'),
+      ]),
+      childrenByParentUID: {
+        [REPO]: fullyLoadedViewItemCollection([item('folder', 'nested', REPO), item('dashboard', 'repo-dash', REPO)]),
+        nested: fullyLoadedViewItemCollection([item('dashboard', 'deep-dash', REPO)]),
+        plain: fullyLoadedViewItemCollection([item('dashboard', 'plain-dash')]),
+        theirs: fullyLoadedViewItemCollection([item('dashboard', 'their-dash', 'other-repo')]),
+      },
+      openFolders: { [REPO]: true, nested: true, plain: true, theirs: true },
+      selectedItems: {
+        $all: false,
+        folder: {},
+        dashboard: { 'repo-dash': true, 'plain-dash': true, 'their-dash': true, 'root-dash': true },
+        panel: {},
+      },
     },
   });
 
-  const rendered = renderHook(() => useRefreshOnRepositorySync(folderUID), { wrapper: getWrapper({ store }) });
+  const render = () =>
+    renderHook(() => useRefreshOnRepositorySync(folderUID, viewedRepository), { wrapper: getWrapper({ store }) });
+  const rendered = render();
 
   const browseState = () => store.getState().browseDashboards;
-  const rootUids = () => browseState().rootItems?.items.map((item) => item.uid);
+  const children = (uid: string) => uids(browseState().childrenByParentUID[uid]?.items);
+  const selected = () => browseState().selectedItems.dashboard;
   // The first repository status seen only seeds the baseline, so wait for it before emitting.
-  const waitForBaseline = () => waitFor(() => expect(browseState().repositorySyncedAt).toBe(1000));
+  const waitForBaseline = () => waitFor(() => expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 1000 }));
+  const emitSync = (finished: number, state = 'success') =>
+    act(() =>
+      getMockLiveSrv().emitWatchEvent('repositories', {
+        type: 'MODIFIED',
+        object: repositoryAt(finished, target, state),
+      })
+    );
 
-  return { ...rendered, store, browseState, rootUids, waitForBaseline };
+  return { ...rendered, render, browseState, children, selected, waitForBaseline, emitSync };
 }
 
 describe('useRefreshOnRepositorySync', () => {
@@ -83,31 +114,99 @@ describe('useRefreshOnRepositorySync', () => {
     jest.clearAllMocks();
   });
 
-  it('refetches the viewed list and drops other loaded folders and the selection when a pull completes', async () => {
-    const { browseState, rootUids, waitForBaseline } = setup();
+  it('at the root: refetches the open repository folder in place and drops only what the repository owns', async () => {
+    const { browseState, children, selected, waitForBaseline, emitSync } = setup();
     await waitForBaseline();
     expect(mockListDashboards).not.toHaveBeenCalled();
 
     emitSync(2000);
 
-    await waitFor(() => expect(rootUids()).toEqual(['dash-2']));
-    expect(browseState().childrenByParentUID['folder-a']).toBeUndefined();
-    expect(browseState().openFolders['folder-a']).toBe(false);
-    expect(browseState().selectedItems.dashboard['dash-3']).toBeUndefined();
-    await waitFor(() => expect(browseState().repositorySyncedAt).toBe(2000));
+    await waitFor(() => expect(children(REPO)).toEqual(['repo-dash-2']));
+    expect(browseState().openFolders[REPO]).toBe(true);
+    expect(mockListDashboards).toHaveBeenCalledTimes(1);
+    expect(mockListDashboards).toHaveBeenCalledWith(REPO, 1, expect.any(Number));
+
+    // Nested folders reload when opened next; everything the repository does not own is untouched.
+    expect(children('nested')).toBeUndefined();
+    expect(browseState().openFolders.nested).toBe(false);
+    expect(uids(browseState().rootItems?.items)).toEqual([REPO, 'plain', 'theirs', 'root-dash']);
+    expect(children('plain')).toEqual(['plain-dash']);
+    expect(children('theirs')).toEqual(['their-dash']);
+    expect(browseState().openFolders.plain).toBe(true);
+
+    expect(selected()).toEqual({ 'repo-dash': false, 'plain-dash': true, 'their-dash': true, 'root-dash': true });
+    await waitFor(() => expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 2000 }));
+  });
+
+  it('inside a folder the repository owns: refetches it in place and drops its other folders', async () => {
+    const { browseState, children, waitForBaseline, emitSync } = setup({ folderUID: 'nested', viewedRepository: REPO });
+    await waitForBaseline();
+
+    emitSync(2000);
+
+    await waitFor(() => expect(children('nested')).toEqual(['repo-dash-2']));
+    expect(mockListDashboards).toHaveBeenCalledTimes(1);
+    expect(children(REPO)).toBeUndefined();
+    expect(children('plain')).toEqual(['plain-dash']);
+    expect(uids(browseState().rootItems?.items)).toHaveLength(4);
+  });
+
+  it('inside a folder it does not own: nothing on screen changes, its cached folders are dropped', async () => {
+    const { browseState, children, selected, waitForBaseline, emitSync } = setup({ folderUID: 'plain' });
+    await waitForBaseline();
+
+    emitSync(2000);
+
+    await waitFor(() => expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 2000 }));
+    expect(mockListDashboards).not.toHaveBeenCalled();
+    expect(children('plain')).toEqual(['plain-dash']);
+    expect(browseState().openFolders.plain).toBe(true);
+    expect(selected()['plain-dash']).toBe(true);
+    expect(children(REPO)).toBeUndefined();
+    expect(children('nested')).toBeUndefined();
+    expect(selected()['repo-dash']).toBe(false);
+  });
+
+  it('a folderless repository owns top-level items too, so the root listing is refetched', async () => {
+    const { browseState, children, selected, waitForBaseline, emitSync } = setup({ target: 'folderless' });
+    await waitForBaseline();
+
+    emitSync(2000);
+
+    await waitFor(() => expect(uids(browseState().rootItems?.items)).toEqual(['repo-dash-2']));
+    expect(mockListDashboards).toHaveBeenCalledWith(undefined, 1, expect.any(Number));
+    expect(children('plain')).toEqual(['plain-dash']);
+    expect(children('theirs')).toEqual(['their-dash']);
+    expect(children('nested')).toBeUndefined();
+    // Only the repository's items leave the selection, even in the refetched root.
+    expect(selected()['root-dash']).toBe(true);
+    expect(selected()['their-dash']).toBe(true);
+  });
+
+  it('an instance repository owns the whole tree', async () => {
+    const { browseState, children, selected, waitForBaseline, emitSync } = setup({ target: 'instance' });
+    await waitForBaseline();
+
+    emitSync(2000);
+
+    await waitFor(() => expect(uids(browseState().rootItems?.items)).toEqual(['repo-dash-2']));
+    expect(children(REPO)).toBeUndefined();
+    expect(children('plain')).toBeUndefined();
+    expect(children('theirs')).toBeUndefined();
+    expect(Object.values(selected()).every((isSelected) => isSelected === false)).toBe(true);
   });
 
   it('refreshes after a pull that finished with errors, which may still have written resources', async () => {
-    const { rootUids, waitForBaseline } = setup();
+    const { children, waitForBaseline, emitSync } = setup();
     await waitForBaseline();
 
     emitSync(2000, 'error');
 
-    await waitFor(() => expect(rootUids()).toEqual(['dash-2']));
+    await waitFor(() => expect(children(REPO)).toEqual(['repo-dash-2']));
   });
 
   it('ignores a status update whose pull has not advanced', async () => {
-    const { browseState, rootUids, waitForBaseline } = setup();
+    const { browseState, children, selected, waitForBaseline, emitSync } = setup();
     await waitForBaseline();
 
     // Same `finished`, e.g. a health check patched the status.
@@ -115,14 +214,14 @@ describe('useRefreshOnRepositorySync', () => {
 
     await act(() => Promise.resolve());
     expect(mockListDashboards).not.toHaveBeenCalled();
-    expect(rootUids()).toEqual(['dash-1', 'dash-2']);
-    expect(browseState().childrenByParentUID['folder-a']).toBeDefined();
-    expect(browseState().selectedItems.dashboard['dash-3']).toBe(true);
-    expect(browseState().repositorySyncedAt).toBe(1000);
+    expect(children(REPO)).toEqual(['nested', 'repo-dash']);
+    expect(children('nested')).toEqual(['deep-dash']);
+    expect(selected()['repo-dash']).toBe(true);
+    expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 1000 });
   });
 
-  it('keeps the tree marked stale when the refetch fails, so the next visit retries', async () => {
-    const { browseState, rootUids, waitForBaseline, unmount, store } = setup();
+  it('keeps the repository marked stale when the refetch fails, so the next visit retries', async () => {
+    const { browseState, children, waitForBaseline, emitSync, unmount, render } = setup();
     await waitForBaseline();
     mockListFolders.mockRejectedValueOnce(new Error('network down'));
 
@@ -130,29 +229,18 @@ describe('useRefreshOnRepositorySync', () => {
 
     await waitFor(() => expect(mockListFolders).toHaveBeenCalledTimes(1));
     await act(() => Promise.resolve());
-    expect(rootUids()).toEqual(['dash-1', 'dash-2']);
-    expect(browseState().repositorySyncedAt).toBe(1000);
+    expect(children(REPO)).toEqual(['nested', 'repo-dash']);
+    expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 1000 });
 
     unmount();
-    renderHook(() => useRefreshOnRepositorySync(undefined), { wrapper: getWrapper({ store }) });
+    render();
 
-    await waitFor(() => expect(rootUids()).toEqual(['dash-2']));
-    await waitFor(() => expect(browseState().repositorySyncedAt).toBe(2000));
-  });
-
-  it('refetches the viewed folder and drops the root when inside a folder', async () => {
-    const { browseState, waitForBaseline } = setup('folder-a');
-    await waitForBaseline();
-
-    emitSync(2000);
-
-    await waitFor(() => expect(browseState().childrenByParentUID['folder-a']?.items).toEqual([dash2]));
-    expect(mockListDashboards).toHaveBeenCalledWith('folder-a', 1, expect.any(Number));
-    expect(browseState().rootItems).toBeUndefined();
+    await waitFor(() => expect(children(REPO)).toEqual(['repo-dash-2']));
+    await waitFor(() => expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 2000 }));
   });
 
   it('notices a pull that landed while the list was not mounted', async () => {
-    const { rootUids, waitForBaseline, unmount, store } = setup();
+    const { children, waitForBaseline, emitSync, unmount, render } = setup();
     await waitForBaseline();
     unmount();
 
@@ -160,8 +248,8 @@ describe('useRefreshOnRepositorySync', () => {
     emitSync(2000);
     expect(mockListDashboards).not.toHaveBeenCalled();
 
-    renderHook(() => useRefreshOnRepositorySync(undefined), { wrapper: getWrapper({ store }) });
+    render();
 
-    await waitFor(() => expect(rootUids()).toEqual(['dash-2']));
+    await waitFor(() => expect(children(REPO)).toEqual(['repo-dash-2']));
   });
 });

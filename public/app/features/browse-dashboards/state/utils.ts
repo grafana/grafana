@@ -1,3 +1,4 @@
+import { ManagerKind } from 'app/features/apiserver/types';
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
 import { type BrowseDashboardsState } from '../types';
@@ -51,6 +52,87 @@ export function* ancestorsOf(
     yield parent;
     parentUID = parent.parentUID;
   }
+}
+
+/** A repository whose pull completed, with how it owns resources (`spec.sync.target`). */
+export interface PulledRepository {
+  name: string;
+  target: 'instance' | 'folder' | 'folderless';
+}
+
+/** The folder in view and the repository that owns it, if any. Its own item is not in the tree. */
+export interface ViewedFolder {
+  folderUID: string | undefined;
+  repository: string | undefined;
+}
+
+export interface RepositoryRefreshPlan {
+  /** On screen: kept and refetched in place. */
+  refetch: Array<string | undefined>;
+  /** Off screen: dropped, reload when opened or visited next. */
+  evict: Array<string | undefined>;
+}
+
+/**
+ * True when the repository owns the item. An item managed through the repository feature without
+ * a manager id (older API shape) cannot be told apart and counts as owned, so a stale listing is
+ * never kept by mistake.
+ */
+export function isOwnedByRepository(
+  item: Pick<DashboardViewItem, 'managedBy' | 'managerId'>,
+  repository: PulledRepository
+): boolean {
+  if (repository.target === 'instance') {
+    return true;
+  }
+  return item.managerId === repository.name || (item.managerId === undefined && item.managedBy === ManagerKind.Repo);
+}
+
+/**
+ * The loaded collections a pull of `repository` may have changed, split into the ones on screen
+ * and the rest. An `instance` repository owns the whole tree. A `folder` one owns the folder named
+ * after it and the folders inside, which carry its manager id; the root listing cannot change. A
+ * `folderless` one owns top-level items too, so the root is in scope as well. On screen are the
+ * collection in view and, at the root, the repository's open folder.
+ */
+export function planRepositoryRefresh(
+  state: BrowseDashboardsState,
+  repository: PulledRepository,
+  viewed: ViewedFolder
+): RepositoryRefreshPlan {
+  const { rootItems, childrenByParentUID, openFolders } = state;
+  // Only a `folder` repository has a folder of its own; the root cannot change under it.
+  const ownFolder = repository.target === 'folder' ? repository.name : undefined;
+  const inScope: Array<string | undefined> = [];
+
+  if (rootItems && !ownFolder) {
+    inScope.push(undefined);
+  }
+
+  for (const [uid, collection] of Object.entries(childrenByParentUID)) {
+    if (!collection) {
+      continue;
+    }
+    if (uid === ownFolder || repository.target === 'instance') {
+      inScope.push(uid);
+    } else if (uid === viewed.folderUID) {
+      if (viewed.repository === repository.name) {
+        inScope.push(uid);
+      }
+    } else {
+      // A folder whose own item is not loaded is not on screen either, so dropping it costs nothing.
+      const folder = findItem(rootItems?.items ?? [], childrenByParentUID, 'folder', uid);
+      if (!folder || isOwnedByRepository(folder, repository)) {
+        inScope.push(uid);
+      }
+    }
+  }
+
+  const onScreen = (uid: string | undefined) =>
+    uid === viewed.folderUID ||
+    (ownFolder !== undefined && uid === ownFolder && viewed.folderUID === undefined && openFolders[ownFolder]);
+
+  return { refetch: inScope.filter(onScreen), evict: inScope.filter((uid) => !onScreen(uid)) };
 }
 
 export function getPaginationPlaceholders(amount: number, parentUID: string | undefined, level: number) {
