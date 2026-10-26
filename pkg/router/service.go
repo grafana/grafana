@@ -140,8 +140,10 @@ func newService(router *GrafanaRouter, reg prometheus.Registerer) *Service {
 	// reused for it. A second router on one registry, as in tests, goes
 	// unreported rather than panicking.
 	var already prometheus.AlreadyRegisteredError
-	if err := reg.Register(newRouterCollector(s.router)); err != nil && !errors.As(err, &already) {
-		panic(err)
+	for _, collector := range append([]prometheus.Collector{newRouterCollector(s.router)}, newLoaderCounterCollectors(s.router.loader)...) {
+		if err := reg.Register(collector); err != nil && !errors.As(err, &already) {
+			panic(err)
+		}
 	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
 	return s

@@ -412,6 +412,10 @@ func TestServicesShareOneRegistry(t *testing.T) {
 	require.NotPanics(t, func() { second = newService(NewGrafanaRouter(&mutableLoader{}, nil), reg) })
 	require.Same(t, first.metrics.requests, second.metrics.requests)
 
+	// Routers whose loaders report different counters share the registry too.
+	require.NotPanics(t, func() { newService(NewGrafanaRouter(&statusLoader{}, nil), reg) })
+	require.NotPanics(t, func() { newService(NewGrafanaRouter(&mutableLoader{}, nil), reg) })
+
 	require.NotPanics(t, func() {
 		newPluginGRPCRequestDuration(reg, sourcePluginsURL)
 		newPluginGRPCRequestDuration(reg, sourcePluginsURL)

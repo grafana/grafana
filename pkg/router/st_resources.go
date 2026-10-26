@@ -43,7 +43,9 @@ func resourceFromPath(path string) (string, bool) {
 func splitSingleTenantResources(st http.Handler) mergeStep {
 	return func(backends map[string]Backend) {
 		b, ok := backends[singleTenantResourcesGroup]
-		if !ok || b.Source() == sourceSingleTenant {
+		// A caller-scoped backend is the stacks' own, and wrappedBackend can't
+		// forward that marker.
+		if _, callerScoped := b.(CallerScopedDiscovery); !ok || callerScoped {
 			return
 		}
 		backends[singleTenantResourcesGroup] = &wrappedBackend{Backend: b, wrap: func(next http.Handler) http.Handler {
