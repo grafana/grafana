@@ -175,15 +175,18 @@ describe('classifyErrorAttributes', () => {
     });
   });
 
-  it.each(['tech_stack', 'techStack', 'full_stack', 'stack', 'addedInfo'])('leaves %s out of the error groups', (key) => {
-    const item = { key, value: 'value' };
+  it.each(['tech_stack', 'techStack', 'full_stack', 'stack', 'addedInfo'])(
+    'leaves %s out of the error groups',
+    (key) => {
+      const item = { key, value: 'value' };
 
-    expect(classifyErrorAttributes([item], getKey)).toEqual({
-      messages: [],
-      stacktraces: [],
-      other: [],
-    });
-  });
+      expect(classifyErrorAttributes([item], getKey)).toEqual({
+        messages: [],
+        stacktraces: [],
+        other: [],
+      });
+    }
+  );
 
   it('splits an error namespace into message, stacktrace, and other attributes', () => {
     const message = { key: 'error.message', value: 'failed' };
