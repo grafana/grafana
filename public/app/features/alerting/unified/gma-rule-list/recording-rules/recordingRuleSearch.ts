@@ -4,11 +4,13 @@ import * as z from 'zod';
 import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type ResultTotal } from '../rule-row/ResultCount';
+import { type FilterIssue } from '../rule-search/parser';
 import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
+import { getRejectionIssues } from '../rule-search/searchRejection';
 import { type PagedFailure } from '../shared/PagedFailureAlert';
 
 import { type RecordingRuleSearchHit, recordingRuleSearchHitSchema } from './recordingRuleSearchHit';
-import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
+import { buildRecordingRuleLeaves, buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
 
 interface RecordingRuleSearchPage {
   hits: RecordingRuleSearchHit[];
@@ -92,6 +94,18 @@ export function useRecordingRuleSearch(filter: RuleSearchFilter) {
     // Only the first page's total counts; later pages repeat it and the count never drives paging.
     total: pages?.[0]?.total,
   };
+}
+
+/**
+ * The issues of a search the rule search refused as invalid, for the search input. It reads the same cached
+ * search as the list, so it sends no request of its own.
+ */
+export function useRecordingRuleSearchRejection(filter: RuleSearchFilter, { skip }: { skip: boolean }): FilterIssue[] {
+  const { error } = useSearchRecordingRulesInfiniteQuery(filter, { skip });
+  return useMemo(
+    () => (skip ? [] : (getRejectionIssues(error, buildRecordingRuleLeaves(filter)) ?? [])),
+    [skip, error, filter]
+  );
 }
 
 function toResultTotal({

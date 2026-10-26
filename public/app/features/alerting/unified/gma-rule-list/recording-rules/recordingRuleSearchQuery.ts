@@ -17,7 +17,7 @@ export function buildRecordingRuleSearchQuery(filter: RuleSearchFilter, continue
 }
 
 /** The request's leaves in order, each with the filter it came from. */
-function buildRecordingRuleLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
+export function buildRecordingRuleLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
   return [...buildSharedLeaves(filter), ...buildRecordingLeaves(filter), ...buildHealthLeaves(filter, 'Recording')];
 }
 
