@@ -250,8 +250,6 @@ export const FlagKeys = {
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
-  /** Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins */
-  GrafanaUnifiedDataSourcePicker: "grafana.unifiedDataSourcePicker",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
   /** Enables semantic (vector) dashboard search in the command palette */
@@ -1696,17 +1694,6 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.thresholdsInterpolation", true, options).value;
-};
-
-/**
- * Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins
- *
- * **Details:**
- * - flag key: `grafana.unifiedDataSourcePicker`
- * - default value: `true`
- */
-export const useFlagGrafanaUnifiedDataSourcePicker = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.unifiedDataSourcePicker", true, options).value;
 };
 
 /**

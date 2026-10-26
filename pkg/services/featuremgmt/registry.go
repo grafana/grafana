@@ -3229,14 +3229,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "grafana.unifiedDataSourcePicker",
-			Description: "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{React: true},
-		},
-		{
 			Name:        "rawPrometheus.tableNg",
 			Description: "Renders the raw Prometheus query results table using TableNG instead of the legacy Table",
 			Stage:       FeatureStageExperimental,

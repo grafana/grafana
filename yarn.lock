@@ -2829,7 +2829,6 @@ __metadata:
   dependencies:
     "@alwaysmeticulous/sdk-bundles-api": "npm:2.341.0"
     "@grafana/data": "npm:13.3.0-pre"
-    "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.12.0"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/ui": "npm:13.3.0-pre"
@@ -2841,7 +2840,6 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
-    "@testing-library/user-event": "npm:14.6.1"
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:^4.17.25"
