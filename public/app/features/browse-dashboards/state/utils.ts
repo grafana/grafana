@@ -78,7 +78,7 @@ export interface ViewedFolder {
 }
 
 export interface RepositoryRefreshPlan {
-  /** On screen: kept and refetched in place. */
+  /** On screen: kept and refetched in place; a load still in flight for one is obsolete. */
   refetch: Array<string | undefined>;
   /** Off screen: dropped, reload when opened or visited next. */
   evict: Array<string | undefined>;
@@ -100,11 +100,12 @@ export function isOwnedByRepository(
 }
 
 /**
- * The loaded collections a pull of `repository` may have changed, split into the ones on screen
- * and the rest. An `instance` repository owns the whole tree. A `folder` one owns the folder named
- * after it and the folders inside, which carry its manager id; the root listing cannot change. A
+ * The collections a pull of `repository` may have changed, split into the ones on screen and the
+ * rest. An `instance` repository owns the whole tree. A `folder` one owns the folder named after it
+ * and the folders inside, which carry its manager id; the root listing cannot change. A
  * `folderless` one owns top-level items too, so the root is in scope as well. On screen are the
- * collection in view and, at the root, the repository's open folder.
+ * collection in view and, at the root, the repository's open folder; those count even before
+ * their first page has landed, since that page may predate the pull.
  */
 export function planRepositoryRefresh(
   state: BrowseDashboardsState,
@@ -114,27 +115,30 @@ export function planRepositoryRefresh(
   const { rootItems, childrenByParentUID, openFolders } = state;
   // Only a `folder` repository has a folder of its own; the root cannot change under it.
   const ownFolder = repository.target === 'folder' ? repository.name : undefined;
-  const inScope: Array<string | undefined> = [];
+  const ownsViewed = repository.target === 'instance' || viewed.repository === repository.name;
+  const inScope = new Set<string | undefined>();
 
-  if (rootItems && !ownFolder) {
-    inScope.push(undefined);
+  if (!ownFolder) {
+    inScope.add(undefined);
+  }
+  if (viewed.folderUID !== undefined && ownsViewed) {
+    inScope.add(viewed.folderUID);
+  }
+  if (ownFolder !== undefined && openFolders[ownFolder]) {
+    inScope.add(ownFolder);
   }
 
   for (const [uid, collection] of Object.entries(childrenByParentUID)) {
-    if (!collection) {
+    if (!collection || inScope.has(uid) || uid === viewed.folderUID) {
       continue;
     }
     if (uid === ownFolder || repository.target === 'instance') {
-      inScope.push(uid);
-    } else if (uid === viewed.folderUID) {
-      if (viewed.repository === repository.name) {
-        inScope.push(uid);
-      }
+      inScope.add(uid);
     } else {
       // A folder whose own item is not loaded is not on screen either, so dropping it costs nothing.
       const folder = findItem(rootItems?.items ?? [], childrenByParentUID, 'folder', uid);
       if (!folder || isOwnedByRepository(folder, repository)) {
-        inScope.push(uid);
+        inScope.add(uid);
       }
     }
   }
@@ -142,8 +146,9 @@ export function planRepositoryRefresh(
   const onScreen = (uid: string | undefined) =>
     uid === viewed.folderUID ||
     (ownFolder !== undefined && uid === ownFolder && viewed.folderUID === undefined && openFolders[ownFolder]);
+  const keys = Array.from(inScope);
 
-  return { refetch: inScope.filter(onScreen), evict: inScope.filter((uid) => !onScreen(uid)) };
+  return { refetch: keys.filter(onScreen), evict: keys.filter((uid) => !onScreen(uid)) };
 }
 
 export function getPaginationPlaceholders(amount: number, parentUID: string | undefined, level: number) {
