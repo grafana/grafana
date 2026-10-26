@@ -96,7 +96,7 @@ interface GlStyle {
   layers: GlLayer[];
 }
 
-/** An undefined value removes the generator's own, as for a dash CARTO draws solid */
+/** An undefined value removes the generator's own, as for a dash the default basemap draws solid */
 type Paint = Record<string, GlValue | undefined>;
 
 type RoadClass = 'highway' | 'major' | 'secondary' | 'minor' | 'service' | 'other';
@@ -108,16 +108,16 @@ const SECONDARY_ROADS = ['secondary', 'tertiary', 'secondary_link', 'tertiary_li
 type RoadColors = [far: string, outer: string, inner: string];
 
 /**
- * CARTO draws roads as a fill inside a wide casing that leaves mostly casing showing until zoom 14,
+ * The default basemap draws roads as a fill inside a wide casing that leaves mostly casing showing until zoom 14,
  * and further out draws them in a lighter casing color. ol-mapbox-style ignores `line-gap-width`, so
- * Protomaps' casings draw as a plain line under the fill, and both take the color CARTO shows at
+ * Protomaps' casings draw as a plain line under the fill, and both take the color the default basemap shows at
  * each zoom.
  */
-function cartoRoads(
+function defaultBasemapRoads(
   fills: Record<RoadClass, RoadColors>,
   tunnels: Record<Exclude<RoadClass, 'service'> | 'casing', string>
 ) {
-  // CARTO colors secondary and tertiary roads apart from trunk and primary ones in some flavors
+  // The default basemap colors secondary and tertiary roads apart from trunk and primary ones in some flavors
   const colorAt = (roadClass: RoadClass, i: number): GlValue => {
     const [color, secondary] = [fills[roadClass][i], fills.secondary[i]];
     return roadClass !== 'major' || color === secondary
@@ -136,7 +136,7 @@ function cartoRoads(
     paint[`${prefix}other`] = { 'line-color': fill('other') };
   }
   paint.roads_minor_service = { 'line-color': fill('service') };
-  // CARTO draws tunnels in one flat color per class at every zoom
+  // The default basemap draws tunnels in one flat color per class at every zoom
   for (const roadClass of ['highway', 'major', 'link', 'minor', 'other'] as const) {
     const fillClass = roadClass === 'link' ? 'major' : roadClass;
     const color =
@@ -166,31 +166,31 @@ function cartoRoads(
 }
 
 /**
- * CARTO's motorways are under a pixel wide until zoom 8, where Protomaps' are already over one. From
+ * The default basemap's motorways are under a pixel wide until zoom 8, where Protomaps' are already over one. From
  * zoom 10 the width follows Protomaps' own ramp.
  */
 const HIGHWAY_WIDTH = roadWidthRamp([3, 0], [6, 0.5], [7, 0.7], [8, 0.8], [10, 1.3], [12, 1.6], [15, 5], [18, 15]);
 
-/** CARTO fades a building's roof in over its footprint between zoom 13 and 16 */
-function cartoBuildings(footprint: string, roof: string): Paint {
+/** The default basemap fades a building's roof in over its footprint between zoom 13 and 16 */
+function defaultBasemapBuildings(footprint: string, roof: string): Paint {
   return { 'fill-color': zoomRamp([13, footprint], [16, roof]), 'fill-opacity': 1 };
 }
 
 /**
- * White and Black stand in for CARTO's Positron and Dark Matter, the basemap panels show by default,
- * so they take CARTO's colors, line widths and dashes. Most of the difference is CARTO's slight blue
+ * White and Black stand in for the light and dark default basemaps that panels show, so they take
+ * their colors, line widths and dashes. Most of the difference is the default basemap's slight blue
  * tint on water and labels where Protomaps is pure gray. Only paint changes here: which features
  * show, and from which zoom, stays with the label rules above.
  */
-const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
+const DEFAULT_BASEMAP_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
   [ProtomapsFlavor.White]: {
     background: { 'background-color': '#fafaf8' },
     earth: { 'fill-color': '#fafaf8' },
     water: { 'fill-color': '#d4dadc' },
     water_stream: { 'line-color': '#d1dbdf' },
     water_river: { 'line-color': '#d1dbdf' },
-    buildings: cartoBuildings('#dfdfdf', '#ededed'),
-    ...cartoRoads(
+    buildings: defaultBasemapBuildings('#dfdfdf', '#ededed'),
+    ...defaultBasemapRoads(
       {
         highway: ['#e6e6e6', '#dddddd', '#ffffff'],
         major: ['#e6e6e6', '#dddddd', '#ffffff'],
@@ -213,7 +213,7 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
       'line-width': zoomRamp([3, 1], [6, 1.5]),
       'line-dasharray': undefined,
     },
-    // Keeps Protomaps' thinner line: unlike CARTO's state borders, this layer also draws city districts
+    // Keeps Protomaps' thinner line: unlike the default basemap's state borders, this layer also draws city districts
     boundaries: {
       'line-color': zoomRamp([5, '#ead5d7'], [6, '#e1c5c7']),
       'line-dasharray': ['step', ['zoom'], ['literal', [1, 0]], 7, ['literal', [2, 2]]],
@@ -237,14 +237,14 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
     water: { 'fill-color': '#2c353c' },
     water_stream: { 'line-color': '#3f5a6d' },
     water_river: { 'line-color': '#3f5a6d' },
-    buildings: cartoBuildings('#0e0e0e', '#393939'),
-    ...cartoRoads(
+    buildings: defaultBasemapBuildings('#0e0e0e', '#393939'),
+    ...defaultBasemapRoads(
       {
         highway: ['#1a1a1a', '#232323', '#494949'],
         major: ['#1a1a1a', '#232323', '#535666'],
         secondary: ['#414758', '#414758', '#414758'],
         minor: ['#414758', '#414758', '#414758'],
-        // Dark Matter fills service roads darker than the land, inside a lighter casing
+        // The dark default basemap fills service roads darker than the land, inside a lighter casing
         service: ['#1c1c1c', '#1c1c1c', '#0b0b0b'],
         other: ['#1c1c1c', '#1c1c1c', '#1c1c1c'],
       },
@@ -355,10 +355,10 @@ export function isProtomapsBasemapEnabled() {
 }
 
 function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean, flavor: ProtomapsFlavor): T {
-  const cartoPaint = CARTO_PAINT[flavor] ?? {};
+  const defaultBasemapPaint = DEFAULT_BASEMAP_PAINT[flavor] ?? {};
   const layers = glStyle.layers
     .filter((layer) => (showLabels || layer.type !== 'symbol') && !UNLABELLED_LAYERS.has(layer.id))
-    .map((layer) => withPaint(adaptLayer(layer), cartoPaint[layer.id]));
+    .map((layer) => withPaint(adaptLayer(layer), defaultBasemapPaint[layer.id]));
   return { ...glStyle, layers };
 }
 
