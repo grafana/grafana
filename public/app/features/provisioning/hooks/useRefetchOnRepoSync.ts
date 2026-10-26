@@ -4,10 +4,9 @@ import { useEffect, useRef } from 'react';
 import { useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 /**
- * Calls `refetch` once each time the repository finishes a pull sync, whatever
- * its outcome (the files come from the repository, not from what the pull
- * applied), so cached reads — README/doc content and the folder's file
- * listing — pick up remote changes (added/removed/renamed files) without a
+ * Calls `refetch` once each time the repository finishes a successful (or
+ * warning) pull sync, so cached reads — README/doc content and the folder's
+ * file listing — pick up remote changes (added/removed/renamed files) without a
  * page reload.
  *
  * Watches the durable repository sync status rather than the Job, since the Job
@@ -37,7 +36,7 @@ export function useRefetchOnRepoSync(repositoryName: string | undefined, refetch
       return;
     }
     // sync only advances on pull, so push/pr/move/delete never reach here.
-    if (finished > lastFinishedRef.current) {
+    if (finished > lastFinishedRef.current && (sync?.state === 'success' || sync?.state === 'warning')) {
       lastFinishedRef.current = finished;
       refetch();
     }

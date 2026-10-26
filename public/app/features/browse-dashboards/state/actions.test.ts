@@ -45,24 +45,31 @@ function storeWith(collection: DashboardViewItemCollection | undefined) {
   return { store, uids };
 }
 
-/** Holds the first search for the given page offset until released; everything else gets `listing`. */
-function holdPage(offset: number, listing = [hit('dash-2')]) {
-  let release!: (hits: DashboardHit[]) => void;
-  const held = new Promise<DashboardHit[]>((resolve) => (release = resolve));
-  let taken = false;
+/**
+ * Holds the first `count` searches for the given page offset until released, in order; everything
+ * else gets `listing`.
+ */
+function holdPages(offset: number, count: number, listing = [hit('dash-2')]) {
+  const releases: Array<(hits: DashboardHit[]) => void> = [];
+  const held = Array.from({ length: count }, () => new Promise<DashboardHit[]>((resolve) => releases.push(resolve)));
+  let taken = 0;
   server.use(
     http.get(searchRoute, async ({ request }) => {
-      if (taken || (new URL(request.url).searchParams.get('offset') ?? '0') !== String(offset)) {
+      if (taken >= count || (new URL(request.url).searchParams.get('offset') ?? '0') !== String(offset)) {
         return;
       }
-      taken = true;
-      const hits = await held;
+      const hits = await held[taken++];
       return HttpResponse.json({ totalHits: hits.length, hits });
     }),
     getCustomSearchHandler(listing)
   );
-  return release;
+  return (index: number, hits: DashboardHit[]) => releases[index](hits);
 }
+
+const holdPage = (offset: number, listing?: DashboardHit[]) => {
+  const release = holdPages(offset, 1, listing);
+  return (hits: DashboardHit[]) => release(0, hits);
+};
 
 describe('browse-dashboards tree loading', () => {
   it('drops a page that completes after its collection was replaced', async () => {
@@ -89,17 +96,31 @@ describe('browse-dashboards tree loading', () => {
     expect(uids()).toBeUndefined();
   });
 
-  it('drops an older refetch that completes after a newer one', async () => {
+  it('keeps the refetch started last, whichever lands first', async () => {
     const { store, uids } = storeWith(firstPageOf([dashboard('dash-1')]));
-    const release = holdPage(0);
+    const release = holdPages(0, 2);
     const older = store.dispatch(refetchChildren({ parentUID: PARENT, pageSize: PAGE_SIZE }));
+    const newer = store.dispatch(refetchChildren({ parentUID: PARENT, pageSize: PAGE_SIZE }));
 
-    await store.dispatch(refetchChildren({ parentUID: PARENT, pageSize: PAGE_SIZE }));
-    expect(uids()).toEqual(['dash-2']);
-
-    release([hit('dash-1')]);
+    // Older lands first: ignored, the newer one is still owed.
+    release(0, [hit('dash-1')]);
     await older;
+    expect(uids()).toEqual(['dash-1']);
+
+    release(1, [hit('dash-2')]);
+    await newer;
     expect(uids()).toEqual(['dash-2']);
+
+    // Newer lands first: applied, the older one is ignored when it arrives.
+    const release2 = holdPages(0, 2);
+    const older2 = store.dispatch(refetchChildren({ parentUID: PARENT, pageSize: PAGE_SIZE }));
+    const newer2 = store.dispatch(refetchChildren({ parentUID: PARENT, pageSize: PAGE_SIZE }));
+    release2(1, [hit('dash-3')]);
+    await newer2;
+    expect(uids()).toEqual(['dash-3']);
+    release2(0, [hit('dash-1')]);
+    await older2;
+    expect(uids()).toEqual(['dash-3']);
   });
 
   it('loads the page again when the one in flight was dropped, since the tree will not ask twice', async () => {

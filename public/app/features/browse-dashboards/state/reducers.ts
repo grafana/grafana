@@ -6,19 +6,19 @@ import { GENERAL_FOLDER_UID } from '../../search/constants';
 import { type BrowseDashboardsState } from '../types';
 import { isNonSelectableVirtualFolder } from '../utils/dashboards';
 
-import { type fetchNextChildrenPage, type refetchChildren, type refreshTree } from './actions';
-import {
-  ancestorsOf,
-  collectionGeneration,
-  collectionKeyOf,
-  isOwnedByRepository,
-  planRepositoryRefresh,
-} from './utils';
+import { type applyRefreshPlan, type fetchNextChildrenPage, type refetchChildren, type refreshTree } from './actions';
+import { ancestorsOf, collectionGeneration, collectionKeyOf, isOwnedByRepository } from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
+type RefetchChildrenPendingAction = ReturnType<typeof refetchChildren.pending>;
 type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
-type RefreshTreePendingAction = ReturnType<typeof refreshTree.pending>;
+type ApplyRefreshPlanAction = ReturnType<typeof applyRefreshPlan>;
 type RefreshTreeFulfilledAction = ReturnType<typeof refreshTree.fulfilled>;
+
+/** A refetch supersedes whatever is in flight for its collection, so the last one started wins. */
+export function refetchChildrenPending(state: BrowseDashboardsState, action: RefetchChildrenPendingAction) {
+  bumpCollectionGeneration(state, collectionKeyOf(action.meta.arg.parentUID));
+}
 
 export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: RefetchChildrenFulfilledAction) {
   const { children, page, kind, lastPageOfKind, generation } = action.payload;
@@ -225,22 +225,19 @@ export function clearFolders(state: BrowseDashboardsState, action: PayloadAction
 }
 
 /**
- * Drops the off-screen collections a pull may have changed; on-screen ones are refetched by the
- * thunk and only get their generation bumped, so their in-flight loads are obsolete. Items the
- * repository owns leave the selection: once gone, so is the metadata that routes them to the
- * right flow.
+ * Drops the off-screen collections a pull may have changed; the on-screen ones are refetched by the
+ * thunk. Items the repository owns leave the selection: once gone, so is the metadata that routes
+ * them to the right flow.
  */
-export function refreshTreePending(state: BrowseDashboardsState, action: RefreshTreePendingAction) {
-  const { repository, viewed } = action.meta.arg;
-  const { refetch, evict } = planRepositoryRefresh(state, repository, viewed);
+export function refreshPlanApplied(state: BrowseDashboardsState, action: ApplyRefreshPlanAction) {
+  const { repository, plan } = action.payload;
 
-  for (const uid of evict) {
+  for (const uid of plan.evict) {
     unselectItemsOf(state, uid, () => true);
     clearFolder(state, uid);
   }
-  for (const uid of refetch) {
+  for (const uid of plan.refetch) {
     unselectItemsOf(state, uid, (item) => isOwnedByRepository(item, repository));
-    bumpCollectionGeneration(state, uid);
   }
 }
 

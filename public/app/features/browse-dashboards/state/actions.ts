@@ -1,3 +1,5 @@
+import { createAction } from '@reduxjs/toolkit';
+
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types/store';
@@ -13,6 +15,7 @@ import {
   findItem,
   planRepositoryRefresh,
   type PulledRepository,
+  type RepositoryRefreshPlan,
   type ViewedFolder,
 } from './utils';
 
@@ -86,19 +89,25 @@ export const refreshParents = createAsyncThunk(
   }
 );
 
+/** Drops and unselects what a pull may have changed, from a plan computed on the state before it. */
+export const applyRefreshPlan = createAction<{ repository: PulledRepository; plan: RepositoryRefreshPlan }>(
+  'browseDashboards/applyRefreshPlan'
+);
+
 /**
- * Brings the tree back in step with a completed pull of one repository: the pending reducer drops
- * the collections it may have changed that are off screen; the ones on screen are refetched here,
- * loaded or not. One still loading its first page cannot be left to that page: it may predate the
- * pull and is discarded, and an open nested folder shows no placeholders that would ask again.
- * The fulfilled reducer stamps the repository, so a failed refetch leaves it stale and retried.
+ * Brings the tree back in step with a completed pull of one repository: the collections it may have
+ * changed are dropped if off screen and refetched if on screen, loaded or not. One still loading its
+ * first page cannot be left to that page: it may predate the pull and is discarded, and an open
+ * nested folder shows no placeholders that would ask again. The fulfilled reducer stamps the
+ * repository, so a failed refetch leaves it stale and retried.
  */
 export const refreshTree = createAsyncThunk(
   'browseDashboards/refreshTree',
   async ({ repository, viewed }: RefreshTreeArgs, { getState, dispatch }) => {
-    const { refetch } = planRepositoryRefresh(getState().browseDashboards, repository, viewed);
+    const plan = planRepositoryRefresh(getState().browseDashboards, repository, viewed);
+    dispatch(applyRefreshPlan({ repository, plan }));
     await Promise.all(
-      refetch.map((parentUID) => dispatch(refetchChildren({ parentUID, pageSize: PAGE_SIZE })).unwrap())
+      plan.refetch.map((parentUID) => dispatch(refetchChildren({ parentUID, pageSize: PAGE_SIZE })).unwrap())
     );
   }
 );

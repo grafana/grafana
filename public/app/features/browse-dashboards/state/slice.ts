@@ -2,13 +2,14 @@ import { createSlice } from '@reduxjs/toolkit';
 
 import { type BrowseDashboardsState } from '../types';
 
-import { fetchNextChildrenPage, refetchChildren, refreshTree } from './actions';
+import { applyRefreshPlan, fetchNextChildrenPage, refetchChildren, refreshTree } from './actions';
 import * as allReducers from './reducers';
 
 const {
   fetchNextChildrenPageFulfilled,
+  refetchChildrenPending,
   refetchChildrenFulfilled,
-  refreshTreePending,
+  refreshPlanApplied,
   refreshTreeFulfilled,
   ...baseReducers
 } = allReducers;
@@ -32,8 +33,9 @@ const browseDashboardsSlice = createSlice({
 
   extraReducers: (builder) => {
     builder.addCase(fetchNextChildrenPage.fulfilled, fetchNextChildrenPageFulfilled);
+    builder.addCase(refetchChildren.pending, refetchChildrenPending);
     builder.addCase(refetchChildren.fulfilled, refetchChildrenFulfilled);
-    builder.addCase(refreshTree.pending, refreshTreePending);
+    builder.addCase(applyRefreshPlan, refreshPlanApplied);
     builder.addCase(refreshTree.fulfilled, refreshTreeFulfilled);
   },
 });
