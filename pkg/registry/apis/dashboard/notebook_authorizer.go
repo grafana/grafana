@@ -16,19 +16,6 @@ import (
 // route (notebooks/search). It is a read, not a create.
 const notebookSearchName = "search"
 
-// newNotebookAuthorizer authorizes dashboard.grafana.app/notebooks requests.
-//
-// It first gates on FlagDashboardNotebooks, evaluated per request via
-// OpenFeature. Notebook storage is always registered, so this is where
-// enablement is enforced: when the feature is disabled for the request's tenant
-// the request is denied (403) before it reaches admission or storage.
-//
-// When enabled and accessControl is wired (embedded Grafana), it maps k8s verbs
-// to notebooks:* RBAC actions. The check is coarse (any scope): the unified
-// storage checker applies the object-level check, and without this one a
-// caller with no notebook permission at all would only be stopped there.
-// Standalone NewAPIService leaves accessControl nil; authorization then defers
-// to the fallback authorizer (ServiceAuthorizer).
 func newNotebookAuthorizer(accessControl ac.AccessControl, fallback authorizer.Authorizer) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
