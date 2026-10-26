@@ -1054,14 +1054,13 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 		},
 	}, map[schema.GroupResource]string{{Group: group, Resource: kindResource}: "v1"})
 
-	newIndex := func(enforce bool) *bleveIndex {
+	newIndex := func() *bleveIndex {
 		return &bleveIndex{
-			key:                   resource.NamespacedResource{Namespace: "ns", Group: group, Resource: kindResource},
-			fields:                resource.StandardSearchFields(),
-			searchFields:          newKindSearchFields(provider, group, kindResource, []string{"spec.slug"}),
-			enforceSortCapability: enforce,
-			logger:                log.NewNopLogger(),
-			indexMetrics:          resource.ProvideIndexMetrics(nil),
+			key:          resource.NamespacedResource{Namespace: "ns", Group: group, Resource: kindResource},
+			fields:       resource.StandardSearchFields(),
+			searchFields: newKindSearchFields(provider, group, kindResource, []string{"spec.slug"}),
+			logger:       log.NewNopLogger(),
+			indexMetrics: resource.ProvideIndexMetrics(nil),
 		}
 	}
 
@@ -1088,7 +1087,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 	}
 	for _, tc := range accepted {
 		t.Run("accepts "+tc.name, func(t *testing.T) {
-			searchReq, errResult := newIndex(true).toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil, nil)
+			searchReq, errResult := newIndex().toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil, nil)
 			require.Nil(t, errResult)
 			require.NotNil(t, searchReq)
 		})
@@ -1110,27 +1109,17 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 	}
 	for _, tc := range rejected {
 		t.Run("rejects "+tc.name, func(t *testing.T) {
-			searchReq, errResult := newIndex(true).toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil, nil)
+			searchReq, errResult := newIndex().toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil, nil)
 			require.Nil(t, searchReq)
 			require.NotNil(t, errResult)
+			assert.Equal(t, int32(http.StatusBadRequest), errResult.Code)
 			assert.Contains(t, errResult.Message, fmt.Sprintf("field %q does not support sorting", tc.field))
-		})
-
-		t.Run("counts but allows "+tc.name+" with enforcement off", func(t *testing.T) {
-			idx := newIndex(false)
-			reg := prometheus.NewPedanticRegistry()
-			idx.indexMetrics = resource.ProvideIndexMetrics(reg)
-
-			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil, nil)
-			require.Nil(t, errResult)
-			require.NotNil(t, searchReq)
-			assert.Equal(t, 1, testutil.CollectAndCount(idx.indexMetrics.SearchCapabilityViolations, "grafana_index_server_search_capability_violations_total"))
 		})
 	}
 
 	// Trash fields are refused on a live search, so they cannot go in the list above.
 	t.Run("accepts a trash field when searching deleted resources", func(t *testing.T) {
-		idx := newIndex(true)
+		idx := newIndex()
 		idx.keepsDeletedDocuments = true
 		req := sortBy(resource.SEARCH_FIELD_DELETION_TIME)
 		req.IsDeleted = true
@@ -1140,10 +1129,9 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 
 	t.Run("an index without declarations still allows standard sortable fields", func(t *testing.T) {
 		idx := &bleveIndex{
-			fields:                resource.StandardSearchFields(),
-			enforceSortCapability: true,
-			logger:                log.NewNopLogger(),
-			indexMetrics:          resource.ProvideIndexMetrics(nil),
+			fields:       resource.StandardSearchFields(),
+			logger:       log.NewNopLogger(),
+			indexMetrics: resource.ProvideIndexMetrics(nil),
 		}
 		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), nil, false, nil, nil)
 		require.Nil(t, errResult)

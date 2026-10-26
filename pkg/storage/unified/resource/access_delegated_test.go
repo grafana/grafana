@@ -894,9 +894,9 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		s := newPermissionTestSearchServer(newLimitedClient(t))
 		s.globalIndexEnabled = true
 		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
-		s.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
-		s.globalCoverage.Reload(AppManifests(), []*app.ManifestData{pages})
-		s.globalCoverage.Reload(AppManifests(), nil)
+		s.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
+		s.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{pages})
+		s.globalCoverage.Reload(testBuiltinManifests(), nil)
 		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get", "x.ext.grafana.app:get"))
 
 		rsp, err := s.Search(ctx, globalRequest())
@@ -915,8 +915,8 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		s := newPermissionTestSearchServer(newLimitedClient(t))
 		s.globalIndexEnabled = true
 		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
-		s.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
-		s.globalCoverage.Reload(AppManifests(), []*app.ManifestData{testGlobalManifest("x.ext.grafana.app", testGlobalKind("Page", "Pages", &yes))})
+		s.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
+		s.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest("x.ext.grafana.app", testGlobalKind("Page", "Pages", &yes))})
 		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get", "x.ext.grafana.app:get"))
 
 		rsp, err := s.Search(ctx, globalRequest())
@@ -935,9 +935,9 @@ func TestGlobalSearchLeavesOutTypesItCannotSearch(t *testing.T) {
 		s := newPermissionTestSearchServer(newLimitedClient(t))
 		s.globalIndexEnabled = true
 		s.search = &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey("stacks-1"): index}}
-		s.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
-		s.globalCoverage.Reload(AppManifests(), []*app.ManifestData{testGlobalManifest("x.ext.grafana.app", testGlobalKind("Page", "Pages", &yes))})
-		index.duringSearch = func() { s.globalCoverage.Reload(AppManifests(), nil) }
+		s.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
+		s.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest("x.ext.grafana.app", testGlobalKind("Page", "Pages", &yes))})
+		index.duringSearch = func() { s.globalCoverage.Reload(testBuiltinManifests(), nil) }
 		ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions("dashboard.grafana.app:get", "folder.grafana.app:get", "x.ext.grafana.app:get"))
 
 		rsp, err := s.Search(ctx, globalRequest())

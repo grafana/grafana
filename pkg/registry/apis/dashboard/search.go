@@ -828,6 +828,7 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 			Title:    r.GetTitle(),
 			Folder:   r.GetFolder(),
 			Score:    r.GetScore(),
+			Tags:     r.GetTags(),
 			ManagedBy: dashboardv0alpha1.ManagedBy{
 				Kind: utils.ManagerKind(r.GetManagedByKind()),
 				ID:   r.GetManagedById(),

@@ -215,9 +215,10 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	require.NoError(t, err)
 	apiRouter := router.NewGrafanaRouter(folderRoutesLoader{RoutesLoader: loader, folder: folderBackend}, tokens)
 	require.NoError(t, apiRouter.Run(ctx))
-	routerHandler.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		apiRouter.HandleFunc(w, r, http.NotFoundHandler())
-	}))
+	routerHandler.Handle("/apis", apiRouter.HandleAPIs())
+	routerHandler.Handle("/apis/", apiRouter.HandleAPIs())
+	routerHandler.Handle("/openapi/v3", apiRouter.HandleOpenAPIv3())
+	routerHandler.Handle("/openapi/v3/", apiRouter.HandleOpenAPIv3())
 	server := httptest.NewServer(routerHandler)
 	t.Cleanup(server.Close)
 	newClient := func(token string) dynamic.Interface {

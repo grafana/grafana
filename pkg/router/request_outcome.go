@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net"
 	"net/http"
+
+	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
 // How the router dispatched a request, for the request metrics' route label.
@@ -12,7 +14,7 @@ const (
 	routeBackend   = "backend"   // proxied to, or served by, the group's backend
 	routeFallback  = "fallback"  // sent to the single-tenant fallback
 	routeDiscovery = "discovery" // root discovery (/apis, /openapi/v3) and /apis/discovery, built by the router
-	routeNext      = "next"      // not the router's; passed to the next handler
+	routeNotFound  = "not_found" // nothing in the router serves the path
 	routeInvalid   = "invalid"   // rejected before routing, such as a non-canonical path
 
 	routeUnauthenticated = "unauthenticated" // rejected because the caller did not authenticate
@@ -38,13 +40,10 @@ type requestOutcome struct {
 	route    string
 	pluginID string
 	failure  string
-	// verb caches requestVerb, which parses the request each time.
-	verb string
-}
-
-func withRequestOutcome(req *http.Request) (*http.Request, *requestOutcome) {
-	outcome := &requestOutcome{}
-	return req.WithContext(context.WithValue(req.Context(), requestOutcomeKey{}, outcome)), outcome
+	// info is the request's info, parsed once by the request metrics for the
+	// verb label and reused by the handler. nil when the request did not
+	// parse, or was not instrumented.
+	info *request.RequestInfo
 }
 
 // withoutRequestOutcome detaches ctx from its request's outcome, for the
@@ -86,7 +85,7 @@ func setPluginID(req *http.Request, pluginID string) {
 // failureReason classifies a proxy failure. A request the caller abandoned
 // is not the backend's failure and has no reason.
 func failureReason(req *http.Request, err error) string {
-	if req.Context().Err() != nil {
+	if callerGone(req.Context()) != nil {
 		return ""
 	}
 	var netErr net.Error
