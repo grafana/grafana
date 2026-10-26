@@ -14,7 +14,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -88,7 +88,7 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 	if err != nil {
 		return nil, false, err
 	}
-	newRule, ok := obj.(*model.AlertRule)
+	newRule, ok := obj.(*v1beta1.AlertRule)
 	if !ok {
 		return nil, false, fmt.Errorf("expected AlertRule but got %T", obj)
 	}
@@ -122,7 +122,7 @@ func (s *statusDualWriter) Update(ctx context.Context, name string, objInfo rest
 // Legacy is the source of truth. When the object is not in unified storage — Mode0
 // (unified disabled) or a best-effort write lag in Mode1 — this is an expected skip,
 // so NotFound is swallowed silently; only unexpected errors are logged.
-func (s *statusDualWriter) mirrorToUnified(ctx context.Context, name string, status model.AlertRuleStatus, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, options *metav1.UpdateOptions) {
+func (s *statusDualWriter) mirrorToUnified(ctx context.Context, name string, status v1beta1.AlertRuleStatus, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, options *metav1.UpdateOptions) {
 	unified, err := s.status.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		if !apierrors.IsNotFound(err) {
@@ -131,7 +131,7 @@ func (s *statusDualWriter) mirrorToUnified(ctx context.Context, name string, sta
 		return
 	}
 	// The unified store serves the request version, which can be v0alpha1.
-	u, err := convert.Hub[*model.AlertRule](unified)
+	u, err := convert.Hub[*v1beta1.AlertRule](unified)
 	if err != nil {
 		logging.FromContext(ctx).Warn("unable to convert unified alert rule for status mirroring", "error", err)
 		return

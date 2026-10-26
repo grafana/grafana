@@ -19,4 +19,5 @@ export const extensionSidebarApi: ExtensionSidebarAPI = {
     }
     return subscribeToFloatingExtensionSidebarCollapse(listener);
   },
+  canDragToFloat: () => canFloatExtensionSidebar(),
 };

@@ -117,12 +117,13 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 	groups, err := discoverGroupResources(ctx, t.client, t.base.String())
 	if err != nil {
 		t.cooldown.OnFailure(now)
-		t.status.recordFailure()
+		if t.status.recordFailure() {
+			wake(dirty)
+		}
 		logging.FromContext(ctx).Warn("router: aggregate discovery poll failed, backing off", "target", t.name, "err", err)
 		return
 	}
 	t.cooldown.OnSuccess(now)
-	t.status.recordSuccess(now)
 
 	backends := make([]Backend, 0, len(groups))
 	keys := make(map[string]struct{}, len(groups))
@@ -143,14 +144,17 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 
 	t.snapshot.Store(&backends)
 	t.status.recordSkipped(skipped)
+	first := t.status.recordSuccess(now)
 
+	// The first attempt ends the cloud loader's wait for this source, even
+	// when it finds nothing, so it wakes the router either way.
 	lastKeys := *t.lastKeys.Load()
-	if !sameKeySet(lastKeys, keys) {
+	changed := !sameKeySet(lastKeys, keys)
+	if changed {
 		t.lastKeys.Store(&keys)
-		select {
-		case dirty <- struct{}{}:
-		default: // already pending; coalesce
-		}
+	}
+	if changed || first {
+		wake(dirty)
 	}
 }
 

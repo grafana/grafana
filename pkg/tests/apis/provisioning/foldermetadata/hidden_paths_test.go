@@ -107,6 +107,48 @@ func TestIntegrationProvisioning_HiddenPaths_FolderRename(t *testing.T) {
 	common.RequireRepoDashboardParent(t, helper.DashboardsV1, repoName, "team/dashboard.json", "team-uid")
 }
 
+func TestIntegrationProvisioning_HiddenPaths_EmptyFolderCleanup(t *testing.T) {
+	for _, target := range []string{"folderless", "folder", "instance"} {
+		t.Run(target, func(t *testing.T) {
+			helper := sharedGitHelper(t)
+			repoName := "empty-folder-cleanup-" + target
+			createRepo := helper.CreateFolderlessTargetGitRepo
+			remaining := []string{"retained", "retained/empty", "replaced"}
+			switch target {
+			case "folder":
+				createRepo = helper.CreateFolderTargetGitRepo
+				remaining = append(remaining, "")
+			case "instance":
+				createRepo = helper.CreateGitRepo
+			}
+			_, local := createRepo(t, repoName, map[string][]byte{
+				"dashboard.json":              common.DashboardJSON("cleanup-dashboard", "Visible", 1),
+				"removed/empty/.keep":         []byte("remove"),
+				"hidden/empty/.keep":          []byte("hide"),
+				"retained/_folder.json":       folderMetadataJSON("retained-uid", "Retained"),
+				"retained/empty/_folder.json": folderMetadataJSON("retained-empty-uid", "Empty"),
+				"retained/empty/.keep":        []byte("retain"),
+				"replaced/.keep":              []byte("replace"),
+			})
+			common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+			common.RequireRepoFolders(t, helper.Folders, repoName, append([]string{"removed", "removed/empty", "hidden", "hidden/empty"}, remaining...))
+
+			_, err := local.Git("rm", "removed/empty/.keep", "retained/empty/.keep", "replaced/.keep")
+			require.NoError(t, err)
+			_, err = local.Git("mv", "hidden", ".ci")
+			require.NoError(t, err)
+			require.NoError(t, local.CreateFile("replaced/_folder.json", string(folderMetadataJSON("replaced-uid", "Replaced"))))
+			commitHiddenPathChanges(t, local)
+
+			common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded(), common.Expect(requireNoHiddenPathWarnings))
+			common.RequireRepoFolders(t, helper.Folders, repoName, remaining)
+			common.RequireRepoFolderUID(t, helper.Folders, repoName, "retained-empty-uid")
+			common.RequireRepoFolderUID(t, helper.Folders, repoName, "replaced-uid")
+			helper.RequireRepoDashboardCount(t, repoName, 1)
+		})
+	}
+}
+
 func TestIntegrationProvisioning_HiddenPaths_MetadataRename(t *testing.T) {
 	helper := sharedGitHelper(t)
 	const repoName = "hidden-metadata-rename"
