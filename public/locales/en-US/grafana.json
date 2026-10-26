@@ -16799,8 +16799,61 @@
   },
   "swagger": {
     "login": "Login",
+    "manifests": {
+      "api-docs": "API docs",
+      "collapse": "Collapse",
+      "collapse-all": "Collapse all",
+      "count": "{{shown}} of {{total}}",
+      "error-title": "Unable to load manifests",
+      "expand": "Expand",
+      "expand-all": "Expand all",
+      "filter-placeholder": "Filter by group, app or kind",
+      "folder-scoped": "folder scoped",
+      "no-kinds": "No kinds",
+      "not-served": "Not served",
+      "preferred": "preferred",
+      "refresh": "Refresh",
+      "roles": "Roles",
+      "routes": "Routes:",
+      "title": "App manifests",
+      "user-readable": "user readable"
+    },
     "namespace-unavailable": "Check the namespace before sending requests, or reload the page to try again.",
-    "namespace-unavailable-title": "Unable to load namespace"
+    "namespace-unavailable-title": "Unable to load namespace",
+    "router-nav": {
+      "api-docs": "API docs",
+      "manifests": "Manifests",
+      "status": "Status"
+    },
+    "router-status": {
+      "all-sources": "All sources",
+      "breaker-settings": "Breakers open after {{after}} consecutive failures, for {{openFor}}",
+      "discovery-cached": "Fetched from the backend; the copy is fresh for 5 minutes after the fetch",
+      "discovery-expired": "Fetched from the backend, but older than 5 minutes: the next /apis request fetches it again, and serves this copy if that fails",
+      "discovery-not-cached": "Not fetched yet: the next aggregated /apis request fetches it from the backend",
+      "discovery-provided": "The backend supplied its resources when it loaded, so discovery never asks it per request",
+      "error-title": "Unable to load router status",
+      "failures-description": "Of those, the ones counted against the backend: 502, 503 and 504 responses, and failures to proxy, such as connection errors and timeouts. Other errors, and callers that disconnect, are not counted. Consecutive failures open the breaker.",
+      "filter-placeholder": "Filter by group, key or plugin",
+      "filtered": "{{shown}} of {{total}}",
+      "groups": "Groups",
+      "last-failed": "Last reconcile failed",
+      "load-failures": "Load failures",
+      "never": "never",
+      "no-backend": "no backend",
+      "no-breaker": "Served in process, without a breaker",
+      "not-ready": "Not ready",
+      "per-destination": "The single-tenant fallback keeps a breaker per stack",
+      "ready": "Ready",
+      "reconciler": "Last reconcile: {{last}} · {{total}} reconciles, {{errors}} errors",
+      "refresh": "Refresh",
+      "requests-description": "Requests the group's breaker let through to the backend, or the plugin's client calls when its scope is plugin-calls. Counted since the backend was loaded or the breaker last changed state.",
+      "shadowed": "Shadowed groups",
+      "shadowed-description": "Groups a source offers that a higher-priority source serves instead.",
+      "sources": "Sources",
+      "stack-lookups": "Stack lookups",
+      "title": "Router status"
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -18402,6 +18455,7 @@
       "title": "Delete variables"
     },
     "editor": {
+      "back": "Back",
       "cancel": "Cancel",
       "delete": "Delete",
       "delete-modal-body": "Are you sure you want to delete \"{{name}}\"?",
@@ -18410,6 +18464,7 @@
       "folder-description": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available to all dashboards)",
       "folder-description-folder-only": "Scope the variable to a folder you can edit",
       "folder-label": "Folder",
+      "load-error-title": "This variable cannot be edited",
       "moved": "Variable moved",
       "name-exists": "A variable with this name already exists in the selected folder",
       "save": "Save",

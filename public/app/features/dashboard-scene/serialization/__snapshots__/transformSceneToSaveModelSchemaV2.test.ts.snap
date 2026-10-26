@@ -288,35 +288,6 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
     },
     {
       "datasource": {
-        "name": "datasource2",
-      },
-      "group": "prometheus",
-      "kind": "GroupByVariable",
-      "spec": {
-        "current": {
-          "text": "text7",
-          "value": "value7",
-        },
-        "description": "A group by variable",
-        "hide": "dontHide",
-        "label": "Group By Variable",
-        "multi": false,
-        "name": "groupByVar",
-        "options": [
-          {
-            "text": "option1",
-            "value": "option1",
-          },
-          {
-            "text": "option2",
-            "value": "option2",
-          },
-        ],
-        "skipUrlSync": false,
-      },
-    },
-    {
-      "datasource": {
         "name": "datasource3",
       },
       "group": "prometheus",

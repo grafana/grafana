@@ -266,8 +266,6 @@ export const FlagKeys = {
   GrafanaAPIServerWithExperimentalAPIs: "grafanaAPIServerWithExperimentalAPIs",
   /** Enables the Graphite data source full backend mode */
   GraphiteBackendMode: "graphiteBackendMode",
-  /** Enable groupBy variable support in scenes dashboards */
-  GroupByVariable: "groupByVariable",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Adds support for Kubernetes correlations */
@@ -1788,17 +1786,6 @@ export const useFlagGrafanaAPIServerWithExperimentalAPIs = (options?: ReactFlagE
  */
 export const useFlagGraphiteBackendMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("graphiteBackendMode", false, options).value;
-};
-
-/**
- * Enable groupBy variable support in scenes dashboards
- *
- * **Details:**
- * - flag key: `groupByVariable`
- * - default value: `false`
- */
-export const useFlagGroupByVariable = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("groupByVariable", false, options).value;
 };
 
 /**

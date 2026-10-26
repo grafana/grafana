@@ -136,7 +136,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 			svc.HandleFunc(w, req, http.NotFoundHandler())
 			return
 		}
-		svc.metrics.instrumentRequest(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		svc.metrics.instrumentRequest(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())))
 	}))
 	t.Cleanup(server.Close)
 	t.Cleanup(func() {
@@ -249,7 +249,7 @@ func TestWatchReleasesHalfOpenBreakerOnceItsStatusIsKnown(t *testing.T) {
 	})
 	router := withGroupHandlerAndBreaker(watchGroup, backend, cb)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		router.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		router.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())))
 	}))
 	t.Cleanup(server.Close)
 	t.Cleanup(func() { close(backend.release) })
@@ -362,19 +362,6 @@ func TestUpgradeRequestsAreRejected(t *testing.T) {
 	}
 }
 
-func TestRequestVerbIsParsedOncePerRequest(t *testing.T) {
-	req, outcome := withRequestOutcome(httptest.NewRequest(http.MethodGet, "/apis/g/v1/namespaces/ns/things?watch=true", nil))
-	require.Equal(t, "watch", requestVerb(req))
-	require.Equal(t, "watch", outcome.verb)
-
-	// A later call reads the recorded verb instead of parsing the request.
-	outcome.verb = "recorded"
-	require.Equal(t, "recorded", requestVerb(req))
-
-	// Without an outcome, as for the router's own sub-requests, it parses.
-	require.Equal(t, "list", requestVerb(httptest.NewRequest(http.MethodGet, "/apis/g/v1/namespaces/ns/things", nil)))
-}
-
 // The deprecated path form puts "watch" before the namespace. The router
 // doesn't serve it, on routed groups or the fallback, and doesn't count it
 // as a watch.
@@ -396,8 +383,8 @@ func TestRouterRejectsDeprecatedWatchPath(t *testing.T) {
 		req := newAuthenticatedRequest(http.MethodGet, path, nil)
 		require.Equal(t, "get", requestVerb(req), path)
 		rec := httptest.NewRecorder()
-		router.HandleFunc(rec, req, handler)
-		require.Equal(t, http.StatusNotFound, rec.Code, path)
+		router.HandleFunc(rec, req)
+		require.Equal(t, http.StatusBadRequest, rec.Code, path)
 	}
 	require.False(t, served)
 
@@ -407,7 +394,7 @@ func TestRouterRejectsDeprecatedWatchPath(t *testing.T) {
 		"/apis/example/v1/namespaces/stacks-1/widgets/watch",
 	} {
 		rec := httptest.NewRecorder()
-		router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil), handler)
+		router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil))
 		require.Equal(t, http.StatusNoContent, rec.Code, path)
 	}
 }

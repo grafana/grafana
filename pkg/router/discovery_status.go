@@ -74,8 +74,10 @@ type groupStatusDoc struct {
 	LoadedAt time.Time        `json:"loadedAt"`
 	Manifest bool             `json:"manifest"`
 	// Discovery is where the group's aggregated discovery comes from:
-	// provided by the backend, cached, expired (refetched on the next
-	// request), or not cached yet.
+	// provided by the backend when it loaded (a DiscoveryProvider, never
+	// fetched per request), cached (fetched, and fresh for
+	// discoveryCacheTTL), expired (refetched on the next /apis request),
+	// or not cached (fetched on the next aggregated /apis request).
 	Discovery     string   `json:"discovery"`
 	OpenAPICached []string `json:"openapiCached,omitempty"`
 	Watches       int64    `json:"watches"`
@@ -85,8 +87,9 @@ type groupStatusDoc struct {
 // group's backend was loaded, and reset when the breaker changes state.
 type breakerStatusDoc struct {
 	// Scope is what the breaker counts: proxied requests, the plugin's client
-	// calls, or nothing here, when the single-tenant fallback keeps a breaker
-	// per destination instead.
+	// calls, or nothing here: per-destination when the single-tenant fallback
+	// keeps a breaker per destination instead, and none when the group has no
+	// breaker, as the embedded API server's groups don't.
 	Scope               string `json:"scope"`
 	State               string `json:"state,omitempty"`
 	Requests            uint32 `json:"requests"`
@@ -188,8 +191,11 @@ func (r *GrafanaRouter) groupStatus(name string, entry servingEntry) groupStatus
 }
 
 func breakerStatus(entry servingEntry) (health string, b breakerStatusDoc) {
-	if _, perDestination := entry.handler.(interface{ managesCircuitBreaking() }); perDestination || entry.breaker == nil {
+	if _, perDestination := entry.handler.(interface{ managesCircuitBreaking() }); perDestination {
 		return "unknown", breakerStatusDoc{Scope: "per-destination"}
+	}
+	if withoutGroupBreaker(entry.handler) || entry.breaker == nil {
+		return "unknown", breakerStatusDoc{Scope: "none"}
 	}
 	b.Scope = "requests"
 	if _, clientScoped := entry.handler.(interface{ breaksOnClientCalls() }); clientScoped {
