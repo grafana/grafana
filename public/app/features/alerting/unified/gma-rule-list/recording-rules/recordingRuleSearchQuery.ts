@@ -14,4 +14,16 @@ export function buildRecordingRuleSearchQuery(continueToken?: string) {
 
 // `health` and `lastError` are status fields populated by `alerting.ruleStatusSync`.
 // Recording rules have no annotations field; `interval` is the evaluation cadence.
-const RECORDING_RULE_FIELDS = ['title', 'folder', 'paused', 'health', 'lastError', 'interval'];
+// `labels` and `datasourceUIDs` are arrays; `metric` and `targetDatasourceUID` are direct strings.
+const RECORDING_RULE_FIELDS = [
+  'title',
+  'folder',
+  'paused',
+  'health',
+  'lastError',
+  'interval',
+  'labels',
+  'datasourceUIDs',
+  'metric',
+  'targetDatasourceUID',
+];
