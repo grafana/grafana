@@ -89,19 +89,12 @@ export class QueryConditionalRenderingBehaviour extends SceneObjectBase<QueryCon
       );
     }
 
-    // A query unhidden from outside (e.g. in the query editor) is no longer hidden by its condition.
+    // Queries replaced from outside (query editor, undo) get their conditions re-applied synchronously, so the run
+    // triggered by whoever replaced them already uses the right `hide` flags.
     this._subs.add(
       queryRunner.subscribeToState((newState, prevState) => {
-        if (newState.queries === prevState.queries) {
-          return;
-        }
-
-        const conditionallyHidden = this.state.conditionallyHidden.filter((refId) =>
-          newState.queries.some((query) => query.refId === refId && query.hide)
-        );
-
-        if (conditionallyHidden.length !== this.state.conditionallyHidden.length) {
-          this.setState({ conditionallyHidden });
+        if (newState.queries !== prevState.queries) {
+          this._applyConditions(queryRunner);
         }
       })
     );
@@ -113,14 +106,19 @@ export class QueryConditionalRenderingBehaviour extends SceneObjectBase<QueryCon
     }
   }
 
-  /** Updates the `hide` flag of the gated queries from their group results; returns whether any query changed. */
+  /**
+   * Sets the `hide` flag of each gated query to its authored value, or to true while its group evaluates to hidden;
+   * returns whether any query changed.
+   */
   private _applyConditions(queryRunner: SceneQueryRunner): boolean {
     if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardsQueryConditionalRendering, false)) {
       return false;
     }
 
+    // refIds of queries currently absent from the runner are kept, so a query restored with the `hide` flag set by
+    // its condition (e.g. by undo) is still recognized as conditionally hidden.
     const conditionallyHidden = new Set(this.state.conditionallyHidden);
-    let changed = false;
+    let queriesChanged = false;
 
     const queries = queryRunner.state.queries.map((query) => {
       const group = this.getGroup(query.refId);
@@ -129,27 +127,36 @@ export class QueryConditionalRenderingBehaviour extends SceneObjectBase<QueryCon
         return query;
       }
 
-      if (!group.state.result && !query.hide) {
+      const authoredHide = Boolean(query.hide) && !conditionallyHidden.has(query.refId);
+      const hide = authoredHide || !group.state.result;
+
+      if (hide && !authoredHide) {
         conditionallyHidden.add(query.refId);
-        changed = true;
-        return { ...query, hide: true };
-      }
-
-      if (group.state.result && conditionallyHidden.has(query.refId)) {
+      } else {
         conditionallyHidden.delete(query.refId);
-        changed = true;
-        return { ...query, hide: false };
       }
 
-      return query;
+      if (hide === Boolean(query.hide)) {
+        return query;
+      }
+
+      queriesChanged = true;
+      return { ...query, hide };
     });
 
-    if (changed) {
+    const previouslyHidden = this.state.conditionallyHidden;
+    if (
+      conditionallyHidden.size !== previouslyHidden.length ||
+      previouslyHidden.some((refId) => !conditionallyHidden.has(refId))
+    ) {
       this.setState({ conditionallyHidden: [...conditionallyHidden] });
+    }
+
+    if (queriesChanged) {
       queryRunner.setState({ queries });
     }
 
-    return changed;
+    return queriesChanged;
   }
 }
 

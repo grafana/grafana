@@ -183,13 +183,27 @@ describe('QueryConditionalRenderingBehaviour', () => {
       expect(behaviour.getAuthoredHide(queryRunner.state.queries[0])).toBe(true);
     });
 
-    it('forgets the condition hide of a query unhidden from outside', () => {
+    it('keeps the condition hide of a query removed and restored, e.g. by undo', () => {
+      const { variable, queryRunner, behaviour } = buildScene([panelQuery('P90', false, 'P90')], ['P50']);
+      const removedQueries = queryRunner.state.queries;
+
+      queryRunner.setState({ queries: [] });
+      queryRunner.setState({ queries: removedQueries });
+
+      expect(behaviour.getAuthoredHide(queryRunner.state.queries[0])).toBe(false);
+
+      variable.changeValueTo(['P90']);
+
+      expect(hiddenRefIds(queryRunner)).toEqual([]);
+    });
+
+    it('keeps a query hidden while its condition is not met when it is unhidden from outside', () => {
       const { queryRunner, behaviour } = buildScene([panelQuery('P90', false, 'P90')], ['P50']);
-      expect(behaviour.state.conditionallyHidden).toEqual(['P90']);
 
       queryRunner.setState({ queries: [{ refId: 'P90', hide: false }] });
 
-      expect(behaviour.state.conditionallyHidden).toEqual([]);
+      expect(hiddenRefIds(queryRunner)).toEqual(['P90']);
+      expect(behaviour.getAuthoredHide(queryRunner.state.queries[0])).toBe(false);
     });
 
     it('saves the authored hidden state and the conditions', () => {
