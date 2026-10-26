@@ -134,8 +134,9 @@ const (
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
 	// DashboardVariablesAnnotation is an optional URL query string of dashboard
-	// variables, such as var-cluster={{ $labels.cluster }}, applied to the alert's
-	// screenshot of its panel. It is templated per alert instance.
+	// variables, such as var-cluster={{ $labels.cluster | urlquery }}, applied to
+	// the alert's screenshot of its panel. It is templated per alert instance, so
+	// label values should be escaped with urlquery.
 	DashboardVariablesAnnotation = "__dashboardVariables__"
 
 	// GrafanaReservedLabelPrefix contains the prefix for Grafana reserved labels. These differ from "__<label>__" labels

@@ -746,8 +746,10 @@ func takeImage(ctx context.Context, s ImageCapturer, r *models.AlertRule, variab
 }
 
 // dashboardVariables returns the dashboard variables in the instance's
-// DashboardVariablesAnnotation, a URL query string. Only var-<name> parameters
-// are kept, so the annotation cannot change other parts of the panel's URL.
+// DashboardVariablesAnnotation, a URL query string whose values are expected to
+// be escaped (for example with urlquery). Only var-<name> parameters are kept,
+// so the annotation cannot change other parts of the panel's URL. Parameters
+// that cannot be parsed are skipped; the others are still used.
 func dashboardVariables(annotations map[string]string, logger log.Logger) url.Values {
 	raw := annotations[models.DashboardVariablesAnnotation]
 	if raw == "" {
@@ -755,8 +757,8 @@ func dashboardVariables(annotations map[string]string, logger log.Logger) url.Va
 	}
 	parsed, err := url.ParseQuery(raw)
 	if err != nil {
-		logger.Warn("Ignoring invalid dashboard variables annotation", "annotation", models.DashboardVariablesAnnotation, "error", err)
-		return nil
+		logger.Warn("Skipping invalid parameters in dashboard variables annotation; escape label values with urlquery",
+			"annotation", models.DashboardVariablesAnnotation, "error", err)
 	}
 	variables := url.Values{}
 	for name, values := range parsed {

@@ -5614,10 +5614,10 @@ func TestProcessEvalResults_ScreenshotDashboardVariables(t *testing.T) {
 	}{
 		{
 			desc:      "one image per distinct set of variables",
-			variables: "var-instance={{ $labels.instance_label }}",
+			variables: "var-instance={{ $labels.instance_label | urlquery }}",
 			expectedVariables: []url.Values{
 				{"var-instance": {"test-1"}},
-				{"var-instance": {"test-2"}},
+				{"var-instance": {"test 2&b"}},
 			},
 		},
 		{
@@ -5642,7 +5642,8 @@ func TestProcessEvalResults_ScreenshotDashboardVariables(t *testing.T) {
 			}
 			mgr := NewManager(cfg, NewNoopPersister())
 
-			results := eval.Results{alerting("test-1"), alerting("test-2"), alerting("test-1")}
+			// "test 2&b" is escaped by urlquery and parsed back unchanged.
+			results := eval.Results{alerting("test-1"), alerting("test 2&b"), alerting("test-1")}
 			mgr.ProcessEvalResults(context.Background(), time.Now(), &rule, results, nil, nil)
 
 			assert.ElementsMatch(t, tc.expectedVariables, images.Variables)

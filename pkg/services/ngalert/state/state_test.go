@@ -819,6 +819,17 @@ func TestDashboardVariables(t *testing.T) {
 		},
 		{desc: "only other parameters", annotations: map[string]string{ngmodels.DashboardVariablesAnnotation: "orgId=2"}, expected: nil},
 		{desc: "invalid query string", annotations: map[string]string{ngmodels.DashboardVariablesAnnotation: "var-cluster=%zz"}, expected: nil},
+		{
+			desc:        "invalid parameters are skipped, valid ones kept",
+			annotations: map[string]string{ngmodels.DashboardVariablesAnnotation: "var-cluster=%zz&var-service=api"},
+			expected:    url.Values{"var-service": {"api"}},
+		},
+		{
+			desc: "values escaped with urlquery round-trip",
+			annotations: map[string]string{ngmodels.DashboardVariablesAnnotation: "var-service=" +
+				url.QueryEscape("a&b+c%d;e f")},
+			expected: url.Values{"var-service": {"a&b+c%d;e f"}},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
