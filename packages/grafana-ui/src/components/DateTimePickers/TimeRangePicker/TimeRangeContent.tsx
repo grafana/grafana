@@ -71,6 +71,7 @@ export const TimeRangeContent = (props: Props) => {
   } = props;
   const style = useStyles2(getStyles);
   const [isOpen, setOpen] = useState(false);
+  const [calendarAnchor, setCalendarAnchor] = useState<HTMLDivElement | null>(null);
 
   const {
     handleSubmit,
@@ -170,7 +171,7 @@ export const TimeRangeContent = (props: Props) => {
   );
 
   return (
-    <div>
+    <div ref={setCalendarAnchor}>
       <div className={style.fieldContainer}>
         <Field
           label={t('time-picker.range-content.from-input', 'From')}
@@ -257,6 +258,7 @@ export const TimeRangeContent = (props: Props) => {
       </div>
 
       <TimePickerCalendar
+        referenceElement={calendarAnchor}
         isFullscreen={isFullscreen}
         isOpen={isOpen}
         from={dateTimeParse(watch('from'), { timeZone })}
