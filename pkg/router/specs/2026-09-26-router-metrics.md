@@ -48,8 +48,8 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_stack_lookups_total` | counter | `result` | Single-tenant stack lookups: `cache_hit`, `resolved`, `not_found`, `throttled`, `error` |
 | `grafana_router_stack_discovery_cache_total` | counter | `result` | Single-tenant discovery requests looked up in the cache shared by each stack's callers: `hit`, `miss`. Absent when `st_discovery_cache_bytes = 0` |
 
-Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `local-plugin`
-and `embedded`.
+Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `local-plugin`,
+`dev` (`[router.dev.<name>]`, #135990) and `embedded`.
 
 Every cloud source (`aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`) is polled
 and records every poll, so a stale last success means the source is failing.
@@ -122,7 +122,7 @@ use `route="not_found"` for the new behavior, or match both during a rolling upg
 
 | Metric | Type | Labels | Meaning |
 | --- | --- | --- | --- |
-| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `source`, `plugin_id`, `method`, `status_code` | Latency of gRPC calls to plugin deployments; `source` is `plugins_url` or `core_url`, and `plugin_id` is the API group for a `core_url` entry without a plugin ID |
+| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `source`, `plugin_id`, `method`, `status_code` | Latency of gRPC calls to plugin deployments; `source` is `plugins_url`, `core_url` or `dev`, and `plugin_id` is the API group for a `core_url` entry without a plugin ID |
 | `grafana_router_plugin_grpc_request_retries_total` | counter | `source`, `plugin_id`, `method` | Retries of unary gRPC calls to plugin deployments (`[router.backend_grpc]` `retry_max`) |
 
 Each plugin deployment's connection (`plugins_url` or `core_url`) records its calls with dskit's client interceptors, and propagates

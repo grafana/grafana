@@ -26,7 +26,7 @@ the 10-10 plan, and none of them closed a plan item. They changed its shape inst
   cluster-scoped requests (#135272). Breaking per destination for traffic from ST (#135169) was
   reverted (#135232).
 
-Updated on 2026-10-26 from `main` at e29755d49bc. Since the rebuild, three router PRs landed outside
+Updated on 2026-10-26 from `main` at 72c31f1a155. Since the rebuild, four router PRs landed outside
 the plan and changed what some items mean:
 
 - **#135946: the router serves `/apis` and `/openapi/v3` directly.** In middleware mode it now
@@ -36,6 +36,8 @@ the plan and changed what some items mean:
   and `/proxy/` path forms now get a 400.
 - **#135815: HTTP operators through a plugin v3 client shim** (`pluginsintegration/baasbridge`,
   deprecated). Its README lists known gaps, among them no gRPC request metrics for these calls.
+- **#135990: `[router.dev.<name>]` dev targets** serve an app from a local manifest file through
+  the local plugin loader, over gRPC or baasbridge. A new `dev` source.
 - **#135949: status and manifests pages** in the swagger UI, and compiled-in app manifests for
   groups whose backend advertises none.
 

@@ -411,17 +411,6 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
 priority order. Repeating a section name merges its keys; it does not create another target.
 
-Dev targets are configured in `[router.dev.<name>]` sections, for running an app's backend locally
-outside the cloud loader. `manifest` is the path to an `AppManifest` JSON file, read on every
-`Load`. The loader's `Notify` watches each manifest's directory with fsnotify, and wakes the router
-once a manifest has stopped changing for `devManifestSettle`, so the changed key reloads just
-that group; `host` is the backend, reached through baasbridge when it is an `http` or `https` URL and
-over gRPC (with the `[router.backend_grpc]` settings) otherwise. `plugin_id` defaults to the
-section name and names the audience of the tokens a gRPC backend gets. A section without `host`
-is skipped; one without `manifest` fails startup; a manifest that fails to load skips only its
-target. In middleware mode their manifest roles are declared at startup, as local plugins' are, so
-a change to a manifest's roles needs a restart; a target whose roles fail is logged and still
-served. Like managed plugins, dev targets get no legacy app-access check.
 Keys support environment overrides, for example `GF_ROUTER_AGGREGATE_BAAS_APISERVER_URL`;
 the corresponding section must contain at least one nonempty setting (for example `audience`)
 in the INI configuration, because Grafana's config loader drops empty sections.
@@ -456,10 +445,24 @@ Shared authentication settings remain in `[cloud_router]`. Discovery uses `Autho
 
 Every URL must be absolute; a trailing slash is tolerated.
 
+## Settings (`[router.dev.<name>]`)
+
+Dev targets are configured in `[router.dev.<name>]` sections, for running an app's backend locally
+outside the cloud loader. `manifest` is the path to an `AppManifest` JSON file, read on every
+`Load`. The loader's `Notify` watches each manifest's directory with fsnotify, and wakes the router
+once a manifest has stopped changing for `devManifestSettle`, so the changed key reloads just
+that group; `host` is the backend, reached through baasbridge when it is an `http` or `https` URL and
+over gRPC (with the `[router.backend_grpc]` settings) otherwise. `plugin_id` defaults to the
+section name and names the audience of the tokens a gRPC backend gets. A section without `host`
+is skipped; one without `manifest` fails startup; a manifest that fails to load skips only its
+target. In middleware mode their manifest roles are declared at startup, as local plugins' are, so
+a change to a manifest's roles needs a restart; a target whose roles fail is logged and still
+served. Like managed plugins, dev targets get no legacy app-access check.
+
 ## Settings (`[router.backend_grpc]`)
 
-These keys configure the gRPC connections to backends from `plugins_url` and `core_url`, and are
-read only when one of them is set. Like `[cloud_router]`, they are read with
+These keys configure the gRPC connections to backends from `plugins_url`, `core_url` and dev
+targets, and are read only when one of them is set. Like `[cloud_router]`, they are read with
 `cfg.SectionWithEnvOverrides`, so environment overrides such as `GF_ROUTER_BACKEND_GRPC_RETRY_MAX`
 work without the section in the INI configuration.
 
