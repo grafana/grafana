@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -82,26 +83,30 @@ func TestFetchPluginManifests_DecodesDeploymentsEnvelope(t *testing.T) {
 }
 
 func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte(pluginManifestsFixture))
-	}))
-	defer srv.Close()
+	synctest.Test(t, func(t *testing.T) {
+		srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte(pluginManifestsFixture))
+		}))
+		_ = srv.Client()
+		defer srv.Close()
 
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
-	require.NoError(t, err)
+		target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+		require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(t.Context())
-	dirty := make(chan struct{}, 1)
-	go target.run(ctx, dirty)
-	defer cancel()
+		ctx, cancel := context.WithCancel(t.Context())
+		dirty := make(chan struct{}, 1)
+		go target.run(ctx, dirty)
+		defer cancel()
 
-	require.Eventually(t, func() bool {
-		return len(target.Backends()) == 1
-	}, 2*time.Second, 10*time.Millisecond)
+		// Finish discovery and reconciliation before inspecting the served groups.
+		synctest.Wait()
 
-	backends := target.Backends()
-	require.Equal(t, "appsdktest.ext.grafana.app", backends[0].Group().Name)
-	require.Contains(t, backends[0].Key(), "managed:grafana-appsdktest-app:")
+		require.True(t, len(target.Backends()) == 1)
+
+		backends := target.Backends()
+		require.Equal(t, "appsdktest.ext.grafana.app", backends[0].Group().Name)
+		require.Contains(t, backends[0].Key(), "managed:grafana-appsdktest-app:")
+	})
 }
 
 func TestPluginManifestsTarget_GroupRegexNarrowsToMatchingGroups(t *testing.T) {
