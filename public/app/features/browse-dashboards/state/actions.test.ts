@@ -1,61 +1,70 @@
+import { HttpResponse, http } from 'msw';
+
+import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { setBackendSrv } from '@grafana/runtime';
+import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
 
-import { listDashboards, listFolders } from '../api/services';
 import { type BrowseDashboardsState } from '../types';
 
 import { fetchNextChildrenPage, refetchChildren } from './actions';
 
-jest.mock('../api/services', () => ({
-  ...jest.requireActual('../api/services'),
-  listFolders: jest.fn(),
-  listDashboards: jest.fn(),
-}));
+setBackendSrv(backendSrv);
+setupMockServer();
 
-const mockListFolders = jest.mocked(listFolders);
-const mockListDashboards = jest.mocked(listDashboards);
+const PARENT = 'folder-a';
 
-function dashboard(uid: string): DashboardViewItem {
-  return { kind: 'dashboard', uid, title: uid };
+function hit(name: string): DashboardHit {
+  return { resource: 'dashboards', name, title: name, folder: PARENT, field: {} };
 }
 
-function stateWithRootPage(items: DashboardViewItem[]): BrowseDashboardsState {
+function stateWithFirstPage(items: DashboardViewItem[]): BrowseDashboardsState {
   return {
-    rootItems: {
-      items,
-      lastFetchedKind: 'dashboard',
-      lastFetchedPage: 1,
-      lastKindHasMoreItems: true,
-      isFullyLoaded: false,
+    rootItems: undefined,
+    childrenByParentUID: {
+      [PARENT]: {
+        items,
+        lastFetchedKind: 'dashboard',
+        lastFetchedPage: 1,
+        lastKindHasMoreItems: true,
+        isFullyLoaded: false,
+      },
     },
-    childrenByParentUID: {},
     openFolders: {},
     selectedItems: { $all: false, folder: {}, dashboard: {}, panel: {} },
   };
 }
 
 describe('fetchNextChildrenPage', () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-  });
-
   it('drops a page that completes after its collection was replaced', async () => {
-    const store = configureStore({ browseDashboards: stateWithRootPage([dashboard('dash-1')]) });
-    const rootUids = () => store.getState().browseDashboards.rootItems?.items.map((item) => item.uid);
+    const store = configureStore({
+      browseDashboards: stateWithFirstPage([{ kind: 'dashboard', uid: 'dash-1', title: 'dash-1' }]),
+    });
+    const children = () => store.getState().browseDashboards.childrenByParentUID[PARENT]?.items.map((i) => i.uid);
 
-    // Page 2 of the old listing is slow; meanwhile a change upstream removes dash-3 and the list is refetched.
-    let resolvePage2!: (items: DashboardViewItem[]) => void;
-    mockListDashboards.mockReturnValueOnce(new Promise((resolve) => (resolvePage2 = resolve)));
-    const stalePage = store.dispatch(fetchNextChildrenPage({ parentUID: undefined, pageSize: 50 }));
+    // Page 2 of the old listing is held; meanwhile a change upstream removes dash-3 and the list is refetched.
+    let releaseStalePage!: () => void;
+    server.use(
+      http.get(searchRoute, async ({ request }) => {
+        if (new URL(request.url).searchParams.get('offset') !== '50') {
+          return;
+        }
+        await new Promise<void>((resolve) => (releaseStalePage = resolve));
+        return HttpResponse.json({ totalHits: 1, hits: [hit('dash-3')] });
+      }),
+      getCustomSearchHandler([hit('dash-2')])
+    );
+    const stalePage = store.dispatch(fetchNextChildrenPage({ parentUID: PARENT, pageSize: 50 }));
 
-    mockListFolders.mockResolvedValue([]);
-    mockListDashboards.mockResolvedValueOnce([dashboard('dash-2')]);
-    await store.dispatch(refetchChildren({ parentUID: undefined, pageSize: 50 }));
-    expect(rootUids()).toEqual(['dash-2']);
+    await store.dispatch(refetchChildren({ parentUID: PARENT, pageSize: 50 }));
+    expect(children()).toEqual(['dash-2']);
 
-    resolvePage2([dashboard('dash-3')]);
+    releaseStalePage();
     await stalePage;
 
-    expect(rootUids()).toEqual(['dash-2']);
+    expect(children()).toEqual(['dash-2']);
   });
 });
