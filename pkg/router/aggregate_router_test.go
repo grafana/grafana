@@ -85,7 +85,7 @@ func TestGrafanaRouter_AggregatedGroupIsServedAndFiltered(t *testing.T) {
 
 	req := newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/things", nil)
 	rec := httptest.NewRecorder()
-	r.HandleFunc(rec, req, http.NotFoundHandler())
+	r.HandleFunc(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Contains(t, rec.Body.String(), "proxied:/apis/dashboard.grafana.app/v1/things")
 }

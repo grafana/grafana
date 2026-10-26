@@ -34,7 +34,6 @@ export function toListItem(settings: DataSourceInstanceSettings): DataSourceInst
   return {
     uid: settings.uid,
     type: settings.type,
-    apiVersion: settings.apiVersion,
     name: settings.name,
     meta: settings.meta,
   };

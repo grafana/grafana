@@ -59,7 +59,6 @@ declare module "@openfeature/core" {
     | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsColumnAutoComplete"
     | "sqlExpressionsCodeMirror"
-    | "groupByVariable"
     | "scopeFilters"
     | "newDashboardWithFiltersAndGroupBy"
     | "grafana.filterablePanels"
