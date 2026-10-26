@@ -1,3 +1,5 @@
+import tinycolor from 'tinycolor2';
+
 import { type GrafanaTheme2 } from '@grafana/data';
 import { DEFAULT_TAG_COLORS } from '@grafana/data/unstable';
 
@@ -21,12 +23,14 @@ export function getTagColorsFromName(name = '', theme?: GrafanaTheme2) {
 /**
  * Returns the background and text colors for a tag badge from the palette in the active theme
  * (`theme.components.tag.colors`).
+ * A CSS color instead of an index produces a tonal pair in the same hue.
  * @param index index into the palette. Wrapped with modulo, so any number is valid — indexes
  * beyond the end of the palette cycle back around to the start.
  */
-export function getTagColor(index: number, theme?: GrafanaTheme2) {
+export function getTagColor(index: number | string, theme?: GrafanaTheme2) {
   const colors = theme?.components.tag.colors ?? DEFAULT_TAG_COLORS;
-  const { background, text } = colors[Math.abs(index % colors.length)];
+  const { background, text } =
+    typeof index === 'string' ? getTonalTagColors(index, theme) : colors[Math.abs(index % colors.length)];
 
   const result = { background, text };
 
@@ -35,6 +39,21 @@ export function getTagColor(index: number, theme?: GrafanaTheme2) {
   Object.assign(result, { color: background, borderColor: text });
 
   return result;
+}
+
+function getTonalTagColors(color: string, theme?: GrafanaTheme2) {
+  const base = tinycolor(color);
+  if (base.getAlpha() === 0) {
+    return { background: 'rgba(0,0,0,0)', text: theme?.colors.text.primary ?? 'rgb(247, 248, 250)' };
+  }
+
+  // Opaque tints keep contrast independent of table striping and the surface behind a tag.
+  base.setAlpha(1);
+  const isDark = theme?.isDark ?? true;
+  return {
+    background: tinycolor.mix(base, isDark ? '#000' : '#fff', isDark ? 85 : 90).toRgbString(),
+    text: tinycolor.mix(base, isDark ? '#fff' : '#000', 65).toRgbString(),
+  };
 }
 
 function djb2(str: string) {
