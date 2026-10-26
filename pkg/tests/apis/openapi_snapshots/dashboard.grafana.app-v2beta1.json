@@ -7641,7 +7641,7 @@
             "default": ""
           },
           "resources": {
-            "description": "Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs.",
+            "description": "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.HybridSearchResource"
@@ -7717,6 +7717,14 @@
             "type": "number",
             "format": "double",
             "default": 0
+          },
+          "tags": {
+            "description": "Tags from the lexical index. Omitted when unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
           },
           "title": {
             "type": "string",
@@ -7928,7 +7936,7 @@
         }
       },
       "com.github.grafana.grafana.pkg.apis.search.v0alpha1.SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
+        "description": "SearchResults is the response body for POST .../{resource}/search.",
         "type": "object",
         "required": [
           "metadata",

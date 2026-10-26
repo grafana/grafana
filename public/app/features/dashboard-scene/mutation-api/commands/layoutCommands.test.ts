@@ -86,6 +86,7 @@ function buildRowsScene(rowTitles: string[] = ['Row A', 'Row B']): DashboardScen
     serializer: mockSerializer(),
     canEditDashboard: jest.fn(() => true),
     isPlanning: jest.fn(() => false),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -124,6 +125,7 @@ function buildTabsScene(tabTitles: string[] = ['Tab A', 'Tab B']): DashboardScen
     serializer: mockSerializer(),
     canEditDashboard: jest.fn(() => true),
     isPlanning: jest.fn(() => false),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -166,6 +168,7 @@ function buildRowsSceneWithPanels(): DashboardScene {
     serializer: mockSerializer({ 'elem-a': 1, 'elem-b': 2 }),
     canEditDashboard: jest.fn(() => true),
     isPlanning: jest.fn(() => false),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -197,6 +200,7 @@ function buildSceneWithLayoutParent(
   };
 
   const mockLayoutParent = {
+    getRoot: () => scene,
     switchLayout: jest.fn((newLayout: unknown) => {
       state.body = newLayout;
     }),
@@ -210,6 +214,7 @@ function buildSceneWithLayoutParent(
     serializer,
     canEditDashboard: jest.fn(() => true),
     isPlanning: jest.fn(() => false),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -781,6 +786,7 @@ describe('Layout mutation commands', () => {
         serializer: mockSerializer({ 'panel-1': 1, 'panel-2': 2, 'panel-3': 3 }),
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -944,6 +950,7 @@ describe('Layout mutation commands', () => {
         serializer: mockSerializer({ 'elem-a': 1 }),
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -991,6 +998,7 @@ describe('Layout mutation commands', () => {
         serializer: mockSerializer({ 'elem-a': 1 }),
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -1036,6 +1044,7 @@ describe('Layout mutation commands', () => {
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -1085,6 +1094,7 @@ describe('Layout mutation commands', () => {
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -1130,6 +1140,7 @@ describe('Layout mutation commands', () => {
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -1345,6 +1356,7 @@ describe('Layout mutation commands', () => {
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -1973,6 +1985,7 @@ describe('Layout mutation commands', () => {
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -2017,6 +2030,7 @@ describe('Layout mutation commands', () => {
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -2064,6 +2078,7 @@ describe('Layout mutation commands', () => {
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -2108,6 +2123,7 @@ describe('Layout mutation commands', () => {
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -2153,6 +2169,7 @@ describe('Layout mutation commands', () => {
         serializer: mockSerializer(),
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           tabsState.isEditing = true;
         }),

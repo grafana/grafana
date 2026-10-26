@@ -15,7 +15,7 @@ import (
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
@@ -60,7 +60,7 @@ func TestDeleteCollection_afterMigrationRoutesToUnifiedStorage(t *testing.T) {
 	deleted := false
 	unified := ruleCleanupStorage{deleteFn: func(_ context.Context, _ k8srest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
 		deleted = true
-		return &model.AlertRuleList{}, nil
+		return &v1beta1.AlertRuleList{}, nil
 	}}
 	storage, err := svc.NewStorage(ResourceInfo.GroupResource(), &legacyStorage{}, unified)
 	require.NoError(t, err)
@@ -73,7 +73,7 @@ func TestDeleteCollection_afterMigrationRoutesToUnifiedStorage(t *testing.T) {
 	reader.mode = migrations.StorageModeUnified
 	result, err := collectionDeleter.DeleteCollection(context.Background(), nil, &metav1.DeleteOptions{}, &internalversion.ListOptions{})
 	require.NoError(t, err)
-	require.IsType(t, &model.AlertRuleList{}, result)
+	require.IsType(t, &v1beta1.AlertRuleList{}, result)
 	require.True(t, deleted, "migration must enable collection cleanup without recreating storage")
 }
 
@@ -158,7 +158,7 @@ func TestCreate_QualityPolicyRejection(t *testing.T) {
 	ctx := genericapirequest.WithNamespace(context.Background(), "default")
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 
-	rule := &model.AlertRule{
+	rule := &v1beta1.AlertRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "no-summary-rule",
 			Namespace: "default",
@@ -166,13 +166,13 @@ func TestCreate_QualityPolicyRejection(t *testing.T) {
 				"grafana.app/folder": "test-folder-uid",
 			},
 		},
-		Spec: model.AlertRuleSpec{
+		Spec: v1beta1.AlertRuleSpec{
 			Title:        "no-summary-rule",
-			Trigger:      model.AlertRuleIntervalTrigger{Interval: "1m"},
-			NoDataState:  model.AlertRuleNoDataStateNoData,
-			ExecErrState: model.AlertRuleExecErrStateError,
-			Expressions: model.AlertRuleExpressionMap{
-				"A": model.AlertRuleExpression{
+			Trigger:      v1beta1.AlertRuleIntervalTrigger{Interval: "1m"},
+			NoDataState:  v1beta1.AlertRuleNoDataStateNoData,
+			ExecErrState: v1beta1.AlertRuleExecErrStateError,
+			Expressions: v1beta1.AlertRuleExpressionMap{
+				"A": v1beta1.AlertRuleExpression{
 					Model:  map[string]interface{}{"type": "math", "expression": "1 == 1", "refId": "A"},
 					Source: new(true),
 				},

@@ -8,6 +8,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv, useScopes } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { DRAWER_INSIDE_ATTRIBUTE } from '@grafana/ui/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { KioskMode } from 'app/types/dashboard';
@@ -29,9 +31,20 @@ jest.mock('@grafana/runtime', () => ({
 
 jest.mock('app/core/hooks/useMediaQueryMinWidth');
 
+const mockSidebarLifecycle = { mounts: 0, unmounts: 0 };
+
 jest.mock('./ExtensionSidebar/ExtensionSidebar', () => ({
   ...jest.requireActual('./ExtensionSidebar/ExtensionSidebar'),
-  ExtensionSidebar: () => <div data-testid="ext-sidebar-stub" />,
+  ExtensionSidebar: function ExtensionSidebarStub() {
+    const { useEffect } = jest.requireActual('react');
+    useEffect(() => {
+      mockSidebarLifecycle.mounts++;
+      return () => {
+        mockSidebarLifecycle.unmounts++;
+      };
+    }, []);
+    return <div data-testid="ext-sidebar-stub" />;
+  },
 }));
 
 jest.mock('./ExtensionSidebar/ExtensionSidebarProvider', () => ({
@@ -50,6 +63,10 @@ const closedSidebarContext: ExtensionSidebarContextType = {
   availableComponents: new Map(),
   extensionSidebarWidth: 300,
   setExtensionSidebarWidth: jest.fn(),
+  floatingExtensionSidebarWidth: 480,
+  setFloatingExtensionSidebarWidth: jest.fn(),
+  presentation: 'docked',
+  floatingHidden: false,
 };
 
 const openSidebarContext: ExtensionSidebarContextType = {
@@ -58,10 +75,20 @@ const openSidebarContext: ExtensionSidebarContextType = {
   dockedComponentId: 'p/c/v',
 };
 
+/** The declarations of the class rules on `element` (jsdom does not resolve `var()` in computed styles). */
+const stylesFor = (element: Element) => {
+  const selectors = new Set(Array.from(element.classList, (className) => `.${className}`));
+  return Array.from(document.styleSheets)
+    .flatMap((sheet) => Array.from(sheet.cssRules))
+    .filter((rule): rule is CSSStyleRule => rule instanceof CSSStyleRule && selectors.has(rule.selectorText))
+    .map((rule) => rule.style.cssText)
+    .join('\n');
+};
+
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const setup = (children: ReactNode) => {
+const setup = (children: ReactNode, { path }: { path?: string } = {}) => {
   config.bootData.navTree = [
     {
       id: HOME_NAV_ID,
@@ -84,18 +111,22 @@ const setup = (children: ReactNode) => {
   ];
 
   const context = getGrafanaContextMock();
-  const wrapper = getWrapper({ grafanaContext: context, renderWithRouter: true });
+  const wrapper = getWrapper({
+    grafanaContext: context,
+    renderWithRouter: true,
+    historyOptions: path ? { initialEntries: [path] } : undefined,
+  });
 
-  const renderResult = render(
+  const tree = (
     <KBarProvider>
       <AppChrome>
         <div data-testid="page-children">{children}</div>
       </AppChrome>
-    </KBarProvider>,
-    { wrapper }
+    </KBarProvider>
   );
+  const renderResult = render(tree, { wrapper });
 
-  return { renderResult, context };
+  return { renderResult, context, rerender: () => renderResult.rerender(tree) };
 };
 
 describe('AppChrome', () => {
@@ -106,7 +137,12 @@ describe('AppChrome', () => {
     mockUseScopes.mockReturnValue(undefined);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates
+    // while the component may still be mounted (RTL's own cleanup afterEach runs after this one).
+    await act(async () => {
+      setTestFlags({});
+    });
     jest.clearAllMocks();
   });
 
@@ -184,6 +220,18 @@ describe('AppChrome', () => {
         expect(parseFloat(getComputedStyle(mainContent).paddingLeft) || 0).toBe(0);
       });
     });
+
+    it('does not render the docked drawer when the mega-menu flag is on', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.scopesDashboardsMegaMenu': true });
+      });
+
+      setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('scopes-dashboards-container')).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe('extension sidebar mobile floating', () => {
@@ -197,6 +245,72 @@ describe('AppChrome', () => {
 
       await screen.findByTestId('ext-sidebar-stub');
       expect(screen.getByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).toBeInTheDocument();
+    });
+
+    it('switches between docked and floating presentation without remounting the extension', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      mockSidebarLifecycle.mounts = 0;
+      mockSidebarLifecycle.unmounts = 0;
+      const { rerender } = setup(<Page navId="child1">Children</Page>);
+      const stub = await screen.findByTestId('ext-sidebar-stub');
+      const mainContent = document.getElementById('pageContent')!;
+      const dockedClassName = mainContent.className;
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      rerender();
+      expect(screen.getByTestId('ext-sidebar-stub')).toBe(stub);
+      expect(mainContent.className).not.toBe(dockedClassName);
+
+      mockUseExtensionSidebarContext.mockReturnValue(openSidebarContext);
+      rerender();
+      expect(screen.getByTestId('ext-sidebar-stub')).toBe(stub);
+      expect(mockSidebarLifecycle).toEqual({ mounts: 1, unmounts: 0 });
+    });
+
+    it.each(['/explore', '/'])('floats over the page on a non-dashboard route (%s)', async (path) => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      setup(<Page navId="child1">Children</Page>, { path });
+
+      await screen.findByTestId('ext-sidebar-stub');
+      const mainContent = document.getElementById('pageContent')!;
+      // The floating sidebar overlays the page, so the page keeps its full size.
+      expect(stylesFor(mainContent)).not.toContain('padding-bottom');
+      expect(screen.queryByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).not.toBeInTheDocument();
+    });
+
+    it('floats above drawers but below modals, and leaves the docked sidebar under drawers', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      const { rerender } = setup(<Page navId="child1">Children</Page>);
+      const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+      expect(stylesFor(container)).toContain('z-index: 1001');
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      rerender();
+      // Drawers and their mask sit at modalBackdrop (1050), modal dialogs at modal (1060).
+      expect(stylesFor(container)).toContain('z-index: 1051');
+    });
+
+    it('keeps the docked minimum width off the floating sidebar', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      const { rerender } = setup(<Page navId="child1">Children</Page>);
+      const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+      expect(container.style.minWidth).toBe('460px');
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      rerender();
+      expect(container.style.minWidth).toBe('');
+    });
+
+    it('marks only the floating sidebar as inside open drawers', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      const { rerender } = setup(<Page navId="child1">Children</Page>);
+      const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+      expect(container).not.toHaveAttribute(DRAWER_INSIDE_ATTRIBUTE);
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      rerender();
+      expect(container).toHaveAttribute(DRAWER_INSIDE_ATTRIBUTE);
     });
 
     it('renders the sidebar docked, not floating, on larger screens', async () => {

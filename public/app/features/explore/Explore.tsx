@@ -54,6 +54,7 @@ import { QueryRows } from './QueryRows';
 import RawPrometheusContainer from './RawPrometheus/RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { SecondaryActions } from './SecondaryActions';
+import { createQueryEditorInsertionRegistry } from './SignalExplorer/queryEditorInsertion';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeDatasource } from './state/datasource';
@@ -61,6 +62,7 @@ import { changeSize, changeCompactMode } from './state/explorePane';
 import { splitOpen } from './state/main';
 import {
   addQueryRow,
+  changeQueries,
   modifyQueries,
   scanStart,
   scanStopAction,
@@ -70,7 +72,7 @@ import {
 } from './state/query';
 import { isSplit, selectExploreDSMaps } from './state/selectors';
 import { updateTimeRange } from './state/time';
-import { isPrometheusType } from './utils/prometheus';
+import { appendToQueryExpr, type ExprTextKind, isPrometheusType } from './utils/prometheus';
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -147,6 +149,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;
+  queryEditorInsertion = createQueryEditorInsertionRegistry();
 
   constructor(props: Props) {
     super(props);
@@ -165,6 +168,14 @@ export class Explore extends PureComponent<Props, ExploreState> {
   // Use this in help pages to set page to a single query
   onClickExample = (query: DataQuery) => {
     this.props.setQueries(this.props.exploreId, [query]);
+  };
+
+  onAddToQuery = (refId: string, text: string, kind: ExprTextKind) => {
+    if (this.queryEditorInsertion.insert(refId, text, kind)) {
+      return;
+    }
+    const { changeQueries, exploreId, queries } = this.props;
+    changeQueries({ exploreId, queries: appendToQueryExpr(queries, refId, text, kind) });
   };
 
   onCellFilterAdded = (filter: AdHocFilterItem) => {
@@ -700,6 +711,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                 queries={this.props.queries}
                 paneDatasource={datasourceInstance}
                 timeRange={this.props.range}
+                onAddToQuery={this.onAddToQuery}
               />
             )}
             <ScrollContainer
@@ -729,6 +741,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           changeCompactMode={(compact: boolean) =>
                             this.props.changeCompactMode(this.props.exploreId, false)
                           }
+                          getQueryEditorInsertion={this.queryEditorInsertion.registrarFor}
                         />
                         <SecondaryActions
                           // do not allow people to add queries with potentially different datasources in correlations editor mode
@@ -906,6 +919,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
 
 const mapDispatchToProps = {
   changeDatasource,
+  changeQueries,
   changeSize,
   modifyQueries,
   scanStart,

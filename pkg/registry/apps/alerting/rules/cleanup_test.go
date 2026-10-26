@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	alertvalidation "github.com/grafana/grafana/apps/alerting/rules/pkg/app/alertrule"
 	appconfig "github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	recordingvalidation "github.com/grafana/grafana/apps/alerting/rules/pkg/app/recordingrule"

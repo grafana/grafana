@@ -149,7 +149,7 @@ func (s *stubPluginRouteStream) Recv() (*pluginv3.CallRouteResponse, error) {
 
 func TestPluginStreamBreaker(t *testing.T) {
 	cb := newGroupBreaker("plugin")
-	ctx := context.WithValue(t.Context(), clientBreakerKey{}, cb)
+	ctx := withClientBreaker(t.Context(), cb)
 	stream := &stubPluginRouteStream{err: status.Error(codes.Unavailable, "offline")}
 	client := &breakerPluginClientV3{Client: &stubPluginClientV3{stream: stream}}
 	for i := 0; i < 6; i++ {
@@ -163,7 +163,7 @@ func TestPluginStreamBreaker(t *testing.T) {
 
 func TestPluginResponsesDoNotTripBreaker(t *testing.T) {
 	cb := newGroupBreaker("plugin")
-	ctx := context.WithValue(t.Context(), clientBreakerKey{}, cb)
+	ctx := withClientBreaker(t.Context(), cb)
 	stream := &stubPluginRouteStream{}
 	client := &breakerPluginClientV3{Client: &stubPluginClientV3{stream: stream}}
 	for i := 0; i < 7; i++ {
@@ -212,7 +212,7 @@ func TestLegacyPluginBreaker(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cb := newGroupBreaker("plugin")
-			ctx := context.WithValue(t.Context(), clientBreakerKey{}, cb)
+			ctx := withClientBreaker(t.Context(), cb)
 			client := &breakerPluginClient{Client: &stubLegacyPluginClient{err: tt.err}}
 			sender := backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 				require.Equal(t, http.StatusServiceUnavailable, res.Status)
@@ -236,7 +236,7 @@ func TestPluginStreamClosesHalfOpenBreakerOnFirstResponse(t *testing.T) {
 		ReadyToTrip: func(counts gobreaker.Counts) bool { return counts.ConsecutiveFailures >= 1 },
 		Timeout:     20 * time.Millisecond,
 	})
-	ctx := context.WithValue(t.Context(), clientBreakerKey{}, cb)
+	ctx := withClientBreaker(t.Context(), cb)
 	stream := &stubPluginRouteStream{err: status.Error(codes.Unavailable, "offline")}
 	client := &breakerPluginClientV3{Client: &stubPluginClientV3{stream: stream}}
 	response, err := client.CallRoute(ctx, &pluginv3.CallRouteRequest{})
@@ -352,7 +352,7 @@ func TestPluginBreakerGETDuringUnavailableClientFlood(t *testing.T) {
 			request := func(method string) *httptest.ResponseRecorder {
 				req := httptest.NewRequest(method, path, nil).WithContext(authenticatedTestContext(ctx))
 				response := httptest.NewRecorder()
-				router.HandleFunc(response, req, http.NotFoundHandler())
+				router.HandleFunc(response, req)
 				return response
 			}
 			failures := make(chan *httptest.ResponseRecorder, writers)
@@ -454,11 +454,11 @@ func TestPluginBreakerRejectionMetrics(t *testing.T) {
 			router := withGroupHandlerAndBreaker(group, handler, cb)
 			metrics := newRouterMetrics(prometheus.NewRegistry())
 			response := httptest.NewRecorder()
-			metrics.instrument(router, response, newAuthenticatedRequest(http.MethodPost, "/apis/"+group+"/v1/things", nil), http.NotFoundHandler())
+			metrics.instrumentRequest(router, response, newAuthenticatedRequest(http.MethodPost, "/apis/"+group+"/v1/things", nil))
 			require.Equal(t, http.StatusServiceUnavailable, response.Code)
 			require.Equal(t, 1.0, testutil.ToFloat64(metrics.backendFailures.WithLabelValues(group, "test-app", failureBreakerOpen)))
 			require.Zero(t, raw.calls)
-			_, err = allowPluginCall(context.WithValue(withoutRequestOutcome(t.Context()), clientBreakerKey{}, cb))
+			_, err = allowPluginCall(withClientBreaker(withoutRequestOutcome(t.Context()), cb))
 			require.True(t, apierrors.IsServiceUnavailable(err))
 		})
 	}
@@ -475,7 +475,7 @@ func TestPluginPanicSettlesHalfOpenAttempt(t *testing.T) {
 			require.NoError(t, err)
 			done(plugins.ErrPluginUnavailable)
 			require.Eventually(t, func() bool { return cb.State() == gobreaker.StateHalfOpen }, time.Second, time.Millisecond)
-			ctx := context.WithValue(t.Context(), clientBreakerKey{}, cb)
+			ctx := withClientBreaker(t.Context(), cb)
 			raw := &stubPluginClientV3{panicValue: panicValue}
 			client := &breakerPluginClientV3{Client: raw}
 			legacy := &breakerPluginClient{Client: &stubLegacyPluginClient{panicValue: panicValue}}
@@ -511,7 +511,7 @@ func TestPluginPanicSettlesHalfOpenAttempt(t *testing.T) {
 
 func TestPluginStreamPanicAfterFirstResponsePreservesOutcome(t *testing.T) {
 	cb := newGroupBreaker("plugin")
-	ctx := context.WithValue(t.Context(), clientBreakerKey{}, cb)
+	ctx := withClientBreaker(t.Context(), cb)
 	raw := &stubPluginRouteStream{}
 	client := &breakerPluginClientV3{Client: &stubPluginClientV3{stream: raw}}
 	stream, err := client.CallRoute(ctx, &pluginv3.CallRouteRequest{})
@@ -536,7 +536,7 @@ func TestPluginStreamCancellationReleasesHalfOpenAttempt(t *testing.T) {
 	require.NoError(t, err)
 	done(plugins.ErrPluginUnavailable)
 	require.Eventually(t, func() bool { return cb.State() == gobreaker.StateHalfOpen }, time.Second, time.Millisecond)
-	ctx := context.WithValue(t.Context(), clientBreakerKey{}, cb)
+	ctx := withClientBreaker(t.Context(), cb)
 	trialCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	raw := &stubPluginRouteStream{}
@@ -559,4 +559,10 @@ func TestPluginStreamCancellationReleasesHalfOpenAttempt(t *testing.T) {
 	_, err = retry.Recv()
 	require.NoError(t, err)
 	require.Equal(t, gobreaker.StateClosed, cb.State())
+}
+
+// withClientBreaker gives ctx a backend call gated by cb, as
+// serveThroughBreaker does for a handler that breaks on client calls.
+func withClientBreaker(ctx context.Context, cb *groupBreaker) context.Context {
+	return context.WithValue(ctx, backendCallKey{}, &backendCall{breaker: cb})
 }

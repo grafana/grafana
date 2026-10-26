@@ -7,8 +7,6 @@ test.use({
   featureToggles: {
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
-    dashboardUnifiedDrilldownControls: false,
   },
 });
 
@@ -52,7 +50,9 @@ test.describe(
       await expect(markdownContent).toContainText('VariableUnderTest: label2="label2Value1"');
 
       await controls.enterEditMode();
-      await flows.contentOutline.selectVariable(sidebar, variable.label);
+      await sidebar.toolbar.clickButton('Outline');
+      await sidebar.contentOutline.toggleNode('Filters');
+      await sidebar.contentOutline.clickItem(variable.label);
 
       await expect(sidebar.getPaneTitle()).toHaveText('Filter');
       await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);

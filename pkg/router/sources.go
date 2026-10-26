@@ -11,7 +11,7 @@ const (
 	sourcePluginsURL    = "plugins_url"
 	sourceCoreURL       = "core_url"
 	sourceLocalPlugin   = "local-plugin"
-	sourceDummy         = "dummy"
+	sourceDev           = "dev"
 	aggregateSourceName = "aggregate:"
 )
 
@@ -30,7 +30,8 @@ type sourceStatus struct {
 }
 
 // shadowedGroup is a group that one source offered but a higher-priority
-// source serves instead.
+// source serves instead. The single-tenant fallback is never reported, since
+// every other source is meant to override it.
 type shadowedGroup struct {
 	Group  string `json:"group"`
 	Source string `json:"source"`
@@ -45,9 +46,6 @@ type loaderStatus interface {
 	// stackLookups counts single-tenant stack lookups by result; nil without
 	// a single-tenant fallback.
 	stackLookups() map[string]uint64
-	// stackFallbackRefused counts requests the single-tenant fallback refused
-	// because a stack's aggregator sent them; false without the fallback.
-	stackFallbackRefused() (uint64, bool)
 	// stackDiscoveryCache counts single-tenant discovery cache lookups by
 	// result; nil without a single-tenant fallback or its discovery cache.
 	stackDiscoveryCache() map[string]uint64
@@ -61,13 +59,28 @@ type pollStatus struct {
 	skipped     atomic.Int64
 }
 
-func (p *pollStatus) recordSuccess(now time.Time) {
+// recordSuccess records a successful attempt, and reports whether it was the
+// source's first attempt (see recordFailure). Call it only once the attempt's
+// snapshot is stored: the cloud loader serves a source once it has polled,
+// and must then see the source's groups.
+func (p *pollStatus) recordSuccess(now time.Time) (first bool) {
 	p.lastSuccess.Store(now.UnixNano())
-	p.successes.Add(1)
+	return p.successes.Add(1) == 1 && p.failures.Load() == 0
 }
 
-func (p *pollStatus) recordFailure() {
-	p.failures.Add(1)
+// recordFailure records a failed attempt, and reports whether it was the
+// source's first attempt: the first attempt ends the cloud loader's pending
+// state, failed or not, so its poll loop wakes the router for it.
+func (p *pollStatus) recordFailure() (first bool) {
+	return p.failures.Add(1) == 1 && p.successes.Load() == 0
+}
+
+// wake asks the router to reconcile, coalescing with a wake already pending.
+func wake(dirty chan<- struct{}) {
+	select {
+	case dirty <- struct{}{}:
+	default:
+	}
 }
 
 // recordSkipped records how many backends the latest load skipped.

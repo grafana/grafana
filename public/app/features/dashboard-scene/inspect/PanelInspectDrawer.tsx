@@ -44,7 +44,9 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
   }
 
   private _activationHandler() {
+    const deactivateNotices = this.state.panelRef.resolve().getPanelContext().activateNotices?.();
     this.buildTabs(0);
+    return deactivateNotices;
   }
 
   /**
@@ -65,9 +67,9 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
     }
 
     if (panelRef) {
+      const panel = panelRef.resolve();
+      const data = sceneGraph.getData(panel);
       if (supportsDataQuery(plugin)) {
-        const data = sceneGraph.getData(panelRef.resolve());
-
         tabs.push(new InspectDataTab({ panelRef }));
         tabs.push(new InspectStatsTab({ panelRef }));
         tabs.push(new InspectQueryTab({ panelRef }));
@@ -76,11 +78,19 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
         if (dsWithInspector) {
           tabs.push(new InspectMetaDataTab({ panelRef, dataSource: dsWithInspector }));
         }
+      }
 
-        if (hasErrorsOrNotices(data.state.data)) {
-          const dsWithErrorsAndNotices = await getDataSourceWithErrorsAndNoticesInspector(data.state.data);
-          tabs.push(new InspectErrorsAndNoticesTab({ panelRef, dataSource: dsWithErrorsAndNotices }));
-        }
+      const snapshot = panel.getPanelContext().notices?.getSnapshot();
+      const hasNotices = snapshot?.hostInitialized
+        ? snapshot.items.length > 0
+        : hasErrorsOrNotices(data.state.data) ||
+          Boolean(panel.state._pluginLoadError) ||
+          Boolean(snapshot?.items.length);
+      if (hasNotices) {
+        const dsWithErrorsAndNotices = hasErrorsOrNotices(data.state.data)
+          ? await getDataSourceWithErrorsAndNoticesInspector(data.state.data)
+          : undefined;
+        tabs.push(new InspectErrorsAndNoticesTab({ panelRef, dataSource: dsWithErrorsAndNotices }));
       }
 
       tabs.push(new InspectJsonTab({ panelRef, onClose: this.onClose }));

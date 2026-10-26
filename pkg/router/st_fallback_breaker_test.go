@@ -12,6 +12,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 func TestSingleTenantBreakersIsolateGroupsOnSameHost(t *testing.T) {
@@ -25,7 +27,7 @@ func TestSingleTenantBreakersIsolateGroupsOnSameHost(t *testing.T) {
 				calls := map[string]int{}
 				st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
 					require.Equal(t, "tenant.example.com", req.URL.Host)
-					group := GroupFromPath(req.URL.Path)
+					group := utils.APIGroupFromRequest(req)
 					calls[group]++
 					code := http.StatusNoContent
 					if group == "broken" {
@@ -45,7 +47,7 @@ func TestSingleTenantBreakersIsolateGroupsOnSameHost(t *testing.T) {
 				request := func(group, version string) int {
 					recorder := httptest.NewRecorder()
 					path := "/apis/" + group + "/" + version + "/namespaces/stacks-123/widgets"
-					router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, path, nil), http.NotFoundHandler())
+					router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, path, nil))
 					return recorder.Code
 				}
 				for range 6 {
@@ -120,7 +122,7 @@ func TestSingleTenantBreakersIsolateDestinations(t *testing.T) {
 				}
 				return &http.Response{StatusCode: http.StatusNoContent, Header: make(http.Header), Body: http.NoBody}, nil
 			})
-			router := NewGrafanaRouter(st, nil)
+			router := NewGrafanaRouter(fallbackLoader{st}, nil)
 			pollDiscovery(t, st)
 			require.NoError(t, router.reconcile(t.Context()))
 			discoveryFailed = true
@@ -130,7 +132,7 @@ func TestSingleTenantBreakersIsolateDestinations(t *testing.T) {
 				if path == "/apis" {
 					req.Header.Set("Accept", aggregatedDiscoveryJSON)
 				}
-				router.HandleFunc(recorder, req, http.NotFoundHandler())
+				router.HandleFunc(recorder, req)
 				return recorder.Code
 			}
 			for range 8 {

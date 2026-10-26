@@ -64,16 +64,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['AlertRule'],
       }),
-      listAlertRuleSearchRulesV0Alpha1: build.mutation<
-        ListAlertRuleSearchRulesV0Alpha1ApiResponse,
-        ListAlertRuleSearchRulesV0Alpha1ApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/alertrules/searchRules`,
-          method: 'POST',
-          body: queryArg.listAlertRuleSearchRulesV0Alpha1RequestBody,
-        }),
-      }),
       getAlertRule: build.query<GetAlertRuleApiResponse, GetAlertRuleApiArg>({
         query: (queryArg) => ({
           url: `/alertrules/${queryArg.name}`,
@@ -367,16 +357,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['RecordingRule'],
       }),
-      listRecordingRuleSearchRulesV0Alpha1: build.mutation<
-        ListRecordingRuleSearchRulesV0Alpha1ApiResponse,
-        ListRecordingRuleSearchRulesV0Alpha1ApiArg
-      >({
-        query: (queryArg) => ({
-          url: `/recordingrules/searchRules`,
-          method: 'POST',
-          body: queryArg.listRecordingRuleSearchRulesV0Alpha1RequestBody,
-        }),
-      }),
       getRecordingRule: build.query<GetRecordingRuleApiResponse, GetRecordingRuleApiArg>({
         query: (queryArg) => ({
           url: `/recordingrules/${queryArg.name}`,
@@ -632,6 +612,26 @@ const injectedRtkApi = api
           },
         }),
       }),
+      listAlertRuleSearchRulesV0Alpha1: build.mutation<
+        ListAlertRuleSearchRulesV0Alpha1ApiResponse,
+        ListAlertRuleSearchRulesV0Alpha1ApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/searchAlertRules`,
+          method: 'POST',
+          body: queryArg.listAlertRuleSearchRulesV0Alpha1RequestBody,
+        }),
+      }),
+      listRecordingRuleSearchRulesV0Alpha1: build.mutation<
+        ListRecordingRuleSearchRulesV0Alpha1ApiResponse,
+        ListRecordingRuleSearchRulesV0Alpha1ApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/searchRecordingRules`,
+          method: 'POST',
+          body: queryArg.listRecordingRuleSearchRulesV0Alpha1RequestBody,
+        }),
+      }),
     }),
     overrideExisting: false,
   });
@@ -751,10 +751,6 @@ export type DeletecollectionAlertRuleApiArg = {
   shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
-};
-export type ListAlertRuleSearchRulesV0Alpha1ApiResponse = /** status 200 OK */ ListAlertRuleSearchRulesV0Alpha1Response;
-export type ListAlertRuleSearchRulesV0Alpha1ApiArg = {
-  listAlertRuleSearchRulesV0Alpha1RequestBody: ListAlertRuleSearchRulesV0Alpha1RequestBody;
 };
 export type GetAlertRuleApiResponse = /** status 200 OK */ AlertRule;
 export type GetAlertRuleApiArg = {
@@ -1166,11 +1162,6 @@ export type DeletecollectionRecordingRuleApiArg = {
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type ListRecordingRuleSearchRulesV0Alpha1ApiResponse =
-  /** status 200 OK */ ListRecordingRuleSearchRulesV0Alpha1Response;
-export type ListRecordingRuleSearchRulesV0Alpha1ApiArg = {
-  listRecordingRuleSearchRulesV0Alpha1RequestBody: ListRecordingRuleSearchRulesV0Alpha1RequestBody;
-};
 export type GetRecordingRuleApiResponse = /** status 200 OK */ RecordingRule;
 export type GetRecordingRuleApiArg = {
   /** name of the RecordingRule */
@@ -1494,6 +1485,15 @@ export type GetHybridSearchAlertRulesApiArg = {
   /** Skip reranking and return the fused lexical and semantic ordering */
   skipRerank?: boolean;
 };
+export type ListAlertRuleSearchRulesV0Alpha1ApiResponse = /** status 200 OK */ ListAlertRuleSearchRulesV0Alpha1Response;
+export type ListAlertRuleSearchRulesV0Alpha1ApiArg = {
+  listAlertRuleSearchRulesV0Alpha1RequestBody: ListAlertRuleSearchRulesV0Alpha1RequestBody;
+};
+export type ListRecordingRuleSearchRulesV0Alpha1ApiResponse =
+  /** status 200 OK */ ListRecordingRuleSearchRulesV0Alpha1Response;
+export type ListRecordingRuleSearchRulesV0Alpha1ApiArg = {
+  listRecordingRuleSearchRulesV0Alpha1RequestBody: ListRecordingRuleSearchRulesV0Alpha1RequestBody;
+};
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -1792,112 +1792,6 @@ export type Status = {
   /** Status of the operation. One of: "Success" or "Failure". More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status */
   status?: string;
 };
-export type ListAlertRuleSearchRulesV0Alpha1FacetValue = {
-  count: number;
-  value: string;
-};
-export type ListAlertRuleSearchRulesV0Alpha1SearchResultResource = {
-  group: string;
-  kind: string;
-  name: string;
-  resource: string;
-};
-export type ListAlertRuleSearchRulesV0Alpha1SearchResultHit = {
-  /** Open to match the generic endpoint's unstructured field values. */
-  fields?: {
-    [key: string]: any;
-  };
-  resource: ListAlertRuleSearchRulesV0Alpha1SearchResultResource;
-  /** Present only when a text query was evaluated. */
-  score?: number;
-};
-export type ListAlertRuleSearchRulesV0Alpha1TotalHitsRelation = 'eq' | 'lte';
-export type ListAlertRuleSearchRulesV0Alpha1SearchResultsMetadata = {
-  /** Opaque next-page token; clients must not construct it. */
-  continue?: string;
-  /** Interpret with totalHitsRelation, not as an exact count unconditionally. */
-  totalHits: number;
-  totalHitsRelation: ListAlertRuleSearchRulesV0Alpha1TotalHitsRelation;
-};
-export type ListAlertRuleSearchRulesV0Alpha1Response = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion: string;
-  /** Counts use a bounded sample and are best-effort. */
-  facets?: {
-    [key: string]: ListAlertRuleSearchRulesV0Alpha1FacetValue[];
-  };
-  items: ListAlertRuleSearchRulesV0Alpha1SearchResultHit[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind: string;
-  metadata: ListAlertRuleSearchRulesV0Alpha1SearchResultsMetadata;
-};
-export type ListAlertRuleSearchRulesV0Alpha1SearchLabelSelectorRequirement = {
-  key: string;
-  operator: 'In' | 'NotIn' | 'Exists' | 'DoesNotExist';
-  values?: string[];
-};
-export type ListAlertRuleSearchRulesV0Alpha1SearchLabelSelector = {
-  matchExpressions?: ListAlertRuleSearchRulesV0Alpha1SearchLabelSelectorRequirement[];
-  matchLabels?: {
-    [key: string]: string;
-  };
-};
-export type ListAlertRuleSearchRulesV0Alpha1SearchSortField = {
-  direction?: 'asc' | 'desc';
-  field: string;
-};
-export type ListAlertRuleSearchRulesV0Alpha1SearchExistsLeaf = {
-  field: string;
-};
-export type ListAlertRuleSearchRulesV0Alpha1SearchFilterLeaf = {
-  field: string;
-  operator: 'In' | 'NotIn' | 'All';
-  values: string[];
-};
-export type ListAlertRuleSearchRulesV0Alpha1SearchRangeLeaf = {
-  field: string;
-  gt?: number;
-  gte?: number;
-  lt?: number;
-  lte?: number;
-};
-export type ListAlertRuleSearchRulesV0Alpha1SearchRegexLeaf = {
-  field: string;
-  negate?: boolean;
-  pattern: string;
-};
-export type ListAlertRuleSearchRulesV0Alpha1SearchTextLeaf = {
-  /** boost is a future per-leaf score multiplier. Setting it is rejected. */
-  boost?: number;
-  fields?: string[];
-  value: string;
-};
-export type ListAlertRuleSearchRulesV0Alpha1SearchWhereNode = {
-  and?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode[];
-  exists?: ListAlertRuleSearchRulesV0Alpha1SearchExistsLeaf;
-  filter?: ListAlertRuleSearchRulesV0Alpha1SearchFilterLeaf;
-  not?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode;
-  or?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode[];
-  range?: ListAlertRuleSearchRulesV0Alpha1SearchRangeLeaf;
-  regex?: ListAlertRuleSearchRulesV0Alpha1SearchRegexLeaf;
-  text?: ListAlertRuleSearchRulesV0Alpha1SearchTextLeaf;
-};
-export type ListAlertRuleSearchRulesV0Alpha1RequestBody = {
-  apiVersion?: string;
-  /** Opaque token from the previous page. */
-  continue?: string;
-  /** Per-facet term limit. Zero uses the default; larger values are clamped. */
-  facetLimit?: number;
-  facets?: string[];
-  fields?: string[];
-  kind?: string;
-  labelSelector?: ListAlertRuleSearchRulesV0Alpha1SearchLabelSelector;
-  /** Page size. Zero uses the default; larger values are clamped. */
-  limit?: number;
-  sort?: ListAlertRuleSearchRulesV0Alpha1SearchSortField[];
-  /** Omitted where matches all authorised rules satisfying labelSelector. */
-  where?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode;
-};
 export type Patch = object;
 export type ConfigSpec = {
   externalRulerSync?: {
@@ -2076,6 +1970,166 @@ export type RecordingRuleList = {
   kind?: string;
   metadata: ListMeta;
 };
+export type RuleSequenceRuleUid = string;
+export type RuleSequenceRuleRef = {
+  name: RuleSequenceRuleUid;
+};
+export type RuleSequencePromDuration = string;
+export type RuleSequenceIntervalTrigger = {
+  interval: RuleSequencePromDuration;
+};
+export type RuleSequenceSpec = {
+  alertingRules?: RuleSequenceRuleRef[];
+  recordingRules: RuleSequenceRuleRef[];
+  trigger: RuleSequenceIntervalTrigger;
+};
+export type RuleSequenceOperatorState = {
+  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
+  descriptiveState?: string;
+  /** details contains any extra information that is operator-specific */
+  details?: {
+    [key: string]: any;
+  };
+  /** lastEvaluation is the ResourceVersion last evaluated */
+  lastEvaluation: string;
+  /** state describes the state of the lastEvaluation.
+    It is limited to three possible states for machine evaluation. */
+  state: 'success' | 'in_progress' | 'failed';
+};
+export type RuleSequenceStatus = {
+  /** additionalFields is reserved for future use */
+  additionalFields?: {
+    [key: string]: any;
+  };
+  /** operatorStates is a map of operator ID to operator state evaluations.
+    Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
+  operatorStates?: {
+    [key: string]: RuleSequenceOperatorState;
+  };
+};
+export type RuleSequence = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind: string;
+  metadata: ObjectMeta;
+  spec: RuleSequenceSpec;
+  status?: RuleSequenceStatus;
+};
+export type RuleSequenceList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: RuleSequence[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata: ListMeta;
+};
+export type ListAlertRuleSearchRulesV0Alpha1FacetValue = {
+  count: number;
+  value: string;
+};
+export type ListAlertRuleSearchRulesV0Alpha1SearchResultResource = {
+  group: string;
+  kind: string;
+  name: string;
+  resource: string;
+};
+export type ListAlertRuleSearchRulesV0Alpha1SearchResultHit = {
+  /** Open to match the generic endpoint's unstructured field values. */
+  fields?: {
+    [key: string]: any;
+  };
+  resource: ListAlertRuleSearchRulesV0Alpha1SearchResultResource;
+  /** Present only when a text query was evaluated. */
+  score?: number;
+};
+export type ListAlertRuleSearchRulesV0Alpha1TotalHitsRelation = 'eq' | 'lte';
+export type ListAlertRuleSearchRulesV0Alpha1SearchResultsMetadata = {
+  /** Opaque next-page token; clients must not construct it. */
+  continue?: string;
+  /** Interpret with totalHitsRelation, not as an exact count unconditionally. */
+  totalHits: number;
+  totalHitsRelation: ListAlertRuleSearchRulesV0Alpha1TotalHitsRelation;
+};
+export type ListAlertRuleSearchRulesV0Alpha1Response = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion: string;
+  /** Counts use a bounded sample and are best-effort. */
+  facets?: {
+    [key: string]: ListAlertRuleSearchRulesV0Alpha1FacetValue[];
+  };
+  items: ListAlertRuleSearchRulesV0Alpha1SearchResultHit[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind: string;
+  metadata: ListAlertRuleSearchRulesV0Alpha1SearchResultsMetadata;
+};
+export type ListAlertRuleSearchRulesV0Alpha1SearchLabelSelectorRequirement = {
+  key: string;
+  operator: 'In' | 'NotIn' | 'Exists' | 'DoesNotExist';
+  values?: string[];
+};
+export type ListAlertRuleSearchRulesV0Alpha1SearchLabelSelector = {
+  matchExpressions?: ListAlertRuleSearchRulesV0Alpha1SearchLabelSelectorRequirement[];
+  matchLabels?: {
+    [key: string]: string;
+  };
+};
+export type ListAlertRuleSearchRulesV0Alpha1SearchSortField = {
+  direction?: 'asc' | 'desc';
+  field: string;
+};
+export type ListAlertRuleSearchRulesV0Alpha1SearchExistsLeaf = {
+  field: string;
+};
+export type ListAlertRuleSearchRulesV0Alpha1SearchFilterLeaf = {
+  field: string;
+  operator: 'In' | 'NotIn' | 'All';
+  values: string[];
+};
+export type ListAlertRuleSearchRulesV0Alpha1SearchRangeLeaf = {
+  field: string;
+  gt?: number;
+  gte?: number;
+  lt?: number;
+  lte?: number;
+};
+export type ListAlertRuleSearchRulesV0Alpha1SearchRegexLeaf = {
+  field: string;
+  negate?: boolean;
+  pattern: string;
+};
+export type ListAlertRuleSearchRulesV0Alpha1SearchTextLeaf = {
+  /** boost is a future per-leaf score multiplier. Setting it is rejected. */
+  boost?: number;
+  fields?: string[];
+  value: string;
+};
+export type ListAlertRuleSearchRulesV0Alpha1SearchWhereNode = {
+  and?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode[];
+  exists?: ListAlertRuleSearchRulesV0Alpha1SearchExistsLeaf;
+  filter?: ListAlertRuleSearchRulesV0Alpha1SearchFilterLeaf;
+  not?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode;
+  or?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode[];
+  range?: ListAlertRuleSearchRulesV0Alpha1SearchRangeLeaf;
+  regex?: ListAlertRuleSearchRulesV0Alpha1SearchRegexLeaf;
+  text?: ListAlertRuleSearchRulesV0Alpha1SearchTextLeaf;
+};
+export type ListAlertRuleSearchRulesV0Alpha1RequestBody = {
+  apiVersion?: string;
+  /** Opaque token from the previous page. */
+  continue?: string;
+  /** Per-facet term limit. Zero uses the default; larger values are clamped. */
+  facetLimit?: number;
+  facets?: string[];
+  fields?: string[];
+  kind?: string;
+  labelSelector?: ListAlertRuleSearchRulesV0Alpha1SearchLabelSelector;
+  /** Page size. Zero uses the default; larger values are clamped. */
+  limit?: number;
+  sort?: ListAlertRuleSearchRulesV0Alpha1SearchSortField[];
+  /** Omitted where matches all authorised rules satisfying labelSelector. */
+  where?: ListAlertRuleSearchRulesV0Alpha1SearchWhereNode;
+};
 export type ListRecordingRuleSearchRulesV0Alpha1FacetValue = {
   count: number;
   value: string;
@@ -2182,60 +2236,6 @@ export type ListRecordingRuleSearchRulesV0Alpha1RequestBody = {
   /** Omitted where matches all authorised rules satisfying labelSelector. */
   where?: ListRecordingRuleSearchRulesV0Alpha1SearchWhereNode;
 };
-export type RuleSequenceRuleUid = string;
-export type RuleSequenceRuleRef = {
-  name: RuleSequenceRuleUid;
-};
-export type RuleSequencePromDuration = string;
-export type RuleSequenceIntervalTrigger = {
-  interval: RuleSequencePromDuration;
-};
-export type RuleSequenceSpec = {
-  alertingRules?: RuleSequenceRuleRef[];
-  recordingRules: RuleSequenceRuleRef[];
-  trigger: RuleSequenceIntervalTrigger;
-};
-export type RuleSequenceOperatorState = {
-  /** descriptiveState is an optional more descriptive state field which has no requirements on format */
-  descriptiveState?: string;
-  /** details contains any extra information that is operator-specific */
-  details?: {
-    [key: string]: any;
-  };
-  /** lastEvaluation is the ResourceVersion last evaluated */
-  lastEvaluation: string;
-  /** state describes the state of the lastEvaluation.
-    It is limited to three possible states for machine evaluation. */
-  state: 'success' | 'in_progress' | 'failed';
-};
-export type RuleSequenceStatus = {
-  /** additionalFields is reserved for future use */
-  additionalFields?: {
-    [key: string]: any;
-  };
-  /** operatorStates is a map of operator ID to operator state evaluations.
-    Any operator which consumes this kind SHOULD add its state evaluation information to this field. */
-  operatorStates?: {
-    [key: string]: RuleSequenceOperatorState;
-  };
-};
-export type RuleSequence = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion: string;
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind: string;
-  metadata: ObjectMeta;
-  spec: RuleSequenceSpec;
-  status?: RuleSequenceStatus;
-};
-export type RuleSequenceList = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items: RuleSequence[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata: ListMeta;
-};
 export const {
   useGetApiResourcesQuery,
   useLazyGetApiResourcesQuery,
@@ -2243,7 +2243,6 @@ export const {
   useLazyListAlertRuleQuery,
   useCreateAlertRuleMutation,
   useDeletecollectionAlertRuleMutation,
-  useListAlertRuleSearchRulesV0Alpha1Mutation,
   useGetAlertRuleQuery,
   useLazyGetAlertRuleQuery,
   useReplaceAlertRuleMutation,
@@ -2270,7 +2269,6 @@ export const {
   useLazyListRecordingRuleQuery,
   useCreateRecordingRuleMutation,
   useDeletecollectionRecordingRuleMutation,
-  useListRecordingRuleSearchRulesV0Alpha1Mutation,
   useGetRecordingRuleQuery,
   useLazyGetRecordingRuleQuery,
   useReplaceRecordingRuleMutation,
@@ -2295,4 +2293,6 @@ export const {
   useUpdateRuleSequenceStatusMutation,
   useGetHybridSearchAlertRulesQuery,
   useLazyGetHybridSearchAlertRulesQuery,
+  useListAlertRuleSearchRulesV0Alpha1Mutation,
+  useListRecordingRuleSearchRulesV0Alpha1Mutation,
 } = injectedRtkApi;

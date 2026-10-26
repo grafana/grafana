@@ -126,17 +126,17 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 		}
 	}
 
-	svc := newService(&mutableLoader{backends: backends}, nil, prometheus.NewRegistry())
+	svc := newService(NewGrafanaRouter(&mutableLoader{backends: backends}, nil), prometheus.NewRegistry())
 	svc.middleware = middleware
 	svc.router.unregisteredGroupHandler = fallback
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if middleware {
-			req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{AccessToken: "access"}))
+			req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Namespace: "stacks-1", AccessToken: "access"}))
 			svc.HandleFunc(w, req, http.NotFoundHandler())
 			return
 		}
-		svc.metrics.instrument(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		svc.metrics.instrumentRequest(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())))
 	}))
 	t.Cleanup(server.Close)
 	t.Cleanup(func() {
@@ -185,6 +185,9 @@ func TestWatchThroughEveryBackendAndMode(t *testing.T) {
 			mode := "standalone"
 			if middleware {
 				mode = "middleware"
+			}
+			if middleware && kind == "single-tenant" {
+				continue // only the standalone router has the single-tenant fallback
 			}
 			t.Run(kind+"/"+mode, func(t *testing.T) {
 				t.Parallel()
@@ -246,7 +249,7 @@ func TestWatchReleasesHalfOpenBreakerOnceItsStatusIsKnown(t *testing.T) {
 	})
 	router := withGroupHandlerAndBreaker(watchGroup, backend, cb)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		router.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		router.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())))
 	}))
 	t.Cleanup(server.Close)
 	t.Cleanup(func() { close(backend.release) })
@@ -356,5 +359,42 @@ func TestUpgradeRequestsAreRejected(t *testing.T) {
 			require.Contains(t, string(body), "watch over WebSocket is not supported")
 			require.Empty(t, rig.backend.queries, "the backend must not be called")
 		})
+	}
+}
+
+// The deprecated path form puts "watch" before the namespace. The router
+// doesn't serve it, on routed groups or the fallback, and doesn't count it
+// as a watch.
+func TestRouterRejectsDeprecatedWatchPath(t *testing.T) {
+	router := NewGrafanaRouter(&mutableLoader{}, nil)
+	served := false
+	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		served = true
+		w.WriteHeader(http.StatusNoContent)
+	})
+	snapshot := map[string]servingEntry{"example": {handler: handler, breaker: newGroupBreaker("example")}}
+	router.snapshot.Store(&snapshot)
+	router.unregisteredGroupHandler = handler
+	for _, path := range []string{
+		"/apis/example/v1/watch/namespaces/stacks-1/widgets",
+		"/apis/example/v1/watch/widgets",
+		"/apis/unknown/v1/watch/namespaces/stacks-1/widgets",
+	} {
+		req := newAuthenticatedRequest(http.MethodGet, path, nil)
+		require.Equal(t, "get", requestVerb(req), path)
+		rec := httptest.NewRecorder()
+		router.HandleFunc(rec, req)
+		require.Equal(t, http.StatusBadRequest, rec.Code, path)
+	}
+	require.False(t, served)
+
+	// A resource or object named watch is still served.
+	for _, path := range []string{
+		"/apis/example/v1/namespaces/stacks-1/watch",
+		"/apis/example/v1/namespaces/stacks-1/widgets/watch",
+	} {
+		rec := httptest.NewRecorder()
+		router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil))
+		require.Equal(t, http.StatusNoContent, rec.Code, path)
 	}
 }

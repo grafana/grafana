@@ -434,49 +434,6 @@
         }
       }
     },
-    "/alertrules/searchRules": {
-      "post": {
-        "operationId": "listAlertRuleSearchRulesV0alpha1",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1RequestBody"
-              }
-            },
-            "application/yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1RequestBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1Response"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1Response"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1Response"
-                }
-              }
-            }
-          }
-        }
-      },
-      "parameters": []
-    },
     "/alertrules/{name}": {
       "get": {
         "tags": ["AlertRule"],
@@ -2445,49 +2402,6 @@
         }
       }
     },
-    "/recordingrules/searchRules": {
-      "post": {
-        "operationId": "listRecordingRuleSearchRulesV0alpha1",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1RequestBody"
-              }
-            },
-            "application/yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1RequestBody"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1Response"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1Response"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1Response"
-                }
-              }
-            }
-          }
-        }
-      },
-      "parameters": []
-    },
     "/recordingrules/{name}": {
       "get": {
         "tags": ["RecordingRule"],
@@ -4117,6 +4031,92 @@
           }
         }
       ]
+    },
+    "/searchAlertRules": {
+      "post": {
+        "operationId": "listAlertRuleSearchRulesV0alpha1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1RequestBody"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1RequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1Response"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1Response"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListAlertRuleSearchRulesV0alpha1Response"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": []
+    },
+    "/searchRecordingRules": {
+      "post": {
+        "operationId": "listRecordingRuleSearchRulesV0alpha1",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1RequestBody"
+              }
+            },
+            "application/yaml": {
+              "schema": {
+                "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1RequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1Response"
+                }
+              },
+              "application/json;stream=watch": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1Response"
+                }
+              },
+              "application/yaml": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListRecordingRuleSearchRulesV0alpha1Response"
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": []
     }
   },
   "components": {
@@ -6020,7 +6020,7 @@
         }
       },
       "SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
+        "description": "SearchResults is the response body for POST .../{resource}/search.",
         "type": "object",
         "required": ["metadata", "items"],
         "properties": {

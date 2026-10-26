@@ -9,7 +9,6 @@ import {
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
-  GroupByVariable,
   IntervalVariable,
   QueryVariable,
   SceneRefreshPicker,
@@ -31,7 +30,6 @@ import {
   defaultConstantVariableKind,
   defaultCustomVariableKind,
   defaultDatasourceVariableKind,
-  defaultGroupByVariableKind,
   defaultIntervalVariableKind,
   defaultQueryVariableKind,
   defaultTextVariableKind,
@@ -257,7 +255,7 @@ export function transformSaveModelSchemaV2ToScene(
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
           reloadOnParamsChange:
-            config.featureToggles.reloadDashboardsOnParamsChange &&
+            getFeatureFlagClient().getBooleanValue(FlagKeys.ReloadDashboardsOnParamsChange, false) &&
             Boolean(metadata.annotations?.[AnnoReloadOnParamsChange]),
           uid: metadata.name,
         }),
@@ -309,35 +307,14 @@ function getVariables(
 }
 
 function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariables: VariableKind[] = []) {
-  const isDefined = (v: SceneVariable | null): v is SceneVariable => Boolean(v);
-  const variables = migrateGroupByVariablesV2(dashboard.variables ?? []);
-  const variableObjects = variables
-    .map((v) => {
-      try {
-        return createSceneVariableFromVariableModel(v);
-      } catch (err) {
-        console.error(err);
-        return null;
-      }
-    })
-    // TODO: Remove filter
-    // Added temporarily to allow skipping non-compatible variables
-    .filter(isDefined);
+  const variableObjects = createSceneVariablesFromVariableKinds(dashboard.variables ?? [], { migrateUrlState: true });
 
   // Nearest scope wins: a dashboard-local variable shadows a default (e.g. predefined
   // global/folder) variable of the same name.
   const localNames = new Set(variableObjects.map((v) => v.state.name));
-  const defaultVariableObjects = defaultVariables
-    .map((v) => {
-      try {
-        return createSceneVariableFromVariableModel(v);
-      } catch (err) {
-        console.error(err);
-        return null;
-      }
-    })
-    .filter(isDefined)
-    .filter((v) => !localNames.has(v.state.name));
+  const defaultVariableObjects = createSceneVariablesFromVariableKinds(defaultVariables, {
+    migrateUrlState: false,
+  }).filter((v) => !localNames.has(v.state.name));
 
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
@@ -347,6 +324,33 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
   return new SceneVariableSet({
     variables: [...defaultVariableObjects, ...variableObjects],
   });
+}
+
+/**
+ * Builds scene variables from a list of variable kinds. Legacy GroupByVariables are merged into
+ * their adhoc variable first (see groupByMigration).
+ *
+ * Only dashboard-level variables should migrate URL state: section and default variables can have
+ * scoped (var-name-2) or shadowed URL keys, so their unscoped `var-<name>` may belong to another variable.
+ */
+export function createSceneVariablesFromVariableKinds(
+  variables: VariableKind[],
+  options: { migrateUrlState: boolean }
+): SceneVariable[] {
+  return (
+    migrateGroupByVariablesV2(variables, options)
+      .map((v) => {
+        try {
+          return createSceneVariableFromVariableModel(v);
+        } catch (err) {
+          console.error(err);
+          return null;
+        }
+      })
+      // TODO: Remove filter
+      // Added temporarily to allow skipping non-compatible variables
+      .filter((v): v is SceneVariable => Boolean(v))
+  );
 }
 
 export function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): SceneVariable {
@@ -384,13 +388,11 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
       applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
-      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
+      drilldownRecommendationsEnabled: true,
       $behaviors: [new ReportInteractionBehavior({})],
       supportsMultiValueOperators: false,
-      collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
-      enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-        ? (variable.spec.enableGroupBy ?? false)
-        : false,
+      collapsible: true,
+      enableGroupBy: variable.spec.enableGroupBy ?? false,
     };
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
@@ -514,31 +516,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       skipUrlSync: variable.spec.skipUrlSync,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
     });
-  } else if (config.featureToggles.groupByVariable && variable.kind === defaultGroupByVariableKind().kind) {
-    const ds = getDataSourceForQuery(
-      {
-        type: variable.group,
-        uid: variable.datasource?.name,
-      },
-      variable.group
-    );
-
-    return new GroupByVariable({
-      ...commonProperties,
-      datasource: ds,
-      value: variable.spec.current?.value || [],
-      text: variable.spec.current?.text || [],
-      skipUrlSync: variable.spec.skipUrlSync,
-      isMulti: variable.spec.multi,
-      hide: transformVariableHideToEnumV1(variable.spec.hide),
-      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
-      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
-      // @ts-expect-error
-      defaultOptions: variable.options,
-      defaultValue: variable.spec.defaultValue
-        ? { value: variable.spec.defaultValue.value, text: variable.spec.defaultValue.text }
-        : undefined,
-    });
   } else if (variable.kind === defaultSwitchVariableKind().kind) {
     return new SwitchVariable({
       ...commonProperties,
@@ -620,9 +597,7 @@ function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSe
               false
             ),
             supportsMultiValueOperators: false,
-            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-              ? (v.spec.enableGroupBy ?? false)
-              : false,
+            enableGroupBy: v.spec.enableGroupBy ?? false,
             $behaviors: [new ReportInteractionBehavior({})],
           });
           applySupportsMultiValueOperators(adhocVariable, ds?.type);
