@@ -142,10 +142,9 @@ func TestServeManifestDiscovery(t *testing.T) {
 		r.served[b.Group().Name] = &handlerEntry{backend: b, handler: http.NotFoundHandler(), lastKey: b.Key(), breaker: newGroupBreaker(b.Group().Name)}
 	}
 	r.publish(t.Context())
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 	serve := func(req *http.Request) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		r.HandleFunc(rec, req, next)
+		r.HandleFunc(rec, req)
 		return rec
 	}
 
@@ -226,11 +225,9 @@ func TestServeManifestDiscovery(t *testing.T) {
 	})
 
 	t.Run("not a group", func(t *testing.T) {
-		require.True(t, r.ownsRequest(httptest.NewRequest(http.MethodGet, "/apis/discovery/v1alpha2/AGENTS.md", nil)))
-		require.False(t, r.ownsRequest(httptest.NewRequest(http.MethodGet, "/apis/discoveryx", nil)))
 		require.Empty(t, requestGroupOf(httptest.NewRequest(http.MethodGet, "/apis/discovery/v1alpha2", nil)), "no group metric label")
 		rec := serve(newAuthenticatedRequest(http.MethodGet, "/apis/discoveryx/v1", nil))
-		require.Equal(t, http.StatusTeapot, rec.Code, "only the exact segment is the discovery tree")
+		require.Equal(t, http.StatusNotFound, rec.Code, "only the exact segment is the discovery tree")
 	})
 
 	t.Run("html page cannot run anything", func(t *testing.T) {
@@ -250,7 +247,7 @@ func TestDiscoveryGroupWithKubernetesClients(t *testing.T) {
 	}
 	r.publish(t.Context())
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		r.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		r.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())))
 	}))
 	t.Cleanup(srv.Close)
 	cfg := &rest.Config{Host: srv.URL}
@@ -328,7 +325,7 @@ func TestDiscoveryOpenAPI(t *testing.T) {
 	r := NewGrafanaRouter(stubLoader{}, nil)
 	serve := func(method, path string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil), http.NotFoundHandler())
+		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil))
 		return rec
 	}
 	rec := serve(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2?hash=anything")
@@ -336,7 +333,6 @@ func TestDiscoveryOpenAPI(t *testing.T) {
 	require.Equal(t, discoveryOpenAPIDoc.etag, rec.Header().Get("ETag"))
 	require.Equal(t, http.StatusNotFound, serve(http.MethodGet, "/openapi/v3/apis/discovery/v9").Code)
 	require.Equal(t, http.StatusMethodNotAllowed, serve(http.MethodPost, "/openapi/v3/apis/discovery/v1alpha2").Code)
-	require.True(t, r.ownsRequest(httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2", nil)))
 	require.Empty(t, requestGroupOf(httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2", nil)), "no group metric label")
 
 	var index handler3.OpenAPIV3Discovery
@@ -574,7 +570,7 @@ func TestServeManifestListStreamsTheGroupDocuments(t *testing.T) {
 	r.publishManifestDocs(t.Context(), testManifestBackends())
 	serve := func(method string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		r.HandleFunc(rec, newAuthenticatedRequest(method, "/apis/discovery/v1alpha2/manifests", nil), http.NotFoundHandler())
+		r.HandleFunc(rec, newAuthenticatedRequest(method, "/apis/discovery/v1alpha2/manifests", nil))
 		return rec
 	}
 	rec := serve(http.MethodGet)
@@ -588,7 +584,7 @@ func TestServeManifestListStreamsTheGroupDocuments(t *testing.T) {
 	require.Zero(t, head.Body.Len())
 
 	empty := httptest.NewRecorder()
-	NewGrafanaRouter(stubLoader{}, nil).HandleFunc(empty, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests", nil), http.NotFoundHandler())
+	NewGrafanaRouter(stubLoader{}, nil).HandleFunc(empty, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests", nil))
 	var list appmanifestv1alpha2.AppManifestList
 	require.NoError(t, json.Unmarshal(empty.Body.Bytes(), &list))
 	require.Empty(t, list.Items)
@@ -603,7 +599,7 @@ func TestServeManifestListAppliesSelectors(t *testing.T) {
 	r.publishManifestDocs(t.Context(), append(testManifestBackends(), second))
 	list := func(query string) (*httptest.ResponseRecorder, []string) {
 		rec := httptest.NewRecorder()
-		r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests?"+query, nil), http.NotFoundHandler())
+		r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests?"+query, nil))
 		var l appmanifestv1alpha2.AppManifestList
 		if rec.Code == http.StatusOK {
 			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &l))
