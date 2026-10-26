@@ -129,3 +129,34 @@ it('filters groups by name or key', async () => {
   expect(groups.queryByText('dashboard.grafana.app')).not.toBeInTheDocument();
   expect(screen.getByText('1 of 2')).toBeInTheDocument();
 });
+
+it('explains the discovery source, a missing breaker and the counted columns', async () => {
+  const embedded: RouterStatus = {
+    ...status,
+    groups: [
+      {
+        ...status.groups[0],
+        source: 'embedded',
+        health: 'unknown',
+        discovery: 'provided',
+        breaker: { scope: 'none', requests: 0, successes: 0, failures: 0, consecutiveFailures: 0 },
+        plugin: undefined,
+      },
+    ],
+    loadFailures: undefined,
+  };
+  jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(embedded)));
+  render(<RouterStatusPage />);
+
+  await userEvent.hover(await screen.findByText('provided'));
+  expect(await screen.findByText(/supplied its resources when it loaded/)).toBeInTheDocument();
+
+  await userEvent.hover(screen.getByText('none'));
+  expect(await screen.findByText('Served in process, without a breaker')).toBeInTheDocument();
+  expect(screen.queryByText(/single-tenant fallback keeps a breaker/)).not.toBeInTheDocument();
+
+  await userEvent.hover(screen.getByText('Requests'));
+  expect(await screen.findByText(/let through to the backend/)).toBeInTheDocument();
+  await userEvent.hover(screen.getByText('Failures'));
+  expect(await screen.findByText(/502, 503 and 504 responses/)).toBeInTheDocument();
+});

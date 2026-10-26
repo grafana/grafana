@@ -4,7 +4,7 @@ import { type ReactNode } from 'react';
 
 import { createTheme, type GrafanaTheme2, ThemeContext } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 
 type RouterPage = 'status' | 'manifests';
 
@@ -90,16 +90,29 @@ export const Section = ({ title, children }: { title: string; children: ReactNod
   </Stack>
 );
 
-export const Table = ({ headers, rows }: { headers: string[]; rows: ReactNode[][] }) => {
+/** A table column's header: its label, with a tooltip explaining it when one is given. */
+export type TableHeader = string | { label: string; tooltip: string };
+
+export const Table = ({ headers, rows }: { headers: TableHeader[]; rows: ReactNode[][] }) => {
   const styles = useStyles2(getTableStyles);
   return (
     <div className={styles.wrapper}>
       <table className={styles.table}>
         <thead>
           <tr>
-            {headers.map((h) => (
-              <th key={h}>{h}</th>
-            ))}
+            {headers.map((h) =>
+              typeof h === 'string' ? (
+                <th key={h}>{h}</th>
+              ) : (
+                <th key={h.label}>
+                  <Tooltip content={h.tooltip}>
+                    <span>
+                      {h.label} <Icon name="info-circle" size="sm" />
+                    </span>
+                  </Tooltip>
+                </th>
+              )
+            )}
           </tr>
         </thead>
         <tbody>

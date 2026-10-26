@@ -271,8 +271,20 @@ const RouterStatusView = ({ status }: { status: RouterStatus }) => {
             'Health',
             'Source',
             'Breaker',
-            'Requests',
-            'Failures',
+            {
+              label: 'Requests',
+              tooltip: t(
+                'swagger.router-status.requests-description',
+                "Requests the group's breaker let through to the backend, or the plugin's client calls when its scope is plugin-calls. Counted since the backend was loaded or the breaker last changed state."
+              ),
+            },
+            {
+              label: 'Failures',
+              tooltip: t(
+                'swagger.router-status.failures-description',
+                'Of those, the ones counted against the backend: 502, 503 and 504 responses, and failures to proxy, such as connection errors and timeouts. Other errors, and callers that disconnect, are not counted. Consecutive failures open the breaker.'
+              ),
+            },
             'Plugin',
             'Loaded',
             'Discovery',
@@ -298,7 +310,7 @@ const RouterStatusView = ({ status }: { status: RouterStatus }) => {
             ),
             <PluginCell key="plugin" plugin={g.plugin} />,
             <TimeAgo key="loaded" value={g.loadedAt} />,
-            g.discovery,
+            <DiscoveryCell key="discovery" discovery={g.discovery} />,
             g.openapiCached?.join(', ') || '-',
             g.watches,
           ])}
@@ -417,11 +429,47 @@ const StackLookups = ({ lookups }: { lookups: Record<string, number> }) => {
   );
 };
 
+// discoveryDescriptions explains each value of a group's discovery source.
+const discoveryDescriptions = (): Record<string, string> => ({
+  provided: t(
+    'swagger.router-status.discovery-provided',
+    'The backend supplied its resources when it loaded, so discovery never asks it per request'
+  ),
+  cached: t(
+    'swagger.router-status.discovery-cached',
+    'Fetched from the backend; the copy is fresh for 5 minutes after the fetch'
+  ),
+  expired: t(
+    'swagger.router-status.discovery-expired',
+    'Fetched from the backend, but older than 5 minutes: the next /apis request fetches it again, and serves this copy if that fails'
+  ),
+  'not-cached': t(
+    'swagger.router-status.discovery-not-cached',
+    'Not fetched yet: the next aggregated /apis request fetches it from the backend'
+  ),
+});
+
+const DiscoveryCell = ({ discovery }: { discovery: string }) => {
+  const description = discoveryDescriptions()[discovery];
+  if (!description) {
+    return <>{discovery}</>;
+  }
+  return (
+    <Tooltip content={description}>
+      <span>{discovery}</span>
+    </Tooltip>
+  );
+};
+
 const BreakerCell = ({ breaker }: { breaker: GroupStatus['breaker'] }) => {
   if (!breaker.state) {
     return (
       <Tooltip
-        content={t('swagger.router-status.per-destination', 'The single-tenant fallback keeps a breaker per stack')}
+        content={
+          breaker.scope === 'per-destination'
+            ? t('swagger.router-status.per-destination', 'The single-tenant fallback keeps a breaker per stack')
+            : t('swagger.router-status.no-breaker', 'Served in process, without a breaker')
+        }
       >
         <span>
           <Text color="secondary">{breaker.scope}</Text>
