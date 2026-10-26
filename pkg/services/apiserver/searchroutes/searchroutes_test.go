@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -792,6 +793,32 @@ func TestBuildGlobalHybridSearch(t *testing.T) {
 		})
 	}
 	assert.Nil(t, BuildGlobalHybridSearch(nil, nil, nil, installers, nil))
+}
+
+func TestBuildGlobalHybridSearchUsesConfiguredDefaults(t *testing.T) {
+	t.Setenv("GF_UNIFIED_STORAGE_HYBRID_SEARCH_DEFAULT_RESOURCES", " example.grafana.app/widgets, dashboard.grafana.app/dashboards ")
+	cfg := setting.NewCfg()
+	require.NoError(t, cfg.Load(setting.CommandLineArgs{HomePath: "../../../../", Config: "../../../../conf/defaults.ini"}))
+	require.Equal(t, []string{"example.grafana.app/widgets", "dashboard.grafana.app/dashboards"}, cfg.HybridSearchDefaultResources)
+
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	b := &manifestBuilder{
+		resourceBuilder: &resourceBuilder{fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}}},
+		manifest:        hybridManifest(gv),
+	}
+	var authorized []string
+	auth := authorizer.AuthorizerFunc(func(_ context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		authorized = append(authorized, attr.GetAPIGroup()+"/"+attr.GetResource())
+		return authorizer.DecisionDeny, "", nil
+	})
+	routes := BuildGlobalHybridSearch(tracing.NewNoopTracerService(), fakeClient{}, []builder.APIGroupBuilder{b}, nil, auth, cfg.HybridSearchDefaultResources...)
+	require.Len(t, routes, 1)
+	require.Len(t, routes[0].Routes.Namespace, 1)
+	r := httptest.NewRequest(http.MethodPost, "/global/search/hybrid", strings.NewReader(`{"apiVersion":"search.grafana.app/v0alpha1","kind":"HybridSearchQuery","query":"cpu"}`))
+	w := httptest.NewRecorder()
+	routes[0].Routes.Namespace[0].Handler(w, r.WithContext(request.WithNamespace(r.Context(), "default")))
+	assert.Equal(t, http.StatusForbidden, w.Code, w.Body.String())
+	assert.Equal(t, []string{"example.grafana.app/widgets"}, authorized)
 }
 
 // hybridResultsClient answers every hybrid search with the same results.
