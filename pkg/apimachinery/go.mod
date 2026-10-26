@@ -4,7 +4,7 @@ go 1.27.3
 
 require (
 	github.com/go-jose/go-jose/v4 v4.1.6
-	github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3 // @grafana/identity-access-team
+	github.com/grafana/authlib v0.0.0-20261023105149-ed7cea0f2b27 // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 // @grafana/identity-access-team
 	github.com/stretchr/testify v1.12.1
 	go.yaml.in/yaml/v3 v3.0.5
@@ -64,4 +64,5 @@ require (
 	sigs.k8s.io/json v0.0.0-20260909141634-11ed52e25bc5 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
+	sigs.k8s.io/yaml v1.6.0 // indirect
 )

@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -17,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type testReadyNotifier struct {
@@ -101,7 +104,7 @@ func TestServiceRegistersTargetPathPrefixes(t *testing.T) {
 	}
 }
 
-func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
+func TestServiceMiddlewareServesTheAPITree(t *testing.T) {
 	cfg := setting.NewCfg()
 	httpRouter := mux.NewRouter()
 	httpRouter.HandleFunc("/apis/legacy.grafana.app/v1", func(w http.ResponseWriter, _ *http.Request) {
@@ -114,6 +117,7 @@ func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
 
 	svc, err := provideTestService(cfg, features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}})
 	require.NoError(t, err)
+	svc.SetUpstream(&fakeEmbeddedAPIServer{groups: []string{"legacy.grafana.app"}, status: http.StatusNoContent})
 	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
 	t.Cleanup(func() {
 		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc))
@@ -130,16 +134,23 @@ func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
 		require.Equal(t, "dummy backend for group: dummy-backend-1.ext.grafana.app", recorder.Body.String())
 	})
 
-	t.Run("existing route falls through", func(t *testing.T) {
+	t.Run("embedded group is served by the embedded server", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/legacy.grafana.app/v1", nil), httpRouter)
 
 		require.Equal(t, http.StatusNoContent, recorder.Code)
 	})
 
-	t.Run("unknown route preserves not found handler", func(t *testing.T) {
+	t.Run("unknown route is not found", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
 		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/unknown.grafana.app/v1", nil), httpRouter)
+
+		require.Equal(t, http.StatusNotFound, recorder.Code)
+	})
+
+	t.Run("other paths go to next", func(t *testing.T) {
+		recorder := httptest.NewRecorder()
+		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/api/health", nil), httpRouter)
 
 		require.Equal(t, http.StatusTeapot, recorder.Code)
 	})
@@ -213,7 +224,7 @@ func TestRouterTargetCloudFallback(t *testing.T) {
 		if enabled {
 			require.Equal(t, http.StatusNoContent, recorder.Code)
 		} else {
-			require.Equal(t, http.StatusTeapot, recorder.Code)
+			require.Equal(t, http.StatusNotFound, recorder.Code)
 		}
 	}
 }
@@ -223,7 +234,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 	cfg.Target = []string{"router"}
 	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
-	loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{})
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	cloud := loader.(*cloudLoader)
 	cloud.singleTenantFallback.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
@@ -242,17 +253,19 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 	require.Contains(t, recorder.Body.String(), "fallback.example.com")
 }
 
-func TestRouterMiddlewarePreservesDelegateWithSTLoader(t *testing.T) {
+func TestRouterMiddlewareDoesNotUseSTFallback(t *testing.T) {
 	cfg := setting.NewCfg()
 	loader := &cloudLoader{BasicService: services.NewIdleService(nil, nil), singleTenantFallback: newTestSingleTenantFallback(t)}
 	svc, err := provideTestService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader)
 	require.NoError(t, err)
 	require.NoError(t, svc.RegisterTargetRoutes(mux.NewRouter(), nil))
+	// As if its first reconcile succeeded, so the router serves the request.
+	svc.router.initialized.Store(true)
 	recorder := httptest.NewRecorder()
 	svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/unknown/v1/namespaces/stacks-123/widgets", nil), http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusTeapot)
 	}))
-	require.Equal(t, http.StatusTeapot, recorder.Code)
+	require.Equal(t, http.StatusNotFound, recorder.Code)
 }
 
 // lifecycleLoader is a routes loader with its own background lifecycle, like
@@ -311,34 +324,39 @@ func TestServiceStopsLoaderWhenStartingFails(t *testing.T) {
 	require.Equal(t, services.Terminated, loader.State())
 }
 
-func TestServiceMiddlewarePassesRequestsItDoesNotOwnToNext(t *testing.T) {
+func TestServiceMiddlewareCapturesAPITrees(t *testing.T) {
 	svc := newService(NewGrafanaRouter(dummyRoutesLoader{groups: []string{"owned.grafana.app"}}, nil), prometheus.NewRegistry())
 	svc.middleware = true
 	require.NoError(t, svc.router.reconcile(t.Context()))
 
-	for _, target := range []string{
-		"/apis/dashboard.grafana.app/v1/namespaces/default/dashboards",
-		"/apis/dashboard.grafana.app",
-		"/apis/Not_A.Group/v1/things",
-		"/openapi/v3/apis/dashboard.grafana.app/v1",
-		"/openapi/v3/apis/owned.grafana.app",
-		"/api/dashboards/uid/abc",
+	for _, tc := range []struct {
+		target string
+		next   bool
+		status int // not found, unless set
+	}{
+		{target: "/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"},
+		{target: "/apis/dashboard.grafana.app"},
+		{target: "/apis/Not_A.Group/v1/things", status: http.StatusBadRequest},
+		{target: "/openapi/v3/apis/dashboard.grafana.app/v1"},
+		{target: "/openapi/v3/apis/owned.grafana.app"},
+		{target: "/api/dashboards/uid/abc", next: true},
 	} {
-		t.Run(target, func(t *testing.T) {
-			// The shortcut must answer as the router would: through next.
-			for name, serve := range map[string]func(http.ResponseWriter, *http.Request, http.Handler){
-				"service": svc.HandleFunc,
-				"router":  svc.router.HandleFunc,
-			} {
-				var called bool
-				next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-					called = true
-					w.WriteHeader(http.StatusTeapot)
-				})
-				rec := httptest.NewRecorder()
-				serve(rec, newAuthenticatedRequest(http.MethodGet, target, nil), next)
-				require.True(t, called, "%s did not call next", name)
-				require.Equal(t, http.StatusTeapot, rec.Code, name)
+		t.Run(tc.target, func(t *testing.T) {
+			var called bool
+			next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				called = true
+				w.WriteHeader(http.StatusTeapot)
+			})
+			rec := httptest.NewRecorder()
+			svc.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, tc.target, nil), next)
+			require.Equal(t, tc.next, called)
+			switch {
+			case tc.next:
+				require.Equal(t, http.StatusTeapot, rec.Code)
+			case tc.status != 0:
+				require.Equal(t, tc.status, rec.Code)
+			default:
+				require.Equal(t, http.StatusNotFound, rec.Code)
 			}
 		})
 	}
@@ -346,30 +364,47 @@ func TestServiceMiddlewarePassesRequestsItDoesNotOwnToNext(t *testing.T) {
 
 // App plugin settings are only served by the router, so enabling them inside
 // Grafana also enables the router middleware. The standalone router has no
-// embedded API server, so the settings flag does not change it.
+// embedded API server, so no flag makes it middleware.
 func TestMiddlewareEnabledBySettingsAPI(t *testing.T) {
 	grafana := setting.NewCfg()
 	standalone := setting.NewCfg()
 	standalone.Target = []string{"router"}
 	for _, tc := range []struct {
-		name     string
-		cfg      *setting.Cfg
-		flags    []any
-		expected bool
+		name       string
+		cfg        *setting.Cfg
+		flags      []any
+		middleware bool
+		settings   bool
 	}{
-		{"no flags", grafana, nil, false},
-		{"router middleware", grafana, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, true},
-		{"settings API", grafana, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, true},
-		{"standalone router with the settings API", standalone, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, false},
-		{"standalone router with router middleware", standalone, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, true},
+		{"no flags", grafana, nil, false, false},
+		{"router middleware", grafana, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, true, false},
+		{"settings API", grafana, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, true, true},
+		{"standalone router with the settings API", standalone, []any{featuremgmt.FlagApppluginsRegisterAPIServer}, false, false},
+		{"standalone router with router middleware", standalone, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			features := featuremgmt.WithFeatures(tc.flags...)
-			require.Equal(t, tc.expected, middlewareEnabled(tc.cfg, features))
+			require.Equal(t, tc.middleware, middlewareEnabled(tc.cfg, features))
+			require.Equal(t, tc.settings, settingsEnabled(tc.cfg, features))
 			svc, err := ProvideService(tc.cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry(), NewGrafanaRouter(nil, nil))
 			require.NoError(t, err)
-			require.Equal(t, tc.expected, svc.middleware)
+			require.Equal(t, tc.middleware, svc.middleware)
 		})
 	}
 	require.False(t, middlewareEnabled(grafana, nil))
+	require.False(t, settingsEnabled(grafana, nil))
+}
+
+// The router wire provides publishes the manifests compiled into Grafana for
+// the groups it serves.
+func TestProvideGrafanaRouterHasTheBuiltinManifests(t *testing.T) {
+	r, err := ProvideGrafanaRouter(setting.NewCfg())
+	require.NoError(t, err)
+	manifests := resource.AppManifests()
+	want := make([]string, 0, len(manifests))
+	for _, m := range manifests {
+		want = append(want, m.Group)
+	}
+	require.NotEmpty(t, want)
+	require.ElementsMatch(t, want, slices.Collect(maps.Keys(r.builtinManifests)))
 }

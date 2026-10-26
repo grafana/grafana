@@ -41,7 +41,6 @@ describe('getDataSourceInstanceList', () => {
         type: 'loki',
         name: 'Loki',
         meta: {},
-        apiVersion: undefined,
       },
     ]);
   });
