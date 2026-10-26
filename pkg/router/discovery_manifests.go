@@ -65,8 +65,10 @@ type manifestDocs struct {
 	listLen   int
 
 	// The index is rendered on its first request, since most route changes
-	// are never followed by one.
+	// are never followed by one. sources holds each group's published
+	// manifest, by group.
 	backends  []Backend
+	sources   map[string]*app.ManifestData
 	indexOnce sync.Once
 	index     cachedDoc // markdown, for agents
 	indexHTML cachedDoc // the same index, for browsers
@@ -291,7 +293,7 @@ func writeManifestList(w io.Writer, items []*cachedDoc) error {
 // indexDocs returns the markdown and HTML index, rendering them once.
 func (d *manifestDocs) indexDocs() (index, page *cachedDoc) {
 	d.indexOnce.Do(func() {
-		markdown := []byte(renderManifestIndex(d.backends, d.manifests))
+		markdown := []byte(renderManifestIndex(d.backends, d.sources, d.manifests))
 		d.index = newCachedDoc("text/markdown; charset=utf-8", markdown)
 		d.indexHTML = newCachedDoc("text/html; charset=utf-8", renderIndexHTML(markdown))
 	})
@@ -311,7 +313,7 @@ func (r *GrafanaRouter) publishManifestDocs(ctx context.Context, backends []Back
 	if r.manifestDocs.Load() != nil && fingerprint.String() == r.manifestFingerprint {
 		return
 	}
-	docs, cache := buildManifestDocsFrom(ctx, sorted, r.manifestCache)
+	docs, cache := buildManifestDocsFrom(ctx, sorted, r.builtinManifests, r.manifestCache)
 	r.manifestDocs.Store(docs)
 	r.manifestCache = cache
 	r.manifestFingerprint = fingerprint.String()
@@ -321,15 +323,17 @@ func (r *GrafanaRouter) publishManifestDocs(ctx context.Context, backends []Back
 // reusing the documents in cache, which is keyed by backend key. It returns
 // the cache for the next build, holding only these backends. A manifest that
 // fails to convert is left out of the manifests, but its group stays in the
-// index; the cache remembers the failure, so it is logged once.
-func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[string]*cachedDoc) (*manifestDocs, map[string]*cachedDoc) {
-	docs := &manifestDocs{manifests: map[string]*cachedDoc{}, backends: sorted}
+// index; the cache remembers the failure, so it is logged once. builtin holds
+// the compiled-in manifests by group, see publishedManifests.
+func buildManifestDocsFrom(ctx context.Context, sorted []Backend, builtin map[string]*app.ManifestData, cache map[string]*cachedDoc) (*manifestDocs, map[string]*cachedDoc) {
+	sources := publishedManifests(sorted, builtin)
+	docs := &manifestDocs{manifests: map[string]*cachedDoc{}, backends: sorted, sources: sources}
 	next := make(map[string]*cachedDoc, len(sorted))
 	listHash := sha256.New()
 	_, _ = io.WriteString(listHash, manifestListPrefix)
 	docs.listLen = len(manifestListPrefix) + len(manifestListSuffix)
 	for _, b := range sorted {
-		manifest, ok := backendManifest(b)
+		manifest, ok := sources[b.Group().Name]
 		if !ok {
 			continue
 		}
@@ -391,6 +395,68 @@ func (r *GrafanaRouter) GetManifest(ctx context.Context, group string) (*appmani
 	return manifest, nil
 }
 
+// publishedManifests returns the manifest published for each backend's group:
+// the backend's own, or else the manifest compiled into this binary for that
+// group, which a backend need not advertise. The compiled-in manifest is
+// limited to the versions the backend serves, since the backend may run
+// another release. Both change only with the backend's key, so documents
+// cached by key stay valid.
+func publishedManifests(backends []Backend, builtin map[string]*app.ManifestData) map[string]*app.ManifestData {
+	out := make(map[string]*app.ManifestData, len(backends))
+	for _, b := range backends {
+		group := b.Group()
+		if manifest, ok := backendManifest(b); ok {
+			out[group.Name] = manifest
+		} else if manifest, ok := servedManifestVersions(builtin[group.Name], group); ok {
+			out[group.Name] = manifest
+		}
+	}
+	return out
+}
+
+// servedManifestVersions returns m with only the versions group serves, or
+// false when it has none of them. It copies m only when versions are dropped.
+func servedManifestVersions(m *app.ManifestData, group metav1.APIGroup) (*app.ManifestData, bool) {
+	if m == nil {
+		return nil, false
+	}
+	served := make(map[string]bool, len(group.Versions))
+	for _, v := range group.Versions {
+		served[v.Version] = true
+	}
+	versions := slices.DeleteFunc(slices.Clone(m.Versions), func(v app.ManifestVersion) bool { return !served[v.Name] })
+	switch len(versions) {
+	case 0:
+		return nil, false
+	case len(m.Versions):
+		return m, true
+	}
+	kept := func(name string) bool {
+		return slices.ContainsFunc(versions, func(v app.ManifestVersion) bool { return v.Name == name })
+	}
+	out := *m
+	out.Versions = versions
+	if !kept(out.PreferredVersion) {
+		// An empty preferred version means the latest of versions.
+		out.PreferredVersion = ""
+		if kept(group.PreferredVersion.Version) {
+			out.PreferredVersion = group.PreferredVersion.Version
+		}
+	}
+	return &out, true
+}
+
+// manifestsByGroup indexes manifests by group, for publishedManifests.
+func manifestsByGroup(manifests []*app.ManifestData) map[string]*app.ManifestData {
+	out := make(map[string]*app.ManifestData, len(manifests))
+	for _, m := range manifests {
+		if m != nil && m.Group != "" {
+			out[m.Group] = m
+		}
+	}
+	return out
+}
+
 func backendManifest(b Backend) (*app.ManifestData, bool) {
 	provider, ok := b.(ManifestProvider)
 	if !ok {
@@ -426,7 +492,7 @@ func appManifestJSON(manifest *app.ManifestData) ([]byte, error) {
 
 // renderManifestIndex renders the markdown index of every served group, for
 // agents and other clients that read documentation rather than schemas.
-func renderManifestIndex(backends []Backend, published map[string]*cachedDoc) string {
+func renderManifestIndex(backends []Backend, sources map[string]*app.ManifestData, published map[string]*cachedDoc) string {
 	var b strings.Builder
 	b.WriteString(`# Grafana API index
 
@@ -452,7 +518,7 @@ A list request returns a ` + "`{Kind}List`" + `;.
 	b.WriteString("\n## Groups\n\n| Group | App | Preferred version | Versions |\n| --- | --- | --- | --- |\n")
 	for _, backend := range backends {
 		group := backend.Group()
-		manifest, _ := backendManifest(backend)
+		manifest := sources[group.Name]
 		appName := ""
 		if manifest != nil {
 			appName = manifestDisplayName(manifest)
@@ -466,7 +532,7 @@ A list request returns a ` + "`{Kind}List`" + `;.
 
 	for _, backend := range backends {
 		group := backend.Group()
-		manifest, _ := backendManifest(backend)
+		manifest := sources[group.Name]
 		title := mdCode(group.Name)
 		if manifest != nil {
 			if name := manifestDisplayName(manifest); name != "" {

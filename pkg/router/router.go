@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -169,6 +170,10 @@ type GrafanaRouter struct {
 	manifestDocs        atomic.Pointer[manifestDocs]
 	manifestFingerprint string
 	manifestCache       map[string]*cachedDoc
+	// builtinManifests are the app manifests compiled into this binary, by
+	// group, published for a served group whose backend has none. Set before
+	// the router serves, and never changed.
+	builtinManifests map[string]*app.ManifestData
 
 	// openapiDocs caches per-group-version OpenAPI v3 documents, keyed by
 	// "group/version". Serving goroutines write it on cache misses, so it is a

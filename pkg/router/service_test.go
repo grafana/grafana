@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -17,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type testReadyNotifier struct {
@@ -375,4 +378,18 @@ func TestMiddlewareEnabledBySettingsAPI(t *testing.T) {
 	}
 	require.False(t, middlewareEnabled(grafana, nil))
 	require.False(t, settingsEnabled(grafana, nil))
+}
+
+// The router wire provides publishes the manifests compiled into Grafana for
+// the groups it serves.
+func TestProvideGrafanaRouterHasTheBuiltinManifests(t *testing.T) {
+	r, err := ProvideGrafanaRouter(setting.NewCfg())
+	require.NoError(t, err)
+	manifests := resource.AppManifests()
+	want := make([]string, 0, len(manifests))
+	for _, m := range manifests {
+		want = append(want, m.Group)
+	}
+	require.NotEmpty(t, want)
+	require.ElementsMatch(t, want, slices.Collect(maps.Keys(r.builtinManifests)))
 }
