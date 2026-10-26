@@ -78,7 +78,7 @@ func (f *fakeWriteStore) ResolveCollection(_ context.Context, group, resource st
 	return f.collectionFor(group, resource), true, nil
 }
 
-func (f *fakeWriteStore) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
+func (f *fakeWriteStore) EnsureCollectionWithScope(_ context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error) {
 	if f.ensureErr != nil {
 		return vector.Collection{}, f.ensureErr
 	}
@@ -90,7 +90,7 @@ func (f *fakeWriteStore) collectionFor(group, resource string) vector.Collection
 	if f.collection.PartitionKey != "" {
 		return f.collection
 	}
-	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource + "_external", IsExternal: true}
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource + "_external", IsExternal: true, Scope: vector.ScopeTenant}
 }
 
 func (f *fakeWriteStore) Upsert(_ context.Context, vs []vector.Vector) error {
@@ -135,7 +135,7 @@ func (f *fakeWriteStore) WithEntityLock(ctx context.Context, _, _, _ string, fn 
 }
 
 func newTestVectorStoreServer(store *fakeWriteStore) *VectorStoreServer {
-	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, nil, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, nil, nil, nil, nil)
 	s.store = store // swap the nil concrete backend for the fake
 	return s
 }
@@ -189,7 +189,7 @@ func TestVectorStore_ServiceIdentityGate(t *testing.T) {
 	// A stray comma in the config (empty entry) must not admit
 	// identity-less tokens.
 	s = newTestVectorStoreServer(&fakeWriteStore{})
-	s2 := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, []string{"", "assistant"}, nil)
+	s2 := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, []string{"", "assistant"}, nil, nil, nil)
 	s2.store = s.store
 	_, err = s2.Upsert(vsAuthedCtx(), validUpsertReq())
 	require.Error(t, err)
@@ -324,7 +324,7 @@ func TestVectorStore_UpsertValidation(t *testing.T) {
 
 func TestVectorStore_UpsertEmbedFailureIsInternal(t *testing.T) {
 	store := &fakeWriteStore{}
-	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: errors.New("provider down")}), []string{"g/r"}, nil, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4, wantErr: errors.New("provider down")}), []string{"g/r"}, nil, nil, nil, nil)
 	s.store = store
 	_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
 	require.Error(t, err)
@@ -699,7 +699,7 @@ func TestVectorStore_DeleteResolveFailureWithCancelledContextIsCanceled(t *testi
 func TestVectorStore_UpsertSubresourcesNoChangesSkipsEmbed(t *testing.T) {
 	fake := &fakeTextEmbedder{dim: 4}
 	store := &fakeWriteStore{stored: map[string]string{"c": "same"}}
-	s := NewVectorStoreServer(nil, newTestEmbedder(fake), []string{"g/r"}, nil, nil)
+	s := NewVectorStoreServer(nil, newTestEmbedder(fake), []string{"g/r"}, nil, nil, nil, nil)
 	s.store = store
 
 	resp, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
@@ -719,7 +719,7 @@ func TestVectorStore_UpsertEmbedQuotaErrorKeepsRetryableCode(t *testing.T) {
 	store := &fakeWriteStore{}
 	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{
 		dim: 4, wantErr: status.Error(codes.ResourceExhausted, "provider quota"),
-	}), []string{"g/r"}, nil, nil)
+	}), []string{"g/r"}, nil, nil, nil, nil)
 	s.store = store
 
 	_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
