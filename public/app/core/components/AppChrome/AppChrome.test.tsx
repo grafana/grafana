@@ -100,6 +100,8 @@ const closedSidebarContext: ExtensionSidebarContextType = {
   availableComponents: new Map(),
   extensionSidebarWidth: 300,
   setExtensionSidebarWidth: jest.fn(),
+  floatingExtensionSidebarWidth: 480,
+  setFloatingExtensionSidebarWidth: jest.fn(),
   presentation: 'docked',
   floatingHidden: false,
 };
@@ -693,6 +695,17 @@ describe('AppChrome', () => {
       rerender();
       // Drawers and their mask sit at modalBackdrop (1050), modal dialogs at modal (1060).
       expect(stylesFor(container)).toContain('z-index: 1051');
+    });
+
+    it('keeps the docked minimum width off the floating sidebar', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      const { rerender } = setup(<Page navId="child1">Children</Page>);
+      const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+      expect(container.style.minWidth).toBe('460px');
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      rerender();
+      expect(container.style.minWidth).toBe('');
     });
 
     it('marks only the floating sidebar as inside open drawers', async () => {
