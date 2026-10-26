@@ -38,7 +38,7 @@ import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLine
 import { type LogListOptions, type LogListFontSize } from './LogList';
 import { collectInsights } from './analytics';
 import { logsSupportHighlighting } from './grammar';
-import { type LogListModel } from './processing';
+import { LogListModel } from './processing';
 
 export interface LogListContextData
   extends Omit<Props, 'containerElement' | 'logs' | 'logsMeta' | 'showControls' | 'showLevel' | 'unwrappedColumns'> {
@@ -46,6 +46,7 @@ export interface LogListContextData
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
   forceEscape: boolean;
+  hasLogsWithErrorFields?: boolean;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
   hasUnescapedContent: boolean;
@@ -573,6 +574,15 @@ export const LogListContextProvider = ({
     [openAssistant]
   );
 
+  const hasLogsWithErrorFields = useMemo(
+    () =>
+      logs.some(
+        (log) =>
+          log instanceof LogListModel &&
+          (log.errorAttributes.messages.length > 0 || log.errorAttributes.stacktraces.length > 0)
+      ),
+    [logs]
+  );
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
   const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
@@ -617,6 +627,7 @@ export const LogListContextProvider = ({
         filterLevels: logListState.filterLevels,
         fontSize: logListState.fontSize,
         forceEscape: logListState.forceEscape,
+        hasLogsWithErrorFields,
         hasLogsWithErrors,
         hasSampledLogs,
         hasUnescapedContent,
