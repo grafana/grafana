@@ -42,9 +42,9 @@ export function getRestrictedGrafanaApis({
 
 /**
  * What `pluginId` gets at load, for `AppPlugin.onRestrictedApis`: the same objects RestrictedGrafanaApisProvider
- * provides its roots, under the same allow and block lists, with the flags as they are now. The id is the one
- * Grafana loads the module for, never one the plugin names. The Dashboard Mutation API is left out: it is
- * created per provider and bound to the plugin's mounted roots.
+ * provides its roots, under the same allow and block lists, with any feature flags as they are now. The id is
+ * the one Grafana loads the module for, never one the plugin names. The Dashboard Mutation API is left out: it
+ * acts on what the plugin's mounted roots show, so it stays with the provider.
  */
 export function getRestrictedGrafanaApisAtLoad(pluginId: string): RestrictedGrafanaApisContextType {
   return getAllowedRestrictedGrafanaApis({
