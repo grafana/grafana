@@ -25,11 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// loaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
-type loaderWithSingleTenantFallback interface {
-	SingleTenantFallback() http.Handler
-}
-
 const (
 	// Bound stale routing after a rename, move, or deletion; cache hits do not extend this TTL.
 	singleTenantCacheTTL = 6 * time.Hour
@@ -88,6 +83,25 @@ func (c *stackLookupCounts) record(target *singleTenantTarget, err error) {
 	default:
 		c.resolved.Add(1)
 	}
+}
+
+// counters reports the fallback's stack lookups and, when it caches
+// discovery, its discovery cache lookups.
+func (st *singleTenantFallback) counters() []loaderCounter {
+	counters := []loaderCounter{{
+		Metric:   "stack_lookups_total",
+		Help:     "Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.",
+		Status:   "stackLookups",
+		ByResult: st.lookupsBy.byResult(),
+	}}
+	if st.discoveryDocs != nil {
+		counters = append(counters, loaderCounter{
+			Metric:   "stack_discovery_cache_total",
+			Help:     "Single-tenant discovery requests looked up in the cache shared by each stack's callers, by result: hit or miss.",
+			ByResult: map[string]uint64{"hit": st.discoveryHits.Load(), "miss": st.discoveryMisses.Load()},
+		})
+	}
+	return counters
 }
 
 func (c *stackLookupCounts) byResult() map[string]uint64 {

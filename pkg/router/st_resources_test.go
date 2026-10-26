@@ -185,3 +185,20 @@ func TestRouterServesSingleTenantResourcesFromStack(t *testing.T) {
 	require.Equal(t, "backend unavailable\n", rec.Body.String())
 	require.Equal(t, uint32(3), r.served["dashboard.grafana.app"].breaker.Counts().Requests)
 }
+
+// The split reports the breaker scope of the backend that owns the group,
+// whatever that backend is, and never the stacks' per-destination breakers.
+func TestSingleTenantResourcesBreakerScope(t *testing.T) {
+	st := newTestSingleTenantFallback(t)
+	require.Equal(t, breakerScopePerDestination, groupBreakerScope(st))
+	for _, tc := range []struct {
+		next http.Handler
+		want breakerScope
+	}{
+		{next: http.NotFoundHandler(), want: breakerScopeRequests},
+		{next: &tracedPluginHandler{}, want: breakerScopePluginCalls},
+		{next: embeddedHandler{}, want: breakerScopeNone},
+	} {
+		require.Equal(t, tc.want, groupBreakerScope(&singleTenantResourcesHandler{next: tc.next, st: st}))
+	}
+}

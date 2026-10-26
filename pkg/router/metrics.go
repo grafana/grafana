@@ -312,8 +312,6 @@ type routerCollector struct {
 	skipped         *prometheus.Desc
 	lastSuccess     *prometheus.Desc
 	polls           *prometheus.Desc
-	stackLookups    *prometheus.Desc
-	stackDiscovery  *prometheus.Desc
 }
 
 func newRouterCollector(router *GrafanaRouter) *routerCollector {
@@ -340,19 +338,25 @@ func newRouterCollector(router *GrafanaRouter) *routerCollector {
 			"When each route source last loaded successfully, in seconds since the Unix epoch.", []string{"source"}, nil),
 		polls: prometheus.NewDesc(name("source_polls_total"),
 			"Load or poll attempts of each route source, by result: success or failure.", []string{"source", "result"}, nil),
-		stackLookups: prometheus.NewDesc(name("stack_lookups_total"),
-			"Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.", []string{"result"}, nil),
-		stackDiscovery: prometheus.NewDesc(name("stack_discovery_cache_total"),
-			"Single-tenant discovery requests looked up in the cache shared by each stack's callers, by result: hit or miss.", []string{"result"}, nil),
 	}
+}
+
+// loaderCounterDesc describes a loaderCounter's metric.
+func loaderCounterDesc(c loaderCounter) *prometheus.Desc {
+	return prometheus.NewDesc(prometheus.BuildFQName("grafana", "router", c.Metric), c.Help, []string{"result"}, nil)
 }
 
 func (c *routerCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, d := range []*prometheus.Desc{
 		c.ready, c.lastReconcile, c.reconciles, c.reconcileErrors, c.groups, c.breaker,
-		c.shadowed, c.skipped, c.lastSuccess, c.polls, c.stackLookups, c.stackDiscovery,
+		c.shadowed, c.skipped, c.lastSuccess, c.polls,
 	} {
 		ch <- d
+	}
+	if status, ok := c.router.loader.(loaderStatus); ok {
+		for _, counter := range status.counters() {
+			ch <- loaderCounterDesc(counter)
+		}
 	}
 }
 
@@ -373,9 +377,7 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 	perSource := map[string]int{}
 	for group, entry := range *c.router.snapshot.Load() {
 		perSource[entry.source]++
-		// The single-tenant fallback keeps a breaker per stack, not per group,
-		// and the embedded API server's groups have none.
-		if withoutGroupBreaker(entry.handler) || entry.breaker == nil {
+		if !entry.breakerScope.counted() {
 			continue
 		}
 		current := entry.breakerState()
@@ -410,10 +412,10 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(c.polls, prometheus.CounterValue, float64(s.Failures), s.Source, "failure")
 		ch <- prometheus.MustNewConstMetric(c.skipped, prometheus.GaugeValue, float64(s.Skipped), s.Source)
 	}
-	for result, n := range status.stackLookups() {
-		ch <- prometheus.MustNewConstMetric(c.stackLookups, prometheus.CounterValue, float64(n), result)
-	}
-	for result, n := range status.stackDiscoveryCache() {
-		ch <- prometheus.MustNewConstMetric(c.stackDiscovery, prometheus.CounterValue, float64(n), result)
+	for _, counter := range status.counters() {
+		desc := loaderCounterDesc(counter)
+		for result, n := range counter.ByResult {
+			ch <- prometheus.MustNewConstMetric(desc, prometheus.CounterValue, float64(n), result)
+		}
 	}
 }

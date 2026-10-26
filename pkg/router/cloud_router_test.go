@@ -520,7 +520,7 @@ func TestCloudLoader_AggregateOnly(t *testing.T) {
 func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 	t.Run("disabled returns a nil interface", func(t *testing.T) {
 		loader := &cloudLoader{}
-		require.True(t, loader.SingleTenantFallback() == nil)
+		require.True(t, loader.UnregisteredGroupHandler() == nil)
 	})
 	t.Run("discovery alone enables fallback", func(t *testing.T) {
 		gcom := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -545,7 +545,7 @@ func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 		require.NoError(t, err)
 		cloud, ok := loader.(*cloudLoader)
 		require.True(t, ok)
-		require.Same(t, cloud.singleTenantFallback, cloud.SingleTenantFallback())
+		require.Same(t, cloud.singleTenantFallback, cloud.UnregisteredGroupHandler())
 		host, err := cloud.singleTenantFallback.hostForNamespace(t.Context(), "stacks-35611")
 		require.NoError(t, err)
 		require.Equal(t, "http://play-grafana-http.hosted-grafana.svc.cluster.local.:80", host.url.String())

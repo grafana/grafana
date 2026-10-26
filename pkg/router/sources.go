@@ -50,12 +50,30 @@ type shadowedGroup struct {
 type loaderStatus interface {
 	sourceStatuses() []sourceStatus
 	shadowedGroups() []shadowedGroup
-	// stackLookups counts single-tenant stack lookups by result; nil without
-	// a single-tenant fallback.
-	stackLookups() map[string]uint64
-	// stackDiscoveryCache counts single-tenant discovery cache lookups by
-	// result; nil without a single-tenant fallback or its discovery cache.
-	stackDiscoveryCache() map[string]uint64
+	// counters reports the loader's own counters. The set of counters must
+	// not change once the loader is built, since their metrics are described
+	// from it.
+	counters() []loaderCounter
+}
+
+// loaderCounter is a loader's own counter, by result, such as the
+// single-tenant fallback's stack lookups. The router reports it as the
+// counter grafana_router_<Metric>{result}, and, when Status is set, under
+// that field of the status page.
+type loaderCounter struct {
+	Metric   string
+	Help     string
+	Status   string
+	ByResult map[string]uint64
+}
+
+// unregisteredGroupLoader is an optional RoutesLoader interface for a loader
+// that serves the groups no backend does, in the standalone router.
+type unregisteredGroupLoader interface {
+	// UnregisteredGroupHandler returns the handler, or nil for none. It
+	// answers root discovery for the caller too, and its answer replaces the
+	// defaults of caller-scoped backends.
+	UnregisteredGroupHandler() http.Handler
 }
 
 // pollStatus records the outcome of a source's loads. Safe for concurrent use.

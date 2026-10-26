@@ -398,19 +398,11 @@ func (l *cloudLoader) shadowedGroups() []shadowedGroup {
 	return nil
 }
 
-func (l *cloudLoader) stackLookups() map[string]uint64 {
+func (l *cloudLoader) counters() []loaderCounter {
 	if l.singleTenantFallback == nil {
 		return nil
 	}
-	return l.singleTenantFallback.lookupsBy.byResult()
-}
-
-func (l *cloudLoader) stackDiscoveryCache() map[string]uint64 {
-	if l.singleTenantFallback == nil || l.singleTenantFallback.discoveryDocs == nil {
-		return nil
-	}
-	st := l.singleTenantFallback
-	return map[string]uint64{"hit": st.discoveryHits.Load(), "miss": st.discoveryMisses.Load()}
+	return l.singleTenantFallback.counters()
 }
 
 func (l *cloudLoader) sourceStatuses() []sourceStatus {
@@ -421,7 +413,9 @@ func (l *cloudLoader) sourceStatuses() []sourceStatus {
 	return statuses
 }
 
-func (l *cloudLoader) SingleTenantFallback() http.Handler {
+// UnregisteredGroupHandler implements [unregisteredGroupLoader]: the
+// single-tenant fallback serves the groups no other source does.
+func (l *cloudLoader) UnregisteredGroupHandler() http.Handler {
 	if l.singleTenantFallback == nil {
 		return nil
 	}

@@ -58,7 +58,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   (`plugin_breaker.go`), and the ST fallback keeps one breaker per destination host and group. A
   handler that implements `handlerFor(*http.Request)` picks the handler for each request first,
   and only that handler's breakers apply, so requests the stacks serve never count against the group
-  breaker. A
+  breaker. Its `groupHandler` names the handler that owns the group, whose breaker scope `publish`
+  records once per entry (`groupBreakerScope`) for metrics and the status page. A
   rejected backend redirect is not a breaker failure. Read a group breaker's state from its
   `breakerView` (`servingEntry.breakerState`), never `breaker.State()`: gobreaker's `State` moves an
   open breaker whose timeout passed to half-open, so a metrics scrape or status read would change
@@ -212,7 +213,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
 | `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served group with a manifest: the backend's own (`ManifestProvider`), or, as a fallback when it advertises none, the one compiled in for the group. |
 | `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
-| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, the ST fallback's stack lookup counts by result (`stackLookups`), and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
+| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, the loader's own counters (`loaderCounter`, such as the ST fallback's stack lookup counts by result, `stackLookups`), and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
 | `/apis/discovery/v1alpha2/AGENTS.md` | Synthesized markdown index of every served group, for agents. |
 | `/openapi/v3/apis/discovery/v1alpha2` | Synthesized OpenAPI v3 document for the discovery group. |
 | `/apis/discovery/v1alpha2/AGENTS` | The same index rendered as a static HTML page for browsers, with a CSP that allows no scripts. Not in the OpenAPI document. |
@@ -350,7 +351,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - In middleware mode, every request in the `/apis` and `/openapi/v3` trees is instrumented,
     the embedded server's groups included; other paths go to `next` and are not.
   - New backends must name their source (`Backend.Source`), and new sources should report through
-    `loaderStatus`, or their loads don't appear in the metrics. A source that skips a backend logs
+    `loaderStatus`, or their loads don't appear in the metrics. A source's own counters go through
+    `loaderStatus.counters`, never as a field or series named in the engine. A source that skips a backend logs
     why, counts it, and stores the count once per load (`pollStatus.recordSkipped`).
   - Managed plugin connections (`pluginConnections.pluginClients`) use dskit's gRPC client
     instrumentation interceptors and `otelgrpc`, which propagates the caller's trace to the plugin.

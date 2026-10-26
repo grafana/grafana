@@ -873,4 +873,4 @@ func (l fallbackLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 	return dirty, nil
 }
 
-func (l fallbackLoader) SingleTenantFallback() http.Handler { return l.singleTenantFallback }
+func (l fallbackLoader) UnregisteredGroupHandler() http.Handler { return l.singleTenantFallback }

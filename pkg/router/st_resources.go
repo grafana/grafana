@@ -78,6 +78,12 @@ func (h *singleTenantResourcesHandler) handlerFor(req *http.Request) http.Handle
 	return h.next
 }
 
+// groupHandler implements [requestRouter]: the group is the multi-tenant
+// backend's, and its breaker is the one the group reports.
+func (h *singleTenantResourcesHandler) groupHandler() http.Handler {
+	return h.next
+}
+
 func (h *singleTenantResourcesHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	h.handlerFor(req).ServeHTTP(w, req)
 }

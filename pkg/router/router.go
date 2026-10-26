@@ -92,9 +92,11 @@ type servingEntry struct {
 	key         string
 	breaker     *groupBreaker
 	breakerView *breakerView
-	watches     context.Context
-	source      string
-	use         *handlerUse
+	// breakerScope is what breaker counts; breakerScopeNone without one.
+	breakerScope breakerScope
+	watches      context.Context
+	source       string
+	use          *handlerUse
 
 	// discovery is set when the backend is a DiscoveryProvider, so the
 	// group's aggregated discovery needs no request.
@@ -925,6 +927,10 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	backends := make([]Backend, 0, len(r.served))
 	for group, e := range r.served {
 		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, breakerView: e.breakerView, watches: e.watches, loadedAt: e.loadedAt, watching: e.watching, use: e.use}
+		entry.breakerScope = groupBreakerScope(e.handler)
+		if e.breaker == nil {
+			entry.breakerScope = breakerScopeNone
+		}
 		if e.backend != nil {
 			entry.group = e.backend.Group()
 			entry.source = e.backend.Source()

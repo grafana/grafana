@@ -109,9 +109,10 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 
 	s.ready = ready
 
-	// The standalone router is never middleware, so the fallback always applies.
-	if st, ok := s.router.loader.(loaderWithSingleTenantFallback); ok {
-		s.router.unregisteredGroupHandler = st.SingleTenantFallback()
+	// The standalone router is never middleware, so the loader's handler for
+	// unregistered groups always applies.
+	if loader, ok := s.router.loader.(unregisteredGroupLoader); ok {
+		s.router.unregisteredGroupHandler = loader.UnregisteredGroupHandler()
 	}
 
 	for _, path := range []string{apisPrefix, openapiV3Prefix} {
