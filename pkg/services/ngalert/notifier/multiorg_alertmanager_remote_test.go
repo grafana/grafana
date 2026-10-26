@@ -1,11 +1,11 @@
 package notifier_test
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -26,16 +26,25 @@ import (
 )
 
 func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
-	ctx := context.Background()
-	nopLogger := log.NewNopLogger()
 	tenantID := "testTenantID"
 	password := "testPassword"
-	reg := prometheus.NewPedanticRegistry()
-	m := metrics.NewNGAlert(reg)
 
-	// We're gonna use an test server to send configuration and state to.
+	// Keep the TCP listener and long-lived tracing workers outside the synctest bubble.
 	fakeAM := newFakeRemoteAlertmanager(t, tenantID, password)
 	testsrv := httptest.NewServer(fakeAM)
+	t.Cleanup(testsrv.Close)
+	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
+	synctest.Test(t, func(t *testing.T) {
+		testMultiorgAlertmanagerRemoteSecondaryMode(t, fakeAM, testsrv.URL, secretsService)
+	})
+}
+
+func testMultiorgAlertmanagerRemoteSecondaryMode(t *testing.T, fakeAM *fakeRemoteAlertmanager, serverURL string, secretsService *secretsManager.SecretsService) { //nolint: staticcheck
+	t.Helper()
+	ctx := t.Context()
+	nopLogger := log.NewNopLogger()
+	reg := prometheus.NewPedanticRegistry()
+	m := metrics.NewNGAlert(reg)
 
 	// We'll start with the default config and no values for silences and notifications.
 	kvStore := ngfakes.NewFakeKVStore(t)
@@ -53,19 +62,18 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 	// Create the factory function for the MOA using the forked Alertmanager in remote secondary mode.
 	remoteAMCfg := remote.AlertmanagerConfig{
 		OrgID:             1,
-		URL:               testsrv.URL,
-		TenantID:          tenantID,
-		BasicAuthPassword: password,
+		URL:               serverURL,
+		TenantID:          fakeAM.username,
+		BasicAuthPassword: fakeAM.password,
 		DefaultConfig:     setting.GetAlertmanagerDefaultConfiguration(),
 	}
-	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	override := remote.NewRemoteSecondaryFactory(remoteAMCfg,
 		kvStore,
 		configStore,
 		10*time.Second,
 		notifier.NewCrypto(secretsService, configStore, log.NewNopLogger()),
 		m.GetRemoteAlertmanagerMetrics(),
-		tracing.InitializeTracerForTest(),
+		tracing.NewNoopTracerService(),
 		false,
 		featuremgmt.WithFeatures(),
 	)
@@ -98,6 +106,11 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		notifier.WithAlertmanagerOverride(override),
 	)
 	require.NoError(t, err)
+	syncAlertmanagers := func() {
+		require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(ctx))
+		// Config reloads start workers asynchronously. Let them start before reloading or stopping them.
+		synctest.Wait()
+	}
 
 	// It should send config and state on startup.
 	var lastConfig *remoteClient.UserGrafanaConfig
@@ -108,7 +121,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		require.Empty(t, fakeAM.state)
 
 		// On the first sync (startup), both config and state should be updated.
-		require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(ctx))
+		syncAlertmanagers()
 		require.NotEmpty(t, fakeAM.config)
 		require.NotEmpty(t, fakeAM.state)
 		lastConfig, lastState = fakeAM.config, fakeAM.state
@@ -126,16 +139,15 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, "OgoqCgZncm91cDISEgoJcmVjZWl2ZXIyEgV0ZXN0MyoMCLSDkbAGEMvaofYCEgwIxJ+RsAYQy9qh9gI6CioKBmdyb3VwMRISCglyZWNlaXZlcjESBXRlc3QzKgwItIORsAYQy9qh9gISDAjEn5GwBhDL2qH2Ag=="))
 
 		// The sync interval (10s) has not elapsed yet, syncing should have no effect.
-		require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(ctx))
-		require.Equal(t, fakeAM.config, lastConfig)
-		require.Equal(t, fakeAM.state, lastState)
+		syncAlertmanagers()
+		require.Same(t, lastConfig, fakeAM.config)
+		require.Same(t, lastState, fakeAM.state)
 
 		// Syncing after the sync interval elapses should update the config, not the state.
-		require.Eventually(t, func() bool {
-			require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(ctx))
-			return fakeAM.config != lastConfig && fakeAM.state == lastState
-		}, 15*time.Second, 300*time.Millisecond)
-		lastConfig = fakeAM.config
+		synctest.Sleep(10 * time.Second)
+		syncAlertmanagers()
+		require.NotSame(t, lastConfig, fakeAM.config)
+		require.Same(t, lastState, fakeAM.state)
 	}
 
 	// It should send state on shutdown.
@@ -149,10 +161,9 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		}))
 
 		// State should be updated when shutting the Alertmanager down.
+		syncAlertmanagers()
 		moa.StopAndWait()
-		require.Eventually(t, func() bool {
-			return fakeAM.state != lastState
-		}, 15*time.Second, 300*time.Millisecond)
+		require.NotSame(t, lastState, fakeAM.state)
 	}
 }
 
@@ -175,6 +186,8 @@ type fakeRemoteAlertmanager struct {
 // ServeHTTP handles all routes we need for getting and setting state and config.
 func (f *fakeRemoteAlertmanager) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-Type", "application/json")
+	// Idle TCP connections would prevent the synctest bubble from becoming idle.
+	w.Header().Set("Connection", "close")
 
 	// Check that basic auth is in place.
 	user, pass, ok := r.BasicAuth()

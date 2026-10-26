@@ -708,6 +708,7 @@ type Cfg struct {
 	UnifiedStorageClusterSlug             string
 	UnifiedStorageAuthzExemptionEnabled   bool
 	UnifiedStorageAuthzExemptResources    []string
+	HybridSearchDefaultResources          []string
 	UnifiedStorageGRPCErrorResultToStatus bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
@@ -776,10 +777,6 @@ type Cfg struct {
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	SearchClientForwardAuthEnabled             bool
-	// SearchEnforceSortCapability rejects a sort on a field that does not declare
-	// sorting. On by default; kept for one release so an instance that still
-	// depends on such sorts can turn it off.
-	SearchEnforceSortCapability bool
 	// SearchPostRankAuthz enables the post-filter authorization search path:
 	// bleve ranks without the in-searcher authz wrapper and authorization runs
 	// app-side in rank order with early exit once the page is filled.
@@ -801,7 +798,9 @@ type Cfg struct {
 	VectorAllowedInternalCollections []string
 	VectorAllowedExternalCollections []string
 	// Exact group/resource collections readable only by the listed service identities.
-	VectorAllowedReadServices map[string][]string
+	VectorAllowedReadServices       map[string][]string
+	VectorSharedExternalCollections []string
+	VectorSharedWriteServices       []string
 	// Registers the VectorStore write RPCs on the storage server.
 	EnableVectorStore bool
 	// Service identities allowed to call the VectorStore write RPCs.

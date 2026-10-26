@@ -717,8 +717,16 @@ describe('applyDashboardSpec', () => {
     });
 
     describe('reading the previous spec off the dashboard', () => {
-      it('is skipped when the URL agrees with the spec the apply sets', async () => {
+      // Edit-period tracking serializes once per period to tell real manual changes from no-ops.
+      // Record one up front so the count below is only the URL-state read.
+      async function openWithEditRecorded() {
         const scene = await open(makeSyncedSpec(), 'var-namespace=a&var-service=$__all');
+        scene.recordEditMutation();
+        return scene;
+      }
+
+      it('is skipped when the URL agrees with the spec the apply sets', async () => {
+        const scene = await openWithEditRecorded();
         mockSerializeCount = 0;
 
         await apply(scene, makeSyncedSpec({ title: 'Renamed' }));
@@ -728,7 +736,7 @@ describe('applyDashboardSpec', () => {
       });
 
       it('happens once when the URL holds a value the spec changes, and is reused by undo and redo', async () => {
-        const scene = await open(makeSyncedSpec(), 'var-namespace=a&var-service=$__all');
+        const scene = await openWithEditRecorded();
         mockSerializeCount = 0;
 
         await apply(scene, makeSyncedSpec({ namespace: 'b' }));
@@ -745,7 +753,7 @@ describe('applyDashboardSpec', () => {
       });
 
       it('happens on undo, off the restored dashboard, when the apply skipped it', async () => {
-        const scene = await open(makeSyncedSpec(), 'var-namespace=a&var-service=$__all');
+        const scene = await openWithEditRecorded();
         mockSerializeCount = 0;
 
         await apply(scene, makeSyncedSpec({ title: 'Renamed' }));
