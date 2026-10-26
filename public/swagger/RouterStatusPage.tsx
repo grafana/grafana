@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import { Global } from '@emotion/react';
-import { type ReactNode, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
-import { createTheme, dateTimeFormat, dateTimeFormatTimeAgo, type GrafanaTheme2, ThemeContext } from '@grafana/data';
+import { dateTimeFormat, dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
   Alert,
@@ -18,6 +17,8 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
+
+import { RouterShell, Section, Table } from './RouterShell';
 
 export const routerStatusURL = 'apis/discovery/v1alpha2/status';
 
@@ -42,7 +43,7 @@ export interface RouterStatus {
   stackLookups?: Record<string, number>;
 }
 
-interface GroupStatus {
+export interface GroupStatus {
   group: string;
   source: string;
   key: string;
@@ -82,7 +83,7 @@ interface SourceStatus {
   skipped: number;
 }
 
-const healthColors: Record<string, BadgeColor> = {
+export const healthColors: Record<string, BadgeColor> = {
   ok: 'green',
   degraded: 'orange',
   recovering: 'blue',
@@ -105,7 +106,6 @@ function formatTime(value?: string) {
 }
 
 export const RouterStatusPage = () => {
-  const theme = createTheme({ colors: { mode: 'light' } });
   const status = useAsyncRetry(async () => {
     const rsp = await fetch(routerStatusURL, { cache: 'no-store' });
     if (!rsp.ok) {
@@ -116,36 +116,22 @@ export const RouterStatusPage = () => {
   });
 
   return (
-    <ThemeContext.Provider value={theme}>
-      <Global
-        styles={{
-          html: {
-            fontSize: `${theme.typography.htmlFontSize}px`,
-          },
-          body: {
-            margin: 0,
-            ...theme.typography.body,
-          },
-        }}
-      />
-      <div style={{ backgroundColor: '#000', padding: '10px' }}>
-        <Stack alignItems="center" justifyContent="space-between">
-          <Icon name="grafana" size="xxl" />
-          <Button icon="sync" variant="secondary" onClick={status.retry} disabled={status.loading}>
-            <Trans i18nKey="swagger.router-status.refresh">Refresh</Trans>
-          </Button>
-        </Stack>
-      </div>
-      <div style={{ padding: theme.spacing(2) }}>
-        {status.error && (
-          <Alert title={t('swagger.router-status.error-title', 'Unable to load router status')} severity="error">
-            {status.error.message}
-          </Alert>
-        )}
-        {status.value && <RouterStatusView status={status.value} />}
-        {!status.value && status.loading && <div>...</div>}
-      </div>
-    </ThemeContext.Provider>
+    <RouterShell
+      page="status"
+      actions={
+        <Button icon="sync" variant="secondary" onClick={status.retry} disabled={status.loading}>
+          <Trans i18nKey="swagger.router-status.refresh">Refresh</Trans>
+        </Button>
+      }
+    >
+      {status.error && (
+        <Alert title={t('swagger.router-status.error-title', 'Unable to load router status')} severity="error">
+          {status.error.message}
+        </Alert>
+      )}
+      {status.value && <RouterStatusView status={status.value} />}
+      {!status.value && status.loading && <div>...</div>}
+    </RouterShell>
   );
 };
 
@@ -361,7 +347,7 @@ function sourceColor(source: string): BadgeColor {
   return 'darkgrey';
 }
 
-const SourceBadge = ({ source }: { source: string }) => <Badge color={sourceColor(source)} text={source} />;
+export const SourceBadge = ({ source }: { source: string }) => <Badge color={sourceColor(source)} text={source} />;
 
 const isZeroTime = (value?: string) => !value || value.startsWith('0001-');
 
@@ -449,62 +435,11 @@ const BreakerCell = ({ breaker }: { breaker: GroupStatus['breaker'] }) => {
   );
 };
 
-const Section = ({ title, children }: { title: string; children: ReactNode }) => (
-  <Stack direction="column" gap={1}>
-    <Text element="h3">{title}</Text>
-    {children}
-  </Stack>
-);
-
-const Table = ({ headers, rows }: { headers: string[]; rows: ReactNode[][] }) => {
-  const styles = useStyles2(getStyles);
-  return (
-    <div className={styles.wrapper}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            {headers.map((h) => (
-              <th key={h}>{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => (
-            <tr key={i}>
-              {row.map((cell, j) => (
-                <td key={j}>{cell}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-};
-
 const getStyles = (theme: GrafanaTheme2) => ({
   stat: css({
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,
     padding: theme.spacing(1, 2),
     minWidth: theme.spacing(12),
-  }),
-  wrapper: css({
-    overflowX: 'auto',
-  }),
-  table: css({
-    borderCollapse: 'collapse',
-    width: '100%',
-    'th, td': {
-      textAlign: 'left',
-      padding: theme.spacing(0.5, 1),
-      borderBottom: `1px solid ${theme.colors.border.weak}`,
-      verticalAlign: 'top',
-      whiteSpace: 'nowrap',
-    },
-    th: {
-      fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.secondary,
-    },
   }),
 });

@@ -16783,8 +16783,32 @@
   },
   "swagger": {
     "login": "Login",
+    "manifests": {
+      "api-docs": "API docs",
+      "collapse": "Collapse",
+      "collapse-all": "Collapse all",
+      "count": "{{shown}} of {{total}}",
+      "error-title": "Unable to load manifests",
+      "expand": "Expand",
+      "expand-all": "Expand all",
+      "filter-placeholder": "Filter by group, app or kind",
+      "folder-scoped": "folder scoped",
+      "no-kinds": "No kinds",
+      "not-served": "Not served",
+      "preferred": "preferred",
+      "refresh": "Refresh",
+      "roles": "Roles",
+      "routes": "Routes:",
+      "title": "App manifests",
+      "user-readable": "user readable"
+    },
     "namespace-unavailable": "Check the namespace before sending requests, or reload the page to try again.",
     "namespace-unavailable-title": "Unable to load namespace",
+    "router-nav": {
+      "api-docs": "API docs",
+      "manifests": "Manifests",
+      "status": "Status"
+    },
     "router-status": {
       "all-sources": "All sources",
       "breaker-settings": "Breakers open after {{after}} consecutive failures, for {{openFor}}",
