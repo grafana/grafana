@@ -415,3 +415,29 @@ jobs:
       run: |
         echo "::error::Yarn constraints check failed. Run 'yarn constraints --fix' locally, commit the changes, and push again."
         exit 1
+  linked-pr:
+    if: github.event_name == 'pull_request' && github.repository == 'grafana/grafana' && github.event.pull_request.head.repo.fork == false && !contains(github.base_ref, '+security')
+    name: Linked enterprise PR
+    runs-on: ubuntu-arm64-small
+    continue-on-error: true
+    permissions:
+      id-token: write
+      statuses: write
+    steps:
+    - name: Get GitHub App token
+      id: get-github-app-token
+      uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+      with:
+        github_app: grafana-ci-bot
+    - name: Post linked PR status
+      env:
+        GH_TOKEN: ${{ github.token }}
+        APP_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+        OTHER_REPO: grafana/grafana-enterprise
+        HEAD_REF: ${{ github.head_ref }}
+        HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      run: |
+        if GH_TOKEN="$APP_TOKEN" gh api "repos/$OTHER_REPO/branches/$HEAD_REF" --silent; then
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f state=success -f context=linked-pr \
+            -f description="$OTHER_REPO PR search" -f target_url="https://github.com/$OTHER_REPO/pulls?q=is%3Apr+head%3A$HEAD_REF"
+        fi
