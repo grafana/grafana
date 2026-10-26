@@ -683,6 +683,9 @@ func (r *GrafanaRouter) storeServing(ctx context.Context, err error) {
 		logging.FromContext(ctx).Error("router: reconcile completed with errors, serving last-known-good", "err", err)
 	}
 	r.state.Store(&routerState{phase: serving, err: err, served: len(r.served) > 0})
+	if r.Ready(ctx) == nil {
+		r.initialized.Store(true)
+	}
 }
 
 // Ready reports whether the router can serve traffic. A reconcile error does
