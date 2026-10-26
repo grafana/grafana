@@ -25,7 +25,7 @@ cards:
       description: Generate a HAR capture to send to Grafana Labs support for troubleshooting.
     - title: Send panel to Grafana Support
       height: 24
-      href: ./send-panel-grafana-support/
+      href: ./send-panel-to-grafana-support/
       description: Send a panel to Grafana Labs support for troubleshooting.
 weight: 700
 ---
