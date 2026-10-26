@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
+	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
@@ -64,6 +65,7 @@ func (e *sharedIntegrationEmbedder) calls() []embedder.EmbedTextInput {
 
 func sharedIntegrationFixture(t *testing.T) (resourcepb.VectorStoreClient, vector.VectorBackend, *xorm.Engine, *sharedIntegrationEmbedder, string, map[string]string) {
 	t.Helper()
+	testutil.SkipIntegrationTestInShortMode(t)
 	connStr := os.Getenv("PGVECTOR_TEST_DB")
 	if connStr == "" {
 		t.Skip("PGVECTOR_TEST_DB not set")
@@ -250,6 +252,10 @@ func TestIntegrationSharedVectorStoreConcurrentPublishersShareContentDiff(t *tes
 	case <-time.After(10 * time.Second):
 		t.Fatal("first publisher did not reach embedding provider")
 	}
+	collection, found, err := backend.ResolveCollection(t.Context(), group, resources["concurrent"])
+	require.NoError(t, err)
+	require.True(t, found)
+	lockName := "vectorentity|" + vector.SharedNamespace + "|" + collection.PartitionKey + "|shared-uid"
 	go publish(secondCtx, "tenant-b", second)
 	select {
 	case <-provider.secondRPC:
@@ -257,9 +263,16 @@ func TestIntegrationSharedVectorStoreConcurrentPublishersShareContentDiff(t *tes
 		t.Fatal("second publisher did not reach the RPC server")
 	}
 	require.Eventually(t, func() bool {
-		var waiting int
-		err := engine.DB().QueryRowContext(t.Context(), `SELECT count(*) FROM pg_locks WHERE locktype = 'advisory' AND granted = false AND database = (SELECT oid FROM pg_database WHERE datname = current_database())`).Scan(&waiting)
-		return err == nil && waiting > 0
+		var waiting bool
+		err := engine.DB().QueryRowContext(t.Context(), `
+			SELECT EXISTS (
+				SELECT 1 FROM pg_locks
+				WHERE locktype = 'advisory' AND NOT granted
+					AND database = (SELECT oid FROM pg_database WHERE datname = current_database())
+					AND objsubid = 1
+					AND ((classid::bigint << 32) | objid::bigint) = hashtext($1)::bigint
+			)`, lockName).Scan(&waiting)
+		return err == nil && waiting
 	}, 2*time.Second, 10*time.Millisecond, "second publisher must wait on the first publisher's database entity lock")
 	select {
 	case result := <-second:
@@ -274,9 +287,6 @@ func TestIntegrationSharedVectorStoreConcurrentPublishersShareContentDiff(t *tes
 	require.EqualValues(t, 1, firstResult.response.Created+secondResult.response.Created)
 	require.Zero(t, firstResult.response.Updated+secondResult.response.Updated)
 	require.Len(t, provider.calls(), 1, "the second publisher should see the stored unchanged chunk")
-	collection, found, err := backend.ResolveCollection(t.Context(), group, resources["concurrent"])
-	require.NoError(t, err)
-	require.True(t, found)
 	stored, _, err := backend.GetSubresourceContent(t.Context(), vector.SharedNamespace, embModel(), collection.PartitionKey, "shared-uid")
 	require.NoError(t, err)
 	require.Equal(t, map[string]string{"section": "identical body"}, stored)
