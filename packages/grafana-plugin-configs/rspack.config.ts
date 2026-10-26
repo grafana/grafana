@@ -44,7 +44,7 @@ class BuildModeRspackPlugin {
   }
 }
 
-// Copying the repo-root LICENSE with CopyRspackPlugin scans the whole monorepo, which adds seconds to every build.
+// A CopyRspackPlugin pattern for the repo-root LICENSE scans the whole monorepo, so emit it directly.
 class EmitLicenseRspackPlugin {
   apply(compiler: Compiler) {
     const licensePath = path.resolve(import.meta.dirname, '../../LICENSE');
@@ -67,8 +67,7 @@ class EmitLicenseRspackPlugin {
   }
 }
 
-// Built from `compiler.rspack` because peer splits can install a second @rspack/core, and
-// virtual modules only register with the copy that created them.
+// Use `compiler.rspack`: virtual modules only register with the @rspack/core copy that created them.
 class PublicPathRspackPlugin {
   constructor(private pluginId: string) {}
 
@@ -93,7 +92,7 @@ export type Env = {
 const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuration> => {
   const pluginJson = getPluginJson(pluginDir);
   const baseConfig: Configuration = {
-    // Without this, SystemJS's global `define` makes bundled UMD deps register as AMD and export nothing.
+    // Without this, SystemJS's global `define` makes bundled UMD deps export nothing.
     amd: {},
 
     context: process.cwd(),
@@ -237,11 +236,10 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
       minimize: Boolean(env.production),
       minimizer: [
         new rspack.SwcJsMinimizerRspackPlugin({
-          // Match Terser: keep third-party license notices in a .LICENSE.txt sidecar
+          // Match Terser's .LICENSE.txt sidecar
           extractComments: true,
           minimizerOptions: {
             format: {
-              // The BannerPlugin re-adds the create-plugin banner after minification
               comments: false,
             },
             compress: {
@@ -261,7 +259,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
         banner: '/* [create-plugin] version: 5.22.0 */',
         raw: true,
         entryOnly: true,
-        // Run after the minimizer so the banner survives
+        // Run after the minimizer, which strips all comments
         stage: rspack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE + 1,
       }),
       new rspack.CopyRspackPlugin({
