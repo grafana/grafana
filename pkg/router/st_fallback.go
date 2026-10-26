@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	lru "github.com/hashicorp/golang-lru/v2"
+	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/time/rate"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
@@ -24,8 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// LoaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
-type LoaderWithSingleTenantFallback interface {
+// loaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
+type loaderWithSingleTenantFallback interface {
 	SingleTenantFallback() http.Handler
 }
 
@@ -123,6 +125,9 @@ type singleTenantFallback struct {
 	resolveHost   func(context.Context, int64) (singleTenantStack, error)
 	discoveryHost *url.URL
 	transport     *http.Transport
+	// tracedTransport is transport wrapped for tracing, built once for the
+	// transport it wraps instead of on every request.
+	tracedTransport atomic.Pointer[tracedTransport]
 
 	// discovery is written only by run's goroutine; nil until the first poll.
 	discovery atomic.Pointer[singleTenantDiscovery]
@@ -151,6 +156,14 @@ type singleTenantFallbackOptions struct {
 	discoveryHost       *url.URL
 	transport           *http.Transport
 }
+
+// Idle connection bounds for the shared transport to every stack: enough per
+// stack for concurrent requests, and a total that bounds the sockets held for
+// thousands of stacks.
+const (
+	singleTenantMaxIdleConnsPerHost = 32
+	singleTenantMaxIdleConns        = 1000
+)
 
 func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFallback, error) {
 	cache, err := lru.New[int64, singleTenantHost](opts.cacheSize)
@@ -197,6 +210,11 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 	if opts.transport == nil {
 		opts.transport = http.DefaultTransport.(*http.Transport).Clone()
 		opts.transport.ResponseHeaderTimeout = backendResponseHeaderTimeout
+		// Stacks are reached over plaintext HTTP/1.1, one request per
+		// connection at a time, so net/http's default of 2 idle connections per
+		// host makes most concurrent requests dial again.
+		opts.transport.MaxIdleConnsPerHost = singleTenantMaxIdleConnsPerHost
+		opts.transport.MaxIdleConns = singleTenantMaxIdleConns
 	}
 
 	return &singleTenantFallback{
@@ -287,7 +305,8 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 }
 
 func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/")
+	var buf [6]string
+	parts := pathParts(req.URL.Path, buf[:0])
 	if len(parts) > 4 && parts[0] == "apis" && parts[1] != "" && parts[2] != "" && parts[3] == "namespaces" && parts[4] != "" {
 		host, err := st.hostForNamespace(req.Context(), parts[4])
 		if errors.Is(err, errStackLookupThrottled) {
@@ -396,11 +415,44 @@ func isSingleTenantDiscoveryPath(path string) bool {
 	}
 	path = strings.TrimSuffix(path, "/")
 	if rest, ok := strings.CutPrefix(path, apisPrefix+"/"); ok {
-		parts := strings.Split(rest, "/")
-		return (len(parts) == 1 && parts[0] != "") || (len(parts) == 2 && parts[0] != "" && parts[1] != "")
+		group, version, hasVersion := strings.Cut(rest, "/")
+		return group != "" && (!hasVersion || (version != "" && !strings.Contains(version, "/")))
 	}
 	_, _, ok := parseOpenAPIGroupVersionPath(path)
 	return ok
+}
+
+type tracedTransport struct {
+	base http.RoundTripper
+	// meterProvider is the global meter provider the wrapper was built with.
+	meterProvider any
+	traced        http.RoundTripper
+}
+
+// backendTransport returns st.transport wrapped for tracing. The wrapper is
+// cached for that transport, which tests replace after construction, and for
+// the global meter provider it captured, which Grafana may replace. It takes
+// its tracer from each request, and reads the global propagator on each
+// request (newBackendTransport).
+func (st *singleTenantFallback) backendTransport() http.RoundTripper {
+	meterProvider := otel.GetMeterProvider()
+	if cached := st.tracedTransport.Load(); cached != nil && cached.base == http.RoundTripper(st.transport) &&
+		sameProvider(cached.meterProvider, meterProvider) {
+		return cached.traced
+	}
+	traced := newBackendTransport(st.transport)
+	st.tracedTransport.Store(&tracedTransport{base: st.transport, meterProvider: meterProvider, traced: traced})
+	return traced
+}
+
+// sameProvider reports whether a and b are the same provider. A provider of a
+// type that can't be compared counts as changed.
+func sameProvider(a, b any) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	typ := reflect.TypeOf(a)
+	return typ == reflect.TypeOf(b) && typ.Comparable() && a == b
 }
 
 // forward proxies req to host. An empty group means discovery. observe, when
@@ -412,9 +464,10 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
 			pr.Out.Host = host.host
 		},
-		Transport:     newBackendTransport(st.transport),
+		Transport:     st.backendTransport(),
 		ErrorHandler:  proxyErrorHandler,
 		FlushInterval: streamingFlushInterval,
+		BufferPool:    proxyBuffers,
 		ModifyResponse: func(resp *http.Response) error {
 			if err := checkStackOrigin(resp, host.slug); err != nil {
 				return err
@@ -488,17 +541,6 @@ func (st *singleTenantFallback) breakerForDestination(host *url.URL, group strin
 	return breaker
 }
 
-// Helper function called when the fallback is directly used as a loader (testing)
-func (st *singleTenantFallback) SingleTenantFallback() http.Handler {
-	return st
-}
-
-// Load implements [RoutesLoader]. It returns the latest discovery snapshot and
-// makes no requests.
-func (st *singleTenantFallback) Load(context.Context) ([]Backend, error) {
-	return st.Backends()
-}
-
 // Backends returns the last-known-good discovered backends, and the error from
 // the latest poll if it failed.
 func (st *singleTenantFallback) Backends() ([]Backend, error) {
@@ -536,15 +578,6 @@ func (st *singleTenantFallback) discover(ctx context.Context) ([]Backend, error)
 	return backends, nil
 }
 
-func (st *singleTenantFallback) Notify(ctx context.Context) (<-chan struct{}, error) {
-	dirty := make(chan struct{}, 1)
-	go func() {
-		defer close(dirty)
-		st.run(ctx, dirty)
-	}()
-	return dirty, nil
-}
-
 // run polls discovery until ctx is done, paced only by st.cooldown, the same
 // way as aggregateTarget.run.
 func (st *singleTenantFallback) run(ctx context.Context, dirty chan<- struct{}) {
@@ -575,18 +608,20 @@ func (st *singleTenantFallback) poll(ctx context.Context, dirty chan<- struct{})
 	backends, err := st.discover(ctx)
 	if err != nil {
 		st.cooldown.OnFailure(now)
-		st.status.recordFailure()
 		logging.FromContext(ctx).Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
 		next := &singleTenantDiscovery{err: err}
 		if prev != nil {
 			next.backends = prev.backends
 		}
 		st.discovery.Store(next)
+		if st.status.recordFailure() {
+			wake(dirty)
+		}
 		return
 	}
 	st.cooldown.OnSuccess(now)
-	st.status.recordSuccess(now)
 	st.discovery.Store(&singleTenantDiscovery{backends: backends})
+	st.status.recordSuccess(now)
 
 	if prev != nil && prev.err == nil && sameKeySet(backendKeys(prev.backends), backendKeys(backends)) {
 		return
@@ -606,7 +641,6 @@ func backendKeys(backends []Backend) map[string]struct{} {
 }
 
 var (
-	_ RoutesLoader          = (*singleTenantFallback)(nil)
 	_ Backend               = (*fallbackBackend)(nil)
 	_ CallerScopedDiscovery = (*fallbackBackend)(nil)
 )

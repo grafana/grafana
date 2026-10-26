@@ -146,8 +146,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let rsp: SearchAPIResponse;
 
     if (query.deleted) {
-      // Both the filtering and the sorting happen behind this call: in the browser today,
-      // on the server once the trash endpoint is switched on.
+      // The trash endpoint does the filtering and sorting, so the results come back ready.
       const results = await deletedDashboardsCache.search(query);
       rsp = { hits: results, totalHits: results.length };
     } else {

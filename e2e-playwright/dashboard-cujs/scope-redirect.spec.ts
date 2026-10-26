@@ -6,7 +6,6 @@ import { testScopesWithRedirect } from '../utils/scopes';
 test.use({
   featureToggles: {
     scopeFilters: true,
-    groupByVariable: true,
     useScopesNavigationEndpoint: true,
   },
   openFeature: {

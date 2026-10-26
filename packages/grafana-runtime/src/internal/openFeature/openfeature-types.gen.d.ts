@@ -45,6 +45,7 @@ declare module "@openfeature/core" {
     | "dashboards.libraryPanelHorizontalRepeatFullWidth"
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
+    | "grafana.savedDashboardViews"
     | "grafana.dashboardPreviewMode"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
@@ -57,7 +58,6 @@ declare module "@openfeature/core" {
     | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsColumnAutoComplete"
     | "sqlExpressionsCodeMirror"
-    | "groupByVariable"
     | "scopeFilters"
     | "newDashboardWithFiltersAndGroupBy"
     | "grafana.filterablePanels"
@@ -160,6 +160,7 @@ declare module "@openfeature/core" {
     | "grafana.vectorSearchCmdk"
     | "grafana.cmdkHybridSearch"
     | "assistant.fullscreenWorkspace"
+    | "assistant.dashboard.artifacts"
     | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
@@ -182,7 +183,6 @@ declare module "@openfeature/core" {
     | "grafana.dynamicTraceToLogs"
     | "grafana.thresholdsInterpolation"
     | "grafana.pluginPathNesting"
-    | "grafana.unifiedDataSourcePicker"
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
     | "datasources.querier.newName"
@@ -198,7 +198,8 @@ declare module "@openfeature/core" {
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"
-    | "grafana.geomapProtomapsBasemap";
+    | "grafana.geomapProtomapsBasemap"
+    | "reporting.removeLogoUrlField";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

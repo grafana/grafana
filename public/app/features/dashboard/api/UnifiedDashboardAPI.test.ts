@@ -3,12 +3,7 @@ import {
   type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import {
-  EMPTY_TABLE_RESPONSE,
-  type Resource,
-  type ResourceList,
-  type TableResponse,
-} from 'app/features/apiserver/types';
+import { type Resource, type ResourceList } from 'app/features/apiserver/types';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -424,53 +419,6 @@ describe('UnifiedDashboardAPI', () => {
       } catch (error) {}
       expect(v1Client.deleteDashboard).toHaveBeenCalledWith('123', true);
       expect(v2Client.deleteDashboard).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('listDeletedDashboards', () => {
-    it('delegates directly to v1 client', async () => {
-      const mockTableResponse: TableResponse = {
-        ...EMPTY_TABLE_RESPONSE,
-        metadata: { resourceVersion: '1', continue: 'next-token' },
-        columnDefinitions: [
-          { name: 'Name', type: 'string' },
-          { name: 'Title', type: 'string' },
-          { name: 'Created At', type: 'date' },
-        ],
-        rows: [
-          {
-            cells: ['deleted-dash-1'],
-            object: { metadata: { name: 'dash-1', resourceVersion: '1', creationTimestamp: '2024-01-01T00:00:00Z' } },
-          },
-        ],
-      };
-      v1Client.listDeletedDashboards.mockResolvedValue(mockTableResponse);
-
-      const result = await api.listDeletedDashboards({ limit: 10 });
-
-      expect(result).toBe(mockTableResponse);
-      expect(v1Client.listDeletedDashboards).toHaveBeenCalledWith({ limit: 10 });
-      expect(v2Client.listDeletedDashboards).not.toHaveBeenCalled();
-    });
-
-    it('passes options through to v1', async () => {
-      const mockTableResponse: TableResponse = {
-        ...EMPTY_TABLE_RESPONSE,
-        metadata: { resourceVersion: '1' },
-      };
-      v1Client.listDeletedDashboards.mockResolvedValue(mockTableResponse);
-
-      await api.listDeletedDashboards({ limit: 50, continue: 'page-token' });
-
-      expect(v1Client.listDeletedDashboards).toHaveBeenCalledWith({ limit: 50, continue: 'page-token' });
-    });
-
-    it('propagates v1 errors', async () => {
-      const mockError = new Error('Network error');
-      v1Client.listDeletedDashboards.mockRejectedValue(mockError);
-
-      await expect(api.listDeletedDashboards({ limit: 10 })).rejects.toThrow('Network error');
-      expect(v2Client.listDeletedDashboards).not.toHaveBeenCalled();
     });
   });
 
