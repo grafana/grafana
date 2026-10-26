@@ -65,6 +65,9 @@ type groupStatusDoc struct {
 	Group  string `json:"group"`
 	Source string `json:"source"`
 	Key    string `json:"key"`
+	// ServiceOnly is set for a group only services may use. The status page
+	// lists it for every caller; the rest of discovery only for services.
+	ServiceOnly bool `json:"serviceOnly,omitempty"`
 	// Health summarizes the breaker: ok, degraded (failing, still closed),
 	// recovering (half-open), unavailable (open), or unknown when the group
 	// has no breaker of its own.
@@ -156,12 +159,13 @@ func (r *GrafanaRouter) routerStatus(req *http.Request) routerStatusDoc {
 
 func (r *GrafanaRouter) groupStatus(name string, entry servingEntry) groupStatusDoc {
 	g := groupStatusDoc{
-		Group:    name,
-		Source:   entry.source,
-		Key:      entry.key,
-		Plugin:   entry.plugin,
-		LoadedAt: entry.loadedAt.UTC(),
-		Manifest: entry.hasManifest,
+		Group:       name,
+		Source:      entry.source,
+		Key:         entry.key,
+		ServiceOnly: r.serviceOnly[name],
+		Plugin:      entry.plugin,
+		LoadedAt:    entry.loadedAt.UTC(),
+		Manifest:    entry.hasManifest,
 	}
 	if entry.watching != nil {
 		g.Watches = entry.watching.Load()

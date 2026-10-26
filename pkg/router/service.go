@@ -61,7 +61,13 @@ func ProvideGrafanaRouter(cfg *setting.Cfg) (*GrafanaRouter, error) {
 			return nil, err
 		}
 	}
-	return NewGrafanaRouter(nil, auth), nil
+	serviceOnly, err := serviceOnlyGroupsFromConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	r := NewGrafanaRouter(nil, auth)
+	r.serviceOnly = serviceOnly
+	return r, nil
 }
 
 // ProvideService creates the router service around router, attaching loader.
@@ -73,6 +79,9 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 		return nil, fmt.Errorf("routes loader is required")
 	}
 	router.loader = loader
+	if filter, ok := loader.(GroupAccessFilter); ok {
+		router.groupAccess = filter
+	}
 
 	s := newService(router, reg)
 	s.standalone = standaloneRouter(cfg)

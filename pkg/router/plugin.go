@@ -16,11 +16,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -317,6 +319,31 @@ func isAppPluginID(id string) bool {
 
 func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
 	return make(chan struct{}), nil // TODO? is there a plugin registry with update events?
+}
+
+var _ GroupAccessFilter = (*PluginLoader)(nil)
+
+// HiddenGroups hides each plugin group whose plugin the requester may not
+// use, by the same check its backend enforces (NewAppAccessChecker).
+func (pl *PluginLoader) HiddenGroups(ctx context.Context, requester identity.Requester, plugins map[string]string) (map[string]bool, error) {
+	if pl.deps.AccessControl == nil {
+		return nil, nil
+	}
+	check := pluginaccesscontrol.NewAppAccessChecker(pl.deps.AccessControl)
+	var hidden map[string]bool
+	for group, pluginID := range plugins {
+		decision, _, err := check(ctx, requester, pluginID)
+		if err != nil {
+			return nil, err
+		}
+		if decision != authorizer.DecisionAllow {
+			if hidden == nil {
+				hidden = map[string]bool{}
+			}
+			hidden[group] = true
+		}
+	}
+	return hidden, nil
 }
 
 //-----------------------

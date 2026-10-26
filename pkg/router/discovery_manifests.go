@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"hash"
 	"io"
 	"maps"
 	"net/http"
@@ -160,7 +161,18 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, "watch"), w)
 		return
 	}
-	docs := r.manifestDocs.Load()
+	var docs *manifestDocs
+	switch filter := r.groupFilter(req); {
+	case filter.service:
+		docs = r.manifestDocs.Load()
+	case filter.restricted():
+		docs = r.restrictedDocsFor(req.Context(), filter).manifests
+	default:
+		docs = r.userManifestDocs.Load()
+	}
+	if r.servesServiceOnly.Load() || r.groupAccess != nil {
+		w.Header().Set("Cache-Control", "private")
+	}
 	switch path := strings.TrimSuffix(req.URL.Path, "/"); path {
 	case discoveryPrefix:
 		serveCachedDoc(w, req, &discoveryGroupDoc)
@@ -314,7 +326,13 @@ func (r *GrafanaRouter) publishManifestDocs(ctx context.Context, backends []Back
 		return
 	}
 	docs, cache := buildManifestDocsFrom(ctx, sorted, r.manifestCache)
+	userDocs := docs
+	if users := r.withoutServiceOnly(sorted); len(users) != len(sorted) {
+		// Every manifest is in cache now, so none is converted again.
+		userDocs, _ = buildManifestDocsFrom(ctx, users, cache)
+	}
 	r.manifestDocs.Store(docs)
+	r.userManifestDocs.Store(userDocs)
 	r.manifestCache = cache
 	r.manifestFingerprint = fingerprint.String()
 }
@@ -325,11 +343,8 @@ func (r *GrafanaRouter) publishManifestDocs(ctx context.Context, backends []Back
 // fails to convert is left out of the manifests, but its group stays in the
 // index; the cache remembers the failure, so it is logged once.
 func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[string]*cachedDoc) (*manifestDocs, map[string]*cachedDoc) {
-	docs := &manifestDocs{manifests: map[string]*cachedDoc{}, backends: sorted}
+	docs, listHash := newManifestDocs(sorted)
 	next := make(map[string]*cachedDoc, len(sorted))
-	listHash := sha256.New()
-	_, _ = io.WriteString(listHash, manifestListPrefix)
-	docs.listLen = len(manifestListPrefix) + len(manifestListSuffix)
 	for _, b := range sorted {
 		manifest, ok := backendManifest(b)
 		if !ok {
@@ -345,27 +360,59 @@ func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[stri
 			}
 		}
 		next[b.Key()] = doc // nil remembers a failed conversion
-		if doc == nil {
-			continue
+		if doc != nil {
+			docs.add(b.Group().Name, doc, listHash)
 		}
-		if len(docs.items) > 0 {
-			docs.listLen++ // the separating comma
-		}
-		docs.items = append(docs.items, doc)
-		docs.names = append(docs.names, b.Group().Name)
-		docs.manifests[b.Group().Name] = doc
-		docs.listLen += len(doc.body)
-		_, _ = io.WriteString(listHash, doc.etag)
 	}
 	docs.listETag = quoteETag(hex.EncodeToString(listHash.Sum(nil))[:16])
 	return docs, next
+}
+
+func newManifestDocs(backends []Backend) (*manifestDocs, hash.Hash) {
+	docs := &manifestDocs{manifests: map[string]*cachedDoc{}, backends: backends}
+	docs.listLen = len(manifestListPrefix) + len(manifestListSuffix)
+	listHash := sha256.New()
+	_, _ = io.WriteString(listHash, manifestListPrefix)
+	return docs, listHash
+}
+
+// add appends group's manifest to the list, in group order.
+func (d *manifestDocs) add(group string, doc *cachedDoc, listHash hash.Hash) {
+	if len(d.items) > 0 {
+		d.listLen++ // the separating comma
+	}
+	d.items = append(d.items, doc)
+	d.names = append(d.names, group)
+	d.manifests[group] = doc
+	d.listLen += len(doc.body)
+	_, _ = io.WriteString(listHash, doc.etag)
+}
+
+// filtered returns the documents of only the groups allowed, sharing their
+// manifests. Its index is rendered on its first request.
+func (d *manifestDocs) filtered(allowed func(group string) bool) *manifestDocs {
+	backends := make([]Backend, 0, len(d.backends))
+	for _, b := range d.backends {
+		if allowed(b.Group().Name) {
+			backends = append(backends, b)
+		}
+	}
+	out, listHash := newManifestDocs(backends)
+	for i, doc := range d.items {
+		if allowed(d.names[i]) {
+			out.add(d.names[i], doc, listHash)
+		}
+	}
+	out.listETag = quoteETag(hex.EncodeToString(listHash.Sum(nil))[:16])
+	return out
 }
 
 var _ resource.ManifestDiscovery = (*GrafanaRouter)(nil)
 
 // ListManifests returns the published manifests, decoded from the documents
 // /apis/discovery serves, so in-process readers see exactly what HTTP clients
-// do. Each call decodes fresh copies the caller may keep or change.
+// do: those of services, service-only groups included. Each call decodes
+// fresh copies the caller may keep or change.
 func (r *GrafanaRouter) ListManifests(ctx context.Context) (*appmanifestv1alpha2.AppManifestList, error) {
 	docs := r.manifestDocs.Load()
 	list := &appmanifestv1alpha2.AppManifestList{

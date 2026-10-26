@@ -99,6 +99,29 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   unless its requester may use that namespace (`authorizeNamespace`), so no backend, stack or
   fallback ever sees it. Allowed: the requester's own namespace, any namespace for `*`, and any for
   Grafana admins. Anonymous users get only their own. Backends still authorize everything else.
+- **Service-only groups are for services alone.** `[router] service_only_groups` (`conf/defaults.ini`
+  lists `events.k8s.io` and `agenthub.ext.grafana.app`) names groups only an access policy
+  identity (`types.TypeAccessPolicy`) may use. Every other requester, Grafana admins and service
+  accounts included, gets a 403 `Status` for them in `/apis` and `/openapi/v3`
+  (`authorizeGroup`), whoever serves them, the ST fallback included, and never sees them in
+  discovery: `/apis` in both formats, the `/openapi/v3` index, and the `/apis/discovery`
+  manifests and index, including what the fallback answers for the caller. Their user documents
+  (`userAPIGroupList`, `userOpenAPIIndex`, `userManifestDocs`) are built in `publish`; while any
+  such group is served, discovery is sent with `Cache-Control: private`. The status page lists every
+  group for any caller, marking these `serviceOnly`. In-process readers (`ListManifests`,
+  `GetManifest`) see every manifest.
+- **Discovery hides the plugins a requester may not use.** A loader that implements
+  `GroupAccessFilter` (`group_access.go`; attached in `ProvideService`) is asked, once per discovery
+  request and never for services, which served plugin groups (`servingEntry.plugin.ID`) to hide.
+  The local plugin loader answers with the check its backends enforce: `plugins.app:access` on
+  `plugins:id:<id>` (`NewAppAccessChecker`). Discovery is filtering, not enforcement: requests to a
+  hidden group still reach its backend, which refuses them. If the check fails, every plugin
+  group is hidden, and only those. A requester who may use every group gets the shared documents.
+  Anyone else gets documents built from `userBackends` and `userManifestDocs`, cached in
+  `restrictedDocs` by the hidden groups and purged on every `publish`. With a filter attached,
+  discovery is sent `Cache-Control: private`. The cloud loader has none: managed plugins are
+  unrestricted (`pluginManifestAccessControl`), so filtering them would need a remote authz check
+  first.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
   `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
@@ -142,6 +165,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Outbound header policy, proxy failure labels, request outcomes | `outbound.go`, `proxy_errors.go`, `request_outcome.go` |
 | Metrics, access logs, tracing | `metrics.go`, `logging.go`, `tracing.go`, `plugin_tracing.go` |
 | Source names and loader status | `sources.go` |
+| Service-only groups (`[router] service_only_groups`) | `service_only.go` |
+| Per-requester discovery filter (`GroupAccessFilter`) | `group_access.go` |
 | Loader selection | `loader_factory.go` |
 | Cloud loader: settings, source priority | `cloud_router.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
@@ -200,7 +225,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
 | `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served `ManifestProvider` backend. |
 | `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
-| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
+| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, whether it is service-only, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
 | `/apis/discovery/v1alpha2/AGENTS.md` | Synthesized markdown index of every served group, for agents. |
 | `/openapi/v3/apis/discovery/v1alpha2` | Synthesized OpenAPI v3 document for the discovery group. |
 | `/apis/discovery/v1alpha2/AGENTS` | The same index rendered as a static HTML page for browsers, with a CSP that allows no scripts. Not in the OpenAPI document. |
@@ -249,7 +274,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - A `DiscoveryProvider` backend supplies its group's resources itself. Aggregate and ST backends
     keep them from their polls, which use the router's own identity, and they are part of the key.
   - Every other group comes from `discoveryCache`, keyed by backend key with a TTL
-    (`discoveryCacheTTL`) and shared across callers, since discovery isn't filtered per caller.
+    (`discoveryCacheTTL`) and shared across callers, since a group's discovery isn't filtered per
+    caller (only which groups are listed is).
     Caller-scoped groups never use it.
     A miss is fetched with the caller's credentials. Concurrent callers share one fetch, misses run
     in parallel, and each fetch is bounded by `discoveryFetchTimeout`. Only complete fetches are

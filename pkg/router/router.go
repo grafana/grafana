@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/types"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/sony/gobreaker/v2"
 	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.43.0"
@@ -165,6 +166,26 @@ type GrafanaRouter struct {
 	// reconcile so discovery only advertises what is actually served.
 	apiGroupList atomic.Pointer[cachedDoc]
 	openapiIndex atomic.Pointer[cachedDoc]
+	// userAPIGroupList, userOpenAPIIndex and userManifestDocs are the same
+	// documents without the service-only groups, for every requester that is
+	// not a service. They are the service documents when no such group is
+	// served, which servesServiceOnly records.
+	// serviceOnly holds the groups only services may use, from
+	// [router] service_only_groups. Set before Run, and only read after.
+	serviceOnly map[string]bool
+
+	userAPIGroupList  atomic.Pointer[cachedDoc]
+	userOpenAPIIndex  atomic.Pointer[cachedDoc]
+	userManifestDocs  atomic.Pointer[manifestDocs]
+	servesServiceOnly atomic.Bool
+
+	// groupAccess is the loader's GroupAccessFilter, or nil. Set before Run.
+	// A requester it hides some group from gets documents of its own, built
+	// from userBackends and userManifestDocs and cached in restrictedDocs by
+	// the groups hidden.
+	groupAccess    GroupAccessFilter
+	userBackends   atomic.Pointer[[]Backend]
+	restrictedDocs *lru.Cache[string, *restrictedDocs]
 
 	// manifestDocs is the /discovery tree, published from served with the
 	// root documents. manifestFingerprint is the group/key set it was built
@@ -218,14 +239,19 @@ func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *Gra
 		loader: loader,
 		authn:  tokens,
 		served: map[string]*handlerEntry{},
+
+		restrictedDocs: newRestrictedDocsCache(),
 	}
 	r.watches, r.endWatches = context.WithCancel(context.Background())
 	empty := map[string]servingEntry{}
 	r.snapshot.Store(&empty)
 	emptyGroups := buildAPIGroupList(context.Background(), nil)
 	r.apiGroupList.Store(&emptyGroups)
+	r.userAPIGroupList.Store(&emptyGroups)
 	emptyIndex := buildOpenAPIV3Index(context.Background(), nil)
 	r.openapiIndex.Store(&emptyIndex)
+	r.userOpenAPIIndex.Store(&emptyIndex)
+	r.userBackends.Store(&[]Backend{})
 	r.publishManifestDocs(context.Background(), nil)
 	return r
 }
@@ -298,7 +324,7 @@ func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 	if req = r.authenticate(w, req); req == nil {
 		return
 	}
-	if !authorizeNamespace(w, req, info.Namespace) {
+	if !authorizeNamespace(w, req, info.Namespace) || !r.authorizeGroup(w, req, info.APIGroup) {
 		return
 	}
 
@@ -482,6 +508,9 @@ func (r *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request)
 	}
 	if group == discoveryGroup {
 		serveDiscoveryOpenAPI(w, req, version)
+		return
+	}
+	if !r.authorizeGroup(w, req, group) {
 		return
 	}
 	r.serveOpenAPIGroupVersion(w, req, group, version)
@@ -913,12 +942,24 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	r.retainOpenAPIDocs(snap)
 
 	groupList := buildAPIGroupList(ctx, backends)
-	r.apiGroupList.Store(&groupList)
-
 	index := buildOpenAPIV3Index(ctx, backends)
+	userGroupList, userIndex := groupList, index
+	userBackends := r.withoutServiceOnly(backends)
+	servesServiceOnly := len(userBackends) != len(backends)
+	if servesServiceOnly {
+		userGroupList = buildAPIGroupList(ctx, userBackends)
+		userIndex = buildOpenAPIV3Index(ctx, userBackends)
+	}
+	r.apiGroupList.Store(&groupList)
 	r.openapiIndex.Store(&index)
+	r.userAPIGroupList.Store(&userGroupList)
+	r.userOpenAPIIndex.Store(&userIndex)
+	r.servesServiceOnly.Store(servesServiceOnly)
 
 	r.publishManifestDocs(ctx, backends)
+	// Restricted documents are built from these, and validated against them.
+	r.userBackends.Store(&userBackends)
+	r.restrictedDocs.Purge()
 }
 
 // retainOpenAPIDocs drops cached OpenAPI documents for groups that are no
