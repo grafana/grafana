@@ -130,9 +130,11 @@ Self-managed Grafana instances support multiple organizations. If you're using G
 
 This feature is available starting in Grafana 13.0.4, but not supported until Grafana 13.1.1.
 
-### Configure multiple organizations
+### Configure multiple organizations in self-managed Grafana
 
-If you're setting up Git Sync as code or with Terraform and want to configure multiple organizations, use the `org_id` (Number) The Grafana organization ID this resource belongs to, for self-hosted OSS or Enterprise Grafana. When set, it overrides the provider's `org_id` for this resource only, so a single provider configuration can manage App Platform resources across multiple organizations. Not supported on Grafana Cloud (configure a stack with `stack_id` instead). Changing this value forces the resource to be recreated in the new organization.
+If you're setting up Git Sync as code or with Terraform and want to configure multiple organizations, set `org_id` to the Grafana organization ID this resource belongs to. When set, it overrides the provider's `org_id` for this resource only. If you modify this value you need to recreate the resource in the new organization.
+
+This option is not supported on Grafana Cloud, where you need to configure a stack with `stack_id` instead.
 
 ## Compatible Git providers
 
