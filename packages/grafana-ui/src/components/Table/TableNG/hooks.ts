@@ -46,7 +46,6 @@ import { getColumnMenuOptions } from './menuOptions';
 import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
-  type FooterFieldState,
   type GetActionsFunctionLocal,
   type NestedRowEntry,
   type SortByBehavior,
@@ -1326,33 +1325,12 @@ export const useReducerEntries = (
       return [];
     }
 
-    // Create a new state object that matches the original behavior exactly
-    const newState: FooterFieldState = {
-      lastProcessedRowCount: 0,
-      ...(field.state || {}), // Preserve any existing state properties
-    };
-
-    // Assign back to field
-    field.state = newState;
-
-    const currentRowCount = rows.length;
-    const lastRowCount = newState.lastProcessedRowCount;
-
-    // Check if we need to invalidate the cache
-    if (lastRowCount !== currentRowCount) {
-      // Cache should be invalidated as row count has changed
-      if (newState.calcs) {
-        delete newState.calcs;
-      }
-      // Update the row count tracker
-      newState.lastProcessedRowCount = currentRowCount;
-    }
-
     // Calculate all specified reducers
     const results: Record<string, number | null> = reduceField({
       field: {
         ...field,
         values: rows.map((row) => row[displayName]),
+        state: undefined,
       },
       reducers,
     });

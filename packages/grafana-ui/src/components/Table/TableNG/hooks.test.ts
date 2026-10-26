@@ -2042,6 +2042,23 @@ describe('TableNG hooks', () => {
         [ReducerID.first, '30 years'],
       ]);
     });
+
+    it('should recalculate when the rows change but the row count stays the same', () => {
+      const { fields, rows } = setupData();
+      fields[1].config.custom = {
+        footer: {
+          reducers: [ReducerID.sum],
+        },
+      };
+
+      const { result, rerender } = renderHook(({ rows }) => useReducerEntries(fields[1], rows, 'age', 0), {
+        initialProps: { rows: [rows[0]] },
+      });
+      expect(result.current).toEqual([[ReducerID.sum, '30']]);
+
+      rerender({ rows: [rows[1]] });
+      expect(result.current).toEqual([[ReducerID.sum, '25']]);
+    });
   });
 
   describe('useNestedColWidths', () => {
