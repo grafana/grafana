@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
+import { partition } from 'lodash';
 import { useMemo } from 'react';
 
-import { type GrafanaTheme2, dateMath } from '@grafana/data';
+import { type GrafanaTheme2, type UrlQueryMap, dateMath } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
@@ -79,48 +80,24 @@ const SilencesTable = () => {
 
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
-  const filteredSilences = useFilteredSilences(silences);
+  const filteredSilences = useFilteredSilences(silences, queryParams);
 
   const { silenceState: silenceStateInParams } = getSilenceFiltersFromUrlParams(queryParams);
   const showExpiredFromUrl = silenceStateInParams === SilenceState.Expired;
 
-  const silencedAlertsBySilenceId = useMemo(() => {
-    if (!canPreview) {
-      return;
-    }
-    const index = new Map<string, AlertmanagerAlert[]>();
-    for (const alert of alertManagerAlerts) {
-      for (const silencedBy of new Set(alert.status.silencedBy)) {
-        const alerts = index.get(silencedBy);
-        if (alerts) {
-          alerts.push(alert);
-        } else {
-          index.set(silencedBy, [alert]);
-        }
-      }
-    }
-    return index;
-  }, [alertManagerAlerts, canPreview]);
+  const [itemsExpired, itemsNotExpired] = useMemo(() => {
+    const items = filteredSilences.map<SilenceTableItemProps>((silence) => ({
+      id: silence.id,
+      data: {
+        ...silence,
+        silencedAlerts: canPreview
+          ? alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(silence.id))
+          : undefined,
+      },
+    }));
 
-  const { itemsNotExpired, itemsExpired } = useMemo(() => {
-    const itemsNotExpired: SilenceTableItemProps[] = [];
-    const itemsExpired: SilenceTableItemProps[] = [];
-    for (const silence of filteredSilences) {
-      const item = {
-        id: silence.id,
-        data: {
-          ...silence,
-          silencedAlerts: silencedAlertsBySilenceId ? (silencedAlertsBySilenceId.get(silence.id) ?? []) : undefined,
-        },
-      };
-      if (silence.status.state === SilenceState.Expired) {
-        itemsExpired.push(item);
-      } else {
-        itemsNotExpired.push(item);
-      }
-    }
-    return { itemsNotExpired, itemsExpired };
-  }, [filteredSilences, silencedAlertsBySilenceId]);
+    return partition(items, ({ data }) => data.status.state === SilenceState.Expired);
+  }, [filteredSilences, alertManagerAlerts, canPreview]);
 
   if (isLoading || amAlertsIsLoading) {
     return <LoadingPlaceholder text={t('alerting.silences-table.text-loading-silences', 'Loading silences...')} />;
@@ -235,34 +212,25 @@ function SilenceList({
   }
 }
 
-const useFilteredSilences = (silences: Silence[]) => {
-  const [queryParams] = useQueryParams();
+const useFilteredSilences = (silences: Silence[], queryParams: UrlQueryMap) => {
   return useMemo(() => {
     const { queryString } = getSilenceFiltersFromUrlParams(queryParams);
-    const silenceIdsString = queryParams?.silenceIds;
+    const silenceIds = typeof queryParams.silenceIds === 'string' ? queryParams.silenceIds.split(',') : undefined;
+    const matchers = queryString ? parsePromQLStyleMatcherLooseSafe(queryString) : [];
+
     return silences.filter((silence) => {
-      if (typeof silenceIdsString === 'string') {
-        const idsIncluded = silenceIdsString.split(',').includes(silence.id);
-        if (!idsIncluded) {
-          return false;
-        }
+      if (silenceIds && !silenceIds.includes(silence.id)) {
+        return false;
       }
-      if (queryString) {
-        const matchers = parsePromQLStyleMatcherLooseSafe(queryString);
-        const matchersMatch = matchers.every((matcher) =>
-          silence.matchers?.some(
-            ({ name, value, isEqual, isRegex }) =>
-              matcher.name === name &&
-              matcher.value === value &&
-              matcher.isEqual === isEqual &&
-              matcher.isRegex === isRegex
-          )
-        );
-        if (!matchersMatch) {
-          return false;
-        }
-      }
-      return true;
+      return matchers.every((matcher) =>
+        silence.matchers?.some(
+          ({ name, value, isEqual, isRegex }) =>
+            matcher.name === name &&
+            matcher.value === value &&
+            matcher.isEqual === isEqual &&
+            matcher.isRegex === isRegex
+        )
+      );
     });
   }, [queryParams, silences]);
 };
