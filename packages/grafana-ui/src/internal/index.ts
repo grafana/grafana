@@ -10,6 +10,7 @@
  *
  */
 
+export { groupPanelStatusItems } from '../components/PanelChrome/groupPanelStatusItems';
 export { useDragAndDrop } from '../components/DragAndDrop/useDragAndDrop';
 export type { DragAndDropComponents, DragAndDropModule } from '../components/DragAndDrop/useDragAndDrop';
 
