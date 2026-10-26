@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 // ProxyDependencies contains the services and configuration used to proxy a request.
@@ -117,6 +119,18 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
+		started := time.Now()
+		status := http.StatusInternalServerError
+		defer func() {
+			logProxyUsage(ctx, req, name, r.builder.pluginJSON.ID, status, time.Since(started))
+		}()
+		respondError := func(err error) {
+			var apiStatus apierrors.APIStatus
+			if errors.As(err, &apiStatus) && apiStatus.Status().Code != 0 {
+				status = int(apiStatus.Status().Code)
+			}
+			responder.Error(err)
+		}
 		if r.builder.cfg.HandlerOrigin != "" {
 			w.Header().Set("X-Grafana-DS-Apiserver", r.builder.cfg.HandlerOrigin)
 		}
@@ -127,7 +141,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		deps, err := r.builder.proxyDependencies(ctx, req)
 		if err != nil {
 			m.SetError()
-			responder.Error(err)
+			respondError(err)
 			return
 		}
 		if deps.GrafanaConfig != nil {
@@ -140,11 +154,11 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		if err != nil {
 			if errors.Is(err, datasources.ErrDataSourceNotFound) {
 				m.SetNotFound()
-				responder.Error(r.builder.datasourceResourceInfo.NewNotFound(name))
+				respondError(r.builder.datasourceResourceInfo.NewNotFound(name))
 				return
 			}
 			m.SetError()
-			responder.Error(err)
+			respondError(err)
 			return
 		}
 		jsonData, _ := ds.Spec.JSONData().(map[string]any)
@@ -152,7 +166,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			proxyCfg, err := deps.GrafanaConfig.Proxy()
 			if err != nil || proxyCfg.ClientCfg == nil {
 				m.SetError()
-				responder.Error(apierrors.NewBadRequest("PDC is not configured for this datasource proxy"))
+				respondError(apierrors.NewBadRequest("PDC is not configured for this datasource proxy"))
 				return
 			}
 		}
@@ -162,20 +176,21 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 		if err := validate(ds.Spec.URL(), jsonData, req); err != nil {
 			m.SetError()
-			responder.Error(apierrors.NewForbidden(r.builder.datasourceResourceInfo.GroupResource(), name, err))
+			respondError(apierrors.NewForbidden(r.builder.datasourceResourceInfo.GroupResource(), name, err))
 			return
 		}
 
 		if ds.Spec.IsOAuthPassThruEnabled() && deps.OAuthTokenService == nil {
 			m.SetError()
-			responder.Error(apierrors.NewBadRequest("OAuth passthrough is not supported by this datasource proxy"))
+			respondError(apierrors.NewBadRequest("OAuth passthrough is not supported by this datasource proxy"))
 			return
 		}
 
+		response := web.Rw(w, req)
 		proxy, err := pluginproxy.NewDataSourceProxy(
 			loader,
 			r.builder.pluginJSON.Routes,
-			pluginproxy.HTTPContext{Req: req, Resp: w},
+			pluginproxy.HTTPContext{Req: req, Resp: response},
 			proxyPathFromRequest(req, name),
 			deps.ProxyCfg,
 			deps.HTTPClientProvider,
@@ -187,10 +202,14 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		)
 		if err != nil {
 			m.SetError()
-			responder.Error(err)
+			respondError(err)
 			return
 		}
 		proxy.HandleRequest()
+		status = response.Status()
+		if status == 0 {
+			status = http.StatusOK
+		}
 	}), nil
 }
 
