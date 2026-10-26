@@ -10,8 +10,6 @@ import (
 
 // JobStatusApplyConfiguration represents a declarative configuration of the JobStatus type for use
 // with apply.
-//
-// The job status
 type JobStatusApplyConfiguration struct {
 	State    *provisioningv0alpha1.JobState `json:"state,omitempty"`
 	Started  *int64                         `json:"started,omitempty"`

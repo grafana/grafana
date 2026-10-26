@@ -44,7 +44,7 @@ func BuildFromManifests(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 ) []builder.GroupVersionRoutes {
-	manifests = slices.Concat(manifests, builder.ManifestsFromBuilders(builders), builder.ManifestsFromInstallers(installers))
+	manifests = slices.Concat(manifests, builder.ManifestsFromBuilders(builders))
 	return BuildForServedGroupVersions(
 		manifests, builder.ServedGroupVersions(builders, installers), enabled, tracer, store)
 }

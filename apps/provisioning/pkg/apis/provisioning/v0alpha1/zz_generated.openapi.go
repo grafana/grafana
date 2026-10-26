@@ -188,7 +188,7 @@ func schema_pkg_apis_provisioning_v0alpha1_BitbucketRepositoryConfig(ref common.
 					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
+							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash. When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -306,8 +306,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Connection(ref common.ReferenceCallba
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "When this code is changed, make sure to update the code generation. As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -331,14 +330,16 @@ func schema_pkg_apis_provisioning_v0alpha1_Connection(ref common.ReferenceCallba
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(ConnectionSpec{}.OpenAPIModelName()),
+							Description: "Spec is the spec of the Connection",
+							Default:     map[string]interface{}{},
+							Ref:         ref(ConnectionSpec{}.OpenAPIModelName()),
 						},
 					},
 					"secure": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(ConnectionSecure{}.OpenAPIModelName()),
+							Description: "Secure holds secret operations or references for Connection.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(ConnectionSecure{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
@@ -672,8 +673,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ConnectionStatus(ref common.Reference
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "The status of a Connection. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"observedGeneration": {
 						SchemaProps: spec.SchemaProps{
@@ -780,8 +780,13 @@ func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.Reference
 						},
 					},
 					"paths": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
+							Description: "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory)",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -794,6 +799,11 @@ func schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref common.Reference
 						},
 					},
 					"resources": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
 							Type:        []string{"array"},
@@ -879,19 +889,24 @@ func schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref common.Reference
 					},
 					"branch": {
 						SchemaProps: spec.SchemaProps{
-							Description: "FIXME: we should validate this in admission hooks Target branch for export (only git)",
+							Description: "Target branch for export (only git)",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "FIXME: we should validate this in admission hooks Prefix in target file system",
+							Description: "Prefix in target file system",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"resources": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported.",
 							Type:        []string{"array"},
@@ -1285,7 +1300,7 @@ func schema_pkg_apis_provisioning_v0alpha1_GitHubRepositoryConfig(ref common.Ref
 					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
+							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash. When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1320,7 +1335,7 @@ func schema_pkg_apis_provisioning_v0alpha1_GitLabRepositoryConfig(ref common.Ref
 					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
+							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash. When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1363,6 +1378,11 @@ func schema_pkg_apis_provisioning_v0alpha1_GitOAuthConnectionConfig(ref common.R
 						},
 					},
 					"scopes": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "The OAuth scopes to request, granting git read and write access.",
 							Type:        []string{"array"},
@@ -1413,7 +1433,7 @@ func schema_pkg_apis_provisioning_v0alpha1_GitRepositoryConfig(ref common.Refere
 					},
 					"path": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash.\n\nWhen specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
+							Description: "Path is the subdirectory for the Grafana data. If specified, Grafana will ignore anything that is outside this directory in the repository. This is usually something like `grafana/`. Trailing and leading slash are not required. They are always added when needed. The path is relative to the root of the repository, regardless of the leading slash. When specifying something like `grafana-`, we will not look for `grafana-*`; we will only look for files under the directory `/grafana-/`. That means `/grafana-example.json` would not be found.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -1484,8 +1504,7 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref common.ReferenceCallb
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "HistoricJob is an append only log, saving all jobs that have been processed.\n\nNOTE: This should not be used directly by any external consumer. When there is a more stable integration with loki (an appropriate append only store) this may be removed without notice.\n\nThe repository name and type are stored as labels.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -1509,8 +1528,9 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJob(ref common.ReferenceCallb
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(JobSpec{}.OpenAPIModelName()),
+							Description: "Spec is the spec of the HistoricJob",
+							Default:     map[string]interface{}{},
+							Ref:         ref(JobSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
@@ -1554,6 +1574,11 @@ func schema_pkg_apis_provisioning_v0alpha1_HistoricJobList(ref common.ReferenceC
 						},
 					},
 					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -1683,8 +1708,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Job(ref common.ReferenceCallback) com
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "The repository name and type are stored as labels",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -1708,8 +1732,9 @@ func schema_pkg_apis_provisioning_v0alpha1_Job(ref common.ReferenceCallback) com
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(JobSpec{}.OpenAPIModelName()),
+							Description: "Spec is the spec of the Job",
+							Default:     map[string]interface{}{},
+							Ref:         ref(JobSpec{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
@@ -1753,6 +1778,11 @@ func schema_pkg_apis_provisioning_v0alpha1_JobList(ref common.ReferenceCallback)
 						},
 					},
 					"items": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -1823,16 +1853,14 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 					},
 					"error": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Create or update (export)",
-							Type:        []string{"integer"},
-							Format:      "int64",
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 					"warning": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The error count",
-							Type:        []string{"integer"},
-							Format:      "int64",
+							Type:   []string{"integer"},
+							Format: "int64",
 						},
 					},
 					"noop": {
@@ -1850,6 +1878,11 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 						},
 					},
 					"errors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Report errors/warnings for this resource type This may not be an exhaustive list and recommend looking at the logs for more info",
 							Type:        []string{"array"},
@@ -1864,6 +1897,11 @@ func schema_pkg_apis_provisioning_v0alpha1_JobResourceSummary(ref common.Referen
 						},
 					},
 					"warnings": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -1972,8 +2010,7 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "The job status",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"state": {
 						SchemaProps: spec.SchemaProps{
@@ -2002,6 +2039,11 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 						},
 					},
 					"errors": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -2015,6 +2057,11 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 						},
 					},
 					"warnings": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{
@@ -2042,6 +2089,11 @@ func schema_pkg_apis_provisioning_v0alpha1_JobStatus(ref common.ReferenceCallbac
 						},
 					},
 					"summary": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Summary of processed actions",
 							Type:        []string{"array"},
@@ -2149,6 +2201,11 @@ func schema_pkg_apis_provisioning_v0alpha1_MigrateJobOptions(ref common.Referenc
 						},
 					},
 					"resources": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported.",
 							Type:        []string{"array"},
@@ -2197,8 +2254,13 @@ func schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref common.ReferenceCa
 						},
 					},
 					"paths": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory) FIXME: we should validate this in admission hooks",
+							Description: "Paths to be deleted. Examples: - dashboard.json (for a file) - a/b/c/other-dashboard.json (for a file) - nested/deep/ (for a directory)",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -2218,6 +2280,11 @@ func schema_pkg_apis_provisioning_v0alpha1_MoveJobOptions(ref common.ReferenceCa
 						},
 					},
 					"resources": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths.",
 							Type:        []string{"array"},
@@ -2457,8 +2524,7 @@ func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallba
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "When this code is changed, make sure to update the code generation. As of writing, this can be done via the hack dir in the root of the repo: ./hack/update-codegen.sh provisioning If you've opened the generated files in this dir at some point in VSCode, you may also have to re-open them to clear errors.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -2482,14 +2548,16 @@ func schema_pkg_apis_provisioning_v0alpha1_Repository(ref common.ReferenceCallba
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(RepositorySpec{}.OpenAPIModelName()),
+							Description: "Spec is the spec of the Repository",
+							Default:     map[string]interface{}{},
+							Ref:         ref(RepositorySpec{}.OpenAPIModelName()),
 						},
 					},
 					"secure": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(SecureValues{}.OpenAPIModelName()),
+							Description: "Secure holds secret operations or references for Repository.",
+							Default:     map[string]interface{}{},
+							Ref:         ref(SecureValues{}.OpenAPIModelName()),
 						},
 					},
 					"status": {
@@ -2598,6 +2666,11 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositorySpec(ref common.ReferenceCa
 						},
 					},
 					"workflows": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Description: "UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly)",
 							Type:        []string{"array"},
@@ -2689,8 +2762,7 @@ func schema_pkg_apis_provisioning_v0alpha1_RepositoryStatus(ref common.Reference
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "The status of a Repository. This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually. As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"observedGeneration": {
 						SchemaProps: spec.SchemaProps{
@@ -4025,6 +4097,11 @@ func schema_pkg_apis_provisioning_v0alpha1_WebhookStatus(ref common.ReferenceCal
 						},
 					},
 					"subscribedEvents": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},
 							Items: &spec.SchemaOrArray{

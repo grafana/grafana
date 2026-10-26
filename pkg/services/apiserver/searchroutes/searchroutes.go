@@ -75,7 +75,7 @@ func BuildFromManifests(
 	builderManifests := builder.ManifestsFromBuilders(builders)
 	served := builder.ServedGroupVersions(builders, installers)
 	routes, err := BuildForServedGroupVersions(
-		slices.Concat(manifests, builderManifests, builder.ManifestsFromInstallers(installers)),
+		slices.Concat(manifests, builderManifests),
 		served,
 		searchEnabled,
 		trashEnabled,

@@ -165,39 +165,26 @@ func KindFor(kind, version string) (resource.Kind, bool) {
 	return resource.Kind{}, false
 }
 
-var folderScoped = false
-
-// ManifestData builds the app manifest. Kind schemas are not part of it; the installer serves the
-// OpenAPI definitions generated for the hand-written types.
-func ManifestData() sdkapp.ManifestData {
-	versions := make([]sdkapp.ManifestVersion, 0, len(Versions))
-	for _, v := range Versions {
-		mv := sdkapp.ManifestVersion{Name: v, Served: true}
-		for _, d := range kindDefs(v) {
-			mk := sdkapp.ManifestVersionKind{
-				Kind:         d.kind,
-				Plural:       d.plural,
-				Scope:        string(resource.NamespacedScope),
-				FolderScoped: &folderScoped,
-				Routes:       map[string]spec3.PathProps{},
+// WithRoutes adds the custom subresource routes to the generated manifest, which only declares the kinds.
+func WithRoutes(m sdkapp.ManifestData) sdkapp.ManifestData {
+	versions := make([]sdkapp.ManifestVersion, len(m.Versions))
+	for i, v := range m.Versions {
+		kinds := make([]sdkapp.ManifestVersionKind, len(v.Kinds))
+		for j, k := range v.Kinds {
+			routes := RoutesFor(k.Kind)
+			if len(routes) > 0 {
+				k.Routes = make(map[string]spec3.PathProps, len(routes))
+				for _, r := range routes {
+					k.Routes[r.Path] = pathProps(r)
+				}
 			}
-			for _, f := range d.selectable {
-				mk.SelectableFields = append(mk.SelectableFields, "."+f.FieldSelector)
-			}
-			for _, r := range RoutesFor(d.kind) {
-				mk.Routes[r.Path] = pathProps(r)
-			}
-			mv.Kinds = append(mv.Kinds, mk)
+			kinds[j] = k
 		}
-		versions = append(versions, mv)
+		v.Kinds = kinds
+		versions[i] = v
 	}
-	return sdkapp.ManifestData{
-		AppName:          AppName,
-		AppDisplayName:   "Provisioning",
-		Group:            provisioning.GROUP,
-		PreferredVersion: provisioning.VERSION,
-		Versions:         versions,
-	}
+	m.Versions = versions
+	return m
 }
 
 // GoTypeAssociator resolves manifest kinds and custom route responses to Go types.

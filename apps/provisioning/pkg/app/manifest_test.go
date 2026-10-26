@@ -5,12 +5,19 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/apps/provisioning/pkg/apis/manifestdata"
 )
 
-func TestManifestIsValid(t *testing.T) {
-	m := ManifestData()
+func TestManifestWithRoutesIsValid(t *testing.T) {
+	m := WithRoutes(*manifestdata.LocalManifest().ManifestData)
 	require.NoError(t, m.Validate())
 	require.Len(t, m.Versions, len(Versions))
+	for _, v := range m.Versions {
+		for _, k := range v.Kinds {
+			require.Len(t, k.Routes, len(RoutesFor(k.Kind)), "%s %s", v.Name, k.Kind)
+		}
+	}
 }
 
 func TestRoutesResolveToGoTypes(t *testing.T) {

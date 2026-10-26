@@ -13,7 +13,6 @@ type DeleteJobOptionsApplyConfiguration struct {
 	// - dashboard.json (for a file)
 	// - a/b/c/other-dashboard.json (for a file)
 	// - nested/deep/ (for a directory)
-	// FIXME: we should validate this in admission hooks
 	Paths []string `json:"paths,omitempty"`
 	// Resources to delete
 	// This option has been created because currently the frontend does not use

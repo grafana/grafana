@@ -169,23 +169,6 @@ type GroupVersionRoutesProvider interface {
 	GroupVersionRoutes() []GroupVersionRoutes
 }
 
-// AppManifestProvider is implemented by app installers whose kinds are missing from the generated app manifests,
-// so per-kind routes (list-keys, search) are mounted from the installer's own manifest.
-type AppManifestProvider interface {
-	AppManifest() *app.ManifestData
-}
-
-// ManifestsFromInstallers returns the manifests of installers implementing AppManifestProvider.
-func ManifestsFromInstallers(installers []appsdkapiserver.AppInstaller) []*app.ManifestData {
-	var manifests []*app.ManifestData
-	for _, i := range installers {
-		if p, ok := i.(AppManifestProvider); ok {
-			manifests = append(manifests, p.AppManifest())
-		}
-	}
-	return manifests
-}
-
 // APIRoutes define explicit HTTP handlers in an apiserver
 // TBD: is this actually necessary -- there may be more k8s native options for this
 type APIRoutes struct {

@@ -13,10 +13,8 @@ type ExportJobOptionsApplyConfiguration struct {
 	Message *string `json:"message,omitempty"`
 	// The source folder (or empty) to export
 	Folder *string `json:"folder,omitempty"`
-	// FIXME: we should validate this in admission hooks
 	// Target branch for export (only git)
 	Branch *string `json:"branch,omitempty"`
-	// FIXME: we should validate this in admission hooks
 	// Prefix in target file system
 	Path *string `json:"path,omitempty"`
 	// Resources to export. When empty, every unmanaged resource in the namespace

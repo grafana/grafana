@@ -10,10 +10,6 @@ import (
 
 // RepositoryStatusApplyConfiguration represents a declarative configuration of the RepositoryStatus type for use
 // with apply.
-//
-// The status of a Repository.
-// This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
-// As such, it is also a little less well structured than the spec, such as conditional-but-ever-present fields.
 type RepositoryStatusApplyConfiguration struct {
 	// The generation of the spec last time reconciliation ran
 	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`

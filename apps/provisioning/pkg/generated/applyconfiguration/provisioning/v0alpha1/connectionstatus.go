@@ -10,9 +10,6 @@ import (
 
 // ConnectionStatusApplyConfiguration represents a declarative configuration of the ConnectionStatus type for use
 // with apply.
-//
-// The status of a Connection.
-// This is expected never to be created by a kubectl call or similar, and is expected to rarely (if ever) be edited manually.
 type ConnectionStatusApplyConfiguration struct {
 	// The generation of the spec last time reconciliation ran
 	ObservedGeneration *int64 `json:"observedGeneration,omitempty"`
