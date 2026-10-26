@@ -57,9 +57,11 @@ and records every poll, so a stale last success means the source is failing.
 A skipped backend is not served, and its group falls back to a lower-priority source if one offers
 it. Each skip is logged with its error, which says why. Backends are skipped by:
 
-- `plugins_url` and `core_url`: a manifest `NewPluginBackend` rejects, such as for a group that
+- `plugins_url` and `core_url`: a manifest `newPluginBackend` rejects, such as for a group that
   isn't a plugin group or a routable core group (`routableCoreGroups`), or one with no served
   versions;
+- `plugins_url` and `core_url`: an entry with manifests whose plugin ID isn't an app plugin ID, or,
+  for `plugins_url`, an entry with no ID (`validatePluginID`, #135273);
 - `plugins_url`, `core_url` and `aggregate:<target>`: a backend whose key could not be computed,
   which is not expected to happen.
 
@@ -81,6 +83,8 @@ retried with backoff.
 
 Groups on the single-tenant fallback keep one breaker per destination host and group, so they have no
 `grafana_router_breaker_state` series. Embedded groups bypass circuit breaking and also have no series.
+For `dashboard.grafana.app`, the series reflects only its multi-tenant backend: requests sent to a
+single-tenant stack count against that stack's breaker instead.
 
 ## Requests
 

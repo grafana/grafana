@@ -23,7 +23,21 @@ the 10-10 plan, and none of them closed a plan item. They changed its shape inst
 - **Plugin gRPC connections** got TLS, retries, keepalive and message-size settings (#134703,
   #134706, #134823).
 - **The ST fallback** serves discovery from the requester's stack (#134782), forwards
-  cluster-scoped requests (#135272), and breaks per destination for traffic from ST (#135169).
+  cluster-scoped requests (#135272). Breaking per destination for traffic from ST (#135169) was
+  reverted (#135232).
+
+Updated on 2026-10-26 from `main` at e29755d49bc. Since the rebuild, three router PRs landed outside
+the plan and changed what some items mean:
+
+- **#135946: the router serves `/apis` and `/openapi/v3` directly.** In middleware mode it now
+  hosts the embedded API server's groups in process (`embedded.go`), and nothing falls through to
+  `next`. Root discovery in middleware mode is built from the snapshot, so F2 now applies only to
+  the ST path. Request parsing moved to `pkg/apimachinery/utils.NewRequestInfo`, and the `/watch/`
+  and `/proxy/` path forms now get a 400.
+- **#135815: HTTP operators through a plugin v3 client shim** (`pluginsintegration/baasbridge`,
+  deprecated). Its README lists known gaps, among them no gRPC request metrics for these calls.
+- **#135949: status and manifests pages** in the swagger UI, and compiled-in app manifests for
+  groups whose backend advertises none.
 
 The new sections in this plan:
 
@@ -54,6 +68,10 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 | D2–D4, D6–D9, D11 (partly): the dead-code sweep | #135744 |
 | R1, R2: retired plugin handlers are destroyed once they drain, and managed plugin connections close with their last handler | #135809 |
 | R4, O4: a failing backend backs off per group, reconcile warnings are logged once, and the status page lists load failures | #135818 |
+| C7, C8: docs and specs caught up with #135946 and #135949, `mdCode` bounded, `cooldown.go` | `router-docs-c7-c8` (unmerged) |
+| O5–O9: 4xx at Debug, no panic on a second registration, ready only after each source's first poll, `plugins_poll_interval` and `core_poll_interval`, no `plugin_id=""` | #135820 |
+| P14, P17, P20, P21: the `/watch/` path rejected, router deadlines counted against the breaker, the ST discovery cache bounded, partial discovery kept | #135823 |
+| F7, F8, F9 (partly), F11 (partly), F12 (partly): one request-state value, a `status_code` table, one ST transport, a cheaper flush, `strings.Cut`, streamed ETag hashing, an ST forward benchmark | #135946, #135827 |
 
 ### Not pursued
 
@@ -65,8 +83,17 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 
 ### Left from partly done items
 
-- **F1:** the aggregated document is still encoded twice per request (once for the ETag) and hashed. Memoizing it needs a key covering the discovery cache state and the exact bytes of the source's answer, so single-tenant callers never share a stack's document. F2 has the same constraint. Do both only if profiles call for it.
-- **F12:** benchmarks for an ST forward, a per-event watch flush and a plugin call.
+- **F1:** the aggregated document is still encoded twice per request (once for the ETag) and hashed
+  with SHA-512. At 100 groups that costs 165 µs and 291 allocs, against about 0.5 µs for every other
+  cached discovery document. Since #135946, a request with no source answer (middleware mode, and ST
+  callers that get the defaults) can be memoized on the snapshot pointer, a `discoveryCache`
+  generation and the negotiated version alone. A caller-scoped ST answer still needs the source
+  bytes in the key, as does F2.
+- **F9:** the ST transport is built once (#135827), but `forward` still builds a `ReverseProxy` per
+  request.
+- **F11:** sorting the manifest backends once per `publish` (`sortedManifestBackends` is still
+  called from `discovery.go` twice and `discovery_manifests.go` once).
+- **F12:** benchmarks for a per-event watch flush and a plugin call.
 - **D3:** the `discoveryHost == nil` branches in the single-tenant fallback, which most fallback tests rely on.
 - **D4:** the `watching` and `endWatches` nil checks, which tests build entries without.
 - **D9:** the legacy `appmanifest_apiserver_url` guard, until deployments are confirmed migrated.
@@ -79,10 +106,9 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
   (cb8b367edd4). That is now P21.
 - **`router-review-3`**: forked 2026-09-28. `main` is now more than 1100 commits ahead of it, 48
   of them in `pkg/router`.
-  - These ports still fit with light work: R4 (120fcb87e0e), P14 (3d2e271b8cb), the `logging.go`
-    part of O5 (ce626095d38), O6 (5f601f48252), and A4.2 and A4.3 (ac69ebc3ce1).
-  - R1 and R2 (e4468573b27): keep `retire.go`'s `handlerUse` and `destroyWhenDrained`, but rewrite
-    the wiring.
+  - R1, R2, R4, P14, O5 and O6 have landed on `main` on their own, so those commits are moot.
+  - A4.2 and A4.3 (ac69ebc3ce1) are the only ports left, and they should still fit with light
+    work.
   - A2 and A5 (56915e172f8) are obsolete, since they were built around the removed RouteBackend
     source. Keep only the design.
 
@@ -90,12 +116,13 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 
 ## Suggested order
 
-1. **Done:** correctness quick wins, performance (F1, F3–F6, F12), the dead-code sweep, and
-   lifecycle (R1, R2, R4, O4).
-2. **Readiness and small fixes:** O5–O9, then P17, P20 and P21. P14 is open.
-3. **Metrics:** M5–M12 in `2026-10-08-router-metrics-review.md`.
-4. **Product decisions:** A4.
+1. **Done:** every R, P, O and C item, the dead-code sweep, and most of F.
+2. **Tests:** T1 and T2, before the restructure moves the code they cover.
+3. **Metrics:** M5–M12 in `2026-10-08-router-metrics-review.md`, plus metrics for the
+   `baasbridge` calls (#135815).
+4. **Config:** A4, while nothing depends on the old key names.
 5. **Restructure:** A2 with A5 and A8, then A6, then A1 and A7.
+6. **Performance leftovers, if profiles call for them:** F1's memo, F2, F9's proxy, F10, F11's sort.
 
 ---
 
@@ -140,7 +167,8 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 
 ## P: Correctness
 
-- [ ] **P14. The deprecated `/watch/` path still classifies as a watch.**
+- [x] **P14. The deprecated `/watch/` path still classifies as a watch.** Done in #135823 (a 404),
+  then a 400 from `NewRequestInfo` in #135946.
   - `requestVerb` (`watch.go`) maps `/apis/<g>/<v>/watch/...` to verb `watch`.
   - That path form is out of scope, so it should get no watch treatment. Reject it, for example with
     a 404, at both `rejectUpgrade` sites.
@@ -180,7 +208,8 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
   - Anonymous users may use only their own namespace, which is stricter than the embedded API
     server's namespace authorizer.
 
-- [ ] **P17. Deadlines the router sets itself never count against a breaker.**
+- [x] **P17. Deadlines the router sets itself never count against a breaker.** Done in #135823
+  (`errRouterDeadline`). A per-version discovery that misses its deadline counts once.
   - **Problem:** `breakerOutcome` treats any `req.Context().Err()` as `errCallerGone`. That includes
     the router's own fetch deadlines:
     - the ST shared discovery fetch, 30 s;
@@ -207,12 +236,13 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
     plugin groups without serving their settings.
   - **Fix:** read the flag once, and pass the result into `PluginLoader`.
 
-- [ ] **P20. A small `st_discovery_cache_bytes` evicts everything.** With a budget below
+- [x] **P20. A small `st_discovery_cache_bytes` evicts everything.** Done in #135823: such a document
+  is not stored. With a budget below
   `maxSingleTenantCachedDiscoveryBytes`, one large document makes `RemoveOldest` evict every stack's
   entries, the new one included. Refuse entries larger than the budget, or require the budget to be at
   least that limit.
 
-- [ ] **P21. An incomplete discovery fetch throws away what it read.**
+- [x] **P21. An incomplete discovery fetch throws away what it read.** Done in #135823.
   - `groupDiscovery` (`discovery_cache.go`) drops a partial fetch and returns versions only.
   - Port cb8b367edd4 from `router-review-2`. It still applies, and matters for older backends that
     use per-version discovery.
@@ -246,7 +276,8 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
     Check that the slug is a DNS label before putting it into the host.
   - **A4.4 (changed).** A new `ProvideCloudRoutesLoader` wraps the factory, so the old "fold into it"
     plan would collide with that name. Instead, unexport `ProvideCloudRoutesLoaderFactory`, for
-    example as `newCloudRoutesLoader`.
+    example as `newCloudRoutesLoader`. Rename it in `2026-09-25-router-design-notes.md` ("Two
+    transports per aggregate target") in the same change.
 
 - [ ] **A5. A source teardown contract.** With A2, the loader tears down each source on shutdown.
   That replaces `defer t.closeConnections()` in `pluginManifestsTarget.run`.
@@ -265,13 +296,12 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
     - Record each entry's breaker scope once in `publish`. That replaces the three repeated
       `managesCircuitBreaking || breaker == nil` checks.
 
-- [ ] **A7. Split the largest files.**
-  - `router.go` (831 lines): OpenAPI serving into `openapi_cache.go`, `authenticate` into `auth.go`,
+- [ ] **A7. Split the largest files.** Line counts as of 2026-10-26.
+  - `router.go` (980 lines): OpenAPI serving into `openapi_cache.go`, `authenticate` into `auth.go`,
     and `Run`/`reconcile`/`publish` into `reconcile.go`.
-  - `st_fallback.go` (699 lines): stack resolution into `st_stacks.go`, and poll plus `fallbackBackend`
+  - `st_fallback.go` (733 lines): stack resolution into `st_stacks.go`, and poll plus `fallbackBackend`
     into `st_poll.go`.
-  - `discovery_manifests.go` (711 lines): index rendering into `discovery_index.go`, unless D5 deletes
-    it.
+  - `discovery_manifests.go` (789 lines): index rendering into `discovery_index.go` (D5 keeps it).
 
 - [ ] **A8. One backend wrapper.**
   - `pluginDeploymentBackend` (`plugin_manifests.go`) and `singleTenantResourcesBackend`
@@ -288,22 +318,25 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
   groups (`router.go`) repeat on every reconcile, and R4's retries make that frequent. Log each one
   once per backend key. Do this with R4.
 
-- [ ] **O5. 4xx access-log lines are logged at Warn.** Log 401, 403 and 404 at Debug (`logging.go`).
+O5–O9 were done in #135820.
 
-- [ ] **O6. Building two services panics.** This now covers four `MustRegister`/`promauto` sites:
+- [x] **O5. 4xx access-log lines are logged at Warn.** Log 401, 403 and 404 at Debug (`logging.go`).
+
+- [x] **O6. Building two services panics.** This now covers four `MustRegister`/`promauto` sites:
   `newRouterMetrics`, `newService`, the plugin gRPC histogram and the retry counter. Reuse a collector
   on `AlreadyRegisteredError`, as `pkg/services/apiserver/builder/watch_metrics.go` does.
 
-- [ ] **O7. The router reports ready before its first poll.**
+- [x] **O7. The router reports ready before its first poll.** A failed first poll ends the wait too.
   - `pollStatus` already counts successes and failures. Have `Load` return a pending error until every
     polled source has `successes+failures > 0`.
   - Today only the ST fallback does this (`errSingleTenantDiscoveryPending`).
 
-- [ ] **O8. `plugins_url` and `core_url` have no `poll_interval` setting.** They reuse the aggregate
+- [x] **O8. `plugins_url` and `core_url` have no `poll_interval` setting.** Now
+  `plugins_poll_interval` and `core_poll_interval`. They reuse the aggregate
   backoff constants. This is follow-up 3 in `2026-09-11-router-aggregate-discovery-design.md`, and it
   can be done with A2.
 
-- [ ] **O9. Core entries without an ID report `plugin_id=""`.**
+- [x] **O9. Core entries without an ID report `plugin_id=""`.**
   - This affects the plugin gRPC metrics and the status page `plugin` field.
   - Have `PluginStatus` return false for an empty ID, and label core connections by group instead.
 
@@ -409,18 +442,23 @@ or impossible configurations reach. No config in this repo sets any `[cloud_rout
 
 ## F: Performance
 
-Baseline on an M5 Pro, from `router_bench_test.go`:
+Measured on an M5 Pro with `router_bench_test.go`. The 2026-10-23 column is the original baseline;
+the 2026-10-26 column was run on `main` at e29755d49bc, `-benchtime 1s`, one run.
 
-| Path | ns/op | allocs/op |
+| Path | 2026-10-23 | 2026-10-26 |
 | --- | --- | --- |
-| Middleware resource request | 1224 | 35 |
-| Standalone resource request | 864 | 29 |
-| Legacy `/apis`, cached | 455 | 16 |
-| Unchanged reconcile, 100 groups | 491 µs | 24.7k |
+| Middleware resource request | 1224 ns, 35 allocs | 953 ns, 19 allocs |
+| Middleware embedded-group request | n/a (handed to `next`) | 443 ns, 6 allocs |
+| Standalone resource request | 864 ns, 29 allocs | 710 ns, 16 allocs |
+| Legacy `/apis`, cached | 455 ns, 16 allocs | 217 ns, 7 allocs |
+| Middleware root `/apis` | 93 µs, 151 allocs | 510 ns, 12 allocs |
+| Aggregated `/apis`, 100 groups | 371 µs, 1938 allocs | 166 µs, 291 allocs |
+| Proxied request, 1 KiB | 7.9 µs | 5.1 µs, 71 allocs |
+| ST forward | n/a | 4.7 µs, 68 allocs |
+| Unchanged reconcile, 100 groups | 491 µs, 24.7k allocs | 476 µs, 24.5k allocs |
 
-GC is about 28% of CPU on the middleware path, so cutting allocations is the main lever. The
-benchmarks never exercise a real proxy, aggregated `/apis`, the ST fallback or plugin calls, so
-add those first (F12).
+GC was about 28% of CPU on the middleware path, so cutting allocations was the main lever. The
+open items with real gains left are aggregated `/apis` (F1) and reconcile (F11's sort).
 
 - [x] **F1. Aggregated `/apis` is rebuilt on every request, and logs a line per group-version.**
   - **Problem:**
@@ -446,7 +484,9 @@ add those first (F12).
   - **Gain:** about 10x on a miss, 100x or more on a hit, and no more log spam.
 
 - [ ] **F2. Merged legacy `/apis` and `/openapi/v3` are rebuilt on every request.**
-  - **Problem:** in middleware and ST modes, each request clones the request, captures the source's
+  - **Update (#135946):** middleware mode no longer merges; it builds root discovery from the
+    snapshot, at 510 ns. This is now about the ST fallback only.
+  - **Problem:** in ST mode, each request clones the request, captures the source's
     body, unmarshals it, merges, marshals and hashes the result. Measured: 89 µs and 151 allocs for
     `/apis`, and 57 µs and 806 allocs for `/openapi/v3`.
   - **Fix:** memoize the merged document, keyed by the source body's ETag or hash plus the snapshot
@@ -486,7 +526,7 @@ add those first (F12).
     info. Measured: resource 26 → 20 allocs (843 → 782 ns), middleware resource 37 → 31 allocs
     (1.24 → 1.15 µs).
 
-- [ ] **F8. Cache request-metric observers.** `WithLabelValues` is about 9% of middleware CPU, and
+- [x] **F8. Cache request-metric observers.** `WithLabelValues` is about 9% of middleware CPU, and
   `strconv.Itoa(status)` allocates. Cache an observer per (group, verb, route), and precompute the
   status strings.
   - Status strings done (`statusCodeLabel`, ported from #135827). Caching observers was measured
@@ -494,6 +534,8 @@ add those first (F12).
 
 - [ ] **F9. ST `forward` builds a `ReverseProxy` and an `otelhttp.NewTransport` per request.** Build
   the transport once, and cache the proxy per resolved host.
+  - Transport done in #135827; it is rebuilt only when the global meter provider changes. The
+    proxy is still built per request.
 
 - [ ] **F10. Outside `pkg/router`: the local token exchanger signs a JWT per plugin call.**
   - That costs 31 µs and 405 allocs per local plugin call (`pkg/plugins/backendplugin/v3/local_exchanger.go`).
@@ -505,8 +547,8 @@ add those first (F12).
   - `statusRecorder.FlushError` allocates a `ResponseController` on every flush, which for a watch is
     every event. Type-assert first. (Done, ported from #135827.)
   - Use `strings.Cut` instead of `strings.Split` on the per-request paths: OpenAPI path parsing
-    (done, ported from #135827), `st_fallback.go` and `st_resources.go` (in #135827).
-  - Hash ETags by streaming the body, without copying it twice.
+    (done, ported from #135827), `st_fallback.go` and `st_resources.go` (done in #135827).
+  - Hash ETags by streaming the body, without copying it twice. (Done in #135827.)
   - Sort the manifest backends once per `publish`, not three times. That is about 30% of an
     unchanged reconcile.
 
@@ -514,7 +556,7 @@ add those first (F12).
   - a proxy through an aggregate backend;
   - aggregated `/apis`;
   - middleware root discovery with a real `next`;
-  - an ST forward;
+  - an ST forward (#135827);
   - a per-event watch flush;
   - a plugin call.
 
@@ -539,17 +581,24 @@ Not pursued:
   - the breaker scope shown in status and metrics.
 
   Also confirm that a user's write to ST is visible to a later read from MT.
+  `st_resources_test.go` covers path classification and plain dispatch only.
 - [ ] **T2. Plugin gRPC.** No end-to-end test against a real `grpc.Server` for retries, keepalive
-  (P18) or a dropped connection.
+  (P18) or a dropped connection. `plugin_grpc_test.go` tests config parsing and dial options only.
+- [ ] **T3. Embedded groups in middleware mode (#135946).** Check coverage for a watch on an
+  embedded group, and for in-process clients (`GetDirectRestConfig`, `DirectlyServeHTTP`) before
+  the router is `Ready`.
 
 ---
 
 ## C: Cleanup and docs
 
-- [ ] **C7. AGENTS.md and specs drift.**
-  - AGENTS.md:
+- [x] **C7. AGENTS.md and specs drift.** Done on `router-docs-c7-c8`. `mdCode` is now bounded like
+  `mdText`. AGENTS.md's layout table also gained `cooldown.go`, `discovery_cache.go` and
+  `embedded.go`. The `ProvideCloudRoutesLoaderFactory` rename moved to A4.4, since the function
+  still has that name.
+  - AGENTS.md (its middleware-mode text was rewritten in #135946):
     - It says `/apis` lists `discovery` and that `/openapi/v3` indexes it. Inside Grafana without the
-      flag, `HandleFunc` serves only the discovery tree, so neither is true there.
+      flag, `HandleFunc` still serves only the discovery tree, so neither is true there.
     - It says `mdText` and `mdCode` are "bounded in length", but `mdCode` isn't bounded. Either bound
       it or fix the doc.
     - The status page contents omit `stackLookups`.
@@ -564,7 +613,11 @@ Not pursued:
     - Note that for `dashboard.grafana.app`, `breaker_state` reflects only the MT backend.
   - The superseded 2026-08-17 and 2026-08-19 specs: add a change-box line for `handlerFor`, the ST
     breakers, caller-scoped ST discovery and `/apis/discovery`.
-- [ ] **C8. Small code notes.**
+  - From #135946: the design notes still describe middleware mode as falling through to `next`, and
+    don't mention that embedded groups bypass the breaker.
+  - From #135949: `RouterStatusPage.tsx` copies `routerStatusDoc` by hand. AGENTS.md should say
+    to update both together.
+- [x] **C8. Small code notes.** Done on `router-docs-c7-c8`.
   - Add a one-line comment that `rejectUpgrade` doesn't handle HTTP/2 extended CONNECT.
   - Rename `aggregate_backoff.go` to `cooldown.go`, since it paces four loops.
-  - Add `var _ Router = (*GrafanaRouter)(nil)`.
+  - ~~Add `var _ Router = (*GrafanaRouter)(nil)`.~~ Already in `router.go`.
