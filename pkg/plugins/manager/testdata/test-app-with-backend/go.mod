@@ -5,6 +5,7 @@ go 1.26.10
 require github.com/grafana/grafana-plugin-sdk-go v0.292.0
 
 require (
+	github.com/andybalholm/brotli v1.2.7 // indirect
 	github.com/apache/arrow-go/v18 v18.5.2 // indirect
 	github.com/apache/thrift v0.24.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
