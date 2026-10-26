@@ -1,0 +1,43 @@
+name: Linked enterprise PR
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  link:
+    if: github.repository == 'grafana/grafana' && github.event.pull_request.head.repo.fork == false && !contains(github.base_ref, '+security')
+    runs-on: ubuntu-arm64-small
+    continue-on-error: true
+    permissions:
+      id-token: write
+      statuses: write
+    steps:
+      - name: Get GitHub App token
+        id: get-github-app-token
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
+        with:
+          github_app: grafana-ci-bot
+      - name: Post linked PR statuses
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          OTHER_REPO: grafana/grafana-enterprise
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          pr=$(GH_TOKEN="$APP_TOKEN" gh pr list -R "$OTHER_REPO" --head "$HEAD_REF" --json number,headRefOid,isCrossRepository \
+            --jq 'map(select(.isCrossRepository | not)) | .[0] // empty | "\(.number) \(.headRefOid)"')
+          if [ -n "$pr" ]; then
+            read -r num sha <<< "$pr"
+            gh api "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f state=success -f context=linked-pr \
+              -f description="$OTHER_REPO#$num" -f target_url="https://github.com/$OTHER_REPO/pull/$num"
+            GH_TOKEN="$APP_TOKEN" gh api "repos/$OTHER_REPO/statuses/$sha" -f state=success -f context=linked-pr \
+              -f description="$GITHUB_REPOSITORY#$PR_NUMBER" -f target_url="https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
+          elif GH_TOKEN="$APP_TOKEN" gh api "repos/$OTHER_REPO/branches/$HEAD_REF" --silent; then
+            gh api "repos/$GITHUB_REPOSITORY/statuses/$HEAD_SHA" -f state=success -f context=linked-pr \
+              -f description="$OTHER_REPO branch, no PR" -f target_url="https://github.com/$OTHER_REPO/tree/$HEAD_REF"
+          fi
