@@ -32,6 +32,6 @@ var WireSet = wire.NewSet(
 	logsdrilldown.RegisterAppInstaller,
 	annotation.RegisterAppInstaller,
 	quotas.RegisterAppInstaller,
-	example.RegisterAppInstaller,
+	example.ProvideAppInstaller,
 	dashvalidator.RegisterAppInstaller,
 )

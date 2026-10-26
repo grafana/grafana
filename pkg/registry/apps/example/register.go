@@ -35,7 +35,15 @@ func (e AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return exampleapp.GetAuthorizer()
 }
 
-func RegisterAppInstaller(
+// RegisterAppInstaller builds the installer without a delta source, leaving the app's reconciler on the kubernetes
+// watch. It is the signature out-of-tree callers already use; wire uses ProvideAppInstaller.
+func RegisterAppInstaller(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*AppInstaller, error) {
+	return ProvideAppInstaller(cfg, features, nil, nil)
+}
+
+// ProvideAppInstaller builds the installer, taking the resource change bus and the storage client the keys-only
+// re-list reads through. A nil resourceBus selects the kubernetes watch.
+func ProvideAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	resourceBus resourcebus.Subscriber,

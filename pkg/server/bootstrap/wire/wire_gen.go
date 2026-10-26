@@ -880,7 +880,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	subscriber := natsbus.ProvideSubscriber(subscriberService)
-	exampleAppInstaller, err := example.RegisterAppInstaller(cfg, featureToggles, subscriber, v5)
+	exampleAppInstaller, err := example.ProvideAppInstaller(cfg, featureToggles, subscriber, v5)
 	if err != nil {
 		return nil, err
 	}
@@ -1675,7 +1675,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	subscriber := natsbus.ProvideSubscriber(subscriberService)
-	exampleAppInstaller, err := example.RegisterAppInstaller(cfg, featureToggles, subscriber, v5)
+	exampleAppInstaller, err := example.ProvideAppInstaller(cfg, featureToggles, subscriber, v5)
 	if err != nil {
 		return nil, err
 	}
