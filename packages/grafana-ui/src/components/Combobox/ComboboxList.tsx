@@ -3,7 +3,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import type { UseComboboxPropGetters } from 'downshift';
 import { useCallback } from 'react';
 
-import { useStyles2 } from '../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { Checkbox } from '../Forms/Checkbox';
 import { Icon } from '../Icon/Icon';
 import { Stack } from '../Layout/Stack/Stack';
@@ -50,6 +50,7 @@ export const ComboboxList = <T extends string | number>({
   noOptionsMessage,
 }: ComboboxListProps<T>) => {
   const styles = useStyles2(getComboboxStyles);
+  const visualRefreshEnabled = useTheme2().flags.visualDesignRefresh;
 
   const estimateSize = useCallback(
     (index: number) => {
@@ -173,6 +174,9 @@ export const ComboboxList = <T extends string | number>({
                   <Stack direction="row" alignItems="center">
                     {item.icon && <Icon name={item.icon} />}
                     <div className={styles.optionLabel}>{item.label ?? item.value}</div>
+                    {visualRefreshEnabled && !isMultiSelect && isOptionSelected(item) && (
+                      <Icon name="check" className={styles.selectedIcon} />
+                    )}
                   </Stack>
 
                   {item.description && <div className={styles.optionDescription}>{item.description}</div>}
