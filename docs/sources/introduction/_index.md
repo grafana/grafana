@@ -2,7 +2,7 @@
 aliases:
   - guides/what-is-grafana/
   - oss-details/
-description: Learn about Grafana OSS, Grafana Enterprise, and Grafana Cloud.
+description: Grafana is an open and composable observability platform for people and AI agents. Learn what Grafana is and how Grafana OSS, Grafana Enterprise, and Grafana Cloud differ.
 labels:
   products:
     - cloud
@@ -14,7 +14,9 @@ weight: 5
 
 # About Grafana
 
-[Grafana open source software](/oss/) enables you to query, visualize, alert on, and explore your metrics, logs, and traces wherever they are stored. Grafana OSS provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations. The Grafana OSS plugin framework also enables you to connect other data sources like NoSQL/SQL databases, ticketing tools like Jira or ServiceNow, and CI/CD tooling like GitLab.
+Grafana is an open and composable observability platform. It brings together metrics, logs, traces, profiles, and other data from across your organization and gives people and AI agents the context they need to monitor, understand, and act on that data.
+
+You can run Grafana yourself with [Grafana OSS](/oss/) or [Grafana Enterprise](grafana-enterprise/), or use [Grafana Cloud](/docs/grafana-cloud/), the fully managed service, which includes a free tier. All three share the same core. Grafana queries your data where it's stored, through data sources that cover time-series databases, logging and tracing backends, SQL and NoSQL databases, and tools like Jira, ServiceNow, and GitLab. You can then visualize, alert on, and explore that data in one place, or work with it through [Grafana Assistant](../administration/assistant/) and the [Grafana MCP servers](/docs/grafana-cloud/ai-tools/mcp-servers/).
 
 After you've [installed Grafana](../setup-grafana/installation/) and set up your first dashboard using instructions in [Getting started with Grafana](../getting-started/build-first-dashboard/), you will have many options to choose from depending on your requirements. For example, if you want to view weather data and statistics about your smart home, then you can create a [playlist](../dashboards/create-manage-playlists/). If you are the administrator for an enterprise and are managing Grafana for multiple teams, then you can set up [provisioning](../administration/provisioning/) and [authentication](../setup-grafana/configure-access/configure-authentication/).
 
@@ -66,17 +68,26 @@ In Grafana Enterprise, you can also map users to teams: If your company has its 
 
 ## Permissions
 
-When organizations have one Grafana and multiple teams, they often want the ability to both keep things separate and share dashboards. You can create a team of users and then set permissions on [folders and dashboards](../administration/user-management/manage-dashboard-permissions/), and down to the [data source level](../administration/data-source-management/#data-source-permissions) if you're using [Grafana Enterprise](grafana-enterprise/).
+When organizations have one Grafana stack and multiple teams, they often want the ability to both keep things separate and share dashboards. You can create a team of users and then set permissions on [folders and dashboards](../administration/user-management/manage-dashboard-permissions/), and down to the [data source level](../administration/data-source-management/#data-source-permissions) if you're using [Grafana Enterprise](grafana-enterprise/).
+
+## AI and agents
+
+Grafana includes the following AI capabilities for people and gives AI agents structured access to the platform.
+
+- **Grafana Assistant:** An AI assistant built into Grafana that generates and explains queries, creates and edits dashboards, and navigates Grafana resources from natural language prompts. Assistant is available in Grafana Cloud and, starting in Grafana v13, in self managed Grafana OSS and Grafana Enterprise deployments connected to a Grafana Cloud stack. For more information, refer to [Grafana Assistant](../administration/assistant/) and the [Grafana Cloud Assistant documentation](/docs/grafana-cloud/platform/grafana-assistant/).
+- **MCP servers:** Grafana provides [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) servers so that external AI agents and assistants can query and work with your Grafana data and resources. The [open source MCP server](/docs/grafana-cloud/ai-tools/mcp-servers/oss-mcp/) runs alongside any Grafana instance, and the [Cloud MCP Server](/docs/grafana-cloud/ai-tools/mcp-servers/cloud-mcp/) is hosted in Grafana Cloud. For more information, refer to [MCP servers](/docs/grafana-cloud/ai-tools/mcp-servers/).
+- **LLM plugin:** The Grafana LLM app plugin centralizes access to large language model providers so that other Grafana features and plugins can use them without managing their own API keys. Refer to [LLM plugin](/docs/grafana-cloud/ai-tools/llm-plugin/).
+- **Agent Observability and AI tools in Grafana Cloud:** Grafana Cloud adds [Agent Observability](/docs/grafana-cloud/observe-and-act/agent-observability/) for monitoring LLM agents in production, machine learning features such as forecasting, outlier detection, and Sift investigations, and the `gcx` CLI that gives AI coding agents access to your Grafana stack. For more information, refer to [AI tools](/docs/grafana-cloud/ai-tools/).
 
 ## Other Grafana Labs OSS Projects
 
-In addition to Grafana, Grafana Labs also provides the following open source projects:
+The Grafana visualization layer is one of several open source projects that make up the platform. Grafana Labs also maintains the following databases that store each observability signal.
 
-**Grafana Loki:** Grafana Loki is an open source, set of components that can be composed into a fully featured logging stack. For more information, refer to [Grafana Loki documentation](/docs/loki/latest/).
+**Grafana Loki:** Grafana Loki is an open source set of components that can be composed into a fully featured logging stack. For more information, refer to [Grafana Loki documentation](/docs/loki/latest/).
 
-**Grafana Tempo:** Grafana Tempo is an open source, easy-to-use and high-volume distributed tracing backend. For more information, refer to [Grafana Tempo documentation](/docs/tempo/latest/?pg=oss-tempo&plcmt=hero-txt/).
+**Grafana Tempo:** Grafana Tempo is an open source and high volume distributed tracing backend. For more information, refer to [Grafana Tempo documentation](/docs/tempo/latest/?pg=oss-tempo&plcmt=hero-txt/).
 
-**Grafana Mimir:** Grafana Mimir is an open source software project that provides a scalable long-term storage for Prometheus. For more information about Grafana Mimir, refer to [Grafana Mimir documentation](/docs/mimir/latest/).
+**Grafana Mimir:** Grafana Mimir is an open source software project that provides a scalable long term storage for Prometheus. For more information about Grafana Mimir, refer to [Grafana Mimir documentation](/docs/mimir/latest/).
 
 **Grafana Pyroscope:** Grafana Pyroscope is an open source software project for aggregating continuous profiling data. Continuous profiling is an observability signal that allows you to understand your workload's resources (CPU, memory, for example) usage down to the line number. For more information about Grafana Pyroscope, refer to [Grafana Pyroscope documentation](/docs/pyroscope/latest/).
 
@@ -102,9 +113,10 @@ For more information, refer to [Contribute to Grafana](https://grafana.com/docs/
 
 {{< qa-list >}}
 {{< qa question="What is Grafana and what is it used for?" >}}
-Grafana is open source software for querying, visualizing, and alerting on your metrics, logs, and traces, wherever they're stored.
+Grafana is an open and composable observability platform.
+It brings together metrics, logs, traces, profiles, and other data from across your organization and gives people and AI agents the context they need to monitor, understand, and act on that data.
 It's used for infrastructure and application monitoring, observability, and operational dashboards.
-Grafana turns time-series data into graphs, with a plugin framework that connects to many data sources so you can bring metrics, logs, and traces into one place.
+Grafana queries data where it's stored, through a plugin framework that connects to many data sources, so you can visualize, alert on, and explore all of it in one place.
 {{< /qa >}}
 {{< qa question="Is Grafana open source and free to use?" >}}
 Yes, Grafana is open source and free to use.
@@ -116,6 +128,13 @@ You can start with Grafana OSS and move to Enterprise or Cloud as your needs gro
 Grafana OSS, Grafana Enterprise, and Grafana Cloud share the same Grafana core but differ in how they're hosted and what they include.
 Grafana OSS is the free, self-managed open source edition that you run and maintain yourself.
 Grafana Enterprise is also self-managed, but adds commercial features such as enterprise data source plugins, reporting, enhanced access control, and official support.
-Grafana Cloud is a fully managed platform hosted by Grafana Labs that bundles Grafana with metrics, logs, and traces backends and includes a free tier, so you don't have to run the stack yourself.
+Grafana Cloud is the fully managed Grafana observability platform, hosted by Grafana Labs, with managed backends for metrics, logs, traces, and profiles and a free tier, so you don't have to run the stack yourself.
+{{< /qa >}}
+{{< qa question="Does Grafana include AI capabilities?" >}}
+Yes.
+Grafana Assistant is an AI assistant built into Grafana that generates queries, creates and edits dashboards, and navigates Grafana resources from natural language prompts. It's available in Grafana Cloud and, starting in Grafana v13, in self managed Grafana OSS and Grafana Enterprise.
+Grafana also provides Model Context Protocol (MCP) servers, an [open source MCP server](/docs/grafana-cloud/ai-tools/mcp-servers/oss-mcp/) that you run yourself and a hosted [Cloud MCP Server](/docs/grafana-cloud/ai-tools/mcp-servers/cloud-mcp/), so AI agents can work with your Grafana data.
+Grafana Cloud adds [Agent Observability](/docs/grafana-cloud/observe-and-act/agent-observability/) for monitoring LLM agents in production, and machine learning features such as forecasting, outlier detection, and Sift investigations.
+Refer to [AI and agents](#ai-and-agents) for details.
 {{< /qa >}}
 {{< /qa-list >}}
