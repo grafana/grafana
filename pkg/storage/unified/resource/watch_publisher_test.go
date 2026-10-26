@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -45,6 +46,14 @@ func (f *fakeEventPublisher) Publish(_ context.Context, subject string, data []b
 	return f.err
 }
 
+// sizedPublisher reports a max payload like the NATS publisher does.
+type sizedPublisher struct {
+	*fakeEventPublisher
+	max int64
+}
+
+func (s *sizedPublisher) MaxPayload() int64 { return s.max }
+
 func TestActionToWatchNotificationType(t *testing.T) {
 	assert.Equal(t, resourcepb.WatchNotification_ADDED, actionToWatchNotificationType(DataActionCreated))
 	assert.Equal(t, resourcepb.WatchNotification_MODIFIED, actionToWatchNotificationType(DataActionUpdated))
@@ -71,7 +80,7 @@ func TestPublishWatchNotification(t *testing.T) {
 		pub := &fakeEventPublisher{enabled: true}
 		backend := newTestKVStorageBackend(pub)
 
-		backend.publishWatchNotification(context.Background(), event, nil)
+		backend.publishWatchNotification(context.Background(), event)
 
 		require.Len(t, pub.subjects, 1)
 		assert.Equal(t, "us.watch.v1.provisioning.grafana.app.default.repositories", pub.subjects[0])
@@ -90,29 +99,65 @@ func TestPublishWatchNotification(t *testing.T) {
 		assert.Equal(t, event.PreviousFolder, got.GetPreviousFolder())
 	})
 
-	t.Run("carries labels and ObjectMeta fields when given metadata", func(t *testing.T) {
+	t.Run("carries the metadata it is given", func(t *testing.T) {
 		pub := &fakeEventPublisher{enabled: true}
 		backend := newTestKVStorageBackend(pub)
+		meta := &resourcepb.NotificationMetadata{
+			Labels:                  map[string]string{"a": "1"},
+			Annotations:             map[string]string{"b": "2"},
+			Finalizers:              []string{"f"},
+			Generation:              3,
+			CreationTimestampMillis: 1000,
+			DeletionTimestampMillis: 2000,
+		}
 
-		backend.publishWatchNotification(context.Background(), event, &watchMetadata{
-			Labels:            map[string]string{"encrypted": "true"},
-			PreviousLabels:    map[string]string{"encrypted": "false"},
-			Generation:        3,
-			CreationTimestamp: 1000,
-			DeletionTimestamp: 2000,
-			Finalizers:        []string{"f"},
-			Annotations:       map[string]string{"k": "v"},
-		})
+		withMeta := event
+		withMeta.Metadata = meta
+		backend.publishWatchNotification(context.Background(), withMeta)
 
 		var got resourcepb.WatchNotification
 		require.NoError(t, proto.Unmarshal(pub.payloads[0], &got))
-		assert.Equal(t, map[string]string{"encrypted": "true"}, got.GetLabels())
-		assert.Equal(t, map[string]string{"encrypted": "false"}, got.GetPreviousLabels())
-		assert.Equal(t, int64(3), got.GetGeneration())
-		assert.Equal(t, int64(1000), got.GetCreationTimestampMillis())
-		assert.Equal(t, int64(2000), got.GetDeletionTimestampMillis())
-		assert.Equal(t, []string{"f"}, got.GetFinalizers())
-		assert.Equal(t, map[string]string{"k": "v"}, got.GetAnnotations())
+		assert.True(t, proto.Equal(meta, got.GetMetadata()))
+	})
+
+	t.Run("drops metadata that pushes the message over the publisher's max payload", func(t *testing.T) {
+		pub := &sizedPublisher{fakeEventPublisher: &fakeEventPublisher{enabled: true}, max: 1024}
+		backend := newTestKVStorageBackend(pub)
+		meta := &resourcepb.NotificationMetadata{
+			Annotations: map[string]string{"big": strings.Repeat("x", 2048)},
+			Generation:  3,
+		}
+
+		withMeta := event
+		withMeta.Metadata = meta
+		backend.publishWatchNotification(context.Background(), withMeta)
+
+		require.Len(t, pub.payloads, 1)
+		assert.LessOrEqual(t, len(pub.payloads[0]), 1024)
+		var got resourcepb.WatchNotification
+		require.NoError(t, proto.Unmarshal(pub.payloads[0], &got))
+		assert.Nil(t, got.GetMetadata())
+		assert.Equal(t, event.Name, got.GetName())
+		assert.Equal(t, 1.0, testutil.ToFloat64(backend.metrics.WatchNotificationMetadataDropped.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+		assert.Equal(t, 1.0, testutil.ToFloat64(backend.metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+	})
+
+	t.Run("keeps metadata that fits the publisher's max payload", func(t *testing.T) {
+		pub := &sizedPublisher{fakeEventPublisher: &fakeEventPublisher{enabled: true}, max: 1024}
+		backend := newTestKVStorageBackend(pub)
+
+		withMeta := event
+		withMeta.Metadata = &resourcepb.NotificationMetadata{Generation: 3}
+		backend.publishWatchNotification(context.Background(), withMeta)
+
+		var got resourcepb.WatchNotification
+		require.NoError(t, proto.Unmarshal(pub.payloads[0], &got))
+		assert.Equal(t, int64(3), got.GetMetadata().GetGeneration())
+	})
+
+	t.Run("falls back to the default limit when the publisher cannot report one", func(t *testing.T) {
+		assert.Equal(t, defaultMaxWatchNotificationBytes, newTestKVStorageBackend(&fakeEventPublisher{enabled: true}).maxWatchNotificationBytes())
+		assert.Equal(t, defaultMaxWatchNotificationBytes, newTestKVStorageBackend(&sizedPublisher{fakeEventPublisher: &fakeEventPublisher{}}).maxWatchNotificationBytes())
 	})
 
 	t.Run("counts a successful publish", func(t *testing.T) {
@@ -120,7 +165,7 @@ func TestPublishWatchNotification(t *testing.T) {
 		backend := newTestKVStorageBackend(pub)
 		metrics := backend.metrics
 
-		backend.publishWatchNotification(context.Background(), event, nil)
+		backend.publishWatchNotification(context.Background(), event)
 
 		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action))))
 		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action))))
@@ -131,7 +176,7 @@ func TestPublishWatchNotification(t *testing.T) {
 		backend := newTestKVStorageBackend(pub)
 		metrics := backend.metrics
 
-		backend.publishWatchNotification(context.Background(), event, nil)
+		backend.publishWatchNotification(context.Background(), event)
 
 		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action))))
 		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action))))
@@ -141,7 +186,7 @@ func TestPublishWatchNotification(t *testing.T) {
 		pub := &fakeEventPublisher{enabled: false}
 		backend := newTestKVStorageBackend(pub)
 
-		backend.publishWatchNotification(context.Background(), event, nil)
+		backend.publishWatchNotification(context.Background(), event)
 
 		assert.Empty(t, pub.subjects)
 	})
@@ -149,25 +194,26 @@ func TestPublishWatchNotification(t *testing.T) {
 	t.Run("does nothing when no publisher is configured", func(t *testing.T) {
 		backend := newTestKVStorageBackend(nil)
 		// Must not panic on a nil publisher.
-		backend.publishWatchNotification(context.Background(), event, nil)
+		backend.publishWatchNotification(context.Background(), event)
 	})
 }
 
-var (
-	settingsGR   = schema.GroupResource{Group: "setting.grafana.app", Resource: "settings"}
-	settingsSpec = watchNotificationSpecs[settingsGR]
-)
+var testSpec = watchMetadataSpec{
+	Labels:      []string{"a", "b"},
+	Annotations: []string{"x"},
+	Finalizers:  []string{"f"},
+}
 
-func TestNewWatchMetadata(t *testing.T) {
+func TestBuildWatchMetadata(t *testing.T) {
 	created := time.UnixMilli(1000)
 	deleted := metav1.NewTime(time.UnixMilli(2000))
-	mk := func(labels map[string]string, deletion *metav1.Time) utils.GrafanaMetaAccessor {
+	mk := func(deletion *metav1.Time) utils.GrafanaMetaAccessor {
 		u := &unstructured.Unstructured{Object: map[string]any{}}
 		u.SetName("n")
-		u.SetLabels(labels)
+		u.SetLabels(map[string]string{"a": "1", "other": "x"})
+		u.SetAnnotations(map[string]string{"x": "y", "other": "z"})
+		u.SetFinalizers([]string{"f", "other"})
 		u.SetGeneration(3)
-		u.SetFinalizers([]string{settingsSpec.Finalizers[0], "other"})
-		u.SetAnnotations(map[string]string{settingsSpec.Annotations[0]: "[\"sv\"]", "other": "x"})
 		u.SetCreationTimestamp(metav1.NewTime(created))
 		u.SetDeletionTimestamp(deletion)
 		m, err := utils.MetaAccessor(u)
@@ -175,67 +221,58 @@ func TestNewWatchMetadata(t *testing.T) {
 		return m
 	}
 
-	t.Run("reads the object and previous labels", func(t *testing.T) {
-		got := newWatchMetadata(settingsGR, mk(map[string]string{"encrypted": "true", "other": "x"}, &deleted), mk(map[string]string{"encrypted": "false"}, nil))
-		assert.Equal(t, &watchMetadata{
-			Labels:            map[string]string{"encrypted": "true"}, // "other" is not allowlisted
-			PreviousLabels:    map[string]string{"encrypted": "false"},
-			Generation:        3,
-			CreationTimestamp: 1000,
-			DeletionTimestamp: 2000,
-			Finalizers:        []string{settingsSpec.Finalizers[0]},                       // "other" is not allowlisted
-			Annotations:       map[string]string{settingsSpec.Annotations[0]: "[\"sv\"]"}, // "other" is not allowlisted
-		}, got)
+	t.Run("keeps only allowlisted values", func(t *testing.T) {
+		got := buildWatchMetadata(testSpec, mk(&deleted))
+		assert.True(t, proto.Equal(&resourcepb.NotificationMetadata{
+			Labels:                  map[string]string{"a": "1"},
+			Annotations:             map[string]string{"x": "y"},
+			Finalizers:              []string{"f"},
+			Generation:              3,
+			CreationTimestampMillis: 1000,
+			DeletionTimestampMillis: 2000,
+		}, got))
 	})
 
-	t.Run("leaves previous labels and deletion timestamp empty on create", func(t *testing.T) {
-		got := newWatchMetadata(settingsGR, mk(nil, nil), nil)
-		assert.Nil(t, got.PreviousLabels)
-		assert.Zero(t, got.DeletionTimestamp)
-	})
-
-	t.Run("a resource without an allowlist entry yields nil", func(t *testing.T) {
-		other := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
-		assert.Nil(t, newWatchMetadata(other, mk(map[string]string{"encrypted": "true"}, nil), nil))
+	t.Run("leaves the deletion timestamp empty when unset", func(t *testing.T) {
+		assert.Zero(t, buildWatchMetadata(testSpec, mk(nil)).GetDeletionTimestampMillis())
 	})
 
 	t.Run("nil object yields nil", func(t *testing.T) {
-		assert.Nil(t, newWatchMetadata(settingsGR, nil, nil))
+		assert.Nil(t, buildWatchMetadata(testSpec, nil))
+	})
+}
+
+func TestNewWatchMetadata(t *testing.T) {
+	u := &unstructured.Unstructured{Object: map[string]any{}}
+	u.SetName("n")
+	u.SetLabels(map[string]string{"encrypted": "true"})
+	obj, err := utils.MetaAccessor(u)
+	require.NoError(t, err)
+
+	t.Run("a resource with an allowlist entry gets metadata", func(t *testing.T) {
+		gr := schema.GroupResource{Group: "setting.grafana.app", Resource: "settings"}
+		assert.Equal(t, map[string]string{"encrypted": "true"}, newWatchMetadata(gr, obj).GetLabels())
+	})
+
+	t.Run("a resource without an allowlist entry yields nil", func(t *testing.T) {
+		gr := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+		assert.Nil(t, newWatchMetadata(gr, obj))
 	})
 }
 
 func TestWatchNotificationAllowlists(t *testing.T) {
 	t.Run("labels and annotations keep only allowlisted keys", func(t *testing.T) {
-		for name, allowed := range map[string][]string{"labels": settingsSpec.Labels, "annotations": settingsSpec.Annotations} {
-			t.Run(name, func(t *testing.T) {
-				in := map[string]string{"not-allowlisted": "x"}
-				assert.Nil(t, filterKeys(in, allowed), "nothing allowlisted is nil, not an empty map")
-				assert.Nil(t, filterKeys(nil, allowed))
+		in := map[string]string{"other": "x"}
+		assert.Nil(t, filterKeys(in, testSpec.Labels), "nothing allowlisted is nil, not an empty map")
+		assert.Nil(t, filterKeys(nil, testSpec.Labels))
 
-				in[allowed[0]] = "v"
-				assert.Equal(t, map[string]string{allowed[0]: "v"}, filterKeys(in, allowed))
-			})
-		}
+		in["a"] = "v"
+		assert.Equal(t, map[string]string{"a": "v"}, filterKeys(in, testSpec.Labels))
 	})
 
 	t.Run("finalizers keep only allowlisted entries", func(t *testing.T) {
-		assert.Nil(t, filterFinalizers([]string{"other"}, settingsSpec.Finalizers))
-		assert.Nil(t, filterFinalizers(nil, settingsSpec.Finalizers))
-		assert.Equal(t, []string{settingsSpec.Finalizers[0]},
-			filterFinalizers([]string{"other", settingsSpec.Finalizers[0]}, settingsSpec.Finalizers))
-	})
-
-	t.Run("previous labels are filtered too", func(t *testing.T) {
-		obj := &unstructured.Unstructured{Object: map[string]any{}}
-		obj.SetName("n")
-		prev := obj.DeepCopy()
-		prev.SetLabels(map[string]string{"encrypted": "true", "other": "x"})
-		om, err := utils.MetaAccessor(obj)
-		require.NoError(t, err)
-		pm, err := utils.MetaAccessor(prev)
-		require.NoError(t, err)
-
-		got := newWatchMetadata(settingsGR, om, pm)
-		assert.Equal(t, map[string]string{"encrypted": "true"}, got.PreviousLabels)
+		assert.Nil(t, filterFinalizers([]string{"other"}, testSpec.Finalizers))
+		assert.Nil(t, filterFinalizers(nil, testSpec.Finalizers))
+		assert.Equal(t, []string{"f"}, filterFinalizers([]string{"other", "f"}, testSpec.Finalizers))
 	})
 }
