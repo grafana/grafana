@@ -1,4 +1,10 @@
-import { type AdHocFiltersVariable, type MultiValueVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
+import {
+  type AdHocFiltersVariable,
+  type MultiValueVariable,
+  sceneGraph,
+  SceneRefreshPicker,
+  type VizPanel,
+} from '@grafana/scenes';
 import { type Dashboard, type VariableModel } from '@grafana/schema';
 import {
   type Spec as DashboardV2Spec,
@@ -17,6 +23,7 @@ import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/S
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
@@ -1385,6 +1392,81 @@ describe('DashboardSceneSerializer', () => {
         });
         expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
       });
+    });
+  });
+
+  describe('panel plugin loads', () => {
+    function loadPlugin(panel: VizPanel, migratedOptions: Record<string, unknown>) {
+      panel.setState({ pluginId: panel.state.pluginId, pluginVersion: '13.3.0', options: migratedOptions });
+    }
+
+    function trackPluginLoads(dashboard: DashboardScene) {
+      const sub = new DashboardSceneChangeTracker(dashboard).trackPanelPluginLoads();
+      return () => sub.unsubscribe();
+    }
+
+    it.each([
+      { schema: 'v1', build: () => setup() },
+      { schema: 'v2', build: () => setupV2() },
+    ])('$schema: changes from the first plugin load are not unsaved changes', ({ build }) => {
+      const dashboard = build();
+      const stop = trackPluginLoads(dashboard);
+
+      loadPlugin(findVizPanelByKey(dashboard, 'panel-1')!, { mode: 'markdown' });
+
+      expect(dashboard.serializer.getDashboardChangesFromScene(dashboard, {}).diffCount).toBe(0);
+      stop();
+    });
+
+    it.each([
+      { schema: 'v1', build: () => setup() },
+      { schema: 'v2', build: () => setupV2() },
+    ])('$schema: a later load of the same plugin is an unsaved change', ({ build }) => {
+      const dashboard = build();
+      const stop = trackPluginLoads(dashboard);
+      const panel = findVizPanelByKey(dashboard, 'panel-1')!;
+
+      loadPlugin(panel, { mode: 'markdown' });
+      loadPlugin(panel, { mode: 'html' });
+
+      expect(dashboard.serializer.getDashboardChangesFromScene(dashboard, {}).hasChanges).toBe(true);
+      stop();
+    });
+
+    it.each([
+      { schema: 'v1', build: () => setup() },
+      { schema: 'v2', build: () => setupV2() },
+    ])('$schema: a panel edited before its plugin loads keeps the edit as an unsaved change', ({ build }) => {
+      const dashboard = build();
+      const stop = trackPluginLoads(dashboard);
+      const panel = findVizPanelByKey(dashboard, 'panel-1')!;
+
+      panel.setState({ options: { content: 'edited' } });
+      loadPlugin(panel, { content: 'edited', mode: 'markdown' });
+
+      expect(dashboard.serializer.getDashboardChangesFromScene(dashboard, {}).hasChanges).toBe(true);
+      stop();
+    });
+
+    it('v1: adopts the first plugin load of a panel in a collapsed row', () => {
+      const dashboard = setup({
+        panels: [
+          {
+            id: 2,
+            type: 'row',
+            title: 'Row',
+            collapsed: true,
+            gridPos: { x: 0, y: 0, w: 24, h: 1 },
+            panels: [{ id: 1, type: 'text', title: 'Panel 1', gridPos: { x: 0, y: 1, w: 12, h: 8 } }],
+          },
+        ],
+      });
+      const stop = trackPluginLoads(dashboard);
+
+      loadPlugin(findVizPanelByKey(dashboard, 'panel-1')!, { mode: 'markdown' });
+
+      expect(dashboard.serializer.getDashboardChangesFromScene(dashboard, {}).diffCount).toBe(0);
+      stop();
     });
   });
 

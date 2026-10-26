@@ -16,6 +16,7 @@ import {
   type SceneVariables,
   SceneVariableSet,
   VizPanel,
+  type VizPanelState,
 } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
@@ -26,11 +27,9 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 import {
   type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
-  defaultFieldConfigSource,
   type PanelKind,
   type PanelQueryKind,
   type TransformationKind,
-  type FieldConfigSource,
   type TransformationSpec,
   type PanelQuerySpec,
   type DataQueryKind,
@@ -55,6 +54,7 @@ import {
   defaultDashboardLinkType,
   defaultDashboardLink,
   type Preferences,
+  type VizConfigKind,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -326,13 +326,6 @@ export function vizPanelToSchemaV2(
     return elementSpec;
   }
 
-  const defaults = handleFieldConfigDefaultsConversion(vizPanel);
-
-  const vizFieldConfig: FieldConfigSource = {
-    defaults,
-    overrides: vizPanel.state.fieldConfig?.overrides ?? [],
-  };
-
   // Repeat clones share the same numeric panel id (parsed from `panel-<id>-clone-<n>`), and panels inside
   // repeated row clones reuse the source panels' keys/ids, so snapshots must assign a stable unique id
   // derived from the disambiguated element identifier.
@@ -378,27 +371,36 @@ export function vizPanelToSchemaV2(
           queryOptions: getVizPanelQueryOptions(vizPanel),
         },
       },
-      vizConfig: {
-        kind: 'VizConfig',
-        group: vizPanel.state.pluginId,
-        version: vizPanel.state.pluginVersion ?? '',
-        spec: {
-          options: vizPanel.state.options,
-          fieldConfig: vizFieldConfig ?? defaultFieldConfigSource(),
-        },
-      },
+      vizConfig: vizPanelStateToVizConfig(vizPanel.state),
     },
   };
   return elementSpec;
 }
 
-function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
-  if (!vizPanel.state.fieldConfig || !vizPanel.state.fieldConfig.defaults) {
+export function vizPanelStateToVizConfig(
+  state: Pick<VizPanelState, 'pluginId' | 'pluginVersion' | 'options' | 'fieldConfig'>
+): VizConfigKind {
+  return {
+    kind: 'VizConfig',
+    group: state.pluginId,
+    version: state.pluginVersion ?? '',
+    spec: {
+      options: state.options,
+      fieldConfig: {
+        defaults: handleFieldConfigDefaultsConversion(state.fieldConfig),
+        overrides: state.fieldConfig?.overrides ?? [],
+      },
+    },
+  };
+}
+
+function handleFieldConfigDefaultsConversion(fieldConfig: VizPanelState['fieldConfig'] | undefined) {
+  if (!fieldConfig || !fieldConfig.defaults) {
     return defaultFieldConfig();
   }
 
   // Handle type conversion for color mode
-  const rawColor = vizPanel.state.fieldConfig.defaults.color;
+  const rawColor = fieldConfig.defaults.color;
   let color: FieldColor | undefined;
 
   if (rawColor) {
@@ -413,13 +415,13 @@ function handleFieldConfigDefaultsConversion(vizPanel: VizPanel) {
   }
 
   // Remove null from the defaults because schema V2 doesn't support null for these fields
-  const decimals = vizPanel.state.fieldConfig.defaults.decimals ?? undefined;
-  const min = vizPanel.state.fieldConfig.defaults.min ?? undefined;
-  const max = vizPanel.state.fieldConfig.defaults.max ?? undefined;
+  const decimals = fieldConfig.defaults.decimals ?? undefined;
+  const min = fieldConfig.defaults.min ?? undefined;
+  const max = fieldConfig.defaults.max ?? undefined;
 
   const defaults = Object.fromEntries(
     Object.entries({
-      ...vizPanel.state.fieldConfig.defaults,
+      ...fieldConfig.defaults,
       decimals,
       min,
       max,

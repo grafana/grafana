@@ -455,6 +455,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     this._initializePanelSearch();
 
+    // Subscribed before change tracking so the initial save model is updated before a diff reads it.
+    const panelPluginLoadsSub = this._changeTracker.trackPanelPluginLoads();
+
     if (this.state.isEditing) {
       this._initialUrlState = locationService.getLocation();
       this._changeTracker.startTrackingChanges();
@@ -532,6 +535,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         this.setState({ planning: undefined });
       }
       presentationSubscription.unsubscribe();
+      panelPluginLoadsSub.unsubscribe();
       destroyMutationClient();
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();

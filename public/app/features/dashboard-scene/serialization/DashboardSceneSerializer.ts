@@ -1,6 +1,10 @@
+import { isEqual, pick } from 'lodash';
+
 import { logWarning } from '@grafana/runtime';
-import { type Dashboard } from '@grafana/schema';
-import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type VizPanel, type VizPanelState } from '@grafana/scenes';
+import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
+import { type Spec as DashboardV2Spec, type VizConfigKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { AnnoKeyDashboardSnapshotOriginalUrl, type ObjectMeta } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -21,10 +25,10 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { hasPredefinedVariablesAnnotationChanges } from '../utils/predefinedVariablesMetadata';
-import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
+import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { transformSceneToSaveModel } from './transformSceneToSaveModel';
-import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
+import { transformSceneToSaveModelSchemaV2, vizPanelStateToVizConfig } from './transformSceneToSaveModelSchemaV2';
 
 /**
  * T is the type of the save model
@@ -63,6 +67,11 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
   getK8SMetadata: () => Partial<ObjectMeta> | undefined;
   /** Replace k8s annotations on the serializer metadata (V1 nests under meta.k8s; V2 is ObjectMeta). */
   setK8SAnnotations: (annotations: Record<string, string>) => void;
+  /**
+   * Adopts what a panel's first plugin load changed (version, migrated options, defaults) into the initial save
+   * model, so it doesn't count as an unsaved change. Only applies when the panel still matched its saved state.
+   */
+  onPanelPluginLoaded: (panel: VizPanel, stateBeforeLoad: VizPanelState) => void;
 }
 
 export interface DashboardTrackingInfo {
@@ -246,6 +255,32 @@ export class V1DashboardSerializer
         annotations,
       },
     };
+  }
+
+  onPanelPluginLoaded(panel: VizPanel, stateBeforeLoad: VizPanelState) {
+    if (!this.initialSaveModel?.panels) {
+      return;
+    }
+
+    const panelId = getPanelIdForVizPanel(panel);
+    const before = panelVizFromState(stateBeforeLoad);
+    let adopted = false;
+
+    const adopt = (saved: Panel): Panel => {
+      if (saved.id !== panelId || !isEqual(savedPanelViz(saved), before)) {
+        return saved;
+      }
+      adopted = true;
+      return Object.assign({}, saved, panelVizFromState(panel.state));
+    };
+
+    const panels = this.initialSaveModel.panels.map((saved) =>
+      isRowPanel(saved) ? { ...saved, panels: saved.panels.map(adopt) } : adopt(saved)
+    );
+
+    if (adopted) {
+      this.initialSaveModel = { ...this.initialSaveModel, panels };
+    }
   }
 
   getTrackingInformation(): DashboardTrackingInfo | undefined {
@@ -486,6 +521,39 @@ export class V2DashboardSerializer
     };
   }
 
+  onPanelPluginLoaded(panel: VizPanel, stateBeforeLoad: VizPanelState) {
+    if (!this.initialSaveModel || !isDashboardV2Spec(this.initialSaveModel)) {
+      return;
+    }
+
+    const panelId = getPanelIdForVizPanel(panel);
+    const entry = Object.entries(this.initialSaveModel.elements).find(
+      ([, element]) => element.kind === 'Panel' && element.spec.id === panelId
+    );
+    if (!entry) {
+      return;
+    }
+
+    const [name, element] = entry;
+    if (
+      element.kind !== 'Panel' ||
+      !isEqual(cleanVizConfig(element.spec.vizConfig), cleanVizConfig(vizPanelStateToVizConfig(stateBeforeLoad)))
+    ) {
+      return;
+    }
+
+    this.initialSaveModel = {
+      ...this.initialSaveModel,
+      elements: {
+        ...this.initialSaveModel.elements,
+        [name]: {
+          ...element,
+          spec: { ...element.spec, vizConfig: cleanVizConfig(vizPanelStateToVizConfig(panel.state)) },
+        },
+      },
+    };
+  }
+
   getTrackingInformation(s: DashboardScene): DashboardTrackingInfo | undefined {
     if (!this.initialSaveModel) {
       return undefined;
@@ -639,6 +707,26 @@ export class V2DashboardSerializer
         return result;
     }
   }
+}
+
+function isRowPanel(panel: Panel | RowPanel): panel is RowPanel {
+  return panel.type === 'row';
+}
+
+function savedPanelViz(panel: Panel) {
+  return sortedDeepCloneWithoutNulls(pick(panel, ['type', 'pluginVersion', 'options', 'fieldConfig']), true);
+}
+
+// Mirrors how vizPanelToPanel writes these fields.
+function panelVizFromState({ pluginId, pluginVersion, options, fieldConfig }: VizPanelState): Record<string, unknown> {
+  return sortedDeepCloneWithoutNulls(
+    { type: pluginId, pluginVersion, options, fieldConfig: fieldConfig ?? { defaults: {}, overrides: [] } },
+    true
+  );
+}
+
+function cleanVizConfig(vizConfig: VizConfigKind) {
+  return sortedDeepCloneWithoutNulls(vizConfig, true, true);
 }
 
 export function getDashboardSceneSerializer(): DashboardSceneSerializerLike<

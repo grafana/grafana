@@ -5,12 +5,14 @@ import {
   SceneDataLayerSet,
   SceneDataTransformer,
   SceneGridLayout,
+  type SceneObjectState,
   SceneObjectStateChangedEvent,
   SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimeRange,
   SceneVariableSet,
   VizPanel,
+  type VizPanelState,
   behaviors,
 } from '@grafana/scenes';
 import { createWorker } from 'app/features/dashboard-scene/saving/createDetectChangesWorker';
@@ -33,6 +35,7 @@ import { TabItem } from '../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isSceneVariableInstance } from '../settings/variables/utils';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { hasPredefinedVariablesAnnotationChanges } from '../utils/predefinedVariablesMetadata';
 
 import { type DashboardChangesRequest, type DashboardChangesResponse } from './shared';
@@ -257,6 +260,37 @@ export class DashboardSceneChangeTracker {
     }
   }
 
+  /**
+   * Panels migrate their options and rewrite their plugin version when their plugin first loads, which can happen
+   * at any time (lazy loading, expanding rows, switching tabs). Those changes are adopted into the initial save
+   * model so they never show up as unsaved changes. Runs outside edit mode too.
+   */
+  public trackPanelPluginLoads(): Unsubscribable {
+    const loadedPanels = new WeakSet<VizPanel>();
+
+    return this._dashboard.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
+      const { changedObject: panel, prevState, partialUpdate } = payload;
+      if (!(panel instanceof VizPanel) || !isVizPanelState(prevState) || loadedPanels.has(panel)) {
+        return;
+      }
+
+      // Only a plugin load writes pluginVersion without changing pluginId; a type change changes pluginId.
+      if (
+        !Object.prototype.hasOwnProperty.call(partialUpdate, 'pluginVersion') ||
+        prevState.pluginId !== panel.state.pluginId
+      ) {
+        return;
+      }
+
+      // Later loads of the same panel come from user actions, like picking a suggestion of the same type.
+      loadedPanels.add(panel);
+
+      if (!isRepeatCloneOrChildOf(panel)) {
+        this._dashboard.serializer.onPanelPluginLoaded(panel, prevState);
+      }
+    });
+  }
+
   public stopTrackingChanges({ discardPendingChecks = false } = {}) {
     this._settingsChangesSub?.unsubscribe();
     this._settingsChangesSub = undefined;
@@ -275,6 +309,10 @@ export class DashboardSceneChangeTracker {
     this._changesWorker?.terminate();
     this._changesWorker = undefined;
   }
+}
+
+function isVizPanelState(state: SceneObjectState): state is VizPanelState {
+  return 'pluginId' in state;
 }
 
 /**
