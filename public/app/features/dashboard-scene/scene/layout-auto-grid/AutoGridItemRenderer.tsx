@@ -22,6 +22,7 @@ import {
   AutoGridLayoutManager,
   getFitMinHeightInPixels,
   getMaxHeightCssValue,
+  getMaxHeightInPixels,
   getNamedHeightInPixels,
 } from './AutoGridLayoutManager';
 import { AutoGridResizeIntercept } from './AutoGridResizeIntercept';
@@ -73,6 +74,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
   // styles.itemMaxHeightClip). The value travels down via a CSS variable.
   const maxHeightCss = getMaxHeightCssValue(maxHeightMode, maxHeight);
   const isMaxHeightBounded = maxHeightCss !== 'none';
+  const fitMaxHeightPx = fitContentOn ? getMaxHeightInPixels(maxHeightMode, maxHeight) : undefined;
   const itemStyle = fitContentOn
     ? isMaxHeightBounded
       ? { '--auto-grid-item-max-height': maxHeightCss }
@@ -125,7 +127,7 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           const wrapperContent = (
             <>
               {autoHeightPanelsEnabled ? (
-                <VizPanelFitScope enabled={fitContentOn} minHeight={fitMinHeightPx}>
+                <VizPanelFitScope enabled={fitContentOn} minHeight={fitMinHeightPx} maxHeight={fitMaxHeightPx}>
                   <item.Component model={item} />
                 </VizPanelFitScope>
               ) : (
@@ -165,7 +167,18 @@ export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem
           );
         }
       ),
-    [model, isLazy, key, styles, isEditing, fitContentOn, isMaxHeightBounded, fitMinHeightPx, autoHeightPanelsEnabled]
+    [
+      model,
+      isLazy,
+      key,
+      styles,
+      isEditing,
+      fitContentOn,
+      isMaxHeightBounded,
+      fitMinHeightPx,
+      fitMaxHeightPx,
+      autoHeightPanelsEnabled,
+    ]
   );
 
   const { isSelected: isSourceSelected } = useElementSelection(body.state.key);

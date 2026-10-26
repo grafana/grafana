@@ -575,17 +575,25 @@ export function getMaxHeightCssValue(
   mode: AutoGridMaxHeightMode | undefined,
   customPixels: number | undefined
 ): string {
+  const pixels = getMaxHeightInPixels(mode, customPixels);
+  return pixels === undefined ? 'none' : `${pixels}px`;
+}
+
+export function getMaxHeightInPixels(
+  mode: AutoGridMaxHeightMode | undefined,
+  customPixels: number | undefined
+): number | undefined {
   switch (mode) {
     case 'short':
     case 'standard':
     case 'tall':
-      return `${getNamedHeightInPixels(mode)}px`;
+      return getNamedHeightInPixels(mode);
     case 'custom':
-      return customPixels != null ? `${customPixels}px` : 'none';
+      return customPixels;
     case 'unlimited':
     case undefined:
     default:
-      return 'none';
+      return undefined;
   }
 }
 
