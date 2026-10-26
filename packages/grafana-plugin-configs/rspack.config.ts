@@ -12,9 +12,6 @@ import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils.t
 
 const require = createRequire(import.meta.url);
 
-// CopyRspackPlugin has no `filter` option (unlike copy-webpack-plugin), so the
-// equivalent of the webpack config's `skipFiles` filter is expressed as glob
-// ignores instead.
 const copyIgnore = ['**/dist/**', '**/tsconfig.json', '**/package.json', '**/project.json'];
 
 class BuildModeRspackPlugin {
@@ -47,12 +44,7 @@ class BuildModeRspackPlugin {
   }
 }
 
-// CopyRspackPlugin recursively scans the *parent directory* of a single-file
-// `from`, so a pattern for the repo-root LICENSE walks the whole monorepo. On
-// @rspack/core 2.1.7 that measures ~3.9s per plugin build, repeated on every
-// watch rebuild (it was ~16s on 2.1.1). Emitting the file directly avoids the
-// scan. Plugins that ship their own LICENSE copy it normally — that `from`
-// resolves inside the plugin directory.
+// Copying the repo-root LICENSE with CopyRspackPlugin scans the whole monorepo, which adds seconds to every build.
 class EmitLicenseRspackPlugin {
   apply(compiler: Compiler) {
     const licensePath = path.resolve(import.meta.dirname, '../../LICENSE');
@@ -75,9 +67,8 @@ class EmitLicenseRspackPlugin {
   }
 }
 
-// The compiler can come from a different @rspack/core copy than this file imports: Yarn and pnpm
-// install one copy per set of resolved peers. VirtualModulesPlugin registers its files with the
-// copy that constructed it, so it must be built from the compiler's own copy.
+// Built from `compiler.rspack` because peer splits can install a second @rspack/core, and
+// virtual modules only register with the copy that created them.
 class PublicPathRspackPlugin {
   constructor(private pluginId: string) {}
 
@@ -102,14 +93,7 @@ export type Env = {
 const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuration> => {
   const pluginJson = getPluginJson(pluginDir);
   const baseConfig: Configuration = {
-    // No `cache` block: rspack's persistent cache is still experimental
-    // (`experiments.cache`) and the cold builds are fast enough without it.
-
-    // rspack only resolves the `define.amd` branch of a UMD wrapper at build
-    // time when AMD support is on. Without this, the check is left in the
-    // bundle and evaluated at load time, where the global `define` SystemJS
-    // installs makes it truthy: the dep registers with SystemJS, exports
-    // nothing, and the plugin throws.
+    // Without this, SystemJS's global `define` makes bundled UMD deps register as AMD and export nothing.
     amd: {},
 
     context: process.cwd(),
@@ -253,23 +237,15 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
       minimize: Boolean(env.production),
       minimizer: [
         new rspack.SwcJsMinimizerRspackPlugin({
-          // TerserPlugin extracts third-party @license banners into a
-          // <asset>.LICENSE.txt sidecar by default; rspack's minimizer does
-          // not, and `format.comments: false` below would otherwise drop those
-          // notices from the shipped bundle entirely.
+          // Match Terser: keep third-party license notices in a .LICENSE.txt sidecar
           extractComments: true,
           minimizerOptions: {
             format: {
-              // swc's `comments` only takes false | 'some' | 'all' — there is
-              // no terser-style predicate to keep the [create-plugin] banner,
-              // so all comments are dropped here and the banner is re-added
-              // after minification by the BannerPlugin below.
+              // The BannerPlugin re-adds the create-plugin banner after minification
               comments: false,
             },
             compress: {
-              // swc's `drop_console` is boolean-only and would drop warn and
-              // error too. pure_funcs matches terser's
-              // `drop_console: ['log', 'info']`.
+              // Match Terser's `drop_console: ['log', 'info']`
               pure_funcs: ['console.log', 'console.info'],
             },
           },
@@ -285,8 +261,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
         banner: '/* [create-plugin] version: 5.22.0 */',
         raw: true,
         entryOnly: true,
-        // Run after the minimizer (PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE) so the
-        // banner survives `format.comments: false`.
+        // Run after the minimizer so the banner survives
         stage: rspack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_SIZE + 1,
       }),
       new rspack.CopyRspackPlugin({
@@ -294,8 +269,6 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           // To `compiler.options.output`
           { from: 'README.md', to: '.', force: true },
           { from: 'plugin.json', to: '.' },
-          // Plugins without their own LICENSE get the repo-root Grafana
-          // LICENSE from EmitLicenseRspackPlugin instead of a copy pattern.
           ...(hasLicense(pluginDir) ? [{ from: 'LICENSE', to: '.' }] : []),
           { from: 'CHANGELOG.md', to: '.', force: true },
           { from: '**/*.json', to: '.', globOptions: { ignore: copyIgnore } }, // TODO<Add an error for checking the basic structure of the repo>
@@ -353,8 +326,6 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
                 '.eslintcache'
               ),
               configType: 'flat',
-              // eslint-rspack-plugin 5.x dropped `failOnError`; downgrading
-              // errors to warnings is the equivalent of `failOnError: false`.
               severity: {
                 error: 'warning',
               },
@@ -371,8 +342,6 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
       },
       extensions: ['.ts', '.tsx', '.js', '.jsx'],
       conditionNames: ['@grafana-app/source', '...'],
-      // webpack's `resolve.unsafeCache` has no rspack equivalent; rspack caches
-      // resolution natively.
     },
 
     stats: 'minimal',
