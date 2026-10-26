@@ -123,16 +123,11 @@ function getDevServer(): DevServerConfiguration {
     allowedHosts: [...new Set([hostname, 'localhost', '127.0.0.1'])],
 
     client: {
+      // Only block the page for build errors. Type and lint problems still print in the terminal.
       overlay: {
-        runtimeErrors: (error) => {
-          const isResizeObserverWarning =
-            error.message === 'ResizeObserver loop completed with undelivered notifications.' ||
-            error.message === 'ResizeObserver loop limit exceeded';
-
-          // These browser notifications have no observer identity. Grid presence scopes the overlay
-          // filter without attributing the notification to RDG or changing resize delivery.
-          return !(isResizeObserverWarning && document.querySelector('.rdg'));
-        },
+        errors: true,
+        warnings: false,
+        runtimeErrors: false,
       },
       // The page is served by Grafana on another port, so the client cannot infer where its
       // socket lives. Point it back at this server.
@@ -220,6 +215,8 @@ export default (env: Env = {}) => {
     devConfig.plugins?.push(
       new TsCheckerRspackPlugin({
         async: true, // don't block rspack emit
+        // Stops type errors being pushed to the dev server overlay once the async check finishes.
+        devServer: false,
         typescript: {
           tsgo: true,
           typescriptPath: nativeTypeScriptPackageJson,
