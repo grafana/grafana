@@ -107,40 +107,22 @@ func TestUserLegacySearchClient_Pagination(t *testing.T) {
 	}
 }
 
-func TestUserLegacySearchClient_HiddenUsers(t *testing.T) {
-	for _, tt := range []struct {
-		name      string
-		requester *user.SignedInUser
-		want      []string
-	}{
-		{name: "hidden users excluded", requester: &user.SignedInUser{Login: "viewer"}, want: []string{"visible"}},
-		{name: "own account included", requester: &user.SignedInUser{Login: "hidden"}, want: []string{"visible", "hidden"}},
-		{name: "grafana admin sees all", requester: &user.SignedInUser{Login: "admin", IsGrafanaAdmin: true}, want: []string{"visible", "hidden"}},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			service := orgtest.NewMockService(t)
-			cfg := &setting.Cfg{HiddenUsers: map[string]struct{}{"hidden": {}}}
-			client := NewUserLegacySearchClient(service, tracing.InitializeTracerForTest(), cfg)
-			ctx := identity.WithRequester(t.Context(), tt.requester)
-			service.On("SearchOrgUsers", mock.Anything, mock.Anything).Return(&org.SearchOrgUsersQueryResult{
-				TotalCount: 2,
-				OrgUsers: []*org.OrgUserDTO{
-					{UID: "visible", Login: "visible"},
-					{UID: "hidden", Login: "hidden"},
-				},
-			}, nil).Once()
+func TestUserLegacySearchClient_ExcludesHiddenUsersInQuery(t *testing.T) {
+	service := orgtest.NewMockService(t)
+	client := NewUserLegacySearchClient(service, tracing.InitializeTracerForTest(), &setting.Cfg{})
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Login: "viewer"})
+	service.On("SearchOrgUsers", mock.Anything, mock.MatchedBy(func(q *org.SearchOrgUsersQuery) bool {
+		return q.ExcludeHiddenUsers
+	})).Return(&org.SearchOrgUsersQueryResult{
+		TotalCount: 1,
+		OrgUsers:   []*org.OrgUserDTO{{UID: "visible", Login: "visible"}},
+	}, nil).Once()
 
-			resp, err := client.Search(ctx, SearchQuery{})
+	resp, err := client.Search(ctx, SearchQuery{})
 
-			require.NoError(t, err)
-			names := make([]string, 0, len(resp.Hits))
-			for _, hit := range resp.Hits {
-				names = append(names, hit.Name)
-			}
-			require.Equal(t, tt.want, names)
-			require.Equal(t, int64(2), resp.TotalHits)
-		})
-	}
+	require.NoError(t, err)
+	require.Len(t, resp.Hits, 1)
+	require.Equal(t, int64(1), resp.TotalHits)
 }
 
 func TestUserLegacySearchClient_Error(t *testing.T) {

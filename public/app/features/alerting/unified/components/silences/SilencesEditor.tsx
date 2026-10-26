@@ -39,7 +39,7 @@ import { contextSrv } from '../../../../../core/services/context_srv';
 import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { type SilenceFormFields } from '../../types/silence-form';
+import { type MatcherFieldValue, type SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
@@ -158,7 +158,7 @@ export const SilencesEditor = ({
   const formAPI = useForm({ defaultValues: formValues });
   const styles = useStyles2(getStyles);
 
-  const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
+  const { register, handleSubmit, formState, watch, setValue, clearErrors, getValues } = formAPI;
 
   const [duration, startsAt, endsAt, matchers] = watch(['duration', 'startsAt', 'endsAt', 'matchers']);
 
@@ -226,6 +226,20 @@ export const SilencesEditor = ({
     700,
     [clearErrors, duration, endsAt, prevDuration, setValue, startsAt]
   );
+
+  const onLabelClick = ([value, name]: [string | undefined, string | undefined]): void => {
+    if (!name || !value) {
+      return;
+    }
+
+    const currentMatchers = getValues('matchers');
+    if (hasEqualMatcher(currentMatchers, name, value)) {
+      return;
+    }
+
+    const nextMatchers = addEqualMatcher(currentMatchers, name, value);
+    setValue('matchers', nextMatchers, { shouldDirty: true, shouldValidate: true });
+  };
 
   const userLogged = Boolean(contextSrv.user.isSignedIn && contextSrv.user.name);
 
@@ -314,7 +328,12 @@ export const SilencesEditor = ({
             </Field>
           )}
           {canPreview && (
-            <SilencedInstancesPreview amSourceName={alertManagerSourceName} matchers={matchers} ruleUid={ruleUid} />
+            <SilencedInstancesPreview
+              amSourceName={alertManagerSourceName}
+              matchers={matchers}
+              ruleUid={ruleUid}
+              onLabelClick={onLabelClick}
+            />
           )}
         </FieldSet>
         <Stack gap={1}>
@@ -336,6 +355,23 @@ export const SilencesEditor = ({
     </FormProvider>
   );
 };
+
+function hasEqualMatcher(matchers: MatcherFieldValue[], name: string, value: string): boolean {
+  return matchers.some(
+    (matcher) => matcher.name === name && matcher.value === value && matcher.operator === MatcherOperator.equal
+  );
+}
+
+function addEqualMatcher(matchers: MatcherFieldValue[], name: string, value: string): MatcherFieldValue[] {
+  const newMatcher = { name, value, operator: MatcherOperator.equal };
+  const emptyIndex = matchers.findIndex((matcher) => !matcher.name && !matcher.value);
+
+  if (emptyIndex === -1) {
+    return [...matchers, newMatcher];
+  }
+
+  return matchers.map((matcher, index) => (index === emptyIndex ? newMatcher : matcher));
+}
 
 function getSilencedRuleDescription(ruleUid: string, ruleLoaded: boolean) {
   if (ruleLoaded) {

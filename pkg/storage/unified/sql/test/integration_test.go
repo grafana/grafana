@@ -248,9 +248,8 @@ func TestIntegrationSearchBackedTrashList(t *testing.T) {
 
 	newBleve := func(t *testing.T) resource.SearchBackend {
 		sb, err := search.NewBleveBackend(search.BleveOptions{
-			FileThreshold:         0,
-			Root:                  t.TempDir(),
-			EnforceSortCapability: true,
+			FileThreshold: 0,
+			Root:          t.TempDir(),
 		}, nil)
 		require.NoError(t, err)
 		t.Cleanup(sb.Stop)

@@ -8,6 +8,7 @@ package searchroutes
 
 import (
 	"slices"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -220,6 +221,7 @@ func BuildGlobalHybridSearch(
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
 	auth authorizer.Authorizer,
+	defaultResourcePairs ...string,
 ) []builder.GroupVersionRoutes {
 	if index == nil {
 		return nil
@@ -230,40 +232,41 @@ func BuildGlobalHybridSearch(
 	}
 	manifests = append(manifests, builder.ManifestsFromBuilders(builders)...)
 	targets := globalHybridSearchTargets(manifests, builder.ServedGroupVersions(builders, installers))
+	defaultResources := make([]searchv0.HybridSearchResource, 0, len(defaultResourcePairs))
+	for _, pair := range defaultResourcePairs {
+		group, resourceName, _ := strings.Cut(pair, "/")
+		defaultResources = append(defaultResources, searchv0.HybridSearchResource{Group: group, Resource: resourceName})
+	}
 	handler := searchapi.NewHybridHandler(index, tracer)
 	gv := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
-	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalHybridSearchRoute(targets, auth)}})
+	// A process that serves none of the types, such as the standalone search API
+	// server, still names results from the manifests it has.
+	kinds := map[schema.GroupResource]string{}
+	for gr, gvk := range globalHybridSearchTargets(manifests, nil) {
+		kinds[gr] = gvk.Kind
+	}
+	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalHybridSearchRoute(targets, kinds, auth, defaultResources)}})
 }
 
 // globalHybridSearchTargets selects a registered version for API authorization
 // and result kinds. Disabling an HTTP route must not bypass its authorization.
+// A nil registered counts every version. The first manifest declaring a resource
+// wins; within it, resource.ManifestKinds picks the version.
 func globalHybridSearchTargets(manifests []*app.ManifestData, registered map[schema.GroupVersion]bool) map[schema.GroupResource]schema.GroupVersionKind {
 	targets := map[schema.GroupResource]schema.GroupVersionKind{}
-	seen := map[schema.GroupVersionResource]bool{}
 	for _, m := range manifests {
 		if m == nil {
 			continue
 		}
-		for _, version := range m.Versions {
-			gv := schema.GroupVersion{Group: m.Group, Version: version.Name}
-			if !registered[gv] {
-				continue
-			}
-			for _, kind := range version.Kinds {
-				if kind.Scope != namespacedScope {
-					continue
-				}
-				gvr := gv.WithResource(resource.ManifestResourceName(kind))
-				if seen[gvr] {
-					continue
-				}
-				seen[gvr] = true
-				gr := gvr.GroupResource()
-				// Select one registered version for the API-level authorization check;
-				// the storage search itself is version-independent.
-				if _, ok := targets[gr]; !ok || version.Name == m.PreferredVersion {
-					targets[gr] = gv.WithKind(kind.Kind)
-				}
+		// Select one registered version for the API-level authorization check;
+		// the storage search itself is version-independent.
+		kinds := resource.ManifestKinds(m, func(version app.ManifestVersion, kind app.ManifestVersionKind) bool {
+			return kind.Scope == namespacedScope &&
+				(registered == nil || registered[schema.GroupVersion{Group: m.Group, Version: version.Name}])
+		})
+		for gr, gvk := range kinds {
+			if _, ok := targets[gr]; !ok {
+				targets[gr] = gvk
 			}
 		}
 	}

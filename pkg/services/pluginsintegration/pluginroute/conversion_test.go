@@ -32,10 +32,10 @@ func (c *stubConverter) ConvertObjects(_ context.Context, req *pluginv3.ConvertO
 	converted := make([]*pluginv3.ConvertObjectsResponse_Object, 0, len(req.GetObjects()))
 	for _, in := range req.GetObjects() {
 		var obj map[string]any
-		if err := json.Unmarshal(in.GetRaw(), &obj); err != nil {
+		if err := json.Unmarshal(in, &obj); err != nil {
 			return nil, err
 		}
-		obj["apiVersion"] = req.GetApi().GetGroup() + "/" + req.GetTargetVersion()
+		obj["apiVersion"] = req.GetTarget().GetGroup() + "/" + req.GetTarget().GetVersion()
 		spec := obj["spec"].(map[string]any)
 		spec["testField"] = "converted:" + spec["testField"].(string)
 		raw, err := json.Marshal(obj)
@@ -101,10 +101,14 @@ func TestHandlerConvertsThroughThePlugin(t *testing.T) {
 
 	require.Len(t, converter.requests, 1)
 	call := converter.requests[0]
-	require.Equal(t, "example.ext.grafana.app", call.GetApi().GetGroup())
-	require.Equal(t, "v2alpha1", call.GetTargetVersion())
+	require.Equal(t, "example.ext.grafana.app", call.GetTarget().GetGroup())
+	require.Equal(t, "v2alpha1", call.GetTarget().GetVersion())
+	require.Equal(t, "TestKind", call.GetTarget().GetKind())
+	require.Equal(t, "default", call.GetNamespace())
 	require.Len(t, call.GetObjects(), 1)
-	require.Equal(t, "v1alpha1", call.GetObjects()[0].GetGvk().GetVersion(), "the stored version is the source")
+	var source map[string]any
+	require.NoError(t, json.Unmarshal(call.GetObjects()[0], &source))
+	require.Equal(t, "example.ext.grafana.app/v1alpha1", source["apiVersion"], "the stored version is the source")
 }
 
 // A failed conversion is an error, not the unconverted object.

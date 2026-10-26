@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -16,6 +17,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -83,6 +85,56 @@ func newHybridResourcesTestServer(responses map[schema.GroupResource]*resourcepb
 	s := newTestSearchServer(nil, nil)
 	s.search = &fakeSearchBackend{idx: index}
 	return s, index
+}
+
+func TestHybridSearch_ReportsRequestedManifestKindsWithNoResults(t *testing.T) {
+	manifest := func(group, kind, plural string) *app.ManifestData {
+		version := hybridConfigVersion("v1", ptr.To(true))
+		version.Kinds[0].Kind = kind
+		version.Kinds[0].Plural = plural
+		m := hybridConfigManifest(version)
+		m.Group = group
+		return m
+	}
+	manifests := []*app.ManifestData{
+		manifest("dashboard.grafana.app", "Dashboard", "dashboards"),
+		manifest("folder.grafana.app", "Folder", "folders"),
+	}
+	for _, tt := range []struct {
+		name string
+		req  *resourcepb.HybridSearchRequest
+		want map[string]string
+	}{
+		{
+			name: "legacy key",
+			req: &resourcepb.HybridSearchRequest{
+				Key:   &resourcepb.ResourceKey{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards"},
+				Query: "missing",
+			},
+			want: map[string]string{"dashboard.grafana.app/dashboards": "Dashboard"},
+		},
+		{
+			name: "resource list",
+			req: &resourcepb.HybridSearchRequest{
+				Namespace: "ns", Query: "missing",
+				Resources: []*resourcepb.HybridSearchRequest_Resource{
+					{Group: "dashboard.grafana.app", Resource: "dashboards"},
+					{Group: "folder.grafana.app", Resource: "folders"},
+					{Group: "unknown.grafana.app", Resource: "unknowns"},
+				},
+			},
+			want: map[string]string{"dashboard.grafana.app/dashboards": "Dashboard", "folder.grafana.app/folders": "Folder"},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			s, _ := newHybridResourcesTestServer(nil)
+			s.hybridSearchConfig = NewHybridSearchConfigRegistry(manifests)
+			resp, err := s.HybridSearch(authedCtx(), tt.req)
+			require.NoError(t, err)
+			assert.Empty(t, resp.Results)
+			assert.Equal(t, tt.want, resp.GetKinds())
+		})
+	}
 }
 
 func TestHybridSearch_MultipleResources_ReranksCombinedResults(t *testing.T) {
