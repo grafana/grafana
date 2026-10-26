@@ -49,32 +49,15 @@ func TestServiceIdentityTokenPermissionsCoverMapper(t *testing.T) {
 		t.Fatal("NewMapperRegistry did not return the expected mapper type")
 	}
 
-	// Dedupe (group, apiResource, verb) triples: aliased mappings (e.g. iam.grafana.app
-	// has both "globalroles" and "roles" pointing at apiResource="roles") would
-	// otherwise produce duplicate subtests with the same assertion.
+	// Subresources share their base resource for token permission checks.
 	type triple struct{ group, resource, verb string }
 	checks := map[triple]struct{}{}
 
 	for group, resources := range registry {
-		// Wildcard groups (e.g. "*.datasource.grafana.app") are matched against
-		// concrete groups at request time. The RolePermissionValidator explicitly
-		// falls back to the legacy permission path for datasources, so the service
-		// identity token is never consulted for these. They're covered separately
-		// in the mapper's own wildcard tests.
-		if strings.HasPrefix(group, "*.") {
-			continue
-		}
-
-		for _, tr := range resources {
-			// Use the API resource name (what the validator passes to authzlib),
-			// not the internal RBAC resource name — e.g. provisioning.grafana.app
-			// uses "jobs", not "provisioning.jobs".
-			apiResource, ok := registry.GetAPIResourceName(group, tr.Resource())
-			if !ok {
-				continue
-			}
+		for apiResource, tr := range resources {
+			resource, _, _ := strings.Cut(apiResource, "/")
 			for verb := range tr.verbMapping {
-				checks[triple{group, apiResource, verb}] = struct{}{}
+				checks[triple{group, resource, verb}] = struct{}{}
 			}
 		}
 	}

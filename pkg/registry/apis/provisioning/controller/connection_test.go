@@ -823,7 +823,9 @@ func TestConnectionController_process(t *testing.T) {
 			errorContains: "failed to update connection status",
 		},
 		{
-			name: "connection not found",
+			// Nothing is left to reconcile, so process returns nil rather than a
+			// spurious error and a recorded processing failure.
+			name: "connection not found - no-op",
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{}
 
@@ -835,7 +837,7 @@ func TestConnectionController_process(t *testing.T) {
 					Namespace: "default",
 				},
 			},
-			expectError: true,
+			expectError: false,
 		},
 		{
 			name: "build connection error",
@@ -1523,6 +1525,21 @@ func TestConnectionController_shouldGenerateToken_BackfillsExpiredFromLiveExpiry
 	cc.shouldGenerateToken(context.Background(), obj, mockConn)
 
 	assert.Equal(t, 1.0, counterValue(t, reg, "grafana_provisioning_connection_tokens_expired_total"))
+}
+
+func TestConnectionController_shouldGenerateToken_SkipsUnauthorizedOAuthConnections(t *testing.T) {
+	cc := &ConnectionController{
+		tokenMetrics:   registerConnectionTokenMetrics(prometheus.NewPedanticRegistry()),
+		resyncInterval: 5 * time.Minute,
+	}
+	unauthorized := &provisioning.Connection{}
+	oauthConn := struct {
+		*connection.MockTokenConnection
+		*connection.MockOAuthConnection
+	}{connection.NewMockTokenConnection(t), connection.NewMockOAuthConnection(t)}
+
+	assert.False(t, cc.shouldGenerateToken(context.Background(), unauthorized, oauthConn), "an OAuth connection waiting for authorization has no token to generate")
+	assert.True(t, cc.shouldGenerateToken(context.Background(), unauthorized, connection.NewMockTokenConnection(t)), "other token connections generate a missing token")
 }
 
 func newConnectionControllerForQueueTest(t *testing.T) (*ConnectionController, *prometheus.Registry) {

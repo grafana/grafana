@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -61,6 +62,14 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 
 			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
 			require.EqualError(t, err, model.ErrFolderHasConnectedLibraryElements.Error())
+		})
+
+	scenarioWithPanel(t, "When ConnectedDashboardsFinder isn't configured, deleting a folder with library elements should fail instead of panicking",
+		func(t *testing.T, sc scenarioContext) {
+			sc.service.ConnectedDashboardsFinder = nil
+
+			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+			require.EqualError(t, err, model.ErrConnectedDashboardsFinderNotConfigured.Error())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
@@ -97,6 +106,172 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			require.NotNil(t, result.Result)
 			require.Equal(t, 0, len(result.Result.Elements))
 		})
+
+	scenarioWithPanel(t, "When an admin deletes a folder, the delete query is routed through LegacyDatabaseProvider",
+		func(t *testing.T, sc scenarioContext) {
+			var requestedTables []string
+			spy := &dbSpy{DB: sc.service.SQLStore}
+			sc.service.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				return &legacysql.LegacyDatabaseHelper{
+					DB: spy,
+					Table: func(n string) string {
+						requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
+						return n
+					},
+				}, nil
+			}
+
+			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+			require.NoError(t, err)
+			require.Contains(t, requestedTables, "library_element")
+			require.True(t, spy.withDbSessionCalled, "select should run on dbHelper.DB, not l.SQLStore directly")
+			require.True(t, spy.withTransactionalDbSessionCalled, "delete should run on dbHelper.DB, not l.SQLStore directly")
+		})
+
+	scenarioWithPanel(t, "the routed delete attaches the requester so a context-dependent provider can resolve the target database",
+		func(t *testing.T, sc scenarioContext) {
+			var gotCtx context.Context
+			sc.service.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				gotCtx = ctx
+				return &legacysql.LegacyDatabaseHelper{
+					DB:    sc.service.SQLStore,
+					Table: func(n string) string { return n },
+				}, nil
+			}
+
+			// A bare context, not sc.reqContext.Req.Context(): that one already has the requester
+			// attached by test setup, which would make this pass without the fix under test.
+			err := sc.service.DeleteLibraryElementsInFolder(context.Background(), sc.reqContext.SignedInUser, sc.folder.UID)
+			require.NoError(t, err)
+
+			require.NotNil(t, gotCtx, "provider should have been called")
+			got, err := identity.GetRequester(gotCtx)
+			require.NoError(t, err, "requester should be attached to ctx, not just passed as an argument")
+			require.Same(t, sc.reqContext.SignedInUser, got)
+		})
+
+	scenarioWithPanel(t, "the routed delete does not reuse an ambient session from a different db.DB",
+		func(t *testing.T, sc scenarioContext) {
+			// sqlstore.startSessionOrUseExisting reuses whatever session is already on ctx
+			// regardless of which db.DB created it, so a routed delete must force a fresh session
+			// or it could silently run on the wrong connection.
+			spy := &dbSpy{DB: sc.service.SQLStore}
+			sc.service.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				return &legacysql.LegacyDatabaseHelper{
+					DB:    spy,
+					Table: func(n string) string { return n },
+				}, nil
+			}
+
+			var ambientSess *db.Session
+			err := sc.service.SQLStore.InTransaction(sc.reqContext.Req.Context(), func(ctx context.Context) error {
+				if err := sc.service.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+					ambientSess = sess
+					return nil
+				}); err != nil {
+					return err
+				}
+				return sc.service.DeleteLibraryElementsInFolder(ctx, sc.reqContext.SignedInUser, sc.folder.UID)
+			})
+			require.NoError(t, err)
+
+			require.NotNil(t, ambientSess)
+			require.NotNil(t, spy.lastSession)
+			require.NotSame(t, ambientSess, spy.lastSession, "routed delete should not reuse the ambient session from a different db.DB")
+		})
+
+	scenarioWithPanel(t, "the default delete (no routed database) joins the caller's ambient transaction",
+		func(t *testing.T, sc scenarioContext) {
+			// Without a configured provider, the delete must keep participating in the caller's
+			// transaction: if the caller later rolls back, the delete must roll back with it too.
+			spy := &dbSpy{DB: sc.service.SQLStore}
+			sc.service.SQLStore = spy
+
+			var ambientSess *db.Session
+			err := spy.InTransaction(sc.reqContext.Req.Context(), func(ctx context.Context) error {
+				if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+					ambientSess = sess
+					return nil
+				}); err != nil {
+					return err
+				}
+				spy.lastSession = nil // setup call above also recorded a session; reset it first
+				return sc.service.DeleteLibraryElementsInFolder(ctx, sc.reqContext.SignedInUser, sc.folder.UID)
+			})
+			require.NoError(t, err)
+
+			require.NotNil(t, ambientSess)
+			require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
+			require.Same(t, ambientSess, spy.lastSession, "default delete should join the caller's ambient transaction")
+		})
+}
+
+func TestIntegration_DeleteLibraryElementsInFolderUnchecked(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	scenarioWithPanel(t, "refuses to run without the unchecked-delete marker, and runs once it's set",
+		func(t *testing.T, sc scenarioContext) {
+			orgID := sc.reqContext.GetOrgID()
+
+			err := sc.service.DeleteLibraryElementsInFolderUnchecked(context.Background(), orgID, sc.reqContext.SignedInUser, sc.folder.UID)
+			require.ErrorIs(t, err, folder.ErrUncheckedDeleteNotAuthorized)
+
+			ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), orgID, sc.reqContext.SignedInUser, []string{sc.folder.UID}, true)
+			err = sc.service.DeleteLibraryElementsInFolderUnchecked(ctx, orgID, sc.reqContext.SignedInUser, sc.folder.UID)
+			require.NoError(t, err)
+
+			resp := sc.service.getAllHandler(sc.reqContext)
+			require.Equal(t, 200, resp.Status())
+			var result libraryElementsSearch
+			require.NoError(t, json.Unmarshal(resp.Body(), &result))
+			require.Equal(t, 0, len(result.Result.Elements))
+		})
+
+	scenarioWithPanel(t, "once marked, deletes elements without consulting AccessControl",
+		func(t *testing.T, sc scenarioContext) {
+			// noPermsUser, not sc.reqContext.SignedInUser, since the latter carries a wildcard that would mask a reintroduced permission check.
+			sc.service.AccessControl = acmock.New()
+			noPermsUser := &user.SignedInUser{OrgID: sc.user.OrgID}
+
+			ctx := folder.WithUncheckedDeleteAuthorized(sc.reqContext.Req.Context(), noPermsUser.OrgID, noPermsUser, []string{sc.folder.UID}, true)
+			err := sc.service.DeleteLibraryElementsInFolderUnchecked(ctx, noPermsUser.OrgID, noPermsUser, sc.folder.UID)
+			require.NoError(t, err)
+
+			var count int64
+			err = sc.sqlStore.WithDbSession(sc.reqContext.Req.Context(), func(session *db.Session) error {
+				_, err := session.SQL("SELECT COUNT(*) FROM library_element WHERE folder_uid=?", sc.folder.UID).Get(&count)
+				return err
+			})
+			require.NoError(t, err)
+			require.Equal(t, int64(0), count)
+		})
+}
+
+// dbSpy wraps a db.DB and records whether WithDbSession/WithTransactionalDbSession were called on
+// it, so a test can prove a query went through this specific connection rather than l.SQLStore.
+type dbSpy struct {
+	db.DB
+	withDbSessionCalled              bool
+	withTransactionalDbSessionCalled bool
+	// lastSession is the session actually used, so a test can prove it isn't the same session
+	// object as an ambient one from a different db.DB (which withoutAmbientSession forces).
+	lastSession *db.Session
+}
+
+func (s *dbSpy) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	s.withDbSessionCalled = true
+	return s.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		s.lastSession = sess
+		return callback(sess)
+	})
+}
+
+func (s *dbSpy) WithTransactionalDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	s.withTransactionalDbSessionCalled = true
+	return s.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		s.lastSession = sess
+		return callback(sess)
+	})
 }
 
 func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
@@ -331,14 +506,15 @@ func setupTestScenario(t *testing.T) scenarioContext {
 	err = folderSvc.RegisterService(alertStore)
 	require.NoError(t, err)
 	service := LibraryElementService{
-		Cfg:               cfg,
-		features:          featuremgmt.WithFeatures(),
-		SQLStore:          sqlStore,
-		folderService:     folderSvc,
-		dashboardsService: dashService,
-		AccessControl:     ac,
-		log:               log.NewNopLogger(),
-		treeCache:         newFolderTreeCache(folderSvc, false),
+		Cfg:                       cfg,
+		features:                  featuremgmt.WithFeatures(),
+		SQLStore:                  sqlStore,
+		folderService:             folderSvc,
+		dashboardsService:         dashService,
+		ConnectedDashboardsFinder: dashService,
+		AccessControl:             ac,
+		log:                       log.NewNopLogger(),
+		treeCache:                 newFolderTreeCache(folderSvc, false),
 	}
 
 	service.AccessControl.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(&service, folderSvc))

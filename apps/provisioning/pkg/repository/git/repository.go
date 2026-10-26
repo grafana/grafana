@@ -466,10 +466,8 @@ func (r *gitRepository) ReadTree(ctx context.Context, ref string) (out []reposit
 	entries := make([]repository.FileTreeEntry, 0, len(tree.Entries))
 	for _, entry := range tree.Entries {
 		isBlob := entry.Type == protocol.ObjectTypeBlob
-		// Apply path prefix filtering
 		relativePath, err := safepath.RelativeTo(entry.Path, r.gitConfig.Path)
-		if err != nil {
-			// File is outside configured path, skip it
+		if err != nil || repository.IsIgnoredPath(relativePath, !isBlob) {
 			continue
 		}
 
@@ -815,11 +813,12 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 
 	changes = make([]repository.VersionedFileChange, 0)
 	for _, f := range files {
+		currentPath, pathErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
+		ignoreCurrentPath := pathErr != nil || repository.IsIgnoredPath(currentPath, f.Type == protocol.ObjectTypeTree)
+
 		switch f.Status {
 		case protocol.FileStatusAdded:
-			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			if err != nil {
-				// do nothing as it's outside of configured path
+			if ignoreCurrentPath {
 				continue
 			}
 
@@ -829,9 +828,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 				Action: repository.FileActionCreated,
 			})
 		case protocol.FileStatusModified:
-			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			if err != nil {
-				// do nothing as it's outside of configured path
+			if ignoreCurrentPath {
 				continue
 			}
 
@@ -842,10 +839,11 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 				Action:      repository.FileActionUpdated,
 			})
 		case protocol.FileStatusDeleted:
-			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			if err != nil {
-				// do nothing as it's outside of configured path
+			if ignoreCurrentPath {
 				continue
+			}
+			if f.Type == protocol.ObjectTypeTree {
+				currentPath = safepath.EnsureTrailingSlash(currentPath)
 			}
 
 			changes = append(changes, repository.VersionedFileChange{
@@ -857,9 +855,7 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 			})
 		case protocol.FileStatusTypeChanged:
 			// Handle type changes as modifications
-			currentPath, err := safepath.RelativeTo(f.Path, r.gitConfig.Path)
-			if err != nil {
-				// do nothing as it's outside of configured path
+			if ignoreCurrentPath {
 				continue
 			}
 
@@ -869,14 +865,12 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 				Action: repository.FileActionUpdated,
 			})
 		case protocol.FileStatusRenamed:
-			newPath, newPathErr := safepath.RelativeTo(f.Path, r.gitConfig.Path)
+			newPath := currentPath
 			oldPath, oldPathErr := safepath.RelativeTo(f.OldPath, r.gitConfig.Path)
 
-			// A rename may span the repository boundary: one side inside the
-			// configured path and the other outside. Resolve this upfront so
-			// the switch below only deals with the four semantic cases.
-			newInsidePath := newPathErr == nil
-			oldInsidePath := oldPathErr == nil
+			// A rename can cross the configured path or move into or out of a hidden directory.
+			newInsidePath := !ignoreCurrentPath
+			oldInsidePath := oldPathErr == nil && !repository.IsIgnoredPath(oldPath, f.Type == protocol.ObjectTypeTree)
 
 			// Tree entries (directories) are emitted with trailing slashes so
 			// downstream code can identify them via safepath.IsDir.

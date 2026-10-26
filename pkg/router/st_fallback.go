@@ -21,10 +21,11 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
-// LoaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
-type LoaderWithSingleTenantFallback interface {
+// loaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
+type loaderWithSingleTenantFallback interface {
 	SingleTenantFallback() http.Handler
 }
 
@@ -109,7 +110,8 @@ type singleTenantDiscovery struct {
 }
 
 // singleTenantFallback forwards requests without a matching multi-tenant route to
-// the single-tenant stack identified by the request namespace. Although this is
+// the single-tenant stack identified by the request namespace, or for
+// cluster-scoped requests and discovery, by the requester's namespace. Although this is
 // not an ideal routing path, it gives clients a single entry point that will
 // resolve ALL /apis requests regardless where they live (MT, or ST)
 type singleTenantFallback struct {
@@ -127,6 +129,12 @@ type singleTenantFallback struct {
 	cooldown  *cooldown
 	status    pollStatus
 	lookupsBy stackLookupCounts
+
+	// discoveryDocs is nil when discovery is not cached. discoveryFetches
+	// shares one fetch among concurrent misses for the same document.
+	discoveryDocs                  *stackDiscoveryCache
+	discoveryFetches               singleflight.Group
+	discoveryHits, discoveryMisses atomic.Uint64
 }
 
 type singleTenantFallbackOptions struct {
@@ -135,12 +143,22 @@ type singleTenantFallbackOptions struct {
 	// group, so it may need to be larger than the host cache.
 	breakerCacheSize int
 	// lookupRate is the sustained grafana.com lookups per second; zero disables the limit.
-	lookupRate    float64
-	lookupBurst   int
-	resolveHost   func(context.Context, int64) (singleTenantStack, error)
-	discoveryHost *url.URL
-	transport     *http.Transport
+	lookupRate  float64
+	lookupBurst int
+	// discoveryCacheBytes bounds the discovery documents cached per stack; zero disables the cache.
+	discoveryCacheBytes int
+	resolveHost         func(context.Context, int64) (singleTenantStack, error)
+	discoveryHost       *url.URL
+	transport           *http.Transport
 }
+
+// Idle connection bounds for the shared transport to every stack: enough per
+// stack for concurrent requests, and a total that bounds the sockets held for
+// thousands of stacks.
+const (
+	singleTenantMaxIdleConnsPerHost = 32
+	singleTenantMaxIdleConns        = 1000
+)
 
 func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFallback, error) {
 	cache, err := lru.New[int64, singleTenantHost](opts.cacheSize)
@@ -167,6 +185,16 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 		limiter = rate.NewLimiter(rate.Limit(opts.lookupRate), opts.lookupBurst)
 	}
 
+	var discoveryDocs *stackDiscoveryCache
+	switch {
+	case opts.discoveryCacheBytes < 0:
+		return nil, fmt.Errorf("single-tenant discovery cache size must not be negative")
+	case opts.discoveryCacheBytes > 0:
+		if discoveryDocs, err = newStackDiscoveryCache(opts.discoveryCacheBytes); err != nil {
+			return nil, fmt.Errorf("single-tenant discovery cache: %w", err)
+		}
+	}
+
 	if opts.resolveHost == nil {
 		return nil, fmt.Errorf("single-tenant host resolver is required")
 	}
@@ -177,12 +205,18 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 	if opts.transport == nil {
 		opts.transport = http.DefaultTransport.(*http.Transport).Clone()
 		opts.transport.ResponseHeaderTimeout = backendResponseHeaderTimeout
+		// Stacks are reached over plaintext HTTP/1.1, one request per
+		// connection at a time, so net/http's default of 2 idle connections per
+		// host makes most concurrent requests dial again.
+		opts.transport.MaxIdleConnsPerHost = singleTenantMaxIdleConnsPerHost
+		opts.transport.MaxIdleConns = singleTenantMaxIdleConns
 	}
 
 	return &singleTenantFallback{
 		breakers:      breakers,
 		cache:         cache,
 		lookupLimiter: limiter,
+		discoveryDocs: discoveryDocs,
 		resolveHost:   opts.resolveHost,
 		discoveryHost: opts.discoveryHost,
 		transport:     opts.transport,
@@ -282,23 +316,98 @@ func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Reque
 			http.NotFound(w, req)
 			return
 		}
-		st.forward(host, parts[1], w, req)
+		st.forward(host, parts[1], w, req, nil)
 		return
 	}
-	// The discovery host supplies metadata, never tenant resources or mutations.
-	if st.discoveryHost != nil && (req.Method == http.MethodGet || req.Method == http.MethodHead) && isSingleTenantDiscoveryPath(req.URL.Path) {
-		// Namespaced requests require a nonempty group, so discovery cannot collide with them.
-		st.forward(&singleTenantTarget{url: st.discoveryHost}, "", w, req)
+	// Namespaced requests require a nonempty group, so discovery cannot collide with them.
+	if (req.Method == http.MethodGet || req.Method == http.MethodHead) && isSingleTenantDiscoveryPath(req.URL.Path) {
+		st.serveDiscovery(w, req)
+		return
+	}
+	if len(parts) > 3 && parts[0] == "apis" && parts[1] != "" && parts[2] != "" && parts[3] != "" && parts[3] != "namespaces" {
+		st.serveClusterScoped(parts[1], w, req)
 		return
 	}
 	http.NotFound(w, req)
 }
 
-func isSingleTenantDiscoveryPath(path string) bool {
+// serveClusterScoped forwards a cluster-scoped request, such as iam's whoami,
+// to the requester's own stack, since the URL names none. The stack checks
+// that the token's namespace is its own, as it does for namespaced requests.
+// A requester whose namespace is not a stack, such as "*", gets a 404.
+func (st *singleTenantFallback) serveClusterScoped(group string, w http.ResponseWriter, req *http.Request) {
+	var host *singleTenantTarget
+	var err error
+	if requester, _ := identity.GetRequester(req.Context()); requester != nil {
+		host, err = st.hostForNamespace(req.Context(), requester.GetNamespace())
+	}
+	if writePrivateLookupError(w, err) {
+		return
+	}
+	if host == nil {
+		w.Header().Set("Cache-Control", "private")
+		http.NotFound(w, req)
+		return
+	}
+	st.forward(host, group, w, req, func(resp *http.Response) {
+		// The same URL answers each caller from their own stack.
+		resp.Header.Set("Cache-Control", privateCacheControl(resp.Header.Values("Cache-Control")))
+	})
+}
+
+// writePrivateLookupError answers a failed lookup of the requester's own stack,
+// on a URL that does not name it, so the answer is for this caller alone. It
+// reports whether it wrote a response.
+func writePrivateLookupError(w http.ResponseWriter, err error) bool {
+	switch {
+	case err == nil:
+		return false
+	case errors.Is(err, errStackLookupThrottled):
+		w.Header().Set("Cache-Control", "private")
+		w.Header().Set("Retry-After", "1")
+		http.Error(w, "stack lookup throttled", http.StatusServiceUnavailable)
+	default:
+		w.Header().Set("Cache-Control", "private")
+		http.Error(w, "stack lookup unavailable", http.StatusServiceUnavailable)
+	}
+	return true
+}
+
+// serveDiscovery answers discovery from the requester's own stack. Only a
+// requester whose namespace is not a stack, such as "*", or whose stack does
+// not exist, gets the discovery host's. For those, root discovery is a 404, so
+// the router serves the defaults it already holds from the discovery poll.
+func (st *singleTenantFallback) serveDiscovery(w http.ResponseWriter, req *http.Request) {
+	var host *singleTenantTarget
+	var err error
+	if requester, _ := identity.GetRequester(req.Context()); requester != nil {
+		host, err = st.hostForNamespace(req.Context(), requester.GetNamespace())
+	}
+	if writePrivateLookupError(w, err) {
+		return
+	}
+	switch {
+	case host != nil:
+		st.forwardDiscovery(host, w, req)
+	case st.discoveryHost == nil || isRootDiscoveryPath(req.URL.Path):
+		w.Header().Set("Cache-Control", "private")
+		http.NotFound(w, req)
+	default:
+		// The discovery host supplies metadata, never tenant resources or mutations.
+		st.forwardDiscovery(&singleTenantTarget{url: st.discoveryHost}, w, req)
+	}
+}
+
+func isRootDiscoveryPath(path string) bool {
 	path = strings.TrimSuffix(path, "/")
-	if path == apisPrefix || path == openapiV3Prefix {
+	return path == apisPrefix || path == openapiV3Prefix
+}
+
+func isSingleTenantDiscoveryPath(path string) bool {
+	if isRootDiscoveryPath(path) {
 		return true
 	}
+	path = strings.TrimSuffix(path, "/")
 	if rest, ok := strings.CutPrefix(path, apisPrefix+"/"); ok {
 		parts := strings.Split(rest, "/")
 		return (len(parts) == 1 && parts[0] != "") || (len(parts) == 2 && parts[0] != "" && parts[1] != "")
@@ -307,7 +416,9 @@ func isSingleTenantDiscoveryPath(path string) bool {
 	return ok
 }
 
-func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, w http.ResponseWriter, req *http.Request) {
+// forward proxies req to host. An empty group means discovery. observe, when
+// set, sees the response as the stack sent it, before it is changed here.
+func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, w http.ResponseWriter, req *http.Request, observe func(*http.Response)) {
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
 			rewriteOutbound(pr, host.url)
@@ -317,14 +428,49 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 		Transport:     newBackendTransport(st.transport),
 		ErrorHandler:  proxyErrorHandler,
 		FlushInterval: streamingFlushInterval,
+		BufferPool:    proxyBuffers,
 		ModifyResponse: func(resp *http.Response) error {
 			if err := checkStackOrigin(resp, host.slug); err != nil {
 				return err
+			}
+			if observe != nil {
+				observe(resp)
+			}
+			if group == "" {
+				// The same discovery URL answers each caller from their own
+				// stack, and a shared cache keyed on Authorization would not
+				// tell X-Access-Token callers apart.
+				resp.Header.Set("Cache-Control", privateCacheControl(resp.Header.Values("Cache-Control")))
 			}
 			return rejectBackendRedirects(resp)
 		},
 	}
 	serveThroughBreaker(st.breakerForDestination(host.url, group), group, proxy, w, req)
+}
+
+// privateCacheControl keeps a response's Cache-Control directives, but makes
+// it private: public is dropped, and private is added unless no-store already
+// keeps the response out of every cache.
+func privateCacheControl(values []string) string {
+	var directives []string
+	noStore := false
+	for _, value := range values {
+		for directive := range strings.SplitSeq(value, ",") {
+			directive = strings.TrimSpace(directive)
+			name, _, _ := strings.Cut(directive, "=")
+			switch strings.ToLower(name) {
+			case "", "public", "private":
+				continue
+			case "no-store":
+				noStore = true
+			}
+			directives = append(directives, directive)
+		}
+	}
+	if !noStore {
+		directives = append(directives, "private")
+	}
+	return strings.Join(directives, ", ")
 }
 
 // checkStackOrigin guards against the connection reaching the wrong stack (for
@@ -354,17 +500,6 @@ func (st *singleTenantFallback) breakerForDestination(host *url.URL, group strin
 	breaker := newGroupBreaker(key)
 	st.breakers.Add(key, breaker)
 	return breaker
-}
-
-// Helper function called when the fallback is directly used as a loader (testing)
-func (st *singleTenantFallback) SingleTenantFallback() http.Handler {
-	return st
-}
-
-// Load implements [RoutesLoader]. It returns the latest discovery snapshot and
-// makes no requests.
-func (st *singleTenantFallback) Load(context.Context) ([]Backend, error) {
-	return st.Backends()
 }
 
 // Backends returns the last-known-good discovered backends, and the error from
@@ -404,15 +539,6 @@ func (st *singleTenantFallback) discover(ctx context.Context) ([]Backend, error)
 	return backends, nil
 }
 
-func (st *singleTenantFallback) Notify(ctx context.Context) (<-chan struct{}, error) {
-	dirty := make(chan struct{}, 1)
-	go func() {
-		defer close(dirty)
-		st.run(ctx, dirty)
-	}()
-	return dirty, nil
-}
-
 // run polls discovery until ctx is done, paced only by st.cooldown, the same
 // way as aggregateTarget.run.
 func (st *singleTenantFallback) run(ctx context.Context, dirty chan<- struct{}) {
@@ -443,18 +569,20 @@ func (st *singleTenantFallback) poll(ctx context.Context, dirty chan<- struct{})
 	backends, err := st.discover(ctx)
 	if err != nil {
 		st.cooldown.OnFailure(now)
-		st.status.recordFailure()
 		logging.FromContext(ctx).Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
 		next := &singleTenantDiscovery{err: err}
 		if prev != nil {
 			next.backends = prev.backends
 		}
 		st.discovery.Store(next)
+		if st.status.recordFailure() {
+			wake(dirty)
+		}
 		return
 	}
 	st.cooldown.OnSuccess(now)
-	st.status.recordSuccess(now)
 	st.discovery.Store(&singleTenantDiscovery{backends: backends})
+	st.status.recordSuccess(now)
 
 	if prev != nil && prev.err == nil && sameKeySet(backendKeys(prev.backends), backendKeys(backends)) {
 		return
@@ -474,8 +602,8 @@ func backendKeys(backends []Backend) map[string]struct{} {
 }
 
 var (
-	_ RoutesLoader = (*singleTenantFallback)(nil)
-	_ Backend      = (*fallbackBackend)(nil)
+	_ Backend               = (*fallbackBackend)(nil)
+	_ CallerScopedDiscovery = (*fallbackBackend)(nil)
 )
 
 type fallbackBackend struct {
@@ -510,6 +638,10 @@ func (f *fallbackBackend) Key() string {
 func (f *fallbackBackend) Load(context.Context) (http.Handler, error) {
 	return f.st, nil
 }
+
+// CallerScopedDiscovery implements [CallerScopedDiscovery]: the discovery
+// host's view of the group is only the default for callers without a stack.
+func (f *fallbackBackend) CallerScopedDiscovery() {}
 
 // maxStackResponseBytes bounds a grafana.com instance response.
 const maxStackResponseBytes = 1 << 20 // 1MB

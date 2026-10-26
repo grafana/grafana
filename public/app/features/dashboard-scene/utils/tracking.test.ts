@@ -6,7 +6,7 @@ import {
   defaultVizConfigKind,
   type GridLayoutItemKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 
 import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import nestedDashboard from '../serialization/testfiles/nested_dashboard.json';
@@ -18,12 +18,6 @@ import { trackDashboardSceneCreatedOrSaved, trackDashboardSceneLoaded } from './
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
-  config: {
-    ...jest.requireActual('@grafana/runtime').config,
-    featureToggles: {
-      dashboardNewLayouts: true,
-    },
-  },
   getDataSourceSrv: () => ({
     getInstanceSettings: () => {
       return { apiVersion: 'v1', meta: { multiValueFilterOperators: true } };
@@ -85,8 +79,14 @@ function buildSceneWithTextPanels(panelOptions: Array<Record<string, unknown>>) 
   });
 }
 
+const defaultFlags = { dashboardNewLayouts: true };
+
 describe('dashboard tracking', () => {
+  beforeEach(() => {
+    setTestFlags(defaultFlags);
+  });
   afterEach(() => {
+    setTestFlags({});
     jest.clearAllMocks();
     jest.resetAllMocks();
   });
@@ -164,7 +164,7 @@ describe('dashboard tracking', () => {
     });
 
     it('fires when on the template route with dashboardTemplateUid and the FF is enabled', async () => {
-      setTestFlags({ 'grafana.customDashboardTemplates': true });
+      setTestFlags({ 'grafana.customDashboardTemplates': true, ...defaultFlags });
       locationService.push('/dashboard/template?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
       await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
@@ -176,7 +176,7 @@ describe('dashboard tracking', () => {
     });
 
     it('does not fire when the route is something other than /dashboard/template', async () => {
-      setTestFlags({ 'grafana.customDashboardTemplates': true });
+      setTestFlags({ 'grafana.customDashboardTemplates': true, ...defaultFlags });
       locationService.push('/d/abc/my-dash?dashboardTemplateUid=tpl-42');
       const scene = buildTestScene();
       await trackDashboardSceneCreatedOrSaved(true, scene, { name: 'n', url: 'u', diff_count: 0 });
@@ -255,15 +255,15 @@ describe('dashboard tracking', () => {
   });
 
   describe('global variables interactions', () => {
-    it('reports dashboards_global_variables_loaded', () => {
-      DashboardInteractions.globalVariablesLoaded({
+    it('reports dashboards_predefined_variables_loaded', () => {
+      DashboardInteractions.predefinedVariablesLoaded({
         global_count: 2,
         folder_count: 1,
         total_count: 3,
         mode: 'all',
       });
 
-      expect(reportInteraction).toHaveBeenCalledWith('dashboards_global_variables_loaded', {
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_predefined_variables_loaded', {
         global_count: 2,
         folder_count: 1,
         total_count: 3,
@@ -289,13 +289,7 @@ describe('dashboard tracking', () => {
   describe('text panel usage tracking', () => {
     const mermaidMarkdown = '# Diagram\n\n```mermaid\ngraph TD;\nA-->B;\n```';
 
-    beforeEach(() => {
-      setTestFlags({ 'grafana.newTextPanel': true, 'text.newFeatures': true });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
+    testWithFlags({ 'grafana.newTextPanel': true, 'text.newFeatures': true, ...defaultFlags });
 
     it('counts the features used by every text panel on the dashboard', () => {
       const scene = buildSceneWithTextPanels([

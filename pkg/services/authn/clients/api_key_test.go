@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -149,6 +150,15 @@ func TestAPIKey_Test(t *testing.T) {
 				},
 			}},
 			expected: true,
+		},
+		{
+			desc: "should not claim a local plugin access policy token",
+			req: &authn.Request{HTTPRequest: &http.Request{
+				Header: map[string][]string{
+					"Authorization": {"Bearer " + v3.LocalAccessPolicyTokenPrefix + "rmD8abc"},
+				},
+			}},
+			expected: false,
 		},
 		{
 			desc:     "should fail when no http request is passed",

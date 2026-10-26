@@ -14,7 +14,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/utils/ptr"
@@ -611,7 +610,7 @@ func TestGRPCStore_APISendsTimeEnd(t *testing.T) {
 		assert.Equal(t, spec.Time, *spec.TimeEnd)
 	})
 
-	t.Run("update omitting time_end is rejected before reaching the store", func(t *testing.T) {
+	t.Run("update omitting time_end on a point sends time_end equal to time", func(t *testing.T) {
 		adapter, srv, ctx := setup(t)
 
 		_, err := adapter.Create(ctx, &annotationV0.Annotation{
@@ -624,7 +623,11 @@ func TestGRPCStore_APISendsTimeEnd(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{Name: "point", Namespace: ns},
 			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
 		}}, nil, nil, false, &metav1.UpdateOptions{})
-		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
-		assert.Empty(t, srv.updates)
+		require.NoError(t, err)
+
+		require.Len(t, srv.updates, 1)
+		spec := srv.updates[0].Annotation.Spec
+		require.NotNil(t, spec.TimeEnd)
+		assert.Equal(t, spec.Time, *spec.TimeEnd)
 	})
 }

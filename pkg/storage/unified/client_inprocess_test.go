@@ -78,7 +78,7 @@ func newInProcessTestClient(t *testing.T, kvBackend, snapshotsEnabled bool) (res
 		nil, // gcGate
 		nil, // eventPublisher
 		nil, // eventSubscriber
-		nil, // experimentalKV
 		nil, // watchExpiry
+		nil, // manifestDiscovery
 	)
 }

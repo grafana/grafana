@@ -1,9 +1,8 @@
 import { HttpResponse, delay, http } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { configureStore } from 'app/store/configureStore';
@@ -293,7 +292,7 @@ describe('NewProvisionedFolderForm', () => {
     expect(posts).toBe(0);
   });
 
-  it('should create folder with branch workflow', async () => {
+  it('should create folder on a new branch', async () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
         const url = new URL(request.url);
@@ -309,7 +308,7 @@ describe('NewProvisionedFolderForm', () => {
     await user.clear(folderNameInput);
     await user.type(folderNameInput, 'Branch Folder');
 
-    // A new branch name moves the form off the configured branch, onto the branch workflow
+    // A new branch name moves the form off the configured branch onto a branch commit
     await user.type(screen.getByRole('combobox', { name: /branch/i }), 'feature/new-folder{Enter}');
 
     const submitButton = screen.getByRole('button', { name: /^create$/i });
@@ -559,14 +558,6 @@ describe('NewProvisionedFolderForm commit message template', () => {
 
   beforeEach(() => {
     capturedRequest = null;
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('pre-fills Comment from the repository template', async () => {

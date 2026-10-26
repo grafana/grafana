@@ -18,10 +18,14 @@ package playlist
 }
 
 playlistv1: {
-	kind:       "Playlist"
-	plural:     "playlists"
-	scope:      "Namespaced"
-	conversion: true
+	kind:         "Playlist"
+	plural:       "playlists"
+	scope:        "Namespaced"
+	folderScoped: false
+	conversion:   true
+	search: {
+		global: true
+	}
 	validation: {
 		operations: [
 			"CREATE",

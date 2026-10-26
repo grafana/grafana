@@ -1281,6 +1281,30 @@ func TestService_listPermission(t *testing.T) {
 
 	testCases := []testCase{
 		{
+			name: "unscoped snapshot read grants access to all snapshots",
+			permissions: []accesscontrol.Permission{
+				{Action: "snapshots:read", Scope: ""},
+			},
+			list: listRequest{
+				Action:   "snapshots:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "snapshots",
+				Verb:     utils.VerbList,
+				Options:  &ListRequestOptions{},
+			},
+			expectedAll: true,
+		},
+		{
+			name: "no snapshot read grant returns no snapshots",
+			list: listRequest{
+				Action:   "snapshots:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "snapshots",
+				Verb:     utils.VerbList,
+				Options:  &ListRequestOptions{},
+			},
+		},
+		{
 			name: "should return wildcard if user has a wildcard permission",
 			permissions: []accesscontrol.Permission{
 				{
@@ -2147,6 +2171,50 @@ func TestService_Check(t *testing.T) {
 				{Action: "datasources:create", Scope: ""},
 			},
 			expected: true,
+		},
+		{
+			name: "should allow playlists create with wildcard-scoped playlists:write (skipped scope accepts wildcard)",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Verb:      "create",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "playlists:write", Scope: "playlists:*", Kind: "playlists", Attribute: "*"},
+			},
+			expected: true,
+		},
+		{
+			name: "should allow named playlists update with unscoped playlists:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Verb:      "update",
+				Name:      "pl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "playlists:write", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny named playlists update without playlists:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Verb:      "update",
+				Name:      "pl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "playlists:read", Scope: ""},
+			},
+			expected: false,
 		},
 		{
 			name: "should allow datasources update via datasources:edit action set scoped to uid",
@@ -4578,6 +4646,14 @@ func (t *trackingPermissionStore) GetUserPermissions(ctx context.Context, ns typ
 		t.folderPermCalls++
 	}
 	return t.inner.GetUserPermissions(ctx, ns, query)
+}
+
+func (t *trackingPermissionStore) HasUserPermissions(
+	ctx context.Context,
+	ns types.NamespaceInfo,
+	query store.PermissionsQuery,
+) (bool, error) {
+	return t.inner.HasUserPermissions(ctx, ns, query)
 }
 
 // Checking a folder that is missing from the tree rebuilds the tree, and a batch can

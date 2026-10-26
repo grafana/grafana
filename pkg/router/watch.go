@@ -4,29 +4,9 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strings"
 
 	"golang.org/x/net/http/httpguts"
-
-	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apiserver/pkg/endpoints/request"
 )
-
-var requestInfoFactory = &request.RequestInfoFactory{
-	APIPrefixes:          sets.NewString(strings.TrimPrefix(apisPrefix, "/")),
-	GrouplessAPIPrefixes: sets.NewString(),
-}
-
-// requestVerb returns the Kubernetes verb for req: "watch" for a watch, "list"
-// or "get" for reads, and so on. Paths outside the resource API, such as
-// discovery and OpenAPI, return the lowercased HTTP method.
-func requestVerb(req *http.Request) string {
-	info, err := requestInfoFactory.NewRequestInfo(req)
-	if err != nil || info.Verb == "" {
-		return strings.ToLower(req.Method)
-	}
-	return info.Verb
-}
 
 // rejectUpgrade answers an upgrade request, which is how a client asks for a
 // watch over WebSocket. The router does not proxy upgrades, so it says so

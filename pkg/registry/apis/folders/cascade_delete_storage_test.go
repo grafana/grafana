@@ -354,11 +354,16 @@ func TestCascadeDelete_DeletesAllVariablesInFolder(t *testing.T) {
 	}
 }
 
-// recordingContentsDeleter records the folders whose contents were requested for deletion.
-type recordingContentsDeleter struct{ folders []string }
+// recordingContentsDeleter records the folders whose contents were requested for deletion, and the
+// requester each deletion was attributed to.
+type recordingContentsDeleter struct {
+	folders   []string
+	deletedBy []identity.Requester
+}
 
-func (r *recordingContentsDeleter) DeleteInFolder(_ context.Context, _, folderUID string) error {
+func (r *recordingContentsDeleter) DeleteInFolder(_ context.Context, _, folderUID string, user identity.Requester) error {
 	r.folders = append(r.folders, folderUID)
+	r.deletedBy = append(r.deletedBy, user)
 	return nil
 }
 
@@ -375,6 +380,30 @@ func TestCascadeDelete_DeletesContentsPerFolder(t *testing.T) {
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.NoError(t, err)
 	require.ElementsMatch(t, []string{"root", "child"}, deleter.folders)
+
+	requester, err := identity.GetRequester(ctxWithNamespace())
+	require.NoError(t, err)
+	for _, got := range deleter.deletedBy {
+		require.Equal(t, requester, got, "contents must be attributed to the real requester, not the service identity used to enumerate the cascade")
+	}
+}
+
+func TestCascadeDelete_RejectsEnumerationIdentityAsRequester(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	deleter := &recordingContentsDeleter{}
+	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient, variableClient: nilVariableClient, contentsDeleter: deleter}
+
+	// Simulates the original bug: the real requester was lost somewhere upstream and Delete
+	// captured the enumeration identity (the one WithServiceIdentityContext mints) in its place.
+	ctx, _ := identity.WithServiceIdentity(apirequest.WithNamespace(context.Background(), "default"), 1)
+
+	_, _, err := s.Delete(ctx, "root", nil, forceDelete())
+	require.True(t, apierrors.IsForbidden(err), "must be a 403, not a generic error: %v", err)
+	require.Empty(t, store.deleted, "folder must not be deleted when the requester is the enumeration identity")
+	require.Empty(t, store.stamped, "folder must not be left stamped terminating when this guard rejects the request")
+	require.Empty(t, deleter.folders)
 }
 
 func TestCascadeDelete_SkipsContentsOnDryRun(t *testing.T) {

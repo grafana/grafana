@@ -3,6 +3,7 @@ import { type FormEvent, type PropsWithChildren } from 'react';
 import * as React from 'react';
 
 import { Field, Input } from '@grafana/ui';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 
 interface VariableTextFieldProps {
   value?: string;
@@ -38,9 +39,17 @@ export function VariableTextField({
   maxLength,
 }: PropsWithChildren<VariableTextFieldProps>) {
   const id = useId(name);
+  const readOnly = useOptionsPaneReadOnly();
 
   return (
-    <Field label={name} description={description} invalid={invalid} error={error} htmlFor={id}>
+    <Field
+      label={name}
+      description={description}
+      invalid={invalid}
+      error={error}
+      htmlFor={id}
+      disabled={readOnly ? true : undefined}
+    >
       <Input
         type="text"
         id={id}

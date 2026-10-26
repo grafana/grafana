@@ -16,7 +16,7 @@ export type Env = Record<string, string | true | undefined>;
 
 // Disk layout, URL and CDN path are one string. The backend rebuilds it too - see
 // webassets.PublicPathFor on the Go side.
-export const PUBLIC_PATH = 'public/build/rspack/';
+export const PUBLIC_PATH = 'public/build/';
 
 // `reactRefresh` emits calls into a runtime that only ReactRefreshRspackPlugin injects, so the
 // caller must register that plugin too. The `hmr` branch below does both; nothing else should
@@ -24,6 +24,7 @@ export const PUBLIC_PATH = 'public/build/rspack/';
 export function createSwcRule({ reactRefresh = false } = {}): RuleSetRule {
   return {
     test: /\.tsx?$/,
+    resourceQuery: { not: [/text-panel-runtime/] },
     use: {
       loader: 'builtin:swc-loader',
       options: {
@@ -88,6 +89,12 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
       // Required to load WASM modules.
       asyncWebAssembly: true,
     },
+    // Webpack's default. Rspack defaults to 'warn-mock', which mocks the same way but warns, and
+    // the dev server overlay turns that warning into a full-page block.
+    node: {
+      __dirname: 'mock',
+      __filename: 'mock',
+    },
     output: {
       // rspack.boot.ts writes boot.js into the build directory from its own compilation.
       // As the two compile concurrently we need to guarantee that boot.js doesn't get deleted.
@@ -121,15 +128,6 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         // source code and miss out in updates
         '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
           '@locker/near-membrane-dom/custom-devtools-formatter.js'
-        ),
-        // TODO: Remove once Rspack replaces Webpack.
-        // Rspack emits worker chunks as ES modules (workerChunkLoading: 'import' below), which
-        // resolve to module-worker variants instead of the importScripts based originals used by
-        // the webpack build.
-        'app/core/utils/CorsWorker$': path.resolve(grafanaRoot, 'public/app/core/utils/CorsWorker.rspack.ts'),
-        'app/core/utils/CorsSharedWorker$': path.resolve(
-          grafanaRoot,
-          'public/app/core/utils/CorsSharedWorker.rspack.ts'
         ),
       },
       modules: [
@@ -187,6 +185,11 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         },
       },
       rules: [
+        {
+          resourceQuery: /text-panel-runtime/,
+          type: 'javascript/auto',
+          use: path.resolve(grafanaRoot, 'scripts/rspack/loaders/textPanelRuntime.cjs'),
+        },
         createSwcRule({ reactRefresh: hmr }),
         cssRule,
         {

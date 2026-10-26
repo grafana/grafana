@@ -246,17 +246,30 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) (tree []repo
 
 	rootlen := len(r.path)
 	entries := make([]repository.FileTreeEntry, 0, 100)
-	err = filepath.Walk(r.path, func(path string, info fs.FileInfo, err error) error {
+	// WalkDir lets us skip hidden directories before attempting to read them.
+	err = filepath.WalkDir(r.path, func(path string, dirEntry fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		entry := repository.FileTreeEntry{
-			Path: strings.TrimLeft(path[rootlen:], "/"),
-			Size: info.Size(),
+			Path: strings.TrimLeft(filepath.ToSlash(path[rootlen:]), "/"),
 		}
 		if entry.Path == "" {
 			return nil // skip the root file
 		}
+
+		if repository.IsIgnoredPath(entry.Path, dirEntry.IsDir()) {
+			if dirEntry.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		info, err := dirEntry.Info()
+		if err != nil {
+			return err
+		}
+		entry.Size = info.Size()
 
 		if !info.IsDir() {
 			entry.Blob = true

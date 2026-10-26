@@ -4,43 +4,75 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // aggregateTargetConfig is a named upstream apiserver whose API groups the
-// router discovers by polling. Name is one of aggregateTargetNames.
+// router discovers by polling.
 type aggregateTargetConfig struct {
-	Name               string
-	URL                string
-	Audience           string
+	Name         string
+	PollInterval time.Duration
+	URL          string
+	Audience     string
+	// DiscoveryAuth is how the router authenticates its own discovery polls:
+	// discoveryAuthCAPToken (also the empty default) or discoveryAuthNone.
+	// Proxied requests always carry the caller's credentials regardless.
+	DiscoveryAuth      string
 	GroupPatterns      []string
 	CAFile             string
 	InsecureSkipVerify bool
 }
 
-// aggregateTargetNames are the fixed upstream apiservers the router aggregates.
-// See specs/2026-09-11-router-aggregate-discovery-design.md for why this is
-// not a configurable list.
-var aggregateTargetNames = []string{"baas_apiserver", "cloud_app_platform_apiserver"}
+const aggregateSectionPrefix = "router.aggregate."
 
-// parseAggregateTargets reads the <name>.url, .audience, .group_regex,
-// .ca_file and .insecure keys for each fixed target. Targets without a url
-// are skipped; an empty group_regex matches every group.
-func parseAggregateTargets(section *setting.DynamicSection) ([]aggregateTargetConfig, error) {
+// Values of a target's discovery_auth key. Unset means discoveryAuthCAPToken.
+const (
+	discoveryAuthCAPToken = "cap_token"
+	discoveryAuthNone     = "none"
+)
+
+// Section order determines priority when targets discover the same group.
+func parseAggregateTargets(cfg *setting.Cfg) ([]aggregateTargetConfig, error) {
 	var targets []aggregateTargetConfig
-	for _, name := range aggregateTargetNames {
-		url := section.Key(name + ".url").MustString("")
+	for _, raw := range cfg.Raw.Sections() {
+		name, ok := strings.CutPrefix(raw.Name(), aggregateSectionPrefix)
+		if !ok {
+			continue
+		}
+		if name == "" {
+			return nil, fmt.Errorf("%s: target name is required", raw.Name())
+		}
+		section := cfg.SectionWithEnvOverrides(raw.Name())
+		url := section.Key("url").MustString("")
 		if url == "" {
 			continue
+		}
+		interval, err := parsePositiveDurationKey(section, "poll_interval", defaultAggregatePollInterval)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", raw.Name(), err)
+		}
+		audience := section.Key("audience").MustString("")
+		discoveryAuth := section.Key("discovery_auth").MustString("")
+		switch discoveryAuth {
+		case "", discoveryAuthCAPToken:
+		case discoveryAuthNone:
+			if audience != "" {
+				return nil, fmt.Errorf("%s: audience must not be set when discovery_auth is %q", raw.Name(), discoveryAuthNone)
+			}
+		default:
+			return nil, fmt.Errorf("%s: discovery_auth must be %q or %q, got %q", raw.Name(), discoveryAuthCAPToken, discoveryAuthNone, discoveryAuth)
 		}
 		targets = append(targets, aggregateTargetConfig{
 			Name:               name,
 			URL:                url,
-			Audience:           section.Key(name + ".audience").MustString(""),
-			GroupPatterns:      splitGroupPatterns(section.Key(name + ".group_regex").MustString("")),
-			CAFile:             section.Key(name + ".ca_file").MustString(""),
-			InsecureSkipVerify: section.Key(name + ".insecure").MustBool(false),
+			PollInterval:       interval,
+			Audience:           audience,
+			DiscoveryAuth:      discoveryAuth,
+			GroupPatterns:      splitGroupPatterns(section.Key("group_regex").MustString("")),
+			CAFile:             section.Key("ca_file").MustString(""),
+			InsecureSkipVerify: section.Key("insecure").MustBool(false),
 		})
 	}
 	return targets, nil
@@ -62,7 +94,8 @@ func splitGroupPatterns(raw string) []string {
 // compileGroupPatterns turns glob patterns ("*.grafana.app") into anchored
 // regexps. "*" is the only special character; everything else is quoted,
 // since the patterns are an allowlist and a live metacharacter would widen it.
-func compileGroupPatterns(patterns []string) ([]*regexp.Regexp, error) {
+// Quoting also means no pattern can fail to compile.
+func compileGroupPatterns(patterns []string) []*regexp.Regexp {
 	compiled := make([]*regexp.Regexp, 0, len(patterns))
 	for _, p := range patterns {
 		var b strings.Builder
@@ -76,15 +109,9 @@ func compileGroupPatterns(patterns []string) ([]*regexp.Regexp, error) {
 			}
 		}
 		b.WriteString("$")
-		regexPattern := b.String()
-
-		re, err := regexp.Compile(regexPattern)
-		if err != nil {
-			return nil, fmt.Errorf("router: invalid group pattern %q: %w", p, err)
-		}
-		compiled = append(compiled, re)
+		compiled = append(compiled, regexp.MustCompile(b.String()))
 	}
-	return compiled, nil
+	return compiled
 }
 
 // matchesAnyPattern reports whether groupName matches any of patterns. No
@@ -99,4 +126,10 @@ func matchesAnyPattern(groupName string, patterns []*regexp.Regexp) bool {
 		}
 	}
 	return false
+}
+
+// anonymousDiscovery reports whether the target's discovery polls go out
+// without a CAP token.
+func (c aggregateTargetConfig) anonymousDiscovery() bool {
+	return c.DiscoveryAuth == discoveryAuthNone
 }

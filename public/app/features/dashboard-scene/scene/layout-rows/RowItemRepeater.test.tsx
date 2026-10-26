@@ -3,7 +3,7 @@ import { render } from 'test/test-utils';
 
 import { type VariableRefresh } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { locationService, setPluginImportUtils } from '@grafana/runtime';
+import { locationService, setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -39,6 +39,8 @@ setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: () => undefined,
 });
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 describe('RowItemRepeater', () => {
   beforeEach(() => {

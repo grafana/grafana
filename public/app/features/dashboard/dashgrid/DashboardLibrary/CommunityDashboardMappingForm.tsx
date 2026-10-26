@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { useDataSourceInstanceList } from '@grafana/runtime';
 import { Stack, Text, Button, Alert, Field, Input, Box } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { type DashboardInput, type DataSourceInput } from 'app/features/manage-dashboards/types';

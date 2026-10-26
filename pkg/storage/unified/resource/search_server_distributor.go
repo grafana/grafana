@@ -186,9 +186,10 @@ func (ds *distributorServer) HybridSearch(ctx context.Context, r *resourcepb.Hyb
 	ctx, span := ds.tracing.Start(ctx, "distributor.HybridSearch")
 	defer span.End()
 
-	var ns string
-	if r.Key != nil {
-		ns = r.Key.Namespace
+	ns := r.GetNamespace()
+	//nolint:staticcheck // Continue routing requests from older clients.
+	if r.GetKey() != nil {
+		ns = r.GetKey().GetNamespace()
 	}
 	return distributeWithFailover(ctx, ds, ns, "HybridSearch", r, ResourceClient.HybridSearch)
 }
