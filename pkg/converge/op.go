@@ -77,7 +77,13 @@ type Op struct {
 	// Identity is known for every operation on something the target already
 	// holds, and for container ensures. It is empty for [OpCreate], where the
 	// target assigns one.
-	Identity Identity
+	//
+	// IdentityProvenance records where Identity came from, and carries the same
+	// warning as ContainerProvenance: a container identity the source asserted
+	// is only as trustworthy as the version it was read from. It is the
+	// container's own identity that is described here, never its parent's.
+	Identity           Identity
+	IdentityProvenance Provenance
 
 	// Fingerprint is the content the operation should leave in place. Empty
 	// for deletions and container operations.

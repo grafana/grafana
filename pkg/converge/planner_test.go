@@ -238,8 +238,14 @@ func TestContainerReidentificationReparentsThenRemoves(t *testing.T) {
 		t.Fatalf("re-identification must be one group: %q %q %q",
 			ensure.Group, update.Group, remove.Group)
 	}
-	if ensure.ContainerProvenance != FromDeclaration {
-		t.Fatalf("a pinned identity comes from the source, got %s", ensure.ContainerProvenance)
+	// The pinned identity is the container's own, so its provenance is the one
+	// that records the source asserted it. ContainerProvenance describes the
+	// container this one sits in, which here is the root.
+	if ensure.IdentityProvenance != FromDeclaration {
+		t.Fatalf("a pinned identity comes from the source, got %s", ensure.IdentityProvenance)
+	}
+	if ensure.Container != "" || ensure.ContainerIdentity != "" {
+		t.Fatalf("a root container has no parent: %q %q", ensure.Container, ensure.ContainerIdentity)
 	}
 }
 

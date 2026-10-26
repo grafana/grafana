@@ -57,12 +57,42 @@ func (s *state) restrictToTargeted(hinted []Key) {
 		named[k.AsContainer()] = true
 	}
 
+	// Which containers this plan actually needs: the ones a surviving operation
+	// lands in, and everything above them. The closure also admits keys reached
+	// by a fingerprint match, so a container elsewhere in the source can carry
+	// a missing-container ensure with nothing surviving inside it — creating a
+	// folder the caller never mentioned.
+	required := make(map[Key]bool, len(hinted))
+	requireAncestry := func(k Key) {
+		for p := k.Parent(); p != ""; p = p.Parent() {
+			if required[p] {
+				break
+			}
+			required[p] = true
+		}
+	}
+	for _, op := range s.ops {
+		switch op.Kind {
+		case OpEnsureContainer:
+			if named[op.Key] {
+				required[op.Key] = true
+				requireAncestry(op.Key)
+			}
+		case OpRemoveContainer:
+			// A removal needs nothing brought into existence.
+		default:
+			if named[op.Key] || (op.From != "" && named[op.From]) {
+				requireAncestry(op.Key)
+			}
+		}
+	}
+
 	kept := s.ops[:0]
 	for _, op := range s.ops {
 		switch op.Kind {
 		case OpEnsureContainer:
 			switch {
-			case len(s.obsCont[op.Key]) == 0:
+			case len(s.obsCont[op.Key]) == 0 && required[op.Key]:
 				// A container the path needs and the target does not have.
 				op.Reason = ""
 				op.Group = ""
@@ -78,13 +108,12 @@ func (s *state) restrictToTargeted(hinted []Key) {
 				//
 				// The identity comes from the target in every case: a targeted
 				// plan updates what a container says about itself, never which
-				// container it is. Both identity fields move together, or a
-				// veto pass marks a path-derived fallback trusted and checks
-				// permission against a folder that does not exist.
-				held := s.obsCont[op.Key][0].Identity
-				op.Identity = held
-				op.ContainerIdentity = held
-				op.ContainerProvenance = FromInventory
+				// container it is. Marking it observed matters: a veto pass
+				// that saw a path-derived fallback here would treat it as
+				// trusted and check permission against a folder that does not
+				// exist.
+				op.Identity = s.obsCont[op.Key][0].Identity
+				op.IdentityProvenance = FromInventory
 				op.Reason = ReasonContentChanged
 				op.Group = ""
 				kept = append(kept, op)

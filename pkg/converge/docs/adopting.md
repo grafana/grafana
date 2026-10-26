@@ -168,9 +168,12 @@ func (a *authorizer) vetoes(ctx context.Context, p *converge.Plan) ([]converge.V
     var out []converge.Veto
     for _, op := range p.Ops {
         // An identity the source asserted is only as trustworthy as the ref it
-        // came from. A branch can claim any folder UID it likes.
+        // came from. A branch can claim any folder UID it likes. A container
+        // operation carries no identity for the container above it, and the
+        // zero provenance reads as trusted, so an unresolved parent would be
+        // checked at the root.
         folder := op.ContainerIdentity
-        if !op.ContainerProvenance.Trusted() {
+        if !op.ContainerProvenance.Trusted() || (folder == "" && op.Container != "") {
             var err error
             if folder, err = a.resolveFromConfiguredBranch(ctx, op.Container); err != nil {
                 return nil, err                   // transient: not a veto

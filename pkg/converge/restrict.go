@@ -118,9 +118,18 @@ func Restrict(p *Plan, vetoes []Veto) (*Plan, error) {
 		kept = append(kept, o)
 	}
 
+	// Removed states that this plan deletes something the target holds. Once a
+	// veto drops the deletion that is no longer true, and a preview that still
+	// claims it describes a destructive change that will not happen.
+	stillRemoved := make(map[Key]bool, len(kept))
+	for _, o := range kept {
+		if o.Kind == OpDelete || o.Kind == OpRemoveContainer {
+			stillRemoved[o.Key] = true
+		}
+	}
 	out := &Plan{
-		Exclusions: append([]Exclusion(nil), p.Exclusions...),
-		Rejected:   append([]Exclusion(nil), p.Rejected...),
+		Exclusions: reflagRemoved(p.Exclusions, stillRemoved),
+		Rejected:   reflagRemoved(p.Rejected, stillRemoved),
 		Mode:       p.Mode,
 		Scope:      p.Scope,
 	}
@@ -139,6 +148,22 @@ func Restrict(p *Plan, vetoes []Veto) (*Plan, error) {
 		return nil, err
 	}
 	return out, nil
+}
+
+// reflagRemoved restates each exclusion's Removed against the operations that
+// survived, leaving everything else about it alone.
+func reflagRemoved(in []Exclusion, stillRemoved map[Key]bool) []Exclusion {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make([]Exclusion, len(in))
+	copy(out, in)
+	for i := range out {
+		if out[i].Removed {
+			out[i].Removed = stillRemoved[out[i].Key]
+		}
+	}
+	return out
 }
 
 // budgetOrdered reports whether the plan it came from had creation waiting on

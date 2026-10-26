@@ -1160,3 +1160,57 @@ func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	// Verify that SetRefURLs was NOT called since repo doesn't support URLs
 	mockProgress.AssertExpectations(t)
 }
+
+// A tree move takes descendant folders along, and a folder holding only a
+// .keep is still a Grafana folder. Classifying blobs alone let a move push one
+// past the depth limit, leaving the repository holding a folder the next sync
+// excludes.
+func TestMoveWorker_RefusesDirectoryMoveWhenADescendantFolderBecomesTooDeep(t *testing.T) {
+	job := provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				Paths:      []string{"a/"},
+				TargetPath: "new/",
+				Ref:        "main",
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{MockRepository: repository.NewMockRepository(t)}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockRepo.On("ReadTree", mock.Anything, "main").Return([]repository.FileTreeEntry{
+		{Path: "a/", Blob: false},
+		{Path: "a/b/c/d/e/f/g/h/", Blob: false},
+		{Path: "a/b/c/d/e/f/g/h/.keep", Blob: true},
+	}, nil)
+
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockRepo, false)
+	})
+
+	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("SetMessage", mock.Anything, mock.Anything).Return().Maybe()
+	mockProgress.On("TooManyErrors").Return(nil)
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
+
+	// An unaddressable path is a warning, not a failure: the same classification
+	// sync gives it.
+	var refusal error
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		if result.Path() != "a/" {
+			return false
+		}
+		refusal = result.Warning()
+		return true
+	})).Return()
+
+	worker := NewWorker(nil, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	require.NoError(t, worker.Process(context.Background(), mockRepo, job, mockProgress))
+
+	require.ErrorIs(t, refusal, resources.ErrUnsupportedPath)
+	require.Contains(t, refusal.Error(), "new/a/b/c/d/e/f/g/h/")
+	mockRepo.AssertNotCalled(t, "Move", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+}

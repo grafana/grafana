@@ -359,11 +359,15 @@ func TestTargetedContentEditSurvivesAnApparentParentChange(t *testing.T) {
 	if op.Identity != "PINNED" {
 		t.Fatalf("the held identity must be kept, got %q", op.Identity)
 	}
-	// Both identity fields move together, or a veto pass marks a path-derived
-	// fallback trusted and checks permission against a folder that does not
-	// exist.
-	if op.ContainerIdentity != "PINNED" || !op.ContainerProvenance.Trusted() {
-		t.Fatalf("container identity must match and be trusted: %q %s",
+	// The identity must be marked observed, or a veto pass treats a
+	// path-derived fallback as trusted and checks permission against a folder
+	// that does not exist.
+	if !op.IdentityProvenance.Trusted() {
+		t.Fatalf("the held identity must be trusted, got %s", op.IdentityProvenance)
+	}
+	// ContainerIdentity describes the container this one sits in, not this one.
+	if op.ContainerIdentity != "TOP-PINNED" || !op.ContainerProvenance.Trusted() {
+		t.Fatalf("parent identity must be the held one and trusted: %q %s",
 			op.ContainerIdentity, op.ContainerProvenance)
 	}
 }
@@ -406,4 +410,75 @@ func TestHeldExcludedContainerIsReportedAsDestructive(t *testing.T) {
 		}
 	}
 	t.Fatalf("the container was not reported: %v", p.Exclusions)
+}
+
+// An exclusion's Removed says this plan deletes something the target holds.
+// Vetoing the deletion makes that false, and a preview that still claims it
+// describes a destructive change that will not happen.
+func TestRestrictRestatesRemovedAgainstSurvivingDeletions(t *testing.T) {
+	p, err := NewPlan(
+		[]Declaration{
+			{Key: "bad.json", Fingerprint: "h1", Verdict: Excluded, Reason: "unsupported"},
+		},
+		[]Observation{
+			{Key: "bad.json", Identity: "id-bad", Fingerprint: "h1"},
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(p.Exclusions) != 1 || !p.Exclusions[0].Removed {
+		t.Fatalf("expected one destructive exclusion, got %+v", p.Exclusions)
+	}
+	if len(p.Ops) != 1 || p.Ops[0].Kind != OpDelete {
+		t.Fatalf("expected one deletion, got %+v", p.Ops)
+	}
+
+	restricted, err := Restrict(p, []Veto{{Ref: p.Ops[0].Ref(), Reason: "forbidden"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(restricted.Ops) != 0 {
+		t.Fatalf("the deletion should be gone, got %+v", restricted.Ops)
+	}
+	for _, e := range restricted.Exclusions {
+		if e.Key == "bad.json" && e.Removed {
+			t.Fatal("the exclusion still claims the entity is removed after the deletion was vetoed")
+		}
+	}
+}
+
+// The hint closure admits keys reached by a fingerprint match so a relocation
+// can be paired. That context must not become folders: a targeted write of one
+// file created an unrelated folder whose only link to the request was a
+// matching content hash.
+func TestTargetedPlanDoesNotCreateFoldersOnlyTheClosureReached(t *testing.T) {
+	p, err := NewPlan(
+		[]Declaration{
+			{Key: "a/", Container: true},
+			{Key: "a/new.json", Fingerprint: "same"},
+			{Key: "b/", Container: true},
+			{Key: "b/other.json", Fingerprint: "same"},
+		},
+		nil,
+		WithContainers(ContainerConfig{
+			Implied:          true,
+			FallbackIdentity: func(k Key) Identity { return Identity("auto:" + string(k)) },
+		}),
+		WithHints(HintSet{Complete: true, Keys: []Key{"a/new.json"}}),
+		WithExclusionScope(ScopeTargeted),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, op := range p.Ops {
+		if op.Key == "b/" || op.Key.Within("b/") {
+			t.Fatalf("targeted write of a/new.json planned %s %s:\n%s", op.Kind, op.Key, p)
+		}
+	}
+	if len(p.Ops) != 2 {
+		t.Fatalf("expected the folder and the write, got:\n%s", p)
+	}
 }

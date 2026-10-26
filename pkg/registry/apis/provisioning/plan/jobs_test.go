@@ -46,3 +46,38 @@ func TestJobPathsAreRefusedByTheSameRuleAsSync(t *testing.T) {
 func TestJobPathRefusalIgnoresNonResources(t *testing.T) {
 	require.Empty(t, plan.RefuseUnsupportedPaths("team/README.md", "team/.keep"))
 }
+
+// A folder at the maximum depth is addressable; the _folder.json describing it
+// sits one level deeper and is not. Classifying the metadata file on its own
+// path refused a move the sync would have accepted.
+func TestJobPathRefusalClassifiesFolderMetadataByItsDirectory(t *testing.T) {
+	require.Empty(t, plan.RefuseUnsupportedPaths("a/b/c/d/e/f/g/h/_folder.json"))
+
+	refused := plan.RefuseUnsupportedPaths("a/b/c/d/e/f/g/h/i/_folder.json")
+	require.Len(t, refused, 1)
+	require.Equal(t, "a/b/c/d/e/f/g/h/i/", refused[0].Path, "the refusal is about the folder, not the metadata file")
+}
+
+// A directory move takes the whole subtree along. A descendant folder holding
+// nothing a resource classifier looks at is still a Grafana folder, so it has
+// to be classified at its destination too.
+func TestDirectoryMoveRefusesDescendantFoldersPushedTooDeep(t *testing.T) {
+	// a/b/c/d/e/f/g/h/ is at the depth limit where it is and one past it under new/a/.
+	refused := plan.RefuseUnsupportedMove("a/", "new/a/", []string{
+		"a/",
+		"a/b/c/d/e/f/g/h/",
+		"a/b/c/d/e/f/g/h/.keep",
+	})
+	require.Len(t, refused, 1)
+	require.Equal(t, "new/a/b/c/d/e/f/g/h/", refused[0].Path)
+	require.Equal(t, plan.ReasonUnsupportedPath, refused[0].Reason)
+}
+
+// The same subtree moved somewhere that still fits is not refused.
+func TestDirectoryMoveAcceptsDescendantFoldersThatStillFit(t *testing.T) {
+	require.Empty(t, plan.RefuseUnsupportedMove("a/b/", "new/b/", []string{
+		"a/b/",
+		"a/b/c/d/e/f/g/h/",
+		"a/b/c/d/e/f/g/h/.keep",
+	}))
+}

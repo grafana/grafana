@@ -88,8 +88,13 @@ func Vetoes(ctx context.Context, p *converge.Plan, c Checker, resolve FolderReso
 			continue
 		}
 
+		// A container removal names the parent key but carries no identity for
+		// it, and the zero provenance reads as trusted, so an unresolved parent
+		// would be checked as the root — deleting a nested folder would ask for
+		// permission in a folder it is not in. Resolve whenever the identity is
+		// missing for a container that has one.
 		folder := string(op.ContainerIdentity)
-		if !op.ContainerProvenance.Trusted() {
+		if !op.ContainerProvenance.Trusted() || (folder == "" && op.Container != "") {
 			resolved, err := resolve(ctx, FolderPathOf(op))
 			if err != nil {
 				return nil, fmt.Errorf("resolve folder for %s: %w", op.Key, err)

@@ -213,11 +213,20 @@ func (w *Worker) refuseMove(ctx context.Context, rw repository.ReaderWriter, sou
 	if err != nil {
 		return nil, fmt.Errorf("read tree to classify a directory move: %w", err)
 	}
+	// Directories count as contents. A folder holding nothing a resource
+	// classifier looks at — a .keep, a README — still becomes a Grafana folder,
+	// so a move that pushes it past the depth limit leaves the repository
+	// holding a folder the next sync excludes.
 	var contents []string
 	for _, entry := range tree {
-		if entry.Blob && safepath.InDir(entry.Path, sourcePath) {
-			contents = append(contents, entry.Path)
+		if !safepath.InDir(entry.Path, sourcePath) {
+			continue
 		}
+		if entry.Blob {
+			contents = append(contents, entry.Path)
+			continue
+		}
+		contents = append(contents, safepath.EnsureTrailingSlash(entry.Path))
 	}
 	return plan.RefuseUnsupportedMove(sourcePath, targetPath, contents), nil
 }

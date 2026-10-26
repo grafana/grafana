@@ -268,3 +268,37 @@ func TestHaltStopsSchedulingWithinAStage(t *testing.T) {
 		t.Fatal("a halted run has not converged")
 	}
 }
+
+// Failure has to propagate through a skip, not stop at it. Marking a blocked
+// operation Skipped without recording it as unsatisfied held back only its
+// direct dependents, so a write two levels under a failed container was
+// attempted and reported applied.
+func TestFailurePropagatesThroughSkippedPrerequisites(t *testing.T) {
+	p := hierarchicalPlan(t)
+	boom := errors.New("boom")
+
+	var attempted []string
+	res, err := apply.Run(context.Background(), p, apply.ActuatorFunc(func(_ context.Context, op converge.Op) error {
+		attempted = append(attempted, string(op.Key))
+		if op.Kind == converge.OpEnsureContainer && op.Key == "a/" {
+			return boom
+		}
+		return nil
+	}), apply.Config{Workers: 1, ContinueOnError: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(attempted) != 1 || attempted[0] != "a/" {
+		t.Fatalf("nothing under the failed container should have been attempted, got %v", attempted)
+	}
+	for _, o := range res.Outcomes {
+		want := apply.Skipped
+		if o.Op.Key == "a/" {
+			want = apply.Failed
+		}
+		if o.Status != want {
+			t.Fatalf("%s: want %s, got %s", o.Op.Key, want, o.Status)
+		}
+	}
+}

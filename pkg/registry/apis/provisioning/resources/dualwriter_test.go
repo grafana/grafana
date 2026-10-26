@@ -3,9 +3,11 @@ package resources
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -19,6 +21,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -1867,5 +1870,149 @@ func TestDualReadWriter_FolderScopeGuard(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, teamAFolder.ID, parsed.Meta.GetFolder(),
 			"folder-scoped resource must be parented to the resolved subdirectory folder")
+	})
+}
+
+// recordingAuthorizer records folder-create checks and the identity that made
+// them, and can deny a chosen path.
+type recordingAuthorizer struct {
+	Authorizer
+	deny     string
+	asked    []string
+	identity []string
+}
+
+func (a *recordingAuthorizer) AuthorizeWrite(context.Context, string) error { return nil }
+
+func (a *recordingAuthorizer) AuthorizeResource(context.Context, *ParsedResource, string) error {
+	return nil
+}
+
+func (a *recordingAuthorizer) AuthorizeCreateFolder(ctx context.Context, path string) error {
+	a.asked = append(a.asked, path)
+	who := ""
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		who = requester.GetUID()
+	}
+	a.identity = append(a.identity, who)
+	if a.deny != "" && path == a.deny {
+		return errors.New("forbidden")
+	}
+	return nil
+}
+
+// The plan-based preflight authorises every folder a write implies before
+// anything is written. Nothing exercised it with the toggle on, so its
+// refusal-before-mutation and caller-identity behaviour were untested.
+func TestDualReadWriter_ConvergePreflightAuthorization(t *testing.T) {
+	const (
+		repoName = "repo"
+		subPath  = "team-a/nested/resource.json"
+	)
+
+	dashboardGVK := schema.GroupVersionKind{Group: "dashboard.grafana.app", Version: "v1beta1", Kind: "Dashboard"}
+	dashboardGVR := schema.GroupVersionResource{Group: "dashboard.grafana.app", Version: "v1beta1", Resource: "dashboards"}
+
+	setup := func(t *testing.T, auth *recordingAuthorizer, heldFolders map[string]bool) (*DualReadWriter, *repository.MockReaderWriter) {
+		t.Helper()
+		SetConvergePreflight(true)
+		t.Cleanup(func() { SetConvergePreflight(false) })
+
+		obj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/v1beta1",
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": "dash-1", "namespace": "default"},
+			"spec":       map[string]any{"title": "Dash"},
+		}}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: repoName})
+
+		client := &MockDynamicResourceInterface{}
+		client.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(&unstructured.Unstructured{}, nil).Maybe()
+		client.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(&unstructured.Unstructured{}, nil).Maybe()
+		// Only the folders the target is said to hold resolve; the rest are missing,
+		// so the plan has to ensure them and the caller has to be allowed to.
+		for dir := range heldFolders {
+			folder := ParseFolder(dir, repoName)
+			held := &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": "folder.grafana.app/v1beta1",
+				"kind":       "Folder",
+				"metadata":   map[string]any{"name": folder.ID, "namespace": "default"},
+				"spec":       map[string]any{"title": folder.Title},
+			}}
+			heldMeta, err := utils.MetaAccessor(held)
+			require.NoError(t, err)
+			heldMeta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: repoName})
+			heldMeta.SetSourceProperties(utils.SourceProperties{Path: dir})
+			client.On("Get", mock.Anything, folder.ID, mock.Anything, mock.Anything).
+				Return(held, nil).Maybe()
+		}
+		client.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{Resource: "folders"}, "")).Maybe()
+
+		parsed := &ParsedResource{
+			Info: &repository.FileInfo{Path: subPath}, Obj: obj, Meta: meta,
+			GVK: dashboardGVK, GVR: dashboardGVR, Client: client, FolderScoped: true,
+			Repo:           provisioning.ResourceRepositoryInfo{Name: repoName, Namespace: "default"},
+			Action:         provisioning.ResourceActionUpdate,
+			Existing:       obj.DeepCopy(),
+			DryRunResponse: obj.DeepCopy(),
+		}
+
+		rw := repository.NewMockReaderWriter(t)
+		rw.On("Config").Return(newSyncEnabledConfig(repoName))
+		rw.On("Update", mock.Anything, subPath, "", mock.Anything, "msg").Return(nil).Maybe()
+		rw.On("Read", mock.Anything, subPath, "").Return(&repository.FileInfo{Path: subPath, Hash: "h"}, nil).Maybe()
+		expectMissingFolderMetadata(&rw.Mock)
+
+		parser := NewMockParser(t)
+		parser.On("Parse", mock.Anything, mock.Anything).Return(parsed, nil)
+
+		fm := NewFolderManager(rw, client, NewEmptyFolderTree(), FolderKind)
+		return NewDualReadWriter(rw, parser, fm, auth, false), rw
+	}
+
+	t.Run("a denied folder refuses the write before the repository is touched", func(t *testing.T) {
+		auth := &recordingAuthorizer{deny: "team-a/nested/"}
+		dw, rw := setup(t, auth, nil)
+
+		_, err := dw.UpdateResource(context.Background(), DualWriteOptions{
+			Path: subPath, Message: "msg", SkipDryRun: true,
+		})
+		require.ErrorContains(t, err, "authorize create folder team-a/nested/")
+		rw.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+	})
+
+	t.Run("every missing ancestor is authorised, with the caller's identity", func(t *testing.T) {
+		auth := &recordingAuthorizer{}
+		dw, _ := setup(t, auth, nil)
+
+		caller := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 42, Namespace: "default"}
+		ctx := identity.WithRequester(context.Background(), caller)
+		_, err := dw.UpdateResource(ctx, DualWriteOptions{
+			Path: subPath, Message: "msg", SkipDryRun: true,
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"team-a/", "team-a/nested/"}, auth.asked)
+
+		for _, who := range auth.identity {
+			require.Equal(t, caller.GetUID(), who,
+				"the folder check must run as the caller, not the provisioning identity")
+		}
+	})
+
+	t.Run("an ancestor the target already holds is not authorised for creation", func(t *testing.T) {
+		auth := &recordingAuthorizer{}
+		dw, _ := setup(t, auth, map[string]bool{"team-a/": true})
+
+		_, err := dw.UpdateResource(context.Background(), DualWriteOptions{
+			Path: subPath, Message: "msg", SkipDryRun: true,
+		})
+		require.NoError(t, err)
+		require.Equal(t, []string{"team-a/nested/"}, auth.asked,
+			"demanding create permission for a folder that already exists fails writes on access they never needed")
 	})
 }

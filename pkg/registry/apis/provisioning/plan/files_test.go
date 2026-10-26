@@ -203,3 +203,32 @@ func TestFilesDeleteDoesNotPlanItsAncestors(t *testing.T) {
 			"a delete needs no path: %s %s", op.Kind, op.Key)
 	}
 }
+
+// Deleting a folder is checked in its parent's context, like every other
+// delete. A container removal carries no identity for its parent and the zero
+// provenance reads as trusted, so an unresolved parent was checked as the root
+// — asking for permission in a folder the request is not in.
+func TestFilesNestedFolderDeleteIsCheckedInItsParent(t *testing.T) {
+	nearby := &provisioning.ResourceList{Items: []provisioning.ResourceListItem{
+		folderItem("team/", ""),
+		folderItem("team/sub/", ""),
+	}}
+
+	p, err := plan.Targeted(repoName, plan.Write{Path: "team/sub/", Delete: true}, nearby)
+	require.NoError(t, err)
+	require.Len(t, p.Ops, 1, "plan:\n%s", p)
+	require.Equal(t, converge.OpRemoveContainer, p.Ops[0].Kind)
+
+	c := &checker{}
+	resolved := func(_ context.Context, path string) (string, error) { return "resolved:" + path, nil }
+	vetoes, err := plan.Vetoes(context.Background(), p, c, resolved)
+	require.NoError(t, err)
+	require.Empty(t, vetoes)
+
+	require.Equal(t, []plan.Permission{{
+		Verb:     "delete",
+		Folder:   "resolved:team/",
+		Path:     "team/sub/",
+		IsFolder: true,
+	}}, c.seen)
+}

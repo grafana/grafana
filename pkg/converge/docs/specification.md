@@ -202,10 +202,16 @@ type Op struct {
     Fingerprint Fingerprint // desired content, for Create/Update/Move
     Reason      Reason      // why, when the operation is not self-evident
 
+    // IdentityProvenance records where Identity came from. For a container
+    // operation this is the provenance of the container's own identity.
+    IdentityProvenance Provenance
+
     // Container is the key of the container this operation resolves into, and
-    // ContainerIdentity the identity that container will have. Provenance
-    // records where that identity came from, which callers performing veto
-    // passes MUST consult (§11.6).
+    // ContainerIdentity the identity that container will have. For a container
+    // operation this is the container ABOVE it, never itself: conflating the
+    // two tells a veto pass to authorise a container's creation against the
+    // container being created. Provenance records where that identity came
+    // from, which callers performing veto passes MUST consult (§11.6).
     Container           Key
     ContainerIdentity   Identity
     ContainerProvenance Provenance
@@ -719,7 +725,9 @@ object is, not against where the write will land.
 Therefore:
 
 - Every operation MUST carry `Container`, `ContainerIdentity` and `ContainerProvenance`
-  (§4.4).
+  (§4.4), describing the container the operation resolves *into* — for a container
+  operation, the one above it. The operation's own identity and its provenance are
+  `Identity` and `IdentityProvenance`.
 - A caller performing a veto pass MUST NOT authorise against a `FromDeclaration` or
   `FromFallback` identity without independently resolving the effective target location from
   trusted state.

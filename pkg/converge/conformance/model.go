@@ -131,7 +131,14 @@ func (m *Model) Apply(p *converge.Plan) error {
 }
 
 // ApplyStages executes a plan stage by stage, checking additionally that no
-// operation inside a stage depends on another in the same stage.
+// operation inside a stage depends on another in the same stage and that every
+// operation is satisfiable before any of its stage-mates have run.
+//
+// Applying a stage in slice order would hide a missing dependency edge whenever
+// the slice happens to be favourably ordered: an ensure followed by a write
+// into it succeeds sequentially and fails under the concurrency a stage
+// promises. Each operation is therefore checked against the state the stage
+// started from, and only then applied.
 func (m *Model) ApplyStages(p *converge.Plan) error {
 	for si, stage := range p.Stages {
 		within := make(map[converge.OpRef]bool, len(stage))
@@ -145,6 +152,13 @@ func (m *Model) ApplyStages(p *converge.Plan) error {
 				}
 			}
 		}
+		atStart := m.Clone()
+		for _, op := range stage {
+			if err := atStart.applyOp(op); err != nil {
+				return fmt.Errorf("stage %d (%s %s) is not independent of its stage: %w", si, op.Kind, op.Key, err)
+			}
+			atStart = m.Clone()
+		}
 		for _, op := range stage {
 			if err := m.applyOp(op); err != nil {
 				return fmt.Errorf("stage %d (%s %s): %w", si, op.Kind, op.Key, err)
@@ -157,7 +171,7 @@ func (m *Model) ApplyStages(p *converge.Plan) error {
 func (m *Model) applyOp(op converge.Op) error {
 	switch op.Kind {
 	case converge.OpCreate:
-		if err := m.requireContainer(op.Key); err != nil {
+		if err := m.requireContainer(op.Key, op.ContainerIdentity); err != nil {
 			return err
 		}
 		if _, exists := m.Entities[op.Key]; exists {
@@ -173,6 +187,9 @@ func (m *Model) applyOp(op converge.Op) error {
 		cur, exists := m.Entities[op.Key]
 		if !exists {
 			return fmt.Errorf("update of an entity that is not held")
+		}
+		if err := m.requireContainer(op.Key, op.ContainerIdentity); err != nil {
+			return err
 		}
 		if cur.Identity != op.Identity {
 			return fmt.Errorf("update targets identity %q but %q is held", op.Identity, cur.Identity)
@@ -196,7 +213,7 @@ func (m *Model) applyOp(op converge.Op) error {
 			if !m.holds(op.From, op.Identity) {
 				return fmt.Errorf("move of a container that is not held")
 			}
-			if err := m.requireContainer(op.Key); err != nil {
+			if err := m.requireContainer(op.Key, op.ContainerIdentity); err != nil {
 				return err
 			}
 			moved := HeldContainer{Identity: op.Identity, Fingerprint: op.Fingerprint}
@@ -216,7 +233,7 @@ func (m *Model) applyOp(op converge.Op) error {
 		if cur.Identity != op.Identity {
 			return fmt.Errorf("move targets identity %q but %q is held", op.Identity, cur.Identity)
 		}
-		if err := m.requireContainer(op.Key); err != nil {
+		if err := m.requireContainer(op.Key, op.ContainerIdentity); err != nil {
 			return err
 		}
 		delete(m.Entities, op.From)
@@ -235,7 +252,7 @@ func (m *Model) applyContainerOp(op converge.Op) error {
 	case converge.OpCreate, converge.OpUpdate, converge.OpDelete, converge.OpMove:
 		return fmt.Errorf("not a container operation: %s", op.Kind)
 	case converge.OpEnsureContainer:
-		if err := m.requireContainer(op.Key); err != nil {
+		if err := m.requireContainer(op.Key, op.ContainerIdentity); err != nil {
 			return err
 		}
 		// Idempotent by contract: the plan may ensure a container that is
@@ -305,16 +322,29 @@ func (m *Model) removeContainer(k converge.Key, id converge.Identity) {
 // requireContainer enforces that a key's parent container exists before
 // anything is placed in it. This is the invariant that costs the most to get
 // wrong: a plan that violates it leaves entities parented to nothing.
-func (m *Model) requireContainer(k converge.Key) error {
+// requireContainer checks that the container an operation parents something to
+// is held. The identity matters, not just the path: a re-identification leaves
+// two containers at one key, and accepting any of them lets a plan parent a
+// child to an identity that does not exist yet.
+//
+// An identity-agnostic target states no parent, and then the key is all there
+// is to go on.
+func (m *Model) requireContainer(k converge.Key, parent converge.Identity) error {
 	if !m.RequireContainers {
 		return nil
 	}
-	parent := k.Parent()
+	at := k.Parent()
+	if at == "" {
+		return nil
+	}
+	if len(m.Containers[at]) == 0 {
+		return fmt.Errorf("container %q does not exist", at)
+	}
 	if parent == "" {
 		return nil
 	}
-	if len(m.Containers[parent]) == 0 {
-		return fmt.Errorf("container %q does not exist", parent)
+	if !m.holds(at, parent) {
+		return fmt.Errorf("container %q at %q is not held", parent, at)
 	}
 	return nil
 }

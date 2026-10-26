@@ -3,6 +3,7 @@ package plan
 import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/converge"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 // PathRefusal is a path a job was asked to write that Grafana cannot address.
@@ -41,8 +42,8 @@ func RefuseUnsupportedMove(sourceDir, targetDir string, sourcePaths []string) []
 	paths := []string{targetDir}
 	for _, p := range sourcePaths {
 		rel, err := safepath.RelativeTo(p, sourceDir)
-		if err != nil {
-			continue
+		if err != nil || rel == "" {
+			continue // the source directory itself is already classified as targetDir
 		}
 		paths = append(paths, safepath.Join(targetDir, rel))
 	}
@@ -51,20 +52,39 @@ func RefuseUnsupportedMove(sourceDir, targetDir string, sourcePaths []string) []
 
 func refusePaths(paths []string) []PathRefusal {
 	var out []PathRefusal
+	seen := make(map[string]bool, len(paths))
 	for _, path := range paths {
 		if path == "" {
 			continue
 		}
-		var d converge.Declaration
-		if safepath.IsDir(path) {
-			d = declareDirectory(converge.Key(path))
-		} else {
-			d = declareFile(fileEntry(path))
-		}
-		if d.Verdict != converge.Excluded {
+		d, key := declarePath(path)
+		if d.Verdict != converge.Excluded || seen[key] {
 			continue
 		}
-		out = append(out, PathRefusal{Path: path, Reason: d.Reason})
+		seen[key] = true
+		out = append(out, PathRefusal{Path: key, Reason: d.Reason})
 	}
 	return out
+}
+
+// declarePath classifies a single repository path the way [Declare] classifies
+// a tree entry, and reports the path the verdict is about.
+//
+// A _folder.json declares the directory holding it, not a resource at its own
+// path. Classifying it as a file refuses a folder sitting at the maximum depth,
+// because the metadata file inside it is one level deeper than the folder it
+// describes — so a move that sync would accept gets refused.
+func declarePath(path string) (converge.Declaration, string) {
+	switch {
+	case safepath.IsDir(path):
+		return declareDirectory(converge.Key(path)), path
+	case resources.IsFolderMetadataFile(path):
+		dir := safepath.EnsureTrailingSlash(safepath.Dir(path))
+		if dir == "" {
+			return converge.Declaration{}, path // metadata for the root, which sync does not own
+		}
+		return declareDirectory(converge.Key(dir)), dir
+	default:
+		return declareFile(fileEntry(path)), path
+	}
 }

@@ -267,15 +267,17 @@ func (s *state) planContainerOps() {
 	for _, c := range s.sortedContainerKeys(s.wantCont) {
 		w := s.wantCont[c]
 		if from, ok := relocating[c]; ok {
+			parent, parentIdentity, parentProvenance := s.resolveContainer(c)
 			s.ops = append(s.ops, Op{
 				Kind:                OpMove,
 				From:                from,
 				Key:                 c,
 				Identity:            w.identity,
+				IdentityProvenance:  w.provenance,
 				Fingerprint:         w.fingerprint,
-				Container:           c.Parent(),
-				ContainerIdentity:   w.identity,
-				ContainerProvenance: FromInventory,
+				Container:           parent,
+				ContainerIdentity:   parentIdentity,
+				ContainerProvenance: parentProvenance,
 			})
 			continue
 		}
@@ -380,16 +382,22 @@ func (s *state) containerNeedsReparent(c Key, observed Observation) bool {
 	return want.identity != observed.Parent
 }
 
+// containerOp builds a container operation. Container names the container this
+// one sits inside and ContainerIdentity is that container's identity, never
+// this one's — the container's own identity is Identity. Conflating them tells
+// a veto pass to authorise a folder creation against the folder being created.
 func (s *state) containerOp(kind OpKind, c Key, w containerWant, reason Reason) Op {
+	parent, parentIdentity, parentProvenance := s.resolveContainer(c)
 	return Op{
 		Kind:                kind,
 		Key:                 c,
 		Identity:            w.identity,
+		IdentityProvenance:  w.provenance,
 		Fingerprint:         w.fingerprint,
 		Reason:              reason,
-		Container:           c.Parent(),
-		ContainerIdentity:   w.identity,
-		ContainerProvenance: w.provenance,
+		Container:           parent,
+		ContainerIdentity:   parentIdentity,
+		ContainerProvenance: parentProvenance,
 	}
 }
 

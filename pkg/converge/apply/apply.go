@@ -263,6 +263,11 @@ func Run(ctx context.Context, p *converge.Plan, a Actuator, cfg Config) (*Result
 		for _, op := range stage {
 			if blockedBy(op, failed) {
 				status[op.Ref()] = Skipped
+				// A skipped operation did not happen, so anything depending on
+				// it is no more satisfied than if it had failed. Without this
+				// only direct dependents are held back, and a write two levels
+				// below a failed container is attempted and reported applied.
+				failed[op.Ref()] = true
 				notify(cfg.Observer, op, Skipped, nil)
 				continue
 			}
