@@ -64,9 +64,27 @@ describe('getGradientRange', () => {
     expect(min).toBe(20);
     expect(max).toBe(80);
   });
+
+  it('falls back to the scale range when the series has only nulls', () => {
+    const u = makeUPlot(50, 150, ScaleOrientation.Horizontal, [[0, 1], [null, null] as unknown as number[]]);
+    const [min, max] = getGradientRange(asUPlot(u), 'y');
+    expect(min).toBe(50);
+    expect(max).toBe(150);
+  });
 });
 
 describe('scaleGradient', () => {
+  it('returns a solid color when the scale has no range', () => {
+    const u = makeUPlot(0, 100);
+    Object.assign(u.scales.y, { min: null, max: null });
+    u.valToPos = jest.fn(() => NaN);
+    const stops: Array<[number, string]> = [
+      [-Infinity, '#00ff00'],
+      [80, '#ff0000'],
+    ];
+    expect(scaleGradient(asUPlot(u), 'y', stops)).toBe('#ff0000');
+  });
+
   it('returns the solid color string when only one stop covers the scale range', () => {
     const u = makeUPlot(0, 100);
     const stops: Array<[number, string]> = [[50, '#ff0000']];

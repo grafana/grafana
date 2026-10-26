@@ -1,17 +1,21 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import {
   alignTimeRangeCompareData,
   DashboardCursorSync,
   type DataFrame,
   DataFrameType,
+  type Field,
+  type FieldConfigSource,
   FieldType,
+  LoadingState,
   type PanelProps,
   shouldAlignTimeCompare,
   useDataLinksContext,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { GraphThresholdsStyleMode, TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import {
   EventBusPlugin,
   KeyboardPlugin,
@@ -20,11 +24,18 @@ import {
   useTheme2,
   XAxisInteractionAreaPlugin,
 } from '@grafana/ui';
-import { type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
+import { type ScaleProps, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { getFilterByGroupedLabels } from 'app/features/panel/filters/adhoc';
+import {
+  buildNoValuesPlaceholderFrame,
+  getNoValuesShape,
+  getThresholdsExtent,
+  type NoValuesShape,
+} from 'app/features/panel/frames/noValues';
 
+import { NoValuesOverlay } from './NoValuesOverlay';
 import { TimeSeriesTooltip } from './TimeSeriesTooltip';
 import { type Options } from './panelcfg.gen';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
@@ -116,6 +127,35 @@ export const TimeSeriesPanel = ({
     return undefined;
   }, [frames, id]);
 
+  const thresholdsWithoutData = getFeatureFlagClient().getBooleanValue(FlagKeys.TimeseriesThresholdsWithoutData, false);
+  // a refresh keeps the previous series while Loading, so thresholds stay only if the last settled response succeeded
+  const lastSettledStateRef = useRef<LoadingState>(null);
+  if (data.state !== LoadingState.Loading) {
+    lastSettledStateRef.current = data.state;
+  }
+
+  const noValuesShape: NoValuesShape = thresholdsWithoutData
+    ? getNoValuesShape({
+        series: data.series,
+        frames: frames ?? [],
+        warning: suggestions?.message ?? prepWarning,
+        state: data.state,
+        lastResponseSucceeded: lastSettledStateRef.current === LoadingState.Done,
+        defaults: fieldConfig.defaults,
+      })
+    : 'none';
+
+  const plotFrames = useMemo(
+    () =>
+      noValuesShape === 'no-frames'
+        ? [buildNoValuesPlaceholderFrame({ timeRange, fieldConfig, theme, replaceVariables, timeZone })]
+        : frames,
+    [noValuesShape, frames, timeRange, fieldConfig, theme, replaceVariables, timeZone]
+  );
+
+  // also ranges scales whose series are all hidden, so the thresholds stay visible
+  const tweakScale = thresholdsWithoutData ? withThresholdsRange : undefined;
+
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
@@ -135,7 +175,7 @@ export const TimeSeriesPanel = ({
     [getFiltersBasedOnGrouping, onAddAdHocFilters]
   );
 
-  if (!frames?.length || suggestions) {
+  if (noValuesShape !== 'no-frames' && (!frames?.length || suggestions)) {
     return (
       <PanelDataErrorView
         panelId={id}
@@ -151,7 +191,8 @@ export const TimeSeriesPanel = ({
 
   return (
     <TimeSeries
-      frames={frames}
+      frames={plotFrames}
+      tweakScale={tweakScale}
       structureRev={data.structureRev}
       timeRange={timeRange}
       timeZone={timezones}
@@ -166,9 +207,10 @@ export const TimeSeriesPanel = ({
       onPinnedToSidebarChange={onPinnedToSidebarChange}
     >
       {(uplotConfig, alignedFrame) => {
-        const compFieldPairs = getComparisonFieldPairs(alignedFrame, frames!);
+        const compFieldPairs = getComparisonFieldPairs(alignedFrame, plotFrames!);
         return (
           <>
+            {noValuesShape !== 'none' && <NoValuesOverlay noValue={getNoValueText(plotFrames, fieldConfig)} />}
             {!options.disableKeyboardEvents && <KeyboardPlugin config={uplotConfig} />}
             {cursorSync !== DashboardCursorSync.Off && (
               <EventBusPlugin config={uplotConfig} eventBus={eventBus} frame={alignedFrame} />
@@ -222,7 +264,7 @@ export const TimeSeriesPanel = ({
                         fieldPairs: compFieldPairs,
                         colorMode: options.timeCompare?.colorMode,
                       }}
-                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, frames)}
+                      assistantContext={getAssistantTooltipContext({ id, title, timeRange, data }, plotFrames)}
                     />
                   );
                 }}
@@ -243,7 +285,7 @@ export const TimeSeriesPanel = ({
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
                 {data.annotations && (
                   <ExemplarsPlugin
-                    visibleSeries={getVisibleLabels(uplotConfig, frames)}
+                    visibleSeries={getVisibleLabels(uplotConfig, plotFrames)}
                     config={uplotConfig}
                     exemplars={data.annotations}
                     timeZone={timeZone}
@@ -259,3 +301,17 @@ export const TimeSeriesPanel = ({
     </TimeSeries>
   );
 };
+
+// ranges an empty scale over the thresholds that the field draws
+function withThresholdsRange(opts: ScaleProps, field: Field): ScaleProps {
+  const mode = field.config.custom?.thresholdsStyle?.mode ?? GraphThresholdsStyleMode.Off;
+  const emptyRange = mode === GraphThresholdsStyleMode.Off ? undefined : getThresholdsExtent(field.config);
+
+  return emptyRange ? { ...opts, emptyRange } : opts;
+}
+
+// the no-values shape keeps real fields, so their overrides of noValue win over the panel default
+function getNoValueText(frames: DataFrame[] | undefined, fieldConfig: FieldConfigSource): string | undefined {
+  const field = frames?.flatMap((frame) => frame.fields).find((f) => f.type === FieldType.number);
+  return field?.config.noValue ?? fieldConfig.defaults.noValue;
+}

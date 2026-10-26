@@ -17263,6 +17263,9 @@
       "tooltip-help": "Help"
     },
     "name-time-zone": "Time zone",
+    "no-values-overlay": {
+      "no-data": "No data"
+    },
     "nulls-threshold-input": {
       "placeholder-never": "Never"
     },
