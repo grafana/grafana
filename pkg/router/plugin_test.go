@@ -24,10 +24,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -67,11 +67,13 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 				PluginSources: sources,
 				ACService:     roles,
 				PluginDependencies: PluginDependencies{
-					PluginClient:    struct{ plugins.Client }{},
-					ContextProvider: struct{ appplugin.PluginContextWrapper }{},
-					Unified:         &resource.MockResourceClient{},
-					AccessControl:   &actest.FakeAccessControl{ExpectedEvaluate: true},
-					Features:        featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware),
+					PluginClient: struct{ plugins.Client }{},
+					ContextProvider: struct {
+						appsettings.PluginContextWrapper
+					}{},
+					Unified:       &resource.MockResourceClient{},
+					AccessControl: &actest.FakeAccessControl{ExpectedEvaluate: true},
+					Features:      featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware),
 				},
 			})
 			require.NoError(t, err)
@@ -97,7 +99,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 				Type: claims.TypeUser, OrgID: 1, Namespace: "default",
 			}))
 			res := httptest.NewRecorder()
-			router.HandleFunc(res, req, http.NotFoundHandler())
+			router.HandleFunc(res, req)
 			require.Equal(t, http.StatusOK, res.Code, res.Body.String())
 			var discovery handler3.OpenAPIV3Discovery
 			require.NoError(t, json.Unmarshal(res.Body.Bytes(), &discovery))
@@ -105,7 +107,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 				require.Contains(t, discovery.Paths, "apis/"+gv)
 				path := discovery.Paths["apis/"+gv].ServerRelativeURL
 				document := httptest.NewRecorder()
-				router.HandleFunc(document, httptest.NewRequest(http.MethodGet, path, nil).WithContext(req.Context()), http.NotFoundHandler())
+				router.HandleFunc(document, httptest.NewRequest(http.MethodGet, path, nil).WithContext(req.Context()))
 				require.Equal(t, http.StatusOK, document.Code, document.Body.String())
 				require.Contains(t, document.Body.String(), gv)
 			}
@@ -305,7 +307,7 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 		Type: claims.TypeUser, OrgID: 1, Namespace: "default",
 	}))
 	res := httptest.NewRecorder()
-	router.HandleFunc(res, req, http.NotFoundHandler())
+	router.HandleFunc(res, req)
 	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
 	require.Contains(t, res.Header().Get("Cache-Control"), "private")
 
@@ -313,7 +315,7 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 	for _, etag := range []string{"", res.Header().Get("ETag")} {
 		req.Header.Set("If-None-Match", etag)
 		denied := httptest.NewRecorder()
-		router.HandleFunc(denied, req, http.NotFoundHandler())
+		router.HandleFunc(denied, req)
 		require.Equal(t, http.StatusForbidden, denied.Code, denied.Body.String())
 	}
 }
@@ -342,8 +344,10 @@ func TestPluginLoaderSkipsInvalidManifest(t *testing.T) {
 	loader, err := ProvideRoutesLoader(setting.NewCfg(), PluginLoaderDependencies{
 		PluginSources: sources,
 		PluginDependencies: PluginDependencies{
-			PluginClient:    struct{ plugins.Client }{},
-			ContextProvider: struct{ appplugin.PluginContextWrapper }{},
+			PluginClient: struct{ plugins.Client }{},
+			ContextProvider: struct {
+				appsettings.PluginContextWrapper
+			}{},
 		},
 	})
 	require.NoError(t, err)
@@ -610,4 +614,144 @@ func TestPluginLoaderIsolatesFingerprintFailure(t *testing.T) {
 	require.Len(t, backends, 2)
 	require.Equal(t, "example-app", backends[0].(*PluginBackend).pluginID)
 	require.Equal(t, "other-app", backends[1].(*PluginBackend).pluginID)
+}
+
+func TestPluginLoaderServesSettingsUnderPluginID(t *testing.T) {
+	manifest := &app.ManifestData{AppName: "example", Group: "example.ext.grafana.app",
+		Versions: []app.ManifestVersion{{Name: "v1", Served: true}}}
+	defs := []definition.PluginDefinition{
+		{JSONData: plugins.JSONData{ID: "example-app"}, Manifests: []*app.ManifestData{manifest}},
+		{JSONData: plugins.JSONData{ID: "legacy-app"}},
+		{JSONData: plugins.JSONData{ID: "Invalid-App"}},
+	}
+	groups := func(backends []Backend) []string {
+		out := make([]string, 0, len(backends))
+		for _, backend := range backends {
+			out = append(out, backend.Group().Name)
+		}
+		return out
+	}
+
+	backends, err := (PluginLoader{}).prepareBackends(t.Context(), defs)
+	require.NoError(t, err)
+	require.Equal(t, []string{"example.ext.grafana.app"}, groups(backends), "a loader without settings serves only manifests")
+	manifestKey := backends[0].Key()
+
+	backends, err = (PluginLoader{settings: true}).prepareBackends(t.Context(), defs)
+	require.NoError(t, err)
+	require.Equal(t, []string{"example-app", "example.ext.grafana.app", "legacy-app"}, groups(backends),
+		"every valid app plugin serves its settings, with or without a manifest")
+	require.Equal(t, manifestKey, backends[1].Key(), "serving settings must not reload the manifest group")
+	settings := backends[0].(*PluginBackend)
+	require.Equal(t, "example-app", settings.pluginID)
+	require.Nil(t, settings.manifest)
+	_, ok := settings.Manifest()
+	require.False(t, ok, "the settings group publishes no app manifest")
+	require.Equal(t, "example-app/v0alpha1", settings.Group().PreferredVersion.GroupVersion)
+
+	// Settings do not depend on the manifest, so a manifest change keeps the settings group serving.
+	manifest.Versions = append(manifest.Versions, app.ManifestVersion{Name: "v2", Served: true})
+	changed, err := (PluginLoader{settings: true}).prepareBackends(t.Context(), defs)
+	require.NoError(t, err)
+	require.Equal(t, settings.Key(), changed[0].Key())
+	require.NotEqual(t, manifestKey, changed[1].Key())
+}
+
+func TestPluginSettingsBackendLoad(t *testing.T) {
+	plugin := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}}
+	deps := PluginDependencies{
+		ContextProvider: struct {
+			appsettings.PluginContextWrapper
+		}{},
+		Unified:       &resource.MockResourceClient{},
+		AccessControl: &actest.FakeAccessControl{ExpectedEvaluate: true},
+	}
+	client := func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+		return struct{ plugins.Client }{}, nil, nil
+	}
+
+	t.Run("serves the app resource and its subresources", func(t *testing.T) {
+		backend, err := newPluginSettingsBackend(plugin, client, deps)
+		require.NoError(t, err)
+		handler, err := backend.Load(t.Context())
+		require.NoError(t, err)
+		t.Cleanup(handler.(interface{ Destroy() }).Destroy)
+
+		req := httptest.NewRequest(http.MethodGet, "/apis/example-app/v0alpha1", nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
+			Type: claims.TypeUser, OrgID: 1, Namespace: "default",
+		}))
+		res := httptest.NewRecorder()
+		handler.ServeHTTP(res, req)
+		require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+		var resources metav1.APIResourceList
+		require.NoError(t, json.Unmarshal(res.Body.Bytes(), &resources))
+		names := make([]string, 0, len(resources.APIResources))
+		for _, r := range resources.APIResources {
+			names = append(names, r.Name)
+		}
+		require.Equal(t, []string{"app"}, names, "the subresources are plain handlers, not API resources")
+
+		// Only the subresource handler answers this way, so it runs behind the
+		// chain's request info.
+		req = httptest.NewRequest(http.MethodGet, "/apis/example-app/v0alpha1/namespaces/default/app/other/health", nil).
+			WithContext(req.Context())
+		res = httptest.NewRecorder()
+		handler.ServeHTTP(res, req)
+		require.Equal(t, http.StatusBadRequest, res.Code, res.Body.String())
+		require.Contains(t, res.Body.String(), "name can only be: instance")
+
+		for _, sub := range []string{"health", "resources/api", "proxy"} {
+			req = httptest.NewRequest(http.MethodGet, "/apis/example-app/v1/namespaces/default/app/instance/"+sub, nil).
+				WithContext(req.Context())
+			res = httptest.NewRecorder()
+			handler.ServeHTTP(res, req)
+			require.Equal(t, http.StatusNotFound, res.Code, "%s under an unserved version: %s", sub, res.Body.String())
+		}
+	})
+
+	t.Run("requires a plugin client", func(t *testing.T) {
+		backend, err := newPluginSettingsBackend(plugin, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+			return nil, nil, nil
+		}, deps)
+		require.NoError(t, err)
+		_, err = backend.Load(t.Context())
+		require.ErrorContains(t, err, "settings require a plugin client")
+	})
+
+	t.Run("rejects plugin IDs that are not DNS labels", func(t *testing.T) {
+		for _, id := range []string{"Invalid-App", "example", "example.ext-app", "under_score-app"} {
+			_, err := newPluginSettingsBackend(definition.PluginDefinition{JSONData: plugins.JSONData{ID: id}}, client, deps)
+			require.Error(t, err, id)
+		}
+	})
+}
+
+// The standalone router has no SQL settings store or dual writer, so its
+// local plugin loader never serves settings, whatever the feature flag says.
+func TestProvideRoutesLoaderServesSettingsOnlyInGrafana(t *testing.T) {
+	sources := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource { return nil }}
+	for _, tc := range []struct {
+		name     string
+		target   []string
+		settings bool
+	}{
+		{"grafana", nil, true},
+		{"standalone router", []string{"router"}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.Target = tc.target
+			loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{
+				PluginSources: sources,
+				PluginDependencies: PluginDependencies{
+					Features: featuremgmt.WithFeatures(featuremgmt.FlagApppluginsRegisterAPIServer),
+				},
+			})
+			require.NoError(t, err)
+			pl, ok := loader.(*PluginLoader)
+			require.True(t, ok, "expected the local plugin loader, got %T", loader)
+			require.Equal(t, tc.settings, pl.settings)
+		})
+	}
 }

@@ -2911,3 +2911,22 @@ var testContactPointConfig = `
 	}
 }
 `
+
+func TestEscapeContactPointReturnsErrorOnInvalidSettings(t *testing.T) {
+	cp := definitions.ContactPointExport{
+		Name: "invalid-settings",
+		Receivers: []definitions.ReceiverExport{
+			{UID: "uid", Type: "webhook", Settings: definitions.RawMessage(`{`)},
+		},
+	}
+
+	t.Run("escapeContactPoint returns an error instead of panicking", func(t *testing.T) {
+		_, err := escapeContactPoint(cp)
+		require.ErrorContains(t, err, "failed to marshal settings to JSON")
+	})
+
+	t.Run("escapeAlertingFileExport propagates the error", func(t *testing.T) {
+		_, err := escapeAlertingFileExport(definitions.AlertingFileExport{ContactPoints: []definitions.ContactPointExport{cp}})
+		require.ErrorContains(t, err, "failed to marshal settings to JSON")
+	})
+}

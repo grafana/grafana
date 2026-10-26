@@ -516,21 +516,18 @@ $(MSI_FILE): $(TARGZ_FILE)
 	ENTERPRISE="$(if $(filter grafana-enterprise,$(TARGZ_PACKAGE_NAME)),true,false)" \
 	bash scripts/build-msi.sh
 
-# The toggle name has a dot, so it needs `env`, not a bare VAR=value prefix.
-RSPACK_ON := $(filter 1 true,$(RSPACK))
-
 .PHONY: run
-run: ## Build and run backend, and watch for changes. See .air.toml for configuration. Set RSPACK=1 to serve the rspack build.
-	$(if $(RSPACK_ON),env GF_FEATURE_TOGGLES_grafana.rspackBuild=true) $(air) -c .air.toml
+run: ## Build and run backend, and watch for changes. See .air.toml for configuration.
+	$(air) -c .air.toml
 
 .PHONY: run-go
-run-go: ## Build and run web server immediately. Set RSPACK=1 to serve the rspack build.
-	$(if $(RSPACK_ON),env GF_FEATURE_TOGGLES_grafana.rspackBuild=true) $(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
+run-go: ## Build and run web server immediately.
+	$(GO) run -race $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS)) \
 		./pkg/cmd/grafana -- server -profile -profile-addr=127.0.0.1 -profile-port=6000 -packaging=dev cfg:app_mode=development
 
 .PHONY: run-frontend
-run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild. Set RSPACK=1 to build with rspack.
-	yarn start$(if $(RSPACK_ON),:rspack)
+run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild.
+	yarn start
 
 .PHONY: frontend-service-check
 frontend-service-check:
@@ -807,7 +804,7 @@ clean: ## Clean up intermediate build artifacts.
 gen-ts:
 	@echo "generating TypeScript definitions"
 	go get github.com/tkrajina/typescriptify-golang-structs/typescriptify@v0.1.7
-	tscriptify -interface -package=github.com/grafana/grafana/pkg/services/live/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts pkg/services/live/pipeline/config.go
+	tscriptify -interface -package=github.com/grafana/grafana/apps/live/pkg/pipeline -import="import { FieldConfig } from '@grafana/data'" -target=public/app/features/live/pipeline/models.gen.ts apps/live/pkg/pipeline/config.go
 	go mod tidy
 
 .PHONY: go-race-is-enabled
@@ -837,7 +834,7 @@ help: ## Display this help.
 check-licenses:
 	license_finder --decisions-file .github/license_finder.yaml
 
-GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1f3fd9fd9d68eb06f1e7b0393d # v0.2.0
+GENERATE_POLICY_BOT_CONFIG_SHA := sha256:ebd798a15f5d05af418da11366eb7cc01d1c4741f18d0c982fccda032ff405f5 # v0.2.1
 .PHONY: .policy.yml
 .policy.yml:
 	docker run -u "$(shell id -u):$(shell id -g)" \

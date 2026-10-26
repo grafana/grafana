@@ -7,7 +7,7 @@ manifests under `/apis/discovery`. A `RoutesLoader` supplies routes as
 
 This file holds the current rules. For the reasoning and history behind them, see `specs/`,
 especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
-`specs/2026-10-10-router-review-plan.md`.
+`specs/2026-10-23-router-review-plan.md`.
 
 ## Rules
 
@@ -19,27 +19,45 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   `aggregate_*.go`, `plugin_manifests*.go` and `st_fallback.go`.
 - **One backend owns every version of a group.** Dispatch is keyed by group (segment 2 of
   `/apis/<group>/...`). Don't reintroduce a path mux that flattens routes into prefixes. A duplicate
-  group in one `Load` makes the last one win, with a warning, and must never panic.
+  group in one `Load` makes the last one win, with a warning, and must never panic. The one
+  exception lives in the cloud loader: with the ST fallback, `dashboard.grafana.app` is split per
+  request between its backend and the single-tenant stacks (`st_resources.go`). Library panels and
+  snapshots always go to the stacks; otherwise users' writes go to the stacks, and reads and every
+  request from a non-user identity (access policies, service accounts) stay on its backend. That
+  group is still one backend, and its discovery and OpenAPI still come from the backend that owns it.
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
   and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
   its pool. Never recreate unrelated backends on a route change.
+- **Tear down a retired handler only after it drains.** A handler that holds resources implements
+  `Destroy` (a plugin's API server, through `tracedPluginHandler`). When reconcile retires its
+  entry, the entry refuses new requests (503 with `Retry-After: 1`, for a request that read the
+  old snapshot), its watches end, and `Destroy` runs once the requests in flight finish
+  (`retire.go`). Never destroy a handler under a running request. A managed plugin's gRPC
+  connection is reference-counted by the handlers loaded on it (`acquireConnection`), so it closes
+  with the last one destroyed, never while a superseded handler may still serve.
 - **Build discovery from what is served,** meaning `r.served`, never the raw `Load` result. A group
   whose reload failed keeps serving and advertising its last-known-good backend.
 - **Reconcile is level-triggered.** `Notify` is a coalescing wake with no payload, and every wake
   re-reads full state through `Load`. Drain the channel before calling `Load`. `Run` does an explicit
-  initial reconcile. A closed `Notify` channel must not busy-loop (set it to nil).
+  initial reconcile. A closed `Notify` channel must not busy-loop (set it to nil). Since every
+  reconcile sees the same routes, a warning about them (reserved, invalid or duplicate groups) is
+  logged when it first appears, not on every reconcile (`warn` in `reconcile`).
 - **`Ready` fails only when nothing is served.** A partial reconcile error is logged, but must not
   drain the router from its load balancer.
 - **The circuit breaker is passive only.** `gobreaker`'s two-step breaker, one per group, driven by
   the outcomes of real proxied requests; no active health probes. An outcome is reported as soon as
   the response status is written, never when the body ends, so a watch can't hold a half-open
   breaker's trial slot. Only requests whose own context ended (`errCallerGone`) are excluded from
-  breaker accounting. Any `ResponseWriter` wrapper between `ReverseProxy` and the client must forward
+  breaker accounting. A deadline the router sets on its own fetches, such as discovery, has the
+  cause `errRouterDeadline` (`callerGone`), so missing it counts against the backend. Any `ResponseWriter` wrapper between `ReverseProxy` and the client must forward
   `Flush` (via `Unwrap`, or a no-op `Flush` for buffering writers). Handlers get
   `statusRecorder.writer()`, not the recorder itself, because in-process plugin apiservers need a
   real `http.Flusher` (plus `CloseNotify`) to serve watches. Two exceptions to "one per group":
   plugin backends break only on plugin client calls, where only reachability errors count
   (`plugin_breaker.go`), and the ST fallback keeps one breaker per destination host and group. A
+  handler that implements `handlerFor(*http.Request)` picks the handler for each request first,
+  and only that handler's breakers apply, so requests the stacks serve never count against the group
+  breaker. A
   rejected backend redirect is not a breaker failure. Read a group breaker's state from its
   `breakerView` (`servingEntry.breakerState`), never `breaker.State()`: gobreaker's `State` moves an
   open breaker whose timeout passed to half-open, so a metrics scrape or status read would change
@@ -64,8 +82,23 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   Every other core group is refused, so no plugin can claim it. Any plugin may shadow the
   `routableCoreGroups` on purpose: they are low risk, and nothing serious happens if a plugin
   misbehaves in them. Don't flag that as a vulnerability. Add a group only if the same holds for
-  it, never one whose data or permissions matter (dashboards, folders, IAM).
+  it, never one whose data or permissions matter (dashboards, folders, IAM). The local plugin
+  loader also serves each app plugin's settings API under its plugin ID
+  (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
+  must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
+  router never serves settings (`standaloneRouter`): it has no SQL settings store or dual writer.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
+  A backend that fails to load is retried only when its own backoff passes (`loadGroup`, up to
+  `groupLoadRetryMax`), not on every reconcile retry, since a plugin's load builds an API server.
+  Until then its error is reported again, so `Ready` and the reconcile log don't change. A new key
+  for the group is loaded at once.
+- **Authenticate, then check the namespace, before any dispatch.** Every `/apis` and `/openapi/v3`
+  request needs a requester: one Grafana's middleware set, or one from a verified `X-Access-Token`
+  (`authenticate`), or it gets a 401. A request whose path names a namespace
+  (`/apis/<g>/<v>/namespaces/<ns>[/...]`, the request info's `Namespace`) then gets a 403 `Status`
+  unless its requester may use that namespace (`authorizeNamespace`), so no backend, stack or
+  fallback ever sees it. Allowed: the requester's own namespace, any namespace for `*`, and any for
+  Grafana admins. Anonymous users get only their own. Backends still authorize everything else.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
   `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
@@ -88,11 +121,12 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - Every proxy flushes after each write (`streamingFlushInterval`).
   - A watch runs through `serveWatch`: it ends when its group's backend is replaced or removed, and
     when the service stops (`closeWatches`), so clients re-watch and shutdown never waits on it.
-  - Watches are long-running requests, identified with the apiserver's `RequestInfoFactory`: they
-    count in `grafana_router_http_requests_total` and `grafana_router_longrunning_requests`, not in
-    the duration histogram or in-flight gauge.
+  - Watches are long-running requests, identified with `utils.NewRequestInfo`
+    (`pkg/apimachinery/utils`): they count in `grafana_router_http_requests_total` and
+    `grafana_router_longrunning_requests`, not in the duration histogram or in-flight gauge.
   - Upgrades are rejected with a 400 (`rejectUpgrade`): watch over WebSocket is not supported. The
-    deprecated `/watch/` path form is not supported either.
+    deprecated `/apis/<g>/<v>/watch/...` path form gets a 400 from `utils.NewRequestInfo` and is not
+    counted as a watch.
 
 ## Package layout
 
@@ -113,18 +147,25 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
-| Single-tenant (ST) fallback, and its per-stack discovery cache | `st_fallback.go`, `st_discovery_cache.go` |
+| Single-tenant (ST) fallback, its per-stack discovery cache, and the `dashboard.grafana.app` split | `st_fallback.go`, `st_discovery_cache.go`, `st_resources.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
-| Dummy loader (the default when nothing is configured) | `dummy.go` |
 
 ## Route sources
 
-`ProvideRoutesLoader` picks exactly one loader:
+Exactly one loader serves:
 
-1. **The cloud loader**, when any `[cloud_router]` source or `[router.aggregate.<name>]` target is
-   configured (see Settings). Never in middleware mode, where the cloud sources are ignored.
-2. **Otherwise the local plugin loader**, when plugin sources are available.
-3. **Otherwise the dummy loader**, which serves two static dummy groups.
+1. **The cloud loader**, only in the standalone router, when any `[cloud_router]` source or
+   `[router.aggregate.<name>]` target is configured (see Settings). `pkg/server` builds it with
+   `ProvideCloudRoutesLoader`. Grafana itself never polls the cloud sources.
+2. **Otherwise the local plugin loader** (`ProvideRoutesLoader`), when plugin sources are
+   available.
+3. **Otherwise no groups** (`noRoutesLoader`). The dummy loader that serves static groups is in
+   `dummy_test.go`, for tests only.
+
+The cloud loader serves nothing until each of its sources has polled once, successfully or not
+(`errFirstPollPending`), so the router doesn't go ready with groups missing from discovery. A
+source's first attempt wakes the router either way, even when it finds nothing. A source records a
+poll only after storing its snapshot, so a `Load` that sees the poll also sees its groups.
 
 The cloud loader merges its sources by group. When sources conflict, later entries override
 earlier ones:
@@ -159,16 +200,22 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
 | `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served `ManifestProvider` backend. |
 | `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
-| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status and shadowed groups. |
+| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
 | `/apis/discovery/v1alpha2/AGENTS.md` | Synthesized markdown index of every served group, for agents. |
 | `/openapi/v3/apis/discovery/v1alpha2` | Synthesized OpenAPI v3 document for the discovery group. |
 | `/apis/discovery/v1alpha2/AGENTS` | The same index rendered as a static HTML page for browsers, with a CSP that allows no scripts. Not in the OpenAPI document. |
 
-- **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
-  server's, fetched through `next`. A routed group replaces all of the embedded server's versions of
-  that group, and its requests never reach `next`.
-- **Standalone with the ST fallback:** root discovery merges in the same way, but reads from the
-  fallback instead of `next`. The fallback answers it from the requester's own stack, so `/apis` and
+- **Middleware mode:** the router serves the whole `/apis` and `/openapi/v3` trees, the embedded
+  server's groups included. At startup it reads the embedded server's aggregated discovery once
+  (`embedded.go`; the server's groups don't change once it has started) and serves each of its groups
+  as an `embeddedBackend` through the server's own handler, in process. The server hands that handler
+  over with `Service.SetUpstream` once it has started. So `/apis` and `/openapi/v3` are built from the
+  snapshot like any other groups, with no per-request call to the server. A routed group replaces all
+  of the embedded server's versions of that group (`embeddedLoader` drops the embedded one), and its
+  requests never reach the server. Embedded groups bypass the group breaker: the server runs in this
+  process, so failing fast would protect nothing.
+- **Standalone with the ST fallback:** root discovery merges the router's groups with the
+  fallback's. The fallback answers it from the requester's own stack, so `/apis` and
   `/openapi/v3` differ by caller and are built on every request. Only a requester whose namespace is
   not a stack (such as `*`) or whose stack doesn't exist gets the defaults: the groups polled from
   `st_discovery_url`, served from the snapshot without a request. Group and version discovery
@@ -179,8 +226,10 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   `singleTenantDiscoveryCacheTTL`.
   - It stores only a 200 that `cacheableOpenAPIResponse` accepts, so a refused caller never
     replaces a good entry, and a stack's private or per-caller answer is never shared.
-  - Callers choose the keys, so it caches only requests whose query is empty or a single `hash`,
-    and its `st_discovery_cache_bytes` budget counts each entry's key, headers and a fixed
+  - The OpenAPI `hash` is never sent to a stack: a stack redirects a hash that is no longer its
+    document's, and the router would turn that redirect into a 502.
+  - Callers choose the keys, so it caches only requests whose query is empty once `hash` is
+    stripped, and its `st_discovery_cache_bytes` budget counts each entry's key, headers and a fixed
     overhead (`stackDiscoveryEntryOverhead`) as well as its body.
   - Concurrent misses share one fetch (`discoveryFetches`), bounded by
     `singleTenantDiscoveryFetchTimeout`; each caller stops waiting when its own request ends. Only
@@ -190,7 +239,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     remembered, so later callers stream it from the stack instead of waiting on a shared fetch.
 - **Caller-scoped backends** (`CallerScopedDiscovery`, such as ST groups) are only defaults: when
   the ST fallback answers root discovery for a request, their groups are left out and its view is
-  used. An answer from `next` never replaces them. The router's own discovery and OpenAPI caches
+  used. The router's own discovery and OpenAPI caches
   never hold them; the source decides what callers may share, as the ST discovery cache does per
   stack.
   - Root discovery through the fallback is bounded by `discoveryFetchTimeout`.
@@ -207,7 +256,12 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     stored.
   - The fetch keeps only the group that backend owns, and falls back to per-version discovery for
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
-    last good copy is served, marked `Stale`.
+    last good copy is served, marked `Stale`. Without one, an incomplete fetch serves what it did
+    read, such as the versions an older backend answered for.
+  - The document is written by `writeAggregatedDiscovery`, never through a per-request
+    `aggregated.ResourceManager`, which logs a line for every group version each time it is built.
+    It must answer exactly as that manager would: groups sorted by name, versions in order, empty
+    groups left out, and the same ETag. `TestAggregatedDiscoveryMatchesAPIServer` checks it.
 - **App manifest discovery** (`/apis/discovery`) is published in `publish` with the root documents, from
   the `ManifestProvider` backends (plugin backends from every source). Nothing is fetched per request.
   - Keep it cheap, since `publish` runs on every reconcile: `publishManifestDocs` does nothing when
@@ -248,7 +302,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     just its text. Link text drops `[` and `]`, which a code span cannot escape.
   - It needs authentication like `/apis`, GET and HEAD only. In middleware mode it covers only
     the router's groups; the embedded server's groups are listed in `/apis` only.
-- **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
+- **Unknown groups:** are not found (404), or go to the ST fallback when running standalone.
 - **Size limits:** nothing the router buffers or decodes can grow without bound.
   - `captureWriter` buffers OpenAPI documents up to `maxCachedOpenAPIDocBytes` (32 MiB). A larger
     one streams to the client and isn't cached.
@@ -267,7 +321,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - Labels stay bounded. `group` is only a served group; any other is `unknown` (`KnownGroup`).
     `verb` is limited to `metricVerbs`, and any other value is `other`. `route`, `reason`, `state`
     and `result` have fixed sets of values. A new label value must come from a fixed set too.
-  - In middleware mode, only requests the router owns (`owns`) are instrumented.
+  - In middleware mode, every request in the `/apis` and `/openapi/v3` trees is instrumented,
+    the embedded server's groups included; other paths go to `next` and are not.
   - New backends must name their source (`Backend.Source`), and new sources should report through
     `loaderStatus`, or their loads don't appear in the metrics. A source that skips a backend logs
     why, counts it, and stores the count once per load (`pollStatus.recordSkipped`).
@@ -289,8 +344,22 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   which runs poll loops) is started, stopped and watched by the `Service`, in every mode, so both
   start and stop together and a failed loader fails the router.
 - **Middleware:** with the `grafana.useRouterMiddleware` feature flag, the embedded API server calls
-  `Service.HandleFunc` after Grafana authentication, and the regular API server handler serves as
-  `next`. The cloud loader, and with it the ST fallback, is not used in this mode.
+  `Service.HandleFunc` after Grafana authentication. The router serves the `/apis` and `/openapi/v3`
+  trees, the embedded server's groups through its handler (see "Serving and discovery"), and passes
+  every other path (`/openapi/v2`, `/version`, `/livez`, ...) to `next`, the regular API server
+  handler. The cloud loader, and with it the ST fallback, is not used in this mode.
+  The embedded server's in-process clients go through `HandleFunc` too (`serveRouted` in
+  `pkg/services/apiserver`): the direct rest config and `DirectlyServeHTTP`, which the legacy `/api`
+  handlers fall back to, and the loopback config for requests that carry a Grafana requester. So a
+  group the router serves is the router's for them as well. Kubernetes' own loopback clients
+  authenticate with the loopback token instead, which the router would refuse, so they go straight
+  to the server. Until the router is `Ready` it hasn't loaded the embedded server's groups, so
+  `HandleFunc` leaves middleware requests to `next`: in-process clients start before the router.
+  `appplugins.registerAPIServer` turns middleware mode on too: app plugin settings are only served
+  by the router. Both flags are read once, at startup (`middlewareEnabled`, `settingsEnabled`), so
+  settings are served exactly when middleware mode can reach them. The standalone router is never
+  in middleware mode, whatever the flags, so a flag that also reaches its deployment can't drop its
+  cloud sources.
 - **Inside Grafana:** the `Service` always runs, flag or not, so the `/apis/discovery` tree stays
   current. Without the flag, `HandleFunc` serves only that tree and passes everything else to
   `next`. Wire builds the router first (`ProvideGrafanaRouter`) and hands the same instance to
@@ -313,6 +382,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
 | `plugins_ca_file`, `plugins_insecure`, `core_ca_file`, `core_insecure` | TLS settings for polling an `https` `plugins_url` or `core_url`, with the same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. They don't apply to the gRPC connections to the plugin backends; see `[router.backend_grpc]`. |
+| `plugins_poll_interval`, `core_poll_interval` | Positive polling duration for `plugins_url` and `core_url`, default `30s`, with the same backoff after a failure as an aggregate target's `poll_interval`. |
 | `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 | `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
@@ -367,7 +437,7 @@ work without the section in the INI configuration.
 | `retry_backoff`, `retry_jitter` | Base retry backoff, doubled each attempt, and the jitter fraction (0 to 1). Default `1s` and `0.1`. |
 | `connect_timeout` | Minimum time allowed for each connection attempt. Default `5s`. |
 | `connect_base_delay`, `connect_max_delay` | Backoff between connection attempts, growing from the base delay up to the max delay. Default `1s` and `10s`. |
-| `keepalive_time`, `keepalive_timeout` | Idle time before the client pings, and how long it waits for a reply before closing the connection. Default `20s` and `10s`; a `keepalive_time` of `0` disables pings. Pings are sent on connections without active calls too, so the plugin server must allow pings at least this often and without active calls; by default, gRPC servers allow one every 5 minutes and close connections that ping more often. |
+| `keepalive_time`, `keepalive_timeout` | Time without activity on a connection with active calls before the client pings, and how long it waits for a reply before closing the connection. Default `5m` and `10s`; a `keepalive_time` of `0` disables pings. Connections without active calls are never pinged. By default, gRPC servers allow one ping every 5 minutes during calls, and close connections that ping more often (`too_many_pings`), so a shorter `keepalive_time` needs a matching server enforcement policy. |
 | `max_recv_msg_size`, `max_send_msg_size` | Largest message the router accepts from and sends to a plugin, in bytes. Default 100 MiB each. The plugin server's own limits still apply. |
 | `tls_enabled` | Connect to every plugin backend over TLS. Default `false` (plaintext). Applies to both `plugins_url` and `core_url` backends, since a manifest's `host` has no scheme to choose per plugin. |
 | `tls_ca_file`, `tls_insecure` | Same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. |
@@ -399,4 +469,4 @@ Dispatch by group has no injection sinks, since the group is only ever used as a
 - `specs/2026-09-25-router-design-notes.md`: why there's no mux, readiness, notify semantics,
   config history.
 - `specs/2026-09-26-router-metrics.md`: every metric, and dashboard queries.
-- `specs/2026-10-10-router-review-plan.md`: open work.
+- `specs/2026-10-23-router-review-plan.md`: open work.

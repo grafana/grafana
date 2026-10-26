@@ -3,6 +3,7 @@ import { createBrowserHistory } from 'history';
 
 import {
   CoreApp,
+  type DataSourceInstanceSettings,
   type GrafanaConfig,
   LiveChannelEventType,
   LoadingState,
@@ -11,7 +12,7 @@ import {
   locationUtil,
   store,
 } from '@grafana/data';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { config, getDataSourceInstanceSettings, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -26,6 +27,7 @@ import {
   SceneDataTransformer,
   LocalValueVariable,
   MultiValueVariable,
+  AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -3839,6 +3841,55 @@ describe('DashboardScene', () => {
       expect(variables[0].state).toMatchObject({ query: 'x,y,z' });
     });
 
+    it('should merge a predefined GroupByVariable into the predefined adhoc variable on the same datasource', () => {
+      jest
+        .mocked(getDataSourceInstanceSettings)
+        .mockResolvedValueOnce({ uid: 'prom', meta: {} } as unknown as DataSourceInstanceSettings);
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+      const origin = toControlSourceRef({ type: 'global' });
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'AdhocVariable' as const,
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: {
+            name: 'globalFilter',
+            baseFilters: [],
+            filters: [],
+            defaultKeys: [],
+            hide: 'dontHide',
+            skipUrlSync: false,
+            allowCustomValue: true,
+            origin,
+          },
+        },
+        {
+          kind: 'GroupByVariable' as const,
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: {
+            name: 'globalGroupBy',
+            current: { text: ['job'], value: ['job'] },
+            options: [],
+            multi: true,
+            hide: 'dontHide',
+            skipUrlSync: false,
+            origin,
+          },
+        },
+      ] as VariableKind[]);
+
+      const variables = sceneGraph.getVariables(scene).state.variables;
+      const filter = variables.find((v) => v.state.name === 'globalFilter');
+      expect(filter).toBeInstanceOf(AdHocFiltersVariable);
+      expect((filter as AdHocFiltersVariable).state.enableGroupBy).toBe(true);
+      expect((filter as AdHocFiltersVariable).state.filters).toEqual([
+        expect.objectContaining({ key: 'job', operator: 'groupBy' }),
+      ]);
+      expect(variables.find((v) => v.state.name === 'globalGroupBy')).toBeUndefined();
+    });
+
     it('should preserve the current selection when refreshing a predefined variable', () => {
       const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
 
@@ -4137,6 +4188,15 @@ describe('DashboardScene', () => {
       const pageNav = scene.getPageNav(location, {} as NavIndex);
 
       expect(pageNav.url).toBe('/subUrl/d/dash-1/dash-1-slug');
+    });
+
+    it('links a new dashboard preview to the uid it is proposed under, not to a blank new dashboard', () => {
+      const scene = buildTestScene({ uid: '', meta: { newDashboardUid: 'new-dash' } });
+      const location = { pathname: '/d/new-dash', search: '?pendingChanges=chat-1', hash: '', state: null, key: '' };
+
+      const pageNav = scene.getPageNav(location, {} as NavIndex);
+
+      expect(pageNav.url).toBe('/subUrl/d/new-dash?pendingChanges=chat-1');
     });
 
     it('prefixes the dashboard parent crumb url with the app sub url when editing a panel', () => {

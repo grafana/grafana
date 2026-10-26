@@ -62,6 +62,9 @@ type dataStore struct {
 	cache         *gocache.Cache
 	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
 	metrics       *kvBackendMetrics
+	// fastLatestKeyLookup resolves latest-version reads with a single-row
+	// descending lookup. Off by default while it is rolled out.
+	fastLatestKeyLookup bool
 }
 
 type dataImportBatchWriter interface {
@@ -297,6 +300,19 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 	defer span.End()
 
 	listKey := ListRequestKey(key)
+
+	if rv == 0 && d.fastLatestKeyLookup {
+		// The newest key for a single resource is the last one in key order, so a
+		// one-row descending lookup avoids scanning the resource's whole history.
+		dataKey, err := d.LastResourceVersion(ctx, listKey)
+		if err != nil {
+			return DataKey{}, err
+		}
+		if dataKey.Action == DataActionDeleted && !includeDeleted {
+			return DataKey{}, ErrNotFound
+		}
+		return dataKey, nil
+	}
 
 	iter := d.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv, IncludeDeleted: includeDeleted})
 	for dataKey, err := range iter {

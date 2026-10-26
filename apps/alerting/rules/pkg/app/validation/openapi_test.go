@@ -7,7 +7,8 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	v1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	v1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	manifestdata "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 )
 
@@ -16,7 +17,7 @@ func buildValidators(t *testing.T) map[string]*SpecValidator {
 	md := *manifestdata.LocalManifest().ManifestData
 	out := make(map[string]*SpecValidator)
 	for _, kind := range []string{"AlertRule", "RecordingRule", "RuleSequence"} {
-		vs := schemaForKind(md, kind)
+		vs := schemaForKind(md, v1.APIVersion, kind)
 		require.NotNil(t, vs, "missing schema for %s", kind)
 		sv, err := NewSpecValidator(schema.GroupKind{Group: md.Group, Kind: kind}, vs, kind)
 		require.NoError(t, err)
@@ -58,7 +59,11 @@ func TestSchemaForKind(t *testing.T) {
 	}
 
 	md := *manifestdata.LocalManifest().ManifestData
-	require.Nil(t, schemaForKind(md, "DoesNotExist"))
+	require.Nil(t, schemaForKind(md, v1.APIVersion, "DoesNotExist"))
+
+	// Config is only served as v0alpha1, so only that version has its schema.
+	require.NotNil(t, schemaForKind(md, v0alpha1.APIVersion, "Config"))
+	require.Nil(t, schemaForKind(md, v1.APIVersion, "Config"))
 }
 
 func TestValidateSpec_AlertRule(t *testing.T) {

@@ -1442,7 +1442,7 @@ func TestWatchFollowsCoverageChanges(t *testing.T) {
 	yes := true
 	storage := &watchStorage{keys: make(chan *WrittenEvent)}
 	server, _ := repairServer(t, storage, nil)
-	server.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
+	server.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
 	ctx, cancel := context.WithCancel(t.Context())
 	done := make(chan struct{})
 	go func() {
@@ -1453,7 +1453,7 @@ func TestWatchFollowsCoverageChanges(t *testing.T) {
 		5*time.Second, 10*time.Millisecond)
 
 	pages := schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}
-	server.globalCoverage.Reload(AppManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
+	server.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
 	require.Eventually(t, func() bool { return slices.Contains(storage.watchedTypes(), pages) },
 		5*time.Second, 10*time.Millisecond, "opened again at once, with the added type")
 	cancel()
@@ -1479,7 +1479,7 @@ func TestCoverageChangeSyncsTypesAtOnce(t *testing.T) {
 	storage := &scanCountingStorage{reconcileStorage: &reconcileStorage{}}
 	server, idx := repairServer(t, storage, nil)
 	server.search.(*mockSearchBackend).openIndexes = []NamespacedResource{GlobalSearchKey("ns")}
-	server.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
+	server.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
 	for _, gr := range GlobalSearchResourceTypes() {
 		require.NoError(t, idx.RecordCompletedTypeBuild(gr, TypeBuild{}))
 	}
@@ -1495,7 +1495,7 @@ func TestCoverageChangeSyncsTypesAtOnce(t *testing.T) {
 	require.Eventually(t, func() bool { return storage.scans.Load() == 1 }, 5*time.Second, 10*time.Millisecond)
 
 	pages := schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}
-	server.globalCoverage.Reload(AppManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
+	server.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
 	waitCtx, stop := context.WithTimeout(ctx, 5*time.Second)
 	defer stop()
 	req, err := server.rebuildQueue.Next(waitCtx)
@@ -1532,7 +1532,7 @@ func TestCoverageChangeDuringAScanSyncsTypes(t *testing.T) {
 		openIndexes: []NamespacedResource{GlobalSearchKey("ns")},
 	}
 	server := globalTestServer(t, &reconcileStorage{}, search)
-	server.globalCoverage = NewGlobalSearchCoverageRegistry(AppManifests())
+	server.globalCoverage = NewGlobalSearchCoverageRegistry(testBuiltinManifests())
 	ctx, cancel := context.WithCancel(t.Context())
 	server.bgTaskWg.Add(1)
 	go server.runPeriodicScanForIndexesToRebuild(ctx)
@@ -1543,7 +1543,7 @@ func TestCoverageChangeDuringAScanSyncsTypes(t *testing.T) {
 
 	<-idx.reached
 	pages := schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}
-	server.globalCoverage.Reload(AppManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
+	server.globalCoverage.Reload(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))})
 	close(idx.release)
 
 	waitCtx, stop := context.WithTimeout(ctx, 5*time.Second)
