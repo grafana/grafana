@@ -14,9 +14,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 - **Never delete or narrow an interface in `types.go` without human sign-off.** `Router`,
   `RoutesLoader` and `Backend` mark seams for planned work, even where they look unused (an earlier
   refactor dropped `Router` by mistake). Adding an interface is fine.
-- **Keep deployment-specific knowledge out of the engine** (`router.go`, `types.go`, `discovery*.go`,
-  `breaker.go`, `openapi_cache.go`). It belongs in the source files: `cloud_router.go`,
-  `aggregate_*.go`, `plugin_manifests*.go` and `st_fallback.go`.
+- **Keep deployment-specific knowledge out of the engine** (`router.go`, `reconcile.go`, `auth.go`,
+  `types.go`, `discovery*.go`, `breaker.go`, `openapi_cache.go`). It belongs in the source files:
+  `cloud_router.go`, `aggregate_*.go`, `plugin_manifests*.go` and `st_*.go`.
 - **One backend owns every version of a group.** Dispatch is keyed by group (segment 2 of
   `/apis/<group>/...`). Don't reintroduce a path mux that flattens routes into prefixes. A duplicate
   group in one `Load` makes the last one win, with a warning, and must never panic. The one
@@ -134,10 +134,12 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 
 | Area | Files |
 | --- | --- |
-| Engine: reconcile loop, dispatch, `Ready`/`Alive` | `router.go`, `types.go` |
+| Engine: dispatch, `Ready`/`Alive` | `router.go`, `types.go` |
+| Engine: reconcile loop (`Run`, `reconcile`, `publish`) | `reconcile.go` |
+| Authentication and the namespace check | `auth.go` |
 | Root discovery (`/apis`, `/openapi/v3`) and the per-backend discovery cache | `discovery.go`, `discovery_handler.go`, `discovery_cache.go` |
-| Per-group-version OpenAPI cache | `openapi_cache.go` |
-| App manifest discovery (`/apis/discovery`) | `discovery_manifests.go`, `discovery_openapi.go`, `discovery_status.go` |
+| OpenAPI serving and the per-group-version OpenAPI cache | `openapi_cache.go` |
+| App manifest discovery (`/apis/discovery`), its markdown and HTML index | `discovery_manifests.go`, `discovery_index.go`, `discovery_openapi.go`, `discovery_status.go` |
 | Circuit breaker, status recorder | `breaker.go`, `plugin_breaker.go` |
 | dskit service, middleware entry point | `service.go` |
 | The embedded API server's groups (middleware mode) | `embedded.go` |
@@ -152,7 +154,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Dev targets (`router.dev.<name>`), served by the local plugin loader | `dev_targets.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
-| Single-tenant (ST) fallback, its per-stack discovery cache, and the `dashboard.grafana.app` split | `st_fallback.go`, `st_discovery_cache.go`, `st_resources.go` |
+| Single-tenant (ST) fallback: serving (`st_fallback.go`), stack resolution (`st_stacks.go`), its discovery poll and backends (`st_poll.go`), its per-stack discovery cache, and the `dashboard.grafana.app` split | `st_*.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
 
 ## Route sources
