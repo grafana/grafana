@@ -322,7 +322,9 @@ test.describe(
       await page.keyboard.press('Escape');
     });
 
-    test('See which elements are hidden while I am editing', async ({
+    // Release builds report a different version than the one saved in the fixtures, so panels that first load in
+    // edit mode rewrite it and "Exit edit" prompts about unsaved changes.
+    test.skip('See which elements are hidden while I am editing', async ({
       page,
       selectors,
       controls,
