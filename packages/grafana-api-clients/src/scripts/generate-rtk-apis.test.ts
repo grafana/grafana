@@ -84,3 +84,23 @@ describe('dashboard search configuration', () => {
     expect(override.pattern('anyName', operation(path, verb))).toBe(overridden);
   });
 });
+
+describe('folder search configuration', () => {
+  if (!('outputFiles' in config)) {
+    throw new Error('expected output files');
+  }
+  const apiConfig = config.outputFiles['../clients/rtkq/folder/v1beta1/endpoints.gen.ts'];
+
+  it.each([
+    ['/folders/search', 'post', true],
+    ['/folders', 'post', false],
+    ['/folders/search', 'get', false],
+  ] as const)('overrides %s %s as a query: %s', (path, verb, overridden) => {
+    const override = apiConfig.endpointOverrides?.[0];
+    expect(override?.type).toBe('query');
+    if (typeof override?.pattern !== 'function') {
+      throw new Error('expected an endpoint matcher');
+    }
+    expect(override.pattern('anyName', operation(path, verb))).toBe(overridden);
+  });
+});

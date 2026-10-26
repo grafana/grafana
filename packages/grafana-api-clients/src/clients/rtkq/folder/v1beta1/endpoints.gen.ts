@@ -40,9 +40,9 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Folder'],
       }),
-      listFolderSearchV1Beta1: build.mutation<ListFolderSearchV1Beta1ApiResponse, ListFolderSearchV1Beta1ApiArg>({
+      listFolderSearchV1Beta1: build.query<ListFolderSearchV1Beta1ApiResponse, ListFolderSearchV1Beta1ApiArg>({
         query: (queryArg) => ({ url: `/folders/search`, method: 'POST', body: queryArg.searchQuery }),
-        invalidatesTags: ['Search'],
+        providesTags: ['Search'],
       }),
       getFolder: build.query<GetFolderApiResponse, GetFolderApiArg>({
         query: (queryArg) => ({
@@ -598,7 +598,8 @@ export const {
   useListFolderQuery,
   useLazyListFolderQuery,
   useCreateFolderMutation,
-  useListFolderSearchV1Beta1Mutation,
+  useListFolderSearchV1Beta1Query,
+  useLazyListFolderSearchV1Beta1Query,
   useGetFolderQuery,
   useLazyGetFolderQuery,
   useReplaceFolderMutation,

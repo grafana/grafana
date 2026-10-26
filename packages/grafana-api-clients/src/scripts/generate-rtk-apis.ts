@@ -146,7 +146,16 @@ const config: ConfigFile = {
     ...createAPIConfig('dashboard', 'v1beta1'),
     ...createAPIConfig('dashboard', 'v2beta1'),
     ...createAPIConfig('dashboard', 'v2'),
-    ...createAPIConfig('folder', 'v1beta1'),
+    ...createAPIConfig('folder', 'v1beta1', undefined, {
+      // The allowlisted search reads folders through a POST, which RTK would otherwise treat as a mutation.
+      endpointOverrides: [
+        {
+          pattern: (_name: string, operation: OperationDefinition) =>
+            operation.verb === 'post' && allowedPerResourceSearchPaths.includes(operation.path),
+          type: 'query',
+        },
+      ],
+    }),
     ...createAPIConfig('iam', 'v0alpha1'),
     ...createAPIConfig('playlist', 'v1'),
     ...createAPIConfig('collections', 'v1alpha1'),
