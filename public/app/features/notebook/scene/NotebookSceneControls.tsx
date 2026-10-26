@@ -55,8 +55,8 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
       {!isKioskFull && (
         <>
           {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has
-              to be visible and retryable there too. This renders nothing until there is something to
-              say. */}
+              to be visible and retryable there too. The status says nothing until there is something to
+              report. It still keeps its space, so the buttons next to it do not move. */}
           <NotebookSaveStatus autosave={model.autosave} />
           {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
         </>

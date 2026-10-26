@@ -36,7 +36,7 @@ describe('NotebookSaveStatus', () => {
 
     const { container } = render(<NotebookSaveStatus autosave={autosave} />);
 
-    expect(container).toBeEmptyDOMElement();
+    expect(container.textContent).toBe('');
   });
 
   it.each([
