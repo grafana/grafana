@@ -160,7 +160,7 @@ export const LogListContextProvider = ({
   unwrappedColumns = false,
   wrapLogMessage = true,
 }: Partial<Props>) => {
-  const hasLogsWithErrorFields = logs.some(logHasErrorAttributes);
+  const hasLogsWithErrorAttributes = logs.some(logHasErrorAttributes);
   const hasLogsWithErrors = logs.some((log) => !!checkLogsError(log));
   const hasSampledLogs = logs.some((log) => !!checkLogsSampled(log));
 
@@ -172,7 +172,7 @@ export const LogListContextProvider = ({
         dedupStrategy,
         displayedFields,
         downloadLogs: jest.fn(),
-        hasLogsWithErrorFields,
+        hasLogsWithErrorAttributes,
         hasLogsWithErrors,
         hasSampledLogs,
         filterLevels,

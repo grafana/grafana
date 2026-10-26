@@ -117,6 +117,7 @@ const LogLineComponent = memo(
       dedupStrategy,
       fontSize,
       hasLogsWithErrors,
+      hasLogsWithErrorAttributes,
       hasSampledLogs,
       showLevel,
       showUniqueLabels,
@@ -239,6 +240,27 @@ const LogLineComponent = memo(
                     className={styles.logIconError}
                     name="exclamation-triangle"
                     aria-label={t('logs.log-line.has-error', 'Has errors')}
+                    size="xs"
+                  />
+                </Tooltip>
+              )}
+            </div>
+          )}
+          {hasLogsWithErrorAttributes && (
+            <div className={`${styles.hasError}`}>
+              {log.hasErrorAttributes && (
+                <Tooltip
+                  content={t(
+                    'logs.log-line.tooltip-error-fields',
+                    'This log line contains error-related fields or a stack trace.'
+                  )}
+                  placement="right"
+                  theme="error"
+                >
+                  <Icon
+                    className={styles.logIconErrorFields}
+                    name="exclamation-triangle"
+                    aria-label={t('logs.log-line.has-error', 'Has error fields')}
                     size="xs"
                   />
                 </Tooltip>
@@ -706,6 +728,9 @@ export const getStyles = (
     }),
     logIconError: css({
       color: theme.colors.warning.main,
+    }),
+    logIconErrorFields: css({
+      color: theme.colors.error.main,
     }),
     logIconInfo: css({
       color: theme.colors.info.main,
