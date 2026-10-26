@@ -345,43 +345,40 @@ Value"
       expect(logListModel.isJSON).toBe(false);
     });
 
-    describe('errorAttributes', () => {
-      test('collects error messages and stack traces from labels and fields', () => {
+    describe('hasErrorAttributes', () => {
+      test('is true when a label is an error message or stack trace', () => {
         const log = createLogLine({
           labels: {
             app: 'api',
             'error.type': 'timeout',
-            'exception.message': 'from label',
             'exception.stacktrace': 'at label',
             tech_stack: 'react',
           },
+        });
+
+        expect(log.hasErrorAttributes).toBe(true);
+      });
+
+      test('is true when a dataframe field is an error message or stack trace', () => {
+        const log = createLogLine({
+          labels: { app: 'api' },
           dataFrame: toDataFrame({
             refId: 'A',
             fields: [
               { name: 'Time', type: FieldType.time, values: [1] },
               { name: 'Line', type: FieldType.string, values: ['line'] },
-              { name: 'err.stack', type: FieldType.string, values: ['at field'] },
               { name: 'error.message', type: FieldType.string, values: ['from field'] },
             ],
           }),
         });
 
-        expect(log.errorAttributes).toEqual({
-          messages: [
-            { key: 'exception.message', value: 'from label' },
-            { key: 'error.message', value: 'from field' },
-          ],
-          stacktraces: [
-            { key: 'exception.stacktrace', value: 'at label' },
-            { key: 'err.stack', value: 'at field' },
-          ],
-        });
+        expect(log.hasErrorAttributes).toBe(true);
       });
 
-      test('returns empty groups when the log has no error message or stack trace', () => {
-        const log = createLogLine({ labels: { app: 'api', 'error.type': 'timeout' } });
+      test('is false when the log has no error message or stack trace', () => {
+        const log = createLogLine({ labels: { app: 'api', 'error.type': 'timeout', tech_stack: 'react' } });
 
-        expect(log.errorAttributes).toEqual({ messages: [], stacktraces: [] });
+        expect(log.hasErrorAttributes).toBe(false);
       });
 
       test('ignores the synthetic OTel attributes field', () => {
@@ -389,7 +386,7 @@ Value"
           {
             labels: {
               [OTEL_PROBE_FIELD]: '9',
-              'exception.message': 'boom',
+              app: 'api',
             },
           },
           {
@@ -401,11 +398,8 @@ Value"
           }
         );
 
-        expect(log.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]).toBe('exception.message=boom');
-        expect(log.errorAttributes).toEqual({
-          messages: [{ key: 'exception.message', value: 'boom' }],
-          stacktraces: [],
-        });
+        expect(log.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]).toBe('app=api');
+        expect(log.hasErrorAttributes).toBe(false);
       });
     });
 

@@ -64,7 +64,7 @@ export class LogListModel implements LogRowModel {
   private _highlightedLogAttributesTokens: Array<string | Token> | undefined = undefined;
   private _highlightTokens: Array<string | Token> | undefined = undefined;
   private _escapeUnescapedString = false;
-  private _errorAttributes: LogErrorAttributes | undefined = undefined;
+  private _hasErrorAttributes: boolean | undefined = undefined;
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
   private _prettifyJSON: boolean;
@@ -185,32 +185,11 @@ export class LogListModel implements LogRowModel {
     return checkLogsError(this);
   }
 
-  get errorAttributes(): LogErrorAttributes {
-    if (this._errorAttributes === undefined) {
-      const labels = Object.keys(this.labels)
-        .filter((key) => key !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME)
-        .map((key) => ({ key, value: this.labels[key] }));
-      const classifiedLabels = classifyErrorAttributes(labels, (label) => label.key);
-      const classifiedFields = classifyErrorAttributes(this.fields, (field) => field.keys[0] ?? '');
-
-      this._errorAttributes = {
-        messages: [
-          ...classifiedLabels.messages,
-          ...classifiedFields.messages.map((field) => ({
-            key: field.keys[0] ?? '',
-            value: field.values[0] ?? '',
-          })),
-        ],
-        stacktraces: [
-          ...classifiedLabels.stacktraces,
-          ...classifiedFields.stacktraces.map((field) => ({
-            key: field.keys[0] ?? '',
-            value: field.values[0] ?? '',
-          })),
-        ],
-      };
+  get hasErrorAttributes(): boolean {
+    if (this._hasErrorAttributes === undefined) {
+      this._hasErrorAttributes = logHasErrorAttributes(this);
     }
-    return this._errorAttributes;
+    return this._hasErrorAttributes;
   }
 
   get fields(): FieldDef[] {
@@ -328,16 +307,6 @@ export class LogListModel implements LogRowModel {
   }
 }
 
-export interface LogErrorAttribute {
-  key: string;
-  value: string;
-}
-
-export interface LogErrorAttributes {
-  messages: LogErrorAttribute[];
-  stacktraces: LogErrorAttribute[];
-}
-
 export interface PreProcessOptions {
   escape: boolean;
   getFieldLinks?: GetFieldLinksFn;
@@ -427,6 +396,19 @@ function countNewLines(log: string, limit = Infinity) {
     }
   }
   return count;
+}
+
+export function logHasErrorAttributes(log: LogRowModel): boolean {
+  const labelKeys = Object.keys(log.labels).filter((key) => key !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME);
+  const classifiedLabels = classifyErrorAttributes(labelKeys, (key) => key);
+  const classifiedFields = classifyErrorAttributes(getAllFields(log), (field) => field.keys[0] ?? '');
+
+  return (
+    classifiedLabels.messages.length > 0 ||
+    classifiedLabels.stacktraces.length > 0 ||
+    classifiedFields.messages.length > 0 ||
+    classifiedFields.stacktraces.length > 0
+  );
 }
 
 export function getLevelsFromLogs(logs: LogListModel[]) {
