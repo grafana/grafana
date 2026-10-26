@@ -357,6 +357,7 @@ Value"
         });
 
         expect(log.hasErrorAttributes).toBe(true);
+        expect(log.hasStacktrace).toBe(true);
       });
 
       test('is true when a dataframe field is an error message or stack trace', () => {
@@ -373,12 +374,14 @@ Value"
         });
 
         expect(log.hasErrorAttributes).toBe(true);
+        expect(log.hasStacktrace).toBe(false);
       });
 
       test('is false when the log has no error message or stack trace', () => {
         const log = createLogLine({ labels: { app: 'api', 'error.type': 'timeout', tech_stack: 'react' } });
 
         expect(log.hasErrorAttributes).toBe(false);
+        expect(log.hasStacktrace).toBe(false);
       });
 
       test('ignores the synthetic OTel attributes field', () => {
@@ -400,6 +403,7 @@ Value"
 
         expect(log.labels[OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]).toBe('app=api');
         expect(log.hasErrorAttributes).toBe(false);
+        expect(log.hasStacktrace).toBe(false);
       });
     });
 

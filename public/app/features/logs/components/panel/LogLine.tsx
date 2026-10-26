@@ -234,7 +234,7 @@ const LogLineComponent = memo(
                     errorMessage: log.errorMessage,
                   })}
                   placement="right"
-                  theme="error"
+                  theme="info"
                 >
                   <Icon
                     className={styles.logIconError}
@@ -248,23 +248,7 @@ const LogLineComponent = memo(
           )}
           {hasLogsWithErrorAttributes && (
             <div className={`${styles.hasError}`}>
-              {log.hasErrorAttributes && (
-                <Tooltip
-                  content={t(
-                    'logs.log-line.tooltip-error-fields',
-                    'This log line contains error-related fields or a stack trace.'
-                  )}
-                  placement="right"
-                  theme="error"
-                >
-                  <Icon
-                    className={styles.logIconErrorFields}
-                    name="exclamation-triangle"
-                    aria-label={t('logs.log-line.has-error', 'Has error fields')}
-                    size="xs"
-                  />
-                </Tooltip>
-              )}
+              {log.hasErrorAttributes && <LogLineErrorAttributeIcon log={log} styles={styles} />}
             </div>
           )}
           {hasSampledLogs && (
@@ -342,6 +326,24 @@ const LogLineComponent = memo(
   }
 );
 LogLineComponent.displayName = 'LogLineComponent';
+
+function LogLineErrorAttributeIcon({ log, styles }: { log: LogListModel; styles: LogLineStyles }) {
+  const copy = log.hasStacktrace
+    ? {
+        content: t('logs.log-line.tooltip-stacktrace', 'This log line contains a stack trace.'),
+        label: t('logs.log-line.has-stacktrace', 'Has a stack trace'),
+      }
+    : {
+        content: t('logs.log-line.tooltip-error-fields', 'This log line contains error-related fields.'),
+        label: t('logs.log-line.has-error-fields', 'Has error fields'),
+      };
+
+  return (
+    <Tooltip content={copy.content} placement="right" theme="info">
+      <Icon className={styles.logIconErrorFields} name="exclamation-triangle" aria-label={copy.label} size="xs" />
+    </Tooltip>
+  );
+}
 
 export type LogLineTimestampResolution = 'ms' | 'ns';
 

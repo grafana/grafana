@@ -64,7 +64,7 @@ export class LogListModel implements LogRowModel {
   private _highlightedLogAttributesTokens: Array<string | Token> | undefined = undefined;
   private _highlightTokens: Array<string | Token> | undefined = undefined;
   private _escapeUnescapedString = false;
-  private _hasErrorAttributes: boolean | undefined = undefined;
+  private _errorAttributePresence: LogErrorAttributePresence | undefined = undefined;
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
   private _prettifyJSON: boolean;
@@ -186,10 +186,19 @@ export class LogListModel implements LogRowModel {
   }
 
   get hasErrorAttributes(): boolean {
-    if (this._hasErrorAttributes === undefined) {
-      this._hasErrorAttributes = logHasErrorAttributes(this);
+    const { hasErrorFields, hasStacktrace } = this.errorAttributePresence;
+    return hasErrorFields || hasStacktrace;
+  }
+
+  get hasStacktrace(): boolean {
+    return this.errorAttributePresence.hasStacktrace;
+  }
+
+  private get errorAttributePresence(): LogErrorAttributePresence {
+    if (this._errorAttributePresence === undefined) {
+      this._errorAttributePresence = getLogErrorAttributePresence(this);
     }
-    return this._hasErrorAttributes;
+    return this._errorAttributePresence;
   }
 
   get fields(): FieldDef[] {
@@ -398,17 +407,25 @@ function countNewLines(log: string, limit = Infinity) {
   return count;
 }
 
-export function logHasErrorAttributes(log: LogRowModel): boolean {
+interface LogErrorAttributePresence {
+  hasErrorFields: boolean;
+  hasStacktrace: boolean;
+}
+
+function getLogErrorAttributePresence(log: LogRowModel): LogErrorAttributePresence {
   const labelKeys = Object.keys(log.labels).filter((key) => key !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME);
   const classifiedLabels = classifyErrorAttributes(labelKeys, (key) => key);
   const classifiedFields = classifyErrorAttributes(getAllFields(log), (field) => field.keys[0] ?? '');
 
-  return (
-    classifiedLabels.messages.length > 0 ||
-    classifiedLabels.stacktraces.length > 0 ||
-    classifiedFields.messages.length > 0 ||
-    classifiedFields.stacktraces.length > 0
-  );
+  return {
+    hasErrorFields: classifiedLabels.messages.length > 0 || classifiedFields.messages.length > 0,
+    hasStacktrace: classifiedLabels.stacktraces.length > 0 || classifiedFields.stacktraces.length > 0,
+  };
+}
+
+export function logHasErrorAttributes(log: LogRowModel): boolean {
+  const { hasErrorFields, hasStacktrace } = getLogErrorAttributePresence(log);
+  return hasErrorFields || hasStacktrace;
 }
 
 export function getLevelsFromLogs(logs: LogListModel[]) {
