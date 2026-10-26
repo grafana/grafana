@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 
-	"github.com/grafana/grafana/apps/provisioning/pkg/apis/manifestdata"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningapp "github.com/grafana/grafana/apps/provisioning/pkg/app"
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
@@ -43,6 +42,7 @@ import (
 var (
 	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
 	_ builder.GroupVersionRoutesProvider = (*AppInstaller)(nil)
+	_ builder.AppManifestProvider        = (*AppInstaller)(nil)
 )
 
 // AppInstaller serves the provisioning API group via the app-sdk.
@@ -65,7 +65,7 @@ func RegisterAppInstaller(cfg *setting.Cfg, builders *provisioningapis.APIBuilde
 	b := builders.V0Alpha1
 
 	i := &AppInstaller{builder: b, builders: builders, legacy: map[string]map[string]rest.Storage{}}
-	manifest := *manifestdata.LocalManifest().ManifestData
+	manifest := provisioningapp.ManifestData()
 	provider := simple.NewAppProvider(sdkapp.NewEmbeddedManifest(manifest), nil, i.newApp)
 	inner, err := appsdkapiserver.NewDefaultAppInstaller(provider, sdkapp.Config{
 		KubeConfig:   clientrest.Config{}, // overridden by InitializeApp
@@ -106,7 +106,7 @@ func (i *AppInstaller) newApp(cfg sdkapp.Config) (sdkapp.App, error) {
 
 // GroupVersionRoutes mounts the builders' own HTTP routes (stats, settings) and post-processes each version's OpenAPI.
 func (i *AppInstaller) GroupVersionRoutes() []builder.GroupVersionRoutes {
-	var out []builder.GroupVersionRoutes
+	out := make([]builder.GroupVersionRoutes, 0, 2)
 	for _, b := range []*provisioningapis.APIBuilder{i.builders.V0Alpha1, i.builders.V1Beta1} {
 		gv := b.GetGroupVersion()
 		out = append(out, builder.GroupVersionRoutes{
@@ -116,6 +116,11 @@ func (i *AppInstaller) GroupVersionRoutes() []builder.GroupVersionRoutes {
 		})
 	}
 	return out
+}
+
+// AppManifest returns the manifest with the real kinds; the generated one is still empty.
+func (i *AppInstaller) AppManifest() *sdkapp.ManifestData {
+	return i.ManifestData()
 }
 
 // GetAuthorizer reuses the builder's authorizer.

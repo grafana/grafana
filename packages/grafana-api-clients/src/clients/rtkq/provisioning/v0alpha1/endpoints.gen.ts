@@ -729,7 +729,7 @@ export type UpdateConnectionApiArg = {
 };
 export type CreateConnectionAuthorizeApiResponse = /** status 200 OK */ ConnectionAuthorizeRequest;
 export type CreateConnectionAuthorizeApiArg = {
-  /** name of the ConnectionAuthorizeRequest */
+  /** name of the ResourceCallOptions */
   name: string;
   body: {
     /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -750,7 +750,7 @@ export type GetConnectionRepositoriesApiResponse = /** status 200 OK */ {
   metadata?: any;
 };
 export type GetConnectionRepositoriesApiArg = {
-  /** name of the ExternalRepositoryList */
+  /** name of the ResourceCallOptions */
   name: string;
 };
 export type GetConnectionStatusApiResponse = /** status 200 OK */ Connection;
@@ -1135,14 +1135,14 @@ export type GetRepositoryFilesApiResponse = /** status 200 OK */ {
   metadata?: any;
 };
 export type GetRepositoryFilesApiArg = {
-  /** name of the ResourceWrapper */
+  /** name of the ResourceCallOptions */
   name: string;
   /** branch or commit hash */
   ref?: string;
 };
 export type GetRepositoryFilesWithPathApiResponse = /** status 200 OK */ ResourceWrapper;
 export type GetRepositoryFilesWithPathApiArg = {
-  /** name of the ResourceWrapper */
+  /** name of the ResourceCallOptions */
   name: string;
   /** path to the resource */
   path: string;
@@ -1151,7 +1151,7 @@ export type GetRepositoryFilesWithPathApiArg = {
 };
 export type ReplaceRepositoryFilesWithPathApiResponse = /** status 200 OK */ ResourceWrapper;
 export type ReplaceRepositoryFilesWithPathApiArg = {
-  /** name of the ResourceWrapper */
+  /** name of the ResourceCallOptions */
   name: string;
   /** path to the resource */
   path: string;
@@ -1169,7 +1169,7 @@ export type ReplaceRepositoryFilesWithPathApiArg = {
 };
 export type CreateRepositoryFilesWithPathApiResponse = /** status 200 OK */ ResourceWrapper;
 export type CreateRepositoryFilesWithPathApiArg = {
-  /** name of the ResourceWrapper */
+  /** name of the ResourceCallOptions */
   name: string;
   /** path to the resource */
   path: string;
@@ -1187,7 +1187,7 @@ export type CreateRepositoryFilesWithPathApiArg = {
 };
 export type DeleteRepositoryFilesWithPathApiResponse = /** status 200 OK */ ResourceWrapper;
 export type DeleteRepositoryFilesWithPathApiArg = {
-  /** name of the ResourceWrapper */
+  /** name of the ResourceCallOptions */
   name: string;
   /** path to the resource */
   path: string;
@@ -1200,16 +1200,16 @@ export type DeleteRepositoryFilesWithPathApiArg = {
   /** path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/') */
   originalPath?: string;
 };
-export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;
+export type GetRepositoryHistoryApiResponse = /** status 200 OK */ HistoryList;
 export type GetRepositoryHistoryApiArg = {
-  /** name of the HistoryList */
+  /** name of the ResourceCallOptions */
   name: string;
   /** branch or commit hash */
   ref?: string;
 };
-export type GetRepositoryHistoryWithPathApiResponse = /** status 200 OK */ string;
+export type GetRepositoryHistoryWithPathApiResponse = /** status 200 OK */ HistoryList;
 export type GetRepositoryHistoryWithPathApiArg = {
-  /** name of the HistoryList */
+  /** name of the ResourceCallOptions */
   name: string;
   /** path to the resource */
   path: string;
@@ -1218,18 +1218,18 @@ export type GetRepositoryHistoryWithPathApiArg = {
 };
 export type GetRepositoryJobsApiResponse = /** status 200 OK */ JobList;
 export type GetRepositoryJobsApiArg = {
-  /** name of the Repository */
+  /** name of the ResourceCallOptions */
   name: string;
 };
 export type CreateRepositoryJobsApiResponse = /** status 200 OK */ Job;
 export type CreateRepositoryJobsApiArg = {
-  /** name of the Repository */
+  /** name of the ResourceCallOptions */
   name: string;
   jobSpec: JobSpec;
 };
 export type GetRepositoryJobsWithPathApiResponse = /** status 200 OK */ Job;
 export type GetRepositoryJobsWithPathApiArg = {
-  /** name of the Repository */
+  /** name of the ResourceCallOptions */
   name: string;
   /** Original Job UID */
   uid: string;
@@ -1243,19 +1243,19 @@ export type GetRepositoryRefsApiResponse = /** status 200 OK */ {
   metadata?: any;
 };
 export type GetRepositoryRefsApiArg = {
-  /** name of the RefList */
+  /** name of the ResourceCallOptions */
   name: string;
 };
 export type GetRepositoryRenderWithPathApiResponse = unknown;
 export type GetRepositoryRenderWithPathApiArg = {
-  /** name of the Repository */
+  /** name of the ResourceCallOptions */
   name: string;
   /** Image GUID */
   guid: string;
 };
 export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceList;
 export type GetRepositoryResourcesApiArg = {
-  /** name of the ResourceList */
+  /** name of the ResourceCallOptions */
   name: string;
 };
 export type GetRepositoryStatusApiResponse = /** status 200 OK */ Repository;
@@ -1297,7 +1297,7 @@ export type UpdateRepositoryStatusApiArg = {
 };
 export type CreateRepositoryTestApiResponse = /** status 200 OK */ TestResults;
 export type CreateRepositoryTestApiArg = {
-  /** name of the TestResults */
+  /** name of the ResourceCallOptions */
   name: string;
   body: {
     /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1312,7 +1312,7 @@ export type CreateRepositoryTestApiArg = {
 };
 export type CreateRepositoryWebhookApiResponse = /** status 200 OK */ WebhookResponse;
 export type CreateRepositoryWebhookApiArg = {
-  /** name of the WebhookResponse */
+  /** name of the ResourceCallOptions */
   name: string;
 };
 export type GetFrontendSettingsApiResponse = /** status 200 undefined */ RepositoryViewList;
@@ -2249,6 +2249,25 @@ export type ResourceWrapper = {
   timestamp?: Time;
   /** Typed links for this file (only supported by external systems, github etc) */
   urls?: RepositoryUrLs;
+};
+export type Author = {
+  avatarURL?: string;
+  name: string;
+  username: string;
+};
+export type HistoryItem = {
+  authors: Author[];
+  createdAt: number;
+  message: string;
+  ref: string;
+};
+export type HistoryList = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  items: HistoryItem[];
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ListMeta;
 };
 export type ResourceListItem = {
   folder?: string;
