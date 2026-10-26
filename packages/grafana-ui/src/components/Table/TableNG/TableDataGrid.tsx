@@ -147,7 +147,7 @@ export function TableDataGrid({
   }, [scrollToIndex, sortedRows, gridRef]);
 
   const showPagination = enablePagination && numRows > 0;
-  const hasGridFrame = tableRefreshEnabled && !noPanelPadding;
+  const hasGridFrame = tableRefreshEnabled && (!noPanelPadding || transparent);
   const bodyHeight =
     height -
     headerHeight -

@@ -268,18 +268,29 @@ describe('TableDataGrid', () => {
       expect(edgeRules.map((rule) => rule.style.getPropertyValue('inset-inline-end'))).toContain('1px');
     });
 
-    it('renders the refreshed outer border unless the table is flush with its panel', () => {
+    it.each(['grid', 'treegrid'] as const)('preserves the refreshed frame for transparent %s panels', (role) => {
       const theme = createTheme();
-      const props = makeProps({ tableRefreshEnabled: true });
+      const props = makeProps({ tableRefreshEnabled: true, role });
       const { rerender } = render(<TableDataGrid {...props} />);
 
-      expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border')).toBe(
+      expect(getGridFrameOverlayStyleRule(role)?.style.getPropertyValue('border')).toBe(
         `1px solid ${theme.components.table.border}`
       );
 
       rerender(<TableDataGrid {...props} noPanelPadding />);
 
-      expect(getGridFrameOverlayStyleRule()).toBeUndefined();
+      expect(getGridFrameOverlayStyleRule(role)).toBeUndefined();
+
+      rerender(<TableDataGrid {...props} noPanelPadding transparent />);
+
+      expect(getGridFrameOverlayStyleRule(role)?.style.getPropertyValue('border')).toBe(
+        `1px solid ${theme.components.table.border}`
+      );
+      expect(window.getComputedStyle(screen.getByRole(role).parentElement!.parentElement!).overflow).toBe('hidden');
+
+      rerender(<TableDataGrid {...props} noPanelPadding transparent tableRefreshEnabled={false} />);
+
+      expect(getGridFrameOverlayStyleRule(role)).toBeUndefined();
     });
 
     it.each([
