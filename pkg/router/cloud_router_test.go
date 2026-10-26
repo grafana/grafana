@@ -604,7 +604,10 @@ func TestCloudLoaderSingleTenantLookupLimits(t *testing.T) {
 
 func TestCloudLoaderFallbackOnlyLifecycle(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "https://play.grafana.org/"})
+		// A host name would be resolved inside the bubble, which crashes when
+		// the lookup is shared with a goroutine outside it. Nothing listens on
+		// this port, so the poll fails at once.
+		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "http://127.0.0.1:1/"})
 		loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 		require.NoError(t, err)
 		cloud := loader.(*cloudLoader)
