@@ -700,10 +700,10 @@ export const useFlagAssistantDashboardArtifacts = (options?: ReactFlagEvaluation
  *
  * **Details:**
  * - flag key: `assistant.dashboardPlanBuildingScreen`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagAssistantDashboardPlanBuildingScreen = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("assistant.dashboardPlanBuildingScreen", false, options).value;
+  return useFlag("assistant.dashboardPlanBuildingScreen", true, options).value;
 };
 
 /**

@@ -18,7 +18,7 @@ const previewPath = '/dashboard/new';
 
 /** Whether a plan may show its building screen; see `assistant.dashboardPlanBuildingScreen`. */
 export function isPlanBuildingScreenEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.AssistantDashboardPlanBuildingScreen, false);
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.AssistantDashboardPlanBuildingScreen, true);
 }
 
 /** Owns navigation for the process-wide mutation API's single on-page plan preview. */

@@ -78,35 +78,36 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 [Public preview](https://grafana.com/docs/release-life-cycle/#public-preview) features are supported by our Support teams, but might be limited to enablement, configuration, and some troubleshooting.
 
-| Feature toggle name                | Description                                                                                                                    |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `panelTitleSearch`                 | Search for dashboards using panel title                                                                                        |
-| `faroDatasourceSelector`           | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                 |
-| `externalServiceAccounts`          | Automatic service account and token setup for plugins                                                                          |
-| `dashboard.notebooks`              | Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels            |
-| `feedbackButton`                   | Enables the feedback button in the dashboard edit sidebar                                                                      |
-| `pdfTables`                        | Enables generating table data as PDF in reporting                                                                              |
-| `canvasPanelPanZoom`               | Allow pan and zoom in canvas panel                                                                                             |
-| `secretsManagementAppPlatformUI`   | Enable the secrets management app platform UI                                                                                  |
-| `secretsKeeperUI`                  | Enable the Secrets Keeper management UI for configuring external secret storage                                                |
-| `grafana.secretsReferenceValueUI`  | Enable referencing an existing secret in an active keeper when creating a secure value                                         |
-| `dashboardTemplates`               | Enables a flow to get started with a new dashboard from a template                                                             |
-| `alertRuleRestore`                 | Enables the alert rule restore feature                                                                                         |
-| `alertingMigrationWizardUI`        | Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting    |
-| `azureMonitorLogsBuilderEditor`    | Enables the logs builder mode for the Azure Monitor data source                                                                |
-| `datasources.azureMonitorBatchAPI` | Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request |
-| `alertingListViewV2PreviewToggle`  | Enables the alerting list view v2 preview toggle                                                                               |
-| `alertingImportAlertmanagerAPI`    | Enables the API to import Alertmanager configuration                                                                           |
-| `grafana.newTextPanel`             | Enables the new text panel                                                                                                     |
-| `text.newFeatures`                 | Enables the new features in text panel                                                                                         |
-| `interactiveLearning`              | Enables the interactive learning app                                                                                           |
-| `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |
-| `pyroscopeUTF8LabelNames`          | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |
-| `queryEditorNext`                  | Enables next generation query editor experience                                                                                |
-| `grafana.viewPanelPane`            | Enables the sidebar pane with new toggles and options in panel view mode                                                       |
-| `splashScreen`                     | Enables the splash screen modal for introducing new Grafana features on first session                                          |
-| `dataviz.tabularNums`              | Enables tabular numerals for visualization legend values                                                                       |
-| `grafana.dynamicTraceToLogs`       | Check for the existence of logs when linking from the Trace View                                                               |
+| Feature toggle name                     | Description                                                                                                                    |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `panelTitleSearch`                      | Search for dashboards using panel title                                                                                        |
+| `faroDatasourceSelector`                | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                 |
+| `externalServiceAccounts`               | Automatic service account and token setup for plugins                                                                          |
+| `dashboard.notebooks`                   | Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels            |
+| `feedbackButton`                        | Enables the feedback button in the dashboard edit sidebar                                                                      |
+| `pdfTables`                             | Enables generating table data as PDF in reporting                                                                              |
+| `canvasPanelPanZoom`                    | Allow pan and zoom in canvas panel                                                                                             |
+| `secretsManagementAppPlatformUI`        | Enable the secrets management app platform UI                                                                                  |
+| `secretsKeeperUI`                       | Enable the Secrets Keeper management UI for configuring external secret storage                                                |
+| `grafana.secretsReferenceValueUI`       | Enable referencing an existing secret in an active keeper when creating a secure value                                         |
+| `dashboardTemplates`                    | Enables a flow to get started with a new dashboard from a template                                                             |
+| `alertRuleRestore`                      | Enables the alert rule restore feature                                                                                         |
+| `alertingMigrationWizardUI`             | Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting    |
+| `azureMonitorLogsBuilderEditor`         | Enables the logs builder mode for the Azure Monitor data source                                                                |
+| `datasources.azureMonitorBatchAPI`      | Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request |
+| `alertingListViewV2PreviewToggle`       | Enables the alerting list view v2 preview toggle                                                                               |
+| `alertingImportAlertmanagerAPI`         | Enables the API to import Alertmanager configuration                                                                           |
+| `grafana.newTextPanel`                  | Enables the new text panel                                                                                                     |
+| `text.newFeatures`                      | Enables the new features in text panel                                                                                         |
+| `interactiveLearning`                   | Enables the interactive learning app                                                                                           |
+| `transformationsEmptyPlaceholder`       | Show transformation quick-start cards in empty transformations state                                                           |
+| `pyroscopeUTF8LabelNames`               | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |
+| `queryEditorNext`                       | Enables next generation query editor experience                                                                                |
+| `grafana.viewPanelPane`                 | Enables the sidebar pane with new toggles and options in panel view mode                                                       |
+| `splashScreen`                          | Enables the splash screen modal for introducing new Grafana features on first session                                          |
+| `dataviz.tabularNums`                   | Enables tabular numerals for visualization legend values                                                                       |
+| `assistant.dashboardPlanBuildingScreen` | Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan                       |
+| `grafana.dynamicTraceToLogs`            | Check for the existence of logs when linking from the Trace View                                                               |
 
 ## Development feature toggles
 

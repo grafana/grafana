@@ -3130,9 +3130,9 @@ var (
 		{
 			Name:        "assistant.dashboardPlanBuildingScreen",
 			Description: "Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{React: true},
 		},
 		{

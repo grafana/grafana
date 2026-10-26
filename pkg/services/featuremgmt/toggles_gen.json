@@ -1038,15 +1038,18 @@
     {
       "metadata": {
         "name": "assistant.dashboardPlanBuildingScreen",
-        "resourceVersion": "1792049243204",
-        "creationTimestamp": "2026-10-15T07:27:23Z"
+        "resourceVersion": "1793024452606",
+        "creationTimestamp": "2026-10-15T07:27:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-26 14:20:52.606864 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

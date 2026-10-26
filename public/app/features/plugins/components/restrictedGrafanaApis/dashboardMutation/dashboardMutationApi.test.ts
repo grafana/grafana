@@ -120,9 +120,16 @@ describe('dashboardMutationApi', () => {
       expect(dashboardMutationApi.getPayloadSchema('RELOAD_FROM_SERVER')).toBeDefined();
     });
 
-    it('advertises the building phase of RENDER_PLAN only while its flag is on', () => {
+    it('advertises the building phase of RENDER_PLAN unless its flag is off', () => {
       const building = { planId: 'plan-1', title: 'Plan', sections: [], phase: 'building' };
 
+      // On by default.
+      const withFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN');
+      expect(withFlag).toBe(payloads.renderPlan);
+      expect(withFlag!.safeParse(building).data).toHaveProperty('phase', 'building');
+      expect(z.toJSONSchema(payloads.renderPlan, { io: 'input' }).properties).toHaveProperty('phase');
+
+      setTestFlags({ [FlagKeys.AssistantDashboardPlanBuildingScreen]: false });
       const withoutFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN');
       expect(withoutFlag).toBe(renderPlanPreviewPayloadSchema);
       const parsed = withoutFlag!.safeParse(building);
@@ -130,12 +137,6 @@ describe('dashboardMutationApi', () => {
       expect(parsed.data).not.toHaveProperty('phase');
       // Callers may inspect the schema itself rather than parse with it.
       expect(z.toJSONSchema(renderPlanPreviewPayloadSchema, { io: 'input' }).properties).not.toHaveProperty('phase');
-
-      setTestFlags({ [FlagKeys.AssistantDashboardPlanBuildingScreen]: true });
-      const withFlag = dashboardMutationApi.getPayloadSchema('RENDER_PLAN');
-      expect(withFlag).toBe(payloads.renderPlan);
-      expect(withFlag!.safeParse(building).data).toHaveProperty('phase', 'building');
-      expect(z.toJSONSchema(payloads.renderPlan, { io: 'input' }).properties).toHaveProperty('phase');
     });
 
     it('is case-insensitive', () => {
@@ -148,8 +149,7 @@ describe('dashboardMutationApi', () => {
     });
 
     it('returns the same schema as the command registry', () => {
-      // With the building screen on; RENDER_PLAN advertises less while it is off (tested below).
-      setTestFlags({ [FlagKeys.AssistantDashboardPlanBuildingScreen]: true });
+      // With the building screen on, its default; RENDER_PLAN advertises less while it is off (tested above).
       for (const cmd of allMutationCommands()) {
         const schema = dashboardMutationApi.getPayloadSchema(cmd.name);
         expect(schema).toBe(cmd.payloadSchema);
