@@ -1563,6 +1563,7 @@
         "name": "dashboard.recentlyDeletedViaTrash",
         "resourceVersion": "1791194326048",
         "creationTimestamp": "2026-08-26T10:13:23Z",
+        "deletionTimestamp": "2026-10-26T15:35:44Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-05 09:58:46.048328 +0000 UTC"
         }
