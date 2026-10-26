@@ -121,7 +121,7 @@ type decl struct {
 func main() {
 	dir := os.Args[1]
 	files, _ := filepath.Glob(filepath.Join(dir, "*_gen.go"))
-	var targets []string
+	targets := make([]string, 0, len(files))
 	for _, f := range files {
 		b := filepath.Base(f)
 		for _, k := range kinds {
@@ -138,7 +138,7 @@ func main() {
 			must(os.Remove(f))
 		}
 	}
-	var kept []string
+	kept := make([]string, 0, len(targets))
 	for _, f := range targets {
 		if !strings.HasSuffix(f, "_client_gen.go") {
 			kept = append(kept, f)
@@ -249,7 +249,7 @@ func must(err error) {
 }
 
 func buildRenameRe(rename map[string]string) *regexp.Regexp {
-	var names []string
+	names := make([]string, 0, len(rename))
 	for n := range rename {
 		names = append(names, regexp.QuoteMeta(n))
 	}
