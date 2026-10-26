@@ -11,7 +11,9 @@ export const ASSISTANT_SETUP_DROPDOWN_INTERACTION = 'assistant_setup_dropdown_op
 type AssistantMenuItem = {
   label: string;
   description: string;
-  onClick: () => void;
+  /** Renders the item as a link so middle-click and "open in new tab" work. */
+  url?: string;
+  onClick?: () => void;
   icon?: IconName;
 };
 
@@ -47,9 +49,9 @@ export function AssistantSetupDropdown({
 }: Props): React.ReactElement {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleSelect = (option: 'assistant' | 'manual', onClick: () => void) => {
+  const handleSelect = (option: 'assistant' | 'manual', onClick?: () => void) => {
     reportInteraction(ASSISTANT_SETUP_DROPDOWN_INTERACTION, { source, option });
-    onClick();
+    onClick?.();
   };
 
   const menu = (
@@ -58,12 +60,14 @@ export function AssistantSetupDropdown({
         icon={assistantItem.icon ?? 'ai-sparkle'}
         label={assistantItem.label}
         description={assistantItem.description}
+        url={assistantItem.url}
         onClick={() => handleSelect('assistant', assistantItem.onClick)}
       />
       <Menu.Item
         icon={manualItem.icon ?? 'list-ul'}
         label={manualItem.label}
         description={manualItem.description}
+        url={manualItem.url}
         onClick={() => handleSelect('manual', manualItem.onClick)}
       />
     </Menu>

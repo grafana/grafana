@@ -3,7 +3,7 @@ import { type JSX } from 'react';
 import { useAssistant } from '@grafana/assistant';
 import { Pages } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AssistantSetupDropdown } from 'app/features/connections/components/AssistantSetupDropdown/AssistantSetupDropdown';
@@ -20,7 +20,6 @@ export function DataSourceAddButton(): JSX.Element | null {
 
   const onAddDataSource = () => {
     reportInteraction('connections_datasource_list_add_datasource_clicked', {}, { silent: true });
-    locationService.push(ROUTES.DataSourcesNew);
   };
 
   const onSetupWithAssistant = () => {
@@ -72,6 +71,7 @@ export function DataSourceAddButton(): JSX.Element | null {
           'data-sources.datasource-add-button.setup-manually-description',
           'Configure all settings yourself'
         ),
+        url: config.appSubUrl + ROUTES.DataSourcesNew,
         onClick: onAddDataSource,
       }}
       source="datasources_list"

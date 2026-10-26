@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { useAssistant } from '@grafana/assistant';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -72,7 +72,7 @@ describe('DataSourceAddButton', () => {
     expect(screen.queryByText('Set up manually')).not.toBeInTheDocument();
   });
 
-  it('navigates to the new data source page when "Set up manually" is selected', async () => {
+  it('renders "Set up manually" as a link to the new data source page and reports the click', async () => {
     mockUseAssistant.mockReturnValue({
       isLoading: false,
       isAvailable: true,
@@ -80,22 +80,23 @@ describe('DataSourceAddButton', () => {
       closeAssistant: jest.fn(),
       toggleAssistant: jest.fn(),
     });
-    const pushSpy = jest.spyOn(locationService, 'push').mockImplementation(() => {});
 
     const user = userEvent.setup();
     render(<DataSourceAddButton />);
 
     await user.click(screen.getByRole('button', { name: /add new data source/i }));
-    await user.click(await screen.findByText('Set up manually'));
+    const manualLink = await screen.findByRole('menuitem', { name: /set up manually/i });
+    expect(manualLink).toHaveAttribute('href', '/connections/datasources/new');
 
-    expect(pushSpy).toHaveBeenCalledWith('/connections/datasources/new');
+    // Stop jsdom from attempting the (unimplemented) navigation the href would trigger.
+    manualLink.addEventListener('click', (e) => e.preventDefault());
+    await user.click(manualLink);
+
     expect(mockReportInteraction).toHaveBeenCalledWith(
       'connections_datasource_list_add_datasource_clicked',
       {},
       { silent: true }
     );
-
-    pushSpy.mockRestore();
   });
 
   it('opens the assistant when "Set up with assistant" is selected', async () => {
