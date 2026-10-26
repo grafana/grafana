@@ -109,10 +109,8 @@ let valToPos = jest.fn((value: number, scaleKey?: string): number => {
 });
 
 /**
- * Integration tests use the real `EventsCanvas` from `@grafana/ui` (no stub) and a mocked `uPlot`
+ * Integration tests use the real `EventsCanvasView` from `@grafana/ui` (no stub) and a mocked `uPlot`
  * instance so hooks (`init` → `draw`) drive `XYCanvas` and exemplar markers end-to-end.
- *
- * Shallow tests that mock `EventsCanvas` live in `ExemplarsPlugin.test.tsx`.
  */
 
 jest.mock('uplot', () => {
@@ -153,6 +151,7 @@ describe('ExemplarsPlugin', () => {
   });
 
   const runPlotHooks = (plot: uPlot) => {
+    Object.assign(plot, { hooks });
     act(() => {
       hooks.init?.forEach((h) => {
         h(plot);
@@ -240,6 +239,30 @@ describe('ExemplarsPlugin', () => {
     setUp(undefined, undefined, undefined, false);
 
     expect(screen.queryByTestId(selectors.components.UPlotChart.xyCanvas)).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { name: 'no frames', exemplars: [] },
+    { name: 'empty frames', exemplars: [createDataFrame({ fields: [{ name: 'Time', values: [] }] })] },
+  ])('defers selection with $name and does not replay it after the overlay remounts', async ({ exemplars }) => {
+    const openExemplar = createOpenExemplar('late-overlay', 0);
+    const getRequest = jest.spyOn(openExemplar, 'getRequest');
+    const result = setUp({ exemplars, openExemplar });
+
+    expect(getRequest).not.toHaveBeenCalled();
+    result.rerenderExemplars([defaultExemplarFrame]);
+    expect(await screen.findByText('2203801e0171aa8b')).toBeVisible();
+    expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
+
+    result.rerenderExemplars(exemplars);
+    expect(screen.queryByTestId(selectors.components.UPlotChart.xyCanvas)).not.toBeInTheDocument();
+
+    result.rerenderExemplars([defaultExemplarFrame]);
+    expect(getMarker()).toBeVisible();
+    expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+    await userEvent.click(getMarker());
+    expect(await screen.findByText('2203801e0171aa8b')).toBeVisible();
+    expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
   });
 
   it('opens a retained request when data arrives and preserves dismissal upon refresh', async () => {
@@ -490,6 +513,39 @@ describe('ExemplarsPlugin', () => {
     expect(screen.getByLabelText('Close')).toBeVisible();
     expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
     expect(openExemplar.onHandled).toHaveBeenCalledWith('navigation-scales');
+  });
+
+  it('repositions late-mounted markers on draw without a programmatic request', () => {
+    const result = setUp({ exemplars: [] });
+    result.rerenderExemplars([defaultExemplarFrame]);
+    expect(getMarker().parentElement).toHaveStyle({ left: '100px', top: '50px' });
+
+    valToPos.mockImplementation((_value, scaleKey) => (scaleKey === 'x' ? 200 : 75));
+    try {
+      act(() => {
+        hooks.draw.forEach((hook) => hook());
+      });
+      expect(getMarker().parentElement).toHaveStyle({ left: '200px', top: '75px' });
+    } finally {
+      valToPos.mockImplementation((_value, scaleKey) => (scaleKey === 'x' ? 100 : 50));
+    }
+  });
+
+  it('removes only its draw subscription when the overlay unmounts', () => {
+    const result = setUp();
+    expect(getMarker()).toBeVisible();
+    const otherDrawHook = jest.fn();
+    hooks.draw.push(otherDrawHook);
+
+    result.rerenderExemplars([]);
+    expect(hooks.draw).toEqual([otherDrawHook]);
+
+    result.rerenderExemplars([defaultExemplarFrame]);
+    expect(getMarker()).toBeVisible();
+    expect(hooks.draw).toHaveLength(2);
+
+    result.unmount();
+    expect(hooks.draw).toEqual([otherDrawHook]);
   });
 
   it.each([
