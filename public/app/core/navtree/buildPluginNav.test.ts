@@ -558,6 +558,40 @@ describe('applyPluginNav', () => {
       expect(moreApps(merged)).toBeUndefined();
     });
 
+    // The overrides ask two different questions of the app set, and the Go
+    // builder's answers differ: it reads the accessible map for the Adaptive
+    // Telemetry header and the plugin store for the assistant flags
+    it('leaves the Adaptive Telemetry header alone when its app is out of scope', () => {
+      setAppAccessScopes(new Set(['plugins:id:grafana-adaptive-metrics-app']));
+
+      const merged = merge(
+        app('grafana-adaptive-metrics-app', 'Adaptive Metrics', [page('Page', '/a/grafana-adaptive-metrics-app/page')]),
+        app('grafana-adaptivetelemetry-app', 'Adaptive Telemetry', [
+          page('Home', '/a/grafana-adaptivetelemetry-app/home'),
+        ])
+      );
+
+      // the section still exists, built by the app the user can see
+      const section = findById(merged, NavID.adaptiveTelemetry);
+      expect(section).toBeDefined();
+      // but it does not link to an app that would 403
+      expect(section?.url).toBe('adaptive-telemetry');
+      expect(section?.pluginId).toBeUndefined();
+    });
+
+    it('still stubs the Assistant when the onboarding app is out of scope', () => {
+      setAppAccessScopes(new Set(['plugins:id:some-app']));
+
+      const merged = merge(
+        app('some-app', 'Some app', [page('Page', '/a/some-app/page')]),
+        app('grafana-assistant-onboarding-app', 'Assistant onboarding', [
+          page('Home', '/a/grafana-assistant-onboarding-app/home'),
+        ])
+      );
+
+      expect(findById(merged, 'plugin-page-grafana-assistant-app')).toBeDefined();
+    });
+
     // Without scopes the unscoped permission stands in, which is the behaviour
     // before this feature: every app the user can reach at all
     it('keeps every app while the scopes are unavailable', () => {

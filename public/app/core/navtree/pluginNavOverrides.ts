@@ -23,21 +23,34 @@ import {
 } from './utils';
 
 /**
+ * The app plugins an override may ask about. Two sets, because the Go builder
+ * asks different questions of each: `accessible` is the set it builds after the
+ * per-plugin access check (enabledAccessibleAppPluginMap), while `installed`
+ * includes apps the user cannot reach, which is what it reads for the assistant
+ * flags and the interactive learning check. Each override says which it means.
+ */
+export interface PluginSets {
+  installed: ReadonlySet<string>;
+  accessible: ReadonlySet<string>;
+}
+
+/**
  * A cross-plugin adjustment applied after all app plugins have been merged
  * into the tree. Each override declares when it applies (based on the merged
- * tree and the installed plugin set) and returns a new, adjusted tree.
+ * tree and the plugin sets) and returns a new, adjusted tree.
  */
 export interface PluginNavOverride {
-  when: (tree: NavModelItem[], installedPluginIds: ReadonlySet<string>) => boolean;
-  apply: (tree: NavModelItem[], installedPluginIds: ReadonlySet<string>) => NavModelItem[];
+  when: (tree: NavModelItem[], plugins: PluginSets) => boolean;
+  apply: (tree: NavModelItem[], plugins: PluginSets) => NavModelItem[];
 }
 
 export const PLUGIN_NAV_OVERRIDES: PluginNavOverride[] = [
   {
     // When assistant onboarding is installed, but main Assistant plugin is not,
     // we show a stub Assistant entry where the real app would live
-    when: (_, installedPluginIds) =>
-      installedPluginIds.has(ASSISTANT_ONBOARDING_APP_ID) && !installedPluginIds.has(ASSISTANT_APP_ID),
+    // Installed, not accessible: the Go builder sets its assistant flags before
+    // the per-plugin access check, so the stub shows either way
+    when: (_, { installed }) => installed.has(ASSISTANT_ONBOARDING_APP_ID) && !installed.has(ASSISTANT_APP_ID),
     apply: (tree) => [
       ...tree,
       {
@@ -55,7 +68,9 @@ export const PLUGIN_NAV_OVERRIDES: PluginNavOverride[] = [
   {
     // When the umbrella Adaptive Telemetry app is installed, the section
     // header itself links to it.
-    when: (_, installedPluginIds) => installedPluginIds.has(ADAPTIVE_TELEMETRY_UMBRELLA_APP_ID),
+    // Accessible, since this points the section header at the app: the Go
+    // builder reads enabledAccessibleAppPluginMap here
+    when: (_, { accessible }) => accessible.has(ADAPTIVE_TELEMETRY_UMBRELLA_APP_ID),
     apply: (tree) =>
       updateNavById(tree, NavID.adaptiveTelemetry, (section) => ({
         ...section,
@@ -102,8 +117,10 @@ export const PLUGIN_NAV_OVERRIDES: PluginNavOverride[] = [
   {
     // Service Center is provided by the SLO plugin when the dedicated
     // servicecenter app is not installed.
-    when: (tree, installedPluginIds) =>
-      Boolean(findNavById(tree, pluginPageId(SLO_APP_ID))) && !installedPluginIds.has(SERVICECENTER_APP_ID),
+    // Installed: the Go builder asks the plugin store whether the dedicated app
+    // exists at all, access aside, before standing in for it
+    when: (tree, { installed }) =>
+      Boolean(findNavById(tree, pluginPageId(SLO_APP_ID))) && !installed.has(SERVICECENTER_APP_ID),
     apply: (tree) =>
       updateNavById(tree, NavID.alertsAndIncidents, (section) => ({
         ...section,
@@ -123,8 +140,8 @@ export const PLUGIN_NAV_OVERRIDES: PluginNavOverride[] = [
   },
   {
     // The Help entry opens the interactive learning plugin when it is installed
-    when: (_, installedPluginIds) =>
-      installedPluginIds.has(PATHFINDER_APP_ID) || installedPluginIds.has(DOCS_PLUGIN_APP_ID),
+    // Installed, matching the Go builder, which checks the plugin store directly
+    when: (_, { installed }) => installed.has(PATHFINDER_APP_ID) || installed.has(DOCS_PLUGIN_APP_ID),
     apply: (tree) => updateNavById(tree, NavID.help, (help) => ({ ...help, hideFromTabs: true })),
   },
 ];

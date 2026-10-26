@@ -12,7 +12,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
 import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { getAppAccessScopes, hasScopedAppAccess } from './pluginAccess';
-import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
+import { PLUGIN_NAV_OVERRIDES, type PluginSets } from './pluginNavOverrides';
 import { appendIntoSection, hoistedPluginPageId, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
 
 /**
@@ -55,18 +55,19 @@ const collator = new Intl.Collator();
  * anything the Go builder gates on those is out of reach here.
  */
 export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): NavModelItem[] {
-  const installedPluginIds: ReadonlySet<string> = new Set(apps.map((app) => app.id));
+  // Per app, because the server scopes plugins.app:access to plugins:id:<id>.
+  // Where no scopes were recorded this is the unscoped check, which answers the
+  // same for every app, so a user with no app access gets none of them.
   const appAccessScopes = getAppAccessScopes();
+  const accessibleApps = byTitle(apps).filter((app) => hasAppAccess(appAccessScopes, app.id));
+  const pluginSets: PluginSets = {
+    installed: new Set(apps.map((app) => app.id)),
+    accessible: new Set(accessibleApps.map((app) => app.id)),
+  };
   let next = tree;
 
-  for (const app of byTitle(apps)) {
+  for (const app of accessibleApps) {
     try {
-      // Per app, because the server scopes plugins.app:access to plugins:id:<id>.
-      // Where no scopes were recorded this is the unscoped check, which answers
-      // the same for every app, so a user with no app access gets none of them.
-      if (!hasAppAccess(appAccessScopes, app.id)) {
-        continue;
-      }
       const { appLink, navChildren, standalonePages } = buildAppLink(app);
       // Built up locally and committed in one go, so a throw part-way through
       // leaves none of this app behind — not even its standalone pages
@@ -92,8 +93,8 @@ export function applyPluginNav(tree: NavModelItem[], apps: AppPluginConfig[]): N
 
   // Last, because each override reads nodes other apps placed
   for (const override of PLUGIN_NAV_OVERRIDES) {
-    if (override.when(next, installedPluginIds)) {
-      next = override.apply(next, installedPluginIds);
+    if (override.when(next, pluginSets)) {
+      next = override.apply(next, pluginSets);
     }
   }
 
