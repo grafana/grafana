@@ -1033,4 +1033,8 @@ const (
 	// FlagDatasourcesGatewayAuditPolicy
 	// Enable support for the query gateway audit policies
 	FlagDatasourcesGatewayAuditPolicy = "datasources.gatewayAuditPolicy"
+
+	// FlagAppPlatformBusInformer
+	// Take app informer deltas from the resource change bus instead of a kubernetes watch
+	FlagAppPlatformBusInformer = "appPlatform.busInformer"
 )

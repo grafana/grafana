@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana-app-sdk/resourcebus"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -29,7 +30,13 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, fmt.Errorf("unable to create example client: %w", err)
 	}
 	var reconciler operator.Reconciler
+	// The delta source the reconciler's informer runs on. A nil subscriber selects the kubernetes watch.
+	var resourceBus resourcebus.Subscriber
+	var busLister func(resource.Kind, resource.Client, operator.ClientListerOptions) (operator.ResourceLister, error)
 	exampleConfig, ok := cfg.SpecificConfig.(*ExampleConfig)
+	if ok {
+		resourceBus, busLister = exampleConfig.ResourceBus, exampleConfig.BusLister
+	}
 	if ok && exampleConfig.EnableReconciler {
 		reconciler = NewExampleReconciler(client)
 		// Set the default logger if the reconciler is enabled--this should be done in grafana's API server handling instead,
@@ -43,6 +50,19 @@ func New(cfg app.Config) (app.App, error) {
 	simpleConfig := simple.AppConfig{
 		Name:       "example",
 		KubeConfig: cfg.KubeConfig,
+		InformerConfig: simple.AppInformerConfig{
+			// Take the reconciler's deltas from the resource change bus instead of a kubernetes watch, when the host
+			// injected one. The informer keeps no per-object cache; a periodic re-list is what keeps it reconciled
+			// with storage, so its cadence is a bound on staleness rather than a tuning knob.
+			//
+			// The payload is hydrated because the reconciler is wrapped in the app-sdk's OpinionatedReconciler, which
+			// reads the deletion timestamp and the finalizer list off the delivered object. An identity payload
+			// carries neither, and simple.NewApp refuses that pairing.
+			InformerSupplier: simple.BusInformerSupplier(resourceBus, simple.BusInformerConfig{
+				Payload:       operator.PayloadHydrated,
+				ListerFactory: busLister,
+			}),
+		},
 		// ManagedKinds is the list of all kinds our app manages (the kinds owned by our app).
 		// Here, a Kind is defined as a distinct Group, Version, and Kind combination,
 		// so for each version of our Example kind, we need to add it to this list.

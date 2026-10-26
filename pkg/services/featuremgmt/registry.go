@@ -3413,6 +3413,16 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:            "appPlatform.busInformer",
+			Description:     "Take app informer deltas from the resource change bus instead of a kubernetes watch",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			HideFromDocs:    true,
+			Expression:      "false",
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:        "reporting.removeLogoUrlField",
 			Description: "Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option",
 			Stage:       FeatureStageExperimental,

@@ -4,17 +4,22 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resourcebus"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/example/pkg/apis/example/v1alpha1"
 	"github.com/grafana/grafana/apps/example/pkg/apis/manifestdata"
 	exampleapp "github.com/grafana/grafana/apps/example/pkg/app"
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
+	"github.com/grafana/grafana/pkg/services/apiserver/keys/keyslister"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
@@ -33,6 +38,8 @@ func (e AppInstaller) GetAuthorizer() authorizer.Authorizer {
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	resourceBus resourcebus.Subscriber,
+	unified resource.ResourceClient,
 ) (*AppInstaller, error) {
 	installer := &AppInstaller{
 		cfg: cfg,
@@ -40,6 +47,15 @@ func RegisterAppInstaller(
 	// Config specific to the app. This can pull from feature flags or setting.Cfg.
 	specificConfig := &exampleapp.ExampleConfig{
 		EnableSomeFeature: true,
+	}
+
+	// Both are app-sdk interface values, so the app depends on neither the bus nor the keys client. The lister comes
+	// with the bus: without one the informer re-lists whole objects, which is most of what the bus exists to avoid.
+	if features.IsEnabledGlobally(featuremgmt.FlagAppPlatformBusInformer) {
+		specificConfig.ResourceBus = resourceBus
+		specificConfig.BusLister = keyslister.Factory(func(gvr schema.GroupVersionResource) keysapi.Lister {
+			return keysapi.NewGRPCLister(unified, gvr)
+		})
 	}
 
 	// Set specificConfig.EnableReconciler to true IFF the v1alpha1 API is enabled in the runtime config.
