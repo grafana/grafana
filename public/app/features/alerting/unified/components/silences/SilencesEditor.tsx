@@ -158,7 +158,7 @@ export const SilencesEditor = ({
   const formAPI = useForm({ defaultValues: formValues });
   const styles = useStyles2(getStyles);
 
-  const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
+  const { register, handleSubmit, formState, watch, setValue, clearErrors, getValues } = formAPI;
 
   const [duration, startsAt, endsAt, matchers] = watch(['duration', 'startsAt', 'endsAt', 'matchers']);
 
@@ -226,6 +226,29 @@ export const SilencesEditor = ({
     700,
     [clearErrors, duration, endsAt, prevDuration, setValue, startsAt]
   );
+
+  const onLabelClick = ([value, name]: [string | undefined, string | undefined]): void => {
+    if (!name || value === undefined) {
+      return;
+    }
+
+    const currentMatchers = getValues('matchers');
+    const alreadyExists = currentMatchers.some(
+      (matcher) => matcher.name === name && matcher.value === value && matcher.operator === MatcherOperator.equal
+    );
+    if (alreadyExists) {
+      return;
+    }
+
+    const newMatcher = { name, value, operator: MatcherOperator.equal };
+    const emptyIndex = currentMatchers.findIndex((matcher) => !matcher.name && !matcher.value);
+    const nextMatchers =
+      emptyIndex === -1
+        ? [...currentMatchers, newMatcher]
+        : currentMatchers.map((matcher, index) => (index === emptyIndex ? newMatcher : matcher));
+
+    setValue('matchers', nextMatchers, { shouldDirty: true, shouldValidate: true });
+  };
 
   const userLogged = Boolean(contextSrv.user.isSignedIn && contextSrv.user.name);
 
@@ -314,7 +337,12 @@ export const SilencesEditor = ({
             </Field>
           )}
           {canPreview && (
-            <SilencedInstancesPreview amSourceName={alertManagerSourceName} matchers={matchers} ruleUid={ruleUid} />
+            <SilencedInstancesPreview
+              amSourceName={alertManagerSourceName}
+              matchers={matchers}
+              ruleUid={ruleUid}
+              onLabelClick={onLabelClick}
+            />
           )}
         </FieldSet>
         <Stack gap={1}>
