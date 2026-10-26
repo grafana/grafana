@@ -160,6 +160,13 @@ type APIRouteHandler struct {
 type GroupVersionRoutes struct {
 	GroupVersion schema.GroupVersion
 	Routes       *APIRoutes
+	// PostProcess optionally edits the group version's OpenAPI spec once the routes are added.
+	PostProcess func(*spec3.OpenAPI) (*spec3.OpenAPI, error)
+}
+
+// GroupVersionRoutesProvider is implemented by app installers that serve HTTP routes outside of their kinds.
+type GroupVersionRoutesProvider interface {
+	GroupVersionRoutes() []GroupVersionRoutes
 }
 
 // APIRoutes define explicit HTTP handlers in an apiserver

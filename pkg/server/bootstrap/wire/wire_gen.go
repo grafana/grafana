@@ -94,6 +94,7 @@ import (
 	playlist2 "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	provisioning4 "github.com/grafana/grafana/pkg/registry/apps/provisioning"
 	migrator6 "github.com/grafana/grafana/pkg/registry/apps/querycaching/migrator"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
@@ -899,12 +900,12 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	v11 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
-	builderMetrics := builder.ProvideBuilderMetrics(registerer)
-	backend := auditing.ProvideNoopBackend()
-	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
-	v12 := _wireValue
-	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v12)
+	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
+	v11 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
+	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
+	v12 := extras.ProvideExtraWorkers(pullRequestWorker)
+	v13 := _wireValue
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v13)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
@@ -913,6 +914,31 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
+	factory := github.ProvideFactory()
+	v14 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v14)
+	if err != nil {
+		return nil, err
+	}
+	githubFactory := github2.ProvideFactory()
+	v15 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, factory, registerer)
+	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, tracingService, v15)
+	if err != nil {
+		return nil, err
+	}
+	quotaGetter := extras.ProvideQuotaGetter(cfg)
+	apiBuilders, err := provisioning3.ProvideAPIBuilders(cfg, featureToggles, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v11, v12, repositoryFactory, connectionFactory, quotaGetter, subscriberService)
+	if err != nil {
+		return nil, err
+	}
+	provisioningAppInstaller, err := provisioning4.RegisterAppInstaller(cfg, apiBuilders)
+	if err != nil {
+		return nil, err
+	}
+	v16 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller, provisioningAppInstaller)
+	builderMetrics := builder.ProvideBuilderMetrics(registerer)
+	backend := auditing.ProvideNoopBackend()
+	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
 	pluginLoaderDependencies := router.ProvidePluginLoaderDependencies(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, v5, accessClient, decryptService, tracingService, featureToggles, cfg, dualwriteService, v4, registerer, builderMetrics, eventualRestConfigProvider, pluginauthConfig)
 	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
 	if err != nil {
@@ -922,7 +948,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, v5, v4, eventualRestConfigProvider, accessClient, v10, eventualRestConfigProvider, eventualClient, registerer, aggregatorRunner, apiExtensionsRunner, v11, builderMetrics, backend, policyRuleProvider, routerService)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, v5, v4, eventualRestConfigProvider, accessClient, v10, eventualRestConfigProvider, eventualClient, registerer, aggregatorRunner, apiExtensionsRunner, v16, builderMetrics, backend, policyRuleProvider, routerService)
 	if err != nil {
 		return nil, err
 	}
@@ -1002,32 +1028,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userimplService, apiserverService)
-	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
-	v13 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
-	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
-	v14 := extras.ProvideExtraWorkers(pullRequestWorker)
-	factory := github.ProvideFactory()
-	v15 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
-	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v15)
-	if err != nil {
-		return nil, err
-	}
-	githubFactory := github2.ProvideFactory()
-	v16 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, factory, registerer)
-	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, tracingService, v16)
-	if err != nil {
-		return nil, err
-	}
-	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService)
-	if err != nil {
-		return nil, err
-	}
 	provisioningDependencyRegisterer, err := provisioning3.RegisterDependencies(cfg, acimplService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, provisioningAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, apiBuilders, dependencyRegisterer, provisioningDependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, features, accessControl, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return nil, err
@@ -1693,12 +1698,12 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	v11 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller)
-	builderMetrics := builder.ProvideBuilderMetrics(registerer)
-	backend := auditing.ProvideNoopBackend()
-	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
-	v12 := _wireValue
-	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v12)
+	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
+	v11 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
+	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
+	v12 := extras.ProvideExtraWorkers(pullRequestWorker)
+	v13 := _wireValue
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(tracer, v13)
 	decryptStorage, err := metadata.ProvideDecryptStorage(tracer, ossKeeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer, registerer)
 	if err != nil {
 		return nil, err
@@ -1707,6 +1712,31 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
+	factory := github.ProvideFactory()
+	v14 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
+	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v14)
+	if err != nil {
+		return nil, err
+	}
+	githubFactory := github2.ProvideFactory()
+	v15 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, factory, registerer)
+	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, tracingService, v15)
+	if err != nil {
+		return nil, err
+	}
+	quotaGetter := extras.ProvideQuotaGetter(cfg)
+	apiBuilders, err := provisioning3.ProvideAPIBuilders(cfg, featureToggles, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v11, v12, repositoryFactory, connectionFactory, quotaGetter, subscriberService)
+	if err != nil {
+		return nil, err
+	}
+	provisioningAppInstaller, err := provisioning4.RegisterAppInstaller(cfg, apiBuilders)
+	if err != nil {
+		return nil, err
+	}
+	v16 := appregistry.ProvideAppInstallers(featureToggles, cfg, appInstaller, pluginsAppInstaller, liveAppInstaller, shortURLAppInstaller, rulesAppInstaller, correlationsAppInstaller, notificationsAppInstaller, logsDrilldownAppInstaller, annotationAppInstaller, exampleAppInstaller, advisorAppInstaller, historianAppInstaller, quotasAppInstaller, dashValidatorAppInstaller, provisioningAppInstaller)
+	builderMetrics := builder.ProvideBuilderMetrics(registerer)
+	backend := auditing.ProvideNoopBackend()
+	policyRuleProvider := auditing.ProvideNoopPolicyRuleProvider()
 	pluginLoaderDependencies := router.ProvidePluginLoaderDependencies(middlewareHandler, plugincontextProvider, pluginstoreService, pluginsourcesService, service12, acimplService, accessControl, v5, accessClient, decryptService, tracingService, featureToggles, cfg, dualwriteService, v4, registerer, builderMetrics, eventualRestConfigProvider, pluginauthConfig)
 	routesLoader, err := router.ProvideRoutesLoader(cfg, pluginLoaderDependencies)
 	if err != nil {
@@ -1716,7 +1746,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, v5, v4, eventualRestConfigProvider, accessClient, v10, eventualRestConfigProvider, eventualClient, registerer, aggregatorRunner, apiExtensionsRunner, v11, builderMetrics, backend, policyRuleProvider, routerService)
+	apiserverService, err := apiserver.ProvideService(cfg, featureToggles, routeRegisterImpl, tracingService, sqlStore, dualwriteService, v5, v4, eventualRestConfigProvider, accessClient, v10, eventualRestConfigProvider, eventualClient, registerer, aggregatorRunner, apiExtensionsRunner, v16, builderMetrics, backend, policyRuleProvider, routerService)
 	if err != nil {
 		return nil, err
 	}
@@ -1796,32 +1826,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	collectionsAPIBuilder := collections.RegisterAPIService(cfg, featureToggles, sqlStore, starService, userimplService, apiserverService)
-	webhookExtraBuilder := webhooks.ProvideWebhooksWithImages(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
-	v13 := extras.ProvideProvisioningExtraAPIs(webhookExtraBuilder)
-	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
-	v14 := extras.ProvideExtraWorkers(pullRequestWorker)
-	factory := github.ProvideFactory()
-	v15 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
-	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v15)
-	if err != nil {
-		return nil, err
-	}
-	githubFactory := github2.ProvideFactory()
-	v16 := extras.ProvideProvisioningOSSConnectionExtras(cfg, decryptService, githubFactory, factory, registerer)
-	connectionFactory, err := extras.ProvideConnectionFactoryFromConfig(cfg, tracingService, v16)
-	if err != nil {
-		return nil, err
-	}
-	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService)
-	if err != nil {
-		return nil, err
-	}
 	provisioningDependencyRegisterer, err := provisioning3.RegisterDependencies(cfg, acimplService, featureToggles)
 	if err != nil {
 		return nil, err
 	}
-	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, provisioningAPIBuilder, dependencyRegisterer, provisioningDependencyRegisterer)
+	apiregistryService := apiregistry.ProvideRegistryServiceSink(dashboardsAPIBuilder, dataSourceAPIBuilder, folderAPIBuilder, identityAccessManagementAPIBuilder, queryAPIBuilder, userStorageAPIBuilder, apiBuilder, collectionsAPIBuilder, apiBuilders, dependencyRegisterer, provisioningDependencyRegisterer)
 	teamPermissionsService, err := ossaccesscontrol.ProvideTeamPermissions(cfg, featureToggles, routeRegisterImpl, sqlStore, features, accessControl, ossLicensingService, acimplService, teamimplService, userimplService, retrieverService, actionSetService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return nil, err

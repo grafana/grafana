@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	provisioningapp "github.com/grafana/grafana/pkg/registry/apps/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -49,6 +50,7 @@ func ProvideAppInstallers(
 	alertingHistorianAppInstaller *historian.AppInstaller,
 	quotasAppInstaller *quotas.QuotasAppInstaller,
 	dashvalidatorAppInstaller *dashvalidator.DashValidatorAppInstaller,
+	provisioningAppInstaller *provisioningapp.AppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
@@ -88,6 +90,10 @@ func ProvideAppInstallers(
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if features.IsEnabledGlobally(featuremgmt.FlagDashboardValidatorApp) {
 		installers = append(installers, dashvalidatorAppInstaller)
+	}
+
+	if provisioningAppInstaller != nil {
+		installers = append(installers, provisioningAppInstaller)
 	}
 
 	// Applications under active development should be disabled by default

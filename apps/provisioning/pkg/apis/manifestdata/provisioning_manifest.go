@@ -11,16 +11,12 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
+	provisioningapp "github.com/grafana/grafana/apps/provisioning/pkg/app"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-var appManifestData = app.ManifestData{
-	AppName:          "provisioning",
-	AppDisplayName:   "provisioning",
-	Group:            "provisioning.grafana.app",
-	PreferredVersion: "v0alpha1",
-	Versions:         []app.ManifestVersion{},
-}
+// The manifest is built in Go (pkg/app) until the CUE kinds describe every kind and route.
+var appManifestData = provisioningapp.ManifestData()
 
 func LocalManifest() app.Manifest {
 	return app.NewEmbeddedManifest(appManifestData)
