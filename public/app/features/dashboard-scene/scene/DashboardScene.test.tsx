@@ -83,7 +83,6 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   }),
 }));
 jest.mock('../serialization/transformSaveModelToScene');
-jest.mock('../serialization/transformSceneToSaveModel');
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
@@ -648,6 +647,38 @@ describe('DashboardScene', () => {
         expect(startSpy).toHaveBeenCalled();
       });
 
+      it('when changes are discarded with a check pending, an old reply cannot mark the restored dashboard dirty', () => {
+        const postMessage = jest.mocked(worker.postMessage);
+        const originalImplementation = postMessage.getMockImplementation()!;
+        postMessage.mockReset().mockImplementation(() => {});
+
+        try {
+          scene.setState({ title: 'Unsaved title' });
+          const oldRequest = postMessage.mock.calls.at(-1)![0];
+
+          scene.discardChangesAndKeepEditing();
+
+          expect(scene.state.title).toBe('hello');
+          expect(scene.state.isDirty).toBe(false);
+
+          worker.onmessage!(
+            new MessageEvent('message', { data: { generation: oldRequest.generation, hasChanges: true } })
+          );
+
+          expect(scene.state.isDirty).toBe(false);
+
+          scene.setState({ title: 'New edit after discard' });
+          const freshRequest = postMessage.mock.calls.at(-1)![0];
+          worker.onmessage!(
+            new MessageEvent('message', { data: { generation: freshRequest.generation, hasChanges: true } })
+          );
+
+          expect(scene.state.isDirty).toBe(true);
+        } finally {
+          postMessage.mockReset().mockImplementation(originalImplementation);
+        }
+      });
+
       it('activateSidebar activates an inactive sidebar and releases it on exit', () => {
         const sidebar = scene.state.sidebar;
         expect(sidebar.isActive).toBe(false);
@@ -688,7 +719,7 @@ describe('DashboardScene', () => {
         scene.setState({ title: 'Updated title' });
         expect(scene.state.isDirty).toBe(true);
 
-        await scene.saveCompleted({} as Dashboard, {
+        await scene.saveCompleted(scene.getSaveModel(), {
           slug: 'slug',
           uid: 'dash-1',
           url: 'sss',
@@ -707,7 +738,7 @@ describe('DashboardScene', () => {
         scene.setState({ uid: '' });
         allowOrigins([{ origin, panelIds: [1] }], 'dashboard');
 
-        await scene.saveCompleted({} as Dashboard, {
+        await scene.saveCompleted(scene.getSaveModel(), {
           slug: 'slug',
           uid: 'new-uid',
           url: 'sss',
@@ -4566,10 +4597,11 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
 }
 
 function mockResultsOfDetectChangesWorker({ hasChanges = true }) {
-  jest.mocked(worker.postMessage).mockImplementationOnce(() => {
+  jest.mocked(worker.postMessage).mockImplementationOnce(({ generation }) => {
     worker.onmessage?.({
       data: {
         hasChanges,
+        generation,
       },
     } as unknown as MessageEvent);
   });
