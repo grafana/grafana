@@ -147,6 +147,7 @@ func (s *ServiceImpl) nestMaintenanceWindowsUnderSLO(treeRoot *navtree.NavTreeRo
 		return
 	}
 
+	mwNode.Text = "Maintenance windows"
 	treeRoot.RemoveSectionByID(mwNode.Id)
 
 	mwNode.Id = "standalone-plugin-page-" + mwPluginID
