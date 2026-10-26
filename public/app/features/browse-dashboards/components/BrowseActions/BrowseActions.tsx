@@ -35,12 +35,14 @@ export interface Props {
 type BulkSelection = Omit<DashboardTreeSelection, 'panel' | '$all'>;
 
 /**
- * The open provisioned drawer and the selection it was opened on. A snapshot, not the live
- * selection: a repository pull or the job itself clears that while the drawer is still open.
+ * The open provisioned drawer and the context it was opened in. A snapshot, not the live values: a
+ * repository pull or the job itself clears the selection, and the page can navigate to another
+ * folder (browser back), while the drawer is still open.
  */
 interface BulkAction {
   kind: 'delete' | 'move';
   selectedItems: BulkSelection;
+  folderUid: string | undefined;
 }
 
 export function BrowseActions({ folderDTO }: Props) {
@@ -111,7 +113,7 @@ export function BrowseActions({ folderDTO }: Props) {
 
     if (provisioningEnabled && hasProvisioned) {
       // Only provisioned items
-      setBulkAction({ kind: 'move', selectedItems });
+      setBulkAction({ kind: 'move', selectedItems, folderUid: folderDTO?.uid });
       return;
     }
 
@@ -138,7 +140,7 @@ export function BrowseActions({ folderDTO }: Props) {
       );
     } else if (hasProvisioned && provisioningEnabled) {
       // Only provisioned items
-      setBulkAction({ kind: 'delete', selectedItems });
+      setBulkAction({ kind: 'delete', selectedItems, folderUid: folderDTO?.uid });
     } else {
       // Only non-provisioned items
       appEvents.publish(
@@ -193,7 +195,7 @@ export function BrowseActions({ folderDTO }: Props) {
         >
           <BulkDeleteProvisionedResource
             selectedItems={bulkAction.selectedItems}
-            folderUid={folderDTO?.uid || ''}
+            folderUid={bulkAction.folderUid || ''}
             onDismiss={closeBulkAction}
             onJobCreated={clearSelection}
           />
@@ -213,7 +215,7 @@ export function BrowseActions({ folderDTO }: Props) {
         >
           <BulkMoveProvisionedResource
             selectedItems={bulkAction.selectedItems}
-            folderUid={folderDTO?.uid}
+            folderUid={bulkAction.folderUid}
             onDismiss={closeBulkAction}
             onJobCreated={clearSelection}
           />

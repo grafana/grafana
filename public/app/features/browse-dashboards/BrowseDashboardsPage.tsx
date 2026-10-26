@@ -56,12 +56,13 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     orphanedRepoName,
     repository,
     folder: folderResource,
+    isLoading: isRepositoryViewLoading,
   } = useGetResourceRepositoryView({ folderName: folderUID });
   const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
   const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
 
-  useRefreshOnRepositorySync(folderUID, repository?.name);
+  useRefreshOnRepositorySync(isRepositoryViewLoading ? undefined : { folderUID, repository: repository?.name });
 
   // CUJ-only signal: silent so it doesn't create analytics noise
   useEffect(() => {

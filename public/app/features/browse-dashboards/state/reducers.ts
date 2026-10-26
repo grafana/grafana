@@ -2,12 +2,18 @@ import { type PayloadAction } from '@reduxjs/toolkit';
 
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
-import { isRootFolderUID } from '../../search/constants';
+import { GENERAL_FOLDER_UID } from '../../search/constants';
 import { type BrowseDashboardsState } from '../types';
 import { isNonSelectableVirtualFolder } from '../utils/dashboards';
 
 import { type fetchNextChildrenPage, type refetchChildren, type refreshTree } from './actions';
-import { ancestorsOf, isOwnedByRepository, planRepositoryRefresh } from './utils';
+import {
+  ancestorsOf,
+  collectionGeneration,
+  collectionKeyOf,
+  isOwnedByRepository,
+  planRepositoryRefresh,
+} from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
 type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
@@ -15,8 +21,14 @@ type RefreshTreePendingAction = ReturnType<typeof refreshTree.pending>;
 type RefreshTreeFulfilledAction = ReturnType<typeof refreshTree.fulfilled>;
 
 export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: RefetchChildrenFulfilledAction) {
-  const { children, page, kind, lastPageOfKind } = action.payload;
+  const { children, page, kind, lastPageOfKind, generation } = action.payload;
   const { parentUID } = action.meta.arg;
+  const key = collectionKeyOf(parentUID);
+
+  // Started against an older listing than the one now in place; a newer load has superseded it.
+  if (generation !== collectionGeneration(state, key)) {
+    return;
+  }
 
   const newCollection = {
     items: children,
@@ -26,11 +38,12 @@ export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: R
     isFullyLoaded: kind === 'dashboard' && lastPageOfKind,
   };
 
-  if (parentUID && !isRootFolderUID(parentUID)) {
-    state.childrenByParentUID[parentUID] = newCollection;
+  if (key) {
+    state.childrenByParentUID[key] = newCollection;
   } else {
     state.rootItems = newCollection;
   }
+  bumpCollectionGeneration(state, key);
 }
 
 export function fetchNextChildrenPageFulfilled(
@@ -43,8 +56,13 @@ export function fetchNextChildrenPageFulfilled(
     return;
   }
 
-  const { children, page, kind, lastPageOfKind } = payload;
+  const { children, page, kind, lastPageOfKind, generation } = payload;
   const { parentUID, excludeKinds = [] } = action.meta.arg;
+
+  // The thunk reloads when its collection changed under it; this guards the last gap before dispatch.
+  if (generation !== collectionGeneration(state, collectionKeyOf(parentUID))) {
+    return;
+  }
 
   const collection = parentUID ? state.childrenByParentUID[parentUID] : state.rootItems;
   const prevItems = collection?.items ?? [];
@@ -208,9 +226,11 @@ export function clearFolders(state: BrowseDashboardsState, action: PayloadAction
 
 /**
  * Drops the collections a pull may have changed that are off screen; the ones on screen are
- * refetched in place by the thunk. Items the repository owns leave the selection with them: it
- * was made against the old listing, and once an item is gone so is its metadata, so a kept
- * selection would route the next action through the wrong flow or at UIDs that no longer exist.
+ * refetched in place by the thunk and have their generation bumped here, so a load of theirs that
+ * is still in flight is already obsolete. Items the repository owns leave the selection with
+ * them: it was made against the old listing, and once an item is gone so is its metadata, so a
+ * kept selection would route the next action through the wrong flow or at UIDs that no longer
+ * exist.
  */
 export function refreshTreePending(state: BrowseDashboardsState, action: RefreshTreePendingAction) {
   const { repository, viewed } = action.meta.arg;
@@ -222,6 +242,7 @@ export function refreshTreePending(state: BrowseDashboardsState, action: Refresh
   }
   for (const uid of refetch) {
     unselectItemsOf(state, uid, (item) => isOwnedByRepository(item, repository));
+    bumpCollectionGeneration(state, uid);
   }
 }
 
@@ -257,4 +278,11 @@ function clearFolder(state: BrowseDashboardsState, folderUID: string | undefined
     // close the folder to require it to be refetched next time its opened
     state.openFolders[folderUID] = false;
   }
+  bumpCollectionGeneration(state, folderUID);
+}
+
+function bumpCollectionGeneration(state: BrowseDashboardsState, collectionKey: string | undefined) {
+  const key = collectionKey ?? GENERAL_FOLDER_UID;
+  const generations = (state.collectionGenerations ??= {});
+  generations[key] = (generations[key] ?? 0) + 1;
 }

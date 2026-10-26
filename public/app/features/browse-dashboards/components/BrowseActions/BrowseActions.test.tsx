@@ -4,6 +4,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { type BulkActionProvisionResourceProps } from 'app/features/provisioning/components/BulkActions/utils';
 import { useSelectionProvisioningStatus } from 'app/features/provisioning/hooks/useSelectionProvisioningStatus';
 
+import { mockFolderDTO } from '../../fixtures/folder.fixture';
+
 import { BrowseActions } from './BrowseActions';
 
 jest.mock('app/features/provisioning/hooks/useSelectionProvisioningStatus', () => ({
@@ -13,9 +15,16 @@ jest.mock('app/features/provisioning/hooks/useSelectionProvisioningStatus', () =
 // The drawer body is covered by its own tests; here it only needs to report the two events
 // BrowseActions reacts to and show which selection it was given.
 jest.mock('app/features/provisioning/components/BulkActions/BulkDeleteProvisionedResource', () => ({
-  BulkDeleteProvisionedResource: ({ selectedItems, onDismiss, onJobCreated }: BulkActionProvisionResourceProps) => (
+  BulkDeleteProvisionedResource: ({
+    selectedItems,
+    folderUid,
+    onDismiss,
+    onJobCreated,
+  }: BulkActionProvisionResourceProps) => (
     <>
-      <span>{Object.values(selectedItems.dashboard).filter(Boolean).length} selected</span>
+      <span>
+        {Object.values(selectedItems.dashboard).filter(Boolean).length} selected in {folderUid}
+      </span>
       <button onClick={onJobCreated}>Create job</button>
       <button onClick={onDismiss}>Cancel</button>
     </>
@@ -24,8 +33,8 @@ jest.mock('app/features/provisioning/components/BulkActions/BulkDeleteProvisione
 
 const mockUseSelectionProvisioningStatus = jest.mocked(useSelectionProvisioningStatus);
 
-function setup(selected = true) {
-  return render(<BrowseActions />, {
+function setup(selected = true, folderDTO = mockFolderDTO(1, { uid: 'folder-a' })) {
+  return render(<BrowseActions folderDTO={folderDTO} />, {
     preloadedState: {
       browseDashboards: {
         rootItems: undefined,
@@ -78,10 +87,21 @@ describe('browse-dashboards BrowseActions', () => {
 
       expect(store!.getState().browseDashboards.selectedItems.dashboard['dash-1']).toBe(false);
       expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-      expect(screen.getByText('1 selected')).toBeInTheDocument();
+      expect(screen.getByText('1 selected in folder-a')).toBeInTheDocument();
 
       await user.click(screen.getByTestId(selectors.components.Drawer.General.close));
-      expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
+      expect(screen.queryByText('1 selected in folder-a')).not.toBeInTheDocument();
+    });
+
+    it('keeps the folder it was opened in when the page navigates elsewhere', async () => {
+      const { user, rerender } = setup();
+
+      await user.click(screen.getByRole('button', { name: 'Delete' }));
+      expect(await screen.findByText('1 selected in folder-a')).toBeInTheDocument();
+
+      rerender(<BrowseActions folderDTO={mockFolderDTO(2, { uid: 'folder-b' })} />);
+
+      expect(screen.getByText('1 selected in folder-a')).toBeInTheDocument();
     });
   });
 });

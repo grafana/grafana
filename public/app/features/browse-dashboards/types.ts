@@ -36,6 +36,11 @@ export interface BrowseDashboardsState {
   // Lives with the cache it stamps: both outlive the browse page, so a pull that lands while the
   // user is elsewhere is still noticed when they come back.
   repositorySyncedAt?: Record<string, number>;
+
+  // Per collection, keyed by parent folder UID (root under GENERAL_FOLDER_UID): bumped whenever the
+  // collection is dropped, marked for refresh or replaced. A load that started before the bump
+  // belongs to an old listing and must not be appended or applied once it completes.
+  collectionGenerations?: Record<string, number>;
 }
 
 export interface UIDashboardViewItem {

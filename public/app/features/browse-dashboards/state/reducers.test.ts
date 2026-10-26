@@ -38,6 +38,7 @@ describe('browse-dashboards reducers', () => {
           kind: 'folder' as const,
           page: 1,
           lastPageOfKind: false,
+          generation: 0,
         },
         type: 'action-type',
         meta: {
@@ -80,6 +81,7 @@ describe('browse-dashboards reducers', () => {
           kind: 'dashboard' as const,
           page: 1,
           lastPageOfKind: true,
+          generation: 0,
         },
         type: 'action-type',
         meta: {
@@ -114,6 +116,7 @@ describe('browse-dashboards reducers', () => {
           kind: 'dashboard' as const,
           page: 1,
           lastPageOfKind: true,
+          generation: 0,
         },
         type: 'action-type',
         meta: {
@@ -154,6 +157,7 @@ describe('browse-dashboards reducers', () => {
           kind: 'dashboard' as const,
           page: 1,
           lastPageOfKind: true,
+          generation: 0,
         },
         type: 'action-type',
         meta: {

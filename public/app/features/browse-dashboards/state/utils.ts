@@ -1,7 +1,18 @@
 import { ManagerKind } from 'app/features/apiserver/types';
+import { GENERAL_FOLDER_UID, isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 
 import { type BrowseDashboardsState } from '../types';
+
+/** The key a load addresses: `undefined` for the root, whichever sentinel the caller used. */
+export function collectionKeyOf(parentUID: string | undefined): string | undefined {
+  return isRootFolderUID(parentUID) ? undefined : parentUID;
+}
+
+/** Current generation of a collection; a load compares the value it started with against this. */
+export function collectionGeneration(state: BrowseDashboardsState, collectionKey: string | undefined): number {
+  return state.collectionGenerations?.[collectionKey ?? GENERAL_FOLDER_UID] ?? 0;
+}
 
 /**
  * Finds the item with the given kind and uid in either the root items or childrenByUID. UIDs are unique per kind

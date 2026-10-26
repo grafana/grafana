@@ -9,10 +9,12 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { createRepository } from 'app/features/provisioning/mocks/factories';
 import { getMockLiveSrv, setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
+import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { type DashboardViewItem } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
 
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
+import { type ViewedFolder } from '../state/utils';
 
 import { useRefreshOnRepositorySync } from './useRefreshOnRepositorySync';
 
@@ -59,9 +61,11 @@ interface SetupOptions {
   folderUID?: string;
   viewedRepository?: string;
   target?: Target;
+  /** Whether the owner of the folder in view is already known when the hook mounts. */
+  resolved?: boolean;
 }
 
-function setup({ folderUID, viewedRepository, target = 'folder' }: SetupOptions = {}) {
+function setup({ folderUID, viewedRepository, target = 'folder', resolved = true }: SetupOptions = {}) {
   server.use(
     http.get(`${BASE}/settings`, () =>
       HttpResponse.json({ items: [{ name: REPO, title: REPO, type: 'github', target, workflows: [] }] })
@@ -107,8 +111,12 @@ function setup({ folderUID, viewedRepository, target = 'folder' }: SetupOptions 
     },
   });
 
+  const viewed: ViewedFolder = { folderUID, repository: viewedRepository };
   const render = () =>
-    renderHook(() => useRefreshOnRepositorySync(folderUID, viewedRepository), { wrapper: getWrapper({ store }) });
+    renderHook((props: ViewedFolder | undefined) => useRefreshOnRepositorySync(props), {
+      initialProps: resolved ? viewed : undefined,
+      wrapper: getWrapper({ store }),
+    });
   const rendered = render();
 
   const browseState = () => store.getState().browseDashboards;
@@ -125,7 +133,7 @@ function setup({ folderUID, viewedRepository, target = 'folder' }: SetupOptions 
       })
     );
 
-  return { ...rendered, render, browseState, children, selected, listedFolders, waitForBaseline, emitSync };
+  return { ...rendered, render, viewed, browseState, children, selected, listedFolders, waitForBaseline, emitSync };
 }
 
 describe('useRefreshOnRepositorySync', () => {
@@ -263,5 +271,44 @@ describe('useRefreshOnRepositorySync', () => {
 
     await waitFor(() => expect(children(REPO)).toEqual(['nested', 'repo-dash-2']));
     await waitFor(() => expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 2000 }));
+  });
+
+  it('waits for the owner of the folder in view before acting on a pull', async () => {
+    const { browseState, children, listedFolders, waitForBaseline, emitSync, rerender, viewed } = setup({
+      folderUID: 'nested',
+      viewedRepository: REPO,
+      resolved: false,
+    });
+    await waitForBaseline();
+
+    emitSync(2000);
+
+    await act(() => Promise.resolve());
+    expect(listedFolders()).toEqual([]);
+    expect(children('nested')).toEqual(['deep-dash']);
+    expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 1000 });
+
+    // The folder turns out to be the repository's: the pending pull now refreshes it.
+    rerender(viewed);
+
+    await waitFor(() => expect(children('nested')).toEqual(['deep-dash-2']));
+    await waitFor(() => expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 2000 }));
+  });
+
+  it('clears the selection and re-runs the search when a pull lands while searching', async () => {
+    const { selected, waitForBaseline, emitSync } = setup();
+    const [, stateManager] = renderHook(() => useSearchStateManager()).result.current;
+    act(() => stateManager.setState({ query: 'dash' }));
+    const doSearch = jest.spyOn(stateManager, 'doSearchWithDebounce').mockImplementation(() => {});
+    await waitForBaseline();
+
+    emitSync(2000);
+
+    // Search results are not in the tree, so even unprovisioned results lose their selection.
+    await waitFor(() => expect(selected()['plain-dash']).toBe(false));
+    expect(doSearch).toHaveBeenCalledTimes(1);
+
+    act(() => stateManager.setState({ query: '' }));
+    doSearch.mockRestore();
   });
 });
