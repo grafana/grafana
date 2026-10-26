@@ -331,6 +331,8 @@ unified storage when the dual writer mode is set to 3 or greater. When <= 2, the
 
 ### Restrict collection searches to service identities
 
+Externally supplied records may have no corresponding unified-storage resources or user-level authorization rules. When the owning service must apply its own authorization checks before returning results to a user, restrict reads to that service so callers cannot bypass those checks.
+
 In `custom.ini`, set `vector_allowed_read_services` to a JSON map of `group/resource` collections and allowed service identities:
 
 ```ini
@@ -342,7 +344,6 @@ For a configured collection, `HybridSearch` and `VectorSearch` accept only authe
 User and on-behalf-of tokens are denied.
 The check covers every target before vector or lexical search; one denied target rejects the whole request.
 Existing tenant and resource `get` checks still apply.
-If your service acts for a user, filter returned records for that user because service grants can authorize tenant records without user-specific filtering.
 
 An unset value or `{}` leaves both search methods unchanged; invalid values prevent server startup.
 Deploy support to every serving storage and search server before setting the restriction because older versions ignore it.
