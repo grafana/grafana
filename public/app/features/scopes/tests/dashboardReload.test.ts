@@ -1,4 +1,5 @@
 import { config, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -23,11 +24,11 @@ setupMockServer();
 describe('Dashboard reload', () => {
   let dashboardReloadSpy: jest.SpyInstance;
   beforeEach(() => {
+    setTestFlags({ [FlagKeys.ScopeFilters]: true });
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(console, 'warn').mockImplementation();
   });
   beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
   });
   afterEach(() => {
@@ -48,7 +49,7 @@ describe('Dashboard reload', () => {
   ])(
     `reloadDashboardsOnParamsChange: %s, reloadOnParamsChange: %s, withUid: %s, editMode: %s`,
     async (reloadDashboardsOnParamsChange, reloadOnParamsChange, withUid, editMode) => {
-      setTestFlags({ reloadDashboardsOnParamsChange });
+      setTestFlags({ [FlagKeys.ScopeFilters]: true, reloadDashboardsOnParamsChange });
       setDashboardAPI(undefined);
 
       const { scene: dashboardScene, scopesService } = await renderDashboard(

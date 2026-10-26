@@ -1,7 +1,9 @@
 import { act, cleanup } from '@testing-library/react';
 
 import { config, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
@@ -29,8 +31,9 @@ describe('Scope selector in edit mode', () => {
   let dashboardScene: DashboardScene;
   let scopesService: ScopesService;
 
+  testWithFlags({ [FlagKeys.ScopeFilters]: true });
+
   beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
   });
 
@@ -85,8 +88,9 @@ describe('Scope selector in edit mode', () => {
 describe('setReadOnly', () => {
   let scopesService: ScopesService;
 
+  testWithFlags({ [FlagKeys.ScopeFilters]: true });
+
   beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
   });
 
@@ -128,8 +132,9 @@ describe('setRedirectEnabled', () => {
   let dashboardScene: DashboardScene;
   let scopesSelectorService: ScopesSelectorService;
 
+  testWithFlags({ [FlagKeys.ScopeFilters]: true });
+
   beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
     config.featureToggles.groupByVariable = true;
   });
 

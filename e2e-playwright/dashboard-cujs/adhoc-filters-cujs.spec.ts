@@ -25,6 +25,7 @@ test.use({
   },
   openFeature: {
     flags: {
+      scopeFilters: true,
       reloadDashboardsOnParamsChange: true,
     },
   },
