@@ -5,7 +5,6 @@ package frontendsettings
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -16,8 +15,8 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // GetBaseFrontendSettings returns the JSON object with all the settings needed for
@@ -260,41 +259,13 @@ func getShortCommitHash(commitHash string, maxLength int) string {
 	return commitHash
 }
 
-// ReadNavigationSettings reads the operator nav placement overrides. The
-// frontend service sends these in its own slim settings as well, since the
-// client-built nav tree reads them at boot.
+// ReadNavigationSettings reads the operator nav placement overrides, with the
+// same parser the server-built tree uses. The frontend service sends these in
+// its own slim settings as well, since the client-built nav tree reads them at
+// boot.
 func ReadNavigationSettings(cfg *setting.Cfg) dtos.FrontendSettingsNavigationDTO {
 	return dtos.FrontendSettingsNavigationDTO{
-		AppSections:        readNavigationPlacements(cfg, "navigation.app_sections"),
-		AppStandalonePages: readNavigationPlacements(cfg, "navigation.app_standalone_pages"),
+		AppSections:        navtree.ParseNavigationPlacements(cfg.Raw.Section("navigation.app_sections").KeysHash()),
+		AppStandalonePages: navtree.ParseNavigationPlacements(cfg.Raw.Section("navigation.app_standalone_pages").KeysHash()),
 	}
-}
-
-// readNavigationPlacements reads one of the operator nav override sections,
-// whose values are `<sectionId> <sortWeight>`. The format has to stay in step
-// with readNavigationSettings in pkg/services/navtree/navtreeimpl/applinks.go,
-// which applies the same overrides to the server-built tree.
-func readNavigationPlacements(cfg *setting.Cfg, section string) map[string]dtos.FrontendSettingsNavigationPlacementDTO {
-	keys := cfg.Raw.Section(section).Keys()
-	if len(keys) == 0 {
-		return nil
-	}
-
-	placements := make(map[string]dtos.FrontendSettingsNavigationPlacementDTO, len(keys))
-	for _, key := range keys {
-		values := util.SplitString(key.MustString(""))
-		if len(values) == 0 {
-			continue
-		}
-
-		placement := dtos.FrontendSettingsNavigationPlacementDTO{SectionID: values[0]}
-		if len(values) > 1 {
-			if weight, err := strconv.ParseInt(values[1], 10, 64); err == nil {
-				placement.SortWeight = weight
-			}
-		}
-		placements[key.Name()] = placement
-	}
-
-	return placements
 }

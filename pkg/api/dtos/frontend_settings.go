@@ -3,6 +3,7 @@ package dtos
 import (
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -155,11 +156,9 @@ type FrontendSettingsNavigationDTO struct {
 }
 
 // FrontendSettingsNavigationPlacementDTO is one `<sectionId> <sortWeight>` value,
-// keyed by plugin id in AppSections and by page path in AppStandalonePages.
-type FrontendSettingsNavigationPlacementDTO struct {
-	SectionID  string `json:"sectionId"`
-	SortWeight int64  `json:"sortWeight,omitempty"`
-}
+// keyed by plugin id in AppSections and by page path in AppStandalonePages. The
+// nav builder's own type, so both sides of the wire parse it identically.
+type FrontendSettingsNavigationPlacementDTO = navtree.NavigationPlacement
 
 type FrontendSettingsDTO struct {
 	DefaultDatasource    string                           `json:"defaultDatasource"`
