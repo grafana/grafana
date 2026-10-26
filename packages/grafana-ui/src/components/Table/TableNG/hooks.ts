@@ -47,7 +47,6 @@ import { getColumnMenuOptions } from './menuOptions';
 import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import { transformTableFilters } from './transformations/rowProjection';
 import {
-  type FilterType,
   type GetActionsFunctionLocal,
   type NestedRowEntry,
   type SortByBehavior,
