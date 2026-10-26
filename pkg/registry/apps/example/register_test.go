@@ -3,12 +3,16 @@ package example
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// Out-of-tree callers construct the installer without a delta source, so widening this signature breaks their build.
-// Take the bus through ProvideAppInstaller instead.
-func TestRegisterAppInstallerSignatureIsStable(t *testing.T) {
-	var _ func(*setting.Cfg, featuremgmt.FeatureToggles) (*AppInstaller, error) = RegisterAppInstaller
+// Out-of-tree callers construct the installer with these two arguments, so widening this signature breaks their
+// build. Take new dependencies through ProvideAppInstaller instead.
+func TestRegisterAppInstaller(t *testing.T) {
+	installer, err := RegisterAppInstaller(setting.NewCfg(), featuremgmt.WithFeatures())
+	require.NoError(t, err)
+	require.NotNil(t, installer)
 }
