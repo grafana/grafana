@@ -4,7 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { Button, Dropdown, Icon, Menu } from '@grafana/ui';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 
 import { getDashboardSceneLike } from '../types/dashboard';
 

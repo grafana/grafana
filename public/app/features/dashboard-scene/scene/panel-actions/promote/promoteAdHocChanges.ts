@@ -1,7 +1,7 @@
 import { type VizPanel } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 
 import { dashboardSceneGraph } from '../../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../../utils/utils';

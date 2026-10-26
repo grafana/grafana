@@ -3,7 +3,7 @@ import { act, render, renderHook, screen, userEvent, waitFor } from 'test/test-u
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 
 import { SaveDashboardDrawer } from '../../../saving/SaveDashboardDrawer';
 import { SaveDashboardForm } from '../../../saving/SaveDashboardForm';

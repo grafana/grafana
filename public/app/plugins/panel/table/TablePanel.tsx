@@ -15,8 +15,8 @@ import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import {
-  TABLE_TRANSFORMATIONS_OWNER,
   useAdHocColumnState,
   useTableRefreshNewFeatures,
   useCacheFieldDisplayNames,

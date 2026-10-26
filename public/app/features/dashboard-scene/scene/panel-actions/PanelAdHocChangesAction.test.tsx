@@ -6,7 +6,7 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { DashboardScene } from '../DashboardScene';

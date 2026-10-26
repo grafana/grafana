@@ -3,7 +3,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
-import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 
 import { DashboardScene } from '../../DashboardScene';
 import { DefaultGridLayoutManager } from '../../layout-default/DefaultGridLayoutManager';
