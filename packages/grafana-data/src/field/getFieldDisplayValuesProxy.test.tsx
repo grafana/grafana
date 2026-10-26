@@ -88,6 +88,43 @@ describe('getFieldDisplayValuesProxy', () => {
     expect(`${p}`).toBe('');
   });
 
+  describe('with a reducer', () => {
+    const frame = applyFieldOverrides({
+      data: [
+        toDataFrame({
+          fields: [
+            { name: 'Time', values: [1000, 2000, 61000] },
+            { name: 'cpu', values: [40, 75, null], config: { unit: 'percent', decimals: 1 } },
+            { name: 'memory', values: [100, null, 120], config: { unit: 'bytes' } },
+          ],
+        }),
+      ],
+      ...overrides,
+    })[0];
+
+    it('reduces each field independently', () => {
+      const p = getFieldDisplayValuesProxy({ frame, reducer: 'lastNotNull' });
+      expect(p.cpu.numeric).toBe(75);
+      expect(p.memory.numeric).toBe(120);
+    });
+
+    it('formats the reduced value with the field display config', () => {
+      const p = getFieldDisplayValuesProxy({ frame, reducer: 'mean' });
+      expect(p.cpu.toString()).toBe('57.5%');
+    });
+
+    it('drops the unit for reducers that do not preserve it', () => {
+      const p = getFieldDisplayValuesProxy({ frame, reducer: 'count' });
+      expect(p.memory.toString()).toBe('2');
+    });
+
+    it('looks fields up the same way as with a row', () => {
+      const p = getFieldDisplayValuesProxy({ frame, reducer: 'max' });
+      expect(p[1].numeric).toBe(75);
+      expect(p.xyz).toBeUndefined();
+    });
+  });
+
   it('should use default display processor if display is not defined', () => {
     const p = getFieldDisplayValuesProxy({
       frame: createDataFrame({ fields: [{ name: 'test', values: [1, 2] }] }),
