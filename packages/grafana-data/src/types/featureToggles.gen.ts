@@ -400,11 +400,6 @@ export interface FeatureToggles {
   */
   kubernetesAggregatorCapTokenAuth?: boolean;
   /**
-  * Enable groupBy variable support in scenes dashboards
-  * @default false
-  */
-  groupByVariable?: boolean;
-  /**
   * Enables the use of scope filters in Grafana
   * @default false
   */
