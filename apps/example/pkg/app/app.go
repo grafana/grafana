@@ -32,10 +32,10 @@ func New(cfg app.Config) (app.App, error) {
 	var reconciler operator.Reconciler
 	// The delta source the reconciler's informer runs on. A nil subscriber selects the kubernetes watch.
 	var resourceBus resourcebus.Subscriber
-	var busLister func(resource.Kind, resource.Client, operator.ClientListerOptions) (operator.ResourceLister, error)
+	var busKeyLister func(resource.Kind) (operator.ResourceKeyLister, error)
 	exampleConfig, ok := cfg.SpecificConfig.(*ExampleConfig)
 	if ok {
-		resourceBus, busLister = exampleConfig.ResourceBus, exampleConfig.BusLister
+		resourceBus, busKeyLister = exampleConfig.ResourceBus, exampleConfig.BusKeyLister
 	}
 	if ok && exampleConfig.EnableReconciler {
 		reconciler = NewExampleReconciler(client)
@@ -59,8 +59,8 @@ func New(cfg app.Config) (app.App, error) {
 			// reads the deletion timestamp and the finalizer list off the delivered object. An identity payload
 			// carries neither, and simple.NewApp refuses that pairing.
 			InformerSupplier: simple.BusInformerSupplier(resourceBus, simple.BusInformerConfig{
-				Payload:       operator.PayloadHydrated,
-				ListerFactory: busLister,
+				Payload:          operator.PayloadHydrated,
+				KeyListerFactory: busKeyLister,
 			}),
 		},
 		// ManagedKinds is the list of all kinds our app manages (the kinds owned by our app).

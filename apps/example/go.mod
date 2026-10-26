@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/example
 go 1.27.3
 
 require (
-	github.com/grafana/grafana-app-sdk v0.61.1-0.20261026134627-c0b018f2ef9f
+	github.com/grafana/grafana-app-sdk v0.61.1-0.20261026151645-77b9c1b67e57
 	github.com/grafana/grafana-app-sdk/logging v0.61.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	k8s.io/apimachinery v0.37.1

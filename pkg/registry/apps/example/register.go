@@ -52,7 +52,7 @@ func RegisterAppInstaller(
 		ResourceBus: resourceBus,
 	}
 	if keyslister.Enabled(cfg) {
-		specificConfig.BusLister = keyslister.Factory(func(gvr schema.GroupVersionResource) keysapi.Lister {
+		specificConfig.BusKeyLister = keyslister.Factory(func(gvr schema.GroupVersionResource) keysapi.Lister {
 			return keysapi.NewGRPCLister(unified, gvr)
 		})
 	}

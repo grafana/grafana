@@ -17,15 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func testKind() resource.Kind {
-	return resource.Kind{
-		Schema: resource.NewSimpleSchema("example.grafana.app", "v1alpha1",
-			&resource.TypedSpecObject[string]{}, &resource.TypedList[*resource.TypedSpecObject[string]]{},
-			resource.WithKind("Example")),
-		Codecs: map[resource.KindEncoding]resource.Codec{resource.KindEncodingJSON: resource.NewJSONCodec()},
-	}
-}
-
 type fakeKeys struct {
 	keys   []keysapi.Key
 	listRV int64
@@ -45,21 +36,17 @@ func (f fakeKeys) ListKeys(context.Context) (int64, iter.Seq2[keysapi.Key, error
 	}
 }
 
-// fakeClient stands in for the kind's client, which only the full-object fallback would call.
-type fakeClient struct {
-	resource.Client
-}
-
-type fakeObjects struct {
-	called bool
-	objs   []resource.Object
-	listRV string
-	err    error
-}
-
-func (f *fakeObjects) List(context.Context) ([]resource.Object, string, error) {
-	f.called = true
-	return f.objs, f.listRV, f.err
+// drain collects the adapted sequence the way the SDK's identity lister does.
+func drain(t *testing.T, keys iter.Seq2[operator.ResourceKey, error]) ([]operator.ResourceKey, error) {
+	t.Helper()
+	var out []operator.ResourceKey
+	for key, err := range keys {
+		if err != nil {
+			return out, err
+		}
+		out = append(out, key)
+	}
+	return out, nil
 }
 
 func TestEnabled(t *testing.T) {
@@ -74,86 +61,60 @@ func TestEnabled(t *testing.T) {
 }
 
 func TestListKeys(t *testing.T) {
-	kind := testKind()
-	keys := fakeKeys{listRV: 42, keys: []keysapi.Key{
-		{Namespace: "default", Name: "one", ResourceVersion: "11"},
+	listRV, keys := New(fakeKeys{listRV: 42, keys: []keysapi.Key{
+		{Namespace: "default", Name: "one", ResourceVersion: "11", Folder: "folder-1"},
 		{Namespace: "other", Name: "two", ResourceVersion: "12"},
-	}}
-	objects := &fakeObjects{}
+	}}).ListKeys(context.Background())
 
-	objs, listRV, err := New(keys, kind, objects, operator.RelistRecorder{}).List(context.Background())
+	got, err := drain(t, keys)
 	require.NoError(t, err)
 
 	assert.Equal(t, "42", listRV)
-	assert.False(t, objects.called)
-	require.Len(t, objs, 2)
-	for i, want := range keys.keys {
-		assert.Equal(t, want.Namespace, objs[i].GetNamespace())
-		assert.Equal(t, want.Name, objs[i].GetName())
-		assert.Equal(t, want.ResourceVersion, objs[i].GetResourceVersion())
-		assert.Equal(t, kind.GroupVersionKind(), objs[i].GetObjectKind().GroupVersionKind())
-	}
+	assert.Equal(t, []operator.ResourceKey{
+		{Namespace: "default", Name: "one", ResourceVersion: "11"},
+		{Namespace: "other", Name: "two", ResourceVersion: "12"},
+	}, got)
 }
 
-func TestListFallsBackWhenKeysAreUnsupported(t *testing.T) {
-	objects := &fakeObjects{objs: []resource.Object{testKind().ZeroValue()}, listRV: "7"}
-	keys := fakeKeys{err: fmt.Errorf("over HTTP the route is absent: %w", keysapi.ErrUnsupported)}
+// The SDK's fallback lister keys off its own sentinel, so an unsupported projection has to carry it.
+func TestListKeysMarksAnUnsupportedProjection(t *testing.T) {
+	inner := fmt.Errorf("over HTTP the route is absent: %w", keysapi.ErrUnsupported)
+	_, keys := New(fakeKeys{err: inner}).ListKeys(context.Background())
 
-	objs, listRV, err := New(keys, testKind(), objects, operator.RelistRecorder{}).List(context.Background())
-	require.NoError(t, err)
+	_, err := drain(t, keys)
 
-	assert.True(t, objects.called)
-	assert.Equal(t, "7", listRV)
-	assert.Len(t, objs, 1)
+	assert.ErrorIs(t, err, operator.ErrProjectionUnsupported)
+	assert.ErrorIs(t, err, keysapi.ErrUnsupported)
 }
 
-// A partial stream is a failed re-list, not a shorter snapshot: the informer diffs the whole set, so a truncated one
-// reads as a mass deletion.
-func TestListFailsOnAPartialStream(t *testing.T) {
+// Any other error must not read as unsupported: the re-list fails and is retried, rather than being served the
+// expensive way from then on.
+func TestListKeysPropagatesOtherErrors(t *testing.T) {
 	wantErr := errors.New("page 2 failed")
-	objects := &fakeObjects{}
-	keys := fakeKeys{listRV: 42, keys: []keysapi.Key{{Namespace: "default", Name: "one", ResourceVersion: "11"}}, err: wantErr}
+	_, keys := New(fakeKeys{listRV: 42, keys: []keysapi.Key{{Name: "one"}}, err: wantErr}).ListKeys(context.Background())
 
-	objs, listRV, err := New(keys, testKind(), objects, operator.RelistRecorder{}).List(context.Background())
+	got, err := drain(t, keys)
 
 	assert.ErrorIs(t, err, wantErr)
-	assert.Nil(t, objs)
-	assert.Empty(t, listRV)
-	assert.False(t, objects.called)
+	assert.NotErrorIs(t, err, operator.ErrProjectionUnsupported)
+	assert.Len(t, got, 1)
 }
 
 func TestFactory(t *testing.T) {
-	kind := testKind()
+	kind := resource.Kind{
+		Schema: resource.NewSimpleSchema("example.grafana.app", "v1alpha1",
+			&resource.TypedSpecObject[string]{}, &resource.TypedList[*resource.TypedSpecObject[string]]{},
+			resource.WithKind("Example")),
+		Codecs: map[resource.KindEncoding]resource.Codec{resource.KindEncodingJSON: resource.NewJSONCodec()},
+	}
+
 	var asked []schema.GroupVersionResource
-	listerFor := func(gvr schema.GroupVersionResource) keysapi.Lister {
+	lister, err := Factory(func(gvr schema.GroupVersionResource) keysapi.Lister {
 		asked = append(asked, gvr)
 		return fakeKeys{}
-	}
+	})(kind)
+	require.NoError(t, err)
 
-	t.Run("an unfiltered kind lists identities", func(t *testing.T) {
-		asked = nil
-		_, err := Factory(listerFor)(kind, fakeClient{}, operator.ClientListerOptions{})
-		require.NoError(t, err)
-
-		assert.Equal(t, []schema.GroupVersionResource{kind.GroupVersionResource()}, asked)
-	})
-
-	// A keys-only list carries no namespace scope and no selectors, so these can only be served by objects.
-	tests := []struct {
-		name string
-		opts operator.ListWatchOptions
-	}{
-		{name: "namespace", opts: operator.ListWatchOptions{Namespace: "default"}},
-		{name: "label filters", opts: operator.ListWatchOptions{LabelFilters: []string{"a=b"}}},
-		{name: "field selectors", opts: operator.ListWatchOptions{FieldSelectors: []string{"spec.a=b"}}},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name+" lists objects", func(t *testing.T) {
-			asked = nil
-			_, err := Factory(listerFor)(kind, fakeClient{}, operator.ClientListerOptions{ListWatchOptions: tt.opts})
-			require.NoError(t, err)
-
-			assert.Empty(t, asked)
-		})
-	}
+	assert.NotNil(t, lister)
+	assert.Equal(t, []schema.GroupVersionResource{kind.GroupVersionResource()}, asked)
 }
