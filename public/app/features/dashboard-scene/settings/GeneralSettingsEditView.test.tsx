@@ -1,9 +1,11 @@
 import { render, screen } from 'test/test-utils';
 
-import { behaviors, SceneTimeRange } from '@grafana/scenes';
+import { behaviors, SceneRefreshPicker, SceneTimeRange } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { defaultSpec as defaultDashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type DashboardMeta } from 'app/types/dashboard';
 
+import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { changeDescription } from '../actions/dashboard/changeDescription';
 import { changeTitle } from '../actions/dashboard/changeTitle';
 import * as utils from '../pages/utils';
@@ -27,10 +29,16 @@ describe('GeneralSettingsEditView', () => {
     let deactivate: () => void;
 
     beforeEach(() => {
+      jest.spyOn(utils, 'updateNavModel').mockResolvedValue();
       dashboard = new DashboardScene({
-        $timeRange: new SceneTimeRange({}),
+        $timeRange: new SceneTimeRange({ timeZone: 'UTC' }),
         $behaviors: [new behaviors.CursorSync({ sync: DashboardCursorSync.Off }), new behaviors.LiveNowTimer({})],
-        controls: new DashboardControls({}),
+        controls: new DashboardControls({
+          hideTimeControls: false,
+          refreshPicker: new SceneRefreshPicker({ intervals: ['10s'] }),
+        }),
+        preferences: { defaultLayoutTemplate: DefaultGridLayoutManager.createEmpty() },
+        meta: { folderUid: 'original-folder', folderTitle: 'Original folder' },
         title: 'A',
         isEditing: true,
       });
@@ -44,30 +52,57 @@ describe('GeneralSettingsEditView', () => {
       dashboard.state.sidebar.undoAction();
     });
 
-    afterEach(() => deactivate());
+    afterEach(() => {
+      deactivate();
+      jest.restoreAllMocks();
+    });
 
     const expectHistoryLength = (length: number) => {
       expect(dashboard.state.sidebar.state.undoStack).toHaveLength(length);
       expect(dashboard.state.sidebar.state.redoStack).toHaveLength(length);
     };
 
-    it('keeps history when leaving settings without changing anything', () => {
+    it('when settings are left unchanged, both history stacks are preserved', () => {
       settings.activate()();
 
       expectHistoryLength(1);
     });
 
-    it('clears history when leaving after a change, so undo no longer reverts it', () => {
+    it('when several settings change, one undo step restores them and preserves earlier edits', () => {
+      const timeRange = settings.getTimeRange();
+      timeRange.setState({ timeZone: 'UTC' });
+      const body = dashboard.state.body;
       const deactivateSettings = settings.activate();
+
       settings.onTitleChange('C');
+      settings.onTimeZoneChange('Europe/Paris');
       deactivateSettings();
 
-      expectHistoryLength(0);
-      dashboard.state.sidebar.undoAction();
+      const sidebar = dashboard.state.sidebar;
+      expect(sidebar.state.undoStack).toHaveLength(2);
+      expect(sidebar.state.redoStack).toHaveLength(0);
       expect(dashboard.state.title).toBe('C');
+      expect(timeRange.state.timeZone).toBe('Europe/Paris');
+
+      sidebar.undoAction();
+
+      expect(dashboard.state.title).toBe('B');
+      expect(timeRange.state.timeZone).toBe('UTC');
+      expect(dashboard.state.body).toBe(body);
+      expect(dashboard.state.$timeRange).toBe(timeRange);
+
+      sidebar.undoAction();
+
+      expect(dashboard.state.title).toBe('A');
+
+      sidebar.redoAction();
+      sidebar.redoAction();
+
+      expect(dashboard.state.title).toBe('C');
+      expect(timeRange.state.timeZone).toBe('Europe/Paris');
     });
 
-    it('keeps history when a setting is changed and then changed back', () => {
+    it('when a setting is changed back to its original value, both history stacks are preserved', () => {
       const deactivateSettings = settings.activate();
       settings.onTitleChange('C');
       settings.onTitleChange('B');
@@ -76,7 +111,7 @@ describe('GeneralSettingsEditView', () => {
       expectHistoryLength(1);
     });
 
-    it('keeps history on dashboard state changes that are not settings', () => {
+    it('when unrelated dashboard state changes, no settings action is recorded', () => {
       const deactivateSettings = settings.activate();
       dashboard.setState({ isDirty: true });
       deactivateSettings();
@@ -84,41 +119,232 @@ describe('GeneralSettingsEditView', () => {
       expectHistoryLength(1);
     });
 
-    it('ignores changes made after settings are left', () => {
+    it('when settings have been left, later changes are not recorded as settings edits', () => {
       settings.activate()();
       dashboard.setState({ title: 'C' });
 
       expectHistoryLength(1);
     });
 
-    it.each([
-      ['description', () => settings.onDescriptionChange('Other')],
-      ['tags', () => settings.onTagsChange(['tag'])],
-      ['editable', () => settings.onEditableChange(false)],
-      ['preload', () => settings.onPreloadChange(true)],
-      ['folder', () => settings.onMoveSuccess('new-folder', 'New folder')],
-      [
-        'default grid',
-        () =>
-          settings.onDefaultGridChange(
-            dashboard.getDefaultLayoutType() === AutoGridLayoutManager.descriptor.id
-              ? DefaultGridLayoutManager.descriptor.id
-              : AutoGridLayoutManager.descriptor.id
-          ),
-      ],
-      ['time zone', () => settings.onTimeZoneChange('Europe/Paris')],
-      ['week start', () => settings.onWeekStartChange('monday')],
-      ['now delay', () => settings.onNowDelayChange('1m')],
-      ['refresh intervals', () => settings.onRefreshIntervalChange(['5s'])],
-      ['hide time picker', () => settings.onHideTimePickerChange(true)],
-      ['live now', () => settings.onLiveNowChange(true)],
-      ['graph tooltip', () => settings.onTooltipChange(DashboardCursorSync.Crosshair)],
-    ])('clears history when %s changes', (_, change) => {
+    it.each<{
+      name: string;
+      change: () => void | Promise<void>;
+      read: () => unknown;
+      before: unknown;
+      after: unknown;
+    }>([
+      {
+        name: 'description',
+        change: () => settings.onDescriptionChange('Other'),
+        read: () => dashboard.state.description,
+        before: undefined,
+        after: 'Other',
+      },
+      {
+        name: 'tags',
+        change: () => settings.onTagsChange(['tag']),
+        read: () => dashboard.state.tags,
+        before: undefined,
+        after: ['tag'],
+      },
+      {
+        name: 'editable',
+        change: () => settings.onEditableChange(false),
+        read: () => dashboard.state.editable,
+        before: true,
+        after: false,
+      },
+      {
+        name: 'preload',
+        change: () => settings.onPreloadChange(true),
+        read: () => dashboard.state.preload,
+        before: undefined,
+        after: true,
+      },
+      {
+        name: 'folder',
+        change: () => settings.onFolderChange('new-folder', 'New folder'),
+        read: () => ({ folderUid: dashboard.state.meta.folderUid, folderTitle: dashboard.state.meta.folderTitle }),
+        before: { folderUid: 'original-folder', folderTitle: 'Original folder' },
+        after: { folderUid: 'new-folder', folderTitle: 'New folder' },
+      },
+      {
+        name: 'default grid',
+        change: () => settings.onDefaultGridChange(AutoGridLayoutManager.descriptor.id),
+        read: () => dashboard.getDefaultLayoutType(),
+        before: DefaultGridLayoutManager.descriptor.id,
+        after: AutoGridLayoutManager.descriptor.id,
+      },
+      {
+        name: 'time zone',
+        change: () => settings.onTimeZoneChange('Europe/Paris'),
+        read: () => settings.getTimeRange().state.timeZone,
+        before: 'UTC',
+        after: 'Europe/Paris',
+      },
+      {
+        name: 'week start',
+        change: () => settings.onWeekStartChange('monday'),
+        read: () => settings.getTimeRange().state.weekStart,
+        before: undefined,
+        after: 'monday',
+      },
+      {
+        name: 'now delay',
+        change: () => settings.onNowDelayChange('1m'),
+        read: () => settings.getTimeRange().state.UNSAFE_nowDelay,
+        before: undefined,
+        after: '1m',
+      },
+      {
+        name: 'refresh intervals',
+        change: () => settings.onRefreshIntervalChange(['5s']),
+        read: () => settings.getRefreshPicker().state.intervals,
+        before: ['10s'],
+        after: ['5s'],
+      },
+      {
+        name: 'hide time picker',
+        change: () => settings.onHideTimePickerChange(true),
+        read: () => settings.getDashboardControls().state.hideTimeControls,
+        before: false,
+        after: true,
+      },
+      {
+        name: 'live now',
+        change: () => settings.onLiveNowChange(true),
+        read: () => settings.getLiveNowTimer().state.enabled,
+        before: false,
+        after: true,
+      },
+      {
+        name: 'graph tooltip',
+        change: () => settings.onTooltipChange(DashboardCursorSync.Crosshair),
+        read: () => settings.getCursorSync()?.state.sync,
+        before: DashboardCursorSync.Off,
+        after: DashboardCursorSync.Crosshair,
+      },
+    ])('when $name changes, undo and redo restore its values', async ({ change, read, before, after }) => {
       const deactivateSettings = settings.activate();
-      change();
+      expect(read()).toEqual(before);
+
+      await change();
       deactivateSettings();
 
-      expectHistoryLength(0);
+      const sidebar = dashboard.state.sidebar;
+      expect(read()).toEqual(after);
+      expect(sidebar.state.undoStack).toHaveLength(2);
+      expect(sidebar.state.redoStack).toHaveLength(0);
+
+      sidebar.undoAction();
+
+      expect(read()).toEqual(before);
+      expect(dashboard.state.title).toBe('B');
+
+      sidebar.redoAction();
+
+      expect(read()).toEqual(after);
+    });
+
+    it('when settings are changed on separate visits, each visit has its own undo step', () => {
+      const closeFirstVisit = settings.activate();
+      settings.onTitleChange('First visit');
+      closeFirstVisit();
+      const nextSettings = new GeneralSettingsEditView({});
+      dashboard.setState({ editview: nextSettings });
+      const closeSecondVisit = nextSettings.activate();
+      nextSettings.onTitleChange('Second visit');
+      closeSecondVisit();
+      const sidebar = dashboard.state.sidebar;
+
+      expect(sidebar.state.undoStack).toHaveLength(3);
+      expect(dashboard.state.title).toBe('Second visit');
+
+      sidebar.undoAction();
+      expect(dashboard.state.title).toBe('First visit');
+
+      sidebar.undoAction();
+      expect(dashboard.state.title).toBe('B');
+
+      sidebar.redoAction();
+      expect(dashboard.state.title).toBe('First visit');
+
+      sidebar.redoAction();
+      expect(dashboard.state.title).toBe('Second visit');
+    });
+
+    it.each([
+      {
+        name: 'leaving edit mode',
+        discard: () => dashboard.exitEditMode({ skipConfirm: true, restoreInitialState: true }),
+        isEditing: false,
+      },
+      {
+        name: 'keeping edit mode',
+        discard: () => dashboard.discardChangesAndKeepEditing(),
+        isEditing: true,
+      },
+    ])('when changes are discarded while $name, closing settings records no action', ({ discard, isEditing }) => {
+      dashboard.setState({ isEditing: false });
+      dashboard.onEnterEditMode();
+      const sidebar = dashboard.state.sidebar;
+      const closeSettings = settings.activate();
+      settings.onTitleChange('Discarded title');
+
+      discard();
+      closeSettings();
+
+      expect(dashboard.state.title).toBe('B');
+      expect(dashboard.state.isEditing).toBe(isEditing);
+      expect(dashboard.state.sidebar.state.undoStack).toEqual([]);
+      expect(dashboard.state.sidebar.state.redoStack).toEqual([]);
+      expect(sidebar.state.undoStack).toEqual([]);
+    });
+
+    it('when settings follow a schema edit, both edits can be undone and redone', () => {
+      // Only history needs activation here; activating the rebuilt dashboard would start annotation queries.
+      deactivate();
+      deactivate = dashboard.state.sidebar.activate();
+      dashboard.setState({ editview: undefined });
+      const originalBody = dashboard.state.body;
+      const spec = defaultDashboardV2Spec();
+      spec.title = 'Schema title';
+      spec.timeSettings.timezone = 'UTC';
+      spec.annotations = [];
+      applyDashboardSpec({ scene: dashboard, spec, description: 'Apply schema', scope: 'code-pane' });
+      const schemaBody = dashboard.state.body;
+      const schemaTimeRange = dashboard.state.$timeRange;
+      dashboard.setState({ editview: settings });
+      const closeSettings = settings.activate();
+      settings.onTitleChange('Settings title');
+      settings.onTimeZoneChange('Europe/Paris');
+      closeSettings();
+      dashboard.setState({ editview: undefined });
+      const sidebar = dashboard.state.sidebar;
+
+      sidebar.undoAction();
+
+      expect(dashboard.state.title).toBe('Schema title');
+      expect(dashboard.state.$timeRange?.state.timeZone).toBe('UTC');
+      expect(dashboard.state.body).toBe(schemaBody);
+      expect(dashboard.state.$timeRange).toBe(schemaTimeRange);
+
+      sidebar.undoAction();
+
+      expect(dashboard.state.title).toBe('B');
+      expect(dashboard.state.body).toBe(originalBody);
+
+      sidebar.redoAction();
+
+      expect(dashboard.state.title).toBe('Schema title');
+      expect(dashboard.state.$timeRange?.state.timeZone).toBe('UTC');
+      expect(dashboard.state.body).toBe(schemaBody);
+
+      sidebar.redoAction();
+
+      expect(dashboard.state.title).toBe('Settings title');
+      expect(dashboard.state.$timeRange?.state.timeZone).toBe('Europe/Paris');
+      expect(dashboard.state.$timeRange).toBe(schemaTimeRange);
     });
   });
 

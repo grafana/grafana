@@ -113,6 +113,10 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.panelEditAction = editAction;
   }
 
+  public recordCompletedEdit(action: DashboardEditActionEventPayload) {
+    this.handleEditAction(action, true);
+  }
+
   public clone(withState: Partial<DashboardSidebarState>): this {
     // Pending requests and edit history belong to the live sidebar, not its snapshots.
     return super.clone({ ...withState, redoStack: [], undoStack: [], isLoading: false });
