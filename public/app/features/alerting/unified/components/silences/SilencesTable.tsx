@@ -79,37 +79,48 @@ const SilencesTable = () => {
 
   const styles = useStyles2(getStyles);
   const [queryParams] = useQueryParams();
-  const filteredSilencesNotExpired = useFilteredSilences(silences, false);
-  const filteredSilencesExpired = useFilteredSilences(silences, true);
+  const filteredSilences = useFilteredSilences(silences);
 
   const { silenceState: silenceStateInParams } = getSilenceFiltersFromUrlParams(queryParams);
   const showExpiredFromUrl = silenceStateInParams === SilenceState.Expired;
 
-  const itemsNotExpired = useMemo((): SilenceTableItemProps[] => {
-    const findSilencedAlerts = (id: string) => {
-      return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
-    };
-    return filteredSilencesNotExpired.map((silence) => {
-      const silencedAlerts = canPreview ? findSilencedAlerts(silence.id) : undefined;
-      return {
-        id: silence.id,
-        data: { ...silence, silencedAlerts },
-      };
-    });
-  }, [filteredSilencesNotExpired, alertManagerAlerts, canPreview]);
+  const silencedAlertsBySilenceId = useMemo(() => {
+    if (!canPreview) {
+      return;
+    }
+    const index = new Map<string, AlertmanagerAlert[]>();
+    for (const alert of alertManagerAlerts) {
+      for (const silencedBy of new Set(alert.status.silencedBy)) {
+        const alerts = index.get(silencedBy);
+        if (alerts) {
+          alerts.push(alert);
+        } else {
+          index.set(silencedBy, [alert]);
+        }
+      }
+    }
+    return index;
+  }, [alertManagerAlerts, canPreview]);
 
-  const itemsExpired = useMemo((): SilenceTableItemProps[] => {
-    const findSilencedAlerts = (id: string) => {
-      return alertManagerAlerts.filter((alert) => alert.status.silencedBy.includes(id));
-    };
-    return filteredSilencesExpired.map((silence) => {
-      const silencedAlerts = canPreview ? findSilencedAlerts(silence.id) : undefined;
-      return {
+  const { itemsNotExpired, itemsExpired } = useMemo(() => {
+    const itemsNotExpired: SilenceTableItemProps[] = [];
+    const itemsExpired: SilenceTableItemProps[] = [];
+    for (const silence of filteredSilences) {
+      const item = {
         id: silence.id,
-        data: { ...silence, silencedAlerts },
+        data: {
+          ...silence,
+          silencedAlerts: silencedAlertsBySilenceId ? (silencedAlertsBySilenceId.get(silence.id) ?? []) : undefined,
+        },
       };
-    });
-  }, [filteredSilencesExpired, alertManagerAlerts, canPreview]);
+      if (silence.status.state === SilenceState.Expired) {
+        itemsExpired.push(item);
+      } else {
+        itemsNotExpired.push(item);
+      }
+    }
+    return { itemsNotExpired, itemsExpired };
+  }, [filteredSilences, silencedAlertsBySilenceId]);
 
   if (isLoading || amAlertsIsLoading) {
     return <LoadingPlaceholder text={t('alerting.silences-table.text-loading-silences', 'Loading silences...')} />;
@@ -224,7 +235,7 @@ function SilenceList({
   }
 }
 
-const useFilteredSilences = (silences: Silence[], expired = false) => {
+const useFilteredSilences = (silences: Silence[]) => {
   const [queryParams] = useQueryParams();
   return useMemo(() => {
     const { queryString } = getSilenceFiltersFromUrlParams(queryParams);
@@ -251,13 +262,9 @@ const useFilteredSilences = (silences: Silence[], expired = false) => {
           return false;
         }
       }
-      if (expired) {
-        return silence.status.state === SilenceState.Expired;
-      } else {
-        return silence.status.state !== SilenceState.Expired;
-      }
+      return true;
     });
-  }, [queryParams, silences, expired]);
+  }, [queryParams, silences]);
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
