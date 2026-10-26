@@ -199,7 +199,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           />
         </div>
 
-        {hasSelection ? <BrowseActions folderDTO={folderDTO} /> : <BrowseFilters />}
+        {!hasSelection && <BrowseFilters />}
+        <BrowseActions folderDTO={folderDTO} />
 
         <div className={styles.subView}>
           <AutoSizer>

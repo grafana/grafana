@@ -17,8 +17,7 @@ export type BulkActionFormData = {
 export interface BulkActionProvisionResourceProps {
   folderUid?: string;
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
-  // Fires once the job exists. The selection it was built from is spent from then on,
-  // even if the drawer is closed before the job finishes.
+  // Fires once the job exists; the selection it was built from is spent from then on.
   onJobCreated?: () => void;
   onDismiss?: () => void;
 }

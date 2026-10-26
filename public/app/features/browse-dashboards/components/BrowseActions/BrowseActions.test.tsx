@@ -23,14 +23,14 @@ jest.mock('app/features/provisioning/components/BulkActions/BulkDeleteProvisione
 
 const mockUseSelectionProvisioningStatus = jest.mocked(useSelectionProvisioningStatus);
 
-function setup() {
+function setup(selected = true) {
   return render(<BrowseActions />, {
     preloadedState: {
       browseDashboards: {
         rootItems: undefined,
         childrenByParentUID: {},
         openFolders: {},
-        selectedItems: { $all: false, folder: {}, dashboard: { 'dash-1': true }, panel: {} },
+        selectedItems: { $all: false, folder: {}, dashboard: { 'dash-1': selected }, panel: {} },
       },
     },
   });
@@ -48,6 +48,12 @@ describe('browse-dashboards BrowseActions', () => {
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
 
+  it('shows no actions without a selection', () => {
+    setup(false);
+
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
+
   describe('provisioned bulk drawer', () => {
     beforeEach(() => {
       mockUseSelectionProvisioningStatus.mockReturnValue({ hasProvisioned: true, hasNonProvisioned: false });
@@ -63,14 +69,18 @@ describe('browse-dashboards BrowseActions', () => {
       expect(store!.getState().browseDashboards.selectedItems.dashboard['dash-1']).toBe(true);
     });
 
-    it('clears the selection when closed after a job was created', async () => {
+    it('clears the selection as soon as a job exists and keeps showing the drawer', async () => {
       const { user, store } = setup();
 
       await user.click(screen.getByRole('button', { name: 'Delete' }));
       await user.click(await screen.findByRole('button', { name: 'Create job' }));
-      await user.click(screen.getByTestId(selectors.components.Drawer.General.close));
 
       expect(store!.getState().browseDashboards.selectedItems.dashboard['dash-1']).toBe(false);
+      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Drawer.General.close)).toBeInTheDocument();
+
+      await user.click(screen.getByTestId(selectors.components.Drawer.General.close));
+      expect(screen.queryByTestId(selectors.components.Drawer.General.close)).not.toBeInTheDocument();
     });
   });
 });

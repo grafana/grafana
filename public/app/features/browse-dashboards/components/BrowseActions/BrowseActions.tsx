@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -19,7 +19,7 @@ import {
   useMoveMultipleFoldersMutationFacade,
 } from '../../../../api/clients/folder/v1beta1/hooks';
 import { useDeleteDashboardsMutation, useMoveDashboardsMutation } from '../../api/browseDashboardsAPI';
-import { useActionSelectionState } from '../../state/hooks';
+import { useActionSelectionState, useHasSelection } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { type DashboardTreeSelection } from '../../types';
 import { getSelectedUIDs } from '../../utils/dashboards';
@@ -35,11 +35,9 @@ export interface Props {
 export function BrowseActions({ folderDTO }: Props) {
   const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
   const [showBulkMoveProvisionedResource, setShowBulkMoveProvisionedResource] = useState(false);
-  // The provisioned drawers run a job and stay open to show its status, so the selection is
-  // spent on close rather than on completion. Cancelling before a job exists keeps it.
-  const bulkJobCreated = useRef(false);
 
   const dispatch = useDispatch();
+  const hasSelection = useHasSelection();
   const selectedItems = useActionSelectionState();
   const [deleteDashboards] = useDeleteDashboardsMutation();
   const deleteFolders = useDeleteMultipleFoldersMutationFacade();
@@ -55,26 +53,16 @@ export function BrowseActions({ folderDTO }: Props) {
 
   const isSearching = stateManager.hasSearchFilters();
 
-  const onActionComplete = () => {
+  const clearSelection = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
+  };
+
+  const onActionComplete = () => {
+    clearSelection();
 
     if (isSearching) {
       // Redo search query
       stateManager.doSearchWithDebounce();
-    }
-  };
-
-  const onBulkJobCreated = () => {
-    bulkJobCreated.current = true;
-  };
-
-  const onProvisionedDrawerClose = () => {
-    setShowBulkDeleteProvisionedResource(false);
-    setShowBulkMoveProvisionedResource(false);
-
-    if (bulkJobCreated.current) {
-      bulkJobCreated.current = false;
-      onActionComplete();
     }
   };
 
@@ -165,18 +153,21 @@ export function BrowseActions({ folderDTO }: Props) {
 
   return (
     <>
-      <Stack gap={1} data-testid="manage-actions">
-        {moveButton}
+      {hasSelection && (
+        <Stack gap={1} data-testid="manage-actions">
+          {moveButton}
 
-        <Button
-          onClick={showDeleteModal}
-          variant="destructive"
-          data-testid={selectors.pages.BrowseDashboards.actions.deleteButton}
-        >
-          <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
-        </Button>
-      </Stack>
-      {/* bulk delete */}
+          <Button
+            onClick={showDeleteModal}
+            variant="destructive"
+            data-testid={selectors.pages.BrowseDashboards.actions.deleteButton}
+          >
+            <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
+          </Button>
+        </Stack>
+      )}
+      {/* The provisioned drawers outlive the selection: the job spends it, and the drawer stays open
+          to show the job's status. The sync watch refreshes the list once the pull lands. */}
       {showBulkDeleteProvisionedResource && (
         <Drawer
           title={
@@ -185,19 +176,18 @@ export function BrowseActions({ folderDTO }: Props) {
               {t('browse-dashboards.action.bulk-delete-provisioned-resources', 'Bulk Delete Provisioned Resources')}
             </Text>
           }
-          onClose={onProvisionedDrawerClose}
+          onClose={() => setShowBulkDeleteProvisionedResource(false)}
           size="md"
         >
           <BulkDeleteProvisionedResource
             selectedItems={selectedItems}
             folderUid={folderDTO?.uid || ''}
-            onDismiss={onProvisionedDrawerClose}
-            onJobCreated={onBulkJobCreated}
+            onDismiss={() => setShowBulkDeleteProvisionedResource(false)}
+            onJobCreated={clearSelection}
           />
         </Drawer>
       )}
 
-      {/* bulk move */}
       {showBulkMoveProvisionedResource && (
         <Drawer
           title={
@@ -206,14 +196,14 @@ export function BrowseActions({ folderDTO }: Props) {
               {t('browse-dashboards.action.bulk-move-provisioned-resources', 'Bulk Move Provisioned Resources')}
             </Text>
           }
-          onClose={onProvisionedDrawerClose}
+          onClose={() => setShowBulkMoveProvisionedResource(false)}
           size="md"
         >
           <BulkMoveProvisionedResource
             selectedItems={selectedItems}
             folderUid={folderDTO?.uid}
-            onDismiss={onProvisionedDrawerClose}
-            onJobCreated={onBulkJobCreated}
+            onDismiss={() => setShowBulkMoveProvisionedResource(false)}
+            onJobCreated={clearSelection}
           />
         </Drawer>
       )}
