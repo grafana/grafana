@@ -1,7 +1,5 @@
-// Libraries
 import { type ComponentType } from 'react';
 
-// Components
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { type DataSourceRef } from '@grafana/schema';
 
