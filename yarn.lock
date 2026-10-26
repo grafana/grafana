@@ -2769,7 +2769,6 @@ __metadata:
     terser-webpack-plugin: "npm:^5.4.0"
     ts-checker-rspack-plugin: "npm:^1.5.1"
     typescript: "npm:6.0.2"
-    vitest: "npm:^4.1.10"
     webpack: "npm:^5.105.0"
     webpack-bundle-analyzer: "npm:^4.10.2"
     webpack-virtual-modules: "npm:^0.6.2"
