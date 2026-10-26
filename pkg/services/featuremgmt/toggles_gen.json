@@ -5155,7 +5155,8 @@
       "metadata": {
         "name": "queryLibrary",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2022-10-07T18:31:45Z"
+        "creationTimestamp": "2022-10-07T18:31:45Z",
+        "deletionTimestamp": "2026-10-26T18:21:00Z"
       },
       "spec": {
         "description": "Enables Saved queries (query library) feature",

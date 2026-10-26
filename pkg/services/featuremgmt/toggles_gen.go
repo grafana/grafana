@@ -327,10 +327,6 @@ const (
 	// Enables Grafana-managed recording rules.
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
 
-	// FlagQueryLibrary
-	// Enables Saved queries (query library) feature
-	FlagQueryLibrary = "queryLibrary"
-
 	// FlagGrafanaSavedQueriesSearch
 	// Enables unified search for saved queries
 	FlagGrafanaSavedQueriesSearch = "grafana.savedQueriesSearch"
