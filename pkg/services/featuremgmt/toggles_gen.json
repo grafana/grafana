@@ -3254,6 +3254,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.restrictWatchToServiceIdentities",
+        "resourceVersion": "1793008675644",
+        "creationTimestamp": "2026-10-26T09:57:55Z"
+      },
+      "spec": {
+        "description": "Restrict API watches to service accounts, service identities, and privileged loopback clients",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.rspackBuild",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-10T08:36:48Z",

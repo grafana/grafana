@@ -20,12 +20,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanaauthz "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -214,6 +216,8 @@ type GrafanaRouter struct {
 	onBreakerChange func(group string, to gobreaker.State)
 	onDiscovery     func(group, result string)
 
+	watchAuthorizer authorizer.Authorizer
+
 	// watches ends every watch in progress when the router closes them.
 	watches    context.Context
 	endWatches context.CancelFunc
@@ -221,9 +225,10 @@ type GrafanaRouter struct {
 
 func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *GrafanaRouter {
 	r := &GrafanaRouter{
-		loader: loader,
-		authn:  tokens,
-		served: map[string]*handlerEntry{},
+		loader:          loader,
+		authn:           tokens,
+		served:          map[string]*handlerEntry{},
+		watchAuthorizer: grafanaauthz.NewWatchRestrictionAuthorizer(),
 	}
 	r.watches, r.endWatches = context.WithCancel(context.Background())
 	empty := map[string]servingEntry{}
@@ -306,6 +311,14 @@ func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 	}
 	if !authorizeNamespace(w, req, info.Namespace) {
 		return
+	}
+	if info.IsResourceRequest && info.Verb == "watch" {
+		decision, reason, err := r.watchAuthorizer.Authorize(req.Context(), authorizer.AttributesRecord{Verb: info.Verb, ResourceRequest: true})
+		if err != nil || decision == authorizer.DecisionDeny {
+			setRoute(req, routeForbidden)
+			_ = errhttp.Write(req.Context(), apierrors.NewForbidden(schema.GroupResource{Group: info.APIGroup, Resource: info.Resource}, info.Name, errors.New(reason)), w)
+			return
+		}
 	}
 
 	// Built by the router, and checked before group dispatch so the tree is
