@@ -8,12 +8,13 @@ import {
   applyFieldOverrides,
   createDataFrame,
   createTheme,
+  type DataFrame,
   FieldConfigOptionsRegistry,
   FieldType,
   HttpRequestMethod,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { FIXED_UNIT, type UPlotConfigBuilder } from '@grafana/ui';
+import { FIXED_UNIT, type PanelContext, type UPlotConfigBuilder } from '@grafana/ui';
 
 import { ExemplarsPlugin, type VisibleExemplarLabels } from './ExemplarsPlugin';
 
@@ -100,7 +101,7 @@ let scales = {
   [FIXED_UNIT]: { min: 0, max: 1 },
 };
 
-let valToPos = jest.fn((value: number, scaleKey?: string) => {
+let valToPos = jest.fn((value: number, scaleKey?: string): number => {
   if (scaleKey === 'x') {
     return 100;
   }
@@ -198,13 +199,259 @@ describe('ExemplarsPlugin', () => {
       runPlotHooks(new uPlot(uPlotProps as uPlot.Options));
     }
 
-    return result;
+    const rerenderExemplars = (
+      exemplars: DataFrame[],
+      overrides?: Partial<React.ComponentProps<typeof ExemplarsPlugin>>
+    ) => {
+      const processed = applyFieldOverrides({
+        data: exemplars,
+        fieldConfig: { defaults: {}, overrides: [] },
+        replaceVariables: (value) => value,
+        theme: createTheme(),
+        fieldConfigRegistry: new FieldConfigOptionsRegistry(),
+      });
+      result.rerender(
+        <div>
+          <ExemplarsPlugin
+            config={configWithDefaults}
+            timeZone="browser"
+            {...props}
+            {...overrides}
+            exemplars={processed}
+          />
+        </div>
+      );
+    };
+
+    return { ...result, rerenderExemplars };
+  };
+
+  const createOpenExemplar = (requestId: string, rowIndex: number) => {
+    let pending = true;
+    return {
+      getRequest: () => (pending ? { requestId, frameIndex: 0, rowIndex } : undefined),
+      onHandled: jest.fn(() => {
+        pending = false;
+      }),
+    } satisfies NonNullable<PanelContext['openExemplar']>;
   };
 
   it('renders nothing before uPlot hooks', () => {
     setUp(undefined, undefined, undefined, false);
 
     expect(screen.queryByTestId(selectors.components.UPlotChart.xyCanvas)).not.toBeInTheDocument();
+  });
+
+  it('opens a retained request when data arrives and preserves dismissal upon refresh', async () => {
+    const result = setUp({ exemplars: [], openExemplar: createOpenExemplar('navigation-1', 1) });
+    const sample = createDataFrame({
+      fields: [
+        { name: 'Time', values: [1670418750000, 1670418750000] },
+        { name: 'Value', values: [0.5, 0.5] },
+        { name: 'traceID', type: FieldType.string, values: ['wrong-trace', 'exact-trace'] },
+      ],
+    });
+    const updateData = () => result.rerenderExemplars([sample]);
+
+    updateData();
+    expect(await screen.findByText('exact-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+    expect(screen.queryByText('wrong-trace')).not.toBeInTheDocument();
+
+    updateData();
+    expect(screen.getByText('exact-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+
+    await userEvent.click(screen.getByLabelText('Close'));
+    updateData();
+
+    expect(getMarker(1)).toBeVisible();
+    expect(screen.queryByText('exact-trace')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+  });
+
+  it('clears a hovered tooltip when another exemplar is pinned programmatically and keeps it closed after dismissal', async () => {
+    const sample = createDataFrame({
+      fields: [
+        { name: 'Time', values: [1670418750000, 1670418800000] },
+        { name: 'Value', values: [0.5, 0.6] },
+        { name: 'traceID', type: FieldType.string, values: ['hovered-trace', 'requested-trace'] },
+      ],
+    });
+    const result = setUp({ exemplars: [sample] });
+
+    await userEvent.hover(getMarker());
+    expect(await screen.findByText('hovered-trace')).toBeVisible();
+
+    result.rerenderExemplars([sample], { openExemplar: createOpenExemplar('navigation-hover', 1) });
+    expect(await screen.findByText('requested-trace')).toBeVisible();
+    expect(screen.queryByText('hovered-trace')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Close'));
+    expect(getMarker()).toBeVisible();
+    expect(screen.queryByText('hovered-trace')).not.toBeInTheDocument();
+    expect(screen.queryByText('requested-trace')).not.toBeInTheDocument();
+  });
+
+  it('does not reopen a handled request after dismissal and remount, but opens a new navigation request', async () => {
+    const sample = createDataFrame({
+      fields: [
+        { name: 'Time', values: [1670418750000] },
+        { name: 'Value', values: [0.5] },
+        { name: 'traceID', type: FieldType.string, values: ['selected-trace'] },
+      ],
+    });
+    const openExemplar = createOpenExemplar('navigation-remount', 0);
+    const result = setUp({ exemplars: [sample], openExemplar });
+    expect(await screen.findByText('selected-trace')).toBeVisible();
+
+    await userEvent.click(screen.getByLabelText('Close'));
+    result.unmount();
+    hooks = {};
+    const remounted = setUp({ exemplars: [sample], openExemplar });
+
+    expect(getMarker()).toBeVisible();
+    expect(screen.queryByText('selected-trace')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+
+    remounted.unmount();
+    hooks = {};
+    setUp({ exemplars: [sample], openExemplar: createOpenExemplar('navigation-new', 0) });
+    expect(await screen.findByText('selected-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+  });
+
+  it('discards a hidden request so showing its series preserves a manual pin and remount cannot replay it', async () => {
+    const sample = createDataFrame({
+      fields: [
+        { name: 'Time', values: [1670418750000, 1670418800000] },
+        { name: 'Value', values: [0.5, 0.6] },
+        { name: 'job', type: FieldType.string, values: ['hidden', 'visible'] },
+        { name: 'traceID', type: FieldType.string, values: ['requested-trace', 'manual-trace'] },
+      ],
+    });
+    const openExemplar = createOpenExemplar('navigation-hidden', 0);
+    const result = setUp({
+      exemplars: [sample],
+      openExemplar,
+      visibleSeries: { totalSeriesCount: 2, labels: [{ labels: { job: 'visible' } }] },
+    });
+
+    expect(getMarker()).toBeVisible();
+    expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+    await userEvent.setup({ skipHover: true }).click(getMarker());
+    expect(await screen.findByText('manual-trace')).toBeVisible();
+
+    result.rerenderExemplars([sample], {
+      visibleSeries: {
+        totalSeriesCount: 2,
+        labels: [{ labels: { job: 'hidden' } }, { labels: { job: 'visible' } }],
+      },
+    });
+    expect(screen.getByText('manual-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+    expect(screen.queryByText('requested-trace')).not.toBeInTheDocument();
+    expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
+    expect(openExemplar.onHandled).toHaveBeenCalledWith('navigation-hidden');
+
+    result.unmount();
+    hooks = {};
+    setUp({ exemplars: [sample], openExemplar });
+    expect(getMarker()).toBeVisible();
+    expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+    expect(screen.queryByText('requested-trace')).not.toBeInTheDocument();
+  });
+
+  it('discards a pending request when the user pins an exemplar, but allows a new navigation request', async () => {
+    const sample = createDataFrame({
+      fields: [
+        { name: 'Time', values: [1670418750000, 1670418800000] },
+        { name: 'Value', values: [0.5, 0.6] },
+        { name: 'traceID', type: FieldType.string, values: ['requested-trace', 'manual-trace'] },
+      ],
+    });
+    const invalidSample = createDataFrame({
+      fields: sample.fields.map((field) => (field.name === 'Value' ? { ...field, values: [NaN, 0.6] } : field)),
+    });
+    const openExemplar = createOpenExemplar('navigation-delayed', 0);
+    const result = setUp({ exemplars: [invalidSample], openExemplar });
+
+    expect(getMarker()).toBeVisible();
+    expect(openExemplar.onHandled).not.toHaveBeenCalled();
+    await userEvent.setup({ skipHover: true }).click(getMarker());
+    expect(await screen.findByText('manual-trace')).toBeVisible();
+
+    result.rerenderExemplars([sample]);
+    act(() => {
+      hooks.draw.forEach((hook) => hook(new uPlot({} as uPlot.Options)));
+    });
+
+    expect(screen.getByText('manual-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+    expect(screen.queryByText('requested-trace')).not.toBeInTheDocument();
+    expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
+    expect(openExemplar.onHandled).toHaveBeenCalledWith('navigation-delayed');
+
+    await userEvent.click(screen.getByLabelText('Close'));
+    result.unmount();
+    hooks = {};
+    const remounted = setUp({ exemplars: [sample], openExemplar });
+    expect(getMarker()).toBeVisible();
+    expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+
+    await userEvent.setup({ skipHover: true }).click(getMarker(1));
+    expect(await screen.findByText('manual-trace')).toBeVisible();
+    remounted.rerenderExemplars([sample], { openExemplar: createOpenExemplar('navigation-new', 0) });
+    expect(await screen.findByText('requested-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+    expect(screen.queryByText('manual-trace')).not.toBeInTheDocument();
+  });
+
+  it('keeps a clicked exemplar pinned across replacement frames', async () => {
+    const sample = createDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', values: [1670418750000, 1670418750000] },
+        { name: 'Value', values: [0.5, 0.5] },
+        { name: 'traceID', type: FieldType.string, values: ['other-trace', 'selected-trace'] },
+      ],
+    });
+    const result = setUp({ exemplars: [sample] });
+    await userEvent.setup({ skipHover: true }).click(getMarker(1));
+
+    result.rerenderExemplars([sample]);
+    expect(screen.getByText('selected-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+    expect(screen.queryByText('other-trace')).not.toBeInTheDocument();
+  });
+
+  it('consumes a request present before chart initialization once the markers render', async () => {
+    const openExemplar = createOpenExemplar('navigation-early', 0);
+    setUp(
+      {
+        openExemplar,
+        exemplars: [
+          createDataFrame({
+            fields: [
+              { name: 'Time', values: [1670418750000] },
+              { name: 'Value', values: [0.5] },
+              { name: 'traceID', type: FieldType.string, values: ['early-trace'] },
+            ],
+          }),
+        ],
+      },
+      undefined,
+      undefined,
+      false
+    );
+
+    expect(openExemplar.onHandled).not.toHaveBeenCalled();
+    runPlotHooks(new uPlot({} as uPlot.Options));
+
+    expect(await screen.findByText('early-trace')).toBeVisible();
+    expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
+    expect(openExemplar.onHandled).toHaveBeenCalledWith('navigation-early');
+    expect(screen.getByLabelText('Close')).toBeVisible();
   });
 
   it('renders xy-canvas', () => {
@@ -219,6 +466,81 @@ describe('ExemplarsPlugin', () => {
       top: `${8 / dpr}px`,
     });
   });
+
+  it('opens a pending request after a draw makes the chart coordinates available', async () => {
+    const openExemplar = createOpenExemplar('navigation-scales', 0);
+    const plot = new uPlot({} as uPlot.Options);
+    valToPos.mockReturnValue(NaN);
+    try {
+      setUp({ openExemplar }, undefined, undefined, false);
+      runPlotHooks(plot);
+
+      expect(screen.getByTestId(selectors.components.UPlotChart.xyCanvas)).toBeVisible();
+      expect(openExemplar.onHandled).not.toHaveBeenCalled();
+      expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+    } finally {
+      valToPos.mockImplementation((_value: number, scaleKey?: string) => (scaleKey === 'x' ? 100 : 50));
+    }
+
+    act(() => {
+      hooks.draw.forEach((hook) => hook(plot));
+    });
+
+    expect(await screen.findByText('2203801e0171aa8b')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+    expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
+    expect(openExemplar.onHandled).toHaveBeenCalledWith('navigation-scales');
+  });
+
+  it.each([
+    { name: 'missing Time field', field: 'Time', missing: true },
+    { name: 'missing Value field', field: 'Value', missing: true },
+    { name: 'null time', field: 'Time', value: null },
+    { name: 'null value', field: 'Value', value: null },
+    { name: 'NaN time', field: 'Time', value: NaN },
+    { name: 'NaN value', field: 'Value', value: NaN },
+    { name: 'infinite time', field: 'Time', value: Infinity },
+    { name: 'infinite value', field: 'Value', value: Infinity },
+  ])(
+    'keeps hover working with $name and opens the request when valid data arrives',
+    async ({ field, missing, value }) => {
+      const sample = createDataFrame({
+        fields: [
+          { name: 'Time', values: [1670418750000] },
+          { name: 'Value', values: [0.5] },
+          { name: 'traceID', type: FieldType.string, values: ['requested-trace'] },
+        ],
+      });
+      const invalidSample = createDataFrame({
+        fields: sample.fields
+          .filter((f) => !missing || f.name !== field)
+          .map((f) => (f.name === field ? { ...f, values: [value] } : f)),
+      });
+      const hoverSample = createDataFrame({
+        fields: [
+          { name: 'Time', values: [1670418800000] },
+          { name: 'Value', values: [0.7] },
+          { name: 'traceID', type: FieldType.string, values: ['hover-trace'] },
+        ],
+      });
+      const openExemplar = createOpenExemplar('navigation-invalid', 0);
+      const result = setUp({ exemplars: [invalidSample, hoverSample], openExemplar });
+
+      expect(getMarkers()).toHaveLength(1);
+      await userEvent.hover(getMarker());
+      expect(await screen.findByText('hover-trace')).toBeVisible();
+      expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+      expect(openExemplar.onHandled).not.toHaveBeenCalled();
+
+      await userEvent.unhover(getMarker());
+      result.rerenderExemplars([sample, hoverSample]);
+
+      expect(await screen.findByText('requested-trace')).toBeVisible();
+      expect(screen.getByLabelText('Close')).toBeVisible();
+      expect(openExemplar.onHandled).toHaveBeenCalledTimes(1);
+      expect(openExemplar.onHandled).toHaveBeenCalledWith('navigation-invalid');
+    }
+  );
 
   describe('marker', () => {
     it('renders', () => {
