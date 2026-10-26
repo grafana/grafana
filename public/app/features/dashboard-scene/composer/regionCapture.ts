@@ -12,8 +12,8 @@ import { type RegionCapture } from './types';
 export const MAX_RASTER_PIXELS = 16_000_000;
 /** Longest edge of the encoded image: what the model sees after its own resizing. */
 export const MAX_IMAGE_EDGE = 1568;
-export const IMAGE_TYPE = 'image/webp';
-export const IMAGE_QUALITY = 0.85;
+const IMAGE_TYPE = 'image/webp';
+const IMAGE_QUALITY = 0.85;
 export const CAPTURE_TIMEOUT_MS = 10_000;
 
 /** Source rectangle in raster pixels and the output size. */

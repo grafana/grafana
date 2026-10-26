@@ -6116,10 +6116,9 @@
       "tooltip-previous": "Previous"
     },
     "modes": {
-      "agent-edit": "Agent editing",
       "change-mode": "Change dashboard mode",
       "composer": "Composer",
-      "composer-description": "Point at panels and regions and ask Assistant to change them.",
+      "composer-description": "Point at anything and ask Assistant to change it.",
       "composer-no-permission": "You need permission to edit this dashboard.",
       "composer-save-first": "Save the dashboard before using Composer.",
       "composer-unsupported": "Composer is not available for this dashboard right now.",
@@ -6132,7 +6131,6 @@
       "empty": "This dashboard has no panels.",
       "label": "Dashboard mode",
       "save-before-viewing": "Save the dashboard before switching to Viewing.",
-      "switch-to-composer": "Switch to Composer",
       "switch-to-editing": "Switch to Editing",
       "switch-to-viewing": "Switch to Viewing",
       "view": "Viewing",

@@ -12,7 +12,7 @@ import { type Spec as NotebookSpec } from 'app/features/notebook/types';
 export type ComposerDashboardSpec = DashboardV2Spec;
 
 /** What GET_NOTEBOOK_SPEC / APPLY_NOTEBOOK_SPEC use. */
-export type ComposerNotebookSpec = NotebookSpec;
+type ComposerNotebookSpec = NotebookSpec;
 
 /**
  * The document a session edits: a dashboard, or (behind `grafana.notebookComposer`) a notebook on its own
@@ -34,7 +34,7 @@ export interface ComposerEnterRequestOptions {
   resources?: ComposerResource[];
 }
 
-export interface ComposerEnterOptions {
+interface ComposerEnterOptions {
   /**
    * 'floating' (the default) floats the extension sidebar over the document when the session starts, even
    * with `grafana.extensionSidebarFloating` off. The user may dock it and stay in Composer. When the session
@@ -180,7 +180,7 @@ export interface ComposerApplyOptions {
  * How the one save a notebook session makes on exit ended. 'unchanged' when nothing was left to write.
  * On 'conflict' core also shows the notebook's own conflict prompt, unless the person has navigated away.
  */
-export interface ComposerSaveOutcome {
+interface ComposerSaveOutcome {
   status: 'saved' | 'save_failed' | 'conflict' | 'unchanged';
   /** The autosave's error text: translated for a conflict, the raw API error for a failed save. */
   message?: string;

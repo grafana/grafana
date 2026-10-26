@@ -5,8 +5,8 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   canCollapseFloatingExtensionSidebar,
   canFloatExtensionSidebar,
-  getEffectiveExtensionSidebarPresentation,
   collapseFloatingExtensionSidebar,
+  getEffectiveExtensionSidebarPresentation,
   getRequestedExtensionSidebarPresentation,
   holdFloatingExtensionSidebar,
   isExtensionSidebarFloatingOverridden,
