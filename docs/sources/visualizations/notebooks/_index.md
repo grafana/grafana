@@ -74,6 +74,8 @@ PDF exports retain the rendered visualizations.
 
 ## Add notebooks
 
+By default, Viewers can read notebooks. Editors and Admins can create, edit, and delete them.
+
 To create a notebook from the **Notebooks** page, follow these steps:
 
 1. Click **+ New notebook**.
