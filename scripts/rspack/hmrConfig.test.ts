@@ -1,3 +1,4 @@
+import { stripVTControlCharacters } from 'node:util';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import dev from './rspack.dev.ts';
@@ -62,6 +63,13 @@ describe('the dev config without hmr', () => {
     expect(built.reactTransform).toEqual({ runtime: 'automatic' });
     expect(built.hasRefreshPlugin).toBe(false);
     expect(built.devServer).toBeUndefined();
+  });
+
+  it('keeps the default infrastructure logging, since there is no dev server Local: line to replace', () => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const config = dev(noChecks) as { infrastructureLogging?: unknown };
+
+    expect(config.infrastructureLogging).toBeUndefined();
   });
 });
 
@@ -141,5 +149,45 @@ describe('the dev config with hmr', () => {
 
   it('compiles everything up front, because the lazy client posts to the wrong origin', () => {
     expect(inspect(dev({ ...noChecks, hmr: '1' })).lazyCompilation).toBe(false);
+  });
+
+  describe('startup message', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.restoreAllMocks();
+    });
+
+    function printStartupMessage() {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const devServer = inspect(dev({ ...noChecks, hmr: '1' })).devServer as { onListening: () => void };
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      devServer.onListening();
+
+      return stripVTControlCharacters(log.mock.calls.map((args) => args.join(' ')).join('\n'));
+    }
+
+    it("silences the dev server's own Local: line, which reads as the URL to open", () => {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const config = dev({ ...noChecks, hmr: '1' }) as { infrastructureLogging?: { level?: string } };
+
+      expect(config.infrastructureLogging).toEqual({ level: 'warn' });
+    });
+
+    it('points at Grafana, and names the dev server only as the source of its assets', () => {
+      expect(printStartupMessage()).toBe(
+        [
+          '  ➜  Grafana:  http://localhost:3000/',
+          '              Frontend assets are served to it from http://localhost:3333/',
+          '',
+        ].join('\n')
+      );
+    });
+
+    it('uses the Grafana port from GF_SERVER_HTTP_PORT when it is set', () => {
+      vi.stubEnv('GF_SERVER_HTTP_PORT', '4000');
+
+      expect(printStartupMessage()).toContain('Grafana:  http://localhost:4000/');
+    });
   });
 });
