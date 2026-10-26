@@ -43,9 +43,11 @@ type RepositoryGetter interface {
 // list.
 //
 // freshness instruments how the getter's reads compare to the notifications
-// that triggered them (see freshness.go); nil disables the observation. It
-// applies to the NATS path only — the apiserver path reads a cache the watch
-// keeps current, so there is no cross-replica read visibility to measure.
+// that triggered them (see freshness.go), and carries the counter for the
+// re-reads that comparison drives (see staleread.go); nil disables the
+// observation. Both apply to the NATS path only — the apiserver path reads a
+// cache the watch keeps current, so there is no cross-replica read visibility
+// to measure or wait on.
 func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, RepositoryGetter) {
 	if nats.Enabled(subscriber) {
 		store := usinformer.NewStore()
@@ -63,8 +65,9 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		source.AllowDegradedStart()
 		announced := newAnnouncements()
 		source.SetAnnouncements(announced)
+		rec := freshness.Recorder(gvr.Resource)
 		getter := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
-		return source, observeRepositoryFreshness(getter, announced, freshness.Recorder(gvr.Resource))
+		return source, retryStaleRepositoryReads(observeRepositoryFreshness(getter, announced, rec), rec)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
 	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister())
