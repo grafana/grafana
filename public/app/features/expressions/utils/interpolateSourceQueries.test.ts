@@ -1,6 +1,4 @@
 import { type DataQuery } from '@grafana/schema';
-import { GraphiteDatasource } from 'app/plugins/datasource/graphite/datasource';
-import { type GraphiteQuery } from 'app/plugins/datasource/graphite/types';
 
 import { interpolateSourceQueries } from './interpolateSourceQueries';
 
@@ -28,18 +26,29 @@ describe('interpolateSourceQueries', () => {
     mockGetDatasource.mockReset();
   });
 
-  it('lets Graphite resolve a reference to a hidden sibling query', async () => {
-    const graphite = new GraphiteDatasource({ uid: 'graphite', type: 'graphite', jsonData: {} });
+  it('interpolates them in one call so a query can resolve a hidden sibling it references', async () => {
+    // Mirrors a data source such as Graphite that resolves `#A` references from sibling queries.
+    type GraphiteQuery = DataQuery & { target: string };
+    const resolveSiblingRefs = (queries: GraphiteQuery[]) => {
+      const targets = new Map(queries.map((q) => [q.refId, q.target]));
+      return queries.map((q) => ({
+        ...q,
+        targetFull: q.target.replace(/#([A-Z])/g, (match, ref) => targets.get(ref) ?? match),
+      }));
+    };
     const datasource = { uid: 'graphite', type: 'graphite' };
-    const hiddenSource: GraphiteQuery = { refId: 'A', hide: true, target: 'metric.$input', datasource };
+    const hiddenSource: GraphiteQuery = { refId: 'A', hide: true, target: 'metric.a', datasource };
     const nested: GraphiteQuery = { refId: 'B', target: 'sumSeries(#A)', datasource };
+    const graphite = { uid: 'graphite', interpolateVariablesInQueries: jest.fn(resolveSiblingRefs) };
     mockDataSources({ graphite });
 
     const result = await interpolateSourceQueries([hiddenSource, nested], {});
 
+    expect(graphite.interpolateVariablesInQueries).toHaveBeenCalledTimes(1);
+    expect(graphite.interpolateVariablesInQueries).toHaveBeenCalledWith([hiddenSource, nested], {}, undefined);
     expect(result).toEqual([
-      expect.objectContaining({ refId: 'A', target: 'metric.10' }),
-      expect.objectContaining({ refId: 'B', targetFull: 'sumSeries(metric.10)' }),
+      { ...hiddenSource, targetFull: 'metric.a' },
+      { ...nested, targetFull: 'sumSeries(metric.a)' },
     ]);
   });
 
