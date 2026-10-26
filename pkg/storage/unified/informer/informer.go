@@ -50,9 +50,13 @@ type ListFunc func(ctx context.Context) (objs []runtime.Object, listRV int64, er
 
 // Verb values passed to the Metrics event observations.
 const (
-	VerbAdd    = "add"
-	VerbUpdate = "update"
-	VerbDelete = "delete"
+	// defaultResyncJitterFactor spreads the re-list cadence by up to ±10% so that
+	// informers started together (multiple replicas or resources) do not re-list in
+	// lockstep and stampede the API server — the thundering-herd problem.
+	defaultResyncJitterFactor = 0.1
+	VerbAdd                   = "add"
+	VerbUpdate                = "update"
+	VerbDelete                = "delete"
 )
 
 // Metrics receives one observation per event the informer delivers to its

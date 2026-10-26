@@ -1296,7 +1296,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 					b.GetClient(),
 					historyJobExpiration,
 				)
-				historySource := informer.NewHistoricJobDeltaSource(nats.Enabled(b.natsSubscriber), c, historyJobExpiration)
+				historySource, err := informer.NewHistoricJobDeltaSource(nats.Enabled(b.natsSubscriber), c, historyJobExpiration)
+				if err != nil {
+					return fmt.Errorf("build history job delta source: %w", err)
+				}
 				if _, err := historySource.AddEventHandler(historyJobController.EventHandler()); err != nil {
 					return fmt.Errorf("add history job controller event handler: %w", err)
 				}
