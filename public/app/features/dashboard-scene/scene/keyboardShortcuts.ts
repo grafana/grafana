@@ -19,6 +19,7 @@ import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
+import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByPathId } from '../utils/pathId';
@@ -300,7 +301,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p r',
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-        if (isFullDashboardEditing(scene.state)) {
+        if (isFullDashboardEditing(scene.state) && !isRepeatCloneOrChildOf(vizPanel)) {
           const panelId = getPanelIdForVizPanel(vizPanel);
           DashboardInteractions.panelActionClicked('delete', panelId, 'keyboard');
           onRemovePanel(scene, vizPanel);

@@ -58,7 +58,6 @@ describe.each(layouts)('%s removePanel focus', (_name, createLayout) => {
     scene.subscribeToEvent(DashboardEditActionEvent, (event) => event.payload.perform());
 
     render(<scene.Component model={scene} />);
-    // The grid and the panel plugins render asynchronously.
     for (const panel of panels) {
       await screen.findByTestId(selectors.components.Panels.Panel.title(panel.state.title));
     }
@@ -67,9 +66,7 @@ describe.each(layouts)('%s removePanel focus', (_name, createLayout) => {
   }
 
   async function removeAndWaitForFocus(layout: DashboardLayoutManager, panel: VizPanel) {
-    // Let React commit the removal first, as it would before the next frame in the browser.
     act(() => layout.removePanel!(panel));
-    // focusVizPanel defers to the next animation frame
     await act(async () => {
       await new Promise((resolve) => requestAnimationFrame(resolve));
     });
@@ -98,7 +95,6 @@ describe.each(layouts)('%s removePanel focus', (_name, createLayout) => {
 
   it('does not take focus when a panel is removed programmatically', async () => {
     const { layout, panels } = await setup();
-    // Focus stays on another panel, as when a mutation command removes a panel the user isn't on.
     act(() => panelTitle('Panel A').focus());
 
     await removeAndWaitForFocus(layout, panels[1]);

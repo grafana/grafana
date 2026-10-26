@@ -12,6 +12,7 @@ import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
+import { RowItem } from '../layout-rows/RowItem';
 
 import { findAdjacentVizPanel, focusVizPanel, generateUniqueTitle, getIsLazy } from './utils';
 
@@ -184,6 +185,25 @@ describe('focusVizPanel', () => {
     });
 
     expect(document.activeElement).toBe(panelATitle);
+  });
+
+  it('does nothing when the panel is inside a repeat clone', async () => {
+    const panelA = new VizPanel({ title: 'Panel A', key: 'panel-a', pluginId: 'table' });
+    await renderPanels([panelA]);
+    const clonedPanelA = new VizPanel({ title: 'Panel A', key: 'panel-a', pluginId: 'table' });
+    new RowItem({
+      repeatSourceKey: 'row-1',
+      layout: new AutoGridLayoutManager({
+        layout: new AutoGridLayout({ children: [new AutoGridItem({ body: clonedPanelA })] }),
+      }),
+    });
+
+    await act(async () => {
+      focusVizPanel(clonedPanelA);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+    });
+
+    expect(document.activeElement).toBe(document.body);
   });
 
   it('does nothing when panel is undefined', async () => {

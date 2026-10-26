@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { type VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { type RowItem } from '../layout-rows/RowItem';
 import { type TabItem } from '../layout-tabs/TabItem';
 import { type DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -159,9 +160,12 @@ export function findAdjacentVizPanel<T>(
  *
  * Only acts when focus has dropped to document.body, i.e. the removal took the focused element
  * with it. Programmatic removals (moves, mutation commands) leave focus where the user has it.
+ *
+ * Panels inside repeated rows and tabs keep the source panel's key, so the DOM lookup below
+ * can't tell them apart and would focus the source panel instead.
  */
 export function focusVizPanel(panel: VizPanel | undefined): void {
-  if (!panel) {
+  if (!panel || isRepeatCloneOrChildOf(panel)) {
     return;
   }
 
