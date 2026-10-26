@@ -259,7 +259,7 @@ describe('Protomaps basemap', () => {
     });
   });
 
-  it('keeps labels as quiet as CARTO’s, so they stay under the panel’s data', async () => {
+  it('keeps labels as quiet as the default basemap’s, so they stay under the panel’s data', async () => {
     await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
 
     const minorRoads = appliedLayer('roads_labels_minor');
@@ -273,7 +273,7 @@ describe('Protomaps basemap', () => {
     expect(pois.paint).toEqual({ 'text-color': '#525252', 'text-halo-color': '#1f1f1f', 'text-halo-width': 1 });
   });
 
-  it('draws region names in CARTO’s size and weight, without a halo', async () => {
+  it('draws region names in the default basemap’s size and weight, without a halo', async () => {
     await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
 
     const region = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'places_region');
@@ -286,7 +286,7 @@ describe('Protomaps basemap', () => {
     expect(region.paint).toEqual({ 'text-color': '#b3b3b3', 'text-halo-color': '#ffffff', 'text-halo-width': 0 });
   });
 
-  it('sizes cities, towns and villages by CARTO’s place classes rather than by population', async () => {
+  it('sizes cities, towns and villages by the default basemap’s place classes rather than by population', async () => {
     await initLayer({ showLabels: true });
 
     const locality = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'places_locality');
@@ -314,7 +314,7 @@ describe('Protomaps basemap', () => {
     ]);
   });
 
-  it('uppercases capitals from zoom 7, cities from zoom 8 and hamlets from zoom 14, like CARTO', async () => {
+  it('uppercases capitals from zoom 7, cities from zoom 8 and hamlets from zoom 14, like the default basemap', async () => {
     await initLayer({ showLabels: true });
 
     const [step, zoom, further, ...stops] = appliedLayer('places_locality').layout['text-transform'];
@@ -345,7 +345,7 @@ describe('Protomaps basemap', () => {
   it.each([
     { flavor: ProtomapsFlavor.White, land: '#fafaf8', border: '#f2e6e7' },
     { flavor: ProtomapsFlavor.Black, land: '#0e0e0e', border: '#5c5e5e' },
-  ])('paints $flavor in the colors of the CARTO basemap it stands in for', async ({ flavor, land, border }) => {
+  ])('paints $flavor in the colors of the default basemap it stands in for', async ({ flavor, land, border }) => {
     await initLayer({ flavor, showLabels: true });
 
     const layers = appliedStyle().layers;
@@ -353,11 +353,11 @@ describe('Protomaps basemap', () => {
     expect(layer('earth').paint).toEqual({ 'fill-color': land });
     const borders = layer('boundaries_country').paint;
     expect(borders['line-color'].slice(0, 5)).toEqual(['interpolate', ['linear'], ['zoom'], 4, border]);
-    // CARTO draws country borders solid
+    // The default basemap draws country borders solid
     expect(borders).not.toHaveProperty('line-dasharray');
   });
 
-  it('draws highways as thin and light as CARTO’s further out, where they would compete with data', async () => {
+  it('draws highways as thin and light as the default basemap’s further out, where they would compete with data', async () => {
     await initLayer({ flavor: ProtomapsFlavor.White });
 
     const highway = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'roads_highway');
@@ -381,7 +381,7 @@ describe('Protomaps basemap', () => {
     ]);
   });
 
-  it('draws secondary roads in Dark Matter’s blue-grey at every zoom, unlike primary roads', async () => {
+  it('draws secondary roads in the dark default basemap’s blue-grey at every zoom, unlike primary roads', async () => {
     await initLayer({ flavor: ProtomapsFlavor.Black });
 
     const major = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'roads_major');
@@ -400,7 +400,7 @@ describe('Protomaps basemap', () => {
     ]);
   });
 
-  it('draws tunnels in CARTO’s flat colors, and Dark Matter’s service roads darker than the land', async () => {
+  it('draws tunnels in the default basemap’s flat colors, and the dark default basemap’s service roads darker than the land', async () => {
     await initLayer({ flavor: ProtomapsFlavor.Black });
 
     const layer = (id: string) => appliedStyle().layers.find((candidate: { id: string }) => candidate.id === id);
