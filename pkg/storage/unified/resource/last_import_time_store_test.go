@@ -110,6 +110,27 @@ func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupRes
 	require.NoError(t, err)
 	require.Equal(t, expectedTimes, times)
 
+	for _, maxAge := range []time.Duration{0, maxLastImportTimeAge} {
+		t.Run(fmt.Sprintf("backend list max age %s", maxAge), func(t *testing.T) {
+			backend := &kvStorageBackend{lastImportStore: store, lastImportTimeMaxAge: maxAge}
+			expected := make(map[NamespacedResource]time.Time, len(expectedTimes)+1)
+			for key, entry := range expectedTimes {
+				expected[key] = entry.LastImportTime
+			}
+			if maxAge == 0 {
+				expected[pnsr] = now.Add(-20 * time.Minute)
+			}
+			times, err := backend.ListResourceLastImportTimes(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, expected, times)
+			for _, key := range []NamespacedResource{dnsr, fnsr, pnsr, onsr, o1nsr} {
+				single, err := backend.GetResourceLastImportTime(t.Context(), key)
+				require.NoError(t, err)
+				require.Equal(t, single, times[key])
+			}
+		})
+	}
+
 	deleted, err := store.CleanupLastImportTimes(t.Context(), maxLastImportTimeAge)
 	require.NoError(t, err)
 	require.NotZero(t, deleted) // Deleted will be 1 for sqlkv, but 5 for regular KV.

@@ -5,24 +5,77 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
+	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	migrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
+
+type ruleCleanupStatusReader struct {
+	migrations.MigrationStatusReader
+	mode migrations.StorageMode
+}
+
+func (r *ruleCleanupStatusReader) GetStorageMode(context.Context, schema.GroupResource) (migrations.StorageMode, error) {
+	return r.mode, nil
+}
+
+type ruleCleanupStorage struct {
+	rest.Storage
+	deleteFn func(context.Context, k8srest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error)
+}
+
+func (s ruleCleanupStorage) DeleteCollection(ctx context.Context, validate k8srest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return s.deleteFn(ctx, validate, options, listOptions)
+}
+
+func TestDeleteCollection_afterMigrationRoutesToUnifiedStorage(t *testing.T) {
+	reader := &ruleCleanupStatusReader{
+		MigrationStatusReader: dualwrite.NewFakeMigrationStatusReader(),
+		mode:                  migrations.StorageModeDualWrite,
+	}
+	svc, err := dualwrite.ProvideService(dualwrite.NewFakeConfig(), dualwrite.NewFakeMigrator(), reader, prometheus.NewRegistry())
+	require.NoError(t, err)
+	deleted := false
+	unified := ruleCleanupStorage{deleteFn: func(_ context.Context, _ k8srest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
+		deleted = true
+		return &v1beta1.AlertRuleList{}, nil
+	}}
+	storage, err := svc.NewStorage(ResourceInfo.GroupResource(), &legacyStorage{}, unified)
+	require.NoError(t, err)
+	collectionDeleter, ok := storage.(k8srest.CollectionDeleter)
+	require.True(t, ok)
+	_, err = collectionDeleter.DeleteCollection(context.Background(), nil, &metav1.DeleteOptions{}, &internalversion.ListOptions{})
+	require.True(t, apierrors.IsMethodNotSupported(err), "legacy collection deletion remains unsupported")
+	require.False(t, deleted)
+
+	reader.mode = migrations.StorageModeUnified
+	result, err := collectionDeleter.DeleteCollection(context.Background(), nil, &metav1.DeleteOptions{}, &internalversion.ListOptions{})
+	require.NoError(t, err)
+	require.IsType(t, &v1beta1.AlertRuleList{}, result)
+	require.True(t, deleted, "migration must enable collection cleanup without recreating storage")
+}
 
 func TestToAPIError(t *testing.T) {
 	t.Run("validation failure becomes BadRequest", func(t *testing.T) {
@@ -75,7 +128,7 @@ func (fakeRuleAccessControl) AuthorizeAccessToRuleGroup(context.Context, identit
 func (fakeRuleAccessControl) AuthorizeAccessInFolder(context.Context, identity.Requester, ngmodels.Namespaced) error {
 	return nil
 }
-func (fakeRuleAccessControl) AuthorizeRuleChanges(context.Context, identity.Requester, *store.GroupDelta) error {
+func (fakeRuleAccessControl) AuthorizeRuleChanges(context.Context, identity.Requester, *rulestore.GroupDelta) error {
 	return nil
 }
 func (fakeRuleAccessControl) HasAccessInFolder(context.Context, identity.Requester, ngmodels.Namespaced) (bool, error) {
@@ -105,7 +158,7 @@ func TestCreate_QualityPolicyRejection(t *testing.T) {
 	ctx := genericapirequest.WithNamespace(context.Background(), "default")
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 
-	rule := &model.AlertRule{
+	rule := &v1beta1.AlertRule{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "no-summary-rule",
 			Namespace: "default",
@@ -113,13 +166,13 @@ func TestCreate_QualityPolicyRejection(t *testing.T) {
 				"grafana.app/folder": "test-folder-uid",
 			},
 		},
-		Spec: model.AlertRuleSpec{
+		Spec: v1beta1.AlertRuleSpec{
 			Title:        "no-summary-rule",
-			Trigger:      model.AlertRuleIntervalTrigger{Interval: "1m"},
-			NoDataState:  model.AlertRuleNoDataStateNoData,
-			ExecErrState: model.AlertRuleExecErrStateError,
-			Expressions: model.AlertRuleExpressionMap{
-				"A": model.AlertRuleExpression{
+			Trigger:      v1beta1.AlertRuleIntervalTrigger{Interval: "1m"},
+			NoDataState:  v1beta1.AlertRuleNoDataStateNoData,
+			ExecErrState: v1beta1.AlertRuleExecErrStateError,
+			Expressions: v1beta1.AlertRuleExpressionMap{
+				"A": v1beta1.AlertRuleExpression{
 					Model:  map[string]interface{}{"type": "math", "expression": "1 == 1", "refId": "A"},
 					Source: new(true),
 				},

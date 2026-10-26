@@ -69,11 +69,7 @@ export type SearchAPIResponse = {
 const folderViewSort = 'name_sort';
 
 export class UnifiedSearcher implements GrafanaSearcher {
-  locationInfo: Promise<Record<string, LocationInfo>>;
-
-  constructor() {
-    this.locationInfo = loadLocationInfo();
-  }
+  private locationInfo = loadLocationInfo();
 
   async search(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
@@ -115,7 +111,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
     return resp.facets?.tags?.terms || [];
   }
 
-  async getLocationInfo() {
+  getLocationInfo() {
+    return this.locationInfo;
+  }
+
+  reloadLocationInfo() {
+    this.locationInfo = loadLocationInfo();
     return this.locationInfo;
   }
 
@@ -145,8 +146,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     let rsp: SearchAPIResponse;
 
     if (query.deleted) {
-      // Both the filtering and the sorting happen behind this call: in the browser today,
-      // on the server once the trash endpoint is switched on.
+      // The trash endpoint does the filtering and sorting, so the results come back ready.
       const results = await deletedDashboardsCache.search(query);
       rsp = { hits: results, totalHits: results.length };
     } else {
@@ -254,7 +254,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return rsp;
     }
     // sync the location info (folders)
-    this.locationInfo = loadLocationInfo();
+    this.reloadLocationInfo();
     // recheck for missing folders
     const hasMissing = await this.isFolderCacheStale(rsp.hits);
     if (!hasMissing) {

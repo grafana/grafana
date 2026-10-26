@@ -1666,7 +1666,7 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 				Limit: 100000,
 			},
 		},
-		Limit:        100000,
+		Limit:        0, // Only tag counts are needed; dashboard rows would be discarded.
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
@@ -1703,6 +1703,10 @@ func (dr DashboardServiceImpl) CountInFolders(ctx context.Context, orgID int64, 
 func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, u identity.Requester) error {
 	ctx, span := tracer.Start(ctx, "dashboards.service.DeleteInFolders")
 	defer span.End()
+
+	// Attach the requester to ctx: a context-dependent LegacyDatabaseProvider (used by
+	// DeleteByDashboardUIDs below) can only resolve the target database from here.
+	ctx = identity.WithRequester(ctx, u)
 
 	// We need a list of dashboard uids inside the folder to delete related public dashboards
 	dashes, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
@@ -2143,7 +2147,7 @@ func (dr *DashboardServiceImpl) searchDashboardsThroughK8sRaw(ctx context.Contex
 	}
 
 	res, err := dr.k8sclient.Search(ctx, query.OrgId, request)
-	if err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return dashboardv0.SearchResults{}, err
 	}
 

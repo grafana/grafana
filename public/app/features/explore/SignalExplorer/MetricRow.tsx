@@ -5,6 +5,9 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
+import { AddToQueryButton, getAddToQueryReveal } from './AddToQueryButton';
+import { type AddToQueryItemType } from './types';
+
 interface Props {
   name: string;
   expanded: boolean;
@@ -21,11 +24,21 @@ interface Props {
    */
   onToggle: (name: string) => void;
   onSelect: (name: string) => void;
+  /** Left out where the card's query has nowhere to put the name. */
+  onAddToQuery?: (name: string, itemType: AddToQueryItemType) => void;
 }
 
 // Memoized: the list re-renders on every keystroke and every expansion, and only the one or two rows
 // whose own props moved need to re-render with it.
-export const MetricRow = memo(function MetricRow({ name, expanded, selected, labelsId, onToggle, onSelect }: Props) {
+export const MetricRow = memo(function MetricRow({
+  name,
+  expanded,
+  selected,
+  labelsId,
+  onToggle,
+  onSelect,
+  onAddToQuery,
+}: Props) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -59,6 +72,14 @@ export const MetricRow = memo(function MetricRow({ name, expanded, selected, lab
       >
         <span className={styles.name}>{name}</span>
       </button>
+      {onAddToQuery && (
+        <AddToQueryButton
+          text={name}
+          itemType="metric"
+          ariaLabel={t('explore.metrics-list.add-metric-to-query', 'Add {{name}} to query', { name })}
+          onAdd={onAddToQuery}
+        />
+      )}
     </div>
   );
 });
@@ -79,6 +100,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
         color: theme.colors.text.primary,
       },
     },
+    ...getAddToQueryReveal(theme),
   }),
   // `&:hover` is restated because the hover rule above is more specific and would otherwise repaint
   // the selected row as merely hovered.

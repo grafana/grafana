@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 
 import { type AnnotationQuery, getDataSourceRef } from '@grafana/data';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type SceneComponentProps, SceneObjectBase, dataLayers } from '@grafana/scenes';
 import { Spinner } from '@grafana/ui';
 

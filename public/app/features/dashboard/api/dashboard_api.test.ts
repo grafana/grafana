@@ -1,4 +1,5 @@
-import { config, getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
 import { UnifiedDashboardAPI } from './UnifiedDashboardAPI';
@@ -40,17 +41,37 @@ afterAll(() => {
 });
 
 describe('DashboardApi', () => {
-  it('should use unified api by default', async () => {
-    expect(await getDashboardAPI()).toBeInstanceOf(UnifiedDashboardAPI);
+  afterEach(() => {
+    setDashboardAPI(undefined);
+    setTestFlags({});
   });
 
-  it('should allow overriding clients in test environment', async () => {
-    process.env.NODE_ENV = 'test';
-    const mockClient = { unified: new UnifiedDashboardAPI() };
-    setDashboardAPI(mockClient);
-    const api = await getDashboardAPI();
-    expect(api).toBe(mockClient.unified);
-    setDashboardAPI(undefined);
+  describe('with dashboardNewLayouts off', () => {
+    beforeEach(() => {
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
+    it('should use unified api by default', async () => {
+      expect(await getDashboardAPI()).toBeInstanceOf(UnifiedDashboardAPI);
+    });
+
+    it('should allow overriding the unified client in test environment', async () => {
+      const unified = new UnifiedDashboardAPI();
+      setDashboardAPI({ unified });
+      expect(await getDashboardAPI()).toBe(unified);
+    });
+  });
+
+  describe('with dashboardNewLayouts true (default)', () => {
+    it('should use v2 api by default', async () => {
+      expect(await getDashboardAPI()).toBeInstanceOf(K8sDashboardV2API);
+    });
+
+    it('should allow overriding clients in test environment', async () => {
+      const v2 = new K8sDashboardV2API();
+      setDashboardAPI({ unified: new UnifiedDashboardAPI(), v2 });
+      expect(await getDashboardAPI()).toBe(v2);
+    });
   });
 
   it('should return v1 if it is passed in the params', async () => {
@@ -59,16 +80,6 @@ describe('DashboardApi', () => {
 
   it('should return v2 if it is passed in the params', async () => {
     expect(await getDashboardAPI('v2')).toBeInstanceOf(K8sDashboardV2API);
-  });
-
-  describe('when dashboardNewLayouts enabled', () => {
-    beforeEach(() => {
-      config.featureToggles.dashboardNewLayouts = true;
-    });
-
-    it('should use v2 when v2 is passed in the params', async () => {
-      expect(await getDashboardAPI('v2')).toBeInstanceOf(K8sDashboardV2API);
-    });
   });
 
   describe('client rebuild after transient discovery failure', () => {

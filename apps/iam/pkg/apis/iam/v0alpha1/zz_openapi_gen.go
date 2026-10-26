@@ -38,6 +38,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		GetTeamGroupsResponse{}.OpenAPIModelName():                                          schema_pkg_apis_iam_v0alpha1_GetTeamGroupsResponse(ref),
 		GetTeamLBACRulesForSubjectRouteBody{}.OpenAPIModelName():                            schema_pkg_apis_iam_v0alpha1_GetTeamLBACRulesForSubjectRouteBody(ref),
 		GetTeamLBACRulesForSubjectRouteResponse{}.OpenAPIModelName():                        schema_pkg_apis_iam_v0alpha1_GetTeamLBACRulesForSubjectRouteResponse(ref),
+		GetTeamLBACUsageResponse{}.OpenAPIModelName():                                       schema_pkg_apis_iam_v0alpha1_GetTeamLBACUsageResponse(ref),
+		GetTeamLBACUsageV0alpha1ResponseCounts{}.OpenAPIModelName():                         schema_pkg_apis_iam_v0alpha1_GetTeamLBACUsageV0alpha1ResponseCounts(ref),
 		GetTeamMembersBody{}.OpenAPIModelName():                                             schema_pkg_apis_iam_v0alpha1_GetTeamMembersBody(ref),
 		GetTeamMembersResponse{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_GetTeamMembersResponse(ref),
 		GetTeamMembersTeamUser{}.OpenAPIModelName():                                         schema_pkg_apis_iam_v0alpha1_GetTeamMembersTeamUser(ref),
@@ -1423,6 +1425,68 @@ func schema_pkg_apis_iam_v0alpha1_GetTeamLBACRulesForSubjectRouteResponse(ref co
 	}
 }
 
+func schema_pkg_apis_iam_v0alpha1_GetTeamLBACUsageResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"counts": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(GetTeamLBACUsageV0alpha1ResponseCounts{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"counts"},
+			},
+		},
+		Dependencies: []string{
+			GetTeamLBACUsageV0alpha1ResponseCounts{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_iam_v0alpha1_GetTeamLBACUsageV0alpha1ResponseCounts(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"datasources": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"teams": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+					"filters": {
+						SchemaProps: spec.SchemaProps{
+							Default: 0,
+							Type:    []string{"integer"},
+							Format:  "int64",
+						},
+					},
+				},
+				Required: []string{"datasources", "teams", "filters"},
+			},
+		},
+	}
+}
+
 func schema_pkg_apis_iam_v0alpha1_GetTeamMembersBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -1624,6 +1688,13 @@ func schema_pkg_apis_iam_v0alpha1_GetUserTeamsUserTeam(ref common.ReferenceCallb
 							Default: "",
 							Type:    []string{"string"},
 							Format:  "",
+						},
+					},
+					"teamInternalId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated numeric team ID, when available, for legacy references.",
+							Type:        []string{"integer"},
+							Format:      "int64",
 						},
 					},
 					"permission": {

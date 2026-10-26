@@ -16,7 +16,6 @@ import (
 // adding an option forces a decision about where its value comes from.
 var callerSuppliedFields = map[string]string{
 	"KvStore":                  "the store itself; chosen by the wiring",
-	"ExperimentalKV":           "an alternative store; chosen by the wiring",
 	"Reg":                      "metrics registry owned by the caller",
 	"Log":                      "logger owned by the caller",
 	"DBKeepAlive":              "reference to the caller's database provider",
@@ -130,12 +129,15 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	cfg.DashboardVersionsToKeep = 7
 	cfg.EnableGarbageCollection = true
 	cfg.GarbageCollectionDryRun = true
+	cfg.BlobGarbageCollectionEnabled = true
+	cfg.BlobGarbageCollectionDryRun = true
 	cfg.GarbageCollectionInterval = 6 * time.Minute
 	cfg.GarbageCollectionBatchSize = 8
 	cfg.GarbageCollectionBatchWait = 7 * time.Minute
 	cfg.GarbageCollectionMaxAge = 8 * time.Minute
 	cfg.DashboardsGarbageCollectionMaxAge = 9 * time.Minute
 	cfg.KVLeaseTTL = 9 * time.Minute
+	cfg.FastLatestKeyLookupEnabled = true
 
 	opts := NewKVBackendOptions(cfg)
 
@@ -147,9 +149,12 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	require.Equal(t, 7, opts.DashboardVersionsToKeep)
 	require.NotEmpty(t, opts.Holder)
 	require.Equal(t, 9*time.Minute, opts.LeaseTTL)
+	require.True(t, opts.FastLatestKeyLookup)
 	require.Equal(t, GarbageCollectionConfig{
 		Enabled:          true,
 		DryRun:           true,
+		BlobEnabled:      true,
+		BlobDryRun:       true,
 		Interval:         6 * time.Minute,
 		BatchSize:        8,
 		BatchWait:        7 * time.Minute,

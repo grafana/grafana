@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -61,6 +62,9 @@ type dataStore struct {
 	cache         *gocache.Cache
 	legacyDialect sqltemplate.Dialect // TODO: remove when backwards compatibility is no longer needed.
 	metrics       *kvBackendMetrics
+	// fastLatestKeyLookup resolves latest-version reads with a single-row
+	// descending lookup. Off by default while it is rolled out.
+	fastLatestKeyLookup bool
 }
 
 type dataImportBatchWriter interface {
@@ -297,6 +301,19 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 
 	listKey := ListRequestKey(key)
 
+	if rv == 0 && d.fastLatestKeyLookup {
+		// The newest key for a single resource is the last one in key order, so a
+		// one-row descending lookup avoids scanning the resource's whole history.
+		dataKey, err := d.LastResourceVersion(ctx, listKey)
+		if err != nil {
+			return DataKey{}, err
+		}
+		if dataKey.Action == DataActionDeleted && !includeDeleted {
+			return DataKey{}, ErrNotFound
+		}
+		return dataKey, nil
+	}
+
 	iter := d.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv, IncludeDeleted: includeDeleted})
 	for dataKey, err := range iter {
 		if err != nil {
@@ -348,9 +365,10 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 	return func(yield func(string, error) bool) {
 		opts := base
 		opts.Limit = int64(pageSize)
+		resuming := false
 
 		for {
-			page := make([]string, 0, pageSize)
+			page := make([]string, 0, opts.Limit)
 			var scanErr error
 			for key, err := range kv.Keys(ctx, section, opts) {
 				if err != nil {
@@ -365,14 +383,18 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 				return
 			}
 
-			for _, key := range page {
+			start := 0
+			if resuming && len(page) > 0 && page[0] == opts.StartKey {
+				start = 1 // Inclusive cursor repeats the previous page's last key.
+			}
+			for _, key := range page[start:] {
 				if !yield(key, nil) {
 					return
 				}
 			}
 
 			// A short page means we reached the end of the range.
-			if len(page) < pageSize {
+			if len(page) < int(opts.Limit) {
 				return
 			}
 
@@ -380,8 +402,11 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 				// EndKey is exclusive; keep the original inclusive lower bound.
 				opts.EndKey = page[len(page)-1]
 			} else {
-				// StartKey is inclusive, so advance past the last key we saw.
-				opts.StartKey = PrefixRangeEnd(page[len(page)-1])
+				// Include the boundary key and request one extra row to avoid losing
+				// keys that extend it, without passing a NUL byte to SQL text columns.
+				opts.StartKey = page[len(page)-1]
+				opts.Limit = int64(pageSize + 1)
+				resuming = true
 			}
 		}
 	}
@@ -514,6 +539,7 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 	))
 	return func(yield func(DataObj, error) bool) {
 		defer span.End()
+		stats := listBodyStatsFromContext(ctx)
 		// Validate all keys first
 		for _, key := range keys {
 			if err := validateDataKey(key); err != nil {
@@ -536,6 +562,9 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 				keyMap[strKey] = key
 			}
 
+			if stats != nil {
+				stats.bodyKeysRequested += len(stringKeys)
+			}
 			// Call kv.BatchGet for this batch
 			for kv, err := range d.kv.BatchGet(ctx, dataSection, stringKeys) {
 				if err != nil {
@@ -550,6 +579,9 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 					return
 				}
 
+				if stats != nil {
+					stats.bodiesConsumed++
+				}
 				// Yield the DataObj
 				if !yield(DataObj{
 					Key:   dataKey,
@@ -1263,19 +1295,6 @@ func (d *dataStore) lookupCanonicalName(
 	return res[0].Name, nil
 }
 
-// snowflakeRVThreshold separates snowflake RVs (new) from legacy microsecond-timestamp
-// RVs (old). The two encodings occupy disjoint numeric bands for any realistic resource
-// timestamp: a snowflake is (ms_since_2010_epoch << 22), so its <<22 shift lifts it ~150x
-// above the microsecond form of the same instant. For resources dated 2013–2030, micro-RVs
-// span ~1.4e15–1.9e15 while snowflakes span ~2.9e17–2.5e18, leaving an empty gap between them.
-//
-// The cut sits in that gap. 1e17 as a UnixMicros timestamp is year ~5138, so no real
-// micro-RV reaches it; the smallest snowflake we can emit is ~1e16 (epoch + a few days),
-// and any snowflake from a post-2011 timestamp is well above 1e17.
-const snowflakeRVThreshold = int64(1e17)
-
-// IsSnowflake returns whether the argument is a snowflake ID (new) or a microsecond
-// timestamp (old).
 func IsSnowflake(rv int64) bool {
-	return rv >= snowflakeRVThreshold
+	return resourceutil.IsSnowflake(rv)
 }

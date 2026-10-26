@@ -1,7 +1,5 @@
 import { useForm } from 'react-hook-form';
-import { act, render, screen } from 'test/test-utils';
-
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { render, screen } from 'test/test-utils';
 
 import { type RepoType } from '../Wizard/types';
 import { setupProvisioningMswServer } from '../mocks/server';
@@ -32,25 +30,6 @@ function Wrapper({ repoType, dashboardPreviewName }: WrapperProps = {}) {
 }
 
 describe('PullRequestOptionsSection', () => {
-  beforeEach(() => {
-    // Default to the gitConventions flag being enabled; specific tests override.
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
-  it('renders nothing when the gitConventions flag is off', () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
-    const { container } = render(<Wrapper />);
-
-    expect(container).toBeEmptyDOMElement();
-  });
-
   it('renders collapsed by default, hiding the inner fields', () => {
     render(<Wrapper />);
 
@@ -77,32 +56,32 @@ describe('PullRequestOptionsSection', () => {
     expect(screen.getByRole('checkbox')).toHaveAttribute('name', 'pullRequest.enforceTemplate');
   });
 
-  it('renders the dashboard previews toggle for GitHub even when the gitConventions flag is off', async () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
+  it('renders the dashboard previews toggle for GitHub', async () => {
     const { user } = render(<Wrapper repoType="github" dashboardPreviewName="generateDashboardPreviews" />);
 
     await user.click(screen.getByText('Pull request options'));
 
     expect(screen.getByRole('checkbox', { name: /Enable dashboard previews in pull requests/i })).toBeInTheDocument();
-    // Template fields stay hidden while the flag is off.
-    expect(screen.queryByText('Pull request title template')).not.toBeInTheDocument();
+    expect(screen.getByText('Pull request title template')).toBeInTheDocument();
   });
 
-  it('renders the dashboard previews toggle for GitHub Enterprise even when the gitConventions flag is off', async () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
+  it('renders the dashboard previews toggle for GitHub Enterprise', async () => {
     const { user } = render(<Wrapper repoType="githubEnterprise" dashboardPreviewName="generateDashboardPreviews" />);
 
     await user.click(screen.getByText('Pull request options'));
 
     expect(screen.getByRole('checkbox', { name: /Enable dashboard previews in pull requests/i })).toBeInTheDocument();
-    // Template fields stay hidden while the flag is off.
-    expect(screen.queryByText('Pull request title template')).not.toBeInTheDocument();
+    expect(screen.getByText('Pull request title template')).toBeInTheDocument();
   });
 
-  it('does not render the dashboard previews toggle for non-GitHub providers', () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
-    const { container } = render(<Wrapper repoType="gitlab" dashboardPreviewName="generateDashboardPreviews" />);
+  it('does not render the dashboard previews toggle for non-GitHub providers', async () => {
+    const { user } = render(<Wrapper repoType="gitlab" dashboardPreviewName="generateDashboardPreviews" />);
 
-    expect(container).toBeEmptyDOMElement();
+    await user.click(screen.getByText('Pull request options'));
+
+    expect(
+      screen.queryByRole('checkbox', { name: /Enable dashboard previews in pull requests/i })
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('Pull request title template')).toBeInTheDocument();
   });
 });

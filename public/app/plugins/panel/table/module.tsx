@@ -43,7 +43,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
     },
     useCustomConfig: (builder) => {
       addTableCustomConfig(builder, {
-        filters: true,
+        filters: () => {
+          const client = getFeatureFlagClient();
+          return (
+            !client.getBooleanValue(FlagKeys.TableRefresh, false) ||
+            !client.getBooleanValue(FlagKeys.TableRefreshNewFeatures, false)
+          );
+        },
         wrapHeaderText: true,
         hideFields: true,
       });

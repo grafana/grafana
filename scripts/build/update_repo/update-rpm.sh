@@ -30,7 +30,7 @@ BUCKET="gs://$GCP_REPO_BUCKET/$RELEASE_TYPE/$REPO"
 mkdir -p /rpm-repo
 
 # Download the database
-gsutil -m rsync -r "$BUCKET" /rpm-repo
+gcloud storage rsync -r "$BUCKET" /rpm-repo
 
 # Add the new release to the repo
 cp "$DIST_PATH"/*.rpm /rpm-repo # adds to many files for enterprise

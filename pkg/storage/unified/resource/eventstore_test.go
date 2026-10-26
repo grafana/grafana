@@ -29,6 +29,7 @@ func setupTestEventStore(t *testing.T) *eventStore {
 
 // TestMain verifies that all background goroutines are properly shut down after tests.
 func TestMain(m *testing.M) {
+	useTestGlobalSearchCoverage()
 	db.SetupTestDB()
 	goleak.VerifyTestMain(m,
 		goleak.Cleanup(func(exitCode int) {
@@ -553,12 +554,13 @@ func testEventStoreListSincePages(t *testing.T, ctx context.Context, store *even
 			}
 			for i, scan := range probe.scans {
 				require.Equal(t, SortOrderAsc, scan.Sort)
-				require.Equal(t, int64(500), scan.Limit)
 				if i == 0 {
+					require.Equal(t, int64(500), scan.Limit)
 					require.Equal(t, fmt.Sprint(since), scan.StartKey)
 				} else {
+					require.Equal(t, int64(501), scan.Limit)
 					cursor := eventStoreTestKey(expected[i*500-1])
-					require.Equal(t, PrefixRangeEnd(cursor), scan.StartKey)
+					require.Equal(t, cursor, scan.StartKey)
 				}
 			}
 			probe.assertClosed()

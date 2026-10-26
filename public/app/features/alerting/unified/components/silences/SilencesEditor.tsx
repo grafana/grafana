@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { pickBy } from 'lodash';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
 import { useDebounce } from 'react-use';
 
+import { useGetAlertRuleQuery } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import {
   type GrafanaTheme2,
   addDurationToDate,
@@ -17,6 +19,7 @@ import { Trans, t } from '@grafana/i18n';
 import { isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
+  Box,
   Button,
   Field,
   FieldSet,
@@ -36,7 +39,7 @@ import { contextSrv } from '../../../../../core/services/context_srv';
 import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { type SilenceFormFields } from '../../types/silence-form';
+import { type MatcherFieldValue, type SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
@@ -147,11 +150,15 @@ export const SilencesEditor = ({
 }: SilencesEditorProps) => {
   const { granted: canPreview } = useSilenceAbility({ action: SilenceAction.Preview });
 
+  const { data: silencedRule, isError: silencedRuleUnavailable } = useGetAlertRuleQuery(
+    ruleUid ? { name: ruleUid } : skipToken
+  );
+
   const [createSilence, { isLoading }] = alertSilencesApi.endpoints.createSilence.useMutation();
   const formAPI = useForm({ defaultValues: formValues });
   const styles = useStyles2(getStyles);
 
-  const { register, handleSubmit, formState, watch, setValue, clearErrors } = formAPI;
+  const { register, handleSubmit, formState, watch, setValue, clearErrors, getValues } = formAPI;
 
   const [duration, startsAt, endsAt, matchers] = watch(['duration', 'startsAt', 'endsAt', 'matchers']);
 
@@ -166,11 +173,11 @@ export const SilencesEditor = ({
   const onSubmit = async (data: SilenceFormFields) => {
     const { id, startsAt, endsAt, comment, createdBy, matchers: matchersFields } = data;
 
-    if (ruleUid) {
-      matchersFields.push({ name: MATCHER_ALERT_RULE_UID, value: ruleUid, operator: MatcherOperator.equal });
-    }
+    const matchersWithRuleUid = ruleUid
+      ? [...matchersFields, { name: MATCHER_ALERT_RULE_UID, value: ruleUid, operator: MatcherOperator.equal }]
+      : matchersFields;
 
-    const matchersToSend = matchersFields.map(matcherFieldToMatcher).filter((field) => field.name && field.value);
+    const matchersToSend = matchersWithRuleUid.map(matcherFieldToMatcher).filter((field) => field.name);
     const payload = pickBy(
       {
         id,
@@ -182,11 +189,16 @@ export const SilencesEditor = ({
       },
       (value) => !!value
     ) as SilenceCreatePayload;
-    await createSilence({ datasourceUid: getDatasourceAPIUid(alertManagerSourceName), payload })
-      .unwrap()
-      .then((newSilenceResponse) => {
-        onSilenceCreatedHandler?.(newSilenceResponse);
-      });
+
+    try {
+      const newSilenceResponse = await createSilence({
+        datasourceUid: getDatasourceAPIUid(alertManagerSourceName),
+        payload,
+      }).unwrap();
+      onSilenceCreatedHandler?.(newSilenceResponse);
+    } catch {
+      // The mutation's onQueryStarted already surfaces an error toast; keep the editor open so the user can retry.
+    }
   };
 
   // Keep duration and endsAt in sync
@@ -214,6 +226,20 @@ export const SilencesEditor = ({
     700,
     [clearErrors, duration, endsAt, prevDuration, setValue, startsAt]
   );
+
+  const onLabelClick = ([value, name]: [string | undefined, string | undefined]): void => {
+    if (!name || !value) {
+      return;
+    }
+
+    const currentMatchers = getValues('matchers');
+    if (hasEqualMatcher(currentMatchers, name, value)) {
+      return;
+    }
+
+    const nextMatchers = addEqualMatcher(currentMatchers, name, value);
+    setValue('matchers', nextMatchers, { shouldDirty: true, shouldValidate: true });
+  };
 
   const userLogged = Boolean(contextSrv.user.isSignedIn && contextSrv.user.name);
 
@@ -243,7 +269,27 @@ export const SilencesEditor = ({
             </Field>
           </div>
 
-          <MatchersField required={Boolean(!ruleUid)} ruleUid={ruleUid} />
+          {ruleUid && (silencedRule || silencedRuleUnavailable) && (
+            <Box marginBottom={2}>
+              <Field
+                noMargin
+                label={t('alerting.silences-editor.label-alert-rule', 'Alert rule')}
+                description={getSilencedRuleDescription(ruleUid, Boolean(silencedRule))}
+                disabled
+              >
+                <Input
+                  id="alert-rule-name"
+                  value={
+                    silencedRule?.spec.title ??
+                    t('alerting.silences-editor.alert-rule-unavailable', 'Alert rule unavailable')
+                  }
+                  disabled
+                />
+              </Field>
+            </Box>
+          )}
+
+          <MatchersField scopedToRule={Boolean(ruleUid)} />
 
           <Field
             label={t('alerting.silences-editor.label-comment', 'Comment')}
@@ -282,7 +328,12 @@ export const SilencesEditor = ({
             </Field>
           )}
           {canPreview && (
-            <SilencedInstancesPreview amSourceName={alertManagerSourceName} matchers={matchers} ruleUid={ruleUid} />
+            <SilencedInstancesPreview
+              amSourceName={alertManagerSourceName}
+              matchers={matchers}
+              ruleUid={ruleUid}
+              onLabelClick={onLabelClick}
+            />
           )}
         </FieldSet>
         <Stack gap={1}>
@@ -304,6 +355,38 @@ export const SilencesEditor = ({
     </FormProvider>
   );
 };
+
+function hasEqualMatcher(matchers: MatcherFieldValue[], name: string, value: string): boolean {
+  return matchers.some(
+    (matcher) => matcher.name === name && matcher.value === value && matcher.operator === MatcherOperator.equal
+  );
+}
+
+function addEqualMatcher(matchers: MatcherFieldValue[], name: string, value: string): MatcherFieldValue[] {
+  const newMatcher = { name, value, operator: MatcherOperator.equal };
+  const emptyIndex = matchers.findIndex((matcher) => !matcher.name && !matcher.value);
+
+  if (emptyIndex === -1) {
+    return [...matchers, newMatcher];
+  }
+
+  return matchers.map((matcher, index) => (index === emptyIndex ? newMatcher : matcher));
+}
+
+function getSilencedRuleDescription(ruleUid: string, ruleLoaded: boolean) {
+  if (ruleLoaded) {
+    return t(
+      'alerting.silences-editor.description-alert-rule-scope',
+      'This silence applies only to alerts from this alert rule.'
+    );
+  }
+
+  return t(
+    'alerting.silences-editor.description-alert-rule-unavailable',
+    'This silence applies only to alerts from the alert rule with UID {{ruleUid}}. The rule may have been deleted, or you may not have permission to view it.',
+    { ruleUid }
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   formContainer: css({

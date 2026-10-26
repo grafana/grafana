@@ -34,7 +34,14 @@ func ProvideDecryptService(cfg *setting.Cfg, tracer trace.Tracer, decryptStorage
 
 		tlsConfig := readTLSFromConfig(cfg)
 
-		client, err := NewGRPCDecryptClientWithTLS(tokenExchangeClient, tracer, cfg.SecretsManagement.GrpcServerAddress, tlsConfig, cfg.SecretsManagement.GrpcClientLoadBalancing)
+		client, err := NewGRPCDecryptClientWithTLS(
+			tokenExchangeClient,
+			tracer,
+			cfg.SecretsManagement.GrpcServerAddress,
+			tlsConfig,
+			cfg.SecretsManagement.GrpcClientLoadBalancing,
+			cfg.SecretsManagement.GrpcTokenExchangerNamespaceAll,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create grpc decrypt client: %w", err)
 		}

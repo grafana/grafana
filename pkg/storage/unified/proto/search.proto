@@ -4,6 +4,7 @@ package resource;
 option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
 
 import "resource.proto";
+import "google/protobuf/struct.proto";
 
 
 // Unlike the ResourceStore, this service can be exposed to clients directly
@@ -24,6 +25,11 @@ service ResourceIndex {
   // Hybrid search: RRF fuse lexical and vector results with optional reranking.
   // Without a vector backend or embedding provider, searches only the regular
   // resource index using the lexical leg; reranking remains available.
+  // A single resource type behaves identically with either request selector.
+  // Multiple resource types are reranked together; without successful reranking,
+  // their results are interleaved in request order, preserving each type's ranking.
+  // A failure searching any requested resource fails the request; no partial
+  // results are returned.
   rpc HybridSearch(HybridSearchRequest) returns (HybridSearchResponse);
 }
 
@@ -218,6 +224,16 @@ message ResourceSearchResponse {
 
   // Populated only when result_format is FIELD_VALUES.
   repeated ResourceSearchRow rows = 12;
+
+  // Types a global search left out, as {group}/{resource}, so the results are
+  // incomplete: the calling service may not search them on the user's behalf,
+  // or this server does not check their results against the user.
+  repeated string skipped_types = 13;
+
+  // The Kubernetes kind of each type a global search covers, keyed by
+  // {group}/{resource}, for the results to report. The API layer may not know
+  // the kinds this server takes from manifests read at runtime.
+  map<string, string> kinds = 14;
 }
 
 message ResourceSearchField {
@@ -348,9 +364,18 @@ message VectorSearchResult {
   bytes metadata = 7;
 }
 
+// New callers should use namespace and resources, including for single-resource searches.
 message HybridSearchRequest {
-  // Resource type to search (namespace + group + resource).
-  ResourceKey key = 1;
+  message Resource {
+    string group = 1;
+    string resource = 2;
+  }
+
+  // Deprecated: use namespace and resources instead.
+  // For a single-resource search, provide one entry in resources.
+  // Retained for backward compatibility; must not be combined with
+  // namespace or resources.
+  ResourceKey key = 1 [deprecated = true];
 
   // Required. Feeds the lexical leg verbatim; also used for semantic search
   // and reranking unless semantic_query is set. Max 1000 bytes. Put
@@ -361,16 +386,19 @@ message HybridSearchRequest {
   // of query. Also used for reranking in lexical-only mode. Max 1000 bytes.
   string semantic_query = 3;
 
-  // Top-k: maximum results. Defaults to 50 when zero, capped at 200.
+  // Top-k: maximum results across all requested resource types.
+  // Defaults to 50 when zero, capped at 200.
   int64 limit = 4;
 
   // Exact-match filters, IN semantics for multiple values, each key at
-  // most once, max 1000 values total. Internal collections allow only
-  // "uid" and "folder" (all kinds), "datasource_uid" and "language"
-  // (dashboards; values: promql, logql, traceql, sql) — enforced
-  // natively by each active leg. External collections: "uid" and "folder"
-  // match the row's identity and folder, any other key matches the
-  // metadata JSON (containment).
+  // most once, max 1000 values total. For a single resource type, with
+  // either selector, internal collections allow "uid" and "folder" (all
+  // kinds), "datasource_uid" and "language" (dashboards; values: promql,
+  // logql, traceql, sql), enforced natively by each active leg. External
+  // collections match "uid" and "folder" against the row's identity and
+  // folder, and other keys against metadata JSON (containment).
+  // With multiple resource types, only "uid" and "folder" are supported
+  // and applied to every requested resource type.
   repeated Requirement filters = 5;
 
   // Minimum relevance a result must reach to be returned. One of:
@@ -382,11 +410,26 @@ message HybridSearchRequest {
   // INVALID_ARGUMENT.
   string min_relevance = 6;
 
-  // Skip the reranking stage even when the server has a reranker
-  // configured, returning RRF ordering (lexical order in lexical-only mode).
-  // Setting this together with min_relevance is INVALID_ARGUMENT (thresholds
-  // are meaningless without reranking).
+  // Skip the reranking stage even when the server has a reranker configured.
+  // A single resource type retains RRF ordering (lexical order in lexical-only
+  // mode). Multiple resource types are interleaved in request order, preserving
+  // each type's ranking. These orderings also apply when no reranker is
+  // configured or reranking fails. Setting this together with min_relevance
+  // is INVALID_ARGUMENT (thresholds are meaningless without reranking).
   bool skip_rerank = 7;
+
+  // Tenant namespace shared by all resource types in resources.
+  // Required with resources; must be unset when key is set.
+  string namespace = 8;
+
+  // Nonempty list of unique group/resource pairs to search in namespace.
+  // Required with namespace; must be unset when key is set.
+  repeated Resource resources = 9;
+
+  // Global HTTP search requires manifest hybrid opt-in for internal resources.
+  // Externally pushed collections retain their existing enrollment checks.
+  // Custom API handlers may leave this unset and apply their own authorization.
+  bool require_hybrid_enabled = 10;
 }
 
 message HybridSearchResponse {
@@ -395,6 +438,10 @@ message HybridSearchResponse {
   // Request failures are gRPC status errors (e.g. INVALID_ARGUMENT for
   // bad filters), never payload-embedded errors.
   repeated HybridSearchResult results = 1;
+
+  // Manifest Kind names for requested internal group/resource pairs.
+  // Entries are present even when the search returns no results.
+  map<string, string> kinds = 2;
 }
 
 message HybridSearchResult {
@@ -413,8 +460,10 @@ message HybridSearchResult {
   string folder_title = 6;
 
   // Relevance: higher = higher quality/score threshold. High thresholds may return far less results. `low` is a recommended starting point.
-  // With a reranker configured this is the calibrated cross-encoder relevance (roughly
-  // 0-1); otherwise it is the RRF fusion score.
+  // After successful reranking this is the calibrated cross-encoder relevance
+  // (roughly 0-1); otherwise a single resource type returns the RRF fusion
+  // score and multiple resource types return reciprocal rank in the combined
+  // ordering.
   // This is NOT comparable to VectorSearchResult.score (raw cosine distance).
   double score = 4;
 
@@ -422,7 +471,7 @@ message HybridSearchResult {
   // One entry with subresource "" for resources embedded whole. For
   // lexical-only hits the server synthesizes a single chunk with
   // content = title and no metadata so rerankers always have text.
-  // Only the best chunk influences score.
+  // Reranking uses the best chunk alongside returned lexical text.
   repeated HybridSearchChunk chunks = 5;
 
   // Manager kind. Empty when unmanaged, for external collections, or when
@@ -432,6 +481,17 @@ message HybridSearchResult {
 
   // Manager identity, alongside managed_by_kind.
   string managed_by_id = 8;
+
+  // Field names and values returned by the lexical search, including metadata.
+  // Values are strings or arrays of strings.
+  // Field names and text share a 4 KiB budget per result, prioritizing title,
+  // then fields in name order. Values may be truncated and later fields
+  // or array elements omitted. Empty values are omitted.
+  // Absent for semantic-only hits, external collections, and legacy table responses.
+  map<string, google.protobuf.Value> lexical = 9;
+
+  // Tags from the lexical index. Omitted when unavailable.
+  repeated string tags = 10;
 }
 
 message HybridSearchChunk {
@@ -444,4 +504,3 @@ message HybridSearchChunk {
   // Structured chunk metadata as raw JSON; empty for synthesized chunks.
   bytes metadata = 3;
 }
-

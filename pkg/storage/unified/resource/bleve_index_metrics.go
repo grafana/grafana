@@ -8,6 +8,10 @@ import (
 )
 
 type BleveIndexMetrics struct {
+	SearchAuthDuration   *prometheus.HistogramVec
+	SearchAuthReturned   *prometheus.HistogramVec
+	SearchAuthChecks     *prometheus.HistogramVec
+	SearchAuthEvents     *prometheus.CounterVec
 	IndexSize            prometheus.Gauge
 	IndexedKinds         *prometheus.GaugeVec
 	IndexCreationTime    *prometheus.HistogramVec
@@ -19,6 +23,9 @@ type BleveIndexMetrics struct {
 	UpdatedDocuments     prometheus.Histogram
 	SearchUpdateWaitTime *prometheus.HistogramVec
 	RebuildQueueLength   prometheus.Gauge
+	ReconcileQueueLength prometheus.Gauge
+
+	GlobalReconcileDuration *prometheus.HistogramVec
 
 	IndexSnapshotDownloadAttempts         *prometheus.CounterVec
 	IndexSnapshotDownloadDuration         prometheus.Histogram
@@ -32,8 +39,8 @@ type BleveIndexMetrics struct {
 	IndexDiskCleanupRuns        *prometheus.CounterVec
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 
-	SearchCapabilityViolations *prometheus.CounterVec
-	SearchResultFormats        *prometheus.CounterVec
+	SearchResultFormats             *prometheus.CounterVec
+	SearchServicePermissionFailures *prometheus.CounterVec
 
 	BuildPhaseSeconds *prometheus.CounterVec
 	BuildDocuments    *prometheus.CounterVec
@@ -77,7 +84,23 @@ var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 5
 // ProvideIndexMetrics builds the index metrics. A nil reg leaves them
 // unregistered, so callers without a registry never have to check for nil.
 func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
+	histogram := func(name, help string, labels ...string) *prometheus.HistogramVec {
+		return promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            name,
+			Help:                            help,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, labels)
+	}
 	m := &BleveIndexMetrics{
+		SearchAuthDuration: histogram("grafana_index_server_search_auth_execution_duration_seconds", "Search execution duration after request validation, including authorization, ranking and response conversion, by actual auth mode (pre_rank, post_rank, none), query type and outcome. Count is executed searches, not incoming RPCs.", "mode", "query_type", "outcome"),
+		SearchAuthReturned: histogram("grafana_index_server_search_auth_returned_documents", "Documents returned per successful executed search.", "mode", "query_type"),
+		SearchAuthChecks:   histogram("grafana_index_server_search_auth_checks", "Check items submitted through Check and BatchCheck per executed search, including failed calls. Excludes Compile and is not a network RPC count.", "mode", "query_type"),
+		SearchAuthEvents: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_search_auth_events_total",
+			Help: "Search auth events: cursor_fallback selects PreRank instead of PostRank; candidate_budget and facet_budget indicate a PostRank scan stopped at its scan limit, without guaranteeing that more matches remain.",
+		}, []string{"reason"}),
 		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "grafana_index_server_index_size_bytes",
 			Help: "Size of the index in bytes - only for file-based indices",
@@ -135,6 +158,17 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_rebuild_queue_length",
 			Help: "Number of indexes waiting for rebuild",
 		}),
+		ReconcileQueueLength: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "grafana_index_server_global_reconcile_queue_length",
+			Help: "Number of global search indexes waiting to be compared with storage",
+		}),
+		GlobalReconcileDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "grafana_index_server_global_reconcile_duration_seconds",
+			Help:                            "Time to compare one global search index with storage and repair what differs",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"result"}),
 		IndexSnapshotDownloadAttempts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_snapshot_download_attempts_total",
 			Help: "Number of remote index snapshot download attempts at index build time, by selection policy and outcome.",
@@ -162,7 +196,7 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		IndexSnapshotBuildCoordinations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_snapshot_build_coordinations_total",
 			Help: "Number of snapshot build coordination outcomes, by flow and outcome.",
-		}, []string{"flow", "outcome"}), // flow: cold_start, rebuild. outcome: acquired_lock, downloaded_after_wait, wait_timed_out, lock_error, context_canceled
+		}, []string{"flow", "outcome"}), // flow: cold_start, rebuild. outcome: acquired_lock, downloaded_after_wait, lock_held, lock_error, context_canceled
 		IndexSnapshotNamespaceCleanups: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_snapshot_namespace_cleanups_total",
 			Help: "Number of namespace-level remote index snapshot cleanup attempts, by outcome.",
@@ -199,10 +233,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_build_indexed_bytes_total",
 			Help: "Bytes the index reports for the documents it was given. Compare with source bytes to see how much bigger or smaller search documents are.",
 		}, []string{"path", "group", "resource"}),
-		SearchCapabilityViolations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_index_server_search_capability_violations_total",
-			Help: "Number of search requests that used a field in a way its declaration does not allow. Counted whether or not the request was rejected.",
-		}, []string{"resource", "capability"}),
+		SearchServicePermissionFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_search_service_permission_failures_total",
+			Help: "Search preflight checks where the service token lacks a required direct or delegated permission, regardless of RBAC exemption. With exempt=\"false\", a search of one type was rejected, and a global search left the type out.",
+		}, []string{"group", "resource", "verb", "mode", "exempt"}),
 		SearchResultFormats: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_search_result_format_total",
 			Help: "Number of search responses by result format.",
@@ -242,6 +276,7 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "acquired_lock").Add(0)
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "downloaded_after_wait").Add(0)
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "wait_timed_out").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "lock_held").Add(0)
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "lock_error").Add(0)
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "context_canceled").Add(0)
 	}

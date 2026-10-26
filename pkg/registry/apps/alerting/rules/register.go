@@ -5,28 +5,35 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
+
+	"github.com/emicklei/go-restful/v3"
 
 	restclient "k8s.io/client-go/rest"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	apirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	alertingv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	alertingv1beta1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	rulesManifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	rulesAppConfig "github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	rulesequence_app "github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/rulesequence"
@@ -57,8 +64,9 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	cfg *setting.Cfg
-	ng  *ngalert.AlertNG
+	cfg          *setting.Cfg
+	ng           *ngalert.AlertNG
+	hybridSearch http.HandlerFunc
 }
 
 func RegisterAppInstaller(
@@ -74,8 +82,9 @@ func RegisterAppInstaller(
 	}
 
 	installer := &AppInstaller{
-		cfg: cfg,
-		ng:  ng,
+		cfg:          cfg,
+		ng:           ng,
+		hybridSearch: search.NewHybridHandler(unifiedClient).Search,
 	}
 
 	membershipIndex := rulesequence_app.NewMembershipIndex()
@@ -95,6 +104,7 @@ func RegisterAppInstaller(
 		ReservedLabelKeys:                ngmodels.LabelsUserCannotSpecify,
 		ResolveRuleRef:                   newRuleRefResolver(ng),
 		MembershipResolver:               membershipIndex,
+		AllowDeletingSequenceMembers:     newSequenceMemberDeletionAuthorizer(ng.Api.AccessControl),
 		NotificationSettingsValidator:    newNotificationSettingsValidator(ng),
 		WatchNamespace:                   watchNamespace(cfg),
 		SearchAlertRulesHandler:          search.WithAPIStatusErrorResponse(searchHandler.SearchAlertRules),
@@ -116,6 +126,33 @@ func RegisterAppInstaller(
 	}
 	installer.AppInstaller = i
 	return installer, nil
+}
+
+func (a *AppInstaller) InstallAPIs(server appsdkapiserver.GenericAPIServer, opts generic.RESTOptionsGetter) error {
+	if err := a.AppInstaller.InstallAPIs(server, opts); err != nil {
+		return err
+	}
+	// Keep this temporary endpoint out of the generated app API contract.
+	for _, ws := range server.RegisteredWebServices() {
+		if ws.RootPath() == "/apis/"+alertingv0alpha1.GroupVersion.String() {
+			ws.Route(ws.GET("/namespaces/{namespace}/search/hybrid").
+				Operation("getHybridSearchAlertRules").
+				Doc("Experimental hybrid search for alert rules").
+				Produces("application/json").
+				Param(ws.PathParameter("namespace", "namespace")).
+				Param(ws.QueryParameter("query", "Search text for lexical and semantic retrieval").DataType("string").Required(true)).
+				Param(ws.QueryParameter("semanticQuery", "Optional text to embed for semantic retrieval instead of query").DataType("string")).
+				Param(ws.QueryParameter("folder", "Filter by the stored folder UID").DataType("string")).
+				Param(ws.QueryParameter("limit", "Maximum number of results (default 50)").DataType("integer")).
+				Param(ws.QueryParameter("minRelevance", "Minimum reranker relevance: lowest, low, medium, high, or highest. Cannot be combined with skipRerank").DataType("string")).
+				Param(ws.QueryParameter("skipRerank", "Skip reranking and return the fused lexical and semantic ordering").DataType("boolean")).
+				To(func(req *restful.Request, res *restful.Response) {
+					ctx := apirequest.WithNamespace(req.Request.Context(), req.PathParameter("namespace"))
+					a.hybridSearch(res, req.Request.WithContext(ctx))
+				}))
+		}
+	}
+	return nil
 }
 
 // Rejects writes while the operator ini override is set, then verifies both
@@ -179,6 +216,23 @@ func watchNamespace(cfg *setting.Cfg) string {
 	return reqns.GetNamespaceMapper(cfg)(0)
 }
 
+func newSequenceMemberDeletionAuthorizer(ac accesscontrol.AccessControl) func(context.Context) (bool, error) {
+	return func(ctx context.Context) (bool, error) {
+		info, ok := apirequest.RequestInfoFrom(ctx)
+		if !ok || !info.IsResourceRequest || info.Verb != "deletecollection" || info.APIGroup != alertingv0alpha1.APIGroup || info.Subresource != "" || info.Name != "" {
+			return false, nil
+		}
+		if info.Resource != alertrule.ResourceInfo.GroupResource().Resource && info.Resource != recordingrule.ResourceInfo.GroupResource().Resource {
+			return false, nil
+		}
+		if info.Namespace != apirequest.NamespaceValue(ctx) {
+			return false, errors.New("request namespace mismatch")
+		}
+		// Folder-scoped delete permission is insufficient for tenant cleanup.
+		return common.AuthorizeOrgCleanup(ctx, info.Namespace, ac, accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, "*"))
+	}
+}
+
 func resolveOrgID(ctx context.Context) int64 {
 	orgID, err := reqns.OrgIDForList(ctx)
 	if err != nil || orgID < 1 {
@@ -237,8 +291,8 @@ func newRuleRefResolver(ng *ngalert.AlertNG) func(ctx context.Context, uid strin
 
 // newNotificationSettingsValidator returns a callback that validates notification
 // receiver configuration against the Alertmanager config.
-func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Context, ns alertingv0alpha1.AlertRuleNotificationSettings) error {
-	return func(ctx context.Context, ns alertingv0alpha1.AlertRuleNotificationSettings) error {
+func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Context, ns alertingv1beta1.AlertRuleNotificationSettings) error {
+	return func(ctx context.Context, ns alertingv1beta1.AlertRuleNotificationSettings) error {
 		if err := validateNotificationSettingsFields(ns); err != nil {
 			return err
 		}
@@ -264,7 +318,7 @@ func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Cont
 	}
 }
 
-func validateNotificationSettingsFields(ns alertingv0alpha1.AlertRuleNotificationSettings) error {
+func validateNotificationSettingsFields(ns alertingv1beta1.AlertRuleNotificationSettings) error {
 	if ns.SimplifiedRouting != nil && ns.SimplifiedRouting.Receiver == "" {
 		return errors.New("receiver is empty")
 	}
@@ -281,7 +335,7 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-			attr = ruleSearchReadAttributes(attr)
+			attr = ruleSearchListAttributes(attr)
 			switch attr.GetResource() {
 			case recordingrule.ResourceInfo.GroupResource().Resource:
 				return recordingrule.Authorize(ctx, authz, attr)
@@ -289,6 +343,8 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return alertrule.Authorize(ctx, authz, attr)
 			case rulesequence.ResourceInfo.GroupResource().Resource:
 				return rulesequence.Authorize(ctx, authz, attr)
+			case search.HybridRouteResource:
+				return search.Authorize(ctx, authz, attr)
 			case config.ResourceInfo.GroupResource().Resource:
 				return config.Authorize(ctx, authz, attr)
 			}
@@ -297,16 +353,27 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	)
 }
 
-// ruleSearchReadAttributes restates the compatibility POST as the list it
-// performs. Kubernetes parses /{resource}/searchRules as a create of an object
-// named searchRules, which would otherwise require rule-create permission.
-func ruleSearchReadAttributes(attr authorizer.Attributes) authorizer.Attributes {
-	resourceName := attr.GetResource()
-	isRule := resourceName == alertrule.ResourceInfo.GroupResource().Resource || resourceName == recordingrule.ResourceInfo.GroupResource().Resource
-	if isRule && attr.IsResourceRequest() && attr.GetVerb() == "create" && attr.GetName() == rulesApp.SearchRulesPathSegment && attr.GetSubresource() == "" {
-		return searchauthorizer.AsReadAttributes(attr)
+// The rule kind each search route searches.
+var searchRouteKinds = map[string]string{
+	rulesApp.SearchAlertRulesResource:     alertrule.ResourceInfo.GroupResource().Resource,
+	rulesApp.SearchRecordingRulesResource: recordingrule.ResourceInfo.GroupResource().Resource,
+}
+
+// ruleSearchListAttributes restates a rule search as a list of the rule kind it
+// searches, so it needs exactly the permission listing those rules does.
+// Kubernetes parses each search route as a request on a resource named after
+// the route, which no rule permission would otherwise cover.
+func ruleSearchListAttributes(attr authorizer.Attributes) authorizer.Attributes {
+	kind, ok := searchRouteKinds[attr.GetResource()]
+	if !ok || !attr.IsResourceRequest() {
+		return attr
 	}
-	return attr
+	list, ok := searchauthorizer.AsReadAttributes(attr).(authorizer.AttributesRecord)
+	if !ok {
+		return attr
+	}
+	list.Resource = kind
+	return list
 }
 
 func (a *AppInstaller) AdmissionPlugin() admission.Factory {
@@ -357,16 +424,19 @@ func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.Stor
 	}
 }
 
+// GetLegacyStorage matches on the resource alone: it is requested for every
+// served version, and the legacy store is not tied to one, because the
+// apiserver converts to the hub version before storage is called.
 func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
-	switch gvr {
-	case recordingrule.ResourceInfo.GroupVersionResource():
+	switch gvr.GroupResource() {
+	case recordingrule.ResourceInfo.GroupResource():
 		return recordingrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
-	case alertrule.ResourceInfo.GroupVersionResource():
+	case alertrule.ResourceInfo.GroupResource():
 		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
-	case rulesequence.ResourceInfo.GroupVersionResource():
+	case rulesequence.ResourceInfo.GroupResource():
 		return nil
-	case config.ResourceInfo.GroupVersionResource():
+	case config.ResourceInfo.GroupResource():
 		// Config has no legacy backend — returning nil makes the apiserver serve
 		// it directly from unified storage (no dual writer).
 		return nil
@@ -378,13 +448,13 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 // GetLegacyStatus wires the /status subresource for the legacy-storage-backed rule
 // kinds. Without this, the app-sdk-generated StatusREST is silently dropped for
 // legacy/dual-write parents. The rule status is persisted to alert_rule.k8s_status
-// via the shared rule store.
+// via the shared rule store. Matched on the resource alone, as in GetLegacyStorage.
 func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified *appsdkapiserver.StatusREST) rest.Storage {
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
-	switch gvr {
-	case recordingrule.ResourceInfo.GroupVersionResource():
+	switch gvr.GroupResource() {
+	case recordingrule.ResourceInfo.GroupResource():
 		return recordingrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified)
-	case alertrule.ResourceInfo.GroupVersionResource():
+	case alertrule.ResourceInfo.GroupResource():
 		return alertrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified)
 	default:
 		return nil

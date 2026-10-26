@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	models2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -41,7 +42,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
-	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations()
+	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything)
 
 	mockedClock := clock.NewMock()
 
@@ -110,7 +111,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
-	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations()
+	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything)
 
 	mockedClock := clock.NewMock()
 
@@ -269,7 +270,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
-	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations()
+	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything)
 
 	mockedClock := clock.NewMock()
 	mockedClock.Set(time.Now())
@@ -361,7 +362,7 @@ func TestAlertmanagersChoiceWithDisableExternalFeatureToggle(t *testing.T) {
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
-	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations()
+	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything)
 
 	mockedClock := clock.NewMock()
 	mockedClock.Set(time.Now())
@@ -432,6 +433,74 @@ func TestAlertmanagersChoiceWithDisableExternalFeatureToggle(t *testing.T) {
 	actualAlerts, err = am.GetAlerts(context.Background(), true, true, true, nil, "")
 	require.NoError(t, err)
 	require.Len(t, actualAlerts, len(expected))
+}
+
+// pluginStoreNotReadyDataSourceService acts like the real datasource service while the
+// plugin store is still loading: looking up a plugin's alias IDs fails.
+type pluginStoreNotReadyDataSourceService struct {
+	*fake_ds.FakeDataSourceService
+}
+
+func (s *pluginStoreNotReadyDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
+	if query.AliasIDs == nil {
+		return nil, fmt.Errorf("plugin %s not found", query.Type)
+	}
+	return s.FakeDataSourceService.GetDataSourcesByType(ctx, query)
+}
+
+func TestSyncSendsToExternalAlertmanagerWhenPluginStoreIsNotReady(t *testing.T) {
+	ruleKey := models.GenerateRuleKey(1)
+
+	fakeAM := NewFakeExternalAlertmanager(t)
+	defer fakeAM.Close()
+
+	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
+	fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything).Return([]*models.AdminConfiguration{
+		{OrgID: ruleKey.OrgID, SendAlertsTo: new(models.ExternalAlertmanagers)},
+	}, nil)
+
+	mockedClock := clock.NewMock()
+	mockedClock.Set(time.Now())
+
+	moa := notifier.NewTestMultiOrgAlertmanager(t, notifier.WithOrgs([]int64{1}), notifier.WithWaitReady())
+
+	ds := datasources.DataSource{
+		URL:   fakeAM.Server.URL,
+		OrgID: ruleKey.OrgID,
+		Type:  datasources.DS_ALERTMANAGER,
+		JsonData: simplejson.NewFromAny(map[string]any{
+			"handleGrafanaManagedAlerts": true,
+			"implementation":             "prometheus",
+		}),
+	}
+	dsService := &pluginStoreNotReadyDataSourceService{
+		FakeDataSourceService: &fake_ds.FakeDataSourceService{DataSources: []*datasources.DataSource{&ds}},
+	}
+
+	alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, &url.URL{Scheme: "http", Host: "localhost"}, map[int64]struct{}{},
+		10*time.Minute, dsService, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), false, metrics.NewSenderMetrics(prometheus.NewPedanticRegistry()))
+
+	require.NoError(t, alertsRouter.SyncAndApplyConfigFromDatabase(context.Background()))
+	require.Len(t, alertsRouter.externalAlertmanagers, 1)
+	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey.OrgID, 1, 0)
+
+	var expected []*models2.PostableAlert
+	alerts := definitions.PostableAlerts{}
+	for i := 0; i < rand.Intn(5)+1; i++ {
+		alert := generatePostableAlert(t, mockedClock)
+		expected = append(expected, &alert)
+		alerts.PostableAlerts = append(alerts.PostableAlerts, alert)
+	}
+	alertsRouter.Send(context.Background(), ruleKey, alerts)
+
+	assertAlertsDelivered(t, fakeAM, expected)
+
+	// The org is set to external only, so the built-in Alertmanager must not get any alerts.
+	am, err := moa.AlertmanagerFor(ruleKey.OrgID)
+	require.NoError(t, err)
+	internalAlerts, err := am.GetAlerts(context.Background(), true, true, true, nil, "")
+	require.NoError(t, err)
+	require.Empty(t, internalAlerts)
 }
 
 func assertAlertmanagersStatusForOrg(t *testing.T, alertsRouter *AlertsRouter, orgID int64, active, dropped int) {
@@ -952,7 +1021,7 @@ func TestSendBroadcastAlerts(t *testing.T) {
 			}
 
 			fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
-			fakeAdminConfigStore.EXPECT().GetAdminConfigurations().Return(nil, nil)
+			fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything).Return(nil, nil)
 
 			alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
 				10*time.Minute, &fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), tc.broadcastAlerts, nil)

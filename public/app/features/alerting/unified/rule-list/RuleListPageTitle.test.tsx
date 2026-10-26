@@ -1,6 +1,8 @@
 import { render, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
+import { config } from '@grafana/runtime';
+
 import { mockLocalStorage } from '../mocks';
 import { getPreviewToggle, setPreviewToggle } from '../previewToggles';
 
@@ -68,8 +70,25 @@ describe('RuleListPageTitle', () => {
     });
   });
 
-  describe('when on OLD view (alertingListViewV2PreviewToggle enabled, alertingListViewV2 disabled)', () => {
-    testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle'] });
+  describe('when alertingListViewV2 is disabled', () => {
+    testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle'], disable: ['alertingListViewV2'] });
+
+    it('should not show the toggle button, even with a stored preference for the new list', () => {
+      setPreviewToggle('alertingListViewV2', true);
+
+      renderRuleListPageTitle();
+
+      expect(ui.useNewExperienceButton.query()).not.toBeInTheDocument();
+      expect(ui.revertButton.query()).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when on OLD view (both toggles enabled, stored preference for the old list)', () => {
+    testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle', 'alertingListViewV2'] });
+
+    beforeEach(() => {
+      setPreviewToggle('alertingListViewV2', false);
+    });
 
     it('should show "Use new experience" button', () => {
       renderRuleListPageTitle();
@@ -104,7 +123,12 @@ describe('RuleListPageTitle', () => {
       expect(ui.useNewExperienceButton.query()).not.toBeInTheDocument();
     });
 
-    describe('when alertingTriage is disabled', () => {
+    it('should label the revert button as deprecated', () => {
+      renderRuleListPageTitle();
+      expect(ui.revertButton.get()).toHaveTextContent('Revert to previous experience (deprecated)');
+    });
+
+    describe('when the alert activity page is unavailable', () => {
       it('should revert directly without showing a modal', async () => {
         const { user } = renderRuleListPageTitle();
 
@@ -116,8 +140,19 @@ describe('RuleListPageTitle', () => {
       });
     });
 
-    describe('when alertingTriage is enabled', () => {
-      testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle', 'alertingListViewV2', 'alertingTriage'] });
+    describe('when the alert activity page is available', () => {
+      const originalUnifiedAlerting = config.unifiedAlerting;
+
+      beforeEach(() => {
+        config.unifiedAlerting = {
+          ...originalUnifiedAlerting,
+          stateHistory: { backend: 'prometheus', prometheusTargetDatasourceUID: 'prom-uid' },
+        };
+      });
+
+      afterEach(() => {
+        config.unifiedAlerting = originalUnifiedAlerting;
+      });
 
       it('should show confirmation modal when clicking revert button', async () => {
         const { user } = renderRuleListPageTitle();

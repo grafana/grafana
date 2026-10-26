@@ -4,15 +4,13 @@ import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
 import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
-import { type WorkflowOption } from 'app/features/provisioning/types';
 
-import { getDefaultRef, getDefaultWorkflow } from '../defaults';
+import { getDefaultRef } from '../defaults';
 import { joinPath } from '../utils/path';
 
 export type BulkActionFormData = {
   comment: string;
   ref: string;
-  workflow?: WorkflowOption;
   targetFolderUID?: string;
 };
 
@@ -45,7 +43,6 @@ export function getBulkActionInitialValues(
   return {
     comment: '',
     ref: getDefaultRef(repository, branchPrefix),
-    workflow: getDefaultWorkflow(repository),
   };
 }
 
@@ -133,6 +130,10 @@ export function isResourceAlreadyInTarget(currentPath: string, targetFolderPath:
   return normalizeRepoPath(currentPath) === normalizeRepoPath(getResourceTargetPath(currentPath, targetFolderPath));
 }
 
-export function isSameFolderPath(currentFolderPath: string | undefined, targetFolderPath: string): boolean {
-  return normalizeRepoPath(currentFolderPath || '') === normalizeRepoPath(targetFolderPath);
+/**
+ * True when every selected item already sits directly under the target folder, so the move would be a no-op.
+ * Items missing from the browse tree (undefined parent) never match; the backend skips them if already in place.
+ */
+export function isSelectionAlreadyInFolder(parentUIDs: Array<string | undefined>, targetFolderUID: string): boolean {
+  return parentUIDs.length > 0 && parentUIDs.every((parentUID) => parentUID === targetFolderUID);
 }
