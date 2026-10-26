@@ -78,6 +78,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     updateOptions,
     asyncLoading,
     asyncError,
+    resetSearch,
   } = useOptions(optionsProp, createCustomValue, customValueDescription);
   const loading = loadingProp || fieldContext.loading || asyncLoading;
 
@@ -220,6 +221,9 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     onIsOpenChange: ({ isOpen, inputValue }) => {
       if (isOpen && inputValue === '') {
         updateOptions(inputValue);
+      }
+      if (!isOpen) {
+        resetSearch();
       }
     },
 
