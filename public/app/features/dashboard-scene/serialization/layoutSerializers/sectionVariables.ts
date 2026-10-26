@@ -1,5 +1,6 @@
-import { type SceneVariables, SceneVariableSet } from '@grafana/scenes';
-import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { config } from '@grafana/runtime';
+import { type SceneVariable, type SceneVariables, SceneVariableSet } from '@grafana/scenes';
+import { defaultGroupByVariableKind, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { sceneVariablesSetToSchemaV2Variables } from '../sceneVariablesSetToVariables';
 import { createSceneVariableFromVariableModel } from '../transformSaveModelSchemaV2ToScene';
@@ -19,7 +20,23 @@ export function deserializeSectionVariables(variables?: VariableKind[]): SceneVa
   }
 
   // VariableKind is structurally identical to TypedVariableModelV2
-  const sceneVariables = variables.map((variable) => createSceneVariableFromVariableModel(variable));
+  const sceneVariables = variables
+    .map((variable) => {
+      // groupByVariable is still experimental. skip the control when the flag is off so
+      // section-scoped dashboards keep loading instead of throwing (see #132312).
+      if (variable.kind === defaultGroupByVariableKind().kind && !config.featureToggles.groupByVariable) {
+        return null;
+      }
+
+      try {
+        return createSceneVariableFromVariableModel(variable);
+      } catch (err) {
+        console.error(err);
+        return null;
+      }
+    })
+    .filter((v): v is SceneVariable => Boolean(v));
+
   if (sceneVariables.length === 0) {
     return undefined;
   }
