@@ -1,3 +1,5 @@
+import { type Page } from '@playwright/test';
+
 import { test, expect } from '../fixtures';
 import { expectRowVisibility, expectTabVisibility, flows } from '../helpers';
 
@@ -11,6 +13,26 @@ import dashboardVariableValueJSON from './fixtures/dashboard-variable-value.json
 
 const HIDDEN_WRAPPER_SELECTOR = '.dashboard-visible-hidden-element';
 const HIDDEN_ICON_TEST_ID = 'icon-eye-slash';
+
+interface DashboardFixture {
+  spec: { elements: Record<string, { spec: { vizConfig: { version: string } } }> };
+}
+
+// A panel saved with a version other than the running one rewrites it when it loads, which counts as an unsaved change.
+async function withRunningPanelVersion(page: Page, dashboard: DashboardFixture): Promise<string> {
+  const response = await page.request.get('/api/frontend/settings');
+  const settings: { buildInfo: { version: string } } = await response.json();
+  const elements = Object.fromEntries(
+    Object.entries(dashboard.spec.elements).map(([name, element]) => [
+      name,
+      {
+        ...element,
+        spec: { ...element.spec, vizConfig: { ...element.spec.vizConfig, version: settings.buildInfo.version } },
+      },
+    ])
+  );
+  return JSON.stringify({ ...dashboard, spec: { ...dashboard.spec, elements } });
+}
 
 test.use({
   featureToggles: {
@@ -30,7 +52,7 @@ test.describe(
         page,
         selectors,
         'Conditional Rendering - Query result',
-        JSON.stringify(dashboardQueryResultJSON),
+        await withRunningPanelVersion(page, dashboardQueryResultJSON),
         {
           requiresDataSourceSelection: false,
         }
@@ -75,7 +97,7 @@ test.describe(
         page,
         selectors,
         'Conditional Rendering - Variable value',
-        JSON.stringify(dashboardVariableValueJSON),
+        await withRunningPanelVersion(page, dashboardVariableValueJSON),
         {
           requiresDataSourceSelection: false,
         }
@@ -124,7 +146,7 @@ test.describe(
         page,
         selectors,
         'Conditional Rendering - Time range',
-        JSON.stringify(dashboardTimerangeJSON),
+        await withRunningPanelVersion(page, dashboardTimerangeJSON),
         {
           requiresDataSourceSelection: false,
         }
@@ -168,7 +190,7 @@ test.describe(
         page,
         selectors,
         'Conditional Rendering - Several rules result',
-        JSON.stringify(dashboardSeveralRulesJSON),
+        await withRunningPanelVersion(page, dashboardSeveralRulesJSON),
         {
           requiresDataSourceSelection: false,
         }
@@ -241,7 +263,7 @@ test.describe(
         page,
         selectors,
         'Conditional Rendering - Only applicable rules',
-        JSON.stringify(dashboardOnlyApplicableRulesJSON),
+        await withRunningPanelVersion(page, dashboardOnlyApplicableRulesJSON),
         {
           requiresDataSourceSelection: false,
         }
@@ -339,7 +361,7 @@ test.describe(
         page,
         selectors,
         'Conditional Rendering - Edit mode',
-        JSON.stringify(dashboardEditMode),
+        await withRunningPanelVersion(page, dashboardEditMode),
         {
           requiresDataSourceSelection: false,
         }
@@ -423,7 +445,7 @@ test.describe(
         page,
         selectors,
         'Conditional Rendering - Repeated panels',
-        JSON.stringify(dashboardRepeatedPanelsJSON),
+        await withRunningPanelVersion(page, dashboardRepeatedPanelsJSON),
         {
           requiresDataSourceSelection: false,
         }
