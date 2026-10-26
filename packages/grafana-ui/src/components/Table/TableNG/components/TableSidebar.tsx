@@ -130,6 +130,7 @@ export function TableSidebar({
                     type="button"
                     className={styles.dragHandle}
                     draggable
+                    data-reorder-name={displayName}
                     aria-label={t('grafana-ui.table.reorder-column-label', 'Reorder {{columnName}}', {
                       columnName: displayName,
                     })}
@@ -147,6 +148,15 @@ export function TableSidebar({
                       const target = columns[index + (ev.key === 'ArrowUp' ? -1 : 1)];
                       if (target) {
                         onColumnsReorder(displayName, target.name);
+                        // The reorder re-renders the list and replaces the row's DOM,
+                        // dropping focus to the sidebar container. Restore it to this
+                        // column's handle at its new position so arrow keys keep
+                        // reordering without tabbing back.
+                        requestAnimationFrame(() => {
+                          sidebarRef.current
+                            ?.querySelector(`[data-reorder-name="${CSS.escape(displayName)}"]`)
+                            ?.focus();
+                        });
                       }
                     }}
                     onDragEnd={() => {
