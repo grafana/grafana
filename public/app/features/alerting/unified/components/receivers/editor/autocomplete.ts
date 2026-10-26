@@ -68,28 +68,25 @@ class CompletionProvider {
   ) {}
 
   getSnippetsSuggestions = (): languages.ProviderResult<languages.CompletionList> => {
-    return this.getCompletionsFromDefinitions(getSnippetsSuggestions(this.monaco));
+    return this.getCompletionsFromDefinitions(getSnippetsSuggestions());
   };
 
   getFunctionsSuggestions = (): languages.ProviderResult<languages.CompletionList> => {
-    return this.getCompletionsFromDefinitions(
-      getAlertManagerSuggestions(this.monaco),
-      getGomplateSuggestions(this.monaco)
-    );
+    return this.getCompletionsFromDefinitions(getAlertManagerSuggestions(), getGomplateSuggestions());
   };
 
   getTemplateDataSuggestions = (wordContext: string): languages.ProviderResult<languages.CompletionList> => {
     switch (wordContext) {
       case '':
-        return this.getCompletionsFromDefinitions(getGlobalSuggestions(this.monaco), getAlertSuggestions(this.monaco));
+        return this.getCompletionsFromDefinitions(getGlobalSuggestions(), getAlertSuggestions());
       case 'Alerts':
-        return this.getCompletionsFromDefinitions(getAlertsSuggestions(this.monaco));
+        return this.getCompletionsFromDefinitions(getAlertsSuggestions());
       case 'GroupLabels':
       case 'CommonLabels':
       case 'CommonAnnotations':
       case 'Labels':
       case 'Annotations':
-        return this.getCompletionsFromDefinitions(getKeyValueSuggestions(this.monaco));
+        return this.getCompletionsFromDefinitions(getKeyValueSuggestions());
       default:
         return { suggestions: [] };
     }
@@ -99,14 +96,15 @@ class CompletionProvider {
     const allDefinitions = concat(...args);
 
     return {
-      suggestions: allDefinitions.map((definition) => buildAutocompleteSuggestion(definition, this.range)),
+      suggestions: allDefinitions.map((definition) => buildAutocompleteSuggestion(definition, this.range, this.monaco)),
     };
   };
 }
 
 function buildAutocompleteSuggestion(
   { label, detail, documentation, kind, insertText }: SuggestionDefinition,
-  range: IRange
+  range: IRange,
+  monaco: Monaco
 ): languages.CompletionItem {
   const insertFallback = typeof label === 'string' ? label : label.label;
   const labelObject = typeof label === 'string' ? { label: label, description: detail } : { ...label };
@@ -115,7 +113,12 @@ function buildAutocompleteSuggestion(
 
   return {
     label: labelObject,
-    kind: kind,
+    kind: {
+      field: monaco.languages.CompletionItemKind.Field,
+      method: monaco.languages.CompletionItemKind.Method,
+      function: monaco.languages.CompletionItemKind.Function,
+      snippet: monaco.languages.CompletionItemKind.Snippet,
+    }[kind],
     insertText: insertText ?? insertFallback,
     range,
     documentation: documentation,

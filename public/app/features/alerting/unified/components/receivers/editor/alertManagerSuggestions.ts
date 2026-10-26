@@ -1,10 +1,8 @@
-import type { Monaco } from '@grafana/ui';
-
 import { AlertmanagerTemplateFunction, GomplateFunctions } from './language';
 import { type SuggestionDefinition } from './suggestionDefinition';
 
-export function getAlertManagerSuggestions(monaco: Monaco): SuggestionDefinition[] {
-  const kind = monaco.languages.CompletionItemKind.Function;
+export function getAlertManagerSuggestions(): SuggestionDefinition[] {
+  const kind = 'function' as const;
   return [
     {
       label: AlertmanagerTemplateFunction.toUpper,
@@ -51,8 +49,8 @@ export function getAlertManagerSuggestions(monaco: Monaco): SuggestionDefinition
   ];
 }
 
-export function getGomplateSuggestions(monaco: Monaco): SuggestionDefinition[] {
-  const kind = monaco.languages.CompletionItemKind.Function;
+export function getGomplateSuggestions(): SuggestionDefinition[] {
+  const kind = 'function' as const;
   return Object.values(GomplateFunctions).flatMap((functionList) =>
     functionList.map((func) => ({
       label: func.keyword,
