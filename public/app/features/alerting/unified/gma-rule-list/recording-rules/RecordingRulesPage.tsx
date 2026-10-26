@@ -2,6 +2,7 @@ import { Box } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
+import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { RecordingRulesListView } from './RecordingRulesListView';
@@ -13,7 +14,7 @@ function RecordingRulesPage() {
     // The heading comes from the navId, so it also drives breadcrumbs and nav highlighting.
     <AlertingPageWrapper navId="recording-rules">
       <Box paddingTop={2}>
-        <RecordingRulesListView />
+        <RecordingRulesListView filter={createEmptyFilter()} />
       </Box>
     </AlertingPageWrapper>
   );
