@@ -12,10 +12,13 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
+const legacyGlobalNamespaceAnchorOrgID int64 = 1
+
 func (a *AccessControl) buildLegacyCheckRequest(
 	user identity.Requester,
 	evaluator accesscontrol.Evaluator,
 	useExternalGroups bool,
+	namespaceMapper types.NamespaceFormatter,
 ) (*authzextv1.LegacyCheckRequest, error) {
 	if user == nil || user.IsNil() {
 		return nil, errors.New("legacy check requester is required")
@@ -33,14 +36,14 @@ func (a *AccessControl) buildLegacyCheckRequest(
 			RequesterOrgId: user.GetOrgID(),
 			HasPermissions: len(user.GetGlobalPermissions()) > 0,
 		}
-		// A self-managed sentinel is requester state, not a tenant. The anchor
-		// selects the same embedded instance; evaluation still uses global grants.
+		// Global org IDs describe requester state. Use the configured instance
+		// namespace for transport; evaluation still uses global grants.
 		if namespace == "" || namespace == types.OrgNamespaceFormatter(user.GetOrgID()) {
-			namespace = types.OrgNamespaceFormatter(1)
+			namespace = namespaceMapper(legacyGlobalNamespaceAnchorOrgID)
 		}
 	}
 	if namespace == "" {
-		namespace = types.OrgNamespaceFormatter(user.GetOrgID())
+		namespace = namespaceMapper(user.GetOrgID())
 	}
 
 	groups := user.GetGroups()

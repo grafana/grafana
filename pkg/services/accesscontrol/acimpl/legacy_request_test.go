@@ -8,10 +8,14 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
+	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestBuildLegacyCheckRequest(t *testing.T) {
@@ -61,7 +65,12 @@ func TestBuildLegacyCheckRequest(t *testing.T) {
 		},
 	}
 
-	request, err := ac.buildLegacyCheckRequest(requester, evaluator, false)
+	request, err := ac.buildLegacyCheckRequest(
+		requester,
+		evaluator,
+		false,
+		types.OrgNamespaceFormatter,
+	)
 
 	require.NoError(t, err)
 	require.Empty(t, cmp.Diff(expected, request, protocmp.Transform()))
@@ -126,7 +135,12 @@ func TestBuildLegacyCheckRequestIdentity(t *testing.T) {
 				SkipScopeResolution: false,
 			}
 
-			request, err := ac.buildLegacyCheckRequest(&tc.requester, accesscontrol.EvalPermission("dashboards:read"), false)
+			request, err := ac.buildLegacyCheckRequest(
+				&tc.requester,
+				accesscontrol.EvalPermission("dashboards:read"),
+				false,
+				types.OrgNamespaceFormatter,
+			)
 
 			require.NoError(t, err)
 			require.Empty(t, cmp.Diff(expected, request, protocmp.Transform()))
@@ -175,7 +189,12 @@ func TestBuildLegacyCheckRequestGroups(t *testing.T) {
 				ExternalGroups: tc.externalGroups,
 			}
 
-			request, err := ac.buildLegacyCheckRequest(requester, accesscontrol.EvalPermission("dashboards:read"), tc.useExternalGroups)
+			request, err := ac.buildLegacyCheckRequest(
+				requester,
+				accesscontrol.EvalPermission("dashboards:read"),
+				tc.useExternalGroups,
+				types.OrgNamespaceFormatter,
+			)
 
 			require.NoError(t, err)
 			require.Equal(t, tc.expected, request.Teams)
@@ -212,7 +231,12 @@ func TestBuildLegacyCheckRequestWithoutResolvers(t *testing.T) {
 		{name: "original instance still resolves scopes", ac: ac},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			request, err := tc.ac.buildLegacyCheckRequest(requester, evaluator, true)
+			request, err := tc.ac.buildLegacyCheckRequest(
+				requester,
+				evaluator,
+				true,
+				types.OrgNamespaceFormatter,
+			)
 
 			require.NoError(t, err)
 			expected := &authzextv1.LegacyCheckRequest{
@@ -262,7 +286,12 @@ func TestBuildLegacyCheckRequestRejectsInvalidInput(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := ProvideAccessControlTest()
 
-			request, err := ac.buildLegacyCheckRequest(tc.requester, tc.evaluator, false)
+			request, err := ac.buildLegacyCheckRequest(
+				tc.requester,
+				tc.evaluator,
+				false,
+				types.OrgNamespaceFormatter,
+			)
 
 			require.ErrorContains(t, err, tc.error)
 			require.Nil(t, request)
@@ -275,6 +304,7 @@ func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
 		name           string
 		orgID          int64
 		namespace      string
+		stackID        string
 		permissions    map[int64]map[string][]string
 		wantNamespace  string
 		hasPermissions bool
@@ -318,8 +348,54 @@ func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
 			wantNamespace:  "stacks-123",
 			hasPermissions: false,
 		},
+		{
+			name:           "cloud NoOrgID with empty namespace",
+			orgID:          accesscontrol.NoOrgID,
+			stackID:        "123",
+			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:  "stacks-123",
+			hasPermissions: true,
+		},
+		{
+			name:           "cloud global identity with empty namespace",
+			orgID:          accesscontrol.GlobalOrgID,
+			stackID:        "123",
+			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:  "stacks-123",
+			hasPermissions: true,
+		},
+		{
+			name:           "cloud NoOrgID with sentinel namespace",
+			orgID:          accesscontrol.NoOrgID,
+			namespace:      "org--1",
+			stackID:        "123",
+			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:  "stacks-123",
+			hasPermissions: true,
+		},
+		{
+			name:           "cloud global identity with sentinel namespace",
+			orgID:          accesscontrol.GlobalOrgID,
+			namespace:      "org-0",
+			stackID:        "123",
+			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:  "stacks-123",
+			hasPermissions: true,
+		},
+		{
+			name:           "explicit namespace is preserved for server validation",
+			orgID:          accesscontrol.GlobalOrgID,
+			namespace:      "stacks-456",
+			stackID:        "123",
+			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:  "stacks-456",
+			hasPermissions: true,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.StackID = tc.stackID
+
 			requester := &user.SignedInUser{
 				UserID:      1,
 				UserUID:     "user-uid",
@@ -343,6 +419,7 @@ func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
 					requester,
 					accesscontrol.EvalPermission("users:read"),
 					useExternalGroups,
+					apirequest.GetNamespaceMapper(cfg),
 				)
 			require.NoError(t, err)
 			require.Empty(t, cmp.Diff(want, got, protocmp.Transform()))
@@ -355,6 +432,31 @@ func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
 			require.Empty(t, cmp.Diff(want, decoded, protocmp.Transform()))
 		})
 	}
+}
+
+func TestBuildLegacyCheckRequestCloudOrganization(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.StackID = "123"
+	requester := &user.SignedInUser{
+		UserID:  1,
+		UserUID: "user-uid",
+		OrgID:   1,
+	}
+	want := &authzextv1.LegacyCheckRequest{
+		Namespace:  "stacks-123",
+		Subject:    "user:user-uid",
+		Expression: legacyRequestPermissionExpression("users:read"),
+	}
+
+	got, err := ProvideAccessControlTest().buildLegacyCheckRequest(
+		requester,
+		accesscontrol.EvalPermission("users:read"),
+		false,
+		apirequest.GetNamespaceMapper(cfg),
+	)
+
+	require.NoError(t, err)
+	require.Empty(t, cmp.Diff(want, got, protocmp.Transform()))
 }
 
 func legacyRequestPermissionExpression(
