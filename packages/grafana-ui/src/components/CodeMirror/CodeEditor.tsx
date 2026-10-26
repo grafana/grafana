@@ -9,15 +9,24 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
+import { signatureHelp } from './signatureHelp';
 import { createCodeEditorTheme } from './theme';
 import {
   type CodeMirrorCompletionMode,
   type CodeMirrorCompletionSource,
   type CodeMirrorEditorProps,
+  type CodeMirrorEditorTheme,
   type CodeMirrorExtension,
+  type CodeMirrorThemeOverrides,
 } from './types';
 import { useLanguageExtension } from './useLanguageExtension';
 import { useShallowStable, useStableCallback } from './useStableProps';
+import { createVariableCompletionSource } from './variableCompletion';
+
+function isThemeOverrides(theme: CodeMirrorEditorTheme): theme is CodeMirrorThemeOverrides {
+  // CodeMirror extensions are arrays or objects exposing an `extension` property.
+  return typeof theme === 'object' && theme !== null && !Array.isArray(theme) && !('extension' in theme);
+}
 
 const getCompletionExtensions = (
   sources: readonly CodeMirrorCompletionSource[] | undefined,
@@ -100,7 +109,7 @@ export const CodeEditor = memo(function CodeEditor({
   completionMode = 'merge',
   completeOnSpace = false,
   extensions: additionalExtensionsProp,
-  theme: themeOverride,
+  theme: themeProp,
   basicSetup: basicSetupProp,
   indentWithTab = true,
   readOnly = false,
@@ -108,10 +117,28 @@ export const CodeEditor = memo(function CodeEditor({
 }: CodeMirrorEditorProps) {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
-  const editorTheme = useMemo(() => createCodeEditorTheme(theme), [theme]);
+  const themeOverride = useShallowStable(themeProp);
+  const editorTheme = useMemo(
+    () =>
+      themeOverride == null || isThemeOverrides(themeOverride)
+        ? createCodeEditorTheme(theme, themeOverride ?? undefined)
+        : themeOverride,
+    [theme, themeOverride]
+  );
 
   // A new identity on any of these reconfigures the whole editor — see useStableProps.
-  const additionalExtensions = useShallowStable(additionalExtensionsProp);
+  const extensionConfig = useShallowStable(additionalExtensionsProp);
+  const additionalExtensions = useMemo(() => {
+    if (typeof extensionConfig !== 'function') {
+      return extensionConfig;
+    }
+    return extensionConfig({
+      theme,
+      signatureHelp: (provider) => signatureHelp(provider, { theme }),
+      variableCompletion: (suggestions, options) =>
+        getCompletionExtensions([createVariableCompletionSource(suggestions, options)], 'merge', completeOnSpace),
+    });
+  }, [extensionConfig, theme, completeOnSpace]);
   const sources = useShallowStable(completionSources);
   const basicSetup = useShallowStable(basicSetupProp);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
@@ -163,7 +190,7 @@ export const CodeEditor = memo(function CodeEditor({
       )}
       <CodeMirror
         ref={editorRef}
-        theme={themeOverride ?? editorTheme}
+        theme={editorTheme}
         value={value}
         height={height}
         extensions={extensions}

@@ -1,11 +1,23 @@
 import { css, cx } from '@emotion/css';
-import { useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
+import { useCallback, useMemo, useRef, useState, type ReactNode, type Ref } from 'react';
 import { useDebounce } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor, createCodeEditorTheme, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
+import {
+  Alert,
+  Button,
+  Dropdown,
+  Icon,
+  Menu,
+  RadioButtonGroup,
+  Stack,
+  useStyles2,
+  useTheme2,
+  CodeMirrorEditor,
+  type CodeMirrorEditorLanguage,
+  type CodeMirrorExtensionFactory,
+} from '@grafana/ui';
 import config from 'app/core/config';
 
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
@@ -14,13 +26,13 @@ import { TextNGHtmlView } from '../TextNGHtmlView';
 import { TextNGTruncationNotice } from '../TextNGTruncationNotice';
 import { type TextSandboxProps } from '../TextSandbox';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
-import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
+import { getInterpolateFormat, transformContent, getCodeMirrorLanguage, TRANSPARENT_EDITOR_THEME } from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFeedbackButton } from './TextNGFeedbackButton';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
 import { getEditorLayoutStyles } from './editorLayout';
-import { variableCompletion } from './variableCompletion';
+import { variableCompletionOptions } from './variableCompletion';
 import { type ViewMode } from './viewMode';
 
 export const PREVIEW_TEST_ID = 'TextNGEditor-preview';
@@ -96,10 +108,6 @@ export function TextNGEditor({
 }: TextNGEditorProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const editorTheme = useMemo(
-    () => (transparent ? createCodeEditorTheme(theme, { transparent: true }) : undefined),
-    [theme, transparent]
-  );
 
   const [draft, setDraft] = useState(content);
   // a blur can fire before React re-renders with the new draft.
@@ -186,7 +194,10 @@ export function TextNGEditor({
     editorLanguage = getCodeMirrorLanguage(codeLanguage);
   }
 
-  const completionSources = useMemo(() => [variableCompletion(suggestions ?? [])], [suggestions]);
+  const extensions = useCallback<CodeMirrorExtensionFactory>(
+    ({ variableCompletion }) => [variableCompletion(suggestions ?? [], variableCompletionOptions)],
+    [suggestions]
+  );
 
   const basicSetup = useMemo(
     () => ({ lineNumbers: mode === TextMode.Code ? showLineNumbers : false }),
@@ -314,12 +325,12 @@ export function TextNGEditor({
               value={draft}
               onChange={handleDraftChange}
               language={editorLanguage}
-              completionSources={completionSources}
+              extensions={extensions}
               lineWrapping
               basicSetup={basicSetup}
               height="100%"
               aria-label={t('textng.editor.aria-label-content', 'Text content')}
-              theme={editorTheme}
+              theme={transparent ? TRANSPARENT_EDITOR_THEME : undefined}
             />
           </div>
         )}

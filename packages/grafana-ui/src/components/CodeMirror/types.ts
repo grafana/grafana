@@ -1,7 +1,10 @@
 import type { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
 import { type EditorState, type Extension } from '@codemirror/state';
+import { type EditorView } from '@codemirror/view';
 import { type BasicSetupOptions } from '@uiw/react-codemirror';
 import { type ReactNode } from 'react';
+
+import { type GrafanaTheme2, type VariableSuggestion } from '@grafana/data';
 
 import { type CODE_MIRROR_LANGUAGES } from './languages';
 
@@ -30,11 +33,14 @@ export type CodeMirrorEditorLanguage = keyof typeof CODE_MIRROR_LANGUAGES;
  */
 export type CodeMirrorSqlDialect = 'standardSql' | 'mySql';
 
+/** Selector-based styles merged into Grafana's default editor theme. */
+export type CodeMirrorThemeOverrides = Parameters<typeof EditorView.theme>[0];
+
 /**
- * A CodeMirror theme: either a theme extension (e.g. from `EditorView.theme`)
- * or one of CodeMirror's built-in keywords.
+ * Plain selector/style overrides, a complete theme extension (e.g. from
+ * `EditorView.theme`), or one of CodeMirror's built-in keywords.
  */
-export type CodeMirrorEditorTheme = CodeMirrorExtension | 'light' | 'dark' | 'none';
+export type CodeMirrorEditorTheme = CodeMirrorThemeOverrides | CodeMirrorExtension | 'light' | 'dark' | 'none';
 
 /**
  * A single parameter within a function signature, such as `decimals: number`.
@@ -97,6 +103,43 @@ export interface SignatureHelp {
  * Computes signature help for the cursor position, or `null` when none applies.
  */
 export type SignatureHelpProvider = (state: EditorState, pos: number) => SignatureHelp | null;
+
+/** How a suggestion is presented in the completion list. */
+export interface VariableCompletionDisplay {
+  label: string;
+  detail?: string;
+}
+
+export interface VariableCompletionOptions {
+  /**
+   * Characters besides `$` that open the popup. They are separators rather than
+   * part of the reference, so they are preserved: the replaced range starts
+   * after them. `['=']` for a URL query string.
+   */
+  separators?: string[];
+  /**
+   * Text inserted when an option is accepted. Defaults to `${value}`. Override
+   * to add a format suffix, for example `${value:queryparam}` inside a URL.
+   */
+  getInsertText?: (suggestion: VariableSuggestion) => string;
+  /**
+   * Label and detail shown in the list. Defaults to the suggestion's own label
+   * with its origin as the detail.
+   */
+  toDisplay?: (suggestion: VariableSuggestion) => VariableCompletionDisplay;
+}
+
+/** Builders available after the editor's bundle has loaded. */
+export interface CodeMirrorExtensionContext {
+  theme: GrafanaTheme2;
+  /** Builds signature tooltips using the current Grafana theme. */
+  signatureHelp: (provider: SignatureHelpProvider) => CodeMirrorExtension;
+  /** Contributes variable suggestions alongside language-default completions. */
+  variableCompletion: (suggestions: VariableSuggestion[], options?: VariableCompletionOptions) => CodeMirrorExtension;
+}
+
+/** Runs inside the lazy editor. Keep the callback stable between renders. */
+export type CodeMirrorExtensionFactory = (context: CodeMirrorExtensionContext) => CodeMirrorExtension[];
 
 export interface CodeMirrorEditorProps {
   /**
@@ -161,9 +204,11 @@ export interface CodeMirrorEditorProps {
   completeOnSpace?: boolean;
   /**
    * Additional CodeMirror extensions to layer on top of the defaults.
-   * Use this for linting, custom keymaps, themes, etc.
+   * Pass an array, or a callback that builds extensions after the editor loads.
+   * The callback receives the Grafana theme and signature/variable builders.
+   * Keep the callback stable between renders to avoid reconfiguration.
    */
-  extensions?: CodeMirrorExtension[];
+  extensions?: CodeMirrorExtension[] | CodeMirrorExtensionFactory;
   /**
    * Toggles for CodeMirror's bundled "basic setup" extensions. Defaults to the
    * full setup (line numbers, gutters, bracket closing, etc.). Pass `false` or a
@@ -171,11 +216,10 @@ export interface CodeMirrorEditorProps {
    */
   basicSetup?: CodeMirrorBasicSetup;
   /**
-   * Replaces the editor's default VS Code theme. A layered theme extension
-   * cannot reliably override the default (the default's style module is mounted
-   * last and wins the CSS cascade for equal-specificity rules), so theming the
-   * editor differently must go through this prop. Defaults to the VS Code theme
-   * (dark or light) when omitted.
+   * Plain selector/style overrides are merged into the default Grafana theme
+   * after the editor loads. Existing styles on each selector are preserved
+   * unless overridden. Memoize the object when it depends on other props.
+   * A complete theme extension or built-in keyword replaces the default theme.
    */
   theme?: CodeMirrorEditorTheme;
   /**
