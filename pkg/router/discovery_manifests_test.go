@@ -452,7 +452,7 @@ func TestIndexLinksCannotBeTakenOverByNames(t *testing.T) {
 	manifest.group.Name = "m](https://evil.example/d)"
 	manifest.manifest.Group = manifest.group.Name
 	backends = append(backends, manifest)
-	docs, _ := buildManifestDocsFrom(t.Context(), sortedManifestBackends(backends), nil)
+	docs, _ := buildManifestDocsFrom(t.Context(), sortedManifestBackends(backends), nil, nil)
 	_, page := docs.indexDocs()
 
 	hrefs := regexp.MustCompile(`href="([^"]*)"`).FindAllStringSubmatch(string(page.body), -1)
@@ -502,7 +502,7 @@ func TestIsRelativePath(t *testing.T) {
 
 func TestIndexLinksEscapeNamesAndKeys(t *testing.T) {
 	odd := &fakeBackend{key: "k) [x](https://evil.example)", group: testAPIGroup("a(b) c", "v1")}
-	index := renderManifestIndex([]Backend{odd}, nil)
+	index := renderManifestIndex([]Backend{odd}, publishedManifests([]Backend{odd}, nil), nil)
 	require.Contains(t, index, "OpenAPI: [`/openapi/v3/apis/a(b) c/v1`](/openapi/v3/apis/a%28b%29%20c/v1?hash=k%29+%5Bx%5D%28https%3A%2F%2Fevil.example%29)")
 	_, page := (&manifestDocs{backends: []Backend{odd}}).indexDocs()
 	require.NotContains(t, string(page.body), `href="https://evil`)
@@ -515,6 +515,7 @@ func TestMDText(t *testing.T) {
 	require.Equal(t, "`GET /a\\|b`", mdCode("GET /a|`b"))
 	require.Equal(t, "`a\\|`", mdCode("a\\|"), "a backslash cannot escape the pipe's escape")
 	require.Empty(t, mdCode(""))
+	require.Equal(t, "`"+strings.Repeat(`\|`, maxIndexTextLen)+"…`", mdCode(strings.Repeat("|", maxIndexTextLen+5)), "truncated before escaping")
 }
 
 // countingManifestBackend counts how often its manifest is read, which is
@@ -694,10 +695,116 @@ func TestManifestDiscoveryBeforeFirstReconcile(t *testing.T) {
 
 // buildManifestDocs builds the documents for backends without a cache.
 func buildManifestDocs(ctx context.Context, backends []Backend) *manifestDocs {
-	docs, _ := buildManifestDocsFrom(ctx, sortedManifestBackends(backends), nil)
+	docs, _ := buildManifestDocsFrom(ctx, sortedManifestBackends(backends), nil, nil)
 	return docs
 }
 
 func (d *manifestDocs) writeList(w io.Writer) error {
 	return writeManifestList(w, d.items)
+}
+
+func versionNames(versions []appmanifestv1alpha2.AppManifestManifestVersion) []string {
+	names := make([]string, 0, len(versions))
+	for _, v := range versions {
+		names = append(names, v.Name)
+	}
+	return names
+}
+
+// A backend need not advertise its manifest: the router publishes the one
+// compiled in for its group instead, with only the versions the backend serves.
+func TestBuiltinManifestsFillInForBackendsWithout(t *testing.T) {
+	builtinVersion := func(name string) app.ManifestVersion {
+		return app.ManifestVersion{Name: name, Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Gadget", Plural: "gadgets", Scope: "Cluster"}}}
+	}
+	r := NewGrafanaRouter(dummyRoutesLoader{}, nil)
+	r.builtinManifests = manifestsByGroup([]*app.ManifestData{
+		{
+			AppName: "gadgets", Group: "gadgets.example.com", PreferredVersion: "v3",
+			Versions: []app.ManifestVersion{builtinVersion("v1"), builtinVersion("v2"), builtinVersion("v3")},
+		},
+		// The backend's own manifest wins over a compiled-in one.
+		{AppName: "builtin-widgets", Group: manifestTestGroup, Versions: []app.ManifestVersion{{Name: "v1", Served: true}}},
+		// Neither a group no backend serves, nor one whose versions it serves none of, is published.
+		{AppName: "unserved", Group: "unserved.example.com", Versions: []app.ManifestVersion{builtinVersion("v1")}},
+		{AppName: "old", Group: "old.example.com", Versions: []app.ManifestVersion{builtinVersion("v1")}},
+	})
+	backends := append(testManifestBackends(), &fakeBackend{key: "old-key", group: testAPIGroup("old.example.com", "v2")})
+	r.publishManifestDocs(t.Context(), backends)
+
+	list, err := r.ListManifests(t.Context())
+	require.NoError(t, err)
+	names := make([]string, 0, len(list.Items))
+	for _, m := range list.Items {
+		names = append(names, m.Name)
+	}
+	require.Equal(t, []string{"gadgets.example.com", manifestTestGroup}, names)
+
+	gadgets, err := r.GetManifest(t.Context(), "gadgets.example.com")
+	require.NoError(t, err)
+	require.Equal(t, "gadgets", gadgets.Spec.AppName)
+	require.Equal(t, []string{"v2"}, versionNames(gadgets.Spec.Versions), "only the served versions")
+	require.Equal(t, "v2", *gadgets.Spec.PreferredVersion, "the backend's preferred version replaces one it does not serve")
+
+	widgets, err := r.GetManifest(t.Context(), manifestTestGroup)
+	require.NoError(t, err)
+	require.Equal(t, "widgets", widgets.Spec.AppName)
+
+	index, _ := r.manifestDocs.Load().indexDocs()
+	require.Contains(t, string(index.body), "Manifest: [`/apis/discovery/v1alpha2/manifests/gadgets.example.com`]")
+	require.Contains(t, string(index.body), "No app manifest is published for this group", "old.example.com still has none")
+}
+
+func TestServedManifestVersions(t *testing.T) {
+	manifest := &app.ManifestData{
+		Group: "g.example.com", PreferredVersion: "v2",
+		Versions: []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: true}, {Name: "v3", Served: true}},
+	}
+	tests := []struct {
+		name      string
+		group     metav1.APIGroup
+		versions  []string
+		preferred string
+	}{
+		{name: "all served", group: testAPIGroup("g.example.com", "v3", "v2", "v1"), versions: []string{"v1", "v2", "v3"}, preferred: "v2"},
+		{name: "preferred kept", group: testAPIGroup("g.example.com", "v3", "v2"), versions: []string{"v2", "v3"}, preferred: "v2"},
+		{name: "preferred dropped", group: testAPIGroup("g.example.com", "v3", "v1"), versions: []string{"v1", "v3"}, preferred: "v3"},
+		{name: "neither preferred kept", group: testAPIGroup("g.example.com", "v4", "v1"), versions: []string{"v1"}, preferred: ""},
+		{name: "none served", group: testAPIGroup("g.example.com", "v4")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, ok := servedManifestVersions(manifest, tt.group)
+			if tt.versions == nil {
+				require.False(t, ok)
+				return
+			}
+			require.True(t, ok)
+			var names []string
+			for _, v := range got.Versions {
+				names = append(names, v.Name)
+			}
+			require.Equal(t, tt.versions, names)
+			require.Equal(t, tt.preferred, got.PreferredVersion)
+		})
+	}
+	require.Len(t, manifest.Versions, 3, "the compiled-in manifest is never changed")
+
+	got, _ := servedManifestVersions(manifest, testAPIGroup("g.example.com", "v1", "v2", "v3"))
+	require.Same(t, manifest, got, "not copied when every version is served")
+}
+
+// The backend may run another release, and still serve a version this binary
+// no longer serves: the backend's group decides what is served.
+func TestServedManifestVersionsMarksTheBackendsVersionsServed(t *testing.T) {
+	manifest := &app.ManifestData{
+		Group: "g.example.com", PreferredVersion: "v2",
+		Versions: []app.ManifestVersion{{Name: "v1", Served: false}, {Name: "v2", Served: true}},
+	}
+	got, ok := servedManifestVersions(manifest, testAPIGroup("g.example.com", "v2", "v1"))
+	require.True(t, ok)
+	require.NotSame(t, manifest, got)
+	require.Equal(t, []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: true}}, got.Versions)
+	require.Equal(t, "v2", got.PreferredVersion)
+	require.False(t, manifest.Versions[0].Served, "the compiled-in manifest is never changed")
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const readinessPollInterval = time.Second
@@ -61,7 +62,9 @@ func ProvideGrafanaRouter(cfg *setting.Cfg) (*GrafanaRouter, error) {
 			return nil, err
 		}
 	}
-	return NewGrafanaRouter(nil, auth), nil
+	r := NewGrafanaRouter(nil, auth)
+	r.builtinManifests = manifestsByGroup(resource.AppManifests())
+	return r, nil
 }
 
 // ProvideService creates the router service around router, attaching loader.

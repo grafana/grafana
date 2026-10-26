@@ -400,11 +400,6 @@ export interface FeatureToggles {
   */
   kubernetesAggregatorCapTokenAuth?: boolean;
   /**
-  * Enable groupBy variable support in scenes dashboards
-  * @default false
-  */
-  groupByVariable?: boolean;
-  /**
   * Enables the use of scope filters in Grafana
   * @default false
   */
@@ -439,11 +434,6 @@ export interface FeatureToggles {
   * @default false
   */
   grafanaManagedRecordingRules?: boolean;
-  /**
-  * Enables Saved queries (query library) feature
-  * @default true
-  */
-  queryLibrary?: boolean;
   /**
   * Enables RBAC for playlists
   * @default false

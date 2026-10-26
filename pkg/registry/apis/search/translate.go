@@ -157,6 +157,9 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 	for _, d := range resource.StandardSearchFieldDefinitions() {
 		m[d.Name] = d
 	}
+	for _, d := range managerFields() {
+		m[d.Name] = d
+	}
 	if provider != nil {
 		for _, d := range provider.Fields(gvr) {
 			m[d.Name] = d
@@ -180,8 +183,32 @@ func globalFieldSet() *fieldSet {
 	for _, d := range resource.GlobalSearchFieldDefinitions() {
 		m[d.Name] = d
 	}
+	for _, d := range managerFields() {
+		m[d.Name] = d
+	}
 	m[resource.SEARCH_FIELD_FOLDER_TREE] = folderTreeField()
 	return &fieldSet{byName: m}
+}
+
+// managerFields can be returned because every index stores them. They are
+// declared here rather than with the index's fields, because declaring them
+// there would rebuild every index. They should move to the standard field
+// definitions together with the next change that rebuilds every index anyway.
+func managerFields() []resource.SearchFieldDefinition {
+	return []resource.SearchFieldDefinition{
+		{
+			Name:         resource.SEARCH_FIELD_MANAGER_KIND,
+			Type:         resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
+			Description:  "Kind of tool that manages the resource, such as repo for Git Sync. Empty when nothing manages it.",
+		},
+		{
+			Name:         resource.SEARCH_FIELD_MANAGER_ID,
+			Type:         resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
+			Description:  "Which instance of that tool manages the resource, such as the repository name.",
+		},
+	}
 }
 
 func folderTreeField() resource.SearchFieldDefinition {

@@ -373,8 +373,9 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 	perSource := map[string]int{}
 	for group, entry := range *c.router.snapshot.Load() {
 		perSource[entry.source]++
-		// The single-tenant fallback keeps a breaker per stack, not per group.
-		if _, perDestination := entry.handler.(interface{ managesCircuitBreaking() }); perDestination || entry.breaker == nil {
+		// The single-tenant fallback keeps a breaker per stack, not per group,
+		// and the embedded API server's groups have none.
+		if withoutGroupBreaker(entry.handler) || entry.breaker == nil {
 			continue
 		}
 		current := entry.breakerState()

@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv, useScopes } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DRAWER_INSIDE_ATTRIBUTE } from '@grafana/ui/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
@@ -136,7 +137,12 @@ describe('AppChrome', () => {
     mockUseScopes.mockReturnValue(undefined);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates
+    // while the component may still be mounted (RTL's own cleanup afterEach runs after this one).
+    await act(async () => {
+      setTestFlags({});
+    });
     jest.clearAllMocks();
   });
 
@@ -212,6 +218,18 @@ describe('AppChrome', () => {
 
       await waitFor(() => {
         expect(parseFloat(getComputedStyle(mainContent).paddingLeft) || 0).toBe(0);
+      });
+    });
+
+    it('does not render the docked drawer when the mega-menu flag is on', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.scopesDashboardsMegaMenu': true });
+      });
+
+      setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('scopes-dashboards-container')).not.toBeInTheDocument();
       });
     });
   });

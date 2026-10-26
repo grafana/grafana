@@ -438,6 +438,7 @@ func TestVectorQueries(t *testing.T) {
 						Resource:     "my-things",
 						PartitionKey: "my_things_external",
 						IsExternal:   true,
+						Scope:        ScopeTenant,
 					},
 				},
 			},
