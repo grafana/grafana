@@ -8,10 +8,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -25,6 +23,13 @@ import (
 // cluster-wide difference between the publisher's
 // storage_server_watch_notifications_published_total and live_events_total
 // summed across replicas.
+// The verbs the delivery metrics are labelled by.
+const (
+	VerbAdd    = "add"
+	VerbUpdate = "update"
+	VerbDelete = "delete"
+)
+
 type informerMetrics struct {
 	liveEvents    *prometheus.CounterVec
 	relistEvents  *prometheus.CounterVec
@@ -106,30 +111,30 @@ var _ cache.ResourceEventHandler = apiServerMeter{}
 func (h apiServerMeter) OnAdd(obj any, isInInitialList bool) {
 	if isInInitialList {
 		// Initial-list objects may be arbitrarily old: no latency sample.
-		h.metrics.observeRelist(h.resourceName, usinformer.VerbAdd, 0)
+		h.metrics.observeRelist(h.resourceName, VerbAdd, 0)
 		return
 	}
-	h.metrics.observeLive(h.resourceName, usinformer.VerbAdd, objectRV(obj))
+	h.metrics.observeLive(h.resourceName, VerbAdd, objectRV(obj))
 }
 
 func (h apiServerMeter) OnUpdate(oldObj, newObj any) {
 	// A resync replays the store's object against itself; a live update always
 	// carries a new RV.
 	if objectRVString(oldObj) == objectRVString(newObj) {
-		h.metrics.observeRelist(h.resourceName, usinformer.VerbUpdate, 0)
+		h.metrics.observeRelist(h.resourceName, VerbUpdate, 0)
 		return
 	}
-	h.metrics.observeLive(h.resourceName, usinformer.VerbUpdate, objectRV(newObj))
+	h.metrics.observeLive(h.resourceName, VerbUpdate, objectRV(newObj))
 }
 
 func (h apiServerMeter) OnDelete(obj any) {
 	if _, missedDelete := obj.(cache.DeletedFinalStateUnknown); missedDelete {
 		// The delete was detected by a re-list; the carried object's RV predates
 		// the delete, so it cannot date it.
-		h.metrics.observeRelist(h.resourceName, usinformer.VerbDelete, 0)
+		h.metrics.observeRelist(h.resourceName, VerbDelete, 0)
 		return
 	}
-	h.metrics.observeLive(h.resourceName, usinformer.VerbDelete, objectRV(obj))
+	h.metrics.observeLive(h.resourceName, VerbDelete, objectRV(obj))
 }
 
 func objectRVString(obj any) string {
@@ -148,53 +153,4 @@ func objectRV(obj any) int64 {
 		return 0
 	}
 	return rv
-}
-
-// RelistProjectionMetrics reports how the periodic re-list was served. Build it
-// once per process and hand it to each delta source: the collectors are shared
-// across resources and told apart by labels, so registering them per delta source
-// would be a duplicate registration.
-type RelistProjectionMetrics struct {
-	projections *prometheus.CounterVec
-}
-
-// NewRelistProjectionMetrics builds the projection metrics on reg. A nil reg
-// leaves the collectors unregistered.
-func NewRelistProjectionMetrics(reg prometheus.Registerer) *RelistProjectionMetrics {
-	return &RelistProjectionMetrics{
-		projections: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_provisioning_informer_relist_projection_total",
-			Help: "Re-lists by what the server returned: keys is the keys-only projection (identities, no object bodies), objects is the full list. Reports whether keys_only_relist took effect, and shows the fallback when a server does not serve the projection.",
-		}, []string{"group", "resource", "projection"}),
-	}
-}
-
-// Recorder binds the metrics to one kind, resolving the label values once. It
-// also creates the series at zero, so the fallback counter is visible before
-// anything falls back.
-func (m *RelistProjectionMetrics) Recorder(gvr schema.GroupVersionResource) RelistRecorder {
-	if m == nil {
-		return RelistRecorder{}
-	}
-	return RelistRecorder{
-		keys:    m.projections.WithLabelValues(gvr.Group, gvr.Resource, "keys"),
-		objects: m.projections.WithLabelValues(gvr.Group, gvr.Resource, "objects"),
-	}
-}
-
-// RelistRecorder records one kind's re-list outcomes. Its zero value discards.
-type RelistRecorder struct {
-	keys    prometheus.Counter
-	objects prometheus.Counter
-}
-
-// Projection records which projection served one re-list.
-func (r RelistRecorder) Projection(keysOnly bool) {
-	counter := r.objects
-	if keysOnly {
-		counter = r.keys
-	}
-	if counter != nil {
-		counter.Inc()
-	}
 }

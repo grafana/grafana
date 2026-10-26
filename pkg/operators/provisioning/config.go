@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana-app-sdk/operator"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -70,7 +71,7 @@ type ControllerConfig struct {
 	tlsConfig             *rest.TLSClientConfig
 	decryptService        decrypt.DecryptService
 	registry              prometheus.Registerer
-	relistProjection      *informer.RelistProjectionMetrics
+	busInformerMetrics    *operator.BusInformerMetrics
 	freshness             *informer.FreshnessMetrics
 	repositoryFactory     repository.Factory
 	repositoryExtras      []repository.Extra
@@ -449,19 +450,19 @@ func (c *ControllerConfig) Registry() prometheus.Registerer {
 	return c.registry
 }
 
-// RelistProjectionMetrics returns the process's re-list projection metrics.
-// Memoized because the collectors register on first call; building them twice
-// would panic on the duplicate.
-func (c *ControllerConfig) RelistProjectionMetrics() *informer.RelistProjectionMetrics {
-	if c.relistProjection == nil {
-		c.relistProjection = informer.NewRelistProjectionMetrics(c.Registry())
+// BusInformerMetrics returns the process's informer delivery metrics. Memoized
+// because the collectors register on first call; building them twice would panic
+// on the duplicate.
+func (c *ControllerConfig) BusInformerMetrics() *operator.BusInformerMetrics {
+	if c.busInformerMetrics == nil {
+		c.busInformerMetrics = informer.NewBusInformerMetrics(c.Registry())
 	}
 
-	return c.relistProjection
+	return c.busInformerMetrics
 }
 
 // FreshnessMetrics returns the process's reconcile read-freshness metrics.
-// Memoized for the same reason as RelistProjectionMetrics.
+// Memoized for the same reason as BusInformerMetrics.
 func (c *ControllerConfig) FreshnessMetrics() *informer.FreshnessMetrics {
 	if c.freshness == nil {
 		c.freshness = informer.NewFreshnessMetrics(c.Registry())

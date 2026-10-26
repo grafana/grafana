@@ -235,12 +235,12 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 
 // The collectors register on first call, so a second call that rebuilt them
 // would panic on the duplicate.
-func TestRelistProjectionMetricsIsMemoized(t *testing.T) {
+func TestBusInformerMetricsIsMemoized(t *testing.T) {
 	cfg := &ControllerConfig{}
 
-	first := cfg.RelistProjectionMetrics()
+	first := cfg.BusInformerMetrics()
 	require.NotNil(t, first)
-	require.Same(t, first, cfg.RelistProjectionMetrics())
+	require.Same(t, first, cfg.BusInformerMetrics())
 }
 
 // nil keeps the full-object re-list, so the flag is the whole gate.

@@ -10,6 +10,7 @@ import (
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // NewHistoricJobDeltaSource returns the historic-job delta source. When NATS is
@@ -44,5 +45,5 @@ func NewHistoricJobPeriodicInformer(client versioned.Interface, namespace string
 		})
 		return objs, err
 	}
-	return NewPeriodicDeltaSource(provisioningapis.HistoricJobResourceInfo.GroupVersionKind(), resync, list)
+	return usinformer.NewPeriodicDeltaSource(&provisioningapis.HistoricJobResourceInfo, resync, list)
 }

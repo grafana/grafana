@@ -7,6 +7,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	"github.com/grafana/grafana-app-sdk/operator"
+
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	typedclient "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
@@ -14,6 +16,7 @@ import (
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
+	"github.com/grafana/grafana/pkg/services/apiserver/keys/keyslister"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
@@ -35,36 +38,42 @@ type ConnectionGetter interface {
 // freshness instruments how the getter's reads compare to the notifications
 // that triggered them (see freshness.go); nil disables the observation, and it
 // applies to the NATS path only.
-func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics, freshness *FreshnessMetrics) (DeltaSource, ConnectionGetter) {
+func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *operator.BusInformerMetrics, freshness *FreshnessMetrics) (DeltaSource, ConnectionGetter, error) {
 	if nats.Enabled(subscriber) {
 		gvr := provisioningapis.ConnectionResourceInfo.GroupVersionResource()
-		recorder := metrics.Recorder(gvr)
-		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore(), keys, recorder)
-		// Same as the repository informer: the controller's only feed, with
-		// connection health checks driven by the re-list, so it must keep
-		// operating at the re-list cadence while NATS is unavailable rather
-		// than gate on the subscription.
-		source.AllowDegradedStart()
 		announced := newAnnouncements()
-		source.SetAnnouncements(announced)
+		source, err := NewConnectionInformer(subscriber, client, "", resync, keys, usinformer.BusSourceOptions{
+			Announcements: announced,
+			Metrics:       metrics,
+		})
+		if err != nil {
+			return nil, nil, err
+		}
 		getter := NewClientConnectionGetter(client.ProvisioningV0alpha1())
-		return source, observeConnectionFreshness(getter, announced, freshness.Recorder(gvr.Resource))
+		return source, observeConnectionFreshness(getter, announced, freshness.Recorder(gvr.Resource)), nil
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
-	return inf.Informer(), NewCachedConnectionGetter(inf.Lister())
+	return inf.Informer(), NewCachedConnectionGetter(inf.Lister()), nil
 }
 
-// NewConnectionInformer builds an Informer for connections. When keys is
-// non-nil the periodic re-list is keys-only; otherwise it lists full objects.
-func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, keys keysapi.Lister, recorder RelistRecorder) *usinformer.Informer {
+// NewConnectionInformer builds the NATS-mode connection source. namespace scopes
+// the subscription and the re-list; pass "" to cover every namespace.
+func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, keys keysapi.Lister, opts usinformer.BusSourceOptions) (usinformer.BusSource, error) {
 	c := client.ProvisioningV0alpha1()
-	newObject := func(ns, name string) runtime.Object {
-		return identity(ns, name, "")
+	if keys != nil {
+		opts.Keys = keyslister.New(keys)
 	}
-	list := identityList(keys, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
-		return c.Connections(namespace).List(ctx, opts)
-	}, recorder)
-	return usinformer.NewInformer(subscriber, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, list)
+	opts.Namespace = namespace
+	// Delivered as a projection rather than the generated type: a live event carries the identity alone, and a
+	// zero-valued spec on a real object would read as a spec that is set to nothing.
+	list := func(ctx context.Context) ([]runtime.Object, error) {
+		objs, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+			return c.Connections(namespace).List(ctx, opts)
+		})
+		return projectObjects(objs), err
+	}
+	return usinformer.NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{},
+		&provisioningapis.ConnectionResourceInfo, resync, list, opts)
 }
 
 // NewCachedConnectionGetter backs a ConnectionGetter with the informer's

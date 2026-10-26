@@ -1197,8 +1197,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
-			// One per process; see RelistProjectionMetrics.
-			relistProjectionMetrics := informer.NewRelistProjectionMetrics(b.registry)
+			// One per process; see BusInformerMetrics.
+			busInformerMetrics := informer.NewBusInformerMetrics(b.registry)
 			// Likewise one per process; see FreshnessMetrics.
 			freshnessMetrics := informer.NewFreshnessMetrics(b.registry)
 
@@ -1208,7 +1208,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				repoKeys = keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
 				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.RepositoryResourceInfo.GroupVersionResource().Resource)
 			}
-			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
+			repoSource, reconcileRepoGetter, err := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, busInformerMetrics, freshnessMetrics)
+			if err != nil {
+				return fmt.Errorf("build repository delta source: %w", err)
+			}
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
 				reconcileRepoGetter,
@@ -1257,7 +1260,10 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				connKeys = keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource())
 				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.ConnectionResourceInfo.GroupVersionResource().Resource)
 			}
-			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
+			connSource, connGetter, err := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, busInformerMetrics, freshnessMetrics)
+			if err != nil {
+				return fmt.Errorf("build connection delta source: %w", err)
+			}
 			connController := controller.NewConnectionController(
 				connGetter,
 				connStatusPatcher,

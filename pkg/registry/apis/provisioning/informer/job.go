@@ -14,6 +14,7 @@ import (
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -45,14 +46,14 @@ func NewJobBusDeltaSource(subscriber nats.Subscriber, client versioned.Interface
 		})
 		return objs, err
 	}
-	return NewBusDeltaSource(subscriber, &provisioningapis.Job{}, provisioningapis.JobResourceInfo.GroupVersionKind(),
-		resync, list, busMetrics(reg))
+	return usinformer.NewBusDeltaSource(subscriber, &provisioningapis.Job{}, &provisioningapis.JobResourceInfo,
+		resync, list, usinformer.BusSourceOptions{Namespace: namespace, Metrics: NewBusInformerMetrics(reg)})
 }
 
-// busMetrics builds the app-sdk's delivery metrics and registers them under this repository's prefix, so the series
-// stay findable alongside the ones this package declares. Like those, it is built once per process at the wiring
-// site: a second registration on the same registry panics.
-func busMetrics(reg prometheus.Registerer) *operator.BusInformerMetrics {
+// NewBusInformerMetrics builds the app-sdk's delivery metrics and registers them under this repository's prefix, so
+// the series stay findable alongside the ones this package declares. Like those, it is built once per process at the
+// wiring site: a second registration on the same registry panics.
+func NewBusInformerMetrics(reg prometheus.Registerer) *operator.BusInformerMetrics {
 	m := operator.NewBusInformerMetrics(operator.BusInformerMetricsConfig{
 		MetricsConfig: sdkmetrics.Config{Namespace: "grafana_provisioning"},
 		// Unified storage embeds the write's timestamp in the resource version, which is what dates a change for

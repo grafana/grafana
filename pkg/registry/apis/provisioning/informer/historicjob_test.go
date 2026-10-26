@@ -54,7 +54,7 @@ func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
 		require.NoError(t, err)
 		_, isInformer := src.(cache.SharedIndexInformer)
 		assert.False(t, isInformer, "expected the periodic source, not an apiserver informer")
-		assert.IsType(t, &sdkSource{}, src)
+		assert.NotNil(t, src)
 	})
 }
 

@@ -34,6 +34,15 @@ var folderGVR = schema.GroupVersionResource{
 	Resource: "folders",
 }
 
+// folderResourceInfo names the kind for the app-sdk's schema and the resource for the subject the bus publishes on.
+type folderResourceInfo struct{}
+
+func (folderResourceInfo) GroupVersionKind() schema.GroupVersionKind {
+	return folderGVR.GroupVersion().WithKind("Folder")
+}
+
+func (folderResourceInfo) GroupVersionResource() schema.GroupVersionResource { return folderGVR }
+
 // RunFolderController watches Folder objects and logs deletion events.
 // This is a bare skeleton: no workqueue, no retries, no finalizers.
 //
@@ -82,17 +91,18 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 			return fmt.Errorf("failed to start NATS subscriber: %w", err)
 		}
 
-		newObject := func(ns, name string) runtime.Object {
-			return &folderv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
-		}
-		list := func(ctx context.Context) ([]runtime.Object, int64, error) {
-			return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		list := func(ctx context.Context) ([]runtime.Object, error) {
+			objs, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 				return dynClient.Resource(folderGVR).Namespace("").List(ctx, opts)
 			})
+			return objs, err
 		}
 
-		inf := usinformer.NewInformer(subscriber, folderGVR, "", 10*time.Minute, queueGroup, nil, newObject, list)
-		inf.AllowDegradedStart()
+		inf, err := usinformer.NewBusDeltaSource(subscriber, &folderv1.Folder{}, folderResourceInfo{},
+			10*time.Minute, list, usinformer.BusSourceOptions{Group: queueGroup})
+		if err != nil {
+			return fmt.Errorf("failed to build folder delta source: %w", err)
+		}
 
 		reg, err = inf.AddEventHandler(handler)
 		if err != nil {

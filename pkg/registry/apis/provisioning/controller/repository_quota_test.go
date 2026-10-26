@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +16,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // MockRepositoryNamespaceLister is a mock implementation of listers.RepositoryNamespaceLister
@@ -317,10 +317,9 @@ func TestRepositoryQuotaConditions_CountsTheRepositoryUnderReconciliation(t *tes
 	existing := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "existing", ResourceVersion: "1"}}
 	added := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "added-elsewhere", ResourceVersion: "2"}}
 
-	// This replica's store has seen only the older repository.
-	store := usinformer.NewStore()
-	store.Update(ctx, &metav1.PartialObjectMetadata{ObjectMeta: existing.ObjectMeta})
-	getter := informer.NewClientRepositoryGetter(fake.NewClientset(existing, added).ProvisioningV0alpha1(), store)
+	// This replica's snapshot has seen only the older repository.
+	snapshot := fakeSnapshot{{Namespace: existing.Namespace, Name: existing.Name}}
+	getter := informer.NewClientRepositoryGetter(fake.NewClientset(existing, added).ProvisioningV0alpha1(), snapshot)
 
 	_, err := getter.Get(ctx, "ns", added.Name)
 	require.NoError(t, err)
@@ -330,3 +329,8 @@ func TestRepositoryQuotaConditions_CountsTheRepositoryUnderReconciliation(t *tes
 	assert.Equal(t, provisioning.ReasonQuotaExceeded, condition.Reason)
 	assert.Equal(t, "namespace quota exceeded: 2/1 repositories", condition.Message)
 }
+
+// fakeSnapshot stands in for the informer's snapshot, which holds identities only.
+type fakeSnapshot []resource.Identifier
+
+func (s fakeSnapshot) Snapshot() []resource.Identifier { return s }

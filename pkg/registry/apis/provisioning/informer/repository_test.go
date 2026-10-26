@@ -9,8 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/cache"
+
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
@@ -37,15 +38,18 @@ func terminating(r *provisioningapis.Repository) *provisioningapis.Repository {
 	return r
 }
 
-// seededStore fills a real store the way the re-list does, with identities.
-func seededStore(objs ...*provisioningapis.Repository) usinformer.Store {
-	store := usinformer.NewStore()
-	projected := make([]runtime.Object, 0, len(objs))
+// fakeSnapshot stands in for the informer's snapshot, which holds identities only.
+type fakeSnapshot []resource.Identifier
+
+func (s fakeSnapshot) Snapshot() []resource.Identifier { return s }
+
+// seededSnapshot is the snapshot a re-list of objs would leave behind.
+func seededSnapshot(objs ...*provisioningapis.Repository) fakeSnapshot {
+	out := make(fakeSnapshot, 0, len(objs))
 	for _, obj := range objs {
-		projected = append(projected, obj)
+		out = append(out, resource.Identifier{Namespace: obj.Namespace, Name: obj.Name})
 	}
-	store.Replace(projectObjects(projected), 1)
-	return store
+	return out
 }
 
 // A live repository notification is delivered as an identity, the same shape the
@@ -55,8 +59,9 @@ func TestNewRepositoryInformer_DeliversTheProjection(t *testing.T) {
 	rec := &typeRecorder{}
 	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
 
-	inf := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, usinformer.NewStore(), nil, RelistRecorder{})
-	_, err := inf.AddEventHandler(rec)
+	inf, err := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, nil, usinformer.BusSourceOptions{})
+	require.NoError(t, err)
+	_, err = inf.AddEventHandler(rec)
 	require.NoError(t, err)
 	stopCh := make(chan struct{})
 	go inf.Run(stopCh)
@@ -102,7 +107,7 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 func TestClientRepositoryGetter_GetReadsTheAPI(t *testing.T) {
 	full := repoAt("ns", "fresh", "7")
 	full.Spec.Title = "a title"
-	g := NewClientRepositoryGetter(fake.NewClientset(full).ProvisioningV0alpha1(), usinformer.NewStore())
+	g := NewClientRepositoryGetter(fake.NewClientset(full).ProvisioningV0alpha1(), fakeSnapshot{})
 
 	got, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
@@ -112,27 +117,48 @@ func TestClientRepositoryGetter_GetReadsTheAPI(t *testing.T) {
 	assert.True(t, apierrors.IsNotFound(err))
 }
 
-// A reconcile Get writes the identity it read into the store and evicts on
-// NotFound, so the count reflects the repository under reconciliation even when
-// this replica never stored it.
-func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
-	store := usinformer.NewStore()
-	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), store)
+// A reconcile Get is remembered until a re-list picks it up, so the count
+// reflects the repository under reconciliation even when the snapshot has not
+// caught up; a Get that 404s drops it again.
+func TestClientRepositoryGetter_GetIsCountedBeforeTheSnapshotCatchesUp(t *testing.T) {
+	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), fakeSnapshot{})
+
+	count, err := g.CountRepositories(context.Background(), "ns")
+	require.NoError(t, err)
+	assert.Zero(t, count, "the snapshot has seen nothing")
+
+	_, err = g.Get(context.Background(), "ns", "fresh")
+	require.NoError(t, err)
+	count, err = g.CountRepositories(context.Background(), "ns")
+	require.NoError(t, err)
+	assert.Equal(t, 1, count, "the repository the reconcile just read counts")
+
+	_, err = g.Get(context.Background(), "ns", "gone")
+	require.True(t, apierrors.IsNotFound(err))
+	count, err = g.CountRepositories(context.Background(), "ns")
+	require.NoError(t, err)
+	assert.Equal(t, 1, count, "a repository that 404s does not")
+}
+
+// What the snapshot already holds is dropped from the remembered set, so it
+// drains on the next re-list rather than growing.
+func TestClientRepositoryGetter_TheSnapshotDrainsWhatItCatchesUpWith(t *testing.T) {
+	snapshot := seededSnapshot(repo("ns", "fresh"))
+	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), snapshot)
 
 	_, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
-	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "an identity, not the whole object")
 
-	store.Update(context.Background(), identity("ns", "gone", "3"))
-	_, err = g.Get(context.Background(), "ns", "gone")
-	require.True(t, apierrors.IsNotFound(err))
-	assert.Equal(t, []string{"ns/fresh@7"}, identities(t, store.List(context.Background())), "a vanished repository leaves the store")
+	count, err := g.CountRepositories(context.Background(), "ns")
+	require.NoError(t, err)
+	assert.Equal(t, 1, count, "counted once, not twice")
+	assert.Empty(t, g.(*clientRepositoryGetter).recent)
 }
 
 // The confirmed count reads the API, not the store.
 func TestClientRepositoryGetter_ConfirmCountListsTheAPI(t *testing.T) {
 	client := fake.NewClientset(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
-	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), usinformer.NewStore())
+	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), fakeSnapshot{})
 
 	cached, err := g.CountRepositories(context.Background(), "ns-a")
 	require.NoError(t, err)
@@ -147,8 +173,8 @@ func TestClientRepositoryGetter_ConfirmCountListsTheAPI(t *testing.T) {
 // it agrees with the cached getter: a repository awaiting its finalizers counts,
 // which is what lets the store hold identities alone.
 func TestClientRepositoryGetter_CountFiltersNamespace(t *testing.T) {
-	store := seededStore(repo("ns-a", "one"), repo("ns-a", "two"), terminating(repo("ns-a", "going")), repo("ns-b", "other"))
-	g := NewClientRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
+	snapshot := seededSnapshot(repo("ns-a", "one"), repo("ns-a", "two"), terminating(repo("ns-a", "going")), repo("ns-b", "other"))
+	g := NewClientRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), snapshot)
 
 	count, err := g.CountRepositories(context.Background(), "ns-a")
 	require.NoError(t, err)
@@ -161,17 +187,19 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 	client := fake.NewClientset(repo(testNamespace, "r"))
 
 	t.Run("nats enabled reads fresh from the API", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(newFakeSubscriber(), client, nil, time.Minute, nil, nil)
+		_, getter, err := NewRepositoryDeltaSource(newFakeSubscriber(), client, nil, time.Minute, nil, nil)
+		require.NoError(t, err)
 		got, err := getter.Get(context.Background(), testNamespace, "r")
 		require.NoError(t, err)
 		assert.Equal(t, "r", got.Name)
 	})
 
 	t.Run("nats disabled reads the informer cache", func(t *testing.T) {
-		_, getter := NewRepositoryDeltaSource(nil, client, nil, time.Minute, nil, nil)
+		_, getter, err := NewRepositoryDeltaSource(nil, client, nil, time.Minute, nil, nil)
+		require.NoError(t, err)
 		// The cache getter reads the (empty, unsynced) informer lister, so the
 		// object present in the API is not found — proving it does not hit the API.
-		_, err := getter.Get(context.Background(), testNamespace, "r")
+		_, err = getter.Get(context.Background(), testNamespace, "r")
 		assert.True(t, apierrors.IsNotFound(err))
 	})
 }
