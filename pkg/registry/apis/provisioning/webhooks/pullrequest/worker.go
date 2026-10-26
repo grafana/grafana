@@ -49,7 +49,7 @@ func ProvidePullRequestWorker(
 	parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
 	evaluator := NewEvaluator(screenshotRenderer, parsers, urls, registry)
-	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering, urls)
+	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering, urls, registry)
 
 	return NewPullRequestWorker(evaluator, commenter, registry)
 }

@@ -190,7 +190,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	renderer := pullrequest.NewNoOpRenderer()
 	urls := pullrequest.URLProvider{Internal: urlProvider, Public: urlProvider}
 	evaluator := pullrequest.NewEvaluator(renderer, parsers, urls, registry)
-	commenter := pullrequest.NewCommenter(false, urls)
+	commenter := pullrequest.NewCommenter(false, urls, registry)
 	prWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
 	workers := []jobs.Worker{

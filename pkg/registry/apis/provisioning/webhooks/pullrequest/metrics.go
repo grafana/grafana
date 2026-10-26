@@ -16,6 +16,7 @@ type pullRequestMetrics struct {
 	registry           prometheus.Registerer
 	processingDuration *prometheus.HistogramVec
 	commentsPosted     *prometheus.CounterVec
+	commentCache       *prometheus.CounterVec
 }
 
 func registerPullRequestMetrics(registry prometheus.Registerer) pullRequestMetrics {
@@ -41,10 +42,20 @@ func registerPullRequestMetrics(registry prometheus.Registerer) pullRequestMetri
 		)
 		registry.MustRegister(commentsPosted)
 
+		commentCache := prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_provisioning_pullrequest_comment_cache_total",
+				Help: "Total number of preview comment cache lookups by result (hit, miss, stale)",
+			},
+			[]string{"result"},
+		)
+		registry.MustRegister(commentCache)
+
 		pullRequestMetricsInstance = pullRequestMetrics{
 			registry:           registry,
 			processingDuration: processingDuration,
 			commentsPosted:     commentsPosted,
+			commentCache:       commentCache,
 		}
 	})
 
@@ -57,6 +68,10 @@ func (m *pullRequestMetrics) recordProcessed(outcome string, duration time.Durat
 
 func (m *pullRequestMetrics) recordCommentPosted(outcome string) {
 	m.commentsPosted.WithLabelValues(outcome).Inc()
+}
+
+func (m *pullRequestMetrics) recordCommentCache(result string) {
+	m.commentCache.WithLabelValues(result).Inc()
 }
 
 type screenshotMetrics struct {

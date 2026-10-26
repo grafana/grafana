@@ -159,7 +159,7 @@ func ProvideWebhooksWithImages(
 			)
 
 			evaluator := pullrequest.NewEvaluator(screenshotRenderer, parsers, urls, registry)
-			commenter := pullrequest.NewCommenter(cfg.ProvisioningAllowImageRendering, urls)
+			commenter := pullrequest.NewCommenter(cfg.ProvisioningAllowImageRendering, urls, registry)
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
 			return NewWebhookExtraWithImages(

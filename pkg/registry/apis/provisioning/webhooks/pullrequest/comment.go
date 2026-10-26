@@ -3,17 +3,29 @@ package pullrequest
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
 	"text/template"
+	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/hashicorp/golang-lru/v2/expirable"
+	"github.com/prometheus/client_golang/prometheus"
+
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
 const maxErrorLength = 256
 
 const previewCommentMarker = `[//]: # "grafana-git-sync-preview"`
+
+const (
+	commentCacheSize = 1000
+	commentCacheTTL  = 7 * 24 * time.Hour
+)
 
 const unsupportedForkMessage = "Grafana doesn't currently support previews for pull requests from forks."
 
@@ -33,9 +45,11 @@ type commenter struct {
 	templateUnsupportedFork  *template.Template
 	showImageRendererNote    bool
 	urls                     URLProvider
+	commentIDs               *expirable.LRU[string, int64]
+	metrics                  pullRequestMetrics
 }
 
-func NewCommenter(showImageRendererNote bool, urls URLProvider) Commenter {
+func NewCommenter(showImageRendererNote bool, urls URLProvider, registry prometheus.Registerer) Commenter {
 	return &commenter{
 		templateDashboard:        template.Must(template.New("dashboard").Parse(commentTemplateSingleDashboard)),
 		templateTable:            template.Must(template.New("table").Parse(commentTemplateTable)),
@@ -47,6 +61,8 @@ func NewCommenter(showImageRendererNote bool, urls URLProvider) Commenter {
 		templateUnsupportedFork:  template.Must(template.New("unsupported-fork").Parse(commentTemplateUnsupportedFork)),
 		showImageRendererNote:    showImageRendererNote,
 		urls:                     urls,
+		commentIDs:               expirable.NewLRU[string, int64](commentCacheSize, nil, commentCacheTTL),
+		metrics:                  registerPullRequestMetrics(registry),
 	}
 }
 
@@ -67,6 +83,22 @@ func (c *commenter) Comment(ctx context.Context, prRepo repository.PullRequestRe
 
 	comment = previewCommentMarker + "\n\n" + comment
 
+	key := commentCacheKey(prRepo.Config(), pr)
+	result := "miss"
+	if id, ok := c.commentIDs.Get(key); ok {
+		err := prRepo.EditPullRequestComment(ctx, pr, id, comment)
+		if err == nil {
+			c.recordCommentCache(ctx, pr, "hit")
+			return nil
+		}
+		if !errors.Is(err, repository.ErrFileNotFound) {
+			return fmt.Errorf("edit pull request comment: %w", err)
+		}
+		c.commentIDs.Remove(key)
+		result = "stale"
+	}
+	c.recordCommentCache(ctx, pr, result)
+
 	existing, err := prRepo.ListPullRequestComments(ctx, pr)
 	if err != nil {
 		return fmt.Errorf("list pull request comments: %w", err)
@@ -83,6 +115,7 @@ func (c *commenter) Comment(ctx context.Context, prRepo repository.PullRequestRe
 		if err := prRepo.EditPullRequestComment(ctx, pr, previewCommentID, comment); err != nil {
 			return fmt.Errorf("edit pull request comment: %w", err)
 		}
+		c.commentIDs.Add(key, previewCommentID)
 		return nil
 	}
 
@@ -91,6 +124,15 @@ func (c *commenter) Comment(ctx context.Context, prRepo repository.PullRequestRe
 	}
 
 	return nil
+}
+
+func (c *commenter) recordCommentCache(ctx context.Context, pr int, result string) {
+	c.metrics.recordCommentCache(result)
+	logging.FromContext(ctx).Debug("preview comment cache lookup", "pr", pr, "result", result)
+}
+
+func commentCacheKey(cfg *provisioning.Repository, pr int) string {
+	return fmt.Sprintf("%s/%d/%d", cfg.UID, cfg.Generation, pr)
 }
 
 func (c *commenter) generateComment(_ context.Context, info changeInfo) (string, error) {

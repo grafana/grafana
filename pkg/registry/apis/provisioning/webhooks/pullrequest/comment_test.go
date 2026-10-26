@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,14 +21,21 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-func newPullRequestRepoWithoutComments(t *testing.T) *repository.MockPullRequestRepo {
+func newPullRequestRepo(t *testing.T) *repository.MockPullRequestRepo {
 	repo := repository.NewMockPullRequestRepo(t)
+	repo.On("Config").Return(&v0alpha1.Repository{ObjectMeta: metav1.ObjectMeta{UID: "repo-uid", Generation: 1}}).Maybe()
+	return repo
+}
+
+func newPullRequestRepoWithoutComments(t *testing.T) *repository.MockPullRequestRepo {
+	repo := newPullRequestRepo(t)
 	repo.On("ListPullRequestComments", mock.Anything, mock.Anything).Return(nil, nil)
 	return repo
 }
 
 func TestCommenter_UnsupportedFork(t *testing.T) {
-	repo := newPullRequestRepoWithoutComments(t)
+	repo := repository.NewMockPullRequestRepo(t)
+	repo.On("ListPullRequestComments", mock.Anything, mock.Anything).Return(nil, nil)
 	expected, err := os.ReadFile("testdata/unsupported-fork.md")
 	require.NoError(t, err)
 	repo.On("CommentPullRequest", mock.Anything, 123, previewCommentMarker+"\n\n"+string(expected)).Return(nil).Once()
@@ -34,14 +43,14 @@ func TestCommenter_UnsupportedFork(t *testing.T) {
 	repo.On("Config").Return(&v0alpha1.Repository{
 		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "org-2"},
 		Spec:       v0alpha1.RepositorySpec{Title: "My Repo"},
-	}).Once()
+	})
 	urls := URLProvider{
 		Internal: func(_ context.Context, namespace string) string {
 			require.Equal(t, "org-2", namespace)
 			return "https://grafana.example.com/grafana/"
 		},
 	}
-	require.NoError(t, NewCommenter(true, urls).Comment(t.Context(), repo, 123, changeInfo{UnsupportedFork: true}))
+	require.NoError(t, NewCommenter(true, urls, prometheus.NewPedanticRegistry()).Comment(t.Context(), repo, 123, changeInfo{UnsupportedFork: true}))
 }
 
 func TestGenerateComment_EscapesTitle(t *testing.T) {
@@ -70,7 +79,7 @@ func TestGenerateComment_EscapesTitle(t *testing.T) {
 		},
 	}
 
-	commenter := NewCommenter(false, URLProvider{})
+	commenter := NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry())
 	require.NoError(t, commenter.Comment(context.Background(), repo, 1, info))
 	require.Contains(t, captured, "Pipes \\| Brackets \\[x\\] newline")
 	require.NotContains(t, captured, "Brackets [x]")
@@ -80,13 +89,13 @@ func TestCommenter_Comment_FailedToComment(t *testing.T) {
 	repo := newPullRequestRepoWithoutComments(t)
 	repo.On("CommentPullRequest", context.Background(), 1, mock.Anything).Return(errors.New("failed"))
 
-	commenter := NewCommenter(false, URLProvider{})
+	commenter := NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry())
 	err := commenter.Comment(context.Background(), repo, 1, changeInfo{})
 	require.Error(t, err)
 }
 
 func TestCommenter_Comment_EditsNewestPreviewComment(t *testing.T) {
-	repo := repository.NewMockPullRequestRepo(t)
+	repo := newPullRequestRepo(t)
 	repo.On("ListPullRequestComments", context.Background(), 1).Return([]repository.PullRequestComment{
 		{ID: 9, Body: "> " + previewCommentMarker},
 		{ID: 3, Body: previewCommentMarker + "\n\nold"},
@@ -97,22 +106,49 @@ func TestCommenter_Comment_EditsNewestPreviewComment(t *testing.T) {
 		return strings.HasPrefix(comment, previewCommentMarker+"\n\n")
 	})).Return(nil).Once()
 
-	require.NoError(t, NewCommenter(false, URLProvider{}).Comment(context.Background(), repo, 1, changeInfo{}))
+	require.NoError(t, NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry()).Comment(context.Background(), repo, 1, changeInfo{}))
 }
 
 func TestCommenter_Comment_FailedToEdit(t *testing.T) {
-	repo := repository.NewMockPullRequestRepo(t)
+	repo := newPullRequestRepo(t)
 	repo.On("ListPullRequestComments", context.Background(), 1).Return([]repository.PullRequestComment{{ID: 7, Body: previewCommentMarker}}, nil)
 	repo.On("EditPullRequestComment", context.Background(), 1, int64(7), mock.Anything).Return(errors.New("failed"))
 
-	require.ErrorContains(t, NewCommenter(false, URLProvider{}).Comment(context.Background(), repo, 1, changeInfo{}), "edit pull request comment")
+	require.ErrorContains(t, NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry()).Comment(context.Background(), repo, 1, changeInfo{}), "edit pull request comment")
 }
 
 func TestCommenter_Comment_FailedToListComments(t *testing.T) {
-	repo := repository.NewMockPullRequestRepo(t)
+	repo := newPullRequestRepo(t)
 	repo.On("ListPullRequestComments", context.Background(), 1).Return(nil, errors.New("failed"))
 
-	require.ErrorContains(t, NewCommenter(false, URLProvider{}).Comment(context.Background(), repo, 1, changeInfo{}), "list pull request comments")
+	require.ErrorContains(t, NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry()).Comment(context.Background(), repo, 1, changeInfo{}), "list pull request comments")
+}
+
+func TestCommenter_Comment_EditsCachedPreviewCommentWithoutListing(t *testing.T) {
+	repo := newPullRequestRepo(t)
+	repo.On("ListPullRequestComments", context.Background(), 1).Return([]repository.PullRequestComment{{ID: 7, Body: previewCommentMarker}}, nil).Once()
+	repo.On("EditPullRequestComment", context.Background(), 1, int64(7), mock.Anything).Return(nil).Twice()
+
+	commenter := NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry())
+	hits := testutil.ToFloat64(pullRequestMetricsInstance.commentCache.WithLabelValues("hit"))
+	require.NoError(t, commenter.Comment(context.Background(), repo, 1, changeInfo{}))
+	require.NoError(t, commenter.Comment(context.Background(), repo, 1, changeInfo{}))
+	require.Equal(t, hits+1, testutil.ToFloat64(pullRequestMetricsInstance.commentCache.WithLabelValues("hit")))
+}
+
+func TestCommenter_Comment_RelistsWhenCachedPreviewCommentIsGone(t *testing.T) {
+	repo := newPullRequestRepo(t)
+	repo.On("ListPullRequestComments", context.Background(), 1).Return([]repository.PullRequestComment{{ID: 7, Body: previewCommentMarker}}, nil).Once()
+	repo.On("EditPullRequestComment", context.Background(), 1, int64(7), mock.Anything).Return(nil).Once()
+	commenter := NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry())
+	require.NoError(t, commenter.Comment(context.Background(), repo, 1, changeInfo{}))
+
+	repo.On("EditPullRequestComment", context.Background(), 1, int64(7), mock.Anything).Return(repository.ErrFileNotFound).Once()
+	repo.On("ListPullRequestComments", context.Background(), 1).Return(nil, nil).Once()
+	repo.On("CommentPullRequest", context.Background(), 1, mock.Anything).Return(nil).Once()
+	stale := testutil.ToFloat64(pullRequestMetricsInstance.commentCache.WithLabelValues("stale"))
+	require.NoError(t, commenter.Comment(context.Background(), repo, 1, changeInfo{}))
+	require.Equal(t, stale+1, testutil.ToFloat64(pullRequestMetricsInstance.commentCache.WithLabelValues("stale")))
 }
 
 func TestGenerateComment(t *testing.T) {
@@ -423,7 +459,7 @@ func TestGenerateComment(t *testing.T) {
 			require.NoError(t, err)
 			repo.On("CommentPullRequest", context.Background(), 1, previewCommentMarker+"\n\n"+string(expect)).Return(nil)
 
-			commenter := NewCommenter(false, URLProvider{})
+			commenter := NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry())
 			err = commenter.Comment(context.Background(), repo, 1, tc.Input)
 			require.NoError(t, err)
 		})
@@ -462,7 +498,7 @@ func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
 		},
 	}
 
-	commenter := NewCommenter(false, URLProvider{})
+	commenter := NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry())
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
 	require.Contains(t, capturedComment, "**2** resource changes")
@@ -516,7 +552,7 @@ func TestGenerateComment_ParsedDeletedWithoutResourceAction(t *testing.T) {
 		},
 	}
 
-	commenter := NewCommenter(false, URLProvider{})
+	commenter := NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry())
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
 	require.Contains(t, capturedComment, "🗑️ Deleted")
@@ -544,7 +580,7 @@ func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
 		},
 	}
 
-	commenter := NewCommenter(false, URLProvider{})
+	commenter := NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry())
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
 	require.Contains(t, capturedComment, "**1** resource change")
@@ -584,7 +620,7 @@ func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
 		},
 	}
 
-	commenter := NewCommenter(false, URLProvider{})
+	commenter := NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry())
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
 	require.Contains(t, capturedComment, "**2** resource changes")
@@ -624,7 +660,7 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 			return true
 		})).Return(nil)
 
-		commenter := NewCommenter(true, URLProvider{})
+		commenter := NewCommenter(true, URLProvider{}, prometheus.NewPedanticRegistry())
 		err := commenter.Comment(context.Background(), repo, 1, info)
 		require.NoError(t, err)
 		require.Contains(t, capturedComment, "💡 **Tip:** To enable dashboard previews")
@@ -660,7 +696,7 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 			return true
 		})).Return(nil)
 
-		commenter := NewCommenter(false, URLProvider{})
+		commenter := NewCommenter(false, URLProvider{}, prometheus.NewPedanticRegistry())
 		err := commenter.Comment(context.Background(), repo, 1, info)
 		require.NoError(t, err)
 		require.NotContains(t, capturedComment, "💡 **Tip:** To enable dashboard previews")
