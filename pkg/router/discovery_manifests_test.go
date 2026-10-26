@@ -515,6 +515,7 @@ func TestMDText(t *testing.T) {
 	require.Equal(t, "`GET /a\\|b`", mdCode("GET /a|`b"))
 	require.Equal(t, "`a\\|`", mdCode("a\\|"), "a backslash cannot escape the pipe's escape")
 	require.Empty(t, mdCode(""))
+	require.Equal(t, "`"+strings.Repeat(`\|`, maxIndexTextLen)+"…`", mdCode(strings.Repeat("|", maxIndexTextLen+5)), "truncated before escaping")
 }
 
 // countingManifestBackend counts how often its manifest is read, which is

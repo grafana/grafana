@@ -51,7 +51,8 @@ const (
 	manifestDiscoveryGroups  = manifestDiscoveryList + "/"
 )
 
-// maxIndexTextLen bounds each manifest-supplied summary in the markdown index.
+// maxIndexTextLen bounds each piece of manifest-supplied text in the markdown
+// index, in runes.
 const maxIndexTextLen = 200
 
 // manifestDocs holds the /apis/discovery documents for one set of served
@@ -534,7 +535,7 @@ Grafana's APIs follow Kubernetes API conventions. Every request needs the same c
 - Namespaced: ` + "`/apis/{group}/{version}/namespaces/{namespace}/{resource}[/{name}]`" + `
 - Cluster-scoped: ` + "`/apis/{group}/{version}/{resource}[/{name}]`" + `
 
-A list request returns a ` + "`{Kind}List`" + `;.
+A list request returns a ` + "`{Kind}List`" + `.
 `)
 
 	b.WriteString("\n## Groups\n\n| Group | App | Preferred version | Versions |\n| --- | --- | --- | --- |\n")
@@ -757,11 +758,15 @@ var mdEscaper = func() *strings.Replacer {
 // cell: a single line, escaped, and bounded in length. It truncates before
 // escaping, so it never splits an escape.
 func mdText(s string) string {
-	s = strings.Join(strings.Fields(s), " ")
+	return mdEscaper.Replace(truncateIndexText(strings.Join(strings.Fields(s), " ")))
+}
+
+// truncateIndexText cuts s to maxIndexTextLen runes.
+func truncateIndexText(s string) string {
 	if r := []rune(s); len(r) > maxIndexTextLen {
-		s = string(r[:maxIndexTextLen]) + "…"
+		return string(r[:maxIndexTextLen]) + "…"
 	}
-	return mdEscaper.Replace(s)
+	return s
 }
 
 // mdLink links text, shown as code, to target. The caller URL-escapes every
@@ -779,9 +784,10 @@ func mdLink(text, target string) string {
 
 // mdCode renders s as an inline code span that can sit in a table cell.
 // Backticks and backslashes are dropped, since a code span has no escapes:
-// one would end the span, the other could escape the pipe after it.
+// one would end the span, the other could escape the pipe after it. Like
+// mdText, it truncates before escaping.
 func mdCode(s string) string {
-	s = strings.NewReplacer("`", "", `\`, "", "|", `\|`).Replace(strings.Join(strings.Fields(s), " "))
+	s = strings.NewReplacer("`", "", `\`, "", "|", `\|`).Replace(truncateIndexText(strings.Join(strings.Fields(s), " ")))
 	if s == "" {
 		return ""
 	}
