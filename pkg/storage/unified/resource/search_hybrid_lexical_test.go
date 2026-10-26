@@ -85,7 +85,7 @@ func TestHybridSearch_LexicalHitRerankText(t *testing.T) {
 			} else {
 				assert.Equal(t, []string{tt.wantText}, scorer.gotTexts)
 				assert.Equal(t, "Different semantic wording", scorer.gotQ)
-				assert.ElementsMatch(t, []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_DESCRIPTION, "summary", "messages"}, idx.gotReq.Fields)
+				assert.ElementsMatch(t, []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS, SEARCH_FIELD_DESCRIPTION, "summary", "messages"}, idx.gotReq.Fields)
 			}
 			if tt.legacy {
 				assert.Nil(t, resp.Results[0].Lexical)

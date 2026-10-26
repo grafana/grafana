@@ -1165,11 +1165,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rules/MultipleDataSourcePicker.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/RuleDetailsDataSources.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -1420,11 +1415,6 @@
       "count": 1
     }
   },
-  "public/app/features/browse-dashboards/components/DeletedDashboardsLimitBanner.tsx": {
-    "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
   "public/app/features/commandPalette/scopes/recentScopesActions.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1590,14 +1580,9 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/serialization/sceneVariablesSetToVariables.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
   "public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.ts": {
@@ -1658,11 +1643,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/settings/variables/utils.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/sharing/ShareButton/share-externally/EmailShare/ConfigEmailSharing/ConfigEmailSharing.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -1695,7 +1675,7 @@
   },
   "public/app/features/dashboard-scene/utils/variables.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
@@ -1734,11 +1714,6 @@
   "public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
-    }
-  },
-  "public/app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/components/SubMenu/DashboardLinksDashboard.tsx": {
@@ -2228,11 +2203,6 @@
     }
   },
   "public/app/features/query/state/DashboardQueryRunner/testHelpers.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
-  "public/app/features/query/state/DashboardQueryRunner/utils.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
     }
@@ -2883,19 +2853,9 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/piechart/migrations.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
   "public/app/plugins/panel/stat/StatMigrations.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    }
-  },
-  "public/app/plugins/panel/state-timeline/migrations.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
     }
   },
   "public/app/plugins/panel/table/migrations.ts": {

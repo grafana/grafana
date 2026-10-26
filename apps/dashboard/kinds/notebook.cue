@@ -7,6 +7,9 @@ import (
 notebookV2beta1: {
 	kind:       "Notebook"
 	pluralName: "Notebooks"
+	search: {
+		global: true
+	}
 	validation: {
 		operations: ["CREATE", "UPDATE"]
 	}
