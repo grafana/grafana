@@ -442,7 +442,7 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 				// tell X-Access-Token callers apart.
 				resp.Header.Set("Cache-Control", privateCacheControl(resp.Header.Values("Cache-Control")))
 			}
-			return rejectBackendRedirects(resp)
+			return modifyBackendResponse(resp)
 		},
 	}
 	serveThroughBreaker(st.breakerForDestination(host.url, group), group, proxy, w, req)

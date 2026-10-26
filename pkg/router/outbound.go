@@ -43,6 +43,14 @@ func rewriteOutbound(pr *httputil.ProxyRequest, target *url.URL) {
 	setRequesterCredentials(pr.Out.Header, requester)
 }
 
+func modifyBackendResponse(resp *http.Response) error {
+	// A backend's frontend CSP and reporting endpoints do not apply to APIs served through the router.
+	resp.Header.Del("Content-Security-Policy")
+	resp.Header.Del("Content-Security-Policy-Report-Only")
+	resp.Header.Del("Reporting-Endpoints")
+	return rejectBackendRedirects(resp)
+}
+
 // deleteHeaders removes each named header, and every header starting with a
 // name that ends in "-".
 func deleteHeaders(header http.Header, names []string) {

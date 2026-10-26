@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -138,4 +139,56 @@ func TestDeleteHeaders(t *testing.T) {
 	header.Set("X-Grafana-Org-Id", "1")
 	deleteHeaders(header, []string{"Impersonate-", "X-Grafana-Org-Id"})
 	require.Equal(t, http.Header{"Impersonated": {"kept"}}, header)
+}
+
+func TestProxyDropsBackendCSPAndReportingEndpoints(t *testing.T) {
+	for _, status := range []int{http.StatusOK, http.StatusForbidden} {
+		t.Run(strconv.Itoa(status), func(t *testing.T) {
+			respond := func(*http.Request) *http.Response {
+				header := make(http.Header)
+				header.Add("Content-Security-Policy", "script-src 'self' 'nonce-backend'")
+				header.Add("Content-Security-Policy", "frame-ancestors 'none'")
+				header.Set("Content-Security-Policy-Report-Only", "script-src 'self'; report-uri /csp-reports")
+				header.Set("Reporting-Endpoints", `csp-reports="https://backend.example.com/csp-reports"`)
+				header.Set("Content-Type", "application/json")
+				header.Set("X-Content-Type-Options", "nosniff")
+				resp := discoveryResponse(header, `{"message":"backend response"}`)
+				resp.StatusCode = status
+				return resp
+			}
+			backend, err := newAggregateBackend("target", metav1.APIGroup{Name: "example"},
+				testFallbackURL(t, "https://backend.example.com"), testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+					return respond(req), nil
+				}))
+			require.NoError(t, err)
+			aggregate, err := backend.Load(t.Context())
+			require.NoError(t, err)
+			fallback, _ := cachingFallback(t, respond)
+
+			for name, handler := range map[string]http.Handler{"aggregate": aggregate, "single tenant": fallback} {
+				t.Run(name, func(t *testing.T) {
+					for _, path := range []string{
+						"/apis/example/v1/",
+						"/openapi/v3/apis/example/v1",
+						"/apis/example/v1/namespaces/stacks-123/widgets",
+					} {
+						// Repeat discovery requests to also exercise cached responses.
+						for range 2 {
+							rec := httptest.NewRecorder()
+							handler.ServeHTTP(rec, requestAs("alice", "stacks-123", path))
+							require.Equal(t, status, rec.Code)
+							require.Empty(t, rec.Header().Values("Content-Security-Policy"), path)
+							require.Empty(t, rec.Header().Values("Content-Security-Policy-Report-Only"), path)
+							require.Empty(t, rec.Header().Values("Reporting-Endpoints"), path)
+							require.Equal(t, "application/json", rec.Header().Get("Content-Type"))
+							if name == "aggregate" || status != http.StatusOK || !isSingleTenantDiscoveryPath(path) {
+								require.Equal(t, "nosniff", rec.Header().Get("X-Content-Type-Options"))
+							}
+							require.JSONEq(t, `{"message":"backend response"}`, rec.Body.String())
+						}
+					}
+				})
+			}
+		})
+	}
 }

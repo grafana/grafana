@@ -161,7 +161,7 @@ func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup
 		proxy: &httputil.ReverseProxy{
 			Rewrite:        func(pr *httputil.ProxyRequest) { rewriteOutbound(pr, &target) },
 			Transport:      newBackendTransport(transport),
-			ModifyResponse: rejectBackendRedirects,
+			ModifyResponse: modifyBackendResponse,
 			ErrorHandler:   proxyErrorHandler,
 			FlushInterval:  streamingFlushInterval,
 			BufferPool:     proxyBuffers,
