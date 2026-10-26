@@ -2,7 +2,6 @@ import { useId } from 'react';
 
 import { TextLink } from '@grafana/ui';
 
-import { labelsSize } from '../../utils/labels';
 import { grafanaRulesNav } from '../../utils/navigation';
 import { FolderPath } from '../rule-row/FolderPath';
 import { RuleDatasources } from '../rule-row/RuleDatasources';
@@ -44,7 +43,8 @@ export function AlertRuleRow({ searchHit, folderPath }: AlertRuleRowProps) {
         searchHit.datasourceUIDs && searchHit.datasourceUIDs.length > 0 && (
           <RuleDatasources key="ds" datasourceUIDs={searchHit.datasourceUIDs} />
         ),
-        searchHit.labels && labelsSize(searchHit.labels) > 0 && <RuleLabels key="labels" labels={searchHit.labels} />,
+        // parseSearchLabels guarantees labels is non-empty when present; RuleLabels handles the null case.
+        searchHit.labels && <RuleLabels key="labels" labels={searchHit.labels} />,
       ]}
     />
   );

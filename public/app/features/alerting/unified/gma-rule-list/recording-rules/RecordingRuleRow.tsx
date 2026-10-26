@@ -2,7 +2,6 @@ import { useId } from 'react';
 
 import { TextLink } from '@grafana/ui';
 
-import { labelsSize } from '../../utils/labels';
 import { grafanaRulesNav } from '../../utils/navigation';
 import { FolderPath } from '../rule-row/FolderPath';
 import { RuleDatasources } from '../rule-row/RuleDatasources';
@@ -39,6 +38,8 @@ export function RecordingRuleRow({ searchHit, folderPath }: RecordingRuleRowProp
       right={searchHit.interval && <RuleInterval interval={searchHit.interval} />}
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
+        // Both metric and targetDatasourceUID are required: showing "Records X to <unknown>" without
+        // a destination makes no sense, and showing just the datasource without context is confusing.
         searchHit.metric && searchHit.targetDatasourceUID && (
           <RuleRecordedMetric
             key="metric"
@@ -46,10 +47,14 @@ export function RecordingRuleRow({ searchHit, folderPath }: RecordingRuleRowProp
             targetDatasourceUID={searchHit.targetDatasourceUID}
           />
         ),
+        // Note: targetDatasourceUID may also appear in datasourceUIDs (when the write target is also
+        // queried). This is accepted — the two items serve different purposes: one names the metric
+        // destination, the other lists query sources.
         searchHit.datasourceUIDs && searchHit.datasourceUIDs.length > 0 && (
           <RuleDatasources key="ds" datasourceUIDs={searchHit.datasourceUIDs} />
         ),
-        searchHit.labels && labelsSize(searchHit.labels) > 0 && <RuleLabels key="labels" labels={searchHit.labels} />,
+        // parseSearchLabels guarantees labels is non-empty when present; RuleLabels handles the null case.
+        searchHit.labels && <RuleLabels key="labels" labels={searchHit.labels} />,
       ]}
     />
   );

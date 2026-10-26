@@ -33,6 +33,7 @@ export function RuleDatasources({ datasourceUIDs }: RuleDatasourcesProps) {
   return (
     <Stack direction="row" alignItems="center" gap={0.5}>
       {singleSource ? (
+        // Single source: the name link right next to the logo makes a tooltip redundant.
         <DataSourceLogo dataSource={firstSource} />
       ) : (
         dataSources.map((ds) => (

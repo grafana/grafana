@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { render, screen, userEvent } from 'test/test-utils';
 
 import { RuleLabels } from './RuleLabels';
 
@@ -18,5 +18,16 @@ describe('RuleLabels', () => {
   it('renders nothing when the labels object is empty', () => {
     const { container } = render(<RuleLabels labels={{}} />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('shows a tooltip with label content on hover', async () => {
+    render(<RuleLabels labels={{ team: 'platform', env: 'prod' }} />);
+
+    await userEvent.hover(screen.getByText('2 labels'));
+
+    // AlertLabels renders keys and values as separate nodes; verify the tooltip appears
+    // and the label key is present rather than asserting the combined "key=value" string.
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    expect(screen.getByText('team')).toBeInTheDocument();
   });
 });

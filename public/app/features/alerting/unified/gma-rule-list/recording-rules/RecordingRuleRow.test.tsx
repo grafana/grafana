@@ -104,4 +104,16 @@ describe('RecordingRuleRow', () => {
 
     expect(screen.getByText('1 label')).toBeInTheDocument();
   });
+
+  it('shows no datasources when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/data source/i)).not.toBeInTheDocument();
+  });
+
+  it('shows no labels when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/label/)).not.toBeInTheDocument();
+  });
 });
