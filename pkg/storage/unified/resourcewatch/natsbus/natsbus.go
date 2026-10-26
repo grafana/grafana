@@ -8,6 +8,7 @@ package natsbus
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana-app-sdk/resourcebus"
@@ -50,8 +51,16 @@ func (s *subscriber) Subscribe(ctx context.Context, gvr schema.GroupVersionResou
 	handler func(context.Context, resourcebus.Event), opts ...resourcebus.SubscribeOption) (resourcebus.Subscription, error) {
 	cfg := resourcebus.NewSubscribeConfig(opts...)
 	natsOpts := make([]nats.SubscribeOption, 0, 2)
-	if cfg.SharedGroup != "" {
-		natsOpts = append(natsOpts, nats.WithQueueGroup(cfg.SharedGroup))
+	if cfg.Group.Name != "" {
+		// A queue group hands each message to one member, which is what both deliveries this adapter accepts ask
+		// for. Anything else is refused rather than substituted: the contract makes the difference between reaching
+		// one member and reaching all of them, so quietly picking the wrong one duplicates or drops events.
+		switch cfg.Group.Delivery {
+		case resourcebus.GroupDeliveryDefault, resourcebus.GroupDeliveryRoundRobin:
+		default:
+			return nil, fmt.Errorf("nats cannot share delivery as %q", cfg.Group.Delivery)
+		}
+		natsOpts = append(natsOpts, nats.WithQueueGroup(cfg.Group.Name))
 	}
 	if cfg.OnReconnect != nil {
 		natsOpts = append(natsOpts, nats.WithOnReconnect(cfg.OnReconnect))

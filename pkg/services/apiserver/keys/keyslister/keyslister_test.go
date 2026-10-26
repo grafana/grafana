@@ -109,12 +109,37 @@ func TestFactory(t *testing.T) {
 	}
 
 	var asked []schema.GroupVersionResource
-	lister, err := Factory(func(gvr schema.GroupVersionResource) keysapi.Lister {
+	factory := Factory(func(gvr schema.GroupVersionResource) keysapi.Lister {
 		asked = append(asked, gvr)
 		return fakeKeys{}
-	})(kind)
-	require.NoError(t, err)
+	})
 
-	assert.NotNil(t, lister)
-	assert.Equal(t, []schema.GroupVersionResource{kind.GroupVersionResource()}, asked)
+	t.Run("an unfiltered re-list reads identities", func(t *testing.T) {
+		asked = nil
+		lister, err := factory(kind, operator.ListWatchOptions{})
+		require.NoError(t, err)
+
+		assert.NotNil(t, lister)
+		assert.Equal(t, []schema.GroupVersionResource{kind.GroupVersionResource()}, asked)
+	})
+
+	// The identities carry no namespace scope and no labels, so nothing downstream could apply a filter this lister
+	// did not. Reporting the projection unsupported leaves the re-list on full objects.
+	tests := []struct {
+		name string
+		opts operator.ListWatchOptions
+	}{
+		{name: "namespace", opts: operator.ListWatchOptions{Namespace: "default"}},
+		{name: "label filters", opts: operator.ListWatchOptions{LabelFilters: []string{"a=b"}}},
+		{name: "field selectors", opts: operator.ListWatchOptions{FieldSelectors: []string{"spec.a=b"}}},
+	}
+	for _, tt := range tests {
+		t.Run("a re-list scoped by "+tt.name+" is unsupported", func(t *testing.T) {
+			asked = nil
+			_, err := factory(kind, tt.opts)
+
+			assert.ErrorIs(t, err, operator.ErrProjectionUnsupported)
+			assert.Empty(t, asked)
+		})
+	}
 }

@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/playlist
 go 1.27.3
 
 require (
-	github.com/grafana/grafana-app-sdk v0.61.1-0.20261026151645-77b9c1b67e57
+	github.com/grafana/grafana-app-sdk v0.61.1-0.20261026195058-268f1ae24de4
 	k8s.io/apimachinery v0.37.1
 	k8s.io/klog/v2 v2.140.0
 )

@@ -32,7 +32,7 @@ func New(cfg app.Config) (app.App, error) {
 	var reconciler operator.Reconciler
 	// The delta source the reconciler's informer runs on. A nil subscriber selects the kubernetes watch.
 	var resourceBus resourcebus.Subscriber
-	var busKeyLister func(resource.Kind) (operator.ResourceKeyLister, error)
+	var busKeyLister func(resource.Kind, operator.ListWatchOptions) (operator.ResourceKeyLister, error)
 	exampleConfig, ok := cfg.SpecificConfig.(*ExampleConfig)
 	if ok {
 		resourceBus, busKeyLister = exampleConfig.ResourceBus, exampleConfig.BusKeyLister

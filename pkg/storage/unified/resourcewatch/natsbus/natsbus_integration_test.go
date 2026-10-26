@@ -61,7 +61,7 @@ func TestIntegrationEmbeddedServer(t *testing.T) {
 		for _, count := range []*atomic.Int64{&first, &second} {
 			subscription, err := bus.Subscribe(ctx, gvr, "default",
 				func(context.Context, resourcebus.Event) { count.Add(1) },
-				resourcebus.WithSharedGroup("repo-controller"))
+				resourcebus.WithGroup(resourcebus.Group{Name: "repo-controller", Delivery: resourcebus.GroupDeliveryRoundRobin}))
 			require.NoError(t, err)
 			t.Cleanup(func() { require.NoError(t, subscription.Close()) })
 			require.NoError(t, subscription.WaitReady(waitCtx(t, ctx)))

@@ -17,5 +17,5 @@ type ExampleConfig struct {
 	ResourceBus resourcebus.Subscriber
 	// BusKeyLister builds the key lister a kind's re-list reads identities through, for a host whose API server can
 	// serve them without object bodies. When nil, the informer re-lists full objects.
-	BusKeyLister func(resource.Kind) (operator.ResourceKeyLister, error)
+	BusKeyLister func(resource.Kind, operator.ListWatchOptions) (operator.ResourceKeyLister, error)
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/grafana/grafana-app-sdk/resourcebus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
@@ -193,7 +194,7 @@ func NewBusDeltaSource(subscriber nats.Subscriber, zero resource.WrappedObjectTy
 	informer, err := operator.NewBusInformer(kind, bus, periodicLister{list: list}, operator.BusInformerOptions{
 		Payload:        operator.PayloadIdentity,
 		ResyncInterval: resync,
-		SharedGroup:    queueGroup,
+		Group:          resourcebus.Group{Name: queueGroup, Delivery: resourcebus.GroupDeliveryRoundRobin},
 		// The informer is the controller's only feed, so holding the initial list until the subscription opens would
 		// stall its work while NATS is unavailable — at startup, before the embedded server has a client URL, for
 		// instance. In degraded mode only the live-event latency is lost until the subscription opens.

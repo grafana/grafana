@@ -38,10 +38,14 @@ type ListerFor func(schema.GroupVersionResource) keysapi.Lister
 
 // Factory returns a key lister factory for simple.BusInformerConfig, resolving each kind to its resource.
 //
-// Leave BusInformerConfig.HonorsListWatchOptions false: a keys-only list carries the identity and nothing else, so
-// it can serve neither a namespace nor a selector, and the SDK falls the re-list back to full objects instead.
-func Factory(listerFor ListerFor) func(resource.Kind) (operator.ResourceKeyLister, error) {
-	return func(kind resource.Kind) (operator.ResourceKeyLister, error) {
+// A keys-only list carries the identity and nothing else, so it can serve neither a namespace nor a selector: a
+// scoped or filtered re-list reports the projection unsupported, which leaves it the full-object list rather than
+// handing the informer objects the app never asked to watch.
+func Factory(listerFor ListerFor) func(resource.Kind, operator.ListWatchOptions) (operator.ResourceKeyLister, error) {
+	return func(kind resource.Kind, opts operator.ListWatchOptions) (operator.ResourceKeyLister, error) {
+		if opts.Namespace != "" || len(opts.LabelFilters) > 0 || len(opts.FieldSelectors) > 0 {
+			return nil, fmt.Errorf("%w: a keys-only list applies no namespace and no filters", operator.ErrProjectionUnsupported)
+		}
 		return New(listerFor(kind.GroupVersionResource())), nil
 	}
 }

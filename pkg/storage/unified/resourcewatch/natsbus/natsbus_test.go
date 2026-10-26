@@ -106,14 +106,14 @@ func TestSubscribeOptions(t *testing.T) {
 		want int
 	}{
 		{name: "no options", want: 0},
-		{name: "shared group", opts: []resourcebus.SubscribeOption{resourcebus.WithSharedGroup("repo-controller")}, want: 1},
+		{name: "group", opts: []resourcebus.SubscribeOption{resourcebus.WithGroup(resourcebus.Group{Name: "repo-controller"})}, want: 1},
 		{name: "reconnect", opts: []resourcebus.SubscribeOption{resourcebus.WithOnReconnect(func() {})}, want: 1},
 		{
 			name: "both",
-			opts: []resourcebus.SubscribeOption{resourcebus.WithSharedGroup("repo-controller"), resourcebus.WithOnReconnect(func() {})},
+			opts: []resourcebus.SubscribeOption{resourcebus.WithGroup(resourcebus.Group{Name: "repo-controller"}), resourcebus.WithOnReconnect(func() {})},
 			want: 2,
 		},
-		{name: "an empty shared group subscribes outside any group", opts: []resourcebus.SubscribeOption{resourcebus.WithSharedGroup("")}, want: 0},
+		{name: "an unnamed group subscribes outside any group", opts: []resourcebus.SubscribeOption{resourcebus.WithGroup(resourcebus.Group{})}, want: 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -234,4 +234,39 @@ func TestDeliveryContinuesAfterDrop(t *testing.T) {
 	assert.Equal(t, []resourcebus.Event{
 		{Verb: resourcebus.VerbAdded, Namespace: "default", Name: "repo-1", ResourceVersion: "42"},
 	}, got)
+}
+
+func TestSubscribeGroupDelivery(t *testing.T) {
+	tests := []struct {
+		name    string
+		group   resourcebus.Group
+		wantErr bool
+	}{
+		{name: "no group", group: resourcebus.Group{}},
+		{name: "default delivery", group: resourcebus.Group{Name: "repo-controller"}},
+		{
+			name:  "round robin",
+			group: resourcebus.Group{Name: "repo-controller", Delivery: resourcebus.GroupDeliveryRoundRobin},
+		},
+		{
+			// Substituting a delivery the bus cannot provide would either duplicate every event across the members
+			// or drop the ones a member was meant to handle.
+			name:    "a delivery nats cannot provide",
+			group:   resourcebus.Group{Name: "repo-controller", Delivery: "sticky"},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fake := &fakeSubscriber{enabled: true}
+			_, err := New(fake, log.NewNopLogger()).Subscribe(context.Background(), testGVR, "default",
+				func(context.Context, resourcebus.Event) {}, resourcebus.WithGroup(tt.group))
+
+			if tt.wantErr {
+				assert.ErrorContains(t, err, "nats cannot share delivery")
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
 }
