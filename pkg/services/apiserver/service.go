@@ -585,6 +585,10 @@ func (s *service) start(ctx context.Context) error {
 		); err != nil {
 			return fmt.Errorf("failed to augment web services with custom routes: %w", err)
 		}
+		if globalSearchAPIEnabled || globalHybridAPIEnabled {
+			builder.AddGroupDiscovery(server.Handler.GoRestfulContainer, server.DiscoveryGroupManager,
+				server.AggregatedDiscoveryGroupManager, server.Serializer, globalSearchGV)
+		}
 	}
 
 	// stash the options for later use
