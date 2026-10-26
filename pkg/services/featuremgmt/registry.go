@@ -936,15 +936,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "groupByVariable",
-			Description:  "Enable groupBy variable support in scenes dashboards",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-		},
-		{
 			Name:            "scopeFilters",
 			Description:     "Enables the use of scope filters in Grafana",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
