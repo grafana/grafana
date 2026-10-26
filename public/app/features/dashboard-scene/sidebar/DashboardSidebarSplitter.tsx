@@ -24,7 +24,6 @@ import { KioskMode } from 'app/types/dashboard';
 import { DashboardControlsChrome } from '../scene/DashboardControlsChrome';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
-import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditActionsLayoutContext';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
@@ -131,10 +130,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
   };
 
   function renderBody() {
-    const renderWithoutSidebar =
-      isPlaying ||
-      kioskMode === KioskMode.Full ||
-      (dashboardModesEnabled() && getDashboardMode(dashboard.state) !== 'edit' && !dashboard.state.viewPanel);
+    const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
 
     // Full-page views use document scrolling.
     if (renderWithoutSidebar) {

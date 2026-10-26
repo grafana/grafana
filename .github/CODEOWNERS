@@ -864,6 +864,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/api/clients/scope/ @grafana/grafana-operator-experience-squad
 /public/app/core/actions/ @grafana/grafana-frontend-platform
 /public/app/core/app_events.ts @grafana/grafana-frontend-platform
+/public/app/core/appPluginIds.ts @grafana/grafana-frontend-navigation @grafana/growth-engineering
 /public/app/core/assistant/ @grafana/dataviz-squad
 /public/app/core/components/AccessControl/ @grafana/identity-access-team
 /public/app/core/components/Animations/ @grafana/grafana-frontend-platform
@@ -995,8 +996,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/ConfigProvider.tsx @grafana/grafana-frontend-platform
 /public/app/core/utils/CorsSharedWorker.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/CorsWorker.ts @grafana/grafana-frontend-platform
-/public/app/core/utils/CorsSharedWorker.rspack.ts @grafana/grafana-frontend-platform
-/public/app/core/utils/CorsWorker.rspack.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/dag* @grafana/grafana-frontend-platform
 /public/app/core/utils/errors* @grafana/grafana-frontend-platform
 /public/app/core/utils/explore* @grafana/datapro
@@ -1156,7 +1155,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/api-enterprise-spec.json @grafanabot
 /public/openapi3.json @grafanabot
 /public/app/app.ts @grafana/grafana-frontend-platform
-/public/app/polyfills.ts @grafana/grafana-frontend-platform
 /public/app/dev.ts @grafana/grafana-frontend-platform
 /public/app/core/utils/metrics.ts @grafana/grafana-catalog
 /public/app/index.ts @grafana/grafana-frontend-platform
@@ -1204,7 +1202,6 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /jest.config.codeowner.js @grafana/dataviz-squad
 
 /scripts/**/generate-transformations* @grafana/datapro
-/scripts/webpack/ @grafana/grafana-frontend-platform
 /scripts/rspack/ @grafana/grafana-frontend-platform
 /scripts/release/ @grafana/grafana-frontend-platform
 /scripts/test-aliases.py @grafana/docs-tooling @jtvdez
@@ -1295,7 +1292,6 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
 /pkg/registry/apis/iam @grafana/access-squad @grafana/identity-squad
-/pkg/registry/apis/appplugin @grafana/grafana-catalog
 /pkg/registry/apis/folders @grafana/grafana-search-and-storage
 /pkg/registry/apis/datasource @grafana/grafana-datasources-core-services
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services

@@ -207,6 +207,7 @@ runs:
             - '**.cue'
             - '.prettier*'
             - '.yarnrc.yml'
+            - '.nvmrc'
             - 'yarn.config.cjs'
             - 'eslint.config.js'
             - 'jest.config.js'

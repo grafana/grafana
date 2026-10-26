@@ -209,7 +209,7 @@ describe('AlertIncidentTabs', () => {
     }
   });
 
-  it('shows the incidents footer actions when the user can declare and access incidents', async () => {
+  it('offers only the view-all action in the footer, even when the user could declare an incident', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     // No page includes to gate on, so canDeclare/canAccess both resolve to true.
     mockIrmPlugin({ includes: [] });
@@ -218,8 +218,9 @@ describe('AlertIncidentTabs', () => {
     render(<AlertIncidentTabsWithData />);
 
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /view all incidents/i })).toBeInTheDocument();
+    // Declaring lives in the empty state; a populated list keeps the footer to filter + view all.
+    expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
   });
 
   it('hides the incidents footer actions when the user lacks the plugin page permissions', async () => {

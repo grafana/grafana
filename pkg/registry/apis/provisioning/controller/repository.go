@@ -555,7 +555,7 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 	deletion := &provisioning.DeletionStatus{
 		State:   provisioning.DeletionStateBlocked,
 		Message: err.Error(),
-		Cause:   provisioning.DeletionCause(classifyTokenErrorCause(err)),
+		Cause:   provisioning.DeletionCause(classifyDeletionErrorCause(err)),
 	}
 	var fe *finalizerError
 	if errors.As(err, &fe) {
@@ -565,7 +565,6 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 	if errors.As(err, &folderErr) {
 		// nonEmptyFolderError is ready for users; omit internal operation prefixes.
 		deletion.Message = folderErr.Error()
-		deletion.Cause = provisioning.DeletionCauseUser
 	}
 	return deletion
 }
@@ -898,9 +897,9 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	ctx := logging.Context(context.Background(), logger)
 
 	// phase tracks how far reconciliation has progressed so a failure is counted
-	// under the stage it occurred in. The user-caused paths that surface their
-	// error on status and return nil (token/build/delete/hook) can't rely on the
-	// returned error, so they stash it in swallowedErr/swallowedPhase.
+	// under the stage it occurred in. Paths that surface an error on status and
+	// return nil (token/build/delete/hook) can't rely on the returned error,
+	// so they stash it in swallowedErr/swallowedPhase.
 	//
 	// The deferred recorder counts exactly one failure per reconcile and prefers
 	// the error actually returned to the workqueue over a swallowed one: a
@@ -1197,7 +1196,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			if rc.isUserCaused(err) {
 				// Swallowed after surfacing on status: stash it so the deferred
 				// recorder counts it, since it returns nil to the workqueue.
-				patchOperations = append(patchOperations, rc.tokenFailurePatchOps(obj, err)...)
+				patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, err, provisioning.ReasonAuthenticationFailed)...)
 				swallowedErr, swallowedPhase = err, reconcilePhaseToken
 				logger.Warn("unable to generate repository token, user-caused error", "error", err)
 				return repoType, nil
@@ -1246,7 +1245,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			token, tokenOps, gerr := rc.generateRepositoryToken(ctx, obj, c)
 			if gerr != nil {
 				if rc.isUserCaused(gerr) {
-					patchOperations = append(patchOperations, rc.tokenFailurePatchOps(obj, gerr)...)
+					patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, gerr, provisioning.ReasonAuthenticationFailed)...)
 					swallowedErr, swallowedPhase = gerr, reconcilePhaseToken
 					logger.Warn("unable to regenerate repository token, user-caused error", "error", gerr)
 					return repoType, nil
@@ -1266,21 +1265,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
 		if err != nil {
-			buildHealthStatus := provisioning.HealthStatus{
-				Healthy: false,
-				Error:   provisioning.HealthFailureHealth,
-				Checked: time.Now().UnixMilli(),
-				Message: []string{err.Error()},
-			}
-			patchOperations = append(patchOperations, rc.healthPatchIfChanged(obj, buildHealthStatus)...)
-
-			// Patch status so user can see errors
-			readyCondition := buildReadyConditionWithReason(buildHealthStatus, classifyBuildFailureReason(err))
-			if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-				obj.Status.Conditions, obj.GetGeneration(), readyCondition,
-			); conditionPatchOps != nil {
-				patchOperations = append(patchOperations, conditionPatchOps...)
-			}
+			patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, err, classifyBuildFailureReason(err))...)
 
 			if rc.isUserCaused(err) {
 				// Swallowed after surfacing on status: stash it so the deferred
@@ -1304,6 +1289,9 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			defaultBranch, err := branchHandler.GetDefaultBranch(branchCtx)
 			branchSpan.End()
 			if err != nil {
+				if errors.Is(err, repository.ErrServerUnavailable) {
+					patchOperations = append(patchOperations, rc.repositoryFailurePatchOps(obj, err, classifyBuildFailureReason(err))...)
+				}
 				return repoType, fmt.Errorf("failed to get default branch: %w", err)
 			}
 
@@ -1566,6 +1554,24 @@ func (rc *RepositoryController) processHooks(ctx context.Context, repo repositor
 	return hookOps, nil, suppressWebhooks, nil
 }
 
+// repositoryFailurePatchOps returns patches marking the repository unhealthy
+// and Ready=False with the supplied reason, omitting unchanged status.
+// The caller applies the patches so the failure can be persisted even when
+// reconciliation returns an error to the work queue.
+func (rc *RepositoryController) repositoryFailurePatchOps(obj *provisioning.Repository, err error, reason string) []map[string]interface{} {
+	healthStatus := provisioning.HealthStatus{
+		Healthy: false,
+		Error:   provisioning.HealthFailureHealth,
+		Checked: time.Now().UnixMilli(),
+		Message: []string{err.Error()},
+	}
+	ops := rc.healthPatchIfChanged(obj, healthStatus)
+	readyCondition := buildReadyConditionWithReason(healthStatus, reason)
+	return append(ops, BuildConditionPatchOpsFromExisting(
+		obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+	)...)
+}
+
 func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repository, status provisioning.HealthStatus) []map[string]interface{} {
 	if !rc.healthChecker.hasHealthStatusChanged(obj.Status.Health, status) {
 		return nil
@@ -1585,7 +1591,12 @@ func (rc *RepositoryController) healthPatchIfChanged(obj *provisioning.Repositor
 // and exclude cause=user.
 func (rc *RepositoryController) recordReconcileError(phase string, err error) {
 	cause := reconcileCauseSystem
-	if rc.isUserCaused(err) {
+	switch {
+	case phase == reconcilePhaseDelete:
+		// Delete failures share the finalizer metric's classification so both
+		// agree on which deletion blockers the user must fix.
+		cause = classifyDeletionErrorCause(err)
+	case rc.isUserCaused(err):
 		cause = reconcileCauseUser
 	}
 	rc.reconcileMetrics.RecordReconcileError(phase, cause)
@@ -1597,30 +1608,6 @@ func (rc *RepositoryController) recordReconcileError(phase string, err error) {
 // reconcile-error and token-generation-error metrics consistent.
 func (rc *RepositoryController) isUserCaused(err error) bool {
 	return classifyTokenErrorCause(err) == reconcileCauseUser
-}
-
-// tokenFailurePatchOps builds the health/ready status patches surfacing a
-// user-caused token generation failure. isUserCaused only matches sentinels
-// that mean the customer lost access (app uninstalled, permissions revoked,
-// installation gone, repository not selected), so the Ready reason is always
-// AuthenticationFailed rather than needing its own classifier.
-func (rc *RepositoryController) tokenFailurePatchOps(obj *provisioning.Repository, err error) []map[string]interface{} {
-	healthStatus := provisioning.HealthStatus{
-		Healthy: false,
-		Error:   provisioning.HealthFailureHealth,
-		Checked: time.Now().UnixMilli(),
-		Message: []string{err.Error()},
-	}
-	ops := rc.healthPatchIfChanged(obj, healthStatus)
-
-	readyCondition := buildReadyConditionWithReason(healthStatus, provisioning.ReasonAuthenticationFailed)
-	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		obj.Status.Conditions, obj.GetGeneration(), readyCondition,
-	); conditionPatchOps != nil {
-		ops = append(ops, conditionPatchOps...)
-	}
-
-	return ops
 }
 
 // classifyBuildFailureReason maps a repository Build failure to a Ready condition

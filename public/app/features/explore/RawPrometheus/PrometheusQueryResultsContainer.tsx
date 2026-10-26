@@ -58,6 +58,7 @@ export const PrometheusQueryResultsContainer = (props: PrometheusQueryResultsV1P
     <Suspense fallback={null}>
       <RawPrometheusContainerPureLazy
         tableResult={processedData}
+        timeZone={timeZone}
         width={width}
         loading={props.loading}
         ariaLabel={props.ariaLabel}

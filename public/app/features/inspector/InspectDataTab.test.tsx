@@ -30,6 +30,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
 // field.state on the same object in place) can run and mask the thing we're trying to observe.
 let dataArrivedWithCachedDisplayNames: boolean | undefined;
 let tableNGFrames: DataFrame[] = [];
+let tableNGTimeZone: string | undefined;
 jest.mock('@grafana/ui/unstable', () => {
   const actual = jest.requireActual('@grafana/ui/unstable');
   return {
@@ -38,6 +39,7 @@ jest.mock('@grafana/ui/unstable', () => {
     TableNG: (props: TableNGProps) => {
       dataArrivedWithCachedDisplayNames = props.data.fields.every((f) => Boolean(f.state?.displayName));
       tableNGFrames.push(props.data);
+      tableNGTimeZone = props.timeZone;
       return <actual.TableNG {...props} />;
     },
   };
@@ -254,6 +256,16 @@ describe('InspectDataTab', () => {
     beforeEach(() => {
       dataArrivedWithCachedDisplayNames = undefined;
       tableNGFrames = [];
+    });
+
+    it('passes inspector timezone to TableNG for value filtering', () => {
+      render(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab {...createProps({ useTableNG: true, timeZone: 'Pacific/Auckland' })} />
+        </OpenFeatureProvider>
+      );
+      expect(screen.getByRole('grid')).toBeInTheDocument();
+      expect(tableNGTimeZone).toBe('Pacific/Auckland');
     });
 
     it('should render the data with TableNG instead of the legacy Table', () => {

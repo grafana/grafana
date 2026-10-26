@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -14,45 +15,43 @@ import (
 )
 
 func TestAggregateTarget_DiscoversAndFiltersGroups(t *testing.T) {
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		list := metav1.APIGroupList{Groups: []metav1.APIGroup{
-			{Name: "dashboard.grafana.app"},
-			{Name: "coordination.k8s.io"},
-		}}
-		_ = json.NewEncoder(w).Encode(list)
-	}))
-	defer srv.Close()
+	synctest.Test(t, func(t *testing.T) {
+		srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			list := metav1.APIGroupList{Groups: []metav1.APIGroup{
+				{Name: "dashboard.grafana.app"},
+				{Name: "coordination.k8s.io"},
+			}}
+			_ = json.NewEncoder(w).Encode(list)
+		}))
+		_ = srv.Client()
+		defer srv.Close()
 
-	target, err := newAggregateTarget(aggregateTargetConfig{
-		Name:          "baas_apiserver",
-		URL:           srv.URL,
-		GroupPatterns: []string{"*.grafana.app"},
-	}, srv.Client(), srv.Client().Transport)
-	require.NoError(t, err)
+		target, err := newAggregateTarget(aggregateTargetConfig{
+			Name:          "baas_apiserver",
+			URL:           srv.URL,
+			GroupPatterns: []string{"*.grafana.app"},
+		}, srv.Client(), srv.Client().Transport)
+		require.NoError(t, err)
 
-	ctx, cancel := context.WithCancel(t.Context())
-	dirty := make(chan struct{}, 1)
-	go target.run(ctx, dirty)
+		ctx, cancel := context.WithCancel(t.Context())
+		dirty := make(chan struct{}, 1)
+		go target.run(ctx, dirty)
 
-	require.Eventually(t, func() bool {
-		return len(target.Backends()) == 1
-	}, 2*time.Second, 10*time.Millisecond)
+		// Finish discovery and reconciliation before inspecting the served groups.
+		synctest.Wait()
 
-	backends := target.Backends()
-	require.Equal(t, "dashboard.grafana.app", backends[0].Group().Name)
+		require.True(t, len(target.Backends()) == 1)
 
-	// The first successful poll took the discovered key set from empty to
-	// non-empty, so it must have signaled dirty.
-	require.Eventually(t, func() bool {
-		select {
-		case <-dirty:
-			return true
-		default:
-			return false
-		}
-	}, 500*time.Millisecond, 5*time.Millisecond, "expected dirty to be signaled when the discovered key set changed from empty to non-empty")
+		backends := target.Backends()
+		require.Equal(t, "dashboard.grafana.app", backends[0].Group().Name)
 
-	cancel()
+		// The first successful poll took the discovered key set from empty to
+		// non-empty, so it must have signaled dirty.
+		require.Len(t, dirty, 1, "the first successful poll must signal its changed key set")
+		<-dirty
+
+		cancel()
+	})
 }
 
 // TestAggregateTarget_DropsTheDiscoveryGroupOfAnotherRouter points a target at
@@ -61,7 +60,7 @@ func TestAggregateTarget_DiscoversAndFiltersGroups(t *testing.T) {
 func TestAggregateTarget_DropsTheDiscoveryGroupOfAnotherRouter(t *testing.T) {
 	upstream := discoveryRouter(t, "dashboard.grafana.app", http.NotFoundHandler())
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		upstream.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		upstream.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())))
 	}))
 	defer srv.Close()
 
@@ -114,10 +113,15 @@ func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(t.Context())
 	dirty := make(chan struct{}, 1)
-	go target.run(ctx, dirty)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		target.run(ctx, dirty)
+	}()
 
 	time.Sleep(150 * time.Millisecond)
 	cancel()
+	<-done
 
 	// Without backoff, the 10ms steady interval over 150ms would be ~15
 	// attempts; with a 200ms floor after the first failure, it must be
@@ -126,13 +130,14 @@ func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
 	require.LessOrEqual(t, attempts.Load(), int64(2))
 	require.Empty(t, target.Backends())
 
-	// A poll that only ever fails must never signal dirty: there is no
-	// discovered key set to change.
-	select {
-	case <-dirty:
-		t.Fatal("dirty must not be signaled while every poll fails")
-	default:
-	}
+	// A poll that only ever fails signals dirty once, for its first attempt,
+	// which ends the cloud loader's wait for it. Later failures leave the key
+	// set unchanged, so they don't. dirty holds one wake, so drain it and
+	// check again after one more failed poll.
+	require.Len(t, dirty, 1, "the first failed poll wakes the router")
+	<-dirty
+	target.poll(t.Context(), dirty)
+	require.Empty(t, dirty, "later failed polls don't")
 }
 
 // TestAggregateTarget_BackoffLadderDrivesRetries pins down the fix for the
@@ -143,30 +148,37 @@ func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
 // under the old ticker-plus-Ready-gate loop this would have produced exactly
 // one attempt.
 func TestAggregateTarget_BackoffLadderDrivesRetries(t *testing.T) {
-	var attempts atomic.Int64
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		attempts.Add(1)
-		w.WriteHeader(http.StatusServiceUnavailable)
-	}))
-	defer srv.Close()
+	synctest.Test(t, func(t *testing.T) {
+		var attempts atomic.Int64
+		srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			attempts.Add(1)
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}))
+		_ = srv.Client()
+		defer srv.Close()
 
-	target, err := newAggregateTarget(aggregateTargetConfig{
-		Name: "baas_apiserver",
-		URL:  srv.URL,
-	}, srv.Client(), srv.Client().Transport)
-	require.NoError(t, err)
-	target.cooldown = newCooldown(time.Second, 10*time.Millisecond, 40*time.Millisecond)
+		target, err := newAggregateTarget(aggregateTargetConfig{
+			Name: "baas_apiserver",
+			URL:  srv.URL,
+		}, srv.Client(), srv.Client().Transport)
+		require.NoError(t, err)
+		target.cooldown = newCooldown(time.Second, 10*time.Millisecond, 40*time.Millisecond)
 
-	ctx, cancel := context.WithCancel(t.Context())
-	dirty := make(chan struct{}, 1)
-	go target.run(ctx, dirty)
-	defer cancel()
+		ctx, cancel := context.WithCancel(t.Context())
+		dirty := make(chan struct{}, 1)
+		go target.run(ctx, dirty)
+		defer cancel()
 
-	// 10ms -> 20ms -> 40ms (capped) leaves room for well over 3 attempts in
-	// 300ms, while the 1s steady interval alone would allow only the first.
-	require.Eventually(t, func() bool {
-		return attempts.Load() >= 3
-	}, 300*time.Millisecond, 5*time.Millisecond, "backoff ladder must drive retries faster than the steady interval")
+		// Finish the initial failed poll before advancing through the retry ladder.
+		synctest.Wait()
+
+		require.Equal(t, int64(1), attempts.Load())
+
+		// Reach both retry deadlines, well before the one-second steady interval.
+		synctest.Sleep(30 * time.Millisecond)
+
+		require.Equal(t, int64(3), attempts.Load())
+	})
 }
 
 // TestAggregateTarget_SignalsDirtyOnlyOnKeySetChange exercises poll()
@@ -286,4 +298,36 @@ func TestNewAggregateTarget_NormalizesTrailingSlash(t *testing.T) {
 	}, http.DefaultClient, http.DefaultTransport)
 	require.NoError(t, err)
 	require.Equal(t, "https://baas.example.invalid", target.base.String())
+}
+
+// A source's first successful poll ends the cloud loader's wait for it even
+// when it finds nothing, so it wakes the router. Later empty polls don't.
+func TestFirstEmptyPollWakesTheRouter(t *testing.T) {
+	emptyDiscovery := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"kind":"APIGroupList","apiVersion":"v1","groups":[]}`))
+	}))
+	defer emptyDiscovery.Close()
+	aggregate, err := newAggregateTarget(aggregateTargetConfig{Name: "empty", URL: emptyDiscovery.URL}, emptyDiscovery.Client(), emptyDiscovery.Client().Transport)
+	require.NoError(t, err)
+
+	emptyManifests := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"key": "k", "plugins": []}`))
+	}))
+	defer emptyManifests.Close()
+	manifests, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, emptyManifests.URL, nil, emptyManifests.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	require.NoError(t, err)
+
+	for name, poll := range map[string]func(context.Context, chan<- struct{}){
+		"aggregate":        aggregate.poll,
+		"plugin manifests": manifests.poll,
+	} {
+		t.Run(name, func(t *testing.T) {
+			dirty := make(chan struct{}, 1)
+			poll(t.Context(), dirty)
+			require.Len(t, dirty, 1, "the first empty poll wakes the router")
+			<-dirty
+			poll(t.Context(), dirty)
+			require.Empty(t, dirty, "a later empty poll doesn't")
+		})
+	}
 }

@@ -100,6 +100,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     showTypeIcons,
     structureRev,
     timeRange,
+    timeZone,
     transparent,
     noPanelPadding = false,
     width,
@@ -180,7 +181,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     [nestedHasFooter, nestedVisibleFields]
   );
 
-  const { rows: filteredRows, filter, setFilter, filterResult } = useFilteredRows(rows, data.fields, true);
+  const { rows: filteredRows, filterResult } = useFilteredRows(rows, data.fields);
 
   const {
     rows: sortedRows,
@@ -191,7 +192,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
   useNotifyDisplayedRowIndices(sortedRows, onDisplayedRowIndicesChange);
 
-  const nestedRows = useNestedRows(rows, nestedData, true, nestedFramesFieldName, filter, sortColumns);
+  const nestedRows = useNestedRows(rows, nestedData, true, nestedFramesFieldName, sortColumns);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
@@ -271,7 +272,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     hasHeader,
     getActions: getCellActions,
     tableRefreshEnabled,
-    filter,
     preventHorizontalOverflow,
   });
 
@@ -287,7 +287,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     typographyCtx: headerTypographyCtx,
     lastColumnExtraPadding,
     tableRefreshEnabled,
-    filter,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
   const visibleNestedRowCounts = useMemo(
@@ -299,8 +298,11 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   // Nested frames carry their own header visibility, so the nested columns can't reuse the outer
   // table's measurement options verbatim.
   const nestedContentAwareWidths = useMemo(
-    () => (contentAwareWidths ? { ...contentAwareWidths, hasHeader: hasNestedHeaders } : undefined),
-    [contentAwareWidths, hasNestedHeaders]
+    () =>
+      contentAwareWidths
+        ? { ...contentAwareWidths, hasHeader: hasNestedHeaders, filterParentCount: data.length }
+        : undefined,
+    [contentAwareWidths, hasNestedHeaders, data.length]
   );
 
   const { nestedFieldWidths, nestedColWidths, handleNestedColumnWidthsChange } = useNestedColWidths({
@@ -318,9 +320,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx: headerTypographyCtx,
     tableRefreshEnabled,
-    // nested filter entries are keyed per parent but carry the column's display name, which is what
-    // the width path matches on — so the nested header reserves the active-filter icon the same way
-    filter,
+    filterParentCount: data.length,
   });
 
   const defaultRowHeight = useMemo(
@@ -460,8 +460,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       getTextColorForBackground,
       rowHeight,
       rowHeightFn,
-      filter,
-      setFilter,
       setInspectCell,
       gridRef,
       getCellActions,
@@ -477,6 +475,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       jsonSyntaxHighlightingEnabled,
       showTypeIcons,
       timeRange,
+      timeZone,
       tableRefreshEnabled,
       typographyCtx,
     }),
@@ -487,7 +486,6 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       hoverOverflow,
       disableSanitizeHtml,
       jsonSyntaxHighlightingEnabled,
-      filter,
       getCellActions,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -497,10 +495,10 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       onCellAddToAssistant,
       rowHeight,
       rowHeightFn,
-      setFilter,
       showTypeIcons,
       theme,
       timeRange,
+      timeZone,
       tableRefreshEnabled,
       typographyCtx,
     ]

@@ -121,10 +121,13 @@ export { decoupleHideFromState } from '../field/decoupleHideFromState';
 export { findNumericFieldMinMax } from '../field/fieldOverrides';
 export { type PluginViewOptionsQuickToggles, type PanelPluginViewOptions } from '../panel/PanelPlugin';
 export { sanitize, sanitizeUrl } from '../text/sanitize';
+export { getPanelDataStatusItems, PanelStatusStore } from '../panel/PanelNotices';
 
 export { NewThemeOptionsSchema } from '../themes/createTheme';
 export { createFieldsOrdererAuto } from '../transformations/transformers/order';
+export { getRowIdentity } from '../transformations/frameIdentity';
 
 export { filterByValueTransformer, type FilterByValueConfig } from '../transformations/transformers/filterByValue';
 export { type ValueSetOptions } from '../transformations/matchers/valueMatchers/setMatchers';
 export { dateTimeFormatTimeAgoShort } from '../datetime/formatter';
+export { getAllowedRestrictedGrafanaApis } from '../context/plugins/RestrictedGrafanaApis';

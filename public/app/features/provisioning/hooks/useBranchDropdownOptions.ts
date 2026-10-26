@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import { t } from '@grafana/i18n';
 import { type GetRepositoryRefsApiResponse, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
+import { isKnownRef } from '../utils/workflow';
+
 interface UseBranchDropdownOptionsParams {
   repository?: RepositoryView;
   prBranch?: string;
@@ -93,7 +95,7 @@ export const useBranchDropdownOptions = ({
     addedBranches.add(lastBranch);
   }
 
-  const selectedExistsInRepository = branchData?.items?.some((ref) => ref.name === selectedBranch);
+  const selectedExistsInRepository = isKnownRef(branchData, selectedBranch);
   if (selectedBranch && !selectedExistsInRepository && !addedBranches.has(selectedBranch)) {
     options.push({
       label: selectedBranch,

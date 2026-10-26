@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 )
 
 func makeRuleSequence(name string, recordingUIDs, alertingUIDs []string) *model.RuleSequence {
@@ -18,9 +18,9 @@ func makeRuleSequence(name string, recordingUIDs, alertingUIDs []string) *model.
 	for i, uid := range recordingUIDs {
 		seq.Spec.RecordingRules[i] = model.RuleSequenceRuleRef{Name: model.RuleSequenceRuleUID(uid)}
 	}
-	seq.Spec.AlertingRules = make([]model.RuleSequenceRuleRef, len(alertingUIDs))
+	seq.Spec.AlertRules = make([]model.RuleSequenceRuleRef, len(alertingUIDs))
 	for i, uid := range alertingUIDs {
-		seq.Spec.AlertingRules[i] = model.RuleSequenceRuleRef{Name: model.RuleSequenceRuleUID(uid)}
+		seq.Spec.AlertRules[i] = model.RuleSequenceRuleRef{Name: model.RuleSequenceRuleUID(uid)}
 	}
 	return seq
 }

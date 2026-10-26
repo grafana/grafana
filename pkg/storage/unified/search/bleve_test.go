@@ -693,7 +693,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 					Limit: 100,
 				},
 			},
-		}, []resource.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
+		}, &resource.SearchIndexes{Federated: []resource.ResourceIndex{foldersIndex}}, nil) // << note the folder index matches the federation request
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Results)
@@ -755,7 +755,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 					Limit: 100,
 				},
 			},
-		}, []resource.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
+		}, &resource.SearchIndexes{Federated: []resource.ResourceIndex{foldersIndex}}, nil) // << note the folder index matches the federation request
 
 		require.NoError(t, err)
 		require.Equal(t, 3, len(rsp.Results.Rows))
@@ -784,7 +784,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 					Limit: 100,
 				},
 			},
-		}, []resource.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
+		}, &resource.SearchIndexes{Federated: []resource.ResourceIndex{foldersIndex}}, nil) // << note the folder index matches the federation request
 
 		require.NoError(t, err)
 		require.Equal(t, 2, len(rsp.Results.Rows))
@@ -812,7 +812,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 					Limit: 100,
 				},
 			},
-		}, []resource.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
+		}, &resource.SearchIndexes{Federated: []resource.ResourceIndex{foldersIndex}}, nil) // << note the folder index matches the federation request
 
 		require.NoError(t, err)
 		require.Equal(t, 0, len(rsp.Results.Rows))
@@ -884,7 +884,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
-		}, nil, false, nil)
+		}, nil, false, nil, nil)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 
@@ -904,7 +904,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
 			Query:   "grafana",
-		}, nil, false, nil)
+		}, nil, false, nil, nil)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 		_, ok := searchReq.Sort[0].(*blevesearch.SortScore)
@@ -923,7 +923,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: 10},
 			},
-		}, nil, false, nil)
+		}, nil, false, nil, nil)
 		require.Nil(t, errResult)
 		require.Contains(t, searchReq.Facets, "tagValues")
 		assert.Equal(t, resource.SEARCH_FIELD_TAGS, searchReq.Facets["tagValues"].Field)
@@ -936,7 +936,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {Field: "labels.region", Limit: 10},
 			},
-		}, nil, false, nil)
+		}, nil, false, nil, nil)
 		require.Nil(t, searchReq)
 		require.NotNil(t, errResult)
 		assert.Contains(t, errResult.Message, `field "labels.region" does not support faceting`)
@@ -952,7 +952,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 					"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: -1},
 				},
-			}, nil, postRankAuthz, nil)
+			}, nil, postRankAuthz, nil, nil)
 			require.Nil(t, searchReq)
 			require.NotNil(t, errResult)
 			assert.Contains(t, errResult.Message, `facet "tagValues" has a negative limit`)
@@ -971,7 +971,7 @@ func TestBleveTrashSearchFailsWhenDeletedDocumentsAreNotIndexed(t *testing.T) {
 		Options:   &resourcepb.ListOptions{},
 		Limit:     10,
 		IsDeleted: true,
-	}, nil, false, nil)
+	}, nil, false, nil, nil)
 
 	require.Nil(t, searchReq)
 	require.NotNil(t, errResult)
@@ -1007,13 +1007,13 @@ func TestBleveTrashResourceVersionSortRequiresIndexFeature(t *testing.T) {
 	}
 
 	t.Run("an older index still serves trash without the new sort", func(t *testing.T) {
-		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(false), nil, false, nil)
+		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(false), nil, false, nil, nil)
 		require.NotNil(t, searchReq)
 		require.Nil(t, errResult)
 	})
 
 	t.Run("an older index refuses the new sort", func(t *testing.T) {
-		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(true), nil, false, nil)
+		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(true), nil, false, nil, nil)
 		require.Nil(t, searchReq)
 		require.NotNil(t, errResult)
 		assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
@@ -1022,7 +1022,7 @@ func TestBleveTrashResourceVersionSortRequiresIndexFeature(t *testing.T) {
 
 	t.Run("a rebuilt index accepts the new sort", func(t *testing.T) {
 		features := append(slices.Clone(oldFeatures), resource.IndexFeatureSortableTrashResourceVersion)
-		searchReq, errResult := newIndex(features).toBleveSearchRequest(t.Context(), request(true), nil, false, nil)
+		searchReq, errResult := newIndex(features).toBleveSearchRequest(t.Context(), request(true), nil, false, nil, nil)
 		require.NotNil(t, searchReq)
 		require.Nil(t, errResult)
 	})
@@ -1054,14 +1054,13 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 		},
 	}, map[schema.GroupResource]string{{Group: group, Resource: kindResource}: "v1"})
 
-	newIndex := func(enforce bool) *bleveIndex {
+	newIndex := func() *bleveIndex {
 		return &bleveIndex{
-			key:                   resource.NamespacedResource{Namespace: "ns", Group: group, Resource: kindResource},
-			fields:                resource.StandardSearchFields(),
-			searchFields:          newKindSearchFields(provider, group, kindResource, []string{"spec.slug"}),
-			enforceSortCapability: enforce,
-			logger:                log.NewNopLogger(),
-			indexMetrics:          resource.ProvideIndexMetrics(nil),
+			key:          resource.NamespacedResource{Namespace: "ns", Group: group, Resource: kindResource},
+			fields:       resource.StandardSearchFields(),
+			searchFields: newKindSearchFields(provider, group, kindResource, []string{"spec.slug"}),
+			logger:       log.NewNopLogger(),
+			indexMetrics: resource.ProvideIndexMetrics(nil),
 		}
 	}
 
@@ -1088,7 +1087,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 	}
 	for _, tc := range accepted {
 		t.Run("accepts "+tc.name, func(t *testing.T) {
-			searchReq, errResult := newIndex(true).toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
+			searchReq, errResult := newIndex().toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil, nil)
 			require.Nil(t, errResult)
 			require.NotNil(t, searchReq)
 		})
@@ -1110,45 +1109,34 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 	}
 	for _, tc := range rejected {
 		t.Run("rejects "+tc.name, func(t *testing.T) {
-			searchReq, errResult := newIndex(true).toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
+			searchReq, errResult := newIndex().toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil, nil)
 			require.Nil(t, searchReq)
 			require.NotNil(t, errResult)
+			assert.Equal(t, int32(http.StatusBadRequest), errResult.Code)
 			assert.Contains(t, errResult.Message, fmt.Sprintf("field %q does not support sorting", tc.field))
-		})
-
-		t.Run("counts but allows "+tc.name+" with enforcement off", func(t *testing.T) {
-			idx := newIndex(false)
-			reg := prometheus.NewPedanticRegistry()
-			idx.indexMetrics = resource.ProvideIndexMetrics(reg)
-
-			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
-			require.Nil(t, errResult)
-			require.NotNil(t, searchReq)
-			assert.Equal(t, 1, testutil.CollectAndCount(idx.indexMetrics.SearchCapabilityViolations, "grafana_index_server_search_capability_violations_total"))
 		})
 	}
 
 	// Trash fields are refused on a live search, so they cannot go in the list above.
 	t.Run("accepts a trash field when searching deleted resources", func(t *testing.T) {
-		idx := newIndex(true)
+		idx := newIndex()
 		idx.keepsDeletedDocuments = true
 		req := sortBy(resource.SEARCH_FIELD_DELETION_TIME)
 		req.IsDeleted = true
-		_, errResult := idx.toBleveSearchRequest(t.Context(), req, nil, false, nil)
+		_, errResult := idx.toBleveSearchRequest(t.Context(), req, nil, false, nil, nil)
 		require.Nil(t, errResult)
 	})
 
 	t.Run("an index without declarations still allows standard sortable fields", func(t *testing.T) {
 		idx := &bleveIndex{
-			fields:                resource.StandardSearchFields(),
-			enforceSortCapability: true,
-			logger:                log.NewNopLogger(),
-			indexMetrics:          resource.ProvideIndexMetrics(nil),
+			fields:       resource.StandardSearchFields(),
+			logger:       log.NewNopLogger(),
+			indexMetrics: resource.ProvideIndexMetrics(nil),
 		}
-		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), nil, false, nil)
+		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), nil, false, nil, nil)
 		require.Nil(t, errResult)
 
-		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_CREATED), nil, false, nil)
+		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_CREATED), nil, false, nil, nil)
 		require.NotNil(t, errResult)
 	})
 }

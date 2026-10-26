@@ -3,6 +3,7 @@ import { createBrowserHistory } from 'history';
 
 import {
   CoreApp,
+  type DataSourceInstanceSettings,
   type GrafanaConfig,
   LiveChannelEventType,
   LoadingState,
@@ -11,7 +12,7 @@ import {
   locationUtil,
   store,
 } from '@grafana/data';
-import { config, locationService, RefreshEvent } from '@grafana/runtime';
+import { config, getDataSourceInstanceSettings, locationService, RefreshEvent } from '@grafana/runtime';
 import {
   sceneGraph,
   SceneGridLayout,
@@ -26,6 +27,7 @@ import {
   SceneDataTransformer,
   LocalValueVariable,
   MultiValueVariable,
+  AdHocFiltersVariable,
 } from '@grafana/scenes';
 import { type Dashboard, DashboardCursorSync, type LibraryPanel } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -83,7 +85,6 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   }),
 }));
 jest.mock('../serialization/transformSaveModelToScene');
-jest.mock('../serialization/transformSceneToSaveModel');
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
@@ -648,6 +649,38 @@ describe('DashboardScene', () => {
         expect(startSpy).toHaveBeenCalled();
       });
 
+      it('when changes are discarded with a check pending, an old reply cannot mark the restored dashboard dirty', () => {
+        const postMessage = jest.mocked(worker.postMessage);
+        const originalImplementation = postMessage.getMockImplementation()!;
+        postMessage.mockReset().mockImplementation(() => {});
+
+        try {
+          scene.setState({ title: 'Unsaved title' });
+          const oldRequest = postMessage.mock.calls.at(-1)![0];
+
+          scene.discardChangesAndKeepEditing();
+
+          expect(scene.state.title).toBe('hello');
+          expect(scene.state.isDirty).toBe(false);
+
+          worker.onmessage!(
+            new MessageEvent('message', { data: { generation: oldRequest.generation, hasChanges: true } })
+          );
+
+          expect(scene.state.isDirty).toBe(false);
+
+          scene.setState({ title: 'New edit after discard' });
+          const freshRequest = postMessage.mock.calls.at(-1)![0];
+          worker.onmessage!(
+            new MessageEvent('message', { data: { generation: freshRequest.generation, hasChanges: true } })
+          );
+
+          expect(scene.state.isDirty).toBe(true);
+        } finally {
+          postMessage.mockReset().mockImplementation(originalImplementation);
+        }
+      });
+
       it('activateSidebar activates an inactive sidebar and releases it on exit', () => {
         const sidebar = scene.state.sidebar;
         expect(sidebar.isActive).toBe(false);
@@ -688,7 +721,7 @@ describe('DashboardScene', () => {
         scene.setState({ title: 'Updated title' });
         expect(scene.state.isDirty).toBe(true);
 
-        await scene.saveCompleted({} as Dashboard, {
+        await scene.saveCompleted(scene.getSaveModel(), {
           slug: 'slug',
           uid: 'dash-1',
           url: 'sss',
@@ -707,7 +740,7 @@ describe('DashboardScene', () => {
         scene.setState({ uid: '' });
         allowOrigins([{ origin, panelIds: [1] }], 'dashboard');
 
-        await scene.saveCompleted({} as Dashboard, {
+        await scene.saveCompleted(scene.getSaveModel(), {
           slug: 'slug',
           uid: 'new-uid',
           url: 'sss',
@@ -718,9 +751,7 @@ describe('DashboardScene', () => {
         expect(getAllowedOrigins('new-uid', 1)).toEqual([origin]);
       });
 
-      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', async () => {
-        setTestFlags({ dashboardNewLayouts: true });
-
+      it('Should exit edit mode after saving from unsaved changes modal', async () => {
         scene.setState({ meta: { ...scene.state.meta, canSave: true } });
 
         const publishSpy = jest.spyOn(appEvents, 'publish');
@@ -749,13 +780,10 @@ describe('DashboardScene', () => {
         } finally {
           publishSpy.mockRestore();
           hasActualSaveChangesSpy.mockRestore();
-          setTestFlags({});
         }
       });
 
       it('Should not show Save option in unsaved changes modal when user cannot save', () => {
-        setTestFlags({ dashboardNewLayouts: true });
-
         scene.setState({ meta: { ...scene.state.meta, canSave: false } });
 
         const publishSpy = jest.spyOn(appEvents, 'publish');
@@ -774,7 +802,6 @@ describe('DashboardScene', () => {
 
         publishSpy.mockRestore();
         hasActualSaveChangesSpy.mockRestore();
-        setTestFlags({});
       });
 
       it('Should start the detect changes worker', () => {
@@ -1092,17 +1119,15 @@ describe('DashboardScene', () => {
       });
 
       it('Should create and add a new panel to the dashboard', async () => {
-        // addPanel parents the panel through the edit-action bus when new layouts are on, and this scene never activates the sidebar.
-        setTestFlags({ dashboardNewLayouts: false });
         scene.exitEditMode({ skipConfirm: true });
         expect(scene.state.isEditing).toBe(false);
+        scene.activateSidebar();
 
         const panel = await scene.onCreateNewPanel();
 
         expect(scene.state.isEditing).toBe(true);
         expect(scene.state.body.getVizPanels().length).toBe(7);
         expect(panel.state.key).toBe('panel-7');
-        setTestFlags({});
       });
 
       it('Should select new row', () => {
@@ -1113,34 +1138,32 @@ describe('DashboardScene', () => {
       });
 
       it('Should fail to copy a panel if it does not have a grid item parent', () => {
-        // With new layouts on, a panel with no grid parent throws instead of returning.
-        setTestFlags({ dashboardNewLayouts: false });
         const vizPanel = new VizPanel({
           title: 'Panel Title',
           key: 'panel-5',
           pluginId: 'timeseries',
         });
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-        scene.copyPanel(vizPanel);
-
+        expect(() => scene.copyPanel(vizPanel)).toThrow('Trying to copy a panel that is not DashboardGridItem child');
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
-        setTestFlags({});
+        errorSpy.mockRestore();
       });
 
       it('Should fail to copy a library panel if it does not have a grid item parent', () => {
-        // With new layouts on, a panel with no grid parent throws instead of returning.
-        setTestFlags({ dashboardNewLayouts: false });
         const libVizPanel = new VizPanel({
           title: 'Library Panel',
           pluginId: 'table',
           key: 'panel-4',
           $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
         });
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-        scene.copyPanel(libVizPanel);
-
+        expect(() => scene.copyPanel(libVizPanel)).toThrow(
+          'Trying to copy a panel that is not DashboardGridItem child'
+        );
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
-        setTestFlags({});
+        errorSpy.mockRestore();
       });
 
       it('Should copy a panel', () => {
@@ -1161,51 +1184,84 @@ describe('DashboardScene', () => {
       });
 
       it('Should paste a panel', () => {
-        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
-        jest.mocked(buildGridItemForPanel).mockReturnValue(
-          new DashboardGridItem({
-            key: 'griditem-9',
-            body: new VizPanel({
-              title: 'Panel A',
-              key: 'panel-9',
-              pluginId: 'table',
-            }),
+        scene.activateSidebar();
+        store.set(
+          LS_PANEL_COPY_KEY,
+          JSON.stringify({
+            elements: {
+              'panel-1': {
+                kind: 'Panel',
+                spec: {
+                  id: 1,
+                  title: 'Panel A',
+                  description: '',
+                  links: [],
+                  data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+                  vizConfig: {
+                    kind: 'VizConfig',
+                    group: 'table',
+                    version: '',
+                    spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+                  },
+                },
+              },
+            },
+            gridItem: {
+              kind: 'GridLayoutItem',
+              spec: {
+                x: 0,
+                y: 0,
+                width: 12,
+                height: 8,
+                element: { kind: 'ElementReference', name: 'panel-1' },
+              },
+            },
           })
         );
 
         scene.pastePanel();
 
-        expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
-
         const addedPanel = findVizPanelByKey(scene, 'panel-7')!;
         expect(addedPanel).toBeDefined();
+        expect(addedPanel.state.title).toBe('Panel A');
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 
       it('Should paste a library viz panel', () => {
-        // New layouts paste through the layout manager, which does not use the buildGridItemForPanel mock.
-        setTestFlags({ dashboardNewLayouts: false });
-        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
-        jest.mocked(buildGridItemForPanel).mockReturnValue(
-          new DashboardGridItem({
-            body: new VizPanel({
-              title: 'Library Panel',
-              pluginId: 'table',
-              key: 'panel-4',
-              $behaviors: [new LibraryPanelBehavior({ name: 'libraryPanel', uid: 'uid' })],
-            }),
+        scene.activateSidebar();
+        store.set(
+          LS_PANEL_COPY_KEY,
+          JSON.stringify({
+            elements: {
+              'library-panel-1': {
+                kind: 'LibraryPanel',
+                spec: {
+                  id: 1,
+                  title: 'Library Panel',
+                  libraryPanel: { uid: 'uid', name: 'libraryPanel' },
+                },
+              },
+            },
+            gridItem: {
+              kind: 'GridLayoutItem',
+              spec: {
+                x: 0,
+                y: 0,
+                width: 12,
+                height: 8,
+                element: { kind: 'ElementReference', name: 'library-panel-1' },
+              },
+            },
           })
         );
 
         scene.pastePanel();
 
-        expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
-
         const addedPanel = findVizPanelByKey(scene, 'panel-7')!;
         expect(addedPanel).toBeDefined();
         expect(addedPanel.state.key).toBe('panel-7');
+        expect(isLibraryPanel(addedPanel)).toBe(true);
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
-        setTestFlags({});
       });
 
       it('Should do nothing when pasting with an empty clipboard', () => {
@@ -3839,6 +3895,55 @@ describe('DashboardScene', () => {
       expect(variables[0].state).toMatchObject({ query: 'x,y,z' });
     });
 
+    it('should merge a predefined GroupByVariable into the predefined adhoc variable on the same datasource', () => {
+      jest
+        .mocked(getDataSourceInstanceSettings)
+        .mockResolvedValueOnce({ uid: 'prom', meta: {} } as unknown as DataSourceInstanceSettings);
+      const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
+      const origin = toControlSourceRef({ type: 'global' });
+
+      scene.setPredefinedVariables([
+        {
+          kind: 'AdhocVariable' as const,
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: {
+            name: 'globalFilter',
+            baseFilters: [],
+            filters: [],
+            defaultKeys: [],
+            hide: 'dontHide',
+            skipUrlSync: false,
+            allowCustomValue: true,
+            origin,
+          },
+        },
+        {
+          kind: 'GroupByVariable' as const,
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: {
+            name: 'globalGroupBy',
+            current: { text: ['job'], value: ['job'] },
+            options: [],
+            multi: true,
+            hide: 'dontHide',
+            skipUrlSync: false,
+            origin,
+          },
+        },
+      ] as VariableKind[]);
+
+      const variables = sceneGraph.getVariables(scene).state.variables;
+      const filter = variables.find((v) => v.state.name === 'globalFilter');
+      expect(filter).toBeInstanceOf(AdHocFiltersVariable);
+      expect((filter as AdHocFiltersVariable).state.enableGroupBy).toBe(true);
+      expect((filter as AdHocFiltersVariable).state.filters).toEqual([
+        expect.objectContaining({ key: 'job', operator: 'groupBy' }),
+      ]);
+      expect(variables.find((v) => v.state.name === 'globalGroupBy')).toBeUndefined();
+    });
+
     it('should preserve the current selection when refreshing a predefined variable', () => {
       const scene = buildTestScene({ $variables: new SceneVariableSet({ variables: [] }) });
 
@@ -4137,6 +4242,15 @@ describe('DashboardScene', () => {
       const pageNav = scene.getPageNav(location, {} as NavIndex);
 
       expect(pageNav.url).toBe('/subUrl/d/dash-1/dash-1-slug');
+    });
+
+    it('links a new dashboard preview to the uid it is proposed under, not to a blank new dashboard', () => {
+      const scene = buildTestScene({ uid: '', meta: { newDashboardUid: 'new-dash' } });
+      const location = { pathname: '/d/new-dash', search: '?pendingChanges=chat-1', hash: '', state: null, key: '' };
+
+      const pageNav = scene.getPageNav(location, {} as NavIndex);
+
+      expect(pageNav.url).toBe('/subUrl/d/new-dash?pendingChanges=chat-1');
     });
 
     it('prefixes the dashboard parent crumb url with the app sub url when editing a panel', () => {
@@ -4557,10 +4671,11 @@ function buildTestScene(overrides?: Partial<DashboardSceneState>) {
 }
 
 function mockResultsOfDetectChangesWorker({ hasChanges = true }) {
-  jest.mocked(worker.postMessage).mockImplementationOnce(() => {
+  jest.mocked(worker.postMessage).mockImplementationOnce(({ generation }) => {
     worker.onmessage?.({
       data: {
         hasChanges,
+        generation,
       },
     } as unknown as MessageEvent);
   });
