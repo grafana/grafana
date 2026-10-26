@@ -156,26 +156,16 @@ it('marks Composer as new until it is the current mode', async () => {
 describe('the main button', () => {
   const mainButton = (mode: string) => screen.getByRole('button', { name: `Dashboard mode: ${mode}`, hidden: true });
 
-  it('switches Viewing to Composer, asking Assistant to enter it', async () => {
+  it('switches Viewing to Editing while Composer is available, without asking Assistant', async () => {
     const listener = jest.fn();
     const unsubscribe = addComposerEnterRequestListener(listener);
     const { user, scene } = await openPicker();
 
     await user.click(mainButton('Viewing'));
 
-    expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'picker-test' });
-    // Assistant enters Composer through the API; the button only asks.
-    expect(scene.state.mode).not.toBe('composer');
-    unsubscribe();
-  });
-
-  it('switches Viewing to Editing while Composer cannot start', async () => {
-    jest.mocked(canEnterComposer).mockReturnValue({ ok: false, reason: 'unsupported' });
-    const { user, scene } = await openPicker();
-
-    await user.click(mainButton('Viewing'));
-
     expect(getDashboardMode(scene.state)).toBe('edit');
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
   });
 
   it('switches Viewing to Editing while Composer is off', async () => {
