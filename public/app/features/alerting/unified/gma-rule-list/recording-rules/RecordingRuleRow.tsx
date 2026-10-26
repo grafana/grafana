@@ -24,6 +24,8 @@ interface RecordingRuleRowProps {
 export function RecordingRuleRow({ searchHit, folderPath }: RecordingRuleRowProps) {
   const titleId = useId();
   const href = grafanaRulesNav.viewLink(searchHit.uid, { includeReturnTo: true });
+  // The write target is already shown in RuleRecordedMetric; exclude it from the queried list.
+  const queriedUIDs = searchHit.datasourceUIDs?.filter((uid) => uid !== searchHit.targetDatasourceUID);
 
   return (
     <RuleListItem
@@ -47,12 +49,7 @@ export function RecordingRuleRow({ searchHit, folderPath }: RecordingRuleRowProp
             targetDatasourceUID={searchHit.targetDatasourceUID}
           />
         ),
-        // Note: targetDatasourceUID may also appear in datasourceUIDs (when the write target is also
-        // queried). This is accepted — the two items serve different purposes: one names the metric
-        // destination, the other lists query sources.
-        searchHit.datasourceUIDs && searchHit.datasourceUIDs.length > 0 && (
-          <RuleDatasources key="ds" datasourceUIDs={searchHit.datasourceUIDs} />
-        ),
+        queriedUIDs && queriedUIDs.length > 0 && <RuleDatasources key="ds" datasourceUIDs={queriedUIDs} />,
         // parseSearchLabels guarantees labels is non-empty when present; RuleLabels handles the null case.
         searchHit.labels && <RuleLabels key="labels" labels={searchHit.labels} />,
       ]}
