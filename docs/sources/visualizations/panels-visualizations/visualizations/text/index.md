@@ -33,6 +33,11 @@ refs:
 
 # Text
 
+{{< admonition type="note" >}}
+This documentation describes the generally available version of the text visualization.
+For information about the updated text visualization, currently in public preview, refer to the [next version of the documentation](https://grafana.com/docs/grafana/next/visualizations/panels-visualizations/visualizations/text/)
+{{< /admonition >}}
+
 Text visualizations let you include text or HTML in your dashboards.
 This can be used to add contextual information and descriptions or embed complex HTML.
 
