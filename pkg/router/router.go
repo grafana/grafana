@@ -155,6 +155,10 @@ type GrafanaRouter struct {
 	// snapshot is the immutable group -> servingEntry map used to serve
 	// requests. reconcile rebuilds and atomically stores it; serving loads it.
 	snapshot atomic.Pointer[map[string]servingEntry]
+	// initialized keeps middleware on the router after the startup handoff,
+	// even if readiness later fails. Falling back could serve a different
+	// backend for a group the router has taken over.
+	initialized atomic.Bool
 
 	// apiGroupList and openapiIndex are the synthesized /apis and /openapi/v3
 	// root documents, rebuilt from served (not the raw Load result) on every

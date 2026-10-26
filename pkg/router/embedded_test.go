@@ -133,6 +133,46 @@ func TestEmbeddedLoaderBaseLoaderWins(t *testing.T) {
 	require.Same(t, Backend(routed), backends[1])
 }
 
+func TestEmbeddedLoaderReconcilesChangingOverrides(t *testing.T) {
+	const group = "playlist.grafana.app"
+	server := &fakeEmbeddedAPIServer{groups: []string{group}, status: http.StatusNoContent}
+	base := &mutableLoader{}
+	router := NewGrafanaRouter(newEmbeddedLoader(base, embeddedUpstreamFor(server)), nil)
+	for _, tc := range []struct {
+		name   string
+		key    string
+		status int
+	}{
+		{name: "embedded", status: http.StatusNoContent},
+		{name: "plugin added", key: "plugin-v1", status: http.StatusCreated},
+		{name: "plugin updated", key: "plugin-v2", status: http.StatusAccepted},
+		{name: "plugin removed", status: http.StatusNoContent},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var backends []Backend
+			if tc.key != "" {
+				backends = []Backend{&fakeBackend{
+					group: metav1.APIGroup{Name: group}, key: tc.key,
+					handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(tc.status)
+					}),
+				}}
+			}
+			base.backends = backends
+			require.NoError(t, router.reconcile(t.Context()))
+			rec := httptest.NewRecorder()
+			router.HandleAPIs().ServeHTTP(rec, newAuthenticatedRequest(http.MethodGet, "/apis/"+group+"/v1/things", nil))
+			require.Equal(t, tc.status, rec.Code)
+			if tc.key == "" {
+				require.Equal(t, embeddedSource, router.served[group].backend.Source())
+			} else {
+				require.Equal(t, tc.key, router.served[group].backend.Key())
+			}
+		})
+	}
+	require.Equal(t, int32(1), server.discoveryReads.Load())
+}
+
 // In middleware mode the router serves the embedded server's groups through
 // its handler, and lists them in root discovery without asking it again.
 func TestMiddlewareServesEmbeddedGroups(t *testing.T) {
@@ -200,7 +240,36 @@ func TestMiddlewareLeavesRequestsToTheServerUntilReady(t *testing.T) {
 	require.Equal(t, http.StatusTeapot, serve(), "not ready: the server's")
 
 	svc.SetUpstream(server)
+	server.failDiscovery.Store(true)
+	require.Error(t, svc.router.reconcile(t.Context()))
+	require.Equal(t, http.StatusTeapot, serve(), "failed initial discovery: still the server's")
+	server.failDiscovery.Store(false)
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	require.Equal(t, http.StatusNoContent, serve(), "ready: the router's, through the server's handler")
 	require.Equal(t, int32(1), server.served.Load())
+}
+
+func TestMiddlewareKeepsRoutedGroupsAfterLosingReadiness(t *testing.T) {
+	for name, phase := range map[string]phase{"stopped": stopped, "crashed": crashed} {
+		t.Run(name, func(t *testing.T) {
+			const group = "playlist.grafana.app"
+			server := &fakeEmbeddedAPIServer{groups: []string{group}, status: http.StatusTeapot}
+			backend := &fakeBackend{
+				group: metav1.APIGroup{Name: group}, key: "routed",
+				handler: http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+					w.WriteHeader(http.StatusNoContent)
+				}),
+			}
+			svc := newService(NewGrafanaRouter(newEmbeddedLoader(&mutableLoader{backends: []Backend{backend}}, embeddedUpstreamFor(server)), nil), prometheus.NewRegistry())
+			svc.middleware = true
+			require.NoError(t, svc.router.reconcile(t.Context()))
+			svc.router.state.Store(&routerState{phase: phase})
+			require.Error(t, svc.router.Ready(t.Context()))
+
+			rec := httptest.NewRecorder()
+			svc.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/"+group+"/v1/things", nil), server)
+			require.Equal(t, http.StatusNoContent, rec.Code, "losing readiness must not hand the group back to the embedded server")
+			require.Zero(t, server.served.Load())
+		})
+	}
 }

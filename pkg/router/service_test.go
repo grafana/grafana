@@ -257,7 +257,7 @@ func TestRouterMiddlewareDoesNotUseSTFallback(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, svc.RegisterTargetRoutes(mux.NewRouter(), nil))
 	// As if its first reconcile succeeded, so the router serves the request.
-	svc.router.storeServing(t.Context(), nil)
+	svc.router.initialized.Store(true)
 	recorder := httptest.NewRecorder()
 	svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/unknown/v1/namespaces/stacks-123/widgets", nil), http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusTeapot)
