@@ -1,9 +1,9 @@
 import { t } from '@grafana/i18n';
 import { Stack, Text, TextLink } from '@grafana/ui';
+import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 
 import { getDataSourceByUid } from '../../utils/datasource';
 import { makeDataSourceLink } from '../../utils/misc';
-import { DataSourceLogo } from '../rule-row/RuleDatasources';
 
 interface RuleRecordedMetricProps {
   metric: string;

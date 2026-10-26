@@ -1,9 +1,9 @@
-import { css, cx } from '@emotion/css';
 import { forwardRef } from 'react';
 
-import { type DataSourceInstanceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
+import { Stack, Text, TextLink, Tooltip } from '@grafana/ui';
+import { DataSourceLogo as SharedDataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 
 import { getDataSourceByUid } from '../../utils/datasource';
 import { makeDataSourceLink } from '../../utils/misc';
@@ -55,29 +55,17 @@ export function RuleDatasources({ datasourceUIDs }: RuleDatasourcesProps) {
   );
 }
 
-/** Datasource logo image; exported for use in other row metadata components. */
-export const DataSourceLogo = forwardRef<HTMLImageElement, { dataSource: DataSourceInstanceSettings }>(
-  ({ dataSource }, ref) => {
-    const styles = useStyles2(getLogoStyles);
-    return (
-      <img
-        ref={ref}
-        className={cx(styles.logo, { [styles.filter]: dataSource.meta.builtIn })}
-        alt={`${dataSource.meta.name} logo`}
-        src={dataSource.meta.info.logos.small}
-      />
-    );
-  }
+/**
+ * Thin forwardRef wrapper around the shared DataSourceLogo so that Tooltip
+ * (Tippy.js) can attach a ref for positioning. The shared component does not
+ * forward refs itself.
+ * Exported for use in other row metadata components (e.g. RuleRecordedMetric).
+ */
+export const DataSourceLogo = forwardRef<HTMLDivElement, { dataSource: DataSourceInstanceSettings }>(
+  ({ dataSource }, ref) => (
+    <span ref={ref}>
+      <SharedDataSourceLogo dataSource={dataSource} size={12} />
+    </span>
+  )
 );
 DataSourceLogo.displayName = 'DataSourceLogo';
-
-const getLogoStyles = (theme: GrafanaTheme2) => ({
-  logo: css({
-    height: '12px',
-    width: '12px',
-    borderRadius: theme.shape.radius.default,
-  }),
-  filter: css({
-    filter: theme.isDark ? 'invert(1) brightness(2)' : 'none',
-  }),
-});
