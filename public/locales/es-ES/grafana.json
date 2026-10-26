@@ -1445,6 +1445,11 @@
         "no-rules": "",
         "rules-error": ""
       },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
       "result-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
@@ -2168,14 +2173,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Puntos de datos máximos",
-      "tooltip-max-data-points": "Los puntos de datos máximos por serie. Utilizado directamente por algunas fuentes de datos y utilizado en el cálculo del intervalo automático. Con los datos de transmisión, este valor se utiliza para el búfer continuo."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "nuevo"
     },
     "min-interval-option": {
       "label-interval": "Intervalo",
-      "tooltip-interval": "Intervalo enviado a la fuente de datos. Se recomienda configurar la frecuencia de escritura, por ejemplo <1>1m</1>, si tus datos se escriben cada minuto."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4143,6 +4148,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Pasar al contenido principal",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Iniciar sesión"
     }
@@ -4612,8 +4622,7 @@
       "delete-warning": "Esto eliminará esta carpeta y todas sus derivadas.",
       "folder-empty": "La carpeta seleccionada está vacía",
       "folder-not-empty": "La carpeta seleccionada contiene recursos que se eliminarán",
-      "missing-info": "Faltan campos obligatorios.",
-      "success-message": "Carpeta eliminada correctamente"
+      "missing-info": "Faltan campos obligatorios."
     },
     "empty-state": {
       "button-title": "Crear panel de control",
@@ -7251,8 +7260,7 @@
       "delete-error": "Error al eliminar el dashboard",
       "deleting": "Eliminando...",
       "drawer-title": "Eliminar dashboard aprovisionado",
-      "no-repository-selected": "Falta el repositorio necesario para la eliminación.",
-      "success-message": "Dashboard eliminado correctamente"
+      "no-repository-selected": "Falta el repositorio necesario para la eliminación."
     },
     "description-label": {
       "description": "Descripción"
@@ -7531,14 +7539,10 @@
       "already-in-folder": "El dashboard ya está en la carpeta seleccionada.",
       "api-error": "No se ha podido mover el dashboard",
       "cancel-action": "Cancelar",
-      "current-file-not-found": "No se ha podido encontrar el archivo del dashboard actual",
       "drawer-title": "Mover dashboard aprovisionado",
-      "file-load-error": "Error al cargar el dashboard",
-      "loading-dashboard-data": "Cargando datos del dashboard",
       "move-action": "Mover dashboard",
       "move-read-only-message": "Este dashboard no se puede mover directamente desde Grafana porque el repositorio es de solo lectura. Para mover este dashboard, mueve el archivo en tu repositorio Git.",
       "moving": "Moviendo...",
-      "success-message": "Dashboard movido correctamente",
       "target-path-label": "Ruta de destino",
       "title-this-repository-is-read-only": "Este repositorio es de solo lectura"
     },
@@ -13161,7 +13165,8 @@
         "close": "Cerrar {{title}}",
         "open": "Abrir {{title}}",
         "open-all": "Abrir asistentes de IA y aplicaciones de la barra lateral"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Entrar en el espacio de trabajo",
@@ -14322,6 +14327,7 @@
       "description-folder": "Carpeta dentro del repositorio. Déjalo vacío para la raíz del repositorio.",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "El envío a la rama configurada está deshabilitado.",
       "label-branch": "Rama",
       "label-comment": "Comentario",
@@ -15867,6 +15873,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "Selecciona una fuente de datos para esta consulta para continuar.",
     "datasource-load-error-title": "Error al cargar la fuente de datos para esta consulta",
     "loading-datasource": "Cargando fuente de datos",

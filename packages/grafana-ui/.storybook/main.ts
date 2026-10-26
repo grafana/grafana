@@ -41,7 +41,11 @@ copyAssetsSync();
 const mainConfig: StorybookConfig = {
   stories,
 
-  addons: [getAbsolutePath('@storybook/addon-docs'), getAbsolutePath('@storybook/addon-a11y')],
+  // Playwright owns axe scans in this mode; the addon's automatic scans would race them.
+  addons: [
+    getAbsolutePath('@storybook/addon-docs'),
+    ...(process.env.STORYBOOK_EXTERNAL_A11Y === 'true' ? [] : [getAbsolutePath('@storybook/addon-a11y')]),
+  ],
 
   framework: {
     name: getAbsolutePath('storybook-react-rsbuild'),

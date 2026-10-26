@@ -920,15 +920,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "groupByVariable",
-			Description:  "Enable groupBy variable support in scenes dashboards",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-		},
-		{
 			Name:            "scopeFilters",
 			Description:     "Enables the use of scope filters in Grafana",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
@@ -1526,26 +1517,10 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "teamLBACApiReadFromAppPlatform",
-			Description: "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       identityAccessTeam,
-			Expression:  "false",
-		},
-		{
 			Name:        "teamlbac.usageFromAppPlatform",
 			Description: "Collect Team LBAC usage through the IAM API instead of legacy datasource JSON",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true},
-			Owner:       identityAccessTeam,
-			Expression:  "false",
-		},
-		{
-			Name:        "teamLBACApiWriteFromAppPlatform",
-			Description: "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
 		},
@@ -2176,6 +2151,15 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "grafana.restrictWatchToServiceIdentities",
+			Description:  "Restrict API watches to service accounts, service identities, and privileged loopback clients",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{Go: true},
+			HideFromDocs: true,
+			Owner:        grafanaSearchAndStorageSquad,
+			Expression:   "false",
 		},
 		{
 			Name:            "grafana.publishLegacySQLEvents",
@@ -3243,14 +3227,6 @@ var (
 			Owner:       grafanaDataSourcesPlugins,
 			Generate:    Generate{LegacyGo: true},
 			Expression:  "false",
-		},
-		{
-			Name:        "grafana.unifiedDataSourcePicker",
-			Description: "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "rawPrometheus.tableNg",

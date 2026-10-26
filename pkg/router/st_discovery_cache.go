@@ -208,7 +208,7 @@ func (st *singleTenantFallback) fetchDiscovery(host *singleTenantTarget, key str
 	}
 	if cacheable && rec.statusCode == http.StatusOK {
 		f.entry.header = openAPICacheHeaders(rec.header)
-		f.entry.etag = quoteETag(hashHex(rec.body.String()))
+		f.entry.etag = quoteETag(hashHexBytes(rec.body.Bytes()))
 		f.entry.expiresAt = time.Now().Add(singleTenantDiscoveryCacheTTL)
 		st.discoveryDocs.add(key, f.entry)
 		f.stored = true

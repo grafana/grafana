@@ -2829,7 +2829,6 @@ __metadata:
   dependencies:
     "@alwaysmeticulous/sdk-bundles-api": "npm:2.341.0"
     "@grafana/data": "npm:13.3.0-pre"
-    "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.12.0"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/ui": "npm:13.3.0-pre"
@@ -2841,7 +2840,6 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
-    "@testing-library/user-event": "npm:14.6.1"
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:^4.17.25"
@@ -31583,9 +31581,9 @@ __metadata:
   linkType: hard
 
 "zod@npm:^3.25 || ^4.0, zod@npm:^4.1.11, zod@npm:^4.3.0":
-  version: 4.6.5
-  resolution: "zod@npm:4.6.5"
-  checksum: 10/db004952e4dc6eab38b70f0cdef9251a65da84f5d08c5a0ef85e2590cfa9c477544ce734161ff5c05f89a15f0967137607a7feb16716195e04965f030db47213
+  version: 4.6.7
+  resolution: "zod@npm:4.6.7"
+  checksum: 10/3ca8b8d6bb401538e59504c543db629ea7beaa775e504c3f22269b406fdffbf1431c856d59a597bf66d8487e4d2be12b03a55d76fc2c63d9f046eae1ca173bca
   languageName: node
   linkType: hard
 

@@ -250,8 +250,6 @@ export const FlagKeys = {
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
-  /** Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins */
-  GrafanaUnifiedDataSourcePicker: "grafana.unifiedDataSourcePicker",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
   /** Enables semantic (vector) dashboard search in the command palette */
@@ -264,8 +262,6 @@ export const FlagKeys = {
   GrafanaAPIServerWithExperimentalAPIs: "grafanaAPIServerWithExperimentalAPIs",
   /** Enables the Graphite data source full backend mode */
   GraphiteBackendMode: "graphiteBackendMode",
-  /** Enable groupBy variable support in scenes dashboards */
-  GroupByVariable: "groupByVariable",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Adds support for Kubernetes correlations */
@@ -1701,17 +1697,6 @@ export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluat
 };
 
 /**
- * Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins
- *
- * **Details:**
- * - flag key: `grafana.unifiedDataSourcePicker`
- * - default value: `true`
- */
-export const useFlagGrafanaUnifiedDataSourcePicker = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.unifiedDataSourcePicker", true, options).value;
-};
-
-/**
  * Use the find default scope endpoint to seed the initial scope selection when none is set.
  *
  * **Details:**
@@ -1775,17 +1760,6 @@ export const useFlagGrafanaAPIServerWithExperimentalAPIs = (options?: ReactFlagE
  */
 export const useFlagGraphiteBackendMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("graphiteBackendMode", false, options).value;
-};
-
-/**
- * Enable groupBy variable support in scenes dashboards
- *
- * **Details:**
- * - flag key: `groupByVariable`
- * - default value: `false`
- */
-export const useFlagGroupByVariable = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("groupByVariable", false, options).value;
 };
 
 /**
