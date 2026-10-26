@@ -27,12 +27,18 @@ const defaultHooksOptions = {
 // The older group-root dashboard search routes remain included.
 const perResourceSearch = /^\/[^/]+\/(search(?:\/hybrid)?|trash)$/;
 
+// The GMA-only rule list pages page through folders with a per-resource /search, which is the only
+// one with a frontend caller today, so it is allowlisted past the exclusion above rather than
+// lifting it entirely.
+const allowedPerResourceSearchPaths = ['/folders/search'];
+
 export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
   if (Array.isArray(filterEndpoints)) {
     return filterEndpoints;
   }
   return (name, operation) =>
-    !perResourceSearch.test(operation.path) && (filterEndpoints ? filterEndpoints(name, operation) : true);
+    (!perResourceSearch.test(operation.path) || allowedPerResourceSearchPaths.includes(operation.path)) &&
+    (filterEndpoints ? filterEndpoints(name, operation) : true);
 };
 
 /**

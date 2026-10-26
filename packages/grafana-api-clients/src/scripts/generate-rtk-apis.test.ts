@@ -9,8 +9,12 @@ describe('withoutPerResourceSearch', () => {
 
   it('drops the per-resource search and trash endpoints', () => {
     expect(include('/dashboards/search')).toBe(false);
-    expect(include('/folders/search')).toBe(false);
     expect(include('/users/trash')).toBe(false);
+  });
+
+  it('keeps the allowlisted folder search, but not its hybrid variant', () => {
+    expect(include('/folders/search')).toBe(true);
+    expect(include('/folders/search/hybrid')).toBe(false);
   });
 
   // The dashboard search at the group root is a different, older endpoint that the
