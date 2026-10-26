@@ -120,7 +120,8 @@ describe('DataSourceAddButton', () => {
       expect.objectContaining({
         origin: 'grafana/datasources-list/add-data-source',
         mode: 'assistant',
-        autoSend: true,
+        prompt: 'I want to connect Grafana to ',
+        autoSend: false,
       })
     );
   });

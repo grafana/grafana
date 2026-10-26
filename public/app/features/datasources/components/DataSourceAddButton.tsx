@@ -31,8 +31,8 @@ export function DataSourceAddButton(): JSX.Element | null {
     openAssistant({
       origin: 'grafana/datasources-list/add-data-source',
       mode: 'assistant',
-      prompt: 'Help me set up a new data source.',
-      autoSend: true,
+      prompt: 'I want to connect Grafana to ',
+      autoSend: false,
     });
   };
 
