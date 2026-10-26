@@ -18,15 +18,15 @@ cards:
     - title: Generate diagnostic bundle
       height: 24
       href: ./generate-diagnostic-bundle/
-      description: TBC.
-    - title: Har captures
+      description: Generate a data source diagnostic bundle and send it to Grafana Labs Support for troubleshooting.
+    - title: HAR captures
       height: 24
       href: ./har-captures/
-      description: Learn how to generate a HAR capture to send to Grafana Labs support for troubleshooting.
+      description: Generate a HAR capture to send to Grafana Labs support for troubleshooting.
     - title: Send panel to Grafana Support
       height: 24
       href: ./send-panel-grafana-support/
-      description: TBC.
+      description: Send a panel to Grafana Labs support for troubleshooting.
 weight: 700
 ---
 
@@ -35,18 +35,6 @@ weight: 700
 This page lists some tools and advice to help troubleshoot common Grafana issues.
 
 {{< card-grid key="cards" type="simple" >}}
-
-## Text is missing when rendering server-side images (RPM-based Linux)
-
-Server-side image rendering is an optional feature that helps you to share visualizations, for example in alert notifications.
-
-If the image is missing text, make sure you have font packages installed:
-
-```bash
-sudo yum install fontconfig
-sudo yum install freetype*
-sudo yum install urw-fonts
-```
 
 ## Troubleshoot transformations
 
@@ -59,6 +47,18 @@ For more information, refer to [Debug a transformation](https://grafana.com/docs
 If you encounter an error or problem, then you can check the Grafana server log. Usually located at `/var/log/grafana/grafana.log` on Unix systems or in `<grafana_install_dir>/data/log` on other platforms and manual installations.
 
 You can enable more logging by changing log level in the Grafana configuration file. For more information, refer to [the `gcx` Grafana CLI](https://grafana.com/docs/grafana/latest/as-code/observability-as-code/grafana-cli/gcx/) and the [log section in Configuration](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#log).
+
+## Text is missing when rendering server-side images (RPM-based Linux)
+
+Server-side image rendering is an optional feature that helps you to share visualizations, for example in alert notifications.
+
+If the image is missing text, make sure you have font packages installed:
+
+```bash
+sudo yum install fontconfig
+sudo yum install freetype*
+sudo yum install urw-fonts
+```
 
 ## Troubleshoot backend performance
 
