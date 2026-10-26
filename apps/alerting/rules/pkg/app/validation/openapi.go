@@ -86,12 +86,14 @@ func schemaErrorToField(se *openapi3.SchemaError) *field.Error {
 	return field.Invalid(path, se.Value, reason)
 }
 
-func OpenAPISpec[T resource.Object](md app.ManifestData, gk schema.GroupKind) (ValidateFunc[T], error) {
-	vs := schemaForKind(md, gk.Kind)
+// OpenAPISpec validates against the schema of gvk's version, which must be the
+// version T belongs to: versions of a kind can differ in what they require.
+func OpenAPISpec[T resource.Object](md app.ManifestData, gvk schema.GroupVersionKind) (ValidateFunc[T], error) {
+	vs := schemaForKind(md, gvk.Version, gvk.Kind)
 	if vs == nil {
 		return func(context.Context, Request[T]) error { return nil }, nil
 	}
-	sv, err := NewSpecValidator(gk, vs, gk.Kind)
+	sv, err := NewSpecValidator(gvk.GroupKind(), vs, gvk.Kind)
 	if err != nil {
 		return nil, err
 	}
@@ -100,9 +102,12 @@ func OpenAPISpec[T resource.Object](md app.ManifestData, gk schema.GroupKind) (V
 	}, nil
 }
 
-func schemaForKind(md app.ManifestData, kind string) *app.VersionSchema {
-	for _, version := range md.Versions {
-		for _, k := range version.Kinds {
+func schemaForKind(md app.ManifestData, version, kind string) *app.VersionSchema {
+	for _, v := range md.Versions {
+		if v.Name != version {
+			continue
+		}
+		for _, k := range v.Kinds {
 			if k.Kind == kind {
 				return k.Schema
 			}

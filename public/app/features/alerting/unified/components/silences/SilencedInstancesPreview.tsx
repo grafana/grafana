@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { type ComponentProps, useState } from 'react';
 import { useDebounce, useDeepCompareEffect } from 'react-use';
 
 import { AlertLabels } from '@grafana/alerting/unstable';
@@ -22,6 +22,7 @@ interface Props {
   amSourceName: string;
   matchers: MatcherFieldValue[];
   ruleUid?: string;
+  onLabelClick?: ComponentProps<typeof AlertLabels>['onClick'];
 }
 
 /**
@@ -37,14 +38,14 @@ const useDebouncedDeepCompare = (cb: () => void, debounceMs: number, dependencie
   }, [dependencies]);
 };
 
-export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers, ruleUid }: Props) => {
+export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers, ruleUid, onLabelClick }: Props) => {
   const matchers: Matcher[] = [
     ...(ruleUid ? [{ name: MATCHER_ALERT_RULE_UID, value: ruleUid, operator: MatcherOperator.equal }] : []),
     ...inputMatchers,
   ].map(matcherFieldToMatcher);
   const useLazyQuery = alertmanagerApi.endpoints.getAlertmanagerAlerts.useLazyQuery;
   const styles = useStyles2(getStyles);
-  const columns = useColumns();
+  const columns = useColumns(onLabelClick);
 
   const regexOperators = new Set([MatcherOperator.regex, MatcherOperator.notRegex]);
   const hasInvalidRegex = inputMatchers.some(
@@ -156,7 +157,7 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
   );
 };
 
-function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
+function useColumns(onLabelClick: Props['onLabelClick']): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
   const styles = useStyles2(getStyles);
 
   return [
@@ -173,7 +174,7 @@ function useColumns(): Array<DynamicTableColumnProps<AlertmanagerAlert>> {
       id: 'labels',
       label: t('alerting.use-columns.label.labels', 'Labels'),
       renderCell: function renderName({ data }) {
-        return <AlertLabels labels={data.labels} size="sm" />;
+        return <AlertLabels labels={data.labels} size="sm" onClick={onLabelClick} />;
       },
       size: 'auto',
     },
