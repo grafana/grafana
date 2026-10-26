@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useId, useLayoutEffect, useRef } from 'react';
+import { useCallback, useId, useRef } from 'react';
 import type * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -12,27 +12,15 @@ import { type DragHandlePosition, getDragStyles } from '../DragHandle/DragHandle
 export interface UseSplitterOptions {
   /**
    * The initial size of the primary pane between 0-1, defaults to 0.5
-   * If `usePixels` is true, this is the initial size in pixels of the pinned pane — the secondary
-   * pane by default, or the primary pane when `pixelPane` is `'primary'`.
+   * If `usePixels` is true, this is the initial size in pixels of the second pane.
    */
   initialSize?: number;
-  /**
-   * The size a double-click on the handle restores, in the same units as `initialSize`. Defaults to
-   * `initialSize` with `usePixels`, or an even split otherwise. Set it when `initialSize` is a
-   * restored size, such as a persisted width, so the reset still returns to a default.
-   */
-  resetSize?: number;
   direction: 'row' | 'column';
   dragPosition?: DragHandlePosition;
   usePixels?: boolean;
   /**
-   * Which pane `usePixels` pins to a fixed pixel size. Defaults to `'secondary'` (right/bottom);
-   * use `'primary'` for a left/top pane such as a sidebar. No effect unless `usePixels` is true.
-   */
-  pixelPane?: 'primary' | 'secondary';
-  /**
-   * Called whenever the size of the primary pane changes.
-   * @param flexSize the primary pane size as a fraction of the container (float from 0-1)
+   * Called when ever the size of the primary pane changes
+   * @param flexSize (float from 0-1)
    */
   onSizeChanged?: (flexSize: number, firstPanePixels: number, secondPanePixels: number) => void;
   onResizing?: (flexSize: number, firstPanePixels: number, secondPanePixels: number) => void;
@@ -74,12 +62,7 @@ export function useSplitter(options: UseSplitterOptions) {
     onResizing,
     onSizeChanged,
     usePixels,
-    pixelPane = 'secondary',
-    resetSize = options.usePixels ? initialSize : 0.5,
   } = options;
-
-  // In primary-pixel mode the fixed pane is the first one, not the second.
-  const pixelPrimary = usePixels && pixelPane === 'primary';
 
   const handleSize = getPixelSize(options.handleSize);
   const splitterRef = useRef<HTMLDivElement | null>(null);
@@ -110,61 +93,44 @@ export function useSplitter(options: UseSplitterOptions) {
       dragStart.current = e[clientAxis];
       splitterRef.current!.setPointerCapture(e.pointerId);
 
-      if (usePixels && !pixelPrimary) {
-        referencePaneSize.current = measureElement(secondPaneRef.current);
+      if (usePixels) {
+        referencePaneSize.current = measureElement(secondPaneRef.current, usePixels);
       } else {
         referencePaneSize.current = measureElement(firstPaneRef.current);
       }
 
       savedPos.current = undefined;
     },
-    [measurementProp, clientAxis, usePixels, pixelPrimary]
+    [measurementProp, clientAxis, usePixels]
   );
 
   const onUpdateSize = useCallback(
     (diff: number) => {
-      const firstPane = firstPaneRef.current;
-      const secondPane = secondPaneRef.current;
-      const splitter = splitterRef.current;
       // A fully collapsed primary pane measures 0, which is a valid size to resize from, so only
       // an absent measurement may bail out here — otherwise the pane could never be dragged open again.
-      if (!containerSize.current || primarySizeRef.current === null || !firstPane || !secondPane || !splitter) {
+      if (!containerSize.current || primarySizeRef.current === null || !secondPaneRef.current) {
         return;
       }
 
-      const containerPixels = containerSize.current;
       const firstPanePixels = primarySizeRef.current;
-      const secondPanePixels = containerPixels - firstPanePixels - handleSize;
+      const secondPanePixels = containerSize.current - firstPanePixels - handleSize;
       const dims = referencePaneSize.current!;
 
-      if (pixelPrimary) {
-        // Handle is on the primary pane's trailing edge, so a positive drag grows it.
-        const newSize = clamp(firstPanePixels + diff, dims[minDimProp], dims[maxDimProp]);
-        firstPane.style.flexBasis = `${newSize}px`;
-        splitter.setAttribute('aria-valuenow', pixelAriaValue(newSize, containerPixels, handleSize));
-        onResizing?.(
-          clamp(newSize / (containerPixels - handleSize), 0, 1),
-          newSize,
-          containerPixels - newSize - handleSize
-        );
-      } else if (usePixels) {
+      if (usePixels) {
         const newSize = clamp(secondPanePixels - diff, dims[minDimProp], dims[maxDimProp]);
-        secondPane.style.flexBasis = `${newSize}px`;
-        splitter.setAttribute(
-          'aria-valuenow',
-          pixelAriaValue(containerPixels - newSize - handleSize, containerPixels, handleSize)
-        );
+        secondPaneRef.current!.style.flexBasis = `${newSize}px`;
+        splitterRef.current!.ariaValueNow = `${newSize}`;
         onResizing?.(newSize, firstPanePixels + diff, newSize);
       } else {
-        const newSize = clamp(firstPanePixels + diff, dims[minDimProp], dims[maxDimProp]);
-        const newFlex = newSize / (containerPixels - handleSize);
-        firstPane.style.flexGrow = `${newFlex}`;
-        secondPane.style.flexGrow = `${1 - newFlex}`;
-        splitter.ariaValueNow = ariaValue(newSize, dims[minDimProp], dims[maxDimProp]);
+        const newSize = clamp(primarySizeRef.current + diff, dims[minDimProp], dims[maxDimProp]);
+        const newFlex = newSize / (containerSize.current! - handleSize);
+        firstPaneRef.current!.style.flexGrow = `${newFlex}`;
+        secondPaneRef.current!.style.flexGrow = `${1 - newFlex}`;
+        splitterRef.current!.ariaValueNow = ariaValue(newSize, dims[minDimProp], dims[maxDimProp]);
         onResizing?.(newFlex, newSize, secondPanePixels - diff);
       }
     },
-    [onResizing, handleSize, usePixels, pixelPrimary, minDimProp, maxDimProp]
+    [onResizing, handleSize, usePixels, minDimProp, maxDimProp]
   );
 
   const onPointerMove = useCallback(
@@ -174,20 +140,6 @@ export function useSplitter(options: UseSplitterOptions) {
       }
     },
     [onUpdateSize, clientAxis]
-  );
-
-  // Primary pane size as a 0-1 fraction. In primary-pixel mode flexGrow is `unset`, so derive it
-  // from measured sizes rather than parsing it.
-  const getPrimaryFlexSize = useCallback(
-    (firstPaneSize: number) => {
-      if (pixelPrimary) {
-        const container = containerSize.current;
-        return container ? clamp(firstPaneSize / (container - handleSize), 0, 1) : 0;
-      }
-
-      return parseFloat(firstPaneRef.current!.style.flexGrow);
-    },
-    [pixelPrimary, handleSize]
   );
 
   const onPointerUp = useCallback(
@@ -202,9 +154,9 @@ export function useSplitter(options: UseSplitterOptions) {
       const firstPaneSize = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
       const secondPanePixels = containerSize.current! - firstPaneSize - handleSize;
 
-      onSizeChanged?.(getPrimaryFlexSize(firstPaneSize), firstPaneSize, secondPanePixels);
+      onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), firstPaneSize, secondPanePixels);
     },
-    [onSizeChanged, handleSize, measurementProp, getPrimaryFlexSize]
+    [onSizeChanged, handleSize, measurementProp]
   );
 
   const pressedKeys = useRef(new Set<string>());
@@ -275,7 +227,7 @@ export function useSplitter(options: UseSplitterOptions) {
       primarySizeRef.current = firstPaneRef.current.getBoundingClientRect()[measurementProp];
       containerSize.current = containerRef.current!.getBoundingClientRect()[measurementProp];
 
-      if (usePixels && !pixelPrimary) {
+      if (usePixels) {
         referencePaneSize.current = measureElement(secondPaneRef.current!);
       } else {
         referencePaneSize.current = measureElement(firstPaneRef.current!);
@@ -292,7 +244,7 @@ export function useSplitter(options: UseSplitterOptions) {
         }
       }
     },
-    [direction, handlePressedKeys, measurementProp, usePixels, pixelPrimary]
+    [direction, handlePressedKeys, , measurementProp, usePixels]
   );
 
   const onKeyUp = useCallback(
@@ -307,47 +259,27 @@ export function useSplitter(options: UseSplitterOptions) {
       pressedKeys.current.delete(e.key);
 
       if (primarySizeRef.current !== null) {
-        // `handlePressedKeys` measures before it resizes, so the stored size is a frame behind the DOM.
-        primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
         const secondPanePixels = containerSize.current! - primarySizeRef.current - handleSize;
-        onSizeChanged?.(getPrimaryFlexSize(primarySizeRef.current), primarySizeRef.current, secondPanePixels);
+        onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current, secondPanePixels);
       }
     },
-    [direction, onSizeChanged, handleSize, measurementProp, getPrimaryFlexSize]
+    [direction, onSizeChanged, handleSize]
   );
 
   const onDoubleClick = useCallback(() => {
-    if (!firstPaneRef.current || !secondPaneRef.current || !containerRef.current) {
+    if (!firstPaneRef.current || !secondPaneRef.current) {
       return;
     }
 
-    if (pixelPrimary) {
-      firstPaneRef.current.style.flexBasis = `${resetSize}px`;
-    } else if (usePixels) {
-      secondPaneRef.current.style.flexBasis = `${resetSize}px`;
-    } else {
-      firstPaneRef.current.style.flexGrow = `${resetSize}`;
-      secondPaneRef.current.style.flexGrow = `${1 - resetSize}`;
-      splitterRef.current!.ariaValueNow = `${resetSize * 100}`;
-    }
-
-    // Report the reset like any other resize. A consumer that keeps the size outside the DOM would
-    // otherwise hold the pre-reset value and reapply it on the next render that touches the styles.
-    containerSize.current = containerRef.current.getBoundingClientRect()[measurementProp];
-    primarySizeRef.current = firstPaneRef.current.getBoundingClientRect()[measurementProp];
-
-    const firstPanePixels = primarySizeRef.current;
-    const secondPanePixels = containerSize.current - firstPanePixels - handleSize;
-
     if (usePixels) {
-      splitterRef.current!.setAttribute(
-        'aria-valuenow',
-        pixelAriaValue(firstPanePixels, containerSize.current, handleSize)
-      );
+      secondPaneRef.current.style.flexBasis = `${initialSize}px`;
+    } else {
+      firstPaneRef.current.style.flexGrow = '0.5';
+      secondPaneRef.current.style.flexGrow = '0.5';
+      primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
+      splitterRef.current!.ariaValueNow = `50`;
     }
-
-    onSizeChanged?.(getPrimaryFlexSize(firstPanePixels), firstPanePixels, secondPanePixels);
-  }, [measurementProp, usePixels, pixelPrimary, resetSize, handleSize, onSizeChanged, getPrimaryFlexSize]);
+  }, [measurementProp, usePixels, initialSize]);
 
   const onBlur = useCallback(() => {
     // If focus is lost while keys are held, stop changing panel sizes
@@ -356,36 +288,11 @@ export function useSplitter(options: UseSplitterOptions) {
       dragStart.current = null;
 
       if (typeof primarySizeRef.current === 'number') {
-        primarySizeRef.current = firstPaneRef.current!.getBoundingClientRect()[measurementProp];
         const secondPanePixels = containerSize.current! - primarySizeRef.current - handleSize;
-        onSizeChanged?.(getPrimaryFlexSize(primarySizeRef.current), primarySizeRef.current, secondPanePixels);
+        onSizeChanged?.(parseFloat(firstPaneRef.current!.style.flexGrow), primarySizeRef.current, secondPanePixels);
       }
     }
-  }, [onSizeChanged, handleSize, measurementProp, getPrimaryFlexSize]);
-
-  // A pixel size has no 0-100 value to render up front, since that depends on the container. Measure
-  // it once laid out; drags and resets keep it current from then on. Checks after every render, not
-  // just the first: the panes can mount later than the hook, or remount as new elements.
-  useLayoutEffect(() => {
-    if (
-      !usePixels ||
-      !firstPaneRef.current ||
-      !containerRef.current ||
-      !splitterRef.current ||
-      splitterRef.current.hasAttribute('aria-valuenow')
-    ) {
-      return;
-    }
-
-    splitterRef.current.setAttribute(
-      'aria-valuenow',
-      pixelAriaValue(
-        firstPaneRef.current.getBoundingClientRect()[measurementProp],
-        containerRef.current.getBoundingClientRect()[measurementProp],
-        handleSize
-      )
-    );
-  });
+  }, [onSizeChanged, handleSize]);
 
   const styles = useStyles2(getStyles, direction);
   const dragStyles = useStyles2(getDragStyles, dragPosition);
@@ -402,17 +309,7 @@ export function useSplitter(options: UseSplitterOptions) {
     [minDimProp]: 'min-content',
   };
 
-  if (pixelPrimary) {
-    primaryStyles.flexGrow = 'unset';
-    primaryStyles.flexBasis = `${initialSize}px`;
-    // This pane's handle sits *after* its width, so a basis wider than the container pushes the
-    // handle past the container's clipped edge — with nothing left to drag, and no size to persist
-    // but the broken one. Reachable from a width stored on a wider window, since it is absolute.
-    // Capping the pane rather than letting it shrink keeps the pinned width authoritative up to the
-    // last point where the handle still fits.
-    primaryStyles[maxDimProp] = `calc(100% - ${handleSize}px)`;
-    secondaryStyles.flexGrow = 1;
-  } else if (usePixels) {
+  if (usePixels) {
     primaryStyles.flexGrow = 1;
     secondaryStyles.flexGrow = 'unset';
     secondaryStyles.flexBasis = `${initialSize}px`;
@@ -449,7 +346,7 @@ export function useSplitter(options: UseSplitterOptions) {
       role: 'separator',
       'aria-valuemin': 0,
       'aria-valuemax': 100,
-      'aria-valuenow': usePixels ? undefined : initialSize * 100,
+      'aria-valuenow': initialSize * 100,
       'aria-controls': primaryId,
       'aria-label': 'Pane resize widget',
       tabIndex: 0,
@@ -462,12 +359,6 @@ function ariaValue(value: number, min: number, max: number) {
   return `${clamp(((value - min) / (max - min)) * 100, 0, 100)}`;
 }
 
-/** The primary pane's share of the space beside the handle, as a whole percentage. */
-function pixelAriaValue(firstPanePixels: number, containerPixels: number, handleSize: number) {
-  const available = containerPixels - handleSize;
-  return available > 0 ? `${Math.round(clamp((firstPanePixels / available) * 100, 0, 100))}` : '0';
-}
-
 interface MeasureResult {
   minWidth: number;
   maxWidth: number;
@@ -475,7 +366,7 @@ interface MeasureResult {
   maxHeight: number;
 }
 
-function measureElement<T extends HTMLElement>(ref: T): MeasureResult {
+function measureElement<T extends HTMLElement>(ref: T, usePixels?: boolean): MeasureResult {
   const savedBodyOverflow = document.body.style.overflow;
   const savedWidth = ref.style.width;
   const savedHeight = ref.style.height;
