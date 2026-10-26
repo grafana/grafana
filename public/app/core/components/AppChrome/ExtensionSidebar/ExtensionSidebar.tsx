@@ -11,8 +11,10 @@ import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { FloatingWidthHandle } from './FloatingWidthHandle';
 import {
   canCollapseFloatingExtensionSidebar,
+  canFloatExtensionSidebar,
   collapseFloatingExtensionSidebar,
   type ExtensionSidebarPresentation,
+  resolveExtensionSidebarPresentation,
   setExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 import { getComponentMetaFromComponentId } from './extensionSidebarUtils';
@@ -20,6 +22,7 @@ import {
   type EdgeActionPreview,
   FLOATING_DRAG_HANDLE_ATTRIBUTE,
   FLOATING_SNAP_DURATION_MS,
+  useDockedDrag,
   useFloatingDrag,
 } from './useFloatingDrag';
 
@@ -41,12 +44,21 @@ export function ExtensionSidebar() {
   } = useExtensionSidebarContext();
   const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null);
   const floating = presentation === 'floating';
-  const edgeActionPreview = useFloatingDrag(floating ? wrapper : null, {
+  const pluginId = dockedComponentId ? getComponentMetaFromComponentId(dockedComponentId)?.pluginId : undefined;
+  const canDragToFloat =
+    !floating && resolveExtensionSidebarPresentation('floating', canFloatExtensionSidebar(), pluginId) === 'floating';
+  const floatingPreview = useFloatingDrag(floating ? wrapper : null, {
     dockWidth: extensionSidebarWidth,
     onDock: dockExtensionSidebar,
     canCollapse: canCollapseFloatingExtensionSidebar,
     onCollapse: collapseFloatingExtensionSidebar,
   });
+  const dockedPreview = useDockedDrag(
+    canDragToFloat ? wrapper : null,
+    floatingExtensionSidebarWidth,
+    floatExtensionSidebar
+  );
+  const edgeActionPreview = floatingPreview ?? dockedPreview;
   const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({
     extensionPointId: PluginExtensionPoints.ExtensionSidebar,
   });
@@ -71,7 +83,11 @@ export function ExtensionSidebar() {
   return (
     <div
       ref={setWrapper}
-      className={cx(styles.sidebarWrapper, floating && styles.sidebarWrapperFloating)}
+      className={cx(
+        styles.sidebarWrapper,
+        floating && styles.sidebarWrapperFloating,
+        (floating || canDragToFloat) && styles.sidebarWrapperDraggable
+      )}
       // Lets page captures (Composer regions) leave the sidebar out.
       data-extension-sidebar
     >
@@ -105,9 +121,13 @@ function dockExtensionSidebar() {
   setExtensionSidebarPresentation('docked');
 }
 
+function floatExtensionSidebar() {
+  setExtensionSidebarPresentation('floating');
+}
+
 /** The preview's box. Docked with the visual refresh, the sidebar leaves a gap at its right and bottom; so does the preview. */
 function previewBox({ action, top, left, width, height }: EdgeActionPreview, theme: GrafanaTheme2): CSSProperties {
-  if (action === 'collapse') {
+  if (action !== 'dock') {
     return { top, left, width, height };
   }
   const gap = theme.flags.visualDesignRefresh ? theme.spacing.gridSize / 2 : 0;
@@ -155,8 +175,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       '--extension-sidebar-floating-radius': theme.shape.radius.lg,
       // The container around it ignores the pointer, so only the sidebar itself takes clicks where it is.
       pointerEvents: 'auto',
-      [`& [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grab', touchAction: 'none' },
-      [`&[data-dragging], &[data-dragging] [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grabbing' },
       // Only the glide to an edge after a drag animates; the drag itself follows the pointer.
       [theme.transitions.handleMotion('no-preference')]: {
         '&[data-snapping]': {
@@ -178,6 +196,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         margin: 0,
         width: '100%',
       },
+    }),
+    sidebarWrapperDraggable: css({
+      [`& [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grab', touchAction: 'none' },
+      [`&[data-dragging], &[data-dragging] [${FLOATING_DRAG_HANDLE_ATTRIBUTE}]`]: { cursor: 'grabbing' },
     }),
     content: css({
       flex: 1,

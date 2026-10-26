@@ -430,3 +430,30 @@ func benchmarkGroupDiscovery(group string) apidiscoveryv2.APIGroupDiscovery {
 		}},
 	}
 }
+
+// BenchmarkSingleTenantForward measures a namespaced request the single-tenant
+// fallback forwards to the requester's stack, which answers from memory.
+func BenchmarkSingleTenantForward(b *testing.B) {
+	st, err := newSingleTenantFallback(singleTenantFallbackOptions{cacheSize: 10, resolveHost: func(context.Context, int64) (singleTenantStack, error) {
+		return singleTenantStack{URL: "https://stack.example.com"}, nil
+	}})
+	if err != nil {
+		b.Fatal(err)
+	}
+	body := bytes.Repeat([]byte("x"), 1<<10)
+	st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+		return benchmarkRoundTripper{body: body}.RoundTrip(req)
+	})
+	req := newAuthenticatedRequest(http.MethodGet, "/apis/fallback.grafana.app/v1/namespaces/stacks-1/things", nil)
+	rec := httptest.NewRecorder()
+	st.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		b.Fatalf("got status %d: %s", rec.Code, rec.Body.String())
+	}
+	w := &benchmarkResponseWriter{header: make(http.Header)}
+	b.ReportAllocs()
+	for b.Loop() {
+		clear(w.header)
+		st.ServeHTTP(w, req)
+	}
+}

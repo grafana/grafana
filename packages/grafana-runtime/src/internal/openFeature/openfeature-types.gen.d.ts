@@ -184,7 +184,6 @@ declare module "@openfeature/core" {
     | "grafana.dynamicTraceToLogs"
     | "grafana.thresholdsInterpolation"
     | "grafana.pluginPathNesting"
-    | "grafana.unifiedDataSourcePicker"
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
     | "datasources.querier.newName"

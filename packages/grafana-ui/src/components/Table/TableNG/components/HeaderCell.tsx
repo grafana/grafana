@@ -206,7 +206,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               ref={filterIconRef}
               type="button"
               className={styles.headerCellFilterButton}
-              aria-label={t('grafana-ui.table.edit-column-filter', 'Edit filter on {{name}}', { name: displayName })}
+              aria-label={t('grafana-ui.table.edit-column-filter', 'Edit filter on {{name}}', {
+                name: displayName,
+                interpolation: { escapeValue: false },
+              })}
               aria-haspopup="dialog"
               aria-expanded={isPopoverVisible && filterAnchor === filterIconRef.current}
               data-testid={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.activeFilterButton}

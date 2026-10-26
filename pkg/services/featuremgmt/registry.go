@@ -2161,6 +2161,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "grafana.restrictWatchToServiceIdentities",
+			Description:  "Restrict API watches to service accounts, service identities, and privileged loopback clients",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{Go: true},
+			HideFromDocs: true,
+			Owner:        grafanaSearchAndStorageSquad,
+			Expression:   "false",
+		},
+		{
 			Name:            "grafana.publishLegacySQLEvents",
 			Description:     "Publish watch events when values are saved to legacy SQL tables",
 			Stage:           FeatureStageExperimental,
@@ -3226,14 +3235,6 @@ var (
 			Owner:       grafanaDataSourcesPlugins,
 			Generate:    Generate{LegacyGo: true},
 			Expression:  "false",
-		},
-		{
-			Name:        "grafana.unifiedDataSourcePicker",
-			Description: "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "rawPrometheus.tableNg",

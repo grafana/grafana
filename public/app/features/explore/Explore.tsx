@@ -54,6 +54,7 @@ import { QueryRows } from './QueryRows';
 import RawPrometheusContainer from './RawPrometheus/RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import { SecondaryActions } from './SecondaryActions';
+import { createQueryEditorInsertionRegistry } from './SignalExplorer/queryEditorInsertion';
 import TableContainer from './Table/TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeDatasource } from './state/datasource';
@@ -148,6 +149,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
   scrollElement: HTMLDivElement | undefined;
   graphEventBus: EventBus;
   logsEventBus: EventBus;
+  queryEditorInsertion = createQueryEditorInsertionRegistry();
 
   constructor(props: Props) {
     super(props);
@@ -169,6 +171,9 @@ export class Explore extends PureComponent<Props, ExploreState> {
   };
 
   onAddToQuery = (refId: string, text: string, kind: ExprTextKind) => {
+    if (this.queryEditorInsertion.insert(refId, text, kind)) {
+      return;
+    }
     const { changeQueries, exploreId, queries } = this.props;
     changeQueries({ exploreId, queries: appendToQueryExpr(queries, refId, text, kind) });
   };
@@ -736,6 +741,7 @@ export class Explore extends PureComponent<Props, ExploreState> {
                           changeCompactMode={(compact: boolean) =>
                             this.props.changeCompactMode(this.props.exploreId, false)
                           }
+                          getQueryEditorInsertion={this.queryEditorInsertion.registrarFor}
                         />
                         <SecondaryActions
                           // do not allow people to add queries with potentially different datasources in correlations editor mode

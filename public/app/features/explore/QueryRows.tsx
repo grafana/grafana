@@ -10,6 +10,7 @@ import { useDispatch, useSelector } from 'app/types/store';
 import { QueryEditorRows } from '../query/components/QueryEditorRows';
 
 import { ContentOutlineItem, QUERIES_PANEL_ID } from './ContentOutline/ContentOutlineItem';
+import { type QueryEditorInsertionRegistrationV1 } from './SignalExplorer/internalInsertionContract';
 import { changeDatasource } from './state/datasource';
 import { setAddingSavedQueryAction, updateEditSavedQueryRefAction } from './state/explorePane';
 import { changeQueries, runQueries } from './state/query';
@@ -19,6 +20,7 @@ interface Props {
   exploreId: string;
   changeCompactMode: (compact: boolean) => void;
   isOpen?: boolean;
+  getQueryEditorInsertion?: (refId: string) => QueryEditorInsertionRegistrationV1;
 }
 
 const makeSelectors = (exploreId: string) => {
@@ -37,7 +39,7 @@ const makeSelectors = (exploreId: string) => {
   };
 };
 
-export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
+export const QueryRows = ({ exploreId, isOpen, changeCompactMode, getQueryEditorInsertion }: Props) => {
   const dispatch = useDispatch();
   const {
     getQueries,
@@ -144,6 +146,7 @@ export const QueryRows = ({ exploreId, isOpen, changeCompactMode }: Props) => {
       addingSavedQuery={addingSavedQuery}
       onCancelAddSavedQuery={onCancelAddSavedQuery}
       isOpen={isOpen}
+      getQueryEditorInsertion={getQueryEditorInsertion}
       queryRowWrapper={(children, refId) => (
         <ContentOutlineItem
           title={refId}

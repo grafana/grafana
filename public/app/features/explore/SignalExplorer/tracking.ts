@@ -1,5 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
 
+import { type AddToQueryItemType } from './types';
+
 /**
  * Properties are snake_case, unlike Explore's older events, because these names are what Analytics
  * signed off on and built their dashboards against.
@@ -11,10 +13,10 @@ import { reportInteraction } from '@grafana/runtime';
 // and an interface has no implicit index signature to satisfy it with.
 type SidebarContext = {
   /**
-   * Which datasource the event belongs to, and it is not the same thing on every event: the three
+   * Which datasource the event belongs to, and it is not the same thing on every event: the
    * card-level events report the card's own query datasource, always a concrete Prometheus flavor,
    * while `panel_opened` reports the pane's and so is the only one that can read `mixed`. Grouping
-   * all four by this property in one query will not join up.
+   * them all by this property in one query will not join up.
    */
   data_source_type?: string;
   /** One card per query, so stacking two queries on one datasource counts as two. */
@@ -41,4 +43,9 @@ export function trackSignalExplorerSearchPerformed(
 
 export function trackSignalExplorerMetricsMetadataViewed(props: SidebarContext) {
   reportInteraction('signal_explorer_metrics_metadata_viewed', props);
+}
+
+/** The added text is deliberately absent, like the search term: it can be a label value from the user's own data. */
+export function trackSignalExplorerAddToQueryClicked(props: SidebarContext & { item_type: AddToQueryItemType }) {
+  reportInteraction('signal_explorer_add_to_query_clicked', props);
 }
