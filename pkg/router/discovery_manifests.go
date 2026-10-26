@@ -24,11 +24,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apiserver/pkg/endpoints"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -149,12 +151,12 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 	setRoute(req, routeDiscovery)
 	if req.Method != http.MethodGet && req.Method != http.MethodHead {
 		w.Header().Set("Allow", "GET, HEAD")
-		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, strings.ToLower(req.Method)), w)
+		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, utils.LowerMethod(req.Method)), w)
 		return
 	}
 	// The documents are static, so there is nothing to watch; a list body
 	// would be misread as a stream of events.
-	if requestVerb(req) == "watch" {
+	if info, ok := request.RequestInfoFrom(req.Context()); ok && info.Verb == "watch" {
 		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, "watch"), w)
 		return
 	}

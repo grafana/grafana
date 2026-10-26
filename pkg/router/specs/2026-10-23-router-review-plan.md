@@ -470,17 +470,27 @@ add those first (F12).
 - [x] **F6. The access log builds its arguments when Debug is off.** That costs 6 allocs per request
   (`logging.go`). Return early for statuses below 400 when Debug isn't enabled. Measured: 80 → 4 ns,
   0 allocs.
+  - Follow-up: the early return checked for an `Enabled` method, which the SDK's `SLogLogger`
+    (the logger Grafana installs) doesn't have, so it never fired in production. `debugEnabled`
+    now asks its `slog.Logger`, and the trace context is resolved only for lines that are written.
+    Measured: middleware resource 31 → 26 allocs, middleware 404 20 → 14 allocs.
 
-- [ ] **F7. One request-state context value.**
+- [x] **F7. One request-state context value.**
   - `withRequestOutcome`, the tracing span value, `withProxyFailure` and the client breaker each call
     `WithContext`. `serveThroughBreaker` also allocates a `sync.Once` and two closures.
   - `Request.WithContext` is 36% of the bytes allocated in the middleware path.
   - Carry one struct instead, and move the report state onto `statusRecorder`. Breaker semantics must
     not change. Expected: about 6–8 allocs per request.
+  - Done: `backendCall` carries the span, client breaker and proxy error under one key; a nested call
+    shares its outer call's breaker and proxy error. The request outcome also carries the request
+    info. Measured: resource 26 → 20 allocs (843 → 782 ns), middleware resource 37 → 31 allocs
+    (1.24 → 1.15 µs).
 
 - [ ] **F8. Cache request-metric observers.** `WithLabelValues` is about 9% of middleware CPU, and
   `strconv.Itoa(status)` allocates. Cache an observer per (group, verb, route), and precompute the
   status strings.
+  - Status strings done (`statusCodeLabel`, ported from #135827). Caching observers was measured
+    there at about 2% of CPU and not done.
 
 - [ ] **F9. ST `forward` builds a `ReverseProxy` and an `otelhttp.NewTransport` per request.** Build
   the transport once, and cache the proxy per resolved host.
@@ -493,9 +503,9 @@ add those first (F12).
 
 - [ ] **F11. Small, cheap fixes.**
   - `statusRecorder.FlushError` allocates a `ResponseController` on every flush, which for a watch is
-    every event. Type-assert first.
-  - Use `strings.Cut` instead of `strings.Split` on the per-request paths: OpenAPI path parsing,
-    `st_fallback.go` and `st_resources.go`.
+    every event. Type-assert first. (Done, ported from #135827.)
+  - Use `strings.Cut` instead of `strings.Split` on the per-request paths: OpenAPI path parsing
+    (done, ported from #135827), `st_fallback.go` and `st_resources.go` (in #135827).
   - Hash ETags by streaming the body, without copying it twice.
   - Sort the manifest backends once per `publish`, not three times. That is about 30% of an
     unchanged reconcile.

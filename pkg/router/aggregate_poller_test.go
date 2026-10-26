@@ -61,7 +61,7 @@ func TestAggregateTarget_DiscoversAndFiltersGroups(t *testing.T) {
 func TestAggregateTarget_DropsTheDiscoveryGroupOfAnotherRouter(t *testing.T) {
 	upstream := discoveryRouter(t, "dashboard.grafana.app", http.NotFoundHandler())
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		upstream.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		upstream.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())))
 	}))
 	defer srv.Close()
 

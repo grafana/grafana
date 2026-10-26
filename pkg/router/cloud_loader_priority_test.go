@@ -192,14 +192,12 @@ func TestCloudLoaderWaitsForEverySourcesFirstPoll(t *testing.T) {
 	err = router.reconcile(t.Context())
 	require.ErrorIs(t, err, errFirstPollPending)
 	require.ErrorContains(t, err, "aggregate:slow")
-	router.storeServing(t.Context(), err)
 	require.Error(t, router.Ready(t.Context()))
 
 	require.True(t, slow.status.recordFailure(), "the first failed attempt is reported")
 	require.False(t, slow.status.recordFailure())
 	err = router.reconcile(t.Context())
 	require.NoError(t, err)
-	router.storeServing(t.Context(), err)
 	require.NoError(t, router.Ready(t.Context()))
 	require.Contains(t, router.served, "polled.ext.grafana.app")
 }
