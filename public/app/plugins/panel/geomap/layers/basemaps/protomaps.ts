@@ -44,11 +44,26 @@ const PROMINENT_POI: GlValue = [
 const MIN_ZOOM: GlValue = ['coalesce', ['get', 'min_zoom'], 0];
 
 /**
- * Protomaps sizes places by population rank. CARTO, on the same Tilezen-style tile schema, sizes
- * countries by how early they appear, cities the same way, and smaller places by OpenStreetMap
- * class. Below zoom 8 CARTO names only cities, all at 12px.
+ * Protomaps sizes places by population rank. The default basemap, on the same Tilezen-style tile schema,
+ * sizes countries by how early they appear, cities the same way, and smaller places by OpenStreetMap
+ * class. Below zoom 8 the default basemap names only cities, all at 12px.
  */
 const COUNTRY_CLASS: GlValue = ['case', ['<=', MIN_ZOOM, 3], 'major', 'minor'];
+const CAPITAL: GlValue = ['in', ['get', 'capital'], ['literal', ['yes', '2', '3', '4', '5', '6']]];
+
+/** The default basemap uppercases capitals from zoom 7, every city from zoom 8, and hamlets from zoom 14 */
+const LOCALITY_CASE: GlValue = [
+  'step',
+  ['zoom'],
+  'none',
+  7,
+  ['case', CAPITAL, 'uppercase', 'none'],
+  8,
+  ['match', ['get', 'kind_detail'], 'city', 'uppercase', 'none'],
+  14,
+  ['match', ['get', 'kind_detail'], ['city', 'hamlet'], 'uppercase', 'none'],
+];
+
 const LOCALITY_CLASS: GlValue = [
   'case',
   ['==', ['get', 'kind_detail'], 'city'],
@@ -57,8 +72,8 @@ const LOCALITY_CLASS: GlValue = [
 ];
 
 /**
- * The map sits under the panel's data, so labels follow CARTO's: no house numbers, shields or one-way
- * arrows, CARTO's text sizes, weights and spacing, and points of interest in the muted grey of
+ * The map sits under the panel's data, so labels follow the default basemap's: no house numbers, shields or one-way
+ * arrows, its text sizes, weights and spacing, and points of interest in the muted grey of
  * minor-road names.
  */
 const UNLABELLED_LAYERS = new Set(['address_label', 'roads_shields', 'roads_oneway']);
@@ -141,6 +156,7 @@ const LABEL_STYLES: Record<string, { layout: Record<string, GlValue>; paint?: Re
         ]
       ),
       'text-font': ['Inter SemiBold'],
+      'text-transform': LOCALITY_CASE,
     },
   },
   places_subplace: {
@@ -164,14 +180,14 @@ const KIND_DETAIL: GlValue = ['get', 'kind_detail'];
 
 /**
  * Protomaps tiles carry features a zoom before their `min_zoom`, and the generated style draws
- * whatever a tile holds, so its map is busier than CARTO's at every zoom. These are CARTO's ranges:
- * `minzoom` and `maxzoom` per layer, and `visible` where CARTO splits one Protomaps layer by class.
+ * whatever a tile holds, so its map is busier than the default basemap's at every zoom. These are its ranges:
+ * `minzoom` and `maxzoom` per layer, and `visible` where the default basemap splits one Protomaps layer by class.
  * Style zooms are one less than the panel's zoom, and `maxzoom` is exclusive.
  */
 const ZOOM_RANGES: Record<string, { minzoom?: number; maxzoom?: number; visible?: GlValue }> = {
   ...roadZoomRanges('highway', { minzoom: 5 }),
   ...roadZoomRanges('link', { minzoom: 12 }),
-  // CARTO adds major roads by class: trunk roads first, then primary, then the rest
+  // The default basemap adds major roads by class: trunk roads first, then primary, then the rest
   ...roadZoomRanges('major', {
     minzoom: 5,
     visible: [
@@ -192,7 +208,7 @@ const ZOOM_RANGES: Record<string, { minzoom?: number; maxzoom?: number; visible?
   roads_rail: { minzoom: 13 },
   roads_runway: { minzoom: 12 },
   buildings: { minzoom: 13 },
-  // CARTO draws macroregion borders up to zoom 6, state borders from zoom 6, county borders from
+  // The default basemap draws macroregion borders up to zoom 6, state borders from zoom 6, county borders from
   // zoom 9, and no city districts
   boundaries: {
     visible: [
@@ -207,7 +223,7 @@ const ZOOM_RANGES: Record<string, { minzoom?: number; maxzoom?: number; visible?
     visible: ['case', ['<=', MIN_ZOOM, 3], ['<', ['zoom'], 7], fromZoom(3)],
   },
   places_region: { minzoom: 5, maxzoom: 10 },
-  // Cities appear early by how prominent they are, and at zoom 7 CARTO also names any town or village
+  // Cities appear early by how prominent they are, and at zoom 7 the default basemap also names any town or village
   // that is prominent or a capital. It names no other kind of locality
   places_locality: {
     minzoom: 4,
@@ -255,7 +271,7 @@ const ZOOM_RANGES: Record<string, { minzoom?: number; maxzoom?: number; visible?
     maxzoom: 16,
     visible: ['match', KIND_DETAIL, 'suburb', true, 'neighbourhood', fromZoom(14), false],
   },
-  // Seas from zoom 5. Ocean points carry only translated names, and CARTO's style reads `name`
+  // Seas from zoom 5. Ocean points carry only translated names, and the default basemap's style reads `name`
   // alone, so it never draws them. Nor does it name bays, straits or fjords
   water_label_ocean: { minzoom: 5, visible: ['==', ['get', 'kind'], 'sea'] },
   water_label_lakes: { minzoom: 4 },
@@ -320,10 +336,10 @@ interface GlStyle {
   layers: GlLayer[];
 }
 
-/** An undefined value removes the generator's own, as for a dash CARTO draws solid */
+/** An undefined value removes the generator's own, as for a dash the default basemap draws solid */
 type Paint = Record<string, GlValue | undefined>;
 
-type RoadClass = 'highway' | 'major' | 'secondary' | 'minor' | 'other';
+type RoadClass = 'highway' | 'major' | 'secondary' | 'minor' | 'service' | 'other';
 
 /** Protomaps' `major_road` kind covers these as well as trunk and primary roads */
 const SECONDARY_ROADS = ['secondary', 'tertiary', 'secondary_link', 'tertiary_link'];
@@ -332,13 +348,16 @@ const SECONDARY_ROADS = ['secondary', 'tertiary', 'secondary_link', 'tertiary_li
 type RoadColors = [far: string, outer: string, inner: string];
 
 /**
- * CARTO draws roads as a fill inside a wide casing that leaves mostly casing showing until zoom 14,
+ * The default basemap draws roads as a fill inside a wide casing that leaves mostly casing showing until zoom 14,
  * and further out draws them in a lighter casing color. ol-mapbox-style ignores `line-gap-width`, so
- * Protomaps' casings draw as a plain line under the fill, and both take the color CARTO shows at
+ * Protomaps' casings draw as a plain line under the fill, and both take the color the default basemap shows at
  * each zoom.
  */
-function cartoRoads(fills: Record<RoadClass, RoadColors>) {
-  // CARTO colors secondary and tertiary roads apart from trunk and primary ones in some flavors
+function defaultBasemapRoads(
+  fills: Record<RoadClass, RoadColors>,
+  tunnels: Record<Exclude<RoadClass, 'service'> | 'casing', string>
+) {
+  // The default basemap colors secondary and tertiary roads apart from trunk and primary ones in some flavors
   const colorAt = (roadClass: RoadClass, i: number): GlValue => {
     const [color, secondary] = [fills[roadClass][i], fills.secondary[i]];
     return roadClass !== 'major' || color === secondary
@@ -356,9 +375,19 @@ function cartoRoads(fills: Record<RoadClass, RoadColors>) {
     paint[`${prefix}minor`] = { 'line-color': fill('minor') };
     paint[`${prefix}other`] = { 'line-color': fill('other') };
   }
-  paint.roads_minor_service = { 'line-color': fill('other') };
+  paint.roads_minor_service = { 'line-color': fill('service') };
+  // The default basemap draws tunnels in one flat color per class at every zoom
+  for (const roadClass of ['highway', 'major', 'link', 'minor', 'other'] as const) {
+    const fillClass = roadClass === 'link' ? 'major' : roadClass;
+    const color =
+      fillClass === 'major' && tunnels.major !== tunnels.secondary
+        ? ['match', ['get', 'kind_detail'], SECONDARY_ROADS, tunnels.secondary, tunnels.major]
+        : tunnels[fillClass];
+    paint[`roads_tunnels_${roadClass}`] = { 'line-color': color };
+    paint[`roads_tunnels_${roadClass}_casing`] = { 'line-color': tunnels.casing };
+  }
   for (const [id, roadClass] of [
-    ['roads_minor_service_casing', 'other'],
+    ['roads_minor_service_casing', 'service'],
     ['roads_minor_casing', 'minor'],
     ['roads_link_casing', 'major'],
     ['roads_major_casing_early', 'major'],
@@ -377,43 +406,54 @@ function cartoRoads(fills: Record<RoadClass, RoadColors>) {
 }
 
 /**
- * CARTO's motorways are under a pixel wide until zoom 8, where Protomaps' are already over one. From
+ * The default basemap's motorways are under a pixel wide until zoom 8, where Protomaps' are already over one. From
  * zoom 10 the width follows Protomaps' own ramp.
  */
 const HIGHWAY_WIDTH = roadWidthRamp([3, 0], [6, 0.5], [7, 0.7], [8, 0.8], [10, 1.3], [12, 1.6], [15, 5], [18, 15]);
 
-/** CARTO fades a building's roof in over its footprint between zoom 13 and 16 */
-function cartoBuildings(footprint: string, roof: string): Paint {
+/** The default basemap fades a building's roof in over its footprint between zoom 13 and 16 */
+function defaultBasemapBuildings(footprint: string, roof: string): Paint {
   return { 'fill-color': zoomRamp([13, footprint], [16, roof]), 'fill-opacity': 1 };
 }
 
 /**
- * White and Black stand in for CARTO's Positron and Dark Matter, the basemap panels show by default,
- * so they take CARTO's colors, line widths and dashes. Most of the difference is CARTO's slight blue
+ * White and Black stand in for the light and dark default basemaps that panels show, so they take
+ * their colors, line widths and dashes. Most of the difference is the default basemap's slight blue
  * tint on water and labels where Protomaps is pure gray. Only paint changes here: which features
  * show, and from which zoom, stays with the label rules above.
  */
-const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
+const DEFAULT_BASEMAP_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
   [ProtomapsFlavor.White]: {
     background: { 'background-color': '#fafaf8' },
     earth: { 'fill-color': '#fafaf8' },
     water: { 'fill-color': '#d4dadc' },
     water_stream: { 'line-color': '#d1dbdf' },
     water_river: { 'line-color': '#d1dbdf' },
-    buildings: cartoBuildings('#dfdfdf', '#ededed'),
-    ...cartoRoads({
-      highway: ['#e6e6e6', '#dddddd', '#ffffff'],
-      major: ['#e6e6e6', '#dddddd', '#ffffff'],
-      secondary: ['#e6e6e6', '#dddddd', '#ffffff'],
-      minor: ['#dddddd', '#dddddd', '#fdfdfd'],
-      other: ['#dddddd', '#dddddd', '#fdfdfd'],
-    }),
+    buildings: defaultBasemapBuildings('#dfdfdf', '#ededed'),
+    ...defaultBasemapRoads(
+      {
+        highway: ['#e6e6e6', '#dddddd', '#ffffff'],
+        major: ['#e6e6e6', '#dddddd', '#ffffff'],
+        secondary: ['#e6e6e6', '#dddddd', '#ffffff'],
+        minor: ['#dddddd', '#dddddd', '#fdfdfd'],
+        service: ['#dddddd', '#dddddd', '#fdfdfd'],
+        other: ['#dddddd', '#dddddd', '#fdfdfd'],
+      },
+      {
+        casing: '#dddddd',
+        highway: '#eeeeee',
+        major: '#eeeeee',
+        secondary: '#eeeeee',
+        minor: '#eeeeee',
+        other: '#eeeeee',
+      }
+    ),
     boundaries_country: {
       'line-color': zoomRamp([4, '#f2e6e7'], [5, '#ebd6d8']),
       'line-width': zoomRamp([3, 1], [6, 1.5]),
       'line-dasharray': undefined,
     },
-    // Keeps Protomaps' thinner line: unlike CARTO's state borders, this layer also draws city districts
+    // Keeps Protomaps' thinner line: unlike the default basemap's state borders, this layer also draws city districts
     boundaries: {
       'line-color': zoomRamp([5, '#ead5d7'], [6, '#e1c5c7']),
       'line-dasharray': ['step', ['zoom'], ['literal', [1, 0]], 7, ['literal', [2, 2]]],
@@ -430,7 +470,6 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
     water_waterway_label: { 'text-color': '#7a96a0', 'text-halo-color': '#f5f5f3' },
     roads_labels_major: { 'text-color': '#838383', 'text-halo-color': '#ffffff' },
     roads_labels_minor: { 'text-color': '#838383', 'text-halo-color': '#ffffff' },
-    pois: { 'text-color': '#7d9c83', 'text-halo-color': '#f5f5f3' },
   },
   [ProtomapsFlavor.Black]: {
     background: { 'background-color': '#0e0e0e' },
@@ -438,14 +477,26 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
     water: { 'fill-color': '#2c353c' },
     water_stream: { 'line-color': '#3f5a6d' },
     water_river: { 'line-color': '#3f5a6d' },
-    buildings: cartoBuildings('#0e0e0e', '#393939'),
-    ...cartoRoads({
-      highway: ['#1a1a1a', '#232323', '#494949'],
-      major: ['#1a1a1a', '#232323', '#535666'],
-      secondary: ['#414758', '#414758', '#414758'],
-      minor: ['#414758', '#414758', '#414758'],
-      other: ['#1c1c1c', '#1c1c1c', '#1c1c1c'],
-    }),
+    buildings: defaultBasemapBuildings('#0e0e0e', '#393939'),
+    ...defaultBasemapRoads(
+      {
+        highway: ['#1a1a1a', '#232323', '#494949'],
+        major: ['#1a1a1a', '#232323', '#535666'],
+        secondary: ['#414758', '#414758', '#414758'],
+        minor: ['#414758', '#414758', '#414758'],
+        // The dark default basemap fills service roads darker than the land, inside a lighter casing
+        service: ['#1c1c1c', '#1c1c1c', '#0b0b0b'],
+        other: ['#1c1c1c', '#1c1c1c', '#1c1c1c'],
+      },
+      {
+        casing: '#232323',
+        highway: '#414758',
+        major: '#414758',
+        secondary: '#161616',
+        minor: '#161616',
+        other: '#161616',
+      }
+    ),
     boundaries_country: {
       'line-color': zoomRamp([4, '#5c5e5e'], [5, '#606060'], [6, '#666666']),
       'line-width': zoomRamp([3, 1], [6, 1.5]),
@@ -467,7 +518,6 @@ const CARTO_PAINT: Partial<Record<ProtomapsFlavor, Record<string, Paint>>> = {
     water_waterway_label: { 'text-color': '#a4a4a4', 'text-halo-color': '#181818' },
     roads_labels_major: { 'text-color': '#929292', 'text-halo-color': '#222222' },
     roads_labels_minor: { 'text-color': '#b5b4b4', 'text-halo-color': '#111111' },
-    pois: { 'text-color': '#515151', 'text-halo-color': '#151515' },
   },
 };
 
@@ -546,11 +596,10 @@ export function isProtomapsBasemapEnabled() {
 
 function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean, flavor: ProtomapsFlavor): T {
   const mutedPaint = glStyle.layers.find((layer) => layer.id === MINOR_ROAD_LABELS)?.paint;
-  const cartoPaint = CARTO_PAINT[flavor] ?? {};
+  const defaultBasemapPaint = DEFAULT_BASEMAP_PAINT[flavor] ?? {};
   const layers = glStyle.layers
     .filter((layer) => (showLabels || layer.type !== 'symbol') && !UNLABELLED_LAYERS.has(layer.id))
-    // CARTO's own colors come last, so they win over the muted grey given to points of interest
-    .map((layer) => withPaint(adaptLayer(layer, mutedPaint), cartoPaint[layer.id]));
+    .map((layer) => withPaint(adaptLayer(layer, mutedPaint), defaultBasemapPaint[layer.id]));
   return { ...glStyle, layers };
 }
 

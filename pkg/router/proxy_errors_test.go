@@ -96,7 +96,7 @@ func TestHandleFuncRejectsNonCanonicalPaths(t *testing.T) {
 	require.Zero(t, calls.Load())
 }
 
-// proxiedRouter serves group "test-app" through a real forward proxy to upstream.
+// proxiedRouter serves group "test-app" through a real reverse proxy to upstream.
 func proxiedRouter(t *testing.T, upstream string, transport *http.Transport) *GrafanaRouter {
 	t.Helper()
 	handler, err := proxyBackend(t, "test-app", upstream, transport).Load(t.Context())

@@ -55,10 +55,7 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 		return nil, nil, err
 	}
 	if pluginsURL != "" {
-		patterns, err := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
-		if err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
-		}
+		patterns := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
 		client, err := newPluginManifestsClient(section, "plugins")
 		if err != nil {
 			return nil, nil, err
@@ -193,21 +190,10 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 	}
 
 	var singleTenantFallback *singleTenantFallback
-	var singleTenantResources map[string][]singleTenantResource
 	if singleTenantDiscoveryURL != "" {
 		discoURL, err := url.Parse(singleTenantDiscoveryURL)
 		if err != nil {
 			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
-		}
-
-		// An explicitly empty st_resources disables the defaults.
-		rawResources := defaultSingleTenantResources
-		if section.HasKey("st_resources") {
-			rawResources = section.Key("st_resources").String()
-		}
-		singleTenantResources, err = parseSingleTenantResources(rawResources)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
 
 		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
@@ -224,12 +210,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		}
 	}
 
-	loader, err := newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
-	if err != nil {
-		return nil, err
-	}
-	loader.singleTenantResources = singleTenantResources
-	return loader, nil
+	return newCloudLoader(aggregateTargets, pluginsTarget, coreTarget, singleTenantFallback)
 }
 
 // cloudLoader is a RoutesLoader and a dskit service. It merges the configured
@@ -253,10 +234,6 @@ type cloudLoader struct {
 
 	// Until all requests are moved to MT, we can fallback to ST instances
 	singleTenantFallback *singleTenantFallback
-
-	// singleTenantResources are, by group, the resources that stay on the
-	// single-tenant stacks when another source serves the rest of the group.
-	singleTenantResources map[string][]singleTenantResource
 
 	shadowed atomic.Pointer[[]shadowedGroup]
 }
@@ -365,10 +342,8 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	l.recordShadowed(ctx, shadowed)
 
 	if l.singleTenantFallback != nil {
-		for group, resources := range l.singleTenantResources {
-			if b, ok := lookup[group]; ok && b.Source() != sourceSingleTenant {
-				lookup[group] = &singleTenantResourcesBackend{Backend: b, resources: resources, st: l.singleTenantFallback}
-			}
+		if b, ok := lookup[singleTenantResourcesGroup]; ok && b.Source() != sourceSingleTenant {
+			lookup[singleTenantResourcesGroup] = &singleTenantResourcesBackend{Backend: b, st: l.singleTenantFallback}
 		}
 	}
 

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -22,6 +23,20 @@ const backendResponseHeaderTimeout = 60 * time.Second
 // event reaches the client at once. Without it, ReverseProxy flushes that way
 // only for responses without a Content-Length.
 const streamingFlushInterval = -1
+
+// proxyBuffers is every proxy's copy buffer pool, so a proxied request
+// doesn't allocate its own 32 KiB buffer. A watch holds one buffer for as
+// long as it streams, and returns it when it ends.
+var proxyBuffers = &proxyBufferPool{pool: sync.Pool{New: func() any {
+	buf := make([]byte, 32<<10)
+	return &buf
+}}}
+
+type proxyBufferPool struct{ pool sync.Pool }
+
+func (p *proxyBufferPool) Get() []byte { return *p.pool.Get().(*[]byte) }
+
+func (p *proxyBufferPool) Put(buf []byte) { p.pool.Put(&buf) }
 
 // errBackendRedirect marks a backend response the router refused to relay.
 // It is a policy decision, not evidence that the backend is unhealthy.

@@ -66,7 +66,7 @@ Revisit only if a concrete client is confirmed to read the field.
 - When a backend is removed, drain its in-flight requests before tearing down what it holds, and
   never close anything eagerly on swap. Today nothing is torn down per backend: each aggregate target
   owns one proxy transport for its lifetime, and plugin gRPC connections (keyed by host and plugin
-  ID) close only at shutdown. Per-backend teardown is R1 and R2 in `2026-10-10-router-review-plan.md`.
+  ID) close only at shutdown. Per-backend teardown is R1 and R2 in `2026-10-23-router-review-plan.md`.
 
 ## Readiness: why a partial reconcile error doesn't fail `Ready`
 
@@ -102,5 +102,5 @@ which allows only 2 idle connections per host.
 `*` is the only special character, and everything else goes through `regexp.QuoteMeta`. An earlier
 version escaped only `.`, which left `+`, `(`, `[` and the rest live. That *widened* matches: for
 example, `foo+.grafana.app` matched `foooo.grafana.app`. `group_regex` is a narrowing allowlist, so
-over-matching is the wrong way to fail. A side effect is that pattern compilation can't fail in
-practice, although `compileGroupPatterns` still returns an error.
+over-matching is the wrong way to fail. A side effect is that pattern compilation can't fail, so
+`compileGroupPatterns` returns no error.

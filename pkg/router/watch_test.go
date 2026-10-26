@@ -132,7 +132,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 	require.NoError(t, svc.router.reconcile(t.Context()))
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		if middleware {
-			req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{AccessToken: "access"}))
+			req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{Namespace: "stacks-1", AccessToken: "access"}))
 			svc.HandleFunc(w, req, http.NotFoundHandler())
 			return
 		}
@@ -185,6 +185,9 @@ func TestWatchThroughEveryBackendAndMode(t *testing.T) {
 			mode := "standalone"
 			if middleware {
 				mode = "middleware"
+			}
+			if middleware && kind == "single-tenant" {
+				continue // only the standalone router has the single-tenant fallback
 			}
 			t.Run(kind+"/"+mode, func(t *testing.T) {
 				t.Parallel()

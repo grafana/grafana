@@ -7,7 +7,7 @@
   "spec": {
     "annotations": [],
     "cursorSync": "Off",
-    "description": "16 copies of one basemap on the same view, to measure cost that grows with panel count. Pick fewer values of the Copies variable for a smaller grid. Needs the grafana.geomapProtomapsBasemap feature flag and a Protomaps tile server on localhost:8095. Rows are collapsed so only the row under test renders; open one panel at a time with viewPanel for single-panel runs.",
+    "description": "16 copies of one basemap on the same view, to measure cost that grows with panel count. Pick fewer values of the Copies variable for a smaller grid. Needs the grafana.geomapProtomapsBasemap feature flag and a Protomaps tile server on localhost:8095. Rows are collapsed so only the row under test renders; open one panel at a time with viewPanel for single-panel runs. Data layers use 10,000-point TestData random walks around each view, enough to spot large regressions but too small for benchmark numbers.",
     "editable": true,
     "elements": {
       "panel-1": {
@@ -264,7 +264,7 @@
         "kind": "Panel",
         "spec": {
           "id": 5,
-          "title": "CARTO positron · 100k markers · $copy",
+          "title": "CARTO positron · 10k markers · $copy",
           "description": "",
           "links": [],
           "data": {
@@ -279,17 +279,92 @@
                       "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
-                        "csvFileName": "geomap_100k_points.csv",
-                        "scenarioId": "csv_file"
+                        "scenarioId": "random_walk",
+                        "startValue": 39,
+                        "spread": 0.25,
+                        "min": -85,
+                        "max": 85,
+                        "seriesCount": 1
                       }
                     },
                     "refId": "A",
                     "hidden": false
                   }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "startValue": -98,
+                        "spread": 0.25,
+                        "min": -180,
+                        "max": 180,
+                        "seriesCount": 2
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "startValue": 50,
+                        "spread": 10,
+                        "min": 0,
+                        "max": 100,
+                        "seriesCount": 3
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
                 }
               ],
-              "transformations": [],
-              "queryOptions": {}
+              "transformations": [
+                {
+                  "kind": "joinByField",
+                  "spec": {
+                    "id": "joinByField",
+                    "options": {
+                      "byField": "time",
+                      "mode": "outer"
+                    }
+                  }
+                },
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "B-series": true,
+                        "C-series": true,
+                        "C-series1": true
+                      },
+                      "renameByName": {
+                        "A-series": "lat",
+                        "B-series1": "lon",
+                        "C-series2": "value"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {
+                "maxDataPoints": 10000
+              }
             }
           },
           "vizConfig": {
@@ -317,7 +392,7 @@
                 "layers": [
                   {
                     "type": "markers",
-                    "name": "100k markers",
+                    "name": "10k markers",
                     "location": {
                       "mode": "coords",
                       "latitude": "lat",
@@ -371,7 +446,7 @@
         "kind": "Panel",
         "spec": {
           "id": 6,
-          "title": "Protomaps white · 100k markers · $copy",
+          "title": "Protomaps white · 10k markers · $copy",
           "description": "",
           "links": [],
           "data": {
@@ -386,17 +461,92 @@
                       "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
-                        "csvFileName": "geomap_100k_points.csv",
-                        "scenarioId": "csv_file"
+                        "scenarioId": "random_walk",
+                        "startValue": 39,
+                        "spread": 0.25,
+                        "min": -85,
+                        "max": 85,
+                        "seriesCount": 1
                       }
                     },
                     "refId": "A",
                     "hidden": false
                   }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "startValue": -98,
+                        "spread": 0.25,
+                        "min": -180,
+                        "max": 180,
+                        "seriesCount": 2
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "startValue": 50,
+                        "spread": 10,
+                        "min": 0,
+                        "max": 100,
+                        "seriesCount": 3
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
                 }
               ],
-              "transformations": [],
-              "queryOptions": {}
+              "transformations": [
+                {
+                  "kind": "joinByField",
+                  "spec": {
+                    "id": "joinByField",
+                    "options": {
+                      "byField": "time",
+                      "mode": "outer"
+                    }
+                  }
+                },
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "B-series": true,
+                        "C-series": true,
+                        "C-series1": true
+                      },
+                      "renameByName": {
+                        "A-series": "lat",
+                        "B-series1": "lon",
+                        "C-series2": "value"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {
+                "maxDataPoints": 10000
+              }
             }
           },
           "vizConfig": {
@@ -426,7 +576,7 @@
                 "layers": [
                   {
                     "type": "markers",
-                    "name": "100k markers",
+                    "name": "10k markers",
                     "location": {
                       "mode": "coords",
                       "latitude": "lat",
@@ -480,7 +630,7 @@
         "kind": "Panel",
         "spec": {
           "id": 7,
-          "title": "Protomaps white, ZXY · 100k markers · $copy",
+          "title": "Protomaps white, ZXY · 10k markers · $copy",
           "description": "",
           "links": [],
           "data": {
@@ -495,17 +645,92 @@
                       "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
-                        "csvFileName": "geomap_100k_points.csv",
-                        "scenarioId": "csv_file"
+                        "scenarioId": "random_walk",
+                        "startValue": 39,
+                        "spread": 0.25,
+                        "min": -85,
+                        "max": 85,
+                        "seriesCount": 1
                       }
                     },
                     "refId": "A",
                     "hidden": false
                   }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "startValue": -98,
+                        "spread": 0.25,
+                        "min": -180,
+                        "max": 180,
+                        "seriesCount": 2
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "startValue": 50,
+                        "spread": 10,
+                        "min": 0,
+                        "max": 100,
+                        "seriesCount": 3
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
                 }
               ],
-              "transformations": [],
-              "queryOptions": {}
+              "transformations": [
+                {
+                  "kind": "joinByField",
+                  "spec": {
+                    "id": "joinByField",
+                    "options": {
+                      "byField": "time",
+                      "mode": "outer"
+                    }
+                  }
+                },
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "B-series": true,
+                        "C-series": true,
+                        "C-series1": true
+                      },
+                      "renameByName": {
+                        "A-series": "lat",
+                        "B-series1": "lon",
+                        "C-series2": "value"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {
+                "maxDataPoints": 10000
+              }
             }
           },
           "vizConfig": {
@@ -535,7 +760,7 @@
                 "layers": [
                   {
                     "type": "markers",
-                    "name": "100k markers",
+                    "name": "10k markers",
                     "location": {
                       "mode": "coords",
                       "latitude": "lat",
@@ -589,7 +814,7 @@
         "kind": "Panel",
         "spec": {
           "id": 8,
-          "title": "Protomaps white, no labels · 100k markers · $copy",
+          "title": "Protomaps white, no labels · 10k markers · $copy",
           "description": "",
           "links": [],
           "data": {
@@ -604,17 +829,92 @@
                       "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
-                        "csvFileName": "geomap_100k_points.csv",
-                        "scenarioId": "csv_file"
+                        "scenarioId": "random_walk",
+                        "startValue": 39,
+                        "spread": 0.25,
+                        "min": -85,
+                        "max": 85,
+                        "seriesCount": 1
                       }
                     },
                     "refId": "A",
                     "hidden": false
                   }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "startValue": -98,
+                        "spread": 0.25,
+                        "min": -180,
+                        "max": 180,
+                        "seriesCount": 2
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "startValue": 50,
+                        "spread": 10,
+                        "min": 0,
+                        "max": 100,
+                        "seriesCount": 3
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
                 }
               ],
-              "transformations": [],
-              "queryOptions": {}
+              "transformations": [
+                {
+                  "kind": "joinByField",
+                  "spec": {
+                    "id": "joinByField",
+                    "options": {
+                      "byField": "time",
+                      "mode": "outer"
+                    }
+                  }
+                },
+                {
+                  "kind": "organize",
+                  "spec": {
+                    "id": "organize",
+                    "options": {
+                      "excludeByName": {
+                        "B-series": true,
+                        "C-series": true,
+                        "C-series1": true
+                      },
+                      "renameByName": {
+                        "A-series": "lat",
+                        "B-series1": "lon",
+                        "C-series2": "value"
+                      }
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {
+                "maxDataPoints": 10000
+              }
             }
           },
           "vizConfig": {
@@ -644,7 +944,7 @@
                 "layers": [
                   {
                     "type": "markers",
-                    "name": "100k markers",
+                    "name": "10k markers",
                     "location": {
                       "mode": "coords",
                       "latitude": "lat",
@@ -834,7 +1134,7 @@
           {
             "kind": "RowsLayoutRow",
             "spec": {
-              "title": "16 × CARTO positron · 100k markers",
+              "title": "16 × CARTO positron · 10k markers",
               "collapse": true,
               "layout": {
                 "kind": "GridLayout",
@@ -867,7 +1167,7 @@
           {
             "kind": "RowsLayoutRow",
             "spec": {
-              "title": "16 × Protomaps white · 100k markers",
+              "title": "16 × Protomaps white · 10k markers",
               "collapse": true,
               "layout": {
                 "kind": "GridLayout",
@@ -900,7 +1200,7 @@
           {
             "kind": "RowsLayoutRow",
             "spec": {
-              "title": "16 × Protomaps white, ZXY · 100k markers",
+              "title": "16 × Protomaps white, ZXY · 10k markers",
               "collapse": true,
               "layout": {
                 "kind": "GridLayout",
@@ -933,7 +1233,7 @@
           {
             "kind": "RowsLayoutRow",
             "spec": {
-              "title": "16 × Protomaps white, no labels · 100k markers",
+              "title": "16 × Protomaps white, no labels · 10k markers",
               "collapse": true,
               "layout": {
                 "kind": "GridLayout",

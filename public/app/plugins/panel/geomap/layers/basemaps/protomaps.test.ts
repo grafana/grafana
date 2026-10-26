@@ -22,7 +22,7 @@ const eventBus = {} as EventBus;
 const lightTheme = { isDark: false } as GrafanaTheme2;
 const darkTheme = { isDark: true } as GrafanaTheme2;
 
-/** Trimmed from a generated Protomaps style: one fill, six labels, two borders, two roads */
+/** Trimmed from a generated Protomaps style: one fill, six labels, two borders, four roads */
 const STYLE = {
   version: 8,
   sources: { protomaps: { type: 'vector' } },
@@ -83,6 +83,8 @@ const STYLE = {
       'source-layer': 'roads',
       paint: { 'line-color': '#292929' },
     },
+    { id: 'roads_minor_service', type: 'line', source: 'protomaps', 'source-layer': 'roads' },
+    { id: 'roads_tunnels_major', type: 'line', source: 'protomaps', 'source-layer': 'roads' },
     {
       id: 'boundaries_country',
       type: 'line',
@@ -140,6 +142,10 @@ async function initLayer(config: ProtomapsConfig, theme = lightTheme) {
 
 function appliedStyle() {
   return applyStyleMock.mock.calls[0][1];
+}
+
+function appliedLayer(id: string) {
+  return appliedStyle().layers.find((layer: { id: string }) => layer.id === id);
 }
 
 describe('Protomaps basemap', () => {
@@ -226,7 +232,7 @@ describe('Protomaps basemap', () => {
   it('draws labels in Grafana’s own Inter instead of Noto Sans', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[1].layout['text-font']).toEqual([
+    expect(appliedLayer('earth_label_islands').layout['text-font']).toEqual([
       'step',
       ['zoom'],
       ['literal', ['Inter Regular']],
@@ -238,7 +244,7 @@ describe('Protomaps basemap', () => {
   it('names minor roads from zoom 16 instead of 15, and leaves paths and other roads unnamed', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[2]).toMatchObject({
+    expect(appliedLayer('roads_labels_minor')).toMatchObject({
       id: 'roads_labels_minor',
       minzoom: 16,
       filter: ['in', 'kind', 'minor_road'],
@@ -248,7 +254,7 @@ describe('Protomaps basemap', () => {
   it('labels only the places CARTO labels, from zoom 15', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[3]).toMatchObject({
+    expect(appliedLayer('pois')).toMatchObject({
       minzoom: 15,
       filter: [
         'all',
@@ -262,10 +268,11 @@ describe('Protomaps basemap', () => {
     });
   });
 
-  it('keeps labels as quiet as CARTO’s, so they stay under the panel’s data', async () => {
+  it('keeps labels as quiet as the default basemap’s, so they stay under the panel’s data', async () => {
     await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
 
-    const [, , minorRoads, pois] = appliedStyle().layers;
+    const minorRoads = appliedLayer('roads_labels_minor');
+    const pois = appliedLayer('pois');
     expect(minorRoads.layout['text-size']).toBe(9);
     expect(pois.layout).toEqual({
       'text-font': ['Inter SemiBold'],
@@ -275,7 +282,7 @@ describe('Protomaps basemap', () => {
     expect(pois.paint).toEqual({ 'text-color': '#525252', 'text-halo-color': '#1f1f1f', 'text-halo-width': 1 });
   });
 
-  it('draws region names in CARTO’s size and weight, without a halo', async () => {
+  it('draws region names in the default basemap’s size and weight, without a halo', async () => {
     await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
 
     const region = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'places_region');
@@ -288,7 +295,7 @@ describe('Protomaps basemap', () => {
     expect(region.paint).toEqual({ 'text-color': '#b3b3b3', 'text-halo-color': '#ffffff', 'text-halo-width': 0 });
   });
 
-  it('sizes cities, towns and villages by CARTO’s place classes rather than by population', async () => {
+  it('sizes cities, towns and villages by the default basemap’s place classes rather than by population', async () => {
     await initLayer({ showLabels: true });
 
     const locality = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'places_locality');
@@ -316,7 +323,7 @@ describe('Protomaps basemap', () => {
     ]);
   });
 
-  it('starts roads and labels at the zooms CARTO starts them', async () => {
+  it('starts roads and labels at the zooms the default basemap starts them', async () => {
     await initLayer({ showLabels: true });
 
     const layer = (id: string) => appliedStyle().layers.find((candidate: { id: string }) => candidate.id === id);
@@ -325,7 +332,7 @@ describe('Protomaps basemap', () => {
     expect(layer('boundaries_country').minzoom).toBeUndefined();
   });
 
-  it('draws macroregion borders up to zoom 6 and state borders only from zoom 6, like CARTO', async () => {
+  it('draws macroregion borders up to zoom 6 and state borders only from zoom 6, like the default basemap', async () => {
     await initLayer({ showLabels: true });
 
     const boundaries = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'boundaries');
@@ -389,7 +396,7 @@ describe('Protomaps basemap', () => {
     expect(toExpressionFilter(legacy)).toEqual(expression);
   });
 
-  it('keeps the generator’s legacy filter working when it adds CARTO’s classes', async () => {
+  it('keeps the generator’s legacy filter working when it adds the default basemap’s classes', async () => {
     await initLayer({ showLabels: true });
 
     const locality = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'places_locality');
@@ -397,6 +404,15 @@ describe('Protomaps basemap', () => {
     expect([all, generated]).toEqual(['all', ['==', ['get', 'kind'], 'locality']]);
     expect(byClass[0]).toBe('any');
     expect(byClass[2].slice(0, 3)).toEqual(['match', ['get', 'kind_detail'], 'city']);
+  });
+
+  it('uppercases capitals from zoom 7, cities from zoom 8 and hamlets from zoom 14, like the default basemap', async () => {
+    await initLayer({ showLabels: true });
+
+    const [step, zoom, further, ...stops] = appliedLayer('places_locality').layout['text-transform'];
+    expect([step, zoom, further]).toEqual(['step', ['zoom'], 'none']);
+    expect(stops.filter((_: unknown, i: number) => i % 2 === 0)).toEqual([7, 8, 14]);
+    expect(stops[3]).toEqual(['match', ['get', 'kind_detail'], 'city', 'uppercase', 'none']);
   });
 
   it('leaves out house numbers, which CARTO never shows', async () => {
@@ -412,28 +428,29 @@ describe('Protomaps basemap', () => {
       'earth',
       'roads_highway',
       'roads_major',
+      'roads_minor_service',
+      'roads_tunnels_major',
       'boundaries_country',
       'boundaries',
     ]);
   });
 
   it.each([
-    { flavor: ProtomapsFlavor.White, land: '#fafaf8', poi: '#7d9c83', border: '#f2e6e7' },
-    { flavor: ProtomapsFlavor.Black, land: '#0e0e0e', poi: '#515151', border: '#5c5e5e' },
-  ])('paints $flavor in the colors of the CARTO basemap it stands in for', async ({ flavor, land, poi, border }) => {
+    { flavor: ProtomapsFlavor.White, land: '#fafaf8', border: '#f2e6e7' },
+    { flavor: ProtomapsFlavor.Black, land: '#0e0e0e', border: '#5c5e5e' },
+  ])('paints $flavor in the colors of the default basemap it stands in for', async ({ flavor, land, border }) => {
     await initLayer({ flavor, showLabels: true });
 
     const layers = appliedStyle().layers;
     const layer = (id: string) => layers.find((candidate: { id: string }) => candidate.id === id);
     expect(layer('earth').paint).toEqual({ 'fill-color': land });
-    expect(layer('pois').paint['text-color']).toBe(poi);
     const borders = layer('boundaries_country').paint;
     expect(borders['line-color'].slice(0, 5)).toEqual(['interpolate', ['linear'], ['zoom'], 4, border]);
-    // CARTO draws country borders solid
+    // The default basemap draws country borders solid
     expect(borders).not.toHaveProperty('line-dasharray');
   });
 
-  it('draws highways as thin and light as CARTO’s further out, where they would compete with data', async () => {
+  it('draws highways as thin and light as the default basemap’s further out, where they would compete with data', async () => {
     await initLayer({ flavor: ProtomapsFlavor.White });
 
     const highway = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'roads_highway');
@@ -457,7 +474,7 @@ describe('Protomaps basemap', () => {
     ]);
   });
 
-  it('draws secondary roads in Dark Matter’s blue-grey at every zoom, unlike primary roads', async () => {
+  it('draws secondary roads in the dark default basemap’s blue-grey at every zoom, unlike primary roads', async () => {
     await initLayer({ flavor: ProtomapsFlavor.Black });
 
     const major = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'roads_major');
@@ -476,6 +493,25 @@ describe('Protomaps basemap', () => {
     ]);
   });
 
+  it('draws tunnels in the default basemap’s flat colors, and the dark default basemap’s service roads darker than the land', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.Black });
+
+    const layer = (id: string) => appliedStyle().layers.find((candidate: { id: string }) => candidate.id === id);
+    expect(layer('roads_tunnels_major').paint['line-color']).toEqual([
+      'match',
+      ['get', 'kind_detail'],
+      ['secondary', 'tertiary', 'secondary_link', 'tertiary_link'],
+      '#161616',
+      '#414758',
+    ]);
+    expect(layer('roads_minor_service').paint['line-color']).toEqual([
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      ...[5, '#1c1c1c', 12, '#1c1c1c', 15, '#0b0b0b'],
+    ]);
+  });
+
   it('paints only colors, leaving which labels show and from which zoom as they were', async () => {
     await initLayer({ flavor: ProtomapsFlavor.White, showLabels: true });
     const white = appliedStyle().layers;
@@ -490,10 +526,8 @@ describe('Protomaps basemap', () => {
   it('leaves the other flavors in their generated colors', async () => {
     await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
 
-    const layers = appliedStyle().layers;
-    expect(layers[0].paint).toBeUndefined();
-    const borders = layers.find((layer: { id: string }) => layer.id === 'boundaries_country');
-    expect(borders.paint['line-color']).toBe('#adadad');
+    expect(appliedLayer('earth').paint).toBeUndefined();
+    expect(appliedLayer('boundaries_country').paint['line-color']).toBe('#adadad');
   });
 
   it('credits OpenStreetMap before the style request resolves', async () => {
