@@ -176,6 +176,19 @@ var resourceTranslations = map[string]resourceTranslation{
 			"snapshots:delete": newUnscopedMapping(RelationDelete),
 		},
 	},
+	KindServiceAccounts: {
+		typ:      TypeServiceAccount,
+		group:    iamGroup,
+		resource: KindServiceAccounts,
+		mapping: map[string]actionMapping{
+			"serviceaccounts:create":            newUnscopedMapping(RelationCreate),
+			"serviceaccounts:read":              newMapping(RelationGet, ""),
+			"serviceaccounts:write":             newMapping(RelationUpdate, ""),
+			"serviceaccounts:delete":            newMapping(RelationDelete, ""),
+			"serviceaccounts.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"serviceaccounts.permissions:write": newMapping(RelationSetPermissions, ""),
+		},
+	},
 	KindTeams: {
 		typ:      TypeTeam,
 		group:    iamGroup,      // "iam.grafana.app"
