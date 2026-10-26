@@ -1445,6 +1445,11 @@
         "no-rules": "",
         "rules-error": ""
       },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
       "result-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
@@ -2168,14 +2173,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Maximale gegevenspunten",
-      "tooltip-max-data-points": "De maximale gegevenspunten per reeks. Rechtstreeks gebruikt door sommige gegevensbronnen en gebruikt bij de berekening van het automatische interval. Bij streaminggegevens wordt deze waarde gebruikt voor de rollende buffer."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "nieuw"
     },
     "min-interval-option": {
       "label-interval": "Interval",
-      "tooltip-interval": "Interval verzonden naar de gegevensbron. Aanbevolen om in te stellen op schrijffrequentie, bijvoorbeeld <1>1 min</1> als je gegevens elke minuut worden geschreven."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4143,6 +4148,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Doorgaan naar hoofdinhoud",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Aanmelden"
     }
@@ -4612,8 +4622,7 @@
       "delete-warning": "Hiermee worden deze map en alle onderliggende mappen verwijderd.",
       "folder-empty": "Geselecteerde map is leeg",
       "folder-not-empty": "De geselecteerde map bevat bronnen die zullen worden verwijderd",
-      "missing-info": "Ontbrekende verplichte velden",
-      "success-message": "Map is verwijderd"
+      "missing-info": "Ontbrekende verplichte velden"
     },
     "empty-state": {
       "button-title": "Dashboard maken",
@@ -7251,8 +7260,7 @@
       "delete-error": "Kan dashboard niet verwijderen",
       "deleting": "Bezig met verwijderen ...",
       "drawer-title": "Kan provisioned dashboard niet verwijderen",
-      "no-repository-selected": "Ontbrekende verplichte repository voor verwijdering",
-      "success-message": "Dashboard is verwijderd"
+      "no-repository-selected": "Ontbrekende verplichte repository voor verwijdering"
     },
     "description-label": {
       "description": "Beschrijving"
@@ -7531,14 +7539,10 @@
       "already-in-folder": "Dashboard bevindt zich al in de geselecteerde map.",
       "api-error": "Kan dashboard niet verplaatsen",
       "cancel-action": "Annuleren",
-      "current-file-not-found": "Huidig dashboardbestand kon niet worden gevonden",
       "drawer-title": "Geprovisioneerd dashboard",
-      "file-load-error": "Er is een fout opgetreden bij het laden van het dashboard",
-      "loading-dashboard-data": "Dashboarddata laden",
       "move-action": "Dashboard verplaatsen",
       "move-read-only-message": "Dit dashboard kan niet rechtstreeks uit Grafana worden verplaatst omdat de repository alleen-lezen is. Verplaats het bestand in je Git-repository om dit dashboard te verplaatsen.",
       "moving": "Bezig met verplaatsen...",
-      "success-message": "Dashboard is verplaatst",
       "target-path-label": "Doelpad",
       "title-this-repository-is-read-only": "Deze repository is alleen-lezen"
     },
@@ -13161,7 +13165,8 @@
         "close": "{{title}} sluiten",
         "open": "{{title}} openen",
         "open-all": "AI-assistenten en zijbalk-apps openen"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Werkruimte openen",
@@ -14322,6 +14327,7 @@
       "description-folder": "Map in de repository. Laat leeg voor de hoofdmap van de repository.",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "Push naar geconfigureerde branch is uitgeschakeld",
       "label-branch": "Branch",
       "label-comment": "Opmerking",
@@ -15867,6 +15873,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "Selecteer een gegevensbron voor deze query om door te gaan.",
     "datasource-load-error-title": "Kan gegevensbron voor deze query niet laden",
     "loading-datasource": "Gegevensbron laden",

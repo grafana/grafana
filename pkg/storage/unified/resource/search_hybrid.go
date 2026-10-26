@@ -130,12 +130,19 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		results = results[:limit]
 	}
 	s.enrichHybridResults(ctx, namespace, candidates, results)
-	return &resourcepb.HybridSearchResponse{Results: results}, nil
+	kinds := make(map[string]string, len(targets))
+	for _, target := range targets {
+		if target.kind != "" {
+			kinds[target.key.Group+"/"+target.key.Resource] = target.kind
+		}
+	}
+	return &resourcepb.HybridSearchResponse{Results: results, Kinds: kinds}, nil
 }
 
 type hybridTarget struct {
 	key        *resourcepb.ResourceKey
 	collection vector.Collection
+	kind       string
 }
 
 type hybridCandidates struct {
@@ -163,13 +170,17 @@ func (s *searchServer) prepareHybridTargets(ctx context.Context, req *resourcepb
 				return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
 			}
 		}
-		if req.RequireHybridEnabled && !coll.IsExternal && !s.hybridSearchConfig.Enabled(key.Group, key.Resource) {
+		config := hybridSearchConfig{}
+		if !coll.IsExternal {
+			config = s.hybridSearchConfig.lookup(key.Group, key.Resource)
+		}
+		if req.RequireHybridEnabled && !coll.IsExternal && !config.enabled {
 			return nil, status.Errorf(codes.InvalidArgument, "hybrid search is not enabled for %s/%s", key.Group, key.Resource)
 		}
 		if err := validateHybridSearchFilters(req.Filters, key, coll.IsExternal); err != nil {
 			return nil, err
 		}
-		targets[i] = hybridTarget{key: key, collection: coll}
+		targets[i] = hybridTarget{key: key, collection: coll, kind: config.kind}
 	}
 	return targets, nil
 }

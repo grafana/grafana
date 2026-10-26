@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1729,12 +1730,18 @@ func TestHybridSearch_ExternalFusesBothLegs(t *testing.T) {
 	}}
 	s, idx, _ := newHybridTestServer(lexTableResponse(), backend)
 	s.externalLexical = lexical
+	enabled := true
+	manifest := hybridConfigManifest(hybridConfigVersion("v1", &enabled))
+	manifest.Group = "g"
+	manifest.Versions[0].Kinds[0].Plural = "r"
+	s.hybridSearchConfig = NewHybridSearchConfigRegistry([]*app.ManifestData{manifest})
 
 	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
 		Key: validKey(), Query: "api latency", Limit: 10,
 	})
 	require.NoError(t, err)
 	require.Len(t, resp.Results, 3)
+	assert.Empty(t, resp.GetKinds())
 
 	assert.Equal(t, "both", resp.Results[0].Key.Name)
 	assert.InDelta(t, 1.0/61+1.0/61, resp.Results[0].Score, 1e-12)

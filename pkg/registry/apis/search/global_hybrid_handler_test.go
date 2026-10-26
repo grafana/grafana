@@ -135,6 +135,50 @@ func TestGlobalHybridSearchRoute(t *testing.T) {
 	assert.Equal(t, 0.9, response.Items[0].Score)
 }
 
+func TestGlobalHybridSearchUsesKindsReportedByServer(t *testing.T) {
+	client := &fakeHybridIndexClient{response: &resourcepb.HybridSearchResponse{
+		Results: []*resourcepb.HybridSearchResult{
+			{Key: &resourcepb.ResourceKey{Group: "example.grafana.app", Resource: "widgets", Name: "widget-a"}},
+			{Key: &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"}},
+			{Key: &resourcepb.ResourceKey{Group: "folder.grafana.app", Resource: "folders", Name: "folder-a"}},
+			{Key: &resourcepb.ResourceKey{Group: "external.ext.grafana.app", Resource: "documents", Name: "doc-a"}},
+		},
+		Kinds: map[string]string{
+			"example.grafana.app/widgets":      "Widget",
+			"dashboard.grafana.app/dashboards": "DisplayDashboard",
+		},
+	}}
+	auth := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
+		return authorizer.DecisionAllow, "", nil
+	})
+	h := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchFor(globalHybridTargets(), nil, auth, nil)
+	q := hybridQuery()
+	q.Resources = []searchv0.HybridSearchResource{
+		{Group: "example.grafana.app", Resource: "widgets"},
+		{Group: "dashboard.grafana.app", Resource: "dashboards"},
+		{Group: "folder.grafana.app", Resource: "folders"},
+		{Group: "external.ext.grafana.app", Resource: "documents"},
+	}
+	kinds := func() []string {
+		t.Helper()
+		w := doHybridRequest(h, hybridBody(t, q), "default", "default")
+		require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+		var out searchv0.HybridSearchResults
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &out))
+		require.Len(t, out.Items, 4)
+		got := make([]string, 0, len(out.Items))
+		for _, item := range out.Items {
+			got = append(got, item.Resource.Kind)
+		}
+		return got
+	}
+	assert.Equal(t, []string{"Widget", "DisplayDashboard", "Folder", ""}, kinds())
+	client.response.Kinds = nil
+	assert.Equal(t, []string{"", "Dashboard", "Folder", ""}, kinds())
+	client.response.Kinds = map[string]string{}
+	assert.Equal(t, []string{"", "Dashboard", "Folder", ""}, kinds())
+}
+
 func TestGlobalHybridSearchUnknownResources(t *testing.T) {
 	remote := searchv0.HybridSearchResource{Group: "example.grafana.app", Resource: "widgets"}
 	dashboards := searchv0.HybridSearchResource{Group: "dashboard.grafana.app", Resource: "dashboards"}

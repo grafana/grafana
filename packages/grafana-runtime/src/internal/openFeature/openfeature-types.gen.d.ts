@@ -58,7 +58,6 @@ declare module "@openfeature/core" {
     | "grafana.secretsReferenceValueUI"
     | "sqlExpressionsColumnAutoComplete"
     | "sqlExpressionsCodeMirror"
-    | "groupByVariable"
     | "scopeFilters"
     | "newDashboardWithFiltersAndGroupBy"
     | "grafana.filterablePanels"
@@ -184,7 +183,6 @@ declare module "@openfeature/core" {
     | "grafana.dynamicTraceToLogs"
     | "grafana.thresholdsInterpolation"
     | "grafana.pluginPathNesting"
-    | "grafana.unifiedDataSourcePicker"
     | "rawPrometheus.tableNg"
     | "datasources.queryGateway"
     | "datasources.querier.newName"
@@ -201,7 +199,8 @@ declare module "@openfeature/core" {
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"
     | "grafana.geomapProtomapsBasemap"
-    | "reporting.removeLogoUrlField";
+    | "reporting.removeLogoUrlField"
+    | "dashboards.disablePublicDashboards";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

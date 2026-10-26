@@ -33,10 +33,11 @@ func (ft *FrameTable) String() string {
 
 func SchemaFromFrame(frame *data.Frame) mysql.Schema {
 	schema := make(mysql.Schema, len(frame.Fields))
+	names := uniqueColumnNames(frame.Fields)
 
 	for i, field := range frame.Fields {
 		schema[i] = &mysql.Column{
-			Name:     field.Name,
+			Name:     names[i],
 			Type:     convertDataType(field.Type()),
 			Nullable: field.Type().Nullable(),
 			Source:   strings.ToLower(frame.RefID),
@@ -44,6 +45,37 @@ func SchemaFromFrame(frame *data.Frame) mysql.Schema {
 	}
 
 	return schema
+}
+
+// uniqueColumnNames returns the field names with repeats renamed to
+// <name>_2, <name>_3, and so on. The engine matches column names
+// case-insensitively and fails on an ambiguous name, so repeats are found
+// case-insensitively. A suffix that another field already uses is skipped,
+// so fields that are not repeats keep their names.
+func uniqueColumnNames(fields []*data.Field) []string {
+	taken := make(map[string]struct{}, len(fields))
+	for _, field := range fields {
+		taken[strings.ToLower(field.Name)] = struct{}{}
+	}
+
+	seen := make(map[string]struct{}, len(fields))
+	names := make([]string, len(fields))
+	for i, field := range fields {
+		name := field.Name
+		if _, ok := seen[strings.ToLower(name)]; ok {
+			for n := 2; ; n++ {
+				candidate := fmt.Sprintf("%s_%d", field.Name, n)
+				if _, ok := taken[strings.ToLower(candidate)]; !ok {
+					name = candidate
+					break
+				}
+			}
+			taken[strings.ToLower(name)] = struct{}{}
+		}
+		seen[strings.ToLower(name)] = struct{}{}
+		names[i] = name
+	}
+	return names
 }
 
 // Schema implements the mysql.Table interface
