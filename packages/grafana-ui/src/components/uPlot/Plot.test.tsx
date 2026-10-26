@@ -238,8 +238,8 @@ describe('UPlotChart', () => {
         />
       );
 
-      expect(destroyMock).toBeCalledTimes(1);
-      expect(uPlot).toBeCalledTimes(2);
+      expect(destroyMock).toHaveBeenCalledTimes(1);
+      expect(uPlot).toHaveBeenCalledTimes(2);
 
       data.fields[1].values[0] = 1;
 
@@ -272,8 +272,8 @@ describe('UPlotChart', () => {
         <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={nextConfig} width={0} height={0} />
       );
 
-      expect(destroyMock).toBeCalledTimes(1);
-      expect(uPlot).toBeCalledTimes(1);
+      expect(destroyMock).toHaveBeenCalledTimes(1);
+      expect(uPlot).toHaveBeenCalledTimes(1);
 
       data.fields[1].values[0] = 1;
 
@@ -286,8 +286,8 @@ describe('UPlotChart', () => {
         />
       );
 
-      expect(setSizeMock).not.toBeCalled();
-      expect(setDataMock).not.toBeCalled();
+      expect(setSizeMock).not.toHaveBeenCalled();
+      expect(setDataMock).not.toHaveBeenCalled();
     });
   });
 
