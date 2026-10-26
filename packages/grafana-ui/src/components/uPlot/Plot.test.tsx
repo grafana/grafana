@@ -254,8 +254,10 @@ describe('UPlotChart', () => {
 
       // All instances share the method mocks, so check which instance received each call.
       const rebuiltPlot = jest.mocked(uPlot).mock.results[1].value;
-      expect(setSizeMock.mock.contexts).toEqual([rebuiltPlot]);
-      expect(setDataMock.mock.contexts).toEqual([rebuiltPlot]);
+      expect(setSizeMock.mock.contexts).toHaveLength(1);
+      expect(setSizeMock.mock.contexts[0]).toBe(rebuiltPlot);
+      expect(setDataMock.mock.contexts).toHaveLength(1);
+      expect(setDataMock.mock.contexts[0]).toBe(rebuiltPlot);
     });
 
     it('does not update the destroyed plot after config changes with zero dimensions', () => {
