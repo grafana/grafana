@@ -111,16 +111,23 @@ func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource 
 		IsExternal:   isExternal,
 	})
 	if err != nil {
-		// The insert's ON CONFLICT only swallows same-collection races, so a
-		// UNIQUE(partition_key) violation from a different collection lands
-		// here — name the owner so the conflict is resolvable without
-		// spelunking. Auto-renaming on conflict is a planned follow-up.
-		if owner, ok, oerr := b.collectionByPartitionKey(ctx, key); oerr == nil && ok {
-			return Collection{}, fmt.Errorf(
-				"provision collection %s/%s: derived partition key %q is already owned by %s/%s; the new collection needs a manually assigned partition key",
-				group, resource, key, owner.Group, owner.Resource)
+		// ON CONFLICT only arbitrates the (group_name, resource) key. When a
+		// concurrent provisioner of the same collection commits first,
+		// Postgres may detect the clash on UNIQUE(partition_key) instead and
+		// raise a unique violation, so an owner equal to this collection means
+		// we lost that race and the row we wanted exists. Any other owner is a
+		// real conflict — name it so it is resolvable without spelunking.
+		// Auto-renaming on conflict is a planned follow-up.
+		owner, ok, oerr := b.collectionByPartitionKey(ctx, key)
+		lostSameCollectionRace := oerr == nil && ok && owner.Group == group && owner.Resource == resource
+		if !lostSameCollectionRace {
+			if oerr == nil && ok {
+				return Collection{}, fmt.Errorf(
+					"provision collection %s/%s: derived partition key %q is already owned by %s/%s; the new collection needs a manually assigned partition key",
+					group, resource, key, owner.Group, owner.Resource)
+			}
+			return Collection{}, fmt.Errorf("provision collection %s/%s: %w", group, resource, err)
 		}
-		return Collection{}, fmt.Errorf("provision collection %s/%s: %w", group, resource, err)
 	}
 
 	// Re-resolve: ON CONFLICT DO NOTHING means a concurrent provisioner may
