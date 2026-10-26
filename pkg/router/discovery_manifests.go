@@ -421,8 +421,11 @@ func publishedManifests(backends []Backend, builtin map[string]*app.ManifestData
 	return out
 }
 
-// servedManifestVersions returns m with only the versions group serves, or
-// false when it has none of them. It copies m only when versions are dropped.
+// servedManifestVersions returns m with only the versions group serves, each
+// marked served, or false when it has none of them. The backend may run
+// another release, and serve a version this binary no longer does, so whether
+// a version is served is the backend's answer, not m's. It copies m only when
+// that changes it.
 func servedManifestVersions(m *app.ManifestData, group metav1.APIGroup) (*app.ManifestData, bool) {
 	if m == nil {
 		return nil, false
@@ -431,11 +434,23 @@ func servedManifestVersions(m *app.ManifestData, group metav1.APIGroup) (*app.Ma
 	for _, v := range group.Versions {
 		served[v.Version] = true
 	}
-	versions := slices.DeleteFunc(slices.Clone(m.Versions), func(v app.ManifestVersion) bool { return !served[v.Name] })
-	switch len(versions) {
-	case 0:
+	versions := make([]app.ManifestVersion, 0, len(m.Versions))
+	changed := false
+	for _, v := range m.Versions {
+		if !served[v.Name] {
+			changed = true
+			continue
+		}
+		if !v.Served {
+			v.Served = true
+			changed = true
+		}
+		versions = append(versions, v)
+	}
+	if len(versions) == 0 {
 		return nil, false
-	case len(m.Versions):
+	}
+	if !changed {
 		return m, true
 	}
 	kept := func(name string) bool {

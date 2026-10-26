@@ -757,7 +757,7 @@ func TestBuiltinManifestsFillInForBackendsWithout(t *testing.T) {
 func TestServedManifestVersions(t *testing.T) {
 	manifest := &app.ManifestData{
 		Group: "g.example.com", PreferredVersion: "v2",
-		Versions: []app.ManifestVersion{{Name: "v1"}, {Name: "v2"}, {Name: "v3"}},
+		Versions: []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: true}, {Name: "v3", Served: true}},
 	}
 	tests := []struct {
 		name      string
@@ -791,4 +791,19 @@ func TestServedManifestVersions(t *testing.T) {
 
 	got, _ := servedManifestVersions(manifest, testAPIGroup("g.example.com", "v1", "v2", "v3"))
 	require.Same(t, manifest, got, "not copied when every version is served")
+}
+
+// The backend may run another release, and still serve a version this binary
+// no longer serves: the backend's group decides what is served.
+func TestServedManifestVersionsMarksTheBackendsVersionsServed(t *testing.T) {
+	manifest := &app.ManifestData{
+		Group: "g.example.com", PreferredVersion: "v2",
+		Versions: []app.ManifestVersion{{Name: "v1", Served: false}, {Name: "v2", Served: true}},
+	}
+	got, ok := servedManifestVersions(manifest, testAPIGroup("g.example.com", "v2", "v1"))
+	require.True(t, ok)
+	require.NotSame(t, manifest, got)
+	require.Equal(t, []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: true}}, got.Versions)
+	require.Equal(t, "v2", got.PreferredVersion)
+	require.False(t, manifest.Versions[0].Served, "the compiled-in manifest is never changed")
 }
