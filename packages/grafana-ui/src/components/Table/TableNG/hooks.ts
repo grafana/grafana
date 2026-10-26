@@ -48,7 +48,6 @@ import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from
 import { transformTableFilters } from './transformations/rowProjection';
 import {
   type FilterType,
-  type FooterFieldState,
   type GetActionsFunctionLocal,
   type NestedRowEntry,
   type SortByBehavior,
