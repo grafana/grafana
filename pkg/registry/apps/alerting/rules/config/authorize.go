@@ -6,9 +6,12 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
+
+const ActionDelete = accesscontrol.AlertingRulesConfigKind + ":delete"
 
 // Authorize maps k8s verbs on the rules-app Config (and its /status subresource)
 // to RBAC actions. Config is a per-org singleton; it mirrors the notifications
@@ -26,8 +29,8 @@ import (
 //     update and is allowed. The singleton-name check lives in the admission
 //     validator, not here.
 //   - patch/update → update (Admin).
-//   - delete/deletecollection → always rejected (deleting the singleton would
-//     nuke every admin setting it carries; reset individual fields via update)
+//   - delete/deletecollection → service identity with delete permission in its
+//     tenant only, for org cleanup. Humans reset individual fields via update.
 //   - status writes → service identity only (sync worker owns it; see
 //     serviceIdentityPermissions in pkg/apimachinery/identity/context.go)
 func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
@@ -68,6 +71,13 @@ func Authorize(ctx context.Context, ac accesscontrol.AccessControl, attr authori
 		case "patch", "update":
 			action = accesscontrol.EvalPermission(accesscontrol.ActionAlertingRulesConfigUpdate, scope)
 		case "delete", "deletecollection":
+			ok, err := common.AuthorizeOrgCleanup(ctx, attr.GetNamespace(), ac, accesscontrol.EvalPermission(ActionDelete, scope))
+			if err != nil {
+				return authorizer.DecisionDeny, err.Error(), nil
+			}
+			if ok {
+				return authorizer.DecisionAllow, "", nil
+			}
 			return authorizer.DecisionDeny, "Config is a singleton and cannot be deleted", nil
 		default:
 			return authorizer.DecisionNoOpinion, "", nil
