@@ -147,7 +147,11 @@ const RouterStatusView = ({ status }: { status: RouterStatus }) => {
   const health = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const g of status.groups) {
-      counts[g.health] = (counts[g.health] ?? 0) + 1;
+      // A group without a group breaker, such as an embedded or single-tenant
+      // one, has no health to show.
+      if (g.health !== 'unknown') {
+        counts[g.health] = (counts[g.health] ?? 0) + 1;
+      }
     }
     return Object.entries(counts).sort(([a], [b]) => healthOrder(a) - healthOrder(b));
   }, [status.groups]);
@@ -277,7 +281,9 @@ const RouterStatusView = ({ status }: { status: RouterStatus }) => {
           ]}
           rows={groups.map((g) => [
             g.group,
-            <Badge key="health" color={healthColors[g.health] ?? 'darkgrey'} text={g.health} />,
+            g.health === 'unknown' ? null : (
+              <Badge key="health" color={healthColors[g.health] ?? 'darkgrey'} text={g.health} />
+            ),
             <Tooltip key="source" content={<code>{g.key}</code>}>
               <span>
                 <SourceBadge source={g.source} />

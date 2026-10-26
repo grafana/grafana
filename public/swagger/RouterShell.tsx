@@ -23,8 +23,14 @@ export const RouterShell = ({
     <ThemeContext.Provider value={theme}>
       <Global
         styles={{
+          // Sizes include padding and borders, as in Grafana: otherwise an input
+          // with a width overflows into what follows it.
           html: {
             fontSize: `${theme.typography.htmlFontSize}px`,
+            boxSizing: 'border-box',
+          },
+          '*, *::before, *::after': {
+            boxSizing: 'inherit',
           },
           body: {
             margin: 0,

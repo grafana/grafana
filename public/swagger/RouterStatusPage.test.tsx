@@ -114,7 +114,8 @@ it('shows the cloud sources, shadowed groups and stack lookups', async () => {
     'error',
   ]);
   expect(screen.getByText('1 ok')).toBeInTheDocument();
-  expect(screen.getByText('1 unknown')).toBeInTheDocument();
+  // A group without a group breaker has no health badge, in the summary or its row.
+  expect(screen.queryByText(/unknown/)).not.toBeInTheDocument();
 });
 
 it('filters groups by name or key', async () => {
