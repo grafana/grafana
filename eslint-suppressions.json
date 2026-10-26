@@ -1415,11 +1415,6 @@
       "count": 1
     }
   },
-  "public/app/features/browse-dashboards/components/DeletedDashboardsLimitBanner.tsx": {
-    "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
   "public/app/features/commandPalette/scopes/recentScopesActions.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
