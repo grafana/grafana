@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 
 import { config } from '@grafana/runtime';
 import { useGetFrontendSettingsQuery, useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
-import { lastSuccessfulSync } from 'app/features/provisioning/hooks/useRefetchOnRepoSync';
+import { lastSyncFinished } from 'app/features/provisioning/hooks/useRefetchOnRepoSync';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useDispatch, useSelector } from 'app/types/store';
 
@@ -28,18 +28,19 @@ export function useRefreshOnRepositorySync(folderUID: string | undefined) {
   const { data: settings } = useGetFrontendSettingsQuery(config.provisioningEnabled ? undefined : skipToken);
   const hasRepositories = (settings?.items.length ?? 0) > 0;
   const { data: repositories } = useListRepositoryQuery(hasRepositories ? { watch: true } : skipToken);
-  const lastSync = repositories?.items ? lastSuccessfulSync(repositories.items) : undefined;
+  const lastSync = repositories?.items ? lastSyncFinished(repositories.items) : undefined;
 
   useEffect(() => {
     if (lastSync === undefined || (syncedAt !== undefined && lastSync <= syncedAt)) {
       return;
     }
-    dispatch(setRepositorySyncedAt(lastSync));
     // The first value only seeds the baseline: the loaded tree is at least as new as this page.
+    // Later ones are stamped by refreshTree once the refetch has succeeded.
     if (syncedAt === undefined) {
+      dispatch(setRepositorySyncedAt(lastSync));
       return;
     }
-    dispatch(refreshTree({ folderUID }));
+    dispatch(refreshTree({ folderUID, syncedAt: lastSync }));
     if (stateManager.hasSearchFilters()) {
       stateManager.doSearchWithDebounce();
     }

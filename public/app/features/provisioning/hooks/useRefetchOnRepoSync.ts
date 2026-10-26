@@ -4,26 +4,23 @@ import { useEffect, useRef } from 'react';
 import { type Repository, useListRepositoryQuery } from 'app/api/clients/provisioning/v0alpha1';
 
 /**
- * `finished` of the newest pull that wrote content, or 0 when none has. A `warning` pull wrote
- * everything it could and only tripped a quota, so it counts; a failed pull wrote nothing and
- * advances `finished` without moving this.
+ * `finished` of the newest completed pull, or 0 when none has completed. The outcome is not
+ * consulted: a pull that ends in `error` has usually applied every resource but the ones it
+ * reports, and the status only holds the last pull, so a success followed by a failure while the
+ * caller was unmounted would otherwise go unnoticed.
  */
-export function lastSuccessfulSync(repositories: Repository[]): number {
+export function lastSyncFinished(repositories: Repository[]): number {
   let latest = 0;
   for (const { status } of repositories) {
-    const sync = status?.sync;
-    if (sync?.finished && (sync.state === 'success' || sync.state === 'warning')) {
-      latest = Math.max(latest, sync.finished);
-    }
+    latest = Math.max(latest, status?.sync?.finished ?? 0);
   }
   return latest;
 }
 
 /**
- * Calls `refetch` once each time the repository finishes a successful (or
- * warning) pull sync, so cached reads — README/doc content and the folder's
- * file listing — pick up remote changes (added/removed/renamed files) without a
- * page reload.
+ * Calls `refetch` once each time the repository finishes a pull sync, so cached
+ * reads — README/doc content and the folder's file listing — pick up remote
+ * changes (added/removed/renamed files) without a page reload.
  *
  * Watches the durable repository sync status rather than the Job, since the Job
  * is deleted on completion and its terminal state is never observable (#1223).
@@ -38,7 +35,7 @@ export function useRefetchOnRepoSync(repositoryName: string | undefined, refetch
     repositoryName ? { fieldSelector: `metadata.name=${repositoryName}`, watch: true } : skipToken
   );
   const repo = data?.items?.[0];
-  const lastSync = repo ? lastSuccessfulSync([repo]) : undefined;
+  const lastSync = repo ? lastSyncFinished([repo]) : undefined;
 
   const baseline = useRef<number | undefined>(undefined);
   useEffect(() => {

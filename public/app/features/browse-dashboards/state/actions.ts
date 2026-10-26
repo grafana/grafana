@@ -52,6 +52,8 @@ interface RefreshParentsArgs {
 
 interface RefreshTreeArgs {
   folderUID: string | undefined;
+  /** `finished` of the repository pull the refreshed tree will reflect; stamped on success. */
+  syncedAt: number;
 }
 
 export const refreshParents = createAsyncThunk(
@@ -74,18 +76,18 @@ export const refreshParents = createAsyncThunk(
 );
 
 /**
- * Brings the tree back in step with the backend after a change that may have touched any folder
- * (a repository pull): the pending reducer drops every collection but the viewed one, which is
- * refetched here. A viewed collection that is still loading gets fresh data from its own first
- * page and needs nothing.
+ * Brings the tree back in step with a repository pull, which may have touched any folder: the
+ * pending reducer drops every collection but the viewed one, which is refetched here. The fulfilled
+ * reducer records `syncedAt`, so a failed refetch leaves the tree marked stale and the next visit
+ * tries again. A viewed collection that is still loading gets fresh data from its own first page.
  */
 export const refreshTree = createAsyncThunk(
   'browseDashboards/refreshTree',
-  ({ folderUID }: RefreshTreeArgs, { getState, dispatch }) => {
+  async ({ folderUID }: RefreshTreeArgs, { getState, dispatch }) => {
     const { rootItems, childrenByParentUID } = getState().browseDashboards;
     const viewed = folderUID ? childrenByParentUID[folderUID] : rootItems;
     if (viewed) {
-      dispatch(refetchChildren({ parentUID: folderUID, pageSize: PAGE_SIZE }));
+      await dispatch(refetchChildren({ parentUID: folderUID, pageSize: PAGE_SIZE })).unwrap();
     }
   }
 );
@@ -240,6 +242,15 @@ export const fetchNextChildrenPage = createAsyncThunk(
         ...child,
         uid: reapplyVirtualFolderPrefix(parentUID, child.uid),
       }));
+    }
+
+    // The collection this page extends may have been replaced or dropped while the request was in
+    // flight (a refetch after a delete, a repository pull). Appending a page of the old listing would
+    // resurrect what the replacement removed, so the result is discarded; the loader asks again.
+    const { browseDashboards } = thunkAPI.getState();
+    const current = collectionKey ? browseDashboards.childrenByParentUID[collectionKey] : browseDashboards.rootItems;
+    if (current !== collection) {
+      return undefined;
     }
 
     return {

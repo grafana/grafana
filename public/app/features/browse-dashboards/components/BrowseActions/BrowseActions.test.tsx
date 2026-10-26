@@ -1,8 +1,10 @@
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { type BulkActionProvisionResourceProps } from 'app/features/provisioning/components/BulkActions/utils';
 import { useSelectionProvisioningStatus } from 'app/features/provisioning/hooks/useSelectionProvisioningStatus';
+
+import { setAllSelection } from '../../state/slice';
 
 import { BrowseActions } from './BrowseActions';
 
@@ -10,11 +12,12 @@ jest.mock('app/features/provisioning/hooks/useSelectionProvisioningStatus', () =
   useSelectionProvisioningStatus: jest.fn(),
 }));
 
-// The drawer body is covered by its own tests; here it only needs to report the two
-// events BrowseActions reacts to.
+// The drawer body is covered by its own tests; here it only needs to report the two events
+// BrowseActions reacts to and show which selection it was given.
 jest.mock('app/features/provisioning/components/BulkActions/BulkDeleteProvisionedResource', () => ({
-  BulkDeleteProvisionedResource: ({ onDismiss, onJobCreated }: BulkActionProvisionResourceProps) => (
+  BulkDeleteProvisionedResource: ({ selectedItems, onDismiss, onJobCreated }: BulkActionProvisionResourceProps) => (
     <>
+      <span>{Object.values(selectedItems.dashboard).filter(Boolean).length} selected</span>
       <button onClick={onJobCreated}>Create job</button>
       <button onClick={onDismiss}>Cancel</button>
     </>
@@ -81,6 +84,21 @@ describe('browse-dashboards BrowseActions', () => {
 
       await user.click(screen.getByTestId(selectors.components.Drawer.General.close));
       expect(screen.queryByTestId(selectors.components.Drawer.General.close)).not.toBeInTheDocument();
+    });
+
+    it('works on the selection it was opened with, even when the live selection clears underneath', async () => {
+      const { user, store } = setup();
+
+      await user.click(screen.getByRole('button', { name: 'Delete' }));
+      expect(await screen.findByText('1 selected')).toBeInTheDocument();
+
+      // A repository pull refreshing the tree resets the selection.
+      act(() => {
+        store!.dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
+      });
+
+      expect(screen.getByText('1 selected')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
   });
 });

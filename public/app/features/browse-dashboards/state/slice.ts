@@ -5,7 +5,13 @@ import { type BrowseDashboardsState } from '../types';
 import { fetchNextChildrenPage, refetchChildren, refreshTree } from './actions';
 import * as allReducers from './reducers';
 
-const { fetchNextChildrenPageFulfilled, refetchChildrenFulfilled, refreshTreePending, ...baseReducers } = allReducers;
+const {
+  fetchNextChildrenPageFulfilled,
+  refetchChildrenFulfilled,
+  refreshTreePending,
+  refreshTreeFulfilled,
+  ...baseReducers
+} = allReducers;
 
 const initialState: BrowseDashboardsState = {
   rootItems: undefined,
@@ -28,6 +34,7 @@ const browseDashboardsSlice = createSlice({
     builder.addCase(fetchNextChildrenPage.fulfilled, fetchNextChildrenPageFulfilled);
     builder.addCase(refetchChildren.fulfilled, refetchChildrenFulfilled);
     builder.addCase(refreshTree.pending, refreshTreePending);
+    builder.addCase(refreshTree.fulfilled, refreshTreeFulfilled);
   },
 });
 

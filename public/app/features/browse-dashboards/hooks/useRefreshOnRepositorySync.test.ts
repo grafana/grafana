@@ -64,7 +64,7 @@ function setup(folderUID?: string) {
       rootItems: fullyLoadedViewItemCollection([dash1, dash2]),
       childrenByParentUID: { 'folder-a': fullyLoadedViewItemCollection([dash3]) },
       openFolders: { 'folder-a': true },
-      selectedItems: { $all: false, folder: {}, dashboard: {}, panel: {} },
+      selectedItems: { $all: false, folder: {}, dashboard: { 'dash-3': true }, panel: {} },
     },
   });
 
@@ -83,7 +83,7 @@ describe('useRefreshOnRepositorySync', () => {
     jest.clearAllMocks();
   });
 
-  it('refetches the viewed list and drops other loaded folders when a newer pull wrote content', async () => {
+  it('refetches the viewed list and drops other loaded folders and the selection when a pull completes', async () => {
     const { browseState, rootUids, waitForBaseline } = setup();
     await waitForBaseline();
     expect(mockListDashboards).not.toHaveBeenCalled();
@@ -93,22 +93,51 @@ describe('useRefreshOnRepositorySync', () => {
     await waitFor(() => expect(rootUids()).toEqual(['dash-2']));
     expect(browseState().childrenByParentUID['folder-a']).toBeUndefined();
     expect(browseState().openFolders['folder-a']).toBe(false);
-    expect(browseState().repositorySyncedAt).toBe(2000);
+    expect(browseState().selectedItems.dashboard['dash-3']).toBeUndefined();
+    await waitFor(() => expect(browseState().repositorySyncedAt).toBe(2000));
   });
 
-  it('ignores status updates that wrote nothing', async () => {
+  it('refreshes after a pull that finished with errors, which may still have written resources', async () => {
+    const { rootUids, waitForBaseline } = setup();
+    await waitForBaseline();
+
+    emitSync(2000, 'error');
+
+    await waitFor(() => expect(rootUids()).toEqual(['dash-2']));
+  });
+
+  it('ignores a status update whose pull has not advanced', async () => {
     const { browseState, rootUids, waitForBaseline } = setup();
     await waitForBaseline();
 
-    // Same `finished` (e.g. a health check patched the status), then a failed pull.
+    // Same `finished`, e.g. a health check patched the status.
     emitSync(1000);
-    emitSync(2000, 'error');
 
     await act(() => Promise.resolve());
     expect(mockListDashboards).not.toHaveBeenCalled();
     expect(rootUids()).toEqual(['dash-1', 'dash-2']);
     expect(browseState().childrenByParentUID['folder-a']).toBeDefined();
+    expect(browseState().selectedItems.dashboard['dash-3']).toBe(true);
     expect(browseState().repositorySyncedAt).toBe(1000);
+  });
+
+  it('keeps the tree marked stale when the refetch fails, so the next visit retries', async () => {
+    const { browseState, rootUids, waitForBaseline, unmount, store } = setup();
+    await waitForBaseline();
+    mockListFolders.mockRejectedValueOnce(new Error('network down'));
+
+    emitSync(2000);
+
+    await waitFor(() => expect(mockListFolders).toHaveBeenCalledTimes(1));
+    await act(() => Promise.resolve());
+    expect(rootUids()).toEqual(['dash-1', 'dash-2']);
+    expect(browseState().repositorySyncedAt).toBe(1000);
+
+    unmount();
+    renderHook(() => useRefreshOnRepositorySync(undefined), { wrapper: getWrapper({ store }) });
+
+    await waitFor(() => expect(rootUids()).toEqual(['dash-2']));
+    await waitFor(() => expect(browseState().repositorySyncedAt).toBe(2000));
   });
 
   it('refetches the viewed folder and drops the root when inside a folder', async () => {

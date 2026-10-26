@@ -32,9 +32,19 @@ export interface Props {
   folderDTO?: FolderDTO;
 }
 
+type BulkSelection = Omit<DashboardTreeSelection, 'panel' | '$all'>;
+
+/**
+ * The open provisioned drawer and the selection it was opened on. A snapshot, not the live
+ * selection: a repository pull or the job itself clears that while the drawer is still open.
+ */
+interface BulkAction {
+  kind: 'delete' | 'move';
+  selectedItems: BulkSelection;
+}
+
 export function BrowseActions({ folderDTO }: Props) {
-  const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
-  const [showBulkMoveProvisionedResource, setShowBulkMoveProvisionedResource] = useState(false);
+  const [bulkAction, setBulkAction] = useState<BulkAction>();
 
   const dispatch = useDispatch();
   const hasSelection = useHasSelection();
@@ -56,6 +66,8 @@ export function BrowseActions({ folderDTO }: Props) {
   const clearSelection = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
   };
+
+  const closeBulkAction = () => setBulkAction(undefined);
 
   const onActionComplete = () => {
     clearSelection();
@@ -99,7 +111,7 @@ export function BrowseActions({ folderDTO }: Props) {
 
     if (provisioningEnabled && hasProvisioned) {
       // Only provisioned items
-      setShowBulkMoveProvisionedResource(true);
+      setBulkAction({ kind: 'move', selectedItems });
       return;
     }
 
@@ -126,7 +138,7 @@ export function BrowseActions({ folderDTO }: Props) {
       );
     } else if (hasProvisioned && provisioningEnabled) {
       // Only provisioned items
-      setShowBulkDeleteProvisionedResource(true);
+      setBulkAction({ kind: 'delete', selectedItems });
     } else {
       // Only non-provisioned items
       appEvents.publish(
@@ -166,9 +178,9 @@ export function BrowseActions({ folderDTO }: Props) {
           </Button>
         </Stack>
       )}
-      {/* The provisioned drawers outlive the selection: the job spends it, and the drawer stays open
-          to show the job's status. The sync watch refreshes the list once the pull lands. */}
-      {showBulkDeleteProvisionedResource && (
+      {/* The drawer outlives the selection: the job spends it, and the drawer stays open to show
+          the job's status. The sync watch refreshes the list once the pull lands. */}
+      {bulkAction?.kind === 'delete' && (
         <Drawer
           title={
             // Heading levels should only increase by one (a11y)
@@ -176,19 +188,19 @@ export function BrowseActions({ folderDTO }: Props) {
               {t('browse-dashboards.action.bulk-delete-provisioned-resources', 'Bulk Delete Provisioned Resources')}
             </Text>
           }
-          onClose={() => setShowBulkDeleteProvisionedResource(false)}
+          onClose={closeBulkAction}
           size="md"
         >
           <BulkDeleteProvisionedResource
-            selectedItems={selectedItems}
+            selectedItems={bulkAction.selectedItems}
             folderUid={folderDTO?.uid || ''}
-            onDismiss={() => setShowBulkDeleteProvisionedResource(false)}
+            onDismiss={closeBulkAction}
             onJobCreated={clearSelection}
           />
         </Drawer>
       )}
 
-      {showBulkMoveProvisionedResource && (
+      {bulkAction?.kind === 'move' && (
         <Drawer
           title={
             // Heading levels should only increase by one (a11y)
@@ -196,13 +208,13 @@ export function BrowseActions({ folderDTO }: Props) {
               {t('browse-dashboards.action.bulk-move-provisioned-resources', 'Bulk Move Provisioned Resources')}
             </Text>
           }
-          onClose={() => setShowBulkMoveProvisionedResource(false)}
+          onClose={closeBulkAction}
           size="md"
         >
           <BulkMoveProvisionedResource
-            selectedItems={selectedItems}
+            selectedItems={bulkAction.selectedItems}
             folderUid={folderDTO?.uid}
-            onDismiss={() => setShowBulkMoveProvisionedResource(false)}
+            onDismiss={closeBulkAction}
             onJobCreated={clearSelection}
           />
         </Drawer>
@@ -216,7 +228,7 @@ const actionMap = {
   delete: 'grafana_manage_dashboards_item_deleted',
 } as const;
 
-function trackAction(action: keyof typeof actionMap, selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
+function trackAction(action: keyof typeof actionMap, selectedItems: BulkSelection) {
   const selectedDashboards = getSelectedUIDs(selectedItems, 'dashboard');
   const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
 

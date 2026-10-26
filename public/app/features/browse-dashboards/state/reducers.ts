@@ -12,6 +12,7 @@ import { ancestorsOf } from './utils';
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
 type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
 type RefreshTreePendingAction = ReturnType<typeof refreshTree.pending>;
+type RefreshTreeFulfilledAction = ReturnType<typeof refreshTree.fulfilled>;
 
 export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: RefetchChildrenFulfilledAction) {
   const { children, page, kind, lastPageOfKind } = action.payload;
@@ -209,6 +210,10 @@ export function clearFolders(state: BrowseDashboardsState, action: PayloadAction
  * A pull can touch any folder in a repository and the frontend does not learn which, so every
  * collection but the one in view is dropped and reloads when opened or visited next. The viewed
  * one is refetched by the thunk instead of blanking.
+ *
+ * The selection goes with it: it was made against the old listing, and once items leave the
+ * tree their metadata is gone too, so a kept selection would route the next action through the
+ * wrong flow or at UIDs that no longer exist.
  */
 export function refreshTreePending(state: BrowseDashboardsState, action: RefreshTreePendingAction) {
   const { folderUID } = action.meta.arg;
@@ -218,6 +223,11 @@ export function refreshTreePending(state: BrowseDashboardsState, action: Refresh
       clearFolder(state, uid);
     }
   }
+  state.selectedItems = { $all: false, dashboard: {}, folder: {}, panel: {} };
+}
+
+export function refreshTreeFulfilled(state: BrowseDashboardsState, action: RefreshTreeFulfilledAction) {
+  state.repositorySyncedAt = action.meta.arg.syncedAt;
 }
 
 export function setRepositorySyncedAt(state: BrowseDashboardsState, action: PayloadAction<number>) {
