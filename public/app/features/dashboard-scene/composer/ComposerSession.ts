@@ -28,7 +28,7 @@ import {
 } from './types';
 
 /** Left out of region captures: Composer's own layer and the extension sidebar. */
-export const CAPTURE_EXCLUDE_SELECTOR = '[data-composer-capture-exclude], [data-extension-sidebar]';
+const CAPTURE_EXCLUDE_SELECTOR = '[data-composer-capture-exclude], [data-extension-sidebar]';
 
 /** A drawn region, kept in overlay (dashboard content) coordinates so it scrolls with the content. */
 interface StoredRegion {

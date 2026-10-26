@@ -28,8 +28,6 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const mode = getDashboardMode(state);
   const composer = useComposerOption(dashboard);
   const nextMode = mode === 'view' ? 'edit' : 'view';
-  // From Viewing, the main button goes to Composer where it can start; otherwise it toggles Viewing and Editing.
-  const requestComposer = mode === 'view' && composer?.disabledReason === undefined ? composer?.request : undefined;
   const saveRequired = isNewDashboard(state);
   const disabled = dashboard.managedResourceCannotBeEdited();
   const hidden =
@@ -99,7 +97,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             label={t('dashboard.modes.composer', 'Composer')}
             description={
               composer.disabledReason ??
-              t('dashboard.modes.composer-description', 'Point at panels and regions and ask Assistant to change them.')
+              t('dashboard.modes.composer-description', 'Point at anything and ask Assistant to change it.')
             }
             // The Assistant sparkle in the Chat button's colours; disabled, it greys out like the others.
             icon="ai-sparkle"
@@ -127,16 +125,14 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
           className={cx(mode === 'composer' && styles.assistantIcon)}
           aria-label={t('dashboard.modes.current', 'Dashboard mode: {{mode}}', { mode: current.label })}
           tooltip={
-            requestComposer
-              ? t('dashboard.modes.switch-to-composer', 'Switch to Composer')
-              : saveRequired && nextMode === 'view'
-                ? saveBeforeViewing
-                : nextMode === 'view'
-                  ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
-                  : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
+            saveRequired && nextMode === 'view'
+              ? saveBeforeViewing
+              : nextMode === 'view'
+                ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
+                : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
           }
-          disabled={disabled || (!requestComposer && !state.editable && nextMode === 'edit')}
-          onClick={() => (requestComposer ? requestComposer() : choose(nextMode))}
+          disabled={disabled || (!state.editable && nextMode === 'edit')}
+          onClick={() => choose(nextMode)}
         >
           {current.label}
         </ToolbarButton>
