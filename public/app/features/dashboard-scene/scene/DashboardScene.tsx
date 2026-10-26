@@ -969,7 +969,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
     this._sidebarBeforeViewing = undefined;
     // No need to listen to changes anymore
-    this._changeTracker.stopTrackingChanges();
+    this._changeTracker.stopTrackingChanges({ discardPendingChecks: true });
 
     // CUJ-only signal: ends dashboard_edit journey when the user actually leaves
     // edit mode, regardless of whether changes were discarded or there were
