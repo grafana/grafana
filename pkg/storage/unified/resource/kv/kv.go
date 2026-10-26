@@ -40,7 +40,9 @@ type bytesValue struct {
 	bytes.Buffer
 }
 
-func newBytesValue(b []byte) *bytesValue {
+// NewBytesValue returns a reader whose bytes ReadAllAndClose hands out without
+// copying, so b must not be used or modified afterwards.
+func NewBytesValue(b []byte) io.ReadCloser {
 	return &bytesValue{Buffer: *bytes.NewBuffer(b)}
 }
 
@@ -207,7 +209,7 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (io.Read
 		return nil, err
 	}
 
-	return newBytesValue(value), nil
+	return NewBytesValue(value), nil
 }
 
 func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error] {
@@ -260,7 +262,7 @@ func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) 
 
 			kv := KeyValue{
 				Key:   key,
-				Value: newBytesValue(value),
+				Value: NewBytesValue(value),
 			}
 
 			if !yield(kv, nil) {

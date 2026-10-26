@@ -20,7 +20,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -154,6 +156,10 @@ type GrafanaRouter struct {
 	// snapshot is the immutable group -> servingEntry map used to serve
 	// requests. reconcile rebuilds and atomically stores it; serving loads it.
 	snapshot atomic.Pointer[map[string]servingEntry]
+	// initialized keeps middleware on the router after the startup handoff,
+	// even if readiness later fails. Falling back could serve a different
+	// backend for a group the router has taken over.
+	initialized atomic.Bool
 
 	// apiGroupList and openapiIndex are the synthesized /apis and /openapi/v3
 	// root documents, rebuilt from served (not the raw Load result) on every
@@ -169,6 +175,11 @@ type GrafanaRouter struct {
 	manifestDocs        atomic.Pointer[manifestDocs]
 	manifestFingerprint string
 	manifestCache       map[string]*cachedDoc
+	// builtinManifests are the app manifests compiled into this binary, by
+	// group: a fallback, published only for a served group whose backend
+	// advertises no manifest of its own (see publishedManifests). Set before
+	// the router serves, and never changed.
+	builtinManifests map[string]*app.ManifestData
 
 	// openapiDocs caches per-group-version OpenAPI v3 documents, keyed by
 	// "group/version". Serving goroutines write it on cache misses, so it is a
@@ -183,7 +194,12 @@ type GrafanaRouter struct {
 	// are not DiscoveryProviders, shared across callers.
 	discoveryCache discoveryCache
 
-	// Set before serving by the standalone target; middleware keeps its delegate.
+	// unregisteredGroupHandler serves groups no backend serves: the
+	// single-tenant fallback, set before serving by the standalone target.
+	// Root discovery also reads the groups the router doesn't serve from it;
+	// it answers for the caller, so its view replaces the defaults of
+	// caller-scoped backends. nil otherwise: such groups are not found, and
+	// root discovery lists only the router's groups.
 	unregisteredGroupHandler http.Handler
 
 	// reconciles and reconcileErrors count completed reconciles, and
@@ -220,40 +236,75 @@ func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *Gra
 	return r
 }
 
-// HandleFunc is the single serving entry point for /apis and /openapi/v3.
-// Anything the router does not own falls through to next.
-func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
-	r.handle(w, req, next, apiGroup(req.URL.Path))
+var _ Router = (*GrafanaRouter)(nil)
+
+// HandleAPIs serves the /apis tree.
+func (r *GrafanaRouter) HandleAPIs() http.HandlerFunc {
+	return r.handleAPIs
 }
 
-// handle is HandleFunc for a request whose group, apiGroup(req.URL.Path), the
-// caller has already read, so a request reads it once.
-func (r *GrafanaRouter) handle(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
-	path := req.URL.Path
-	isOpenAPI := path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/")
-	isAPIs := path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/")
+// HandleOpenAPIv3 serves the /openapi/v3 tree.
+func (r *GrafanaRouter) HandleOpenAPIv3() http.HandlerFunc {
+	return r.handleOpenAPIv3
+}
 
-	// Not part of the /apis or /openapi/v3 trees — not ours.
-	if !isOpenAPI && !isAPIs {
-		setRoute(req, routeNext)
-		next.ServeHTTP(w, req)
-		return
+// handlerFor returns the router's handler for the tree path is in, or nil
+// when it is in neither. parseInfo reports whether the handler reads the
+// request info, so the request metrics parse it for the handler: only /apis
+// does.
+func (r *GrafanaRouter) handlerFor(path string) (handle http.HandlerFunc, parseInfo bool) {
+	switch {
+	case path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/"):
+		return r.handleAPIs, true
+	case path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/"):
+		return r.handleOpenAPIv3, false
 	}
-	if !canonicalAPIPath(req.URL) {
+	return nil, false
+}
+
+// serveNotFound answers a request the router has nothing to serve for.
+func serveNotFound(w http.ResponseWriter, req *http.Request) {
+	setRoute(req, routeNotFound)
+	http.NotFound(w, req)
+}
+
+// handleOpenAPIv3 serves the OpenAPI v3 discovery index and per-group-version
+// documents.
+func (r *GrafanaRouter) handleOpenAPIv3(w http.ResponseWriter, req *http.Request) {
+	if !utils.IsCanonicalAPIPath(req.URL) {
 		setRoute(req, routeInvalid)
 		http.Error(w, "non-canonical API path", http.StatusBadRequest)
 		return
 	}
-
 	if req = r.authenticate(w, req); req == nil {
 		return
 	}
-	if !authorizeNamespace(w, req) {
+	r.serveOpenAPIV3(w, req)
+}
+
+// handleAPIs serves the /apis tree: discovery, and each group's requests
+// proxied to its backend.
+func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
+	path := req.URL.Path
+	// The request metrics have usually parsed it already. Parsing rejects a
+	// path that is not canonical, so a backend serves the group and
+	// namespace the request was routed and authorized by.
+	var info *request.RequestInfo
+	if outcome := outcomeOf(req); outcome != nil && outcome.info != nil {
+		info = outcome.info
+	} else {
+		var err error
+		if info, err = utils.NewRequestInfo(req); err != nil {
+			setRoute(req, routeInvalid)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		req = req.WithContext(request.WithRequestInfo(req.Context(), info))
+	}
+	if req = r.authenticate(w, req); req == nil {
 		return
 	}
-	if isDeprecatedWatchPath(req.URL.Path) {
-		setRoute(req, routeInvalid)
-		http.Error(w, "the deprecated /watch/ path is not supported, use ?watch=true", http.StatusNotFound)
+	if !authorizeNamespace(w, req, info.Namespace) {
 		return
 	}
 
@@ -264,26 +315,21 @@ func (r *GrafanaRouter) handle(w http.ResponseWriter, req *http.Request, next ht
 		return
 	}
 
-	// OpenAPI v3 discovery index and per-group-version documents.
-	if isOpenAPI {
-		r.serveOpenAPIV3(w, req, next)
-		return
-	}
-
 	// Root discovery (APIGroupList) is the only path that needs a union
 	// across every group; synthesize it router-side.
 	if path == apisPrefix || path == apisPrefix+"/" {
 		setRoute(req, routeDiscovery)
-		r.serveAPIGroupList(w, req, next)
+		r.serveAPIGroupList(w, req)
 		return
 	}
 
-	// An invalid group name gets no group, so it goes to next: no backend
-	// can serve it.
+	// Parsing rejects an invalid group name, so a group no backend serves is
+	// one that could exist: the unregistered-group handler may serve it.
+	group := info.APIGroup
 	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {
-		r.serveUnregisteredGroup(w, req, next, group)
+		r.serveUnregisteredGroup(w, req, group, info.Verb)
 		return
 	}
 
@@ -296,7 +342,7 @@ func (r *GrafanaRouter) handle(w http.ResponseWriter, req *http.Request, next ht
 	serve := func(w http.ResponseWriter, req *http.Request) {
 		entry.serve(group, w, req)
 	}
-	if requestVerb(req) == "watch" {
+	if info.Verb == "watch" {
 		if entry.watching != nil {
 			entry.watching.Add(1)
 			defer entry.watching.Add(-1)
@@ -350,12 +396,11 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 	return req.WithContext(identity.WithRequester(req.Context(), info))
 }
 
-// authorizeNamespace refuses a request for a namespace its requester may not
-// use, before any backend or stack sees it: Grafana admins may name any
+// authorizeNamespace refuses a request for ns, the namespace its path names,
+// when its requester may not use it, before any backend or stack sees it: Grafana admins may name any
 // namespace, and everyone else only their own, or any with "*". Backends
 // still authorize everything else.
-func authorizeNamespace(w http.ResponseWriter, req *http.Request) bool {
-	ns := namespaceFromPath(req.URL.Path)
+func authorizeNamespace(w http.ResponseWriter, req *http.Request, ns string) bool {
 	if ns == "" {
 		return true
 	}
@@ -379,76 +424,20 @@ func authorizeNamespace(w http.ResponseWriter, req *http.Request) bool {
 	return false
 }
 
-// namespaceFromPath returns the namespace a resource path names, where the
-// apiserver reads it: /apis/<group>/<version>/namespaces/<namespace>[/...].
-// That includes the namespace object itself, /apis/<g>/<v>/namespaces/<ns>.
-// Any other path names none.
-func namespaceFromPath(path string) string {
-	rest, ok := pathAfterVersion(path)
-	if !ok {
-		return ""
-	}
-	rest, ok = strings.CutPrefix(rest, "namespaces/")
-	if !ok {
-		return ""
-	}
-	namespace, _, _ := strings.Cut(rest, "/")
-	return namespace
-}
-
-// pathAfterVersion returns what follows /apis/<group>/<version>/ in path,
-// without allocating, since every request reads it.
-func pathAfterVersion(path string) (string, bool) {
-	rest, ok := strings.CutPrefix(path, apisPrefix+"/")
-	for i := 0; ok && i < 2; i++ {
-		_, rest, ok = strings.Cut(rest, "/")
-	}
-	return rest, ok
-}
-
-func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
+func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, group, verb string) {
 	if group != "" && r.unregisteredGroupHandler != nil {
 		setRoute(req, routeFallback)
 		if rejectUpgrade(w, req) {
 			return
 		}
-		if requestVerb(req) == "watch" {
+		if verb == "watch" {
 			r.serveWatch(w, req, nil, r.unregisteredGroupHandler.ServeHTTP)
 			return
 		}
 		r.unregisteredGroupHandler.ServeHTTP(w, req)
 		return
 	}
-	setRoute(req, routeNext)
-	next.ServeHTTP(w, req)
-}
-
-// discoverySource is where root discovery reads the groups the router does
-// not serve: the unregistered-group handler when one is set, otherwise next.
-// callerScoped reports whether the source answers for the caller, so its
-// answer replaces the defaults of caller-scoped backends. next never serves
-// those groups, so its answer must not hide them.
-func (r *GrafanaRouter) discoverySource(next http.Handler) (source http.Handler, callerScoped bool) {
-	if r.unregisteredGroupHandler != nil {
-		return r.unregisteredGroupHandler, true
-	}
-	return next, false
-}
-
-// apiGroup returns the group of an /apis/<group>[/...] path, or "" when there
-// is none or it is not a valid group name (see utils.IsAPIGroup). Unlike
-// utils.APIGroupFromRequest it reads only the first segment: the router
-// rejects a non-canonical path before it routes by group.
-func apiGroup(path string) string {
-	rest, ok := strings.CutPrefix(path, apisPrefix+"/")
-	if !ok {
-		return ""
-	}
-	group, _, _ := strings.Cut(rest, "/")
-	if !utils.IsAPIGroup(group) {
-		return ""
-	}
-	return group
+	serveNotFound(w, req)
 }
 
 // breakerState is the group breaker's state, read without changing it:
@@ -456,33 +445,6 @@ func apiGroup(path string) string {
 // half-open.
 func (e servingEntry) breakerState() gobreaker.State {
 	return e.breakerView.State()
-}
-
-// owns reports whether the router answers req itself rather than passing it
-// to next: root discovery, which it builds, groups it serves, and paths it
-// rejects before routing. In
-// middleware mode everything else belongs to the embedded API server, which
-// has its own metrics.
-func (r *GrafanaRouter) owns(req *http.Request, group string) bool {
-	path := req.URL.Path
-	inTree := path == apisPrefix || strings.HasPrefix(path, apisPrefix+"/") ||
-		path == openapiV3Prefix || strings.HasPrefix(path, openapiV3Prefix+"/")
-	switch {
-	case inTree && !canonicalAPIPath(req.URL):
-		return true // HandleFunc rejects it before routing, so it never reaches next
-
-	case isDiscoveryPath(path):
-		return true
-
-	case path == apisPrefix || path == apisPrefix+"/" || path == openapiV3Prefix || path == openapiV3Prefix+"/":
-		return true
-	case strings.HasPrefix(path, apisPrefix+"/"):
-		return r.KnownGroup(group)
-	}
-	if group, _, ok := parseOpenAPIGroupVersionPath(path); ok {
-		return group == discoveryGroup || r.KnownGroup(group)
-	}
-	return false
 }
 
 // KnownGroup reports whether group has a live backend in the current
@@ -513,32 +475,31 @@ func serveCachedDoc(w http.ResponseWriter, req *http.Request, doc *cachedDoc) {
 }
 
 // serveOpenAPIV3 serves the /openapi/v3 index and per-group-version documents.
-func (r *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request, next http.Handler) {
+func (r *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request) {
 	if req.URL.Path == openapiV3Prefix || req.URL.Path == openapiV3Prefix+"/" {
 		setRoute(req, routeDiscovery)
-		r.serveOpenAPIIndex(w, req, next)
+		r.serveOpenAPIIndex(w, req)
 		return
 	}
 	group, version, ok := parseOpenAPIGroupVersionPath(req.URL.Path)
 	if !ok {
-		setRoute(req, routeNext)
-		next.ServeHTTP(w, req)
+		serveNotFound(w, req)
 		return
 	}
 	if group == discoveryGroup {
 		serveDiscoveryOpenAPI(w, req, version)
 		return
 	}
-	r.serveOpenAPIGroupVersion(w, req, next, group, version)
+	r.serveOpenAPIGroupVersion(w, req, group, version)
 }
 
 // serveOpenAPIGroupVersion proxies one group-version's OpenAPI v3 document
 // from its owning backend, cached and validated against the backend key.
-func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *http.Request, next http.Handler, group, version string) {
+func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *http.Request, group, version string) {
 	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {
-		r.serveUnregisteredGroup(w, req, next, group)
+		r.serveUnregisteredGroup(w, req, group, "get")
 		return
 	}
 	setRoute(req, routeBackend)
@@ -611,11 +572,11 @@ func parseOpenAPIGroupVersionPath(path string) (group, version string, ok bool) 
 	if !hasAPIs || rest == "" {
 		return "", "", false
 	}
-	parts := strings.Split(rest, "/")
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+	group, version, ok = strings.Cut(rest, "/")
+	if !ok || group == "" || version == "" || strings.Contains(version, "/") {
 		return "", "", false
 	}
-	return parts[0], parts[1], true
+	return group, version, true
 }
 
 // Run does an initial load, then reconciles on every coalesced wake from the
@@ -644,7 +605,6 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 		var retryC <-chan time.Time
 		run := func() {
 			err := r.reconcile(ctx)
-			r.storeServing(ctx, err)
 			now := time.Now()
 			if err == nil {
 				retry.OnSuccess(now)
@@ -729,6 +689,9 @@ func (r *GrafanaRouter) storeServing(ctx context.Context, err error) {
 		logging.FromContext(ctx).Error("router: reconcile completed with errors, serving last-known-good", "err", err)
 	}
 	r.state.Store(&routerState{phase: serving, err: err, served: len(r.served) > 0})
+	if r.Ready(ctx) == nil {
+		r.initialized.Store(true)
+	}
 }
 
 // Ready reports whether the router can serve traffic. A reconcile error does
@@ -763,8 +726,9 @@ func (r *GrafanaRouter) Alive(context.Context) error {
 // reconcile re-reads the full desired route set and converges served to it:
 // rebuild changed/new groups, leave unchanged ones (key match) untouched, drop
 // groups that disappeared, then publish a fresh snapshot. Level-triggered, so
-// it is safe to run on any wake.
-func (r *GrafanaRouter) reconcile(ctx context.Context) error {
+// it is safe to run on any wake. It records its outcome, which Ready reports.
+func (r *GrafanaRouter) reconcile(ctx context.Context) (err error) {
+	defer func() { r.storeServing(ctx, err) }()
 	rawBackends, err := r.loader.Load(ctx)
 	if err != nil {
 		// Keep serving last-known-good; Run retries with backoff.

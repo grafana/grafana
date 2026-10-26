@@ -12,5 +12,6 @@ export function buildAlertRuleSearchQuery(continueToken?: string) {
   } satisfies ListAlertRuleSearchRulesV0Alpha1RequestBody;
 }
 
-// `state` and `health` are status fields: see apps/alerting/rules/kinds/alertRule.cue searchFields.
-const ALERT_RULE_FIELDS = ['title', 'folder', 'paused', 'state', 'health'];
+// `state`, `health`, and `lastError` are status fields populated by `alerting.ruleStatusSync`.
+// `annotations` returns as a JSON-encoded string; `interval` is the evaluation cadence.
+const ALERT_RULE_FIELDS = ['title', 'folder', 'paused', 'state', 'health', 'lastError', 'annotations', 'interval'];
