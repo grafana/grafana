@@ -1438,6 +1438,11 @@
         "no-rules": "",
         "rules-error": ""
       },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
       "result-count": {
         "alert-rules_other": "",
         "recording-rules_other": ""
@@ -2153,14 +2158,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "最大数据点",
-      "tooltip-max-data-points": "每个序列的最大数据点。由某些数据源直接使用，并用于计算自动间隔。对于流数据，此值用于滚动缓冲区。"
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "新建"
     },
     "min-interval-option": {
       "label-interval": "间隔",
-      "tooltip-interval": "发送到数据源的时间间隔。建议设置为写入频率，例如，如果您的数据每分钟写入一次，则设置为 <1>1m</1>。"
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4105,6 +4110,11 @@
   },
   "app-chrome": {
     "skip-content-button": "跳至主要内容",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "登录"
     }
@@ -4567,8 +4577,7 @@
       "delete-warning": "此操作将删除此文件夹及其所有子内容。",
       "folder-empty": "选中的文件夹为空",
       "folder-not-empty": "所选文件夹包含将被删除的资源",
-      "missing-info": "缺少必填字段",
-      "success-message": "文件夹已成功删除"
+      "missing-info": "缺少必填字段"
     },
     "empty-state": {
       "button-title": "创建数据面板",
@@ -7199,8 +7208,7 @@
       "delete-error": "删除数据面板失败",
       "deleting": "正在删除...",
       "drawer-title": "删除已预置的数据面板",
-      "no-repository-selected": "缺少删除所需的存储库",
-      "success-message": "数据面板已成功删除"
+      "no-repository-selected": "缺少删除所需的存储库"
     },
     "description-label": {
       "description": "描述"
@@ -7477,14 +7485,10 @@
       "already-in-folder": "数据面板已在所选文件夹中。",
       "api-error": "移动数据面板失败",
       "cancel-action": "取消",
-      "current-file-not-found": "找不到当前数据面板文件",
       "drawer-title": "移动已预置的数据面板",
-      "file-load-error": "加载数据面板时出错",
-      "loading-dashboard-data": "正在加载数据面板的数据",
       "move-action": "移动数据面板",
       "move-read-only-message": "此数据面板无法直接从 Grafana 移动，因为存储库为只读。要移动此数据面板，请移动 Git 存储库中的文件。",
       "moving": "正在移动…",
-      "success-message": "数据面板已成功移动",
       "target-path-label": "目标路径",
       "title-this-repository-is-read-only": "此存储库为只读"
     },
@@ -13056,7 +13060,8 @@
         "close": "关闭 {{title}}",
         "open": "打开 {{title}}",
         "open-all": "打开 AI 助手和侧边栏应用"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "进入工作区",
@@ -14211,6 +14216,7 @@
       "description-folder": "存储库内的文件夹。对于存储库根目录，请保留为空。",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "推送到已配置分支已禁用",
       "label-branch": "分支",
       "label-comment": "评论",
@@ -15731,6 +15737,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "选择此查询的一个数据源以继续。",
     "datasource-load-error-title": "加载此查询的数据源失败",
     "loading-datasource": "正在加载数据源",

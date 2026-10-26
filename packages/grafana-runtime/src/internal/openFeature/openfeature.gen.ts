@@ -118,6 +118,8 @@ export const FlagKeys = {
   DashboardUndoRedo: "dashboardUndoRedo",
   /** Enables dashboard validator app to run compatibility checks between a dashboard and data source */
   DashboardValidatorApp: "dashboardValidatorApp",
+  /** Disables public dashboards for the stack */
+  DashboardsDisablePublicDashboards: "dashboards.disablePublicDashboards",
   /** Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out */
   DashboardsLibraryPanelHorizontalRepeatFullWidth: "dashboards.libraryPanelHorizontalRepeatFullWidth",
   /** Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state */
@@ -234,6 +236,8 @@ export const FlagKeys = {
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Disables creating new recorded queries while preserving access to existing queries */
   GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
+  /** Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state */
+  GrafanaSavedDashboardViews: "grafana.savedDashboardViews",
   /** Enables the dedicated Saved queries page and its navigation entry */
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
@@ -248,8 +252,6 @@ export const FlagKeys = {
   GrafanaStarredFolders: "grafana.starredFolders",
   /** Enables using dashboard variables in panel threshold values */
   GrafanaThresholdsInterpolation: "grafana.thresholdsInterpolation",
-  /** Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins */
-  GrafanaUnifiedDataSourcePicker: "grafana.unifiedDataSourcePicker",
   /** Use the find default scope endpoint to seed the initial scope selection when none is set. */
   GrafanaUseDefaultScopesEndpoint: "grafana.useDefaultScopesEndpoint",
   /** Enables semantic (vector) dashboard search in the command palette */
@@ -262,8 +264,6 @@ export const FlagKeys = {
   GrafanaAPIServerWithExperimentalAPIs: "grafanaAPIServerWithExperimentalAPIs",
   /** Enables the Graphite data source full backend mode */
   GraphiteBackendMode: "graphiteBackendMode",
-  /** Enable groupBy variable support in scenes dashboards */
-  GroupByVariable: "groupByVariable",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Adds support for Kubernetes correlations */
@@ -973,6 +973,17 @@ export const useFlagDashboardValidatorApp = (options?: ReactFlagEvaluationOption
 };
 
 /**
+ * Disables public dashboards for the stack
+ *
+ * **Details:**
+ * - flag key: `dashboards.disablePublicDashboards`
+ * - default value: `false`
+ */
+export const useFlagDashboardsDisablePublicDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.disablePublicDashboards", false, options).value;
+};
+
+/**
  * Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out
  *
  * **Details:**
@@ -1373,10 +1384,10 @@ export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvalua
  *
  * **Details:**
  * - flag key: `grafana.filterablePanels`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.filterablePanels", false, options).value;
+  return useFlag("grafana.filterablePanels", true, options).value;
 };
 
 /**
@@ -1611,6 +1622,17 @@ export const useFlagGrafanaRecordedQueriesDisableCreate = (options?: ReactFlagEv
 };
 
 /**
+ * Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
+ *
+ * **Details:**
+ * - flag key: `grafana.savedDashboardViews`
+ * - default value: `false`
+ */
+export const useFlagGrafanaSavedDashboardViews = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.savedDashboardViews", false, options).value;
+};
+
+/**
  * Enables the dedicated Saved queries page and its navigation entry
  *
  * **Details:**
@@ -1681,21 +1703,10 @@ export const useFlagGrafanaStarredFolders = (options?: ReactFlagEvaluationOption
  *
  * **Details:**
  * - flag key: `grafana.thresholdsInterpolation`
- * - default value: `false`
- */
-export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.thresholdsInterpolation", false, options).value;
-};
-
-/**
- * Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins
- *
- * **Details:**
- * - flag key: `grafana.unifiedDataSourcePicker`
  * - default value: `true`
  */
-export const useFlagGrafanaUnifiedDataSourcePicker = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.unifiedDataSourcePicker", true, options).value;
+export const useFlagGrafanaThresholdsInterpolation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.thresholdsInterpolation", true, options).value;
 };
 
 /**
@@ -1762,17 +1773,6 @@ export const useFlagGrafanaAPIServerWithExperimentalAPIs = (options?: ReactFlagE
  */
 export const useFlagGraphiteBackendMode = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("graphiteBackendMode", false, options).value;
-};
-
-/**
- * Enable groupBy variable support in scenes dashboards
- *
- * **Details:**
- * - flag key: `groupByVariable`
- * - default value: `false`
- */
-export const useFlagGroupByVariable = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("groupByVariable", false, options).value;
 };
 
 /**

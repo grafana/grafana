@@ -72,7 +72,7 @@ func (s *Service) GetSQLSchemas(ctx context.Context, req Request) (queryV0.SQLSc
 		n := min(frame.Rows(), maxRows)
 		sampleRows := make([][]any, 0, n)
 		for i := range n {
-			sampleRows = append(sampleRows, frame.RowCopy(i))
+			sampleRows = append(sampleRows, sql.SampleRow(frame, i))
 		}
 
 		schemas[dsNode.RefID()] = queryV0.SchemaInfo{
