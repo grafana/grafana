@@ -465,7 +465,7 @@ func TestCreateMuteTimings(t *testing.T) {
 		store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error {
 			return nil
 		}
-		prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		withUID := timing
 		withUID.UID = "my-custom-uid"
@@ -1407,7 +1407,7 @@ func TestDeleteMuteTimings(t *testing.T) {
 				return &legacy_storage.ConfigRevision{Config: collidingConfig()}, nil
 			}
 			store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error { return nil }
-			prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{}, nil)
+			prov.EXPECT().GetAllManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(map[string]utils.ManagerProperties{}, nil)
 			prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 			require.NoError(t, del(sut))
 
@@ -1699,7 +1699,7 @@ func TestMuteTimingManagerProperties(t *testing.T) {
 		}
 		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, orgID, terraform).Return(nil)
 
-		mt := v1.NewTimeInterval(v1.TimeIntervalUID("New"), "New", nil,models.ProvenanceNone)
+		mt := v1.NewTimeInterval(v1.TimeIntervalUID("New"), "New", nil, models.ProvenanceNone)
 		mt.Manager = terraform
 		result, err := sut.CreateMuteTiming(context.Background(), mt, orgID)
 		require.NoError(t, err)
@@ -1725,6 +1725,41 @@ func TestMuteTimingManagerProperties(t *testing.T) {
 
 		assert.Equal(t, fileManager, result.Manager)
 		assert.Equal(t, models.ProvenanceFile, result.Provenance())
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("legacy update keeps the stored manager when the provenance matches it", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(), nil
+		}
+		prov.EXPECT().GetAllManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(map[string]utils.ManagerProperties{"Managed": terraform}, nil)
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, orgID, terraform).Return(nil)
+
+		mt := v1.NewTimeInterval(v1.TimeIntervalUID("Managed"), "Managed", []timeinterval.TimeInterval{{}}, models.ProvenanceAPI)
+		mt.Version = ""
+		result, err := sut.UpdateMuteTiming(context.Background(), mt, orgID)
+		require.NoError(t, err)
+
+		assert.Equal(t, terraform, result.Manager)
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("legacy update with a different provenance replaces the stored manager", func(t *testing.T) {
+		sut, store, prov := createMuteTimingSvcSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(), nil
+		}
+		prov.EXPECT().GetAllManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(map[string]utils.ManagerProperties{"Managed": terraform}, nil)
+		fileManager := models.ProvenanceToManagerProperties(models.ProvenanceFile)
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, orgID, fileManager).Return(nil)
+
+		mt := v1.NewTimeInterval(v1.TimeIntervalUID("Managed"), "Managed", []timeinterval.TimeInterval{{}}, models.ProvenanceFile)
+		mt.Version = ""
+		result, err := sut.UpdateMuteTiming(context.Background(), mt, orgID)
+		require.NoError(t, err)
+
+		assert.Equal(t, fileManager, result.Manager)
 		prov.AssertExpectations(t)
 	})
 }

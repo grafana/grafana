@@ -239,6 +239,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 	// API never sends a UID, so without this a rename would otherwise fall through to
 	// SetTimeInterval's new-interval fallback and derive a fresh UID from the new title.
 	mt.UID = existing.UID
+	mt.Manager = models.PreserveStoredManager(existing.Manager, mt.Manager)
 	updated := revision.SetTimeInterval(mt)
 
 	// TODO add diff and noop detection

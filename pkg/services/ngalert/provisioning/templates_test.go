@@ -1804,6 +1804,41 @@ func TestTemplateManagerProperties(t *testing.T) {
 		assert.Equal(t, models.ProvenanceAPI, result.Provenance())
 		prov.AssertExpectations(t)
 	})
+
+	t.Run("legacy update keeps the stored manager when the provenance matches it", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(), nil
+		}
+		prov.EXPECT().GetManagerProperties(mock.Anything, mock.Anything, orgID).Return(terraform, nil)
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, orgID, terraform).Return(nil)
+
+		tmpl := v1.NewTemplateGroup("", "managed", "{{ define \"managed\" }}updated{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
+		tmpl.Version = ""
+		result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
+		require.NoError(t, err)
+
+		assert.Equal(t, terraform, result.Manager)
+		prov.AssertExpectations(t)
+	})
+
+	t.Run("legacy update with a different provenance replaces the stored manager", func(t *testing.T) {
+		sut, store, prov := createTemplateServiceSut()
+		store.GetFn = func(ctx context.Context, org int64) (*legacy_storage.ConfigRevision, error) {
+			return newRevision(), nil
+		}
+		fileManager := models.ProvenanceToManagerProperties(models.ProvenanceFile)
+		prov.EXPECT().GetManagerProperties(mock.Anything, mock.Anything, orgID).Return(terraform, nil)
+		prov.EXPECT().SetManagerProperties(mock.Anything, mock.Anything, orgID, fileManager).Return(nil)
+
+		tmpl := v1.NewTemplateGroup("", "managed", "{{ define \"managed\" }}updated{{ end }}", v1.TemplateKindGrafana, models.ProvenanceFile)
+		tmpl.Version = ""
+		result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
+		require.NoError(t, err)
+
+		assert.Equal(t, fileManager, result.Manager)
+		prov.AssertExpectations(t)
+	})
 }
 
 func generateTemplates(templates map[string]string, kind v1.TemplateKind) map[v1.ResourceUID]v1.TemplateGroup {
