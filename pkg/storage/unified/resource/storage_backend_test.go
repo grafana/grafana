@@ -14,6 +14,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 	"uuid"
 
@@ -3128,26 +3129,42 @@ func TestKvStorageBackend_ListModifiedSince_PastEventRetention(t *testing.T) {
 	})
 
 	t.Run("rescans the data store when the event store scan outlives the retention period", func(t *testing.T) {
-		backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
-			opts.EventRetentionPeriod = eventStoreRetentionMargin + 2*time.Second
-		})
-		rv, _ := addTestObject(t, backend, t.Context(), ns, "pruned", "value")
-		time.Sleep(2 * time.Millisecond)
-		slowRV, _ := addTestObject(t, backend, t.Context(), ns, "slow", "value")
-		_, err := backend.eventStore.CleanupOldEvents(t.Context(), time.UnixMilli(snowflakeTimestampMillis(slowRV)))
-		require.NoError(t, err)
-
-		_, seq := backend.ListModifiedSince(t.Context(), ns, SubtractDurationFromSnowflake(rv, time.Millisecond), nil)
-		var names []string
-		for mr, err := range seq {
-			require.NoError(t, err)
-			names = append(names, mr.Key.Name)
-			if len(names) == 1 {
-				time.Sleep(2500 * time.Millisecond)
+		synctest.Test(t, func(t *testing.T) {
+			// Snowflake RVs must be positive, so move the fake clock past their epoch.
+			time.Sleep(time.Until(time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)))
+			// Built by hand: the data store cache from newDataStore runs a goroutine that never exits the bubble.
+			kv := setupBadgerKV(t)
+			backend := &kvStorageBackend{
+				dataStore:            &dataStore{kv: kv, metrics: newKVBackendMetrics(nil)},
+				eventStore:           newEventStore(kv),
+				log:                  &logging.NoOpLogger{},
+				metrics:              newKVBackendMetrics(nil),
+				eventRetentionPeriod: eventStoreRetentionMargin + 2*time.Second,
 			}
-		}
-		// The rescan recovers the pruned event without repeating what the event store listed.
-		require.Equal(t, []string{"slow", "pruned"}, names)
+			save := func(name string) int64 {
+				key := DataKey{Namespace: ns.Namespace, Group: ns.Group, Resource: ns.Resource, Name: name, ResourceVersion: snowflakeFromTime(time.Now()), Action: DataActionCreated}
+				require.NoError(t, backend.dataStore.Save(t.Context(), key, strings.NewReader(name)))
+				require.NoError(t, backend.eventStore.Save(t.Context(), Event{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: key.Name, ResourceVersion: key.ResourceVersion, Action: key.Action}))
+				return key.ResourceVersion
+			}
+			rv := save("pruned")
+			time.Sleep(time.Millisecond)
+			slowRV := save("slow")
+			_, err := backend.eventStore.CleanupOldEvents(t.Context(), time.UnixMilli(snowflakeTimestampMillis(slowRV)))
+			require.NoError(t, err)
+
+			_, seq := backend.ListModifiedSince(t.Context(), ns, SubtractDurationFromSnowflake(rv, time.Millisecond), nil)
+			var names []string
+			for mr, err := range seq {
+				require.NoError(t, err)
+				names = append(names, mr.Key.Name)
+				if len(names) == 1 {
+					time.Sleep(2500 * time.Millisecond)
+				}
+			}
+			// The rescan recovers the pruned event without repeating what the event store listed.
+			require.Equal(t, []string{"slow", "pruned"}, names)
+		})
 	})
 
 	t.Run("reads the data store past an hour even with a longer retention period", func(t *testing.T) {
