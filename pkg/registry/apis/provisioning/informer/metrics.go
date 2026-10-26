@@ -2,7 +2,6 @@ package informer
 
 import (
 	"strconv"
-	"sync/atomic"
 	"time"
 
 	"github.com/grafana/dskit/instrument"
@@ -27,13 +26,10 @@ import (
 // storage_server_watch_notifications_published_total and live_events_total
 // summed across replicas.
 type informerMetrics struct {
-	liveEvents        *prometheus.CounterVec
-	relistEvents      *prometheus.CounterVec
-	liveLatency       *prometheus.HistogramVec
-	relistLatency     *prometheus.HistogramVec
-	reconnects        *prometheus.CounterVec
-	natsSubscriptions prometheus.Gauge
-	relistRequests    *prometheus.CounterVec
+	liveEvents    *prometheus.CounterVec
+	relistEvents  *prometheus.CounterVec
+	liveLatency   *prometheus.HistogramVec
+	relistLatency *prometheus.HistogramVec
 }
 
 // newInformerMetrics builds the delivery metrics on reg. One instance serves
@@ -68,18 +64,6 @@ func newInformerMetrics(reg prometheus.Registerer) *informerMetrics {
 			"grafana_provisioning_informer_relist_event_latency_seconds",
 			"Time from a change's resource version being issued to its recovery by a re-list, for adds the live stream did not deliver. Re-deliveries of unchanged objects carry no latency.",
 		), []string{"resource"}),
-		reconnects: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_provisioning_informer_nats_reconnects_total",
-			Help: "Times an informer's NATS subscription was (re)established after a gap. Live events published during the gap never reach this replica; the informer forces a re-list to recover them.",
-		}, []string{"resource"}),
-		natsSubscriptions: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
-			Name: "grafana_provisioning_informer_nats_subscriptions",
-			Help: "Number of provisioning informers currently holding an open live NATS subscription. Below the running informer count means some run re-list-only — before their subscription first opens, or in degraded-start mode. Mid-run connection outages are reported by grafana_nats_subscriber_connection_status instead — the subscription itself resumes transparently on reconnect. Always 0 on the apiserver watch path, which has no NATS subscription.",
-		}),
-		relistRequests: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_provisioning_informer_relist_requests_total",
-			Help: "LIST API requests the re-list issued, one per page followed (unified storage caps a page at 500 items / 2 MB). Divided by the number of re-lists it is the average page count per snapshot; a rising ratio means the resource is outgrowing a single page. Recorded on the NATS informer path only — the apiserver watch lists via client-go internally.",
-		}, []string{"resource"}),
 	}
 }
 
@@ -91,10 +75,6 @@ func (m *informerMetrics) observeLive(resourceName, verb string, rv int64) {
 func (m *informerMetrics) observeRelist(resourceName, verb string, rv int64) {
 	m.relistEvents.WithLabelValues(resourceName, verb).Inc()
 	m.observeLatency(m.relistLatency, resourceName, rv)
-}
-
-func (m *informerMetrics) observeRelistRequest(resourceName string) {
-	m.relistRequests.WithLabelValues(resourceName).Inc()
 }
 
 func (m *informerMetrics) observeLatency(latency *prometheus.HistogramVec, resourceName string, rv int64) {
@@ -109,53 +89,9 @@ func (m *informerMetrics) observeLatency(latency *prometheus.HistogramVec, resou
 	}
 }
 
-// natsRecorder adapts informerMetrics to the NATS informer's metrics hook,
-// labelling everything it observes with one resource.
-type natsRecorder struct {
-	metrics      *informerMetrics
-	resourceName string
-	// subscribed dedupes the informer's open/close notifications so this recorder
-	// moves the shared natsSubscriptions gauge by at most one, however many times
-	// the informer reports the same state.
-	subscribed *atomic.Bool
-}
-
-// newNATSRecorder builds a recorder for one informer. Each recorder owns its own
-// subscribed state; they share metrics so the gauge totals across informers.
-func newNATSRecorder(metrics *informerMetrics, resourceName string) natsRecorder {
-	return natsRecorder{metrics: metrics, resourceName: resourceName, subscribed: &atomic.Bool{}}
-}
-
-var _ usinformer.Metrics = natsRecorder{}
-
-func (r natsRecorder) ObserveLiveEvent(verb string, rv int64) {
-	r.metrics.observeLive(r.resourceName, verb, rv)
-}
-
-func (r natsRecorder) ObserveRelistEvent(verb string, rv int64) {
-	r.metrics.observeRelist(r.resourceName, verb, rv)
-}
-
-func (r natsRecorder) ObserveReconnect() {
-	r.metrics.reconnects.WithLabelValues(r.resourceName).Inc()
-}
-
-func (r natsRecorder) ObserveLiveSubscription(open bool) {
-	if open {
-		if r.subscribed.CompareAndSwap(false, true) {
-			r.metrics.natsSubscriptions.Inc()
-		}
-		return
-	}
-	if r.subscribed.CompareAndSwap(true, false) {
-		r.metrics.natsSubscriptions.Dec()
-	}
-}
-
 // apiServerMeter observes deliveries from an apiserver-backed
-// SharedIndexInformer on the same series the NATS recorder writes. Register it
-// as one extra event handler so each event is counted once however many
-// controller handlers the informer has. The informer has no live/relist
+// SharedIndexInformer. Register it as one extra event handler so each event is
+// counted once however many controller handlers the informer has. The informer has no live/relist
 // distinction of its own, so the meter derives it: initial-list adds and resync
 // re-deliveries (same RV on both sides of an update) and re-list-detected
 // deletes (DeletedFinalStateUnknown) count as relist, everything else came from
