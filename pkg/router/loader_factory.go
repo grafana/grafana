@@ -23,14 +23,23 @@ import (
 // standalone router tries ProvideCloudRoutesLoader first, and calls this only
 // when [cloud_router] configures none, and Grafana itself never polls them.
 func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
-	if deps.PluginSources != nil {
+	dev, err := newDevTargets(cfg, deps.PluginDependencies)
+	if err != nil {
+		return nil, err
+	}
+	if deps.PluginSources != nil || dev != nil {
 		if middlewareEnabled(cfg, deps.Features) {
 			// When running in ST grafana as middleware, declare plugin roles and resolve settings storage defaults
-			if err := initLocalPlugins(context.Background(), deps); err != nil {
+			if deps.PluginSources != nil {
+				if err := initLocalPlugins(context.Background(), deps); err != nil {
+					return nil, err
+				}
+			}
+			if err := dev.declareRoles(context.Background(), deps.ACService); err != nil {
 				return nil, err
 			}
 		}
-		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg, deps.Features)}, nil
+		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg, deps.Features), dev: dev}, nil
 	}
 
 	return noRoutesLoader{}, nil

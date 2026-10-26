@@ -145,6 +145,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Loader selection | `loader_factory.go` |
 | Cloud loader: settings, source priority | `cloud_router.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
+| Dev targets (`router.dev.<name>`), served by the local plugin loader | `dev_targets.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
 | Single-tenant (ST) fallback, its per-stack discovery cache, and the `dashboard.grafana.app` split | `st_fallback.go`, `st_discovery_cache.go`, `st_resources.go` |
@@ -158,7 +159,8 @@ Exactly one loader serves:
    `[router.aggregate.<name>]` target is configured (see Settings). `pkg/server` builds it with
    `ProvideCloudRoutesLoader`. Grafana itself never polls the cloud sources.
 2. **Otherwise the local plugin loader** (`ProvideRoutesLoader`), when plugin sources are
-   available.
+   available or any `[router.dev.<name>]` target is set. Dev targets come after the local
+   plugins, so they win a shared group.
 3. **Otherwise no groups** (`noRoutesLoader`). The dummy loader that serves static groups is in
    `dummy_test.go`, for tests only.
 
@@ -186,7 +188,8 @@ must, since the tokens the router sends them name that ID as their audience. Ent
 `core_url` may have no ID; their tokens name their API group instead.
 
 Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
-`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `p:<hash>` or `st:<hash>`.
+`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `dev:<pluginId>:<hash>`, `p:<hash>` or
+`st:<hash>`.
 
 ## Serving and discovery
 
@@ -398,6 +401,14 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
 priority order. Repeating a section name merges its keys; it does not create another target.
+
+Dev targets are configured in `[router.dev.<name>]` sections, for running an app's backend locally
+outside the cloud loader. `manifest` is the path to an `AppManifest` JSON file, read on every
+`Load`; `host` is the backend, reached through baasbridge when it is an `http` or `https` URL and
+over gRPC (with the `[router.backend_grpc]` settings) otherwise. `plugin_id` defaults to the
+section name and names the audience of the tokens a gRPC backend gets. A section without `host`
+is skipped; one without `manifest` fails startup; a manifest that fails to load skips only its
+target. Like managed plugins, dev targets get no legacy app-access check.
 Keys support environment overrides, for example `GF_ROUTER_AGGREGATE_BAAS_APISERVER_URL`;
 the corresponding section must contain at least one nonempty setting (for example `audience`)
 in the INI configuration, because Grafana's config loader drops empty sections.

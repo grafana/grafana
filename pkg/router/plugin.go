@@ -218,6 +218,9 @@ type PluginLoader struct {
 	// settings is whether the loader serves app plugin settings
 	// (settingsEnabled).
 	settings bool
+
+	// dev serves the [router.dev.<name>] sections; nil when none is set.
+	dev *devTargets
 }
 
 func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, schemas bool) ([]definition.PluginDefinition, error) {
@@ -243,12 +246,20 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, 
 }
 
 func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
+	dev := pl.dev.backends(ctx)
+	if pl.deps.PluginSources == nil {
+		return dev, nil
+	}
 	pluginDefs, err := loadLocalPluginDefinitions(ctx, pl.deps.PluginSources, true)
 	if err != nil {
 		return nil, err
 	}
-
-	return pl.prepareBackends(ctx, pluginDefs)
+	backends, err := pl.prepareBackends(ctx, pluginDefs)
+	if err != nil {
+		return nil, err
+	}
+	// Dev targets come last, so they replace a local plugin serving the same group.
+	return append(backends, dev...), nil
 }
 
 func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definition.PluginDefinition) ([]Backend, error) {
