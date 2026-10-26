@@ -404,11 +404,15 @@ priority order. Repeating a section name merges its keys; it does not create ano
 
 Dev targets are configured in `[router.dev.<name>]` sections, for running an app's backend locally
 outside the cloud loader. `manifest` is the path to an `AppManifest` JSON file, read on every
-`Load`; `host` is the backend, reached through baasbridge when it is an `http` or `https` URL and
+`Load`. The loader's `Notify` watches each manifest's directory with fsnotify, and wakes the router
+once a manifest has stopped changing for `devManifestSettle`, so the changed key reloads just
+that group; `host` is the backend, reached through baasbridge when it is an `http` or `https` URL and
 over gRPC (with the `[router.backend_grpc]` settings) otherwise. `plugin_id` defaults to the
 section name and names the audience of the tokens a gRPC backend gets. A section without `host`
 is skipped; one without `manifest` fails startup; a manifest that fails to load skips only its
-target. Like managed plugins, dev targets get no legacy app-access check.
+target. In middleware mode their manifest roles are declared at startup, as local plugins' are, so
+a change to a manifest's roles needs a restart; a target whose roles fail is logged and still
+served. Like managed plugins, dev targets get no legacy app-access check.
 Keys support environment overrides, for example `GF_ROUTER_AGGREGATE_BAAS_APISERVER_URL`;
 the corresponding section must contain at least one nonempty setting (for example `audience`)
 in the INI configuration, because Grafana's config loader drops empty sections.

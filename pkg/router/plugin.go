@@ -192,22 +192,31 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 		}
 
 		for _, manifest := range plugin.Manifests {
-			if manifest == nil {
-				continue
-			}
-			group := manifest.Group
-			if slices.Contains(routableCoreGroups, group) {
-				// A core group keeps the roles its own app declares.
-				continue
-			}
-			if !isPluginManifestGroup(group) || len(validation.IsDNS1123Subdomain(group)) > 0 {
-				logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", plugin.JSONData.ID, "group", group)
-				continue
-			}
-			if err := declareManifestRoles(deps.ACService, group, plugin.JSONData.Name, manifest); err != nil {
-				return fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
+			if err := declareLocalManifestRoles(ctx, deps.ACService, plugin.JSONData.ID, plugin.JSONData.Name, manifest); err != nil {
+				return err
 			}
 		}
+	}
+	return nil
+}
+
+// declareLocalManifestRoles declares the roles of a manifest served by the
+// local plugin loader. A routable core group keeps the roles its own app
+// declares, and an invalid group gets none.
+func declareLocalManifestRoles(ctx context.Context, service accesscontrol.Service, pluginID, pluginName string, manifest *app.ManifestData) error {
+	if manifest == nil {
+		return nil
+	}
+	group := manifest.Group
+	if slices.Contains(routableCoreGroups, group) {
+		return nil
+	}
+	if !isPluginManifestGroup(group) || len(validation.IsDNS1123Subdomain(group)) > 0 {
+		logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", pluginID, "group", group)
+		return nil
+	}
+	if err := declareManifestRoles(service, group, pluginName, manifest); err != nil {
+		return fmt.Errorf("error declaring roles for %s: %w", pluginID, err)
 	}
 	return nil
 }
@@ -326,7 +335,10 @@ func isAppPluginID(id string) bool {
 	return strings.Contains(id, "-") && !strings.Contains(id, ".")
 }
 
-func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
+func (pl PluginLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
+	if pl.dev != nil {
+		return pl.dev.notify(ctx)
+	}
 	return make(chan struct{}), nil // TODO? is there a plugin registry with update events?
 }
 

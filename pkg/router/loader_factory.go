@@ -35,9 +35,7 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 					return nil, err
 				}
 			}
-			if err := dev.declareRoles(context.Background(), deps.ACService); err != nil {
-				return nil, err
-			}
+			dev.declareRoles(context.Background(), deps.ACService)
 		}
 		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg, deps.Features), dev: dev}, nil
 	}

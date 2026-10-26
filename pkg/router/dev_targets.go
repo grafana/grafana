@@ -3,8 +3,13 @@ package router
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/fsnotify/fsnotify"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -20,6 +25,11 @@ const (
 	devSectionPrefix = "router.dev."
 	devKeyPrefix     = "dev"
 )
+
+// devManifestSettle is how long a manifest must stop changing before the
+// router reloads it: an editor or generator often writes a file several times
+// for one save.
+var devManifestSettle = 100 * time.Millisecond
 
 // devTargetConfig is an app served from a local manifest file by a backend
 // at host: an http or https URL is reached through baasbridge, anything else
@@ -99,9 +109,17 @@ func newDevTargets(cfg *setting.Cfg, deps PluginDependencies) (*devTargets, erro
 
 func readDevManifest(path string) (*app.ManifestData, error) {
 	// The path comes from the operator's own config.
-	raw, err := os.ReadFile(path) //nolint:gosec
+	f, err := os.Open(path) //nolint:gosec
 	if err != nil {
 		return nil, err
+	}
+	defer func() { _ = f.Close() }()
+	raw, err := io.ReadAll(io.LimitReader(f, maxPluginManifestsBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(raw) > maxPluginManifestsBytes {
+		return nil, fmt.Errorf("manifest is larger than %d bytes", maxPluginManifestsBytes)
 	}
 	manifest, err := definition.ParseManifest(raw)
 	if err != nil {
@@ -112,25 +130,22 @@ func readDevManifest(path string) (*app.ManifestData, error) {
 }
 
 // declareRoles registers each target's manifest roles, as initLocalPlugins
-// does for local plugins.
-func (d *devTargets) declareRoles(ctx context.Context, service accesscontrol.Service) error {
+// does for local plugins. Roles are declared once, at startup, so a change to
+// a manifest's roles needs a restart. A target whose roles fail is only
+// logged, so one bad manifest can't stop Grafana from starting.
+func (d *devTargets) declareRoles(ctx context.Context, service accesscontrol.Service) {
 	if d == nil {
-		return nil
+		return
 	}
 	for _, c := range d.configs {
 		manifest, err := readDevManifest(c.Manifest)
+		if err == nil {
+			err = declareLocalManifestRoles(ctx, service, c.PluginID, c.Name, manifest)
+		}
 		if err != nil {
 			logging.FromContext(ctx).Warn("router: skipping roles for dev target", "target", c.Name, "manifest", c.Manifest, "err", err)
-			continue
-		}
-		if !isPluginManifestGroup(manifest.Group) {
-			continue
-		}
-		if err := declareManifestRoles(service, manifest.Group, c.Name, manifest); err != nil {
-			return fmt.Errorf("error declaring roles for dev target %s: %w", c.Name, err)
 		}
 	}
-	return nil
 }
 
 // backends reads every manifest on each load. A target that fails is skipped,
@@ -174,4 +189,63 @@ func (d *devTargets) backend(c devTargetConfig) (Backend, error) {
 		return nil, err
 	}
 	return &pluginDeploymentBackend{Backend: backend, key: key, source: sourceDev}, nil
+}
+
+// notify wakes the router when a manifest file changes. A changed manifest
+// changes its backend's key, so the reload rebuilds only that target's group.
+// Each manifest's directory is watched rather than the file, since editors and
+// generators often replace a file by renaming another over it, which ends a
+// watch on the file itself.
+func (d *devTargets) notify(ctx context.Context) (<-chan struct{}, error) {
+	dirty := make(chan struct{}, 1)
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, fmt.Errorf("router: watching dev manifests: %w", err)
+	}
+	manifests := make(map[string]struct{}, len(d.configs))
+	for _, c := range d.configs {
+		path, err := filepath.Abs(c.Manifest)
+		if err != nil {
+			logging.FromContext(ctx).Warn("router: not watching dev manifest", "target", c.Name, "manifest", c.Manifest, "err", err)
+			continue
+		}
+		if err := watcher.Add(filepath.Dir(path)); err != nil {
+			logging.FromContext(ctx).Warn("router: not watching dev manifest", "target", c.Name, "manifest", c.Manifest, "err", err)
+			continue
+		}
+		manifests[path] = struct{}{}
+	}
+
+	go func() {
+		defer func() { _ = watcher.Close() }()
+		settle := time.NewTimer(0)
+		settle.Stop()
+		defer settle.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-settle.C:
+				logging.FromContext(ctx).Info("router: dev manifest changed, reloading")
+				wake(dirty)
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				logging.FromContext(ctx).Warn("router: watching dev manifests", "err", err)
+			case e, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				// A change of mode or access time leaves the content as it was.
+				if e.Op == fsnotify.Chmod {
+					continue
+				}
+				if _, watched := manifests[filepath.Clean(e.Name)]; watched {
+					settle.Reset(devManifestSettle)
+				}
+			}
+		}
+	}()
+	return dirty, nil
 }

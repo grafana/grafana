@@ -1,10 +1,12 @@
 package router
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
@@ -127,4 +129,90 @@ func TestPluginLoaderServesDevTargetsWithoutPluginSources(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, backends, 1)
 	require.Equal(t, "widgets.ext.grafana.app", backends[0].Group().Name)
+}
+
+func TestDevTargetsNotifyOnManifestChange(t *testing.T) {
+	manifest := writeDevManifest(t, devTestManifest)
+	cfg := devTestCfg(t, "[router.dev.widgets]\nmanifest = "+manifest+"\nhost = http://127.0.0.1:8080\n")
+	loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{})
+	require.NoError(t, err)
+
+	dirty, err := loader.Notify(t.Context())
+	require.NoError(t, err)
+	before, err := loader.Load(t.Context())
+	require.NoError(t, err)
+	require.Len(t, before, 1)
+
+	requireWake := func(msg string) {
+		t.Helper()
+		select {
+		case <-dirty:
+		case <-time.After(5 * time.Second):
+			t.Fatal(msg)
+		}
+	}
+
+	// A sibling file in the watched directory is not a manifest change.
+	require.NoError(t, os.WriteFile(filepath.Join(filepath.Dir(manifest), "other.json"), []byte("{}"), 0o600))
+	select {
+	case <-dirty:
+		t.Fatal("a change to another file must not wake the router")
+	case <-time.After(3 * devManifestSettle):
+	}
+
+	changed := strings.Replace(devTestManifest, `"Widgets"`, `"Gadgets"`, 1)
+	require.NoError(t, os.WriteFile(manifest, []byte(changed), 0o600))
+	requireWake("rewriting the manifest must wake the router")
+
+	after, err := loader.Load(t.Context())
+	require.NoError(t, err)
+	require.Len(t, after, 1)
+	require.NotEqual(t, before[0].Key(), after[0].Key(), "a changed manifest changes the key, so the group reloads")
+
+	// Editors and generators often replace the file by renaming another over it.
+	tmp := manifest + ".tmp"
+	require.NoError(t, os.WriteFile(tmp, []byte(devTestManifest), 0o600))
+	require.NoError(t, os.Rename(tmp, manifest))
+	requireWake("replacing the manifest must wake the router")
+}
+
+func TestDevTargetsDeclareRoles(t *testing.T) {
+	manifest := writeDevManifest(t, devTestManifest)
+	broken := writeDevManifest(t, "{not json")
+	cfg := devTestCfg(t, `
+[router.dev.broken]
+manifest = `+broken+`
+host = http://127.0.0.1:8081
+
+[router.dev.widgets]
+manifest = `+manifest+`
+host = http://127.0.0.1:8080
+`)
+	dev, err := newDevTargets(cfg, PluginDependencies{})
+	require.NoError(t, err)
+
+	service := &recordingManifestRoleService{}
+	dev.declareRoles(t.Context(), service)
+	require.Equal(t, 1, service.calls, "a broken manifest is skipped, and the others still declare their roles")
+	require.NotEmpty(t, service.roles)
+
+	// A failing declaration is logged, never fatal: it must not stop Grafana from starting.
+	dev.declareRoles(t.Context(), &recordingManifestRoleService{err: errors.New("role registration failed")})
+	dev.declareRoles(t.Context(), nil)
+}
+
+func TestDevTargetsNotifyIgnoresChmod(t *testing.T) {
+	manifest := writeDevManifest(t, devTestManifest)
+	cfg := devTestCfg(t, "[router.dev.widgets]\nmanifest = "+manifest+"\nhost = http://127.0.0.1:8080\n")
+	dev, err := newDevTargets(cfg, PluginDependencies{})
+	require.NoError(t, err)
+	dirty, err := dev.notify(t.Context())
+	require.NoError(t, err)
+
+	require.NoError(t, os.Chmod(manifest, 0o400))
+	select {
+	case <-dirty:
+		t.Fatal("a mode change leaves the manifest as it was")
+	case <-time.After(3 * devManifestSettle):
+	}
 }
