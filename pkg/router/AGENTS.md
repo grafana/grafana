@@ -198,7 +198,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/openapi/v3/apis/{group}/{version}` | GET and HEAD only (405 otherwise). Proxied, and cached against the backend key unless the response is private, `no-cache` or `no-store`, or larger than `maxCachedOpenAPIDocBytes`. |
 | `/apis/discovery` | Synthesized `APIGroup` for the router's own `discovery` group. |
 | `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
-| `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served `ManifestProvider` backend. |
+| `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served group with a manifest: the backend's own (`ManifestProvider`), or, as a fallback when it advertises none, the one compiled in for the group. |
 | `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
 | `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
 | `/apis/discovery/v1alpha2/AGENTS.md` | Synthesized markdown index of every served group, for agents. |
@@ -264,6 +264,14 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     groups left out, and the same ETag. `TestAggregatedDiscoveryMatchesAPIServer` checks it.
 - **App manifest discovery** (`/apis/discovery`) is published in `publish` with the root documents, from
   the `ManifestProvider` backends (plugin backends from every source). Nothing is fetched per request.
+  - The backend's own manifest (`ManifestProvider`) is the source of truth. `resource.AppManifests`
+    (the manifests compiled into the binary, set in `ProvideGrafanaRouter`) is only a fallback, for a
+    served group whose backend advertises no manifest, so the router does not know what it serves
+    (`publishedManifests`). It is a best guess, since a remote backend may run another release, so
+    it is limited to the versions the backend serves. The status page's `manifest` field reports
+    only what the backend advertises, never the fallback.
+  - `Backend.Group` must change only when `Key` does. Reconcile keeps a served `Backend` while its
+    key is unchanged, so the manifest documents, like `/apis`, are rebuilt only on a key change.
   - Keep it cheap, since `publish` runs on every reconcile: `publishManifestDocs` does nothing when
     the served group/key set is unchanged, and converts only manifests whose backend key is new
     (`manifestCache`), relying on a manifest changing only with its key.
