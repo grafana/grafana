@@ -371,6 +371,17 @@ describe('HeaderCell', () => {
       expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
     });
 
+    it('does not escape special characters in the column menu name', () => {
+      render(
+        <HeaderCell
+          {...baseProps}
+          field={makeField({ name: 'Image w/ Link', config: { custom: { filterable: true } } })}
+          tableRefreshEnabled
+        />
+      );
+      expect(screen.getByRole('button', { name: 'Column options for Image w/ Link' })).toBeInTheDocument();
+    });
+
     it('omits the menu when no actions are available', () => {
       render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
       expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();

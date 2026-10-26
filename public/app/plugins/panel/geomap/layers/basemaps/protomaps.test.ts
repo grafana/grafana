@@ -189,7 +189,7 @@ describe('Protomaps basemap', () => {
     });
   });
 
-  it('labels only the places CARTO labels, from zoom 15', async () => {
+  it('labels only the places the default basemap labels, from zoom 15', async () => {
     await initLayer({ showLabels: true });
 
     expect(appliedStyle().layers[3]).toMatchObject({
@@ -206,7 +206,7 @@ describe('Protomaps basemap', () => {
     });
   });
 
-  it('leaves out house numbers, which CARTO never shows', async () => {
+  it('leaves out house numbers, which the default basemap never shows', async () => {
     await initLayer({ showLabels: true });
 
     expect(appliedStyle().layers.map((layer: { id: string }) => layer.id)).not.toContain('address_label');

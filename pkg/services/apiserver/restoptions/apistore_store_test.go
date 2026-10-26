@@ -175,13 +175,17 @@ func TestGuaranteedUpdateUnconditionalUpsertOnMissingCreates(t *testing.T) {
 	unconditionalUpsertOnMissingCreates(ctx, t, store)
 }
 
-// TestIntegrationGuaranteedUpdateCreateOnUpdate exercises the create-on-update behavior
-// against every storage backend (including the real SQL-backed unified store), so the
-// Conflict-on-deleted semantics are verified end-to-end and not just against the in-memory
-// file backend.
+func TestGuaranteedUpdateCreateOnUpdate(t *testing.T) {
+	runGuaranteedUpdateCreateOnUpdate(t, StorageTypeFile)
+}
+
 func TestIntegrationGuaranteedUpdateCreateOnUpdate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	runGuaranteedUpdateCreateOnUpdate(t, StorageTypeSQL, StorageTypeKV)
+}
 
+func runGuaranteedUpdateCreateOnUpdate(t *testing.T, storageTypes ...StorageType) {
+	t.Helper()
 	for _, s := range storageTypes {
 		t.Run(string(s), func(t *testing.T) {
 			t.Run("conditional update on deleted returns conflict", func(t *testing.T) {

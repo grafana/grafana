@@ -31,7 +31,7 @@ func TestOpenAPIGroupVersionDoesNotCachePrivateResponses(t *testing.T) {
 			req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/test-app/v0alpha1", nil)
 			for range 2 {
 				res := httptest.NewRecorder()
-				s.HandleFunc(res, req, http.NotFoundHandler())
+				s.HandleFunc(res, req)
 				require.Equal(t, http.StatusOK, res.Code)
 				require.Equal(t, directive, res.Header().Get("Cache-Control"))
 			}
@@ -55,7 +55,7 @@ func TestOpenAPIGroupVersionRechecksAuthorization(t *testing.T) {
 	req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/example.grafana.app/v1", nil)
 	req.Header.Set("Authorization", "Bearer allowed")
 	res := httptest.NewRecorder()
-	router.HandleFunc(res, req, http.NotFoundHandler())
+	router.HandleFunc(res, req)
 	require.Equal(t, http.StatusOK, res.Code)
 	require.NotEmpty(t, res.Header().Get("ETag"))
 
@@ -63,7 +63,7 @@ func TestOpenAPIGroupVersionRechecksAuthorization(t *testing.T) {
 	for _, etag := range []string{"", res.Header().Get("ETag")} {
 		req.Header.Set("If-None-Match", etag)
 		denied := httptest.NewRecorder()
-		router.HandleFunc(denied, req, http.NotFoundHandler())
+		router.HandleFunc(denied, req)
 		require.Equal(t, http.StatusForbidden, denied.Code)
 	}
 }
@@ -84,7 +84,7 @@ func TestOpenAPIGroupVersionPreservesRepresentation(t *testing.T) {
 				req.Header.Set("Accept", accept)
 				for range 2 {
 					res := httptest.NewRecorder()
-					s.HandleFunc(res, req, http.NotFoundHandler())
+					s.HandleFunc(res, req)
 					require.Equal(t, http.StatusOK, res.Code)
 					require.Equal(t, accept, res.Header().Get("Content-Type"))
 					require.Equal(t, accept, res.Body.String())
@@ -97,7 +97,7 @@ func TestOpenAPIGroupVersionPreservesRepresentation(t *testing.T) {
 			req.Header.Set("Accept", "application/json")
 			req.Header.Set("If-None-Match", previousETag)
 			res := httptest.NewRecorder()
-			s.HandleFunc(res, req, http.NotFoundHandler())
+			s.HandleFunc(res, req)
 			require.Equal(t, http.StatusOK, res.Code)
 			require.NotEqual(t, previousETag, res.Header().Get("ETag"))
 		})
@@ -124,8 +124,7 @@ func buildRouterWithBackend(group, key string, upstream http.Handler) *GrafanaRo
 func TestOpenAPIGroupVersionCachesUntilKeyChanges(t *testing.T) {
 	upstream := &countingHandler{body: `{"openapi":"3.0.0"}`}
 	s := buildRouterWithBackend("dashboard.grafana.app", "5", upstream)
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
-	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req, next) })
+	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req) })
 
 	path := "/openapi/v3/apis/dashboard.grafana.app/v1alpha1"
 
@@ -166,8 +165,7 @@ func TestOpenAPIGroupVersionCachesUntilKeyChanges(t *testing.T) {
 func TestOpenAPIGroupVersionIfNoneMatch304(t *testing.T) {
 	upstream := &countingHandler{body: `{"openapi":"3.0.0"}`}
 	s := buildRouterWithBackend("dashboard.grafana.app", "5", upstream)
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
-	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req, next) })
+	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req) })
 	path := "/openapi/v3/apis/dashboard.grafana.app/v1alpha1"
 
 	rec1 := httptest.NewRecorder()
@@ -192,14 +190,13 @@ func TestOpenAPIGroupVersionIfNoneMatch304(t *testing.T) {
 	}
 }
 
-func TestOpenAPIGroupVersionUnknownGroupFallsThrough(t *testing.T) {
+func TestOpenAPIGroupVersionUnknownGroupIsNotFound(t *testing.T) {
 	s := buildRouterWithBackend("dashboard.grafana.app", "5", &countingHandler{body: "{}"})
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
-	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req, next) })
+	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req) })
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/unknown.grafana.app/v1", nil))
-	if rec.Code != http.StatusTeapot {
-		t.Errorf("got code %d, want 418 (fell through)", rec.Code)
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("got code %d, want 404", rec.Code)
 	}
 }
 
@@ -223,8 +220,7 @@ func (u *conditionalUpstream) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 func TestOpenAPIGroupVersionStripsConditionalHeaders(t *testing.T) {
 	upstream := &conditionalUpstream{body: `{"openapi":"3.0.0"}`}
 	s := buildRouterWithBackend("dashboard.grafana.app", "5", upstream)
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
-	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req, next) })
+	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req) })
 
 	req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/dashboard.grafana.app/v1alpha1", nil)
 	// A stale/foreign If-None-Match that does NOT match our current key-based
@@ -247,8 +243,7 @@ func TestOpenAPIGroupVersionStripsConditionalHeaders(t *testing.T) {
 func TestOpenAPIGroupVersionIfNoneMatch304SetsETag(t *testing.T) {
 	upstream := &countingHandler{body: `{"openapi":"3.0.0"}`}
 	s := buildRouterWithBackend("dashboard.grafana.app", "5", upstream)
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
-	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req, next) })
+	h := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) { s.HandleFunc(w, req) })
 	path := "/openapi/v3/apis/dashboard.grafana.app/v1alpha1"
 
 	rec1 := httptest.NewRecorder()
@@ -325,7 +320,7 @@ func TestOpenAPIGroupVersionTooLargeToCache(t *testing.T) {
 	s := buildRouterWithBackend("test-app", "1", upstream)
 	for range 2 {
 		res := httptest.NewRecorder()
-		s.HandleFunc(res, newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/test-app/v1", nil), http.NotFoundHandler())
+		s.HandleFunc(res, newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/test-app/v1", nil))
 		require.Equal(t, http.StatusOK, res.Code)
 		require.Equal(t, body, res.Body.String(), "the whole document still reaches the client")
 		require.Empty(t, res.Header().Get("ETag"), "an uncached document has no router ETag")
@@ -363,7 +358,7 @@ func TestOpenAPIGroupVersionIsReadOnly(t *testing.T) {
 				req = newAuthenticatedRequest(tc.method, path, nil)
 			}
 			res := httptest.NewRecorder()
-			s.HandleFunc(res, req, http.NotFoundHandler())
+			s.HandleFunc(res, req)
 			require.Equal(t, tc.status, res.Code)
 			if tc.status == http.StatusMethodNotAllowed {
 				require.Equal(t, "GET, HEAD", res.Header().Get("Allow"))

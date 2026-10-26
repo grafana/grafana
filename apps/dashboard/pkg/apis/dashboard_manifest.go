@@ -1000,6 +1000,9 @@ var appManifestData = app.ManifestData{
 					Plural:     "Notebooks",
 					Scope:      "Namespaced",
 					Conversion: false,
+					Search: &app.ManifestVersionKindSearch{
+						Global: func(b bool) *bool { return &b }(true),
+					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{

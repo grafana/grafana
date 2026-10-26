@@ -26,9 +26,12 @@ type ResourceType = ResourceKindKey;
 interface ProvisionedOperationInfo {
   repoType: RepoType;
   resourceType?: ResourceType;
-  workflow?: string;
 }
 
+/**
+ * `onBranchSuccess` runs when the commit landed on a branch other than the configured one (new or
+ * existing); `onWriteSuccess` when it landed on the configured branch.
+ */
 interface RequestHandlers<T> {
   onBranchSuccess?: (
     data: { ref: string; path: string; urls?: Record<string, string> },
@@ -42,54 +45,29 @@ interface RequestHandlers<T> {
 
 interface ProvisionedHandlerOptions<T> {
   folderUID?: string; // this is used to refetch folder items
-  workflow?: string;
   repository?: RepositoryView;
   resourceType?: ResourceType;
-  selectedBranch?: string; // The branch selected by the user in the form
+  /** The commit created the branch: the destination page shows the PR banner, so no toast. */
+  isNewBranch?: boolean;
   successMessage?: string;
   handlers?: RequestHandlers<T>;
 }
 
-interface BranchContext {
-  workflow?: string;
-  ref?: string; // ref returned in the response data
-  selectedBranch?: string;
-  repository?: RepositoryView;
-}
-
-function resolveLastBranchToSave({ workflow, ref, selectedBranch, repository }: BranchContext): string | undefined {
-  if (workflow === 'branch') {
-    // For branch workflow, save the ref from the response
-    return ref;
-  }
-  if (workflow === 'write') {
-    // For write workflow, save the selectedBranch or fall back to repository branch
-    return selectedBranch || repository?.branch;
-  }
-  return undefined;
-}
-
 function notifySaveSuccess(
   {
-    workflow,
     ref,
-    selectedBranch,
     repository,
     urls,
     successMessage,
-  }: BranchContext & {
+  }: {
+    ref?: string; // ref returned in the response data
+    repository?: RepositoryView;
     urls?: Record<string, string>;
     successMessage?: string;
   },
   dispatch: AppDispatch
 ) {
-  // Only show success alert for write workflow (not branch workflow,
-  // which navigates to a preview page with its own PR banner)
-  if (workflow === 'branch') {
-    return;
-  }
-
-  const branch = ref || selectedBranch || repository?.branch;
+  const branch = ref || repository?.branch;
   // Link to the configured path (e.g. /tree/main/dashboards) so users
   // land where their resources live, not the repo root.
   const repoFileUrl = repository?.path
@@ -122,7 +100,7 @@ function notifySaveSuccess(
  *
  * Call the returned function from the submit path; handle failures in the caller's catch:
  *
- *   const { handleSuccess } = useProvisionedRequestHandler({ repository, workflow, handlers });
+ *   const { handleSuccess } = useProvisionedRequestHandler({ repository, isNewBranch, handlers });
  *   try {
  *     const data = await mutation(args).unwrap();
  *     handleSuccess(data);
@@ -131,43 +109,40 @@ function notifySaveSuccess(
  *   }
  *
  * Per-call `overrides` shallow-merge over the hook options, for values only
- * known at submit time (e.g. the branch entered in the form).
+ * known at submit time (e.g. the folder a new resource was saved into).
  */
 export function useProvisionedRequestHandler<T>(options: ProvisionedHandlerOptions<T> = {}) {
   const dispatch = useDispatch();
   const { setLastBranch } = useLastBranch();
 
   const handleSuccess = (data: ResourceWrapper, overrides?: Partial<ProvisionedHandlerOptions<T>>) => {
-    const { folderUID, workflow, repository, resourceType, selectedBranch, successMessage, handlers } = {
+    const { folderUID, repository, resourceType, isNewBranch, successMessage, handlers } = {
       ...options,
       ...overrides,
     };
-    const info: ProvisionedOperationInfo = {
-      repoType: repository?.type || 'git',
-      resourceType,
-      workflow,
-    };
+    const info: ProvisionedOperationInfo = { repoType: repository?.type || 'git', resourceType };
 
     const { ref, path, urls, resource } = data;
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const resourceData = resource.upsert as Resource<T>;
 
-    const lastBranch = resolveLastBranchToSave({ workflow, ref, selectedBranch, repository });
+    // The request only carries a ref for a branch commit, and the response echoes it; a direct
+    // write comes back without one.
+    const lastBranch = ref || repository?.branch;
     if (lastBranch) {
       setLastBranch(repository?.name, lastBranch);
     }
 
-    notifySaveSuccess({ workflow, ref, selectedBranch, repository, urls, successMessage }, dispatch);
-
-    // Branch workflow
-    if (workflow === 'branch' && handlers?.onBranchSuccess && ref && path) {
-      handlers.onBranchSuccess({ ref, path, urls }, info, resourceData, data);
+    // A new branch lands on a page with its own PR banner, so the toast would be noise.
+    if (!isNewBranch) {
+      notifySaveSuccess({ ref, repository, urls, successMessage }, dispatch);
     }
 
-    // Write workflow
-    if (workflow === 'write' && handlers?.onWriteSuccess) {
+    if (ref && path && handlers?.onBranchSuccess) {
+      handlers.onBranchSuccess({ ref, path, urls }, info, resourceData, data);
+    }
+    if (!ref && handlers?.onWriteSuccess) {
       if (folderUID) {
-        // refetch folder items after success if folderUID is passed in
         dispatch(refetchChildren({ parentUID: folderUID, pageSize: PAGE_SIZE }));
       }
       handlers.onWriteSuccess(resourceData, data);

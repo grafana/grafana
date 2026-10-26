@@ -22,14 +22,14 @@ const MAX_TILE_ZOOM = 15;
 /**
  * Protomaps names minor roads, paths and roads of kind `other` from zoom 15. In dense cities that is
  * thousands of line labels, each split into pieces that are placed and drawn every frame, which
- * drops panning to about 15 fps. CARTO waits until zoom 16 and leaves paths unnamed.
+ * drops panning to about 15 fps. The default basemap waits until zoom 16 and leaves paths unnamed.
  */
 const MINOR_ROAD_LABELS = 'roads_labels_minor';
 const MINOR_ROAD_LABEL_MIN_ZOOM = 16;
 
 /**
  * The light and dark flavors label shops, restaurants and street furniture from the zoom each
- * feature allows. CARTO only names parks, plus stadiums and attractions prominent enough to appear
+ * feature allows. The default basemap only names parks, plus stadiums and attractions prominent enough to appear
  * by zoom 13, and only from zoom 15.
  */
 const POI_LABELS = 'pois';
@@ -41,7 +41,7 @@ const PROMINENT_POI: GlValue = [
   ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13],
 ];
 
-/** The map sits under the panel's data, so like CARTO it shows no house numbers, shields or one-way arrows */
+/** The map sits under the panel's data, so like the default basemap it shows no house numbers, shields or one-way arrows */
 const UNLABELLED_LAYERS = new Set(['address_label', 'roads_shields', 'roads_oneway']);
 
 /** Which kinds each label layer keeps */
