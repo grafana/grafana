@@ -198,7 +198,7 @@ func TestPublishWatchNotification(t *testing.T) {
 	})
 }
 
-var testSpec = watchMetadataSpec{
+var testSpec = WatchMetadataSpec{
 	Labels:      []string{"a", "b"},
 	Annotations: []string{"x"},
 	Finalizers:  []string{"f"},
@@ -242,22 +242,46 @@ func TestBuildWatchMetadata(t *testing.T) {
 	})
 }
 
+// registerTestWatchMetadata registers spec for gr until the test ends.
+func registerTestWatchMetadata(t *testing.T, gr schema.GroupResource, spec WatchMetadataSpec) {
+	t.Helper()
+	RegisterWatchMetadata(gr, spec)
+	t.Cleanup(func() {
+		watchMetadataSpecsMu.Lock()
+		defer watchMetadataSpecsMu.Unlock()
+		delete(watchMetadataSpecs, gr)
+	})
+}
+
 func TestNewWatchMetadata(t *testing.T) {
 	u := &unstructured.Unstructured{Object: map[string]any{}}
 	u.SetName("n")
-	u.SetLabels(map[string]string{"encrypted": "true"})
+	u.SetLabels(map[string]string{"a": "1", "other": "x"})
 	obj, err := utils.MetaAccessor(u)
 	require.NoError(t, err)
 
-	t.Run("a resource with an allowlist entry gets metadata", func(t *testing.T) {
-		gr := schema.GroupResource{Group: "setting.grafana.app", Resource: "settings"}
-		assert.Equal(t, map[string]string{"encrypted": "true"}, newWatchMetadata(gr, obj).GetLabels())
+	registered := schema.GroupResource{Group: "example.grafana.app", Resource: "examples"}
+	registerTestWatchMetadata(t, registered, testSpec)
+
+	t.Run("a registered resource gets metadata", func(t *testing.T) {
+		assert.Equal(t, map[string]string{"a": "1"}, newWatchMetadata(registered, obj).GetLabels())
 	})
 
-	t.Run("a resource without an allowlist entry yields nil", func(t *testing.T) {
+	t.Run("an unregistered resource yields nil", func(t *testing.T) {
 		gr := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
 		assert.Nil(t, newWatchMetadata(gr, obj))
 	})
+}
+
+func TestRegisterWatchMetadata(t *testing.T) {
+	gr := schema.GroupResource{Group: "example.grafana.app", Resource: "registered"}
+	registerTestWatchMetadata(t, gr, testSpec)
+
+	got, ok := WatchMetadataFor(gr)
+	require.True(t, ok)
+	assert.Equal(t, testSpec, got)
+
+	assert.Panics(t, func() { RegisterWatchMetadata(gr, WatchMetadataSpec{}) }, "a second registration of one resource panics")
 }
 
 func TestWatchNotificationAllowlists(t *testing.T) {
