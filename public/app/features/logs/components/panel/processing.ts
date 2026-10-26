@@ -17,6 +17,7 @@ import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { type FieldDef, getAllFields } from '../logParser';
+import { classifyErrorAttributes } from '../otel/details';
 import { identifyOTelLanguage, getOtelAttributesField } from '../otel/formats';
 
 import { generateLogGrammar, generateTextMatchGrammar } from './grammar';
@@ -63,6 +64,7 @@ export class LogListModel implements LogRowModel {
   private _highlightedLogAttributesTokens: Array<string | Token> | undefined = undefined;
   private _highlightTokens: Array<string | Token> | undefined = undefined;
   private _escapeUnescapedString = false;
+  private _errorAttributes: LogErrorAttributes | undefined = undefined;
   private _fields: FieldDef[] | undefined = undefined;
   private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
   private _prettifyJSON: boolean;
@@ -183,6 +185,34 @@ export class LogListModel implements LogRowModel {
     return checkLogsError(this);
   }
 
+  get errorAttributes(): LogErrorAttributes {
+    if (this._errorAttributes === undefined) {
+      const labels = Object.keys(this.labels)
+        .filter((key) => key !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME)
+        .map((key) => ({ key, value: this.labels[key] }));
+      const classifiedLabels = classifyErrorAttributes(labels, (label) => label.key);
+      const classifiedFields = classifyErrorAttributes(this.fields, (field) => field.keys[0] ?? '');
+
+      this._errorAttributes = {
+        messages: [
+          ...classifiedLabels.messages,
+          ...classifiedFields.messages.map((field) => ({
+            key: field.keys[0] ?? '',
+            value: field.values[0] ?? '',
+          })),
+        ],
+        stacktraces: [
+          ...classifiedLabels.stacktraces,
+          ...classifiedFields.stacktraces.map((field) => ({
+            key: field.keys[0] ?? '',
+            value: field.values[0] ?? '',
+          })),
+        ],
+      };
+    }
+    return this._errorAttributes;
+  }
+
   get fields(): FieldDef[] {
     if (this._fields === undefined) {
       this._fields = getAllFields(this, this._getFieldLinks);
@@ -296,6 +326,16 @@ export class LogListModel implements LogRowModel {
     this._highlightTokens = undefined;
     this._highlightedLogAttributesTokens = undefined;
   }
+}
+
+export interface LogErrorAttribute {
+  key: string;
+  value: string;
+}
+
+export interface LogErrorAttributes {
+  messages: LogErrorAttribute[];
+  stacktraces: LogErrorAttribute[];
 }
 
 export interface PreProcessOptions {
