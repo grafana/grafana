@@ -382,7 +382,9 @@ function SpecialMarkdownCell({
     setMenuOpen(false);
     openDrawer({
       onSelectQuery: async (query, title) => {
-        await cell.getParentLayout().convertCellFromSavedQuery(cell, query, title);
+        await cell
+          .getParentLayout()
+          .convertCellFromSavedQuery(cell, query, title, NOTEBOOK_BLOCK_INSERT_VIA.SLASH_MENU);
         onFocusRequest?.();
       },
       options: { context: CoreApp.Notebook },

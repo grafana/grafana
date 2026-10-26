@@ -1200,6 +1200,33 @@ describe('NotebookLayoutManager', () => {
 
       expect(cellNames(manager)).toEqual(['a', 'b', 'visualization-1', 'paragraph-1']);
     });
+
+    // The id generator scans the scene, so an id claimed before the lookup would be handed out again.
+    it('does not reuse a panel id taken by a visualization added during the suggestion lookup', async () => {
+      let resolveSuggestion: (value: typeof suggestion) => void = () => {};
+      mockGetVizSuggestionForQuery.mockReturnValue(new Promise((resolve) => (resolveSuggestion = resolve)));
+      const manager = buildManager(buildNarrativeCells(['a']));
+
+      const pending = manager.addCellFromSavedQuery(1, query);
+      const added = manager.addCell('visualization', 0);
+      resolveSuggestion(suggestion);
+      const picked = await pending;
+
+      expect(picked?.state.body?.state.key).toBeDefined();
+      expect(picked?.state.body?.state.key).not.toBe(added?.state.body?.state.key);
+    });
+
+    it('reports the inserted block with where it came from', async () => {
+      jest.spyOn(NotebookAnalytics, 'blockInserted').mockImplementation(() => {});
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const manager = buildManager(buildNarrativeCells(['a']));
+      attachScene(manager).setState({ uid: 'nb-1' });
+
+      await manager.addCellFromSavedQuery(1, query, undefined, 'plus_menu');
+
+      expect(NotebookAnalytics.blockInserted).toHaveBeenCalledWith('nb-1', 'visualization', 'plus_menu');
+      jest.restoreAllMocks();
+    });
   });
 
   describe('convertCellFromSavedQuery', () => {
@@ -1262,6 +1289,19 @@ describe('NotebookLayoutManager', () => {
       await pending;
 
       expect(b.state.body).toBeUndefined();
+    });
+
+    it('reports the converted block with where it came from', async () => {
+      jest.spyOn(NotebookAnalytics, 'blockInserted').mockImplementation(() => {});
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const [a, b] = buildNarrativeCells(['a', 'b']);
+      const manager = buildManager([a, b]);
+      attachScene(manager).setState({ uid: 'nb-1' });
+
+      await manager.convertCellFromSavedQuery(b, query, undefined, 'slash_menu');
+
+      expect(NotebookAnalytics.blockInserted).toHaveBeenCalledWith('nb-1', 'visualization', 'slash_menu');
+      jest.restoreAllMocks();
     });
   });
 

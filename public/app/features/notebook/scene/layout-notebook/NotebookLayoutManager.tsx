@@ -924,7 +924,8 @@ export class NotebookLayoutManager
   public addCellFromSavedQuery = async (
     index: number,
     query: DataQuery,
-    title?: string
+    title?: string,
+    via?: NotebookBlockInsertVia
   ): Promise<NotebookCellItem | undefined> => {
     const panel = await this.buildSavedQueryPanel(query, title);
 
@@ -942,6 +943,10 @@ export class NotebookLayoutManager
       undo: () => this.removeCellInstance(built.cell),
     });
 
+    if (via) {
+      this.reportBlockInserted('visualization', via);
+    }
+
     return built.cell;
   };
 
@@ -949,7 +954,8 @@ export class NotebookLayoutManager
   public convertCellFromSavedQuery = async (
     cell: NotebookCellItem,
     query: DataQuery,
-    title?: string
+    title?: string,
+    via?: NotebookBlockInsertVia
   ): Promise<void> => {
     const panel = await this.buildSavedQueryPanel(query, title);
     // Deleted (or undone away) while the suggestion was being looked up.
@@ -957,6 +963,9 @@ export class NotebookLayoutManager
       return;
     }
     this.convertCellToPanel(cell, panel);
+    if (via) {
+      this.reportBlockInserted('visualization', via);
+    }
   };
 
   /**
@@ -964,10 +973,11 @@ export class NotebookLayoutManager
    * Dashboards' Unconfigured Panel "Use saved query" flow, minus its DashboardScene coupling.
    * Fully configured before it's attached so the whole pick lands as one undo step, and nothing
    * is inserted until the (async) suggestion lookup is done.
+   *
+   * The panel (and so its id) is only built after the lookup: the id generator scans the scene, so
+   * a detached panel holding an id across the await would be handed out again to anything added meanwhile.
    */
   private async buildSavedQueryPanel(query: DataQuery, title?: string): Promise<VizPanel> {
-    const panel = this.buildVisualizationPanel();
-
     // A lookup miss or failure still applies the query with the default viz, so this is a warning,
     // not an error — an "apply failed, try again" toast would invite a retry that adds a second cell.
     const warnNoSuggestion = () =>
@@ -979,20 +989,24 @@ export class NotebookLayoutManager
         ),
       ]);
 
+    let suggestion: Awaited<ReturnType<typeof getVizSuggestionForQuery>>;
     try {
       const timeRange = sceneGraph.getTimeRange(this).state.value;
-      const suggestion = await getVizSuggestionForQuery(query, timeRange);
-      if (suggestion) {
-        // Plain state, not changePluginType: the plugin loads (and fills in defaults) on activation.
-        panel.setState({
-          pluginId: suggestion.pluginId,
-          options: suggestion.options ?? {},
-          fieldConfig: suggestion.fieldConfig ?? { defaults: {}, overrides: [] },
-        });
-      } else {
-        warnNoSuggestion();
-      }
+      suggestion = await getVizSuggestionForQuery(query, timeRange);
     } catch {
+      suggestion = undefined;
+    }
+
+    // Nothing awaits from here on, so the panel's id is claimed and inserted in one synchronous run.
+    const panel = this.buildVisualizationPanel();
+    if (suggestion) {
+      // Plain state, not changePluginType: the plugin loads (and fills in defaults) on activation.
+      panel.setState({
+        pluginId: suggestion.pluginId,
+        options: suggestion.options ?? {},
+        fieldConfig: suggestion.fieldConfig ?? { defaults: {}, overrides: [] },
+      });
+    } else {
       warnNoSuggestion();
     }
 
@@ -1333,7 +1347,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
     (index: number) => {
       openDrawer({
         onSelectQuery: async (query, title) => {
-          const cell = await model.addCellFromSavedQuery(index, query, title);
+          const cell = await model.addCellFromSavedQuery(index, query, title, NOTEBOOK_BLOCK_INSERT_VIA.PLUS_MENU);
           requestFocus(cell?.state.key);
         },
         options: { context: CoreApp.Notebook },
