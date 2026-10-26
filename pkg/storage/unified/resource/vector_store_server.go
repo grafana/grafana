@@ -69,7 +69,7 @@ type VectorStoreServer struct {
 
 var _ resourcepb.VectorStoreServer = (*VectorStoreServer)(nil)
 
-// NewVectorStoreServer builds the external write service. Legacy collections
+// NewVectorStoreServer builds the external write service. Tenant-scoped collections
 // retain their optional service gate; shared collections require a dedicated
 // nonempty publisher identity and store rows in the shared namespace.
 func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, externalAllowlist, allowedServices, sharedCollections, sharedWriteServices []string, metrics *VectorMetrics) *VectorStoreServer {
@@ -169,8 +169,8 @@ func (s *VectorStoreServer) resolveWriteTarget(ctx context.Context, namespace, g
 	}
 	key := vector.Collection{Group: group, Resource: resource, IsExternal: true}
 	shared := s.sharedAllowlist.Allows(key)
-	legacy := s.allowlist.Allows(key)
-	if shared && legacy {
+	tenantScoped := s.allowlist.Allows(key)
+	if shared && tenantScoped {
 		s.log.Error("vector store: overlapping collection enrollment", "group", group, "resource", resource)
 		return writeTarget{}, status.Error(codes.Internal, "invalid collection enrollment")
 	}
@@ -187,7 +187,7 @@ func (s *VectorStoreServer) resolveWriteTarget(ctx context.Context, namespace, g
 			return writeTarget{}, status.Error(codes.PermissionDenied, "service identity not allowed to write vectors")
 		}
 	}
-	if !shared && !legacy {
+	if !shared && !tenantScoped {
 		return writeTarget{}, status.Errorf(codes.NotFound, "collection %s/%s not found", group, resource)
 	}
 	storageNamespace := namespace
