@@ -139,6 +139,9 @@ describe('classifyErrorAttributes', () => {
     'err.stack',
     'error.stack',
     'exception.stack',
+    'errorStack',
+    'exceptionStack',
+    'errStack',
   ])('classifies %s as a stacktrace', (key) => {
     const item = { key, value: 'at main' };
 
@@ -149,7 +152,30 @@ describe('classifyErrorAttributes', () => {
     });
   });
 
-  it.each(['tech_stack', 'full_stack', 'stack', 'addedInfo'])('leaves %s out of the error groups', (key) => {
+  it.each(['error', 'err', 'exception', 'errorMessage', 'exceptionMessage', 'err.message', 'errMessage'])(
+    'classifies %s as an error message',
+    (key) => {
+      const item = { key, value: 'failed' };
+
+      expect(classifyErrorAttributes([item], getKey)).toEqual({
+        messages: [item],
+        stacktraces: [],
+        other: [],
+      });
+    }
+  );
+
+  it('classifies err.type with the other error attributes', () => {
+    const item = { key: 'err.type', value: 'Error' };
+
+    expect(classifyErrorAttributes([item], getKey)).toEqual({
+      messages: [],
+      stacktraces: [],
+      other: [item],
+    });
+  });
+
+  it.each(['tech_stack', 'techStack', 'full_stack', 'stack', 'addedInfo'])('leaves %s out of the error groups', (key) => {
     const item = { key, value: 'value' };
 
     expect(classifyErrorAttributes([item], getKey)).toEqual({

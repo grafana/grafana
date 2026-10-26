@@ -232,10 +232,23 @@ function findCategory(key: string): AttributeCategoryConfig {
   );
 }
 
-const ERROR_CATEGORY_IDS = new Set(['error', 'exception']);
+// Loggers such as zap and zerolog store the message in a field with one of these names.
+const BARE_ERROR_MESSAGE_KEYS = new Set(['error', 'err', 'exception']);
 
 function normalizeAttributeKey(key: string): string {
-  return key.toLowerCase().replace(/[-.]/g, '_');
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .toLowerCase()
+    .replace(/[-.]/g, '_');
+}
+
+function isErrorNamespaceKey(normalized: string): boolean {
+  return (
+    BARE_ERROR_MESSAGE_KEYS.has(normalized) ||
+    normalized.startsWith('error_') ||
+    normalized.startsWith('exception_') ||
+    normalized.startsWith('err_')
+  );
 }
 
 function isStacktraceAttributeKey(key: string): boolean {
@@ -249,16 +262,8 @@ function isStacktraceAttributeKey(key: string): boolean {
     return true;
   }
 
-  // Limit the "_stack" suffix to error.* and exception.* so names like tech_stack are left alone.
-  return normalized.endsWith('_stack') && ERROR_CATEGORY_IDS.has(findCategory(key).id);
-}
-
-function isErrorAttributeKey(key: string): boolean {
-  if (isStacktraceAttributeKey(key)) {
-    return true;
-  }
-
-  return ERROR_CATEGORY_IDS.has(findCategory(key).id);
+  // Limit the "_stack" suffix to error, exception, and err so names like tech_stack are left alone.
+  return normalized.endsWith('_stack') && isErrorNamespaceKey(normalized);
 }
 
 type ErrorAttributeKind = 'message' | 'stacktrace' | 'other';
@@ -267,10 +272,12 @@ function getErrorAttributeKind(key: string): ErrorAttributeKind | undefined {
   if (isStacktraceAttributeKey(key)) {
     return 'stacktrace';
   }
-  if (!isErrorAttributeKey(key)) {
+
+  const normalized = normalizeAttributeKey(key);
+  if (!isErrorNamespaceKey(normalized)) {
     return undefined;
   }
-  if (normalizeAttributeKey(key).endsWith('_message')) {
+  if (BARE_ERROR_MESSAGE_KEYS.has(normalized) || normalized.endsWith('_message')) {
     return 'message';
   }
   return 'other';
