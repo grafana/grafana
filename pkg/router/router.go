@@ -20,12 +20,14 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanaauthz "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -214,6 +216,8 @@ type GrafanaRouter struct {
 	onBreakerChange func(group string, to gobreaker.State)
 	onDiscovery     func(group, result string)
 
+	watchAuthorizer authorizer.Authorizer
+
 	// watches ends every watch in progress when the router closes them.
 	watches    context.Context
 	endWatches context.CancelFunc
@@ -221,9 +225,10 @@ type GrafanaRouter struct {
 
 func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *GrafanaRouter {
 	r := &GrafanaRouter{
-		loader: loader,
-		authn:  tokens,
-		served: map[string]*handlerEntry{},
+		loader:          loader,
+		authn:           tokens,
+		served:          map[string]*handlerEntry{},
+		watchAuthorizer: grafanaauthz.NewWatchRestrictionAuthorizer(),
 	}
 	r.watches, r.endWatches = context.WithCancel(context.Background())
 	empty := map[string]servingEntry{}
@@ -306,6 +311,14 @@ func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 	}
 	if !authorizeNamespace(w, req, info.Namespace) {
 		return
+	}
+	if info.IsResourceRequest && info.Verb == "watch" {
+		decision, reason, err := r.watchAuthorizer.Authorize(req.Context(), authorizer.AttributesRecord{Verb: info.Verb, ResourceRequest: true})
+		if err != nil || decision == authorizer.DecisionDeny {
+			setRoute(req, routeForbidden)
+			_ = errhttp.Write(req.Context(), apierrors.NewForbidden(schema.GroupResource{Group: info.APIGroup, Resource: info.Resource}, info.Name, errors.New(reason)), w)
+			return
+		}
 	}
 
 	// Built by the router, and checked before group dispatch so the tree is
@@ -422,6 +435,23 @@ func authorizeNamespace(w http.ResponseWriter, req *http.Request, ns string) boo
 		fmt.Errorf("the requester's namespace is not %q", ns),
 	), w)
 	return false
+}
+
+// pathParts splits path, without its leading "/", into parts, up to the
+// capacity of parts. Callers pass a slice of a local array, so splitting a
+// request's path doesn't allocate. Beyond that capacity the path is not split:
+// callers read no part past it.
+func pathParts(path string, parts []string) []string {
+	path = strings.TrimPrefix(path, "/")
+	for len(parts) < cap(parts) {
+		part, rest, more := strings.Cut(path, "/")
+		parts = append(parts, part)
+		if !more {
+			break
+		}
+		path = rest
+	}
+	return parts
 }
 
 func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, group, verb string) {
@@ -547,7 +577,7 @@ func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *htt
 	// Private schemas pass through authorization on every request. Honor their
 	// private/no-cache responses instead of bypassing that check on a cache hit.
 	if rec.statusCode == http.StatusOK && cacheableRequest && cacheableOpenAPIResponse(rec.header) {
-		etag := quoteETag(hashHex(entry.key + "\x00" + rec.body.String()))
+		etag := quoteETag(hashHexBytes([]byte(entry.key), []byte{0}, rec.body.Bytes()))
 		r.storeOpenAPIDoc(group, cacheKey, openapiCacheEntry{
 			key: entry.key, etag: etag, body: rec.body.Bytes(), header: openAPICacheHeaders(rec.header),
 			accept: req.Header.Get("Accept"), encoding: req.Header.Get("Accept-Encoding"),

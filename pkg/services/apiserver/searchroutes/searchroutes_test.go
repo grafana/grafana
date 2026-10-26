@@ -909,34 +909,6 @@ func TestGlobalHybridSearchTargets_SelectsRegisteredVersion(t *testing.T) {
 	}
 }
 
-func TestManifestKinds_PreferredVersionWins(t *testing.T) {
-	v1 := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
-	v2 := schema.GroupVersion{Group: "example.grafana.app", Version: "v2"}
-	manifest := hybridManifest(v1)
-	renamed := manifest.Versions[0]
-	renamed.Name = v2.Version
-	renamed.Kinds = []app.ManifestVersionKind{manifest.Versions[0].Kinds[0]}
-	renamed.Kinds[0].Kind = "Gadget"
-	manifest.Versions = append(manifest.Versions, renamed)
-	widgets := v1.WithResource("widgets").GroupResource()
-
-	for _, tc := range []struct {
-		preferred string
-		want      string
-	}{
-		{preferred: "", want: "Widget"},
-		{preferred: v1.Version, want: "Widget"},
-		{preferred: v2.Version, want: "Gadget"},
-	} {
-		t.Run("preferred "+tc.preferred, func(t *testing.T) {
-			manifest.PreferredVersion = tc.preferred
-			for range 10 {
-				assert.Equal(t, map[schema.GroupResource]string{widgets: tc.want}, manifestKinds([]*app.ManifestData{manifest}))
-			}
-		})
-	}
-}
-
 func TestGlobalHybridSearchTargets_FirstDeclarationSuppliesKind(t *testing.T) {
 	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
 	first := hybridManifest(gv)

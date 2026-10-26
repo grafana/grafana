@@ -776,10 +776,6 @@ type Cfg struct {
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	SearchClientForwardAuthEnabled             bool
-	// SearchEnforceSortCapability rejects a sort on a field that does not declare
-	// sorting. On by default; kept for one release so an instance that still
-	// depends on such sorts can turn it off.
-	SearchEnforceSortCapability bool
 	// SearchPostRankAuthz enables the post-filter authorization search path:
 	// bleve ranks without the in-searcher authz wrapper and authorization runs
 	// app-side in rank order with early exit once the page is filled.
