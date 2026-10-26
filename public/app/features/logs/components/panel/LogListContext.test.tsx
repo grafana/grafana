@@ -77,11 +77,11 @@ test('Allows to tell if a log is not permalinked', () => {
 });
 
 function ErrorFieldsProbe() {
-  const { hasLogsWithErrorFields } = useLogListContext();
-  return <span>{hasLogsWithErrorFields ? 'error-fields' : 'no-error-fields'}</span>;
+  const { hasLogsWithErrorAttributes } = useLogListContext();
+  return <span>{hasLogsWithErrorAttributes ? 'error-fields' : 'no-error-fields'}</span>;
 }
 
-test('hasLogsWithErrorFields is true when a log has an error message or stack trace', () => {
+test('hasLogsWithErrorAttributes is true when a log has an error message or stack trace', () => {
   const log = createLogRow({ labels: { 'exception.stacktrace': 'at main' } });
 
   render(
@@ -93,7 +93,7 @@ test('hasLogsWithErrorFields is true when a log has an error message or stack tr
   expect(screen.getByText('error-fields')).toBeInTheDocument();
 });
 
-test('hasLogsWithErrorFields is false when logs have no error fields', () => {
+test('hasLogsWithErrorAttributes is false when logs have no error fields', () => {
   const log = createLogRow({ labels: { app: 'api', 'error.type': 'timeout' } });
 
   render(

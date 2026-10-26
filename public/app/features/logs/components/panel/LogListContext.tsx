@@ -46,7 +46,7 @@ export interface LogListContextData
   downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
   forceEscape: boolean;
-  hasLogsWithErrorFields?: boolean;
+  hasLogsWithErrorAttributes?: boolean;
   hasLogsWithErrors?: boolean;
   hasSampledLogs?: boolean;
   hasUnescapedContent: boolean;
@@ -574,7 +574,7 @@ export const LogListContextProvider = ({
     [openAssistant]
   );
 
-  const hasLogsWithErrorFields = useMemo(() => logs.some(logHasErrorAttributes), [logs]);
+  const hasLogsWithErrorAttributes = useMemo(() => logs.some(logHasErrorAttributes), [logs]);
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);
   const hasUnescapedContent = useMemo(() => logs.some((r) => r.hasUnescapedContent), [logs]);
@@ -619,7 +619,7 @@ export const LogListContextProvider = ({
         filterLevels: logListState.filterLevels,
         fontSize: logListState.fontSize,
         forceEscape: logListState.forceEscape,
-        hasLogsWithErrorFields,
+        hasLogsWithErrorAttributes,
         hasLogsWithErrors,
         hasSampledLogs,
         hasUnescapedContent,
