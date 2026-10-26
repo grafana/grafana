@@ -39,7 +39,7 @@ import { contextSrv } from '../../../../../core/services/context_srv';
 import { useSilenceAbility } from '../../hooks/abilities/alertmanager/useSilenceAbility';
 import { SilenceAction } from '../../hooks/abilities/types';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
-import { type SilenceFormFields } from '../../types/silence-form';
+import { type MatcherFieldValue, type SilenceFormFields } from '../../types/silence-form';
 import { matcherFieldToMatcher } from '../../utils/alertmanager';
 import { makeAMLink } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
@@ -233,20 +233,11 @@ export const SilencesEditor = ({
     }
 
     const currentMatchers = getValues('matchers');
-    const alreadyExists = currentMatchers.some(
-      (matcher) => matcher.name === name && matcher.value === value && matcher.operator === MatcherOperator.equal
-    );
-    if (alreadyExists) {
+    if (hasEqualMatcher(currentMatchers, name, value)) {
       return;
     }
 
-    const newMatcher = { name, value, operator: MatcherOperator.equal };
-    const emptyIndex = currentMatchers.findIndex((matcher) => !matcher.name && !matcher.value);
-    const nextMatchers =
-      emptyIndex === -1
-        ? [...currentMatchers, newMatcher]
-        : currentMatchers.map((matcher, index) => (index === emptyIndex ? newMatcher : matcher));
-
+    const nextMatchers = addEqualMatcher(currentMatchers, name, value);
     setValue('matchers', nextMatchers, { shouldDirty: true, shouldValidate: true });
   };
 
@@ -364,6 +355,23 @@ export const SilencesEditor = ({
     </FormProvider>
   );
 };
+
+function hasEqualMatcher(matchers: MatcherFieldValue[], name: string, value: string): boolean {
+  return matchers.some(
+    (matcher) => matcher.name === name && matcher.value === value && matcher.operator === MatcherOperator.equal
+  );
+}
+
+function addEqualMatcher(matchers: MatcherFieldValue[], name: string, value: string): MatcherFieldValue[] {
+  const newMatcher = { name, value, operator: MatcherOperator.equal };
+  const emptyIndex = matchers.findIndex((matcher) => !matcher.name && !matcher.value);
+
+  if (emptyIndex === -1) {
+    return [...matchers, newMatcher];
+  }
+
+  return matchers.map((matcher, index) => (index === emptyIndex ? newMatcher : matcher));
+}
 
 function getSilencedRuleDescription(ruleUid: string, ruleLoaded: boolean) {
   if (ruleLoaded) {
