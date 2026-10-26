@@ -4,7 +4,7 @@
 import { useMemo, useState } from 'react';
 import type uPlot from 'uplot';
 
-import { type Field, getDisplayProcessor, type PanelProps, useDataLinksContext } from '@grafana/data';
+import { type DataFrame, type Field, getDisplayProcessor, type PanelProps, useDataLinksContext } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { DashboardCursorSync, TooltipDisplayMode } from '@grafana/schema';
 import {
@@ -31,6 +31,8 @@ import { defaultCandlestickColors, type Options, VizDisplayMode } from './panelc
 import { drawMarkers, type FieldIndices } from './utils';
 
 interface CandlestickPanelProps extends PanelProps<Options> {}
+
+const noAnnotations: DataFrame[] = [];
 
 export const CandlestickPanel = ({
   data,
@@ -326,15 +328,13 @@ export const CandlestickPanel = ({
               setNewRange={setNewAnnotationRange}
             />
             <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
-            {data.annotations && (
-              <ExemplarsPlugin
-                config={uplotConfig}
-                exemplars={data.annotations}
-                timeZone={timeZone}
-                maxHeight={options.tooltip.maxHeight}
-                maxWidth={options.tooltip.maxWidth}
-              />
-            )}
+            <ExemplarsPlugin
+              config={uplotConfig}
+              exemplars={data.annotations ?? noAnnotations}
+              timeZone={timeZone}
+              maxHeight={options.tooltip.maxHeight}
+              maxWidth={options.tooltip.maxWidth}
+            />
           </>
         );
       }}

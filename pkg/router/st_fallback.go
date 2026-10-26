@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	lru "github.com/hashicorp/golang-lru/v2"
+	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/time/rate"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
@@ -123,6 +125,9 @@ type singleTenantFallback struct {
 	resolveHost   func(context.Context, int64) (singleTenantStack, error)
 	discoveryHost *url.URL
 	transport     *http.Transport
+	// tracedTransport is transport wrapped for tracing, built once for the
+	// transport it wraps instead of on every request.
+	tracedTransport atomic.Pointer[tracedTransport]
 
 	// discovery is written only by run's goroutine; nil until the first poll.
 	discovery atomic.Pointer[singleTenantDiscovery]
@@ -300,7 +305,8 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 }
 
 func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	parts := strings.Split(strings.TrimPrefix(req.URL.Path, "/"), "/")
+	var buf [6]string
+	parts := pathParts(req.URL.Path, buf[:0])
 	if len(parts) > 4 && parts[0] == "apis" && parts[1] != "" && parts[2] != "" && parts[3] == "namespaces" && parts[4] != "" {
 		host, err := st.hostForNamespace(req.Context(), parts[4])
 		if errors.Is(err, errStackLookupThrottled) {
@@ -409,11 +415,44 @@ func isSingleTenantDiscoveryPath(path string) bool {
 	}
 	path = strings.TrimSuffix(path, "/")
 	if rest, ok := strings.CutPrefix(path, apisPrefix+"/"); ok {
-		parts := strings.Split(rest, "/")
-		return (len(parts) == 1 && parts[0] != "") || (len(parts) == 2 && parts[0] != "" && parts[1] != "")
+		group, version, hasVersion := strings.Cut(rest, "/")
+		return group != "" && (!hasVersion || (version != "" && !strings.Contains(version, "/")))
 	}
 	_, _, ok := parseOpenAPIGroupVersionPath(path)
 	return ok
+}
+
+type tracedTransport struct {
+	base http.RoundTripper
+	// meterProvider is the global meter provider the wrapper was built with.
+	meterProvider any
+	traced        http.RoundTripper
+}
+
+// backendTransport returns st.transport wrapped for tracing. The wrapper is
+// cached for that transport, which tests replace after construction, and for
+// the global meter provider it captured, which Grafana may replace. It takes
+// its tracer from each request, and reads the global propagator on each
+// request (newBackendTransport).
+func (st *singleTenantFallback) backendTransport() http.RoundTripper {
+	meterProvider := otel.GetMeterProvider()
+	if cached := st.tracedTransport.Load(); cached != nil && cached.base == http.RoundTripper(st.transport) &&
+		sameProvider(cached.meterProvider, meterProvider) {
+		return cached.traced
+	}
+	traced := newBackendTransport(st.transport)
+	st.tracedTransport.Store(&tracedTransport{base: st.transport, meterProvider: meterProvider, traced: traced})
+	return traced
+}
+
+// sameProvider reports whether a and b are the same provider. A provider of a
+// type that can't be compared counts as changed.
+func sameProvider(a, b any) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+	typ := reflect.TypeOf(a)
+	return typ == reflect.TypeOf(b) && typ.Comparable() && a == b
 }
 
 // forward proxies req to host. An empty group means discovery. observe, when
@@ -425,7 +464,7 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 			// SetURL clears Out.Host; an empty host keeps it that way, so the URL's host is sent.
 			pr.Out.Host = host.host
 		},
-		Transport:     newBackendTransport(st.transport),
+		Transport:     st.backendTransport(),
 		ErrorHandler:  proxyErrorHandler,
 		FlushInterval: streamingFlushInterval,
 		BufferPool:    proxyBuffers,

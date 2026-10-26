@@ -44,4 +44,35 @@ describe('AlertRuleRow', () => {
     expect(screen.getByRole('link', { name: 'CPU high' })).toBeInTheDocument();
     expect(screen.queryByText('Team Alerts') !== null).toBe(shown);
   });
+
+  it('shows the last error when the hit has one', () => {
+    renderRow({ searchHit: baseHit({ lastError: 'remote write failed' }) });
+
+    expect(screen.getByText('remote write failed')).toBeInTheDocument();
+  });
+
+  it('shows the summary annotation when there is no error', () => {
+    renderRow({ searchHit: baseHit({ summary: 'CPU usage is high' }) });
+
+    expect(screen.getByText('CPU usage is high')).toBeInTheDocument();
+  });
+
+  it('shows no description when neither error nor summary is present', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText('remote write failed')).not.toBeInTheDocument();
+    expect(screen.queryByText('CPU usage is high')).not.toBeInTheDocument();
+  });
+
+  it('shows the evaluation interval', () => {
+    renderRow({ searchHit: baseHit({ interval: '5m' }) });
+
+    expect(screen.getByRole('img', { name: 'Evaluated every 5m' })).toBeInTheDocument();
+  });
+
+  it('shows no interval indicator when interval is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+  });
 });
