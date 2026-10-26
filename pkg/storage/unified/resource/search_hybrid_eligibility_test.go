@@ -77,6 +77,52 @@ func TestHybridSearch_AllowedReadServices(t *testing.T) {
 	}
 }
 
+func TestVectorSearch_AllowedReadServices(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		subject    authlib.IdentityType
+		identity   string
+		restricted bool
+		wantDenied bool
+	}{
+		{name: "other service with get grant", subject: authlib.TypeAccessPolicy, identity: "other", restricted: true, wantDenied: true},
+		{name: "allowed service with get grant", subject: authlib.TypeAccessPolicy, identity: "assistant", restricted: true},
+		{name: "user with assistant identity and get grant", subject: authlib.TypeUser, identity: "assistant", restricted: true, wantDenied: true},
+		{name: "unconfigured user", subject: authlib.TypeUser},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &fakeVectorBackend{
+				collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true},
+				results:    []vector.VectorSearchResult{{UID: "memory", Title: "Memory", Score: 0.1}},
+			}
+			access := NewAuthzLimitedClient(authzlib.NewClient(nil), AuthzOptions{Registry: prometheus.NewRegistry()})
+			embedder := &fakeTextEmbedder{dim: 4}
+			s := newTestSearchServer(newTestEmbedder(embedder), backend, access)
+			if tc.restricted {
+				s.allowedReadServices = map[string][]string{"g/r": {"assistant"}}
+			}
+			caller := &identity.StaticRequester{
+				Type: tc.subject, Namespace: "ns", AccessToken: "verified-access-token",
+				AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{
+					ServiceIdentity: tc.identity, Permissions: []string{"g/r:get"},
+				}},
+			}
+			resp, err := s.VectorSearch(authlib.WithAuthInfo(t.Context(), caller), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "memory"})
+			if tc.wantDenied {
+				require.Equal(t, codes.PermissionDenied, status.Code(err))
+				require.Nil(t, resp)
+				require.Zero(t, backend.resolveCalls)
+				require.Empty(t, embedder.gotIn.Texts)
+				return
+			}
+			require.NoError(t, err)
+			require.Nil(t, resp.Error)
+			require.Len(t, resp.Results, 1)
+			require.Equal(t, "memory", resp.Results[0].Name)
+		})
+	}
+}
+
 func TestHybridSearch_ExternalServiceStillNeedsGetPermission(t *testing.T) {
 	const group, resource = "assistant.inframemories.ext.grafana.app", "inframemories"
 	const collection = group + "/" + resource

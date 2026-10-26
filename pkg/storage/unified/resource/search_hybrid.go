@@ -103,13 +103,8 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		return nil, status.Error(codes.PermissionDenied, "namespace mismatch")
 	}
 	for _, key := range keys {
-		allowed, restricted := s.allowedReadServices[key.Group+"/"+key.Resource]
-		if !restricted {
-			continue
-		}
-		identities := user.GetExtra()[authnlib.ServiceIdentityKey]
-		if user.GetIdentityType() != types.TypeAccessPolicy || len(identities) != 1 || !slices.Contains(allowed, identities[0]) {
-			return nil, status.Error(codes.PermissionDenied, "service identity not allowed to read collection")
+		if err := s.checkAllowedReadService(user, key.Group, key.Resource); err != nil {
+			return nil, err
 		}
 	}
 	targets, err := s.prepareHybridTargets(ctx, req, keys)
@@ -142,6 +137,18 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	}
 	s.enrichHybridResults(ctx, namespace, candidates, results)
 	return &resourcepb.HybridSearchResponse{Results: results}, nil
+}
+
+func (s *searchServer) checkAllowedReadService(user types.AuthInfo, group, resource string) error {
+	allowed, restricted := s.allowedReadServices[group+"/"+resource]
+	if !restricted {
+		return nil
+	}
+	identities := user.GetExtra()[authnlib.ServiceIdentityKey]
+	if user.GetIdentityType() != types.TypeAccessPolicy || len(identities) != 1 || !slices.Contains(allowed, identities[0]) {
+		return status.Error(codes.PermissionDenied, "service identity not allowed to read collection")
+	}
+	return nil
 }
 
 type hybridTarget struct {
