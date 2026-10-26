@@ -22,8 +22,18 @@ const SAVING_SHOWN_AFTER_MS = 150;
  *
  * Nothing is shown while `idle`. Saying "Saved" about a notebook nobody has touched claims something we
  * did not do, and a label that is always there stops being information.
+ *
+ * `reserveSpace` keeps room for the longest label while idle. Edit mode uses it, so the undo and redo
+ * buttons stay put when the assistant writes. View mode skips it. There it costs a line on a narrow
+ * screen, to avoid a move that lasts one quick save.
  */
-export function NotebookSaveStatus({ autosave }: { autosave: NotebookAutosave }) {
+export function NotebookSaveStatus({
+  autosave,
+  reserveSpace = false,
+}: {
+  autosave: NotebookAutosave;
+  reserveSpace?: boolean;
+}) {
   const { status, errorMessage, isConflict } = autosave.useState();
   const styles = useStyles2(getStyles);
   const [savedExpired, setSavedExpired] = useState(false);
@@ -69,7 +79,7 @@ export function NotebookSaveStatus({ autosave }: { autosave: NotebookAutosave })
   );
 
   if (shown === 'idle' || (shown === 'saved' && savedExpired)) {
-    return <div className={styles.slot} data-widest-label={widest} />;
+    return reserveSpace ? <div className={styles.slot} data-widest-label={widest} /> : null;
   }
 
   const label = (
@@ -99,7 +109,7 @@ export function NotebookSaveStatus({ autosave }: { autosave: NotebookAutosave })
   );
 
   // A failure stays on screen and can carry a button, so it takes the room it needs.
-  if (shown === 'error') {
+  if (shown === 'error' || !reserveSpace) {
     return content;
   }
 

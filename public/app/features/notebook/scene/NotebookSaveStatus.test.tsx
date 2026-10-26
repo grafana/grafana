@@ -36,6 +36,14 @@ describe('NotebookSaveStatus', () => {
 
     const { container } = render(<NotebookSaveStatus autosave={autosave} />);
 
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('says nothing about a notebook nobody has changed, even when it keeps its space', () => {
+    const autosave = buildAutosave();
+
+    const { container } = render(<NotebookSaveStatus autosave={autosave} reserveSpace />);
+
     expect(container.textContent).toBe('');
   });
 

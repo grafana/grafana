@@ -56,8 +56,8 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
         <>
           {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has
               to be visible and retryable there too. The status says nothing until there is something to
-              report. It still keeps its space, so the buttons next to it do not move. */}
-          <NotebookSaveStatus autosave={model.autosave} />
+              report. While editing it keeps its space, so the undo and redo buttons do not move. */}
+          <NotebookSaveStatus autosave={model.autosave} reserveSpace={isEditing} />
           {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
         </>
       )}
