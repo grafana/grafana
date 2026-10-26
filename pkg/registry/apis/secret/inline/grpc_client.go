@@ -118,7 +118,7 @@ func (g *GRPCInlineClient) Close() error {
 }
 
 func (g *GRPCInlineClient) CanReference(ctx context.Context, owner v0alpha1.ObjectReference, names ...string) error {
-	client, err := g.getClient(owner.Namespace)
+	client, err := g.getClient(owner.Namespace, referenceSubjectToken(ctx))
 	if err != nil {
 		return err
 	}
@@ -138,8 +138,35 @@ func (g *GRPCInlineClient) CanReference(ctx context.Context, owner v0alpha1.Obje
 	return err
 }
 
+func referenceSubjectToken(ctx context.Context) string {
+	info, ok := types.AuthInfoFrom(ctx)
+	if !ok || info == nil {
+		return ""
+	}
+	accessToken := info.GetAccessToken()
+	if types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
+		return accessToken
+	}
+	if !types.IsIdentityType(info.GetIdentityType(), types.TypeUser, types.TypeServiceAccount) {
+		return ""
+	}
+
+	// Preserve an existing actor chain. A separate ID token may accompany an access token
+	// that only represents the service, so that access token cannot always be the subject.
+	if parsed, err := authnlib.Parse(accessToken); err == nil {
+		var claims authnlib.AccessTokenClaims
+		// Authentication already verified the incoming token; the signer verifies it again on exchange.
+		if err := parsed.UnsafeClaimsWithoutVerification(&claims); err == nil && claims.IsOnBehalfOfUser() {
+			return accessToken
+		}
+	}
+	// Tokenless legacy/internal calls can still check ownership. Without an ordinary
+	// securevalues:get grant, their service token cannot authorize shared references.
+	return info.GetIDToken()
+}
+
 func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.ObjectReference, value v0alpha1.RawSecureValue, desc *string) (string, error) {
-	client, err := g.getClient(owner.Namespace)
+	client, err := g.getClient(owner.Namespace, "")
 	if err != nil {
 		return "", err
 	}
@@ -169,7 +196,7 @@ func (g *GRPCInlineClient) CreateInline(ctx context.Context, owner v0alpha1.Obje
 }
 
 func (g *GRPCInlineClient) DeleteWhenOwnedByResource(ctx context.Context, owner v0alpha1.ObjectReference, names ...string) error {
-	client, err := g.getClient(owner.Namespace)
+	client, err := g.getClient(owner.Namespace, "")
 	if err != nil {
 		return err
 	}
@@ -189,14 +216,15 @@ func (g *GRPCInlineClient) DeleteWhenOwnedByResource(ctx context.Context, owner 
 	return err
 }
 
-func (g *GRPCInlineClient) getClient(namespace string) (inlinev1beta1.InlineSecureValueServiceClient, error) {
+func (g *GRPCInlineClient) getClient(namespace, subjectToken string) (inlinev1beta1.InlineSecureValueServiceClient, error) {
 	_, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, err
 	}
 
 	tokenExchangerNamespace := namespace
-	if g.tokenExchangerNamespaceAll {
+	// Forwarded callers must stay scoped to the resource's namespace.
+	if g.tokenExchangerNamespaceAll && subjectToken == "" {
 		tokenExchangerNamespace = "*"
 	}
 
@@ -205,6 +233,7 @@ func (g *GRPCInlineClient) getClient(namespace string) (inlinev1beta1.InlineSecu
 		authnlib.WithClientInterceptorTracer(g.tracer),
 		authnlib.WithClientInterceptorNamespace(tokenExchangerNamespace),
 		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
+		authnlib.WithClientInterceptorSubjectToken(subjectToken),
 	)
 
 	clientConn := grpchan.InterceptClientConn(
