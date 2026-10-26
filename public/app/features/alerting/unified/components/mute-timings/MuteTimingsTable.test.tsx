@@ -1,6 +1,5 @@
 import { render, screen, userEvent, within } from 'test/test-utils';
 
-import { base64UrlEncode } from '@grafana/alerting';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import {
   setDeleteTimeIntervalError,
@@ -12,7 +11,10 @@ import { captureRequests } from 'app/features/alerting/unified/mocks/server/even
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { grantUserPermissions } from '../../mocks';
-import { TIME_INTERVAL_NAME_HAPPY_PATH } from '../../mocks/server/handlers/k8s/timeIntervals.k8s';
+import {
+  TIME_INTERVAL_NAME_HAPPY_PATH,
+  TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH,
+} from '../../mocks/server/handlers/k8s/timeIntervals.k8s';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
@@ -115,12 +117,24 @@ describe('MuteTimingsTable', () => {
       await user.click(await screen.findByRole('button', { name: /delete/i }));
 
       const requests = await capture;
-      const encodedName = base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH);
       const deleteRequest = requests.find(
-        (r) => r.url.includes(`timeintervals/${encodedName}`) && r.method === 'DELETE'
+        (r) => r.url.includes(`timeintervals/${TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH}`) && r.method === 'DELETE'
       );
 
       expect(deleteRequest).toBeDefined();
+    });
+
+    it('lists display names and links edit via the resource name path rather than the display name', async () => {
+      renderWithProvider();
+
+      expect(await screen.findByText(TIME_INTERVAL_NAME_HAPPY_PATH)).toBeInTheDocument();
+      expect(screen.queryByText(TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH)).not.toBeInTheDocument();
+
+      const editLinks = await screen.findAllByRole('link', { name: /edit/i });
+      expect(editLinks[0]).toHaveAttribute(
+        'href',
+        expect.stringContaining(`/mute-timing/${TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH}/edit`)
+      );
     });
 
     it('surfaces an error when deletion fails', async () => {

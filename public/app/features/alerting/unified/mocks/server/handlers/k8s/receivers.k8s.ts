@@ -5,6 +5,7 @@ import {
   getAlertmanagerConfig,
   setAlertmanagerConfig,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
+import { filterBySelector } from 'app/features/alerting/unified/mocks/server/handlers/k8s/utils';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
@@ -55,8 +56,14 @@ const getReceiversList = () => {
 };
 
 const listNamespacedReceiverHandler = () =>
-  http.get<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, () => {
-    return HttpResponse.json(getReceiversList());
+  http.get<{ namespace: string }>(`${ALERTING_API_SERVER_BASE_URL}/namespaces/:namespace/receivers`, ({ request }) => {
+    const receivers = getReceiversList();
+    // Rudimentary filter support for `spec.title`
+    const fieldSelector = new URL(request.url).searchParams.get('fieldSelector');
+    if (fieldSelector?.includes('spec.title')) {
+      return HttpResponse.json({ ...receivers, items: filterBySelector(receivers.items, fieldSelector) });
+    }
+    return HttpResponse.json(receivers);
   });
 
 const getNamespacedReceiverHandler = () =>

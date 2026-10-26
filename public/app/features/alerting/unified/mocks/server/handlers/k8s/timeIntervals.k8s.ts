@@ -1,17 +1,20 @@
 import { HttpResponse, http } from 'msw';
 
-import { base64UrlEncode } from '@grafana/alerting';
 import { API_GROUP, API_VERSION, type TimeInterval } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { filterBySelector } from 'app/features/alerting/unified/mocks/server/handlers/k8s/utils';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
 import { KnownProvenance } from 'app/features/alerting/unified/types/knownProvenance';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 
+/** Resource name (`metadata.name`) of the happy path time interval, deliberately unrelated to its display name */
+export const TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH = 'ti-abc123';
 /** UID of a time interval that we expect to follow all happy paths within tests/mocks */
 const TIME_INTERVAL_UID_HAPPY_PATH = 'f4eae7a4895fa786';
 /** Display name of a time interval that we expect to follow all happy paths within tests/mocks */
 export const TIME_INTERVAL_NAME_HAPPY_PATH = 'Some interval';
 
+/** Resource name (`metadata.name`) of the provisioned time interval, deliberately unrelated to its display name */
+export const TIME_INTERVAL_RESOURCE_NAME_FILE_PROVISIONED = 'ti-def456';
 /** UID of a (file) provisioned time interval */
 const TIME_INTERVAL_UID_FILE_PROVISIONED = 'd7b8515fc39e90f7';
 export const TIME_INTERVAL_NAME_FILE_PROVISIONED = 'A provisioned interval';
@@ -25,7 +28,7 @@ const allTimeIntervals = getK8sResponse<TimeInterval>('TimeIntervalList', [
         [K8sAnnotations.Provenance]: KnownProvenance.None,
         [K8sAnnotations.CanUse]: 'true',
       },
-      name: base64UrlEncode(TIME_INTERVAL_NAME_HAPPY_PATH),
+      name: TIME_INTERVAL_RESOURCE_NAME_HAPPY_PATH,
       uid: TIME_INTERVAL_UID_HAPPY_PATH,
       namespace: 'default',
       resourceVersion: 'e0270bfced786660',
@@ -40,7 +43,7 @@ const allTimeIntervals = getK8sResponse<TimeInterval>('TimeIntervalList', [
         [K8sAnnotations.Provenance]: 'file',
         [K8sAnnotations.CanUse]: 'true',
       },
-      name: base64UrlEncode(TIME_INTERVAL_NAME_FILE_PROVISIONED),
+      name: TIME_INTERVAL_RESOURCE_NAME_FILE_PROVISIONED,
       uid: TIME_INTERVAL_UID_FILE_PROVISIONED,
       namespace: 'default',
       resourceVersion: 'a76d2fcc6731aa0c',

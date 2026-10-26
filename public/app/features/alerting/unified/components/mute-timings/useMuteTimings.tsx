@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 
-import { base64UrlEncode } from '@grafana/alerting';
 import {
   API_GROUP,
   API_VERSION,
@@ -16,7 +15,6 @@ import {
   isK8sEntityProvisioned,
   isProvisionedResource,
   shouldUseK8sApi,
-  stringifyFieldSelector,
 } from 'app/features/alerting/unified/utils/k8s/utils';
 import { type MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
@@ -31,6 +29,7 @@ import {
 const { useLazyGetAlertmanagerConfigurationQuery } = alertmanagerApi;
 const {
   useLazyListTimeIntervalQuery,
+  useLazyGetTimeIntervalQuery,
   useCreateTimeIntervalMutation,
   useReplaceTimeIntervalMutation,
   useDeleteTimeIntervalMutation,
@@ -41,6 +40,7 @@ const {
  * (returned in the case of K8S API implementation)
  * */
 export type MuteTiming = MuteTimeInterval & {
+  /** Resource identifier: `metadata.name` for k8s time intervals, the raw name for Alertmanager config ones */
   id: string;
   metadata?: ObjectMeta;
 };
@@ -50,7 +50,7 @@ const parseK8sTimeInterval: (item: TimeInterval) => MuteTiming = (item) => {
   const { metadata, spec } = item;
   return {
     ...spec,
-    id: spec.name,
+    id: metadata.name ?? spec.name,
     metadata,
     provisioned: isK8sEntityProvisioned(item),
   };
@@ -172,26 +172,55 @@ export const useCreateMuteTiming = ({ alertmanager }: BaseAlertmanagerArgs) => {
 };
 
 /**
- * Get an individual time interval, either from the k8s API,
- * or by finding it in the alertmanager config
+ * Get an individual time interval from the k8s API by its resource name (`metadata.name`).
+ *
+ * Only the k8s API addresses time intervals by resource name, so for any other alertmanager this
+ * always reports an error. To search for an interval by its display name use {@link useSearchMuteTiming}.
  */
-export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertmanagerArgs & { name: string }) => {
+export const useGetMuteTiming = ({ alertmanager, id }: BaseAlertmanagerArgs & { id: string }) => {
   const useK8sApi = shouldUseK8sApi(alertmanager);
 
-  const [getGrafanaTimeInterval, k8sResponse] = useLazyListTimeIntervalQuery({
+  const [getGrafanaTimeInterval, k8sResponse] = useLazyGetTimeIntervalQuery({
+    selectFromResult: ({ data, ...rest }) => ({
+      data: data ? parseK8sTimeInterval(data) : undefined,
+      ...rest,
+    }),
+  });
+
+  useEffect(() => {
+    if (useK8sApi) {
+      getGrafanaTimeInterval({ name: id }, true);
+    }
+  }, [getGrafanaTimeInterval, id, useK8sApi]);
+
+  if (!useK8sApi) {
+    return { data: undefined, isLoading: false, isError: true };
+  }
+  return k8sResponse;
+};
+
+/**
+ * Find an individual time interval by its display name, either from the k8s API,
+ * or by finding it in the alertmanager config
+ *
+ * For the k8s API there is no way to filter on the name server-side, so we list the intervals and
+ * match `spec.name` client-side.
+ */
+export const useSearchMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertmanagerArgs & { name: string }) => {
+  const useK8sApi = shouldUseK8sApi(alertmanager);
+
+  const [listGrafanaTimeIntervals, k8sResponse] = useLazyListTimeIntervalQuery({
     selectFromResult: ({ data, ...rest }) => {
       if (!data) {
         return { data, ...rest };
       }
 
-      if (data.items.length === 0) {
+      const matches = data.items.filter((item) => item.spec.name === nameToFind);
+      if (matches.length === 0) {
         return { ...rest, data: undefined, isError: true };
       }
 
-      return {
-        data: parseK8sTimeInterval(data.items[0]),
-        ...rest,
-      };
+      return { data: parseK8sTimeInterval(matches[0]), ...rest };
     },
   });
 
@@ -202,7 +231,7 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
       }
       const alertmanager_config = data?.alertmanager_config ?? {};
       const timeIntervals = mergeTimeIntervals(alertmanager_config);
-      const timing = timeIntervals.find(({ name }) => name === nameToFind);
+      const timing = timeIntervals.find((interval) => interval.name === nameToFind);
       if (timing) {
         const muteTimingsProvenances = alertmanager_config?.muteTimeProvenances ?? {};
 
@@ -217,14 +246,11 @@ export const useGetMuteTiming = ({ alertmanager, name: nameToFind }: BaseAlertma
 
   useEffect(() => {
     if (useK8sApi) {
-      getGrafanaTimeInterval(
-        { fieldSelector: stringifyFieldSelector([['metadata.name', base64UrlEncode(nameToFind)]]) },
-        true
-      );
+      listGrafanaTimeIntervals({}, true);
     } else {
       getAlertmanagerTimeInterval(alertmanager, true);
     }
-  }, [alertmanager, getAlertmanagerTimeInterval, getGrafanaTimeInterval, nameToFind, useK8sApi]);
+  }, [alertmanager, getAlertmanagerTimeInterval, listGrafanaTimeIntervals, useK8sApi]);
 
   return useK8sApi ? k8sResponse : amConfigApiResponse;
 };
