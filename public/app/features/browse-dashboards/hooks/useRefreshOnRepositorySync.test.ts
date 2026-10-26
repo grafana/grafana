@@ -4,7 +4,6 @@ import { getWrapper } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { createRepository } from 'app/features/provisioning/mocks/factories';
 import { getMockLiveSrv, setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 import { type DashboardViewItem } from 'app/features/search/types';
@@ -34,23 +33,26 @@ const dash1 = dashboard('dash-1');
 const dash2 = dashboard('dash-2');
 const dash3 = dashboard('dash-3');
 
-// The hook remembers each repository's last synced ref for the lifetime of the page (module
-// state), so every test gets its own repository name to start from a clean baseline.
-let repoCounter = 0;
+function repositoryAt(finished: number, state = 'success') {
+  return createRepository({ status: { sync: { state, finished, message: [] } } });
+}
+
+function emitSync(finished: number, state = 'success') {
+  act(() =>
+    getMockLiveSrv().emitWatchEvent('repositories', { type: 'MODIFIED', object: repositoryAt(finished, state) })
+  );
+}
 
 function setup(folderUID?: string) {
-  const repoName = `repo-${++repoCounter}`;
+  const repository = repositoryAt(1000);
   server.use(
     http.get(`${BASE}/settings`, () =>
       HttpResponse.json({
-        items: [{ name: repoName, title: repoName, type: 'github', target: 'folder', workflows: [] }],
+        items: [{ name: repository.metadata?.name, title: 'Repo', type: 'github', target: 'folder', workflows: [] }],
       })
     ),
     http.get(`${BASE}/repositories`, () =>
-      HttpResponse.json({
-        items: [repositoryAt(repoName, 'aaa')],
-        metadata: { resourceVersion: '1' },
-      })
+      HttpResponse.json({ items: [repository], metadata: { resourceVersion: '1' } })
     )
   );
   // Remote deleted dash-1; the next fetch of the root no longer returns it.
@@ -70,31 +72,10 @@ function setup(folderUID?: string) {
 
   const browseState = () => store.getState().browseDashboards;
   const rootUids = () => browseState().rootItems?.items.map((item) => item.uid);
-  // Data in the RTK cache is not enough: the hook seeds its baseline in an effect on the next
-  // commit, so flush React before emitting an event or the event would be taken as the baseline.
-  const waitForWatch = async () => {
-    await waitFor(() =>
-      expect(
-        provisioningAPIv0alpha1.endpoints.listRepository.select({ watch: true })(store.getState()).data
-      ).toBeDefined()
-    );
-    await act(() => Promise.resolve());
-  };
+  // The first repository status seen only seeds the baseline, so wait for it before emitting.
+  const waitForBaseline = () => waitFor(() => expect(browseState().repositorySyncedAt).toBe(1000));
 
-  return { ...rendered, store, repoName, browseState, rootUids, waitForWatch };
-}
-
-function repositoryAt(name: string, lastRef: string, finished = 1000) {
-  return createRepository({
-    metadata: { name },
-    status: { sync: { state: 'success', finished, lastRef, message: [] } },
-  });
-}
-
-function emitSync(name: string, lastRef: string, finished: number) {
-  act(() =>
-    getMockLiveSrv().emitWatchEvent('repositories', { type: 'MODIFIED', object: repositoryAt(name, lastRef, finished) })
-  );
+  return { ...rendered, store, browseState, rootUids, waitForBaseline };
 }
 
 describe('useRefreshOnRepositorySync', () => {
@@ -102,36 +83,39 @@ describe('useRefreshOnRepositorySync', () => {
     jest.clearAllMocks();
   });
 
-  it('refetches the viewed list and drops other loaded folders when a pull reaches a new commit', async () => {
-    const { repoName, browseState, rootUids, waitForWatch } = setup();
-    await waitForWatch();
+  it('refetches the viewed list and drops other loaded folders when a newer pull wrote content', async () => {
+    const { browseState, rootUids, waitForBaseline } = setup();
+    await waitForBaseline();
     expect(mockListDashboards).not.toHaveBeenCalled();
 
-    emitSync(repoName, 'bbb', 2000);
+    emitSync(2000);
 
     await waitFor(() => expect(rootUids()).toEqual(['dash-2']));
     expect(browseState().childrenByParentUID['folder-a']).toBeUndefined();
     expect(browseState().openFolders['folder-a']).toBe(false);
+    expect(browseState().repositorySyncedAt).toBe(2000);
   });
 
-  it('ignores a sync that finished without reaching a new commit', async () => {
-    const { repoName, browseState, rootUids, waitForWatch } = setup();
-    await waitForWatch();
+  it('ignores status updates that wrote nothing', async () => {
+    const { browseState, rootUids, waitForBaseline } = setup();
+    await waitForBaseline();
 
-    // Interval sync found nothing: `finished` advances, `lastRef` does not.
-    emitSync(repoName, 'aaa', 2000);
+    // Same `finished` (e.g. a health check patched the status), then a failed pull.
+    emitSync(1000);
+    emitSync(2000, 'error');
 
     await act(() => Promise.resolve());
     expect(mockListDashboards).not.toHaveBeenCalled();
     expect(rootUids()).toEqual(['dash-1', 'dash-2']);
     expect(browseState().childrenByParentUID['folder-a']).toBeDefined();
+    expect(browseState().repositorySyncedAt).toBe(1000);
   });
 
   it('refetches the viewed folder and drops the root when inside a folder', async () => {
-    const { repoName, browseState, waitForWatch } = setup('folder-a');
-    await waitForWatch();
+    const { browseState, waitForBaseline } = setup('folder-a');
+    await waitForBaseline();
 
-    emitSync(repoName, 'bbb', 2000);
+    emitSync(2000);
 
     await waitFor(() => expect(browseState().childrenByParentUID['folder-a']?.items).toEqual([dash2]));
     expect(mockListDashboards).toHaveBeenCalledWith('folder-a', 1, expect.any(Number));
@@ -139,12 +123,12 @@ describe('useRefreshOnRepositorySync', () => {
   });
 
   it('notices a pull that landed while the list was not mounted', async () => {
-    const { repoName, rootUids, waitForWatch, unmount, store } = setup();
-    await waitForWatch();
+    const { rootUids, waitForBaseline, unmount, store } = setup();
+    await waitForBaseline();
     unmount();
 
     // The list query is still cached, so the watch keeps the repository status current.
-    emitSync(repoName, 'bbb', 2000);
+    emitSync(2000);
     expect(mockListDashboards).not.toHaveBeenCalled();
 
     renderHook(() => useRefreshOnRepositorySync(undefined), { wrapper: getWrapper({ store }) });

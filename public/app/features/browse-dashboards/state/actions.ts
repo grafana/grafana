@@ -50,6 +50,10 @@ interface RefreshParentsArgs {
   uids: string[];
 }
 
+interface RefreshTreeArgs {
+  folderUID: string | undefined;
+}
+
 export const refreshParents = createAsyncThunk(
   'browseDashboards/refreshParents',
   async ({ kind, uids }: RefreshParentsArgs, { getState, dispatch }) => {
@@ -65,6 +69,23 @@ export const refreshParents = createAsyncThunk(
 
     for (const parentUID of parentsToRefresh) {
       dispatch(refetchChildren({ parentUID, pageSize: PAGE_SIZE }));
+    }
+  }
+);
+
+/**
+ * Brings the tree back in step with the backend after a change that may have touched any folder
+ * (a repository pull): the pending reducer drops every collection but the viewed one, which is
+ * refetched here. A viewed collection that is still loading gets fresh data from its own first
+ * page and needs nothing.
+ */
+export const refreshTree = createAsyncThunk(
+  'browseDashboards/refreshTree',
+  ({ folderUID }: RefreshTreeArgs, { getState, dispatch }) => {
+    const { rootItems, childrenByParentUID } = getState().browseDashboards;
+    const viewed = folderUID ? childrenByParentUID[folderUID] : rootItems;
+    if (viewed) {
+      dispatch(refetchChildren({ parentUID: folderUID, pageSize: PAGE_SIZE }));
     }
   }
 );

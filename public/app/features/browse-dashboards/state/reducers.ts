@@ -6,11 +6,12 @@ import { isRootFolderUID } from '../../search/constants';
 import { type BrowseDashboardsState } from '../types';
 import { isNonSelectableVirtualFolder } from '../utils/dashboards';
 
-import { type fetchNextChildrenPage, type refetchChildren } from './actions';
+import { type fetchNextChildrenPage, type refetchChildren, type refreshTree } from './actions';
 import { ancestorsOf } from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
 type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
+type RefreshTreePendingAction = ReturnType<typeof refreshTree.pending>;
 
 export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: RefetchChildrenFulfilledAction) {
   const { children, page, kind, lastPageOfKind } = action.payload;
@@ -200,13 +201,36 @@ export function clearFolders(state: BrowseDashboardsState, action: PayloadAction
   const folderUIDs = Array.isArray(action.payload) ? action.payload : [action.payload];
 
   for (const folderUID of folderUIDs) {
-    if (!folderUID) {
-      state.rootItems = undefined;
-    } else {
-      state.childrenByParentUID[folderUID] = undefined;
+    clearFolder(state, folderUID);
+  }
+}
 
-      // close the folder to require it to be refetched next time its opened
-      state.openFolders[folderUID] = false;
+/**
+ * A pull can touch any folder in a repository and the frontend does not learn which, so every
+ * collection but the one in view is dropped and reloads when opened or visited next. The viewed
+ * one is refetched by the thunk instead of blanking.
+ */
+export function refreshTreePending(state: BrowseDashboardsState, action: RefreshTreePendingAction) {
+  const { folderUID } = action.meta.arg;
+
+  for (const uid of [undefined, ...Object.keys(state.childrenByParentUID)]) {
+    if (uid !== folderUID) {
+      clearFolder(state, uid);
     }
+  }
+}
+
+export function setRepositorySyncedAt(state: BrowseDashboardsState, action: PayloadAction<number>) {
+  state.repositorySyncedAt = action.payload;
+}
+
+function clearFolder(state: BrowseDashboardsState, folderUID: string | undefined) {
+  if (!folderUID) {
+    state.rootItems = undefined;
+  } else {
+    state.childrenByParentUID[folderUID] = undefined;
+
+    // close the folder to require it to be refetched next time its opened
+    state.openFolders[folderUID] = false;
   }
 }

@@ -31,6 +31,11 @@ export interface BrowseDashboardsState {
 
   // Only folders can ever be open or closed, so no need to seperate this by kind
   openFolders: Record<string, boolean>;
+
+  // `finished` of the newest repository pull the loaded collections reflect. Lives with the cache
+  // it stamps: both outlive the browse page, so a pull that lands while the user is elsewhere is
+  // still noticed when they come back.
+  repositorySyncedAt?: number;
 }
 
 export interface UIDashboardViewItem {
