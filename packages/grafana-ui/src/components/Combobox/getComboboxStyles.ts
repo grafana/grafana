@@ -92,6 +92,10 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
         },
       },
     }),
+    optionDynamic: css({
+      whiteSpace: 'normal',
+      overflow: 'visible',
+    }),
 
     optionAccessory: css({
       label: 'combobox-option-accessory',
@@ -104,6 +108,11 @@ export const getComboboxStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       flexGrow: 1,
       overflow: 'hidden',
+    }),
+    optionBodyDynamic: css({
+      minWidth: 0,
+      overflow: 'visible',
+      whiteSpace: 'normal',
     }),
 
     optionLabel: css({

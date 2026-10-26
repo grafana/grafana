@@ -5,12 +5,14 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"maps"
 	"net/http"
 	"net/url"
 	"os"
 	"slices"
+	"strings"
 	"sync/atomic"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -55,10 +57,7 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 		return nil, nil, err
 	}
 	if pluginsURL != "" {
-		patterns, err := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
-		if err != nil {
-			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
-		}
+		patterns := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
 		client, err := newPluginManifestsClient(section, "plugins")
 		if err != nil {
 			return nil, nil, err
@@ -67,6 +66,9 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 			patterns, client, grpcConfig, deps)
 		if err != nil {
 			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+		}
+		if pluginsTarget.cooldown, err = pluginManifestsCooldown(section, "plugins"); err != nil {
+			return nil, nil, err
 		}
 	}
 	if coreURL != "" {
@@ -79,8 +81,22 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 		if err != nil {
 			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
+		if coreTarget.cooldown, err = pluginManifestsCooldown(section, "core"); err != nil {
+			return nil, nil, err
+		}
 	}
 	return pluginsTarget, coreTarget, nil
+}
+
+// pluginManifestsCooldown paces a plugin manifests source by its
+// <prefix>_poll_interval key, with the same default and backoff as an
+// aggregate target.
+func pluginManifestsCooldown(section *setting.DynamicSection, prefix string) (*cooldown, error) {
+	interval, err := parsePositiveDurationKey(section, prefix+"_poll_interval", defaultAggregatePollInterval)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+	}
+	return newCooldown(interval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff), nil
 }
 
 // newPluginManifestsClient builds the client that polls a plugin manifests
@@ -296,7 +312,24 @@ func (l *cloudLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 	return l.dirty, nil // the poll loops push to this channel
 }
 
+// errFirstPollPending keeps the cloud loader from serving before each of its
+// sources has polled once.
+var errFirstPollPending = errors.New("router: waiting for the first poll of")
+
 func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
+	// Until every source has polled once, the snapshots of those that haven't
+	// are empty but not failed. Serving then would report ready with groups
+	// missing from discovery, so wait. A failed first poll ends the wait too.
+	var pending []string
+	for _, status := range l.sourceStatuses() {
+		if status.Successes+status.Failures == 0 {
+			pending = append(pending, status.Source)
+		}
+	}
+	if len(pending) > 0 {
+		return nil, fmt.Errorf("%w: %s", errFirstPollPending, strings.Join(pending, ", "))
+	}
+
 	lookup := make(map[string]Backend)
 	var discoveryErr error
 	var shadowed []shadowedGroup

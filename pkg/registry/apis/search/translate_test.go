@@ -1059,14 +1059,27 @@ func TestTranslateGlobalSearchQuery_Manager(t *testing.T) {
 	assert.Equal(t, resource.SEARCH_FIELD_MANAGER_KIND, req.Options.Fields[0].Key)
 	assert.Equal(t, []string{"repo"}, req.Options.Fields[0].Values)
 	assert.Equal(t, q.Fields, req.Fields)
+}
 
-	t.Run("not sortable or faceted", func(t *testing.T) {
-		q := searchQuery(nil)
-		q.Sort = []searchv0.SortField{{Field: resource.SEARCH_FIELD_MANAGER_ID}}
-		q.Facets = []string{resource.SEARCH_FIELD_MANAGER_KIND}
-		_, errs := TranslateGlobalSearchQuery(q, "default")
-		require.Len(t, errs, 2, errs)
-		assert.Equal(t, "sort[0].field", errs[0].Field)
-		assert.Equal(t, "facets[0]", errs[1].Field)
-	})
+// Storage does not model the manager fields as search fields, so only returning
+// them is known to work. Global search filters on them too; see
+// TestTranslateGlobalSearchQuery_Manager.
+func TestTranslateSearchQuery_ManagerFieldsCanOnlyBeReturned(t *testing.T) {
+	for _, f := range []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ID} {
+		for name, q := range map[string]*searchv0.SearchQuery{
+			"filter": searchQuery(&searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: f, Operator: "In", Values: []string{"repo"}}}),
+			"sort":   {TypeMeta: searchQuery(nil).TypeMeta, Sort: []searchv0.SortField{{Field: f, Direction: "asc"}}},
+			"facet":  {TypeMeta: searchQuery(nil).TypeMeta, Facets: []string{f}},
+		} {
+			t.Run(f+" "+name, func(t *testing.T) {
+				_, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+				assert.Len(t, errs, 1, errs)
+				if name == "filter" {
+					return
+				}
+				_, errs = TranslateGlobalSearchQuery(q, "default")
+				assert.Len(t, errs, 1, errs)
+			})
+		}
+	}
 }

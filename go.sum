@@ -799,8 +799,8 @@ github.com/alicebob/miniredis/v2 v2.11.1/go.mod h1:UA48pmi7aSazcGAvcdKcBB49z521I
 github.com/alicebob/miniredis/v2 v2.38.0 h1:nZAzCR+Lj+Vxk4ZXzm2NuKq2O33RXj1XxJ2e2uP9jiw=
 github.com/alicebob/miniredis/v2 v2.38.0/go.mod h1:TcL7YfarKPGDAthEtl5NBeHZfeUQj6OXMm/+iu5cLMM=
 github.com/andybalholm/brotli v1.0.4/go.mod h1:fO7iG3H7G2nSZ7m0zPUDn85XEX2GTukHGRSepvi9Eig=
-github.com/andybalholm/brotli v1.2.3 h1:8H1qwOkl2LPfjf3YezB90JnCliZb6SInJ/OJkEbA5NQ=
-github.com/andybalholm/brotli v1.2.3/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
+github.com/andybalholm/brotli v1.2.7 h1:UgafRPGMam5ySHfRkhthMqOFA6IFoeF3D7mWIDLjG5A=
+github.com/andybalholm/brotli v1.2.7/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/antithesishq/antithesis-sdk-go v0.7.2-default-no-op h1:p2zFsAzvhIpFya8AIOHIbWf7NGvO34QpLGclyf7nXj8=
 github.com/antithesishq/antithesis-sdk-go v0.7.2-default-no-op/go.mod h1:FQyySiasQQM8735Ddel3MRojmy4dA1IqCeyJ5jmPMbI=
@@ -1569,8 +1569,8 @@ github.com/grafana/alerting v0.0.0-20261014191024-71374176ca7b h1:yne7FfCc6lErg/
 github.com/grafana/alerting v0.0.0-20261014191024-71374176ca7b/go.mod h1:Nk8imWjRFJbfR6B+ZpFMf0Qs6cYzyNi2sKIIxEncG4U=
 github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c h1:Pky+hqnm0GSA9NGMDN+E1GDBc4SaJDGNCrMjtctAavg=
 github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c/go.mod h1:VeTh5j/IeWxbj5v1itvbbH6wt+nYH7qF0/BwH7GpK+U=
-github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3 h1:ZR82gG5heBaj8Dp9UbzruZLzgBSi/JCe1hppeXfWdUo=
-github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3/go.mod h1:EhN0hx/B4OffEAyj5BKhXXiVlH8icKjcoOEnplCRf+k=
+github.com/grafana/authlib v0.0.0-20261023105149-ed7cea0f2b27 h1:+JITeJCAECYl1YY1mTk4XmML9imgO0dov6sUNF/c+PU=
+github.com/grafana/authlib v0.0.0-20261023105149-ed7cea0f2b27/go.mod h1:EhN0hx/B4OffEAyj5BKhXXiVlH8icKjcoOEnplCRf+k=
 github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 h1:w2lobCqO1jqwo5dV64QO5i5QdMomnJQmIbW7ueGZb88=
 github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3/go.mod h1:/AvD+WnWIDMlsvyczIBNXo50NkkJcF6qkoQbUXd3ziE=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=

@@ -58,6 +58,8 @@ test('moves the shared crosshair when hovering table rows and clears it on leave
     const middleRowCursor = await cursor.getAttribute('style');
     await table.getByRole('gridcell', { name: '30', exact: true }).hover();
     await expect(cursor).not.toHaveAttribute('style', middleRowCursor!);
+    // Let the 50 ms clear-event throttle expire so the final mouse leave is not dropped.
+    await page.waitForTimeout(200);
     await page.getByRole('navigation', { name: 'Breadcrumbs' }).hover();
     await expect(cursor).toHaveAttribute('style', before!);
   } finally {

@@ -1690,6 +1690,13 @@ func schema_pkg_apis_iam_v0alpha1_GetUserTeamsUserTeam(ref common.ReferenceCallb
 							Format:  "",
 						},
 					},
+					"teamInternalId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Deprecated numeric team ID, when available, for legacy references.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
 					"permission": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",

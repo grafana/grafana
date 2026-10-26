@@ -157,6 +157,9 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 	for _, d := range resource.StandardSearchFieldDefinitions() {
 		m[d.Name] = d
 	}
+	for _, d := range managerFields() {
+		m[d.Name] = d
+	}
 	if provider != nil {
 		for _, d := range provider.Fields(gvr) {
 			m[d.Name] = d
@@ -177,26 +180,39 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 // tree when searching, so it is declared here rather than with the index's
 // stored fields.
 //
-// The manager fields are stored and keyword-indexed in every index already. They
-// are declared here rather than in GlobalSearchFieldDefinitions so adding them
-// does not change the index hash and rebuild every global index.
+// Global search can also filter on the manager fields, which every index
+// keyword-indexes, so a caller can list only what Git Sync manages.
 func globalFieldSet() *fieldSet {
 	m := map[string]resource.SearchFieldDefinition{}
 	for _, d := range resource.GlobalSearchFieldDefinitions() {
 		m[d.Name] = d
 	}
+	for _, d := range managerFields() {
+		d.Capabilities = append(slices.Clone(d.Capabilities), resource.SearchCapabilityFilter)
+		m[d.Name] = d
+	}
 	m[resource.SEARCH_FIELD_FOLDER_TREE] = folderTreeField()
-	m[resource.SEARCH_FIELD_MANAGER_KIND] = managerField(resource.SEARCH_FIELD_MANAGER_KIND, "Kind of tool that manages the resource, such as repo for Git Sync. Empty when not managed.")
-	m[resource.SEARCH_FIELD_MANAGER_ID] = managerField(resource.SEARCH_FIELD_MANAGER_ID, "Name of the manager instance, such as the repository name. Empty when not managed.")
 	return &fieldSet{byName: m}
 }
 
-func managerField(name, description string) resource.SearchFieldDefinition {
-	return resource.SearchFieldDefinition{
-		Name:         name,
-		Type:         resource.SearchFieldTypeString,
-		Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve},
-		Description:  description,
+// managerFields can be returned because every index stores them. They are
+// declared here rather than with the index's fields, because declaring them
+// there would rebuild every index. They should move to the standard field
+// definitions together with the next change that rebuilds every index anyway.
+func managerFields() []resource.SearchFieldDefinition {
+	return []resource.SearchFieldDefinition{
+		{
+			Name:         resource.SEARCH_FIELD_MANAGER_KIND,
+			Type:         resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
+			Description:  "Kind of tool that manages the resource, such as repo for Git Sync. Empty when nothing manages it.",
+		},
+		{
+			Name:         resource.SEARCH_FIELD_MANAGER_ID,
+			Type:         resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
+			Description:  "Which instance of that tool manages the resource, such as the repository name.",
+		},
 	}
 }
 

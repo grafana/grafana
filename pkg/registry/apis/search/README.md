@@ -614,6 +614,17 @@ to every requested type; multi-resource queries support only `uid` and `folder`.
 A failure searching any resource fails the request. Each result includes its own
 group and resource; `kind` is empty when no manifest supplies it.
 
+To let clients omit `resources`, configure defaults in the Grafana HTTP process:
+
+```ini
+[unified_storage]
+hybrid_search_default_resources = dashboard.grafana.app/dashboards,folder.grafana.app/folders
+```
+
+An omitted or empty list uses these defaults; an explicit list overrides them.
+Keep group/resource pairs unique; an empty setting still requires explicit resources.
+Configured targets pass existing validation and authorization checks.
+
 ## Where to look
 
 - `pkg/apis/search/v0alpha1/types.go` and `hybrid.go`: public request and response shapes
