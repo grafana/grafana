@@ -228,7 +228,7 @@ export const SilencesEditor = ({
   );
 
   const onLabelClick = ([value, name]: [string | undefined, string | undefined]): void => {
-    if (!name || value === undefined) {
+    if (!name || !value) {
       return;
     }
 

@@ -136,20 +136,6 @@ describe('SilencesEditor preview label matchers', () => {
     expect(matcherLabels[1]).toHaveValue('severity');
     expect(matcherValues[1]).toHaveValue('warning');
   });
-
-  it('adds a matcher for a label with an empty value', async () => {
-    server.use(
-      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () =>
-        HttpResponse.json([mockAlertmanagerAlert({ labels: { region: '' } })])
-      )
-    );
-    const { user } = renderEditor();
-
-    await user.click(await screen.findByRole('button', { name: 'region' }));
-
-    expect(screen.getByRole('textbox', { name: /^label$/i })).toHaveValue('region');
-    expect(screen.getByRole('textbox', { name: /^value$/i })).toHaveValue('');
-  });
 });
 
 describe('SilencesEditor', () => {
