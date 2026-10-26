@@ -21,19 +21,24 @@ func (a *AccessControl) buildLegacyCheckRequest(
 		return nil, errors.New("legacy check requester is required")
 	}
 
-	// TODO: will be implemented in the follow up PR related to the issue https://github.com/grafana/identity-access-team/issues/2436
-	// The current request contract cannot distinguish global evaluation from
-	// evaluation in the requester's namespace.
-	if user.GetOrgID() == accesscontrol.NoOrgID {
-		return nil, errors.New("legacy check does not yet support global evaluation")
-	}
-
 	expression, err := accesscontrol.ToLegacyExpression(evaluator)
 	if err != nil {
 		return nil, fmt.Errorf("converting evaluator to legacy expression: %w", err)
 	}
 
 	namespace := user.GetNamespace()
+	var global *authzextv1.LegacyGlobalEvaluation
+	if user.GetOrgID() == accesscontrol.NoOrgID || user.GetOrgID() == accesscontrol.GlobalOrgID {
+		global = &authzextv1.LegacyGlobalEvaluation{
+			RequesterOrgId: user.GetOrgID(),
+			HasPermissions: len(user.GetGlobalPermissions()) > 0,
+		}
+		// A self-managed sentinel is requester state, not a tenant. The anchor
+		// selects the same embedded instance; evaluation still uses global grants.
+		if namespace == "" || namespace == types.OrgNamespaceFormatter(user.GetOrgID()) {
+			namespace = types.OrgNamespaceFormatter(1)
+		}
+	}
 	if namespace == "" {
 		namespace = types.OrgNamespaceFormatter(user.GetOrgID())
 	}
@@ -49,5 +54,6 @@ func (a *AccessControl) buildLegacyCheckRequest(
 		Expression:          expression,
 		Teams:               slices.Clone(groups),
 		SkipScopeResolution: a.skipScopeResolution,
+		GlobalEvaluation:    global,
 	}, nil
 }

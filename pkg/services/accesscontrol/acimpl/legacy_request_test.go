@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -246,17 +247,6 @@ func TestBuildLegacyCheckRequestRejectsInvalidInput(t *testing.T) {
 			error:     "legacy check requester is required",
 		},
 		{
-			name: "global evaluation cannot be expressed as a namespace",
-			requester: &user.SignedInUser{
-				UserID:    1,
-				UserUID:   "user-uid",
-				OrgID:     accesscontrol.NoOrgID,
-				Namespace: "stacks-123",
-			},
-			evaluator: accesscontrol.EvalPermission("users:read"),
-			error:     "legacy check does not yet support global evaluation",
-		},
-		{
 			name: "unsupported evaluator",
 			requester: &user.SignedInUser{
 				UserID:  1,
@@ -276,6 +266,93 @@ func TestBuildLegacyCheckRequestRejectsInvalidInput(t *testing.T) {
 
 			require.ErrorContains(t, err, tc.error)
 			require.Nil(t, request)
+		})
+	}
+}
+
+func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		orgID          int64
+		namespace      string
+		permissions    map[int64]map[string][]string
+		wantNamespace  string
+		hasPermissions bool
+	}{
+		{
+			name:           "NoOrgID with a global map",
+			orgID:          accesscontrol.NoOrgID,
+			namespace:      "stacks-123",
+			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:  "stacks-123",
+			hasPermissions: true,
+		},
+		{
+			name:           "organization map does not count as global",
+			orgID:          accesscontrol.NoOrgID,
+			namespace:      "org--1",
+			permissions:    map[int64]map[string][]string{12: {"users:read": {"users:*"}}},
+			wantNamespace:  "default",
+			hasPermissions: false,
+		},
+		{
+			name:           "minus one map does not count as global",
+			orgID:          accesscontrol.NoOrgID,
+			permissions:    map[int64]map[string][]string{-1: {"users:read": {"users:*"}}},
+			wantNamespace:  "default",
+			hasPermissions: false,
+		},
+		{
+			name:           "explicit global identity",
+			orgID:          accesscontrol.GlobalOrgID,
+			namespace:      "org-0",
+			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:  "default",
+			hasPermissions: true,
+		},
+		{
+			name:           "global identity with empty global map",
+			orgID:          accesscontrol.GlobalOrgID,
+			namespace:      "stacks-123",
+			permissions:    map[int64]map[string][]string{0: {}},
+			wantNamespace:  "stacks-123",
+			hasPermissions: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			requester := &user.SignedInUser{
+				UserID:      1,
+				UserUID:     "user-uid",
+				OrgID:       tc.orgID,
+				Namespace:   tc.namespace,
+				Permissions: tc.permissions,
+			}
+			want := &authzextv1.LegacyCheckRequest{
+				Namespace:  tc.wantNamespace,
+				Subject:    "user:user-uid",
+				Expression: legacyRequestPermissionExpression("users:read"),
+				GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{
+					RequesterOrgId: tc.orgID,
+					HasPermissions: tc.hasPermissions,
+				},
+			}
+
+			useExternalGroups := false
+			got, err := ProvideAccessControlTest().
+				buildLegacyCheckRequest(
+					requester,
+					accesscontrol.EvalPermission("users:read"),
+					useExternalGroups,
+				)
+			require.NoError(t, err)
+			require.Empty(t, cmp.Diff(want, got, protocmp.Transform()))
+
+			encoded, err := proto.Marshal(got)
+			require.NoError(t, err)
+
+			decoded := &authzextv1.LegacyCheckRequest{}
+			require.NoError(t, proto.Unmarshal(encoded, decoded))
+			require.Empty(t, cmp.Diff(want, decoded, protocmp.Transform()))
 		})
 	}
 }
