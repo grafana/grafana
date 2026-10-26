@@ -324,7 +324,8 @@ func (r *GrafanaRouter) publishManifestDocs(ctx context.Context, backends []Back
 // the cache for the next build, holding only these backends. A manifest that
 // fails to convert is left out of the manifests, but its group stays in the
 // index; the cache remembers the failure, so it is logged once. builtin holds
-// the compiled-in manifests by group, see publishedManifests.
+// the compiled-in manifests by group, the fallback for backends without one;
+// see publishedManifests.
 func buildManifestDocsFrom(ctx context.Context, sorted []Backend, builtin map[string]*app.ManifestData, cache map[string]*cachedDoc) (*manifestDocs, map[string]*cachedDoc) {
 	sources := publishedManifests(sorted, builtin)
 	docs := &manifestDocs{manifests: map[string]*cachedDoc{}, backends: sorted, sources: sources}
@@ -395,12 +396,16 @@ func (r *GrafanaRouter) GetManifest(ctx context.Context, group string) (*appmani
 	return manifest, nil
 }
 
-// publishedManifests returns the manifest published for each backend's group:
-// the backend's own, or else the manifest compiled into this binary for that
-// group, which a backend need not advertise. The compiled-in manifest is
-// limited to the versions the backend serves, since the backend may run
-// another release. Both change only with the backend's key, so documents
-// cached by key stay valid.
+// publishedManifests returns the manifest published for each backend's group.
+// The backend's own manifest (ManifestProvider) is the source of truth. Only
+// when a backend advertises none, so the router does not know what it serves,
+// does it fall back to the manifest compiled into this binary for the group
+// (resource.AppManifests). That manifest is a best guess: the backend may run
+// another release, so it is limited to the versions the backend serves.
+//
+// Neither input changes while a backend's key does not: reconcile keeps the
+// served Backend until its key changes, and Group must change only with Key.
+// So the fingerprint and documents cached by key stay valid.
 func publishedManifests(backends []Backend, builtin map[string]*app.ManifestData) map[string]*app.ManifestData {
 	out := make(map[string]*app.ManifestData, len(backends))
 	for _, b := range backends {

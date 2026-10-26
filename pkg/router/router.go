@@ -171,7 +171,8 @@ type GrafanaRouter struct {
 	manifestFingerprint string
 	manifestCache       map[string]*cachedDoc
 	// builtinManifests are the app manifests compiled into this binary, by
-	// group, published for a served group whose backend has none. Set before
+	// group: a fallback, published only for a served group whose backend
+	// advertises no manifest of its own (see publishedManifests). Set before
 	// the router serves, and never changed.
 	builtinManifests map[string]*app.ManifestData
 
