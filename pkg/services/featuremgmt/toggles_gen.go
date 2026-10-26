@@ -710,6 +710,10 @@ const (
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
 
+	// FlagGrafanaRestrictWatchToServiceIdentities
+	// Restrict API watches to service accounts, service identities, and privileged loopback clients
+	FlagGrafanaRestrictWatchToServiceIdentities = "grafana.restrictWatchToServiceIdentities"
+
 	// FlagGrafanaPublishLegacySQLEvents
 	// Publish watch events when values are saved to legacy SQL tables
 	FlagGrafanaPublishLegacySQLEvents = "grafana.publishLegacySQLEvents"
