@@ -101,7 +101,8 @@ var _ resourcebus.Subscription = subscription{}
 func (s subscription) Close() error { return s.Unsubscribe() }
 
 // ProvideSubscriber builds the adapter for dependency injection, so that an app receives the bus as a
-// resourcebus.Subscriber and no app package imports pkg/infra/nats.
+// resourcebus.Subscriber and no app package imports pkg/infra/nats. An app runs on the bus wherever NATS is enabled,
+// as the provisioning controllers already do; with it off the nil selects the kubernetes watch.
 func ProvideSubscriber(sub nats.Subscriber) resourcebus.Subscriber {
 	return New(sub, log.New("resourcebus.nats"))
 }

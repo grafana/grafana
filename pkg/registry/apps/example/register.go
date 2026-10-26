@@ -47,12 +47,11 @@ func RegisterAppInstaller(
 	// Config specific to the app. This can pull from feature flags or setting.Cfg.
 	specificConfig := &exampleapp.ExampleConfig{
 		EnableSomeFeature: true,
+		// An app-sdk interface value, so the app depends on neither the bus nor the keys client below. A nil
+		// subscriber selects the kubernetes watch, which is what an instance with NATS off gets.
+		ResourceBus: resourceBus,
 	}
-
-	// Both are app-sdk interface values, so the app depends on neither the bus nor the keys client. The lister comes
-	// with the bus: without one the informer re-lists whole objects, which is most of what the bus exists to avoid.
-	if features.IsEnabledGlobally(featuremgmt.FlagAppPlatformBusInformer) {
-		specificConfig.ResourceBus = resourceBus
+	if keyslister.Enabled(cfg) {
 		specificConfig.BusLister = keyslister.Factory(func(gvr schema.GroupVersionResource) keysapi.Lister {
 			return keysapi.NewGRPCLister(unified, gvr)
 		})

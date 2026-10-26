@@ -15,7 +15,21 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
+	"github.com/grafana/grafana/pkg/setting"
 )
+
+// ConfigSection and ConfigKey name the ini setting that switches an app's re-list to the keys-only projection. The
+// key is the one the provisioning controllers already read, so an operator turns the projection on by one name.
+const (
+	ConfigSection = "grafana-apiserver"
+	ConfigKey     = "keys_only_relist"
+)
+
+// Enabled reports whether the keys-only re-list is switched on. With it off a caller supplies no lister and the
+// informer re-lists full objects, which is correct but reads every body.
+func Enabled(cfg *setting.Cfg) bool {
+	return cfg.SectionWithEnvOverrides(ConfigSection).Key(ConfigKey).MustBool(false)
+}
 
 // ListerFor builds the keys lister for one resource, so that a caller chooses between the gRPC and the HTTP keys
 // client without this package depending on either.

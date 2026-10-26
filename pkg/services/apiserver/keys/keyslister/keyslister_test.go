@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func testKind() resource.Kind {
@@ -59,6 +60,17 @@ type fakeObjects struct {
 func (f *fakeObjects) List(context.Context) ([]resource.Object, string, error) {
 	f.called = true
 	return f.objs, f.listRV, f.err
+}
+
+func TestEnabled(t *testing.T) {
+	cfg := setting.NewCfg()
+	assert.False(t, Enabled(cfg), "an unset key keeps the full-object re-list")
+
+	section, err := cfg.Raw.NewSection(ConfigSection)
+	require.NoError(t, err)
+	_, err = section.NewKey(ConfigKey, "true")
+	require.NoError(t, err)
+	assert.True(t, Enabled(cfg))
 }
 
 func TestListKeys(t *testing.T) {
