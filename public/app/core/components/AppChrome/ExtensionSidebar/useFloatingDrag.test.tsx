@@ -455,6 +455,32 @@ it('left in the bottom half, keeps its bottom edge, re-clamped while the box has
   expect(floating().style.transform).toBe('translate(0px, -200px)');
 });
 
+it('moves only by its handle, with the primary button, following the pointer that grabbed it', () => {
+  render(<Floating />);
+
+  fireEvent.pointerDown(floating(), { clientX: 500, clientY: 520, button: 0 });
+  fireEvent.pointerMove(floating(), { clientX: 300, clientY: 320 });
+  fireEvent.pointerUp(floating(), { clientX: 300, clientY: 320 });
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 2 });
+  fireEvent.pointerMove(handle(), { clientX: 300, clientY: 320 });
+  fireEvent.pointerUp(handle(), { clientX: 300, clientY: 320 });
+  expect(floating().style.transform).toBe('');
+
+  fireEvent.pointerDown(handle(), { clientX: 500, clientY: 520, button: 0, pointerId: 1 });
+  fireEvent.pointerMove(handle(), { clientX: 300, clientY: 320, pointerId: 2 });
+  fireEvent.pointerUp(handle(), { clientX: 300, clientY: 320, pointerId: 2 });
+  expect(floating().style.transform).toBe('');
+  expect(floating()).not.toHaveAttribute('data-dragging');
+});
+
+it('ignores arrow keys pressed away from its handle', () => {
+  render(<Floating />);
+
+  fireEvent.keyDown(floating(), { key: 'ArrowLeft' });
+
+  expect(floating().style.transform).toBe('');
+});
+
 describe('dragged from the docked sidebar', () => {
   const docked = { left: 664, top: 40, width: 360, height: 728 };
   const floatingBox = { left: 312, top: 500, width: 400, height: 244 };
@@ -554,6 +580,47 @@ describe('dragged from the docked sidebar', () => {
 
     // Centred on the pointer, short of the sidebar's right edge (1024) by the gutter.
     expect(preview()).toMatchObject({ left: 536, top: 44 });
+  });
+
+  it('only starts from the handle, with the primary button', () => {
+    render(<Sidebar />);
+
+    fireEvent.pointerDown(floating(), { clientX: 900, clientY: 60, button: 0 });
+    fireEvent.pointerMove(floating(), { clientX: 300, clientY: 300 });
+    fireEvent.pointerUp(floating(), { clientX: 300, clientY: 300 });
+    fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 2 });
+    fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300 });
+    fireEvent.pointerUp(handle(), { clientX: 300, clientY: 300 });
+
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+    expect(floating()).not.toHaveAttribute('data-dragging');
+    expect(onFloat).not.toHaveBeenCalled();
+  });
+
+  it('follows only the pointer that grabbed the handle', () => {
+    render(<Sidebar />);
+
+    fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0, pointerId: 1 });
+    fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300, pointerId: 2 });
+    fireEvent.pointerUp(handle(), { clientX: 300, clientY: 300, pointerId: 2 });
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument();
+
+    fireEvent.pointerMove(handle(), { clientX: 300, clientY: 300, pointerId: 1 });
+    fireEvent.pointerUp(handle(), { clientX: 300, clientY: 300, pointerId: 1 });
+    expect(onFloat).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats a press that barely moves as a click on the handle', () => {
+    render(<Sidebar />);
+
+    fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0 });
+    fireEvent.pointerMove(handle(), { clientX: 898, clientY: 61 });
+    fireEvent.pointerUp(handle(), { clientX: 898, clientY: 61 });
+    fireEvent.click(handle());
+
+    expect(floating()).not.toHaveAttribute('data-dragging');
+    expect(onFloat).not.toHaveBeenCalled();
+    expect(onHandleClick).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the preview inside the page', () => {
