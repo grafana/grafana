@@ -1,4 +1,7 @@
+import { waitFor } from '@testing-library/react';
+
 import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
@@ -54,6 +57,8 @@ function buildTabsLayoutManager(tabs: TabItem[] = []) {
   new DashboardScene({ body: tabsLayoutManager });
   return tabsLayoutManager;
 }
+
+afterEach(() => setTestFlags({}));
 
 describe('TabsLayoutManager', () => {
   describe('URL sync', () => {
@@ -155,6 +160,20 @@ describe('TabsLayoutManager', () => {
   });
 
   describe('addNewTab', () => {
+    it('disables interaction in the inner layout added during review', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const manager = new TabsLayoutManager({ tabs: [] });
+      new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
+      const layout = AutoGridLayoutManager.createEmpty();
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+
+      manager.addNewTab(new TabItem({ layout }));
+
+      expect(layout.state.layout.state.isDraggable).toBe(false);
+      manager.editModeChanged(true);
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+    });
+
     beforeEach(() => {
       lastUndo = undefined;
     });
@@ -217,7 +236,7 @@ describe('TabsLayoutManager', () => {
       expect(tabsLayoutManager.state.tabs).toHaveLength(0);
     });
 
-    it('should sync edit mode to a new tab inner layout when the dashboard is already editing', () => {
+    it('should sync edit mode to a new tab inner layout when the dashboard is already editing', async () => {
       // New tabs use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
       // TabItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
       // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.
@@ -247,7 +266,7 @@ describe('TabsLayoutManager', () => {
       expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
 
       const grid = (layout as DefaultGridLayoutManager).state.grid;
-      expect(grid.state.isDraggable).toBe(true);
+      await waitFor(() => expect(grid.state.isDraggable).toBe(true));
       expect(grid.state.isResizable).toBe(true);
     });
   });

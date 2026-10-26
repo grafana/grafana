@@ -14,17 +14,6 @@ labels:
     - oss
 title: Monitor alerts
 weight: 130
-refs:
-  configure-alert-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/
-  configure-notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/
 ---
 
 # Monitor alerts
@@ -37,7 +26,7 @@ The **History** page includes separate tabs for alert state changes and sent not
 
 {{< figure src="/media/docs/alerting/alert-history-page.png" max-width="750px" alt="History page in Grafana Alerting" >}}
 
-The previous sections explain how to [configure alert rules](ref:configure-alert-rules) and [configure notifications](ref:configure-notifications) to generate alerts and send their notifications.
+The previous sections explain how to [configure alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/) and [configure notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/) to generate alerts and send their notifications.
 
 This section focuses on finding and understanding the state of your alert rules, alert instances, and their notifications. For more details, refer to:
 

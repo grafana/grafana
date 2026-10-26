@@ -2,7 +2,6 @@ import memoize from 'micro-memoize';
 
 import { formattedValueToString, getValueFormat, locationUtil, type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
 import {
   fetchClusterCpuSeries,
@@ -13,10 +12,12 @@ import {
   KUBERNETES_APP_ID,
   type KubernetesHealth,
 } from './kubernetesData';
-import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
+import { type KubernetesFilter } from './kubernetesFilter';
+import { accessibleAppPage, exploreFallbackCta, openAppLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
+import { noMatchStats, scopeFor } from './solutionFilter';
 import { solutionOffer } from './solutionOffer';
-import { detectSignal } from './solutionState';
+import { detectSignal, type SignalDetection } from './solutionState';
 import { type Solution } from './types';
 
 const formatUsageNumber = getValueFormat('short');
@@ -58,13 +59,20 @@ function buildHealthRows(health: KubernetesHealth): string[] {
   return rows;
 }
 
-export function kubernetesSolution(): Solution {
-  const detect = memoize(() => detectSignal(resolveKubernetesDatasource));
+/** Shared Kubernetes detection; solutions recreated for a new filter reuse it so the datasource is never re-resolved. */
+export function kubernetesDetection(): () => Promise<SignalDetection> {
+  return memoize(() => detectSignal(resolveKubernetesDatasource));
+}
+
+export function kubernetesSolution(
+  filter: KubernetesFilter | null,
+  detect: () => Promise<SignalDetection> = kubernetesDetection()
+): Solution {
   const datasource = async () => (await detect()).datasource;
 
-  const inventory = datasourceFact(datasource, fetchKubernetesInventory);
-  const health = datasourceFact(datasource, fetchKubernetesHealth);
-  const clusterCpu = datasourceFact(datasource, fetchClusterCpuSeries);
+  const inventory = datasourceFact(datasource, (ds) => fetchKubernetesInventory(ds, scopeFor(filter, ds)));
+  const health = datasourceFact(datasource, (ds) => fetchKubernetesHealth(ds, scopeFor(filter, ds)));
+  const clusterCpu = datasourceFact(datasource, (ds) => fetchClusterCpuSeries(ds, scopeFor(filter, ds)));
   const alert = memoize(async () => {
     const status = await health();
     if (!status || hasHealthProblems(status) !== true) {
@@ -129,7 +137,7 @@ export function kubernetesSolution(): Solution {
       const clusterCount = Math.ceil(counts.clusters);
       const podCount = Math.ceil(counts.pods);
       if (clusterCount <= 0 && podCount <= 0) {
-        return null;
+        return noMatchStats(filter, datasource, t('home.solutions.kubernetes.filter.no-match', 'No matching data'));
       }
       return {
         primary: t('home.solutions.kubernetes.clusters', '', {
@@ -166,13 +174,10 @@ export function kubernetesSolution(): Solution {
         }
       }
       const href = await accessibleAppHref('/home', ds);
-      return href
-        ? { label: openAppLabel('Kubernetes Monitoring'), href, action: 'open_solution' }
-        : {
-            label: openExploreLabel(),
-            href: constructDataSourceExploreUrl({ name: ds.name }),
-            action: 'open_solution',
-          };
+      if (href) {
+        return { label: openAppLabel('Kubernetes Monitoring'), href, action: 'open_solution' };
+      }
+      return exploreFallbackCta(ds);
     },
   };
 }

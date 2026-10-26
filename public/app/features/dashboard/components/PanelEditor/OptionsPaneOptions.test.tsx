@@ -1,4 +1,5 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
 import { render } from 'test/test-utils';
@@ -15,6 +16,8 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { PanelModel } from '../../state/PanelModel';
@@ -23,11 +26,9 @@ import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardF
 import { OptionsPaneOptions } from './OptionsPaneOptions';
 import { dataOverrideTooltipDescription, overrideRuleTooltipDescription } from './state/getOptionOverrides';
 
-jest.mock('../GenAI/GenAIPanelTitleButton', () => ({
-  GenAIPanelTitleButton: () => null,
-}));
-jest.mock('../GenAI/GenAIPanelDescriptionButton', () => ({
-  GenAIPanelDescriptionButton: () => null,
+jest.mock('../GenAI/LazyGenAIButtons', () => ({
+  LazyGenAIPanelTitleButton: () => null,
+  LazyGenAIPanelDescriptionButton: () => null,
 }));
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
@@ -99,35 +100,77 @@ class OptionsPaneOptionsTestScenario {
     },
   });
 
-  setup() {
-    render(
-      <Provider store={this.store}>
-        <OptionsPaneOptions
-          data={this.panelData}
-          plugin={this.plugin}
-          panel={this.panel}
-          dashboard={this.dashboard}
-          onFieldConfigsChange={this.onFieldConfigsChange}
-          onPanelConfigChange={this.onPanelConfigChange}
-          onPanelOptionsChanged={this.onPanelOptionsChanged}
-          instanceState={undefined}
-        />
-      </Provider>
-    );
+  // Registry editors are lazy, so let them resolve before the test asserts
+  async setup() {
+    await act(async () => {
+      render(
+        <Provider store={this.store}>
+          <OptionsPaneOptions
+            data={this.panelData}
+            plugin={this.plugin}
+            panel={this.panel}
+            dashboard={this.dashboard}
+            onFieldConfigsChange={this.onFieldConfigsChange}
+            onPanelConfigChange={this.onPanelConfigChange}
+            onPanelOptionsChanged={this.onPanelOptionsChanged}
+            instanceState={undefined}
+          />
+        </Provider>
+      );
+    });
   }
 }
 
 describe('OptionsPaneOptions', () => {
+  it('updates field-option visibility when a feature flag changes without panel config changes', async () => {
+    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: false });
+    const scenario = new OptionsPaneOptionsTestScenario();
+    scenario.plugin = getPanelPlugin({ id: 'TestPanel' }).useFieldConfig({
+      useCustomConfig: (builder) => {
+        builder.addBooleanSwitch({
+          name: 'Flagged option',
+          path: 'flaggedOption',
+          showIf: () => !getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
+        });
+      },
+    });
+
+    render(
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <Provider store={scenario.store}>
+          <OptionsPaneOptions
+            data={scenario.panelData}
+            plugin={scenario.plugin}
+            panel={scenario.panel}
+            dashboard={scenario.dashboard}
+            onFieldConfigsChange={scenario.onFieldConfigsChange}
+            onPanelConfigChange={scenario.onPanelConfigChange}
+            onPanelOptionsChanged={scenario.onPanelOptionsChanged}
+            instanceState={undefined}
+          />
+        </Provider>
+      </OpenFeatureProvider>
+    );
+
+    const option = OptionsPaneSelector.fieldLabel('TestPanel Flagged option');
+    expect(screen.getByTestId(option)).toBeInTheDocument();
+    await act(async () => setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true }));
+    await waitFor(() => expect(screen.queryByTestId(option)).not.toBeInTheDocument());
+    await act(async () => setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: false }));
+    expect(await screen.findByTestId(option)).toBeInTheDocument();
+    await act(async () => setTestFlags({}));
+  });
+
   it('should render panel frame options', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.setup();
+    await scenario.setup();
 
     expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
   });
 
   it('should render all categories', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.setup();
+    await scenario.setup();
 
     expect(screen.getByRole('heading', { name: /Panel options/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Standard options/ })).toBeInTheDocument();
@@ -136,21 +179,21 @@ describe('OptionsPaneOptions', () => {
     expect(screen.getByRole('heading', { name: /TestPanel/ })).toBeInTheDocument();
   });
 
-  it('should render custom  options', () => {
+  it('should render custom  options', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.setup();
+    await scenario.setup();
 
     expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('TestPanel CustomBool'))).toBeInTheDocument();
   });
 
-  it('should not render options that are marked as hidden from defaults', () => {
+  it('should not render options that are marked as hidden from defaults', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.setup();
+    await scenario.setup();
 
     expect(screen.queryByTestId(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).not.toBeInTheDocument();
   });
 
-  it('should render options that are specifically not marked as hidden from defaults', () => {
+  it('should render options that are specifically not marked as hidden from defaults', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
 
     scenario.plugin = getPanelPlugin({
@@ -169,18 +212,18 @@ describe('OptionsPaneOptions', () => {
       },
     });
 
-    scenario.setup();
+    await scenario.setup();
     expect(screen.queryByTestId(OptionsPaneSelector.fieldLabel('TestPanel HiddenFromDef'))).toBeInTheDocument();
   });
 
-  it('should create categories for field options with category', () => {
+  it('should create categories for field options with category', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.setup();
+    await scenario.setup();
 
     expect(screen.getByRole('heading', { name: /Axis/ })).toBeInTheDocument();
   });
 
-  it('should not render categories with hidden fields only', () => {
+  it('should not render categories with hidden fields only', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
 
     scenario.plugin = getPanelPlugin({
@@ -197,13 +240,13 @@ describe('OptionsPaneOptions', () => {
       },
     });
 
-    scenario.setup();
+    await scenario.setup();
     expect(screen.queryByRole('heading', { name: /Axis/ })).not.toBeInTheDocument();
   });
 
-  it('should call onPanelConfigChange when updating title', () => {
+  it('should call onPanelConfigChange when updating title', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.setup();
+    await scenario.setup();
 
     const input = screen.getByDisplayValue(scenario.panel.title);
     fireEvent.change(input, { target: { value: 'New' } });
@@ -212,9 +255,9 @@ describe('OptionsPaneOptions', () => {
     expect(scenario.onPanelConfigChange).toHaveBeenCalledWith('title', 'New');
   });
 
-  it('should call onFieldConfigsChange when updating field config', () => {
+  it('should call onFieldConfigsChange when updating field config', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.setup();
+    await scenario.setup();
 
     const input = screen.getByPlaceholderText('CustomTextPropPlaceholder');
     fireEvent.change(input, { target: { value: 'New' } });
@@ -228,7 +271,7 @@ describe('OptionsPaneOptions', () => {
 
   it('should only render hits when search query specified', async () => {
     const scenario = new OptionsPaneOptionsTestScenario();
-    scenario.setup();
+    await scenario.setup();
 
     const input = screen.getByPlaceholderText('Search options');
     fireEvent.change(input, { target: { value: 'TextPropWithCategory' } });
@@ -244,7 +287,7 @@ describe('OptionsPaneOptions', () => {
       id: 'TestPanel',
     });
 
-    scenario.setup();
+    await scenario.setup();
 
     expect(
       screen.queryByLabelText(selectors.components.ValuePicker.button('Add field override'))
@@ -266,7 +309,7 @@ describe('OptionsPaneOptions', () => {
       },
     });
 
-    scenario.setup();
+    await scenario.setup();
 
     const thresholdsSection = screen.getByTestId(selectors.components.OptionsGroup.group('Thresholds'));
     expect(
@@ -292,7 +335,7 @@ describe('OptionsPaneOptions', () => {
       }),
     ];
 
-    scenario.setup();
+    await scenario.setup();
 
     expect(screen.getByText(dataOverrideTooltipDescription)).toBeInTheDocument();
     expect(screen.queryByText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
@@ -312,7 +355,7 @@ describe('OptionsPaneOptions', () => {
       },
     ];
 
-    scenario.setup();
+    await scenario.setup();
     expect(screen.getByText(overrideRuleTooltipDescription)).toBeInTheDocument();
   });
 });

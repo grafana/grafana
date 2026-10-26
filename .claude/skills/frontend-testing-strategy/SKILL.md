@@ -1,6 +1,6 @@
 ---
 name: frontend-testing-strategy
-description: Write unit and E2E tests for Grafana frontend code (React/TypeScript, any package or feature area) to the conventions this repo expects. Use when adding, backfilling, or reviewing frontend tests; when a test only asserts "it rendered" or "it's defined"; when reviewing AI-generated tests for slop; or when a frontend test is flaky. For visualization panels and grafana-ui viz components specifically, also load the `panel-testing-strategy` skill.
+description: Write and run unit and E2E tests for Grafana frontend code (React/TypeScript, any package or feature area) to the conventions this repo expects. Use when running Playwright E2E tests; when adding, backfilling, or reviewing frontend tests; when a test only asserts "it rendered" or "it's defined"; when reviewing AI-generated tests for slop; or when a frontend test is flaky. For visualization panels and grafana-ui viz components specifically, also load the `panel-testing-strategy` skill.
 ---
 
 # Frontend testing strategy
@@ -10,6 +10,18 @@ Write tests for Grafana frontend code that pass review on the first pass. Goals:
 actually exercises the target code path; and stabilize the known flake classes. Several codeowner
 paths are opted into the gating `check-frontend-test-coverage.yml` check, so coverage that drops
 fails CI.
+
+## Running Playwright E2E tests
+
+Use `yarn e2e:playwright <spec>` with `GRAFANA_URL` unset by default. The harness starts
+its own lightweight Grafana server on port 3001; this is more efficient than starting a
+separate development instance. Do not start `make run` or another Grafana server just to
+run E2E tests.
+
+Only set `GRAFANA_URL` to use a custom server when the task specifically needs one, such as
+debugging a particular running instance or testing a deployment. State that reason before
+using the override. Setting `GRAFANA_URL` disables the harness-managed server, so the target
+instance must already be running and accessible.
 
 ## Resolve the target
 
@@ -61,24 +73,45 @@ expect(results[0].text).toBe('100%'); // (formatting is secondary)
 
 If the function mostly delegates, assert the delegation with exact arguments (see Step 2).
 
-**Expected values are literals, not recomputations.** Never derive the expected side by calling the
+**Expected values are literals, not recomputations, except for theme colors (see below).** Never derive the expected side by calling the
 code under test, a collaborator it calls internally, or by re-typing the production formula — the
 test then passes whenever the code and the expectation share the same bug, and comparing a value to
 _itself_ asserts nothing at all. Freeze the expected value as a literal, computed once by hand or
 captured from a known-good run:
 
 ```ts
-// ❌ circular: `expected` is produced the same way the code produces its result
-const expected = theme.visualization.getColorByName('red');
-expect(dim.value()).toBe(expected);
 // ❌ re-derives the production formula — a bug in the formula is copied into `expected`
 const expected = TABLE.CELL_PADDING * 2 + theme.typography.fontSize * theme.typography.body.lineHeight;
 expect(getDefaultRowHeight(theme, [])).toBe(expected);
 
-// ✅ frozen literals — a change in the resolver or the formula now fails the test
-expect(dim.value()).toBe('#F2495C');
+// ✅ frozen literal — a change in the formula now fails the test
 expect(getDefaultRowHeight(theme, [])).toBe(34);
 ```
+
+**Theme colors are an explicit exception.** When testing that a component or consumer uses a
+theme color, derive the expected color from the theme supplied to that component (or its theme
+provider), rather than hardcoding the current hex/RGB value. Assert the specific semantic token
+or named theme color the element should use. Palette changes should not break these tests;
+using the wrong token should.
+
+For example, the JSON highlighting assertions in
+`packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx` should express the
+string and number token choices:
+
+```ts
+// Before: pins today's palette
+expect(await screen.findByText('"us-east-1"')).toHaveStyle({ color: '#6CCF8E' });
+expect(screen.getByText('3')).toHaveStyle({ color: '#FBAD37' });
+
+// After: checks the intended theme tokens
+expect(await screen.findByText('"us-east-1"')).toHaveStyle({ color: theme.components.codeEditor.string });
+expect(screen.getByText('3')).toHaveStyle({ color: theme.components.codeEditor.number });
+```
+
+For theme-switching tests, assert against each supplied theme after rerendering. This exception
+does not apply when the color resolver, transformation, or palette definition itself is under
+test: keep independent literal expectations there rather than calling the implementation to
+produce its own expected result.
 
 For values awkward to write by hand (projected coordinates, hashes), assert an **independent
 readback** rather than re-running the same path — e.g. project lng/lat, read it back in WGS84, and
@@ -346,8 +379,10 @@ that stays green without the fix documents nothing and will not catch the bug co
 Pointers to the sections above — read them for the detail:
 
 - Principle 2 — assert concrete values / exact call args; never bare `toBeDefined`,
-  `instanceof`, "did not throw", or length-mirrors-input. Expected values are frozen literals, never
-  recomputed from the code under test; mutate the value and confirm red before landing.
+  `instanceof`, "did not throw", or length-mirrors-input. Expected values are frozen literals,
+  except theme-color consumers should assert the intended theme token instead of a hardcoded
+  color. Never recompute expectations using the code under test; mutate the value and confirm
+  red before landing.
 - Principle 3 — no unfocused/verbose/implementation-coupled slop; review AI output before a PR.
 - Principle 4 — a failing test after a behavior change is a regression signal, not something to
   patch over; net new functionality needs net new tests.
@@ -381,5 +416,5 @@ of this one), the `add-e2e-selectors` skill, `contribute/style-guides/testing.md
 
 - `yarn test <path>` (add `--watchAll=false`) — the new tests pass and actually fail when the
   asserted value is broken (mutate the expected value once to confirm it's not a no-op).
-- For E2E: `yarn e2e:playwright <spec>` (it starts its own server).
+- For E2E: `yarn e2e:playwright <spec>` — follow "Running Playwright E2E tests" above.
 - `yarn typecheck` if selectors or casts were added.

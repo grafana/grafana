@@ -84,8 +84,6 @@ services:
         target: /config/config.yaml
       - source: goff_flags
         target: /flags/flags.yaml
-      - source: goff_flags_bundler
-        target: /flags/bundler.yaml
 
   postgres:
     image: postgres:16.1-alpine3.19@sha256:17eb369d9330fe7fbdb2f705418c18823d66322584c77c2b43cc0e1851d01de7
@@ -128,7 +126,7 @@ services:
       - 'alloy.logs=true'
 
   loki:
-    image: grafana/loki:3.7.7@sha256:d70e4659623f3e109af669cae76fe2a5dd5be54e2298fe8aed380d982fbc2500
+    image: grafana/loki:3.7.8@sha256:1107dd5274e0ada47e42472b7a7e71f3b2a2fe878878108f3e2f9e51528f0193
     volumes:
       - loki-data:/loki
     command: -config.file=/etc/loki/local-config.yaml
@@ -136,7 +134,7 @@ services:
       - 'alloy.logs=true'
 
   tempo-init:
-    image: busybox:1.38.0@sha256:fd8d9aa63ba2f0982b5304e1ee8d3b90a210bc1ffb5314d980eb6962f1a9715d
+    image: busybox:1.38.0@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e
     user: root
     entrypoint:
       - 'chown'
@@ -174,14 +172,8 @@ configs:
       retrievers:
         - kind: "file"
           path: "/flags/flags.yaml"
-        - kind: "file"
-          path: "/flags/bundler.yaml"
   goff_flags:
     file: ./goff-flags.yaml
-  # Which bundler the frontend-service reads assets from. Tilt points this at
-  # goff-flags.rspack.yaml when RSPACK=1 is set.
-  goff_flags_bundler:
-    file: ./goff-flags.webpack.yaml
 
 volumes:
   backend-data:

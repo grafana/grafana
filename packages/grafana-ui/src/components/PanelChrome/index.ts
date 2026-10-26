@@ -33,6 +33,16 @@ export {
   type LoadingIndicatorProps as PanelChromeLoadingIndicatorProps,
 } from './LoadingIndicator';
 
-export { usePanelContext, PanelContextProvider, type PanelContext, PanelContextRoot } from './PanelContext';
+export {
+  usePanelContext,
+  PanelContextProvider,
+  type PanelContext,
+  type PanelRuntimeTransformations,
+  type AdHocTransformationsState,
+  PanelContextRoot,
+} from './PanelContext';
+export { useAdHocTransformations } from './useAdHocTransformations';
 
 export * from './types';
+export { usePanelNotices, usePanelStatusSnapshot } from './usePanelNotices';
+export { PanelStatusActions } from './PanelStatusActions';

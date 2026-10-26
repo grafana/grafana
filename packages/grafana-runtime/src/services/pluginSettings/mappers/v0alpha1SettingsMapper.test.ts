@@ -529,14 +529,14 @@ describe('inlineSecureValuesMapper', () => {
     });
   });
 
-  it('should update existing values when key exists in secureJsonFields', () => {
+  it('should send new plaintext as create when key exists in secureJsonFields', () => {
     expect(
       inlineSecureValuesMapper({
         secureJsonData: { apiKey: 'newSecret' },
         secureJsonFields: { apiKey: true },
       })
     ).toStrictEqual({
-      apiKey: { name: 'newSecret' },
+      apiKey: { create: 'newSecret' },
     });
   });
 
@@ -557,7 +557,7 @@ describe('inlineSecureValuesMapper', () => {
         secureJsonFields: { apiKey: true },
       })
     ).toStrictEqual({
-      apiKey: { name: 'newKey' },
+      apiKey: { create: 'newKey' },
       password: { create: 'newPass' },
     });
   });

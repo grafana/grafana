@@ -62,6 +62,10 @@ In this way, you eliminate the need for manual monitoring and provide a first li
 Using Grafana Alerting, you create queries and expressions from multiple data sources, no matter where you store your data, giving you the flexibility to combine your data and alert on your metrics and logs in new and unique ways.
 You can then create, manage, and take action on your alerts from a single, consolidated view, and improve your team's ability to identify and resolve issues quickly.
 
+To see alert rules and their current state, explore the alert rules on Grafana Play:
+
+{{< docs/play title="Alert rules" url="https://play.grafana.org/alerting/list" >}}
+
 ## Explore
 
 {{< card-grid key="cards" type="simple" >}}

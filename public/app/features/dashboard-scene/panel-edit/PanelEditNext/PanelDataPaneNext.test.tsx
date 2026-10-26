@@ -24,14 +24,9 @@ const mockGetDataSourceInstance = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: (ref?: unknown, scopedVars?: unknown) => mockGetDataSourceInstance(ref, scopedVars),
   getDataSourceInstanceSettings: (ref?: unknown, scopedVars?: unknown) => mockGetInstanceSettings(ref, scopedVars),
 }));
-
 // Mutable state object for the mock queryRunner
 const mockQueryRunnerState: {
   datasource: { uid: string; type: string } | undefined;
@@ -483,6 +478,38 @@ describe('PanelDataPaneNext', () => {
 
         dataPane.toggleTransformationDisabled(5);
         expect(mockTransformer.setState).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('transformations with a static refId', () => {
+      const named: DataTransformerConfig = { id: 'reduce', refId: 'T-A', options: {} };
+      const unnamed: DataTransformerConfig = { id: 'groupBy', options: {} };
+
+      let namedTransformer: SceneDataTransformer;
+
+      beforeEach(() => {
+        namedTransformer = new SceneDataTransformer({
+          transformations: [named, unnamed],
+          $data: mockQueryRunner,
+        });
+
+        jest.spyOn(namedTransformer, 'setState');
+        jest.spyOn(namedTransformer, 'reprocessTransformations').mockImplementation(() => {});
+        mockPanel.state.$data = namedTransformer;
+      });
+
+      it('should keep the named transformation when another one is added', () => {
+        dataPane.addTransformation('limit');
+
+        expect(namedTransformer.setState).toHaveBeenCalledWith({
+          transformations: [named, unnamed, { id: 'limit', options: {} }],
+        });
+      });
+
+      it('should delete by an index that counts the named transformation', () => {
+        dataPane.deleteTransformation(1);
+
+        expect(namedTransformer.setState).toHaveBeenCalledWith({ transformations: [named] });
       });
     });
   });
@@ -1414,6 +1441,23 @@ describe('PanelDataPaneNext', () => {
       expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
     });
 
+    it('should clear dsError after a subsequent successful datasource change', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
+      mockGetInstanceSettings.mockReturnValueOnce(undefined);
+
+      await testDataPane.changeDataSource({ uid: 'nonexistent-uid', type: 'unknown' }, 'A');
+
+      expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+
+      mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
+
+      await testDataPane.changeDataSource({ uid: 'prom-uid-2', type: 'prometheus' }, 'A');
+
+      expect(testDataPane.state.dsError).toBeUndefined();
+    });
+
     it('should set dsError and not update queries when get() fails during a type-change DS switch', async () => {
       mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
@@ -1676,6 +1720,23 @@ describe('PanelDataPaneNext', () => {
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 
+    it('clears dsError after a subsequent successful bulk datasource change', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
+      mockGetInstanceSettings.mockReturnValueOnce(undefined);
+
+      await testDataPane.bulkChangeDataSource(['A'], { uid: 'nonexistent', type: 'unknown' });
+
+      expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+
+      mockGetInstanceSettings.mockReturnValue(promInstance2Settings);
+
+      await testDataPane.bulkChangeDataSource(['A'], { uid: 'prom-uid-2', type: 'prometheus' });
+
+      expect(testDataPane.state.dsError).toBeUndefined();
+    });
+
     it('runs queries after a successful datasource change', async () => {
       mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
@@ -1727,6 +1788,22 @@ describe('PanelDataPaneNext', () => {
         ],
       });
       expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+
+    it('bulkToggleTransformationsDisabled leaves a transformation with a static refId in place', () => {
+      const named: DataTransformerConfig = { id: 'reduce', refId: 'T-A', options: {} };
+      const namedTransformer = new SceneDataTransformer({
+        transformations: [named, { id: 'groupBy', options: {} }],
+        $data: mockQueryRunner,
+      });
+      jest.spyOn(namedTransformer, 'setState');
+      mockPanel.state.$data = namedTransformer;
+
+      dataPane.bulkToggleTransformationsDisabled([1], true);
+
+      expect(namedTransformer.setState).toHaveBeenCalledWith({
+        transformations: [named, { id: 'groupBy', options: {}, disabled: true }],
+      });
     });
   });
 });

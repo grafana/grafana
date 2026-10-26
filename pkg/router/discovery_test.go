@@ -28,6 +28,7 @@ type fakeBackend struct {
 }
 
 func (b *fakeBackend) Key() string            { return b.key }
+func (b *fakeBackend) Source() string         { return "test" }
 func (b *fakeBackend) Group() metav1.APIGroup { return b.group }
 func (b *fakeBackend) Load(context.Context) (http.Handler, error) {
 	if b.handler != nil {
@@ -53,7 +54,7 @@ func TestBuildAPIGroupList(t *testing.T) {
 		}},
 	}
 
-	doc := buildAPIGroupList(backends)
+	doc := buildAPIGroupList(t.Context(), backends)
 
 	var list metav1.APIGroupList
 	if err := json.Unmarshal(doc.body, &list); err != nil {
@@ -62,12 +63,16 @@ func TestBuildAPIGroupList(t *testing.T) {
 	if list.Kind != "APIGroupList" || list.APIVersion != "v1" {
 		t.Errorf("got Kind=%q APIVersion=%q, want APIGroupList/v1", list.Kind, list.APIVersion)
 	}
-	if len(list.Groups) != 2 {
-		t.Fatalf("got %d groups, want 2: %+v", len(list.Groups), list.Groups)
+	if len(list.Groups) != 3 {
+		t.Fatalf("got %d groups, want 3: %+v", len(list.Groups), list.Groups)
 	}
-	// sorted alphabetically: dashboard before folder
+	// sorted alphabetically: dashboard, then the router's own discovery group,
+	// then folder
 	if list.Groups[0].Name != "dashboard.grafana.app" {
 		t.Errorf("got Groups[0].Name=%q, want dashboard.grafana.app", list.Groups[0].Name)
+	}
+	if list.Groups[1].Name != discoveryGroup {
+		t.Errorf("got Groups[1].Name=%q, want %s", list.Groups[1].Name, discoveryGroup)
 	}
 	if len(list.Groups[0].Versions) != 2 {
 		t.Errorf("got %d served versions for dashboard.grafana.app, want 2: %+v",
@@ -89,8 +94,8 @@ func TestBuildAPIGroupListETagChangesWithKey(t *testing.T) {
 			Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: "dashboard.grafana.app/v1alpha1", Version: "v1alpha1"}},
 		}}}
 	}
-	a := buildAPIGroupList(mk("1"))
-	b := buildAPIGroupList(mk("2"))
+	a := buildAPIGroupList(t.Context(), mk("1"))
+	b := buildAPIGroupList(t.Context(), mk("2"))
 	if a.etag == b.etag {
 		t.Errorf("etag did not change when key changed: both %q", a.etag)
 	}
@@ -106,14 +111,14 @@ func TestBuildOpenAPIV3Index(t *testing.T) {
 		}},
 	}
 
-	doc := buildOpenAPIV3Index(backends)
+	doc := buildOpenAPIV3Index(t.Context(), backends)
 
 	var idx handler3.OpenAPIV3Discovery
 	if err := json.Unmarshal(doc.body, &idx); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
-	if len(idx.Paths) != 1 {
-		t.Fatalf("got %d paths, want 1: %+v", len(idx.Paths), idx.Paths)
+	if len(idx.Paths) != 2 { // with the router's own discovery group
+		t.Fatalf("got %d paths, want 2: %+v", len(idx.Paths), idx.Paths)
 	}
 	entry, ok := idx.Paths["apis/dashboard.grafana.app/v0alpha1"]
 	if !ok {
@@ -122,5 +127,15 @@ func TestBuildOpenAPIV3Index(t *testing.T) {
 	want := "/openapi/v3/apis/dashboard.grafana.app/v0alpha1?hash=10"
 	if entry.ServerRelativeURL != want {
 		t.Errorf("got ServerRelativeURL=%q, want %q", entry.ServerRelativeURL, want)
+	}
+}
+
+// Streaming the hash must give the ETags that hashing one string did.
+func TestHashHexBytesMatchesHashHex(t *testing.T) {
+	if got, want := hashHexBytes([]byte("key"), []byte{0}, []byte("body")), hashHex("key\x00body"); got != want {
+		t.Errorf("hashHexBytes = %q, want %q", got, want)
+	}
+	if got, want := hashHexBytes(), hashHex(""); got != want {
+		t.Errorf("hashHexBytes() = %q, want %q", got, want)
 	}
 }

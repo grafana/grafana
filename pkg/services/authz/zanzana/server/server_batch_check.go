@@ -118,6 +118,7 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest, n
 			correlationID: item.GetCorrelationId(),
 			resource:      resource,
 			relation:      relation,
+			resolved:      isLegacyPermissionDelegation(item.GetGroup(), item.GetResource(), item.GetSubresource()),
 		}
 	}
 
@@ -280,7 +281,7 @@ func collectFolderPermissionChecks(items map[string]*batchCheckItem) []folderChe
 		if !isFolderPermissionBasedResource(item.resource.GroupResource()) {
 			continue
 		}
-		relation := common.FolderPermissionRelation(item.relation)
+		relation := common.FolderContentPermissionRelation(item.relation)
 		entries = append(entries, folderCheckEntry{
 			correlationID: item.correlationID,
 			relation:      relation,
@@ -559,12 +560,6 @@ func expandedSubresourcePermissionRelations(relation string) []string {
 		return []string{
 			common.RelationSubresourceGet,
 			common.RelationSubresourceSetView,
-			common.RelationSubresourceSetEdit,
-			common.RelationSubresourceSetAdmin,
-		}
-	case common.RelationSubresourceCreate:
-		return []string{
-			common.RelationSubresourceCreate,
 			common.RelationSubresourceSetEdit,
 			common.RelationSubresourceSetAdmin,
 		}

@@ -71,8 +71,9 @@ func TestNatsStorageBackendOptions(t *testing.T) {
 			cfg.NATS.Notifier = tt.notifier
 			cfg.NATS.NotifierShadow = tt.notifierShadow
 
+			expiry := resource.NewWatchExpiry()
 			var backendOpts resource.KVBackendOptions
-			for _, opt := range NatsStorageBackendOptions(cfg, tt.publisher, tt.subscriber) {
+			for _, opt := range NatsStorageBackendOptions(cfg, tt.publisher, tt.subscriber, expiry) {
 				opt(&backendOpts)
 			}
 
@@ -80,6 +81,11 @@ func TestNatsStorageBackendOptions(t *testing.T) {
 			require.Equal(t, tt.wantSubscriber, backendOpts.EventSubscriber != nil)
 			require.Equal(t, tt.wantNotifier, backendOpts.EnableNatsNotifier)
 			require.Equal(t, tt.wantShadow, backendOpts.EnableNatsNotifierShadow)
+			if tt.wantNotifier {
+				require.Same(t, expiry, backendOpts.WatchInvalidator)
+			} else {
+				require.Nil(t, backendOpts.WatchInvalidator)
+			}
 		})
 	}
 }

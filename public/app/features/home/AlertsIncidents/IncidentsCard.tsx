@@ -7,24 +7,26 @@ import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
+import { TimeAgoCell } from '../TimeAgoCell';
 import { ctaClicked } from '../analytics/main';
 
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
-import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
+import { AllClearGrot, SummaryCard, SummaryCardPrefix } from './SummaryCard';
+import { type FilterScope } from './filterSelection';
 import { severityLevelColor } from './severity';
-import { type TeamSelection, explicitTeam } from './teamFilter';
 import { type IncidentsData } from './useIncidents';
 
-/** Empty-state copy names the filtered team; the default and "All teams" scopes use the generic line. */
-function emptyMessage(selectedTeam: TeamSelection): string {
-  const team = explicitTeam(selectedTeam);
-  if (team) {
-    return t('home.incidents-card.empty-selected-team', 'No active incidents for {{team}}.', {
-      team,
+/** Empty-state copy names the filtered value; the unfiltered scope uses the generic line. */
+function emptyMessage(filterScope: FilterScope): string {
+  if (filterScope.kind === 'label') {
+    // Value only: the dropdown headers show field names, and the selection only holds the slug.
+    // Key and param predate the widening past `team`; the copy fits any field value, so they stay.
+    return t('home.incidents-card.empty-selected-team', 'All quiet! No active incidents for {{team}}.', {
+      team: filterScope.label.value,
       interpolation: { escapeValue: false },
     });
   }
-  return t('home.incidents-card.empty', 'No active incidents.');
+  return t('home.incidents-card.empty', 'All quiet! No active incidents.');
 }
 
 /** Render-only card body; data comes from useIncidents so callers control where the hook runs. */
@@ -36,7 +38,7 @@ export function IncidentsCard({
   hideFooterActions?: boolean;
 }) {
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
-  const { pluginId, canAccess, canDeclare, displayed, count, hasMore, selectedTeam, loading, error, refetch } = data;
+  const { pluginId, canAccess, canDeclare, displayed, count, hasMore, filterScope, loading, error, refetch } = data;
 
   return (
     <SummaryCard
@@ -51,7 +53,8 @@ export function IncidentsCard({
           ? { title: t('home.incidents-card.error-title', 'Could not load active incidents'), onRetry: () => refetch() }
           : undefined
       }
-      emptyMessage={emptyMessage(selectedTeam)}
+      emptyMessage={emptyMessage(filterScope)}
+      emptyImage={<AllClearGrot />}
       items={displayed}
       getItemKey={(incident) => incident.incidentID}
       renderItem={(incident) => (
@@ -75,7 +78,7 @@ export function IncidentsCard({
             )
           }
           title={incident.title}
-          trailing={<SummaryCardAge date={new Date(incident.createdTime)} />}
+          trailing={<TimeAgoCell date={new Date(incident.createdTime)} />}
           href={canAccess ? createBridgeURL(pluginId, `/incidents/${incident.incidentID}`) : undefined}
           onClick={() => ctaClicked({ surface: 'incidents_card', action: 'incident_detail', placement: 'list' })}
           showDivider={redesignEnabled}
@@ -85,6 +88,7 @@ export function IncidentsCard({
         canDeclare ? (
           <LinkButton
             variant="primary"
+            size="sm"
             icon="fire"
             href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
             onClick={() =>

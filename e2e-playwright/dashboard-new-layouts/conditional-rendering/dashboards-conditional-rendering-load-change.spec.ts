@@ -3,14 +3,13 @@ import { type Page } from '@playwright/test';
 import { type DashboardPage, type DashboardPageArgs } from '@grafana/plugin-e2e';
 
 import testDashboard from '../../dashboards/DashboardWithAllConditionalRendering.json';
-import { test, expect } from '../fixtures';
+import { expect, test } from '../fixtures';
 import { expectRepeatedPanelTitlesToBe, flows } from '../helpers';
 
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
   },
   viewport: { width: 1920, height: 1080 },
 });
@@ -110,7 +109,6 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(tabs.getTitle('Tab - hide - time range <7d')).not.toBeVisible();
 
     await controls.timeRange.set('now-8d', 'now');
-    await page.waitForLoadState('networkidle');
 
     await expect(panels.getPanel('Panel - show - time range <7d')).not.toBeVisible();
     await expect(panels.getPanel('Panel - hide - time range <7d')).toBeVisible();
@@ -134,7 +132,6 @@ test.describe('Dashboard - Conditional Rendering - Load and Change', { tag: ['@d
     await expect(tabs.getTitle('Tab - hide - time range <7d')).toBeVisible();
 
     await controls.timeRange.set('now-6h', 'now');
-    await page.waitForLoadState('networkidle');
 
     await expect(panels.getPanel('Panel - show - time range <7d')).toBeVisible();
     await expect(panels.getPanel('Panel - hide - time range <7d')).not.toBeVisible();

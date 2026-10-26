@@ -4,6 +4,7 @@ import { locationService } from '@grafana/runtime';
 import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
+import { isFullscreenWorkspaceActive } from './fullscreenWorkspaceState';
 import { useFullscreenWorkspace } from './useFullscreenWorkspace';
 
 jest.mock('@grafana/runtime', () => {
@@ -91,6 +92,22 @@ describe('useFullscreenWorkspace', () => {
     expect(result.current.fullscreenWorkspaceFeatureFlagEnabled).toBe(true);
     expect(result.current.fullscreenWorkspaceActive).toBe(true);
     expect(getLocationObservableMock).toHaveBeenCalled();
+  });
+
+  it('mirrors the active state for imperative callers that cannot use this hook', () => {
+    // The assistant entry points read this to decide whether to continue the open chat, and they
+    // run outside React.
+    useFlagMock.mockReturnValue(true);
+    mockChrome(true);
+    const { unmount } = renderHook(() => useFullscreenWorkspace());
+
+    expect(isFullscreenWorkspaceActive()).toBe(true);
+
+    unmount();
+    mockChrome(false);
+    renderHook(() => useFullscreenWorkspace());
+
+    expect(isFullscreenWorkspaceActive()).toBe(false);
   });
 
   it('enters fullscreen workspace and clears the query param when the flag is on and ?fullscreenWorkspace=1 is present', () => {

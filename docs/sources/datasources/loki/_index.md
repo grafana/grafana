@@ -65,6 +65,31 @@ After configuring the Loki data source, you can:
 - Add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/) to overlay log events on your graphs.
 - Optimize performance with [query caching](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/#query-and-resource-caching).
 
+To see the Loki data source in action, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="Loki NGINX Service Mesh - JSON version" url="https://play.grafana.org/d/T512JVH7z/" >}}
+
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to query your Loki data source, use the `gcx datasources loki` commands:
+
+```sh
+# Run a LogQL query that returns log lines
+gcx datasources loki query -d <DATASOURCE_UID> '{job="varlogs"} |= "error"' --since 1h
+
+# Run a metric LogQL query that returns time series
+gcx datasources loki metrics -d <DATASOURCE_UID> 'rate({job="varlogs"}[5m])' --since 1h
+
+# List all labels, or the values for a single label
+gcx datasources loki labels -d <DATASOURCE_UID>
+gcx datasources loki labels -d <DATASOURCE_UID> --label job
+
+# List log streams matching a selector
+gcx datasources loki series -d <DATASOURCE_UID> --match '{job="varlogs"}'
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your Loki data source. You can omit the `-d` flag when `datasources.loki` is configured in your `gcx` context. The `query` command returns log lines, `metrics` returns time series from a metric LogQL query, and `series` requires at least one `--match` stream selector.
+
 ## Related resources
 
 - [Loki documentation](https://grafana.com/docs/loki/latest/)

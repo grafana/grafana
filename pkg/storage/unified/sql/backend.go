@@ -24,10 +24,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -53,6 +52,8 @@ const defaultGarbageCollectionBatchWait = 1 * time.Second
 type GarbageCollectionConfig struct {
 	Enabled          bool
 	DryRun           bool
+	BlobEnabled      bool
+	BlobDryRun       bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
 	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
@@ -66,6 +67,8 @@ func NewGarbageCollectionConfig(cfg *setting.Cfg) GarbageCollectionConfig {
 	return GarbageCollectionConfig{
 		Enabled:          cfg.EnableGarbageCollection,
 		DryRun:           cfg.GarbageCollectionDryRun,
+		BlobEnabled:      cfg.BlobGarbageCollectionEnabled,
+		BlobDryRun:       cfg.BlobGarbageCollectionDryRun,
 		Interval:         cfg.GarbageCollectionInterval,
 		BatchSize:        cfg.GarbageCollectionBatchSize,
 		BatchWait:        cfg.GarbageCollectionBatchWait,
@@ -122,17 +125,12 @@ func WithNatsNotifierShadow(s resource.EventSubscriber) StorageBackendOption {
 // WithNatsNotifier feeds the watch pipeline directly from the NATS bus instead
 // of polling. Delivery is at-most-once; the backend falls back to polling when
 // the subscriber is disabled. KV backend only.
-func WithNatsNotifier(s resource.EventSubscriber) StorageBackendOption {
+func WithNatsNotifier(s resource.EventSubscriber, invalidator resource.Invalidator) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) {
 		o.EventSubscriber = s
 		o.EnableNatsNotifier = true
+		o.WatchInvalidator = invalidator
 	}
-}
-
-// WithExperimentalKV routes flagged experimental use-cases to an alternative
-// KV. Nil preserves existing behavior. KV backend only.
-func WithExperimentalKV(e *resource.ExperimentalKVOptions) StorageBackendOption {
-	return func(o *resource.KVBackendOptions) { o.ExperimentalKV = e }
 }
 
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
@@ -165,6 +163,10 @@ func NewStorageBackend(
 		cfg.SectionWithEnvOverrides("resource_api"))
 
 	if !cfg.EnableSQLKVBackend {
+		blobURL, err := resolvedBlobURL(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("blob_url").MustString(""), cfg.DataPath)
+		if err != nil {
+			return nil, err
+		}
 		return NewBackend(BackendOptions{
 			DBProvider:              eDB,
 			Reg:                     reg,
@@ -173,6 +175,7 @@ func NewStorageBackend(
 			LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
 			GCGate:                  gcGate,
 			GarbageCollection:       NewGarbageCollectionConfig(cfg),
+			BlobURL:                 blobURL,
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
 			MigrationChunkedWrites:  cfg.MigrationChunkedWrites,
@@ -205,7 +208,7 @@ func NewStorageBackend(
 	kvBackendOpts.KvStore = kvStore
 	kvBackendOpts.Reg = reg
 	kvBackendOpts.UseChannelNotifier = !isHA
-	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.Log = logging.DefaultLogger.With("logger", "storage-backend")
 	kvBackendOpts.DBKeepAlive = eDB
 	kvBackendOpts.GCGate = gcGate
 	// The KV backend has one switch for all background write jobs, so the older
@@ -244,7 +247,7 @@ func newKVGrpcBackendOptions(cfg *setting.Cfg, reg prometheus.Registerer, disabl
 	kvBackendOpts := resource.NewKVBackendOptions(cfg)
 	kvBackendOpts.KvStore = kvStore
 	kvBackendOpts.Reg = reg
-	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.Log = logging.DefaultLogger.With("logger", "storage-backend")
 	kvBackendOpts.GCGate = gcGate
 	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
 
@@ -261,8 +264,10 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 	}
 	return resource.NewKVStorageBackend(resource.KVBackendOptions{
 		KvStore:                 kvStore,
-		Log:                     log.New("storage-backend"),
+		Log:                     logging.DefaultLogger.With("logger", "storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+		ResourceVersionMaxWait:  cfg.ResourceVersionMaxWait,
+		FastLatestKeyLookup:     cfg.FastLatestKeyLookupEnabled,
 	})
 }
 
@@ -313,6 +318,9 @@ type BackendOptions struct {
 	// an exported method of the SQL backend.
 	// TODO: remove after confirming sql/backend receives no production traffic.
 	LogCalls bool
+
+	// BlobURL selects the same external blob backend as the resource server.
+	BlobURL string
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -354,6 +362,8 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		batchTxnTimeout:         opts.BatchTransactionTimeout,
 		garbageCollection:       garbageCollection,
+		blobGCMetrics:           resource.NewBlobGCMetricsIfEnabled(opts.Reg, "sql", garbageCollection.Enabled && garbageCollection.BlobEnabled),
+		blobURL:                 opts.BlobURL,
 		gcGate:                  opts.GCGate,
 		logCalls:                opts.LogCalls,
 	}
@@ -418,6 +428,9 @@ type backend struct {
 
 	garbageCollection GarbageCollectionConfig
 	gcGate            *resource.GCGate
+	blobGC            *resource.BlobGarbageCollector
+	blobGCMetrics     *resource.BlobGCMetrics
+	blobURL           string
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	migrationParquetBuffer bool
@@ -623,6 +636,9 @@ func (b *backend) initGarbageCollection(ctx context.Context) error {
 func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
 	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
 	defer span.End()
+	if b.garbageCollection.BlobEnabled {
+		defer b.collectBlobs(ctx)
+	}
 	start := time.Now()
 
 	deletedByKey := map[string]int64{}
@@ -1102,7 +1118,7 @@ func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv i
 
 // BatchReadResource is unsupported: the SQL backend is retiring, so batched
 // search-list reads live only on the KV backend.
-func (*backend) BatchReadResource(context.Context, []*resourcepb.ReadRequest) ([]*resource.BackendReadResponse, error) {
+func (*backend) BatchReadResource(context.Context, []resource.BatchReadRequest, bool) (iter.Seq[*resource.BackendReadResponse], error) {
 	return nil, resource.ErrBatchReadUnsupported
 }
 
@@ -1513,6 +1529,12 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 	return iter.listRV, err
 }
 
+// WatchWrittenKeys is not supported: only the KV backend reads written keys
+// from NATS.
+func (b *backend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *resource.WrittenEvent, error) {
+	return nil, resource.ErrWrittenKeysUnsupported
+}
+
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	b.logCall("WatchWriteEvents")
 	if b.disableStorageServices {
@@ -1622,6 +1644,19 @@ func (b *backend) GetResourceLastImportTime(ctx context.Context, nsr resource.Na
 		}
 	}
 	return time.Time{}, nil
+}
+
+func (b *backend) ListResourceLastImportTimes(ctx context.Context) (map[resource.NamespacedResource]time.Time, error) {
+	result := make(map[resource.NamespacedResource]time.Time)
+	for entry, err := range b.GetResourceLastImportTimes(ctx) {
+		if err != nil {
+			return result, err
+		}
+		if entry.LastImportTime.After(result[entry.NamespacedResource]) {
+			result[entry.NamespacedResource] = entry.LastImportTime
+		}
+	}
+	return result, nil
 }
 
 func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {

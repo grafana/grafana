@@ -608,6 +608,16 @@ func (r *SearchFieldsRegistry) For(key LowerGroupResource) (selectableFields []s
 	return r.selectableFields[key], r.searchFieldsHashes[key], r.searchFieldsProvider[key]
 }
 
+// ForKey is For for a whole index key. A namespace-wide index declares its own
+// fields and covers a fixed set of resource types, so none of its inputs come
+// from a manifest.
+func (r *SearchFieldsRegistry) ForKey(key NamespacedResource) (selectableFields []string, hash string, provider SearchFieldsProvider) {
+	if key.IsGlobal() {
+		return nil, GlobalSearchFieldsHash(), nil
+	}
+	return r.For(NewLowerGroupResource(key.Group, key.Resource))
+}
+
 // Replace atomically swaps all three maps. Callers must not mutate the maps
 // afterwards. A live-manifest source uses this to reload search fields.
 func (r *SearchFieldsRegistry) Replace(
@@ -617,7 +627,27 @@ func (r *SearchFieldsRegistry) Replace(
 ) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	r.warnRemovedKinds(searchFieldsProvider)
 	r.selectableFields = selectableFields
 	r.searchFieldsHashes = searchFieldsHashes
 	r.searchFieldsProvider = searchFieldsProvider
+}
+
+// warnRemovedKinds logs kinds that have search fields now but would not after
+// the swap. Losing a kind's search fields is silent otherwise: searches on
+// those fields still succeed and simply match nothing, and the index has to be
+// rebuilt to get them back. Caller holds the lock.
+func (r *SearchFieldsRegistry) warnRemovedKinds(next map[LowerGroupResource]SearchFieldsProvider) {
+	var removed []string
+	for key := range r.searchFieldsProvider {
+		if _, ok := next[key]; !ok {
+			removed = append(removed, key.Group+"/"+key.Resource)
+		}
+	}
+	if len(removed) == 0 {
+		return
+	}
+	slices.Sort(removed)
+	searchFieldLogger.Warn("search fields removed for kinds that had them; searches on those fields will match nothing until the manifests declaring them are restored and the index is rebuilt",
+		"kinds", strings.Join(removed, ","))
 }

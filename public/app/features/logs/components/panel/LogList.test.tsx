@@ -69,12 +69,9 @@ jest.mock('@grafana/runtime', () => {
     getDataSourceSrv: () => ({
       get: (uid: string) => Promise.resolve(tempoDS),
     }),
+    getDataSourceInstance: () => Promise.resolve(tempoDS),
   };
 });
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: () => Promise.resolve(tempoDS),
-}));
 jest.mock('../../utils', () => ({
   ...jest.requireActual('../../utils'),
   isPopoverMenuDisabled: jest.fn(),
@@ -739,6 +736,7 @@ describe('LogList', () => {
     });
 
     test('Renders multiple log details', async () => {
+      const user = userEvent.setup();
       const logs = [
         createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
         createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
@@ -748,7 +746,9 @@ describe('LogList', () => {
 
       // Open details of 2 logs
       await userEvent.click(screen.getByText('First log'));
-      await userEvent.click(screen.getByText('Second log'));
+      await user.keyboard('{Control>}');
+      await user.click(screen.getByText('Second log'));
+      await user.keyboard('{/Control}');
 
       // 2 tabs
       expect(screen.queryAllByRole('tab')).toHaveLength(2);
@@ -771,6 +771,7 @@ describe('LogList', () => {
     });
 
     test('Changes details focus when logs are added and removed', async () => {
+      const user = userEvent.setup();
       const logs = [
         createLogLine({ uid: '1', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'First log' }),
         createLogLine({ uid: '2', logLevel: LogLevel.error, timeEpochMs: 1546297200000, entry: 'Second log' }),
@@ -790,13 +791,17 @@ describe('LogList', () => {
       // No tabs, only one details displayed
       expect(screen.queryAllByRole('tab')).toHaveLength(0);
 
-      await userEvent.click(screen.getByText('Second log'));
+      await user.keyboard('{Control>}');
+      await user.click(screen.getByText('Second log'));
+      await user.keyboard('{/Control}');
 
       // 2 details displayed, Second log is the first tab
       expect(screen.queryAllByRole('tab')).toHaveLength(2);
       expect(screen.queryAllByRole('tab')[0]).toHaveTextContent('Second log');
 
-      await userEvent.click(screen.getByText('Third log'));
+      await user.keyboard('{Control>}');
+      await user.click(screen.getByText('Third log'));
+      await user.keyboard('{/Control}');
 
       // 3 details displayed, Second log is the first tab
       expect(screen.queryAllByRole('tab')).toHaveLength(3);

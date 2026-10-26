@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -5041,6 +5042,7 @@ func TestGitRepository_GetDefaultBranch(t *testing.T) {
 		expectedBranch string
 		wantError      bool
 		errorContains  string
+		expectedError  error
 	}{
 		{
 			name: "returns main when main branch exists",
@@ -5108,6 +5110,36 @@ func TestGitRepository_GetDefaultBranch(t *testing.T) {
 			wantError:     true,
 			errorContains: "list refs",
 		},
+		{
+			name: "maps wrapped nanogit unauthorized error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns(nil, fmt.Errorf("list refs: send ls-refs command: %w",
+					client.NewUnauthorizedError("POST", "git-upload-pack", errors.New("got status code 401: 401 Unauthorized"))))
+			},
+			wantError:     true,
+			errorContains: "list refs",
+			expectedError: repository.ErrUnauthorized,
+		},
+		{
+			name: "maps wrapped nanogit permission denied error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns(nil, fmt.Errorf("list refs: send ls-refs command: %w",
+					client.NewPermissionDeniedError("POST", "git-upload-pack", errors.New("got status code 403: 403 Forbidden"))))
+			},
+			wantError:     true,
+			errorContains: "list refs",
+			expectedError: repository.ErrPermissionDenied,
+		},
+		{
+			name: "maps wrapped nanogit server unavailable error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns(nil, fmt.Errorf("list refs: send ls-refs command: %w",
+					client.NewServerUnavailableError("POST", http.StatusServiceUnavailable, errors.New("got status code 503: 503 Service Unavailable"))))
+			},
+			wantError:     true,
+			errorContains: "list refs",
+			expectedError: repository.ErrServerUnavailable,
+		},
 	}
 
 	for _, tt := range tests {
@@ -5135,6 +5167,10 @@ func TestGitRepository_GetDefaultBranch(t *testing.T) {
 			if tt.wantError {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.errorContains)
+				if tt.expectedError != nil {
+					require.ErrorIs(t, err, tt.expectedError)
+					require.EqualError(t, err, "list refs: "+tt.expectedError.Error())
+				}
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tt.expectedBranch, branch)
@@ -5255,4 +5291,77 @@ func TestGitRepository_AuditLog(t *testing.T) {
 	require.Contains(t, output, `"namespace":"my-ns"`)
 	require.Contains(t, output, `"repository_name":"my-repo"`)
 	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
+}
+
+func TestGitRepository_CompareFiles_DeletedDirectories(t *testing.T) {
+	mockClient := &mocks.FakeClient{}
+	mockClient.GetRefReturns(nanogit.Ref{Hash: hash.Hash{1}}, nil)
+	mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+		{Path: "configs/empty.json", Type: protocol.ObjectTypeTree, Status: protocol.FileStatusDeleted},
+		{Path: "configs/dashboard.json", Type: protocol.ObjectTypeBlob, Status: protocol.FileStatusDeleted},
+	}, nil)
+	repo := &gitRepository{client: mockClient, gitConfig: RepositoryConfig{Path: "configs"}, config: &provisioning.Repository{}}
+	changes, err := repo.CompareFiles(t.Context(), "main", "feature")
+	require.NoError(t, err)
+	require.Equal(t, []repository.VersionedFileChange{
+		{Action: repository.FileActionDeleted, Path: "empty.json/", PreviousPath: "empty.json/", Ref: "feature", PreviousRef: "main"},
+		{Action: repository.FileActionDeleted, Path: "dashboard.json", PreviousPath: "dashboard.json", Ref: "feature", PreviousRef: "main"},
+	}, changes)
+}
+
+func TestGitRepository_CompareFiles_HiddenPaths(t *testing.T) {
+	for _, status := range []protocol.FileStatus{protocol.FileStatusAdded, protocol.FileStatusModified, protocol.FileStatusDeleted, protocol.FileStatusTypeChanged} {
+		t.Run(string(status), func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			mockClient.GetRefReturns(nanogit.Ref{Hash: hash.Hash{1}}, nil)
+			mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+				{Path: "configs/.ci/dashboard.json", Type: protocol.ObjectTypeBlob, Status: status},
+				{Path: "configs/.ci/.keep", Type: protocol.ObjectTypeBlob, Status: status},
+				{Path: "configs/team/.keep", Type: protocol.ObjectTypeTree, Status: status},
+				{Path: "configs/visible/.keep", Type: protocol.ObjectTypeBlob, Status: status},
+			}, nil)
+			repo := &gitRepository{client: mockClient, gitConfig: RepositoryConfig{Path: "configs"}, config: &provisioning.Repository{}}
+			changes, err := repo.CompareFiles(t.Context(), "main", "feature")
+			require.NoError(t, err)
+			require.Len(t, changes, 1)
+			require.Equal(t, "visible/.keep", changes[0].Path)
+		})
+	}
+}
+
+func TestGitRepository_CompareFiles_HiddenPathRenames(t *testing.T) {
+	for _, prefix := range []string{"", "configs/"} {
+		for _, tt := range []struct {
+			from, to string
+			kind     protocol.ObjectType
+			want     []repository.VersionedFileChange
+		}{
+			{"dashboard.json", ".ci/dashboard.json", protocol.ObjectTypeBlob, []repository.VersionedFileChange{
+				{Action: repository.FileActionDeleted, Path: "dashboard.json", PreviousPath: "dashboard.json", Ref: "feature", PreviousRef: "main"},
+			}},
+			{".ci/dashboard.json", "dashboard.json", protocol.ObjectTypeBlob, []repository.VersionedFileChange{
+				{Action: repository.FileActionCreated, Path: "dashboard.json", Ref: "feature"},
+			}},
+			{".ci/old.json", ".ci/new.json", protocol.ObjectTypeBlob, []repository.VersionedFileChange{}},
+			{"team", ".ci", protocol.ObjectTypeTree, []repository.VersionedFileChange{
+				{Action: repository.FileActionDeleted, Path: "team/", PreviousPath: "team/", Ref: "feature", PreviousRef: "main"},
+			}},
+			{".ci", "team", protocol.ObjectTypeTree, []repository.VersionedFileChange{
+				{Action: repository.FileActionCreated, Path: "team/", Ref: "feature"},
+			}},
+			{".ci", ".github", protocol.ObjectTypeTree, []repository.VersionedFileChange{}},
+		} {
+			t.Run(prefix+tt.from+" to "+tt.to, func(t *testing.T) {
+				mockClient := &mocks.FakeClient{}
+				mockClient.GetRefReturns(nanogit.Ref{Hash: hash.Hash{1}}, nil)
+				mockClient.CompareCommitsReturns([]nanogit.CommitFile{{
+					Path: prefix + tt.to, OldPath: prefix + tt.from, Type: tt.kind, Status: protocol.FileStatusRenamed,
+				}}, nil)
+				repo := &gitRepository{client: mockClient, gitConfig: RepositoryConfig{Path: prefix}, config: &provisioning.Repository{}}
+				changes, err := repo.CompareFiles(t.Context(), "main", "feature")
+				require.NoError(t, err)
+				require.Equal(t, tt.want, changes)
+			})
+		}
+	}
 }

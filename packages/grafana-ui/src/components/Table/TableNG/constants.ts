@@ -1,7 +1,7 @@
 /** Column width and sizing configuration */
 export const COLUMN = {
   DEFAULT_WIDTH: 150,
-  EXPANDER_WIDTH: 50,
+  EXPANDER_WIDTH: 36,
   // This will need to eventually change to 36
   MIN_WIDTH: 50,
   // Upper bound for a content-aware auto-sized column before we grow it to fill the panel.
@@ -14,7 +14,9 @@ export const COLUMN = {
 
 /** Table layout and display constants */
 export const TABLE = {
+  MAX_WRAP_TEXT_LENGTH: 10_000,
   CELL_PADDING: 6,
+  FRAME_BORDER_WIDTH: 1,
   LINE_HEIGHT: 22,
   /**
    * The header label's own line box, which is shorter than a body row's `LINE_HEIGHT`. Kept here
@@ -44,6 +46,10 @@ export const TABLE = {
  */
 export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGHT;
 
+/** Block-axis space around a nested table. */
+export const NESTED_TABLE_VERTICAL_PADDING = TABLE.CELL_PADDING * 2;
+export const REFRESHED_NESTED_TABLE_VERTICAL_PADDING = TABLE.CELL_PADDING * 4;
+
 /**
  * Marker classes stamped onto the first and last columns once the final column list is assembled.
  * CSS can't find those columns on its own: `:first-child`/`:last-child` match the first and last
@@ -52,6 +58,8 @@ export const CELL_HORIZONTAL_CHROME = TABLE.CELL_PADDING * 2 + TABLE.BORDER_RIGH
  */
 export const FIRST_COLUMN_CLASS = 'table-ng-first-col';
 export const LAST_COLUMN_CLASS = 'table-ng-last-col';
+export const NESTED_LAST_ROW_CLASS = 'table-ng-row-nested-last';
+export const OVERFLOW_CELL_CLASS = 'table-ng-cell-overflow';
 
 // Marks a row that carries a zebra stripe, and one that is a nested table's container rather than
 // a row of data. Both are applied through `rowClass` - see `makeStripedRowClass`.
@@ -94,6 +102,9 @@ export const PAGINATION_MARGIN = 8;
 export const getPaginationChromeHeight = (noPanelPadding = false): number =>
   PAGINATION_ROW_HEIGHT + PAGINATION_MARGIN * (noPanelPadding ? 2 : 1);
 
+// Duration of the post-reorder highlight.
+export const COLUMN_SETTLE_MS = 280;
+
 // Space a single header affordance icon (filter / sort / type) reserves next to the label. Sized to
 // the widest of them — the sort arrow, rendered at Icon size "lg" (18px) — plus the flex gap, so a
 // filterable or sorted column doesn't ellipsize its title once its icon appears.
@@ -121,3 +132,6 @@ export const HEADER_TOOLTIP_SPACE = HEADER_ICON_BUTTON_SPACE;
 // (see useScrollShadows). Sub-pixel scroll heights are common — fractional row heights, zoom levels
 // — and at 0 they left a shadow permanently half-lit on a table that doesn't actually scroll.
 export const SCROLL_SHADOW_THRESHOLD = 1;
+// Reserve the hover-only drag handle so the label does not shift when it appears.
+export const HEADER_DRAG_HANDLE_WIDTH = 16;
+export const HEADER_DRAG_HANDLE_SPACE = HEADER_DRAG_HANDLE_WIDTH + HEADER_ICON_GAP;

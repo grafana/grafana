@@ -21,6 +21,31 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 describe('Unified Storage Searcher', () => {
+  it('shares a folder lookup between concurrent readers until it is reloaded', async () => {
+    let folderTitle = 'Original folder';
+    const folderRequest = jest.fn();
+    server.use(
+      http.get(searchRoute, () => {
+        folderRequest();
+        return HttpResponse.json({
+          totalHits: 1,
+          hits: [{ name: 'folder1', title: folderTitle, resource: 'folders' }],
+        });
+      })
+    );
+
+    const searcher = new UnifiedSearcher();
+    const locations = await Promise.all([searcher.getLocationInfo(), searcher.getLocationInfo()]);
+    expect(locations.map((info) => info.folder1.name)).toEqual(['Original folder', 'Original folder']);
+    expect(folderRequest).toHaveBeenCalledTimes(1);
+
+    folderTitle = 'Renamed folder';
+    searcher.reloadLocationInfo();
+    const refreshed = await Promise.all([searcher.getLocationInfo(), searcher.getLocationInfo()]);
+    expect(refreshed.map((info) => info.folder1.name)).toEqual(['Renamed folder', 'Renamed folder']);
+    expect(folderRequest).toHaveBeenCalledTimes(2);
+  });
+
   it('should perform search with basic query', async () => {
     const query: SearchQuery = {
       query: '*',
@@ -138,6 +163,42 @@ describe('Unified Storage Searcher', () => {
     expect(response.view.length).toBe(1);
     expect(response.view.get(0).name).toBe('Team owned dashboard');
     expect(response.view.get(0).uid).toBe('team-owned-dashboard');
+  });
+
+  describe('sort request parameters', () => {
+    let searchRequests: URL[] = [];
+
+    // The searcher also loads folder location info, so capture every request and
+    // pick the one carrying the sort.
+    const captureSearchHandler = http.get(searchRoute, ({ request }) => {
+      searchRequests.push(new URL(request.url));
+      return HttpResponse.json({ totalHits: 0, hits: [] });
+    });
+
+    beforeEach(() => {
+      searchRequests = [];
+    });
+
+    it.each([
+      { sort: 'name_sort', expectedSort: 'title', expectedField: 'title' },
+      { sort: '-name_sort', expectedSort: '-title', expectedField: 'title' },
+      { sort: 'alpha-desc', expectedSort: '-title', expectedField: 'title' },
+      { sort: 'viewed-recently-desc', expectedSort: '-views_last_30_days', expectedField: 'views_last_30_days' },
+      { sort: 'viewed-desc', expectedSort: '-views_total', expectedField: 'views_total' },
+      { sort: 'errors-recently-asc', expectedSort: 'errors_last_30_days', expectedField: 'errors_last_30_days' },
+      { sort: '-views_total', expectedSort: '-views_total', expectedField: 'views_total' },
+      { sort: 'views_last_30_days', expectedSort: 'views_last_30_days', expectedField: 'views_last_30_days' },
+    ])('asks to sort on $expectedSort for sort value $sort', async ({ sort, expectedSort, expectedField }) => {
+      server.use(captureSearchHandler);
+
+      const searcher = new UnifiedSearcher();
+      await searcher.search({ query: '*', sort });
+
+      const request = searchRequests.find((url) => url.searchParams.has('sort'));
+      expect(request?.searchParams.get('sort')).toBe(expectedSort);
+      // The sorted field is requested back so the results table can show its value.
+      expect(request?.searchParams.get('field')).toBe(expectedField);
+    });
   });
 
   describe('starred', () => {

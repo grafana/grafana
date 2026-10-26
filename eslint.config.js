@@ -80,6 +80,11 @@ const baseImportConfig = {
       importNames: ['useObservable'],
       message: 'react-use is being phased out. Import useObservable from @grafana/data/unstable instead.',
     },
+    {
+      name: 'react-use',
+      importNames: ['useCopyToClipboard'],
+      message: 'Please import copyTextToClipboard from @grafana/ui instead.',
+    },
   ],
 };
 
@@ -520,7 +525,6 @@ module.exports = [
     name: 'grafana/decoupled-plugins-overrides',
     files: [
       'public/app/plugins/datasource/azuremonitor/**/*.{ts,tsx}',
-      'public/app/plugins/datasource/cloudwatch/**/*.{ts,tsx}',
       'public/app/plugins/datasource/grafana-testdata-datasource/**/*.{ts,tsx}',
       'public/app/plugins/datasource/graphite/**/*.{ts,tsx}',
     ],

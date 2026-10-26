@@ -2,6 +2,7 @@ package notifier
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/receivers/line"
 	"github.com/grafana/alerting/receivers/schema"
 
@@ -20,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	ac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
+	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -139,6 +142,71 @@ func TestIntegrationReceiverService_GetReceivers(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, recvs, 2)
 		})
+	})
+}
+
+func TestReceiverService_GetReceiverStatuses(t *testing.T) {
+	var orgId int64 = 1
+	secretsService := fake_secrets.NewFakeSecretsService()
+
+	redactedUser := &user.SignedInUser{OrgID: orgId, Permissions: map[int64]map[string][]string{
+		orgId: {
+			accesscontrol.ActionAlertingNotificationsRead: nil,
+		},
+	}}
+
+	allAMStatuses := []alertingModels.ReceiverStatus{
+		{Name: "grafana-default-email", Active: true},
+		{Name: "slack receiver", Active: true},
+		{Name: "does not exist", Active: true},
+	}
+
+	t.Run("returns statuses for readable receivers, omitting names that don't exist", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService, withAMReceiverStatuses(allAMStatuses...))
+
+		result, err := sut.GetReceiverStatuses(context.Background(), orgId, redactedUser)
+		require.NoError(t, err)
+		require.ElementsMatch(t, []alertingModels.ReceiverStatus{
+			{Name: "grafana-default-email", Active: true},
+			{Name: "slack receiver", Active: true},
+		}, result)
+	})
+
+	t.Run("omits statuses for names the user does not have permission to read", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService, withAMReceiverStatuses(
+			alertingModels.ReceiverStatus{Name: "grafana-default-email", Active: true},
+			alertingModels.ReceiverStatus{Name: "slack receiver", Active: true},
+		))
+
+		limitedUser := &user.SignedInUser{OrgID: orgId, Permissions: map[int64]map[string][]string{
+			orgId: {
+				accesscontrol.ActionAlertingReceiversRead: {
+					models.ScopeReceiversProvider.GetResourceScopeUID(string(v1.ReceiverUID("grafana-default-email"))),
+				},
+			},
+		}}
+
+		result, err := sut.GetReceiverStatuses(context.Background(), orgId, limitedUser)
+		require.NoError(t, err)
+		require.ElementsMatch(t, []alertingModels.ReceiverStatus{
+			{Name: "grafana-default-email", Active: true},
+		}, result)
+	})
+
+	t.Run("returns an empty slice when the Alertmanager reports no receivers", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService, withAMReceiverStatuses())
+
+		result, err := sut.GetReceiverStatuses(context.Background(), orgId, redactedUser)
+		require.NoError(t, err)
+		require.Empty(t, result)
+	})
+
+	t.Run("propagates errors from the Alertmanager status fetch", func(t *testing.T) {
+		sut := createReceiverServiceSut(t, &secretsService)
+		sut.amStatusFetcher = &fakeAMStatusFetcher{err: errors.New("boom")}
+
+		_, err := sut.GetReceiverStatuses(context.Background(), orgId, redactedUser)
+		require.ErrorContains(t, err, "boom")
 	})
 }
 
@@ -1006,6 +1074,45 @@ func TestReceiverService_Update(t *testing.T) {
 				tc.expectedProvenances = make(map[string]models.Provenance)
 			}
 			assert.Equal(t, tc.expectedProvenances, provenances)
+		})
+	}
+}
+
+func TestReceiverService_Update_HasUpdateProtectedError(t *testing.T) {
+	writer := &user.SignedInUser{OrgID: 1}
+	existing := models.ReceiverGen(models.ReceiverMuts.WithName("test receiver"),
+		models.ReceiverMuts.WithIntegrations(models.IntegrationGen(models.IntegrationMuts.WithName("test receiver"), models.IntegrationMuts.WithValidConfig("slack"))()))()
+
+	for _, tc := range []struct {
+		name        string
+		hasErr      error
+		expectedErr string
+	}{
+		{name: "backend error is returned", hasErr: errors.New("boom"), expectedErr: "failed to check protected fields permission"},
+		{name: "authorization error is treated as no permission", hasErr: ac.NewAuthorizationErrorGeneric("update protected")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			sut := createReceiverServiceSut(t, fake_secrets.NewFakeSecretsService())
+			revision, err := sut.cfgStore.Get(context.Background(), writer.GetOrgID())
+			require.NoError(t, err)
+			created, err := revision.CreateReceiver(&existing)
+			require.NoError(t, err)
+			require.NoError(t, sut.cfgStore.Save(context.Background(), revision, writer.GetOrgID()))
+
+			sut.authz = &acfakes.FakeReceiverAccessService[*models.Receiver]{
+				HasUpdateProtectedFunc: func(context.Context, identity.Requester, *models.Receiver) (bool, error) {
+					return false, tc.hasErr
+				},
+			}
+
+			// No protected field changes.
+			_, err = sut.UpdateReceiver(context.Background(), created, nil, writer.GetOrgID(), writer)
+			if tc.expectedErr != "" {
+				require.ErrorIs(t, err, tc.hasErr)
+				require.ErrorContains(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
 		})
 	}
 }
@@ -1982,6 +2089,22 @@ func withEmailValidator(emailValidator EmailIntegrationValidator) createReceiver
 	}
 }
 
+// fakeAMStatusFetcher is a test double for amReceiverStatusFetcher.
+type fakeAMStatusFetcher struct {
+	statuses []alertingModels.ReceiverStatus
+	err      error
+}
+
+func (f *fakeAMStatusFetcher) GetReceiverStatuses(_ context.Context, _ int64) ([]alertingModels.ReceiverStatus, error) {
+	return f.statuses, f.err
+}
+
+func withAMReceiverStatuses(statuses ...alertingModels.ReceiverStatus) createReceiverServiceSutOpt {
+	return func(_ *testing.T, sut *ReceiverService) {
+		sut.amStatusFetcher = &fakeAMStatusFetcher{statuses: statuses}
+	}
+}
+
 func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...createReceiverServiceSutOpt) *ReceiverService {
 	cfg := createEncryptedConfig(t, encryptSvc, getExtraConfig())
 	store := fakes.NewFakeAlertmanagerConfigStore(cfg)
@@ -2003,6 +2126,7 @@ func createReceiverServiceSut(t *testing.T, encryptSvc secretService, opts ...cr
 		false,
 		nil,
 		&NoopOrgEmailValidator{},
+		&fakeAMStatusFetcher{},
 	)
 	for _, opt := range opts {
 		opt(t, sut)

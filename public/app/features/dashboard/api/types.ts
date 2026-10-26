@@ -1,6 +1,6 @@
 import { type UrlQueryMap } from '@grafana/data';
 import { type Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { type ListOptions, type Resource, type ResourceList, type TableResponse } from 'app/features/apiserver/types';
+import { type Resource, type ResourceList } from 'app/features/apiserver/types';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { type AnnotationsPermissions, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
@@ -17,8 +17,6 @@ export enum ExportFormat {
   V1Resource = 'v1-resource',
   V2Resource = 'v2-resource',
 }
-
-export type ListDeletedDashboardsOptions = Omit<ListOptions, 'labelSelector'>;
 
 export interface ListDashboardHistoryOptions {
   limit?: number;
@@ -38,8 +36,6 @@ export interface DashboardAPI<G, T> {
   getDashboardHistoryVersions(uid: string, versions: number[]): Promise<Array<Resource<T>>>;
   /** Restore a dashboard to a previous version */
   restoreDashboardVersion(uid: string, version: number): Promise<SaveDashboardResponseDTO>;
-  /** List all deleted dashboards (table format — metadata only, no spec) */
-  listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse>;
   /** Get a single soft-deleted dashboard (full resource incl. spec) via the recently-deleted listing.
    *  Uses the deletion-aware auth check (deleter-keyed), unlike getDashboard at a resourceVersion.
    *  Resolves undefined when the dashboard is no longer recently deleted or not visible to this user. */
@@ -64,6 +60,13 @@ export interface DashboardWithAccessInfo<T> extends Resource<T, Status, 'Dashboa
     annotationsPermissions?: AnnotationsPermissions;
     isPublic?: boolean;
   }; // TODO...
+}
+
+// A DashboardWithAccessInfo plus what the client knows about where it came from.
+export interface DashboardWithLoadInfo<T> extends DashboardWithAccessInfo<T> {
+  // Whether a library panel's repeat still has to be resolved onto the grid item.
+  // Only true when this spec was converted to v2 in the browser, which cannot resolve it.
+  libraryPanelRepeatUnresolved?: boolean;
 }
 
 export interface DashboardVersionError extends Error {

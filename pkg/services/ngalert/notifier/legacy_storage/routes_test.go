@@ -5,9 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/prometheus/alertmanager/dispatch"
-	"github.com/prometheus/alertmanager/pkg/labels"
-	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -16,161 +13,6 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
-
-func TestManagedRoute_GeneratedSubRoute_DefaultsAndMatcher(t *testing.T) {
-	mr := &v1.ManagedRoute{
-		Name:     "managed",
-		Receiver: "receiver",
-	}
-
-	route := GeneratedSubRoute(mr)
-
-	assert.Equal(t, model.Duration(dispatch.DefaultRouteOpts.GroupWait), *route.GroupWait)
-	assert.Equal(t, model.Duration(dispatch.DefaultRouteOpts.GroupInterval), *route.GroupInterval)
-	assert.Equal(t, model.Duration(dispatch.DefaultRouteOpts.RepeatInterval), *route.RepeatInterval)
-
-	require.Len(t, route.ObjectMatchers, 1)
-	assert.Equal(t, NamedRouteMatcher, route.ObjectMatchers[0].Name)
-	assert.Equal(t, "managed", route.ObjectMatchers[0].Value)
-}
-
-func TestManagedRoute_GeneratedSubRoute_UserDefinedHasNoMatcher(t *testing.T) {
-	mr := &v1.ManagedRoute{
-		Name:     models.DefaultRoutingTreeName,
-		Receiver: "receiver",
-	}
-
-	route := GeneratedSubRoute(mr)
-	require.Empty(t, route.ObjectMatchers)
-}
-
-func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
-	gw := model.Duration(10)
-	gi := model.Duration(20)
-	ri := model.Duration(30)
-
-	child := &v1.Route{
-		Receiver: "child",
-	}
-
-	mr := &v1.ManagedRoute{
-		Name:           "managed",
-		Receiver:       "receiver",
-		GroupBy:        []string{"alertname", "cluster"},
-		GroupWait:      &gw,
-		GroupInterval:  &gi,
-		RepeatInterval: &ri,
-		Routes:         []*v1.Route{child},
-		Provenance:     models.Provenance("test"),
-	}
-
-	route := GeneratedSubRoute(mr)
-
-	// Basic fields preserved
-	assert.Equal(t, "receiver", route.Receiver)
-	assert.Equal(t, []string{"alertname", "cluster"}, route.GroupByStr)
-	assert.Equal(t, &gw, route.GroupWait)
-	assert.Equal(t, &gi, route.GroupInterval)
-	assert.Equal(t, &ri, route.RepeatInterval)
-
-	// Child routes preserved
-	require.Len(t, route.Routes, 1)
-	assert.Equal(t, "child", route.Routes[0].Receiver)
-
-	// Managed route matcher added
-	require.Len(t, route.ObjectMatchers, 1)
-	assert.Equal(t, NamedRouteMatcher, route.ObjectMatchers[0].Name)
-	assert.Equal(t, "managed", route.ObjectMatchers[0].Value)
-
-	// Provenance propagated
-	assert.EqualValues(t, v1.Provenance("test"), route.Provenance)
-}
-
-func TestWithManagedRoutes(t *testing.T) {
-	rev := func(root *v1.Route, managedRoutes map[string]*v1.Route) *ConfigRevision {
-		return &ConfigRevision{
-			Config: &v1.AMConfigV1{
-				AlertmanagerConfig: v1.PostableApiAlertingConfig{
-					Config: v1.Config{
-						Route: root,
-					},
-				},
-				ManagedRoutes: managedRoutes,
-			},
-		}
-	}
-	testCases := []struct {
-		name string
-
-		rev *ConfigRevision
-
-		expectedRoute *v1.Route
-	}{
-		{
-			name: "simple, root is empty just adds managed routes",
-			rev: rev(policy_exports.Empty(),
-				map[string]*v1.Route{
-					"override-inherit": policy_exports.OverrideInherit(),
-					"matcher-variety":  policy_exports.MatcherVariety(),
-				},
-			),
-			expectedRoute: &v1.Route{
-				Receiver: policy_exports.Empty().Receiver,
-				Routes: []*v1.Route{
-					GeneratedSubRoute(v1.NewManagedRoute("matcher-variety", policy_exports.MatcherVariety())),
-					GeneratedSubRoute(v1.NewManagedRoute("override-inherit", policy_exports.OverrideInherit())),
-				},
-			},
-		},
-		{
-			name: "complex root with existing routes merges to end of routes",
-			rev: rev(&v1.Route{
-				Receiver: "root-receiver",
-				Routes: []*v1.Route{
-					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchEqual, Value: "warn"}}, Continue: true},
-					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchNotEqual, Value: "critical"}}, Continue: true},
-					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchRegexp, Value: "info"}}, Continue: true},
-					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchNotRegexp, Value: "debug"}}, Continue: true},
-				},
-			},
-				map[string]*v1.Route{
-					"r1": {Receiver: "recv1"},
-					"r2": {Receiver: "recv2"},
-				},
-			),
-			expectedRoute: &v1.Route{
-				Receiver: "root-receiver",
-				Routes: []*v1.Route{
-					{
-						Receiver:       "recv1",
-						ObjectMatchers: v1.ObjectMatchers{{Name: NamedRouteMatcher, Type: labels.MatchEqual, Value: "r1"}},
-						GroupWait:      new(model.Duration(dispatch.DefaultRouteOpts.GroupWait)),
-						GroupInterval:  new(model.Duration(dispatch.DefaultRouteOpts.GroupInterval)),
-						RepeatInterval: new(model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)),
-					},
-					{
-						Receiver:       "recv2",
-						ObjectMatchers: v1.ObjectMatchers{{Name: NamedRouteMatcher, Type: labels.MatchEqual, Value: "r2"}},
-						GroupWait:      new(model.Duration(dispatch.DefaultRouteOpts.GroupWait)),
-						GroupInterval:  new(model.Duration(dispatch.DefaultRouteOpts.GroupInterval)),
-						RepeatInterval: new(model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)),
-					},
-					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchEqual, Value: "warn"}}, Continue: true},
-					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchNotEqual, Value: "critical"}}, Continue: true},
-					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchRegexp, Value: "info"}}, Continue: true},
-					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchNotRegexp, Value: "debug"}}, Continue: true},
-				},
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			result := WithManagedRoutes(tc.rev.Config.AlertmanagerConfig.Route, tc.rev.Config.ManagedRoutes)
-			assert.Equal(t, tc.expectedRoute, result)
-		})
-	}
-}
 
 func TestConfigRevision_GetManagedRoute(t *testing.T) {
 	rev := testConfig()
@@ -186,7 +28,7 @@ func TestConfigRevision_GetManagedRoute(t *testing.T) {
 	t.Run("returns user-defined route", func(t *testing.T) {
 		got := rev.GetManagedRoute(models.DefaultRoutingTreeName)
 		require.NotNil(t, got)
-		assert.Equal(t, models.DefaultRoutingTreeName, got.Name)
+		assert.EqualValues(t, models.DefaultRoutingTreeName, got.UID)
 		assert.Equal(t, v1.NewManagedRoute(models.DefaultRoutingTreeName, rev.Config.AlertmanagerConfig.Route), got)
 	})
 
@@ -198,14 +40,12 @@ func TestConfigRevision_GetManagedRoute(t *testing.T) {
 func TestConfigRevision_DefaultRoutingTreeAliases(t *testing.T) {
 	// The default (root) tree must be addressable by both its canonical name and the legacy alias
 	// so existing clients (e.g. Terraform) that reference "user-defined" keep working.
-	t.Run("both names resolve to the root route and echo the requested name", func(t *testing.T) {
+	t.Run("both names resolve to the root route", func(t *testing.T) {
 		for _, name := range []string{models.DefaultRoutingTreeName, models.DefaultRoutingTreeNameAlias} {
 			t.Run(name, func(t *testing.T) {
 				rev := testConfig()
 				got := rev.GetManagedRoute(name)
 				require.NotNil(t, got)
-				// Name echoes the requested alias so the API response preserves the client's name.
-				assert.Equal(t, name, got.Name)
 				// The underlying route is the root route regardless of which alias was used.
 				assert.Equal(t, v1.NewManagedRoute(name, rev.Config.AlertmanagerConfig.Route), got)
 				// Identity is canonical so RBAC scopes and provenance keys are stable across aliases.
@@ -318,7 +158,7 @@ func TestConfigRevision_CreateManagedRoute(t *testing.T) {
 		mr, err := rev.CreateManagedRoute(name, subtree)
 		assert.NoError(t, err)
 		assert.NotNil(t, mr)
-		assert.Equal(t, name, mr.Name)
+		assert.Equal(t, name, mr.GetUID())
 
 		assert.Contains(t, rev.Config.ManagedRoutes, name)
 		assert.Equal(t, &subtree, rev.Config.ManagedRoutes[name])
@@ -356,7 +196,7 @@ func TestConfigRevision_UpdateNamedRoute(t *testing.T) {
 		mr, err := rev.UpdateNamedRoute(name, subtree)
 		assert.NoError(t, err)
 		assert.NotNil(t, mr)
-		assert.Equal(t, name, mr.Name)
+		assert.Equal(t, name, mr.GetUID())
 
 		assert.Contains(t, rev.Config.ManagedRoutes, name)
 		assert.Equal(t, &subtree, rev.Config.ManagedRoutes[name])
@@ -389,7 +229,7 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 	mr, err := rev.ResetUserDefinedRoute(&defaultCfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, mr)
-	assert.Equal(t, models.DefaultRoutingTreeName, mr.Name)
+	assert.Equal(t, models.DefaultRoutingTreeName, mr.GetUID())
 
 	assert.Equal(t, &newRoute, rev.Config.AlertmanagerConfig.Route)
 	assert.NotEqual(t, original, rev.Config.AlertmanagerConfig.Route)
@@ -418,7 +258,7 @@ func TestConfigRevision_ResetUserDefinedRoute(t *testing.T) {
 	mr, err = rev.ResetUserDefinedRoute(&defaultCfg)
 	assert.NoError(t, err)
 	assert.NotNil(t, mr)
-	assert.Equal(t, models.DefaultRoutingTreeName, mr.Name)
+	assert.Equal(t, models.DefaultRoutingTreeName, mr.GetUID())
 
 	assert.Equal(t, &newRoute, rev.Config.AlertmanagerConfig.Route)
 	assert.NotEqual(t, original, rev.Config.AlertmanagerConfig.Route)

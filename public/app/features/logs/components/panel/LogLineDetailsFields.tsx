@@ -1,7 +1,7 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CoreApp,
@@ -11,10 +11,11 @@ import {
   type IconName,
   type LinkModel,
   type LogLabelStatsModel,
+  textUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, IconButton, useStyles2 } from '@grafana/ui';
+import { Box, ClipboardButton, Dropdown, Icon, IconButton, Menu, Pagination, Stack, useStyles2 } from '@grafana/ui';
 
 import { logRowToSingleRowDataFrame } from '../../logsModel';
 import { calculateLogsLabelStats, calculateStats } from '../../utils';
@@ -23,10 +24,32 @@ import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields'
 import { type FieldDef } from '../logParser';
 
 import { AsyncIconButton } from './AsyncIconButton';
-import { useLogDetailsContext } from './LogDetailsContext';
+import { LogLinksResolver } from './LogLinksResolver';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
+import { getIconButtonStyles } from './activeIconButtonStyles';
 import { type LogListModel, getNormalizedFieldName } from './processing';
+
+// Paginate fields above this number.
+const FIELDS_PAGE_SIZE = 50;
+
+export function usePagedItems<T>(items: T[]) {
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    setPage(1);
+  }, [items]);
+
+  const numberOfPages = Math.max(1, Math.ceil(items.length / FIELDS_PAGE_SIZE));
+  const currentPage = Math.min(page, numberOfPages);
+  const pagedItems = useMemo(
+    () => items.slice((currentPage - 1) * FIELDS_PAGE_SIZE, currentPage * FIELDS_PAGE_SIZE),
+    [items, currentPage]
+  );
+  const showTopPagination = pagedItems.length === FIELDS_PAGE_SIZE;
+
+  return { pagedItems, currentPage, numberOfPages, onNavigate: setPage, showTopPagination };
+}
 
 interface LogLineDetailsFieldsProps {
   disableActions?: boolean;
@@ -41,33 +64,58 @@ export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, s
   const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
+  const { pagedItems, currentPage, numberOfPages, onNavigate, showTopPagination } = usePagedItems(filteredFields);
 
   if (!fields.length) {
     return null;
   } else if (filteredFields.length === 0) {
-    return t('logs.log-line-details.search.no-results', 'No results to display.');
+    return t('logs.log-line-details.search.no-results', 'No matching results.');
   }
 
   return (
-    <div className={disableActions ? styles.fieldsTableNoActions : styles.fieldsTable}>
-      {filteredFields.map((field, i) => (
-        <LogLineDetailsField
-          key={`${field.keys[0]}=${field.values[0]}-${i}`}
-          disableActions={disableActions}
-          getLogs={getLogs}
-          fieldIndex={field.fieldIndex}
-          keys={field.keys}
-          links={field.links}
-          log={log}
-          values={field.values}
-        />
-      ))}
-    </div>
+    <>
+      {showTopPagination && (
+        <Stack justifyContent="center">
+          <Box marginBottom={1}>
+            <Pagination
+              currentPage={currentPage}
+              numberOfPages={numberOfPages}
+              onNavigate={onNavigate}
+              hideWhenSinglePage
+            />
+          </Box>
+        </Stack>
+      )}
+      <div className={disableActions ? styles.fieldsTableNoActions : styles.fieldsTable}>
+        {pagedItems.map((field, i) => (
+          <LogLineDetailsField
+            key={`${field.keys[0]}=${field.values[0]}-${i}`}
+            disableActions={disableActions}
+            getLogs={getLogs}
+            fieldIndex={field.fieldIndex}
+            keys={field.keys}
+            links={field.links}
+            log={log}
+            values={field.values}
+          />
+        ))}
+      </div>
+      <Stack justifyContent="center">
+        <Box marginTop={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
+    </>
   );
 });
 LogLineDetailsFields.displayName = 'LogLineDetailsFields';
 
-interface LinkModelWithIcon extends LinkModel<Field> {
+export interface LinkModelWithIcon extends LinkModel<Field> {
   icon?: IconName;
 }
 
@@ -89,27 +137,52 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
   const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
   const getLogs = useCallback(() => logs, [logs]);
   const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
+  const { pagedItems, currentPage, numberOfPages, onNavigate, showTopPagination } = usePagedItems(filteredFields);
 
   if (!fields.length) {
     return null;
   } else if (filteredFields.length === 0) {
-    return t('logs.log-line-details.search.no-results', 'No results to display.');
+    return t('logs.log-line-details.search.no-results', 'No matching results.');
   }
 
   return (
-    <div className={styles.fieldsTable}>
-      {filteredFields.map((field, i) => (
-        <LogLineDetailsField
-          key={`${field.key}=${field.value}-${i}`}
-          getLogs={getLogs}
-          isLabel
-          keys={[field.key]}
-          links={field.links}
-          log={log}
-          values={[field.value]}
-        />
-      ))}
-    </div>
+    <>
+      {showTopPagination && (
+        <Stack justifyContent="center">
+          <Box marginBottom={1}>
+            <Pagination
+              currentPage={currentPage}
+              numberOfPages={numberOfPages}
+              onNavigate={onNavigate}
+              hideWhenSinglePage
+            />
+          </Box>
+        </Stack>
+      )}
+      <div className={styles.fieldsTable}>
+        {pagedItems.map((field, i) => (
+          <LogLineDetailsField
+            key={`${field.key}=${field.value}-${i}`}
+            getLogs={getLogs}
+            isLabel
+            keys={[field.key]}
+            links={field.links}
+            log={log}
+            values={[field.value]}
+          />
+        ))}
+      </div>
+      <Stack justifyContent="center">
+        <Box marginTop={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
+    </>
   );
 };
 
@@ -121,7 +194,8 @@ const getFieldsStyles = (
   fieldsTable: css({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(10) : theme.spacing(7)) : onClickShowField ? theme.spacing(11.5) : theme.spacing(7.5)} fit-content(30%) 1fr`,
+    // Icon buttons are 24px (sm) or 26px (md). Fit 3, or 4 when the show-field toggle is available.
+    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(12) : theme.spacing(9)) : onClickShowField ? theme.spacing(13) : theme.spacing(9.75)} fit-content(30%) 1fr`,
   }),
   fieldsTableNoActions: css({
     display: 'grid',
@@ -137,7 +211,7 @@ interface LogLineDetailsFieldProps {
   fieldIndex?: number;
   getLogs(): LogListModel[];
   isLabel?: boolean;
-  links?: LinkModelWithIcon[];
+  links?: readonly LinkModelWithIcon[];
   log: LogListModel;
 }
 
@@ -164,11 +238,8 @@ const LogLineDetailsField = ({
     onClickFilterOutLabel,
     onClickShowField,
     onClickHideField,
-    onPinLine,
-    pinLineButtonTooltipTitle,
     prettifyJSON,
   } = useLogListContext();
-  const { closeDetails } = useLogDetailsContext();
 
   const styles = useStyles2(getFieldStyles);
 
@@ -255,7 +326,7 @@ const LogLineDetailsField = ({
     (value: string) => {
       onClickFilterLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
 
-      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+      reportInteractionWrapper('logs_log_line_details_ad_hoc_filter_clicked', {
         datasourceType: log.datasourceType,
         filterType: 'include',
         logRowUid: log.uid,
@@ -268,7 +339,7 @@ const LogLineDetailsField = ({
     (value: string) => {
       onClickFilterOutLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
 
-      reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+      reportInteractionWrapper('logs_log_line_details_ad_hoc_filter_clicked', {
         datasourceType: log.datasourceType,
         filterType: 'exclude',
         logRowUid: log.uid,
@@ -330,7 +401,7 @@ const LogLineDetailsField = ({
             <div className={styles.actionIcons}>
               {onClickFilterLabel && fieldSupportsFilters && (
                 <AsyncIconButton
-                  name="search-plus"
+                  name="filter-plus"
                   size={fontSize === 'small' ? 'sm' : undefined}
                   onClick={filterLabel}
                   // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
@@ -340,7 +411,8 @@ const LogLineDetailsField = ({
               )}
               {onClickFilterOutLabel && fieldSupportsFilters && (
                 <IconButton
-                  name="search-minus"
+                  className={styles.iconButton}
+                  name="filter-minus"
                   size={fontSize === 'small' ? 'sm' : undefined}
                   tooltip={
                     app === CoreApp.Explore && log.dataFrame?.refId
@@ -354,7 +426,7 @@ const LogLineDetailsField = ({
               )}
               {onClickHideField && singleKey && displayedFields.includes(keys[0]) && (
                 <IconButton
-                  variant="primary"
+                  className={cx(styles.iconButton, styles.activeIconButton)}
                   size={fontSize === 'small' ? 'sm' : undefined}
                   tooltip={t('logs.log-line-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
                   name="eye"
@@ -363,6 +435,7 @@ const LogLineDetailsField = ({
               )}
               {onClickShowField && singleKey && !displayedFields.includes(keys[0]) && (
                 <IconButton
+                  className={styles.iconButton}
                   tooltip={t(
                     'logs.log-line-details.fields.toggle-field-button.field-instead-message',
                     'Show this field instead of the message'
@@ -373,11 +446,10 @@ const LogLineDetailsField = ({
                 />
               )}
               <IconButton
-                variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
                 size={fontSize === 'small' ? 'sm' : undefined}
                 tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
-                className={styles.statsIcon}
+                className={cx(styles.iconButton, styles.statsIcon, showFieldsStats && styles.activeIconButton)}
                 disabled={!singleKey}
                 onClick={showStats}
               />
@@ -389,48 +461,23 @@ const LogLineDetailsField = ({
         </div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
-            {singleValue ? (
-              <SingleValue value={values[0]} prettifyJSON={prettifyJSON} />
-            ) : (
-              <MultipleValue showCopy={true} values={values} />
-            )}
+            <LogLinksResolver links={links}>
+              {(resolvedLinks) =>
+                singleValue ? (
+                  <SingleValue
+                    value={values[0]}
+                    links={resolvedLinks}
+                    prettifyJSON={prettifyJSON}
+                    onLinkClick={reportLinkClick}
+                  />
+                ) : (
+                  <MultipleValue showCopy={true} values={values} links={resolvedLinks} onLinkClick={reportLinkClick} />
+                )
+              }
+            </LogLinksResolver>
           </div>
         </div>
       </div>
-      {links?.map((link, i) => {
-        if (link.onClick && onPinLine) {
-          const originalOnClick = link.onClick;
-          link.onClick = (e, origin) => {
-            // Pin the line
-            onPinLine(log);
-
-            // Execute the link onClick function
-            originalOnClick(e, origin);
-
-            closeDetails();
-          };
-        }
-        return (
-          <div className={styles.row} key={`${link.title}-${i}`}>
-            <div className={disableActions ? styles.linkNoActions : styles.link}>
-              <DataLinkButton
-                buttonProps={{
-                  // Show tooltip message if max number of pinned lines has been reached
-                  tooltip:
-                    typeof pinLineButtonTooltipTitle === 'object' && link.onClick
-                      ? pinLineButtonTooltipTitle
-                      : undefined,
-                  variant: 'secondary',
-                  fill: 'outline',
-                  onClick: () => reportLinkClick(link),
-                  ...(link.icon && { icon: link.icon }),
-                }}
-                link={link}
-              />
-            </div>
-          </div>
-        );
-      })}
       {showFieldsStats && fieldStats && (
         <div className={styles.row}>
           <div className={disableActions ? undefined : styles.statsColumn}>
@@ -467,12 +514,12 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   actionIcons: css({
     display: 'flex',
     justifyContent: 'space-between',
-    paddingRight: 2,
   }),
   statsIcon: css({
     margin: 0,
     paddingRight: 4,
   }),
+  ...getIconButtonStyles(theme),
   label: css({
     paddingRight: theme.spacing(1),
     overflowWrap: 'break-word',
@@ -481,21 +528,14 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
   value: css({
     overflowWrap: 'break-word',
     wordBreak: 'break-word',
-    button: {
+    'button:not([aria-haspopup])': {
       visibility: 'hidden',
     },
     '&:hover': {
-      button: {
+      'button:not([aria-haspopup])': {
         visibility: 'visible',
       },
     },
-  }),
-  link: css({
-    gridColumn: '2 / 4',
-  }),
-  linkNoActions: css({
-    gridColumn: 'span 2',
-    paddingBottom: theme.spacing(0.5),
   }),
   stats: css({
     paddingRight: theme.spacing(1),
@@ -556,7 +596,17 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; values: string[] }) => {
+export const MultipleValue = ({
+  links,
+  onLinkClick,
+  showCopy,
+  values = [],
+}: {
+  links?: readonly LinkModelWithIcon[];
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+  showCopy?: boolean;
+  values: string[];
+}) => {
   if (values.every((val) => val === '')) {
     return null;
   }
@@ -566,7 +616,11 @@ export const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; v
         {values.map((val, i) => {
           return (
             <tr key={`${val}-${i}`}>
-              <td>{val}</td>
+              <td>
+                <LinkedValue links={links} onLinkClick={onLinkClick}>
+                  {val}
+                </LinkedValue>
+              </td>
               <td>{showCopy && val !== '' && <ClipboardButtonWrapper value={val} />}</td>
             </tr>
           );
@@ -576,7 +630,17 @@ export const MultipleValue = ({ showCopy, values = [] }: { showCopy?: boolean; v
   );
 };
 
-export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: string; prettifyJSON?: boolean }) => {
+export const SingleValue = ({
+  links,
+  value: originalValue,
+  prettifyJSON,
+  onLinkClick,
+}: {
+  links?: readonly LinkModelWithIcon[];
+  value: string;
+  prettifyJSON?: boolean;
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+}) => {
   const value = useMemo(() => {
     if (!prettifyJSON) {
       return originalValue;
@@ -592,11 +656,188 @@ export const SingleValue = ({ value: originalValue, prettifyJSON }: { value: str
 
   return (
     <>
-      {value}
+      <LinkedValue links={links} onLinkClick={onLinkClick}>
+        {value}
+      </LinkedValue>
       <ClipboardButtonWrapper value={value} />
     </>
   );
 };
+
+function LinkedValue({
+  children,
+  links,
+  onLinkClick,
+}: {
+  children: ReactNode;
+  links?: readonly LinkModelWithIcon[];
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+}) {
+  if (links && links.length > 1) {
+    return (
+      <LinkValuesMenu links={links} onLinkClick={onLinkClick}>
+        {children}
+      </LinkValuesMenu>
+    );
+  }
+
+  if (links?.length === 1) {
+    return (
+      <Link link={links[0]} onLinkClick={onLinkClick}>
+        {children}
+      </Link>
+    );
+  }
+
+  return children;
+}
+
+const Link = ({
+  children,
+  link,
+  onLinkClick,
+}: {
+  children: ReactNode;
+  link: LinkModelWithIcon;
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+}) => {
+  const styles = useStyles2(getValueLinkStyles);
+  const icon: IconName = link.icon ?? 'external-link-alt';
+  const href = link.href ? textUtil.sanitizeUrl(link.href) : link.href;
+
+  return (
+    <a
+      href={href}
+      title={link.title}
+      target={link.target}
+      rel="noopener noreferrer"
+      className={styles.linkValue}
+      onClick={(event) => {
+        onLinkClick?.(link);
+        if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+          event.preventDefault();
+          link.onClick(event);
+        }
+      }}
+    >
+      <Icon name={icon} className={styles.linkIcon} />
+      {children}
+    </a>
+  );
+};
+
+const LinkValuesMenu = ({
+  children,
+  links,
+  onLinkClick,
+}: {
+  children: ReactNode;
+  links: readonly LinkModelWithIcon[];
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+}) => {
+  const styles = useStyles2(getValueLinkStyles);
+  const openValueInLabel = t('logs.log-line-details.open-value-in', 'Open value in');
+  const triggerId = useId();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [menuOffset, setMenuOffset] = useState<[number, number]>([8, 0]);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const button = container?.querySelector('button');
+    if (!container || !button) {
+      return;
+    }
+    setMenuOffset([8, container.getBoundingClientRect().left - button.getBoundingClientRect().left]);
+  }, [links, children]);
+
+  return (
+    <div className={styles.multiLinkValue} ref={containerRef}>
+      <label htmlFor={triggerId} className={styles.multiLinkContent}>
+        {children}
+      </label>
+      <Dropdown
+        placement="bottom-start"
+        offset={menuOffset}
+        overlay={
+          <Menu>
+            <Menu.Group label={openValueInLabel.toLocaleUpperCase()}>
+              {links.map((link, index) => (
+                <div key={index} title={link.title}>
+                  <Menu.Item
+                    label={link.title || t('logs.log-line-details.link-fallback-label', 'Link')}
+                    icon={link.icon}
+                    url={link.href ? textUtil.sanitizeUrl(link.href) : undefined}
+                    target={link.target}
+                    onClick={(event) => {
+                      onLinkClick?.(link);
+                      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                        event.preventDefault();
+                        link.onClick(event);
+                      }
+                    }}
+                  />
+                </div>
+              ))}
+            </Menu.Group>
+          </Menu>
+        }
+      >
+        <button
+          id={triggerId}
+          type="button"
+          className={styles.multiLinkTrigger}
+          title={openValueInLabel}
+          aria-haspopup="menu"
+        >
+          <Icon name="angle-down" size="sm" className={styles.multiLinkChevron} />
+        </button>
+      </Dropdown>
+    </div>
+  );
+};
+
+const getValueLinkStyles = (theme: GrafanaTheme2) => ({
+  linkValue: css({
+    '& svg': {
+      color: theme.colors.text.primary,
+    },
+    color: theme.colors.text.link,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+  }),
+  linkIcon: css({
+    flexShrink: 0,
+  }),
+  multiLinkValue: css({
+    display: 'inline-flex',
+    alignItems: 'flex-start',
+    gap: theme.spacing(0.25),
+  }),
+  multiLinkContent: css({
+    color: theme.colors.text.link,
+    cursor: 'pointer',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  }),
+  multiLinkTrigger: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: 0,
+    margin: 0,
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: theme.colors.text.link,
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  }),
+  multiLinkChevron: css({
+    flexShrink: 0,
+  }),
+});
 
 export function filterFields(fields: FieldDef[], search: string) {
   const keys = fields.map((field) => field.keys.join(' '));
@@ -614,7 +855,7 @@ export function filterFields(fields: FieldDef[], search: string) {
   return results;
 }
 
-function filterLabels(labels: LabelWithLinks[], search: string) {
+export function filterLabels(labels: LabelWithLinks[], search: string) {
   const keys = labels.map((field) => field.key);
   const keysIdx = fuzzySearch(keys, search);
   const values = labels.map((field) => field.value);

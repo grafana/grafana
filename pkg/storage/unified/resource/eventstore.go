@@ -6,11 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -189,9 +190,12 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 	if err != nil {
 		return Event{}, err
 	}
-	defer func() { _ = reader.Close() }()
+	data, err := kv.ReadAllAndClose(reader)
+	if err != nil {
+		return Event{}, err
+	}
 	var event Event
-	if err = json.NewDecoder(reader).Decode(&event); err != nil {
+	if err = json.Unmarshal(data, &event); err != nil {
 		return Event{}, err
 	}
 	return event, nil
@@ -208,7 +212,7 @@ func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64, sortOrder
 	}
 	return func(yield func(string, error) bool) {
 		defer span.End()
-		for evtKey, err := range n.kv.Keys(ctx, eventsSection, opts) {
+		for evtKey, err := range pagedKeys(ctx, n.kv, eventsSection, opts, keyPageSize) {
 			if err != nil {
 				yield("", err)
 				return
@@ -287,10 +291,12 @@ func (n *eventStore) readEventPage(ctx context.Context, keys []string) ([]Event,
 		if pair.Value == nil {
 			return nil, fmt.Errorf("event record %q has no reader", pair.Key)
 		}
-		var event Event
-		err = json.NewDecoder(pair.Value).Decode(&event)
-		_ = pair.Value.Close()
+		data, err := kv.ReadAllAndClose(pair.Value)
 		if err != nil {
+			return nil, err
+		}
+		var event Event
+		if err := json.Unmarshal(data, &event); err != nil {
 			return nil, err
 		}
 		key := EventKey{
@@ -308,6 +314,31 @@ func (n *eventStore) readEventPage(ctx context.Context, keys []string) ([]Event,
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
+	return events, nil
+}
+
+// latest reads metadata at or below throughRV newest-first
+func (n *eventStore) latest(ctx context.Context, limit int, throughRV int64) ([]Event, error) {
+	keys := make([]string, 0, limit)
+	opts := ListOptions{Sort: SortOrderDesc, Limit: int64(limit)}
+	if throughRV < math.MaxInt64 {
+		opts.EndKey = fmt.Sprintf("%d", throughRV+1)
+	}
+	for key, err := range n.kv.Keys(ctx, eventsSection, opts) {
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
+	}
+	events := make([]Event, 0, len(keys))
+	for page := range slices.Chunk(keys, readEventBatchSize) {
+		batch, err := n.readEventPage(ctx, page)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, batch...)
+	}
+	slices.Reverse(events)
 	return events, nil
 }
 
@@ -362,14 +393,14 @@ func (n *eventStore) batchDelete(ctx context.Context, keys []string) error {
 
 // snowflake id with last two sections set to 0 (machine id and sequence)
 func snowflakeFromTime(t time.Time) int64 {
-	return (t.UnixMilli() - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)
+	return (t.UnixMilli() - resourceVersionEpoch) << resourceVersionTimestampShift
 }
 
 // SubtractDurationFromSnowflake subtracts a duration from a snowflake ID by
 // converting it to time, subtracting the duration, and converting back to a snowflake ID
 func SubtractDurationFromSnowflake(snowflakeID int64, duration time.Duration) int64 {
 	// Extract timestamp from snowflake (returns milliseconds since epoch)
-	timestamp := snowflake.ID(snowflakeID).Time()
+	timestamp := snowflakeTimestampMillis(snowflakeID)
 	// Convert to time.Time
 	t := time.Unix(0, timestamp*int64(time.Millisecond))
 	// Subtract duration

@@ -16,6 +16,7 @@ import { configureStore } from 'app/store/configureStore';
 import { ctaClicked } from '../analytics/main';
 
 import { IncidentsCard } from './IncidentsCard';
+import { type FilterSelection } from './filterSelection';
 import { ACTIVE_INCIDENTS_QUERY, QUERY_PREVIEWS_PATH, mockIncidents } from './mockIncidentsApi';
 import { useIncidents } from './useIncidents';
 
@@ -64,8 +65,8 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-function IncidentsCardWithData({ team }: { team?: string } = {}) {
-  const data = useIncidents(team);
+function IncidentsCardWithData({ filter }: { filter?: FilterSelection } = {}) {
+  const data = useIncidents(filter);
   return <IncidentsCard data={data} />;
 }
 
@@ -105,14 +106,14 @@ describe('IncidentsCard', () => {
     expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
   });
 
-  it('names the selected team in the empty message and scopes the request to it', async () => {
+  it('names only the selected value in the empty message and scopes the request to its field', async () => {
     const queries = mockIncidents([]);
 
-    render(<IncidentsCardWithData team="Team C" />);
+    render(<IncidentsCardWithData filter="squad:Frontend" />);
 
-    expect(await screen.findByText('No active incidents for Team C.')).toBeInTheDocument();
-    expect(screen.queryByText('No active incidents.')).not.toBeInTheDocument();
-    expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:team:"Team C"`]);
+    expect(await screen.findByText('All quiet! No active incidents for Frontend.')).toBeInTheDocument();
+    expect(screen.queryByText('All quiet! No active incidents.')).not.toBeInTheDocument();
+    expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`]);
   });
 
   it('treats a 404 (org not onboarded) as the empty state, not an error', async () => {
@@ -131,7 +132,7 @@ describe('IncidentsCard', () => {
 
     expect(await screen.findByText('Could not load active incidents')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
-    expect(screen.queryByText('No active incidents.')).not.toBeInTheDocument();
+    expect(screen.queryByText('All quiet! No active incidents.')).not.toBeInTheDocument();
   });
 
   it('renders incident titles as plain text when the user cannot access the incidents page', async () => {
@@ -237,7 +238,7 @@ describe('IncidentsCard', () => {
 
     render(<IncidentsCardWithData />);
 
-    expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
+    expect(await screen.findByText('All quiet! No active incidents.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
   });
 

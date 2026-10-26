@@ -185,6 +185,67 @@ describe('Combobox', () => {
     expect(onChangeHandler).toHaveBeenCalledWith(iconOptions[1]);
   });
 
+  it('renders custom options in a virtualized list', async () => {
+    const largeOptions: Array<ComboboxOption<string>> = Array.from({ length: 1000 }, (_, index) => ({
+      label: `Option ${index}`,
+      value: String(index),
+    }));
+
+    render(
+      <Combobox
+        options={largeOptions}
+        value={null}
+        onChange={onChangeHandler}
+        renderOption={(option) => <span>Custom content {option.label}</span>}
+      />
+    );
+    await user.click(screen.getByRole('combobox'));
+
+    expect(await screen.findByText('Custom content Option 0')).toBeVisible();
+    expect(screen.getAllByRole('option').length).toBeLessThan(50); // not everything is rendered!
+    expect(screen.queryByText('Custom content Option 999')).not.toBeInTheDocument();
+  });
+
+  it('selects the source option from a custom descendant and keeps its string label in the input', async () => {
+    render(
+      <Combobox
+        options={options}
+        value={null}
+        onChange={onChangeHandler}
+        renderOption={(option) => (
+          <span>
+            Custom content for <strong data-testid={`custom-option-${option.value}`}>{option.label}</strong>
+          </span>
+        )}
+      />
+    );
+
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByTestId('custom-option-2'));
+
+    expect(onChangeHandler).toHaveBeenCalledTimes(1);
+    expect(onChangeHandler).toHaveBeenCalledWith(options[1]);
+    expect(screen.getByRole('combobox')).toHaveValue('Option 2');
+  });
+
+  it('selects an option with custom content by keyboard', async () => {
+    render(
+      <Combobox
+        options={options}
+        value={null}
+        onChange={onChangeHandler}
+        renderOption={(option) => <span>{option.label} custom</span>}
+      />
+    );
+
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+
+    expect(onChangeHandler).toHaveBeenCalledWith(options[2]);
+    expect(input).toHaveValue('Option 3');
+  });
+
   it('selects value by clicking that needs scrolling', async () => {
     render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
 
@@ -493,6 +554,32 @@ describe('Combobox', () => {
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'string').toBeFalsy();
       expect(typeof onChangeHandler.mock.calls[1][0].value === 'number').toBeTruthy();
     });
+
+    it('uses default content for a numeric custom-value row', async () => {
+      const numericOptions: Array<ComboboxOption<number>> = [
+        { label: 'One', value: 1 },
+        { label: 'Two', value: 2 },
+      ];
+
+      render(
+        <Combobox<number>
+          options={numericOptions}
+          value={null}
+          onChange={onChangeHandler}
+          createCustomValue
+          renderOption={(option) => <span>Number {option.value.toFixed(2)}</span>}
+        />
+      );
+
+      const input = screen.getByRole('combobox');
+      await user.click(input);
+      expect(await screen.findByText('Number 1.00')).toBeVisible();
+
+      await user.type(input, 'custom');
+
+      expect(await screen.findByText('custom')).toBeVisible();
+      expect(screen.getByText('Use custom value')).toBeVisible();
+    });
   });
 
   describe('async', () => {
@@ -512,6 +599,68 @@ describe('Combobox', () => {
 
     // Assume that most apis only return with the value
     const simpleAsyncOptions = [{ value: 'Option 1' }, { value: 'Option 2' }, { value: 'Option 3' }];
+
+    it('loads async options when mounted with controlled isOpen', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+      render(
+        <React.StrictMode>
+          <Combobox options={asyncOptions} value={null} onChange={onChangeHandler} isOpen />
+        </React.StrictMode>
+      );
+
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
+      expect(asyncOptions).toHaveBeenCalledWith('');
+      expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
+    it('loads async options once when opening a controlled Combobox', async () => {
+      const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));
+
+      function ControlledCombobox() {
+        const [isOpen, setIsOpen] = React.useState(false);
+        return (
+          <Combobox
+            options={asyncOptions}
+            value={null}
+            onChange={onChangeHandler}
+            isOpen={isOpen}
+            onIsOpenChange={setIsOpen}
+          />
+        );
+      }
+
+      render(<ControlledCombobox />);
+      await user.click(screen.getByRole('combobox'));
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
+      expect(asyncOptions).toHaveBeenCalledWith('');
+      expect(screen.getByRole('option', { name: 'Option 1' })).toBeInTheDocument();
+    });
+
+    it('preserves the search when opening a controlled Combobox is delayed', async () => {
+      const asyncOptions = jest.fn((searchTerm: string) =>
+        Promise.resolve(searchTerm === 'O' ? [{ value: 'Only match' }] : [{ value: 'Unfiltered option' }])
+      );
+
+      const { rerender } = render(
+        <Combobox options={asyncOptions} value={null} onChange={onChangeHandler} isOpen={false} />
+      );
+      const input = screen.getByRole('combobox');
+      await user.type(input, 'O');
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      rerender(<Combobox options={asyncOptions} value={null} onChange={onChangeHandler} isOpen />);
+      await act(async () => jest.advanceTimersByTimeAsync(DEBOUNCE_TIME_MS));
+
+      expect(input).toHaveValue('O');
+      expect(asyncOptions).toHaveBeenCalledTimes(1);
+      expect(asyncOptions).toHaveBeenCalledWith('O');
+      expect(screen.getByRole('option', { name: 'Only match' })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'Unfiltered option' })).not.toBeInTheDocument();
+    });
 
     it('should allow async options', async () => {
       const asyncOptions = jest.fn(() => Promise.resolve(simpleAsyncOptions));

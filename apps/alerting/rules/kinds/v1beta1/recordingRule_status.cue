@@ -1,0 +1,13 @@
+package v1beta1
+
+import "time"
+
+#RecordingRuleHealth: "Unknown" | "Recording" | "Paused" | "Error" | "NoData"
+
+#RecordingRuleStatus: {
+	health?:             #RecordingRuleHealth
+	lastEvaluationTime?: string & time.Time
+	// duration of the last evaluation in seconds
+	evaluationDuration?: float
+	lastError?:          string
+}

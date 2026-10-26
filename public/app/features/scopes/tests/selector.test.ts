@@ -50,7 +50,6 @@ describe('Selector', () => {
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
   });
 
   beforeEach(async () => {

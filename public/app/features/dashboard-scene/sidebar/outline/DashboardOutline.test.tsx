@@ -24,6 +24,9 @@ import { DashboardOutline } from './DashboardOutline';
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
+    editPeriodStarted: jest.fn(),
+    editPeriodEnded: jest.fn(),
+    editActorFirstChange: jest.fn(),
     outlineItemClicked: jest.fn(),
     dashboardEditDiscarded: jest.fn(),
   },
@@ -216,10 +219,10 @@ describe('DashboardOutline', () => {
           </WrapSidebar>
         </ElementSelectionContext.Provider>
       );
-      // select Row lvl 1 (index 3 because Variables is at 0, Annotations at 1, Links at 2)
+      // select Row lvl 1 (index 4 because Filters is at 0, Variables at 1, Annotations at 2, Links at 3)
       await user.click(await screen.findByTestId(selectors.components.PanelEditor.Outline.item('Row level 1')));
       expect(DashboardInteractions.outlineItemClicked).toHaveBeenNthCalledWith(1, {
-        index: 3,
+        index: 4,
         depth: 1,
         isEditing: true,
       });

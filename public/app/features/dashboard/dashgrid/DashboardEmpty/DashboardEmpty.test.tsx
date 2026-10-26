@@ -1,8 +1,9 @@
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
@@ -87,6 +88,10 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => {
+  setTestFlags({});
+});
+
 it('renders page with correct title for an empty dashboard', () => {
   setup();
 
@@ -118,7 +123,7 @@ it('creates new visualization when clicked Add visualization', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', {
     item: 'add_visualization',
-    isDynamicDashboard: false,
+    isDynamicDashboard: true,
   });
   expect(locationService.partial).toHaveBeenCalled();
   expect(locationService.partial).toHaveBeenCalledWith({ editPanel: undefined, firstPanel: true });
@@ -134,7 +139,7 @@ it('open import dashboard when clicked Import dashboard', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', {
     item: 'import_dashboard',
-    isDynamicDashboard: false,
+    isDynamicDashboard: true,
   });
   expect(onImportDashboard).toHaveBeenCalled();
 });
@@ -148,7 +153,7 @@ it('adds a library panel when clicked Add library panel', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', {
     item: 'import_from_library',
-    isDynamicDashboard: false,
+    isDynamicDashboard: true,
   });
   expect(locationService.partial).not.toHaveBeenCalled();
   expect(onAddLibraryPanel).toHaveBeenCalled();
@@ -179,15 +184,16 @@ it('renders with buttons disabled when repository is read-only', () => {
 });
 
 describe('new layouts empty state', () => {
-  const originalDashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
+  beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
+  });
 
   afterEach(() => {
-    config.featureToggles.dashboardNewLayouts = originalDashboardNewLayouts;
+    setTestFlags({});
     mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
   });
 
   function setupScene(args: Partial<DashboardSceneState> = {}) {
-    config.featureToggles.dashboardNewLayouts = true;
     const dashboard = new DashboardScene({
       isEditing: true,
       body: AutoGridLayoutManager.createEmpty(),
@@ -197,12 +203,21 @@ describe('new layouts empty state', () => {
     return dashboard;
   }
 
-  it('keeps the layout picker and opens the add pane when assistant dashboard planning is off', () => {
+  it('hides manual layout controls and the add pane in View mode', () => {
+    setTestFlags({ 'grafana.dashboardPreviewMode': true });
+    const dashboard = setupScene({ mode: 'view' });
+    expect(screen.getByText('This dashboard has no panels.')).toBeInTheDocument();
+    expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
+  });
+
+  it('keeps the layout picker and opens the add pane when assistant dashboard planning is off', async () => {
     const dashboard = setupScene();
 
     expect(screen.getByText('Select layout')).toBeInTheDocument();
     expect(screen.queryByText('Or build it yourself')).not.toBeInTheDocument();
-    expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('add');
+    await waitFor(() => expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('add'));
   });
 
   it('shows a loading indicator and leaves the add pane closed while planning is resolving', () => {

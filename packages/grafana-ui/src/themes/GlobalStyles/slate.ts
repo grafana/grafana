@@ -8,16 +8,24 @@ export function getSlateStyles(theme: GrafanaTheme2) {
       fontSize: theme.typography.fontSize,
       fontFamily: theme.typography.fontFamilyMonospace,
       height: 'auto',
+      flexGrow: 1,
+      minWidth: 0,
       wordBreak: 'break-word',
       // Affects only placeholder in query field. Adds scrollbar only if content is cropped.
       overflow: 'auto',
+
+      // slate's placeholder hardcodes an inline `vertical-align: text-top`, which grows the line box by 1px when empty
+      '[data-slate-editor] [contenteditable="false"]': {
+        verticalAlign: 'top !important',
+      },
     },
 
     '.slate-query-field__wrapper': {
       position: 'relative',
-      display: 'inline-block',
-      padding: '6px 8px',
-      minHeight: '32px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      padding: theme.spacing(0.5, 1),
+      minHeight: theme.spacing(theme.components.height.md),
       width: '100%',
       color: theme.colors.text.primary,
       backgroundColor: theme.components.input.background,
