@@ -82,7 +82,7 @@ function ErrorFieldsProbe() {
 }
 
 test('hasLogsWithErrorFields is true when a log has an error message or stack trace', () => {
-  const log = createLogLine({ labels: { 'exception.stacktrace': 'at main' } });
+  const log = createLogRow({ labels: { 'exception.stacktrace': 'at main' } });
 
   render(
     <LogListContextProvider {...defaultProps} logs={[log]}>
@@ -94,10 +94,10 @@ test('hasLogsWithErrorFields is true when a log has an error message or stack tr
 });
 
 test('hasLogsWithErrorFields is false when logs have no error fields', () => {
-  const log = createLogLine({ labels: { app: 'api', 'error.type': 'timeout' } });
+  const log = createLogRow({ labels: { app: 'api', 'error.type': 'timeout' } });
 
   render(
-    <LogListContextProvider {...defaultProps} logs={[log, createLogRow()]}>
+    <LogListContextProvider {...defaultProps} logs={[log]}>
       <ErrorFieldsProbe />
     </LogListContextProvider>
   );
