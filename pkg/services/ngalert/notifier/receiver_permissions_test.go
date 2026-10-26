@@ -35,8 +35,7 @@ func TestReceiverService_UpdateReceiverRefreshPermissions(t *testing.T) {
 		{name: "commit failure", rename: true, commitErr: failure, want: []string{"copy", "delete", "save", "commit"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			type requestKey struct{}
-			ctx := context.WithValue(t.Context(), requestKey{}, "request metadata")
+			ctx := t.Context()
 			requester := &user.SignedInUser{OrgID: 1, Permissions: map[int64]map[string][]string{
 				1: {
 					accesscontrol.ActionAlertingNotificationsWrite: nil,

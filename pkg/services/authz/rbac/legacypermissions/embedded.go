@@ -57,7 +57,7 @@ func (c *embeddedTransactionCall) wait() {
 type embeddedClient struct{ legacyclient.Service }
 
 func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
-	if sqlstore.IsInTransaction(ctx) {
+	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
 		call := &embeddedTransactionCall{done: make(chan struct{})}
 		ctx = context.WithValue(ctx, embeddedTransactionCallKey{}, call)
 		defer call.wait()
@@ -92,7 +92,7 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
 			// Preserve their SQL session without forwarding unrelated context values.
 			// Receiver renames refresh permissions after the outermost transaction commits.
 			// No other caller is known to read permissions inside a transaction.
-			if sess := sqlstore.SessionFromContext(clientCtx); sess != nil {
+			if sess, ok := clientCtx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
 				call, ok := clientCtx.Value(embeddedTransactionCallKey{}).(*embeddedTransactionCall)
 				if !ok || !call.start() {
 					return status.Error(codes.Canceled, "embedded transaction call already returned")
