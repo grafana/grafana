@@ -1,12 +1,11 @@
 import { type AdHocVariableFilter, type TypedVariableModel } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
-  GroupByVariable,
   IntervalVariable,
   QueryVariable,
   sceneGraph,
@@ -23,23 +22,12 @@ import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
-import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
+import { createSceneVariablesFromVariableKinds } from '../serialization/transformSaveModelSchemaV2ToScene';
 
+import { applySupportsMultiValueOperators } from './applySupportsMultiValueOperators';
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
 
 const DEFAULT_DATASOURCE = 'default';
-
-// Keep dashboard-load construction synchronous while the instance-settings lookup is async.
-function applySupportsMultiValueOperators(variable: AdHocFiltersVariable, datasourceType?: string) {
-  void getDataSourceInstanceSettings({ type: datasourceType })
-    .then((settings) => {
-      const supports = Boolean(settings?.meta.multiValueFilterOperators);
-      if (variable.state.supportsMultiValueOperators !== supports) {
-        variable.setState({ supportsMultiValueOperators: supports });
-      }
-    })
-    .catch((e) => console.warn('Failed to resolve multi-value operator support', datasourceType, e));
-}
 
 export const keepOnlyUserDefinedVariables = (v: SceneVariable) => !v.UNSAFE_renderAsHidden;
 
@@ -101,16 +89,7 @@ export function createVariablesForDashboard(oldModel: DashboardModel, defaultVar
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
 
-  const defaultVariableObjects = defaultVariables
-    .map((v) => {
-      try {
-        return createSceneVariableFromVariableModelV2(v);
-      } catch (err) {
-        console.error(err);
-        return null;
-      }
-    })
-    .filter((v): v is SceneVariable => Boolean(v));
+  const defaultVariableObjects = createSceneVariablesFromVariableKinds(defaultVariables, { migrateUrlState: false });
 
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
@@ -141,9 +120,12 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             baseFilters: v.baseFilters ?? [],
             defaultKeys: v.defaultKeys,
             useQueriesAsFilterForOptions: true,
-            applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
+            applicabilityEnabled: getFeatureFlagClient().getBooleanValue(
+              FlagKeys.PerPanelNonApplicableDrilldowns,
+              false
+            ),
             supportsMultiValueOperators: false,
-            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls ? (v.enableGroupBy ?? false) : false,
+            enableGroupBy: v.enableGroupBy ?? false,
             $behaviors: [new ReportInteractionBehavior({})],
           });
           applySupportsMultiValueOperators(adhocVariable, v.datasource?.type);
@@ -241,13 +223,11 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.defaultKeys,
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
-      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
-      collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
+      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
+      drilldownRecommendationsEnabled: true,
+      collapsible: true,
       supportsMultiValueOperators: false,
-      enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-        ? (variable.enableGroupBy ?? false)
-        : false,
+      enableGroupBy: variable.enableGroupBy ?? false,
       $behaviors: [new ReportInteractionBehavior({})],
     });
     applySupportsMultiValueOperators(adhocVariable, variable.datasource?.type);
@@ -364,22 +344,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       value: val,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
-    });
-    // Groupby variable
-  } else if (config.featureToggles.groupByVariable && variable.type === 'groupby') {
-    return new GroupByVariable({
-      ...commonProperties,
-      datasource: variable.datasource,
-      value: variable.current?.value || [],
-      text: variable.current?.text || [],
-      skipUrlSync: variable.skipUrlSync,
-      hide: variable.hide,
-      // @ts-expect-error
-      defaultOptions: variable.options,
-      defaultValue: variable.defaultValue,
-      allowCustomValue: variable.allowCustomValue,
-      applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
     });
     // Switch variable
     // In the old variable model we are storing the enabled and disabled values in the options:

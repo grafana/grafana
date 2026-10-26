@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -25,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -48,32 +48,36 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 	}
 	logger := st.Logger.New("org_id", orgID, "rule_uids", ruleUID)
 
-	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return err
+	}
+	conn := dbHelper.DB
+	alertRuleTable := dbHelper.Table("alert_rule")
+	alertInstanceTable := dbHelper.Table("alert_instance")
+	alertRuleStateTable := dbHelper.Table("alert_rule_state")
+	alertRuleVersionTable := dbHelper.Table("alert_rule_version")
+	if st.LegacyDatabaseProvider != nil {
+		ctx = ambientSessionFor(ctx, conn)
+	}
+
+	return conn.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// Read the parent folders before the delete, since the rows carrying namespace_uid are gone
 		// afterwards and RuleChangeEvent subscribers need to know which folders were affected. Gated
 		// because this is an extra query on every delete and the only subscriber is behind the flag.
-		// With no routed database configured, this stays on the delete's own transaction (sess), so
-		// a concurrent folder move can't leave FolderKeys pointing at the wrong folder. A routed
-		// database may be a different connection, so it gets its own read instead.
+		// This stays in the delete's transaction, so a concurrent folder move can't leave stale
+		// FolderKeys.
 		var folderKeys []ngmodels.FolderKey
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
 			var err error
-			if st.LegacyDatabaseProvider == nil {
-				folderKeys, err = deletedRuleFolderKeys(sess, orgID, ruleUID, "alert_rule")
-			} else {
-				var dbHelper *legacysql.LegacyDatabaseHelper
-				dbHelper, err = st.legacyDatabaseProvider(ctx)
-				if err == nil {
-					folderKeys, err = deletedRuleFolderKeysOnDB(ctx, dbHelper, orgID, ruleUID)
-				}
-			}
+			folderKeys, err = deletedRuleFolderKeys(sess, orgID, ruleUID, alertRuleTable)
 			if err != nil {
 				return err
 			}
 		}
 
-		rows, err := sess.Table(alertRule{}).Where("org_id = ?", orgID).In("uid", ruleUID).Delete(alertRule{})
+		rows, err := sess.Table(alertRuleTable).Where("org_id = ?", orgID).In("uid", ruleUID).Delete(alertRule{})
 		if err != nil {
 			return err
 		}
@@ -89,24 +93,35 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 			})
 		}
 
-		rows, err = sess.Table("alert_instance").Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
+		rows, err = sess.Table(alertInstanceTable).Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
 		if err != nil {
 			return err
 		}
 		logger.Debug("Deleted alert instances", "count", rows)
 
-		rows, err = sess.Table("alert_rule_state").Where("org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
+		rows, err = sess.Table(alertRuleStateTable).Where("org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
 		if err != nil {
 			return err
 		}
 		logger.Debug("Deleted alert rule state", "count", rows)
 
 		var versions []alertRuleVersion
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) && st.Cfg.DeletedRuleRetention > 0 && !permanently { // save deleted version only if retention is greater than 0
-			versions, err = st.getLatestVersionOfRulesByUID(ctx, orgID, ruleUID)
+		if st.Cfg.DeletedRuleRetention > 0 && !permanently { // save deleted version only if retention is greater than 0
+			// Reuses sess so a routed delete needs only one connection. Savepoint-scoped since this
+			// read is best-effort and a failed statement would otherwise abort the whole transaction
+			// on Postgres.
+			const versionSnapshotSavepoint = "alert_rule_version_snapshot"
+			if _, spErr := sess.Exec("SAVEPOINT " + versionSnapshotSavepoint); spErr != nil {
+				return spErr
+			}
+			versions, err = latestVersionOfRulesByUID(sess, st.Logger, orgID, ruleUID, alertRuleVersionTable)
 			if err != nil {
 				logger.Error("Failed to get latest version of deleted alert rules. The recovery will not be possible", "error", err)
+				if _, rbErr := sess.Exec("ROLLBACK TO SAVEPOINT " + versionSnapshotSavepoint); rbErr != nil {
+					return rbErr
+				}
+			} else if _, relErr := sess.Exec("RELEASE SAVEPOINT " + versionSnapshotSavepoint); relErr != nil {
+				return relErr
 			}
 			for idx := range versions {
 				version := &versions[idx]
@@ -120,14 +135,14 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 			}
 		}
 
-		rows, err = sess.Table(alertRuleVersion{}).Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
+		rows, err = sess.Table(alertRuleVersionTable).Where("rule_org_id = ?", orgID).In("rule_uid", ruleUID).Delete(alertRule{})
 		if err != nil {
 			return err
 		}
 		logger.Debug("Deleted alert rule versions", "count", rows)
 
 		if len(versions) > 0 {
-			_, err = sess.BulkInsert(alertRuleVersion{}, versions, sqlstore.NativeSettingsForDialect(st.SQLStore.GetDialect()))
+			_, err = sess.BulkInsert(alertRuleVersionTable, versions, sqlstore.NativeSettingsForDialect(conn.GetDialect()))
 			if err != nil {
 				return fmt.Errorf("failed to persist deleted rule for recovery: %w", err)
 			}
@@ -138,49 +153,58 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 }
 
 func (st RuleStore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int64, ruleUIDs []string) ([]alertRuleVersion, error) {
-	conn := st.SQLStore
-	alertRuleVersionTable := "alert_rule_version"
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn := dbHelper.DB
+	alertRuleVersionTable := dbHelper.Table("alert_rule_version")
 	if st.LegacyDatabaseProvider != nil {
-		dbHelper, err := st.legacyDatabaseProvider(ctx)
-		if err != nil {
-			return nil, err
-		}
-		conn = dbHelper.DB
-		alertRuleVersionTable = dbHelper.Table("alert_rule_version")
 		ctx = withoutAmbientSession(ctx)
 	}
 
 	var result []alertRuleVersion
-	err := conn.WithDbSession(ctx, func(sess *db.Session) error {
-		args, in := getINSubQueryArgs(ruleUIDs)
-		// take only the latest versions of each rule by GUID
-		rows, err := sess.SQL(fmt.Sprintf(`
-		SELECT v1.* FROM %[1]s AS v1
-			INNER JOIN (
-			    SELECT rule_guid, MAX(id) AS id
-			    FROM %[1]s
-			    WHERE rule_org_id = ?
-			      AND rule_uid IN (%[2]s)
-			    GROUP BY rule_guid
-			) AS v2 ON v1.rule_guid = v2.rule_guid AND v1.id = v2.id
-		`, alertRuleVersionTable, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
-
-		if err != nil {
-			return err
-		}
-		result = make([]alertRuleVersion, 0, len(ruleUIDs))
-		for rows.Next() {
-			rule := new(alertRuleVersion)
-			err = rows.Scan(rule)
-			if err != nil {
-				st.Logger.Error("Invalid rule version found in DB store, ignoring it", "func", "getLatestVersionOfRulesByUID", "error", err)
-				continue
-			}
-			result = append(result, *rule)
-		}
-		return nil
+	err = conn.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		result, err = latestVersionOfRulesByUID(sess, st.Logger, orgID, ruleUIDs, alertRuleVersionTable)
+		return err
 	})
 	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+// latestVersionOfRulesByUID reads the latest version of each rule by UID through sess, so a
+// caller already in a transaction can reuse it instead of opening a second session.
+func latestVersionOfRulesByUID(sess *db.Session, logger log.Logger, orgID int64, ruleUIDs []string, alertRuleVersionTable string) ([]alertRuleVersion, error) {
+	args, in := getINSubQueryArgs(ruleUIDs)
+	// take only the latest versions of each rule by GUID
+	rows, err := sess.SQL(fmt.Sprintf(`
+	SELECT v1.* FROM %[1]s AS v1
+		INNER JOIN (
+		    SELECT rule_guid, MAX(id) AS id
+		    FROM %[1]s
+		    WHERE rule_org_id = ?
+		      AND rule_uid IN (%[2]s)
+		    GROUP BY rule_guid
+		) AS v2 ON v1.rule_guid = v2.rule_guid AND v1.id = v2.id
+	`, alertRuleVersionTable, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+	result := make([]alertRuleVersion, 0, len(ruleUIDs))
+	for rows.Next() {
+		rule := new(alertRuleVersion)
+		if err := rows.Scan(rule); err != nil {
+			logger.Error("Invalid rule version found in DB store, ignoring it", "func", "latestVersionOfRulesByUID", "error", err)
+			continue
+		}
+		result = append(result, *rule)
+	}
+	// rows.Err() always reports sql.ErrNoRows here; IterationErr() surfaces a real mid-stream failure.
+	if err := rows.IterationErr(); err != nil {
 		return nil, err
 	}
 	return result, nil
@@ -213,6 +237,25 @@ func (st RuleStore) getFolderFullpaths(ctx context.Context, orgID int64, folderU
 		result[f.UID] = f.Fullpath
 	}
 	return result, nil
+}
+
+// GetFolderUIDsWithMissingFullpath returns distinct folders with NULL legacy fullpaths.
+// Empty strings are not missing paths and must not trigger another backfill.
+func (st RuleStore) GetFolderUIDsWithMissingFullpath(ctx context.Context, orgID int64) ([]string, error) {
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	alertRuleTable := dbHelper.Table("alert_rule")
+	var uids []string
+	err = dbHelper.DB.WithDbSession(withoutAmbientSession(ctx), func(sess *db.Session) error {
+		return sess.Table(alertRuleTable).Distinct("namespace_uid").
+			Where("org_id = ? AND folder_fullpath IS NULL", orgID).Find(&uids)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return uids, nil
 }
 
 // UpdateFolderFullpathsForFolders updates the folder_fullpath column for all alert rules
@@ -282,6 +325,7 @@ func (st RuleStore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid 
 		if err != nil {
 			return err
 		}
+		defer func() { _ = rows.Close() }()
 		// Deserialize each rule separately in case any of them contain invalid JSON.
 		var previousVersion *alertRuleVersion
 		for rows.Next() {
@@ -303,6 +347,9 @@ func (st RuleStore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid 
 			}
 			previousVersion = rule
 			alertRules = append(alertRules, &converted)
+		}
+		if err := rows.IterationErr(); err != nil {
+			return err
 		}
 		return nil
 	})
@@ -353,6 +400,7 @@ func (st RuleStore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmod
 		if err != nil {
 			return err
 		}
+		defer func() { _ = rows.Close() }()
 		// Deserialize each rule separately in case any of them contain invalid JSON.
 		for rows.Next() {
 			rule := new(alertRuleVersion)
@@ -368,6 +416,9 @@ func (st RuleStore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmod
 				continue
 			}
 			alertRules = append(alertRules, &converted)
+		}
+		if err := rows.IterationErr(); err != nil {
+			return err
 		}
 		return nil
 	})
@@ -445,17 +496,14 @@ func (st RuleStore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmo
 //
 // Served as a leading-prefix scan of the (org_id, namespace_uid, rule_group) index.
 func (st RuleStore) GetAllFoldersWithRules(ctx context.Context, orgID int64) (result map[string]struct{}, err error) {
-	conn := st.SQLStore
-	alertRuleTable := "alert_rule"
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn := dbHelper.DB
+	alertRuleTable := dbHelper.Table("alert_rule")
 	if st.LegacyDatabaseProvider != nil {
-		var dbHelper *legacysql.LegacyDatabaseHelper
-		dbHelper, err = st.legacyDatabaseProvider(ctx)
-		if err != nil {
-			return nil, err
-		}
-		conn = dbHelper.DB
-		alertRuleTable = dbHelper.Table("alert_rule")
-		ctx = withoutAmbientSession(ctx)
+		ctx = ambientSessionFor(ctx, conn)
 	}
 
 	err = conn.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -521,24 +569,6 @@ func deletedRuleFolderKeys(sess *db.Session, orgID int64, ruleUIDs []string, ale
 	if err := sess.Table(alertRuleTable).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids); err != nil {
 		return nil, err
 	}
-	return dedupFolderKeys(orgID, uids), nil
-}
-
-// deletedRuleFolderKeysOnDB is deletedRuleFolderKeys for a routed database, which may live on a
-// different connection than the delete's own transaction, so it reads on its own session instead
-// of sharing one.
-func deletedRuleFolderKeysOnDB(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, ruleUIDs []string) ([]ngmodels.FolderKey, error) {
-	var uids []string
-	err := dbHelper.DB.WithDbSession(withoutAmbientSession(ctx), func(sess *db.Session) error {
-		return sess.Table(dbHelper.Table("alert_rule")).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids)
-	})
-	if err != nil {
-		return nil, err
-	}
-	return dedupFolderKeys(orgID, uids), nil
-}
-
-func dedupFolderKeys(orgID int64, uids []string) []ngmodels.FolderKey {
 	seen := make(map[string]struct{}, len(uids))
 	keys := make([]ngmodels.FolderKey, 0, len(uids))
 	for _, uid := range uids {
@@ -551,7 +581,7 @@ func dedupFolderKeys(orgID int64, uids []string) []ngmodels.FolderKey {
 		seen[uid] = struct{}{}
 		keys = append(keys, ngmodels.FolderKey{OrgID: orgID, UID: uid})
 	}
-	return keys
+	return keys, nil
 }
 
 // fetchFolderFullpathsByOrg fetches folder fullpaths for all namespace UIDs grouped by org ID.
@@ -858,23 +888,22 @@ func (st RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs 
 		return 0, nil
 	}
 
-	conn := st.SQLStore
-	alertRuleTable := "alert_rule"
 	if st.LegacyDatabaseProvider != nil {
 		// A context-dependent LegacyDatabaseProvider resolves the target database from the
 		// requester on ctx, which this interface allows callers to pass separately instead.
 		ctx = identity.WithRequester(ctx, user)
-		dbHelper, err := st.legacyDatabaseProvider(ctx)
-		if err != nil {
-			return 0, err
-		}
-		conn = dbHelper.DB
-		alertRuleTable = dbHelper.Table("alert_rule")
-		ctx = withoutAmbientSession(ctx)
+	}
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return 0, err
+	}
+	conn := dbHelper.DB
+	alertRuleTable := dbHelper.Table("alert_rule")
+	if st.LegacyDatabaseProvider != nil {
+		ctx = ambientSessionFor(ctx, conn)
 	}
 
 	var count int64
-	var err error
 	err = conn.WithDbSession(ctx, func(sess *db.Session) error {
 		args := make([]any, 0, len(folderUIDs))
 		for _, folderUID := range folderUIDs {
@@ -918,7 +947,9 @@ func (st RuleStore) ListAlertRulesByGroup(ctx context.Context, query *ngmodels.L
 			return err
 		}
 		defer func() {
-			_ = rows.Close()
+			if err := rows.Close(); err != nil {
+				st.Logger.Error("Unable to close rows session", "func", "ListAlertRulesByGroup", "error", err)
+			}
 		}()
 
 		opts := alertRuleConvertOptions{}
@@ -1180,7 +1211,9 @@ func (st RuleStore) ListAlertRulesPaginated(ctx context.Context, query *ngmodels
 			return err
 		}
 		defer func() {
-			_ = rows.Close()
+			if err := rows.Close(); err != nil {
+				st.Logger.Error("Unable to close rows session", "func", "ListAlertRulesPaginated", "error", err)
+			}
 		}()
 
 		// Deserialize each rule separately in case any of them contain invalid JSON.
@@ -1508,12 +1541,13 @@ func (st RuleStore) buildListAlertRulesQuery(sess *db.Session, query *ngmodels.L
 		}
 	}
 
-	// FIXME: record is nullable but we don't save it as null when it's nil
+	// The record column is nullable. We write '' for alert rules, but rows that existed before
+	// the column was added hold NULL, and those are alert rules too.
 	switch query.RuleType {
 	case ngmodels.RuleTypeFilterAlerting:
-		q = q.Where("record = ''")
+		q = q.Where("(record IS NULL OR record = '')")
 	case ngmodels.RuleTypeFilterRecording:
-		q = q.Where("record != ''")
+		q = q.Where("(record IS NOT NULL AND record != '')")
 	case ngmodels.RuleTypeFilterAll:
 		// no additional filter
 	default:
@@ -1678,6 +1712,33 @@ func (st RuleStore) Count(ctx context.Context, orgID int64) (int64, error) {
 	return r.Count, err
 }
 
+// CountRuleGroups counts distinct rule group names, across all organizations when orgID is zero.
+// Groups with the same name in different folders or organizations count only once.
+func (st RuleStore) CountRuleGroups(ctx context.Context, orgID int64) (int64, error) {
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return 0, err
+	}
+	if st.LegacyDatabaseProvider != nil {
+		ctx = ambientSessionFor(ctx, dbHelper.DB)
+	}
+
+	var result struct {
+		Count int64
+	}
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		query := "SELECT COUNT(DISTINCT rule_group) AS count FROM " + dbHelper.Table("alert_rule")
+		args := make([]any, 0, 1)
+		if orgID != 0 {
+			query += " WHERE org_id = ?"
+			args = append(args, orgID)
+		}
+		_, err := sess.SQL(query, args...).Get(&result)
+		return err
+	})
+	return result.Count, err
+}
+
 func (st RuleStore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {
 	var interval int64 = 0
 	return interval, st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -1817,12 +1878,10 @@ func (st RuleStore) GetAlertRulesForScheduling(ctx context.Context, query *ngmod
 }
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
+//
+// All folders are permission-checked before any deletion starts, so a denial partway through
+// the list leaves every folder's rules intact rather than only the ones checked first.
 func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
-	// Attach the requester to ctx: ListAlertRuleUIDsInFolder has no requester parameter of its
-	// own, so a context-dependent LegacyDatabaseProvider can only resolve the target database
-	// from here.
-	ctx = identity.WithRequester(ctx, user)
-
 	for _, folderUID := range folderUIDs {
 		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
 		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
@@ -1831,10 +1890,33 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 			return err
 		}
 		if !canSave {
-			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
+			// GetUID() isn't safe to call on a typed-nil user, which AccessControl.Evaluate above tolerates.
+			userUID := ""
+			if user != nil && !user.IsNil() {
+				userUID = user.GetUID()
+			}
+			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user", userUID)
 			return folder.ErrAccessDenied
 		}
+	}
+	// Reaching here means every folder's AccessControl check above passed.
+	return st.DeleteInFoldersUnchecked(folder.WithUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs, true), orgID, folderUIDs, user)
+}
 
+// DeleteInFoldersUnchecked is DeleteInFolders without the AccessControl check, for callers that have
+// already authorized the requester through a different mechanism (e.g. a standalone folder
+// apiserver's cascade delete, which authorizes via authlib.AccessClient before calling in) and
+// marked ctx with folder.WithUncheckedDeleteAuthorized to prove it.
+func (st RuleStore) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
+	if err := folder.RequireUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs); err != nil {
+		return err
+	}
+
+	// Attach the requester to ctx: ListAlertRuleUIDsInFolder has no requester parameter of its own,
+	// so a context-dependent LegacyDatabaseProvider can only resolve the target database from here.
+	ctx = identity.WithRequester(ctx, user)
+
+	for _, folderUID := range folderUIDs {
 		uids, err := st.ListAlertRuleUIDsInFolder(ctx, orgID, folderUID)
 		if err != nil {
 			return err
@@ -1851,20 +1933,18 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 // LegacyDatabaseProvider, for callers that only need rule UIDs scoped to one folder (the delete
 // path here, and the folder reconciler) rather than ListAlertRules' many other callers.
 func (st RuleStore) ListAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error) {
-	conn := st.SQLStore
-	alertRuleTable := "alert_rule"
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn := dbHelper.DB
+	alertRuleTable := dbHelper.Table("alert_rule")
 	if st.LegacyDatabaseProvider != nil {
-		dbHelper, err := st.legacyDatabaseProvider(ctx)
-		if err != nil {
-			return nil, err
-		}
-		conn = dbHelper.DB
-		alertRuleTable = dbHelper.Table("alert_rule")
-		ctx = withoutAmbientSession(ctx)
+		ctx = ambientSessionFor(ctx, conn)
 	}
 
 	var uids []string
-	err := conn.WithDbSession(ctx, func(sess *db.Session) error {
+	err = conn.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(alertRuleTable).Cols("uid").Where("org_id = ? AND namespace_uid = ?", orgID, folderUID).Find(&uids)
 	})
 	if err != nil {
@@ -2029,7 +2109,9 @@ func (st RuleStore) filterByContentInRecord(key, value string, exclude bool, ses
 	}
 	sql, param := st.SQLStore.GetDialect().LikeOperator("record", true, search, true)
 	if exclude {
-		return sess.And("NOT ("+sql+")", param), nil
+		// NOT (NULL LIKE ...) is NULL, so without the IS NULL check alert rules with a NULL
+		// record would be dropped by an exclude filter.
+		return sess.And("(record IS NULL OR NOT ("+sql+"))", param), nil
 	}
 	return sess.And(sql, param), nil
 }

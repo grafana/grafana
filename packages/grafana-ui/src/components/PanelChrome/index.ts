@@ -35,12 +35,14 @@ export {
 
 export {
   usePanelContext,
-  useAdHocTransformations,
   PanelContextProvider,
   type PanelContext,
   type PanelRuntimeTransformations,
   type AdHocTransformationsState,
   PanelContextRoot,
 } from './PanelContext';
+export { useAdHocTransformations } from './useAdHocTransformations';
 
 export * from './types';
+export { usePanelNotices, usePanelStatusSnapshot } from './usePanelNotices';
+export { PanelStatusActions } from './PanelStatusActions';

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 
@@ -18,6 +20,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -29,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -66,12 +71,20 @@ func TestGetAPIRoutes_UserPermissionsGate(t *testing.T) {
 			}
 			routes := b.GetAPIRoutes(legacyiamv0.SchemeGroupVersion)
 			found := false
-			for _, route := range routes.Namespace {
-				if route.Path == "users/~/permissions" {
+			for _, route := range routes.Root {
+				if route.Path == "whoami/permissions" {
 					found = true
 				}
 			}
 			require.Equal(t, tt.want, found)
+			foundLegacy := false
+			for _, route := range routes.Namespace {
+				if route.Path == "users/~/permissions" {
+					foundLegacy = true
+				}
+				require.NotEqual(t, "whoami/permissions", route.Path)
+			}
+			require.Equal(t, tt.want, foundLegacy)
 		})
 	}
 }
@@ -122,6 +135,69 @@ func TestNewAPIService_WiresSSOStore(t *testing.T) {
 	// Standalone must wire the read-only SSO store so the SSOSetting kind is served
 	// once kubernetesSsoSettingsApi is enabled.
 	require.NotNil(t, b.ssoLegacyStore)
+}
+
+func TestNewAPIService_AuthorizesWhoami(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{},
+	)
+
+	for _, tc := range []struct {
+		name         string
+		verb         string
+		resourceName string
+		subresource  string
+		namespace    string
+		noIdentity   bool
+		want         authorizer.Decision
+	}{
+		{name: "list", verb: "list", want: authorizer.DecisionAllow},
+		{name: "get", verb: "get", want: authorizer.DecisionAllow},
+		{name: "permissions", verb: "get", resourceName: "permissions", want: authorizer.DecisionAllow},
+		{name: "permissions missing identity", verb: "get", resourceName: "permissions", noIdentity: true, want: authorizer.DecisionDeny},
+		{name: "permissions list", verb: "list", resourceName: "permissions", want: authorizer.DecisionDeny},
+		{name: "permissions create", verb: "create", resourceName: "permissions", want: authorizer.DecisionDeny},
+		{name: "permissions watch", verb: "watch", resourceName: "permissions", want: authorizer.DecisionDeny},
+		{name: "permissions subresource", verb: "get", resourceName: "permissions", subresource: "other", want: authorizer.DecisionDeny},
+		{name: "permissions namespaced", verb: "get", resourceName: "permissions", namespace: "org-1", want: authorizer.DecisionDeny},
+		{name: "missing identity", verb: "list", noIdentity: true, want: authorizer.DecisionDeny},
+		{name: "create", verb: "create", want: authorizer.DecisionDeny},
+		{name: "watch", verb: "watch", want: authorizer.DecisionDeny},
+		{name: "named resource", verb: "get", resourceName: "other", want: authorizer.DecisionDeny},
+		{name: "subresource", verb: "get", subresource: "permissions", want: authorizer.DecisionDeny},
+		{name: "namespaced", verb: "list", namespace: "default", want: authorizer.DecisionDeny},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			if !tc.noIdentity {
+				ctx = authlib.WithAuthInfo(ctx, newTestAuthInfo())
+			}
+			decision, _, err := b.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
+				ResourceRequest: true, Resource: "whoami", Verb: tc.verb,
+				Name: tc.resourceName, Subresource: tc.subresource, Namespace: tc.namespace,
+			})
+			if tc.noIdentity {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tc.want, decision)
+		})
+	}
 }
 
 func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
@@ -190,13 +266,43 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 		teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
 		tracing:              tracing.InitializeTracerForTest(),
 	}
+	defs := iamv0.GetOpenAPIDefinitions(func(string) spec.Ref { return spec.Ref{} })
+	routes := b.teamLBACApiInstaller.GetTeamLBACUsageRoutes(defs)
+	require.Len(t, routes.Namespace, 1)
+	route := routes.Namespace[0]
+	require.Equal(t, "teamlbacusage", route.Path)
+	responseSchema := route.Spec.Get.Responses.StatusCodeResponses[200].Content["application/json"].Schema
+	require.Contains(t, responseSchema.Properties, "counts")
+	response := httptest.NewRecorder()
+	route.Handler(response, httptest.NewRequest(http.MethodGet, "/apis/iam.grafana.app/v0alpha1/namespaces/org-1/teamlbacusage", nil))
+	require.Equal(t, http.StatusForbidden, response.Code)
+	require.NotContains(t, response.Body.String(), "counts")
+	decision, _, err := b.teamLBACApiInstaller.GetTeamLBACUsageAuthorizer().Authorize(context.Background(), authorizer.AttributesRecord{
+		ResourceRequest: true, Resource: "teamlbacusage", Verb: "list", Namespace: "org-1",
+	})
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionDeny, decision)
 	storage := map[string]rest.Storage{
 		iamv0.TeamResourceInfo.StoragePath(): &noopstorage.NoopREST{ResourceInfo: iamv0.TeamResourceInfo},
 	}
 
+	err = b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
+	require.NoError(t, err)
+	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
+}
+
+func TestUpdateTeamLBACRulesAPIGroupWithoutTeamAPI(t *testing.T) {
+	tracer := tracing.InitializeTracerForTest()
+	b := &IdentityAccessManagementAPIBuilder{
+		teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
+		legacyTeamStore:      team.NewLegacyStore(nil, nil, tracer, nil),
+		tracing:              tracer,
+	}
+	storage := map[string]rest.Storage{}
 	err := b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
 	require.NoError(t, err)
 	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
+	require.NotContains(t, storage, iamv0.TeamResourceInfo.StoragePath())
 }
 
 func TestUpdateUsersAPIGroup_TeamsSubresourceRequiresTeamsAPI(t *testing.T) {
@@ -449,4 +555,19 @@ func TestNewLocalStore_EnforcesVersionCap(t *testing.T) {
 	require.Error(t, err, "write above the group's maxAllowedVersion cap must be rejected")
 	require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
 	require.Contains(t, err.Error(), "v0alpha1", "message should name the cap version")
+}
+
+func TestPostProcessOpenAPI_PermissionItems(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{}
+	oas, err := b.PostProcessOpenAPI(&spec3.OpenAPI{
+		Info:       &spec.Info{},
+		Components: &spec3.Components{Schemas: map[string]*spec.Schema{}},
+	})
+	require.NoError(t, err)
+	require.NotContains(t, oas.Components.Schemas[legacyiamv0.OpenAPIPrefix+"CurrentUserInfo"].Properties, "permissions")
+	permissions := oas.Components.Schemas[legacyiamv0.OpenAPIPrefix+"UserPermissions"].Properties["permissions"]
+	require.Equal(t, spec.StringOrArray{"array"}, permissions.Type)
+	require.NotNil(t, permissions.Items)
+	require.NotNil(t, permissions.Items.Schema)
+	require.Equal(t, "#/components/schemas/"+legacyiamv0.OpenAPIPrefix+"UserPermission", permissions.Items.Schema.Ref.String())
 }

@@ -55,6 +55,48 @@ func TestAggregateTarget_DiscoversAndFiltersGroups(t *testing.T) {
 	cancel()
 }
 
+// TestAggregateTarget_DropsTheDiscoveryGroupOfAnotherRouter points a target at
+// another router, whose /apis always lists the discovery group, in both
+// discovery formats.
+func TestAggregateTarget_DropsTheDiscoveryGroupOfAnotherRouter(t *testing.T) {
+	upstream := discoveryRouter(t, "dashboard.grafana.app", http.NotFoundHandler())
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		upstream.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())))
+	}))
+	defer srv.Close()
+
+	for _, accept := range []string{aggregatedDiscoveryJSON + ", application/json", "application/json"} {
+		client := srv.Client()
+		client.Transport = acceptTransport{accept: accept, next: http.DefaultTransport}
+		groups, err := discoverGroupResources(t.Context(), client, srv.URL)
+		require.NoError(t, err)
+		names := make([]string, 0, len(groups))
+		for _, g := range groups {
+			names = append(names, g.group.Name)
+		}
+		require.Equal(t, []string{"dashboard.grafana.app"}, names, "accept=%s", accept)
+	}
+
+	target, err := newAggregateTarget(aggregateTargetConfig{Name: "router", URL: srv.URL}, srv.Client(), srv.Client().Transport)
+	require.NoError(t, err)
+	target.poll(t.Context(), make(chan struct{}, 1))
+	require.Len(t, target.Backends(), 1)
+	require.Equal(t, "dashboard.grafana.app", target.Backends()[0].Group().Name)
+	require.Zero(t, target.status.status("router").Skipped, "an expected group is not a skipped backend")
+}
+
+// acceptTransport overrides the Accept header, to force a discovery format.
+type acceptTransport struct {
+	accept string
+	next   http.RoundTripper
+}
+
+func (a acceptTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("Accept", a.accept)
+	return a.next.RoundTrip(req)
+}
+
 func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
 	var attempts atomic.Int64
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -72,10 +114,15 @@ func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(t.Context())
 	dirty := make(chan struct{}, 1)
-	go target.run(ctx, dirty)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		target.run(ctx, dirty)
+	}()
 
 	time.Sleep(150 * time.Millisecond)
 	cancel()
+	<-done
 
 	// Without backoff, the 10ms steady interval over 150ms would be ~15
 	// attempts; with a 200ms floor after the first failure, it must be
@@ -84,13 +131,14 @@ func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
 	require.LessOrEqual(t, attempts.Load(), int64(2))
 	require.Empty(t, target.Backends())
 
-	// A poll that only ever fails must never signal dirty: there is no
-	// discovered key set to change.
-	select {
-	case <-dirty:
-		t.Fatal("dirty must not be signaled while every poll fails")
-	default:
-	}
+	// A poll that only ever fails signals dirty once, for its first attempt,
+	// which ends the cloud loader's wait for it. Later failures leave the key
+	// set unchanged, so they don't. dirty holds one wake, so drain it and
+	// check again after one more failed poll.
+	require.Len(t, dirty, 1, "the first failed poll wakes the router")
+	<-dirty
+	target.poll(t.Context(), dirty)
+	require.Empty(t, dirty, "later failed polls don't")
 }
 
 // TestAggregateTarget_BackoffLadderDrivesRetries pins down the fix for the
@@ -189,7 +237,7 @@ func (t *taggedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 // transport (CAP-token-wrapped, used only for the router's own /apis poll)
 // must never end up as the aggregateBackend's proxy transport (which carries
 // real caller traffic and must forward the caller's own credentials
-// transparently, same as forwardBackend).
+// transparently).
 func TestAggregateTarget_PollUsesDedicatedProxyTransportNotDiscoveryClient(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		list := metav1.APIGroupList{Groups: []metav1.APIGroup{
@@ -244,4 +292,36 @@ func TestNewAggregateTarget_NormalizesTrailingSlash(t *testing.T) {
 	}, http.DefaultClient, http.DefaultTransport)
 	require.NoError(t, err)
 	require.Equal(t, "https://baas.example.invalid", target.base.String())
+}
+
+// A source's first successful poll ends the cloud loader's wait for it even
+// when it finds nothing, so it wakes the router. Later empty polls don't.
+func TestFirstEmptyPollWakesTheRouter(t *testing.T) {
+	emptyDiscovery := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"kind":"APIGroupList","apiVersion":"v1","groups":[]}`))
+	}))
+	defer emptyDiscovery.Close()
+	aggregate, err := newAggregateTarget(aggregateTargetConfig{Name: "empty", URL: emptyDiscovery.URL}, emptyDiscovery.Client(), emptyDiscovery.Client().Transport)
+	require.NoError(t, err)
+
+	emptyManifests := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"key": "k", "plugins": []}`))
+	}))
+	defer emptyManifests.Close()
+	manifests, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, emptyManifests.URL, nil, emptyManifests.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	require.NoError(t, err)
+
+	for name, poll := range map[string]func(context.Context, chan<- struct{}){
+		"aggregate":        aggregate.poll,
+		"plugin manifests": manifests.poll,
+	} {
+		t.Run(name, func(t *testing.T) {
+			dirty := make(chan struct{}, 1)
+			poll(t.Context(), dirty)
+			require.Len(t, dirty, 1, "the first empty poll wakes the router")
+			<-dirty
+			poll(t.Context(), dirty)
+			require.Empty(t, dirty, "a later empty poll doesn't")
+		})
+	}
 }

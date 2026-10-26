@@ -47,11 +47,10 @@ function getDevServerOrigin(): { hostname: string; port: number } {
   const raw = getEnvConfig(grafanaRoot).frontend_dev_server_url;
 
   if (typeof raw !== 'string' || raw === '') {
-    // Note that blanking the key is not a way to turn HMR off: this side honours the blank but
-    // Grafana does not, so it would still point the browser at the dev server. Run
-    // `yarn start:rspack:noHmr` instead.
+    // Throw rather than build without a dev server: Grafana ignores a blank value and would
+    // still point the browser here.
     throw new Error(
-      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini. To build without a dev server, run `yarn start:rspack:noHmr`.'
+      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini. To build without a dev server, run `yarn start:noHmr`.'
     );
   }
 
@@ -124,16 +123,11 @@ function getDevServer(): DevServerConfiguration {
     allowedHosts: [...new Set([hostname, 'localhost', '127.0.0.1'])],
 
     client: {
+      // Only block the page for build errors. Type and lint problems still print in the terminal.
       overlay: {
-        runtimeErrors: (error) => {
-          const isResizeObserverWarning =
-            error.message === 'ResizeObserver loop completed with undelivered notifications.' ||
-            error.message === 'ResizeObserver loop limit exceeded';
-
-          // These browser notifications have no observer identity. Grid presence scopes the overlay
-          // filter without attributing the notification to RDG or changing resize delivery.
-          return !(isResizeObserverWarning && document.querySelector('.rdg'));
-        },
+        errors: true,
+        warnings: false,
+        runtimeErrors: false,
       },
       // The page is served by Grafana on another port, so the client cannot infer where its
       // socket lives. Point it back at this server.
@@ -143,8 +137,8 @@ function getDevServer(): DevServerConfiguration {
     devMiddleware: {
       publicPath: `/${PUBLIC_PATH}`,
 
-      // Nothing is written to disk. The backend reads the manifest from this server over HTTP,
-      // and falls back to whatever `yarn build:rspack` last left in public/build/rspack.
+      // The backend reads the manifest from this server over HTTP, and falls back to the last
+      // build on disk.
       writeToDisk: false,
     },
   };
@@ -221,6 +215,8 @@ export default (env: Env = {}) => {
     devConfig.plugins?.push(
       new TsCheckerRspackPlugin({
         async: true, // don't block rspack emit
+        // Stops type errors being pushed to the dev server overlay once the async check finishes.
+        devServer: false,
         typescript: {
           tsgo: true,
           typescriptPath: nativeTypeScriptPackageJson,

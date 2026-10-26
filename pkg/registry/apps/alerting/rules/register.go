@@ -19,16 +19,17 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 
 	alertingv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	alertingv1beta1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	rulesManifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	rulesApp "github.com/grafana/grafana/apps/alerting/rules/pkg/app"
 	rulesAppConfig "github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	rulesequence_app "github.com/grafana/grafana/apps/alerting/rules/pkg/app/rulesequence"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
@@ -271,8 +272,8 @@ func newRuleRefResolver(ng *ngalert.AlertNG) func(ctx context.Context, uid strin
 
 // newNotificationSettingsValidator returns a callback that validates notification
 // receiver configuration against the Alertmanager config.
-func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Context, ns alertingv0alpha1.AlertRuleNotificationSettings) error {
-	return func(ctx context.Context, ns alertingv0alpha1.AlertRuleNotificationSettings) error {
+func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Context, ns alertingv1beta1.AlertRuleNotificationSettings) error {
+	return func(ctx context.Context, ns alertingv1beta1.AlertRuleNotificationSettings) error {
 		if err := validateNotificationSettingsFields(ns); err != nil {
 			return err
 		}
@@ -298,7 +299,7 @@ func newNotificationSettingsValidator(ng *ngalert.AlertNG) func(ctx context.Cont
 	}
 }
 
-func validateNotificationSettingsFields(ns alertingv0alpha1.AlertRuleNotificationSettings) error {
+func validateNotificationSettingsFields(ns alertingv1beta1.AlertRuleNotificationSettings) error {
 	if ns.SimplifiedRouting != nil && ns.SimplifiedRouting.Receiver == "" {
 		return errors.New("receiver is empty")
 	}
@@ -315,7 +316,7 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	authz := a.ng.Api.AccessControl
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-			attr = ruleSearchReadAttributes(attr)
+			attr = ruleSearchListAttributes(attr)
 			switch attr.GetResource() {
 			case recordingrule.ResourceInfo.GroupResource().Resource:
 				return recordingrule.Authorize(ctx, authz, attr)
@@ -333,16 +334,27 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	)
 }
 
-// ruleSearchReadAttributes restates the compatibility POST as the list it
-// performs. Kubernetes parses /{resource}/searchRules as a create of an object
-// named searchRules, which would otherwise require rule-create permission.
-func ruleSearchReadAttributes(attr authorizer.Attributes) authorizer.Attributes {
-	resourceName := attr.GetResource()
-	isRule := resourceName == alertrule.ResourceInfo.GroupResource().Resource || resourceName == recordingrule.ResourceInfo.GroupResource().Resource
-	if isRule && attr.IsResourceRequest() && attr.GetVerb() == "create" && attr.GetName() == rulesApp.SearchRulesPathSegment && attr.GetSubresource() == "" {
-		return searchauthorizer.AsReadAttributes(attr)
+// The rule kind each search route searches.
+var searchRouteKinds = map[string]string{
+	rulesApp.SearchAlertRulesResource:     alertrule.ResourceInfo.GroupResource().Resource,
+	rulesApp.SearchRecordingRulesResource: recordingrule.ResourceInfo.GroupResource().Resource,
+}
+
+// ruleSearchListAttributes restates a rule search as a list of the rule kind it
+// searches, so it needs exactly the permission listing those rules does.
+// Kubernetes parses each search route as a request on a resource named after
+// the route, which no rule permission would otherwise cover.
+func ruleSearchListAttributes(attr authorizer.Attributes) authorizer.Attributes {
+	kind, ok := searchRouteKinds[attr.GetResource()]
+	if !ok || !attr.IsResourceRequest() {
+		return attr
 	}
-	return attr
+	list, ok := searchauthorizer.AsReadAttributes(attr).(authorizer.AttributesRecord)
+	if !ok {
+		return attr
+	}
+	list.Resource = kind
+	return list
 }
 
 func (a *AppInstaller) AdmissionPlugin() admission.Factory {
@@ -393,16 +405,19 @@ func (a *AppInstaller) GetStorageOptions(gr schema.GroupResource) *apistore.Stor
 	}
 }
 
+// GetLegacyStorage matches on the resource alone: it is requested for every
+// served version, and the legacy store is not tied to one, because the
+// apiserver converts to the hub version before storage is called.
 func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafanarest.Storage {
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
-	switch gvr {
-	case recordingrule.ResourceInfo.GroupVersionResource():
+	switch gvr.GroupResource() {
+	case recordingrule.ResourceInfo.GroupResource():
 		return recordingrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
-	case alertrule.ResourceInfo.GroupVersionResource():
+	case alertrule.ResourceInfo.GroupResource():
 		return alertrule.NewStorage(*a.ng.Api.AlertRules, namespacer)
-	case rulesequence.ResourceInfo.GroupVersionResource():
+	case rulesequence.ResourceInfo.GroupResource():
 		return nil
-	case config.ResourceInfo.GroupVersionResource():
+	case config.ResourceInfo.GroupResource():
 		// Config has no legacy backend — returning nil makes the apiserver serve
 		// it directly from unified storage (no dual writer).
 		return nil
@@ -414,13 +429,13 @@ func (a *AppInstaller) GetLegacyStorage(gvr schema.GroupVersionResource) grafana
 // GetLegacyStatus wires the /status subresource for the legacy-storage-backed rule
 // kinds. Without this, the app-sdk-generated StatusREST is silently dropped for
 // legacy/dual-write parents. The rule status is persisted to alert_rule.k8s_status
-// via the shared rule store.
+// via the shared rule store. Matched on the resource alone, as in GetLegacyStorage.
 func (a *AppInstaller) GetLegacyStatus(gvr schema.GroupVersionResource, unified *appsdkapiserver.StatusREST) rest.Storage {
 	namespacer := reqns.GetNamespaceMapper(a.cfg)
-	switch gvr {
-	case recordingrule.ResourceInfo.GroupVersionResource():
+	switch gvr.GroupResource() {
+	case recordingrule.ResourceInfo.GroupResource():
 		return recordingrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified)
-	case alertrule.ResourceInfo.GroupVersionResource():
+	case alertrule.ResourceInfo.GroupResource():
 		return alertrule.NewStatusStorage(*a.ng.Api.AlertRules, namespacer, a.ng.Api.RuleStore, unified)
 	default:
 		return nil

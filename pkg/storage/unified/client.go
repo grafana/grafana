@@ -7,8 +7,12 @@ import (
 	"time"
 
 	"github.com/fullstorydev/grpchan"
-	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/flagext"
+	"github.com/grafana/dskit/grpcclient"
+	"github.com/grafana/dskit/middleware"
+	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -17,15 +21,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	_ "google.golang.org/grpc/health" // Register client-side health checking.
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/flagext"
-	"github.com/grafana/dskit/grpcclient"
-	"github.com/grafana/dskit/middleware"
-	"github.com/grafana/dskit/services"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
@@ -38,8 +38,10 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -65,9 +67,6 @@ type Options struct {
 	DashboardStats builders.DashboardStats
 	KV             kv.KV
 	EDB            sqldb.DBProvider
-	// ExperimentalKV, when set, routes flagged use-cases in the in-process KV
-	// storage backend to an alternative KV. Nil disables the routing.
-	ExperimentalKV *resource.ExperimentalKVOptions
 	// Publisher announces committed writes on the NATS bus. It is wired into the
 	// in-process storage backend so a monolith run (storage_type=unified) emits
 	// the same resource-change notifications as the storage-server module. Nil-safe
@@ -78,6 +77,9 @@ type Options struct {
 	// gated on Enabled(), so a disabled bus starts nothing.
 	Subscriber  nats.Subscriber
 	WatchExpiry resource.WatchExpiry
+	// ManifestDiscovery loads the manifests the router publishes under
+	// /apis/discovery, which in-process storage reads for search.
+	ManifestDiscovery resource.ManifestDiscovery
 }
 
 // natsEventSubscriber adapts nats.Subscriber to resource.EventSubscriber for the
@@ -132,7 +134,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime),
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.ExperimentalKV, opts.WatchExpiry)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.WatchExpiry, opts.ManifestDiscovery)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -168,8 +170,8 @@ func newClient(opts options.StorageOptions,
 	gcGate *resource.GCGate,
 	eventPublisher nats.Publisher,
 	eventSubscriber nats.Subscriber,
-	experimentalKV *resource.ExperimentalKVOptions,
 	watchExpiry resource.WatchExpiry,
+	manifestDiscovery resource.ManifestDiscovery,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -226,9 +228,6 @@ func newClient(opts options.StorageOptions,
 	default:
 		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
 			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber, watchExpiry)...)
-		if experimentalKV != nil {
-			storageOpts = append(storageOpts, sql.WithExperimentalKV(experimentalKV))
-		}
 		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
 		if err != nil {
 			return nil, err
@@ -247,17 +246,8 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
-		if cfg.EnableEmbeddedAPIExtensions {
-			if cfg.ManifestApiServerAddress != "" {
-				cfg.Logger.Warn("manifest_api_server_address is ignored by in-process storage; embedded search reads startup-provisioned AppManifest files")
-			}
-			manifests, err := loadEmbeddedAppManifests(cfg.ProvisioningPath)
-			if err != nil {
-				cfg.Logger.Error("failed to load embedded app manifests for search", "error", err)
-			}
-			if err := searchOptions.ReloadManifests(resource.AppManifests(), manifests); err != nil {
-				cfg.Logger.Error("failed to load embedded search fields", "error", err)
-			}
+		if err := configureInProcessManifests(ctx, cfg, searchOptions, manifestDiscovery, reg); err != nil {
+			return nil, err
 		}
 
 		if backendService, ok := backend.(services.Service); ok {
@@ -293,19 +283,21 @@ func newClient(opts options.StorageOptions,
 
 		if cfg.QOSEnabled {
 			queue := scheduler.NewQueue(&scheduler.QueueOptions{
-				MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-				Registerer:       reg,
-				Logger:           cfg.Logger,
+				MaxSizePerTenant:       cfg.QOSMaxSizePerTenant,
+				MaxConcurrentPerTenant: cfg.QOSMaxConcurrentPerTenant,
+				Registerer:             reg,
+				Logger:                 cfg.Logger,
 			})
-			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
-				return nil, fmt.Errorf("failed to start queue: %w", err)
-			}
 			scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 				NumWorkers: cfg.QOSNumberWorker,
 				Logger:     cfg.Logger,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("failed to create scheduler: %w", err)
+			}
+
+			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
+				return nil, fmt.Errorf("failed to start queue: %w", err)
 			}
 
 			err = services.StartAndAwaitRunning(ctx, scheduler)
@@ -337,6 +329,33 @@ func newClient(opts options.StorageOptions,
 	}
 }
 
+func configureInProcessManifests(ctx context.Context, cfg *setting.Cfg, searchOptions resource.SearchOptions, discovery resource.ManifestDiscovery, reg prometheus.Registerer) error {
+	if cfg.ManifestApiServerAddress != "" || cfg.ManifestDiscoveryAddress != "" {
+		cfg.Logger.Warn("manifest_api_server_address and manifest_discovery_url are ignored by in-process storage; search reads the router's discovery manifests in-process")
+	}
+	// The router discovers plugin manifests, but not provisioned custom-resource
+	// manifests, so keep provisioning as a lower-priority source on every reload.
+	var manifests []*app.ManifestData
+	if cfg.EnableEmbeddedAPIExtensions {
+		var err error
+		manifests, err = loadEmbeddedAppManifests(cfg.ProvisioningPath)
+		if err != nil {
+			cfg.Logger.Error("failed to load embedded app manifests for search", "error", err)
+		}
+		if err := searchOptions.ReloadManifests(resource.AppManifests(), manifests); err != nil {
+			cfg.Logger.Error("failed to load embedded search fields", "error", err)
+		}
+	}
+	if discovery != nil && (searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil) {
+		watcherLog := log.New("search-manifest-watcher")
+		watcher := resource.NewLocalManifestWatcher(discovery, reg, searchOptions.ManifestReloader(watcherLog, manifests), watcherLog)
+		if err := watcher.StartAsync(ctx); err != nil {
+			return fmt.Errorf("failed to start manifest watcher: %w", err)
+		}
+	}
+	return nil
+}
+
 func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
 	var searchClient resourcepb.ResourceIndexClient
 	var err error
@@ -349,28 +368,9 @@ func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureTog
 	return searchClient, nil
 }
 
-// NewRemoteResourceClientFromConfig creates a unified-storage client using the
-// storage and optional search-server addresses from [grafana-apiserver].
-func NewRemoteResourceClientFromConfig(
-	cfg *setting.Cfg,
-	features featuremgmt.FeatureToggles,
-	tracer tracing.Tracer,
-	reg prometheus.Registerer,
-) (resource.ResourceClient, error) {
-	return newRemoteResourceClientFromConfig(cfg, reg, func(conn, indexConn grpc.ClientConnInterface) (resource.ResourceClient, error) {
-		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
-	})
-}
-
-// NewRemoteResourceClientWithAuth creates a remote client with explicit authentication,
-// retaining the configured storage/search connections, keepalive, and instrumentation.
-func NewRemoteResourceClientWithAuth(cfg *setting.Cfg, tracer trace.Tracer, reg prometheus.Registerer, auth resource.RemoteResourceClientConfig) (resource.ResourceClient, error) {
-	return newRemoteResourceClientFromConfig(cfg, reg, func(conn, indexConn grpc.ClientConnInterface) (resource.ResourceClient, error) {
-		return resource.NewRemoteResourceClient(tracer, conn, indexConn, auth)
-	})
-}
-
-func newRemoteResourceClientFromConfig(cfg *setting.Cfg, reg prometheus.Registerer, newClient func(grpc.ClientConnInterface, grpc.ClientConnInterface) (resource.ResourceClient, error)) (resource.ResourceClient, error) {
+// NewStandaloneRemoteResourceClientWithAuth creates a standalone remote client with explicit
+// authentication, using the storage and optional search-server addresses from [grafana-apiserver].
+func NewStandaloneRemoteResourceClientWithAuth(cfg *setting.Cfg, tracer trace.Tracer, reg prometheus.Registerer, auth resource.RemoteResourceClientConfig) (resource.ResourceClient, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	address := apiserverCfg.Key("address").MustString("")
 	if address == "" {
@@ -394,7 +394,7 @@ func newRemoteResourceClientFromConfig(cfg *setting.Cfg, reg prometheus.Register
 		indexConn = searchConn
 	}
 
-	client, err := newClient(storageConn, indexConn)
+	client, err := resource.NewStandaloneRemoteResourceClient(tracer, storageConn, indexConn, auth)
 	if err != nil {
 		_ = storageConn.Close()
 		if searchConn != nil {
@@ -433,12 +433,12 @@ func newSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles, forw
 		return resourcepb.NewResourceIndexClient(cc), nil
 	}
 
-	// Mirror NewRemoteResourceClient so exchanges preserve the caller's ID token.
+	// Mirror NewStandaloneRemoteResourceClient so exchanges preserve the caller's identity.
 	if grpcClientAuth {
 		clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
-		clientInt, err := resource.NewAuthnGrpcClientInterceptor(
+		clientInt, err := resourceclient.NewAuthnGrpcClientInterceptor(
 			otel.Tracer("github.com/grafana/grafana/pkg/storage/unified"),
-			resource.RemoteResourceClientConfig{
+			resourceclient.RemoteResourceClientConfig{
 				Token:            clientCfg.Token,
 				TokenExchangeURL: clientCfg.TokenExchangeURL,
 				Audiences:        []string{"resourceStore"},
@@ -446,6 +446,7 @@ func newSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles, forw
 				AllowInsecure:    cfg.Env == setting.Dev,
 				IsDev:            cfg.Env == setting.Dev,
 			},
+			resourceclient.ModeStandalone,
 		)
 		if err != nil {
 			_ = conn.Close()
@@ -523,7 +524,7 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	// Use round_robin to balance requests more evenly over the available Storage server.
-	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
+	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin","healthCheckConfig":{"serviceName":""}}`))
 
 	// Disable looking up service config from TXT DNS records.
 	// This reduces the number of requests made to the DNS servers.

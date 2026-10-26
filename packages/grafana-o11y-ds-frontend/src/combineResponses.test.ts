@@ -175,6 +175,203 @@ describe('combineResponses', () => {
     });
   });
 
+  it('does not silently drop a field that only exists in the newly fetched frame', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+
+    // Simulates infinite-scroll fetching an older page (logFrameB) whose documents contain a
+    // field the already-displayed page (logFrameA) doesn't have, e.g. an Elasticsearch
+    // response where only some matched documents carry a given field.
+    logFrameB.fields.push({
+      name: 'extraField',
+      type: FieldType.string,
+      config: {},
+      values: ['extraB1', 'extraB2'],
+    });
+
+    const responseA: DataQueryResponse = {
+      data: [logFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [logFrameB],
+    };
+
+    const combined = combineResponses(responseA, responseB);
+    const extraField = combined.data[0].fields.find((field: Field) => field.name === 'extraField');
+
+    expect(extraField).toBeDefined();
+    expect(extraField?.values).toEqual(['extraB1', 'extraB2', undefined, undefined]);
+  });
+
+  it('pads a field missing from a later page so prepended rows do not reuse its earlier values', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
+
+    // Page 2 introduces a field page 1 does not have. A third page then omits it again.
+    // New rows are prepended, so the copied field has to grow by the same number of
+    // empty values or its old values sit on the newest log lines.
+    logFrameB.fields.push({
+      name: 'extraField',
+      type: FieldType.string,
+      config: {},
+      values: ['extraB1', 'extraB2'],
+    });
+
+    const withExtra = combineResponses({ data: [logFrameA] }, { data: [logFrameB] });
+
+    const { logFrameA: laterPage } = getMockFrames();
+    laterPage.fields[0].values = [5, 6];
+    laterPage.fields[1].values = ['line5', 'line6'];
+    laterPage.fields[3].values = ['5000000', '6000000'];
+    laterPage.fields[4].values = ['id5', 'id6'];
+
+    const combined = combineResponses(withExtra, { data: [laterPage] });
+    const lineField = combined.data[0].fields.find((field: Field) => field.name === 'Line');
+    const extraField = combined.data[0].fields.find((field: Field) => field.name === 'extraField');
+
+    expect(combined.data[0].length).toBe(6);
+    expect(lineField?.values).toEqual(['line5', 'line6', 'line3', 'line4', 'line1', 'line2']);
+    expect(extraField?.values).toEqual([undefined, undefined, 'extraB1', 'extraB2', undefined, undefined]);
+  });
+
+  it('keeps a field introduced in the middle of the newly fetched frame', () => {
+    // `extraField` occupies an index that dest already uses for `Line`. Copying source fields
+    // only into empty slots drops it and can duplicate the shifted field at the end instead.
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 33] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line1', 'line3'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1', 'id3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22] },
+        { name: 'extraField', type: FieldType.string, config: {}, values: ['extra'] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line2'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id2'] },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+
+    expect(fields.map((field: Field) => field.name)).toEqual(['Time', 'Line', 'id', 'extraField']);
+    expect(fields.find((field: Field) => field.name === 'Time')?.values).toEqual([22, 11, 33]);
+    expect(fields.find((field: Field) => field.name === 'Line')?.values).toEqual(['line2', 'line1', 'line3']);
+    expect(fields.find((field: Field) => field.name === 'id')?.values).toEqual(['id2', 'id1', 'id3']);
+    expect(fields.find((field: Field) => field.name === 'extraField')?.values).toEqual(['extra', undefined, undefined]);
+  });
+
+  it('keeps a field that replaces another field when both frames have the same field count', () => {
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 33] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line1', 'line3'] },
+        { name: 'fieldA', type: FieldType.string, config: {}, values: ['a1', 'a3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line2'] },
+        { name: 'fieldB', type: FieldType.string, config: {}, values: ['b2'] },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+
+    expect(fields.map((field: Field) => field.name)).toEqual(['Time', 'Line', 'fieldA', 'fieldB']);
+    expect(fields.find((field: Field) => field.name === 'Time')?.values).toEqual([22, 11, 33]);
+    expect(fields.find((field: Field) => field.name === 'Line')?.values).toEqual(['line2', 'line1', 'line3']);
+    expect(fields.find((field: Field) => field.name === 'fieldA')?.values).toEqual([undefined, 'a1', 'a3']);
+    expect(fields.find((field: Field) => field.name === 'fieldB')?.values).toEqual(['b2', undefined, undefined]);
+  });
+
+  it('keeps a same-named field with different labels when it replaces another at the same count', () => {
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 33] },
+        { name: 'Value', type: FieldType.number, config: {}, values: [1, 3], labels: { level: 'debug' } },
+        { name: 'Value', type: FieldType.number, config: {}, values: [10, 30], labels: { only: 'dest' } },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22] },
+        { name: 'Value', type: FieldType.number, config: {}, values: [2], labels: { level: 'debug' } },
+        { name: 'Value', type: FieldType.number, config: {}, values: [20], labels: { only: 'source' } },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+
+    expect(fields.map((field: Field) => field.labels)).toEqual([
+      undefined,
+      { level: 'debug' },
+      { only: 'dest' },
+      { only: 'source' },
+    ]);
+    expect(fields[1].values).toEqual([2, 1, 3]);
+    expect(fields[2].values).toEqual([undefined, 10, 30]);
+    expect(fields[3].values).toEqual([20, undefined, undefined]);
+  });
+
+  it('does not pair a dest field with an unrelated source field when no field by that name exists in source', () => {
+    // `onlyInDest` sits where `id` sits in the source frame. A positional fallback with
+    // zero name matches would copy `id` into `onlyInDest` instead of leaving it empty
+    // for the prepended row.
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22, 33] },
+        { name: 'onlyInDest', type: FieldType.string, config: {}, values: ['d1', 'd2'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id2', 'id3'] },
+      ],
+      meta: {
+        custom: {
+          frameType: 'LabeledTimeValues',
+        },
+      },
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1'] },
+      ],
+      meta: {
+        custom: {
+          frameType: 'LabeledTimeValues',
+        },
+      },
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const timeField = combined.data[0].fields.find((field: Field) => field.name === 'Time');
+    const idField = combined.data[0].fields.find((field: Field) => field.name === 'id');
+    const onlyInDest = combined.data[0].fields.find((field: Field) => field.name === 'onlyInDest');
+
+    expect(combined.data[0].length).toBe(3);
+    expect(timeField?.values).toEqual([11, 22, 33]);
+    expect(idField?.values).toEqual(['id1', 'id2', 'id3']);
+    expect(onlyInDest?.values).toEqual([undefined, 'd1', 'd2']);
+  });
+
   it('combines metric frames', () => {
     const { metricFrameA, metricFrameB } = getMockFrames();
     const responseA: DataQueryResponse = {
@@ -368,6 +565,41 @@ describe('combineResponses', () => {
     expect(combined.errors).toHaveLength(2);
     expect(combined.errors?.[0]?.message).toBe('errorA');
     expect(combined.errors?.[1]?.message).toBe('errorB');
+  });
+
+  it('pads nanoseconds for a timestamp column whose source index differs from its destination index', () => {
+    // eventTime is source index 2 and is appended at destination index 3.
+    // otherTime occupies that destination index in the source frame and has different fractions.
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [11, 33] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line1', 'line3'] },
+        { name: 'oldField', type: FieldType.string, config: {}, values: ['old1', 'old3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 1,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [22] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line2'] },
+        { name: 'eventTime', type: FieldType.time, config: {}, values: [2200], nanos: [456789] },
+        { name: 'otherTime', type: FieldType.time, config: {}, values: [3300], nanos: [111111] },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+    const eventTime = fields.find((field: Field) => field.name === 'eventTime');
+    const otherTime = fields.find((field: Field) => field.name === 'otherTime');
+
+    expect(fields.map((field: Field) => field.name)).toEqual(['Time', 'Line', 'oldField', 'eventTime', 'otherTime']);
+    expect(eventTime?.values).toEqual([2200, undefined, undefined]);
+    expect(eventTime?.nanos).toEqual([456789, undefined, undefined]);
+    expect(otherTime?.values).toEqual([3300, undefined, undefined]);
+    expect(otherTime?.nanos).toEqual([111111, undefined, undefined]);
   });
 
   it('combines frames with nanoseconds', () => {

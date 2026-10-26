@@ -11,29 +11,31 @@ same API's spec offline; see [Rendering the spec offline](#rendering-the-spec-of
 
 Manifest handlers serve only the manifest's declared kinds, routes, and served
 versions. Settings and their subresources are served exclusively at
-`/apis/{plugin-id}/v0alpha1`. The embedded appplugin API server handles settings; the router prepares one
-backend per manifest. Settings never appear under the manifest's
-`ext.grafana.app` group, even when `appplugins.loadAppManifestAndKeepSettings` is enabled.
+`/apis/{plugin-id}/v0alpha1` by `NewAppSettingsHandler`, which wraps the
+[`appsettings`](appsettings/README.md) builder: the single `app` resource, always
+named `instance`, with its `health`, `resources` and `proxy` subresources. The
+router prepares one backend per manifest, and one settings backend per app plugin.
+Settings never appear under the manifest's `ext.grafana.app` group.
 
-The router loads plugin APIs and manifests independently of
-`appplugins.registerAPIServer` and `appplugins.loadAppManifest`.
-`appplugins.registerAPIServer` controls shared-server settings registration only.
-Manifest APIs require the router.
+The router loads manifests independently of `appplugins.loadAppManifest`.
+`appplugins.registerAPIServer` controls whether it serves settings, and in
+single-tenant Grafana also turns on the router middleware. Both APIs require the
+router.
 
 Each handler has its own scheme and storage options. `UnifiedStorage` adapts a
 shared resource client to that scheme and accepts a REST config provider for
 parent-folder lookups. The router supplies the embedded server's provider so folder
 existence and repository-manager consistency checks run for routed plugin kinds.
-Settings migration remains the responsibility of the embedded settings server.
+Settings use the dual-write service the caller passes in `Options.DualWrite`,
+with the legacy store in `Options.Settings.LegacyStore`.
 
 The caller owns authentication and must populate `identity.Requester` in the
 request context. The handler then checks namespace access, plugin access, and
 manifest kind policies. Resource and folder permissions remain enforced by
-unified storage. During the transition, `appplugin.RegisterAPIService` still
-declares manifest roles and resolves wildcard settings storage configuration at
-startup, including for plugins whose API is served by the router. Callers outside
-that registration path must provision roles and configure their dual-write service
-for the plugin's settings resource before constructing a handler.
+unified storage. The router declares manifest roles and resolves wildcard settings
+storage configuration at startup. Other callers must provision roles and configure
+their dual-write service for the plugin's settings resource before constructing a
+handler.
 
 A manifest that declares no kinds has nothing to store, so no API server is built
 for it. The handler serves its routes, its group and version discovery, and its
@@ -85,8 +87,8 @@ Paths under `namespaces/{namespace}/` are namespaced. A path of the form
 `{plural}/{name}/<subresource>` is a subresource of one object of that kind, and
 the plugin receives the stored object with the request. Which paths can be
 served, including catch-all segments, is decided by
-[`manifestroutes`](manifestroutes/README.md), which is written to be copied into
-app-sdk so a manifest can be checked when it is generated. A path it rejects is
+the app-sdk `routes` package (`github.com/grafana/grafana-app-sdk/routes`), which
+also checks a manifest when it is generated. A path it rejects is
 skipped with a warning, and left out of the spec and the authorizer as well.
 The router reserves the `app` settings resource and does not serve `TRACE` or
 `OPTIONS`.
@@ -110,9 +112,17 @@ Cluster-scoped kinds are reserved for service identities unless the manifest
 marks them `userReadable`. End users can only `get` or `list` a user-readable
 cluster-scoped kind; watching one is left to service identities.
 
+An access policy is held to the permissions in its own token for every kind,
+namespaced or cluster-scoped, because storage is called with a token this
+server substitutes or exchanges. The verb checked is the one storage checks:
+`list` and `watch` need `get`, `patch` needs `update` and `deletecollection`
+needs `delete`. Search, trash and list-keys are reads, so they need `get`, and
+any other verb is refused. A subresource such as `status` needs the permission
+on its parent kind. Custom routes are left to their declared checks.
+
 A manifest route can also declare an access check on each operation, with the
 `x-grafana-declared-authz-*` extensions (see
-[`manifestroutes`](manifestroutes/README.md#declared-access-checks)). The route
+the app-sdk `routes` package). The route
 handler runs it through the configured `AccessClient` before calling the plugin,
 and after reading the parent object, so a refused request never has the parent's
 secure values decrypted. The check's group is the manifest's, its namespace the
@@ -124,6 +134,71 @@ declares GET but not HEAD is sent to the plugin as the GET it declared, with the
 response body dropped. A route that declares a check is refused when no access
 client is configured.
 
+## Local plugin authentication
+
+Without an external token signer, Grafana signs v3 requests with an in-memory
+key and passes its public key to the plugin as `GRAFANA_JWKS`. App plugins that
+ship an `app-sdk-manifest.json` also receive `API_ACCESS_ROUTER_URL`,
+`API_ACCESS_TOKEN_EXCHANGE_URL`, and a process-specific `API_ACCESS_CAP_TOKEN`. The app SDK's `BuildKubeConfig` uses
+these to call Grafana through the same token-exchange transport used in Cloud.
+Pass the handler's context to the SDK client to act on behalf of the caller;
+background requests act as the plugin. No `insecure_skip_authentication` setting
+is needed.
+
+The local policy grants the plugin's own `*.ext.grafana.app` group and the
+manifest's `extraPermissions.accessKinds`. A plugin acting as itself reaches an
+app plugin's API group when its token's permissions name that group, since
+unscoped app access would cover every app plugin. Requests on behalf of a caller
+also delegate app access (`plugins.app:access`), and are limited by the caller's
+own permissions and organization. Cloud deployment policy overrides are not
+imported into this local policy.
+
+Local signing requires the `appplugins.loadAppManifest` feature toggle, since
+the local policy comes from the plugin's app manifest. Setting `[plugins]
+enable_local_plugin_auth = false`, either `[plugins]
+v3_cap_token` or `v3_token_exchange_url`, `[auth.extended_jwt] jwks_url`, or the
+`GRAFANA_JWKS` or `GRAFANA_JWKS_URL` environment variable disables local signing.
+Inherited `API_ACCESS_*` URL, CAP token or bearer token overrides prevent
+automatic local API credentials from being injected; forwarded basic-auth
+credentials don't, because the app SDK prefers token exchange. Use an app SDK version that supports the JWKS
+and token-exchange environment variables, and keep the `grafana` audience in
+`[auth.extended_jwt] audiences` (the default).
+
+The key and credentials belong to one Grafana process. Restarting Grafana
+invalidates them; stopping, replacing, or failing to start a plugin revokes that
+plugin process's exchange credential. This local signer does not provide shared
+credentials across Grafana replicas. With a plain HTTP listener on all
+interfaces or loopback, plugins reach their own Grafana process on loopback,
+so each replica's plugins work behind a load balancer, and the token exchange
+(`/api/internal/plugin-token-exchange`) refuses callers that are not on
+loopback. The port comes from `[server] http_port`. The loopback check is
+defense in depth: a reverse proxy on the same host makes its callers look local,
+so the process-specific CAP token is what authenticates a plugin. Plugin API
+access also needs `grafana` in `[auth.extended_jwt] audiences`, the default.
+
+Override automatic detection with `[plugins] local_api_url` (or
+`GF_PLUGINS_LOCAL_API_URL`):
+
+```ini
+[plugins]
+local_api_url = https://grafana-instance.internal:8443/grafana
+```
+
+The override supplies the complete base URL, including its port and any subpath,
+for both API requests and token exchange. It must reach the Grafana process that
+started the plugin; a load-balanced public URL cannot provide that guarantee.
+An explicit non-loopback endpoint still requires the process's CAP token, but
+accepts non-loopback peers so a specific-interface listener or local proxy can
+be used. HTTPS uses normal certificate verification.
+
+With local signing enabled, Grafana cannot infer the endpoint for HTTPS,
+sockets, specific non-loopback addresses, a dynamic port, or `[server]
+enforce_domain` with another domain. It then logs a warning and gives app
+plugins no API credentials; Grafana's own requests to plugins are still
+authenticated. Set the override to enable plugin API access. An invalid
+override, or one whose host conflicts with `enforce_domain`, is a configuration
+error at startup. Grafana never falls back to the public `root_url`. External
+token-exchange configurations do not use this setting.
 
 ## Admission hooks
 

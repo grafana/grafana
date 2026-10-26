@@ -3,8 +3,6 @@ import userEvent from '@testing-library/user-event';
 
 import { type Field, FieldType } from '@grafana/data';
 
-import { type FilterType } from '../types';
-
 import { FilterPopup } from './FilterPopup';
 import { operatorSelectableValues } from './utils';
 
@@ -21,15 +19,16 @@ const defaultOperator = operatorSelectableValues()['Contains' as const];
 function renderPopup(overrides: Partial<Parameters<typeof FilterPopup>[0]> = {}) {
   const buttonElement = document.createElement('button');
   document.body.appendChild(buttonElement);
-  const setFilter = jest.fn();
+  const onApplyValues = jest.fn();
+  const onClear = jest.fn();
   const onClose = jest.fn();
 
   const view = render(
     <FilterPopup
-      name="Status"
       rows={makeRows('Status', ['active', 'inactive'])}
       filterValue={undefined}
-      setFilter={setFilter}
+      onApplyValues={onApplyValues}
+      onClear={onClear}
       onClose={onClose}
       field={makeField('Status')}
       searchFilter=""
@@ -41,7 +40,7 @@ function renderPopup(overrides: Partial<Parameters<typeof FilterPopup>[0]> = {})
     />
   );
 
-  return { setFilter, onClose, buttonElement, ...view };
+  return { onApplyValues, onClear, onClose, buttonElement, ...view };
 }
 
 describe('FilterPopup', () => {
@@ -53,12 +52,13 @@ describe('FilterPopup', () => {
   describe('Cancel button', () => {
     it('calls onClose without modifying the filter', async () => {
       const user = userEvent.setup();
-      const { setFilter, onClose } = renderPopup();
+      const { onApplyValues, onClear, onClose } = renderPopup();
 
       await user.click(screen.getByText('Cancel'));
 
       expect(onClose).toHaveBeenCalledTimes(1);
-      expect(setFilter).not.toHaveBeenCalled();
+      expect(onApplyValues).not.toHaveBeenCalled();
+      expect(onClear).not.toHaveBeenCalled();
     });
   });
 
@@ -73,24 +73,16 @@ describe('FilterPopup', () => {
       expect(screen.getByText('Clear filter')).toBeInTheDocument();
     });
 
-    it('removes the filter key and closes when clicked', async () => {
+    it('clears the filter and closes when clicked', async () => {
       const user = userEvent.setup();
-      const { setFilter, onClose } = renderPopup({
+      const { onClear, onClose } = renderPopup({
         filterValue: [{ value: 'active', label: 'active' }],
       });
 
       await user.click(screen.getByText('Clear filter'));
 
       expect(onClose).toHaveBeenCalledTimes(1);
-      expect(setFilter).toHaveBeenCalledTimes(1);
-
-      // setFilter is called with an updater; run it to verify the key is deleted
-      const updater: (f: FilterType) => FilterType = setFilter.mock.calls[0][0];
-      const before: FilterType = {
-        Status: { filteredSet: new Set(['active']), displayName: 'Status', filtered: [{ value: 'active' }] },
-      };
-      const after = updater(before);
-      expect(after).not.toHaveProperty('Status');
+      expect(onClear).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -108,36 +100,23 @@ describe('FilterPopup', () => {
       const user = userEvent.setup();
       // Pre-select "active" by passing it as a filterValue; FilterPopup will initialise
       // its internal values state from the matching option in the computed options list.
-      const { setFilter } = renderPopup({
+      const { onApplyValues } = renderPopup({
         filterValue: [{ value: 'active', label: 'active' }],
       });
 
       await user.click(screen.getByText('Ok'));
 
-      expect(setFilter).toHaveBeenCalledTimes(1);
-      const updater: (f: FilterType) => FilterType = setFilter.mock.calls[0][0];
-      const result = updater({});
-
-      expect(result).toHaveProperty('Status');
-      expect(result.Status.filtered?.map((v) => v.value)).toEqual(['active']);
-      expect(result.Status.filteredSet).toEqual(new Set(['active']));
-      expect(result.Status.displayName).toBe('Status');
+      expect(onApplyValues).toHaveBeenCalledWith([{ value: 'active', label: 'active' }]);
     });
 
-    it('deletes the filter key when Ok is clicked with no items selected', async () => {
+    it('passes an empty selection when Ok is clicked with no items selected', async () => {
       const user = userEvent.setup();
       // No filterValue means no items are pre-selected; clicking Ok should clear the key.
-      const { setFilter } = renderPopup({ filterValue: undefined });
+      const { onApplyValues } = renderPopup({ filterValue: undefined });
 
       await user.click(screen.getByText('Ok'));
 
-      expect(setFilter).toHaveBeenCalledTimes(1);
-      const updater: (f: FilterType) => FilterType = setFilter.mock.calls[0][0];
-      const before: FilterType = {
-        Status: { filteredSet: new Set(['active']), displayName: 'Status' },
-      };
-      const after = updater(before);
-      expect(after).not.toHaveProperty('Status');
+      expect(onApplyValues).toHaveBeenCalledWith([]);
     });
   });
 
@@ -149,24 +128,6 @@ describe('FilterPopup', () => {
       await user.keyboard('{Escape}');
 
       expect(onClose).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('parentIndex', () => {
-    it('uses a composite key when parentIndex is provided', async () => {
-      const user = userEvent.setup();
-      const { setFilter } = renderPopup({
-        filterValue: [{ value: 'active', label: 'active' }],
-        parentIndex: 3,
-      });
-
-      await user.click(screen.getByText('Ok'));
-
-      const updater: (f: FilterType) => FilterType = setFilter.mock.calls[0][0];
-      const result = updater({});
-
-      expect(result).toHaveProperty('Status-3');
-      expect(result['Status-3'].parentIndex).toBe(3);
     });
   });
 });

@@ -56,7 +56,10 @@ export function RelativeTimeRangePicker(props: RelativeTimeRangePickerProps) {
     { onClose: () => setIsOpen(false), isDismissable: true, isOpen },
     ref
   );
-  const { dialogProps } = useDialog({}, ref);
+  const { dialogProps } = useDialog(
+    { 'aria-label': t('time-picker.time-range.dialog-label', 'Relative time range picker') },
+    ref
+  );
   const validOptions = getQuickOptions().filter((o) => isRelativeFormat(o.from));
   const placement = 'bottom-start';
 
@@ -254,7 +257,7 @@ const getStyles = (fromError?: string, toError?: string) => (theme: GrafanaTheme
       })
     ),
     content: css({
-      background: theme.colors.background.primary,
+      background: theme.colors.background.elevated,
       boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       position: 'absolute',
       zIndex: theme.zIndex.modal,

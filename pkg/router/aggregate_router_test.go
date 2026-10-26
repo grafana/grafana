@@ -35,7 +35,7 @@ func (l *staticAggregateLoader) Notify(context.Context) (<-chan struct{}, error)
 }
 
 // TestGrafanaRouter_AggregatedGroupIsServedAndFiltered is an end-to-end proof
-// that a group learned purely through active discovery (no RouteBackend CR)
+// that a group learned purely through active discovery
 // reaches a real GrafanaRouter's reconcile/serve pipeline: NewGrafanaRouter,
 // Run's initial reconcile plus its dirty-triggered reconcile, and HandleFunc
 // actually proxying a request -- with a non-matching group filtered out by
@@ -85,7 +85,7 @@ func TestGrafanaRouter_AggregatedGroupIsServedAndFiltered(t *testing.T) {
 
 	req := newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/things", nil)
 	rec := httptest.NewRecorder()
-	r.HandleFunc(rec, req, http.NotFoundHandler())
+	r.HandleFunc(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Contains(t, rec.Body.String(), "proxied:/apis/dashboard.grafana.app/v1/things")
 }

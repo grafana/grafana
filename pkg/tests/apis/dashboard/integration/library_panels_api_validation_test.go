@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,17 +17,26 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestIntegrationLibraryPanelScopePermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelScopePermissions)
+}
 
 func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelConnections)
@@ -47,6 +58,10 @@ func TestIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelStorageModesEnforceWritePermissions)
 }
 
+func TestIntegrationLibraryPanelMode1PreservesSQLIDInUnifiedStorage(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelMode1PreservesSQLIDInUnifiedStorage)
+}
+
 func TestIntegrationLibraryPanelMode5SupportsAdvertisedPatchTypes(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelMode5SupportsAdvertisedPatchTypes)
 }
@@ -57,6 +72,95 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 
 func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryElementFolderHierarchy)
+}
+
+func testIntegrationLibraryPanelScopePermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode5} {
+		t.Run(fmt.Sprintf("storage mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous:        true,
+				DisableAuthZClientCache: true,
+				EnableFeatureToggles:    []string{featuremgmt.FlagLibraryelementsKubernetesLibraryPanels},
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"librarypanels.dashboard.grafana.app": {DualWriterMode: mode},
+				},
+			})
+			ctx := createTestContext(t, helper, helper.Org1)
+			allowedFolder, err := createFolder(t, helper, ctx.AdminUser, "Allowed panels")
+			require.NoError(t, err)
+
+			deniedFolder, err := createFolder(t, helper, ctx.AdminUser, "Denied panels")
+			require.NoError(t, err)
+
+			panel, err := createLibraryElement(t, ctx, ctx.AdminUser, "Allowed panel", allowedFolder.UID)
+			require.NoError(t, err)
+
+			other, err := createLibraryElement(t, ctx, ctx.AdminUser, "Other panel", deniedFolder.UID)
+			require.NoError(t, err)
+
+			cases := []struct {
+				name     string
+				resource string
+				uid      string
+			}{
+				{
+					name:     "direct panel grant",
+					resource: libraryelements.ScopeLibraryPanelsRoot,
+					uid:      panel,
+				},
+				{
+					name:     "folder grant",
+					resource: folder.ScopeFoldersRoot,
+					uid:      allowedFolder.UID,
+				},
+			}
+
+			for _, tc := range cases {
+				t.Run(tc.name, func(t *testing.T) {
+					grant := resourcepermissions.SetResourcePermissionCommand{
+						Actions:           []string{libraryelements.ActionLibraryPanelsRead},
+						Resource:          tc.resource,
+						ResourceAttribute: "uid",
+						ResourceID:        tc.uid,
+					}
+					caller := helper.CreateUser(
+						fmt.Sprintf("panel-reader-%s", tc.resource),
+						apis.Org1,
+						org.RoleNone,
+						[]resourcepermissions.SetResourcePermissionCommand{grant},
+					)
+
+					readCases := []struct {
+						uid        string
+						wantStatus int
+					}{
+						{uid: panel, wantStatus: http.StatusOK},
+						{uid: other, wantStatus: http.StatusForbidden},
+						{uid: panel, wantStatus: http.StatusOK},
+					}
+
+					for _, read := range readCases {
+						requireLibraryPanelRead(t, helper, caller, read.uid, read.wantStatus)
+					}
+
+					requireLibraryPanelWritesDenied(t, helper, caller, ctx.AdminUser, panel)
+
+					grant.Actions = nil
+					helper.SetPermissions(caller, []resourcepermissions.SetResourcePermissionCommand{grant})
+
+					reload := apis.DoRequest(helper, apis.RequestParams{
+						User: caller,
+						Path: "/api/access-control/user/permissions?reloadcache=true",
+					}, &map[string]interface{}{})
+					require.Equal(t, http.StatusOK, reload.Response.StatusCode)
+
+					requireLibraryPanelRead(t, helper, caller, panel, http.StatusForbidden)
+				})
+			}
+		})
+	}
 }
 
 // this tests the /api path still, but behind the scenes is using search to get the library connections
@@ -549,6 +653,59 @@ func testIntegrationLibraryPanelPreservesStatusMissingInUnifiedStorage(t *testin
 	require.Equal(t, int64(100), missing["maxDataPoints"])
 }
 
+func testIntegrationLibraryPanelMode1PreservesSQLIDInUnifiedStorage(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagLibraryelementsKubernetesLibraryPanels,
+		},
+		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+			"librarypanels.dashboard.grafana.app": {DualWriterMode: grafanarest.Mode1},
+		},
+	})
+	ctx := createTestContext(t, helper, helper.Org1)
+	created, err := postHelper(t, &ctx, "/api/library-elements", map[string]interface{}{
+		"kind": 1,
+		"name": "Mode 1 dual-write panel",
+		"model": map[string]interface{}{
+			"type":  "text",
+			"title": "Mode 1 dual-write panel",
+		},
+	}, ctx.AdminUser)
+	require.NoError(t, err)
+	result := created["result"].(map[string]interface{})
+	uid := result["uid"].(string)
+	sqlID := int64(result["id"].(float64))
+	require.Positive(t, sqlID)
+
+	svcCtx, _ := identity.WithServiceIdentity(context.Background(), ctx.OrgID)
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		rsp, readErr := helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+			Namespace: helper.Namespacer(ctx.OrgID),
+			Group:     dashboardV0.APIGroup,
+			Resource:  dashboardV0.LibraryPanelResourceInfo.GroupResource().Resource,
+			Name:      uid,
+		}})
+		if !assert.NoError(c, readErr) || !assert.NotNil(c, rsp) {
+			return
+		}
+		if !assert.NoError(c, resource.ErrorFromResponse(rsp.Error, readErr)) {
+			return
+		}
+		stored := &unstructured.Unstructured{}
+		if !assert.NoError(c, stored.UnmarshalJSON(rsp.Value)) {
+			return
+		}
+		meta, metaErr := utils.MetaAccessor(stored)
+		if !assert.NoError(c, metaErr) {
+			return
+		}
+		assert.Equal(c, sqlID, meta.GetDeprecatedInternalID()) //nolint:staticcheck
+	}, 5*time.Second, 50*time.Millisecond)
+}
+
 func testIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T) {
 	// Regression guard for the authorization bypass reproduced on the combined
 	// hosted POC: https://github.com/grafana/grafana/pull/130108#issuecomment-5189622165
@@ -559,8 +716,11 @@ func testIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T
 		mode grafanarest.DualWriterMode
 	}{
 		{name: "legacy", mode: grafanarest.Mode0},
-		{name: "dual write", mode: grafanarest.Mode1},
-		{name: "unified", mode: grafanarest.Mode5},
+		{name: "dual write (mode 1)", mode: grafanarest.Mode1},
+		{name: "dual write (mode 2 compatibility)", mode: grafanarest.Mode2},
+		{name: "dual write (mode 3 compatibility)", mode: grafanarest.Mode3},
+		{name: "unified (mode 4 compatibility)", mode: grafanarest.Mode4},
+		{name: "unified (mode 5)", mode: grafanarest.Mode5},
 	}
 
 	for _, tt := range tests {
@@ -639,7 +799,7 @@ func testIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T
 
 			// The legacy store does not implement dry-run, and dual-write dry-run
 			// delegates only to unified storage. Verify dry-run where it is supported.
-			if tt.mode == grafanarest.Mode5 {
+			if tt.mode >= grafanarest.Mode4 {
 				require.NoError(t, editorClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{DryRun: []string{v1.DryRunAll}}))
 				_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
 				require.NoError(t, err, "dry-run delete removed the panel")
@@ -649,7 +809,7 @@ func testIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T
 			_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
 			require.True(t, apierrors.IsNotFound(err), "Editor delete did not remove the panel: %v", err)
 
-			if tt.mode == grafanarest.Mode5 {
+			if tt.mode >= grafanarest.Mode4 {
 				_, err = viewerClient.Resource.Update(context.Background(), panel.DeepCopy(), v1.UpdateOptions{})
 				require.True(t, apierrors.IsForbidden(err), "Viewer create-on-update must be forbidden, got %v", err)
 				_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
@@ -1069,4 +1229,61 @@ func createSubFolder(t *testing.T, helper *apis.K8sTestHelper, user apis.User, t
 		Title:     meta.FindTitle(""),
 		ParentUID: parentUID,
 	}, nil
+}
+
+const libraryPanelPathFormat = "/api/library-elements/%s"
+
+func requireLibraryPanelRead(
+	t *testing.T, helper *apis.K8sTestHelper, caller apis.User, uid string, wantStatus int,
+) map[string]interface{} {
+	t.Helper()
+
+	response := apis.DoRequest(helper, apis.RequestParams{
+		User:   caller,
+		Method: http.MethodGet,
+		Path:   fmt.Sprintf(libraryPanelPathFormat, uid),
+	}, &map[string]interface{}{})
+	require.Equal(t, wantStatus, response.Response.StatusCode, string(response.Body))
+	if wantStatus != http.StatusOK {
+		return nil
+	}
+
+	result, ok := (*response.Result)["result"].(map[string]interface{})
+	require.True(t, ok, "response must contain a library panel")
+	return result
+}
+
+func requireLibraryPanelWritesDenied(
+	t *testing.T, helper *apis.K8sTestHelper, caller, admin apis.User, uid string,
+) {
+	t.Helper()
+
+	before := requireLibraryPanelRead(t, helper, admin, uid, http.StatusOK)
+	patch, err := json.Marshal(map[string]interface{}{
+		"name":    "Unauthorized rename",
+		"version": before["version"],
+		"model":   before["model"],
+	})
+	require.NoError(t, err)
+
+	requests := []struct {
+		method string
+		body   []byte
+	}{
+		{method: http.MethodPatch, body: patch},
+		{method: http.MethodDelete},
+	}
+
+	for _, request := range requests {
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   caller,
+			Method: request.method,
+			Path:   fmt.Sprintf(libraryPanelPathFormat, uid),
+			Body:   request.body,
+		}, &struct{}{})
+		require.Equal(t, http.StatusForbidden, response.Response.StatusCode, string(response.Body))
+
+		after := requireLibraryPanelRead(t, helper, admin, uid, http.StatusOK)
+		require.Equal(t, before, after, "denied %s must not change the panel", request.method)
+	}
 }

@@ -14,72 +14,20 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 	"testing/synctest"
 	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/time/rate"
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-func TestAPIGroupFromManifestData(t *testing.T) {
-	manifest := app.ManifestData{
-		Group:            "example.grafana.app",
-		PreferredVersion: "v2",
-		Versions: []app.ManifestVersion{
-			{Name: "v1", Served: true},
-			{Name: "v2", Served: true},
-			{Name: "v3", Served: false},
-		},
-	}
-
-	want := metav1.APIGroup{
-		Name: "example.grafana.app",
-		Versions: []metav1.GroupVersionForDiscovery{
-			{GroupVersion: "example.grafana.app/v1", Version: "v1"},
-			{GroupVersion: "example.grafana.app/v2", Version: "v2"},
-		},
-		PreferredVersion: metav1.GroupVersionForDiscovery{GroupVersion: "example.grafana.app/v2", Version: "v2"},
-	}
-
-	if got := apiGroupFromManifestData(manifest); !reflect.DeepEqual(got, want) {
-		t.Fatalf("apiGroupFromManifestData() = %#v, want %#v", got, want)
-	}
-}
-
-func TestAPIGroupFromManifestSpecUsesDefaults(t *testing.T) {
-	served, unserved := true, false
-	spec := v1alpha2.AppManifestSpec{
-		Group: "example.grafana.app",
-		Versions: []v1alpha2.AppManifestManifestVersion{
-			{Name: "v1"},
-			{Name: "v2", Served: &unserved},
-			{Name: "v3", Served: &served},
-		},
-	}
-
-	want := metav1.APIGroup{
-		Name: "example.grafana.app",
-		Versions: []metav1.GroupVersionForDiscovery{
-			{GroupVersion: "example.grafana.app/v1", Version: "v1"},
-			{GroupVersion: "example.grafana.app/v3", Version: "v3"},
-		},
-		PreferredVersion: metav1.GroupVersionForDiscovery{GroupVersion: "example.grafana.app/v3", Version: "v3"},
-	}
-
-	if got := apiGroupFromManifestSpec(spec); !reflect.DeepEqual(got, want) {
-		t.Fatalf("apiGroupFromManifestSpec() = %#v, want %#v", got, want)
-	}
-}
 
 func TestProvideCloudRoutesLoaderFactoryNotConfigured(t *testing.T) {
 	cfg := setting.NewCfg()
@@ -87,34 +35,6 @@ func TestProvideCloudRoutesLoaderFactoryNotConfigured(t *testing.T) {
 	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.Nil(t, loader)
-}
-
-func TestProvideCloudRoutesLoaderFactoryRequiresCapTokenAndExchangeURL(t *testing.T) {
-	cfg := setting.NewCfg()
-	section, err := cfg.Raw.NewSection(cloudRouterSection)
-	require.NoError(t, err)
-	_, err = section.NewKey("appmanifest_apiserver_url", "https://apiserver.example.com")
-	require.NoError(t, err)
-
-	_, err = ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-	require.ErrorContains(t, err, "cap_token and token_exchange_url are required")
-}
-
-func TestProvideCloudRoutesLoaderFactoryBuildsLoader(t *testing.T) {
-	cfg := setting.NewCfg()
-	section, err := cfg.Raw.NewSection(cloudRouterSection)
-	require.NoError(t, err)
-	_, err = section.NewKey("appmanifest_apiserver_url", "https://apiserver.example.com")
-	require.NoError(t, err)
-	_, err = section.NewKey("cap_token", "token")
-	require.NoError(t, err)
-	_, err = section.NewKey("token_exchange_url", "https://token-exchange.example.com")
-	require.NoError(t, err)
-
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-	require.NoError(t, err)
-	require.NotNil(t, loader)
-	require.IsType(t, &cloudLoader{}, loader)
 }
 
 // cfgWithCloudRouterSection is a test helper that builds a *setting.Cfg with a cloud_router section
@@ -130,54 +50,29 @@ func cfgWithCloudRouterSection(t *testing.T, kv map[string]string) *setting.Cfg 
 	return cfg
 }
 
-func TestProvideCloudRoutesLoaderFactory_RenamedKey(t *testing.T) {
-	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"appmanifest_apiserver_url": "https://example.invalid",
-		"cap_token":                 "tok",
-		"token_exchange_url":        "https://exchange.invalid",
-	})
-
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-	require.NoError(t, err)
-	require.NotNil(t, loader)
-}
-
-// TestProvideCloudRoutesLoaderFactory_LegacyKeyFailsLoudly covers the
-// rename's worst failure mode: a deployment still on apiserver_url would
-// otherwise look like "nothing configured" and silently degrade to the dummy
-// loader, with the router reporting itself ready while serving no real routes.
-func TestProvideCloudRoutesLoaderFactory_LegacyKeyFailsLoudly(t *testing.T) {
-	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"apiserver_url":      "https://example.invalid",
-		"cap_token":          "tok",
-		"token_exchange_url": "https://exchange.invalid",
-	})
-
-	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-	require.ErrorContains(t, err, "apiserver_url was renamed to appmanifest_apiserver_url")
-}
-
-// The legacy key must be ignored, not fatal, once the new key is also present
-// -- an operator mid-migration who set both is correctly configured.
-func TestProvideCloudRoutesLoaderFactory_LegacyKeyIgnoredWhenNewKeySet(t *testing.T) {
-	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"apiserver_url":             "https://old.invalid",
-		"appmanifest_apiserver_url": "https://example.invalid",
-		"cap_token":                 "tok",
-		"token_exchange_url":        "https://exchange.invalid",
-	})
-
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-	require.NoError(t, err)
-	require.NotNil(t, loader)
-}
-
 func TestProvideCloudRoutesLoaderFactory_NoTargetsConfigured(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{})
 
 	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.Nil(t, loader) // falls back to dummyRoutesLoader upstream
+}
+
+// A deployment still configured only for the removed appmanifest apiserver
+// must not silently degrade to the dummy loader, reporting itself ready while
+// serving no real routes.
+func TestProvideCloudRoutesLoaderFactory_RemovedAppManifestKeyFailsLoudly(t *testing.T) {
+	for _, key := range []string{"appmanifest_apiserver_url", "apiserver_url"} {
+		t.Run(key, func(t *testing.T) {
+			cfg := cfgWithCloudRouterSection(t, map[string]string{
+				key:                  "https://example.invalid",
+				"cap_token":          "tok",
+				"token_exchange_url": "https://exchange.invalid",
+			})
+			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			require.ErrorContains(t, err, key+" is no longer supported")
+		})
+	}
 }
 
 func TestProvideCloudRoutesLoaderFactory_AggregateOnlyRequiresCapToken(t *testing.T) {
@@ -380,9 +275,9 @@ func TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients(t *testing.T) 
 }
 
 // TestProvideCloudRoutesLoaderFactory_PluginsURLAloneActivatesWithoutCapToken
-// pins plugins_url's independence from the appmanifest/aggregate auth gate:
-// its operator is an unauthenticated in-cluster endpoint, so it must not
-// require cap_token/token_exchange_url the way the other two sources do.
+// pins plugins_url's independence from the aggregate auth gate: its operator
+// is an unauthenticated in-cluster endpoint, so it must not require
+// cap_token/token_exchange_url the way signed aggregate targets do.
 func TestProvideCloudRoutesLoaderFactory_PluginsURLAloneActivatesWithoutCapToken(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"plugins_url": "https://plugins.invalid/plugins",
@@ -397,8 +292,40 @@ func TestProvideCloudRoutesLoaderFactory_PluginsURLAloneActivatesWithoutCapToken
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
 	require.NotNil(t, loader.pluginsTarget)
-	require.Nil(t, loader.routeBackendClient)
 	require.Empty(t, loader.aggregateTargets)
+}
+
+func TestProvideCloudRoutesLoaderFactory_CoreURLAloneActivatesWithoutCapToken(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"core_url": "https://core.invalid/plugins",
+	})
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
+
+	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	require.NoError(t, err)
+	loader, ok := loaderIface.(*cloudLoader)
+	require.True(t, ok)
+	require.NotNil(t, loader.coreTarget)
+	require.Nil(t, loader.pluginsTarget)
+	require.Equal(t, sourceCoreURL, loader.coreTarget.source)
+	require.Equal(t, coreKeyPrefix, loader.coreTarget.keyPrefix)
+}
+
+func TestProvideCloudRoutesLoaderFactory_CoreAndPluginsURLShareRegisterer(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"plugins_url": "https://plugins.invalid/plugins",
+		"core_url":    "https://core.invalid/plugins",
+	})
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
+
+	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	loader, ok := loaderIface.(*cloudLoader)
+	require.True(t, ok)
+	require.NotNil(t, loader.coreTarget)
+	require.NotNil(t, loader.pluginsTarget)
 }
 
 func TestProvideCloudRoutesLoaderFactory_PluginsURLRejectsNonAbsoluteURL(t *testing.T) {
@@ -412,12 +339,72 @@ func TestProvideCloudRoutesLoaderFactory_PluginsURLRejectsNonAbsoluteURL(t *test
 	require.ErrorContains(t, err, "must be absolute")
 }
 
-// TestCloudLoader_AllThreeSourcesCombineInLoad exercises plugins_url as a
-// third source alongside an aggregate target, confirming Load() combines
+// TestProvideCloudRoutesLoaderFactory_PluginManifestsTLS checks that each
+// plugin manifests source polls an HTTPS endpoint with its own TLS settings.
+func TestProvideCloudRoutesLoaderFactory_PluginManifestsTLS(t *testing.T) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"plugins":[]}`))
+	}))
+	t.Cleanup(srv.Close)
+	caFile := filepath.Join(t.TempDir(), "ca.crt")
+	require.NoError(t, os.WriteFile(caFile, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: srv.Certificate().Raw}), 0o600))
+
+	targets := func(t *testing.T, kv map[string]string) (pluginsTarget, coreTarget *pluginManifestsTarget) {
+		t.Helper()
+		kv["plugins_url"] = srv.URL + "/plugins"
+		kv["core_url"] = srv.URL + "/core"
+		loaderIface, err := ProvideCloudRoutesLoaderFactory(cfgWithCloudRouterSection(t, kv), PluginDependencies{})
+		require.NoError(t, err)
+		loader, ok := loaderIface.(*cloudLoader)
+		require.True(t, ok)
+		return loader.pluginsTarget, loader.coreTarget
+	}
+	poll := func(target *pluginManifestsTarget) error {
+		_, err := fetchPluginManifests(context.Background(), target.client, target.url)
+		return err
+	}
+
+	t.Run("an unknown CA is rejected", func(t *testing.T) {
+		pluginsTarget, coreTarget := targets(t, map[string]string{})
+		require.ErrorContains(t, poll(pluginsTarget), "certificate")
+		require.ErrorContains(t, poll(coreTarget), "certificate")
+	})
+
+	t.Run("ca_file trusts the CA for its own source only", func(t *testing.T) {
+		pluginsTarget, coreTarget := targets(t, map[string]string{"plugins_ca_file": caFile})
+		require.NoError(t, poll(pluginsTarget))
+		require.ErrorContains(t, poll(coreTarget), "certificate")
+
+		pluginsTarget, coreTarget = targets(t, map[string]string{"core_ca_file": caFile})
+		require.ErrorContains(t, poll(pluginsTarget), "certificate")
+		require.NoError(t, poll(coreTarget))
+	})
+
+	t.Run("insecure skips verification", func(t *testing.T) {
+		pluginsTarget, coreTarget := targets(t, map[string]string{"plugins_insecure": "true", "core_insecure": "true"})
+		require.NoError(t, poll(pluginsTarget))
+		require.NoError(t, poll(coreTarget))
+	})
+
+	t.Run("a missing ca_file is a startup error", func(t *testing.T) {
+		for _, prefix := range []string{"plugins", "core"} {
+			cfg := cfgWithCloudRouterSection(t, map[string]string{
+				prefix + "_url":     srv.URL,
+				prefix + "_ca_file": "/does/not/exist.crt",
+			})
+			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			require.ErrorContains(t, err, prefix+"_url: reading ca_file")
+		}
+	})
+}
+
+// TestCloudLoader_PluginsAndAggregateCombineInLoad exercises plugins_url
+// alongside an aggregate target, confirming Load() combines
 // backends from both rather than treating them as mutually exclusive (the
 // dummy plugins_url loader this replaces returned early instead of
 // combining).
-func TestCloudLoader_AllThreeSourcesCombineInLoad(t *testing.T) {
+func TestCloudLoader_PluginsAndAggregateCombineInLoad(t *testing.T) {
 	aggregateUpstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		list := metav1.APIGroupList{Groups: []metav1.APIGroup{{Name: "dashboard.grafana.app"}}}
 		_ = json.NewEncoder(w).Encode(list)
@@ -477,7 +464,7 @@ func TestCloudLoader_AllThreeSourcesCombineInLoad(t *testing.T) {
 	}, 5*time.Second, 10*time.Millisecond)
 }
 
-func TestCloudLoader_AggregateOnlyNoAppManifest(t *testing.T) {
+func TestCloudLoader_AggregateOnly(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		list := metav1.APIGroupList{Groups: []metav1.APIGroup{{Name: "dashboard.grafana.app"}}}
 		_ = json.NewEncoder(w).Encode(list)
@@ -504,11 +491,10 @@ func TestCloudLoader_AggregateOnlyNoAppManifest(t *testing.T) {
 
 	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
-	require.NotNil(t, loaderIface) // must activate without appmanifest_apiserver_url set
+	require.NotNil(t, loaderIface)
 
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.Nil(t, loader.routeBackendClient) // CRD side must stay unconfigured
 
 	svc, ok := loaderIface.(services.Service)
 	require.True(t, ok)
@@ -636,76 +622,6 @@ func TestProvideCloudRoutesLoaderFactory_PluginsWithoutTokenVerificationConfig(t
 	require.NotNil(t, loader)
 }
 
-func TestAPIGroupPreferredVersion(t *testing.T) {
-	served, unserved := true, false
-	ptr := func(s string) *string { return &s }
-	for _, tc := range []struct {
-		name      string
-		versions  []v1alpha2.AppManifestManifestVersion
-		preferred *string
-		want      string
-	}{
-		{name: "an unserved last version is not preferred",
-			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}, {Name: "v2", Served: &unserved}}, want: "v1"},
-		{name: "an unserved explicit preference falls back to a served version",
-			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}, {Name: "v2", Served: &unserved}}, preferred: ptr("v2"), want: "v1"},
-		{name: "a served explicit preference is kept",
-			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}, {Name: "v2"}}, preferred: ptr("v1"), want: "v1"},
-		{name: "GA over alpha, whatever the order",
-			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}, {Name: "v2alpha1"}}, want: "v1"},
-		{name: "beta over alpha",
-			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1beta1"}, {Name: "v1alpha1", Served: &served}}, want: "v1beta1"},
-		{name: "the highest GA version",
-			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v2"}, {Name: "v1"}, {Name: "v10"}}, want: "v10"},
-		{name: "nothing served, nothing preferred",
-			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1", Served: &unserved}}, want: ""},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			group := apiGroupFromManifestSpec(v1alpha2.AppManifestSpec{Group: "example.grafana.app", Versions: tc.versions, PreferredVersion: tc.preferred})
-			require.Equal(t, tc.want, group.PreferredVersion.Version)
-		})
-	}
-
-	t.Run("embedded manifests follow the same rule", func(t *testing.T) {
-		group := apiGroupFromManifestData(app.ManifestData{
-			Group: "example.grafana.app", PreferredVersion: "v2",
-			Versions: []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: false}},
-		})
-		require.Equal(t, "v1", group.PreferredVersion.Version)
-	})
-}
-
-func TestProvideCloudRoutesLoaderFactory_LegacyAggregateSettings(t *testing.T) {
-	for _, name := range []string{"baas_apiserver", "cloud_app_platform_apiserver"} {
-		for _, fromEnv := range []bool{false, true} {
-			t.Run(fmt.Sprintf("%s/env=%t", name, fromEnv), func(t *testing.T) {
-				cfg := cfgWithCloudRouterSection(t, map[string]string{
-					"cap_token":          "token",
-					"token_exchange_url": "https://exchange.invalid",
-				})
-				values := map[string]string{"url": "https://old.invalid", "audience": "legacy", "group_regex": "*.ext.grafana.app", "insecure": "true"}
-				for key, value := range values {
-					if fromEnv {
-						t.Setenv(setting.EnvKey(cloudRouterSection, name+"."+key), value)
-					} else {
-						cfg.Raw.Section(cloudRouterSection).Key(name + "." + key).SetValue(value)
-					}
-				}
-				result, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-				require.NoError(t, err)
-				loader := result.(*cloudLoader)
-				require.Len(t, loader.aggregateTargets, 1)
-				target := loader.aggregateTargets[0]
-				require.Equal(t, name, target.name)
-				require.Equal(t, "https://old.invalid", target.base.String())
-				require.True(t, matchesAnyPattern("test.ext.grafana.app", target.patterns))
-				require.False(t, matchesAnyPattern("other.grafana.app", target.patterns))
-				require.True(t, target.proxyTransport.(*http.Transport).TLSClientConfig.InsecureSkipVerify)
-			})
-		}
-	}
-}
-
 func TestCloudLoaderAggregateSectionPriority(t *testing.T) {
 	newUpstream := func(version string) *httptest.Server {
 		upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -752,13 +668,35 @@ audience = second
 		require.Equal(t, "aggregate:"+name, backends[0].Source())
 		require.Equal(t, []metav1.GroupVersionForDiscovery{{GroupVersion: "shared.ext.grafana.app/" + version, Version: version}}, backends[0].Group().Versions)
 	}
-	// Poll completion order must not determine priority or merge group versions.
+	// Poll completion order must not determine priority or merge group
+	// versions. The loader serves nothing until every target has polled once.
 	loader.aggregateTargets[1].poll(t.Context(), dirty)
-	assertWinner("a_second", "v2")
+	_, err = loader.Load(t.Context())
+	require.ErrorIs(t, err, errFirstPollPending)
 	loader.aggregateTargets[0].poll(t.Context(), dirty)
 	assertWinner("z_first", "v1")
 	require.Equal(t, []shadowedGroup{{Group: "shared.ext.grafana.app", Source: "aggregate:a_second", By: "aggregate:z_first"}}, loader.shadowedGroups())
 	first.Close()
 	loader.aggregateTargets[0].poll(t.Context(), dirty)
 	assertWinner("z_first", "v1")
+}
+
+func TestPluginManifestsPollInterval(t *testing.T) {
+	section := func(t *testing.T, kv map[string]string) *setting.DynamicSection {
+		return cfgWithCloudRouterSection(t, kv).SectionWithEnvOverrides(cloudRouterSection)
+	}
+	plugins, core, err := newPluginManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+		"plugins_url":           "https://plugins.invalid/plugins",
+		"core_url":              "https://core.invalid/plugins",
+		"plugins_poll_interval": "5m",
+	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	require.Equal(t, 5*time.Minute, plugins.cooldown.steady)
+	require.Equal(t, defaultAggregatePollInterval, core.cooldown.steady)
+
+	_, _, err = newPluginManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+		"core_url":           "https://core.invalid/plugins",
+		"core_poll_interval": "0s",
+	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.ErrorContains(t, err, "core_poll_interval must be a positive duration")
 }

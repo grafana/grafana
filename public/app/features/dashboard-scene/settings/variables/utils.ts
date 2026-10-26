@@ -2,8 +2,7 @@ import { chain } from 'lodash';
 
 import { type SelectableValue, getDataSourceRef } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -151,7 +150,7 @@ export function getVariableTypeLabel(
   variableType: EditableVariableType,
   { standalone }: VariableTypeSelectOptionsArgs = {}
 ): string {
-  if (variableType === 'adhoc' && standalone && config.featureToggles.dashboardUnifiedDrilldownControls) {
+  if (variableType === 'adhoc' && standalone) {
     return t('dashboard.sidebar.add.filters.label', 'Filter and Group by');
   }
   return getEditableVariablesMetadata()[variableType].name;
@@ -161,14 +160,13 @@ export function getVariableTypeSelectOptions({ standalone }: VariableTypeSelectO
   SelectableValue<EditableVariableType>
 > {
   const metadata = getEditableVariablesMetadata();
-  const unifiedDrilldown = Boolean(config.featureToggles.dashboardUnifiedDrilldownControls);
 
   const results = EDITABLE_VARIABLES_SELECT_ORDER.map(
     (variableType): SelectableValue<EditableVariableType> => ({
       label: getVariableTypeLabel(variableType, { standalone }),
       value: variableType,
       description:
-        variableType === 'adhoc' && unifiedDrilldown && standalone
+        variableType === 'adhoc' && standalone
           ? t(
               'dashboard-scene.get-editable-variables.description.add-filters-and-group-by-keys-on-the-fly',
               'Add key/value filters and group by keys on the fly'
@@ -178,12 +176,11 @@ export function getVariableTypeSelectOptions({ standalone }: VariableTypeSelectO
   );
 
   return results.filter((option) => {
-    // Legacy standalone groupby is experimental/deprecated; leave it gated only
-    // by groupByVariable and focus new work on the unified adhoc path.
-    if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
+    // Standalone groupby is superseded by the group by support in the unified adhoc filters.
+    if (option.value === 'groupby') {
       return false;
     }
-    if (option.value === 'adhoc' && unifiedDrilldown && !standalone) {
+    if (option.value === 'adhoc' && !standalone) {
       // Dashboards have a dedicated "Filter and Group by" entry point instead.
       return false;
     }
@@ -222,10 +219,7 @@ export async function getVariableScene(type: EditableVariableType, initialState:
     case 'datasource':
       return new DataSourceVariable(initialState);
     case 'adhoc':
-      return new AdHocFiltersVariable({
-        ...initialState,
-        ...(config.featureToggles.dashboardUnifiedDrilldownControls ? { enableGroupBy: true } : {}),
-      });
+      return new AdHocFiltersVariable({ ...initialState, enableGroupBy: true });
     case 'groupby':
       return new GroupByVariable(initialState);
     case 'textbox':

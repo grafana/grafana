@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/chunked"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/responsesize"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -181,6 +182,7 @@ func (c *ClientV2) queryData(ctx context.Context, req *backend.QueryDataRequest)
 		return nil, fmt.Errorf("%v: %w", "Failed to query data", err)
 	}
 
+	responsesize.FromContext(ctx).AddQueryDataResponse(protoResp)
 	return protoResp, nil
 }
 
@@ -210,6 +212,7 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 		return fmt.Errorf("%v: %w", "Failed to QueryChunkedData", err)
 	}
 
+	sizes := responsesize.FromContext(ctx)
 	for {
 		chunk, err := stream.Recv()
 		if err != nil {
@@ -218,6 +221,7 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 			}
 			return err
 		}
+		sizes.AddChunk(chunk)
 
 		if isRaw {
 			if err = raw.OnChunk(chunk); err != nil {

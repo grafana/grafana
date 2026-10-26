@@ -5,7 +5,8 @@ import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService, useScopes } from '@grafana/runtime';
+import { useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -60,7 +61,21 @@ jest.mock('@grafana/runtime', () => ({
     reload: jest.fn(),
     registerRuntimeDataSource: jest.fn(),
   })),
+  useScopes: jest.fn(),
 }));
+
+jest.mock('app/features/scopes/ScopesContextProvider', () => ({
+  ...jest.requireActual('app/features/scopes/ScopesContextProvider'),
+  useScopesServices: jest.fn(() => ({ scopesDashboardsService: { toggleDrawer: jest.fn() } })),
+}));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagGrafanaScopesDashboardsMegaMenu: jest.fn(),
+}));
+
+const mockUseScopes = jest.mocked(useScopes);
+const mockUseFlagScopesDashboardsMegaMenu = jest.mocked(useFlagGrafanaScopesDashboardsMegaMenu);
 
 function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
   const context = getGrafanaContextMock();
@@ -539,6 +554,18 @@ describe('DashboardControls', () => {
 
       expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
     });
+
+    // A draft has no uid until it's saved, but can be edited and saved like any new dashboard.
+    it('should show Edit for a draft out of edit mode, not for another dashboard without a uid', async () => {
+      const draft = buildTestSceneWithEditable({ hasUid: false, newDashboardUid: 'proposed-uid' });
+      const { unmount } = renderInGrafanaContext(<draft.Component model={draft} />, undefined);
+      expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
+      unmount();
+
+      const unsaved = buildTestSceneWithEditable({ hasUid: false });
+      renderInGrafanaContext(<unsaved.Component model={unsaved} />, undefined);
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).not.toBeInTheDocument();
+    });
   });
 
   describe('DashboardControlActions save button visibility', () => {
@@ -581,8 +608,6 @@ describe('DashboardControls', () => {
 
   describe('Panel edit buttons', () => {
     beforeEach(() => {
-      // Default most tests to new layouts on; the flag-off case overrides this explicitly.
-      setTestFlags({ dashboardNewLayouts: true });
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
     });
 
@@ -843,6 +868,47 @@ describe('DashboardControls', () => {
       expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).toBeInTheDocument();
     });
   });
+
+  describe('scopes dashboards navigation toggle', () => {
+    beforeEach(() => {
+      mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
+      mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
+    });
+
+    afterEach(() => {
+      mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
+    });
+
+    it('hides the toggle when the mega-menu flag is on, even with scopeFilters enabled', () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+      try {
+        config.featureToggles.scopeFilters = true;
+        mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(true);
+
+        const scene = buildTestScene();
+        const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
+
+        expect(renderer.queryByTestId('scopes-dashboards-expand')).not.toBeInTheDocument();
+      } finally {
+        config.featureToggles = originalFeatureToggles;
+      }
+    });
+
+    it('shows the toggle when the mega-menu flag is off and scopeFilters is enabled', () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+      try {
+        config.featureToggles.scopeFilters = true;
+        mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
+
+        const scene = buildTestScene();
+        const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
+
+        expect(renderer.queryByTestId('scopes-dashboards-expand')).toBeInTheDocument();
+      } finally {
+        config.featureToggles = originalFeatureToggles;
+      }
+    });
+  });
 });
 
 function buildTestSceneWithEditable(options: {
@@ -853,6 +919,7 @@ function buildTestSceneWithEditable(options: {
   canSave?: boolean;
   canMakeEditable?: boolean;
   isSnapshot?: boolean;
+  newDashboardUid?: string;
 }): DashboardControls {
   const {
     editable = true,
@@ -862,6 +929,7 @@ function buildTestSceneWithEditable(options: {
     canMakeEditable = false,
     isSnapshot = false,
     hasUid = true,
+    newDashboardUid,
   } = options;
 
   const dashboard = new DashboardScene({
@@ -873,6 +941,7 @@ function buildTestSceneWithEditable(options: {
       canSave,
       canMakeEditable,
       isSnapshot,
+      ...(newDashboardUid ? { newDashboardUid } : {}),
     },
     controls: new DashboardControls({}),
   });
