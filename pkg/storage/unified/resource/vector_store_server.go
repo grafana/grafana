@@ -120,13 +120,6 @@ func (s *VectorStoreServer) countRows(rpc, group, resource string, n int64) {
 	s.metrics.WriteRowsTotal.WithLabelValues(rpc, group, resource).Add(float64(n))
 }
 
-func (s *VectorStoreServer) logSharedWrite(rpc, publisherNamespace string, target writeTarget, rows int64) {
-	if !target.shared {
-		return
-	}
-	s.log.Info("vector store: shared write", "rpc", rpc, "publisher_namespace", publisherNamespace, "storage_namespace", target.storageNamespace, "group", target.group, "resource", target.resource, "rows", rows)
-}
-
 // writeStatusError maps a downstream failure to its gRPC status: the
 // caller's dead context wins (Canceled/DeadlineExceeded), anything else is
 // Internal. Mirrors the VectorSearch convention.
@@ -392,7 +385,6 @@ func (s *VectorStoreServer) Upsert(ctx context.Context, req *resourcepb.VectorUp
 		return nil, writeStatusError(ctx, err, "upsert")
 	}
 	s.countRows("upsert", req.Group, req.Resource, int64(len(rows)))
-	s.logSharedWrite("upsert", req.Namespace, target, int64(len(rows)))
 	return &resourcepb.VectorUpsertResponse{Upserted: int64(len(rows))}, nil
 }
 
@@ -491,7 +483,6 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 		return nil, writeStatusError(ctx, err, "entity lock")
 	}
 	s.countRows("upsert_subresources", req.Group, req.Resource, resp.Created+resp.Updated+resp.Deleted)
-	s.logSharedWrite("upsert_subresources", req.Namespace, target, resp.Created+resp.Updated+resp.Deleted)
 	return resp, nil
 }
 
@@ -549,7 +540,6 @@ func (s *VectorStoreServer) Delete(ctx context.Context, req *resourcepb.VectorDe
 		return nil, writeStatusError(ctx, err, "delete rows")
 	}
 	s.countRows("delete", req.Group, req.Resource, deleted)
-	s.logSharedWrite("delete", req.Namespace, target, deleted)
 	return &resourcepb.VectorDeleteResponse{Deleted: deleted, HasMore: hasMore}, nil
 }
 
@@ -594,6 +584,5 @@ func (s *VectorStoreServer) UpdateMetadata(ctx context.Context, req *resourcepb.
 		return nil, writeStatusError(ctx, err, "update metadata")
 	}
 	s.countRows("update_metadata", req.Group, req.Resource, updated)
-	s.logSharedWrite("update_metadata", req.Namespace, target, updated)
 	return &resourcepb.VectorUpdateMetadataResponse{Updated: updated}, nil
 }
