@@ -5,12 +5,13 @@ import ESLintPlugin from 'eslint-rspack-plugin';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
+import { styleText } from 'node:util';
 import { RspackManifestPlugin } from 'rspack-manifest-plugin';
 import { TsCheckerRspackPlugin } from 'ts-checker-rspack-plugin';
 import { merge } from 'webpack-merge';
 import WebpackBar from 'webpackbar';
 
-import { getEnvConfig } from '../cli/env-util.ts';
+import { getEnvConfig, getServerHttpPort } from '../cli/env-util.ts';
 
 import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
 import common, { PUBLIC_PATH, type Env } from './rspack.common.ts';
@@ -146,6 +147,20 @@ function getDevServer(): DevServerConfiguration {
       // build on disk.
       writeToDisk: false,
     },
+
+    // Stands in for the dev server's own `Local:` line, silenced through `infrastructureLogging`.
+    onListening: () => {
+      const grafanaUrl = `http://localhost:${getServerHttpPort(grafanaRoot)}/`;
+      const devServerUrl = `http://${hostname}:${port}/`;
+
+      console.log(
+        [
+          `  ${styleText('white', '➜')}  ${styleText(['white', 'dim'], 'Grafana:')}  ${styleText('cyan', grafanaUrl)}`,
+          `              ${styleText('dim', `Frontend assets are served to it from ${devServerUrl}`)}`,
+          '',
+        ].join('\n')
+      );
+    },
   };
 }
 
@@ -202,6 +217,10 @@ export default (env: Env = {}) => {
 
   if (hmr) {
     devConfig.devServer = getDevServer();
+
+    // The dev server prints its own address as `Local:` at info level, which reads as the URL to
+    // open. `onListening` prints the Grafana URL instead. Warnings and errors are unaffected.
+    devConfig.infrastructureLogging = { level: 'warn' };
 
     // `rspack serve` turns lazy compilation on for web-only builds unless the config says
     // otherwise, and its client posts to a root-relative /_rspack/lazy/trigger. The page is
