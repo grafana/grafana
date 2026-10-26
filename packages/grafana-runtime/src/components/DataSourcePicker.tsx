@@ -27,8 +27,11 @@ export interface DataSourcePickerProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | string | undefined | null; // uid
   hideTextValue?: boolean;
+  /** @deprecated No longer supported. The picker manages its own focus and open state. */
   onBlur?: () => void;
+  /** @deprecated No longer supported. The picker manages its own focus and open state. */
   autoFocus?: boolean;
+  /** @deprecated No longer supported. The picker manages its own focus and open state. */
   openMenuOnFocus?: boolean;
   placeholder?: string;
   tracing?: boolean;
