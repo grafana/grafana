@@ -18395,6 +18395,7 @@
     },
     "tabs": {
       "all": "All",
+      "empty": "No {{type}} to show, so this tab is disabled",
       "more": "More ({{total}})",
       "more-item": "{{type}} ({{total}})"
     },

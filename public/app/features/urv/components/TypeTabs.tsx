@@ -3,10 +3,10 @@ import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Dropdown, Icon, Menu, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { type FacetTerm } from '../api/globalSearchApi';
-import { kindInfoFor } from '../kinds';
+import { type KindInfo, kindInfoFor, knownKinds } from '../kinds';
 
 import { KindIcon } from './KindIcon';
 
@@ -21,10 +21,7 @@ interface Props {
 
 export function TypeTabs({ types, total, selected, onSelect }: Props) {
   const styles = useStyles2(getStyles);
-  const ranked = types.filter((term) => term.count > 0 || term.value === selected);
-  if (selected && !ranked.some((term) => term.value === selected)) {
-    ranked.push({ value: selected, count: 0 });
-  }
+  const ranked = rankTabs(types, selected);
   const visible = ranked.slice(0, VISIBLE_TABS);
   const overflow = ranked.slice(VISIBLE_TABS);
   const selectedOverflow = overflow.find((term) => term.value === selected);
@@ -33,18 +30,29 @@ export function TypeTabs({ types, total, selected, onSelect }: Props) {
   }
   const more = overflow.filter((term) => term !== selectedOverflow);
 
-  const tab = (key: string, active: boolean, onClick: () => void, content: ReactNode) => (
-    <button
-      key={key}
-      type="button"
-      role="tab"
-      aria-selected={active}
-      className={cx(styles.tab, active && styles.active)}
-      onClick={onClick}
-    >
-      {content}
-    </button>
-  );
+  const tab = (key: string, active: boolean, onClick: () => void, content: ReactNode, disabledReason?: string) => {
+    const button = (
+      <button
+        key={key}
+        type="button"
+        role="tab"
+        aria-selected={active}
+        // A disabled button gets no hover events, so the tooltip wouldn't show.
+        aria-disabled={disabledReason ? true : undefined}
+        className={cx(styles.tab, active && styles.active, disabledReason && styles.disabled)}
+        onClick={disabledReason ? undefined : onClick}
+      >
+        {content}
+      </button>
+    );
+    return disabledReason ? (
+      <Tooltip key={key} content={disabledReason}>
+        {button}
+      </Tooltip>
+    ) : (
+      button
+    );
+  };
 
   return (
     <div className={styles.bar} role="tablist">
@@ -67,7 +75,8 @@ export function TypeTabs({ types, total, selected, onSelect }: Props) {
             <KindIcon info={info} size="sm" />
             {info.plural()}
             <span className={styles.counter}>{term.count.toLocaleString()}</span>
-          </>
+          </>,
+          isEmpty(term, selected) ? emptyReason(info) : undefined
         );
       })}
       {more.length > 0 && (
@@ -77,6 +86,7 @@ export function TypeTabs({ types, total, selected, onSelect }: Props) {
             <Menu>
               {more.map((term) => {
                 const info = kindInfoFor(term.value);
+                const empty = isEmpty(term, selected);
                 return (
                   <Menu.Item
                     key={term.value}
@@ -86,6 +96,8 @@ export function TypeTabs({ types, total, selected, onSelect }: Props) {
                       interpolation: { escapeValue: false },
                     })}
                     icon={info.icon}
+                    disabled={empty}
+                    description={empty ? emptyReason(info) : undefined}
                     onClick={() => onSelect(term.value)}
                   />
                 );
@@ -101,6 +113,26 @@ export function TypeTabs({ types, total, selected, onSelect }: Props) {
       )}
     </div>
   );
+}
+
+/** Types with results first, by count, then every other known type, so no tab disappears when filters narrow the results. */
+function rankTabs(types: FacetTerm[], selected?: string): FacetTerm[] {
+  const withResults = types.filter((term) => term.count > 0);
+  const empty = new Set([...knownKinds(), ...types.map((term) => term.value), ...(selected ? [selected] : [])]);
+  withResults.forEach((term) => empty.delete(term.value));
+  return [...withResults, ...[...empty].map((value) => ({ value, count: 0 }))];
+}
+
+// The open tab stays clickable so the user can still see where they are.
+function isEmpty(term: FacetTerm, selected?: string) {
+  return term.count === 0 && term.value !== selected;
+}
+
+function emptyReason(info: KindInfo) {
+  return t('urv.tabs.empty', 'No {{type}} to show, so this tab is disabled', {
+    type: info.plural(),
+    interpolation: { escapeValue: false },
+  });
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -134,6 +166,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderBottomColor: theme.colors.primary.main,
     borderImage: theme.colors.gradients.brandHorizontal,
     borderImageSlice: 1,
+  }),
+  disabled: css({
+    color: theme.colors.text.disabled,
+    cursor: 'not-allowed',
+    '&:hover': {
+      color: theme.colors.text.disabled,
+    },
   }),
   counter: css({
     padding: theme.spacing(0, 0.75),

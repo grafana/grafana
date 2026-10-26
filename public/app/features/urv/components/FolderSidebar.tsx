@@ -28,6 +28,7 @@ export function FolderSidebar({ sidebar, filter, onFilterChange, selected, onSel
     expanded,
     toggle,
     counts,
+    hasSubfolders,
     totals,
     matches,
     parentTitles,
@@ -87,7 +88,7 @@ export function FolderSidebar({ sidebar, filter, onFilterChange, selected, onSel
       isSelected: selected === node.uid,
       onClick: () => onSelect(selected === node.uid ? undefined : node.uid),
       expander:
-        subtitle === undefined ? (
+        subtitle === undefined && hasSubfolders[node.uid] ? (
           <IconButton
             name={isOpen ? 'angle-down' : 'angle-right'}
             size="sm"

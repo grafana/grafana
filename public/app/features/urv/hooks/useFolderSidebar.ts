@@ -39,12 +39,24 @@ async function countWhere(where: ReturnType<typeof buildWhere>): Promise<number>
   return res.metadata.totalHits;
 }
 
+/** Everything below a folder, and whether any of it is a folder, so leaf folders can skip the expand button. */
+export async function countUnder(uid: string): Promise<{ count: number; hasSubfolders: boolean }> {
+  const res = await globalSearch({
+    where: buildWhere({ folders: [uid], includeSubfolders: true }),
+    facets: [FIELD.groupResource],
+    limit: 1,
+  });
+  const folders = res.facets?.[FIELD.groupResource]?.find((term) => term.value === FOLDER_GROUP_RESOURCE);
+  return { count: res.metadata.totalHits, hasSubfolders: (folders?.count ?? 0) > 0 };
+}
+
 /** Folder tree, filter and counts for the sidebar, all from global search. */
 export function useFolderSidebar(filter: string) {
   // Keyed by parent uid, with '' for the root.
   const [children, setChildren] = useState<Record<string, FolderNode[]>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const [hasSubfolders, setHasSubfolders] = useState<Record<string, boolean>>({});
   const [totals, setTotals] = useState<{ all?: number; root?: number; noFolder?: number; folders?: number }>({});
   const [matches, setMatches] = useState<FolderNode[]>();
   const [parentTitles, setParentTitles] = useState<Record<string, string>>({});
@@ -64,6 +76,7 @@ export function useFolderSidebar(filter: string) {
     requestedCounts.current = new Set();
     setChildren({});
     setCounts({});
+    setHasSubfolders({});
     load('');
     Promise.all([
       countWhere(undefined),
@@ -165,8 +178,11 @@ export function useFolderSidebar(filter: string) {
     const uids = countKey.split(',');
     uids.forEach((uid) => requestedCounts.current.add(uid));
     uids.forEach((uid) => {
-      countWhere(buildWhere({ folders: [uid], includeSubfolders: true }))
-        .then((count) => setCounts((prev) => ({ ...prev, [uid]: count })))
+      countUnder(uid)
+        .then(({ count, hasSubfolders }) => {
+          setCounts((prev) => ({ ...prev, [uid]: count }));
+          setHasSubfolders((prev) => ({ ...prev, [uid]: hasSubfolders }));
+        })
         .catch(() => requestedCounts.current.delete(uid));
     });
   }, [countKey]);
@@ -178,6 +194,7 @@ export function useFolderSidebar(filter: string) {
     expanded,
     toggle,
     counts,
+    hasSubfolders,
     totals,
     matches,
     parentTitles,

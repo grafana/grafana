@@ -164,6 +164,11 @@ export function kindInfoFor(groupResource: string): KindInfo {
   return getKindInfo({ group, resource });
 }
 
+/** Every type this page has a label for, in registry order. */
+export function knownKinds(): string[] {
+  return Object.keys(KINDS);
+}
+
 /** Types that can be created from this page, in registry order. */
 export function creatableKinds(): Array<{ groupResource: string; info: KindInfo }> {
   return Object.entries(KINDS)
