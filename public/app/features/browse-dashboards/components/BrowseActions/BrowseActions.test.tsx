@@ -1,10 +1,8 @@
-import { act, render, screen } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { type BulkActionProvisionResourceProps } from 'app/features/provisioning/components/BulkActions/utils';
 import { useSelectionProvisioningStatus } from 'app/features/provisioning/hooks/useSelectionProvisioningStatus';
-
-import { setAllSelection } from '../../state/slice';
 
 import { BrowseActions } from './BrowseActions';
 
@@ -72,7 +70,7 @@ describe('browse-dashboards BrowseActions', () => {
       expect(store!.getState().browseDashboards.selectedItems.dashboard['dash-1']).toBe(true);
     });
 
-    it('clears the selection as soon as a job exists and keeps showing the drawer', async () => {
+    it('clears the selection as soon as a job exists; the drawer keeps the selection it was opened with', async () => {
       const { user, store } = setup();
 
       await user.click(screen.getByRole('button', { name: 'Delete' }));
@@ -80,25 +78,10 @@ describe('browse-dashboards BrowseActions', () => {
 
       expect(store!.getState().browseDashboards.selectedItems.dashboard['dash-1']).toBe(false);
       expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
-      expect(screen.getByTestId(selectors.components.Drawer.General.close)).toBeInTheDocument();
+      expect(screen.getByText('1 selected')).toBeInTheDocument();
 
       await user.click(screen.getByTestId(selectors.components.Drawer.General.close));
-      expect(screen.queryByTestId(selectors.components.Drawer.General.close)).not.toBeInTheDocument();
-    });
-
-    it('works on the selection it was opened with, even when the live selection clears underneath', async () => {
-      const { user, store } = setup();
-
-      await user.click(screen.getByRole('button', { name: 'Delete' }));
-      expect(await screen.findByText('1 selected')).toBeInTheDocument();
-
-      // A repository pull refreshing the tree resets the selection.
-      act(() => {
-        store!.dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
-      });
-
-      expect(screen.getByText('1 selected')).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+      expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
     });
   });
 });

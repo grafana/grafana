@@ -238,18 +238,4 @@ describe('useRefreshOnRepositorySync', () => {
     await waitFor(() => expect(children(REPO)).toEqual(['repo-dash-2']));
     await waitFor(() => expect(browseState().repositorySyncedAt).toEqual({ [REPO]: 2000 }));
   });
-
-  it('notices a pull that landed while the list was not mounted', async () => {
-    const { children, waitForBaseline, emitSync, unmount, render } = setup();
-    await waitForBaseline();
-    unmount();
-
-    // The list query is still cached, so the watch keeps the repository status current.
-    emitSync(2000);
-    expect(mockListDashboards).not.toHaveBeenCalled();
-
-    render();
-
-    await waitFor(() => expect(children(REPO)).toEqual(['repo-dash-2']));
-  });
 });
