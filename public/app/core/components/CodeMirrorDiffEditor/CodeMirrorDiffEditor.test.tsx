@@ -1,0 +1,53 @@
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+import { store } from '@grafana/data';
+
+import { CodeMirrorDiffEditor } from './CodeMirrorDiffEditor';
+
+describe('CodeMirrorDiffEditor preference', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it('switches from side by side to inline and persists the existing preference across instances', async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<CodeMirrorDiffEditor original="before" modified="after" height="200px" />);
+
+    expect(await screen.findByRole('textbox', { name: 'Original' })).toHaveTextContent('before');
+    expect(screen.getByRole('radio', { name: 'Side by side' })).toBeChecked();
+
+    await user.click(screen.getByRole('radio', { name: 'Inline' }));
+
+    expect(screen.getAllByRole('textbox')).toHaveLength(1);
+    expect(screen.getByRole('textbox', { name: 'Modified' })).toHaveTextContent('after');
+    expect(store.getBool('grafana.monaco-diff-editor.inline', false)).toBe(true);
+    unmount();
+
+    render(<CodeMirrorDiffEditor original="before" modified="after" height="200px" />);
+
+    expect(await screen.findByRole('textbox', { name: 'Modified' })).toHaveTextContent('after');
+    expect(screen.getAllByRole('textbox')).toHaveLength(1);
+    expect(screen.getByRole('radio', { name: 'Inline' })).toBeChecked();
+  });
+
+  it('uses a saved Monaco preference and lets controlled mode override it without persisting', async () => {
+    store.set('grafana.monaco-diff-editor.inline', true);
+    const { rerender } = render(<CodeMirrorDiffEditor original="before" modified="after" />);
+
+    expect(await screen.findByRole('textbox', { name: 'Modified' })).toHaveTextContent('after');
+    expect(screen.getAllByRole('textbox')).toHaveLength(1);
+    expect(screen.getByRole('radio', { name: 'Inline' })).toBeChecked();
+
+    rerender(<CodeMirrorDiffEditor original="before" modified="after" inline={false} />);
+
+    expect(screen.getByRole('textbox', { name: 'Original' })).toHaveTextContent('before');
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    expect(store.getBool('grafana.monaco-diff-editor.inline', false)).toBe(true);
+
+    rerender(<CodeMirrorDiffEditor original="before" modified="after" inline />);
+
+    expect(screen.getAllByRole('textbox')).toHaveLength(1);
+    expect(screen.getByRole('textbox', { name: 'Modified' })).toHaveTextContent('after');
+  });
+});
