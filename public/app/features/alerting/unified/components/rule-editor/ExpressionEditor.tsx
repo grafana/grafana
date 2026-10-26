@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 import { useAsync } from 'react-use';
 
 import { CoreApp, DataSourcePluginContextProvider, type GrafanaTheme2, LoadingState } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { type PromQuery } from '@grafana/prometheus';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 
@@ -31,23 +31,35 @@ export const ExpressionEditor = ({
 }: ExpressionEditorProps) => {
   const styles = useStyles2(getStyles);
 
-  const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
+  const {
+    settings: dsi,
+    isLoading: settingsLoading,
+    error: settingsError,
+  } = useDataSourceInstanceSettings(dataSourceName);
 
-  const dataQuery = mapToQuery({ refId: 'A', hide: false }, value);
+  const dataQuery = mapToQuery(value);
+  let dataSourceSettingsError = settingsError;
+  if (!settingsLoading && !dataSourceSettingsError) {
+    if (!dsi) {
+      dataSourceSettingsError = new Error(`Datasource ${dataSourceName} not found`);
+    } else if (!isSupportedExternalRulesSourceType(dsi.type)) {
+      dataSourceSettingsError = new Error(`${dsi.type} is not supported as an expression editor`);
+    }
+  }
 
   const {
     error,
     loading,
     value: dataSource,
   } = useAsync(() => {
-    return getDataSourceSrv().get(dataSourceName);
+    return getDataSourceInstance(dataSourceName);
   }, [dataSourceName]);
 
   const onChangeQuery = useCallback(
     (query: DataQuery) => {
       onChange(mapToValue(query));
     },
-    [onChange, mapToValue]
+    [onChange]
   );
 
   const [alertPreview, onPreview] = usePreview();
@@ -56,15 +68,14 @@ export const ExpressionEditor = ({
     onPreview();
   };
 
-  if (loading || dataSource?.name !== dataSourceName) {
+  if (loading || settingsLoading || dataSource?.name !== dataSourceName) {
     return null;
   }
 
-  const dsi = getDataSourceSrv().getInstanceSettings(dataSourceName);
-
-  if (error || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
+  if (error || dataSourceSettingsError || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
     const errorMessage =
       error?.message ||
+      dataSourceSettingsError?.message ||
       t(
         'alerting.expression-editor.error-no-component',
         'Data source plugin does not export any Query Editor component'
@@ -136,25 +147,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-type QueryMappers<T extends DataQuery = DataQuery> = {
-  mapToValue: (query: T) => string;
-  mapToQuery: (existing: T, value: string | undefined) => T;
-};
+function mapToValue(query: DataQuery): string {
+  return (query as PromQuery | LokiQuery).expr;
+}
 
-function useQueryMappers(dataSourceName: string): QueryMappers {
-  return useMemo(() => {
-    const settings = getDataSourceSrv().getInstanceSettings(dataSourceName);
-    if (!settings) {
-      throw new Error(`Datasource ${dataSourceName} not found`);
-    }
-
-    if (!isSupportedExternalRulesSourceType(settings.type)) {
-      throw new Error(`${settings.type} is not supported as an expression editor`);
-    }
-
-    return {
-      mapToValue: (query: DataQuery) => (query as PromQuery | LokiQuery).expr,
-      mapToQuery: (existing: DataQuery, value: string | undefined) => ({ ...existing, expr: value }),
-    };
-  }, [dataSourceName]);
+function mapToQuery(value: string | undefined) {
+  return { refId: 'A', hide: false, expr: value };
 }
