@@ -199,10 +199,10 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	cfg.ExtJWTAuth.JWKSUrl = manifests.URL + "/jwks"
 	cfg.ExtJWTAuth.Audiences = []string{audience}
 	cfg.SectionWithEnvOverrides("cloud_router").Key("plugins_url").SetValue(manifests.URL + "/plugins")
-	loader, err := router.ProvideRoutesLoader(cfg, router.PluginLoaderDependencies{
-		PluginDependencies: router.PluginDependencies{Cfg: cfg, Unified: helper.GetEnv().ResourceClient,
-			RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler),
-			SecureValues:       secret.NewMockInlineSecureValueSupport(t), Decrypter: decrypter},
+	loader, err := router.ProvideCloudRoutesLoaderFactory(cfg, router.PluginDependencies{
+		Cfg: cfg, Unified: helper.GetEnv().ResourceClient,
+		RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler),
+		SecureValues:       secret.NewMockInlineSecureValueSupport(t), Decrypter: decrypter,
 	})
 	require.NoError(t, err)
 	lifecycle, ok := loader.(services.Service)
@@ -215,9 +215,10 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	require.NoError(t, err)
 	apiRouter := router.NewGrafanaRouter(folderRoutesLoader{RoutesLoader: loader, folder: folderBackend}, tokens)
 	require.NoError(t, apiRouter.Run(ctx))
-	routerHandler.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		apiRouter.HandleFunc(w, r, http.NotFoundHandler())
-	}))
+	routerHandler.Handle("/apis", apiRouter.HandleAPIs())
+	routerHandler.Handle("/apis/", apiRouter.HandleAPIs())
+	routerHandler.Handle("/openapi/v3", apiRouter.HandleOpenAPIv3())
+	routerHandler.Handle("/openapi/v3/", apiRouter.HandleOpenAPIv3())
 	server := httptest.NewServer(routerHandler)
 	t.Cleanup(server.Close)
 	newClient := func(token string) dynamic.Interface {

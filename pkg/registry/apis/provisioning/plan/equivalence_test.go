@@ -181,7 +181,7 @@ func runBoth(t *testing.T, tree []repository.FileTreeEntry, items []provisioning
 	legacyChanges = sync.DetectRenames(legacyChanges)
 
 	p, err = converge.NewPlan(
-		plan.Declare(tree, metadata, true),
+		plan.Declare(tree, metadata),
 		mustObserve(list),
 		converge.WithContainers(plan.FolderConfig(repoName)),
 	)

@@ -21,14 +21,16 @@ import (
 // resolve folder metadata, diff — but the diff, the ordering, the re-parenting
 // and the orphan cleanup come from the planner, and the result is translated
 // back into the ResourceFileChange list the apply path already consumes.
+//
+// The unused bool keeps the CompareFn signature; folder metadata is always read.
 func CompareViaConverge(
 	ctx context.Context,
 	repo repository.Reader,
 	repositoryResources resources.RepositoryResources,
 	ref string,
-	folderMetadataEnabled bool,
+	_ bool,
 ) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error) {
-	return compareViaConverge(ctx, repo, repositoryResources, ref, folderMetadataEnabled, converge.HintSet{})
+	return compareViaConverge(ctx, repo, repositoryResources, ref, converge.HintSet{})
 }
 
 func compareViaConverge(
@@ -36,7 +38,6 @@ func compareViaConverge(
 	repo repository.Reader,
 	repositoryResources resources.RepositoryResources,
 	ref string,
-	folderMetadataEnabled bool,
 	hints converge.HintSet,
 ) ([]ResourceFileChange, []string, []*resources.InvalidFolderMetadata, error) {
 	target, err := repositoryResources.List(ctx)
@@ -52,7 +53,7 @@ func compareViaConverge(
 	// Folder identities are resolved here, by the caller, because the planner
 	// performs no I/O. This is also the only place a _folder.json is read, as
 	// against the several reads the augmentation passes make today.
-	metadata, invalid, err := readFolderMetadata(ctx, repo, ref, source, folderMetadataEnabled)
+	metadata, invalid, err := readFolderMetadata(ctx, repo, ref, source)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -77,7 +78,7 @@ func compareViaConverge(
 	if hints.Complete {
 		opts = append(opts, converge.WithHints(hints))
 	}
-	p, err := converge.NewPlan(plan.Declare(source, metadata, folderMetadataEnabled), observed, opts...)
+	p, err := converge.NewPlan(plan.Declare(source, metadata), observed, opts...)
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("calculate changes: %w", err)
 	}
@@ -108,17 +109,15 @@ func compareViaConverge(
 // _folder.json that cannot be parsed leaves the folder's identity undecidable,
 // which is permanent given this content: the folder is reported and nothing is
 // written into it.
+//
+// Metadata is read unconditionally, matching the actuator: a planner that
+// skipped it would compare against identities the ensure does not write.
 func readFolderMetadata(
 	ctx context.Context,
 	repo repository.Reader,
 	ref string,
 	source []repository.FileTreeEntry,
-	enabled bool,
 ) (map[string]plan.FolderMetadata, []*resources.InvalidFolderMetadata, error) {
-	if !enabled {
-		return nil, nil, nil
-	}
-
 	out := make(map[string]plan.FolderMetadata)
 	var invalid []*resources.InvalidFolderMetadata
 

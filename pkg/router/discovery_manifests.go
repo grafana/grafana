@@ -24,11 +24,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apiserver/pkg/endpoints"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -149,12 +151,12 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 	setRoute(req, routeDiscovery)
 	if req.Method != http.MethodGet && req.Method != http.MethodHead {
 		w.Header().Set("Allow", "GET, HEAD")
-		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, strings.ToLower(req.Method)), w)
+		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, utils.LowerMethod(req.Method)), w)
 		return
 	}
 	// The documents are static, so there is nothing to watch; a list body
 	// would be misread as a stream of events.
-	if requestVerb(req) == "watch" {
+	if info, ok := request.RequestInfoFrom(req.Context()); ok && info.Verb == "watch" {
 		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, "watch"), w)
 		return
 	}
@@ -270,10 +272,6 @@ func (s *manifestSelector) String() string {
 	return s.labels.String() + "\x00" + s.fields.String()
 }
 
-func (d *manifestDocs) writeList(w io.Writer) error {
-	return writeManifestList(w, d.items)
-}
-
 func writeManifestList(w io.Writer, items []*cachedDoc) error {
 	if _, err := io.WriteString(w, manifestListPrefix); err != nil {
 		return err
@@ -319,12 +317,6 @@ func (r *GrafanaRouter) publishManifestDocs(ctx context.Context, backends []Back
 	r.manifestDocs.Store(docs)
 	r.manifestCache = cache
 	r.manifestFingerprint = fingerprint.String()
-}
-
-// buildManifestDocs builds the documents for backends without a cache.
-func buildManifestDocs(ctx context.Context, backends []Backend) *manifestDocs {
-	docs, _ := buildManifestDocsFrom(ctx, sortedManifestBackends(backends), nil)
-	return docs
 }
 
 // buildManifestDocsFrom converts each served manifest to an AppManifest,

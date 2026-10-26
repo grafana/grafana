@@ -957,6 +957,8 @@ export type HybridSearchResultItem = {
   resource: ResourceRef;
   /** Score is opaque: higher scores rank first, but scores are meaningful only for ordering within this response. Do not compare scores across queries or treat them as probabilities or distances. */
   score: number;
+  /** Tags from the lexical index. Omitted when unavailable. */
+  tags?: string[];
   title: string;
 };
 export type HybridSearchResults = {

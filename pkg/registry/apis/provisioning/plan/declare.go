@@ -76,7 +76,7 @@ type FolderMetadata struct {
 //
 // The line between the last two is the whole user-visible difference between a
 // dashboard that disappears with a warning and one that disappears silently.
-func Declare(tree []repository.FileTreeEntry, metadata map[string]FolderMetadata, folderMetadataEnabled bool) []converge.Declaration {
+func Declare(tree []repository.FileTreeEntry, metadata map[string]FolderMetadata) []converge.Declaration {
 	out := make([]converge.Declaration, 0, len(tree))
 
 	for _, entry := range tree {
@@ -87,13 +87,6 @@ func Declare(tree []repository.FileTreeEntry, metadata map[string]FolderMetadata
 				continue // the repository root is not a folder sync owns
 			}
 			out = append(out, declareDirectory(dir))
-
-		case resources.IsFolderMetadataFile(entry.Path) && !folderMetadataEnabled:
-			// With folder metadata off, a _folder.json states nothing about
-			// the folder: the identity is path-derived and the stored metadata
-			// hash is always empty. Declaring the file's hash anyway makes
-			// every full sync see a content change the ensure can never
-			// persist, so the repository never settles.
 
 		case resources.IsFolderMetadataFile(entry.Path):
 			dir := converge.Key(safepath.EnsureTrailingSlash(safepath.Dir(entry.Path)))

@@ -122,10 +122,14 @@ export const getFieldLinksForExplore = (options: {
     text: t('explore.get-field-links-for-explore.text.raw-value', 'Raw value'),
   };
 
+  const linksToProcess = options.linksToProcess || field.config.links;
+
   let fieldDisplayValuesProxy: Record<string, DisplayValue> | undefined = undefined;
 
   // If we have a dataFrame we can allow referencing other columns and their values in the interpolation.
-  if (dataFrame) {
+  // Only worth doing when there are actually links to resolve: this scans every field in the dataframe,
+  // which is wasteful (and can be very slow on wide frames) when there is nothing to interpolate for.
+  if (dataFrame && linksToProcess && linksToProcess.length > 0) {
     fieldDisplayValuesProxy = getFieldDisplayValuesProxy({
       frame: dataFrame,
       rowIndex,
@@ -165,8 +169,6 @@ export const getFieldLinksForExplore = (options: {
       value: fieldDisplayValuesProxy[field.name],
     };
   }
-
-  const linksToProcess = options.linksToProcess || field.config.links;
 
   if (linksToProcess) {
     const links = linksToProcess.filter((link) => {

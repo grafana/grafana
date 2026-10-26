@@ -99,7 +99,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	ctx := c.Req.Context()
 	renderBindingSupported, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagReportRenderBinding, false, openfeature.TransactionContext(ctx))
 	useLuxon, _ := ofClient.BooleanValue(ctx, featuremgmt.FlagDatetimeUseLuxon, false, openfeature.TransactionContext(ctx))
-	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
 	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
 
 	// With the client-built nav tree the frontend only needs the items it cannot
@@ -129,7 +128,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme)
-	assets, err := webassets.GetWebAssets(ctx, webassets.ResolveBuildDir(ctx), hs.Cfg, hs.License)
+	assets, err := webassets.GetWebAssets(ctx, webassets.BuildDir, hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +192,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		RenderBindingSupported:              renderBindingSupported,
 		UseLuxon:                            useLuxon,
 		AssetSriChecksEnabled:               hs.Cfg.AssetSriChecksEnabled,
-		OFREPRootUrlEnabled:                 ofrepRootUrlEnabled,
 		LegacyFeatureToggleMode:             legacyFeatureToggleMode,
 		ESModuleAssetsEnabled:               assets.ESModule,
 	}
