@@ -10,7 +10,11 @@ import {
 } from '../serialization/DashboardSceneSerializer';
 
 import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
-import { type DashboardEditSessionTracking, type DashboardModeTrigger } from './dashboardModeTracking';
+import {
+  type DashboardEditPeriodOutcome,
+  type DashboardEditSessionTracking,
+  type DashboardModeTrigger,
+} from './dashboardModeTracking';
 
 let isScenesContextSet = false;
 
@@ -406,7 +410,7 @@ export const DashboardInteractions = {
   editPeriodEnded: (
     properties: Partial<DashboardEditSessionTracking> & {
       edit_session_id: string;
-      outcome: 'saved' | 'saved_as_copy' | 'discarded';
+      outcome: DashboardEditPeriodOutcome;
       has_unsaved_changes?: boolean;
     }
   ) => {

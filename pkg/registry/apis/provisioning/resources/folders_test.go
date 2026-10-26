@@ -114,18 +114,17 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 	}
 
 	for _, tt := range []struct {
-		name            string
-		dir             string
-		ref             string
-		target          provisioning.SyncTargetType
-		metadataEnabled bool
-		metadataReads   []metadataRead
-		existing        []string
-		cachedLeaf      bool
-		lookupErrorID   string
-		wantID          string
-		wantProbes      []string
-		wantErr         error
+		name          string
+		dir           string
+		ref           string
+		target        provisioning.SyncTargetType
+		metadataReads []metadataRead
+		existing      []string
+		cachedLeaf    bool
+		lookupErrorID string
+		wantID        string
+		wantProbes    []string
+		wantErr       error
 	}{
 		{
 			name: "stops at the starting directory", dir: "a/b/c/",
@@ -213,7 +212,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 		},
 		{
 			name: "resolves metadata at each visited level using the requested ref",
-			dir:  "a/b/c", ref: "preview-ref", metadataEnabled: true,
+			dir:  "a/b/c", ref: "preview-ref",
 			metadataReads: []metadataRead{
 				{path: "a/b/c/_folder.json", data: `{"metadata":{"name":"stable-leaf"}}`},
 				{path: "a/b/_folder.json", data: `{"metadata":{"name":"stable-parent"}}`},
@@ -223,7 +222,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 		},
 		{
 			name: "missing leaf metadata falls back to its hash before a stable parent",
-			dir:  "a/b/c/", metadataEnabled: true,
+			dir:  "a/b/c/",
 			metadataReads: []metadataRead{
 				{path: "a/b/c/_folder.json", err: repository.ErrFileNotFound},
 				{path: "a/b/_folder.json", data: `{"metadata":{"name":"stable-parent"}}`},
@@ -233,7 +232,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 		},
 		{
 			name: "missing parent metadata falls back to its hash after a stable leaf",
-			dir:  "a/b/c/", ref: "preview-ref", metadataEnabled: true,
+			dir:  "a/b/c/", ref: "preview-ref",
 			metadataReads: []metadataRead{
 				{path: "a/b/c/_folder.json", data: `{"metadata":{"name":"stable-leaf"}}`},
 				{path: "a/b/_folder.json", err: repository.ErrFileNotFound},
@@ -243,7 +242,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 		},
 		{
 			name: "metadata lookup can reach the repository root",
-			dir:  "a/b/c/", metadataEnabled: true,
+			dir:  "a/b/c/",
 			metadataReads: []metadataRead{
 				{path: "a/b/c/_folder.json", data: `{"metadata":{"name":"stable-leaf"}}`},
 				{path: "a/b/_folder.json", data: `{"metadata":{"name":"stable-parent"}}`},
@@ -253,18 +252,18 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			wantProbes: []string{"stable-leaf", "stable-parent", "stable-ancestor", repoName},
 		},
 		{
-			name: "root does not need metadata", metadataEnabled: true,
+			name:     "root does not need metadata",
 			existing: []string{repoName}, wantID: repoName, wantProbes: []string{repoName},
 		},
 		{
-			name: "malformed metadata stops before any existence probe",
-			dir:  "a/b/c/", metadataEnabled: true,
+			name:          "malformed metadata stops before any existence probe",
+			dir:           "a/b/c/",
 			metadataReads: []metadataRead{{path: "a/b/c/_folder.json", data: `{"metadata":`}},
 			existing:      []string{parentID, repoName}, wantErr: ErrInvalidFolderMetadata,
 		},
 		{
 			name: "malformed metadata cannot fall back to a cached folder",
-			dir:  "a/b/c/", metadataEnabled: true, cachedLeaf: true,
+			dir:  "a/b/c/", cachedLeaf: true,
 			metadataReads: []metadataRead{{path: "a/b/c/_folder.json", data: `{"metadata":`}},
 			existing:      []string{leafID, repoName}, wantErr: ErrInvalidFolderMetadata,
 		},
@@ -275,7 +274,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 		},
 		{
 			name: "metadata without a UID stops before a higher ancestor",
-			dir:  "a/b/c/", metadataEnabled: true,
+			dir:  "a/b/c/",
 			metadataReads: []metadataRead{
 				{path: "a/b/c/_folder.json", data: `{"metadata":{"name":"stable-leaf"}}`},
 				{path: "a/b/_folder.json", data: `{"metadata":{}}`},
@@ -285,7 +284,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 		},
 		{
 			name: "metadata read error stops before a higher ancestor",
-			dir:  "a/b/c/", ref: "preview-ref", metadataEnabled: true,
+			dir:  "a/b/c/", ref: "preview-ref",
 			metadataReads: []metadataRead{{path: "a/b/c/_folder.json", err: readErr}},
 			existing:      []string{parentID, repoName}, wantErr: readErr,
 		},
@@ -341,7 +340,8 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 					Run(func(args mock.Arguments) { probes = append(probes, args.String(1)) }).Once()
 				dir = safepath.Dir(dir)
 			}
-			manager := NewFolderManager(repo, client, tree, FolderKind, WithFolderMetadataEnabled(tt.metadataEnabled))
+			expectMissingFolderMetadata(&repo.Mock)
+			manager := NewFolderManager(repo, client, tree, FolderKind, WithFolderMetadataEnabled(false))
 			ancestor, found, err := manager.FindExistingAncestor(ctx, tt.dir, tt.ref)
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
@@ -434,7 +434,8 @@ func TestFolderManager_FindExistingAncestorValidatesOwnership(t *testing.T) {
 					wantProbes = append(wantProbes, id)
 				}
 			}
-			manager := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(tt.metadataUID != ""))
+			expectMissingFolderMetadata(&repo.Mock)
+			manager := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(false))
 
 			ancestor, found, err := manager.FindExistingAncestor(t.Context(), tt.dir, "")
 			require.NoError(t, err)
@@ -468,7 +469,7 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 
 		repo := repository.NewMockReaderWriter(t)
 		repo.On("Config").Return(cfg)
-		repo.On("Read", mock.Anything, mock.Anything, "test-ref").Return(nil, errors.New("not found")).Maybe()
+		repo.On("Read", mock.Anything, mock.Anything, "test-ref").Return(nil, repository.ErrFileNotFound).Maybe()
 		return repo, cfg
 	}
 
@@ -1407,7 +1408,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").Return(nil, errors.New("not found")).Maybe()
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").Return(nil, repository.ErrFileNotFound).Maybe()
 
 		// Pre-populate tree with the parent's hash-derived ID so EnsureFolderPathExist
 		// finds it immediately without needing to create it.
@@ -1436,7 +1437,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		config := newTestRepoConfig("test-repo")
 		rw := repository.NewMockReaderWriter(t)
 		rw.On("Config").Return(config)
-		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").Return(nil, errors.New("not found")).Maybe()
+		rw.On("Read", mock.Anything, "parent/_folder.json", "test-ref").Return(nil, repository.ErrFileNotFound).Maybe()
 
 		parentFolder := ParseFolder("parent/", config.Name)
 
@@ -1459,7 +1460,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("nested folder with metadata flag reads stable parent UID from _folder.json", func(t *testing.T) {
+	t.Run("nested folder with metadata reads stable parent UID from _folder.json", func(t *testing.T) {
 		ctx := context.Background()
 		const stableUID = "child-stable-uid"
 		const stableParentUID = "stable-parent-uid"
@@ -1489,7 +1490,7 @@ func TestCreateFolderWithUID(t *testing.T) {
 		mockClient.AssertExpectations(t)
 	})
 
-	t.Run("nested folder with metadata flag falls back to hash UID when _folder.json absent", func(t *testing.T) {
+	t.Run("nested folder with metadata falls back to hash UID when _folder.json absent", func(t *testing.T) {
 		ctx := context.Background()
 		const stableUID = "child-stable-uid"
 
@@ -2346,25 +2347,6 @@ func TestEnsureFolderPathExist_MetadataErrors(t *testing.T) {
 		_, err := fm.EnsureFolderPathExist(ctx, "parent/child/file.json", "test-ref")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "connection refused")
-		require.Empty(t, client.getCalls)
-	})
-
-	t.Run("flag OFF + non-NotFound error silently ignored", func(t *testing.T) {
-		config := newTestRepoConfig("test-repo")
-		rw := repository.NewMockReaderWriter(t)
-		rw.On("Config").Return(config)
-
-		// Pre-populate tree so the function returns early after ignoring the error.
-		tree := NewEmptyFolderTree()
-		parentFolder := ParseFolder("parent/", config.Name)
-		tree.Add(parentFolder, "")
-
-		client := &fakeDynamicResourceClient{}
-		fm := NewFolderManager(rw, client, tree, FolderKind)
-
-		parent, err := fm.EnsureFolderPathExist(ctx, "parent/file.json", "test-ref")
-		require.NoError(t, err)
-		require.Equal(t, parentFolder.ID, parent)
 		require.Empty(t, client.getCalls)
 	})
 
@@ -3237,6 +3219,8 @@ func TestRenameFolderPath(t *testing.T) {
 				return obj, nil
 			},
 		}
+
+		expectMissingFolderMetadata(&rw.Mock)
 
 		fm := NewFolderManager(rw, client, tree, FolderKind)
 		oldID, err := fm.RenameFolderPath(ctx, "old-team/", "ref-old", "new-team/", "ref-new")

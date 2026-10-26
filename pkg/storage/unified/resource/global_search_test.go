@@ -348,15 +348,40 @@ func TestUpdateCopyFieldsSetsGroupResource(t *testing.T) {
 	assert.Equal(t, "dashboard.grafana.app/dashboards", doc.GroupResource)
 }
 
-// Dashboards and folders opt in through their manifests. Written out so that a
-// Grafana kind joining them is reviewed: its lists must not hide objects that a
-// get by name returns, including in storage wrappers the manifest says nothing
-// about.
+// Dashboards, folders, notebooks and playlists opt in through their manifests.
+// Written out so that a Grafana kind joining them is reviewed: its lists must not
+// hide objects that a get by name returns, including in storage wrappers the
+// manifest says nothing about. The only test that reads the real coverage; the
+// others use testBuiltinManifests.
 func TestGlobalSearchCoversTheKindsThatOptIn(t *testing.T) {
 	dashboards := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
 	folders := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
-	assert.Equal(t, []schema.GroupResource{dashboards, folders}, GlobalSearchResourceTypes())
-	assert.Equal(t, map[schema.GroupResource]string{dashboards: "Dashboard", folders: "Folder"}, GlobalSearchKinds())
+	notebooks := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "notebooks"}
+	playlists := schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
+	got := globalSearchCoverageOf(AppManifests())
+	assert.Equal(t, []schema.GroupResource{dashboards, folders, notebooks, playlists}, got.types)
+	assert.Equal(t, map[schema.GroupResource]string{
+		dashboards: "Dashboard",
+		folders:    "Folder",
+		notebooks:  "Notebook",
+		playlists:  "Playlist",
+	}, got.kinds)
+}
+
+// testBuiltinManifests stand in for the compiled-in manifests in tests, so that
+// a Grafana kind opting in to global search changes only the test above.
+func testBuiltinManifests() []*app.ManifestData {
+	yes := true
+	return []*app.ManifestData{
+		testGlobalManifest("dashboard.grafana.app", testGlobalKind("Dashboard", "Dashboards", &yes)),
+		testGlobalManifest("folder.grafana.app", testGlobalKind("Folder", "Folders", &yes)),
+	}
+}
+
+// useTestGlobalSearchCoverage makes the compiled-in coverage, which a nil
+// registry falls back to, the one testBuiltinManifests describe.
+func useTestGlobalSearchCoverage() {
+	globalSearchCoverage = func() globalSearchTypes { return globalSearchCoverageOf(testBuiltinManifests()) }
 }
 
 // A kind opts in on every version it is served in, or on none: the global index
@@ -437,6 +462,45 @@ func TestGlobalSearchCoverageOf(t *testing.T) {
 	}, got.kinds)
 }
 
+// A kind renamed between versions is named from the preferred version, or else
+// the first version that declares it, not from whichever version comes last.
+func TestGlobalSearchCoverageOfNamesRenamedKinds(t *testing.T) {
+	yes := true
+	widgets := schema.GroupResource{Group: "a.grafana.app", Resource: "widgets"}
+	for _, tc := range []struct {
+		preferred string
+		want      string
+	}{
+		{preferred: "", want: "Widget"},
+		{preferred: "v1", want: "Widget"},
+		{preferred: "v2", want: "Gadget"},
+	} {
+		t.Run("preferred "+tc.preferred, func(t *testing.T) {
+			got := globalSearchCoverageOf([]*app.ManifestData{{
+				Group:            widgets.Group,
+				PreferredVersion: tc.preferred,
+				Versions: []app.ManifestVersion{
+					{Name: "v1", Kinds: []app.ManifestVersionKind{testGlobalKind("Widget", "widgets", &yes)}},
+					{Name: "v2", Kinds: []app.ManifestVersionKind{testGlobalKind("Gadget", "widgets", &yes)}},
+				},
+			}})
+			assert.Equal(t, map[schema.GroupResource]string{widgets: tc.want}, got.kinds)
+		})
+	}
+}
+
+func TestManifestKindsInclude(t *testing.T) {
+	m := &app.ManifestData{Group: "a.grafana.app", PreferredVersion: "v2", Versions: []app.ManifestVersion{
+		{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets"}}},
+		{Name: "v2", Kinds: []app.ManifestVersionKind{{Kind: "Gadget", Plural: "widgets"}}},
+	}}
+	onlyV1 := func(v app.ManifestVersion, _ app.ManifestVersionKind) bool { return v.Name == "v1" }
+	assert.Equal(t, map[schema.GroupResource]schema.GroupVersionKind{
+		{Group: "a.grafana.app", Resource: "widgets"}: {Group: "a.grafana.app", Version: "v1", Kind: "Widget"},
+	}, ManifestKinds(m, onlyV1), "a preferred version left out by include does not count")
+	assert.Empty(t, ManifestKinds(nil, nil))
+}
+
 // Manifests read at runtime replace the compiled-in ones kind by kind, so an app
 // can opt a kind in or out without a Grafana release.
 func TestGlobalSearchCoverageOfSeveralSources(t *testing.T) {
@@ -498,8 +562,8 @@ func TestGlobalSearchCoverageRegistry(t *testing.T) {
 // The manifest watcher reloads every registry through ReloadManifests.
 func TestReloadManifestsUpdatesGlobalSearchCoverage(t *testing.T) {
 	yes := true
-	opts := SearchOptions{GlobalSearchCoverage: NewGlobalSearchCoverageRegistry(AppManifests())}
+	opts := SearchOptions{GlobalSearchCoverage: NewGlobalSearchCoverageRegistry(testBuiltinManifests())}
 	pages := schema.GroupResource{Group: "x.ext.grafana.app", Resource: "pages"}
-	require.NoError(t, opts.ReloadManifests(AppManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))}))
+	require.NoError(t, opts.ReloadManifests(testBuiltinManifests(), []*app.ManifestData{testGlobalManifest(pages.Group, testGlobalKind("Page", "Pages", &yes))}))
 	assert.True(t, opts.GlobalSearchCoverage.Covers(pages))
 }

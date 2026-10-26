@@ -22,14 +22,14 @@ const MAX_TILE_ZOOM = 15;
 /**
  * Protomaps names minor roads, paths and roads of kind `other` from zoom 15. In dense cities that is
  * thousands of line labels, each split into pieces that are placed and drawn every frame, which
- * drops panning to about 15 fps. CARTO waits until zoom 16 and leaves paths unnamed.
+ * drops panning to about 15 fps. The default basemap waits until zoom 16 and leaves paths unnamed.
  */
 const MINOR_ROAD_LABELS = 'roads_labels_minor';
 const MINOR_ROAD_LABEL_MIN_ZOOM = 16;
 
 /**
  * The light and dark flavors label shops, restaurants and street furniture from the zoom each
- * feature allows. CARTO only names parks, plus stadiums and attractions prominent enough to appear
+ * feature allows. The default basemap only names parks, plus stadiums and attractions prominent enough to appear
  * by zoom 13, and only from zoom 15.
  */
 const POI_LABELS = 'pois';
@@ -44,9 +44,9 @@ const PROMINENT_POI: GlValue = [
 const MIN_ZOOM: GlValue = ['coalesce', ['get', 'min_zoom'], 0];
 
 /**
- * Protomaps sizes places by population rank. The default basemap, on the same Tilezen-style tile schema,
- * sizes countries by how early they appear, cities the same way, and smaller places by OpenStreetMap
- * class. Below zoom 8 the default basemap names only cities, all at 12px.
+ * Protomaps sizes places by population rank. The default basemap, on the same Tilezen-style tile
+ * schema, sizes countries by how early they appear, cities the same way, and smaller places by
+ * OpenStreetMap class. Below zoom 8 the default basemap names only cities, all at 12px.
  */
 const COUNTRY_CLASS: GlValue = ['case', ['<=', MIN_ZOOM, 3], 'major', 'minor'];
 const CAPITAL: GlValue = ['in', ['get', 'capital'], ['literal', ['yes', '2', '3', '4', '5', '6']]];
@@ -72,9 +72,9 @@ const LOCALITY_CLASS: GlValue = [
 ];
 
 /**
- * The map sits under the panel's data, so labels follow the default basemap's: no house numbers, shields or one-way
- * arrows, its text sizes, weights and spacing, and points of interest in the muted grey of
- * minor-road names.
+ * The map sits under the panel's data, so labels follow the default basemap's: no house numbers,
+ * shields or one-way arrows, its text sizes, weights and spacing, and points of interest in the
+ * muted grey of minor-road names.
  */
 const UNLABELLED_LAYERS = new Set(['address_label', 'roads_shields', 'roads_oneway']);
 const LABEL_STYLES: Record<string, { layout: Record<string, GlValue>; paint?: Record<string, GlValue> }> = {

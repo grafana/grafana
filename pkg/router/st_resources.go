@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"slices"
-	"strings"
 
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 
@@ -27,7 +26,8 @@ var singleTenantOnlyResources = []string{"librarypanels", "snapshots"}
 // across namespaces, including its items and subresources. Discovery and
 // OpenAPI address no resource.
 func resourceFromPath(path string) (string, bool) {
-	parts := strings.Split(strings.TrimPrefix(path, "/"), "/")
+	var buf [6]string
+	parts := pathParts(path, buf[:0])
 	if len(parts) < 4 || parts[0] != "apis" {
 		return "", false
 	}

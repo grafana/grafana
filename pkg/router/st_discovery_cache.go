@@ -91,6 +91,11 @@ func (c *stackDiscoveryCache) add(key string, entry stackDiscoveryEntry) {
 	defer c.mu.Unlock()
 	// Remove first, so that the evict callback subtracts a replaced entry.
 	c.entries.Remove(key)
+	if entry.size > c.limit {
+		// It could never fit, and making room would evict every other stack's
+		// entries before dropping it too.
+		return
+	}
 	c.entries.Add(key, entry)
 	c.bytes += entry.size
 	for c.bytes > c.limit && c.entries.Len() > 0 {
@@ -183,7 +188,7 @@ func (st *singleTenantFallback) forwardDiscovery(host *singleTenantTarget, w htt
 func (st *singleTenantFallback) fetchDiscovery(host *singleTenantTarget, key string, req *http.Request) fetchedStackDiscovery {
 	// Shared by every caller waiting on it, so one caller leaving must not
 	// cancel it.
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(req.Context()), singleTenantDiscoveryFetchTimeout)
+	ctx, cancel := context.WithTimeoutCause(context.WithoutCancel(req.Context()), singleTenantDiscoveryFetchTimeout, errRouterDeadline)
 	defer cancel()
 	// Without conditional headers the stack sends a body to cache, never a 304.
 	proxyReq := req.Clone(ctx)
@@ -203,7 +208,7 @@ func (st *singleTenantFallback) fetchDiscovery(host *singleTenantTarget, key str
 	}
 	if cacheable && rec.statusCode == http.StatusOK {
 		f.entry.header = openAPICacheHeaders(rec.header)
-		f.entry.etag = quoteETag(hashHex(rec.body.String()))
+		f.entry.etag = quoteETag(hashHexBytes(rec.body.Bytes()))
 		f.entry.expiresAt = time.Now().Add(singleTenantDiscoveryCacheTTL)
 		st.discoveryDocs.add(key, f.entry)
 		f.stored = true
