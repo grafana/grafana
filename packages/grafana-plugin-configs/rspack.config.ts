@@ -269,10 +269,8 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           { from: 'plugin.json', to: '.' },
           ...(hasLicense(pluginDir) ? [{ from: 'LICENSE', to: '.' }] : []),
           { from: 'CHANGELOG.md', to: '.', force: true },
-          { from: '**/*.json', to: '.', globOptions: { ignore: copyIgnore } }, // TODO<Add an error for checking the basic structure of the repo>
-          { from: '**/*.svg', to: '.', noErrorOnMissing: true, globOptions: { ignore: copyIgnore } }, // Optional
-          { from: '**/*.png', to: '.', noErrorOnMissing: true, globOptions: { ignore: copyIgnore } }, // Optional
-          { from: '**/*.html', to: '.', noErrorOnMissing: true, globOptions: { ignore: copyIgnore } }, // Optional
+          { from: 'dashboards/**/*', to: '.', noErrorOnMissing: true, globOptions: { ignore: copyIgnore } }, // Optional
+          { from: 'locales/**/*', to: '.', noErrorOnMissing: true, globOptions: { ignore: copyIgnore } }, // Optional
           { from: 'img/**/*', to: '.', noErrorOnMissing: true, globOptions: { ignore: copyIgnore } }, // Optional
           { from: 'libs/**/*', to: '.', noErrorOnMissing: true, globOptions: { ignore: copyIgnore } }, // Optional
           { from: 'schema/**/*', to: '.', noErrorOnMissing: true, globOptions: { ignore: copyIgnore } }, // Optional
