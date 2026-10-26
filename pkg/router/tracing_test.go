@@ -199,7 +199,7 @@ func TestOpenAPIBackendTracing(t *testing.T) {
 			for range 2 {
 				response := httptest.NewRecorder()
 				req := newAuthenticatedRequest(http.MethodGet, "/openapi/v3/apis/test.grafana.app/v1?hash=revision", nil)
-				router.HandleFunc(response, req, http.NotFoundHandler())
+				router.HandleFunc(response, req)
 				require.Equal(t, status, response.Code)
 			}
 			if status == http.StatusOK {
@@ -250,7 +250,7 @@ func TestDiscoveryBackendTracing(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/apis", nil).WithContext(authenticatedTestContext(ctx))
 			req.Header.Set("Accept", aggregatedDiscoveryJSON)
 			response := httptest.NewRecorder()
-			router.HandleFunc(response, req, http.NotFoundHandler())
+			router.HandleFunc(response, req)
 			require.Equal(t, http.StatusOK, response.Code)
 			expected := 1
 			if mode == "legacy" {
@@ -422,4 +422,25 @@ func TestSameProvider(t *testing.T) {
 	require.False(t, sameProvider(sliceProvider{"a"}, sliceProvider{"a"}))
 	require.True(t, sameProvider(nil, nil))
 	require.False(t, sameProvider(a, nil))
+}
+
+// A call nested in another, such as a plugin's own span inside the router's
+// backend span, keeps the outer call's client breaker, and a proxy failure
+// inside it reaches the outer call's breaker outcome.
+func TestNestedBackendCallSharesBreakerState(t *testing.T) {
+	cb := newGroupBreaker("test.grafana.app")
+	outerRec, outerReq, outer := traceRouterRequest(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/test.grafana.app/v1", nil), "router.backend", "test.grafana.app")
+	defer outerRec.endSpan()
+	outer.breaker = cb
+
+	innerRec, innerReq, inner := traceRouterRequest(httptest.NewRecorder(), outerReq, "router.plugin", "test.grafana.app")
+	defer innerRec.endSpan()
+	require.Same(t, inner, backendCallFrom(innerReq.Context()))
+	require.Same(t, cb, inner.breaker)
+
+	failure := io.ErrUnexpectedEOF
+	proxyErrorHandler(httptest.NewRecorder(), innerReq, failure)
+	require.ErrorIs(t, inner.proxyErr, failure)
+	require.ErrorIs(t, outer.proxyErr, failure)
+	require.ErrorIs(t, breakerOutcome(outerReq, http.StatusOK, outer), failure)
 }

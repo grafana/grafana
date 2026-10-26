@@ -15,7 +15,36 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-type routerSpanKey struct{}
+// backendCall is the router's state for one call to a backend, in the
+// request context under one key, so a call adds a single context value: the
+// router's span, the breaker a client-scoped handler gates its own calls
+// through, and why the proxy could not relay the backend's response.
+type backendCall struct {
+	span trace.SpanContext
+	// breaker is set only for handlers that break on client calls.
+	breaker *groupBreaker
+	// proxyErr is recorded by proxyErrorHandler, so the breaker classifies
+	// the failure itself rather than inferring it from a 502.
+	proxyErr error
+	// outer is the call this one is nested in, such as a plugin's own span
+	// inside the router's backend span. It shares the outer call's breaker,
+	// and its proxy error is the outer call's too.
+	outer *backendCall
+}
+
+// setProxyErr records err on call and every call it is nested in.
+func (call *backendCall) setProxyErr(err error) {
+	for ; call != nil; call = call.outer {
+		call.proxyErr = err
+	}
+}
+
+type backendCallKey struct{}
+
+func backendCallFrom(ctx context.Context) *backendCall {
+	call, _ := ctx.Value(backendCallKey{}).(*backendCall)
+	return call
+}
 
 const routerTracerName = "github.com/grafana/grafana/pkg/router"
 
@@ -77,18 +106,23 @@ func (currentPropagator) Fields() []string {
 var internalSpanKind = trace.WithSpanKind(trace.SpanKindInternal)
 
 // traceRouterRequest starts a router span for req, and returns the recorder
-// to write the response through and the request carrying the span. The
-// caller defers rec.endSpan(), which ends the span with the outcome.
-func traceRouterRequest(w http.ResponseWriter, req *http.Request, name, group string, attributes ...attribute.KeyValue) (*statusRecorder, *http.Request) {
+// to write the response through, the request carrying the span, and the
+// backend call it is for. The caller defers rec.endSpan(), which ends the
+// span with the outcome.
+func traceRouterRequest(w http.ResponseWriter, req *http.Request, name, group string, attributes ...attribute.KeyValue) (*statusRecorder, *http.Request, *backendCall) {
 	ctx := routerTraceContext(req)
 	attributes = append(attributes,
 		attribute.String("grafana.router.group", group),
 		semconv.HTTPRequestMethodKey.String(traceHTTPMethod(req.Method)))
 	ctx, span := routerTracer().Start(ctx, name, internalSpanKind, trace.WithAttributes(attributes...))
-	ctx = context.WithValue(ctx, routerSpanKey{}, span.SpanContext())
+	call := &backendCall{span: span.SpanContext()}
+	if outer := backendCallFrom(ctx); outer != nil {
+		call.breaker, call.outer = outer.breaker, outer
+	}
+	ctx = context.WithValue(ctx, backendCallKey{}, call)
 	rec := newStatusRecorder(w)
 	rec.span, rec.spanCtx = span, ctx
-	return rec, req.WithContext(ctx)
+	return rec, req.WithContext(ctx), call
 }
 
 // endSpan ends the span traceRouterRequest started, with the response's
