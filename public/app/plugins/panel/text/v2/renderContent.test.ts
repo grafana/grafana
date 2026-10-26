@@ -428,8 +428,9 @@ describe('interpolateTemplate', () => {
     it.each([
       ['an unknown reducer', '${__data.fields.CPU:reduce:nope}'],
       ['a reducer that returns every value', '${__data.fields.CPU:reduce:allValues}'],
-    ])('leaves %s literal', (_name, content) => {
+    ])('leaves %s literal, in both render modes', (_name, content) => {
       expect(interpolate(content, usage, RenderMode.Once)).toBe(content);
+      expect(interpolate(content, usage, RenderMode.PerRow)).toBe([content, content, content].join('\n\n'));
     });
 
     it('resolves the same value on every row, leaving row macros alone', () => {

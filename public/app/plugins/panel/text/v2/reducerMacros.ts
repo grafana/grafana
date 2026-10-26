@@ -38,15 +38,18 @@ export function withReducerMacros(replaceVariables: InterpolateFunction): Interp
 
     const replaced = text.replace(REDUCER_MACRO, (match, rawPath: string, reducerId: string, macroFormat?: string) => {
       const reducer = fieldReducers.getIfExists(reducerId);
+      const name = `__textReduced${count++}`;
+
+      // Kept as a scoped var, not left in the text, so Per row mode can't resolve it against the row.
       if (!reducer || LIST_REDUCERS.has(reducer.id)) {
-        return match;
+        resolved[name] = { text: match, value: match };
+        return `\${${name}}`;
       }
 
       const path = rawPath.startsWith('.') ? rawPath.slice(1) : rawPath;
       const fields = getFieldDisplayValuesProxy({ frame, reducer: reducer.id });
       const value = String(getFieldAccessor(path)({ name: frame.name, refId: frame.refId, fields }) ?? '');
 
-      const name = `__textReduced${count++}`;
       resolved[name] = { text: value, value };
 
       return macroFormat ? `\${${name}:${macroFormat}}` : `\${${name}}`;
