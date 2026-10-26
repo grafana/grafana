@@ -39,7 +39,7 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 	})
 }
 
-func testMultiorgAlertmanagerRemoteSecondaryMode(t *testing.T, fakeAM *fakeRemoteAlertmanager, serverURL string, secretsService *secretsManager.SecretsService) {
+func testMultiorgAlertmanagerRemoteSecondaryMode(t *testing.T, fakeAM *fakeRemoteAlertmanager, serverURL string, secretsService *secretsManager.SecretsService) { //nolint: staticcheck
 	t.Helper()
 	ctx := t.Context()
 	nopLogger := log.NewNopLogger()
