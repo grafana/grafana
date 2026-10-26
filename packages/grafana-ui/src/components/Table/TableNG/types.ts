@@ -11,7 +11,6 @@ import {
   type FieldType,
   type DataFrameWithValue,
   type SelectableValue,
-  type FieldState,
 } from '@grafana/data';
 import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
 import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
