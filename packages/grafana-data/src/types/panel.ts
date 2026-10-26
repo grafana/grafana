@@ -104,6 +104,12 @@ export interface PanelProps<T = any> {
    */
   fitContent?: boolean;
 
+  /**
+   * In fit-content mode, the most height (px) the layout allows the panel's content.
+   * Undefined when the layout does not cap it.
+   */
+  fitMaxHeight?: number;
+
   /** Field options configuration. Controls how field values are displayed (e.g., units, min, max, decimals, thresholds) */
   fieldConfig: FieldConfigSource;
 

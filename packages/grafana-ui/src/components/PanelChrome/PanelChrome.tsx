@@ -95,6 +95,11 @@ interface BaseProps {
    * the chrome still fills a floor when its content is shorter.
    */
   minHeight?: number;
+  /**
+   * Maximum height (px) for the panel container. With no `height`, children receive
+   * the inner height this cap leaves, so content-fit panels can size to it.
+   */
+  maxHeight?: number;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -175,6 +180,7 @@ export function PanelChrome({
   subHeaderContent,
   subtitle,
   minHeight,
+  maxHeight,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
@@ -219,7 +225,7 @@ export function PanelChrome({
     theme,
     headerHeight,
     collapsed,
-    height,
+    height ?? maxHeight,
     width
   );
 
@@ -228,7 +234,7 @@ export function PanelChrome({
     paddingBottom: subHeaderHeight ? 0 : theme.spacing.gridSize,
   };
 
-  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height, minHeight };
+  const containerStyles: CSSProperties = { width, height: collapsed ? undefined : height, minHeight, maxHeight };
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
   /** Old property name now maps to actions */
