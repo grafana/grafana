@@ -252,11 +252,12 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 	return tuples, nil
 }
 
-// Only wildcard service-account grants are supported here. Legacy instance scopes
-// can contain numeric IDs, while the FGA type uses UIDs and does not support
-// per-instance permission management. Do not broaden those grants to all accounts.
+// Only unscoped creation and wildcard service-account grants are supported here.
+// Legacy instance scopes can contain numeric IDs, while the FGA type uses UIDs
+// and does not support per-instance permission management. Do not broaden scoped
+// grants to all accounts.
 func serviceAccountRolePermissionTuple(subject string, perm RolePermission) *openfgav1.TupleKey {
-	if perm.Action == "serviceaccounts:create" {
+	if perm.Action == "serviceaccounts:create" && perm.Kind == "" && perm.Identifier == "" {
 		return NewGroupResourceTuple(subject, RelationCreate, iamGroup, common.KindServiceAccounts, "")
 	}
 	if perm.Kind != common.KindServiceAccounts || perm.Identifier != "*" {

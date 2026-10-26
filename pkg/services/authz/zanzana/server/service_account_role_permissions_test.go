@@ -84,3 +84,22 @@ func TestIntegrationServiceAccountScopedGrantsDoNotAuthorizeAllAccounts(t *testi
 		})
 	}
 }
+
+func TestIntegrationServiceAccountCreateRequiresUnscopedGrant(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, scope := range []string{"permissions:type:delegate", "permissions:type:escalate", "serviceaccounts:id:42", "serviceaccounts:uid:sa1"} {
+		t.Run(scope, func(t *testing.T) {
+			srv := setupOpenFGAServer(t)
+			tuples, err := zanzana.RoleToTuples("create-role", []*authzextv1.RolePermission{{Action: "serviceaccounts:create", Scope: scope}})
+			require.NoError(t, err)
+			tuples = append(tuples, common.NewTuple("user:manager", "assignee", "role:create-role"))
+			setupOpenFGADatabase(t, srv, tuples)
+			result, err := srv.Check(newContextWithNamespace(), &authzv1.CheckRequest{
+				Namespace: namespace, Subject: "user:manager", Group: "iam.grafana.app",
+				Resource: "serviceaccounts", Verb: "create",
+			})
+			require.NoError(t, err)
+			require.False(t, result.GetAllowed(), "scope %q must not grant service-account creation", scope)
+		})
+	}
+}
