@@ -60,7 +60,10 @@ export function RangeFilterFrame({
       direction="column"
       gap={1.5}
       role="group"
-      aria-label={t('grafana-ui.table.range.label', 'Filter {{field}}', { field: getDisplayName(field) })}
+      aria-label={t('grafana-ui.table.range.label', 'Filter {{field}}', {
+        field: getDisplayName(field),
+        interpolation: { escapeValue: false },
+      })}
     >
       {children}
       {invalid && (

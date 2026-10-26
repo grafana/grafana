@@ -129,6 +129,14 @@ describe('FilterPopup', () => {
     expect(screen.queryByPlaceholderText('Filter values')).not.toBeInTheDocument();
   });
 
+  it('announces a range filter field name without HTML escaping', () => {
+    const name = 'CPU & memory < max';
+    const field: Field = { name, type: FieldType.number, values: [0, 10], config: {} };
+    renderPopup({ field, rows: makeRows(name, ['0', '10']), rangeFiltersEnabled: true });
+
+    expect(screen.getByRole('group', { name: `Filter ${name}` })).toBeInTheDocument();
+  });
+
   it.each([FieldType.number, FieldType.time])(
     'uses the string editor for %s fields without the new-features flag',
     (type) => {
@@ -196,6 +204,27 @@ describe('FilterPopup', () => {
 
       await user.keyboard('{Escape}');
 
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('closes the date calendar before closing the filter popup', async () => {
+      const user = userEvent.setup();
+      const field: Field = { name: 'Time', type: FieldType.time, values: [Date.UTC(2026, 8, 17)], config: {} };
+      const { onClose } = renderPopup({
+        field,
+        rows: makeRows('Time', ['2026-09-17']),
+        rangeFiltersEnabled: true,
+      });
+
+      await user.click(screen.getAllByRole('button', { name: 'Open calendar' })[0]);
+      const calendar = screen.getByRole('dialog');
+      calendar.focus();
+
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(onClose).not.toHaveBeenCalled();
+
+      await user.keyboard('{Escape}');
       expect(onClose).toHaveBeenCalledTimes(1);
     });
   });

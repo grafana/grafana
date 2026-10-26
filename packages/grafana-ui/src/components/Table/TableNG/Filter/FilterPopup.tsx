@@ -37,15 +37,15 @@ const FilterPopupEditor = memo((props: FilterPopupProps) => {
 
   useEffect(() => {
     function handleEscape(e: KeyboardEvent) {
-      if (e.key === 'Escape') {
+      if (e.key === 'Escape' && !e.defaultPrevented) {
         onClose();
         buttonElement?.focus();
       }
     }
-    document.addEventListener('keyup', handleEscape);
+    document.addEventListener('keydown', handleEscape);
 
     return () => {
-      document.removeEventListener('keyup', handleEscape);
+      document.removeEventListener('keydown', handleEscape);
     };
   }, [onClose, buttonElement]);
 
