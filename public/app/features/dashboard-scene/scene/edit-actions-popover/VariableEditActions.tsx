@@ -5,7 +5,13 @@ import { t } from '@grafana/i18n';
 import { CustomVariable, QueryVariable, type SceneVariable } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 
-import { DeleteActionButton, DuplicateActionButton, getActionStyles, SettingsActionButton } from './EditActions';
+import {
+  DeleteActionButton,
+  DuplicateActionButton,
+  EditActionButton,
+  getActionStyles,
+  SettingsActionButton,
+} from './EditActions';
 import { useEditActionsPopover } from './EditActionsPopover';
 
 export function VariableEditActions({
@@ -65,22 +71,19 @@ export function VariableEditActions({
 
   return (
     <>
-      <SettingsActionButton onClick={onClickEdit} />
+      <SettingsActionButton
+        onClick={onClickEdit}
+        tooltip={t('dashboard-scene.variable-edit-actions.tooltip-variable-settings', 'Variable settings')}
+      />
       {hasQueryEditor && (
-        <>
-          <div className={styles.actionsDivider} />
-          <Button
-            fill="text"
-            variant="secondary"
-            size="sm"
-            className={cx(styles.action, styles.textAction)}
-            onClick={onClickEditQueryInternal}
-          >
-            {variable instanceof CustomVariable
+        <EditActionButton
+          onClick={onClickEditQueryInternal}
+          tooltip={
+            variable instanceof CustomVariable
               ? t('dashboard-scene.variable-edit-actions.edit-custom-values', 'Edit values')
-              : t('dashboard-scene.variable-edit-actions.edit-query', 'Edit query')}
-          </Button>
-        </>
+              : t('dashboard-scene.variable-edit-actions.edit-query', 'Edit query')
+          }
+        />
       )}
       <div className={styles.actionsDivider} />
       <DuplicateActionButton onClick={onClickDuplicate} />

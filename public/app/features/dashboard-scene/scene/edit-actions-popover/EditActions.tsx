@@ -3,24 +3,41 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, IconButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { IconButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { useEditActionsPopover } from './EditActionsPopover';
 
-export function SettingsActionButton({ onClick }: { onClick: () => void }) {
+export function EditActionButton({ onClick, tooltip }: { onClick: () => void; tooltip: string }) {
   const styles = useStyles2(getActionStyles);
   return (
-    <Button
-      fill="text"
+    <IconButton
+      name="edit"
       variant="secondary"
-      size="sm"
-      className={cx(styles.action, styles.textAction)}
+      size="md"
+      className={styles.action}
       onClick={onClick}
-    >
-      {t('dashboard-scene.control-edit-actions.settings', 'Settings')}
-    </Button>
+      aria-label={tooltip}
+      tooltip={tooltip}
+      tooltipPlacement="top"
+    />
+  );
+}
+
+export function SettingsActionButton({ onClick, tooltip }: { onClick: () => void; tooltip: string }) {
+  const styles = useStyles2(getActionStyles);
+  return (
+    <IconButton
+      name="cog"
+      variant="secondary"
+      size="md"
+      className={styles.action}
+      onClick={onClick}
+      aria-label={tooltip}
+      tooltip={tooltip}
+      tooltipPlacement="top"
+    />
   );
 }
 
@@ -80,6 +97,7 @@ export function DuplicateActionButton({ onClick, isRepeated }: { onClick: () => 
       size="md"
       className={styles.action}
       onClick={onClick}
+      aria-label={tooltip}
       tooltip={tooltip}
       tooltipPlacement="top"
       disabled={isRepeated}
@@ -133,6 +151,7 @@ export function DeleteActionButton({
       size="md"
       className={cx(styles.action, styles.deleteAction)}
       onClick={onClickInternal}
+      aria-label={tooltip}
       tooltip={tooltip}
       tooltipPlacement="top"
       disabled={isRepeated}

@@ -1,11 +1,16 @@
-import { cx } from '@emotion/css';
 import { useCallback } from 'react';
 
 import { t } from '@grafana/i18n';
 import { type SceneDataLayerProvider } from '@grafana/scenes';
-import { Button, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
-import { DeleteActionButton, DuplicateActionButton, getActionStyles, SettingsActionButton } from './EditActions';
+import {
+  DeleteActionButton,
+  DuplicateActionButton,
+  EditActionButton,
+  getActionStyles,
+  SettingsActionButton,
+} from './EditActions';
 import { useEditActionsPopover } from './EditActionsPopover';
 
 export function AnnotationEditActions({
@@ -31,17 +36,14 @@ export function AnnotationEditActions({
 
   return (
     <>
-      <SettingsActionButton onClick={onClickEdit} />
-      <div className={styles.actionsDivider} />
-      <Button
-        fill="text"
-        variant="secondary"
-        size="sm"
-        className={cx(styles.action, styles.textAction)}
+      <SettingsActionButton
+        tooltip={t('dashboard-scene.annotation-edit-actions.tooltip-edit-annotation-settings', 'Annotation settings')}
+        onClick={onClickEdit}
+      />
+      <EditActionButton
         onClick={onClickEditQueryInternal}
-      >
-        {t('dashboard-scene.annotation-edit-actions.edit-query', 'Edit query')}
-      </Button>
+        tooltip={t('dashboard-scene.annotation-edit-actions.tooltip-edit-annotation-query', 'Edit query')}
+      />
       <div className={styles.actionsDivider} />
       <DuplicateActionButton onClick={onClickDuplicate} />
       <DeleteActionButton
