@@ -36,21 +36,22 @@ func TestDebouncer(t *testing.T) {
 			ctx := t.Context()
 
 			group.Start(ctx)
+			defer group.Stop()
 
 			require.NoError(t, group.Add("key1"))
 			require.NoError(t, group.Add("key2"))
 			// Should be deduplicated.
 			require.NoError(t, group.Add("key1"))
 
-			require.Eventually(t, func() bool {
-				// We should have processed key1 and key2 exactly once.
-				processedMu.Lock()
-				if processedValues["key1"] == 1 && processedValues["key2"] == 1 {
-					return true
-				}
-				processedMu.Unlock()
-				return false
-			}, time.Millisecond*200, time.Millisecond*20)
+			// Let the group consume all three additions before measuring the debounce interval.
+			synctest.Wait()
+
+			// Expire MinWait and finish both handlers before checking deduplication.
+			synctest.Sleep(10 * time.Millisecond)
+
+			processedMu.Lock()
+			defer processedMu.Unlock()
+			require.Equal(t, map[string]int{"key1": 1, "key2": 1}, processedValues)
 		})
 	})
 
