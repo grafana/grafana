@@ -450,8 +450,12 @@ func TestIntegrationContactPointService(t *testing.T) {
 					},
 				}
 
-				ctx := context.WithValue(context.Background(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
-				err = sut.UpdateContactPoint(ctx, 1, adminUser, cp, models.ProvenanceAPI)
+				// A fresh secrets service forces data-key reads instead of hiding invalid sessions through cache hits.
+				sut.encryptionService = manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
+				sut.xact = sqlStore
+				err = sqlStore.InTransaction(t.Context(), func(ctx context.Context) error {
+					return sut.UpdateContactPoint(ctx, 1, adminUser, cp, models.ProvenanceAPI)
+				})
 				require.NoError(t, err)
 				require.True(t, saved)
 				require.Equal(t, tc.rename, copied)

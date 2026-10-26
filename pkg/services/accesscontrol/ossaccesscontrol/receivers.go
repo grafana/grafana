@@ -184,7 +184,7 @@ func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID i
 
 func (r ReceiverPermissionsService) onPermissionsCopied(ctx context.Context, event *receiverPermissionsCopied) error {
 	if err := r.refreshPermissions(ctx, event.user); err != nil {
-		tracing.Error(trace.SpanFromContext(ctx), err)
+		_ = tracing.Error(trace.SpanFromContext(ctx), err)
 	}
 	// The mutation already committed. Refresh failures must not fail event delivery.
 	return nil
