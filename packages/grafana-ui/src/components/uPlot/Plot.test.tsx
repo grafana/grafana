@@ -195,6 +195,77 @@ describe('UPlotChart', () => {
       expect(uPlot).toBeCalledTimes(1);
       expect(setSizeMock).toBeCalledTimes(1);
     });
+
+    it('updates the rebuilt plot after config changes', () => {
+      const { data, config } = mockData();
+
+      const { rerender } = render(
+        <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={100} height={100} />
+      );
+
+      const nextConfig = new UPlotConfigBuilder();
+      nextConfig.addSeries({} as SeriesProps);
+
+      rerender(
+        <UPlotChart
+          data={preparePlotData2(data, getStackingGroups(data))}
+          config={nextConfig}
+          width={100}
+          height={100}
+        />
+      );
+
+      expect(destroyMock).toBeCalledTimes(1);
+      expect(uPlot).toBeCalledTimes(2);
+
+      data.fields[1].values[0] = 1;
+
+      rerender(
+        <UPlotChart
+          data={preparePlotData2(data, getStackingGroups(data))}
+          config={nextConfig}
+          width={200}
+          height={200}
+        />
+      );
+
+      // All instances share the method mocks, so check which instance received each call.
+      const rebuiltPlot = jest.mocked(uPlot).mock.results[1].value;
+      expect(setSizeMock.mock.contexts).toEqual([rebuiltPlot]);
+      expect(setDataMock.mock.contexts).toEqual([rebuiltPlot]);
+    });
+
+    it('does not update the destroyed plot after config changes with zero dimensions', () => {
+      const { data, config } = mockData();
+
+      const { rerender } = render(
+        <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={100} height={100} />
+      );
+
+      const nextConfig = new UPlotConfigBuilder();
+      nextConfig.addSeries({} as SeriesProps);
+
+      rerender(
+        <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={nextConfig} width={0} height={0} />
+      );
+
+      expect(destroyMock).toBeCalledTimes(1);
+      expect(uPlot).toBeCalledTimes(1);
+
+      data.fields[1].values[0] = 1;
+
+      rerender(
+        <UPlotChart
+          data={preparePlotData2(data, getStackingGroups(data))}
+          config={nextConfig}
+          width={200}
+          height={200}
+        />
+      );
+
+      expect(setSizeMock).not.toBeCalled();
+      expect(setDataMock).not.toBeCalled();
+    });
   });
 
   describe('plot lifecycle timing', () => {
