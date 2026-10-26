@@ -18489,13 +18489,13 @@ __metadata:
     ol: "npm:10.7.0"
     ol-ext: "npm:4.0.38"
     ol-mapbox-style: "npm:^13.0.1"
-    ol-pmtiles: "npm:2.0.2"
     open: "npm:^10.2.0"
     ora: "npm:^9.0.0"
     papaparse: "npm:5.5.3"
     pdf-parse: "npm:^1.1.1"
     playwright: "npm:1.56.1"
     pluralize: "npm:^8.0.0"
+    pmtiles: "npm:4.5.0"
     prettier: "npm:3.6.2"
     prismjs: "npm:1.30.0"
     prom-client: "npm:^15.1.3"
@@ -24028,17 +24028,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-pmtiles@npm:2.0.2":
-  version: 2.0.2
-  resolution: "ol-pmtiles@npm:2.0.2"
-  dependencies:
-    pmtiles: "npm:^4.3.0"
-  peerDependencies:
-    ol: ">=9.0.0"
-  checksum: 10/25889371842209c97fec7ce5845711bd0f45f9a21453cdb9f2fceb9811bb7ca2c12f0ea79a6e0bb872d4842b9352332425bfab9c78c299fc19882a70006e5590
-  languageName: node
-  linkType: hard
-
 "ol@npm:10.7.0, ol@npm:^10.7.0":
   version: 10.7.0
   resolution: "ol@npm:10.7.0"
@@ -25002,7 +24991,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pmtiles@npm:^4.3.0":
+"pmtiles@npm:4.5.0":
   version: 4.5.0
   resolution: "pmtiles@npm:4.5.0"
   dependencies:
