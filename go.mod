@@ -28,7 +28,7 @@ require (
 	github.com/Masterminds/sprig/v3 v3.3.0 // @grafana/grafana-backend-group
 	github.com/VividCortex/mysqlerr v0.0.0-20170204212430-6c6b55f8796f // @grafana/grafana-backend-group
 	github.com/alicebob/miniredis/v2 v2.37.0 // @grafana/alerting-backend
-	github.com/andybalholm/brotli v1.2.2 // @grafana/partner-datasources
+	github.com/andybalholm/brotli v1.2.7 // @grafana/partner-datasources
 	github.com/apache/arrow-go/v18 v18.5.2 // @grafana/plugins-platform-backend
 	github.com/armon/go-radix v1.0.0 // @grafana/grafana-app-platform-squad
 	github.com/aws/aws-sdk-go v1.55.8 // @grafana/aws-datasources

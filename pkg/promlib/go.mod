@@ -18,7 +18,7 @@ require (
 )
 
 require (
-	github.com/andybalholm/brotli v1.2.2 // indirect
+	github.com/andybalholm/brotli v1.2.7 // indirect
 	github.com/apache/arrow-go/v18 v18.5.2 // indirect
 	github.com/apache/thrift v0.24.0 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
