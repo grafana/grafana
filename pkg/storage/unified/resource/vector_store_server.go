@@ -179,7 +179,7 @@ func (s *VectorStoreServer) resolveWriteTarget(ctx context.Context, namespace, g
 			s.log.Error("vector store: missing shared publishers", "group", group, "resource", resource)
 			return writeTarget{}, status.Error(codes.Internal, "invalid shared publisher configuration")
 		}
-		if _, ok := s.sharedServices[identity]; identity == "" || !ok {
+		if _, ok := s.sharedServices[identity]; !ok {
 			return writeTarget{}, status.Error(codes.PermissionDenied, "service identity not allowed to publish shared vectors")
 		}
 	} else if len(s.allowedServices) > 0 {
@@ -308,6 +308,15 @@ func validateInputs(inputs []*resourcepb.EmbeddingInput, requireUID string) erro
 	return nil
 }
 
+func validateSharedFolders(inputs []*resourcepb.EmbeddingInput) error {
+	for _, in := range inputs {
+		if in.Folder != "" {
+			return status.Error(codes.InvalidArgument, "shared vectors cannot have a folder")
+		}
+	}
+	return nil
+}
+
 // embedInputs embeds every input's content (retrieval-document task) and
 // returns one Vector per input, stamped with the collection's partition key.
 // Embedding is all-or-nothing per batch: a provider failure fails the call.
@@ -364,10 +373,8 @@ func (s *VectorStoreServer) Upsert(ctx context.Context, req *resourcepb.VectorUp
 	}
 
 	if target.shared {
-		for _, in := range req.Inputs {
-			if in.Folder != "" {
-				return nil, status.Error(codes.InvalidArgument, "shared vectors cannot have a folder")
-			}
+		if err := validateSharedFolders(req.Inputs); err != nil {
+			return nil, err
 		}
 	}
 	target, err = s.resolveWriteCollection(ctx, target, true)
@@ -414,10 +421,8 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 	}
 
 	if target.shared {
-		for _, in := range req.Inputs {
-			if in.Folder != "" {
-				return nil, status.Error(codes.InvalidArgument, "shared vectors cannot have a folder")
-			}
+		if err := validateSharedFolders(req.Inputs); err != nil {
+			return nil, err
 		}
 	}
 	target, err = s.resolveWriteCollection(ctx, target, true)
