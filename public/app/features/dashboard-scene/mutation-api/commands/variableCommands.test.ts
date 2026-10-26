@@ -23,6 +23,7 @@ function buildMockScene(
     state,
     canEditDashboard: jest.fn(() => editable),
     isPlanning: jest.fn(() => isPlanning),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -333,6 +334,7 @@ describe('Variable mutation commands', () => {
         state,
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -370,6 +372,7 @@ describe('Variable mutation commands', () => {
         state,
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
@@ -404,6 +407,7 @@ describe('Variable mutation commands', () => {
         state,
         canEditDashboard: jest.fn(() => true),
         isPlanning: jest.fn(() => false),
+        recordEditMutation: jest.fn(),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
