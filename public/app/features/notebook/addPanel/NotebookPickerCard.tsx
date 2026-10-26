@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useId } from 'react';
 
 import { dateTimeFormatTimeAgo, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -17,6 +18,8 @@ interface Props {
 
 export function NotebookPickerCard({ notebook, isSelected, onSelect }: Props) {
   const styles = useStyles2(getStyles);
+  const updatedId = useId();
+  const authorId = useId();
 
   return (
     // A native radio per card rather than Card's `onClick` button, so the list is a single tab stop
@@ -30,16 +33,24 @@ export function NotebookPickerCard({ notebook, isSelected, onSelect }: Props) {
         checked={isSelected}
         onChange={() => onSelect(notebook.uid)}
         aria-label={notebook.title}
+        // Card.Meta takes no id of its own, hence pointing at each entry.
+        aria-describedby={`${updatedId} ${authorId}`}
       />
       <Card.Heading>{notebook.title}</Card.Heading>
       {/* Dots rather than the default vertical bar, per the design. */}
       <Card.Meta separator="·">
         {[
-          t('notebooks.add-panel.card-updated', 'Updated {{when}}', { when: dateTimeFormatTimeAgo(notebook.updated) }),
-          t('notebooks.add-panel.card-author', 'By {{author}}', {
-            author: notebook.authorName,
-            interpolation: { escapeValue: false },
-          }),
+          <span key="updated" id={updatedId}>
+            {t('notebooks.add-panel.card-updated', 'Updated {{when}}', {
+              when: dateTimeFormatTimeAgo(notebook.updated),
+            })}
+          </span>,
+          <span key="author" id={authorId}>
+            {t('notebooks.add-panel.card-author', 'By {{author}}', {
+              author: notebook.authorName,
+              interpolation: { escapeValue: false },
+            })}
+          </span>,
         ]}
       </Card.Meta>
       {/* The Description slot rather than Card.Tags: Tags is a right-hand column of the card's grid,

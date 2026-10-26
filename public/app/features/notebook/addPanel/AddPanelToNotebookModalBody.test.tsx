@@ -270,6 +270,30 @@ describe('AddPanelToNotebookModalBody', () => {
 
         expect(isNotebookRadio(document.activeElement)).toBe(false);
       });
+
+      // Arrows choose, so Enter is free to do what it does for any radio in a form: press the form's
+      // submit button. Asserted through the form owner rather than by pressing Enter, because
+      // user-event only finds a submit button inside the <form>, and this one is in the modal footer.
+      it('submit with Enter on the chosen notebook', async () => {
+        const { user } = renderModal();
+        await chooseExisting(user);
+        await user.click(selectNotebook('Checkout error spike'));
+
+        const radio = screen.getByRole<HTMLInputElement>('radio', { name: 'Checkout error spike' });
+        const submit = screen.getByRole<HTMLButtonElement>('button', { name: 'Add to notebook' });
+        expect(submit).toHaveAttribute('type', 'submit');
+        expect(submit).toBeEnabled();
+        expect(radio.form).not.toBeNull();
+        expect(radio.form).toBe(submit.form);
+      });
+    });
+
+    // The name is the title alone, so the rest of the card has to arrive as the description.
+    it('describe each notebook by its author and age', async () => {
+      const { user } = renderModal();
+      await chooseExisting(user);
+
+      expect(selectNotebook('Q2 latency regression')).toHaveAccessibleDescription(/Updated .* By Marcus Chen/);
     });
   });
 
