@@ -15,6 +15,7 @@ import {
   setMockUserPreferences,
   setTestFlags,
 } from '@grafana/test-utils/unstable';
+import { HIDDEN_NAV_ITEMS } from 'app/core/navtree/navTweaks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
@@ -22,7 +23,6 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { MegaMenu } from './MegaMenu';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
 import { HIDDEN_ITEMS_STORAGE_KEY, SECTION_ORDER_STORAGE_KEY } from './hooks';
-import { HIDDEN_NAV_ITEMS } from './utils';
 
 // The org switcher fetches user orgs on mount when signed in, which is irrelevant here.
 jest.mock('../OrganizationSwitcher/OrganizationSwitcher', () => ({

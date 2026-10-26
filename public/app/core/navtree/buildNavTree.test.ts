@@ -620,6 +620,24 @@ describe('getInitialNavTree', () => {
     expect(ids(getInitialNavTree())).toEqual(['server-built']);
   });
 
+  // The transitional tweaks are the one stage both trees share, which is what
+  // lets a tweak land for everyone during the client-build rollout
+  it('applies the nav tweaks to the bootdata tree as well', () => {
+    setup({ openFeatureFlags: { 'grafana.navigationInfoArchRefresh': true } });
+    config.bootData = {
+      ...config.bootData,
+      navTree: [
+        { id: 'plugin-page-grafana-ml-app', text: 'Machine Learning', url: '/a/grafana-ml-app' },
+        { id: NavID.apps, text: 'More apps', url: '/apps', children: [] },
+      ],
+    };
+
+    const tree = getInitialNavTree();
+
+    expect(ids(tree)).toEqual([NavID.apps]);
+    expect(ids(findById(tree, NavID.apps)?.children ?? [])).toEqual(['plugin-page-grafana-ml-app']);
+  });
+
   // The apps section reads the app metas synchronously: app.ts fills the cache
   // and fetches the user's permissions before the store is configured, and this
   // is where both land in the tree.
