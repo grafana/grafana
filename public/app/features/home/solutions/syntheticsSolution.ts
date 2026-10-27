@@ -2,9 +2,9 @@ import memoize from 'micro-memoize';
 
 import { formattedValueToString, getValueFormat, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { SYNTHETIC_MONITORING_APP_ID, SYNTHETIC_MONITORING_CHECKS_WRITE } from 'app/core/appPluginIds';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { SYNTHETIC_MONITORING_APP_ID, SYNTHETIC_MONITORING_CHECKS_WRITE } from './appPluginIds';
 import { accessibleAppPage, exploreFallbackCta, openAppLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
 import { noMatchStats, scopeFor } from './solutionFilter';

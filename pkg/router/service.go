@@ -2,9 +2,9 @@ package router
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
-	"slices"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const readinessPollInterval = time.Second
@@ -37,6 +38,10 @@ type Service struct {
 	standalone bool
 	middleware bool
 
+	// upstream is the embedded API server, whose groups the router serves in
+	// middleware mode.
+	upstream embeddedUpstream
+
 	// loaderLifecycle is the routes loader's own background lifecycle (such as
 	// cloudLoader's poll loops), which this service starts, stops and watches.
 	// Both are nil for a loader without one; a nil watcher's channel never fires.
@@ -50,14 +55,16 @@ type Service struct {
 // building the router first keeps the dependency graph acyclic.
 func ProvideGrafanaRouter(cfg *setting.Cfg) (*GrafanaRouter, error) {
 	var auth authn.TokenAuthenticator
-	if slices.Contains(cfg.Target, "router") {
+	if standaloneRouter(cfg) {
 		var err error
 		auth, err = authn.NewGrafanaTokenAuthenticator(cfg)
 		if err != nil {
 			return nil, err
 		}
 	}
-	return NewGrafanaRouter(nil, auth), nil
+	r := NewGrafanaRouter(nil, auth)
+	r.builtinManifests = manifestsByGroup(resource.AppManifests())
+	return r, nil
 }
 
 // ProvideService creates the router service around router, attaching loader.
@@ -78,7 +85,20 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 		s.loaderFailures = services.NewFailureWatcher()
 		s.loaderFailures.WatchService(lifecycle)
 	}
+	// In middleware mode the router serves the whole /apis tree, so it serves
+	// the embedded API server's groups too.
+	if s.middleware {
+		router.loader = newEmbeddedLoader(loader, &s.upstream)
+	}
 	return s, nil
+}
+
+// SetUpstream gives the router the embedded API server's handler, once the
+// server has started. In middleware mode the router serves the server's groups
+// through it. The router starts after the server, so it is set before the
+// router's first reconcile.
+func (s *Service) SetUpstream(handler http.Handler) {
+	s.upstream.set(handler)
 }
 
 // RegisterTargetRoutes enables the service and mounts it on the dskit module server.
@@ -88,24 +108,25 @@ func (s *Service) RegisterTargetRoutes(httpRouter *mux.Router, ready ReadyNotifi
 	}
 
 	s.ready = ready
-	next := httpRouter.NotFoundHandler
-	if next == nil {
-		next = http.NotFoundHandler()
+
+	// The standalone router is never middleware, so the loader's handler for
+	// unregistered groups always applies.
+	if loader, ok := s.router.loader.(unregisteredGroupLoader); ok {
+		s.router.unregisteredGroupHandler = loader.UnregisteredGroupHandler()
 	}
 
-	// NOTE: this is not enabled when running as middleware, otherwise this could be internal to the router
-	if st, ok := s.router.loader.(LoaderWithSingleTenantFallback); ok && !s.middleware {
-		s.router.unregisteredGroupHandler = st.SingleTenantFallback()
-	}
-
-	handler := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		s.metrics.instrument(s.router, w, req, next, apiGroup(req.URL.Path))
-	})
 	for _, path := range []string{apisPrefix, openapiV3Prefix} {
+		handler := s.instrumented(s.router.handlerFor(path))
 		httpRouter.Handle(path, handler)
 		httpRouter.PathPrefix(path + "/").Handler(handler)
 	}
 	return nil
+}
+
+func (s *Service) instrumented(handle http.HandlerFunc, parseInfo bool) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		s.metrics.instrument(s.router, w, req, handle, parseInfo)
+	}
 }
 
 func newService(router *GrafanaRouter, reg prometheus.Registerer) *Service {
@@ -115,29 +136,33 @@ func newService(router *GrafanaRouter, reg prometheus.Registerer) *Service {
 	}
 	s.router.onBreakerChange = s.metrics.breakerChanged
 	s.router.onDiscovery = s.metrics.discoveryResult
-	reg.MustRegister(newRouterCollector(s.router))
+	// The collector reads this router's state, so another router's must not be
+	// reused for it. A second router on one registry, as in tests, goes
+	// unreported rather than panicking.
+	var already prometheus.AlreadyRegisteredError
+	for _, collector := range append([]prometheus.Collector{newRouterCollector(s.router)}, newLoaderCounterCollectors(s.router.loader)...) {
+		if err := reg.Register(collector); err != nil && !errors.As(err, &already) {
+			panic(err)
+		}
+	}
 	s.BasicService = services.NewBasicService(s.starting, s.running, s.stopping).WithName("router")
 	return s
 }
 
 // HandleFunc serves through the router when enabled and otherwise delegates.
-// The /apis/discovery tree is the router's own, so it is served either way.
+// When enabled, the router serves the whole /apis and /openapi/v3 trees, the
+// embedded API server's groups included. The /apis/discovery tree is the
+// router's own, so it is served either way.
+//
+// Until the router first becomes ready, it hasn't loaded the embedded server's groups,
+// so next, the embedded server, keeps serving them. In-process clients start
+// before the router does, such as app installers, and the router's own
+// loading calls the server through them.
 func (s *Service) HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler) {
-	if s.middleware || isDiscoveryPath(req.URL.Path) {
-		// Requests for groups the router doesn't serve belong to the embedded
-		// API server, which has its own metrics; don't count them as the router's.
-		group := apiGroup(req.URL.Path)
-		if !s.router.owns(req, group) {
-			// Without a single-tenant fallback, which middleware mode doesn't
-			// set up, the router passes every request it doesn't own to next.
-			if s.router.unregisteredGroupHandler == nil {
-				next.ServeHTTP(w, req)
-				return
-			}
-			s.router.handle(w, req, next, group)
-			return
-		}
-		s.metrics.instrument(s.router, w, req, next, group)
+	path := req.URL.Path
+	if handle, parseInfo := s.router.handlerFor(path); handle != nil &&
+		(isDiscoveryPath(path) || s.middleware && s.router.initialized.Load()) {
+		s.metrics.instrument(s.router, w, req, handle, parseInfo)
 		return
 	}
 	next.ServeHTTP(w, req)

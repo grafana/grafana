@@ -60,6 +60,15 @@ import {
   isRedirectResponse,
 } from 'app/types/dashboard';
 
+import {
+  clearPendingChangePreview,
+  isPreviewingPendingChanges,
+  loadPendingChangePreview,
+  type PendingChangePreview,
+  pendingChangesIdFromLocation,
+  previewedDashboardUid,
+  proposesNewDashboard,
+} from '../lifecycle/pendingChangePreview';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -120,6 +129,15 @@ interface DashboardCacheEntry<T> {
   cacheKey: string;
 }
 
+/**
+ * The pending changes each preview response shows instead of the saved dashboard (see
+ * withPendingChanges and newDashboardPreview). Kept with the response rather than read from the
+ * preview registry when it is turned into a scene: a load of the same dashboard started meanwhile
+ * replaces the registry's entry. Such a scene never goes through the scene cache: it shares the
+ * saved dashboard's version.
+ */
+const shownPendingChanges = new WeakMap<object, PendingChangePreview>();
+
 export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
@@ -130,6 +148,12 @@ export interface LoadDashboardOptions {
   editTemplate?: boolean;
   defaultVariables?: VariableKind[];
   defaultLinks?: DashboardLink[];
+  /**
+   * Pending changes to preview (see pendingChangePreview.ts). The dashboard page reads them
+   * from its URL instead. With them, a missing dashboard isn't alerted: they may propose it, and
+   * the page reports one that is missing.
+   */
+  pendingChanges?: string;
 }
 
 type HomeDashboardDTO = DashboardDTO & {
@@ -838,6 +862,7 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     uid,
     route,
     urlFolderUid,
+    pendingChanges,
   }: LoadDashboardOptions): Promise<DashboardDTO | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
@@ -922,9 +947,13 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
           // Since the scene is not yet there, we need to process whatever came through URL
           if (getFeatureFlagClient().getBooleanValue(FlagKeys.ReloadDashboardsOnParamsChange, false)) {
             const queryParamsObject = processQueryParamsForDashboardLoad();
-            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid, queryParamsObject);
+            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid, queryParamsObject, {
+              alertNotFound: !pendingChanges,
+            });
           } else {
-            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid);
+            rsp = await dashboardLoaderSrv.loadDashboard(type || 'db', slug || '', uid, undefined, {
+              alertNotFound: !pendingChanges,
+            });
           }
 
           if (route === DashboardRoutes.Embedded) {
@@ -1099,7 +1128,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     const mode = getGlobalVariablesMode(parseUseCrossDashboardVariables(resolutionInput.annotations));
 
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
-      DashboardInteractions.globalVariablesLoaded({
+      DashboardInteractions.predefinedVariablesLoaded({
         global_count: 0,
         folder_count: 0,
         total_count: 0,
@@ -1116,7 +1145,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     const predefinedVariables = resolvePredefinedVariablesForDashboard(candidates, resolutionInput);
     const counts = countPredefinedVariableOrigins(predefinedVariables);
 
-    DashboardInteractions.globalVariablesLoaded({
+    DashboardInteractions.predefinedVariablesLoaded({
       ...counts,
       mode,
     });
@@ -1137,7 +1166,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     // Provisioning previews are cached under the file path (options.uid for this route), which
     // doesn't encode the ref/commit being previewed - reusing that cache could show a stale
     // preview when the same file is revisited at a different ref.
-    const skipSceneCache = options.route === DashboardRoutes.Public || options.route === DashboardRoutes.Provisioning;
+    const pendingChanges = rsp ? shownPendingChanges.get(rsp) : undefined;
+    const skipSceneCache =
+      options.route === DashboardRoutes.Public ||
+      options.route === DashboardRoutes.Provisioning ||
+      Boolean(pendingChanges);
 
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
@@ -1160,6 +1193,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 
     if (rsp) {
       const scene = transformSaveModelSchemaV2ToScene(rsp, options);
+
+      // A new dashboard proposed as pending changes is unsaved; saving creates it under this uid.
+      if (pendingChanges && proposesNewDashboard(pendingChanges.pending) && !scene.state.uid) {
+        scene.setState({ meta: { ...scene.state.meta, newDashboardUid: options.uid } });
+      }
 
       // Special handling for Template route - set up edit mode and dirty state
       if (
@@ -1206,6 +1244,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     urlFolderUid,
     dashboardTemplateUid,
     editTemplate,
+    pendingChanges,
   }: LoadDashboardOptions): Promise<DashboardWithAccessInfo<DashboardV2Spec> | null> {
     const cacheKey = route === DashboardRoutes.Home ? HOME_DASHBOARD_CACHE_KEY : uid;
 
@@ -1264,9 +1303,13 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         default:
           if (getFeatureFlagClient().getBooleanValue(FlagKeys.ReloadDashboardsOnParamsChange, false)) {
             const queryParamsObject = processQueryParamsForDashboardLoad();
-            rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid, queryParamsObject);
+            rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid, queryParamsObject, {
+              alertNotFound: !pendingChanges,
+            });
           } else {
-            rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid);
+            rsp = await this.dashboardLoader.loadDashboard(type || 'db', slug || '', uid, undefined, {
+              alertNotFound: !pendingChanges,
+            });
           }
 
           if (route === DashboardRoutes.Embedded) {
@@ -1471,12 +1514,101 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async fetchDashboard(options: LoadDashboardOptions) {
-    return this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>((manager) =>
-      manager.fetchDashboard(options)
-    );
+    const id =
+      options.pendingChanges ?? (options.route === DashboardRoutes.Normal ? pendingChangesIdFromLocation() : undefined);
+    // Loaded alongside the dashboard; it never rejects.
+    const loadingPreview =
+      options.route === DashboardRoutes.Normal || options.route === DashboardRoutes.Embedded
+        ? loadPendingChangePreview(options.route === DashboardRoutes.Normal ? 'page' : 'embedded', options.uid, id)
+        : Promise.resolve(undefined);
+    let rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null;
+    try {
+      rsp = await this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>((manager) =>
+        // The id the page read from its URL too, so a missing dashboard isn't alerted before the
+        // pending changes say whether they propose it.
+        manager.fetchDashboard({ ...options, pendingChanges: id })
+      );
+    } catch (error) {
+      const preview = await loadingPreview;
+      if (isFetchError(error) && error.status === 404 && preview && proposesNewDashboard(preview.pending)) {
+        return this.newDashboardPreview(preview, options.route);
+      }
+      throw error;
+    }
+    const preview = await loadingPreview;
+    // Only a dashboard that loaded shows it exists: a cancelled load also returns null.
+    if (rsp && preview && proposesNewDashboard(preview.pending)) {
+      // The dashboard exists, so a proposal to create it no longer applies (it was saved, and the
+      // plugin's discard after the save failed). Discard it again, so it isn't offered on every visit.
+      clearPendingChangePreview(options.uid, preview.id);
+      Promise.resolve()
+        .then(() => preview.pending.discard())
+        .catch(() => {});
+      return rsp;
+    }
+    return this.withPendingChanges(rsp, options, preview);
+  }
+
+  /**
+   * A new dashboard proposed as pending changes, under a uid no dashboard has yet: an unsaved
+   * dashboard showing the proposed spec, which saving creates under that uid.
+   */
+  private async newDashboardPreview(
+    preview: PendingChangePreview,
+    route: DashboardRoutes
+  ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
+    const created = await buildNewDashboardSaveModelV2();
+    if (route === DashboardRoutes.Embedded) {
+      // Embedded like a saved dashboard in that route: view-only, so it can't be edited or saved there.
+      created.metadata.annotations = { ...created.metadata.annotations, [AnnoKeyEmbedded]: 'embedded' };
+    }
+    // Editable unless the proposal says otherwise, so it can be saved.
+    const previewRsp = { ...created, spec: { editable: true, ...structuredClone(preview.pending.proposed) } };
+    shownPendingChanges.set(previewRsp, preview);
+    return previewRsp;
+  }
+
+  /**
+   * Swaps in the pending changes the load asked for, unless the requester is viewing the
+   * original (see pendingChangePreview.ts). The preview is a read-only v2 dashboard that never
+   * goes through the scene cache: it shares the saved dashboard's version.
+   */
+  private async withPendingChanges(
+    rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null,
+    options: LoadDashboardOptions,
+    preview: PendingChangePreview | undefined
+  ): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null> {
+    if (!rsp || !preview?.previewing) {
+      return rsp;
+    }
+    try {
+      const saved = isDashboardV2Resource(rsp) ? rsp : await this.v2Manager.fetchDashboard(options);
+      if (!saved || !isDashboardV2Resource(saved)) {
+        preview.previewing = false;
+        return rsp;
+      }
+      const previewRsp = {
+        ...saved,
+        // A copy: building the scene adds defaults to the spec it is given, and the banner
+        // diffs the pending changes as saved.
+        spec: structuredClone(preview.pending.proposed),
+        access: { ...saved.access, canEdit: false, canSave: false, canDelete: false },
+      };
+      shownPendingChanges.set(previewRsp, preview);
+      return previewRsp;
+    } catch {
+      preview.previewing = false;
+      return rsp;
+    }
   }
 
   public async reloadDashboard(queryParams: UrlQueryMap) {
+    // A pending changes preview shows the proposed spec, which doesn't depend on the query
+    // params; reloading would swap in the saved dashboard under the preview's banner.
+    const dashboard = this.state.dashboard;
+    if (dashboard && isPreviewingPendingChanges(previewedDashboardUid(dashboard.state))) {
+      return;
+    }
     return this.withVersionHandling((manager) => {
       if (manager instanceof DashboardScenePageStateManagerV2) {
         // V2 reload needs state synced into the active manager before reloading.
@@ -1583,6 +1715,13 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     } else {
       this.v1Manager.setDashboardCache(cacheKey, dashboard);
     }
+  }
+
+  /** Loads the dashboard again without the response or scene it has cached, after a write made elsewhere. */
+  public async reloadDashboardFresh(options: LoadDashboardOptions): Promise<void> {
+    this.clearDashboardCache();
+    this.removeSceneCache(options.uid);
+    await this.loadDashboard(options);
   }
 
   public async loadDashboard(options: LoadDashboardOptions): Promise<void> {

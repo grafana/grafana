@@ -48,6 +48,41 @@ func TestUnifiedStorageQuotaResources(t *testing.T) {
 	}
 }
 
+func TestVectorAllowedReadServicesConfig(t *testing.T) {
+	for _, tc := range []struct {
+		name, value string
+		want        map[string][]string
+		invalid     bool
+	}{
+		{name: "unset"},
+		{name: "empty map", value: `{}`, want: map[string][]string{}},
+		{name: "preconfigured collection", value: `{"assistant.inframemories.ext.grafana.app/inframemories":["assistant"]}`, want: map[string][]string{"assistant.inframemories.ext.grafana.app/inframemories": {"assistant"}}},
+		{name: "custom resource name", value: `{"g/custom_resource":["assistant"]}`, want: map[string][]string{"g/custom_resource": {"assistant"}}},
+		{name: "null", value: `null`, invalid: true},
+		{name: "malformed JSON", value: `{"g/r":`, invalid: true},
+		{name: "missing group", value: `{"/r":["assistant"]}`, invalid: true},
+		{name: "extra slash", value: `{"g/r/other":["assistant"]}`, invalid: true},
+		{name: "wildcard", value: `{"g/*":["assistant"]}`, invalid: true},
+		{name: "interior whitespace", value: `{"g/custom resource":["assistant"]}`, invalid: true},
+		{name: "empty services", value: `{"g/r":[]}`, invalid: true},
+		{name: "empty identity", value: `{"g/r":[""]}`, invalid: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.value != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_VECTOR_ALLOWED_READ_SERVICES", tc.value)
+			}
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			if tc.invalid {
+				require.ErrorContains(t, err, "vector_allowed_read_services")
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, cfg.VectorAllowedReadServices)
+		})
+	}
+}
+
 func TestBlobGarbageCollectionDefaultsAndOverrides(t *testing.T) {
 	cfg := NewCfg()
 	cfg.setUnifiedStorageConfig()
@@ -132,6 +167,33 @@ func TestSeededWatchesEnabled(t *testing.T) {
 			}
 			cfg.setUnifiedStorageConfig()
 			require.Equal(t, tc.want, cfg.SeededWatchesEnabled)
+		})
+	}
+}
+
+func TestFastLatestKeyLookupEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured string
+		env        string
+		want       bool
+	}{
+		{name: "default off"},
+		{name: "enabled", configured: "true", want: true},
+		{name: "disabled", configured: "false"},
+		{name: "environment enables", configured: "false", env: "true", want: true},
+		{name: "environment disables", configured: "true", env: "false"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.configured != "" {
+				cfg.Raw.Section("unified_storage").Key("fast_latest_key_lookup_enabled").SetValue(tc.configured)
+			}
+			if tc.env != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_FAST_LATEST_KEY_LOOKUP_ENABLED", tc.env)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.FastLatestKeyLookupEnabled)
 		})
 	}
 }
@@ -385,26 +447,6 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			assert.Equal(t, 5000, cfg.SearchPostRankAuthzMaxWindow)
 			assert.Equal(t, 12345, cfg.SearchPostRankAuthzMaxCandidates)
 			assert.Equal(t, 8000, cfg.SearchPostRankAuthzFacetSampleSize)
-		})
-	})
-
-	t.Run("search_enforce_sort_capability", func(t *testing.T) {
-		t.Run("defaults to on", func(t *testing.T) {
-			cfg := NewCfg()
-			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
-			assert.NoError(t, err)
-			cfg.setUnifiedStorageConfig()
-			assert.True(t, cfg.SearchEnforceSortCapability)
-		})
-
-		t.Run("can be turned off", func(t *testing.T) {
-			cfg := NewCfg()
-			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
-			assert.NoError(t, err)
-			_, err = cfg.Raw.Section("unified_storage").NewKey("search_enforce_sort_capability", "false")
-			assert.NoError(t, err)
-			cfg.setUnifiedStorageConfig()
-			assert.False(t, cfg.SearchEnforceSortCapability)
 		})
 	})
 
@@ -741,6 +783,8 @@ func TestVectorAllowedCollections(t *testing.T) {
 
 		assert.Equal(t, []string{"dashboard.grafana.app/dashboards"}, cfg.VectorAllowedInternalCollections)
 		assert.Empty(t, cfg.VectorAllowedExternalCollections)
+		assert.Empty(t, cfg.VectorSharedExternalCollections)
+		assert.Empty(t, cfg.VectorSharedWriteServices)
 	})
 
 	t.Run("explicit lists are parsed as CSV", func(t *testing.T) {
@@ -752,11 +796,42 @@ func TestVectorAllowedCollections(t *testing.T) {
 		assert.NoError(t, err)
 		_, err = section.NewKey("vector_allowed_external_collections", "ext.example.com/my-things")
 		assert.NoError(t, err)
+		_, err = section.NewKey("vector_shared_external_collections", "docs.example.com/articles")
+		assert.NoError(t, err)
+		_, err = section.NewKey("vector_shared_write_services", "publisher")
+		assert.NoError(t, err)
 		cfg.setUnifiedStorageConfig()
 
 		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.VectorAllowedInternalCollections)
 		assert.Equal(t, []string{"ext.example.com/my-things"}, cfg.VectorAllowedExternalCollections)
+		assert.Equal(t, []string{"docs.example.com/articles"}, cfg.VectorSharedExternalCollections)
+		assert.Equal(t, []string{"publisher"}, cfg.VectorSharedWriteServices)
 	})
+}
+
+func TestSharedVectorCollectionConfiguration(t *testing.T) {
+	for _, tc := range []struct {
+		name                                   string
+		internal, external, shared, publishers []string
+		wantErr                                string
+	}{
+		{name: "disabled"},
+		{name: "shared publisher", shared: []string{"docs.example.com/articles"}, publishers: []string{"publisher"}},
+		{name: "missing publisher", shared: []string{"docs.example.com/articles"}, wantErr: "publisher"},
+		{name: "blank publisher", shared: []string{"docs.example.com/articles"}, publishers: []string{" "}, wantErr: "publisher"},
+		{name: "external overlap", external: []string{"docs.example.com/articles"}, shared: []string{"docs.example.com/articles"}, publishers: []string{"publisher"}, wantErr: "overlap"},
+		{name: "internal overlap", internal: []string{"docs.example.com/articles"}, shared: []string{"docs.example.com/articles"}, publishers: []string{"publisher"}, wantErr: "overlap"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &Cfg{VectorAllowedInternalCollections: tc.internal, VectorAllowedExternalCollections: tc.external, VectorSharedExternalCollections: tc.shared, VectorSharedWriteServices: tc.publishers}
+			err := cfg.ValidateSharedVectorConfig()
+			if tc.wantErr == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorContains(t, err, tc.wantErr)
+			}
+		})
+	}
 }
 
 func TestStorageServicesEnabled(t *testing.T) {

@@ -99,7 +99,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 				Type: claims.TypeUser, OrgID: 1, Namespace: "default",
 			}))
 			res := httptest.NewRecorder()
-			router.HandleFunc(res, req, http.NotFoundHandler())
+			router.HandleFunc(res, req)
 			require.Equal(t, http.StatusOK, res.Code, res.Body.String())
 			var discovery handler3.OpenAPIV3Discovery
 			require.NoError(t, json.Unmarshal(res.Body.Bytes(), &discovery))
@@ -107,7 +107,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 				require.Contains(t, discovery.Paths, "apis/"+gv)
 				path := discovery.Paths["apis/"+gv].ServerRelativeURL
 				document := httptest.NewRecorder()
-				router.HandleFunc(document, httptest.NewRequest(http.MethodGet, path, nil).WithContext(req.Context()), http.NotFoundHandler())
+				router.HandleFunc(document, httptest.NewRequest(http.MethodGet, path, nil).WithContext(req.Context()))
 				require.Equal(t, http.StatusOK, document.Code, document.Body.String())
 				require.Contains(t, document.Body.String(), gv)
 			}
@@ -307,7 +307,7 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 		Type: claims.TypeUser, OrgID: 1, Namespace: "default",
 	}))
 	res := httptest.NewRecorder()
-	router.HandleFunc(res, req, http.NotFoundHandler())
+	router.HandleFunc(res, req)
 	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
 	require.Contains(t, res.Header().Get("Cache-Control"), "private")
 
@@ -315,7 +315,7 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 	for _, etag := range []string{"", res.Header().Get("ETag")} {
 		req.Header.Set("If-None-Match", etag)
 		denied := httptest.NewRecorder()
-		router.HandleFunc(denied, req, http.NotFoundHandler())
+		router.HandleFunc(denied, req)
 		require.Equal(t, http.StatusForbidden, denied.Code, denied.Body.String())
 	}
 }
@@ -632,15 +632,10 @@ func TestPluginLoaderServesSettingsUnderPluginID(t *testing.T) {
 		return out
 	}
 
-	backends, err := (PluginLoader{settings: true}).prepareBackends(t.Context(), defs)
+	backends, err := (PluginLoader{}).prepareBackends(t.Context(), defs)
 	require.NoError(t, err)
-	require.Equal(t, []string{"example.ext.grafana.app"}, groups(backends), "settings are only served behind the feature flag")
+	require.Equal(t, []string{"example.ext.grafana.app"}, groups(backends), "a loader without settings serves only manifests")
 	manifestKey := backends[0].Key()
-
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsRegisterAPIServer)
-	standalone, err := (PluginLoader{}).prepareBackends(t.Context(), defs)
-	require.NoError(t, err)
-	require.Equal(t, []string{"example.ext.grafana.app"}, groups(standalone), "a loader without settings ignores the feature flag")
 
 	backends, err = (PluginLoader{settings: true}).prepareBackends(t.Context(), defs)
 	require.NoError(t, err)

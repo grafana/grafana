@@ -2,7 +2,10 @@ package remotecache
 
 import (
 	"context"
+	"strconv"
+	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -45,6 +48,48 @@ func TestIntegrationCachedBasedOnConfig(t *testing.T) {
 
 	client := createTestClient(t, cfg.RemoteCacheOptions, db)
 	runTestsForClient(t, client)
+}
+
+func TestNewTestCache(t *testing.T) {
+	t.Run("cache contract", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			runTestsForClient(t, NewTestCache())
+		})
+	})
+
+	t.Run("zero TTL uses the default expiration", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			cache := NewTestCache()
+			require.NoError(t, cache.Set(t.Context(), "key", []byte("value"), 0))
+
+			time.Sleep(defaultMaxCacheExpiration - time.Second)
+			value, err := cache.Get(t.Context(), "key")
+			require.NoError(t, err)
+			require.Equal(t, []byte("value"), value)
+
+			time.Sleep(2 * time.Second)
+			_, err = cache.Get(t.Context(), "key")
+			require.ErrorIs(t, err, ErrCacheItemNotFound)
+		})
+	})
+
+	t.Run("concurrent access", func(t *testing.T) {
+		cache := NewTestCache()
+		ctx := t.Context()
+		var wg sync.WaitGroup
+		for i := range 32 {
+			wg.Go(func() {
+				key := strconv.Itoa(i)
+				value := []byte(key)
+				assert.NoError(t, cache.Set(ctx, key, value, time.Minute))
+				got, err := cache.Get(ctx, key)
+				assert.NoError(t, err)
+				assert.Equal(t, value, got)
+				assert.NoError(t, cache.Delete(ctx, key))
+			})
+		}
+		wg.Wait()
+	})
 }
 
 func TestInvalidCacheTypeReturnsError(t *testing.T) {

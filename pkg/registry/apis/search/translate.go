@@ -55,7 +55,7 @@ var defaultTextFields = []string{resource.SEARCH_FIELD_TITLE}
 // (gvr) and, on success, returns the backend request scoped to namespace.
 // On failure it returns a field.ErrorList suitable for a 400 BadRequest.
 func TranslateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResource, namespace string, provider resource.SearchFieldsProvider) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
-	return translateSearchQuery(q, gvr, namespace, newFieldSet(gvr, provider))
+	return translateSearchQuery(q, gvr, namespace, newFieldSet(gvr, provider, false))
 }
 
 // GlobalSearchGVR names the global index. It is not a stored resource,
@@ -152,15 +152,23 @@ type fieldSet struct {
 	byName map[string]resource.SearchFieldDefinition
 }
 
-func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFieldsProvider) *fieldSet {
+func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFieldsProvider, allowFolderTree bool) *fieldSet {
 	m := map[string]resource.SearchFieldDefinition{}
 	for _, d := range resource.StandardSearchFieldDefinitions() {
+		m[d.Name] = d
+	}
+	for _, d := range managerFields() {
 		m[d.Name] = d
 	}
 	if provider != nil {
 		for _, d := range provider.Fields(gvr) {
 			m[d.Name] = d
 		}
+	}
+	// A manifest must not bypass the flag for this computed field.
+	delete(m, resource.SEARCH_FIELD_FOLDER_TREE)
+	if allowFolderTree {
+		m[resource.SEARCH_FIELD_FOLDER_TREE] = folderTreeField()
 	}
 	return &fieldSet{byName: m}
 }
@@ -169,19 +177,47 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 //
 // folderTree is not stored in the index: the index works it out from its folder
 // tree when searching, so it is declared here rather than with the index's
-// fields, and only the global search offers it.
+// stored fields.
 func globalFieldSet() *fieldSet {
 	m := map[string]resource.SearchFieldDefinition{}
 	for _, d := range resource.GlobalSearchFieldDefinitions() {
 		m[d.Name] = d
 	}
-	m[resource.SEARCH_FIELD_FOLDER_TREE] = resource.SearchFieldDefinition{
+	for _, d := range managerFields() {
+		m[d.Name] = d
+	}
+	m[resource.SEARCH_FIELD_FOLDER_TREE] = folderTreeField()
+	return &fieldSet{byName: m}
+}
+
+// managerFields can be returned because every index stores them. They are
+// declared here rather than with the index's fields, because declaring them
+// there would rebuild every index. They should move to the standard field
+// definitions together with the next change that rebuilds every index anyway.
+func managerFields() []resource.SearchFieldDefinition {
+	return []resource.SearchFieldDefinition{
+		{
+			Name:         resource.SEARCH_FIELD_MANAGER_KIND,
+			Type:         resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
+			Description:  "Kind of tool that manages the resource, such as repo for Git Sync. Empty when nothing manages it.",
+		},
+		{
+			Name:         resource.SEARCH_FIELD_MANAGER_ID,
+			Type:         resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
+			Description:  "Which instance of that tool manages the resource, such as the repository name.",
+		},
+	}
+}
+
+func folderTreeField() resource.SearchFieldDefinition {
+	return resource.SearchFieldDefinition{
 		Name:         resource.SEARCH_FIELD_FOLDER_TREE,
 		Type:         resource.SearchFieldTypeString,
 		Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
 		Description:  "Kubernetes name of the folder containing the resource, or of any folder above it. Filter only, with In.",
 	}
-	return &fieldSet{byName: m}
 }
 
 // trashFieldSet is the fixed uniform field set for /trash, expressed as a

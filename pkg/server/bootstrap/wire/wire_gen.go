@@ -558,10 +558,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	experimentalKVOptions, err := sql.ProvideExperimentalKV(cfg)
-	if err != nil {
-		return nil, err
-	}
 	subscriberService := nats.ProvideSubscriber(config, registerer)
 	watchExpiry := resource.NewWatchExpiry()
 	grafanaRouter, err := router.ProvideGrafanaRouter(cfg)
@@ -583,7 +579,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		DashboardStats:    ossDashboardStats,
 		KV:                kv,
 		EDB:               dbProvider,
-		ExperimentalKV:    experimentalKVOptions,
 		Publisher:         publisherService,
 		Subscriber:        subscriberService,
 		WatchExpiry:       watchExpiry,
@@ -1355,10 +1350,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	experimentalKVOptions, err := sql.ProvideExperimentalKV(cfg)
-	if err != nil {
-		return nil, err
-	}
 	subscriberService := nats.ProvideSubscriber(config, registerer)
 	watchExpiry := resource.NewWatchExpiry()
 	grafanaRouter, err := router.ProvideGrafanaRouter(cfg)
@@ -1380,7 +1371,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		DashboardStats:    ossDashboardStats,
 		KV:                kv,
 		EDB:               dbProvider,
-		ExperimentalKV:    experimentalKVOptions,
 		Publisher:         publisherService,
 		Subscriber:        subscriberService,
 		WatchExpiry:       watchExpiry,
