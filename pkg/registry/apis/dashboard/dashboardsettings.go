@@ -1,12 +1,21 @@
 package dashboard
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+
+	authlib "github.com/grafana/authlib/types"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
@@ -136,4 +145,127 @@ func validateDashboardSettingsMetadataName(gotName string, scope dashboardSettin
 		scope.Tier,
 		expectedName,
 	)
+}
+
+func (b *DashboardsAPIBuilder) validateDashboardSettingsCreate(ctx context.Context, a admission.Attributes) error {
+	obj, ok := a.GetObject().(*dashv2beta1.DashboardSettings)
+	if !ok {
+		return fmt.Errorf("unsupported dashboard settings version: %T", a.GetObject())
+	}
+
+	if err := validateDashboardSettingsNotManaged(obj); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	scope, err := dashboardSettingsScopeOf(obj)
+	if err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	name := obj.GetName()
+	if err := validateDashboardSettingsMetadataName(name, scope); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	if err := validateDashboardSettingsSpec(name, obj.Spec); err != nil {
+		return err
+	}
+
+	if err := b.validateDashboardSettingsAutoRefresh(obj.Spec); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting requester: %w", err)
+	}
+
+	// The authorizer can't see the name of a POST, so the tier rules for that name run here.
+	// Access-policy tokens are left out: the authorizer already restricted them, and a token has no
+	// user for the tier rules to judge.
+	if !requester.IsIdentityType(authlib.TypeAccessPolicy) {
+		decision, reason, err := authorizeDashboardSettingsName(ctx, b.accessClient, requester, a.GetNamespace(), name, utils.VerbCreate)
+		if err != nil {
+			return err
+		}
+		if decision != authorizer.DecisionAllow {
+			return apierrors.NewForbidden(dashv2beta1.DashboardSettingsResourceInfo.GroupResource(), name, errors.New(reason))
+		}
+	}
+
+	if scope.Tier == dashboardSettingsTierFolder && !a.IsDryRun() {
+		nsInfo, err := request.NamespaceInfoFrom(ctx, true)
+		if err != nil {
+			return err
+		}
+		if _, err := b.validateFolderExists(ctx, scope.FolderUID, nsInfo.OrgID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Unlike a create, an update is not authorized here: PUT and PATCH reach the authorizer with the name,
+// and the name has to match a scope that can't change.
+func (b *DashboardsAPIBuilder) validateDashboardSettingsUpdate(ctx context.Context, a admission.Attributes) error {
+	obj, ok := a.GetObject().(*dashv2beta1.DashboardSettings)
+	if !ok {
+		return fmt.Errorf("unsupported dashboard settings version: %T", a.GetObject())
+	}
+
+	oldObj, ok := a.GetOldObject().(*dashv2beta1.DashboardSettings)
+	if !ok || oldObj == nil {
+		return fmt.Errorf("unsupported old dashboard settings version: %T", a.GetOldObject())
+	}
+
+	if err := validateDashboardSettingsNotManaged(obj); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	scope, err := dashboardSettingsScopeOf(obj)
+	if err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+	oldScope, err := dashboardSettingsScopeOf(oldObj)
+	if err != nil {
+		return fmt.Errorf("error getting the scope of the stored dashboard settings: %w", err)
+	}
+	if scope != oldScope {
+		return apierrors.NewBadRequest("dashboard settings scope (grafana.app/folder annotation and spec.userUID) cannot be changed; delete it and create a new one")
+	}
+
+	name := obj.GetName()
+	if err := validateDashboardSettingsMetadataName(name, scope); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	if err := validateDashboardSettingsSpec(name, obj.Spec); err != nil {
+		return err
+	}
+
+	if err := b.validateDashboardSettingsAutoRefresh(obj.Spec); err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	return nil
+}
+
+func (b *DashboardsAPIBuilder) validateDashboardSettingsAutoRefresh(spec dashv2beta1.DashboardSettingsSpec) error {
+	if spec.AutoRefresh == nil {
+		return nil
+	}
+	return b.dashboardService.ValidateDashboardRefreshInterval(b.minRefreshInterval, *spec.AutoRefresh)
+}
+
+// Nothing manages dashboard settings: the authorizer denies Git Sync writes, and the storage layer
+// would hand writes of a repository-managed object to the repository, out of the owner's reach.
+func validateDashboardSettingsNotManaged(obj *dashv2beta1.DashboardSettings) error {
+	annotations := obj.GetAnnotations()
+	_, hasKind := annotations[utils.AnnoKeyManagerKind]
+	_, hasIdentity := annotations[utils.AnnoKeyManagerIdentity]
+	if hasKind || hasIdentity {
+		return errors.New("dashboard settings can't be managed by a repository")
+	}
+	return nil
 }

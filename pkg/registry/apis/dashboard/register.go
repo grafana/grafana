@@ -414,6 +414,21 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		default:
 			return nil // delete/connect need no validation
 		}
+	// Reachability invariant: dashboard settings storage is always registered, but
+	// FlagGrafanaDashboardSettings is enforced per request in GetAuthorizer. With
+	// the flag off no identity may create or update, so the create and update
+	// checks only run when the feature is enabled. A delete is not checked: it
+	// must still work once the folder is gone, and for the service identities
+	// that clean up folder and user settings.
+	case dashv2beta1.DashboardSettingsResourceInfo.GroupVersionResource().Resource:
+		switch op {
+		case admission.Create:
+			return b.validateDashboardSettingsCreate(ctx, a)
+		case admission.Update:
+			return b.validateDashboardSettingsUpdate(ctx, a)
+		default:
+			return nil
+		}
 	}
 
 	return fmt.Errorf("unsupported validation: %+v", a.GetResource())
