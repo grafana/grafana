@@ -1,34 +1,15 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect, useMemo, useState } from 'react';
 
-import { getStarsSrv } from '@grafana/runtime';
-import { useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
+import { type StarsList, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
 import { starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { dispatch } from 'app/store/store';
 
 import { searchStarredResources } from './kindSearch';
-import { loadStarredKinds, type StarredKind, starredKindsNeedIcons } from './kinds';
+import { getStarredKinds, type StarredKind, starredNavEntry } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
-
-type StarItemArgs = {
-  id: string;
-  /** Title of the item - this is displayed in the nav */
-  title: string;
-};
-
-/** Star or unstar an item; the same path plugins take through getStarsSrv(). */
-export const useStarItem = (group: string, kind: string) => {
-  return async ({ id, title }: StarItemArgs, newStarredState: boolean) => {
-    const ref = { group, kind, id, title };
-    try {
-      await (newStarredState ? getStarsSrv().star(ref) : getStarsSrv().unstar(ref));
-    } catch {
-      // Server rejected the change — the nav stays as-is rather than showing state that didn't persist
-    }
-  };
-};
 
 /**
  * Get starred items from the app platform API
@@ -64,68 +45,70 @@ export const useStarredItems = (group: string, kind: string, options?: { skip?: 
 // Matches the backend cap on starred nav children in bootData (buildStarredItemsNavLinks)
 const STARRED_NAV_CAP = 50;
 
-/** The starred names of each kind, in the order the kinds are listed. */
 type StarredNamesByKind = Array<{ kind: StarredKind; names: string[] }>;
 
-/**
- * Resolves starred names to nav items: Grafana's own kinds through one dashboard search, each
- * plugin kind through its own search endpoint. A plugin kind whose API is unavailable (plugin
- * disabled, apiserver down) contributes nothing rather than failing the sync; the dashboard
- * search failing rejects, as it did before plugin kinds existed.
- */
-async function resolveStarredNavItems(byKind: StarredNamesByKind, names: string[]): Promise<StarredNavItem[]> {
-  const showIcons = starredKindsNeedIcons();
-  const searchKinds = byKind.filter(({ kind, names }) => kind.source === 'dashboard-search' && names.length > 0);
-  const pluginKinds = byKind.filter(({ kind, names }) => kind.source === 'kind-search' && names.length > 0);
-  // `names` is the capped, deduped union; each query asks only about the part starred as its kinds
-  const namesStarredAs = (entries: StarredNamesByKind) => {
-    const starred = new Set(entries.flatMap(({ names }) => names));
-    return names.filter((name) => starred.has(name));
-  };
-  const searchNames = namesStarredAs(searchKinds);
-
-  const [response, ...resolvedPluginKinds] = await Promise.all([
-    searchNames.length > 0
-      ? getGrafanaSearcher().search({ name: searchNames, kind: searchKinds.map(({ kind }) => kind.searchKind) })
-      : Promise.resolve(undefined),
-    ...pluginKinds.map((entry) =>
-      searchStarredResources(entry.kind, namesStarredAs([entry])).catch((err: unknown) => {
-        console.error(`Failed to resolve starred ${entry.kind.group}/${entry.kind.kind}`, err);
-        return [];
-      })
-    ),
-  ]);
-
-  const items: StarredNavItem[] = [];
+/** Nav items for Grafana's own kinds, resolved through one dashboard search over the starred names. */
+async function resolveGrafanaKinds(byKind: StarredNamesByKind, uids: string[]): Promise<StarredNavItem[]> {
+  if (byKind.length === 0) {
+    return [];
+  }
   // The search matches the name union against every kind, so a cross-kind name collision can
   // return an item that was never starred as that kind — keep only kind-matching hits.
-  const starredNamesBySearchKind = new Map(searchKinds.map(({ kind, names }) => [kind.searchKind, new Set(names)]));
-  for (let i = 0; response && i < response.view.length; i++) {
+  const starredAs = new Map(byKind.map(({ kind, names }) => [kind.searchKind, { kind, names: new Set(names) }]));
+  const names = new Set(byKind.flatMap(({ names }) => names));
+  const response = await getGrafanaSearcher().search({
+    // In the capped order, so the same stars always make the same request
+    name: uids.filter((uid) => names.has(uid)),
+    kind: byKind.map(({ kind }) => kind.searchKind),
+  });
+
+  const items: StarredNavItem[] = [];
+  for (let i = 0; i < response.view.length; i++) {
     const row = response.view.get(i);
-    const kind = searchKinds.find(({ kind }) => kind.searchKind === row.kind)?.kind;
-    if (!kind || !starredNamesBySearchKind.get(row.kind)?.has(row.uid)) {
+    const starred = starredAs.get(row.kind);
+    if (!starred?.names.has(row.uid)) {
       continue;
     }
-    items.push({
-      id: row.uid,
-      title: row.name,
-      url: row.url,
-      icon: showIcons ? kind.icon : undefined,
-      sortWeight: kind.sortWeight,
-    });
+    // The search row carries the slugged url, which the nav keeps over the kind's plain one
+    items.push({ ...starredNavEntry(starred.kind, row.uid), id: row.uid, title: row.name, url: row.url });
   }
-  pluginKinds.forEach(({ kind }, index) => {
-    for (const resource of resolvedPluginKinds[index]) {
-      items.push({
-        id: resource.name,
-        title: resource.title,
-        url: kind.url(resource.name),
-        icon: kind.icon,
-        sortWeight: kind.sortWeight,
-      });
-    }
-  });
   return items;
+}
+
+/** Nav items for a plugin kind, resolved through the kind's own search endpoint. */
+async function resolvePluginKind(kind: StarredKind, names: string[]): Promise<StarredNavItem[]> {
+  const resources = await searchStarredResources(kind, names);
+  return resources.map((resource) => ({
+    ...starredNavEntry(kind, resource.name),
+    id: resource.name,
+    title: resource.title,
+  }));
+}
+
+/**
+ * Resolves the user's stars to nav items. A plugin kind whose API is unavailable contributes
+ * nothing rather than failing the sync; the dashboard search failing rejects, as it did before
+ * plugin kinds existed.
+ */
+async function resolveStarredNavItems(stars: StarsList): Promise<{ uids: string[]; items: StarredNavItem[] }> {
+  const kinds = getStarredKinds();
+  const starredNames = (kind: StarredKind) => findStarredNames(stars, kind.group, kind.kind);
+  // Dedupe so a name starred as several kinds can't occupy two cap slots or render twice
+  const uids = [...new Set(kinds.flatMap(starredNames))].sort().slice(0, STARRED_NAV_CAP);
+  const capped = new Set(uids);
+  // Each query asks only about the part of the capped set starred as its kind
+  const byKind: StarredNamesByKind = kinds
+    .map((kind) => ({ kind, names: starredNames(kind).filter((name) => capped.has(name)) }))
+    .filter(({ names }) => names.length > 0);
+
+  const [grafanaItems, pluginItems] = await Promise.all([
+    resolveGrafanaKinds(
+      byKind.filter(({ kind }) => !kind.pluginId),
+      uids
+    ),
+    Promise.all(byKind.filter(({ kind }) => kind.pluginId).map(({ kind, names }) => resolvePluginKind(kind, names))),
+  ]);
+  return { uids, items: [...grafanaItems, ...pluginItems.flat()] };
 }
 
 /**
@@ -160,19 +143,12 @@ export const useSyncStarredItemsInNav = () => {
 
     let cancelled = false;
 
-    loadStarredKinds()
-      .then(async (kinds) => {
-        const byKind: StarredNamesByKind = kinds.map((kind) => ({
-          kind,
-          names: findStarredNames(stars, kind.group, kind.kind),
-        }));
-        // Dedupe so a name starred as several kinds can't occupy two cap slots or render twice
-        const names = [...new Set(byKind.flatMap(({ names }) => names))].sort().slice(0, STARRED_NAV_CAP);
-        const items = names.length === 0 ? [] : await resolveStarredNavItems(byKind, names);
+    resolveStarredNavItems(stars)
+      .then(({ uids, items }) => {
         if (cancelled) {
           return;
         }
-        dispatch(setStarredItems({ uids: names, items }));
+        dispatch(setStarredItems({ uids, items }));
         setHasSynced(true);
         setSearchFailed(false);
       })

@@ -3,10 +3,9 @@ import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
 
 import { config, setBackendSrv } from '@grafana/runtime';
-import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
 import {
   getCustomSearchHandler,
-  getKindDiscoveryHandlers,
+  getKindDiscoveryHandler,
   getKindSearchHandler,
   kindSearchRoute,
   searchRoute,
@@ -21,6 +20,7 @@ import {
 } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { initStarredKinds } from 'app/features/stars/kinds';
 import { setStore } from 'app/store/store';
 
 import { type SearchQuery } from './types';
@@ -321,11 +321,11 @@ describe('Unified Storage Searcher', () => {
       const THING_URL = '/a/test-things-app/things/t1';
 
       beforeEach(() => {
-        setAppPluginMetas({ [MOCK_STARRED_KIND_APP.id]: MOCK_STARRED_KIND_APP });
-        server.use(...getKindDiscoveryHandlers(MOCK_STARRED_KIND_SERVED));
+        initStarredKinds([MOCK_STARRED_KIND_APP]);
+        server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
       });
 
-      afterEach(() => clearAppPluginMetas());
+      afterEach(() => initStarredKinds([]));
 
       it('appends the plugin rows after the dashboard and folder rows, linking into the plugin', async () => {
         server.use(
@@ -410,8 +410,7 @@ describe('Unified Storage Searcher', () => {
       });
 
       it('ignores stars of a kind no installed plugin declares', async () => {
-        clearAppPluginMetas();
-        setAppPluginMetas({});
+        initStarredKinds([]);
         server.use(starsHandler([...bothStarredResources, thingResource]), captureSearchHandler(starredHits));
 
         const searcher = new UnifiedSearcher();

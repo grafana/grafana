@@ -19,7 +19,7 @@ import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
 import { searchStarredResources } from 'app/features/stars/kindSearch';
-import { loadStarredKinds, type StarredKind } from 'app/features/stars/kinds';
+import { getStarredKinds, type StarredKind } from 'app/features/stars/kinds';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
@@ -51,7 +51,7 @@ export type SearchHit = {
   // calculated in the frontend
   url: string;
   managedBy?: ManagedBy;
-  // Set for hits from a plugin kind's own search, which carry their kind and url; dashboard search hits derive both from `resource`
+  // Hits a plugin kind's search produces are built here with their kind set; dashboard search hits derive it from `resource`
   kind?: string;
 };
 
@@ -72,6 +72,33 @@ const folderViewSort = 'name_sort';
 // Shared so each starred() call doesn't construct a collator just to order a handful of plugin-kind rows
 const titleCollator = new Intl.Collator();
 
+/**
+ * Appends rows from another index after the last server page. They cannot be server-sorted with
+ * the paged rows, so they go on the end, once, as soon as every paged row is loaded. Their fields
+ * are a subset of the paged rows', so the view built over the first page can show them.
+ */
+function withTrailingRows(response: QueryResponse, trailing: DataFrame): QueryResponse {
+  const { view } = response;
+  let appended = false;
+  const appendOnceComplete = () => {
+    if (!appended && view.dataFrame.length >= response.totalRows) {
+      appendFrame(view.dataFrame, trailing);
+      appended = true;
+    }
+  };
+  appendOnceComplete();
+
+  return {
+    ...response,
+    totalRows: response.totalRows + trailing.length,
+    loadMoreItems: async (stopIndex) => {
+      await response.loadMoreItems(stopIndex);
+      appendOnceComplete();
+    },
+    isItemLoaded: (index) => index < view.dataFrame.length,
+  };
+}
+
 export class UnifiedSearcher implements GrafanaSearcher {
   private locationInfo = loadLocationInfo();
 
@@ -86,34 +113,41 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
-    // The starred names of every kind: Grafana's own kinds resolve through the dashboard search
-    // below, each plugin kind through its own search endpoint
-    const stars: Promise<{ data: ListStarsApiResponse }> = dispatch(
+    const result: { data: ListStarsApiResponse } = await dispatch(
       generatedAPI.endpoints.listStars.initiate({
         fieldSelector: userStarsFieldSelector(),
       })
     );
-    const [kinds, result] = await Promise.all([loadStarredKinds(), stars]);
+    // Grafana's own kinds resolve through the dashboard search, each plugin kind through its own search endpoint
     const searchNames = new Set<string>();
-    const pluginKindHits: Array<Promise<SearchHit[]>> = [];
-    for (const kind of kinds) {
+    const pluginSearches: Array<Promise<SearchHit[]>> = [];
+    for (const kind of getStarredKinds()) {
       const names = findStarredNames(result.data, kind.group, kind.kind);
-      if (kind.source === 'dashboard-search') {
-        names.forEach((name) => searchNames.add(name));
+      if (kind.pluginId) {
+        pluginSearches.push(this.starredKindHits(kind, names, query));
       } else {
-        pluginKindHits.push(this.starredKindHits(kind, names, query));
+        names.forEach((name) => searchNames.add(name));
       }
     }
-    const pluginHits = (await Promise.all(pluginKindHits)).flat();
 
-    if (searchNames.size > 0) {
-      return this.doSearchQuery({ ...query, name: [...searchNames], query: query.query ?? '*' }, pluginHits);
+    const sort = query.sort ?? '';
+    const [dashboards, pluginHits] = await Promise.all([
+      searchNames.size > 0
+        ? this.doSearchQuery({ ...query, name: [...searchNames], query: query.query ?? '*' })
+        : undefined,
+      Promise.all(pluginSearches).then((hits) => hits.flat()),
+    ]);
+
+    if (pluginHits.length === 0) {
+      return dashboards ?? noDataResponse();
     }
-    if (pluginHits.length > 0) {
-      return this.toQueryResponse({ hits: [], totalHits: 0 }, query.sort ?? '', pluginHits);
+    const pluginRsp = { hits: pluginHits, totalHits: pluginHits.length };
+    // Without dashboard rows the plugin rows are the whole result and the frame is built from them:
+    // a view over an empty frame has no fields to show appended rows in
+    if (!dashboards || dashboards.totalRows === 0) {
+      return this.toQueryResponse(pluginRsp, sort);
     }
-    // Nothing is starred
-    return noDataResponse();
+    return withTrailingRows(dashboards, toDashboardResults(pluginRsp, sort));
   }
 
   /**
@@ -134,31 +168,25 @@ export class UnifiedSearcher implements GrafanaSearcher {
     if (names.length === 0 || dashboardOnlyFilter || query.location === 'general') {
       return [];
     }
-    try {
-      const resources = await searchStarredResources(kind, names, {
-        text: query.query,
-        tags: query.tags,
-        folder: query.location || undefined,
-      });
-      const descending = toSortParam(query.sort ?? '') === '-title';
-      return resources
-        .sort((a, b) => (descending ? -1 : 1) * titleCollator.compare(a.title, b.title))
-        .map(({ name, title, description, folder, tags }) => ({
-          resource: kind.searchKind,
-          kind: kind.searchKind,
-          name,
-          title,
-          description,
-          folder,
-          tags,
-          field: {},
-          url: kind.url(name),
-        }));
-    } catch (err) {
-      // A plugin kind whose API is unavailable must not blank the Starred view; dashboards still render
-      console.error(`Failed to load starred ${kind.group}/${kind.kind}`, err);
-      return [];
-    }
+    const resources = await searchStarredResources(kind, names, {
+      text: query.query,
+      tags: query.tags,
+      folder: query.location || undefined,
+    });
+    const descending = toSortParam(query.sort ?? '') === '-title';
+    return resources
+      .sort((a, b) => (descending ? -1 : 1) * titleCollator.compare(a.title, b.title))
+      .map(({ name, resource, title, description, folder, tags }) => ({
+        resource,
+        kind: kind.searchKind,
+        name,
+        title,
+        description,
+        folder,
+        tags,
+        field: {},
+        url: kind.url(name),
+      }));
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {
@@ -197,7 +225,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     return Promise.resolve(opts);
   }
 
-  async doSearchQuery(query: SearchQuery, trailingHits: SearchHit[] = []): Promise<QueryResponse> {
+  async doSearchQuery(query: SearchQuery): Promise<QueryResponse> {
     const uri = await this.newRequest(query);
 
     let rsp: SearchAPIResponse;
@@ -210,34 +238,19 @@ export class UnifiedSearcher implements GrafanaSearcher {
       rsp = await this.fetchResponse(uri);
     }
 
-    return this.toQueryResponse(rsp, query.sort ?? '', trailingHits, (offset) =>
-      this.fetchResponse(`${uri}&offset=${offset}`)
-    );
+    return this.toQueryResponse(rsp, query.sort ?? '', (offset) => this.fetchResponse(`${uri}&offset=${offset}`));
   }
 
   /**
-   * Builds the paged response for a search result. `trailingHits` come from another index and cannot
-   * be server-sorted with the paged rows, so they are appended once, after the last server page;
-   * `fetchPage` loads the server page starting at `offset`.
+   * Builds the paged response for a search result. `fetchPage` loads the server page starting at
+   * `offset`; omitted when `rsp` already holds every row.
    */
   private async toQueryResponse(
     rsp: SearchAPIResponse,
     sort: string,
-    trailingHits: SearchHit[],
     fetchPage?: (offset: number) => Promise<SearchAPIResponse>
   ): Promise<QueryResponse> {
-    // Rows the server pages through; the trailing rows count towards the total but are never fetched
-    const pagedCount = rsp.totalHits;
-    let trailing = trailingHits;
-    const totalHits = pagedCount + trailing.length;
-    if (rsp.hits.length >= pagedCount && trailing.length) {
-      // The first page already holds every server row, so the trailing rows belong in it. Merging before
-      // the frame is built matters: DataFrameView only knows fields present at construction.
-      rsp = { ...rsp, hits: [...rsp.hits, ...trailing] };
-      trailing = [];
-    }
-
-    const first = toDashboardResults({ ...rsp, totalHits }, sort);
+    const first = toDashboardResults(rsp, sort);
 
     // We add parent folder information into meta.custom of the data frame. This is loaded separately in
     // loadLocationInfo. Used to show parent information upstream.
@@ -276,15 +289,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const getNextPage = async () => {
       while (loadMax > view.dataFrame.length) {
         const offset = view.dataFrame.length;
-        if (offset >= pagedCount) {
-          // Past the last server page: the trailing rows go on the end, once
-          if (trailing.length) {
-            appendFrame(view.dataFrame, toDashboardResults({ hits: trailing, totalHits: trailing.length }, sort));
-            trailing = [];
-          }
-          return;
-        }
-        if (!fetchPage) {
+        if (offset >= meta.count || !fetchPage) {
           return;
         }
         const resp = await fetchPage(offset);

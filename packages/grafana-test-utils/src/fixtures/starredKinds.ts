@@ -11,7 +11,7 @@ export const MOCK_STARRED_KIND: PluginStarredKind = {
   path: '/a/test-things-app/things/{name}',
 };
 
-/** How the apiserver serves that kind; pair with getKindDiscoveryHandlers and getKindSearchHandler. */
+/** How the apiserver serves that kind; pair with getKindDiscoveryHandler and getKindSearchHandler. */
 export const MOCK_STARRED_KIND_SERVED: MockServedKind = {
   group: MOCK_STARRED_KIND.group,
   version: 'v1alpha1',

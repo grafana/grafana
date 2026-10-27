@@ -4,8 +4,7 @@ import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
-import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
-import { getKindDiscoveryHandlers, getKindSearchHandler } from '@grafana/test-utils/handlers';
+import { getKindDiscoveryHandler, getKindSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
@@ -24,6 +23,7 @@ import {
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { initStarredKinds } from 'app/features/stars/kinds';
 
 import { MegaMenu } from './MegaMenu';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
@@ -691,9 +691,9 @@ describe('MegaMenu', () => {
     const thingUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
     setMockStarredDashboards([]);
     setMockStarredPluginKind(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind, [thingUuid]);
-    setAppPluginMetas({ [MOCK_STARRED_KIND_APP.id]: MOCK_STARRED_KIND_APP });
+    initStarredKinds([MOCK_STARRED_KIND_APP]);
     server.use(
-      ...getKindDiscoveryHandlers(MOCK_STARRED_KIND_SERVED),
+      getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
       getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
         { name: thingUuid, title: 'Capacity review', folder: folderB.item.uid },
       ])
@@ -714,6 +714,6 @@ describe('MegaMenu', () => {
 
     // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
     expect(starredSection().getByTitle('Thing')).toBe(starredSection().getByTestId('icon-cube'));
-    clearAppPluginMetas();
+    initStarredKinds([]);
   });
 });

@@ -1,6 +1,5 @@
-import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
 import { MOCK_STARRED_KIND_APP } from '@grafana/test-utils/unstable';
-import { loadStarredKinds } from 'app/features/stars/kinds';
+import { initStarredKinds } from 'app/features/stars/kinds';
 
 import { canEditItemType } from './permissions';
 import { type BrowseDashboardsPermissions } from './types';
@@ -8,6 +7,8 @@ import { type BrowseDashboardsPermissions } from './types';
 describe('canEditItemType', () => {
   const dashboardsOnly: BrowseDashboardsPermissions = { canEditFolders: false, canEditDashboards: true };
   const foldersOnly: BrowseDashboardsPermissions = { canEditFolders: true, canEditDashboards: false };
+
+  afterEach(() => initStarredKinds([]));
 
   it.each([
     { kind: 'folder', permissions: foldersOnly, expected: true },
@@ -21,15 +22,10 @@ describe('canEditItemType', () => {
     expect(canEditItemType(kind, permissions)).toBe(expected);
   });
 
-  it("never lets a plugin's objects be edited, whatever the permissions", async () => {
-    setAppPluginMetas({ [MOCK_STARRED_KIND_APP.id]: MOCK_STARRED_KIND_APP });
-    await loadStarredKinds();
+  it("never lets a plugin's objects be edited, whatever the permissions", () => {
+    initStarredKinds([MOCK_STARRED_KIND_APP]);
     const everything = { ...dashboardsOnly, canEditFolders: true, canDeleteDashboards: true };
 
     expect(canEditItemType('things.ext.grafana.app/Thing', everything)).toBe(false);
-
-    setAppPluginMetas({});
-    await loadStarredKinds();
-    clearAppPluginMetas();
   });
 });

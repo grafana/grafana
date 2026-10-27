@@ -17,7 +17,7 @@ import { toComparablePath } from 'app/core/navigation/comparablePath';
 import { useIsMtFallbackConfigured, useIsUrlAllowed } from 'app/core/navigation/mtFallback';
 import { useIsStPodLoading } from 'app/core/navigation/useIsStPodLoading';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
-import { getStarredKinds } from 'app/features/stars/kinds';
+import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
 
 import { Indent } from '../../Indent/Indent';
 
@@ -147,12 +147,9 @@ export function MegaMenuItem({
   }
 
   // Announce the kind on starred-leaf icons so a same-named dashboard/folder pair doesn't read
-  // as two identical links to screen readers. The leaf carries only its icon, so the kind is the
-  // starred kind using that icon; anything else stays untitled (and thus aria-hidden). Level-0
-  // section icons must stay aria-hidden or they double-announce the label.
-  const starredLeafIconTitle = isStarredLeaf
-    ? getStarredKinds().find((kind) => kind.icon === link.icon)?.title
-    : undefined;
+  // as two identical links to screen readers. Other icons stay untitled (and thus aria-hidden):
+  // level-0 section icons must, or they double-announce the label.
+  const starredLeafIconTitle = link.starredKind ? findStarredKindBySearchKind(link.starredKind)?.title : undefined;
 
   let iconElement: React.JSX.Element | null = null;
 

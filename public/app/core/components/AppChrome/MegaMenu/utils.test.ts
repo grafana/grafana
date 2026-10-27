@@ -2,10 +2,7 @@ import { cloneDeep } from 'lodash';
 
 import { type NavModelItem } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
-import { MOCK_STARRED_KIND_APP, setTestFlags } from '@grafana/test-utils/unstable';
 import { ContextSrv, setContextSrv } from 'app/core/services/context_srv';
-import { loadStarredKinds } from 'app/features/stars/kinds';
 
 import {
   getEnrichedHelpItem,
@@ -153,13 +150,12 @@ describe('enrichWithInteractionTracking', () => {
     jest.mocked(reportInteraction).mockClear();
   });
 
-  it('reports a starred folder click with itemKind folder', () => {
-    // A folder can only sit in the Starred section while folders are starrable
-    setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
+  it('reports the kind a starred leaf carries', () => {
     const item: NavModelItem = {
-      text: 'Folder 1',
-      id: 'starred/f1',
-      url: '/dashboards/f/f1/',
+      text: 'Thing 1',
+      id: 'starred/t1',
+      url: '/a/test-things-app/things/t1',
+      starredKind: 'things.ext.grafana.app/Thing',
       parentItem: { text: 'Starred', id: 'starred' },
     };
 
@@ -167,12 +163,11 @@ describe('enrichWithInteractionTracking', () => {
 
     expect(reportInteraction).toHaveBeenCalledWith(
       'grafana_navigation_item_clicked',
-      expect.objectContaining({ itemIsStarred: true, itemKind: 'folder' })
+      expect.objectContaining({ itemIsStarred: true, itemKind: 'things.ext.grafana.app/Thing' })
     );
-    setTestFlags({});
   });
 
-  it('reports a starred dashboard click with itemKind dashboard', () => {
+  it('reports a starred leaf the backend shipped, which carries no kind, as a dashboard', () => {
     const item: NavModelItem = {
       text: 'Dashboard 1',
       id: 'starred/d1',
@@ -186,27 +181,6 @@ describe('enrichWithInteractionTracking', () => {
       'grafana_navigation_item_clicked',
       expect.objectContaining({ itemIsStarred: true, itemKind: 'dashboard' })
     );
-  });
-
-  it('reports a starred plugin object click with the kind a plugin declared', async () => {
-    setAppPluginMetas({ [MOCK_STARRED_KIND_APP.id]: MOCK_STARRED_KIND_APP });
-    await loadStarredKinds();
-    const item: NavModelItem = {
-      text: 'Thing 1',
-      id: 'starred/t1',
-      url: '/a/test-things-app/things/t1',
-      parentItem: { text: 'Starred', id: 'starred' },
-    };
-
-    enrichWithInteractionTracking(item, false).onClick?.();
-
-    expect(reportInteraction).toHaveBeenCalledWith(
-      'grafana_navigation_item_clicked',
-      expect.objectContaining({ itemIsStarred: true, itemKind: 'things.ext.grafana.app/Thing' })
-    );
-    setAppPluginMetas({});
-    await loadStarredKinds();
-    clearAppPluginMetas();
   });
 
   it('reports non-starred items as not starred and without a kind', () => {

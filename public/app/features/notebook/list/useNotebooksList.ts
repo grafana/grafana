@@ -6,13 +6,9 @@ import { useDebounce } from 'react-use';
 import { t } from '@grafana/i18n';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
+import { type WhereNode } from 'app/features/apiserver/search';
 
-import {
-  useSearchNotebooksInfiniteQuery,
-  type NotebookSearchQuery,
-  type ResultItem,
-  type WhereNode,
-} from './notebookSearchApi';
+import { useSearchNotebooksInfiniteQuery, type NotebookSearchQuery, type ResultItem } from './notebookSearchApi';
 
 /**
  * Field names as the index declares them (resource.SEARCH_FIELD_* on the backend). Only the

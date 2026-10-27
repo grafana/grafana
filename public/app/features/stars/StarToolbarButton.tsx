@@ -2,10 +2,11 @@ import { useMemo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { getStarsSrv } from '@grafana/runtime';
 import { Icon, ToolbarButton } from '@grafana/ui';
 
 import { itemStarred } from './analytics/main';
-import { useStarItem, useStarredItems } from './hooks';
+import { useStarredItems } from './hooks';
 
 const getStarTooltips = (title: string) => ({
   star: t('stars.mark-as-starred', 'Mark as favorite'),
@@ -25,8 +26,6 @@ type Props = {
 export function StarToolbarButton({ title, group, kind, id, onStarChange }: Props) {
   const tooltips = getStarTooltips(title);
 
-  const handleItemStar = useStarItem(group, kind);
-
   const { data: stars, isLoading } = useStarredItems(group, kind);
 
   const isStarred = useMemo(() => {
@@ -36,7 +35,13 @@ export function StarToolbarButton({ title, group, kind, id, onStarChange }: Prop
   }, [id, stars]);
 
   const handleStarToggle = async () => {
-    await handleItemStar({ id, title }, !isStarred);
+    const ref = { group, kind, id, title };
+    try {
+      await (isStarred ? getStarsSrv().unstar(ref) : getStarsSrv().star(ref));
+    } catch {
+      // Grafana refused the change — the button keeps showing the state that persisted
+      return;
+    }
     onStarChange?.(id, !isStarred);
     itemStarred({
       group,

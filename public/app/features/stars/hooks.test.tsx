@@ -1,10 +1,8 @@
 import { http, HttpResponse } from 'msw';
-import { useState } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { config, setBackendSrv, setStarsSrv } from '@grafana/runtime';
-import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
-import { getKindDiscoveryHandlers, getKindSearchHandler, kindSearchRoute } from '@grafana/test-utils/handlers';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { getKindDiscoveryHandler, getKindSearchHandler, kindSearchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   getFolderFixtures,
@@ -21,9 +19,8 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useSelector } from 'app/types/store';
 
-import { useStarItem, useSyncStarredItemsInNav } from './hooks';
-import { loadStarredKinds } from './kinds';
-import { CollectionsStarsSrv } from './service';
+import { useSyncStarredItemsInNav } from './hooks';
+import { initStarredKinds } from './kinds';
 
 jest.mock('app/features/search/service/searcher');
 
@@ -38,23 +35,18 @@ const THING_URL = `/a/test-things-app/things/${THING_UUID}`;
 const { group: THING_GROUP, kind: THING_KIND } = MOCK_STARRED_KIND;
 
 setBackendSrv(backendSrv);
-// Stars go through the runtime service, which refuses signed-out callers
-setStarsSrv(new CollectionsStarsSrv());
 contextSrv.isSignedIn = true;
 setupMockServer();
 
-/** Installs the mock app plugin that declares the Thing kind, so the registry lists it. */
-async function installThingsApp() {
-  setAppPluginMetas({ [MOCK_STARRED_KIND_APP.id]: MOCK_STARRED_KIND_APP });
-  await loadStarredKinds();
-  server.use(...getKindDiscoveryHandlers(MOCK_STARRED_KIND_SERVED));
+/** Declares the Thing kind in the registry and serves it, so the sync resolves it through its own search. */
+function installThingsApp() {
+  initStarredKinds([MOCK_STARRED_KIND_APP]);
+  server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
 }
 
-afterEach(async () => {
-  // Forget the plugin kind: the metas cache and the registry snapshot both outlive a test
-  setAppPluginMetas({});
-  await loadStarredKinds();
-  clearAppPluginMetas();
+afterEach(() => {
+  // Forget the plugin kind: the registry outlives a test
+  initStarredKinds([]);
 });
 
 /** Renders the hook plus a read-only component that reflects Redux starred state */
@@ -67,35 +59,6 @@ const TestHarness = () => {
     <>
       <span data-testid="loading-state">{String(isLoading)}</span>
       <span data-testid="error-state">{String(isError)}</span>
-      <ul data-testid="starred-list">
-        {starred?.children?.map((child) => (
-          <li key={child.id} data-testid={`synced-${child.id}`} data-icon={child.icon} data-url={child.url}>
-            {child.text}
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-};
-
-/** Renders the star callback for one kind plus a read-only list of nav starred children */
-const StarHarness = ({ uid, group, kind, title }: { uid: string; group: string; kind: string; title: string }) => {
-  const starItem = useStarItem(group, kind);
-  const [starDone, setStarDone] = useState(false);
-  const navTree = useSelector((state) => state.navBarTree);
-  const starred = navTree.find((item) => item.id === 'starred');
-
-  return (
-    <>
-      <button
-        onClick={async () => {
-          await starItem({ id: uid, title }, true);
-          setStarDone(true);
-        }}
-      >
-        star item
-      </button>
-      <span data-testid="star-done">{String(starDone)}</span>
       <ul data-testid="starred-list">
         {starred?.children?.map((child) => (
           <li key={child.id} data-testid={`synced-${child.id}`} data-icon={child.icon} data-url={child.url}>
@@ -225,7 +188,7 @@ describe('useSyncStarredItemsInNav', () => {
     const dashUid = dashbdD.item.uid;
     setMockStarredDashboards([dashUid]);
     setMockStarredPluginKind(THING_GROUP, THING_KIND, [THING_UUID]);
-    await installThingsApp();
+    installThingsApp();
     server.use(
       getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
         { name: THING_UUID, title: 'My Thing', folder: folderA.item.uid },
@@ -248,8 +211,8 @@ describe('useSyncStarredItemsInNav', () => {
     const dashUid = dashbdD.item.uid;
     setMockStarredDashboards([dashUid]);
     setMockStarredPluginKind(THING_GROUP, THING_KIND, [THING_UUID]);
-    await installThingsApp();
-    server.use(http.post(kindSearchRoute(MOCK_STARRED_KIND_SERVED), () => new HttpResponse(null, { status: 404 })));
+    installThingsApp();
+    server.use(http.post(kindSearchRoute(MOCK_STARRED_KIND_SERVED), () => new HttpResponse(null, { status: 503 })));
     jest.spyOn(console, 'error').mockImplementation(() => {});
     setupSearchMock([{ uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' }]);
 
@@ -427,7 +390,7 @@ describe('useSyncStarredItemsInNav', () => {
       setMockStarredDashboards([dashUid]);
       setMockStarredFolders([folderUid]);
       setMockStarredPluginKind(THING_GROUP, THING_KIND, [THING_UUID]);
-      await installThingsApp();
+      installThingsApp();
       // The title sorts before both other titles, so a pure alphabetical sort would render it first
       server.use(
         getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: THING_UUID, title: 'AAA Thing', folder: folderUid }])
@@ -464,114 +427,6 @@ describe('useSyncStarredItemsInNav', () => {
         `synced-starred/${folderUid}`,
         `synced-starred/${THING_UUID}`,
       ]);
-    });
-  });
-});
-
-describe('useStarItem', () => {
-  // grafana.starredFolders stays off, so starredFoldersEnabled() is false and kind Folder must
-  // never surface in the nav Starred section.
-  describe('with starred folders disabled', () => {
-    beforeEach(() => {
-      // Provide a starred section in the nav tree so the reducer has a target
-      config.bootData.navTree = [
-        { id: 'home', text: 'Home', url: '/' },
-        { id: 'starred', text: 'Starred', children: [] },
-      ];
-    });
-
-    it('refuses to star a folder, sending nothing and leaving the nav untouched', async () => {
-      const folderUid = folderA.item.uid;
-      setMockStarredFolders([]);
-      const starPuts: string[] = [];
-      server.use(
-        http.put(
-          '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id',
-          ({ params }) => {
-            starPuts.push(`${params.group}/${params.kind}/${params.id}`);
-            return HttpResponse.json({ kind: 'Status', apiVersion: 'v1', metadata: {}, code: 200 });
-          }
-        )
-      );
-
-      const { user } = render(
-        <StarHarness uid={folderUid} group="folder.grafana.app" kind="Folder" title="My Folder" />
-      );
-
-      await user.click(screen.getByRole('button', { name: 'star item' }));
-
-      // The click handler settled without an unhandled rejection escaping...
-      await waitFor(() => {
-        expect(screen.getByTestId('star-done')).toHaveTextContent('true');
-      });
-
-      // ...and a kind this Grafana cannot show was never written, let alone added to the nav tree
-      expect(starPuts).toEqual([]);
-      expect(screen.queryByTestId(`synced-starred/${folderUid}`)).not.toBeInTheDocument();
-      expect(screen.getByTestId('starred-list').children).toHaveLength(0);
-    });
-
-    it('adds a starred plugin object to the nav starred section with its plugin URL and icon', async () => {
-      await installThingsApp();
-
-      const { user } = render(<StarHarness uid={THING_UUID} group={THING_GROUP} kind={THING_KIND} title="My Thing" />);
-
-      await user.click(screen.getByRole('button', { name: 'star item' }));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('star-done')).toHaveTextContent('true');
-      });
-
-      // A declared kind needs no flag: the star lands in the nav straight away, linking into the plugin
-      const thingRow = screen.getByTestId(`synced-starred/${THING_UUID}`);
-      expect(thingRow).toHaveTextContent('My Thing');
-      expect(thingRow).toHaveAttribute('data-icon', 'cube');
-      expect(thingRow).toHaveAttribute('data-url', THING_URL);
-    });
-  });
-
-  // Folder gates on: a successful star would land in the nav, so a rejected one must not.
-  describe('with starred folders enabled', () => {
-    beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
-      // Provide a starred section in the nav tree so the reducer has a target
-      config.bootData.navTree = [
-        { id: 'home', text: 'Home', url: '/' },
-        { id: 'starred', text: 'Starred', children: [] },
-      ];
-    });
-
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
-    it('leaves the nav starred section untouched when the server rejects the star', async () => {
-      const folderUid = folderA.item.uid;
-      setMockStarredFolders([]);
-
-      server.use(
-        http.put(
-          '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id',
-          () => new HttpResponse(null, { status: 500 })
-        )
-      );
-
-      const { user } = render(
-        <StarHarness uid={folderUid} group="folder.grafana.app" kind="Folder" title="My Folder" />
-      );
-
-      await user.click(screen.getByRole('button', { name: 'star item' }));
-
-      // The star round-trip finished without an unhandled rejection escaping the click handler...
-      await waitFor(() => {
-        expect(screen.getByTestId('star-done')).toHaveTextContent('true');
-      });
-
-      // ...and the rejected star never mutated the nav tree
-      expect(screen.queryByTestId(`synced-starred/${folderUid}`)).not.toBeInTheDocument();
-      expect(screen.getByTestId('starred-list').children).toHaveLength(0);
     });
   });
 });

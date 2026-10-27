@@ -1,10 +1,10 @@
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv, setStarsSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { useSelector } from 'app/types/store';
@@ -150,6 +150,7 @@ describe('StarToolbarButton', () => {
   });
 
   it('reports a typed analytics event when starring a folder', async () => {
+    setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
     const { user } = setup(folderToStar, { group: 'folder.grafana.app', kind: 'Folder' });
 
     await user.click(await findStarButton(folderToStar.title, false));
@@ -163,6 +164,30 @@ describe('StarToolbarButton', () => {
       });
     });
     expect(itemStarred).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('reports neither a change nor an analytics event when Grafana refuses the star', async () => {
+    // Folders cannot be starred while the flag is off, so the service refuses this one
+    const onStarChange = jest.fn();
+    config.bootData.navTree = [{ id: 'starred', text: 'Starred', children: [] }];
+    const { user } = render(
+      <StarToolbarButton
+        title={folderToStar.title}
+        group="folder.grafana.app"
+        kind="Folder"
+        id={folderToStar.uid}
+        onStarChange={onStarChange}
+      />
+    );
+
+    await user.click(await findStarButton(folderToStar.title, false));
+
+    expect(await findStarButton(folderToStar.title, false)).toBeInTheDocument();
+    expect(onStarChange).not.toHaveBeenCalled();
+    expect(itemStarred).not.toHaveBeenCalled();
   });
 
   it('reports a typed analytics event when unstarring a dashboard', async () => {

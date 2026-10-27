@@ -40,6 +40,8 @@ export interface NavModelItem extends NavLinkDTO {
   tabCounter?: number;
   hideFromBreadcrumbs?: boolean;
   emptyMessage?: string;
+  /** The kind of object a leaf in the Starred section links to, as the stars registry names it: `dashboard`, `folder`, or a plugin kind's `group/Kind`. */
+  starredKind?: string;
 }
 
 /**

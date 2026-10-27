@@ -36,12 +36,12 @@ export function DashListItem({
   const isCompact = density === 'compact';
 
   // Rows may be dashboards, folders or plugin kinds; the star has to target the row's own kind
-  const resource = findStarredKindBySearchKind(dashboard.kind);
-  const starButton = resource ? (
+  const starredKind = findStarredKindBySearchKind(dashboard.kind);
+  const starButton = starredKind ? (
     <StarToolbarButton
       title={dashboard.name}
-      group={resource.group}
-      kind={resource.kind}
+      group={starredKind.group}
+      kind={starredKind.kind}
       id={dashboard.uid}
       onStarChange={onStarChange}
     />

@@ -1,4 +1,5 @@
 import { iamAPIv0alpha1, type DisplayList } from 'app/api/clients/iam/v0alpha1';
+import { type SortField, type WhereNode } from 'app/features/apiserver/search';
 import { dispatch } from 'app/types/store';
 
 import { getMessageFromError, getStatusFromError } from '../../../core/utils/errors';
@@ -10,10 +11,8 @@ import {
   TRASH_FIELD_FOLDER,
   TRASH_FIELD_TAGS,
   TRASH_FIELD_TITLE,
-  type SortField,
   type TrashItem,
   type TrashQuery,
-  type WhereNode,
 } from './trashSearchApi';
 import { type SearchHit } from './unified';
 import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN } from './utils';

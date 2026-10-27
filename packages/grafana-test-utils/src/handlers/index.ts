@@ -3,7 +3,7 @@ export { FOLDER_BY_NAME as FOLDER_BY_NAME_URL } from './apis/folder.grafana.app/
 export { USAGE_URL as QUOTAS_USAGE_URL } from './apis/quotas.grafana.app/v0alpha1/handlers';
 export { MERGED_PREFS_URL, preferencesHandlers } from './apis/preferences.grafana.app/v1/handlers';
 export { starsRoute } from './apis/collections.grafana.app/v1alpha1/handlers';
-export { getKindDiscoveryHandlers, getKindSearchHandler, kindSearchRoute } from './apis/kindSearch/handlers';
+export { getKindDiscoveryHandler, getKindSearchHandler, kindSearchRoute } from './apis/kindSearch/handlers';
 export type { MockServedKind, MockKindResource } from './apis/kindSearch/handlers';
 export {
   getCustomSearchHandler,

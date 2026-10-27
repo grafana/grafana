@@ -39,7 +39,7 @@ export function getFolderPermissions(folderDTO?: FolderDTO) {
 export function canEditItemType(itemKind: string, permissions: BrowseDashboardsPermissions) {
   const { canEditFolders, canDeleteFolders, canEditDashboards, canDeleteDashboards } = permissions;
   // Objects of a plugin's kind belong to that plugin, so the browse view never moves or deletes them
-  if (findStarredKindBySearchKind(itemKind)?.editable === false) {
+  if (findStarredKindBySearchKind(itemKind)?.pluginId) {
     return false;
   }
   return itemKind === 'folder'

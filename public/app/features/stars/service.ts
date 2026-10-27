@@ -1,4 +1,5 @@
-import { Observable, of } from 'rxjs';
+import { isEqual } from 'lodash';
+import { defer, distinctUntilChanged, filter, finalize, from, map, type Observable, of } from 'rxjs';
 
 import { type StarredResourceRef, type StarsSrv } from '@grafana/runtime';
 import { collectionsAPIv1alpha1, type StarsList } from 'app/api/clients/collections/v1alpha1';
@@ -6,13 +7,12 @@ import { setStarred } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch, store } from 'app/store/store';
 
-import { findStarredKind, loadStarredKinds, starredNavEntry } from './kinds';
+import { findStarredKind, starredNavEntry } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 /** Stars objects over the collections API and keeps Grafana's Starred nav and lists in sync. */
 export class CollectionsStarsSrv implements StarsSrv {
   async canStar(group: string, kind: string): Promise<boolean> {
-    await loadStarredKinds();
     return findStarredKind(group, kind) !== undefined;
   }
 
@@ -30,40 +30,20 @@ export class CollectionsStarsSrv implements StarsSrv {
       return of([]);
     }
 
-    return new Observable<string[]>((subscriber) => {
+    return defer(() => {
       const args = { fieldSelector: userStarsFieldSelector() };
       // Keeps the listStars cache entry alive (and refetching on tag invalidation) while subscribed.
-      const querySub = dispatch(collectionsAPIv1alpha1.endpoints.listStars.initiate(args));
+      const query = dispatch(collectionsAPIv1alpha1.endpoints.listStars.initiate(args));
       const select = collectionsAPIv1alpha1.endpoints.listStars.select(args);
 
-      let lastData: StarsList | undefined;
-      let lastNames: string[] | undefined;
-
-      const emit = () => {
-        const { data } = select(store.getState());
-        if (data === lastData) {
-          return;
-        }
-        lastData = data;
+      return from(store).pipe(
+        map((state) => select(state).data),
         // Hold the first emission until a response exists, so subscribers never see a spurious empty set.
-        if (!data) {
-          return;
-        }
-        const names = findStarredNames(data, group, kind);
-        if (lastNames && lastNames.length === names.length && lastNames.every((n, i) => n === names[i])) {
-          return;
-        }
-        lastNames = names;
-        subscriber.next(names);
-      };
-
-      emit();
-      const storeUnsub = store.subscribe(emit);
-
-      return () => {
-        storeUnsub();
-        querySub.unsubscribe();
-      };
+        filter((data): data is StarsList => data !== undefined),
+        map((data) => findStarredNames(data, group, kind)),
+        distinctUntilChanged(isEqual),
+        finalize(() => query.unsubscribe())
+      );
     });
   }
 
@@ -73,11 +53,10 @@ export class CollectionsStarsSrv implements StarsSrv {
     }
 
     const { group, kind, id, title } = ref;
-    // The server stores a star of any kind, but only declared kinds can be shown anywhere, so refuse the rest here
-    await loadStarredKinds();
+    // The server stores a star of any kind, but only registered kinds can be shown anywhere, so refuse the rest here
     const starredKind = findStarredKind(group, kind);
     if (!starredKind) {
-      throw new Error(`Cannot star ${group}/${kind}: no installed app plugin declares it as starrable`);
+      throw new Error(`Cannot star ${group}/${kind}: not a kind this Grafana can show as starred`);
     }
 
     const name = `user-${contextSrv.user.uid}`;

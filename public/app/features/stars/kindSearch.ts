@@ -1,23 +1,35 @@
 import { getAPINamespace } from '@grafana/api-clients';
-import { getBackendSrv } from '@grafana/runtime';
-import { getAPIGroupVersions } from 'app/features/apiserver/discovery';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import {
+  discoveryResources,
+  getAPIGroupDiscoveryList,
+  type GroupDiscoveryResource,
+} from 'app/features/apiserver/discovery';
+import {
+  SEARCH_API_VERSION,
+  SEARCH_QUERY_KIND,
+  type SearchQueryBody,
+  type SearchResults,
+  type WhereNode,
+} from 'app/features/apiserver/search';
 
 import { type StarredKind } from './kinds';
 
 /**
  * Resolves starred names of a plugin kind to titles and folders through the kind's own search
  * endpoint, `POST /apis/{group}/{version}/namespaces/{ns}/{plural}/search`, which the app platform
- * mounts for every served namespaced kind. The served version and plural come from API discovery,
- * so a plugin declares only its group and kind, and a version bump needs no change here.
+ * mounts for every served namespaced kind whose manifest enables search. The served version and
+ * plural come from API discovery, so a plugin declares only its group and kind, and a version bump
+ * needs no change here.
  */
 
-const SEARCH_API_VERSION = 'search.grafana.app/v0alpha1';
-const SEARCH_QUERY_KIND = 'SearchQuery';
 // Server page-size cap for a single search request
 const MAX_SEARCH_LIMIT = 500;
 
 export interface StarredResource {
   name: string;
+  /** The kind's plural, as the API serves it. */
+  resource: string;
   title: string;
   folder: string;
   description: string;
@@ -30,62 +42,40 @@ export interface StarredResourceFilter {
   folder?: string;
 }
 
-interface WhereNode {
-  and?: WhereNode[];
-  text?: { value: string; fields?: string[] };
-  filter?: { field: string; operator: 'In' | 'NotIn' | 'All'; values: string[] };
-}
+// Resolved once per page load: the set of served kinds is static for the apiserver process
+// lifetime. Failures are not cached so a transient outage can be retried by the next caller.
+let servedResources: Promise<GroupDiscoveryResource[]> | undefined;
 
-interface SearchItem {
-  resource: { group: string; resource: string; kind: string; name: string };
-  /** The requested fields' values. Absent fields are omitted, so read defensively. */
-  fields?: Record<string, unknown>;
+function getServedResources(): Promise<GroupDiscoveryResource[]> {
+  if (!servedResources) {
+    const pending = getAPIGroupDiscoveryList().then(discoveryResources);
+    servedResources = pending;
+    pending.catch(() => {
+      if (servedResources === pending) {
+        servedResources = undefined;
+      }
+    });
+  }
+  return servedResources;
 }
-
-interface SearchResults {
-  items?: SearchItem[];
-}
-
-interface APIResourceList {
-  resources: Array<{ name: string; kind: string }>;
-}
-
-// Served version and plural per kind. A kind's API does not change within a page load.
-const resourceBaseURLs = new Map<string, Promise<string>>();
 
 /** `/apis/{group}/{version}/namespaces/{ns}/{plural}` of a kind, as this Grafana serves it. */
 async function resourceBaseURL(kind: StarredKind): Promise<string> {
-  const key = `${kind.group}/${kind.kind}`;
-  let pending = resourceBaseURLs.get(key);
-  if (!pending) {
-    pending = discoverResourceBaseURL(kind);
-    resourceBaseURLs.set(key, pending);
-    // A failed discovery (plugin disabled, apiserver down) is retried on the next call
-    pending.catch(() => resourceBaseURLs.delete(key));
+  const resources = await getServedResources();
+  // Discovery lists a group's versions by preference, so the first match is the preferred one
+  const served = resources.find(
+    (resource) => resource.responseKind.group === kind.group && resource.responseKind.kind === kind.kind
+  );
+  if (!served) {
+    throw new Error(`Kind ${kind.group}/${kind.kind} is not served`);
   }
-  return pending;
-}
-
-async function discoverResourceBaseURL(kind: StarredKind): Promise<string> {
-  const versions = await getAPIGroupVersions(kind.group);
-  const version = versions?.preferred ?? [...(versions?.versions ?? [])][0];
-  if (!version) {
-    throw new Error(`API group ${kind.group} is not served`);
-  }
-  const list = await getBackendSrv().get<APIResourceList>(`/apis/${kind.group}/${version}`, undefined, undefined, {
-    showErrorAlert: false,
-  });
-  // Subresources are listed as `plural/sub`; the kind's own entry has no slash
-  const resource = list.resources.find((candidate) => candidate.kind === kind.kind && !candidate.name.includes('/'));
-  if (!resource) {
-    throw new Error(`Kind ${kind.kind} is not served in ${kind.group}/${version}`);
-  }
-  return `/apis/${kind.group}/${version}/namespaces/${getAPINamespace()}/${resource.name}`;
+  return `/apis/${kind.group}/${served.responseKind.version}/namespaces/${getAPINamespace()}/${served.resource}`;
 }
 
 /**
- * Titles and folders of the starred objects of a kind that the user may read. Throws on
- * transport or API errors, including a kind whose API is not served.
+ * Titles and folders of the starred objects of a kind that the user may read. A kind whose API is
+ * unavailable (plugin disabled, apiserver down, search not enabled for the kind) yields nothing:
+ * its stars go unshown rather than failing the list around them.
  */
 export async function searchStarredResources(
   kind: StarredKind,
@@ -106,24 +96,37 @@ export async function searchStarredResources(
   if (filter.folder) {
     leaves.push({ filter: { field: 'folder', operator: 'In', values: [filter.folder] } });
   }
+  const query: SearchQueryBody = {
+    where: leaves.length === 1 ? leaves[0] : { and: leaves },
+    fields: ['title', 'folder', 'description', 'tags'],
+    limit: Math.min(names.length, MAX_SEARCH_LIMIT),
+  };
 
-  const results = await getBackendSrv().post<SearchResults>(
-    `${await resourceBaseURL(kind)}/search`,
-    {
-      apiVersion: SEARCH_API_VERSION,
-      kind: SEARCH_QUERY_KIND,
-      where: leaves.length === 1 ? leaves[0] : { and: leaves },
-      fields: ['title', 'folder', 'description', 'tags'],
-      limit: Math.min(names.length, MAX_SEARCH_LIMIT),
-    },
-    // Callers show no stars for the kind instead; a global toast for an optional plugin API would only confuse
-    { showErrorAlert: false }
-  );
+  let results: SearchResults;
+  try {
+    results = await getBackendSrv().post<SearchResults>(
+      `${await resourceBaseURL(kind)}/search`,
+      { apiVersion: SEARCH_API_VERSION, kind: SEARCH_QUERY_KIND, ...query },
+      // The kind's stars are simply not shown; a global toast for an optional plugin API would only confuse
+      { showErrorAlert: false }
+    );
+  } catch (err) {
+    if (isFetchError(err) && err.status === 404) {
+      // The route is only mounted for kinds whose app manifest enables search
+      console.warn(
+        `Plugin ${kind.pluginId} declares ${kind.group}/${kind.kind} as starrable, but the kind's app manifest does not enable search, so its stars cannot be shown`
+      );
+    } else {
+      console.error(`Failed to resolve starred ${kind.group}/${kind.kind}`, err);
+    }
+    return [];
+  }
 
-  return (results.items ?? []).map((item) => {
+  return results.items.map((item) => {
     const fields = item.fields ?? {};
     return {
       name: item.resource.name,
+      resource: item.resource.resource,
       title: typeof fields.title === 'string' && fields.title ? fields.title : item.resource.name,
       folder: typeof fields.folder === 'string' ? fields.folder : '',
       description: typeof fields.description === 'string' ? fields.description : '',

@@ -2,8 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { render, screen } from 'test/test-utils';
 
 import { setBackendSrv, setStarsSrv } from '@grafana/runtime';
-import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
-import { getCustomSearchHandler, getKindDiscoveryHandlers, getKindSearchHandler } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler, getKindDiscoveryHandler, getKindSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   getFolderFixtures,
@@ -15,6 +14,7 @@ import {
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
+import { initStarredKinds } from 'app/features/stars/kinds';
 import { CollectionsStarsSrv } from 'app/features/stars/service';
 
 import { getPanelProps } from '../test-utils';
@@ -124,10 +124,10 @@ describe('DashList', () => {
   it('lists a starred plugin object and un-stars it under its own kind', async () => {
     const thingUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
     setMockStarredPluginKind(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind, [thingUuid]);
-    setAppPluginMetas({ [MOCK_STARRED_KIND_APP.id]: MOCK_STARRED_KIND_APP });
+    initStarredKinds([MOCK_STARRED_KIND_APP]);
     const deletedStars: string[] = [];
     server.use(
-      ...getKindDiscoveryHandlers(MOCK_STARRED_KIND_SERVED),
+      getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
       getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
         { name: thingUuid, title: 'Capacity review', folder: folderA.item.uid },
       ]),
@@ -155,7 +155,7 @@ describe('DashList', () => {
     // The star targets the row's own kind, not the dashboard kind every row used to get
     expect(deletedStars).toEqual([`${MOCK_STARRED_KIND.group}/${MOCK_STARRED_KIND.kind}/${thingUuid}`]);
     expect(screen.queryByText('Capacity review')).not.toBeInTheDocument();
-    clearAppPluginMetas();
+    initStarredKinds([]);
   });
 
   it('shows recently viewed dashboards', async () => {

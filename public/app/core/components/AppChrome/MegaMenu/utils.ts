@@ -6,7 +6,6 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
-import { starredKindForUrl } from 'app/features/stars/kinds';
 
 import { ShowModalReactEvent } from '../../../../types/events';
 import { appEvents } from '../../../app_events';
@@ -62,8 +61,8 @@ export const enrichWithInteractionTracking = (
 
   newItem.onClick = () => {
     const itemIsStarred = newItem?.parentItem?.id === 'starred';
-    // Starred leaves carry only a link, so the kind is read back from it
-    const itemKind = itemIsStarred ? starredKindForUrl(newItem.url ?? '').searchKind : undefined;
+    // The backend ships only starred dashboards into bootData, and those leaves carry no kind
+    const itemKind = itemIsStarred ? (newItem.starredKind ?? 'dashboard') : undefined;
     reportInteraction('grafana_navigation_item_clicked', {
       path: newItem.url ?? newItem.id,
       menuIsDocked: megaMenuDockedState,

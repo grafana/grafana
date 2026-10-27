@@ -1,3 +1,4 @@
+import { groupBy } from 'lodash';
 import { HttpResponse, http } from 'msw';
 
 /** A kind served by the app platform, as the discovery and per-kind search handlers describe it. */
@@ -26,30 +27,32 @@ export const kindSearchRoute = (served: MockServedKind) =>
   `/apis/${served.group}/${served.version}/namespaces/:namespace/${served.plural}/search`;
 
 /**
- * Answers API discovery for one served kind the way the apiserver does: the group's versions, and
- * the resources of that version. Core resolves starred names of a plugin kind through these.
+ * Answers aggregated API discovery (`GET /apis`) for the served kinds the way the apiserver does:
+ * each group with its versions and their resources. Core resolves the version and plural of a
+ * plugin kind through this.
  */
-export function getKindDiscoveryHandlers(served: MockServedKind) {
-  return [
-    http.get(`/apis/${served.group}/`, () =>
-      HttpResponse.json({
-        kind: 'APIGroup',
-        name: served.group,
-        versions: [{ groupVersion: `${served.group}/${served.version}`, version: served.version }],
-        preferredVersion: { groupVersion: `${served.group}/${served.version}`, version: served.version },
-      })
-    ),
-    http.get(`/apis/${served.group}/${served.version}`, () =>
-      HttpResponse.json({
-        kind: 'APIResourceList',
-        groupVersion: `${served.group}/${served.version}`,
-        resources: [
-          { name: served.plural, singularName: served.plural.replace(/s$/, ''), namespaced: true, kind: served.kind },
-          { name: `${served.plural}/search`, namespaced: true, kind: 'SearchResults' },
-        ],
-      })
-    ),
-  ];
+export function getKindDiscoveryHandler(...served: MockServedKind[]) {
+  return http.get('/apis', () =>
+    HttpResponse.json({
+      kind: 'APIGroupDiscoveryList',
+      apiVersion: 'apidiscovery.k8s.io/v2',
+      metadata: {},
+      items: Object.entries(groupBy(served, (kind) => kind.group)).map(([group, kinds]) => ({
+        metadata: { name: group },
+        versions: Object.entries(groupBy(kinds, (kind) => kind.version)).map(([version, versionKinds]) => ({
+          version,
+          freshness: 'Current',
+          resources: versionKinds.map((kind) => ({
+            resource: kind.plural,
+            responseKind: { group: '', version: '', kind: kind.kind },
+            scope: 'Namespaced',
+            singularResource: kind.plural.replace(/s$/, ''),
+            verbs: ['create', 'delete', 'get', 'list', 'patch', 'update', 'watch'],
+          })),
+        })),
+      })),
+    })
+  );
 }
 
 /**
