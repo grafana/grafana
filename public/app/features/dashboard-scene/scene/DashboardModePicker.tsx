@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
-import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
+import { FeatureState, type GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ButtonGroup, Dropdown, FeatureBadge, Icon, Menu, ToolbarButton, useStyles2, type IconName } from '@grafana/ui';
 import { AssistantSparkleGradient } from 'app/core/components/AppChrome/FullscreenWorkspace/AssistantToolbarButtons';
@@ -20,12 +20,22 @@ import {
 
 const COMPOSER_ICON_GRADIENT_ID = 'grafana-assistant-composer-mode-icon-gradient';
 
+/** Set once Composer has been entered in this browser: the picker stops marking it as new. */
+export const COMPOSER_SEEN_KEY = 'grafana.dashboard.composer.seen';
+
 export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }) {
   const state = dashboard.useState();
   const styles = useStyles2(getStyles);
   const [buttonGroup, setButtonGroup] = useState<HTMLDivElement | null>(null);
   const [isCaretMenuOpen, setIsCaretMenuOpen] = useState(false);
   const mode = getDashboardMode(state);
+  const [composerSeen, setComposerSeen] = useState(() => store.getBool(COMPOSER_SEEN_KEY, false));
+  useEffect(() => {
+    if (mode === 'composer' && !composerSeen) {
+      store.set(COMPOSER_SEEN_KEY, true);
+      setComposerSeen(true);
+    }
+  }, [mode, composerSeen]);
   const composer = useComposerOption(dashboard);
   const nextMode = mode === 'view' ? 'edit' : 'view';
   const saveRequired = isNewDashboard(state);
@@ -73,6 +83,12 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const choose = (value: 'view' | 'edit') =>
     mode === 'composer' ? dashboard.switchFromComposer(value) : dashboard.setDashboardMode(value, 'picker');
 
+  // The current mode is ticked; until Composer has been entered, it is marked as new instead.
+  let composerBadge: typeof NewMode | undefined = composerSeen ? undefined : NewMode;
+  if (mode === 'composer') {
+    composerBadge = SelectedMode;
+  }
+
   const menu = (
     <div className={styles.menu}>
       <Menu ariaLabel={t('dashboard.modes.label', 'Dashboard mode')}>
@@ -103,7 +119,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             ariaChecked={mode === 'composer'}
             disabled={composer.disabledReason !== undefined}
             className={cx(styles.item, composer.disabledReason === undefined && styles.assistantIcon)}
-            component={mode === 'composer' ? SelectedMode : NewMode}
+            component={composerBadge}
             // Already in Composer: nothing to do.
             onClick={mode === 'composer' ? undefined : composer.request}
           />
