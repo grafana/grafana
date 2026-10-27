@@ -3,14 +3,17 @@ package apistore
 import (
 	"context"
 	"fmt"
+	"maps"
 	"strings"
 
 	authlib "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	secret "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
 )
 
@@ -30,6 +33,7 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 	v.ref = owner
 
 	var previous common.InlineSecureValues
+	var stored common.InlineSecureValues // the references saved before this write; previous is changed below
 	if previousObject == nil {
 		if len(secure) == 0 {
 			return nil // nothing needs to change
@@ -49,12 +53,13 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 				return fmt.Errorf("invalid state, saved values must only have a name")
 			}
 		}
+		stored = maps.Clone(previous)
 
 		// Keep exactly what we had before
 		if len(secure) == 0 {
 			if len(previous) > 0 {
 				// Kept references still need checking: the rest of the object may have changed
-				if err := verifyDynamicSecureValues(ctx, store, obj, owner, previous); err != nil {
+				if err := verifyDynamicSecureValues(ctx, store, obj, previousObject, stored, owner, previous); err != nil {
 					return err
 				}
 				return obj.SetSecureValues(previous)
@@ -132,18 +137,18 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 	}
 
 	// Check the merged result, so references kept from the previous object are checked too
-	if err := verifyDynamicSecureValues(ctx, store, obj, owner, secure); err != nil {
+	if err := verifyDynamicSecureValues(ctx, store, obj, previousObject, stored, owner, secure); err != nil {
 		return err
 	}
 
 	return cleanupSecureValues(v, obj, secure)
 }
 
-// verifyDynamicSecureValues requires that only grafana cloud writes an object holding a dynamic
-// secure value, on every create and update. To change such an object, anyone else must first drop
-// the reference. The secrets service separately checks which owners may reference each value.
-// The owner is the same reference used for inline secure values, so shared storage groups match.
-func verifyDynamicSecureValues(ctx context.Context, store secret.InlineSecureValueSupport, obj utils.GrafanaMetaAccessor, owner common.ObjectReference, secure common.InlineSecureValues) error {
+// verifyDynamicSecureValues checks every dynamic secure value an object will hold after this write.
+// Only grafana cloud may add or change one; it must also pass CanReference with the same owner
+// used for inline secure values, so shared storage groups match. Anyone else may edit an object
+// that keeps its dynamic values unchanged, but not its url, since that is where the credential goes.
+func verifyDynamicSecureValues(ctx context.Context, store secret.InlineSecureValueSupport, obj, previousObject utils.GrafanaMetaAccessor, stored common.InlineSecureValues, owner common.ObjectReference, secure common.InlineSecureValues) error {
 	for k, v := range secure {
 		if !secret.IsDynamicSecureValueName(v.Name) {
 			continue
@@ -153,7 +158,7 @@ func verifyDynamicSecureValues(ctx context.Context, store secret.InlineSecureVal
 		}
 
 		// The manager is not enforced for ManagerKindGrafana (see enforceManagerProperties), so this
-		// only marks the object; the identity check below is what restricts the writer.
+		// only keeps the object marked; the identity check below is what restricts the writer.
 		m, ok := obj.GetManagerProperties()
 		if !ok || m.Kind != utils.ManagerKindGrafana || m.Identity != "cloud" {
 			return newSecureValueError("dynamic secure values may only be configured by grafana cloud", k)
@@ -162,17 +167,40 @@ func verifyDynamicSecureValues(ctx context.Context, store secret.InlineSecureVal
 		if !ok {
 			return newSecureValueError("missing auth info", k)
 		}
+
 		// TODO: any access policy in the namespace passes. Restrict this to the grafana cloud service identity.
-		if auth.GetIdentityType() != authlib.TypeAccessPolicy {
-			return newSecureValueError("dynamic secure values must be written by an access policy", k)
+		if auth.GetIdentityType() == authlib.TypeAccessPolicy {
+			if err := store.CanReference(ctx, owner, v.Name); err != nil {
+				return err
+			}
+			continue
 		}
 
-		// Verify the dynamic secure value for a given owner
-		if err := store.CanReference(ctx, owner, v.Name); err != nil {
-			return err
+		// Anyone else may only keep a dynamic value that is already saved, at the same url
+		if stored[k].Name != v.Name {
+			return newSecureValueError("dynamic secure values may only be configured by grafana cloud", k)
+		}
+		if dataSourceURL(obj) != dataSourceURL(previousObject) {
+			return newSpecFieldError("url can not change while a dynamic secure value is configured", "url")
 		}
 	}
 	return nil
+}
+
+// dataSourceURL reads spec.url. This proof of concept only protects the datasource url.
+func dataSourceURL(obj utils.GrafanaMetaAccessor) string {
+	if obj == nil {
+		return ""
+	}
+	raw, _ := obj.GetRuntimeObject()
+	switch ds := raw.(type) {
+	case *datasourceV0.DataSource:
+		return ds.Spec.URL()
+	case *unstructured.Unstructured:
+		url, _, _ := unstructured.NestedString(ds.Object, "spec", "url")
+		return url
+	}
+	return ""
 }
 
 // make sure the registered changes are unique and valid
@@ -220,6 +248,17 @@ func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValu
 		}
 	}
 	return obj.SetSecureValues(nil) // remove them from the object
+}
+
+func newSpecFieldError(msg string, field string) error {
+	err := apierrors.NewBadRequest(msg)
+	err.ErrStatus.Details = &v1.StatusDetails{
+		Causes: []v1.StatusCause{{
+			Type:  v1.CauseTypeFieldValueInvalid,
+			Field: fmt.Sprintf("spec.%s", field),
+		}},
+	}
+	return err
 }
 
 func newSecureValueError(msg string, key string) error {
