@@ -708,6 +708,7 @@ type Cfg struct {
 	UnifiedStorageClusterSlug             string
 	UnifiedStorageAuthzExemptionEnabled   bool
 	UnifiedStorageAuthzExemptResources    []string
+	HybridSearchDefaultResources          []string
 	UnifiedStorageGRPCErrorResultToStatus bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
@@ -776,10 +777,6 @@ type Cfg struct {
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	SearchClientForwardAuthEnabled             bool
-	// SearchEnforceSortCapability rejects a sort on a field that does not declare
-	// sorting. On by default; kept for one release so an instance that still
-	// depends on such sorts can turn it off.
-	SearchEnforceSortCapability bool
 	// SearchPostRankAuthz enables the post-filter authorization search path:
 	// bleve ranks without the in-searcher authz wrapper and authorization runs
 	// app-side in rank order with early exit once the page is filled.
@@ -800,6 +797,10 @@ type Cfg struct {
 	// defaults to dashboards; external defaults to none.
 	VectorAllowedInternalCollections []string
 	VectorAllowedExternalCollections []string
+	// Exact group/resource collections readable only by the listed service identities.
+	VectorAllowedReadServices       map[string][]string
+	VectorSharedExternalCollections []string
+	VectorSharedWriteServices       []string
 	// Registers the VectorStore write RPCs on the storage server.
 	EnableVectorStore bool
 	// Service identities allowed to call the VectorStore write RPCs.
@@ -859,6 +860,7 @@ type Cfg struct {
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
 	EnforcedQuotaResources        []string
+	LoggedQuotaResources          []string
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend           bool
@@ -889,6 +891,9 @@ type Cfg struct {
 	SearchLookback       time.Duration
 	NotifierSettleDelay  time.Duration
 	SeededWatchesEnabled bool
+	// FastLatestKeyLookupEnabled makes the KV backend resolve latest-version reads with a
+	// single-row descending lookup instead of scanning the resource's history.
+	FastLatestKeyLookupEnabled bool
 	// ResourceVersionBatchTransactionTimeout bounds one batched WithTx in the
 	// resource version manager (all WriteEventFunc calls + RV stamp updates).
 	ResourceVersionBatchTransactionTimeout time.Duration
@@ -1886,6 +1891,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
+	if err := cfg.readVectorAllowedReadServices(); err != nil {
+		return err
+	}
 
 	cfg.readStartupParams(iniFile)
 	return nil

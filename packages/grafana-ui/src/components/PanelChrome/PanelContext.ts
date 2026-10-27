@@ -9,6 +9,7 @@ import {
   type DataTransformerConfig,
   type EventBus,
   EventBusSrv,
+  type PanelNotices,
 } from '@grafana/data';
 
 import { type AdHocFilterItem } from '../Table/types';
@@ -41,9 +42,26 @@ export interface AdHocTransformationsState {
 
 /** @alpha */
 export interface PanelContext {
+  /** Panel-owned notices. Absent on hosts without notice support. @alpha */
+  notices?: PanelNotices;
+  /** Connects host data for the lifetime of a panel status surface. @internal */
+  activateNotices?: () => () => void;
   /** Identifier for the events scope */
   eventsScope: string;
   eventBus: EventBus;
+
+  /**
+   * Experimental one-shot exemplar selection. The caller retains the request until the panel
+   * acknowledges it, so panel remounts cannot replay a handled navigation request.
+   * Frame indexes refer to the supplied annotation frames, including field overrides.
+   * `onHandled` may be called more than once for the same request and should be idempotent.
+   *
+   * @alpha -- experimental
+   */
+  openExemplar?: {
+    getRequest: (exemplars: DataFrame[]) => { requestId: string; frameIndex: number; rowIndex: number } | undefined;
+    onHandled: (requestId: string) => void;
+  };
 
   /** Dashboard panels sync */
   sync?: () => DashboardCursorSync;

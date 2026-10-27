@@ -86,6 +86,8 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
   const resolution = panel.map.getView().getResolution() ?? 0;
   const tolerance = resolution * HIT_TOLERANCE_PX;
 
+  const basemapLayers = panel.layers.find((l) => l.isBasemap)?.layer.getLayersArray() ?? [];
+
   let ttip: Pick<GeomapHoverPayload, 'data' | 'rowIndex'> = {};
   panel.map.forEachFeatureAtPixel(
     pixel,
@@ -166,6 +168,9 @@ export const pointerMoveListener = (evt: MapBrowserEvent, panel: GeomapPanel) =>
     },
     {
       layerFilter: (l) => {
+        if (basemapLayers.includes(l)) {
+          return false;
+        }
         const hoverLayerState = getMapLayerState(l);
         // A vector basemap's roads and land polygons are features too, and are never what a user hovers for
         return !hoverLayerState?.isBasemap && hoverLayerState?.options?.tooltip !== false;

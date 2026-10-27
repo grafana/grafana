@@ -6,7 +6,6 @@ import {
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
-  GroupByVariable,
   IntervalVariable,
   QueryVariable,
   sceneGraph,
@@ -23,7 +22,7 @@ import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
-import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
+import { createSceneVariablesFromVariableKinds } from '../serialization/transformSaveModelSchemaV2ToScene';
 
 import { applySupportsMultiValueOperators } from './applySupportsMultiValueOperators';
 import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from './utils';
@@ -90,16 +89,7 @@ export function createVariablesForDashboard(oldModel: DashboardModel, defaultVar
     // Added temporarily to allow skipping non-compatible variables
     .filter((v): v is SceneVariable => Boolean(v));
 
-  const defaultVariableObjects = defaultVariables
-    .map((v) => {
-      try {
-        return createSceneVariableFromVariableModelV2(v);
-      } catch (err) {
-        console.error(err);
-        return null;
-      }
-    })
-    .filter((v): v is SceneVariable => Boolean(v));
+  const defaultVariableObjects = createSceneVariablesFromVariableKinds(defaultVariables, { migrateUrlState: false });
 
   // Explicitly disable scopes for public dashboards
   if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
@@ -354,22 +344,6 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       value: val,
       skipUrlSync: variable.skipUrlSync,
       hide: variable.hide,
-    });
-    // Groupby variable
-  } else if (config.featureToggles.groupByVariable && variable.type === 'groupby') {
-    return new GroupByVariable({
-      ...commonProperties,
-      datasource: variable.datasource,
-      value: variable.current?.value || [],
-      text: variable.current?.text || [],
-      skipUrlSync: variable.skipUrlSync,
-      hide: variable.hide,
-      // @ts-expect-error
-      defaultOptions: variable.options,
-      defaultValue: variable.defaultValue,
-      allowCustomValue: variable.allowCustomValue,
-      applicabilityEnabled: getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false),
-      drilldownRecommendationsEnabled: true,
     });
     // Switch variable
     // In the old variable model we are storing the enabled and disabled values in the options:

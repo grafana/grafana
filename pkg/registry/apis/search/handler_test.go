@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -22,18 +24,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type fakeIndexClient struct {
-	got  *resourcepb.ResourceSearchRequest
-	resp *resourcepb.ResourceSearchResponse
-	err  error
+	got   *resourcepb.ResourceSearchRequest
+	resp  *resourcepb.ResourceSearchResponse
+	err   error
+	calls int
 }
 
 func (f *fakeIndexClient) Search(_ context.Context, in *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	f.got = in
+	f.calls++
 	return f.resp, f.err
 }
 
@@ -80,6 +85,84 @@ func TestHandler_TranslatesAndReturnsEnvelope(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &out))
 	assert.Equal(t, searchv0.KindSearchResults, out.Kind)
 	assert.Equal(t, searchv0.TotalHitsEqual, out.Metadata.TotalHitsRelation)
+}
+
+func TestHandler_FolderTreeFlag(t *testing.T) {
+	evaluate := func(_ memprovider.InMemoryFlag, ctx openfeature.FlattenedContext) (any, openfeature.ProviderResolutionDetail) {
+		return ctx["allowRecursiveSearch"] == true, openfeature.ProviderResolutionDetail{}
+	}
+	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagSearchPerResourceFolderTree: {
+			Key: featuremgmt.FlagSearchPerResourceFolderTree, State: memprovider.Enabled,
+			Variants: map[string]any{"off": false}, DefaultVariant: "off", ContextEvaluator: &evaluate,
+		},
+	})
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+	client := &fakeIndexClient{resp: emptyResponse()}
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+	body := globalQuery(`{"filter":{"field":"folderTree","operator":"In","values":["team-a","team-b"]}}`)
+	for _, tc := range []struct {
+		name    string
+		enabled bool
+		code    int
+	}{
+		{name: "default off", code: http.StatusUnprocessableEntity},
+		{name: "enabled for this request", enabled: true, code: http.StatusOK},
+		{name: "disabled for the next request", code: http.StatusUnprocessableEntity},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client.got, client.calls = nil, 0
+			ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Namespace: "default"})
+			ctx = request.WithNamespace(ctx, "default")
+			ctx = openfeature.WithTransactionContext(ctx, openfeature.NewEvaluationContext("default", map[string]any{"allowRecursiveSearch": tc.enabled}))
+			r := httptest.NewRequest(http.MethodPost, "/search", strings.NewReader(body)).WithContext(ctx)
+			w := httptest.NewRecorder()
+			h.SearchFor(testKind)(w, r)
+			require.Equal(t, tc.code, w.Code, w.Body.String())
+			if !tc.enabled {
+				assert.Zero(t, client.calls)
+				assert.Nil(t, client.got)
+				assert.Contains(t, w.Body.String(), "unknown field")
+				return
+			}
+			require.Equal(t, 1, client.calls)
+			require.Len(t, client.got.Options.Fields, 1)
+			assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, client.got.Options.Fields[0].Key)
+			assert.Equal(t, "in", client.got.Options.Fields[0].Operator)
+			assert.Equal(t, []string{"team-a", "team-b"}, client.got.Options.Fields[0].Values)
+			assert.Equal(t, "default", client.got.Options.Key.Namespace)
+			assert.Equal(t, testKind.group, client.got.Options.Key.Group)
+			assert.Equal(t, testKind.resource, client.got.Options.Key.Resource)
+			assert.Empty(t, client.got.Federated)
+		})
+	}
+
+	w := doGlobalRequest(t, h, body)
+	require.Equal(t, http.StatusOK, w.Code, "the flag must not disable existing global search: %s", w.Body.String())
+	w = doRequest(t, h, globalQuery(`{"filter":{"field":"folder","operator":"In","values":["team-a"]}}`))
+	require.Equal(t, http.StatusOK, w.Code, "non-recursive search must remain available: %s", w.Body.String())
+}
+
+func TestHandler_FolderTreePropagatesUnsupportedBackend(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSearchPerResourceFolderTree)
+	result := &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "folderTree can only be searched in the global search index"}
+	grpcStatus, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
+	require.NoError(t, err)
+	for name, client := range map[string]*fakeIndexClient{
+		"payload":   {resp: &resourcepb.ResourceSearchResponse{Error: result}},
+		"transport": {err: grpcStatus.Err()},
+	} {
+		t.Run(name, func(t *testing.T) {
+			h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+			w := doRequest(t, h, globalQuery(`{"filter":{"field":"folderTree","operator":"In","values":["team-a"]}}`))
+			require.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+			assert.Contains(t, w.Body.String(), result.Message)
+			assert.Equal(t, 1, client.calls, "an unsupported filter must not be retried as a non-recursive search")
+			require.Len(t, client.got.Options.Fields, 1)
+			assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, client.got.Options.Fields[0].Key)
+		})
+	}
 }
 
 func TestHandler_RejectsInvalidBody(t *testing.T) {
@@ -453,4 +536,43 @@ func TestGlobalHandler_UsesTheKindsTheServerReports(t *testing.T) {
 	// untouched by the previous one.
 	client.resp.Kinds = nil
 	assert.Equal(t, []string{"Dashboard", "", "Folder"}, kinds())
+}
+
+// Clients mark provisioned items from these fields, which every index stores.
+func TestHandler_ReturnsManagerFields(t *testing.T) {
+	cols := []*resourcepb.ResourceTableColumnDefinition{
+		col(resource.SEARCH_FIELD_MANAGER_KIND, resourcepb.ResourceTableColumnDefinition_STRING),
+		col(resource.SEARCH_FIELD_MANAGER_ID, resourcepb.ResourceTableColumnDefinition_STRING),
+	}
+	rows := []map[string]any{{
+		"__name":                           "a",
+		resource.SEARCH_FIELD_MANAGER_KIND: "repo",
+		resource.SEARCH_FIELD_MANAGER_ID:   "my-repo",
+	}}
+	body := `{"apiVersion": "` + searchv0.APIVERSION + `", "kind": "` + searchv0.KindSearchQuery + `", "fields": ["manager.kind", "manager.id"]}`
+
+	for name, do := range map[string]func(*testing.T, *Handler, string) *httptest.ResponseRecorder{
+		"one kind": doRequest,
+		"global":   doGlobalRequest,
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
+				Results: buildTable(t, cols, rows, nil), TotalHits: 1, TotalHitsExact: true,
+			}}
+			h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+			w := do(t, h, body)
+			require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+			assert.Equal(t, []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ID}, client.got.Fields)
+
+			var got struct {
+				Items []struct {
+					Fields map[string]any `json:"fields"`
+				} `json:"items"`
+			}
+			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+			require.Len(t, got.Items, 1)
+			assert.Equal(t, map[string]any{"manager.kind": "repo", "manager.id": "my-repo"}, got.Items[0].Fields)
+		})
+	}
 }

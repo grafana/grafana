@@ -135,6 +135,9 @@ type buildResourceServerOpts func(*ServerOptions, *resource.ResourceServerOption
 
 // buildResourceServerOptions builds the resource.ResourceServerOptions from sql.ServerOptions.
 func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceServerOpts) (*resource.ResourceServerOptions, error) {
+	if err := opts.Cfg.ValidateSharedVectorConfig(); err != nil {
+		return nil, fmt.Errorf("vector collection configuration: %w", err)
+	}
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	serverOptions := &resource.ResourceServerOptions{
 		Blob: resource.BlobConfig{
@@ -374,8 +377,13 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 	for _, r := range opts.Cfg.EnforcedQuotaResources {
 		enforced[r] = true
 	}
+	logged := make(map[string]bool, len(opts.Cfg.LoggedQuotaResources))
+	for _, r := range opts.Cfg.LoggedQuotaResources {
+		logged[r] = true
+	}
 	resourceOpts.QuotasConfig = resource.QuotasConfig{
 		EnforcedResources: enforced,
+		LoggedResources:   logged,
 		SupportMessage:    opts.Cfg.QuotasErrorMessageSupportInfo,
 	}
 	return nil

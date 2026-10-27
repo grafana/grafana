@@ -239,6 +239,10 @@ const (
 	// Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels
 	FlagDashboardNotebooks = "dashboard.notebooks"
 
+	// FlagGrafanaSavedDashboardViews
+	// Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state
+	FlagGrafanaSavedDashboardViews = "grafana.savedDashboardViews"
+
 	// FlagPdfTables
 	// Enables generating table data as PDF in reporting
 	FlagPdfTables = "pdfTables"
@@ -295,10 +299,6 @@ const (
 	// Enable CAP token based authentication in grafana's embedded kube-aggregator
 	FlagKubernetesAggregatorCapTokenAuth = "kubernetesAggregatorCapTokenAuth"
 
-	// FlagGroupByVariable
-	// Enable groupBy variable support in scenes dashboards
-	FlagGroupByVariable = "groupByVariable"
-
 	// FlagScopeFilters
 	// Enables the use of scope filters in Grafana
 	FlagScopeFilters = "scopeFilters"
@@ -326,10 +326,6 @@ const (
 	// FlagGrafanaManagedRecordingRules
 	// Enables Grafana-managed recording rules.
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
-
-	// FlagQueryLibrary
-	// Enables Saved queries (query library) feature
-	FlagQueryLibrary = "queryLibrary"
 
 	// FlagGrafanaSavedQueriesSearch
 	// Enables unified search for saved queries
@@ -507,17 +503,9 @@ const (
 	// Guard embedded Team LBAC rules against external datasource Kubernetes API writes
 	FlagDatasourcesTeamHttpHeadersWriteGuard = "datasources.teamHttpHeadersWriteGuard"
 
-	// FlagTeamLBACApiReadFromAppPlatform
-	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
-	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
-
 	// FlagTeamlbacUsageFromAppPlatform
 	// Collect Team LBAC usage through the IAM API instead of legacy datasource JSON
 	FlagTeamlbacUsageFromAppPlatform = "teamlbac.usageFromAppPlatform"
-
-	// FlagTeamLBACApiWriteFromAppPlatform
-	// Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server
-	FlagTeamLBACApiWriteFromAppPlatform = "teamLBACApiWriteFromAppPlatform"
 
 	// FlagElasticsearchImprovedParsing
 	// Enables less memory intensive Elasticsearch result parsing
@@ -714,6 +702,10 @@ const (
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
 
+	// FlagGrafanaRestrictWatchToServiceIdentities
+	// Restrict API watches to service accounts, service identities, and privileged loopback clients
+	FlagGrafanaRestrictWatchToServiceIdentities = "grafana.restrictWatchToServiceIdentities"
+
 	// FlagGrafanaPublishLegacySQLEvents
 	// Publish watch events when values are saved to legacy SQL tables
 	FlagGrafanaPublishLegacySQLEvents = "grafana.publishLegacySQLEvents"
@@ -813,10 +805,6 @@ const (
 	// FlagApppluginsLoadAppManifest
 	// Load app manifest when loading plugin definitions
 	FlagApppluginsLoadAppManifest = "appplugins.loadAppManifest"
-
-	// FlagApppluginsLoadAppManifestAndKeepSettings
-	// Continue to expose settings when a manifest exists
-	FlagApppluginsLoadAppManifestAndKeepSettings = "appplugins.loadAppManifestAndKeepSettings"
 
 	// FlagApppluginsRegisterAPIServer
 	// Registers an API server for each backend app plugin exposing a settings endpoint
@@ -934,6 +922,10 @@ const (
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
 
+	// FlagSearchPerResourceFolderTree
+	// Allow recursive folder filters in per-resource search APIs
+	FlagSearchPerResourceFolderTree = "search.perResourceFolderTree"
+
 	// FlagAlertingHybridSearch
 	// Enables hybrid (lexical and semantic) search for alert rules in unified storage
 	FlagAlertingHybridSearch = "alerting.hybridSearch"
@@ -978,10 +970,6 @@ const (
 	// Controls how the frontend handles calls to legacy /api/ endpoints. One of "off", "log" (warn on each call) or "block" (reject before sending).
 	FlagGrafanaFrontendLegacyAPIHandling = "grafana.frontendLegacyAPIHandling"
 
-	// FlagGrafanaOfrepRootUrl
-	// Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route
-	FlagGrafanaOfrepRootUrl = "grafana.ofrepRootUrl"
-
 	// FlagFeaturesLegacyOverrideLookupBypass
 	// Skips checking for flag overrides.
 	FlagFeaturesLegacyOverrideLookupBypass = "features.legacyOverrideLookupBypass"
@@ -1009,10 +997,6 @@ const (
 	// FlagGrafanaPluginPathNesting
 	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
 	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
-
-	// FlagGrafanaRspackBuild
-	// Switches the backend to load frontend assets built with rspack instead of webpack
-	FlagGrafanaRspackBuild = "grafana.rspackBuild"
 
 	// FlagPluginsForceTls13
 	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client
@@ -1045,4 +1029,8 @@ const (
 	// FlagDatasourcesGatewayAuditPolicy
 	// Enable support for the query gateway audit policies
 	FlagDatasourcesGatewayAuditPolicy = "datasources.gatewayAuditPolicy"
+
+	// FlagDashboardsDisablePublicDashboards
+	// Disables public dashboards for the stack
+	FlagDashboardsDisablePublicDashboards = "dashboards.disablePublicDashboards"
 )

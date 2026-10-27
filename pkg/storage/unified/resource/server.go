@@ -481,6 +481,7 @@ type SearchOptions struct {
 	// Vector API collection allowlists: "group/resource" entries; empty allows nothing.
 	AllowedInternalCollections []string
 	AllowedExternalCollections []string
+	AllowedReadServices        map[string][]string
 }
 
 type ResourceServerOptions struct {
@@ -3153,7 +3154,7 @@ func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildInde
 }
 
 func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
-	if nsr.Namespace == "" {
+	if nsr.Namespace == "" || !s.quotasConfig.ShouldCheck(nsr.Group, nsr.Resource) {
 		return nil
 	}
 

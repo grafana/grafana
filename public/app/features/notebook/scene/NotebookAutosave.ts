@@ -288,7 +288,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       return;
     }
 
-    this.savedTimeSettings = timeSettings;
+    // Never the stored `hideTimepicker`: the scene ignores it, and `buildSpecToSave` substitutes this
+    // whenever time was not edited, so keeping it would write `true` back on every cell or title save.
+    this.savedTimeSettings = { ...timeSettings, hideTimepicker: false };
   }
 
   /**
@@ -1170,16 +1172,12 @@ function isVizPanelState(state: SceneObjectState): state is VizPanel['state'] {
 /**
  * Whether a state change was a change to the notebook's time settings.
  *
- * `buildTimeSettingsSpec` reads them from these four places, so all four have to be named here: one left
+ * `buildTimeSettingsSpec` reads them from these three places, so all three have to be named here: one left
  * out is one whose edits get thrown away as if a reader had made them.
  */
 export function changesTimeSettings(payload: SceneObjectStateChangedPayload, scene: NotebookScene): boolean {
-  const { changedObject, partialUpdate } = payload;
+  const { changedObject } = payload;
   const { $timeRange, timePicker, refreshPicker } = scene.state;
-
-  if (changedObject === scene) {
-    return 'hideTimeControls' in partialUpdate;
-  }
 
   return changedObject === $timeRange || changedObject === timePicker || changedObject === refreshPicker;
 }

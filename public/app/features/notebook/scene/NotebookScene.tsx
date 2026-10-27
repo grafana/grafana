@@ -56,7 +56,6 @@ export interface NotebookSceneState extends SceneObjectState {
   body: NotebookLayoutManager;
   timePicker: SceneTimePicker;
   refreshPicker: SceneRefreshPicker;
-  hideTimeControls?: boolean;
   overlay?: SceneObject;
   $timeRange: SceneTimeRange;
   /**

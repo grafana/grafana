@@ -26,6 +26,12 @@ packet (such as MySQL's `max_allowed_packet`).
 
 There are 2 main tables, the `resource` table stores a "current" view of the objects, and the `resource_history` table stores a record of each revision of a given object.
 
+## Quota checks
+
+In `[unified_storage]`, `enforce_quotas_resources` selects resource kinds whose quotas block creates, while `log_quotas_resources` selects additional kinds whose exceeded quotas are logged without blocking. Both settings accept comma-separated `group/resource` names.
+
+Kinds in neither list skip the quota lookup and usage count. The log-only list is empty by default; add any unenforced kinds whose advisory quota logging you want to retain. A kind in both lists is counted once and its quota is enforced. Explicit quota-usage requests are unaffected by these lists.
+
 ## Running Unified Storage
 
 ### Playlists: baseline configuration
@@ -322,6 +328,26 @@ enable_search = true
 
 The dashboard search page has been set up to search unified storage. Additionally, all legacy search calls (e.g. `/api/search`) will go to
 unified storage when the dual writer mode is set to 3 or greater. When <= 2, the legacy search api calls will go to legacy storage.
+
+### Restrict collection searches to service identities
+
+Externally supplied records may have no corresponding unified-storage resources or user-level authorization rules. When the owning service must apply its own authorization checks before returning results to a user, restrict reads to that service so callers cannot bypass those checks.
+
+In `custom.ini`, set `vector_allowed_read_services` to a JSON map of `group/resource` collections and allowed service identities:
+
+```ini
+[unified_storage]
+vector_allowed_read_services = {"example.ext.grafana.app/records":["example-service"]}
+```
+
+For a configured collection, `HybridSearch` and `VectorSearch` accept only authenticated access-policy tokens with exactly one matching service identity.
+User and on-behalf-of tokens are denied.
+The check covers every target before vector or lexical search; one denied target rejects the whole request.
+Existing tenant and resource `get` checks still apply.
+
+An unset value or `{}` leaves both search methods unchanged; invalid values prevent server startup.
+Deploy support to every serving storage and search server before setting the restriction because older versions ignore it.
+Before rolling back server support, disable the collection on every serving route.
 
 ## Running load tests
 Load tests and instructions can be found [here](https://github.com/grafana/grafana-api-tests/tree/main/simulation/src/unified_storage).

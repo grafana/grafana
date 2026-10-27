@@ -190,13 +190,6 @@ const IndexFeatureSortableTrashResourceVersion IndexFeature = "sortable-trash-re
 // that path reports facet-capable but unstored fields as missing values.
 const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
 
-// IndexFeatureStoredResourceVersion means the index stores each document's resource
-// version; without it a search returns 0, which callers read as "unknown".
-//
-// Recorded but not required, because requiring it rebuilds every existing index at
-// once. Recording it now is what lets a later release require it.
-const IndexFeatureStoredResourceVersion IndexFeature = "resource-version-stored"
-
 // IndexFeatureHoldsDeletedDocuments means the index keeps deleted documents, so a
 // reader that does not exclude them returns deleted resources as live. It says what
 // the index holds, not what it maps, and every index built now holds them. Older
@@ -222,7 +215,6 @@ var currentIndexFeatures = []IndexFeature{
 	IndexFeatureHoldsDeletedDocuments,
 	IndexFeatureSortableTrashResourceVersion,
 	IndexFeatureStoredFacets,
-	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
 }
 
@@ -234,7 +226,6 @@ var knownIndexFeatures = []IndexFeature{
 	IndexFeatureHoldsDeletedDocuments,
 	IndexFeatureSortableTrashResourceVersion,
 	IndexFeatureStoredFacets,
-	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
 }
 
@@ -320,6 +311,29 @@ func UnknownIndexRequirements(requirements []IndexFeature) []IndexFeature {
 	return unknown
 }
 
+// Folders supplies an external hierarchy without adding folder documents to the
+// results. Folder and global indexes use their own hierarchy instead.
+type SearchIndexes struct {
+	Federated []ResourceIndex
+	Folders   ResourceIndex
+}
+
+// ValidateFolderTreeRequirement is shared by request handling and query conversion
+// so invalid filters are refused before their folder index is built.
+func ValidateFolderTreeRequirement(req *resourcepb.Requirement) *resourcepb.ErrorResult {
+	switch selection.Operator(req.Operator) {
+	case selection.In:
+		return nil
+	case selection.Equals, selection.DoubleEquals:
+		if len(req.Values) == 1 {
+			return nil
+		}
+		return NewBadRequestError(SEARCH_FIELD_FOLDER_TREE + " takes one value with =, and several with in")
+	default:
+		return NewBadRequestError(SEARCH_FIELD_FOLDER_TREE + " only supports in and =")
+	}
+}
+
 type ResourceIndex interface {
 	// BulkIndex allows for multiple index actions to be performed in a single call.
 	// The order of the items is guaranteed to be the same as the input
@@ -330,8 +344,8 @@ type ResourceIndex interface {
 	SearchFieldDefinitions() []SearchFieldDefinition
 
 	// Search within a namespaced resource
-	// When working with federated queries, the additional indexes will be passed in explicitly
-	Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex, stats *SearchStats) (*resourcepb.ResourceSearchResponse, error)
+	// Additional indexes are request-scoped because they can be rebuilt independently.
+	Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, indexes *SearchIndexes, stats *SearchStats) (*resourcepb.ResourceSearchResponse, error)
 
 	// List within an response
 	ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest, stats *SearchStats) (*resourcepb.ListManagedObjectsResponse, error)
@@ -513,6 +527,7 @@ type searchServer struct {
 	rateLimitPerTenant     int
 	rateLimitWindow        time.Duration
 	collectionAllowlist    vector.CollectionAllowlist
+	allowedReadServices    map[string][]string
 	embeddingBuilders      embed.BuilderProvider
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
@@ -659,6 +674,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rateLimitPerTenant:     opts.RateLimitPerTenant,
 		rateLimitWindow:        opts.RateLimitWindow,
 		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
+		allowedReadServices:    opts.AllowedReadServices,
 		embeddingBuilders:      opts.EmbeddingBuilders,
 	}
 
@@ -908,12 +924,23 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	return s.searchWithIndex(ctx, req, nil)
 }
 
+func validateSearchResultFormat(req *resourcepb.ResourceSearchRequest) error {
+	format := req.GetResultFormat()
+	if format != resourcepb.ResourceSearchRequest_FIELD_VALUES {
+		return status.Errorf(codes.InvalidArgument, "search result format must be FIELD_VALUES, got %s", format.String())
+	}
+	return nil
+}
+
 // searchWithIndex prepares the request against the same index that executes it,
 // so a concurrent rebuild cannot change the field definitions between the two.
 func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.ResourceSearchRequest, prepare func(ResourceIndex)) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.Search")
 	defer span.End()
 
+	if err := validateSearchResultFormat(req); err != nil {
+		return nil, err
+	}
 	if err := s.maybeInjectFailure(); err != nil {
 		return nil, err
 	}
@@ -944,6 +971,18 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 		return &resourcepb.ResourceSearchResponse{
 			Error: NewBadRequestError("searching deleted resources does not support federated queries"),
 		}, nil
+	}
+
+	for _, field := range req.Options.Fields {
+		if field.Key != SEARCH_FIELD_FOLDER_TREE {
+			continue
+		}
+		if req.IsDeleted {
+			return &resourcepb.ResourceSearchResponse{Error: NewBadRequestError("searching deleted resources does not support " + SEARCH_FIELD_FOLDER_TREE)}, nil
+		}
+		if err := ValidateFolderTreeRequirement(field); err != nil {
+			return &resourcepb.ResourceSearchResponse{Error: err}, nil
+		}
 	}
 
 	stats := NewSearchStats("Search")
@@ -1021,21 +1060,33 @@ func (s *searchServer) searchIndex(ctx context.Context, stats *SearchStats, req 
 		}, nil
 	}
 
-	federate := make([]ResourceIndex, len(req.Federated))
+	indexes := &SearchIndexes{Federated: make([]ResourceIndex, len(req.Federated))}
+	folderKey := NamespacedResource{Namespace: nsr.Namespace, Group: folders.GROUP, Resource: folders.RESOURCE}
 	for i, f := range req.Federated {
 		key := NamespacedResource{Namespace: nsr.Namespace, Group: f.Group, Resource: f.Resource}
-		federate[i], err = s.getOrCreateIndex(ctx, stats, key, "federatedSearch")
+		indexes.Federated[i], err = s.getOrCreateIndex(ctx, stats, key, "federatedSearch")
 		if err != nil {
 			return &resourcepb.ResourceSearchResponse{
 				Error: AsErrorResult(err),
 			}, nil
+		}
+		if key == folderKey {
+			indexes.Folders = indexes.Federated[i]
 		}
 	}
 
 	if prepare != nil {
 		prepare(idx)
 	}
-	return idx.Search(ctx, s.access, req, federate, stats)
+	if !nsr.IsGlobal() && nsr != folderKey && indexes.Folders == nil && slices.ContainsFunc(req.Options.Fields, func(field *resourcepb.Requirement) bool {
+		return field.Key == SEARCH_FIELD_FOLDER_TREE
+	}) {
+		indexes.Folders, err = s.getOrCreateIndex(ctx, stats, folderKey, "recursiveSearch")
+		if err != nil {
+			return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
+		}
+	}
+	return idx.Search(ctx, s.access, req, indexes, stats)
 }
 
 // VectorSearch implements ResourceIndexServer. Embeds the query string with
@@ -1087,6 +1138,10 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
 		return &resourcepb.VectorSearchResponse{Error: errRes}, nil
 	}
+	user, _ := types.AuthInfoFrom(ctx)
+	if err := s.checkAllowedReadService(user, req.Key.Group, req.Key.Resource); err != nil {
+		return nil, err
+	}
 
 	limit := int(req.Limit)
 	switch {
@@ -1137,11 +1192,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	// Using authz post-filtering for now
 	// Downside is that the results could be lower than expected
 	// For example: VectorSearch returns 10 results, user has access to 3 items, we would only return 3 items
-	user, ok := types.AuthInfoFrom(ctx)
-	if !ok || user == nil {
-		return nil, status.Error(codes.Unauthenticated, "no user in context")
-	}
-
 	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
 	if err != nil {
 		if ctx.Err() != nil {

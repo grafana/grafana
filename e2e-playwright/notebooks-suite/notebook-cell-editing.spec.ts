@@ -3,6 +3,7 @@ import { type APIRequestContext } from '@playwright/test';
 import { test, expect } from '@grafana/plugin-e2e';
 
 import { NOTEBOOK_CELL_FRAME_CLASS } from '../../public/app/features/notebook/scene/layout-notebook/edit/cellClassNames';
+import { defaultVisualizationPanelKind } from '../../public/app/features/notebook/types';
 
 // The `namespace` fixture is per-test and cannot be used in beforeAll/afterAll - hardcoded to match
 // custom.ini's stack_id, the same way the dashboard-restore specs do.
@@ -342,4 +343,66 @@ test.describe('Notebook drag-to-reorder', () => {
     await expect(firstEditor).toContainText('Second cell');
     await expect(page.locator('.cm-content').nth(1)).toContainText('First cell');
   });
+});
+
+test.describe('Notebook locked time range layout', () => {
+  for (const range of [
+    {
+      name: 'absolute',
+      from: '2026-10-20T07:00:00.000Z',
+      to: '2026-10-21T07:00:00.000Z',
+      label: 'Locked: 2026-10-20T07:00:00.000Z to 2026-10-21T07:00:00.000Z',
+    },
+    { name: 'relative', from: 'now-30m', to: 'now', label: 'Locked: Last 30 minutes' },
+  ]) {
+    test(`keeps the ${range.name} lock inside the panel in view and edit modes`, async ({ page, request }) => {
+      const notebook = seededNotebook(`E2E Notebook ${range.name} time lock ${SUFFIX}`);
+      const panel = defaultVisualizationPanelKind();
+      panel.spec.title = 'Locked panel';
+      panel.spec.data.spec.queryOptions = { timeFrom: range.from, timeTo: range.to };
+      const uid = await createNotebook(request, {
+        ...notebook,
+        spec: { ...notebook.spec, elements: { 'cell-1': panel } },
+      });
+
+      try {
+        for (const isEditing of [false, true]) {
+          await page.goto(`/notebooks/${uid}${isEditing ? '?edit=true' : ''}`);
+          const frame = page.getByRole('group', { name: 'Visualization block: cell-1' });
+          const label = frame.getByText(range.label, { exact: true });
+
+          for (const width of [390, 900, 1280]) {
+            await page.setViewportSize({ width, height: 900 });
+            await expect(label).toBeVisible();
+            const labelBounds = await label.boundingBox();
+            const panelBounds = await frame.boundingBox();
+            expect(labelBounds!.x).toBeGreaterThanOrEqual(panelBounds!.x);
+            expect(labelBounds!.x + labelBounds!.width).toBeLessThanOrEqual(panelBounds!.x + panelBounds!.width);
+            expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+
+            const clear = frame.getByRole('button', { name: 'Remove time lock' });
+            if (isEditing) {
+              await expect(clear).toBeInViewport({ ratio: 1 });
+              expect((await clear.boundingBox())!.width).toBeGreaterThanOrEqual(14);
+            } else {
+              await expect(clear).toHaveCount(0);
+            }
+          }
+        }
+
+        await page.setViewportSize({ width: 390, height: 900 });
+        const trigger = page.getByRole('button', { name: range.label, exact: true });
+        await trigger.click();
+        await expect(page.getByRole('dialog', { name: 'Panel time range' })).toBeVisible();
+        await page.keyboard.press('Escape');
+        await expect(trigger).toBeFocused();
+        await page.getByRole('button', { name: 'Remove time lock' }).click();
+        await expect(page.getByRole('button', { name: 'Update time range' })).toBeVisible();
+        await page.getByRole('button', { name: 'Undo: Use notebook time range', exact: true }).click();
+        await expect(page.getByRole('button', { name: range.label, exact: true })).toBeVisible();
+      } finally {
+        await deleteNotebook(request, uid);
+      }
+    });
+  }
 });

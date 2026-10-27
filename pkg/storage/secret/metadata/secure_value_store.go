@@ -658,7 +658,7 @@ func (s *secureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Conte
 			span.RecordError(err)
 		}
 
-		s.metrics.SecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.SecureValueLeaseInactiveDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
 	leaseToken := uuid.NewV4().String()
