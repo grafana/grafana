@@ -204,6 +204,17 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
 		return nil, false, err
 	}
+	// Mark ctx authorized for this folder's Unchecked contents delete, so an Unchecked
+	// contentsDeleter (standalone deployments) can trust it instead of re-checking -- but only
+	// when accessClient is actually wired, since checkFolderContentsAccess is a no-op without one
+	// and nothing was really verified above.
+	if s.accessClient != nil {
+		ns, err := authlib.ParseNamespace(namespace)
+		if err != nil {
+			return nil, false, err
+		}
+		ctx = folder.WithUncheckedDeleteAuthorized(ctx, ns.OrgID, user, []string{name}, true)
+	}
 
 	children, err := s.childFolders(ctx, namespace, name)
 	if err != nil {
