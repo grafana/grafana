@@ -238,6 +238,7 @@
     "rollup-plugin-node-externals": "^8.0.0",
     "rspack-manifest-plugin": "5.2.2",
     "sass": "1.89.2",
+    "supports-color": "7.2.0",
     "testing-library-selector": "0.3.1",
     "ts-checker-rspack-plugin": "^1.5.1",
     "ts-jest": "29.4.0",
@@ -413,57 +414,10 @@
     "vis-data": "^8.0.0",
     "vis-network": "10.1.2"
   },
-  "resolutions": {
-    "@types/slate": "0.47.16",
-    "@react-aria/dialog": "3.6.1",
-    "@react-aria/focus": "3.22.1",
-    "@react-aria/overlays": "3.32.1",
-    "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#./patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch",
-    "react-split-pane@0.1.92": "patch:react-split-pane@npm:0.1.92#./patches/react-split-pane-npm-0.1.92-93dbf51dff.patch",
-    "history@4.10.1": "patch:history@npm%3A4.10.1#./patches/history-npm-4.10.1-ee217563ae.patch",
-    "history@^4.10.1": "patch:history@npm%3A4.10.1#./patches/history-npm-4.10.1-ee217563ae.patch",
-    "redux": "^5.0.0",
-    "react-grid-layout": "patch:react-grid-layout@npm%3A1.4.4#~/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch",
-    "@grafana/plugin-e2e/@grafana/e2e-selectors": "workspace:*",
-    "@grafana/scenes/@grafana/e2e-selectors": "workspace:*",
-    "@grafana/scenes-react/@grafana/e2e-selectors": "workspace:*",
-    "swagger-ui-react/dompurify": "^3.4.16",
-    "socks/ip-address": "10.7.4",
-    "@mapbox/jsonlint-lines-primitives": "workspace:*",
-    "get-document": "workspace:*",
-    "storybook@npm:10.6.2": "patch:storybook@npm%3A10.6.2#~/patches/storybook-npm-10.6.2-7da1cdbbd6.patch",
-    "storybook-react-rsbuild/@storybook/react": "10.6.2",
-    "@types/slate/immutable": "^5.0.0",
-    "@types/slate-react/immutable": "^5.0.0",
-    "ws": "^8.20.1",
-    "js-cookie": "^3.0.7",
-    "@opentelemetry/core": "2.11.0",
-    "shell-quote": "1.11.0",
-    "tmp": "0.2.7",
-    "react-calendar@npm:^6.0.0": "patch:react-calendar@npm%3A6.0.1#~/patches/react-calendar-npm-6.0.1-22fe91a41c.patch",
-    "axios": "1.20.0",
-    "@braintree/sanitize-url@npm:^7.0.1": "7.0.1",
-    "smol-toml@npm:1.6.1": "1.9.0"
-  },
-  "workspaces": {
-    "packages": [
-      "packages/*",
-      "public/app/plugins/*/*",
-      "e2e-playwright/test-plugins/*"
-    ]
-  },
   "engines": {
     "node": ">= 22 <25"
   },
-  "packageManager": "yarn@4.18.1",
-  "dependenciesMeta": {
-    "msw": {
-      "built": true
-    },
-    "prettier@3.6.2": {
-      "unplugged": true
-    }
-  },
+  "packageManager": "pnpm@12.15.0",
   "msw": {
     "workerDirectory": [
       "public"
