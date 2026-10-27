@@ -1892,8 +1892,9 @@ func TestGlobalSearchIsUnavailableWhileTheIndexIsDisabled(t *testing.T) {
 	server.globalIndexEnabled = false
 
 	rsp, err := server.Search(t.Context(), &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
-		Limit:   10,
+		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "ns", Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
+		Limit:        10,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, rsp.Error)

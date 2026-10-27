@@ -2179,8 +2179,9 @@ func verifySearchServerResults(t *testing.T, searchServer resource.ResourceServe
 				Namespace: namespace,
 			},
 		},
-		Query: query,
-		Limit: 100, // high enough to get all results
+		Query:        query,
+		Limit:        100, // high enough to get all results
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
 	searchResp, err := searchServer.Search(ctx, searchReq)
@@ -2191,9 +2192,8 @@ func verifySearchServerResults(t *testing.T, searchServer resource.ResourceServe
 	require.Equal(t, int64(expectedHits), searchResp.TotalHits, "Search hits mismatch")
 
 	// Verify result names match expected (order-agnostic)
-	require.NotNil(t, searchResp.Results, "Search results should not be nil")
-	actualNames := make([]string, 0, len(searchResp.Results.Rows))
-	for _, row := range searchResp.Results.Rows {
+	actualNames := make([]string, 0, len(searchResp.Rows))
+	for _, row := range searchResp.Rows {
 		actualNames = append(actualNames, row.Key.Name)
 	}
 	require.ElementsMatch(t, expectedNames, actualNames, "Search result names mismatch")
