@@ -79,9 +79,20 @@ func (f *finalizer) process(ctx context.Context,
 		if !slices.Contains(cfg.Finalizers, finalizer) {
 			continue
 		}
+		if finalizer == repository.ReleaseOrphanResourcesFinalizer || finalizer == repository.RemoveOrphanResourcesFinalizer {
+			running, err := f.jobs.CountRunning(ctx, cfg.Namespace, cfg.Name)
+			if err != nil {
+				return &finalizerError{finalizer: finalizer, err: fmt.Errorf("count running jobs: %w", err)}
+			}
+			if running > 0 {
+				logger.Info("waiting for running jobs before the finalizer", "finalizer", finalizer, "running", running)
+				return errJobsRunning
+			}
+		}
+
 		logger.Info("running finalizer", "finalizer", finalizer)
 		var err error
-		var count, running int
+		var count int
 		start := time.Now()
 
 		switch finalizer {
@@ -90,8 +101,6 @@ func (f *finalizer) process(ctx context.Context,
 			count, err = f.jobs.CleanupQueue(ctx, cfg.Namespace, cfg.Name)
 			if err != nil {
 				err = fmt.Errorf("clear job queue: %w", err)
-			} else if running, err = f.jobs.CountRunning(ctx, cfg.Namespace, cfg.Name); err != nil {
-				err = fmt.Errorf("count running jobs: %w", err)
 			}
 
 		case repository.CleanFinalizer:
@@ -139,10 +148,6 @@ func (f *finalizer) process(ctx context.Context,
 
 		if err != nil {
 			return &finalizerError{finalizer: finalizer, err: err}
-		}
-		if running > 0 {
-			logger.Info("waiting for running jobs before the remaining finalizers", "running", running)
-			return errJobsRunning
 		}
 	}
 	return nil
