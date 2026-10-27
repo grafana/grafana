@@ -5944,8 +5944,6 @@
       "variable-datasource-name-filter": "Change variable name filter",
       "variable-datasource-type": "Change variable data source type",
       "variable-description": "Change variable description",
-      "variable-group-by-default-options": "Change variable static dimensions",
-      "variable-group-by-default-value": "Change variable default value",
       "variable-hide": "Change variable hide option",
       "variable-include-all": "Change variable include All value",
       "variable-label": "Change variable label",

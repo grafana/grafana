@@ -1,4 +1,4 @@
-import { isEqual, noop } from 'lodash';
+import { noop } from 'lodash';
 import { type FormEvent } from 'react';
 import { useAsync } from 'react-use';
 
@@ -8,12 +8,10 @@ import {
   type SelectableValue,
   getDataSourceRef,
 } from '@grafana/data';
-import { t } from '@grafana/i18n';
 import { getDataSourceInstance } from '@grafana/runtime';
 import { GroupByVariable, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { undoableVariableEdit } from '../../../actions/variable/undoableVariableEdit';
 import { GroupByVariableForm } from '../components/GroupByVariableForm';
 
 interface GroupByVariableEditorProps {
@@ -45,72 +43,33 @@ export function GroupByVariableEditor(props: GroupByVariableEditorProps) {
 
   const onDataSourceChange = async (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);
-    const oldDatasource = variable.state.datasource;
 
-    undoableVariableEdit(inline && !isEqual(oldDatasource, dsRef), {
-      meta: { actionId: 'variable.changeDataSource', scope: 'groupby' },
-      source: variable,
-      description: t('dashboard.edit-actions.variable-datasource', 'Change variable data source'),
-      perform: () => {
-        variable.setState({ datasource: dsRef });
-        onRunQuery();
-      },
-      undo: () => {
-        variable.setState({ datasource: oldDatasource });
-        onRunQuery();
-      },
-    });
+    variable.setState({ datasource: dsRef });
+    onRunQuery();
   };
 
   const onDefaultOptionsChange = async (defaultOptions?: MetricFindValue[]) => {
-    const oldDefaultOptions = variable.state.defaultOptions;
-
-    undoableVariableEdit(inline && !isEqual(oldDefaultOptions, defaultOptions), {
-      meta: { actionId: 'variable.changeDefaultOptions' },
-      source: variable,
-      description: t('dashboard.edit-actions.variable-group-by-default-options', 'Change variable static dimensions'),
-      perform: () => {
-        variable.setState({ defaultOptions });
-        onRunQuery();
-      },
-      undo: () => {
-        variable.setState({ defaultOptions: oldDefaultOptions });
-        onRunQuery();
-      },
-    });
+    variable.setState({ defaultOptions });
+    onRunQuery();
   };
 
   const onDefaultValueChange = (options: Array<SelectableValue<string>>) => {
-    const { defaultValue: oldDefaultValue, restorable: oldRestorable, value: oldValue, text: oldText } = variable.state;
-
-    undoableVariableEdit(inline, {
-      meta: { actionId: 'variable.changeDefaultValue' },
-      source: variable,
-      description: t('dashboard.edit-actions.variable-group-by-default-value', 'Change variable default value'),
-      perform: () => {
-        if (options.length === 0) {
-          variable.setState({
-            defaultValue: undefined,
-            restorable: false,
-          });
-          variable.changeValueTo([], []);
-        } else {
-          const value = options.map((opt) => opt.value!);
-          const text = options.map((opt) => opt.label ?? opt.value!);
-          variable.setState({
-            defaultValue: { value, text },
-            restorable: false,
-          });
-          variable.changeValueTo(value, text);
-        }
-        onRunQuery();
-      },
-      undo: () => {
-        variable.setState({ defaultValue: oldDefaultValue, restorable: oldRestorable });
-        variable.changeValueTo(oldValue, oldText);
-        onRunQuery();
-      },
-    });
+    if (options.length === 0) {
+      variable.setState({
+        defaultValue: undefined,
+        restorable: false,
+      });
+      variable.changeValueTo([], []);
+    } else {
+      const value = options.map((opt) => opt.value!);
+      const text = options.map((opt) => opt.label ?? opt.value!);
+      variable.setState({
+        defaultValue: { value, text },
+        restorable: false,
+      });
+      variable.changeValueTo(value, text);
+    }
+    onRunQuery();
   };
 
   const defaultValueSelection: Array<SelectableValue<string>> = defaultValue
