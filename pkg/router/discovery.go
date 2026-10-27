@@ -80,6 +80,16 @@ func hashHex(s string) string {
 	return hex.EncodeToString(sum[:])[:16]
 }
 
+// hashHexBytes is hashHex of the concatenated parts, without copying them
+// into one string: a document can be many megabytes.
+func hashHexBytes(parts ...[]byte) string {
+	h := sha256.New()
+	for _, part := range parts {
+		_, _ = h.Write(part)
+	}
+	return hex.EncodeToString(h.Sum(nil))[:16]
+}
+
 // buildOpenAPIV3Index synthesizes the /openapi/v3 root document: a small
 // path -> {serverRelativeURL} map (never a merged schema — see AGENTS.md
 // "Discovery endpoints" / the design spec's "no cross-group merge" decision).

@@ -1443,13 +1443,71 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "No alert rules found",
-        "rules-error": "Failed to load rules"
+        "rules-error": "Failed to load rules",
+        "search-issues": "Change the search to see results"
+      },
+      "interval": "Evaluated every {{interval}}",
+      "recording-rules": {
+        "no-rules": "No recording rules found",
+        "rules-error": "Failed to load recording rules"
       },
       "result-count": {
         "alert-rules_one": "{{formatted}} alert rule",
         "alert-rules_other": "{{formatted}} alert rules",
         "recording-rules_one": "{{formatted}} recording rule",
         "recording-rules_other": "{{formatted}} recording rules"
+      },
+      "search": {
+        "default-policy-unavailable": "Filtering by the default policy isn't available yet.",
+        "help": {
+          "contact-point": "Direct contact point (mutually exclusive with policy:).",
+          "dashboard": "Dashboard the rule is linked to (canonical value is the dashboard UID).",
+          "datasource": "Query data source referenced by the rule (canonical value is the UID).",
+          "folder": "Folder (canonical value is the folder UID).",
+          "health": "Rule health: ok, nodata, error or unknown.",
+          "label": "Label matcher: label:key (exists), label:!key (absent), label:key=value (equal), label:key!=value (not equal), label:key=~re (regex), label:key!~re (not regex). Quote a value with spaces: label:team=\"a b\".",
+          "metric": "Recorded metric name (exact match).",
+          "panel-id": "Panel the rule is linked to. Panel IDs are dashboard-local; pair with dashboard:.",
+          "paused": "Whether the rule is paused (true/false).",
+          "plugins": "plugins:hide excludes rules created by plugins.",
+          "policy": "Named notification policy (mutually exclusive with contactPoint:).",
+          "rule": "Rule title text search (equivalent to free text).",
+          "state": "Alert state: firing, pending, recovering or normal.",
+          "target-datasource": "Data source the recorded metric is written to (canonical value is the UID)."
+        },
+        "help-availability": "Availability",
+        "help-available": "Available",
+        "help-expression": "Expression",
+        "help-filter-type": "Filter type",
+        "help-intro": "Search syntax allows you to query rules by the filters below.",
+        "help-title": "Search help",
+        "invalid-tokens": "Some filters could not be applied: {{tokens}}",
+        "invalid-value": "Use one of these values for {{key}}: {{values}}",
+        "label": "Search",
+        "not-paused-unavailable": "Filtering by not paused isn't available yet.",
+        "placeholder": "Search by name or enter filter query...",
+        "property": {
+          "contact-point": "Contact point",
+          "dashboard": "Dashboard",
+          "datasource": "Query data source",
+          "folder": "Folder",
+          "health": "Health",
+          "labels": "Labels",
+          "metric": "Recorded metric",
+          "panel": "Panel ID",
+          "paused": "Paused",
+          "plugins": "Plugin rules",
+          "policy": "Notification policy",
+          "rule-name": "Rule name",
+          "state": "Alert state",
+          "target-datasource": "Target data source"
+        },
+        "rejected-filter": "{{key}} was rejected: {{message}}",
+        "rejected-search": "The search was rejected: {{message}}",
+        "renamed-value": "Use {{to}} instead of {{from}}.",
+        "unavailable-tokens": "Some filters are not available yet: {{tokens}}",
+        "unclosed-quote": "A quote in the search is not closed.",
+        "wildcard-in-text": "Search text cannot contain * or %."
       },
       "shared": {
         "load-more": "Load more",
@@ -2168,14 +2226,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Max data points",
-      "tooltip-max-data-points": "The maximum data points per series. Used directly by some data sources and used in calculation of auto interval. With streaming data this value is used for the rolling buffer."
+      "tooltip-max-data-points": "Per series, used directly by some data sources and to calculate auto interval"
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "new"
     },
     "min-interval-option": {
       "label-interval": "Interval",
-      "tooltip-interval": "Interval sent to the data source. Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute."
+      "tooltip-interval": "Recommended to be set to write frequency, for example <1>1m</1> if your data is written every minute."
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4143,6 +4201,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Skip to main content",
+    "st-loading": {
+      "background-tooltip": "{{itemName}} is starting up",
+      "pending-dots-aria-label": "Page is starting up",
+      "pending-dots-aria-label-named": "{{itemName}} is starting up"
+    },
     "top-bar": {
       "sign-in": "Sign in"
     }
@@ -4612,8 +4675,7 @@
       "delete-warning": "This will delete this folder and all its descendants.",
       "folder-empty": "Selected folder is empty",
       "folder-not-empty": "Selected folder contains resources that will be deleted",
-      "missing-info": "Missing required fields",
-      "success-message": "Folder deleted successfully"
+      "missing-info": "Missing required fields"
     },
     "empty-state": {
       "button-title": "Create dashboard",
@@ -5859,6 +5921,7 @@
       "paste-panel-styles": "Paste panel styles",
       "remove": "Remove {{typeName}}",
       "remove-multiple": "Remove {{typeName}} ({{num}})",
+      "rename": "Rename {{typeName}}",
       "replace-panel": "Replace panel",
       "row-fill-screen-disable": "Disable row fill screen",
       "row-fill-screen-enable": "Enable row fill screen",
@@ -7253,8 +7316,7 @@
       "delete-error": "Failed to delete dashboard",
       "deleting": "Deleting...",
       "drawer-title": "Delete Provisioned Dashboard",
-      "no-repository-selected": "Missing required repository for deletion",
-      "success-message": "Dashboard deleted successfully"
+      "no-repository-selected": "Missing required repository for deletion"
     },
     "description-label": {
       "description": "Description"
@@ -7291,6 +7353,7 @@
       "copy": "Copy to clipboard",
       "learn-more": "Learn more",
       "no-issues": "No errors or notices for this query.",
+      "no-panel-issues": "No errors or notices for this panel.",
       "severity-error": "Error",
       "severity-info": "Info",
       "severity-warning": "Warning"
@@ -7533,14 +7596,10 @@
       "already-in-folder": "Dashboard is already in the selected folder.",
       "api-error": "Failed to move dashboard",
       "cancel-action": "Cancel",
-      "current-file-not-found": "Current dashboard file could not be found",
       "drawer-title": "Move Provisioned Dashboard",
-      "file-load-error": "Error loading dashboard",
-      "loading-dashboard-data": "Loading dashboard data",
       "move-action": "Move dashboard",
       "move-read-only-message": "This dashboard cannot be moved directly from Grafana because the repository is read-only. To move this dashboard, please move the file in your Git repository.",
       "moving": "Moving...",
-      "success-message": "Dashboard moved successfully",
       "target-path-label": "Target path",
       "title-this-repository-is-read-only": "This repository is read only"
     },
@@ -8123,8 +8182,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Open query pane",
-      "open-query-pane": "Open query pane",
-      "open-sidebar": "Open sidebar",
       "tooltip-open-query-pane": "Open query pane"
     },
     "viz-panel-links-renderer": {
@@ -12200,10 +12257,14 @@
     },
     "log-line": {
       "has-error": "Has errors",
+      "has-error-fields": "Has error fields",
+      "has-stacktrace": "Has a stack trace",
       "is-sampled": "Is sampled",
       "show-less": "show less",
       "show-more": "show more",
-      "tooltip-error": "Error: {{errorMessage}}"
+      "tooltip-error": "Error: {{errorMessage}}",
+      "tooltip-error-fields": "This log line contains error-related fields.",
+      "tooltip-stacktrace": "This log line contains a stack trace."
     },
     "log-line-context": {
       "center-matched-line": "Center matched line",
@@ -13165,7 +13226,8 @@
         "close": "Close {{title}}",
         "open": "Open {{title}}",
         "open-all": "Open AI assistants and sidebar apps"
-      }
+      },
+      "floating-resize": "Resize sidebar width"
     },
     "fullscreen-workspace": {
       "enter": "Enter Workspace",
@@ -13424,7 +13486,6 @@
     "add-panel": {
       "cancel": "Cancel",
       "card-author": "By {{author}}",
-      "card-selected": "{{title}} (selected)",
       "card-updated": "Updated {{when}}",
       "create-name": "Notebook name",
       "create-name-required": "A notebook name is required",
@@ -13435,6 +13496,7 @@
       "error-open-conflict": "This notebook changed since it was opened. Reload it and try again.",
       "list-error": "Failed to load notebooks",
       "list-error-body": "Something went wrong loading your notebooks. Try again, or create a new one instead.",
+      "list-label": "Notebooks",
       "list-no-matches": "No notebooks match these filters.",
       "list-none": "You have no notebooks yet. Create one instead.",
       "list-none-read-only": "You have no notebooks yet, and no permission to create one.",
@@ -14326,6 +14388,7 @@
       "description-folder": "Folder inside the repository. Leave empty for the repository root.",
       "description-folder-path": "Folder path inside the repository",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "Pushing to the configured branch is disabled for this repository",
       "info-branch-disabled": "Push to configured branch is disabled",
       "label-branch": "Branch",
       "label-comment": "Comment",
@@ -15871,6 +15934,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "Datasource error",
     "datasource-load-error-body": "Select a datasource for this query to continue.",
     "datasource-load-error-title": "Failed to load datasource for this query",
     "loading-datasource": "Loading datasource",
@@ -16067,6 +16131,7 @@
       "expand": "Expand",
       "filter": "Filter...",
       "loading": "Loading dashboards",
+      "megaMenuSectionHeading": "Suggested dashboards",
       "noResultsForFilter": "No results found for your query",
       "noResultsForFilterClear": "Clear search",
       "noResultsForScopes": "No dashboards or links found for the selected scopes",
@@ -16778,8 +16843,61 @@
   },
   "swagger": {
     "login": "Login",
+    "manifests": {
+      "api-docs": "API docs",
+      "collapse": "Collapse",
+      "collapse-all": "Collapse all",
+      "count": "{{shown}} of {{total}}",
+      "error-title": "Unable to load manifests",
+      "expand": "Expand",
+      "expand-all": "Expand all",
+      "filter-placeholder": "Filter by group, app or kind",
+      "folder-scoped": "folder scoped",
+      "no-kinds": "No kinds",
+      "not-served": "Not served",
+      "preferred": "preferred",
+      "refresh": "Refresh",
+      "roles": "Roles",
+      "routes": "Routes:",
+      "title": "App manifests",
+      "user-readable": "user readable"
+    },
     "namespace-unavailable": "Check the namespace before sending requests, or reload the page to try again.",
-    "namespace-unavailable-title": "Unable to load namespace"
+    "namespace-unavailable-title": "Unable to load namespace",
+    "router-nav": {
+      "api-docs": "API docs",
+      "manifests": "Manifests",
+      "status": "Status"
+    },
+    "router-status": {
+      "all-sources": "All sources",
+      "breaker-settings": "Breakers open after {{after}} consecutive failures, for {{openFor}}",
+      "discovery-cached": "Fetched from the backend; the copy is fresh for 5 minutes after the fetch",
+      "discovery-expired": "Fetched from the backend, but older than 5 minutes: the next /apis request fetches it again, and serves this copy if that fails",
+      "discovery-not-cached": "Not fetched yet: the next aggregated /apis request fetches it from the backend",
+      "discovery-provided": "The backend supplied its resources when it loaded, so discovery never asks it per request",
+      "error-title": "Unable to load router status",
+      "failures-description": "Of those, the ones counted against the backend: 502, 503 and 504 responses, and failures to proxy, such as connection errors and timeouts. Other errors, and callers that disconnect, are not counted. Consecutive failures open the breaker.",
+      "filter-placeholder": "Filter by group, key or plugin",
+      "filtered": "{{shown}} of {{total}}",
+      "groups": "Groups",
+      "last-failed": "Last reconcile failed",
+      "load-failures": "Load failures",
+      "never": "never",
+      "no-backend": "no backend",
+      "no-breaker": "Served in process, without a breaker",
+      "not-ready": "Not ready",
+      "per-destination": "The single-tenant fallback keeps a breaker per stack",
+      "ready": "Ready",
+      "reconciler": "Last reconcile: {{last}} · {{total}} reconciles, {{errors}} errors",
+      "refresh": "Refresh",
+      "requests-description": "Requests the group's breaker let through to the backend, or the plugin's client calls when its scope is plugin-calls. Counted since the backend was loaded or the breaker last changed state.",
+      "shadowed": "Shadowed groups",
+      "shadowed-description": "Groups a source offers that a higher-priority source serves instead.",
+      "sources": "Sources",
+      "stack-lookups": "Stack lookups",
+      "title": "Router status"
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16833,6 +16951,9 @@
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "description-zebra-striping": "Alternate the background color of every other row",
+    "filter": {
+      "error": "Table filters could not be applied. Showing unfiltered rows."
+    },
     "frame-picker": {
       "label": "Query"
     },
@@ -18381,6 +18502,7 @@
       "title": "Delete variables"
     },
     "editor": {
+      "back": "Back",
       "cancel": "Cancel",
       "delete": "Delete",
       "delete-modal-body": "Are you sure you want to delete \"{{name}}\"?",
@@ -18389,6 +18511,7 @@
       "folder-description": "Scope the variable to a folder, or choose the root Dashboards folder to make it global (available to all dashboards)",
       "folder-description-folder-only": "Scope the variable to a folder you can edit",
       "folder-label": "Folder",
+      "load-error-title": "This variable cannot be edited",
       "moved": "Variable moved",
       "name-exists": "A variable with this name already exists in the selected folder",
       "save": "Save",

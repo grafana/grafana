@@ -3,6 +3,7 @@ package router
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -22,7 +23,7 @@ func TestLogRequestIncludesPropagatedTraceID(t *testing.T) {
 	req.Header.Set("traceparent", "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
 	req = req.WithContext(logging.Context(req.Context(), logger))
 
-	logRequest(req, "example.grafana.app", http.StatusUnauthorized, time.Millisecond)
+	logRequest(req, "example.grafana.app", http.StatusConflict, time.Millisecond)
 
 	var line map[string]any
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &line))
@@ -40,7 +41,9 @@ func TestLogRequestHonorsTheLoggerLevel(t *testing.T) {
 	}{
 		{"success, debug on", slog.LevelDebug, http.StatusOK, true},
 		{"success, debug off", slog.LevelInfo, http.StatusOK, false},
-		{"client error, debug off", slog.LevelInfo, http.StatusNotFound, true},
+		{"routine client error, debug off", slog.LevelInfo, http.StatusNotFound, false},
+		{"routine client error, debug on", slog.LevelDebug, http.StatusUnauthorized, true},
+		{"client error, debug off", slog.LevelInfo, http.StatusConflict, true},
 		{"server error, debug off", slog.LevelInfo, http.StatusBadGateway, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -52,4 +55,26 @@ func TestLogRequestHonorsTheLoggerLevel(t *testing.T) {
 			require.Equal(t, tc.logged, buf.Len() > 0, buf.String())
 		})
 	}
+}
+
+// A routine request with Debug off costs only the logger lookup, with the
+// SDK's SLogLogger that Grafana installs: nothing is built for the line.
+func TestLogRequestSkipsRoutineLinesCheaply(t *testing.T) {
+	logger := logging.NewSLogLogger(slog.NewJSONHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	req := httptest.NewRequest(http.MethodGet, "/apis/example.grafana.app/v1/things", nil)
+	req = req.WithContext(logging.Context(req.Context(), logger))
+	// logging.FromContext allocates the context-bound logger it returns.
+	allocs := testing.AllocsPerRun(100, func() {
+		logRequest(req, "example.grafana.app", http.StatusOK, time.Millisecond)
+	})
+	require.LessOrEqual(t, allocs, 1.0)
+}
+
+func TestDebugEnabled(t *testing.T) {
+	ctx := t.Context()
+	debug := logging.NewSLogLogger(slog.NewJSONHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	info := logging.NewSLogLogger(slog.NewJSONHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	require.True(t, debugEnabled(ctx, debug.WithContext(ctx)))
+	require.False(t, debugEnabled(ctx, info.WithContext(ctx)))
+	require.False(t, debugEnabled(ctx, &logging.NoOpLogger{}))
 }

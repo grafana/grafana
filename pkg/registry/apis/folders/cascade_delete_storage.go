@@ -42,7 +42,7 @@ var _ grafanarest.Storage = (*cascadeDeleteStorage)(nil)
 // elements) during cascade delete. Satisfied by *cleaner.ContentsCleaner; kept as an interface here
 // so the cascade can be faked in tests and the cleaner package need not import the apiserver.
 type FolderContentsDeleter interface {
-	DeleteInFolder(ctx context.Context, namespace, folderUID string) error
+	DeleteInFolder(ctx context.Context, namespace, folderUID string, user identity.Requester) error
 }
 
 // cascadeDeleteStorage wraps the folder storage and overrides Delete to recursively remove a
@@ -180,6 +180,16 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 // NotFound errors for children, since they might be already deleted or a stale search-index entry,
 // but we keep the error for the user-requested folder.
 func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.Requester, namespace, parentUID, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
+	// user must not be ctx's wildcard-permissioned enumeration identity; checked before markTerminating so a rejection doesn't stamp the folder as mid-deletion.
+	enumUser, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	if user.GetUID() == enumUser.GetUID() {
+		return nil, false, apierrors.NewForbidden(foldersv1.FolderResourceInfo.GroupResource(), name,
+			fmt.Errorf("cascade delete requester must not be the ctx enumeration identity: %w", folder.ErrAccessDenied))
+	}
+
 	if err := s.markTerminating(ctx, name, options); err != nil {
 		if apierrors.IsNotFound(err) && !requested {
 			return nil, false, nil
@@ -220,7 +230,7 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	// failure aborts the cascade, same as the dashboard sweep above. Skipped on dry-run: the
 	// RegistryService cleanups mutate the DB directly and have no dry-run mode.
 	if s.contentsDeleter != nil && len(options.DryRun) == 0 {
-		if err := s.contentsDeleter.DeleteInFolder(ctx, namespace, name); err != nil {
+		if err := s.contentsDeleter.DeleteInFolder(ctx, namespace, name, user); err != nil {
 			// Surface a permission failure as 403 rather than a generic 500, so the client sees why.
 			if errors.Is(err, folder.ErrAccessDenied) {
 				return nil, false, apierrors.NewForbidden(foldersv1.FolderResourceInfo.GroupResource(), name, err)
