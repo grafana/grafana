@@ -370,7 +370,7 @@ function VariableLabelInput({ variable, id }: VariableInputProps) {
     <Input
       id={id}
       disabled={readOnly}
-      value={label}
+      value={label ?? ''}
       onFocus={() => {
         oldLabel.current = label ?? '';
       }}

@@ -18,30 +18,43 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// ProvideRoutesLoader serves local plugins. Dummy groups let the router run
-// when no plugin sources are available. It never loads the cloud sources: the
+// ProvideRoutesLoader serves local plugins, or no groups without plugin
+// sources. It never loads the cloud sources: the
 // standalone router tries ProvideCloudRoutesLoader first, and calls this only
 // when [cloud_router] configures none, and Grafana itself never polls them.
 func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
-	if deps.PluginSources != nil {
+	dev, err := newDevTargets(cfg, deps.PluginDependencies)
+	if err != nil {
+		return nil, err
+	}
+	if deps.PluginSources != nil || dev != nil {
 		if middlewareEnabled(cfg, deps.Features) {
 			// When running in ST grafana as middleware, declare plugin roles and resolve settings storage defaults
-			if err := initLocalPlugins(context.Background(), deps); err != nil {
-				return nil, err
+			if deps.PluginSources != nil {
+				if err := initLocalPlugins(context.Background(), deps); err != nil {
+					return nil, err
+				}
 			}
+			dev.declareRoles(context.Background(), deps.ACService)
 		}
-		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg, deps.Features)}, nil
+		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg, deps.Features), dev: dev}, nil
 	}
 
-	return dummyRoutesLoader{groups: []string{
-		"dummy-backend-1.ext.grafana.app",
-		"dummy-backend-2.ext.grafana.app",
-	}}, nil
+	return noRoutesLoader{}, nil
+}
+
+// noRoutesLoader serves no groups, for a router without plugin sources.
+type noRoutesLoader struct{}
+
+func (noRoutesLoader) Load(context.Context) ([]Backend, error) { return nil, nil }
+
+func (noRoutesLoader) Notify(context.Context) (<-chan struct{}, error) {
+	return make(chan struct{}), nil
 }
 
 // ProvideCloudRoutesLoader builds the cloud routes loader from the router
 // module's clients, without ProvideRoutesLoader's dependencies: those open the
-// SQL database and run migrations. Like ProvideCloudRoutesLoaderFactory, it
+// SQL database and run migrations. Like NewCloudRoutesLoader, it
 // returns (nil, nil) when [cloud_router] configures no source.
 //
 // Managed plugins get no plugin store, plugin settings, legacy access control
@@ -58,7 +71,7 @@ func ProvideCloudRoutesLoader(
 	if err != nil {
 		return nil, err
 	}
-	return ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{
+	return NewCloudRoutesLoader(cfg, PluginDependencies{
 		SecureValues:       clients.SecureValues,
 		MetricsRegister:    reg,
 		RESTConfigProvider: clients.RESTConfigProvider,

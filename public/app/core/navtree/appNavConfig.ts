@@ -23,9 +23,19 @@ export interface AppNavConfig {
   icon?: IconName;
   subTitle?: string;
   isNew?: boolean;
+  /**
+   * Render the app's pages as standalone entries of the target section instead
+   * of nesting them under an app node (asserts today; the assistant plans the
+   * same). `slotWeightByPath` pins specific pages to a section slot; the rest
+   * sort above the section's app entries in their own order.
+   */
+  hoistPages?: { slotWeightByPath?: Record<string, number> };
   /** Drops the `includes` that the app should not show in this deployment, on top of the RBAC checks */
   filterInclude?: (include: PluginInclude) => boolean;
 }
+
+export const ASSERTS_SERVICES_PATH = `/a/${ASSERTS_APP_ID}/services`;
+export const SLO_SERVICES_PATH = `/a/${SLO_APP_ID}/services`;
 
 // The assistant pages OSS deployments get (mirrors assistantOSSNavigationPaths
 // in the Go builder)
@@ -34,6 +44,11 @@ const ASSISTANT_OSS_NAV_PATHS = new Set([
   `/a/${ASSISTANT_APP_ID}/workspace`,
   `/a/${ASSISTANT_APP_ID}/settings`,
 ]);
+
+// The asserts services page takes the same Observability slot as the App
+// Observability entry — only one of the two is ever shown. The value mirrors
+// the weight in the Go builder's table (applinks.go), as every weight here does.
+const APP_OBSERVABILITY_SORT_WEIGHT = 4;
 
 /**
  * Where known app plugins go in the nav. An app with no entry here is listed
@@ -58,8 +73,8 @@ const ASSISTANT_OSS_NAV_PATHS = new Set([
  * },
  * ```
  *
- * `filterInclude` covers the rarer case and is documented on AppNavConfig
- * above. Keep entries in step with the equivalent
+ * `hoistPages` and `filterInclude` cover the rarer cases and are documented on
+ * AppNavConfig above. Keep entries in step with the equivalent
  * table in the Go builder (applinks.go), which serves the same nav when the
  * client-built tree is off.
  */
@@ -84,6 +99,7 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
     sectionId: NavID.observability,
     sortWeight: 2,
     icon: 'asserts',
+    hoistPages: { slotWeightByPath: { [ASSERTS_SERVICES_PATH]: APP_OBSERVABILITY_SORT_WEIGHT } },
   },
   'grafana-kowalski-app': {
     sectionId: NavID.observability,
@@ -92,7 +108,7 @@ const APP_NAV_CONFIG: Record<string, AppNavConfig> = {
   },
   [APP_OBSERVABILITY_APP_ID]: {
     sectionId: NavID.observability,
-    sortWeight: 4,
+    sortWeight: APP_OBSERVABILITY_SORT_WEIGHT,
     text: 'Application',
   },
   'grafana-dbo11y-app': {

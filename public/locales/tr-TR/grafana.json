@@ -1440,6 +1440,41 @@
       "saving": "Kaydediliyor…",
       "title-error-saving-receiver": "Alıcı kaydedilirken hata oluştu"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "result-count": {
+        "alert-rules_one": "",
+        "alert-rules_other": "",
+        "recording-rules_one": "",
+        "recording-rules_other": ""
+      },
+      "shared": {
+        "load-more": "",
+        "load-more-error": "",
+        "loading-rules": "",
+        "refresh-error": "",
+        "retry": ""
+      },
+      "status": {
+        "error": "",
+        "firing": "",
+        "no-data": "",
+        "normal": "",
+        "paused": "",
+        "pending": "",
+        "recording": "",
+        "recovering": "",
+        "unavailable": ""
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Alertmanager yapılandırmanızı değiştirmek için Uyarı Yönetimi sayfasına gidin. Erişiminiz yoksa yöneticinizle iletişime geçin. Erişiminiz yoksa Yöneticinizle iletişime geçin.",
       "admin-hint-external": "Alertmanager yapılandırmanızı değiştirmek için Uyarı Yönetimi sayfasına gidin. Erişiminiz yoksa yöneticinizle iletişime geçin. Erişiminiz yoksa Yöneticinizle iletişime geçin.",
@@ -1765,7 +1800,9 @@
         "autosync-tooltip-unsupported": "Otomatik eşitleme bu Alertmanager türü için kullanılamıyor. Etkinleştirmek için bir Mimir veya Cortex veri kaynağı seçin.",
         "datasource": "Alertmanager veri kaynağı",
         "datasource-autosync-badge": "Otomatik eşitleme",
+        "embedded-yaml-parse-error": "",
         "heading": "Bildirim Kaynaklarını İçe Aktar",
+        "invalid-alertmanager-config": "",
         "next-disabled-tooltip": "",
         "no-datasources": "Alertmanager veri kaynağı bulunamadı",
         "no-permission-desc": "Bildirim kaynaklarını içe aktarma izniniz yok. <strong>alerting.notifications:write</strong> iznine ihtiyacınız var. Bu adımı atlayabilirsiniz.",
@@ -2136,14 +2173,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Maksimum veri noktaları",
-      "tooltip-max-data-points": "Seri başına maksimum veri noktası. Bazı veri kaynakları tarafından doğrudan kullanılır ve otomatik aralık hesaplamasında kullanılır. Akış verilerinde bu değer döngüsel tampon için kullanılır."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "yeni"
     },
     "min-interval-option": {
       "label-interval": "Aralık",
-      "tooltip-interval": "Veri kaynağına gönderilen aralık. Yazma sıklığına göre ayarlanması önerilir, örn. veriniz her dakika yazılıyorsa <1>1m</1>."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4111,6 +4148,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Ana içeriğe geç",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Giriş yap"
     }
@@ -4580,8 +4622,7 @@
       "delete-warning": "Bu işlem, bu klasörü ve tüm alt klasörlerini silecek.",
       "folder-empty": "Seçilen klasör boş",
       "folder-not-empty": "Seçilen klasör silinecek kaynaklar içeriyor",
-      "missing-info": "Eksik zorunlu alanlar",
-      "success-message": "Klasör başarıyla silindi"
+      "missing-info": "Eksik zorunlu alanlar"
     },
     "empty-state": {
       "button-title": "Pano oluştur",
@@ -7219,8 +7260,7 @@
       "delete-error": "Pano silinemedi",
       "deleting": "Siliniyor...",
       "drawer-title": "Sağlanan Panoyu Sil",
-      "no-repository-selected": "Silme işlemi için gerekli depo eksik",
-      "success-message": "Pano başarıyla silindi"
+      "no-repository-selected": "Silme işlemi için gerekli depo eksik"
     },
     "description-label": {
       "description": "Açıklama"
@@ -7257,6 +7297,7 @@
       "copy": "Panoya kopyala",
       "learn-more": "Daha fazla bilgi edinin",
       "no-issues": "Bu sorgu için hata veya bildirim yok.",
+      "no-panel-issues": "",
       "severity-error": "Hata",
       "severity-info": "Bilgi",
       "severity-warning": "Uyarı"
@@ -7420,6 +7461,57 @@
       "usage-count_one": "{{count}} panoda kullanılıyor",
       "usage-count_other": "{{count}} panoda kullanılıyor"
     },
+    "lifecycle": {
+      "applied": "",
+      "apply": "",
+      "apply-body": "",
+      "apply-failed": "",
+      "apply-needs-edit": "",
+      "breadcrumb-draft": "",
+      "breadcrumb-pending-changes": "",
+      "change-added": "",
+      "change-badge-parts": "",
+      "change-edited": "",
+      "change-layout": "",
+      "change-layout-detail": "",
+      "change-panel": "",
+      "change-removed": "",
+      "change-setting": "",
+      "change-variable": "",
+      "compare": "",
+      "compare-base": "",
+      "compare-base-unknown": "",
+      "compare-changes": "",
+      "compare-empty": "",
+      "compare-json": "",
+      "compare-latest": "",
+      "compare-loading": "",
+      "compare-title": "",
+      "discard": "",
+      "discard-draft-body": "",
+      "discard-draft-failed": "",
+      "discard-draft-title": "",
+      "discard-pending-body": "",
+      "discard-pending-failed": "",
+      "discard-pending-title": "",
+      "draft-body": "",
+      "draft-body-source": "",
+      "draft-title": "",
+      "highlight-changes": "",
+      "open-to-save": "",
+      "pending-body": "",
+      "pending-body-source": "",
+      "pending-hint": "",
+      "pending-stale": "",
+      "pending-title": "",
+      "preview-changes": "",
+      "rebase": "",
+      "save": "",
+      "show-original-dashboard": "",
+      "stop-highlighting-changes": "",
+      "apply-title_one": "",
+      "apply-title_other": ""
+    },
     "link-edit-actions": {
       "add-link": "Bağlantı ekle",
       "remove-link": "Bağlantıyı kaldır",
@@ -7448,14 +7540,10 @@
       "already-in-folder": "Pano zaten seçilen klasörde.",
       "api-error": "Pano taşınamadı",
       "cancel-action": "İptal et",
-      "current-file-not-found": "Geçerli pano dosyası bulunamadı",
       "drawer-title": "Sağlanan Gösterge Tablosunu Taşı",
-      "file-load-error": "Pano yüklenirken hata oluştu",
-      "loading-dashboard-data": "Pano verisi yükleniyor",
       "move-action": "Panoyu taşı",
       "move-read-only-message": "Depo salt okunur olduğundan bu pano doğrudan Grafana'dan taşınamaz. Bu panoyu taşımak için lütfen dosyayı Git deponuza taşıyın.",
       "moving": "Taşınıyor...",
-      "success-message": "Pano başarıyla taşındı",
       "target-path-label": "Hedef yol",
       "title-this-repository-is-read-only": "Bu depo salt okunur"
     },
@@ -7745,6 +7833,7 @@
       "show-variables-warning-alert-title": "Değişken sorguları başarısız oldu"
     },
     "save-errors": {
+      "forbidden": "",
       "unexpected": "Kaydedilirken beklenmedik bir hata oluştu."
     },
     "save-library-viz-panel-modal": {
@@ -13075,7 +13164,8 @@
         "close": "{{title}} bölümünü kapat",
         "open": "{{title}} bölümünü aç",
         "open-all": "Yapay Zeka asistanlarını ve yan menü uygulamalarını aç"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Çalışma alanına gir",
@@ -13632,6 +13722,13 @@
       "placeholder": "Ad",
       "required": "Lütfen bir başlık girin",
       "save-tooltip": "Kaydet"
+    }
+  },
+  "page-fallback-loader": {
+    "aria-label": "",
+    "step": {
+      "preparing": "",
+      "preparing-named": ""
     }
   },
   "page-loader": {
@@ -14229,6 +14326,7 @@
       "description-folder": "Depo içindeki klasör. Depo kök dizini için boş bırakın.",
       "description-folder-path": "Depo içindeki klasör yolu",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "Yapılandırılan dala gönderme (push) işlemi devre dışı bırakıldı",
       "label-branch": "Dal",
       "label-comment": "Yorum",
@@ -15460,11 +15558,6 @@
       "original-query": "Orijinal sorgu",
       "trace-id": "(İzleme kimliği: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Sorgu ekle",
-      "expression": "İfade",
-      "title-data-source-help": "Veri kaynağı yardımı"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Aralık = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -15504,28 +15597,31 @@
     "accept": "Kabul et",
     "assistant-context-title": "Sorgu ortak yazarlık bağlamı",
     "assistant-instructions-title": "Sorgu ortak yazarlık yönergeleri",
-    "assistant-unavailable": "Asistan kullanılamıyor",
-    "assistant-unavailable-body": "Sorgu ortak yazarlığı için Grafana Asistanı gereklidir.",
-    "building": "Sorgu derleniyor...",
+    "assistant-unavailable": "",
+    "building": "",
+    "cancel": "",
+    "change-inside-focus": "",
+    "change-outside-focus": "",
     "checking-assistant": "Asistan kullanılabilirliği denetleniyor...",
     "clarification-label": "Ek ayrıntı ekleyin",
     "clarification-message": "Açıklama mesajı",
-    "clarification-placeholder": "Ek ayrıntı ekleyin...",
+    "clarification-placeholder": "",
     "clarification-title": "Ayrıntı isteği gönderildi",
     "close": "Ortak yazarlığı kapat",
-    "context": "BAĞLAM",
-    "context-error": "Seçilen sorgu bağlamı okunamadı",
+    "context-error": "",
     "continue": "Devam et",
     "continue-here": "Buradan devam et",
     "continue-in-assistant": "Asistan'da devam et",
-    "continue-in-assistant-chat": "Asistan sohbetinde devam et",
     "dialog": "Sorgu ortak yazarı",
     "dismiss": "Kapat",
     "error": "Sorgu ortak yazarlık hatası",
     "error-accept-failed": "Sorgu önerisi kabul edilemedi. Tekrar deneyin.",
     "error-multiple-responses": "Asistan çakışan sorgu önerileri döndürdü. Tekrar deneyin.",
     "error-preview-failed": "Sorgu önerisinin ön izlemesi yapılamadı. Tekrar deneyin.",
+    "explain-failed": "",
     "explain-or-modify": "Açıkla veya değiştir",
+    "explain-query": "",
+    "explaining": "",
     "feedback-cancel": "İptal et",
     "feedback-description": "Geri bildiriminiz, Grafana'daki sorgu deneyimini geliştirmeye yardımcı olur.",
     "feedback-error": "Geri bildirim gönderilemedi. Tekrar deneyin.",
@@ -15536,36 +15632,61 @@
     "feedback-not-helpful": "Yardımcı değil",
     "feedback-positive-placeholder": "Neyi beğendiniz? Nasıl daha da iyi olabilirdi?",
     "feedback-positive-title": "Neler sorunsuz ilerledi?",
-    "feedback-privacy": "Değerlendirmeniz, yorumunuz ve asistanın bir öneri mi sunduğu yoksa işlemi sohbete mi aktardığı bilgisi iletilir. Sorgunuz, komutunuz ve Asistan yanıtı dâhil edilmez.",
+    "feedback-privacy": "",
     "feedback-recipient": "Geri bildiriminiz sorgulama üzerinde çalışan ekiplere iletilecektir.",
     "feedback-send": "Gönder",
     "feedback-sending": "Gönderiliyor...",
-    "focus": "ODAK",
-    "handoff-guidance": "Değişikliklerinizin başka bir veri kaynağına veya odaklandığımız sorgunun dışındaki ek sorgulara yayılması gerekebilir. Daha büyük değişiklikler yapmak için Asistan sohbetinde devam edin.",
+    "focus": "",
+    "follow-up-label": "",
+    "follow-up-placeholder": "",
+    "handoff-guidance": "",
     "highlighted-query": "Vurgulanan sorgu",
-    "highlighted-query-summary": "Vurgulanan sorgu özeti",
+    "hold-to-peek": "",
     "invalid-query-response": "Asistan, öneriyi düzeltmeyi denedikten sonra geçerli bir {{language}} üretemedi. Tekrar deneyin veya daha fazla ayrıntı ekleyin.",
     "iteration-nudge": "Büyük bir kapsamda mı çalışıyorsunuz? Daha fazla alanda daha büyük değişiklikler üzerinde yinelemeler yapın.",
-    "open-in-chat": "Sohbette aç",
-    "original-change": "Orijinal {{kind}}",
+    "mention-label": "",
+    "mention-metric": "",
+    "mention-option": "",
+    "mention-suggestions": "",
+    "modify-query": "",
+    "next-option": "",
+    "open-in-chat": "",
+    "option": "",
+    "options": "",
+    "original": "",
+    "original-query": "",
+    "preview-error": "",
+    "preview-error-title": "",
+    "preview-no-data": "",
+    "preview-no-data-suggestion": "",
+    "preview-no-signal": "",
+    "preview-no-signal-title": "",
+    "preview-option": "",
+    "preview-original": "",
+    "preview-result": "",
     "previewing-query": "Sorgu ön izleniyor",
+    "previous-option": "",
     "prompt-label": "Bir sorgu değişikliğini açıklayın",
-    "prompt-placeholder": "Hızlı bir değişiklik açıklayın...",
+    "prompt-placeholder": "",
     "proposal-details": "Sorgu önerisi ayrıntıları",
-    "proposed-change": "Önerilen {{kind}}",
-    "reading-highlighted-query": "Vurgulanan sorgu okunuyor...",
+    "query-diff": "",
     "relevant-context": "İlgili sorgu bağlamı",
     "request-failed": "Asistan bir sorgu önerisi oluşturamadı. Tekrar deneyin.",
+    "resize-left": "",
+    "resize-right": "",
     "retry": "Tekrar dene",
+    "retry-context": "",
     "running-updated-query": "Güncellenen sorgu çalıştırılıyor...",
+    "select-to-accept": "",
     "selection-ready": "Seçim, bu {{language}} sorgunun bir parçasıdır.",
     "selection-whole-query": "Ortak yazarlık için {{language}} sorgunun tamamı seçildi.",
     "selection-with-type": "{{name}}, bir {{type}} {{kind}} ögesidir.",
     "stale-query-response": "Vurgulanan sorgu, öneri hazır olmadan önce değişti. Kapatıp yeniden vurgulayın.",
     "stop": "Durdur",
     "submit": "Ortak yazarlık yap",
-    "suggestion-updated": "Öneri güncellendi",
+    "submit-follow-up": "",
     "unchanged-query-response": "Asistan mevcut sorguyu değişiklik yapmadan döndürdü. Tekrar deneyin veya daha fazla ayrıntı ekleyin.",
+    "unconfirmed-prefix": "",
     "unsaved-safe": "Kaydedilmemiş panel düzenlemeleri kaybolmayacaktır.",
     "working-focus": "Sorgu odağı"
   },
@@ -15751,6 +15872,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "Devam etmek amacıyla bu sorgu için bir veri kaynağı seçin.",
     "datasource-load-error-title": "Bu sorgu için veri kaynağı yüklenemedi",
     "loading-datasource": "Veri kaynağı yükleniyor",
@@ -15947,6 +16069,7 @@
       "expand": "Genişlet",
       "filter": "",
       "loading": "Panolar yükleniyor",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Sorgunuz için sonuç bulunamadı",
       "noResultsForFilterClear": "Aramayı temizle",
       "noResultsForScopes": "Seçilen kapsamlar için pano veya bağlantı bulunamadı",
@@ -16181,14 +16304,7 @@
       "time-range": "Zaman aralığını kilitle"
     },
     "export": {
-      "back-button": "Yapılandırmayı dışa aktarmaya geri dön",
-      "cancel-button": "İptal",
-      "info-text": "Bu panoyu dışa aktarın.",
-      "loading": "Yükleniyor...",
-      "save-button": "Dosyaya kaydet",
-      "share-externally-label": "Harici olarak paylaşmak için dışa aktar",
-      "view-button": "JSON'u görüntüle",
-      "view-button-yaml": "YAML'yi görüntüle"
+      "share-externally-label": "Harici olarak paylaşmak için dışa aktar"
     },
     "image": {
       "actions": "Görsel dışa aktarma işlemleri",
@@ -16246,9 +16362,6 @@
       "dark": "Koyu",
       "field-name": "Tema",
       "light": "Açık"
-    },
-    "view-json": {
-      "copy-button": "Panoya kopyala"
     }
   },
   "share-panel": {
@@ -16668,8 +16781,61 @@
   },
   "swagger": {
     "login": "Oturum Aç",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "İstekleri göndermeden önce ad alanını kontrol edin veya tekrar denemek için sayfayı yeniden yükleyin.",
-    "namespace-unavailable-title": "Ad alanı yüklenemedi"
+    "namespace-unavailable-title": "Ad alanı yüklenemedi",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16723,6 +16889,9 @@
     "description-styling-from-field": "CSS özellikleri içeren JSON nesnelerinden oluşan bir alan",
     "description-tooltip-from-field": "Araç ipucunda (gizli veya görünür) bir alandaki hücreyi göster",
     "description-zebra-striping": "Arka plan rengini birer satır atlayarak değiştirin",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Sorgu"
     },
@@ -17427,6 +17596,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "Bir regex deseni kullanarak sorgu sonuçlarının bölümlerini kaldırın."
       },
+      "deselect-all": "",
       "label-from-variable": "Değişken üzerinden",
       "label-identifier": "Tanımlayıcı",
       "label-use-variable": "Değişken kullan",
@@ -17434,7 +17604,8 @@
       "name": {
         "filter-fields-by-name": "Alanları ada göre filtrele"
       },
-      "placeholder-regular-expression-pattern": "Düzenli ifade deseni"
+      "placeholder-regular-expression-pattern": "Düzenli ifade deseni",
+      "select-all": ""
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {
@@ -18269,6 +18440,7 @@
       "body_other": "{{count}} değişkeni silmek istediğinizden emin misiniz?"
     },
     "editor": {
+      "back": "",
       "cancel": "İptal et",
       "delete": "Sil",
       "delete-modal-body": "\"{{name}}\" ögesini silmek istediğinizden emin misiniz?",
@@ -18277,6 +18449,7 @@
       "folder-description": "Değişkeni bir klasör kapsamına alın veya genel (tüm panolarda kullanılabilir) yapmak için kök Panolar klasörünü seçin",
       "folder-description-folder-only": "Değişkeni düzenleyebildiğiniz bir klasörle sınırlandırın",
       "folder-label": "Klasör",
+      "load-error-title": "",
       "moved": "Değişken taşındı",
       "name-exists": "Seçili klasörde bu ada sahip bir değişken zaten var",
       "save": "Kaydet",

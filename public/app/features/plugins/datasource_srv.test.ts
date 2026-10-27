@@ -986,7 +986,6 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
         filter({
           uid: ds.uid,
           type: ds.type,
-          apiVersion: ds.apiVersion,
           name: ds.name,
           meta: ds.meta,
         }),

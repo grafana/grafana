@@ -29,6 +29,9 @@ import { VariableTypeChangePane } from './VariableTypeSelectionPane';
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
+    editPeriodStarted: jest.fn(),
+    editPeriodEnded: jest.fn(),
+    editActorFirstChange: jest.fn(),
     variableActionButtonClicked: jest.fn(),
     trackDeleteDashboardElement: jest.fn(),
   },

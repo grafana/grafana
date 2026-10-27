@@ -16,7 +16,7 @@ import {
   setupNavTestState,
   type NavTestState,
 } from './test-utils';
-import { findNavById as findById } from './utils';
+import { findNavById as findById, pruneEmptyNavSections } from './utils';
 
 setupMockServer();
 
@@ -380,6 +380,151 @@ describe('applyPluginNav', () => {
 
       const assistant = findById(merged, 'plugin-page-grafana-assistant-app');
       expect((assistant?.children ?? []).map((child) => child.text)).toEqual(['Investigations']);
+    });
+  });
+
+  describe('cross-plugin overrides', () => {
+    it('hoists asserts pages into the Observability section as standalone pages', () => {
+      const merged = merge(
+        app('grafana-asserts-app', 'Asserts', [
+          page('Service overview', '/a/grafana-asserts-app/services'),
+          page('Entities', '/a/grafana-asserts-app/entities'),
+        ])
+      );
+
+      const observability = findById(merged, NavID.observability);
+      expect(findById(merged, 'plugin-page-grafana-asserts-app')).toBeUndefined();
+      // The ids do not start with `standalone-plugin-page-/`, so routes.tsx keeps
+      // routing these by the app url and the app root keeps this section
+      expect(ids(observability?.children ?? [])).toEqual([
+        'standalone-plugin-page-a-grafana-asserts-app-entities',
+        'standalone-plugin-page-a-grafana-asserts-app-services',
+      ]);
+      // The services page takes the App Observability slot
+      expect(findById(merged, 'standalone-plugin-page-a-grafana-asserts-app-services')?.sortWeight).toBe(4);
+    });
+
+    // Mirrors the Go builder's TestAddAppLinksObservabilityAssertsOrdering: the
+    // unpinned pages sort above the section's app entries, and the services page
+    // takes the slot right after Frontend
+    it('orders hoisted pages above the section apps, with the services page in its slot', () => {
+      const merged = merge(
+        app('grafana-asserts-app', 'Asserts', [
+          page('Entity graph', '/a/grafana-asserts-app/entities'),
+          page('Service overview', '/a/grafana-asserts-app/services'),
+        ]),
+        app('grafana-kowalski-app', 'Frontend', [page('Overview', '/a/grafana-kowalski-app/overview')])
+      );
+
+      expect((findById(merged, NavID.observability)?.children ?? []).map((child) => child.text)).toEqual([
+        'Entity graph',
+        'Frontend',
+        'Service overview',
+      ]);
+    });
+
+    // A standalone id is a routing key: `/d/<uid>` as one would register the
+    // dashboard's own url as an app route and shadow the dashboard
+    it('leaves a hoisted app dashboard without a standalone id', () => {
+      const merged = merge(
+        app('grafana-asserts-app', 'Asserts', [
+          page('Entities', '/a/grafana-asserts-app/entities'),
+          { type: PluginIncludeType.dashboard, name: 'Overview dashboard', addToNav: true, uid: 'dash-uid' },
+        ])
+      );
+
+      const children = findById(merged, NavID.observability)?.children ?? [];
+      const dashboard = children.find((child) => child.url === '/d/dash-uid');
+      expect(dashboard?.id).toBeUndefined();
+      expect(ids(children)).toContain('standalone-plugin-page-a-grafana-asserts-app-entities');
+    });
+
+    it('removes the asserts Application page when App Observability is present', () => {
+      const merged = merge(
+        app('grafana-asserts-app', 'Asserts', [page('Service overview', '/a/grafana-asserts-app/services')]),
+        app('grafana-app-observability-app', 'Application Observability', [
+          page('Services', '/a/grafana-app-observability-app/services'),
+        ])
+      );
+
+      const observability = findById(merged, NavID.observability);
+      expect((observability?.children ?? []).map((child) => child.url)).not.toContain(
+        '/a/grafana-asserts-app/services'
+      );
+    });
+
+    it('nests maintenance windows under the SLO app', () => {
+      const merged = merge(
+        app('grafana-slo-app', 'SLO', [page('SLOs', '/a/grafana-slo-app/home')]),
+        app('grafana-maintenancewindows-app', 'Maintenance windows', [
+          page('Windows', '/a/grafana-maintenancewindows-app/home'),
+        ]),
+        app('grafana-servicecenter-app', 'Service center', [page('Home', '/a/grafana-servicecenter-app/home')])
+      );
+
+      const slo = findById(merged, 'plugin-page-grafana-slo-app');
+      const nested = findById(slo?.children ?? [], 'standalone-plugin-page-grafana-maintenancewindows-app');
+      expect(nested).toBeDefined();
+      // No new badge: the Go builder dropped it
+      expect(nested?.isNew).toBeUndefined();
+      expect(findById(merged, 'plugin-page-grafana-maintenancewindows-app')).toBeUndefined();
+      // Nothing else is left in More apps, so the prune pass drops the section
+      expect(findById(merged, NavID.apps)?.children).toEqual([]);
+      expect(findById(pruneEmptyNavSections(merged), NavID.apps)).toBeUndefined();
+    });
+
+    it('synthesizes a Service center link when SLO is installed without the servicecenter app', () => {
+      const merged = merge(app('grafana-slo-app', 'SLO', [page('SLOs', '/a/grafana-slo-app/home')]));
+
+      expect(findById(merged, 'standalone-plugin-page-slo-services')?.url).toBe('/a/grafana-slo-app/services');
+    });
+
+    it('does not synthesize Service center when the servicecenter app is installed', () => {
+      const merged = merge(
+        app('grafana-slo-app', 'SLO', [page('SLOs', '/a/grafana-slo-app/home')]),
+        app('grafana-servicecenter-app', 'Service center', [page('Home', '/a/grafana-servicecenter-app/home')])
+      );
+
+      expect(findById(merged, 'standalone-plugin-page-slo-services')).toBeUndefined();
+    });
+
+    it('points the Adaptive Telemetry section at the umbrella plugin when installed', () => {
+      const merged = merge(
+        app('grafana-adaptive-metrics-app', 'Adaptive Metrics', [
+          page('Metrics', '/a/grafana-adaptive-metrics-app/home'),
+        ]),
+        app('grafana-adaptivetelemetry-app', 'Adaptive Telemetry', [
+          page('Home', '/a/grafana-adaptivetelemetry-app/home'),
+        ])
+      );
+
+      const section = findById(merged, NavID.adaptiveTelemetry);
+      expect(section?.url).toBe('/a/grafana-adaptivetelemetry-app');
+      expect(section?.pluginId).toBe('grafana-adaptivetelemetry-app');
+    });
+
+    it('marks Help to open interactive learning when the pathfinder plugin is installed', () => {
+      const merged = merge(app('grafana-pathfinder-app', 'Pathfinder', []));
+
+      expect(findById(merged, NavID.help)?.hideFromTabs).toBe(true);
+    });
+
+    it('adds an Assistant stub when only the onboarding app is installed', () => {
+      const merged = merge(app('grafana-assistant-onboarding-app', 'Assistant onboarding', []));
+
+      const stub = findById(merged, 'plugin-page-grafana-assistant-app');
+      expect(stub?.text).toBe('Assistant');
+      expect(stub?.url).toBe('/a/grafana-assistant-app');
+    });
+
+    it('does not add the Assistant stub when the real app is installed', () => {
+      const merged = merge(
+        app('grafana-assistant-onboarding-app', 'Assistant onboarding', []),
+        app('grafana-assistant-app', 'Assistant', [page('Workspace', '/a/grafana-assistant-app/workspace')])
+      );
+
+      const assistant = findById(merged, 'plugin-page-grafana-assistant-app');
+      expect(assistant?.children?.length).toBe(1);
     });
   });
 

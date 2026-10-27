@@ -3091,6 +3091,79 @@ describe('TableNG', () => {
       expect(trigger).toHaveAttribute('aria-expanded', 'false');
     });
 
+    describe('keyboard access to the cell actions trigger', () => {
+      const triggerTestId = selectors.components.Panels.Visualization.TableNG.cellActions.triggerButton;
+
+      const renderWithInspectOnColumnB = () => {
+        const data = createBasicDataFrame();
+        data.fields[1].config.custom = { ...data.fields[1].config.custom, inspect: true };
+        render(<TableNG data={data} width={800} height={600} tableRefreshEnabled />);
+        const cell = screen.getByRole('gridcell', { name: '1' });
+        return { cell, trigger: within(cell).getByTestId(triggerTestId) };
+      };
+
+      it('tabs from a cell into its trigger, back with Shift+Tab, and on to the next row', async () => {
+        const { cell, trigger } = renderWithInspectOnColumnB();
+
+        await user.click(screen.getByRole('gridcell', { name: 'A1' }));
+        await user.keyboard('{ArrowRight}');
+        expect(cell).toHaveFocus();
+
+        await user.keyboard('{Tab}');
+        expect(trigger).toHaveFocus();
+
+        await user.keyboard('{Shift>}{Tab}{/Shift}');
+        expect(cell).toHaveFocus();
+
+        await user.keyboard('{Tab}{Tab}');
+        expect(screen.getByRole('gridcell', { name: 'A2' })).toHaveFocus();
+      });
+
+      it('opens the menu with Enter on a focused cell and returns focus to the trigger on Escape', async () => {
+        const { trigger } = renderWithInspectOnColumnB();
+
+        await user.click(screen.getByRole('gridcell', { name: 'A1' }));
+        await user.keyboard('{ArrowRight}{Enter}');
+        expect(screen.getByRole('menu', { name: 'Cell actions' })).toBeVisible();
+        expect(screen.getByRole('menuitem', { name: 'Inspect value' })).toHaveFocus();
+
+        await user.keyboard('{Escape}');
+        expect(screen.queryByRole('menu', { name: 'Cell actions' })).not.toBeInTheDocument();
+        expect(trigger).toHaveFocus();
+      });
+
+      it('tabs from the tooltip trigger to the cell actions trigger in the same cell', async () => {
+        const data = createBasicDataFrame();
+        data.fields[1].config.custom = {
+          ...data.fields[1].config.custom,
+          inspect: true,
+          tooltip: { field: 'Column A' },
+        };
+        render(<TableNG data={data} width={800} height={600} tableRefreshEnabled />);
+        const cell = screen.getByRole('gridcell', { name: '1' });
+
+        await user.click(screen.getByRole('gridcell', { name: 'A1' }));
+        await user.keyboard('{ArrowRight}');
+        expect(within(cell).getByRole('button', { name: 'Toggle tooltip' })).toHaveFocus();
+
+        await user.keyboard('{Tab}');
+        expect(within(cell).getByTestId(triggerTestId)).toHaveFocus();
+      });
+
+      it('tabs into the trigger of a cell in an expanded nested table', async () => {
+        const data = createNestedDataFrame();
+        const nestedField = data.fields[4].values[0][0].fields[1];
+        nestedField.config.custom = { ...nestedField.config.custom, inspect: true };
+        render(<TableNG data={data} width={800} height={600} tableRefreshEnabled />);
+        await user.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+
+        const nestedCell = screen.getByRole('gridcell', { name: 'N1' });
+        await user.click(nestedCell);
+        await user.keyboard('{Tab}');
+        expect(within(nestedCell).getByTestId(triggerTestId)).toHaveFocus();
+      });
+    });
+
     it('shows inspect icon when hovering over a cell with inspection enabled', async () => {
       const inspectDataFrame = {
         ...createBasicDataFrame(),

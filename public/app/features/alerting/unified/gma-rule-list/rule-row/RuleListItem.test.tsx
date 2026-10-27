@@ -20,4 +20,51 @@ describe('RuleListItem', () => {
       'third',
     ]);
   });
+
+  it('renders description between title and meta when provided', () => {
+    render(
+      <ul>
+        <RuleListItem
+          title="My rule"
+          description={<span>Something went wrong</span>}
+          meta={[<span key="a">meta item</span>]}
+        />
+      </ul>
+    );
+
+    const listitem = screen.getByRole('listitem');
+    expect(listitem).toHaveTextContent('My rule');
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByText('meta item')).toBeInTheDocument();
+  });
+
+  it('renders nothing for description when absent', () => {
+    render(
+      <ul>
+        <RuleListItem title="My rule" />
+      </ul>
+    );
+
+    expect(screen.getByRole('listitem')).toHaveTextContent('My rule');
+  });
+
+  it('renders the right slot when provided', () => {
+    render(
+      <ul>
+        <RuleListItem title="My rule" right={<span>1m</span>} />
+      </ul>
+    );
+
+    expect(screen.getByText('1m')).toBeInTheDocument();
+  });
+
+  it('renders nothing for right when absent', () => {
+    render(
+      <ul>
+        <RuleListItem title="My rule" />
+      </ul>
+    );
+
+    expect(screen.getByRole('listitem')).not.toHaveTextContent('1m');
+  });
 });

@@ -215,10 +215,18 @@ func TestStackDiscoveryCacheByteBudget(t *testing.T) {
 	// Replacing an entry accounts for the old one.
 	c.add("a", entry("12"))
 	require.Equal(t, 2*size-2, c.bytes)
-	// An entry larger than the budget evicts everything, itself included.
+	// An entry larger than the budget is never stored, so it can't evict
+	// every other stack's entries.
 	c.add("d", entry(strings.Repeat("x", 2*size)))
-	require.Zero(t, c.entries.Len())
-	require.Zero(t, c.bytes)
+	_, ok = c.get("d")
+	require.False(t, ok)
+	require.Equal(t, 2, c.entries.Len())
+	require.Equal(t, 2*size-2, c.bytes)
+	// Replacing an entry with one too large drops the stale one.
+	c.add("a", entry(strings.Repeat("x", 2*size)))
+	_, ok = c.get("a")
+	require.False(t, ok)
+	require.Equal(t, size, c.bytes)
 }
 
 func TestStackDiscoveryCacheCountsKeysAndHeaders(t *testing.T) {
@@ -403,7 +411,7 @@ func TestRouterRootDiscoveryIsSharedByTheStacksCallers(t *testing.T) {
 		return discoveryResponse(http.Header{"Content-Type": {"application/json"}},
 			`{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"`+group+`","versions":[{"groupVersion":"`+group+`/v1","version":"v1"}]}]}`)
 	})
-	router := NewGrafanaRouter(st, nil)
+	router := NewGrafanaRouter(fallbackLoader{st}, nil)
 	router.unregisteredGroupHandler = st
 	pollDiscovery(t, st)
 	require.NoError(t, router.reconcile(t.Context()))
@@ -413,7 +421,7 @@ func TestRouterRootDiscoveryIsSharedByTheStacksCallers(t *testing.T) {
 		req := requestAs(user, "stacks-123", apisPrefix)
 		req.Header.Set("Accept", "application/json")
 		res := httptest.NewRecorder()
-		router.HandleFunc(res, req, http.NotFoundHandler())
+		router.HandleFunc(res, req)
 		require.Equal(t, http.StatusOK, res.Code)
 		require.Contains(t, res.Body.String(), "stack.grafana.app")
 		require.NotContains(t, res.Body.String(), "default.grafana.app")
@@ -430,7 +438,7 @@ func TestRouterRevalidatesCallerScopedOpenAPI(t *testing.T) {
 		}
 		return discoveryResponse(nil, "document")
 	})
-	router := NewGrafanaRouter(st, nil)
+	router := NewGrafanaRouter(fallbackLoader{st}, nil)
 	router.unregisteredGroupHandler = st
 	pollDiscovery(t, st)
 	require.NoError(t, router.reconcile(t.Context()))
@@ -443,7 +451,7 @@ func TestRouterRevalidatesCallerScopedOpenAPI(t *testing.T) {
 			req.Header.Set("If-None-Match", etag)
 		}
 		res := httptest.NewRecorder()
-		router.HandleFunc(res, req, http.NotFoundHandler())
+		router.HandleFunc(res, req)
 		return res
 	}
 	first := serve("alice", "")

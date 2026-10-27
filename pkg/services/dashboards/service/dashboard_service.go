@@ -1666,7 +1666,7 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 				Limit: 100000,
 			},
 		},
-		Limit:        100000,
+		Limit:        0, // Only tag counts are needed; dashboard rows would be discarded.
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
