@@ -15,6 +15,7 @@ export function ruleSearchUrl(kind: RuleKind) {
 }
 
 interface SearchRequestBody {
+  where?: unknown;
   continue?: string;
 }
 

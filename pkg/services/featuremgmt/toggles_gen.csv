@@ -113,7 +113,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-05,cloudWatchNewLabelParsing,GA,@grafana/data-sources-plugins,false,false,false
 2024-04-16,disableNumericMetricsSortingInExpressions,experimental,@grafana/data-sources-plugins,false,true,false
 2024-04-22,grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
-2022-10-07,queryLibrary,GA,@grafana/sharing-squad,false,false,false
 2026-09-25,grafana.savedQueriesSearch,experimental,@grafana/sharing-squad,false,false,false
 2026-07-15,grafana.savedQueriesPage,experimental,@grafana/sharing-squad,false,false,false
 2026-03-19,playlistsRBAC,GA,@grafana/sharing-squad,false,false,false
@@ -250,6 +249,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-17,transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
 2025-11-18,ttlPluginInstanceManager,experimental,@grafana/grafana-catalog,false,false,true
 2025-11-21,lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
+2026-10-26,grafana.restrictWatchToServiceIdentities,experimental,@grafana/search-and-storage,false,false,false
 2026-10-07,grafana.publishLegacySQLEvents,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-08,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-15,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
@@ -283,7 +283,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-06,appplugins.registerAPIServer,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-06,appplugins.handleProxyRequests,experimental,@grafana/grafana-catalog,false,true,false
 2026-02-12,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
-2026-08-26,dashboard.recentlyDeletedViaTrash,GA,@grafana/search-and-storage,false,false,true
 2026-07-14,deletedFolderResourceCleanup,experimental,@grafana/search-and-storage,false,true,false
 2026-08-13,libraryElementFolderUIDRepair,experimental,@grafana/search-and-storage,false,true,false
 2026-02-25,managedPluginsV2,experimental,@grafana/grafana-catalog,false,false,false
@@ -373,7 +372,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-04,alerting.stateManagerRequireWarm,experimental,@grafana/alerting-squad,false,false,false
 2026-08-12,grafana.pluginPathNesting,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2026-08-10,pluginsForceTls13,experimental,@grafana/data-sources-plugins,false,false,false
-2026-08-11,grafana.unifiedDataSourcePicker,GA,@grafana/grafana-datasources-core-services,false,false,true
 2026-08-13,rawPrometheus.tableNg,experimental,@grafana/data-sources-plugins,false,false,true
 2026-08-14,datasources.queryGateway,experimental,@grafana/data-sources-plugins,false,false,false
 2026-09-09,datasources.querier.newName,experimental,@grafana/grafana-datasources-core-services,false,false,true
@@ -396,3 +394,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-14,datasources.gatewayAuditPolicy,experimental,@grafana/data-sources-plugins,false,false,false
 2026-10-21,grafana.geomapProtomapsBasemap,experimental,@grafana/dataviz-squad,false,false,true
 2026-10-22,reporting.removeLogoUrlField,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+2026-10-23,dashboards.disablePublicDashboards,experimental,@grafana/grafana-backend-services-squad,false,false,false

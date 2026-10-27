@@ -1563,6 +1563,7 @@
         "name": "dashboard.recentlyDeletedViaTrash",
         "resourceVersion": "1791194326048",
         "creationTimestamp": "2026-08-26T10:13:23Z",
+        "deletionTimestamp": "2026-10-26T15:35:44Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-05 09:58:46.048328 +0000 UTC"
         }
@@ -1711,6 +1712,20 @@
         "description": "Enables dashboard validator app to run compatibility checks between a dashboard and data source",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboards.disablePublicDashboards",
+        "resourceVersion": "1792771676544",
+        "creationTimestamp": "2026-10-23T16:07:56Z"
+      },
+      "spec": {
+        "description": "Disables public dashboards for the stack",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -3254,6 +3269,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.restrictWatchToServiceIdentities",
+        "resourceVersion": "1793008675644",
+        "creationTimestamp": "2026-10-26T09:57:55Z"
+      },
+      "spec": {
+        "description": "Restrict API watches to service accounts, service identities, and privileged loopback clients",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.rspackBuild",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-10T08:36:48Z",
@@ -3414,7 +3443,8 @@
       "metadata": {
         "name": "grafana.unifiedDataSourcePicker",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-11T09:43:42Z"
+        "creationTimestamp": "2026-08-11T09:43:42Z",
+        "deletionTimestamp": "2026-10-26T11:15:47Z"
       },
       "spec": {
         "description": "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
@@ -5125,7 +5155,8 @@
       "metadata": {
         "name": "queryLibrary",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2022-10-07T18:31:45Z"
+        "creationTimestamp": "2022-10-07T18:31:45Z",
+        "deletionTimestamp": "2026-10-26T18:21:00Z"
       },
       "spec": {
         "description": "Enables Saved queries (query library) feature",
