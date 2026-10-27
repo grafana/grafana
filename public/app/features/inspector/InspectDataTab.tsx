@@ -88,9 +88,7 @@ export const InspectDataTab = memo(function InspectDataTab({
   // The join resolves asynchronously, so only use a result computed from the current data
   const transformedData = !data ? [] : shouldJoin && joined?.input === data ? joined.frames : data;
 
-  const exportCsv = (dataFrames: DataFrame[]) => {
-    const dataFrame = dataFrames[dataFrameIndex];
-
+  const exportCsv = (dataFrame: DataFrame) => {
     downloadDataFrameAsCsv(dataFrame, dataName, {}, transformId, excelCompatibilityMode);
   };
 
@@ -156,7 +154,7 @@ export const InspectDataTab = memo(function InspectDataTab({
   const getProcessedData = (): DataFrame[] => {
     if (!options.withFieldConfig) {
       const rawOverriddenData = applyRawFieldOverrides(transformedData);
-      cacheFieldDisplayNames(rawOverriddenData);
+      rawOverriddenData.forEach((frame) => cacheFieldDisplayNames([frame]));
       return rawOverriddenData;
     }
 
@@ -178,14 +176,14 @@ export const InspectDataTab = memo(function InspectDataTab({
     // applyFieldOverrides always clears any previously cached displayName (it can change during the
     // override process), so caching has to happen here on its output — caching transformedData
     // beforehand would just get wiped out again.
-    cacheFieldDisplayNames(overriddenData);
+    overriddenData.forEach((frame) => cacheFieldDisplayNames([frame]));
     return overriddenData;
   };
 
-  const renderActions = (dataFrames: DataFrame[], hasLogs: boolean, hasTraces: boolean, hasServiceGraph: boolean) => {
+  const renderActions = (dataFrame: DataFrame, hasLogs: boolean, hasTraces: boolean, hasServiceGraph: boolean) => {
     return (
       <>
-        <Button variant="primary" onClick={() => exportCsv(dataFrames)} size="sm">
+        <Button variant="primary" onClick={() => exportCsv(dataFrame)} size="sm">
           <Trans i18nKey="dashboard.inspect-data.download-csv">Download CSV</Trans>
         </Button>
         {hasLogs && !config.exploreHideLogsDownload && (
@@ -247,7 +245,7 @@ export const InspectDataTab = memo(function InspectDataTab({
           onDataFrameChange={onDataFrameChange}
           excelCompatibilityMode={excelCompatibilityMode}
           toggleExcelCompatibilityMode={onToggleExcelCompatibilityMode}
-          actions={renderActions(dataFrames, hasLogs, hasTraces, hasServiceGraph)}
+          actions={renderActions(dataFrame, hasLogs, hasTraces, hasServiceGraph)}
         />
       </div>
       <div className={styles.content}>

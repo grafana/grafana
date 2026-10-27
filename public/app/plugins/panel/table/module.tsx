@@ -67,6 +67,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         defaultValue: [],
         process: identityOverrideProcessor,
         shouldApply: () => true,
+        // A footer override sets the calculations for that field instead of adding to the panel's
+        arrayOverrideStrategy: 'replace',
         settings: {
           allowMultiple: true,
         },

@@ -30,6 +30,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -95,6 +96,8 @@ type kvStorageBackend struct {
 	eventStore             *eventStore
 	notifier               notifier
 	eventPublisher         EventPublisher
+	// watchNotificationMetadata adds object metadata to published notifications.
+	watchNotificationMetadata bool
 	// keysSubscriber lets search watch written keys straight from the bus. Set only
 	// when the NATS notifier is on: shadow mode is for observation, and must not
 	// change how anything receives updates.
@@ -149,6 +152,7 @@ type kvBackendMetrics struct {
 	NatsNotifierDropped               *prometheus.CounterVec
 	WatchNotificationsPublished       *prometheus.CounterVec
 	WatchNotificationPublishFailures  *prometheus.CounterVec
+	WatchNotificationMetadataDropped  *prometheus.CounterVec
 	GCGroupResourceDuration           *prometheus.HistogramVec
 	GCCycleDuration                   *prometheus.HistogramVec
 	GCCycleBatches                    *prometheus.HistogramVec
@@ -212,6 +216,10 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 		WatchNotificationPublishFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_storage_server_watch_notifications_publish_failures_total",
 			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
+		}, []string{"group", "resource", "action"}),
+		WatchNotificationMetadataDropped: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_storage_server_watch_notification_metadata_dropped_total",
+			Help: "Watch notifications published without their metadata because it pushed the message over the size limit, by group, resource, and action.",
 		}, []string{"group", "resource", "action"}),
 		GCCycleDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_storage_server_gc_cycle_duration_seconds",
@@ -277,6 +285,10 @@ func (m *kvBackendMetrics) recordWatchNotificationPublished(event Event) {
 	m.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
 
+func (m *kvBackendMetrics) recordWatchNotificationMetadataDropped(event Event) {
+	m.WatchNotificationMetadataDropped.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
+}
+
 func (m *kvBackendMetrics) recordWatchNotificationPublishFailure(event Event) {
 	m.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
@@ -323,6 +335,10 @@ type KVBackendOptions struct {
 	// EventPublisher, when set, is used to announce committed writes on an
 	// external message bus (NATS). Optional; nil disables external publishing.
 	EventPublisher EventPublisher
+
+	// WatchNotificationMetadata adds allowlisted object metadata (labels,
+	// annotations, finalizers, generation, timestamps) to published notifications.
+	WatchNotificationMetadata bool
 
 	// EventSubscriber feeds the shadow NATS notifier; nil disables it.
 	EventSubscriber EventSubscriber
@@ -488,28 +504,29 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			natsDropped:        metrics.NatsNotifierDropped,
 			invalidator:        opts.WatchInvalidator,
 		}),
-		eventPublisher:          opts.EventPublisher,
-		keysSubscriber:          keysSubscriber(opts),
-		watchOpts:               opts.WatchOptions.normalize(),
-		resourceVersions:        processResourceVersions,
-		resourceVersionMaxWait:  resourceVersionMaxWait,
-		log:                     logger,
-		eventRetentionPeriod:    eventRetentionPeriod,
-		eventPruningInterval:    eventPruningInterval,
-		rvManager:               opts.RvManager,
-		leaseManager:            leaseManager,
-		leaseTTL:                opts.LeaseTTL,
-		dbKeepAlive:             opts.DBKeepAlive,
-		lastImportStore:         newLastImportStore(kv),
-		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
-		garbageCollection:       garbageCollection,
-		blobGCMetrics:           NewBlobGCMetricsIfEnabled(opts.Reg, "kv", garbageCollection.Enabled && garbageCollection.BlobEnabled),
-		gcGate:                  opts.GCGate,
-		searchLookback:          opts.SearchLookback,
-		disableStorageServices:  opts.DisableStorageServices,
-		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
-		cancel:                  cancel,
-		metrics:                 metrics,
+		eventPublisher:            opts.EventPublisher,
+		watchNotificationMetadata: opts.WatchNotificationMetadata,
+		keysSubscriber:            keysSubscriber(opts),
+		watchOpts:                 opts.WatchOptions.normalize(),
+		resourceVersions:          processResourceVersions,
+		resourceVersionMaxWait:    resourceVersionMaxWait,
+		log:                       logger,
+		eventRetentionPeriod:      eventRetentionPeriod,
+		eventPruningInterval:      eventPruningInterval,
+		rvManager:                 opts.RvManager,
+		leaseManager:              leaseManager,
+		leaseTTL:                  opts.LeaseTTL,
+		dbKeepAlive:               opts.DBKeepAlive,
+		lastImportStore:           newLastImportStore(kv),
+		lastImportTimeMaxAge:      opts.LastImportTimeMaxAge,
+		garbageCollection:         garbageCollection,
+		blobGCMetrics:             NewBlobGCMetricsIfEnabled(opts.Reg, "kv", garbageCollection.Enabled && garbageCollection.BlobEnabled),
+		gcGate:                    opts.GCGate,
+		searchLookback:            opts.SearchLookback,
+		disableStorageServices:    opts.DisableStorageServices,
+		dashboardVersionsToKeep:   opts.DashboardVersionsToKeep,
+		cancel:                    cancel,
+		metrics:                   metrics,
 	}
 	err := backend.initPruner(ctx, opts.Reg)
 	if err != nil {
@@ -1402,6 +1419,9 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		PreviousRV:      event.PreviousRV,
 		PreviousAction:  previousKey.Action,
 		PreviousFolder:  previousKey.Folder,
+	}
+	if k.watchNotificationMetadata {
+		eventData.Metadata = newWatchMetadata(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, obj)
 	}
 	if err := k.eventStore.Save(ctx, eventData); err != nil {
 		k.metrics.recordEventEmitFailure(event)

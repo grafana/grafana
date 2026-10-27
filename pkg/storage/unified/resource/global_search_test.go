@@ -44,20 +44,15 @@ func TestGlobalSearchFieldDefinitions(t *testing.T) {
 	}
 }
 
-func TestGlobalSearchFieldDefinitionsLeaveStandardAlone(t *testing.T) {
-	// Indexing created and updated for every kind would change the
-	// index-affecting hash and rebuild every index in the deployment, so the
-	// standard set must not pick up the global capabilities.
-	_ = GlobalSearchFieldDefinitions()
+// The global index adds only the resource type to the standard set, so a field
+// behaves the same in global and per-resource search.
+func TestGlobalSearchFieldDefinitionsAddOnlyTheResourceType(t *testing.T) {
+	global := GlobalSearchFieldDefinitions()
+	require.NotEmpty(t, global)
+	assert.Equal(t, SEARCH_FIELD_GROUP_RESOURCE, global[0].Name)
+	assert.Equal(t, StandardSearchFieldDefinitions(), global[1:])
 
-	standard := StandardSearchFieldDefinitions()
-	for _, name := range []string{SEARCH_FIELD_CREATED, SEARCH_FIELD_UPDATED} {
-		def := fieldByName(t, standard, name)
-		assert.False(t, def.HasCapability(SearchCapabilityFilter), name)
-		assert.False(t, def.HasCapability(SearchCapabilitySort), name)
-	}
-
-	for _, def := range standard {
+	for _, def := range StandardSearchFieldDefinitions() {
 		assert.NotEqual(t, SEARCH_FIELD_GROUP_RESOURCE, def.Name)
 	}
 }
@@ -463,7 +458,7 @@ func TestGlobalSearchCoverageOf(t *testing.T) {
 }
 
 // A kind renamed between versions is named from the preferred version, or else
-// the first version that declares it, not from whichever version comes last.
+// the last version that declares it, as the app SDK does.
 func TestGlobalSearchCoverageOfNamesRenamedKinds(t *testing.T) {
 	yes := true
 	widgets := schema.GroupResource{Group: "a.grafana.app", Resource: "widgets"}
@@ -471,7 +466,7 @@ func TestGlobalSearchCoverageOfNamesRenamedKinds(t *testing.T) {
 		preferred string
 		want      string
 	}{
-		{preferred: "", want: "Widget"},
+		{preferred: "", want: "Gadget"},
 		{preferred: "v1", want: "Widget"},
 		{preferred: "v2", want: "Gadget"},
 	} {
