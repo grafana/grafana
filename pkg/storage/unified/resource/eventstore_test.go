@@ -20,6 +20,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -242,17 +243,27 @@ func testEventStoreSaveGet(t *testing.T, ctx context.Context, store *eventStore)
 		previousRV     int64
 		previousAction kv.DataAction
 		previousFolder string
+		metadata       *resourcepb.NotificationMetadata
 	}{
 		{name: "no previous revision"},
 		{name: "legacy event", previousRV: 999},
 		{name: "bulk exclusion", previousRV: -1},
 		{name: "empty previous folder", previousRV: 999, previousAction: DataActionCreated},
 		{name: "previous folder", previousRV: 999, previousAction: DataActionUpdated, previousFolder: "old-folder"},
+		{name: "metadata", previousRV: 999, previousAction: DataActionCreated, metadata: &resourcepb.NotificationMetadata{
+			Labels:                  map[string]string{"a": "1"},
+			Annotations:             map[string]string{"b": "2"},
+			Finalizers:              []string{"f"},
+			Generation:              3,
+			CreationTimestampMillis: 1000,
+			DeletionTimestampMillis: 2000,
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			event.PreviousRV = tc.previousRV
 			event.PreviousAction = tc.previousAction
 			event.PreviousFolder = tc.previousFolder
+			event.Metadata = tc.metadata
 			require.NoError(t, store.Save(ctx, event))
 
 			eventKey := EventKey{

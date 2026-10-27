@@ -991,14 +991,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "queryLibrary",
-			Description: "Enables Saved queries (query library) feature",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "true",                                                      // enabled by default
-		},
-		{
 			Name:        "grafana.savedQueriesSearch",
 			Description: "Enables unified search for saved queries",
 			Stage:       FeatureStageExperimental,
