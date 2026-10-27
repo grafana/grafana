@@ -49,7 +49,7 @@ weight: -57
 
 # What's new in Grafana v13.3
 
-Welcome to Grafana 13.3!
+Welcome to Grafana 13.3! This release brings our biggest visual refresh since Grafana 7, introduces Notebooks as a new artifact type to help you share investigations with your teams, lets you define cross-dashboard variables and brings a whole wealth of other new features and fixes. 
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v13.3, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v13/upgrade-v13.3/).
 
