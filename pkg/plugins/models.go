@@ -338,22 +338,10 @@ type AppDTO struct {
 	Angular         AngularMeta       `json:"angular"`
 	LoadingStrategy LoadingStrategy   `json:"loadingStrategy"`
 	Extensions      Extensions        `json:"extensions"`
-	StarredKinds    []StarredKind     `json:"starredKinds,omitempty"`
 	Dependencies    Dependencies      `json:"dependencies"`
 	ModuleHash      string            `json:"moduleHash,omitempty"`
 	Translations    map[string]string `json:"translations,omitempty"`
 	BuildMode       string            `json:"buildMode,omitempty"`
-}
-
-// StarredKind is a kind an app plugin serves whose objects people can star. Grafana keeps the
-// stars in the collections Stars resource under Group/Kind and shows them with Title and Icon,
-// linking to Path with {name} replaced by the object's name.
-type StarredKind struct {
-	Group string `json:"group"`
-	Kind  string `json:"kind"`
-	Title string `json:"title"`
-	Icon  string `json:"icon"`
-	Path  string `json:"path"`
 }
 
 const (

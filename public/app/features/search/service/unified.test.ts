@@ -12,15 +12,10 @@ import {
   starsRoute,
 } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import {
-  MOCK_STARRED_KIND,
-  MOCK_STARRED_KIND_APP,
-  MOCK_STARRED_KIND_SERVED,
-  setTestFlags,
-} from '@grafana/test-utils/unstable';
+import { MOCK_STARRED_KIND, MOCK_STARRED_KIND_SERVED, setTestFlags } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { initStarredKinds } from 'app/features/stars/kinds';
+import { registerStarredKind } from 'app/features/stars/kinds';
 import { setStore } from 'app/store/store';
 
 import { type SearchQuery } from './types';
@@ -315,17 +310,18 @@ describe('Unified Storage Searcher', () => {
       expect(findStarredSearchRequest()).toBeUndefined();
     });
 
-    describe('with a plugin-declared starred kind', () => {
+    describe('with a plugin-registered starred kind', () => {
       const thingResource = { group: MOCK_STARRED_KIND.group, kind: MOCK_STARRED_KIND.kind, names: ['t1'] };
       const starredThing = { name: 't1', title: 'Thing 1', folder: 'f1' };
       const THING_URL = '/a/test-things-app/things/t1';
+      let unregister: () => void;
 
       beforeEach(() => {
-        initStarredKinds([MOCK_STARRED_KIND_APP]);
+        unregister = registerStarredKind(MOCK_STARRED_KIND);
         server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
       });
 
-      afterEach(() => initStarredKinds([]));
+      afterEach(() => unregister());
 
       it('appends the plugin rows after the dashboard and folder rows, linking into the plugin', async () => {
         server.use(
@@ -409,8 +405,8 @@ describe('Unified Storage Searcher', () => {
         expect(findStarredSearchRequest()).toBeUndefined();
       });
 
-      it('ignores stars of a kind no installed plugin declares', async () => {
-        initStarredKinds([]);
+      it('ignores stars of a kind no plugin registered', async () => {
+        unregister();
         server.use(starsHandler([...bothStarredResources, thingResource]), captureSearchHandler(starredHits));
 
         const searcher = new UnifiedSearcher();

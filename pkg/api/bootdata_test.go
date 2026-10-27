@@ -548,61 +548,6 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				},
 			},
 		},
-		{
-			desc: "app plugin with starredKinds",
-			pluginStore: func() pluginstore.Store {
-				return &pluginstore.FakePluginStore{
-					PluginList: []pluginstore.Plugin{
-						{
-							Module: fmt.Sprintf("/%s/module.js", "test-app"),
-							JSONData: plugins.JSONData{
-								ID:      "test-app",
-								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.TypeApp,
-								Preload: true,
-								StarredKinds: []plugins.StarredKind{
-									{
-										Group: "example.grafana.app",
-										Kind:  "Page",
-										Title: "Pages",
-										Icon:  "file-alt",
-										Path:  "/a/test-app/pages/{name}",
-									},
-								},
-							},
-							FS:              &pluginfakes.FakePluginFS{},
-							LoadingStrategy: plugins.LoadingStrategyScript,
-						},
-					},
-				}
-			},
-			pluginSettings: func() pluginsettings.Service {
-				return &pluginsettings.FakePluginSettings{
-					Plugins: newAppSettings("test-app", true),
-				}
-			},
-			pluginAssets: newPluginAssets(),
-			expected: settings{
-				Apps: map[string]*plugins.AppDTO{
-					"test-app": {
-						ID:              "test-app",
-						Preload:         true,
-						Path:            "/test-app/module.js",
-						Version:         "0.5.0",
-						LoadingStrategy: plugins.LoadingStrategyScript,
-						StarredKinds: []plugins.StarredKind{
-							{
-								Group: "example.grafana.app",
-								Kind:  "Page",
-								Title: "Pages",
-								Icon:  "file-alt",
-								Path:  "/a/test-app/pages/{name}",
-							},
-						},
-					},
-				},
-			},
-		},
 	}
 
 	for _, test := range tests {

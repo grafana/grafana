@@ -1,13 +1,14 @@
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
-import { type AppPluginConfig, type IconName, locationUtil, type PluginStarredKind } from '@grafana/data';
+import { type IconName, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { type StarredKindRegistration } from '@grafana/runtime';
 import { getFolderURL, starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
 
 /**
- * A kind whose objects people can star. The Stars resource stores names per API group and kind;
- * this describes how Grafana shows those names and where it finds their titles. Dashboards and
- * folders are built in; app plugins declare their own kinds in plugin.json (`starredKinds`).
+ * A kind whose starred objects Grafana shows. The Stars resource stores names per API group and
+ * kind; this describes how Grafana shows those names and where it finds their titles. Dashboards
+ * and folders are built in; app plugins register their own kinds through getStarsSrv().
  */
 export interface StarredKind {
   group: string;
@@ -20,15 +21,16 @@ export interface StarredKind {
   /** Starred lists group kinds by this rank, alphabetical within a rank: dashboards, folders, then plugin kinds. */
   sortWeight: number;
   /**
-   * The app plugin that declared the kind; Grafana's own kinds have none. A plugin's objects
-   * resolve through the kind's own search endpoint rather than the dashboard search index, and
-   * belong to the plugin, so the browse views never move or delete them.
+   * Grafana's own kinds resolve titles through the dashboard search index and the browse views may
+   * move or delete them; a plugin's kinds resolve through their own search endpoint and belong to
+   * the plugin.
    */
-  pluginId?: string;
+  origin: 'grafana' | 'plugin';
   url(name: string): string;
 }
 
 const PLUGIN_KIND_FIRST_SORT_WEIGHT = 2;
+const DEFAULT_PLUGIN_KIND_ICON: IconName = 'cube';
 
 /** Nav Starred entry (url + icon + sort rank + kind) for one starred object. */
 export interface StarredNavEntry {
@@ -46,6 +48,7 @@ function dashboardKind(): StarredKind {
     title: t('stars.kinds.dashboard', 'Dashboard'),
     icon: 'apps',
     sortWeight: 0,
+    origin: 'grafana',
     url: (name) => locationUtil.assureBaseUrl(`/d/${name}`),
   };
 }
@@ -58,36 +61,66 @@ function folderKind(): StarredKind {
     title: t('stars.kinds.folder', 'Folder'),
     icon: 'folder',
     sortWeight: 1,
+    origin: 'grafana',
     url: getFolderURL,
   };
 }
 
-function pluginKind(pluginId: string, declared: PluginStarredKind, sortWeight: number): StarredKind {
+function pluginKind(registration: StarredKindRegistration, sortWeight: number): StarredKind {
+  // An object's page is the list page plus its name, the way app platform UIs route
+  const listUrl = registration.listUrl.replace(/\/$/, '');
   return {
-    group: declared.group,
-    kind: declared.kind,
-    searchKind: `${declared.group}/${declared.kind}`,
-    title: declared.title,
-    icon: declared.icon,
+    group: registration.group,
+    kind: registration.kind,
+    searchKind: `${registration.group}/${registration.kind}`,
+    title: registration.title,
+    icon: registration.icon ?? DEFAULT_PLUGIN_KIND_ICON,
     sortWeight,
-    pluginId,
-    // The validated path always holds the placeholder
-    url: (name) => locationUtil.assureBaseUrl(declared.path.replace('{name}', encodeURIComponent(name))),
+    origin: 'plugin',
+    url: (name) => locationUtil.assureBaseUrl(`${listUrl}/${encodeURIComponent(name)}`),
   };
 }
 
-// Filled once at startup from the app plugin metas; a plugin's declaration cannot change within a page load.
+// Registered in the order plugins load; registering a kind again replaces its earlier registration
+const registrations = new Map<string, StarredKindRegistration>();
 let pluginKinds: StarredKind[] = [];
+let version = 0;
+const listeners = new Set<() => void>();
 
-/** Registers the kinds the installed app plugins declare, in declaration order. */
-export function initStarredKinds(apps: AppPluginConfig[]): void {
-  const declared = apps.flatMap((app) => (app.starredKinds ?? []).map((kind) => ({ pluginId: app.id, kind })));
-  pluginKinds = declared.map(({ pluginId, kind }, index) =>
-    pluginKind(pluginId, kind, PLUGIN_KIND_FIRST_SORT_WEIGHT + index)
+function rebuildPluginKinds() {
+  pluginKinds = [...registrations.values()].map((registration, index) =>
+    pluginKind(registration, PLUGIN_KIND_FIRST_SORT_WEIGHT + index)
   );
+  version++;
+  listeners.forEach((listener) => listener());
 }
 
-/** Grafana's own kinds, then the plugin-declared ones. */
+/** Registers a plugin's kind so starred lists show its objects; returns the unregister function. */
+export function registerStarredKind(registration: StarredKindRegistration): () => void {
+  const key = `${registration.group}/${registration.kind}`;
+  registrations.set(key, registration);
+  rebuildPluginKinds();
+  return () => {
+    if (registrations.get(key) === registration) {
+      registrations.delete(key);
+      rebuildPluginKinds();
+    }
+  };
+}
+
+/** Changes whenever a kind is registered or unregistered, for readers that have to re-run then. */
+export function getStarredKindsVersion(): number {
+  return version;
+}
+
+export function subscribeStarredKinds(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+/** Grafana's own kinds, then the plugin-registered ones. */
 export function getStarredKinds(): StarredKind[] {
   const kinds = [dashboardKind()];
   if (starredFoldersEnabled()) {

@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 
 import { type StarsList, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
@@ -8,7 +8,13 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { dispatch } from 'app/store/store';
 
 import { searchStarredResources } from './kindSearch';
-import { getStarredKinds, type StarredKind, starredNavEntry } from './kinds';
+import {
+  getStarredKinds,
+  getStarredKindsVersion,
+  type StarredKind,
+  starredNavEntry,
+  subscribeStarredKinds,
+} from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 /**
@@ -103,10 +109,12 @@ async function resolveStarredNavItems(stars: StarsList): Promise<{ uids: string[
 
   const [grafanaItems, pluginItems] = await Promise.all([
     resolveGrafanaKinds(
-      byKind.filter(({ kind }) => !kind.pluginId),
+      byKind.filter(({ kind }) => kind.origin === 'grafana'),
       uids
     ),
-    Promise.all(byKind.filter(({ kind }) => kind.pluginId).map(({ kind, names }) => resolvePluginKind(kind, names))),
+    Promise.all(
+      byKind.filter(({ kind }) => kind.origin === 'plugin').map(({ kind, names }) => resolvePluginKind(kind, names))
+    ),
   ]);
   return { uids, items: [...grafanaItems, ...pluginItems.flat()] };
 }
@@ -119,6 +127,8 @@ export const useSyncStarredItemsInNav = () => {
   const { data: stars, isLoading, isError } = useListStarsQuery({ fieldSelector: userStarsFieldSelector() });
   // Read during render so the sync re-runs when the flag flips, since it decides which kinds are listed
   const foldersEnabled = starredFoldersEnabled();
+  // A plugin registers its kinds as its module loads, which can be after the first sync
+  const kindsVersion = useSyncExternalStore(subscribeStarredKinds, getStarredKindsVersion);
 
   // Initialized from the stars query so a remount with a warm RTK cache doesn't
   // flash a loading state — the nav tree is already correct from the prior sync
@@ -167,7 +177,7 @@ export const useSyncStarredItemsInNav = () => {
     };
     // `stars` only changes in step with starsKey, which is the identity the sync keys on
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [starsKey, isLoading, foldersEnabled]);
+  }, [starsKey, isLoading, foldersEnabled, kindsVersion]);
 
   return { isLoading: isLoading || !hasSynced, isError: isError || searchFailed };
 };

@@ -11,7 +11,6 @@ import {
   customPatchUserPreferencesHandler,
   getFolderFixtures,
   MOCK_STARRED_KIND,
-  MOCK_STARRED_KIND_APP,
   MOCK_STARRED_KIND_SERVED,
   mockUserPreferences,
   setMockStarredDashboards,
@@ -23,7 +22,7 @@ import {
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { initStarredKinds } from 'app/features/stars/kinds';
+import { registerStarredKind } from 'app/features/stars/kinds';
 
 import { MegaMenu } from './MegaMenu';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
@@ -691,7 +690,7 @@ describe('MegaMenu', () => {
     const thingUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
     setMockStarredDashboards([]);
     setMockStarredPluginKind(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind, [thingUuid]);
-    initStarredKinds([MOCK_STARRED_KIND_APP]);
+    const unregister = registerStarredKind(MOCK_STARRED_KIND);
     server.use(
       getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
       getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
@@ -700,7 +699,7 @@ describe('MegaMenu', () => {
     );
     setupSearcher([]);
 
-    const { user } = renderMegaMenu();
+    const { user, unmount } = renderMegaMenu();
 
     await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
 
@@ -714,6 +713,8 @@ describe('MegaMenu', () => {
 
     // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
     expect(starredSection().getByTitle('Thing')).toBe(starredSection().getByTestId('icon-cube'));
-    initStarredKinds([]);
+    // Unregistering would re-sync a mounted menu, so take it down first
+    unmount();
+    unregister();
   });
 });

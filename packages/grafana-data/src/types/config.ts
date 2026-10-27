@@ -33,24 +33,6 @@ export interface AzureCloudInfo {
   displayName: string;
 }
 
-/**
- * A kind an app plugin serves whose objects people can star. Stars are kept in Grafana's
- * collections Stars resource under the kind's API group and kind, and Grafana shows them wherever
- * starred dashboards and folders appear. Declared in the plugin.json `starredKinds` list.
- */
-export interface PluginStarredKind {
-  /** API group of the kind, e.g. `assistant.ext.grafana.app`. */
-  group: string;
-  /** Kind name as served by the API, e.g. `Page`. */
-  kind: string;
-  /** Singular display name of the kind, e.g. `Page`. */
-  title: string;
-  /** Icon shown next to starred items of the kind. */
-  icon: IconName;
-  /** Route of one object inside the plugin, with `{name}` standing for the object's `metadata.name`. Under `/a/<pluginId>/`. */
-  path: string;
-}
-
 export type AppPluginConfig = {
   id: string;
   path: string;
@@ -61,7 +43,6 @@ export type AppPluginConfig = {
   loadingStrategy: PluginLoadingStrategy;
   dependencies: PluginDependencies;
   extensions: PluginExtensions;
-  starredKinds?: PluginStarredKind[];
   moduleHash?: string;
   buildMode?: string;
   // Display and navigation fields, absent from the bootdata-sourced configs and

@@ -107,9 +107,8 @@ type JSONData struct {
 	Suggestions   bool `json:"suggestions,omitempty"`
 
 	// App settings
-	AutoEnabled  bool          `json:"autoEnabled"`
-	Extensions   Extensions    `json:"extensions"`
-	StarredKinds []StarredKind `json:"starredKinds,omitempty"`
+	AutoEnabled bool       `json:"autoEnabled"`
+	Extensions  Extensions `json:"extensions"`
 
 	// Datasource settings
 	Annotations               bool            `json:"annotations"`
@@ -202,44 +201,6 @@ func ReadPluginJSON(reader io.Reader) (JSONData, error) {
 func validatePluginJSON(data JSONData) error {
 	if data.ID == "" || !data.Type.IsValid() {
 		return ErrInvalidPluginJSON
-	}
-	if err := validateStarredKinds(data); err != nil {
-		return err
-	}
-	return nil
-}
-
-func validateStarredKinds(data JSONData) error {
-	if len(data.StarredKinds) == 0 {
-		return nil
-	}
-	if data.Type != TypeApp {
-		return fmt.Errorf("%w: starredKinds: only app plugins may declare starredKinds", ErrInvalidPluginJSON)
-	}
-	pathPrefix := "/a/" + data.ID + "/"
-	seen := make(map[string]struct{}, len(data.StarredKinds))
-	for i, k := range data.StarredKinds {
-		switch {
-		case k.Group == "":
-			return fmt.Errorf("%w: starredKinds[%d]: group is required", ErrInvalidPluginJSON, i)
-		case k.Kind == "":
-			return fmt.Errorf("%w: starredKinds[%d]: kind is required", ErrInvalidPluginJSON, i)
-		case k.Title == "":
-			return fmt.Errorf("%w: starredKinds[%d]: title is required", ErrInvalidPluginJSON, i)
-		case k.Icon == "":
-			return fmt.Errorf("%w: starredKinds[%d]: icon is required", ErrInvalidPluginJSON, i)
-		case k.Path == "":
-			return fmt.Errorf("%w: starredKinds[%d]: path is required", ErrInvalidPluginJSON, i)
-		case !strings.HasPrefix(k.Path, pathPrefix):
-			return fmt.Errorf("%w: starredKinds[%d]: path must start with %q", ErrInvalidPluginJSON, i, pathPrefix)
-		case !strings.Contains(k.Path, "{name}"):
-			return fmt.Errorf("%w: starredKinds[%d]: path must contain {name}", ErrInvalidPluginJSON, i)
-		}
-		key := k.Group + "/" + k.Kind
-		if _, ok := seen[key]; ok {
-			return fmt.Errorf("%w: starredKinds[%d]: duplicate group+kind %q", ErrInvalidPluginJSON, i, key)
-		}
-		seen[key] = struct{}{}
 	}
 	return nil
 }

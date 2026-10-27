@@ -114,7 +114,7 @@ export async function searchStarredResources(
     if (isFetchError(err) && err.status === 404) {
       // The route is only mounted for kinds whose app manifest enables search
       console.warn(
-        `Plugin ${kind.pluginId} declares ${kind.group}/${kind.kind} as starrable, but the kind's app manifest does not enable search, so its stars cannot be shown`
+        `${kind.group}/${kind.kind} is registered as a starred kind, but its app manifest does not enable search, so its stars cannot be shown`
       );
     } else {
       console.error(`Failed to resolve starred ${kind.group}/${kind.kind}`, err);

@@ -77,7 +77,7 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
       {
         id: PluginExtensionExposedComponents.StarToolbarButtonV1,
         title: 'Star toolbar button',
-        description: 'Stars or unstars one object of a kind an app plugin declared in plugin.json starredKinds',
+        description: 'Stars or unstars one object of a kind an app plugin registered through getStarsSrv()',
         component: StarToolbarButtonExposed,
       },
       // Only with notebooks on: plugins treat the form's absence as notebooks being unavailable.

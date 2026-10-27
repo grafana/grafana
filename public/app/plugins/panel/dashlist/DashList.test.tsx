@@ -7,14 +7,13 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   getFolderFixtures,
   MOCK_STARRED_KIND,
-  MOCK_STARRED_KIND_APP,
   MOCK_STARRED_KIND_SERVED,
   setMockStarredPluginKind,
 } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import { initStarredKinds } from 'app/features/stars/kinds';
+import { registerStarredKind } from 'app/features/stars/kinds';
 import { CollectionsStarsSrv } from 'app/features/stars/service';
 
 import { getPanelProps } from '../test-utils';
@@ -124,7 +123,7 @@ describe('DashList', () => {
   it('lists a starred plugin object and un-stars it under its own kind', async () => {
     const thingUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
     setMockStarredPluginKind(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind, [thingUuid]);
-    initStarredKinds([MOCK_STARRED_KIND_APP]);
+    const unregister = registerStarredKind(MOCK_STARRED_KIND);
     const deletedStars: string[] = [];
     server.use(
       getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
@@ -155,7 +154,7 @@ describe('DashList', () => {
     // The star targets the row's own kind, not the dashboard kind every row used to get
     expect(deletedStars).toEqual([`${MOCK_STARRED_KIND.group}/${MOCK_STARRED_KIND.kind}/${thingUuid}`]);
     expect(screen.queryByText('Capacity review')).not.toBeInTheDocument();
-    initStarredKinds([]);
+    unregister();
   });
 
   it('shows recently viewed dashboards', async () => {

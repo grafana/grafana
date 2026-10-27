@@ -730,37 +730,6 @@
         }
       }
     },
-    "starredKinds": {
-      "type": "array",
-      "description": "Kinds this app plugin serves whose objects people can star. Grafana keeps the stars in the collections Stars resource under `group`/`kind` and shows them with `title` and `icon`, linking to `path`. App plugins only.",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["group", "kind", "title", "icon", "path"],
-        "properties": {
-          "group": {
-            "type": "string",
-            "description": "The API group of the kind, e.g. `example.grafana.app`."
-          },
-          "kind": {
-            "type": "string",
-            "description": "The kind name whose objects can be starred, e.g. `Page`."
-          },
-          "title": {
-            "type": "string",
-            "description": "The label Grafana shows for starred objects of this kind."
-          },
-          "icon": {
-            "type": "string",
-            "description": "The Grafana icon name shown next to starred objects of this kind."
-          },
-          "path": {
-            "type": "string",
-            "description": "The plugin route of one object, with `{name}` replaced by the object's name. Must start with `/a/<pluginId>/`, e.g. `/a/myorg-stars-app/pages/{name}`."
-          }
-        }
-      }
-    },
     "languages": {
       "type": "array",
       "description": "The list of languages supported by the plugin. Each entry should be a locale identifier in the format `language-COUNTRY`, for example `en-US`, `es-ES`, or `de-DE`.",

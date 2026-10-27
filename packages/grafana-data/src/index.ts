@@ -520,7 +520,6 @@ export type {
   BuildInfo,
   LicenseInfo,
   PreinstalledPlugin,
-  PluginStarredKind,
   UnifiedAlertingConfig,
 } from './types/config';
 export { availableIconsIndex, type IconName, isIconName, toIconName } from './types/icon';

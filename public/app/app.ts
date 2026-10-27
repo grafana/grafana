@@ -127,7 +127,6 @@ import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
 import { cleanupOldExpandedFolders } from './features/search/utils';
-import { initStarredKinds } from './features/stars/kinds';
 import { CollectionsStarsSrv } from './features/stars/service';
 import { variableAdapters } from './features/variables/adapters';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
@@ -260,11 +259,6 @@ export class GrafanaApp {
       // without one, and a login or public dashboard boot renders chromeless anyway
       if (isPluginNavAvailable()) {
         bootTasks.push(getAppPluginMetas());
-      }
-      // Starred lists and the star button read the kinds installed app plugins declare, so the
-      // registry is filled before anything renders; without a session there are no stars to show
-      if (contextSrv.isSignedIn) {
-        bootTasks.push(getAppPluginMetas().then(initStarredKinds));
       }
       if (
         isFrontendService() &&

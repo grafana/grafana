@@ -123,7 +123,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
     const pluginSearches: Array<Promise<SearchHit[]>> = [];
     for (const kind of getStarredKinds()) {
       const names = findStarredNames(result.data, kind.group, kind.kind);
-      if (kind.pluginId) {
+      if (kind.origin === 'plugin') {
         pluginSearches.push(this.starredKindHits(kind, names, query));
       } else {
         names.forEach((name) => searchNames.add(name));

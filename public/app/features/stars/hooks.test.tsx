@@ -7,7 +7,6 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   getFolderFixtures,
   MOCK_STARRED_KIND,
-  MOCK_STARRED_KIND_APP,
   MOCK_STARRED_KIND_SERVED,
   setMockStarredDashboards,
   setMockStarredFolders,
@@ -20,7 +19,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useSelector } from 'app/types/store';
 
 import { useSyncStarredItemsInNav } from './hooks';
-import { initStarredKinds } from './kinds';
+import { registerStarredKind } from './kinds';
 
 jest.mock('app/features/search/service/searcher');
 
@@ -38,15 +37,17 @@ setBackendSrv(backendSrv);
 contextSrv.isSignedIn = true;
 setupMockServer();
 
-/** Declares the Thing kind in the registry and serves it, so the sync resolves it through its own search. */
+const unregisters: Array<() => void> = [];
+
+/** Registers the Thing kind and serves it, so the sync resolves it through its own search. */
 function installThingsApp() {
-  initStarredKinds([MOCK_STARRED_KIND_APP]);
+  unregisters.push(registerStarredKind(MOCK_STARRED_KIND));
   server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
 }
 
 afterEach(() => {
   // Forget the plugin kind: the registry outlives a test
-  initStarredKinds([]);
+  unregisters.splice(0).forEach((unregister) => unregister());
 });
 
 /** Renders the hook plus a read-only component that reflects Redux starred state */
@@ -205,6 +206,35 @@ describe('useSyncStarredItemsInNav', () => {
     // Two kinds can appear, so the dashboard row needs its icon to be told apart from the plugin kind
     expect(screen.getByTestId(`synced-starred/${dashUid}`)).toHaveAttribute('data-icon', 'apps');
     expect(screen.getByTestId(`synced-starred/${THING_UUID}`)).toHaveAttribute('data-icon', 'cube');
+  });
+
+  it('re-syncs the nav when a plugin registers its kind after the first sync', async () => {
+    const dashUid = dashbdD.item.uid;
+    setMockStarredDashboards([dashUid]);
+    setMockStarredPluginKind(THING_GROUP, THING_KIND, [THING_UUID]);
+    server.use(
+      getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
+      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: THING_UUID, title: 'My Thing' }])
+    );
+    setupSearchMock([{ uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' }]);
+
+    render(<TestHarness />);
+
+    // Nobody has registered the kind yet, so the first sync lists the dashboard alone
+    await waitFor(() => {
+      expect(screen.getByTestId(`synced-starred/${dashUid}`)).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId(`synced-starred/${THING_UUID}`)).not.toBeInTheDocument();
+
+    // The plugin module loads late and registers; the nav catches up without a new star
+    act(() => {
+      unregisters.push(registerStarredKind(MOCK_STARRED_KIND));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId(`synced-starred/${THING_UUID}`)).toHaveTextContent('My Thing');
+    });
+    expect(screen.getByTestId(`synced-starred/${dashUid}`)).toHaveAttribute('data-icon', 'apps');
   });
 
   it('keeps dashboards in the nav and reports no error when a plugin kind API is unavailable', async () => {

@@ -4,13 +4,12 @@ import { waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { MOCK_STARRED_KIND, MOCK_STARRED_KIND_APP, setMockStarredDashboards } from '@grafana/test-utils/unstable';
+import { MOCK_STARRED_KIND, setMockStarredDashboards } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { type StoreState } from 'app/types/store';
 
-import { initStarredKinds } from './kinds';
 import { CollectionsStarsSrv } from './service';
 
 const USER_UID = 'test-uid';
@@ -31,6 +30,7 @@ let srv: CollectionsStarsSrv;
 let store: Store<StoreState>;
 
 const starredChildren = () => store.getState().navBarTree.find((item) => item.id === 'starred')?.children ?? [];
+let unregister: () => void;
 
 beforeEach(async () => {
   seenRequests.length = 0;
@@ -40,11 +40,13 @@ beforeEach(async () => {
     { id: 'home', text: 'Home', url: '/' },
     { id: 'starred', text: 'Starred', children: [] },
   ];
-  // Dashboards are the only starrable kind unless a test declares more
-  initStarredKinds([]);
+  // Dashboards are the only shown kind unless a test registers more
+  unregister = () => {};
   store = configureStore();
   srv = new CollectionsStarsSrv();
 });
+
+afterEach(() => unregister());
 
 describe('CollectionsStarsSrv.star', () => {
   it('sends a PUT to the user stars resource and adds the object to the nav Starred section', async () => {
@@ -63,7 +65,7 @@ describe('CollectionsStarsSrv.star', () => {
   });
 
   it('adds a starred plugin object to the nav Starred section under its kind, linking into the plugin', async () => {
-    initStarredKinds([MOCK_STARRED_KIND_APP]);
+    unregister = srv.registerKind(MOCK_STARRED_KIND);
     const name = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
 
     await srv.star({ group: MOCK_STARRED_KIND.group, kind: MOCK_STARRED_KIND.kind, id: name, title: 'My Thing' });
@@ -136,15 +138,18 @@ describe('CollectionsStarsSrv.starred', () => {
 });
 
 describe('CollectionsStarsSrv.canStar', () => {
-  it('is true for the dashboard kind and false for an undeclared kind', async () => {
-    expect(await srv.canStar(DASHBOARD_GROUP, 'Dashboard')).toBe(true);
-    expect(await srv.canStar('undeclared.grafana.app', 'Nope')).toBe(false);
+  it('is true for the dashboard kind and false for a kind nobody registered', () => {
+    expect(srv.canStar(DASHBOARD_GROUP, 'Dashboard')).toBe(true);
+    expect(srv.canStar('unregistered.grafana.app', 'Nope')).toBe(false);
   });
 
-  it('is true for a kind an installed app plugin declares', async () => {
-    initStarredKinds([MOCK_STARRED_KIND_APP]);
+  it('is true for a registered kind until it is unregistered', () => {
+    const unregisterThing = srv.registerKind(MOCK_STARRED_KIND);
 
-    expect(await srv.canStar(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind)).toBe(true);
+    expect(srv.canStar(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind)).toBe(true);
+
+    unregisterThing();
+    expect(srv.canStar(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind)).toBe(false);
   });
 });
 
@@ -167,21 +172,13 @@ describe('CollectionsStarsSrv error handling', () => {
     await expect(srv.star({ group: DASHBOARD_GROUP, kind: 'Dashboard', id: 'any', title: 'Any' })).rejects.toThrow();
   });
 
-  it('rejects a kind no installed plugin declares without writing a star', async () => {
-    await expect(srv.star({ group: 'gone.ext.grafana.app', kind: 'Ghost', id: 'g1', title: 'Ghost' })).rejects.toThrow(
-      'Cannot star gone.ext.grafana.app/Ghost: not a kind this Grafana can show as starred'
-    );
+  it('stores a star of a kind Grafana cannot show, leaving the nav alone', async () => {
+    await srv.star({ group: 'gone.ext.grafana.app', kind: 'Ghost', id: 'g1', title: 'Ghost' });
 
-    expect(seenRequests.filter((request) => request.method === 'PUT')).toEqual([]);
-    expect(starredChildren()).toEqual([]);
-  });
-
-  it('refuses to star a folder while folders cannot be starred', async () => {
-    await expect(
-      srv.star({ group: 'folder.grafana.app', kind: 'Folder', id: 'f1', title: 'My Folder' })
-    ).rejects.toThrow('Cannot star folder.grafana.app/Folder');
-
-    expect(seenRequests.filter((request) => request.method === 'PUT')).toEqual([]);
+    expect(seenRequests).toContainEqual({
+      method: 'PUT',
+      path: `/apis/collections.grafana.app/v1alpha1/namespaces/default/stars/user-${USER_UID}/update/gone.ext.grafana.app/Ghost/g1`,
+    });
     expect(starredChildren()).toEqual([]);
   });
 });

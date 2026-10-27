@@ -3,11 +3,11 @@ import { http, HttpResponse } from 'msw';
 import { setBackendSrv } from '@grafana/runtime';
 import { getKindDiscoveryHandler, getKindSearchHandler, kindSearchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { MOCK_STARRED_KIND, MOCK_STARRED_KIND_APP, MOCK_STARRED_KIND_SERVED } from '@grafana/test-utils/unstable';
+import { MOCK_STARRED_KIND, MOCK_STARRED_KIND_SERVED } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { searchStarredResources } from './kindSearch';
-import { findStarredKindBySearchKind, initStarredKinds, type StarredKind } from './kinds';
+import { findStarredKindBySearchKind, registerStarredKind, type StarredKind } from './kinds';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -25,12 +25,14 @@ describe('searchStarredResources', () => {
       return HttpResponse.json({ metadata: { totalHits: items.length, totalHitsRelation: 'eq' }, items });
     });
 
+  let unregister: () => void;
+
   beforeAll(() => {
-    initStarredKinds([MOCK_STARRED_KIND_APP]);
+    unregister = registerStarredKind(MOCK_STARRED_KIND);
     thing = findStarredKindBySearchKind(THING)!;
   });
 
-  afterAll(() => initStarredKinds([]));
+  afterAll(() => unregister());
 
   beforeEach(() => {
     requests = [];
