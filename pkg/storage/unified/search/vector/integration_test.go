@@ -979,6 +979,63 @@ func TestIntegrationPromoterReleasesLockAfterCancellation(t *testing.T) {
 	require.NoError(t, second.Promote(ctx), "a later pass should acquire the released lock")
 }
 
+func TestIntegrationPromoterConcurrentReplicas(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	namespaces := []string{"integration-test-c1", "integration-test-c2"}
+	for _, ns := range namespaces {
+		upsertTenantRows(ctx, t, backend, ns, 2)
+	}
+
+	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
+	var wg sync.WaitGroup
+	for range 3 {
+		wg.Go(func() {
+			assert.NoError(t, NewPromoter(database, 1, 0).Promote(ctx))
+		})
+	}
+	wg.Wait()
+
+	for _, ns := range namespaces {
+		assert.True(t, indexExists(t, engine, partialHNSWName(testResource, ns)), "index for %s", ns)
+	}
+}
+
+func TestIntegrationPromoterSkipsWhileLocked(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+
+	const ns = "integration-test-locked"
+	upsertTenantRows(ctx, t, backend, ns, 2)
+
+	conn, err := engine.DB().Conn(ctx)
+	require.NoError(t, err)
+	defer func() { _ = conn.Close() }()
+	_, err = conn.ExecContext(ctx, "SELECT pg_advisory_lock(hashtext($1)::bigint)", promoterAdvisoryLockName)
+	require.NoError(t, err)
+
+	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
+	require.NoError(t, NewPromoter(database, 1, 0).Promote(ctx))
+	require.False(t, indexExists(t, engine, partialHNSWName(testResource, ns)))
+
+	_, err = conn.ExecContext(ctx, "SELECT pg_advisory_unlock(hashtext($1)::bigint)", promoterAdvisoryLockName)
+	require.NoError(t, err)
+	require.NoError(t, NewPromoter(database, 1, 0).Promote(ctx))
+	require.True(t, indexExists(t, engine, partialHNSWName(testResource, ns)))
+}
+
+func upsertTenantRows(ctx context.Context, t *testing.T, backend VectorBackend, ns string, n int) {
+	t.Helper()
+	vectors := make([]Vector, 0, n)
+	for i := range n {
+		vectors = append(vectors, Vector{
+			Namespace: ns, Resource: testResource, UID: "dash", Title: "Dash", Subresource: fmt.Sprintf("panel/%d", i),
+			ResourceVersion: int64(i + 1), Content: fmt.Sprintf("content %d", i),
+			Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(float32(i+1), 1), Model: testModel,
+		})
+	}
+	require.NoError(t, backend.Upsert(ctx, vectors))
+}
+
 func indexExists(t *testing.T, engine *xorm.Engine, idxName string) bool {
 	t.Helper()
 	var exists bool

@@ -664,9 +664,11 @@ describe('TableNG hooks', () => {
       { tableRefreshEnabled: true, noPanelPadding: false, height: 58, pageSize: undefined, expected: 1 },
       { tableRefreshEnabled: false, noPanelPadding: false, height: 58, pageSize: undefined, expected: 2 },
       { tableRefreshEnabled: true, noPanelPadding: true, height: 66, pageSize: undefined, expected: 2 },
+      { tableRefreshEnabled: true, noPanelPadding: true, transparent: true, height: 66, expected: 1 },
+      { tableRefreshEnabled: false, noPanelPadding: true, transparent: true, height: 66, expected: 2 },
       { tableRefreshEnabled: true, noPanelPadding: false, height: 58, pageSize: 2, expected: 2 },
     ])(
-      'fits $expected rows with refresh=$tableRefreshEnabled, noPanelPadding=$noPanelPadding, pageSize=$pageSize',
+      'fits $expected rows with refresh=$tableRefreshEnabled, noPanelPadding=$noPanelPadding, transparent=$transparent, pageSize=$pageSize',
       ({ expected, ...options }) => {
         const { rows } = setupData();
         const { result } = renderHook(() =>

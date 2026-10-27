@@ -16,6 +16,7 @@ import (
 )
 
 const unifiedParent = "embeddings"
+
 const promoterAdvisoryLockName = "vectorpromoter"
 
 var sanitizeRe = regexp.MustCompile(`[^a-zA-Z0-9]`)
@@ -93,7 +94,9 @@ func (s *Promoter) Run(ctx context.Context) error {
 	}
 }
 
-// Promote runs one pass over every resource sub-tree. Exported for tests.
+// Promote runs one pass over every resource sub-tree, unless another replica
+// is running one: concurrent passes drop each other's in-progress builds and
+// deadlock on concurrent index builds. Exported for tests.
 func (s *Promoter) Promote(ctx context.Context) (retErr error) {
 	// Cleanup and concurrent index builds must share both this lock and its
 	// connection so another replica cannot remove an index being built here.
