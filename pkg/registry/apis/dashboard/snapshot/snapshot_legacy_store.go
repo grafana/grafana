@@ -239,8 +239,8 @@ func (s *SnapshotLegacyStore) Create(ctx context.Context, obj runtime.Object, cr
 		return nil, err
 	}
 
-	// Keep the dashboard on the returned object so the dual writer can upload it
-	// to unified storage without removing it from the legacy write.
+	// The legacy service encrypts the dashboard and returns an empty inline value.
+	// Preserve the input on the result so the dual writer can copy it to unified storage.
 	created := convertSnapshotToK8sResource(result, s.Namespacer)
 	created.Spec.Dashboard = snap.Spec.Dashboard
 	return created, nil
