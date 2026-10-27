@@ -88,6 +88,7 @@ export function StringMatchingFilter({
         <Stack gap={1}>
           <FilterInput
             ref={inputRef}
+            hideClearText
             placeholder={t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values')}
             title={t('grafana-ui.table.filter-popup-input-placeholder', 'Filter values')}
             onChange={setSearchFilter}

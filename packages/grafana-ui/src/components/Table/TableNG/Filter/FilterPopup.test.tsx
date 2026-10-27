@@ -68,6 +68,21 @@ describe('FilterPopup', () => {
     expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
   });
 
+  it('clears the search with an accessible icon button and returns focus to the input', async () => {
+    const user = userEvent.setup();
+    const setSearchFilter = jest.fn();
+    renderPopup({ searchFilter: 'active', setSearchFilter });
+    const input = screen.getByPlaceholderText('Filter values');
+    await waitFor(() => expect(input).toHaveFocus());
+    const clearButton = screen.getByRole('button', { name: 'Clear' });
+
+    expect(clearButton).not.toHaveTextContent(/./);
+    await user.click(clearButton);
+
+    expect(setSearchFilter).toHaveBeenCalledWith('');
+    expect(input).toHaveFocus();
+  });
+
   describe('Cancel button', () => {
     it('calls onClose without modifying the filter', async () => {
       const user = userEvent.setup();
