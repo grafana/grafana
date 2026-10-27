@@ -33,9 +33,6 @@
     "./internal": {
       "@grafana-app/source": "./src/internal/index.ts"
     },
-    "./internal/legacyMoment": {
-      "@grafana-app/source": "./src/datetime/loadLegacyMoment.ts"
-    },
     "./test": {
       "@grafana-app/source": "./test/index.ts"
     },
