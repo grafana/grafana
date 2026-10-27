@@ -778,20 +778,32 @@ func getTracesQueryUrl(azurePortalUrl string) (string, error) {
 }
 
 func getCorrelationWorkspaces(ctx context.Context, baseResource string, resourcesMap map[string]bool, dsInfo types.DatasourceInfo, operationId string) (map[string]bool, error) {
-	azMonService := dsInfo.Services["Azure Monitor"]
-	correlationUrl := azMonService.URL + fmt.Sprintf("%s/providers/microsoft.insights/transactions/%s", baseResource, operationId)
+	if err := validateAzureResourcePath(baseResource); err != nil {
+		return nil, err
+	}
+	if err := validateTraceOperationID(operationId); err != nil {
+		return nil, err
+	}
 
-	callCorrelationAPI := func(url string) (AzureCorrelationAPIResponse, error) {
-		req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer([]byte{}))
+	azMonService := dsInfo.Services["Azure Monitor"]
+	baseURL, err := url.Parse(azMonService.URL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid Azure Monitor URL: %w", err)
+	}
+	if baseURL.Host == "" {
+		return nil, fmt.Errorf("invalid Azure Monitor URL: missing host")
+	}
+	correlationUrl := baseURL.JoinPath(baseResource, "providers", "microsoft.insights", "transactions", operationId).String()
+
+	callCorrelationAPI := func(requestURL string) (AzureCorrelationAPIResponse, error) {
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
 		if err != nil {
 			return AzureCorrelationAPIResponse{}, fmt.Errorf("%v: %w", "failed to create request", err)
 		}
-		req.URL.Path = url
 		req.Header.Set("Content-Type", "application/json")
 		values := req.URL.Query()
 		values.Add("api-version", "2019-10-17-preview")
 		req.URL.RawQuery = values.Encode()
-		req.Method = "GET"
 
 		_, span := tracing.DefaultTracer().Start(ctx, "azure traces correlation request", trace.WithAttributes(
 			attribute.String("target", req.URL.String()),
@@ -841,7 +853,7 @@ func getCorrelationWorkspaces(ctx context.Context, baseResource string, resource
 	var nextLink *string
 	var correlationResponse AzureCorrelationAPIResponse
 
-	correlationResponse, err := callCorrelationAPI(correlationUrl)
+	correlationResponse, err = callCorrelationAPI(correlationUrl)
 	if err != nil {
 		return nil, err
 	}
