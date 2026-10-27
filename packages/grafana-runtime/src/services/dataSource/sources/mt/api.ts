@@ -11,7 +11,8 @@ function getConnectionsUrl(): string {
 }
 
 function getDataSourceResourceUrl(connection: DataSourceConnection): string {
-  return `apis/${connection.group}/${connection.version}/namespaces/${config.namespace}/datasources/${encodeURIComponent(connection.name)}`;
+  const VERSION = 'v0alpha1';
+  return `apis/${connection.group}/${VERSION}/namespaces/${config.namespace}/datasources/${encodeURIComponent(connection.name)}`;
 }
 
 export interface FetchConnectionsOptions {

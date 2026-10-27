@@ -1438,6 +1438,11 @@
         "no-rules": "",
         "rules-error": ""
       },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
       "result-count": {
         "alert-rules_other": "",
         "recording-rules_other": ""
@@ -2153,14 +2158,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "最大データポイント数",
-      "tooltip-max-data-points": "シリーズごとの最大データポイント数。一部のデータソースでは直接用いられ、自動間隔の計算に使用されます。ストリーミングデータでは、この値はローリングバッファに使用されます。"
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "新規"
     },
     "min-interval-option": {
       "label-interval": "間隔",
-      "tooltip-interval": "データソースへの送信間隔。データが毎分書き込まれる場合は、書き込み頻度に合わせて<1>1分</1>に設定することをお勧めします。"
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4105,6 +4110,11 @@
   },
   "app-chrome": {
     "skip-content-button": "メインコンテンツへスキップ",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "サインイン"
     }
@@ -4567,8 +4577,7 @@
       "delete-warning": "これにより、このフォルダとその配下のすべてのフォルダが削除されます。",
       "folder-empty": "選択したフォルダは空です",
       "folder-not-empty": "選択したフォルダには、削除されるリソースが含まれています",
-      "missing-info": "必須フィールドが不足しています",
-      "success-message": "フォルダが正常に削除されました"
+      "missing-info": "必須フィールドが不足しています"
     },
     "empty-state": {
       "button-title": "ダッシュボードを作成",
@@ -7199,8 +7208,7 @@
       "delete-error": "ダッシュボードの削除に失敗しました",
       "deleting": "削除中…",
       "drawer-title": "プロビジョニングされたダッシュボードを削除",
-      "no-repository-selected": "削除に必要なリポジトリが不足しています",
-      "success-message": "ダッシュボードが正常に削除されました"
+      "no-repository-selected": "削除に必要なリポジトリが不足しています"
     },
     "description-label": {
       "description": "説明"
@@ -7237,6 +7245,7 @@
       "copy": "クリップボードにコピー",
       "learn-more": "詳しく見る",
       "no-issues": "このクエリにエラーや通知はありません。",
+      "no-panel-issues": "",
       "severity-error": "エラー",
       "severity-info": "インフォメーション",
       "severity-warning": "警告"
@@ -7477,14 +7486,10 @@
       "already-in-folder": "ダッシュボードはすでに選択したフォルダにあります。",
       "api-error": "ダッシュボードの移動に失敗しました",
       "cancel-action": "キャンセル",
-      "current-file-not-found": "現在のダッシュボードファイルが見つかりませんでした",
       "drawer-title": "プロビジョニング済みダッシュボードを移動",
-      "file-load-error": "ダッシュボードの読み込み中にエラーが発生しました",
-      "loading-dashboard-data": "ダッシュボードデータを読み込み中",
       "move-action": "ダッシュボードを移動",
       "move-read-only-message": "読み取り専用リポジトリのため、このダッシュボードをGrafanaから直接移動することはできません。このダッシュボードを移動するには、Gitリポジトリ内のファイルを移動してください。",
       "moving": "移動中…",
-      "success-message": "ダッシュボードが正常に移動しました",
       "target-path-label": "ターゲットパス",
       "title-this-repository-is-read-only": "このリポジトリは読み取り専用です"
     },
@@ -8058,8 +8063,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "クエリペインを開く",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "クエリペインを開く"
     },
     "viz-panel-links-renderer": {
@@ -13056,7 +13059,8 @@
         "close": "{{title}}を閉じる",
         "open": "{{title}}を開く",
         "open-all": "AIアシスタントとサイドバーアプリを開く"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "ワークスペースに入る",
@@ -14211,6 +14215,7 @@
       "description-folder": "リポジトリ内のフォルダ。リポジトリのルートディレクトリの場合は空欄のままにしてください。",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "設定済みブランチへのプッシュは無効です",
       "label-branch": "ブランチ",
       "label-comment": "コメント",
@@ -15731,6 +15736,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "続行するには、このクエリのデータソースを選択してください。",
     "datasource-load-error-title": "このクエリのデータソースの読み込みに失敗しました",
     "loading-datasource": "データソースを読み込み中",
@@ -15924,6 +15930,7 @@
       "expand": "展開",
       "filter": "",
       "loading": "ダッシュボードを読み込んでいます",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "クエリに一致する結果が見つかりませんでした。",
       "noResultsForFilterClear": "検索結果をクリア",
       "noResultsForScopes": "選択したスコープのダッシュボードまたはリンクが見つかりません",
@@ -16633,8 +16640,61 @@
   },
   "swagger": {
     "login": "ログイン",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "リクエストを送信する前に名前空間を確認するか、ページを再読み込みしてもう一度お試しください。",
-    "namespace-unavailable-title": "名前空間を読み込めません"
+    "namespace-unavailable-title": "名前空間を読み込めません",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16688,6 +16748,9 @@
     "description-styling-from-field": "CSSプロパティを持つJSONオブジェクトを含むフィールド",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "1行おきに背景色を交互に切り替えます",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "クエリ"
     },
@@ -18232,6 +18295,7 @@
       "body_other": "{{count}}件の変数を削除してもよろしいですか？"
     },
     "editor": {
+      "back": "",
       "cancel": "キャンセル",
       "delete": "削除",
       "delete-modal-body": "「{{name}}」を削除してもよろしいですか？",
@@ -18240,6 +18304,7 @@
       "folder-description": "変数のスコープをフォルダに設定するか、ルートのDashboardsフォルダを選択してグローバルにします（すべてのダッシュボードで利用可能）",
       "folder-description-folder-only": "変数のスコープを編集可能なフォルダに設定します",
       "folder-label": "フォルダ",
+      "load-error-title": "",
       "moved": "変数を移動しました",
       "name-exists": "この名前の変数は選択したフォルダにすでに存在します",
       "save": "保存",

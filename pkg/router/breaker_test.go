@@ -95,7 +95,7 @@ func TestStatusRecorderFlushesThroughAPIServerFilters(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 	rw := httptest.NewRecorder()
-	s.HandleFunc(rw, httptest.NewRequest(http.MethodGet, "/apis/demo.grafana.app/v1", nil).WithContext(authenticatedTestContext(ctx)), nil)
+	s.HandleFunc(rw, httptest.NewRequest(http.MethodGet, "/apis/demo.grafana.app/v1", nil).WithContext(authenticatedTestContext(ctx)))
 
 	if !rw.Flushed {
 		t.Error("the flush did not reach the client's writer")
@@ -132,10 +132,9 @@ func fixedStatusHandler(status int) (http.Handler, *atomic.Int32) {
 func TestHandleFuncClosedBreakerPassesThrough(t *testing.T) {
 	h, calls := fixedStatusHandler(http.StatusOK)
 	s := withGroupHandler("dashboard.grafana.app", h)
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 
 	rec := httptest.NewRecorder()
-	s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil), next)
+	s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil))
 
 	if rec.Code != http.StatusOK {
 		t.Errorf("got code %d, want 200", rec.Code)
@@ -153,11 +152,10 @@ func TestHandleFuncClosedBreakerPassesThrough(t *testing.T) {
 func TestHandleFuncBreakerTripsOpenAfterConsecutiveFailures(t *testing.T) {
 	h, calls := fixedStatusHandler(http.StatusBadGateway)
 	s := withGroupHandler("dashboard.grafana.app", h)
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 
 	for i := 1; i <= 6; i++ {
 		rec := httptest.NewRecorder()
-		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil), next)
+		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil))
 		if rec.Code != http.StatusBadGateway {
 			t.Fatalf("request %d: got code %d, want 502 (still dialed while closed)", i, rec.Code)
 		}
@@ -167,7 +165,7 @@ func TestHandleFuncBreakerTripsOpenAfterConsecutiveFailures(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil), next)
+	s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil))
 	if rec.Code != http.StatusServiceUnavailable {
 		t.Errorf("7th request: got code %d, want 503 (breaker open, fail fast)", rec.Code)
 	}
@@ -182,11 +180,10 @@ func TestHandleFuncBreakerTripsOpenAfterConsecutiveFailures(t *testing.T) {
 func TestHandleFuncBreakerIgnoresPlain500(t *testing.T) {
 	h, calls := fixedStatusHandler(http.StatusInternalServerError)
 	s := withGroupHandler("dashboard.grafana.app", h)
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 
 	for i := 1; i <= 20; i++ {
 		rec := httptest.NewRecorder()
-		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil), next)
+		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/dashboards", nil))
 		if rec.Code != http.StatusInternalServerError {
 			t.Fatalf("request %d: got code %d, want 500 (breaker must never open on plain 500s)", i, rec.Code)
 		}
@@ -223,10 +220,9 @@ func TestHandleFuncBreakerHalfOpenRecovers(t *testing.T) {
 		Timeout:     timeout,
 	})
 	s := withGroupHandlerAndBreaker("dashboard.grafana.app", h, cb)
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 	req := func() *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/x", nil), next)
+		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/x", nil))
 		return rec
 	}
 
@@ -287,10 +283,9 @@ func TestHandleFuncBreakerHalfOpenCapRejectsConcurrentTrial(t *testing.T) {
 		Timeout:     timeout,
 	})
 	s := withGroupHandlerAndBreaker("dashboard.grafana.app", h, cb)
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 	doReq := func() *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/x", nil), next)
+		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/x", nil))
 		return rec
 	}
 
@@ -408,12 +403,11 @@ func TestReconcileChangedKeyResetsBreaker(t *testing.T) {
 func TestOpenAPIGroupVersionRoutesThroughBreaker(t *testing.T) {
 	upstream, calls := fixedStatusHandler(http.StatusBadGateway)
 	s := buildRouterWithBackend("dashboard.grafana.app", "5", upstream)
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 	path := "/openapi/v3/apis/dashboard.grafana.app/v1alpha1"
 
 	for i := 1; i <= 6; i++ {
 		rec := httptest.NewRecorder()
-		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil), next)
+		s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil))
 		if rec.Code != http.StatusBadGateway {
 			t.Fatalf("request %d: got code %d, want 502 (still dialed while closed)", i, rec.Code)
 		}
@@ -423,7 +417,7 @@ func TestOpenAPIGroupVersionRoutesThroughBreaker(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil), next)
+	s.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil))
 	if rec.Code != http.StatusServiceUnavailable {
 		t.Errorf("7th request: got code %d, want 503 (breaker open, fail fast)", rec.Code)
 	}
@@ -444,12 +438,11 @@ func TestOpenAPIGroupVersionCacheHitBypassesBreaker(t *testing.T) {
 		ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= 1 },
 	})
 	s := withGroupHandlerAndBreaker(group, upstream, cb)
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 	path := "/openapi/v3/apis/dashboard.grafana.app/v1alpha1"
 
 	// First request: cache miss, proxies through, populates the cache.
 	rec1 := httptest.NewRecorder()
-	s.HandleFunc(rec1, newAuthenticatedRequest(http.MethodGet, path, nil), next)
+	s.HandleFunc(rec1, newAuthenticatedRequest(http.MethodGet, path, nil))
 	if rec1.Code != http.StatusOK {
 		t.Fatalf("first request: got code %d, want 200", rec1.Code)
 	}
@@ -464,7 +457,7 @@ func TestOpenAPIGroupVersionCacheHitBypassesBreaker(t *testing.T) {
 	// Second request, same key: must still be served from cache, untouched by
 	// the open breaker.
 	rec2 := httptest.NewRecorder()
-	s.HandleFunc(rec2, newAuthenticatedRequest(http.MethodGet, path, nil), next)
+	s.HandleFunc(rec2, newAuthenticatedRequest(http.MethodGet, path, nil))
 	if rec2.Code != http.StatusOK {
 		t.Errorf("cache-hit request with breaker open: got code %d, want 200 (cache hit must bypass the breaker)", rec2.Code)
 	}
@@ -519,7 +512,7 @@ func TestRouterPreservesFlusherForWatches(t *testing.T) {
 	gr := withGroupHandler(group, backend)
 	m := newRouterMetrics(prometheus.NewRegistry())
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		m.instrumentRequest(gr, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+		m.instrumentRequest(gr, w, req.WithContext(authenticatedTestContext(req.Context())))
 	}))
 	defer srv.Close()
 	defer close(release)
@@ -561,7 +554,6 @@ func TestCaptureWriterSupportsFlush(t *testing.T) {
 func TestHandleFuncBreakerIgnoresCanceledRequests(t *testing.T) {
 	h, calls := fixedStatusHandler(http.StatusBadGateway) // simulates ReverseProxy's cancel->502 mapping
 	s := withGroupHandler("dashboard.grafana.app", h)     // real newGroupBreaker defaults
-	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // pre-canceled: simulates a client that already disconnected
@@ -569,7 +561,7 @@ func TestHandleFuncBreakerIgnoresCanceledRequests(t *testing.T) {
 	for i := 1; i <= 20; i++ {
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/x", nil).WithContext(authenticatedTestContext(ctx))
-		s.HandleFunc(rec, req, next)
+		s.HandleFunc(rec, req)
 	}
 	if got := calls.Load(); got != 20 {
 		t.Fatalf("handler called %d times, want 20 (breaker must never open on canceled-context requests)", got)

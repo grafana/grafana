@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
 	"sync"
@@ -558,9 +557,7 @@ func (m *Manager) read(ctx context.Context, key leaseKey) (state leaseMetadata, 
 	if err != nil {
 		return leaseMetadata{}, fmt.Errorf("fetching lease key: %w", err)
 	}
-	defer func() { _ = r.Close() }()
-
-	data, err := io.ReadAll(r)
+	data, err := kv.ReadAllAndClose(r)
 	if err != nil {
 		return leaseMetadata{}, fmt.Errorf("reading lease key: %w", err)
 	}

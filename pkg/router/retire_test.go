@@ -82,7 +82,7 @@ func TestRetiredHandlerIsDestroyedAfterItsLastRequest(t *testing.T) {
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		router.HandleFunc(inFlight, newAuthenticatedRequest(http.MethodGet, path, nil), http.NotFoundHandler())
+		router.HandleFunc(inFlight, newAuthenticatedRequest(http.MethodGet, path, nil))
 	}()
 	<-old.started
 
@@ -93,7 +93,7 @@ func TestRetiredHandlerIsDestroyedAfterItsLastRequest(t *testing.T) {
 
 	// New requests reach the replacement while the old one finishes.
 	recorder := httptest.NewRecorder()
-	router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, path, nil), http.NotFoundHandler())
+	router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, path, nil))
 	require.Equal(t, "new", recorder.Body.String())
 
 	close(old.release)
@@ -119,7 +119,7 @@ func TestRetiredHandlerEndsItsWatchesBeforeItIsDestroyed(t *testing.T) {
 	go func() {
 		defer close(done)
 		req := newAuthenticatedRequest(http.MethodGet, "/apis/"+retireGroup+"/v1/namespaces/default/things?watch=true", nil)
-		router.HandleFunc(httptest.NewRecorder(), req, http.NotFoundHandler())
+		router.HandleFunc(httptest.NewRecorder(), req)
 	}()
 	<-old.started
 

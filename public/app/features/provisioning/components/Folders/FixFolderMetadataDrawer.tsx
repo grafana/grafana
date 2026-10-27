@@ -14,7 +14,7 @@ import { type BaseProvisionedFormData } from '../../types/form';
 import { useGetActiveJob } from '../../useGetActiveJob';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
-import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
 
 interface FixFolderMetadataDrawerProps {
   repositoryName: string;
@@ -112,7 +112,6 @@ function FixFolderMetadataForm({
     path: '',
     comment: '',
     repo: repositoryName,
-    workflow: getDefaultWorkflow(repository),
     title: '',
   };
 

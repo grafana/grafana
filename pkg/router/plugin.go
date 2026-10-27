@@ -1,6 +1,7 @@
 package router
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -35,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim, used until HTTP operators move to gRPC
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
@@ -191,22 +193,31 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 		}
 
 		for _, manifest := range plugin.Manifests {
-			if manifest == nil {
-				continue
-			}
-			group := manifest.Group
-			if slices.Contains(routableCoreGroups, group) {
-				// A core group keeps the roles its own app declares.
-				continue
-			}
-			if !isPluginManifestGroup(group) || len(validation.IsDNS1123Subdomain(group)) > 0 {
-				logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", plugin.JSONData.ID, "group", group)
-				continue
-			}
-			if err := declareManifestRoles(deps.ACService, group, plugin.JSONData.Name, manifest); err != nil {
-				return fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
+			if err := declareLocalManifestRoles(ctx, deps.ACService, plugin.JSONData.ID, plugin.JSONData.Name, manifest); err != nil {
+				return err
 			}
 		}
+	}
+	return nil
+}
+
+// declareLocalManifestRoles declares the roles of a manifest served by the
+// local plugin loader. A routable core group keeps the roles its own app
+// declares, and an invalid group gets none.
+func declareLocalManifestRoles(ctx context.Context, service accesscontrol.Service, pluginID, pluginName string, manifest *app.ManifestData) error {
+	if manifest == nil {
+		return nil
+	}
+	group := manifest.Group
+	if slices.Contains(routableCoreGroups, group) {
+		return nil
+	}
+	if !isPluginManifestGroup(group) || len(validation.IsDNS1123Subdomain(group)) > 0 {
+		logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", pluginID, "group", group)
+		return nil
+	}
+	if err := declareManifestRoles(service, group, pluginName, manifest); err != nil {
+		return fmt.Errorf("error declaring roles for %s: %w", pluginID, err)
 	}
 	return nil
 }
@@ -217,6 +228,9 @@ type PluginLoader struct {
 	// settings is whether the loader serves app plugin settings
 	// (settingsEnabled).
 	settings bool
+
+	// dev serves the [router.dev.<name>] sections; nil when none is set.
+	dev *devTargets
 }
 
 func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, schemas bool) ([]definition.PluginDefinition, error) {
@@ -242,12 +256,20 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, 
 }
 
 func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
+	dev := pl.dev.backends(ctx)
+	if pl.deps.PluginSources == nil {
+		return dev, nil
+	}
 	pluginDefs, err := loadLocalPluginDefinitions(ctx, pl.deps.PluginSources, true)
 	if err != nil {
 		return nil, err
 	}
-
-	return pl.prepareBackends(ctx, pluginDefs)
+	backends, err := pl.prepareBackends(ctx, pluginDefs)
+	if err != nil {
+		return nil, err
+	}
+	// Dev targets come last, so they replace a local plugin serving the same group.
+	return append(backends, dev...), nil
 }
 
 func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definition.PluginDefinition) ([]Backend, error) {
@@ -314,7 +336,10 @@ func isAppPluginID(id string) bool {
 	return strings.Contains(id, "-") && !strings.Contains(id, ".")
 }
 
-func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
+func (pl PluginLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
+	if pl.dev != nil {
+		return pl.dev.notify(ctx)
+	}
 	return make(chan struct{}), nil // TODO? is there a plugin registry with update events?
 }
 
@@ -400,6 +425,8 @@ func newPluginSettingsBackend(plugin definition.PluginDefinition, client PluginC
 
 type PluginBackend struct {
 	key string
+	// source is reported by Source; empty for a local plugin.
+	source string
 
 	pluginID string
 	info     plugins.Info
@@ -435,7 +462,7 @@ func (b *PluginBackend) Group() metav1.APIGroup {
 }
 
 // Source implements [Backend].
-func (b *PluginBackend) Source() string { return sourceLocalPlugin }
+func (b *PluginBackend) Source() string { return cmp.Or(b.source, sourceLocalPlugin) }
 
 // Manifest implements [ManifestProvider].
 func (b *PluginBackend) Manifest() (*app.ManifestData, bool) {
@@ -524,15 +551,21 @@ func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts
 // loadManifest serves a manifest's kinds and routes, which call the plugin
 // through its v3 client only.
 func (b *PluginBackend) loadManifest(cfg *setting.Cfg, opts pluginroute.Options, client appclientv3.Client) (*pluginroute.Handler, error) {
+	// A baasbridge client forwards the requester's own credentials, so an
+	// exchanged token would go unused.
+	bridged := baasbridge.IsClient(client) //nolint:staticcheck
 	if client != nil {
 		client = &breakerPluginClientV3{Client: client}
 	}
-	// Keep authentication outside the breaker: token exchange failures do not
-	// indicate whether the plugin is reachable.
-	client, err := v3.WithAuthentication(client, b.pluginID, []string{b.group.Name},
-		withAuthFailureOutcome(pluginauth.ClientV3TokenExchanger(b.deps.Cfg, b.deps.PluginAuth, b.pluginID, b.deps.TokenExchanger)))
-	if err != nil {
-		return nil, err
+	if !bridged {
+		// Keep authentication outside the breaker: token exchange failures do not
+		// indicate whether the plugin is reachable.
+		var err error
+		client, err = v3.WithAuthentication(client, b.pluginID, []string{b.group.Name},
+			withAuthFailureOutcome(pluginauth.ClientV3TokenExchanger(b.deps.Cfg, b.deps.PluginAuth, b.pluginID, b.deps.TokenExchanger)))
+		if err != nil {
+			return nil, err
+		}
 	}
 	apiserverSection := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	opts.ClientV3 = client
