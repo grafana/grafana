@@ -1,4 +1,4 @@
-package annotation
+package folderresolver
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,17 +23,20 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 )
 
-func newTestDashboardFolderResolver(cacheEnabled bool, objects ...runtime.Object) (*dashboardFolderResolver, *dynamicfake.FakeDynamicClient) {
+func newTestDashboardFolderResolver(cacheEnabled bool, objects ...runtime.Object) (*Resolver, *dynamicfake.FakeDynamicClient) {
 	gvr := dashboardv1.DashboardResourceInfo.GroupVersionResource()
 	scheme := runtime.NewScheme()
 	listKinds := map[schema.GroupVersionResource]string{gvr: "DashboardList"}
 	fakeDyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, listKinds, objects...)
 
 	const testCacheTTL = time.Minute
-	r := &dashboardFolderResolver{
-		client:       &dashboardClient{gvr: gvr, dyn: fakeDyn},
-		tracer:       testTracer,
-		metrics:      ProvideMetrics(prometheus.NewRegistry()),
+	r := &Resolver{
+		client: &dashboardClient{gvr: gvr, dyn: fakeDyn},
+		tracer: noop.NewTracerProvider().Tracer(""),
+		metrics: &Metrics{
+			CacheHits:   prometheus.NewCounter(prometheus.CounterOpts{Name: "test_folder_cache_hits_total"}),
+			CacheMisses: prometheus.NewCounter(prometheus.CounterOpts{Name: "test_folder_cache_misses_total"}),
+		},
 		fetchTimeout: defaultFolderFetchTimeout,
 	}
 	if cacheEnabled {
@@ -105,8 +109,8 @@ func TestDashboardFolderResolver_ResolveFolder(t *testing.T) {
 		assert.Equal(t, folderUID, folder)
 
 		assert.Equal(t, 1, countGets(fakeDyn), "subsequent ResolveFolder calls should be served from cache, not the apiserver")
-		assert.Equal(t, float64(1), testutil.ToFloat64(resolver.metrics.FolderCacheHits))
-		assert.Equal(t, float64(1), testutil.ToFloat64(resolver.metrics.FolderCacheMisses))
+		assert.Equal(t, float64(1), testutil.ToFloat64(resolver.metrics.CacheHits))
+		assert.Equal(t, float64(1), testutil.ToFloat64(resolver.metrics.CacheMisses))
 	})
 
 	t.Run("cache disabled resolves every call from the apiserver", func(t *testing.T) {
