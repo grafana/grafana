@@ -429,5 +429,4 @@ func TestFieldValueIncludeFields(t *testing.T) {
 	// Per-label fields are typed by the "labels." prefix and must survive; the legacy ID is read
 	// back out of them.
 	assert.Contains(t, FieldValueIncludeFields, resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID)
-
 }
