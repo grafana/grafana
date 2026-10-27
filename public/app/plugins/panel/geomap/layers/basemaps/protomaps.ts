@@ -46,8 +46,135 @@ const PROMINENT_POI: GlValue = [
   ['any', ['==', ['get', 'kind'], 'park'], ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13]],
 ];
 
-/** The map sits under the panel's data, so like the default basemap it shows no house numbers, shields or one-way arrows */
+const MIN_ZOOM: GlValue = ['coalesce', ['get', 'min_zoom'], 0];
+
+/**
+ * Protomaps sizes places by population rank. The default basemap, on the same Tilezen-style tile
+ * schema, sizes countries by how early they appear, cities the same way, and smaller places by
+ * OpenStreetMap class. Below zoom 8 the default basemap names only cities, all at 12px.
+ */
+const COUNTRY_CLASS: GlValue = ['case', ['<=', MIN_ZOOM, 3], 'major', 'minor'];
+const CAPITAL: GlValue = ['in', ['get', 'capital'], ['literal', ['yes', '2', '3', '4', '5', '6']]];
+
+/** The default basemap uppercases capitals from zoom 7, every city from zoom 8, and hamlets from zoom 14 */
+const LOCALITY_CASE: GlValue = [
+  'step',
+  ['zoom'],
+  'none',
+  7,
+  ['case', CAPITAL, 'uppercase', 'none'],
+  8,
+  ['match', ['get', 'kind_detail'], 'city', 'uppercase', 'none'],
+  14,
+  ['match', ['get', 'kind_detail'], ['city', 'hamlet'], 'uppercase', 'none'],
+];
+
+const LOCALITY_CLASS: GlValue = [
+  'case',
+  ['==', ['get', 'kind_detail'], 'city'],
+  ['case', ['<=', MIN_ZOOM, 6], 'major_city', 'city'],
+  ['get', 'kind_detail'],
+];
+
+/**
+ * The map sits under the panel's data, so labels follow the default basemap's: no house numbers,
+ * shields or one-way arrows, its text sizes, weights and spacing, and points of interest in the
+ * muted grey of minor-road names.
+ */
 const UNLABELLED_LAYERS = new Set(['address_label', 'roads_shields', 'roads_oneway']);
+const LABEL_STYLES: Record<string, { layout: Record<string, GlValue>; paint?: Record<string, GlValue> }> = {
+  [MINOR_ROAD_LABELS]: { layout: { 'text-size': 9, 'text-font': ['Inter Medium'] } },
+  roads_labels_major: {
+    layout: {
+      'text-size': zoomRamp([14, 10], [16, 11], [18, 12]),
+      'text-font': ['Inter Medium'],
+      'text-letter-spacing': zoomRamp([13, 0], [16, 0.2]),
+    },
+  },
+  water_waterway_label: {
+    layout: { 'text-size': zoomRamp([9, 8], [10, 9]), 'text-font': ['Inter Italic'], 'text-letter-spacing': 0 },
+  },
+  // Protomaps labels seas, bays and straits in this layer too, which the default basemap draws at a fixed 12px
+  water_label_ocean: {
+    layout: {
+      'text-size': zoomRamp([0, oceanOr(13, 12)], [2, oceanOr(14, 12)], [4, oceanOr(18, 12)]),
+      'text-font': ['Inter SemiBold Italic'],
+      'text-transform': 'none',
+      'text-letter-spacing': 0.1,
+      'text-max-width': 6,
+      'text-line-height': 1.2,
+    },
+  },
+  water_label_lakes: {
+    layout: {
+      'text-size': zoomRamp([13, 9], [14, 10], [15, 11], [16, 12], [17, 13]),
+      'text-font': ['Inter Italic'],
+      'text-letter-spacing': 0,
+      'text-line-height': 1.2,
+    },
+    paint: { 'text-halo-blur': 1 },
+  },
+  pois: { layout: { 'text-size': zoomRamp([15, 8], [17, 9], [18, 10]), 'text-font': ['Inter SemiBold'] } },
+  places_country: {
+    layout: {
+      // Columns: countries named by zoom 3, then the rest
+      'text-size': sizeByClass(
+        COUNTRY_CLASS,
+        ['major'],
+        [
+          [3, 11, 10],
+          [4, 12, 10.5],
+          [5, 13, 11],
+          [6, 14, 12],
+          [7, 14, 13],
+          [8, 14, 14],
+        ]
+      ),
+      'text-font': ['Inter SemiBold'],
+      'text-transform': 'uppercase',
+      'text-max-width': zoomRamp([3, 6], [4, 9], [5, 12]),
+    },
+  },
+  places_region: {
+    layout: {
+      'text-size': zoomRamp([5, 12], [7, 14]),
+      'text-font': ['Inter SemiBold'],
+      'text-transform': 'uppercase',
+      'text-max-width': 9,
+    },
+    paint: { 'text-halo-width': 0 },
+  },
+  places_locality: {
+    layout: {
+      // Columns: cities named by zoom 6, other cities, towns, villages, then hamlets
+      'text-size': sizeByClass(
+        LOCALITY_CLASS,
+        ['major_city', 'city', 'town', 'village'],
+        [
+          [7.99, 12, 12, 12, 12, 12],
+          [8, 14, 12, 10, 9, 8],
+          [9, 15, 13, 10, 9, 8],
+          [10, 16, 14, 11, 9, 8],
+          [12, 18, 16, 13, 10, 8],
+          [13, 19, 17, 14, 11, 8],
+          [14, 22, 20, 15, 12, 10],
+          [16, 22, 20, 15, 13, 11],
+        ]
+      ),
+      'text-font': ['Inter SemiBold'],
+      'text-transform': LOCALITY_CASE,
+    },
+  },
+  places_subplace: {
+    layout: {
+      'text-size': zoomRamp([12, 9], [13, 10], [14, 11], [15, 12], [16, 13]),
+      'text-font': ['Inter Medium'],
+      'text-transform': ['step', ['zoom'], 'none', 12, 'uppercase'],
+      'text-letter-spacing': 0,
+      'text-max-width': 10,
+    },
+  },
+};
 
 export enum ProtomapsFlavor {
   Auto = 'auto',
@@ -354,10 +481,11 @@ export function isProtomapsBasemapEnabled() {
 }
 
 function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean, flavor: ProtomapsFlavor): T {
+  const mutedPaint = glStyle.layers.find((layer) => layer.id === MINOR_ROAD_LABELS)?.paint;
   const defaultBasemapPaint = DEFAULT_BASEMAP_PAINT[flavor] ?? {};
   const layers = glStyle.layers
     .filter((layer) => (showLabels || layer.type !== 'symbol') && !UNLABELLED_LAYERS.has(layer.id))
-    .map((layer) => withPaint(adaptLayer(layer), defaultBasemapPaint[layer.id]));
+    .map((layer) => withPaint(adaptLayer(layer, mutedPaint), defaultBasemapPaint[layer.id]));
   return { ...glStyle, layers };
 }
 
@@ -369,7 +497,7 @@ function withPaint<T extends GlLayer>(layer: T, paint: Paint | undefined): T {
   return { ...layer, paint: Object.fromEntries(merged) };
 }
 
-function adaptLayer<T extends GlLayer>(layer: T): T {
+function adaptLayer<T extends GlLayer>(layer: T, mutedPaint: GlLayer['paint']): T {
   let adapted = layer;
   if (adapted.layout?.['text-font']) {
     adapted = { ...adapted, layout: { ...adapted.layout, 'text-font': toGrafanaFonts(adapted.layout['text-font']) } };
@@ -386,9 +514,46 @@ function adaptLayer<T extends GlLayer>(layer: T): T {
       ...adapted,
       minzoom: Math.max(adapted.minzoom ?? 0, POI_LABEL_MIN_ZOOM),
       filter: adapted.filter ? ['all', adapted.filter, PROMINENT_POI] : PROMINENT_POI,
+      layout: { ...withoutIcon(adapted.layout), 'text-transform': 'uppercase' },
+      paint: mutedLabelPaint(adapted.paint, mutedPaint),
+    };
+  }
+  const labelStyle = LABEL_STYLES[adapted.id];
+  if (labelStyle) {
+    adapted = {
+      ...adapted,
+      layout: { ...adapted.layout, ...labelStyle.layout },
+      paint: labelStyle.paint ? { ...adapted.paint, ...labelStyle.paint } : adapted.paint,
     };
   }
   return adapted;
+}
+
+/** The text sat beside the icon, so it moves back onto the point once the icon is gone */
+function withoutIcon(layout: GlLayer['layout']) {
+  const { 'icon-image': _icon, 'text-offset': _offset, 'text-variable-anchor': _anchor, ...rest } = layout ?? {};
+  return rest;
+}
+
+function mutedLabelPaint(paint: GlLayer['paint'], mutedPaint: GlLayer['paint']) {
+  if (!mutedPaint) {
+    return paint;
+  }
+  return { ...paint, 'text-color': mutedPaint['text-color'], 'text-halo-color': mutedPaint['text-halo-color'] };
+}
+
+/** A zoom ramp whose stops give one size per class, in `classes` order, then one for any other class */
+function sizeByClass(classOf: GlValue, classes: string[], stops: Array<[number, ...number[]]>): GlValue {
+  return zoomRamp(
+    ...stops.map(([zoom, ...sizes]): [number, GlValue] => [
+      zoom,
+      ['match', classOf, ...classes.flatMap((name, i) => [name, sizes[i]]), sizes[classes.length]],
+    ])
+  );
+}
+
+function oceanOr(ocean: number, other: number): GlValue {
+  return ['match', ['get', 'kind'], 'ocean', ocean, other];
 }
 
 /** Protomaps widens roads exponentially with zoom, so they keep the same width on the ground */
