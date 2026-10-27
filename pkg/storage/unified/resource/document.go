@@ -615,8 +615,7 @@ const (
 	// Internal fixed-width companion to SEARCH_FIELD_DELETED_RV.
 	SEARCH_FIELD_DELETED_RV_SORT = "_deleted_rv_sort"
 
-	// The manager sub-document's fields, named by their path into it. Kept apart
-	// so their alignment does not spread to the rest of the block.
+	// The manager sub-document's fields, named by their path into it.
 	SEARCH_FIELD_MANAGER_KIND        = "manager.kind"
 	SEARCH_FIELD_MANAGER_ID          = "manager.id"
 	SEARCH_FIELD_MANAGER_ALLOW_EDITS = "manager.allowEdits"
