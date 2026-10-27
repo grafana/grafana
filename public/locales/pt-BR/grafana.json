@@ -1445,6 +1445,11 @@
         "no-rules": "",
         "rules-error": ""
       },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
       "result-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
@@ -2168,14 +2173,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Máximo de pontos de dados",
-      "tooltip-max-data-points": "O máximo de pontos de dados por série. Usado diretamente por algumas fontes de dados e usado no cálculo do intervalo automático. Com dados de transmissão, esse valor é usado para o buffer circular."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "novo"
     },
     "min-interval-option": {
       "label-interval": "Intervalo",
-      "tooltip-interval": "Intervalo enviado para a fonte de dados. Recomendamos definir a frequência de gravação — por exemplo, <1>1m</1>, se seus dados forem gravados a cada minuto."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4143,6 +4148,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Ir direto para o conteúdo principal",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Acessar"
     }
@@ -4612,8 +4622,7 @@
       "delete-warning": "Essa ação excluirá esta pasta e todos os elementos contidos nela. ",
       "folder-empty": "A pasta selecionada está vazia",
       "folder-not-empty": "A pasta selecionada contém recursos que serão excluídos",
-      "missing-info": "Faltam campos obrigatórios",
-      "success-message": "Pasta excluída com sucesso"
+      "missing-info": "Faltam campos obrigatórios"
     },
     "empty-state": {
       "button-title": "Criar painel de controle",
@@ -7251,8 +7260,7 @@
       "delete-error": "Falha ao excluir o painel",
       "deleting": "Excluindo...",
       "drawer-title": "Excluir painel provisionado",
-      "no-repository-selected": "O repositório obrigatório para a exclusão está faltando",
-      "success-message": "Painel de controle excluído com sucesso"
+      "no-repository-selected": "O repositório obrigatório para a exclusão está faltando"
     },
     "description-label": {
       "description": "Descrição"
@@ -7289,6 +7297,7 @@
       "copy": "Copiar para a área de transferência",
       "learn-more": "Saiba mais",
       "no-issues": "Nenhum erro ou aviso para esta consulta.",
+      "no-panel-issues": "",
       "severity-error": "Erro",
       "severity-info": "Informações",
       "severity-warning": "Aviso"
@@ -7531,14 +7540,10 @@
       "already-in-folder": "O painel já está na pasta selecionada.",
       "api-error": "Falha ao mover o painel de controle",
       "cancel-action": "Cancelar",
-      "current-file-not-found": "Não foi possível encontrar o arquivo do painel de controle atual",
       "drawer-title": "Mover painel de controle provisionado",
-      "file-load-error": "Erro ao carregar o painel de controle",
-      "loading-dashboard-data": "Carregando dados do painel de controle",
       "move-action": "Mover painel de controle",
       "move-read-only-message": "Este painel de controle não pode ser movido diretamente do Grafana porque o repositório é somente leitura. Para mover este painel de controle, mova o arquivo no seu repositório Git.",
       "moving": "Movendo…",
-      "success-message": "Painel de controle movido com sucesso",
       "target-path-label": "Caminho de destino",
       "title-this-repository-is-read-only": "Este repositório é somente leitura"
     },
@@ -8121,8 +8126,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abrir painel de consulta",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Abrir painel de consulta"
     },
     "viz-panel-links-renderer": {
@@ -13161,7 +13164,8 @@
         "close": "Fechar {{title}}",
         "open": "Abrir {{title}}",
         "open-all": "Abrir assistentes de IA e aplicativos da barra lateral"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Entrar no espaço de trabalho",
@@ -14322,6 +14326,7 @@
       "description-folder": "Pasta dentro do repositório. Deixe em branco para a raiz do repositório.",
       "description-folder-path": "Caminho da pasta dentro do repositório",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "O envio para a ramificação configurada está desativado",
       "label-branch": "Ramificação",
       "label-comment": "Comentário",
@@ -15867,6 +15872,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "Selecione uma fonte de dados para esta consulta para continuar.",
     "datasource-load-error-title": "Falha ao carregar a fonte de dados para esta consulta",
     "loading-datasource": "Carregando fonte de dados",
@@ -16063,6 +16069,7 @@
       "expand": "Expandir",
       "filter": "",
       "loading": "Carregando painéis de controle",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Nenhum resultado encontrado para sua consulta",
       "noResultsForFilterClear": "Limpar pesquisa",
       "noResultsForScopes": "Nenhum painel ou link encontrado para os escopos selecionados",
@@ -16774,8 +16781,61 @@
   },
   "swagger": {
     "login": "Entrar",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Verifique a nomenclatura antes de enviar solicitações ou recarregue a página para tentar novamente.",
-    "namespace-unavailable-title": "Não foi possível carregar a nomenclatura"
+    "namespace-unavailable-title": "Não foi possível carregar a nomenclatura",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16829,6 +16889,9 @@
     "description-styling-from-field": "Um campo contendo objetos JSON com propriedades CSS",
     "description-tooltip-from-field": "Renderizar uma célula a partir de um campo (oculto ou visível) em uma dica de ferramenta",
     "description-zebra-striping": "Alternar a cor de fundo das linhas de forma intercalada",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Consulta"
     },
@@ -18377,6 +18440,7 @@
       "body_other": "Tem certeza de que deseja excluir {{count}} variáveis?"
     },
     "editor": {
+      "back": "",
       "cancel": "Cancelar",
       "delete": "Excluir",
       "delete-modal-body": "Tem certeza de que deseja excluir \"{{name}}\"?",
@@ -18385,6 +18449,7 @@
       "folder-description": "Defina o escopo da variável para uma pasta ou escolha a pasta raiz de Painéis para torná-la global (disponível para todos os painéis)",
       "folder-description-folder-only": "Defina o escopo da variável para uma pasta que você possa editar",
       "folder-label": "Pasta",
+      "load-error-title": "",
       "moved": "Variável transferida",
       "name-exists": "Já existe uma variável com este nome na pasta selecionada",
       "save": "Salvar",

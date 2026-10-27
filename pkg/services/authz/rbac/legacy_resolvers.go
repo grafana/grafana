@@ -29,10 +29,11 @@ func (s *Service) WithLegacyScopeResolvers(
 }
 
 type legacyScopeRequest struct {
-	namespace    types.NamespaceInfo
-	identityType types.IdentityType
-	userUID      string
-	skipCache    bool
+	namespace      types.NamespaceInfo
+	identityType   types.IdentityType
+	userUID        string
+	skipCache      bool
+	globalIdentity *legacyGlobalIdentity
 }
 
 // Evaluate the original expression first. If it denies access, resolve its
@@ -118,7 +119,7 @@ func (s *Service) newLegacyScopeMutator(
 		// Resolvers must observe the checked subject, never that caller's privileges.
 		ctx = identity.WithRequester(ctx, requester)
 
-		scopes, err := resolver.Resolve(ctx, req.namespace.OrgID, scope)
+		scopes, err := resolver.Resolve(ctx, requester.GetOrgID(), scope)
 		if err != nil {
 			return nil, fmt.Errorf("could not resolve %v: %w", scope, err)
 		}
@@ -134,6 +135,10 @@ func (s *Service) legacyResolverRequester(
 	req legacyScopeRequest,
 	permissions map[string][]string,
 ) (identity.Requester, error) {
+	if req.globalIdentity != nil {
+		return s.legacyGlobalResolverRequester(ctx, req, permissions)
+	}
+
 	requester := &identity.StaticRequester{
 		Type:      req.identityType,
 		UserUID:   req.userUID,
@@ -172,6 +177,10 @@ func (s *Service) legacyResolverRequester(
 
 	// Library-panel resolution can perform folder visibility checks as the
 	// subject. Load that action explicitly instead of fetching a full snapshot.
+	//
+	// TODO: in the follow-up PRs (of this task https://github.com/grafana/identity-access-team/issues/2436)
+	// we will need to address the issue that ALL resolvers load folder.ActionFoldersRead
+	// even when the resolver does not need it (f.e. datasources)
 	if _, ok := grants[folder.ActionFoldersRead]; !ok {
 		scopes, _, err := s.getLegacyIdentityScopes(
 			ctx,

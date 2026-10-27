@@ -7,7 +7,7 @@
     "/global/search": {
       "post": {
         "tags": ["Search"],
-        "description": "Search resources of several types in a namespace: `dashboard.grafana.app/dashboards`, `folder.grafana.app/folders`. Each result names its own group, resource and kind, and is authorized on its own.\n\nOnly the fields every resource has can be used, plus:\n\n- `groupResource` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type.\n- `created` and `updated`: also filter (including range) and sort, so results of several types can be ordered by time.\n- `folderTree`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. `general` names the root folder and matches everything; an empty value is rejected.\n\nResults are eventually consistent: just after a change, a search can still return what was there before, and just after a folder moves, a `folderTree` search can still find what was below it in its old place.",
+        "description": "Search resources of several types in a namespace: `dashboard.grafana.app/dashboards`, `folder.grafana.app/folders`, `dashboard.grafana.app/notebooks`, `playlist.grafana.app/playlists`. Each result names its own group, resource and kind, and is authorized on its own.\n\nOnly the fields every resource has can be used, plus:\n\n- `groupResource` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type.\n- `created` and `updated`: also filter (including range) and sort, so results of several types can be ordered by time.\n- `folderTree`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. `general` names the root folder and matches everything; an empty value is rejected.\n\nResults are eventually consistent: just after a change, a search can still return what was there before, and just after a folder moves, a `folderTree` search can still find what was below it in its old place.",
         "operationId": "listGlobalSearchV0alpha1",
         "parameters": [],
         "requestBody": {
@@ -320,7 +320,7 @@
             "default": ""
           },
           "resources": {
-            "description": "Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs.",
+            "description": "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/HybridSearchResource"

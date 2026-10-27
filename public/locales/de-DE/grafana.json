@@ -1445,6 +1445,11 @@
         "no-rules": "",
         "rules-error": ""
       },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
       "result-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
@@ -2168,14 +2173,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Max. Datenpunkte",
-      "tooltip-max-data-points": "Die maximalen Datenpunkte pro Reihe. Wird direkt von einigen Datenquellen genutzt und für die Berechnung des automatischen Intervalls verwendet. Beim Datenstreaming wird dieser Wert für den rollierenden Puffer verwendet."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "neu"
     },
     "min-interval-option": {
       "label-interval": "Intervall",
-      "tooltip-interval": "Intervall an die Datenquelle gesendet. Es wird empfohlen, die Schreibfrequenz einzustellen, zum Beispiel <1>1m</1>, wenn Ihre Daten jede Minute geschrieben werden."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4143,6 +4148,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Weiter zum Hauptinhalt",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Anmelden"
     }
@@ -4612,8 +4622,7 @@
       "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht.",
       "folder-empty": "Der ausgewählte Ordner ist leer",
       "folder-not-empty": "Der ausgewählte Ordner enthält Ressourcen, die gelöscht werden",
-      "missing-info": "Fehlende Pflichtfelder",
-      "success-message": "Ordner erfolgreich gelöscht"
+      "missing-info": "Fehlende Pflichtfelder"
     },
     "empty-state": {
       "button-title": "Dashboard erstellen",
@@ -7251,8 +7260,7 @@
       "delete-error": "Das Dashboard konnte nicht gelöscht werden",
       "deleting": "Löschen...",
       "drawer-title": "Bereitgestelltes Dashboard löschen",
-      "no-repository-selected": "Fehlendes erforderliches Repository zum Löschen",
-      "success-message": "Dashboard erfolgreich gelöscht"
+      "no-repository-selected": "Fehlendes erforderliches Repository zum Löschen"
     },
     "description-label": {
       "description": "Beschreibung"
@@ -7289,6 +7297,7 @@
       "copy": "In die Zwischenablage kopieren",
       "learn-more": "Mehr erfahren",
       "no-issues": "Keine Fehler oder Hinweise für diese Abfrage.",
+      "no-panel-issues": "",
       "severity-error": "Fehler",
       "severity-info": "Info",
       "severity-warning": "Warnung"
@@ -7531,14 +7540,10 @@
       "already-in-folder": "Das Dashboard ist bereits im ausgewählten Ordner.",
       "api-error": "Dashboard konnte nicht verschoben werden",
       "cancel-action": "Abbrechen",
-      "current-file-not-found": "Die aktuelle Dashboard-Datei konnte nicht gefunden werden",
       "drawer-title": "Bereitgestelltes Dashboard verschieben",
-      "file-load-error": "Fehler beim Laden des Dashboards",
-      "loading-dashboard-data": "Daten des Dashboards werden geladen",
       "move-action": "Dashboard verschieben",
       "move-read-only-message": "Dieses Dashboard kann nicht direkt von Grafana aus verschoben werden, da das Repository schreibgeschützt ist. Um dieses Dashboard zu verschieben, verschieben Sie die Datei bitte in Ihrem Git-Repository.",
       "moving": "Wird verschoben ...",
-      "success-message": "Dashboard erfolgreich verschoben",
       "target-path-label": "Zielpfad",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
     },
@@ -8121,8 +8126,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abfragebereich öffnen",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Abfragebereich öffnen"
     },
     "viz-panel-links-renderer": {
@@ -13161,7 +13164,8 @@
         "close": "Schließen von {{title}}",
         "open": "Öffnen von {{title}}",
         "open-all": "Open-AI-Assistenten und Seitenleisten-Apps"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Workspace aufrufen",
@@ -14322,6 +14326,7 @@
       "description-folder": "Ordner innerhalb des Repositorys. Für das Repository-Stammverzeichnis leer lassen.",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "Push zum konfigurierten Branch ist deaktiviert",
       "label-branch": "Branch",
       "label-comment": "Kommentar",
@@ -15867,6 +15872,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "Wählen Sie zum Fortfahren eine Datenquelle für diese Abfrage aus.",
     "datasource-load-error-title": "Die Datenquelle für diese Abfrage konnte nicht geladen werden",
     "loading-datasource": "Datenquelle wird geladen",
@@ -16063,6 +16069,7 @@
       "expand": "Ausklappen",
       "filter": "",
       "loading": "Dashboards werden geladen",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Keine Ergebnisse für deine Abfrage gefunden",
       "noResultsForFilterClear": "Suche löschen",
       "noResultsForScopes": "Es wurden keine Dashboards oder Links für die ausgewählten Bereiche gefunden",
@@ -16774,8 +16781,61 @@
   },
   "swagger": {
     "login": "Anmelden",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Überprüfen Sie den Namensraum, bevor Sie Abfragen senden, oder laden Sie die Seite neu, um es erneut zu versuchen.",
-    "namespace-unavailable-title": "Namensraum kann nicht geladen werden"
+    "namespace-unavailable-title": "Namensraum kann nicht geladen werden",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16829,6 +16889,9 @@
     "description-styling-from-field": "Ein Feld, das JSON-Objekte mit CSS-Eigenschaften enthält",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Hintergrundfarbe jeder zweiten Zeile abwechseln",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Abfrage"
     },
@@ -18377,6 +18440,7 @@
       "body_other": "Sind Sie sicher, dass Sie {{count}} Variablen löschen möchten?"
     },
     "editor": {
+      "back": "",
       "cancel": "Abbrechen",
       "delete": "Löschen",
       "delete-modal-body": "Sind Sie sicher, dass Sie „{{name}}“ löschen möchten?",
@@ -18385,6 +18449,7 @@
       "folder-description": "Ordnen Sie die Variable einem Ordner zu oder wählen Sie den Stammordner der Dashboards aus, um sie global zugänglich zu machen (für alle Dashboards verfügbar)",
       "folder-description-folder-only": "Ordnen Sie die Variable einem Ordner zu, den Sie bearbeiten können",
       "folder-label": "Ordner",
+      "load-error-title": "",
       "moved": "Variable verschoben",
       "name-exists": "Eine Variable mit diesem Namen ist im ausgewählten Ordner bereits vorhanden",
       "save": "Speichern",

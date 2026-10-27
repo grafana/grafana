@@ -20,7 +20,7 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	// TODO: Complete in subsequent PRs:
 	//   - Standalone scope resolution: replace embedded service dependencies with namespace-aware providers.
 	//			MT AuthZ: https://github.com/grafana/identity-access-team/issues/2436
-	//   - Permissions: NoOrgID globals.
+	//   - Permissions: contextual team grants.
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
@@ -41,34 +41,35 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
 
-	permissions, hasAnyPermissions, err := s.getLegacyIdentityPermissions(
-		ctx,
-		ns,
-		idType,
-		userUID,
-		actions,
-		req.GetSkipCache(),
-	)
+	scopeRequest := legacyScopeRequest{
+		namespace:    ns,
+		identityType: idType,
+		userUID:      userUID,
+		skipCache:    req.GetSkipCache(),
+	}
+
+	var args legacyEvaluationArgs
+	if global := req.GetGlobalEvaluation(); global != nil {
+		args, err = s.prepareLegacyGlobalEvaluation(ctx, global, actions, scopeRequest)
+	} else {
+		args, err = s.prepareLegacyOrgEvaluation(ctx, actions, scopeRequest)
+	}
+
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
 
-	if !hasAnyPermissions {
+	if !args.hasAnyPermissions {
 		return &authzextv1.LegacyCheckResponse{Allowed: false}, nil
 	}
 
 	allowed, err := s.evaluateLegacyWithResolvers(
 		ctx,
 		evaluator,
-		permissions,
-		hasAnyPermissions,
+		args.permissions,
+		args.hasAnyPermissions,
 		req.GetSkipScopeResolution(),
-		legacyScopeRequest{
-			namespace:    ns,
-			identityType: idType,
-			userUID:      userUID,
-			skipCache:    req.GetSkipCache(),
-		},
+		args.scopeRequest,
 	)
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{
@@ -199,5 +200,35 @@ func (s *Service) getLegacyUserPermissionQuery(
 		TeamIDs:       teamIDs,
 		Role:          basicRole.Role,
 		IsServerAdmin: basicRole.IsAdmin,
+	}, nil
+}
+
+type legacyEvaluationArgs struct {
+	permissions       map[string][]string
+	hasAnyPermissions bool
+	scopeRequest      legacyScopeRequest
+}
+
+func (s *Service) prepareLegacyOrgEvaluation(
+	ctx context.Context,
+	actions []string,
+	scopeRequest legacyScopeRequest,
+) (legacyEvaluationArgs, error) {
+	permissions, hasAnyPermissions, err := s.getLegacyIdentityPermissions(
+		ctx,
+		scopeRequest.namespace,
+		scopeRequest.identityType,
+		scopeRequest.userUID,
+		actions,
+		scopeRequest.skipCache,
+	)
+	if err != nil {
+		return legacyEvaluationArgs{}, err
+	}
+
+	return legacyEvaluationArgs{
+		permissions:       permissions,
+		hasAnyPermissions: hasAnyPermissions,
+		scopeRequest:      scopeRequest,
 	}, nil
 }

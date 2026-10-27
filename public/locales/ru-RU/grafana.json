@@ -1459,6 +1459,11 @@
         "no-rules": "",
         "rules-error": ""
       },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
       "result-count": {
         "alert-rules_one": "",
         "alert-rules_few": "",
@@ -2198,14 +2203,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Макс. количество точек данных",
-      "tooltip-max-data-points": "Максимальное количество точек данных на ряд. Используется непосредственно некоторыми источниками данных и при расчете автоматического интервала. При потоковой передаче данных это значение используется для кольцевого буфера."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "новая"
     },
     "min-interval-option": {
       "label-interval": "Интервал",
-      "tooltip-interval": "Интервал отправлен в источник данных. Рекомендуем установить частоту записи, например <1>1 мин</1>, если ваши данные записываются каждую минуту."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4219,6 +4224,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Перейти к основному контенту",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Вход"
     }
@@ -4702,8 +4712,7 @@
       "delete-warning": "Эта папка и все вложенные элементы будут удалены.",
       "folder-empty": "Выбранная папка пуста",
       "folder-not-empty": "Выбранная папка содержит ресурсы, которые будут удалены",
-      "missing-info": "Отсутствуют обязательные поля",
-      "success-message": "Папка удалена"
+      "missing-info": "Отсутствуют обязательные поля"
     },
     "empty-state": {
       "button-title": "Создать дашборд",
@@ -7355,8 +7364,7 @@
       "delete-error": "Не удалось удалить дашборд",
       "deleting": "Удаление...",
       "drawer-title": "Удалить подготовленный дашборд",
-      "no-repository-selected": "Отсутствует нужный репозиторий для удаления",
-      "success-message": "Дашборд удален"
+      "no-repository-selected": "Отсутствует нужный репозиторий для удаления"
     },
     "description-label": {
       "description": "Описание"
@@ -7393,6 +7401,7 @@
       "copy": "Копировать в буфер обмена",
       "learn-more": "Подробнее",
       "no-issues": "По запросу нет ошибок или сообщений.",
+      "no-panel-issues": "",
       "severity-error": "Ошибка",
       "severity-info": "Информация",
       "severity-warning": "Предупреждение"
@@ -7639,14 +7648,10 @@
       "already-in-folder": "Дашборд уже находится в выбранной папке.",
       "api-error": "Не удалось переместить дашборд",
       "cancel-action": "Отмена",
-      "current-file-not-found": "Текущий файл дашборда не найден",
       "drawer-title": "Переместить подготовленный дашборд",
-      "file-load-error": "Ошибка при загрузке дашборда",
-      "loading-dashboard-data": "Загрузка данных дашборда",
       "move-action": "Переместить дашборд",
       "move-read-only-message": "Дашборд невозможно переместить непосредственно из Grafana, поскольку репозиторий доступен только для чтения. Чтобы переместить этот дашборд, переместите файл в репозиторий Git.",
       "moving": "Перемещение...",
-      "success-message": "Дашборд перемещен",
       "target-path-label": "Целевой путь",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
     },
@@ -8247,8 +8252,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Открыть панель запросов",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Открыть панель запросов"
     },
     "viz-panel-links-renderer": {
@@ -13371,7 +13374,8 @@
         "close": "Закрыть {{title}}",
         "open": "Открыть {{title}}",
         "open-all": "Открыть ИИ-помощников и приложения боковой панели"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Войти в рабочее пространство",
@@ -14544,6 +14548,7 @@
       "description-folder": "Папка в репозитории. Оставьте поле пустым, если это корневой каталог репозитория.",
       "description-folder-path": "Путь к папке внутри репозитория",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "Отправка данных в заданную ветвь отключена",
       "label-branch": "Ветвь",
       "label-comment": "Комментарий",
@@ -16139,6 +16144,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "Чтобы продолжить, выберите источник данных для этого запроса.",
     "datasource-load-error-title": "Не удалось загрузить источник данных для этого запроса",
     "loading-datasource": "Загрузка источника данных",
@@ -16341,6 +16347,7 @@
       "expand": "Развернуть",
       "filter": "",
       "loading": "Загрузка дашбордов",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "По вашему запросу ничего не найдено",
       "noResultsForFilterClear": "Очистить поиск",
       "noResultsForScopes": "Не найдены дашборды или ссылки для выбранных областей",
@@ -17056,8 +17063,61 @@
   },
   "swagger": {
     "login": "Вход",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Проверьте пространство имен перед отправкой запросов или перезагрузите страницу и повторите попытку.",
-    "namespace-unavailable-title": "Не удалось загрузить пространство имен"
+    "namespace-unavailable-title": "Не удалось загрузить пространство имен",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17111,6 +17171,9 @@
     "description-styling-from-field": "Поле, содержащее объекты JSON со свойствами CSS",
     "description-tooltip-from-field": "Отобразите ячейку из поля (скрытого или видимого) в подсказке",
     "description-zebra-striping": "Чередовать цвет фона каждой второй строки",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Запрос"
     },
@@ -18667,6 +18730,7 @@
       "body_other": "Точно удалить {{count}} переменных?"
     },
     "editor": {
+      "back": "",
       "cancel": "Отменить",
       "delete": "Удалить",
       "delete-modal-body": "Точно удалить «{{name}}»?",
@@ -18675,6 +18739,7 @@
       "folder-description": "Ограничьте область действия переменной одной папкой или сделайте ее глобальной (доступной для всех дашбордов). Для этого выберите корневую папку «Дашборды»",
       "folder-description-folder-only": "Определите область действия переменной папкой, которую вы можете редактировать",
       "folder-label": "Папка",
+      "load-error-title": "",
       "moved": "Переменная перемещена",
       "name-exists": "В выбранной папке уже существует переменная с таким именем",
       "save": "Сохранить",

@@ -28,13 +28,13 @@ func (h *tracedPluginHandler) Destroy() {
 func (h *tracedPluginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	setPluginID(req, h.pluginID)
 	span := trace.SpanFromContext(req.Context())
-	if parent, ok := req.Context().Value(routerSpanKey{}).(trace.SpanContext); ok && parent.Equal(span.SpanContext()) {
+	if call := backendCallFrom(req.Context()); call != nil && call.span.Equal(span.SpanContext()) {
 		// Routed plugin execution is already timed by the backend span.
 		span.SetAttributes(attribute.String("grafana.plugin.id", h.pluginID))
 		h.Handler.ServeHTTP(w, req)
 		return
 	}
-	rec, req, endSpan := traceRouterRequest(w, req, "router.plugin", h.group, attribute.String("grafana.plugin.id", h.pluginID))
-	defer endSpan()
+	rec, req, _ := traceRouterRequest(w, req, "router.plugin", h.group, attribute.String("grafana.plugin.id", h.pluginID))
+	defer rec.endSpan()
 	h.Handler.ServeHTTP(rec.writer(), req)
 }

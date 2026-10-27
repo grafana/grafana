@@ -7,6 +7,7 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/singleflight"
 
@@ -39,16 +40,17 @@ type MigratedPermissions interface {
 }
 
 type Loader struct {
-	store    permissionStore
-	catalog  *RoleCatalog
-	actions  ac.ActionResolver
-	cache    *localcache.CacheService
-	cfg      *setting.Cfg
-	features featuremgmt.FeatureToggles
-	license  licensing.Licensing
-	zanzana  MigratedPermissions
-	flight   singleflight.Group
-	log      log.Logger
+	store             permissionStore
+	catalog           *RoleCatalog
+	actions           ac.ActionResolver
+	cache             *localcache.CacheService
+	cfg               *setting.Cfg
+	features          featuremgmt.FeatureToggles
+	openFeatureClient *openfeature.Client
+	license           licensing.Licensing
+	zanzana           MigratedPermissions
+	flight            singleflight.Group
+	log               log.Logger
 }
 
 func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver,
@@ -56,15 +58,16 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 	license licensing.Licensing, zanzana MigratedPermissions,
 ) *Loader {
 	return &Loader{
-		store:    permissionStore{sql},
-		catalog:  catalog,
-		actions:  actionResolver,
-		cache:    cache,
-		cfg:      cfg,
-		features: features,
-		license:  license,
-		zanzana:  zanzana,
-		log:      log.New("authz.legacypermissions"),
+		store:             permissionStore{sql},
+		catalog:           catalog,
+		actions:           actionResolver,
+		cache:             cache,
+		cfg:               cfg,
+		features:          features,
+		openFeatureClient: openfeature.NewDefaultClient(),
+		license:           license,
+		zanzana:           zanzana,
+		log:               log.New("authz.legacypermissions"),
 	}
 }
 
