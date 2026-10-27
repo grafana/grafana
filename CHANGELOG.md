@@ -2,6 +2,19 @@
 
 # 13.3.0 (2026-10-27)
 
+### Security
+
+- Security: Fix CVE-2026-100105
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-15577
+- Security: Fix CVE-2026-33374
+- Security: Fix CVE-2026-81841
+- Security: Fix CVE-2026-88858
+- Security: Fix CVE-2026-88967
+- Security: Fix CVE-2026-93294
+- Security: Fix CVE-2026-95502
+
 ### Features and enhancements
 
 - **Access control:** reject global role creation in single-org mode (Enterprise)

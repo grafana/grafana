@@ -20,7 +20,7 @@ func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Se
 
 		// Get public dashboard
 		orgId, err := publicDashboardService.GetOrgIdByAccessToken(c.Req.Context(), accessToken)
-		if err != nil {
+		if err != nil || orgId < 1 {
 			return
 		}
 

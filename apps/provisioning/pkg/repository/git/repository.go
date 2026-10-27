@@ -47,6 +47,60 @@ type RepositoryConfig struct {
 	SkipGitSuffix    bool
 }
 
+// Hardcoded git response byte limits. These cap how many bytes nanogit will
+// read from a git server per operation class so a malicious or misbehaving
+// server cannot exhaust client memory: an oversized response is aborted
+// mid-read rather than buffered in full. They are intentionally hardcoded and
+// self-contained here (rather than exposed as configurable settings) to keep
+// this a minimal security patch. The defaults are deliberately generous so
+// valid traffic is never rejected while memory stays bounded against abuse.
+const (
+	// maxFileContentBytes caps decoded single-file content (blob/tree/commit,
+	// used by GetBlobByPath). It also seeds the post-read content-size check
+	// (r.maxBytes). Provisioning reads whole dashboard JSON files through this
+	// path and large dashboards can legitimately reach ~20 MiB, so the cap is
+	// set well above that to avoid rejecting valid content while still bounding
+	// per-fetch memory.
+	maxFileContentBytes = 32 * 1024 * 1024 // 32 MiB
+
+	// maxSingleObjectWireBytes caps the git-upload-pack wire response for a
+	// single-object fetch. It is larger than maxFileContentBytes to leave room
+	// for packfile framing (headers/trailer, zlib wrapping) and pkt-line
+	// sideband framing, so an incompressible file at the content limit is not
+	// aborted on the wire. The overhead is well under 1% of the payload plus a
+	// small fixed component; this stays far above that while keeping per-fetch
+	// memory to roughly the file size.
+	maxSingleObjectWireBytes = maxFileContentBytes + maxFileContentBytes/16 + 4096
+
+	// maxBulkFetchBytes caps multi-object fetches (recursive tree listings,
+	// commit comparisons, staged-writer fetch). It is much larger than the
+	// per-file cap because those operations legitimately return many objects
+	// for large repositories.
+	maxBulkFetchBytes = 1024 * 1024 * 1024 // 1 GiB
+
+	// maxRefsBytes caps ref-listing and protocol-detection responses
+	// (ListRefs, GetRef).
+	maxRefsBytes = 10 * 1024 * 1024 // 10 MiB
+
+	// maxPushResponseBytes caps the git-receive-pack reply to a push
+	// (CreateRef, staged Push).
+	maxPushResponseBytes = 10 * 1024 * 1024 // 10 MiB
+)
+
+// nanogitLimits is the nanogit representation of the hardcoded caps above.
+// MaxObjectDecodedBytes is set to the per-file content cap rather than left at
+// nanogit's built-in 10 MiB default, which would otherwise reject a legitimate
+// large (~20 MiB) dashboard object during packfile decode. Keeping it aligned
+// with maxFileContentBytes preserves the decompression-bomb defense (it stays
+// finite) while allowing the same content the wire and post-read caps allow.
+var nanogitLimits = options.Limits{
+	SingleObjectFetchMaxBytes:   maxSingleObjectWireBytes,
+	MultiObjectFetchMaxBytes:    maxBulkFetchBytes,
+	RefsMetadataMaxBytes:        maxRefsBytes,
+	ReceivePackResponseMaxBytes: maxPushResponseBytes,
+	MaxObjectDecodedBytes:       maxFileContentBytes,
+}
+
 // Make sure all public functions of this struct call the (*gitRepository).logger function, to ensure the Git repo details are included.
 type gitRepository struct {
 	config        *provisioning.Repository
@@ -71,6 +125,10 @@ func NewRepository(
 	if gitConfig.SkipGitSuffix {
 		opts = append(opts, options.WithoutGitSuffix())
 	}
+	// Push the byte limits into nanogit so a malicious or misbehaving server
+	// cannot exhaust client memory: oversized responses are aborted mid-read
+	// rather than buffered in full.
+	opts = append(opts, options.WithLimits(nanogitLimits))
 	if !gitConfig.Token.IsZero() {
 		tokenUser := gitConfig.TokenUser
 		if tokenUser == "" {
@@ -97,14 +155,18 @@ func NewRepository(
 		writerOptions = append(writerOptions, signer)
 	}
 
-	return &gitRepository{
+	repo := &gitRepository{
 		config:        config,
 		gitConfig:     gitConfig,
 		client:        client,
 		writerOptions: writerOptions,
 		metrics:       metrics.Recorder(config.Spec.Type),
 		clientMetrics: clientMetrics.Recorder(config.Spec.Type),
-	}, nil
+	}
+	// Mirror the nanogit wire-level cap with the post-read content check
+	// (nanogit caps wire bytes; this still catches decompressed content size).
+	repo.maxBytes.Store(maxFileContentBytes)
+	return repo, nil
 }
 
 func (r *gitRepository) URL() string {
@@ -1175,6 +1237,26 @@ func mapNanogitError(err error) error {
 		return repository.ErrServerUnavailable
 	}
 
+	// nanogit aborted the read because the response exceeded a configured byte
+	// limit (e.g. a file larger than the per-file cap). Surface it as a 413 so
+	// callers and the API layer treat it the same as the post-read size check.
+	var tooLarge *client.ErrResponseTooLarge
+	if errors.As(err, &tooLarge) {
+		return apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("git response for %s operation exceeded the %d byte limit", tooLarge.Op, tooLarge.Limit),
+		)
+	}
+
+	// nanogit rejected an object whose decoded (inflated) size exceeds the
+	// decoded-object cap — a decompression-bomb defense that fires before the
+	// object is allocated. Surface it as a 413 like the wire-size limits.
+	var objectTooLarge *protocol.ObjectTooLargeError
+	if errors.As(err, &objectTooLarge) {
+		return apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("git object decoded size %d bytes exceeded the %d byte limit", objectTooLarge.Size, objectTooLarge.Limit),
+		)
+	}
+
 	// Return original error if not a known nanogit error
 	return err
 }
@@ -1183,18 +1265,43 @@ func mapNanogitError(err error) error {
 // with the given operation context. It centralizes the repeated
 // fmt.Errorf("<op>: %w", mapNanogitError(err)) pattern so every nanogit call
 // site maps errors consistently.
+//
+// The capped-response error is the one exception: mapNanogitError turns it into
+// a 413 apierror whose status must survive to responsewriters.ErrorToAPIStatus,
+// which type-switches on the concrete error and does not unwrap fmt.Errorf
+// wrappers. Wrapping it would downgrade the status to a generic 500, so it is
+// returned unwrapped.
 func wrapNanogitError(prefix string, err error) error {
 	if err == nil {
 		return nil
 	}
-	return fmt.Errorf("%s: %w", prefix, mapNanogitError(err))
+	mapped := mapNanogitError(err)
+	if apierrors.IsRequestEntityTooLargeError(mapped) {
+		return mapped
+	}
+	return fmt.Errorf("%s: %w", prefix, mapped)
 }
 
-// checkHTTPError checks if the error is a known HTTP error (401, 403, 503) and returns
-// the appropriate TestResults. Returns nil if the error is not a known HTTP error.
+// checkHTTPError checks if the error is a known HTTP error (401, 403, 413, 503) and
+// returns the appropriate TestResults. Returns nil if the error is not a known HTTP error.
 func checkHTTPError(err error, fieldPath *field.Path) *provisioning.TestResults {
 	if err == nil {
 		return nil
+	}
+
+	// A capped git operation (refs listing, branch fetch) aborted because the
+	// response exceeded a configured byte limit; mapNanogitError has already
+	// turned it into a 413. Surface that instead of the generic 400 fallback.
+	if apierrors.IsRequestEntityTooLargeError(err) {
+		return &provisioning.TestResults{
+			Code:    http.StatusRequestEntityTooLarge,
+			Success: false,
+			Errors: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  fieldPath.String(),
+				Detail: err.Error(),
+			}},
+		}
 	}
 
 	if errors.Is(err, repository.ErrUnauthorized) {
