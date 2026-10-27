@@ -10,6 +10,7 @@ import (
 	"github.com/fullstorydev/grpchan"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -143,6 +144,20 @@ func referenceSubjectToken(ctx context.Context) string {
 	if !ok || info == nil {
 		return ""
 	}
+
+	logging.FromContext(ctx).Error("DEBUG_CLIENT_CAN_IDENTITY_READ_SECURE_VALUE",
+		"identityUID", info.GetUID(),
+		"identityType", info.GetIdentityType(),
+		"identityNamespace", info.GetNamespace(),
+		"identityAudience", info.GetAudience(),
+		"identityGroups", info.GetGroups(),
+		"identitySubject", info.GetSubject(),
+		"identityAccessTokenExists", info.GetAccessToken() != "",
+		"identityIdTokenExists", info.GetIDToken() != "",
+		"identityPermissions", info.GetTokenPermissions(),
+		"identityDelegatedPermissions", info.GetTokenDelegatedPermissions(),
+	)
+
 	accessToken := info.GetAccessToken()
 	if types.IsIdentityType(info.GetIdentityType(), types.TypeAccessPolicy) {
 		return accessToken
@@ -157,9 +172,11 @@ func referenceSubjectToken(ctx context.Context) string {
 		var claims authnlib.AccessTokenClaims
 		// Authentication already verified the incoming token; the signer verifies it again on exchange.
 		if err := parsed.UnsafeClaimsWithoutVerification(&claims); err == nil && claims.IsOnBehalfOfUser() {
+			logging.FromContext(ctx).Error("DEBUG_CLIENT_CAN_IDENTITY_READ_SECURE_VALUE", "IsOnBehalfOfUser", true)
 			return accessToken
 		}
 	}
+	logging.FromContext(ctx).Error("DEBUG_CLIENT_CAN_IDENTITY_READ_SECURE_VALUE", "IsOnBehalfOfUser", false)
 	// Tokenless legacy/internal calls can still check ownership. Without an ordinary
 	// securevalues:get grant, their service token cannot authorize shared references.
 	return info.GetIDToken()
