@@ -164,6 +164,7 @@ export const availableIconsIndex = {
   'gf-ml-alt': true,
   'gf-movepane-left': true,
   'gf-movepane-right': true,
+  'gf-notebook': true,
   'gf-portrait': true,
   'gf-service-account': true,
   'gf-show-context': true,

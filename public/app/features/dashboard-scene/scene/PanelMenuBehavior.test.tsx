@@ -1313,7 +1313,7 @@ describe('panelMenuBehavior', () => {
       const items = await itemsWith({ notebooks: true, permission: true });
 
       expect(items.find((item) => item.text === 'Add to notebook')).toEqual(
-        expect.objectContaining({ iconClassName: 'book' })
+        expect.objectContaining({ iconClassName: 'gf-notebook' })
       );
       expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
     });
