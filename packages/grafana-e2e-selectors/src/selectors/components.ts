@@ -730,6 +730,7 @@ export const versionedComponents = {
         },
         Filters: {
           Range: {
+            field: { '13.3.0': (bound: string) => `data-testid tableng range field ${bound}` },
             minimumInput: { '13.3.0': 'data-testid tableng range minimum-input' },
             maximumInput: { '13.3.0': 'data-testid tableng range maximum-input' },
             includeMissingCheckbox: { '13.3.0': 'data-testid tableng range include-missing-checkbox' },

@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { FieldType, toDataFrame } from '@grafana/data';
+import { createTheme, FieldType, getDisplayProcessor, toDataFrame } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { compileFrameToRecords } from '../utils';
 
@@ -47,9 +48,11 @@ it.each([FieldType.number, FieldType.time])('shows Clear filter only for an acti
   expect(onClear).toHaveBeenCalledTimes(1);
 });
 
-it.each([FieldType.number, FieldType.time])('does not expose a missing-value checkbox for %s filters', async (type) => {
+it.each([FieldType.number, FieldType.time])('preserves and toggles missing values for %s filters', async (type) => {
   const { user, onApply } = setup(type, [1, null, 2], { min: 1, max: 2, includeMissing: true });
-  expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  expect(screen.getByRole('checkbox', { name: 'Include missing values' })).toBeChecked();
+  expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
+  await user.click(screen.getByRole('checkbox', { name: 'Include missing values' }));
   expect(screen.getByRole('status')).toHaveTextContent('2 of 3 rows');
   await user.click(screen.getByRole('button', { name: 'Apply' }));
   expect(onApply).toHaveBeenCalledWith({ min: 1, max: 2, includeMissing: false });
@@ -111,7 +114,7 @@ it('previews exact bounds without missing values, then commits only on Apply', a
   expect(screen.getByRole('slider', { name: 'Maximum' })).toHaveAttribute('aria-valuenow', '2');
   expect(screen.getByRole('status')).toHaveTextContent('3 of 7 rows');
   expect(onApply).not.toHaveBeenCalled();
-  expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  expect(screen.getByRole('checkbox', { name: 'Include missing values' })).not.toBeChecked();
   await user.click(screen.getByRole('button', { name: 'Apply' }));
   expect(onApply).toHaveBeenCalledWith({ min: 1, max: 2, includeMissing: false });
 });
@@ -187,4 +190,91 @@ it('keeps millisecond precision with an unbounded end date', async () => {
   expect(screen.getByRole('status')).toHaveTextContent('2 of 3 rows');
   await user.click(screen.getByRole('button', { name: 'Apply' }));
   expect(onApply).toHaveBeenCalledWith({ min: 1789660800123, max: undefined, includeMissing: false });
+});
+
+it.each([FieldType.number, FieldType.time])(
+  'clears an unbounded %s range without dropping missing rows',
+  async (type) => {
+    const { user, onClear, onApply } = setup(type, [1, null, 2]);
+    expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(onClear).toHaveBeenCalledTimes(1);
+    expect(onApply).not.toHaveBeenCalled();
+  }
+);
+
+it('keeps raw fractional endpoints when moving the slider to its limits', async () => {
+  const { user, onApply } = setup(FieldType.number, [8.005, 10.004, 12.123456, 15.98765, null], {
+    min: 10,
+    max: 14,
+    includeMissing: false,
+  });
+  await waitFor(() => expect(screen.getByRole('textbox', { name: 'Minimum' })).toHaveFocus());
+  act(() => screen.getByRole('slider', { name: 'Minimum' }).focus());
+  // rc-slider reads legacy keyCode, which userEvent does not populate.
+  // eslint-disable-next-line testing-library/prefer-user-event
+  fireEvent.keyDown(screen.getByRole('slider', { name: 'Minimum' }), { key: 'Home', keyCode: 36 });
+  act(() => screen.getByRole('slider', { name: 'Maximum' }).focus());
+  // eslint-disable-next-line testing-library/prefer-user-event
+  fireEvent.keyDown(screen.getByRole('slider', { name: 'Maximum' }), { key: 'End', keyCode: 35 });
+  expect(screen.getByRole('status')).toHaveTextContent('4 of 5 rows');
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(onApply).toHaveBeenCalledWith({ min: 8.005, max: 15.98765, includeMissing: false });
+});
+
+it('exposes separate start and end calendar field scopes', async () => {
+  const { user } = setup(FieldType.time, [Date.UTC(2026, 8, 17), Date.UTC(2026, 8, 18)]);
+  const range = selectors.components.Panels.Visualization.TableNG.Filters.Range;
+  expect(within(screen.getByTestId(range.field('minimum'))).getByRole('textbox')).toHaveAccessibleName('Start');
+  const end = within(screen.getByTestId(range.field('maximum')));
+  expect(end.getByRole('textbox')).toHaveAccessibleName('End');
+  await user.click(end.getByRole('button', { name: 'Open calendar' }));
+  expect(screen.getByRole('button', { name: 'Close calendar' })).toBeInTheDocument();
+});
+
+it.each(['percentunit', 'short'])('moves slider bounds in raw units with %s formatting', async (unit) => {
+  const data = toDataFrame({
+    fields: [{ name: 'Value', type: FieldType.number, values: [0.8, 0.85, 0.95], config: { unit, decimals: 1 } }],
+  });
+  const field = data.fields[0];
+  field.display = getDisplayProcessor({ field, theme: createTheme() });
+  const onApply = jest.fn();
+  render(
+    <NumericRangeFilter
+      field={field}
+      rows={compileFrameToRecords(['Value'])(data)}
+      range={{ min: 0.85, max: 0.95, includeMissing: false }}
+      onApply={onApply}
+      onClear={jest.fn()}
+      onCancel={jest.fn()}
+    />
+  );
+  await waitFor(() => expect(screen.getByRole('textbox', { name: 'Minimum' })).toHaveFocus());
+  act(() => screen.getByRole('slider', { name: 'Minimum' }).focus());
+  // rc-slider reads legacy keyCode, which userEvent does not populate.
+  // eslint-disable-next-line testing-library/prefer-user-event
+  fireEvent.keyDown(screen.getByRole('slider', { name: 'Minimum' }), { key: 'ArrowLeft', keyCode: 37 });
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(onApply.mock.calls[0][0].min).toBeGreaterThan(0.84);
+  expect(onApply.mock.calls[0][0].min).toBeLessThan(0.85);
+  expect(onApply.mock.calls[0][0].max).toBe(0.95);
+});
+
+it.each([FieldType.number, FieldType.time])('preserves includeMissing when reapplying a %s range', async (type) => {
+  const { user, onApply } = setup(type, [1, null, 2], { min: 1, max: 2, includeMissing: true });
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(onApply).toHaveBeenCalledWith({ min: 1, max: 2, includeMissing: true });
+});
+
+it.each([
+  [FieldType.number, 'Minimum', 'Maximum'],
+  [FieldType.time, 'Start', 'End'],
+])('clears an existing %s range after deleting both bounds', async (type, minimum, maximum) => {
+  const { user, onClear, onApply } = setup(type, [1, null, 2], { min: 1, max: 2, includeMissing: false });
+  await user.clear(screen.getByRole('textbox', { name: minimum }));
+  await user.clear(screen.getByRole('textbox', { name: maximum }));
+  expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(onClear).toHaveBeenCalledTimes(1);
+  expect(onApply).not.toHaveBeenCalled();
 });

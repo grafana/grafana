@@ -50,10 +50,14 @@ export function TableRangeFields({ from, to, calendar, calendarAnchor, calendarD
   return (
     <Stack direction="column" gap={1}>
       {[
-        { field: from, id: fromId },
-        { field: to, id: toId },
-      ].map(({ field, id }) => (
-        <Field key={id} label={field.label}>
+        { field: from, id: fromId, bound: 'minimum' },
+        { field: to, id: toId, bound: 'maximum' },
+      ].map(({ field, id, bound }) => (
+        <Field
+          key={id}
+          label={field.label}
+          data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Range.field(bound)}
+        >
           <Input
             id={id}
             autoComplete="off"

@@ -122,6 +122,9 @@ export function useFilterPopupState({
         continue;
       }
       const raw = row[fieldName];
+      if (selection.includeMissing !== undefined && raw == null) {
+        continue;
+      }
       if (selected.has(formattedValueToString(previousDisplay(raw)))) {
         currentValues.add(formattedValueToString(currentDisplay(raw)));
       }
@@ -137,9 +140,9 @@ export function useFilterPopupState({
     popupProps: {
       stateKey: snapshot,
       rangeFiltersEnabled: view?.rangeFiltersEnabled,
-      onApplyValues: (values) => {
+      onApplyValues: (values, includeMissing) => {
         if (view && field) {
-          if (values.length === 0) {
+          if (values.length === 0 && !includeMissing) {
             view.clearFilter(field, parentIndex);
           } else {
             view.applyFilter(
@@ -148,7 +151,8 @@ export function useFilterPopupState({
                 field,
                 values.map((item) => item.value),
                 selection,
-                timeZone
+                timeZone,
+                includeMissing
               ),
               parentIndex
             );
@@ -161,7 +165,8 @@ export function useFilterPopupState({
               view.applyFilter(field, createRangePredicate({ min, max, includeMissing }), parentIndex)
           : undefined,
       onClear: () => field && view?.clearFilter(field, parentIndex),
-      timeZone: view?.timeZone,
+      timeZone,
+      includeMissing: selection?.includeMissing,
       range: range ? { min: range.from, max: range.to, includeMissing: range.includeMissing === true } : undefined,
       rows: rowsForPopup,
       filterValue: filterValue ?? (range && !view?.rangeFiltersEnabled ? [] : undefined),

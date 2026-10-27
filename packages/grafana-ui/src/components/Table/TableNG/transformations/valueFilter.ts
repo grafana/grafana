@@ -7,7 +7,8 @@ export function createValuePredicate(
   field: Field,
   values: ValueSetOptions['values'],
   selection?: ValueSetOptions,
-  timeZone?: string
+  timeZone?: string,
+  includeMissing?: boolean
 ): MatcherConfig {
   return {
     id: 'inSet',
@@ -17,6 +18,7 @@ export function createValuePredicate(
       mode: 'display',
       displayConfig: field.config,
       timeZone,
+      ...(includeMissing !== undefined ? { includeMissing } : {}),
     } satisfies ValueSetOptions,
   };
 }

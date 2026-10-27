@@ -66,8 +66,15 @@ export function useRowTransformations(props: TableNGProps) {
   );
   const clearFilters = useCallback(() => update((current) => clearFrameFilters(current, frameKey)), [update, frameKey]);
   const value = useMemo(
-    () => ({ filters, getFilters, applyFilter, clearFilter, clearFilters, timeZone: props.timeZone }),
-    [filters, getFilters, applyFilter, clearFilter, clearFilters, props.timeZone]
+    () => ({
+      filters,
+      getFilters,
+      applyFilter,
+      clearFilter,
+      clearFilters,
+      rangeFiltersEnabled: props.rangeFiltersEnabled,
+    }),
+    [filters, getFilters, applyFilter, clearFilter, clearFilters, props.rangeFiltersEnabled]
   );
   return { configs, value };
 }

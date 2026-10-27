@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import * as textMeasurement from '../../../../utils/measureText';
 import { FilterOperator } from '../types';
 
 import { FilterList } from './FilterList';
@@ -304,4 +305,26 @@ describe('FilterList', () => {
       expect(screen.getByRole('checkbox', { name: /1 selected/ })).toBeInTheDocument();
     });
   });
+});
+
+it('sizes from the widest available label and keeps that width while searching', () => {
+  const measurement = jest
+    .spyOn(textMeasurement, 'measureText')
+    .mockImplementation((text) => ({ width: text === 'WWWW' ? 250 : 120 }) as TextMetrics);
+  const options = [
+    { value: 'wide', label: 'WWWW' },
+    { value: 'long', label: 'iiiiiiii' },
+  ];
+  const onWidthChange = jest.fn();
+  const props = { options, values: [], onChange: jest.fn(), onWidthChange, operator: containsOp() };
+  try {
+    const { rerender } = render(<FilterList {...props} searchFilter="" />);
+    expect(onWidthChange).toHaveBeenLastCalledWith(314);
+    onWidthChange.mockClear();
+    rerender(<FilterList {...props} searchFilter="iiii" />);
+    expect(screen.getByRole('checkbox', { name: 'iiiiiiii' })).toBeInTheDocument();
+    expect(onWidthChange).not.toHaveBeenCalled();
+  } finally {
+    measurement.mockRestore();
+  }
 });

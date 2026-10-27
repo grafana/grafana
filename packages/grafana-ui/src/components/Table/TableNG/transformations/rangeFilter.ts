@@ -1,7 +1,7 @@
 import { type MatcherConfig, type RangeValueMatcherOptions } from '@grafana/data';
 import { FilterByValueType, type FilterByValueConfig } from '@grafana/data/internal';
 
-interface RangeSelection {
+export interface RangeSelection {
   min?: number;
   max?: number;
   includeMissing: boolean;

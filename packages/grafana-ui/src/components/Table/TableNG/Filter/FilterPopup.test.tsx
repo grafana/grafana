@@ -30,7 +30,7 @@ function renderPopup(overrides: Partial<Parameters<typeof FilterPopup>[0]> = {})
       onApplyValues={onApplyValues}
       onClear={onClear}
       onClose={onClose}
-      field={makeField('Status')}
+      field={{ ...makeField('Status'), values: overrides.rows?.map((row) => row.Status) ?? ['active', 'inactive'] }}
       searchFilter=""
       setSearchFilter={jest.fn()}
       operator={defaultOperator}
@@ -199,7 +199,7 @@ describe('FilterPopup', () => {
 
       await user.click(screen.getByText('Ok'));
 
-      expect(onApplyValues).toHaveBeenCalledWith([{ value: 'active', label: 'active' }]);
+      expect(onApplyValues).toHaveBeenCalledWith([{ value: 'active', label: 'active' }], false);
     });
 
     it('passes an empty selection when Ok is clicked with no items selected', async () => {
@@ -209,7 +209,7 @@ describe('FilterPopup', () => {
 
       await user.click(screen.getByText('Ok'));
 
-      expect(onApplyValues).toHaveBeenCalledWith([]);
+      expect(onApplyValues).toHaveBeenCalledWith([], false);
     });
   });
 
@@ -266,4 +266,44 @@ describe('FilterPopup', () => {
     await user.click(document.body);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+});
+
+it('keeps a range on a changed string field clearable', async () => {
+  const { onClear } = renderPopup({ rangeFiltersEnabled: true, range: { min: 1, includeMissing: false } });
+  await userEvent.click(screen.getByRole('button', { name: 'Clear filter' }));
+  expect(onClear).toHaveBeenCalledTimes(1);
+});
+
+it('selects missing string values separately from empty strings and mapped labels', async () => {
+  const values = [null, undefined, '', '-', 'ok'];
+  const field: Field = {
+    name: 'Status',
+    type: FieldType.string,
+    config: {},
+    values,
+    display: (value) => ({ text: value == null ? '-' : String(value), numeric: NaN }),
+  };
+  const { onApplyValues } = renderPopup({
+    field,
+    rows: values.map((value, i) => ({ __depth: 0, __index: i, Status: value ?? undefined })),
+  });
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Include missing values' }));
+  expect(screen.getByRole('status')).toHaveTextContent('2 of 5 rows');
+  await userEvent.click(screen.getByRole('checkbox', { name: '(Blanks)' }));
+  expect(screen.getByRole('status')).toHaveTextContent('3 of 5 rows');
+  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  expect(onApplyValues).toHaveBeenCalledWith([{ label: '(Blanks)', value: '' }], true);
+});
+
+it('closes on Escape after clicking the histogram without bubbling to the panel', async () => {
+  const field: Field = { name: 'Value', type: FieldType.number, values: [1, 2], config: {} };
+  const { onClose, buttonElement } = renderPopup({
+    field,
+    rangeFiltersEnabled: true,
+    rows: [1, 2].map((Value, __index) => ({ Value, __index, __depth: 0 })),
+  });
+  await userEvent.click(screen.getByRole('img', { name: /Value distribution/ }));
+  await userEvent.keyboard('{Escape}');
+  expect(onClose).toHaveBeenCalledTimes(1);
+  expect(buttonElement).toHaveFocus();
 });

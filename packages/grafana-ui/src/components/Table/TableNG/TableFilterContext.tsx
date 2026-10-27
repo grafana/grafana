@@ -27,7 +27,6 @@ interface FilterContext {
   applyFilter: (field: Field, predicate: MatcherConfig, parentIndex?: number) => void;
   clearFilter: (field: Field, parentIndex?: number) => void;
   clearFilters: () => void;
-  timeZone?: string;
 }
 const TableFilterContext = createContext<FilterContext | undefined>(undefined);
 export const useTableFilters = () => useContext(TableFilterContext);
@@ -100,11 +99,7 @@ export function TableFilterProvider({ props, children }: { props: TableNGProps; 
               clearFilters: () => {},
             }
           : value;
-        return (
-          <TableFilterContext.Provider value={{ ...context, rangeFiltersEnabled: props.rangeFiltersEnabled }}>
-            {children}
-          </TableFilterContext.Provider>
-        );
+        return <TableFilterContext.Provider value={context}>{children}</TableFilterContext.Provider>;
       }}
     </ErrorBoundary>
   );

@@ -17,26 +17,28 @@ import { Body } from './CalendarBody';
 import { Footer } from './CalendarFooter';
 import { Header } from './CalendarHeader';
 
+export const getCalendarStyles = (theme: GrafanaTheme2) =>
+  css({
+    zIndex: theme.zIndex.modal,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    padding: theme.spacing(1),
+    label: 'calendar',
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
+    backgroundColor: theme.colors.background.elevated,
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.lg,
+  });
+
 const getStyles = (theme: GrafanaTheme2) => {
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     modalContainer: css({
       label: 'modalContainer',
       margin: '0 auto',
     }),
 
-    calendar: css({
-      zIndex: theme.zIndex.modal,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-      padding: theme.spacing(1),
-      label: 'calendar',
-      boxShadow: visualRefreshEnabled ? theme.shadows.z2 : theme.shadows.z3,
-      backgroundColor: theme.colors.background.elevated,
-      border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.lg,
-    }),
+    calendar: getCalendarStyles(theme),
 
     modal: css({
       label: 'modal',

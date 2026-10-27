@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { useEffect, useMemo, useRef, useState, type KeyboardEventHandler, type RefObject } from 'react';
+import { useMemo, useState, type KeyboardEventHandler, type RefObject } from 'react';
 
 import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -13,7 +13,8 @@ import { Stack } from '../../../Layout/Stack/Stack';
 import { type FilterOperator, type TableRow } from '../types';
 
 import { FilterList } from './FilterList';
-import { FilterPopupFooter, FilterPopupLayout } from './FilterPopupLayout';
+import { FilterMissingValues, FilterPopupFooter, FilterPopupLayout } from './FilterPopupLayout';
+import { useFilterInputFocus } from './useFilterInputFocus';
 import {
   calculateUniqueFieldValues,
   getFieldFilterValue,
@@ -31,7 +32,8 @@ interface Props {
   setSearchFilter: (value: string) => void;
   operator: SelectableValue<FilterOperator>;
   setOperator: (item: SelectableValue<FilterOperator>) => void;
-  onApplyValues: (values: SelectableValue[]) => void;
+  onApplyValues: (values: SelectableValue[], includeMissing?: boolean) => void;
+  includeMissing?: boolean;
   onClear: () => void;
   onClose: () => void;
   onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
@@ -42,6 +44,7 @@ export function StringMatchingFilter({
   rows,
   field,
   filterValue,
+  includeMissing: appliedIncludeMissing,
   searchFilter,
   setSearchFilter,
   operator,
@@ -51,9 +54,21 @@ export function StringMatchingFilter({
   onClose,
   onKeyDown,
 }: Props) {
-  const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
+  const presentRows = useMemo(() => rows.filter((row) => !field || field.values[row.__index] != null), [rows, field]);
+  const uniqueValues = useMemo(() => calculateUniqueFieldValues(presentRows, field), [presentRows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
   const filteredOptions = useMemo(() => getFilteredOptions(options, filterValue), [options, filterValue]);
+  const [includeMissing, setIncludeMissing] = useState(
+    () =>
+      appliedIncludeMissing ??
+      (filterValue !== undefined &&
+        rows.some(
+          (row) =>
+            field &&
+            field.values[row.__index] == null &&
+            filterValue.some((option) => option.value === getFieldFilterValue(row, field))
+        ))
+  );
   const [values, setValues] = useState<SelectableValue[]>(filteredOptions);
   const { selectedRows, totalRows } = useMemo(() => {
     const selectedValues = new Set(values.map((option) => option.value));
@@ -64,23 +79,20 @@ export function StringMatchingFilter({
         continue;
       }
       totalRows++;
-      if (field && selectedValues.has(getFieldFilterValue(row, field))) {
+      if (
+        field &&
+        (field.values[row.__index] == null ? includeMissing : selectedValues.has(getFieldFilterValue(row, field)))
+      ) {
         selectedRows++;
       }
     }
-    return { selectedRows: values.length === 0 ? totalRows : selectedRows, totalRows };
-  }, [field, rows, values]);
+    return { selectedRows: values.length === 0 && !includeMissing ? totalRows : selectedRows, totalRows };
+  }, [field, rows, values, includeMissing]);
   const [popupWidth, setPopupWidth] = useState(280);
   const [matchCase, setMatchCase] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useFilterInputFocus();
   const operators = Object.values(operatorSelectableValues());
   const styles = useStyles2(getStyles);
-
-  useEffect(() => {
-    // Wait for the closing column menu to restore focus before focusing the filter input.
-    const frame = requestAnimationFrame(() => inputRef.current?.focus());
-    return () => cancelAnimationFrame(frame);
-  }, []);
 
   return (
     <FilterPopupLayout containerRef={containerRef} width={popupWidth} onKeyDown={onKeyDown}>
@@ -124,6 +136,7 @@ export function StringMatchingFilter({
           operator={operator}
         />
 
+        <FilterMissingValues value={includeMissing} onChange={setIncludeMissing} />
         <FilterPopupFooter
           selectedRows={selectedRows}
           totalRows={totalRows}
@@ -137,7 +150,7 @@ export function StringMatchingFilter({
           }
           onCancel={onClose}
           onApply={() => {
-            onApplyValues(values);
+            onApplyValues(values, includeMissing);
             onClose();
           }}
           applyLabel={<Trans i18nKey="grafana-ui.table.filter-popup-apply">Ok</Trans>}

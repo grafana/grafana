@@ -1,15 +1,14 @@
 import { type Field } from '@grafana/data';
 
+import { type RangeSelection } from '../transformations/rangeFilter';
 import { type TableRow } from '../types';
-
-type Range = { min?: number; max?: number; includeMissing: boolean };
 
 export interface RangeFilterProps {
   field: Field;
   rows: TableRow[];
-  range?: Range;
+  range?: RangeSelection;
   timeZone?: string;
-  onApply: (range: Range) => void;
+  onApply: (range: RangeSelection) => void;
   onClear: () => void;
   onCancel: () => void;
 }

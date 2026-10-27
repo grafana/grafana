@@ -1,26 +1,27 @@
-import { css } from '@emotion/css';
 import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { useRef } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Body } from '../../../DateTimePickers/TimeRangePicker/CalendarBody';
 import { Header } from '../../../DateTimePickers/TimeRangePicker/CalendarHeader';
-import { type TimePickerCalendarProps } from '../../../DateTimePickers/TimeRangePicker/TimePickerCalendar';
+import {
+  getCalendarStyles,
+  type TimePickerCalendarProps,
+} from '../../../DateTimePickers/TimeRangePicker/TimePickerCalendar';
 
-interface Props extends TimePickerCalendarProps {
+interface Props extends Omit<TimePickerCalendarProps, 'isFullscreen' | 'onApply'> {
   anchorElement: HTMLElement | null;
   minDate?: Date;
   maxDate?: Date;
 }
 
 export function TableRangeCalendar(props: Props) {
-  const styles = useStyles2(getStyles);
+  const calendarStyle = useStyles2(getCalendarStyles);
   const ref = useRef<HTMLElement>(null);
   const { refs, floatingStyles } = useFloating({
     elements: { reference: props.anchorElement },
@@ -40,7 +41,7 @@ export function TableRangeCalendar(props: Props) {
     <FocusScope contain restoreFocus autoFocus>
       <div ref={refs.setFloating} style={floatingStyles}>
         <section
-          className={styles.calendar}
+          className={calendarStyle}
           ref={ref}
           {...overlayProps}
           {...dialogProps}
@@ -53,16 +54,3 @@ export function TableRangeCalendar(props: Props) {
     </FocusScope>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  calendar: css({
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1),
-    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
-    backgroundColor: theme.colors.background.elevated,
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.lg,
-  }),
-});

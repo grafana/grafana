@@ -62,10 +62,14 @@ export const FilterList = ({
       }),
     [options, regex, predicate]
   );
-  const longestVisibleLabel = useMemo(
+  const theme = useTheme2();
+  const widestLabel = useMemo(
     () =>
-      items.reduce((longest, item) => (item.label && item.label.length > longest.length ? item.label : longest), ''),
-    [items]
+      options.reduce(
+        (width, item) => Math.max(width, measureText(item.label ?? '', parseFloat(theme.typography.size.md)).width),
+        0
+      ),
+    [options, theme.typography.size.md]
   );
   const selectedItems = useMemo(() => items.filter((item) => values.includes(item)), [items, values]);
 
@@ -97,13 +101,12 @@ export const FilterList = ({
   );
 
   const styles = useStyles2(getStyles);
-  const theme = useTheme2();
   useEffect(() => {
     if (onWidthChange) {
-      const textWidth = measureText(longestVisibleLabel, parseFloat(theme.typography.size.md)).width;
+      const textWidth = widestLabel;
       onWidthChange(Math.min(360, Math.max(280, Math.ceil(textWidth + 64))));
     }
-  }, [longestVisibleLabel, onWidthChange, theme.typography.size.md]);
+  }, [widestLabel, onWidthChange]);
   const gutter = theme.spacing.gridSize / 2;
   const height = useMemo(() => Math.min(items.length * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [gutter, items.length]);
 

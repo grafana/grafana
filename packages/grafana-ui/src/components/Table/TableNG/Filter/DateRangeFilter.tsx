@@ -6,9 +6,10 @@ import { t } from '@grafana/i18n';
 
 import { adjustDateForReactCalendar } from '../../../DateTimePickers/utils/adjustDateForReactCalendar';
 
-import { RangeFilterFrame, useRangeInputFocus } from './RangeFilterFrame';
+import { RangeFilterFrame } from './RangeFilterFrame';
 import { TableRangeFields } from './TableRangeFields';
 import { type RangeFilterProps } from './rangeFilterTypes';
+import { useFilterInputFocus } from './useFilterInputFocus';
 import { rangeValidation, useRangeValues } from './utils';
 
 const rangeSelectors = selectors.components.Panels.Visualization.TableNG.Filters.Range;
@@ -32,7 +33,7 @@ export function DateRangeFilter({
 }: RangeFilterProps) {
   const validationId = useId();
   const calendarAnchor = useRef<HTMLElement | null>(null);
-  const minimumRef = useRangeInputFocus();
+  const minimumRef = useFilterInputFocus();
   const formatInput = (value?: number) =>
     value == null ? '' : dateTimeFormat(value, { format: DATE_FORMAT, timeZone });
   const [lowerDraft, setLowerDraft] = useState<DateDraft>(() => ({ text: formatInput(range?.min), timeZone }));
@@ -97,17 +98,11 @@ export function DateRangeFilter({
             errorId: validationId,
           }}
           calendar={{
-            isFullscreen: true,
             minDate: Number.isFinite(histogram.min) ? calendarBoundary(histogram.min, timeZone, false) : undefined,
             maxDate: Number.isFinite(histogram.max) ? calendarBoundary(histogram.max, timeZone, true) : undefined,
             from: dateTimeParse(min ?? (Number.isFinite(histogram.min) ? histogram.min : Date.now()), { timeZone }),
             to: dateTimeParse(max ?? (Number.isFinite(histogram.max) ? histogram.max : Date.now()), { timeZone }),
             timeZone,
-            onApply: () => {
-              if (!invalid) {
-                onApply({ min, max, includeMissing: false });
-              }
-            },
             onChange: (from, to) => {
               setLowerDraft({ text: formatInput(from.valueOf()), timeZone });
               setUpperDraft({ text: formatInput(to.endOf('day').valueOf()), timeZone });

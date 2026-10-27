@@ -1,4 +1,4 @@
-import { type ReactNode, type Ref, useEffect, useRef } from 'react';
+import { type ReactNode, type Ref, useState } from 'react';
 
 import { type Field } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,7 +8,7 @@ import { FieldValidationMessage } from '../../../Forms/FieldValidationMessage';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { getDisplayName } from '../utils';
 
-import { FilterPopupFooter } from './FilterPopupLayout';
+import { FilterMissingValues, FilterPopupFooter } from './FilterPopupLayout';
 import { type RangeFilterProps } from './rangeFilterTypes';
 
 const rangeSelectors = selectors.components.Panels.Visualization.TableNG.Filters.Range;
@@ -23,16 +23,6 @@ interface Props extends Pick<RangeFilterProps, 'range' | 'onApply' | 'onClear' |
   validationId: string;
   containerRef?: Ref<HTMLDivElement>;
   children: ReactNode;
-}
-
-export function useRangeInputFocus() {
-  const minimumRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    // The closing column menu restores its trigger focus before this popup takes over.
-    const frame = requestAnimationFrame(() => minimumRef.current?.focus());
-    return () => cancelAnimationFrame(frame);
-  }, []);
-  return minimumRef;
 }
 
 export function RangeFilterFrame({
@@ -50,9 +40,14 @@ export function RangeFilterFrame({
   onCancel,
   children,
 }: Props) {
+  const [includeMissing, setIncludeMissing] = useState(range?.includeMissing ?? false);
+  const unbounded = min == null && max == null;
   const count = invalid
     ? 0
-    : finite.filter((value) => (min == null || value >= min) && (max == null || value <= max)).length;
+    : unbounded
+      ? values.length
+      : finite.filter((value) => (min == null || value >= min) && (max == null || value <= max)).length +
+        (includeMissing ? values.length - finite.length : 0);
 
   return (
     <Stack
@@ -71,12 +66,18 @@ export function RangeFilterFrame({
           {t('grafana-ui.table.range.invalid', 'Enter valid bounds with minimum no greater than maximum.')}
         </FieldValidationMessage>
       )}
+      <FilterMissingValues
+        value={unbounded || includeMissing}
+        disabled={unbounded}
+        onChange={setIncludeMissing}
+        testId={rangeSelectors.includeMissingCheckbox}
+      />
       <FilterPopupFooter
         selectedRows={count}
         totalRows={values.length}
         onClear={range !== undefined ? onClear : undefined}
         onCancel={onCancel}
-        onApply={() => onApply({ min, max, includeMissing: false })}
+        onApply={() => (unbounded ? onClear() : onApply({ min, max, includeMissing }))}
         applyLabel={t('grafana-ui.table.range.apply', 'Apply')}
         applyDisabled={invalid}
         clearTestId={rangeSelectors.clearButton}

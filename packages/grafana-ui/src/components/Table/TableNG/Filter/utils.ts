@@ -149,26 +149,24 @@ export function rangeValidation(min?: number, max?: number) {
   };
 }
 
-export function sliderDecimals(field: Field, values: number[], range: number) {
-  const display = field.display;
-  const displayed = display
-    ? values
-        .slice(0, 100)
-        .map((value) => Number(display(value).text.replaceAll(',', '')))
-        .filter(Number.isFinite)
-    : [];
-  const dataDecimals =
-    field.config.decimals ??
-    (displayed.length > 0
-      ? displayed.reduce((decimals, value) => Math.max(decimals, guessDecimals(value)), 0)
-      : Math.min(
-          3,
-          values.reduce((decimals, value) => Math.max(decimals, guessDecimals(Number(value.toPrecision(10)))), 0)
-        ));
-  const rangeDecimals = range > 0 && range < 1 ? Math.ceil(-Math.log10(range)) : 0;
-  return Math.min(100, Math.max(0, dataDecimals, rangeDecimals));
+export function sliderDecimals(values: number[], range: number) {
+  const dataDecimals = values.reduce(
+    (decimals, value) => Math.max(decimals, guessDecimals(Number(value.toPrecision(12)))),
+    0
+  );
+  const rangeDecimals = range > 0 ? Math.max(0, Math.ceil(-Math.log10(range / 1000))) : 0;
+  return Math.min(100, Math.max(dataDecimals, rangeDecimals));
 }
 
-export function sliderBoundText(value: number, currentValue: number, currentText: string, decimals: number) {
-  return value === currentValue ? currentText : String(Number(value.toFixed(decimals)));
+export function sliderBoundText(
+  value: number,
+  currentValue: number,
+  currentText: string,
+  decimals: number,
+  extent?: number
+) {
+  if (value === currentValue) {
+    return currentText;
+  }
+  return String(value === extent ? value : Number(value.toFixed(decimals)));
 }

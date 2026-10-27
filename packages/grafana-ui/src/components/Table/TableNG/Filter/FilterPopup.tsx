@@ -2,6 +2,7 @@ import { memo, useEffect, useRef, type KeyboardEvent } from 'react';
 
 import { FieldType, type Field, type SelectableValue } from '@grafana/data';
 
+import { type RangeSelection } from '../transformations/rangeFilter';
 import { type FilterOperator, type TableRow } from '../types';
 
 import { DateRangeFilter } from './DateRangeFilter';
@@ -12,11 +13,12 @@ import { StringMatchingFilter } from './StringMatchingFilter';
 export interface FilterPopupProps {
   stateKey?: string;
   rangeFiltersEnabled?: boolean;
-  onApplyValues: (values: SelectableValue[]) => void;
-  onApplyRange?: (range: { min?: number; max?: number; includeMissing: boolean }) => void;
+  onApplyValues: (values: SelectableValue[], includeMissing?: boolean) => void;
+  onApplyRange?: (range: RangeSelection) => void;
   onClear: () => void;
   timeZone?: string;
-  range?: { min?: number; max?: number; includeMissing: boolean };
+  range?: RangeSelection;
+  includeMissing?: boolean;
   rows: TableRow[];
   filterValue?: Array<SelectableValue<unknown>>;
   onClose: () => void;
@@ -83,7 +85,7 @@ const FilterPopupEditor = memo((props: FilterPopupProps) => {
         onClose();
         buttonElement?.focus();
       },
-      onApply: (next: { min?: number; max?: number; includeMissing: boolean }) => {
+      onApply: (next: RangeSelection) => {
         onApplyRange?.(next);
         onClose();
         buttonElement?.focus();
@@ -106,7 +108,14 @@ const FilterPopupEditor = memo((props: FilterPopupProps) => {
     }
   }
 
-  return <StringMatchingFilter {...props} containerRef={containerRef} onKeyDown={handleKeyDown} />;
+  return (
+    <StringMatchingFilter
+      {...props}
+      filterValue={filterValue ?? (range ? [] : undefined)}
+      containerRef={containerRef}
+      onKeyDown={handleKeyDown}
+    />
+  );
 });
 
 FilterPopup.displayName = 'FilterPopup';

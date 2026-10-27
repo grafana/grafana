@@ -2,9 +2,11 @@ import { type KeyboardEventHandler, type ReactNode, type Ref } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
+import { getResolvedLanguage } from '@grafana/i18n/internal';
 
 import { useTheme2 } from '../../../../themes/ThemeContext';
 import { Button } from '../../../Button/Button';
+import { Checkbox } from '../../../Forms/Checkbox';
 import { Box } from '../../../Layout/Box/Box';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Text } from '../../../Text/Text';
@@ -23,6 +25,7 @@ export function FilterPopupLayout({ children, containerRef, width, onKeyDown }: 
     // Handle Escape from child controls before the table header stops keyboard propagation.
     <Box
       ref={containerRef}
+      tabIndex={-1}
       onKeyDown={onKeyDown}
       width={width ? `${width}px` : 'fit-content'}
       minWidth="280px"
@@ -92,12 +95,40 @@ export function FilterPopupFooter({
   );
 }
 
-const compactCount = new Intl.NumberFormat('en-US', {
-  notation: 'compact',
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-});
+export function formatRowCount(count: number, locale = getResolvedLanguage()): string {
+  const formatted = new Intl.NumberFormat(
+    locale,
+    count > 1000
+      ? {
+          notation: 'compact',
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1,
+        }
+      : { useGrouping: false }
+  ).format(count);
+  return locale.startsWith('en') ? formatted.replace('K', 'k') : formatted;
+}
 
-export function formatRowCount(count: number): string {
-  return count > 1000 ? compactCount.format(count).replace('K', 'k') : String(count);
+export function FilterMissingValues({
+  value,
+  disabled,
+  onChange,
+  testId,
+}: {
+  value: boolean;
+  disabled?: boolean;
+  onChange: (value: boolean) => void;
+  testId?: string;
+}) {
+  return (
+    <Stack>
+      <Checkbox
+        label={t('grafana-ui.table.filter.include-missing', 'Include missing values')}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(event.currentTarget.checked)}
+        data-testid={testId}
+      />
+    </Stack>
+  );
 }

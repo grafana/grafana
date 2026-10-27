@@ -11,8 +11,9 @@ import { Box } from '../../../Layout/Box/Box';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { RangeSliderG14 } from '../../../Slider/RangeSliderG14';
 
-import { RangeFilterFrame, useRangeInputFocus } from './RangeFilterFrame';
+import { RangeFilterFrame } from './RangeFilterFrame';
 import { type RangeFilterProps } from './rangeFilterTypes';
+import { useFilterInputFocus } from './useFilterInputFocus';
 import { rangeValidation, sliderBoundText, sliderDecimals, useRangeValues } from './utils';
 
 const rangeSelectors = selectors.components.Panels.Visualization.TableNG.Filters.Range;
@@ -22,15 +23,12 @@ export function NumericRangeFilter({ field, rows, range, onApply, onClear, onCan
   const styles = useStyles2(getStyles);
   const id = useId();
   const validationId = useId();
-  const minimumRef = useRangeInputFocus();
+  const minimumRef = useFilterInputFocus();
   const [lower, setLower] = useState(() => (range?.min == null ? '' : String(range.min)));
   const [upper, setUpper] = useState(() => (range?.max == null ? '' : String(range.max)));
   const { values, histogram } = useRangeValues(field, rows);
   const sliderRange = histogram.max - histogram.min;
-  const decimals = useMemo(
-    () => sliderDecimals(field, histogram.finite, sliderRange),
-    [field, histogram.finite, sliderRange]
-  );
+  const decimals = useMemo(() => sliderDecimals(histogram.finite, sliderRange), [histogram.finite, sliderRange]);
   const sliderStep = Math.max(sliderRange / 1000, 10 ** -decimals);
   const parse = (value: string) => (value.trim() === '' ? undefined : Number(value));
   const min = parse(lower);
@@ -105,10 +103,10 @@ export function NumericRangeFilter({ field, rows, range, onApply, onClear, onCan
                 step={sliderStep}
                 tooltipAlwaysVisible={false}
                 ariaLabelForHandle={[minimumLabel, maximumLabel]}
-                formatTooltipResult={(value) => formatValue(Number(value.toFixed(decimals)))}
+                formatTooltipResult={(value) => formatValue(value)}
                 onChange={([min, max]) => {
-                  setLower(sliderBoundText(min, sliderMin, lower, decimals));
-                  setUpper(sliderBoundText(max, sliderMax, upper, decimals));
+                  setLower(sliderBoundText(min, sliderMin, lower, decimals, histogram.min));
+                  setUpper(sliderBoundText(max, sliderMax, upper, decimals, histogram.max));
                 }}
               />
             </Box>

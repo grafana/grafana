@@ -25,15 +25,15 @@ export type CommonTableNGProps = Omit<
 export function CommonTableNG(props: CommonTableNGProps) {
   const tableRefreshEnabled = useFlagTableRefresh();
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
-  const jsonSyntaxHighlightingEnabled = useFlagTableRefreshNewFeatures();
+  const refreshNewFeaturesEnabled = useFlagTableRefreshNewFeatures();
 
   return (
     <TableNG
       {...props}
       tableRefreshEnabled={tableRefreshEnabled}
       contentAwareWidthsEnabled={contentAwareWidthsEnabled}
-      jsonSyntaxHighlightingEnabled={jsonSyntaxHighlightingEnabled}
-      rangeFiltersEnabled={jsonSyntaxHighlightingEnabled}
+      jsonSyntaxHighlightingEnabled={refreshNewFeaturesEnabled}
+      rangeFiltersEnabled={refreshNewFeaturesEnabled}
     />
   );
 }
