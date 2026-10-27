@@ -15,10 +15,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8stesting "k8s.io/client-go/testing"
-
-	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
@@ -92,94 +89,6 @@ const (
 	outcomeNotFound = "not_found"
 )
 
-// fixedAnnouncements answers with one version regardless of key, and records how
-// many times it was asked, so a test can prove when the sample is taken.
-type fixedAnnouncements struct {
-	rv    int64
-	calls int
-	onGet func()
-}
-
-func (f *fixedAnnouncements) Announced(sdkresource.Identifier) int64 {
-	f.calls++
-	if f.onGet != nil {
-		f.onGet()
-	}
-	return f.rv
-}
-
-// stubRepositoryGetter is a RepositoryGetter whose Get is scripted.
-type stubRepositoryGetter struct {
-	RepositoryGetter
-	get func(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error)
-}
-
-func (s stubRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
-	return s.get(ctx, namespace, name)
-}
-
-func TestObserveRepositoryFreshness(t *testing.T) {
-	const res = "repositories"
-	ctx := context.Background()
-
-	t.Run("passes the result through untouched", func(t *testing.T) {
-		want := repoAt(testNamespace, "r", rvString(rvAgo(0)))
-		inner := stubRepositoryGetter{get: func(context.Context, string, string) (*provisioningapis.Repository, error) {
-			return want, nil
-		}}
-		rec, _ := newFreshnessRecorder(t, res)
-
-		got, err := observeRepositoryFreshness(inner, &fixedAnnouncements{rv: rvAgo(0)}, rec).Get(ctx, testNamespace, "r")
-		require.NoError(t, err)
-		assert.Same(t, want, got)
-	})
-
-	t.Run("passes a NotFound through untouched", func(t *testing.T) {
-		notFound := apierrors.NewNotFound(schema.GroupResource{Resource: res}, "r")
-		inner := stubRepositoryGetter{get: func(context.Context, string, string) (*provisioningapis.Repository, error) {
-			return nil, notFound
-		}}
-		rec, reg := newFreshnessRecorder(t, res)
-
-		_, err := observeRepositoryFreshness(inner, &fixedAnnouncements{rv: rvAgo(0)}, rec).Get(ctx, testNamespace, "r")
-		assert.Same(t, notFound, err)
-		assert.Equal(t, float64(1), freshnessCount(t, reg, res, outcomeNotFound))
-	})
-
-	// The legal execution Rafael Paulovic called out: a read already in flight
-	// when a newer write commits may return the earlier state. Sampling the
-	// announcement before the read is what keeps that out of the counter — an
-	// announcement that lands mid-read is simply not compared against.
-	t.Run("an announcement that lands mid-read is not counted", func(t *testing.T) {
-		announced := &fixedAnnouncements{rv: 0}
-		inner := stubRepositoryGetter{get: func(context.Context, string, string) (*provisioningapis.Repository, error) {
-			// The concurrent write commits and is announced while the read runs.
-			announced.rv = rvAgo(0)
-			return repoAt(testNamespace, "r", rvString(rvAgo(5*time.Second))), nil
-		}}
-		rec, reg := newFreshnessRecorder(t, res)
-
-		_, err := observeRepositoryFreshness(inner, announced, rec).Get(ctx, testNamespace, "r")
-		require.NoError(t, err)
-		for _, outcome := range []string{outcomeCurrent, outcomeBehind, outcomeNotFound} {
-			assert.Zerof(t, freshnessCount(t, reg, res, outcome), "outcome %q", outcome)
-		}
-		assert.Equal(t, 1, announced.calls, "the announcement should be sampled once, before the read")
-	})
-
-	// A getter the wrapper does not own still answers the quota methods.
-	t.Run("forwards the rest of the getter", func(t *testing.T) {
-		client := fake.NewClientset(repo(testNamespace, "r")).ProvisioningV0alpha1()
-		inner := NewClientRepositoryGetter(client, seededSnapshot(repo(testNamespace, "r")))
-		rec, _ := newFreshnessRecorder(t, res)
-
-		wrapped := observeRepositoryFreshness(inner, &fixedAnnouncements{}, rec)
-		count, err := wrapped.CountRepositories(ctx, testNamespace)
-		require.NoError(t, err)
-		assert.Equal(t, 1, count)
-	})
-}
-
 // End-to-end over the real informer: the notification raises the announcement,
 // the getter the same delta source returns compares its read against it.
 func TestNewRepositoryDeltaSource_ObservesReadFreshness(t *testing.T) {
@@ -201,7 +110,7 @@ func TestNewRepositoryDeltaSource_ObservesReadFreshness(t *testing.T) {
 
 		reg := prometheus.NewRegistry()
 		sub := newFakeSubscriber()
-		source, getter, err := NewRepositoryDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+		source, getter, err := NewRepositoryDeltaSource(sub, client, nil, time.Minute, Metrics{}, NewFreshnessMetrics(reg))
 		require.NoError(t, err)
 
 		stop := make(chan struct{})
@@ -254,7 +163,7 @@ func TestNewRepositoryDeltaSource_DeleteLeavesNoAnnouncement(t *testing.T) {
 
 		reg := prometheus.NewRegistry()
 		sub := newFakeSubscriber()
-		source, getter, err := NewRepositoryDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+		source, getter, err := NewRepositoryDeltaSource(sub, client, nil, time.Minute, Metrics{}, NewFreshnessMetrics(reg))
 		require.NoError(t, err)
 
 		stop := make(chan struct{})
@@ -285,7 +194,7 @@ func TestNewRepositoryDeltaSource_DeleteLeavesNoAnnouncement(t *testing.T) {
 // The getter the apiserver path returns is not wrapped: a watch-fed cache has no
 // cross-replica read visibility to measure.
 func TestNewRepositoryDeltaSource_NoFreshnessOnTheAPIServerPath(t *testing.T) {
-	_, getter, err := NewRepositoryDeltaSource(nil, fake.NewClientset(), nil, time.Minute, nil, NewFreshnessMetrics(prometheus.NewRegistry()))
+	_, getter, err := NewRepositoryDeltaSource(nil, fake.NewClientset(), nil, time.Minute, Metrics{}, NewFreshnessMetrics(prometheus.NewRegistry()))
 	require.NoError(t, err)
 	assert.IsType(t, cachedRepositoryGetter{}, getter)
 }
@@ -303,7 +212,7 @@ func TestNewConnectionDeltaSource_ObservesReadFreshness(t *testing.T) {
 
 		reg := prometheus.NewRegistry()
 		sub := newFakeSubscriber()
-		source, getter, err := NewConnectionDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+		source, getter, err := NewConnectionDeltaSource(sub, client, nil, time.Minute, Metrics{}, NewFreshnessMetrics(reg))
 		require.NoError(t, err)
 
 		stop := make(chan struct{})

@@ -1,156 +1,52 @@
 package informer
 
 import (
-	"strconv"
-	"time"
-
-	"github.com/grafana/dskit/instrument"
+	sdkmetrics "github.com/grafana/grafana-app-sdk/metrics"
+	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	usresource "github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// informerMetrics measures event delivery into the provisioning controllers'
-// delta source — the NATS-backed informer or the apiserver watch, whichever the
-// process runs. It records how many events arrived — live vs recovered by the
-// periodic re-list/resync, as separate metric families — and how long after the
-// change was written. Events a replica missed live cannot be counted here —
-// under the round-robin queue group each notification reaches one replica, so a
-// per-replica gap measures routing, not loss. Missed NATS events are the
-// cluster-wide difference between the publisher's
-// storage_server_watch_notifications_published_total and live_events_total
-// summed across replicas.
-// The verbs the delivery metrics are labelled by.
-const (
-	VerbAdd    = "add"
-	VerbUpdate = "update"
-	VerbDelete = "delete"
-)
+// metricsNamespace prefixes every collector this package builds, so the app-sdk's series stay findable alongside
+// the rest of provisioning's.
+const metricsNamespace = "grafana_provisioning"
 
-type informerMetrics struct {
-	liveEvents    *prometheus.CounterVec
-	relistEvents  *prometheus.CounterVec
-	liveLatency   *prometheus.HistogramVec
-	relistLatency *prometheus.HistogramVec
+// Metrics are the collectors a process's informers report on. Delivery is shared by every shape — bus, periodic and
+// the apiserver-backed watch — so a kind keeps its series when its source changes; Bus adds what only a bus informer
+// has, its subscription state and reconnects.
+type Metrics struct {
+	Delivery *operator.InformerDeliveryMetrics
+	Bus      *operator.BusInformerMetrics
 }
 
-// newInformerMetrics builds the delivery metrics on reg. One instance serves
-// every recorder in a delta source, which pass their own resource label, so a
-// process builds this once per delta source. A nil reg leaves the collectors
-// unregistered.
-func newInformerMetrics(reg prometheus.Registerer) *informerMetrics {
-	latencyOpts := func(name, help string) prometheus.HistogramOpts {
-		return prometheus.HistogramOpts{
-			Name:                            name,
-			Help:                            help,
-			Buckets:                         instrument.DefBuckets,
-			NativeHistogramBucketFactor:     1.1,
-			NativeHistogramMaxBucketNumber:  160,
-			NativeHistogramMinResetDuration: time.Hour,
-		}
-	}
-	return &informerMetrics{
-		liveEvents: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_provisioning_informer_live_events_total",
-			Help: "Events delivered live to provisioning informer handlers, by resource and verb.",
-		}, []string{"resource", "verb"}),
-		relistEvents: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_provisioning_informer_relist_events_total",
-			Help: "Events delivered by the periodic re-list/resync to provisioning informer handlers, by resource and verb. Adds and deletes are changes the live stream did not deliver here; updates are re-deliveries of unchanged objects.",
-		}, []string{"resource", "verb"}),
-		liveLatency: promauto.With(reg).NewHistogramVec(latencyOpts(
-			"grafana_provisioning_informer_live_event_latency_seconds",
-			"Time from a change's resource version being issued to its live event reaching the informer handlers.",
-		), []string{"resource"}),
-		relistLatency: promauto.With(reg).NewHistogramVec(latencyOpts(
-			"grafana_provisioning_informer_relist_event_latency_seconds",
-			"Time from a change's resource version being issued to its recovery by a re-list, for adds the live stream did not deliver. Re-deliveries of unchanged objects carry no latency.",
-		), []string{"resource"}),
+// NewMetrics builds the informers' collectors under this repository's prefix, registering as it builds. Building a
+// second set on the same registry reuses the collectors already there rather than failing.
+func NewMetrics(reg prometheus.Registerer) Metrics {
+	// Unified storage embeds the write's timestamp in the resource version, which is what dates a change for the
+	// delivery latency histograms and turns a version difference into a lag in seconds.
+	cfg := sdkmetrics.Config{Namespace: metricsNamespace}
+	delivery := operator.NewInformerDeliveryMetrics(operator.InformerDeliveryMetricsConfig{
+		MetricsConfig:       cfg,
+		Registerer:          reg,
+		ResourceVersionTime: usresource.ResourceVersionTime,
+	})
+	return Metrics{
+		Delivery: delivery,
+		Bus: operator.NewBusInformerMetrics(operator.BusInformerMetricsConfig{
+			MetricsConfig: cfg,
+			Registerer:    reg,
+			Delivery:      delivery,
+		}),
 	}
 }
 
-func (m *informerMetrics) observeLive(resourceName, verb string, rv int64) {
-	m.liveEvents.WithLabelValues(resourceName, verb).Inc()
-	m.observeLatency(m.liveLatency, resourceName, rv)
-}
-
-func (m *informerMetrics) observeRelist(resourceName, verb string, rv int64) {
-	m.relistEvents.WithLabelValues(resourceName, verb).Inc()
-	m.observeLatency(m.relistLatency, resourceName, rv)
-}
-
-func (m *informerMetrics) observeLatency(latency *prometheus.HistogramVec, resourceName string, rv int64) {
-	if rv <= 0 {
-		return
-	}
-	// The RV embeds the write's timestamp (snowflake or microsecond epoch);
-	// negative results mean clock skew, not delivery, so they are dropped.
-	seconds := time.Since(resource.ResourceVersionTime(rv)).Seconds()
-	if seconds > 0 {
-		latency.WithLabelValues(resourceName).Observe(seconds)
-	}
-}
-
-// apiServerMeter observes deliveries from an apiserver-backed
-// SharedIndexInformer. Register it as one extra event handler so each event is
-// counted once however many controller handlers the informer has. The informer has no live/relist
-// distinction of its own, so the meter derives it: initial-list adds and resync
-// re-deliveries (same RV on both sides of an update) and re-list-detected
-// deletes (DeletedFinalStateUnknown) count as relist, everything else came from
-// the watch and counts as live.
-type apiServerMeter struct {
-	metrics      *informerMetrics
-	resourceName string
-}
-
-var _ cache.ResourceEventHandler = apiServerMeter{}
-
-func (h apiServerMeter) OnAdd(obj any, isInInitialList bool) {
-	if isInInitialList {
-		// Initial-list objects may be arbitrarily old: no latency sample.
-		h.metrics.observeRelist(h.resourceName, VerbAdd, 0)
-		return
-	}
-	h.metrics.observeLive(h.resourceName, VerbAdd, objectRV(obj))
-}
-
-func (h apiServerMeter) OnUpdate(oldObj, newObj any) {
-	// A resync replays the store's object against itself; a live update always
-	// carries a new RV.
-	if objectRVString(oldObj) == objectRVString(newObj) {
-		h.metrics.observeRelist(h.resourceName, VerbUpdate, 0)
-		return
-	}
-	h.metrics.observeLive(h.resourceName, VerbUpdate, objectRV(newObj))
-}
-
-func (h apiServerMeter) OnDelete(obj any) {
-	if _, missedDelete := obj.(cache.DeletedFinalStateUnknown); missedDelete {
-		// The delete was detected by a re-list; the carried object's RV predates
-		// the delete, so it cannot date it.
-		h.metrics.observeRelist(h.resourceName, VerbDelete, 0)
-		return
-	}
-	h.metrics.observeLive(h.resourceName, VerbDelete, objectRV(obj))
-}
-
-func objectRVString(obj any) string {
-	acc, err := meta.Accessor(obj)
-	if err != nil {
-		return ""
-	}
-	return acc.GetResourceVersion()
-}
-
-// objectRV parses an object's resource version as the int64 unified storage
-// issues; 0 when absent or not numeric (no latency sample).
-func objectRV(obj any) int64 {
-	rv, err := strconv.ParseInt(objectRVString(obj), 10, 64)
-	if err != nil {
-		return 0
-	}
-	return rv
+// NewFreshnessMetrics builds the read-freshness collectors, which only a bus-backed source reports on: an apiserver
+// watch keeps a cache current, so there is no cross-replica read visibility to measure.
+func NewFreshnessMetrics(reg prometheus.Registerer) *operator.FreshnessMetrics {
+	return operator.NewFreshnessMetrics(operator.FreshnessMetricsConfig{
+		MetricsConfig:       sdkmetrics.Config{Namespace: metricsNamespace},
+		Registerer:          reg,
+		ResourceVersionTime: usresource.ResourceVersionTime,
+	})
 }

@@ -109,7 +109,7 @@ func RunRepoController(ctx context.Context, deps server.OperatorDependencies) (r
 	}
 
 	// The repository delta source and the getter it backs.
-	repoSource, repoGetter, err := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, repoKeys, controllerCfg.ResyncInterval(), controllerCfg.BusInformerMetrics(), controllerCfg.FreshnessMetrics())
+	repoSource, repoGetter, err := informer.NewRepositoryDeltaSource(controllerCfg.natsSubscriber, provisioningClient, repoKeys, controllerCfg.ResyncInterval(), controllerCfg.InformerMetrics(), controllerCfg.FreshnessMetrics())
 	if err != nil {
 		return fmt.Errorf("failed to build repository delta source: %w", err)
 	}

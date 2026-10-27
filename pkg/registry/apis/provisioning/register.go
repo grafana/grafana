@@ -1166,14 +1166,14 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// One per process: the collectors register on construction, so a second set panics on the duplicate.
-			busInformerMetrics := informer.NewBusInformerMetrics(b.registry)
+			informerMetrics := informer.NewMetrics(b.registry)
 
 			// Feed the driver's work queue from the jobs informer: live create
 			// events plus the periodic resync/re-list, which re-delivers unclaimed
 			// jobs and is the driver's only recovery path. The handler must be
 			// registered before the informer runs: the NATS-backed source has no
 			// cache to replay for late handlers.
-			jobSource, err := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry, busInformerMetrics)
+			jobSource, err := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, informerMetrics)
 			if err != nil {
 				return fmt.Errorf("build job delta source: %w", err)
 			}
@@ -1209,7 +1209,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				repoKeys = keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
 				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.RepositoryResourceInfo.GroupVersionResource().Resource)
 			}
-			repoSource, reconcileRepoGetter, err := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, busInformerMetrics, freshnessMetrics)
+			repoSource, reconcileRepoGetter, err := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, informerMetrics, freshnessMetrics)
 			if err != nil {
 				return fmt.Errorf("build repository delta source: %w", err)
 			}
@@ -1261,7 +1261,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				connKeys = keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource())
 				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.ConnectionResourceInfo.GroupVersionResource().Resource)
 			}
-			connSource, connGetter, err := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, busInformerMetrics, freshnessMetrics)
+			connSource, connGetter, err := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, informerMetrics, freshnessMetrics)
 			if err != nil {
 				return fmt.Errorf("build connection delta source: %w", err)
 			}

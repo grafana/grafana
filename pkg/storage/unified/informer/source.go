@@ -1,9 +1,7 @@
 package informer
 
 import (
-	"context"
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/operator"
@@ -17,13 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch/natsbus"
 )
 
-// DeltaSource is the subset of cache.SharedIndexInformer a controller uses to receive events: register a handler
-// (whose registration reports HasSynced) and run until stopped. An apiserver-backed SharedIndexInformer satisfies it
-// too, so the wiring can pick a source without the controller knowing which it is.
-type DeltaSource interface {
-	AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error)
-	Run(stopCh <-chan struct{})
-}
+// DeltaSource is what a controller registers against, whichever informer is behind it.
+type DeltaSource = operator.DeltaSource
 
 // NewPeriodicDeltaSource returns a DeltaSource backed by the app-sdk's re-list-only informer: it lists the resource
 // on a jittered cadence and delivers every listed object as an add, keeping no cache. It suits idempotent,
@@ -32,7 +25,10 @@ type DeltaSource interface {
 // The controllers keep their own generated types: the objects list carries them through unchanged, and the handlers
 // receive them back. Nothing here requires the resource's kind to implement resource.Object.
 func NewPeriodicDeltaSource(info ResourceInfo, zero resource.WrappedObjectType, resync time.Duration, page operator.PageFunc) (DeltaSource, error) {
-	kind := sdkKind(info, resource.NewWrappedObject(zero))
+	kind, err := sdkKind(info, resource.NewWrappedObject(zero))
+	if err != nil {
+		return nil, err
+	}
 
 	// Identity rather than the listed body: it carries the metadata a cadence-driven handler reads — the creation
 	// timestamp an age-based cleanup ages off, the finalizers, the deletion timestamp — and unlike a conversion it
@@ -47,7 +43,7 @@ func NewPeriodicDeltaSource(info ResourceInfo, zero resource.WrappedObjectType, 
 	if err != nil {
 		return nil, err
 	}
-	return newDeltaSource(informer, info.GroupVersionKind().String()), nil
+	return source{operator.NewDeltaSource(informer)}, nil
 }
 
 // ResourceInfo is the pair of names a kind is addressed by: its GroupVersionKind, which the app-sdk's schema wants,
@@ -58,138 +54,80 @@ type ResourceInfo interface {
 	GroupVersionResource() schema.GroupVersionResource
 }
 
-// sdkKind builds the app-sdk kind an informer is parameterised on, with the resource's real plural.
-func sdkKind(info ResourceInfo, zero resource.Object) resource.Kind {
-	gvk := info.GroupVersionKind()
-	return resource.Kind{Schema: resource.NewSimpleSchema(gvk.Group, gvk.Version, zero, &resource.UntypedList{},
-		resource.WithKind(gvk.Kind), resource.WithPlural(info.GroupVersionResource().Resource))}
+// sdkKind builds the app-sdk kind an informer is parameterised on. A WrappedObject carries a generated type, whose
+// own marshaling must not be re-wrapped.
+func sdkKind(info ResourceInfo, zero resource.Object) (resource.Kind, error) {
+	return resource.NewKind(resource.KindConfig{
+		GroupVersionKind:     info.GroupVersionKind(),
+		GroupVersionResource: info.GroupVersionResource(),
+		Scope:                resource.NamespacedScope,
+		Zero:                 zero,
+		ZeroList:             &resource.UntypedList{},
+		Codec:                resource.NewPassthroughJSONCodec(),
+	})
 }
 
 // SDKKind builds the app-sdk kind for a resource, for the SDK APIs which are parameterised on one but read only
 // its identity — the read-freshness recorder, for instance.
 func SDKKind(info ResourceInfo) resource.Kind {
-	return sdkKind(info, &resource.UntypedObject{})
+	kind, _ := sdkKind(info, &resource.UntypedObject{})
+	return kind
 }
 
 // unwrapObject returns the object the lister wrapped, so a handler type-asserts the type it registered for.
-func unwrapObject(obj resource.Object) any {
+func unwrapObject(obj any) any {
 	if wrapped, ok := obj.(*resource.WrappedObject[resource.WrappedObjectType]); ok {
 		return wrapped.Object
 	}
 	return obj
 }
 
-// sdkInformer is the subset of the app-sdk's informers sdkSource drives. BusInformer and PeriodicInformer both
-// satisfy it, so the delta source below is the one seam between them and the controllers.
-type sdkInformer interface {
-	AddEventHandler(operator.ResourceWatcher) error
-	HasSynced() bool
-	WaitForSync(context.Context) error
-	Run(context.Context) error
+// source hands the controllers their own generated types back. The app-sdk's delta source dispatches the
+// resource.Object the informer holds, which for these kinds is a WrappedObject around the generated type, so the
+// handler is decorated to take it back out before the controller type-asserts it.
+type source struct {
+	*operator.InformerDeltaSource
 }
 
-func newDeltaSource(informer sdkInformer, name string) *sdkSource {
-	return &sdkSource{informer: informer, name: name, syncedCh: make(chan struct{})}
+func (s source) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
+	return s.InformerDeltaSource.AddEventHandler(unwrapping{handler: handler})
 }
 
-// sdkSource exposes an app-sdk informer as the DeltaSource the controllers register against, so a source backed by
-// the SDK is interchangeable with an apiserver-backed SharedIndexInformer at the wiring seam.
-type sdkSource struct {
-	informer sdkInformer
-	name     string
-	// bus is set for a bus-backed source; nil for the re-list-only one, which keeps no snapshot to read.
+// busSource adds the snapshot reads, which the delta source does not expose: the informer behind it holds them.
+type busSource struct {
+	source
 	bus *operator.BusInformer
-
-	syncedOnce sync.Once
-	syncedCh   chan struct{}
 }
 
-var _ DeltaSource = (*sdkSource)(nil)
+var _ BusSource = busSource{}
 
-func (s *sdkSource) Count(namespace string) int {
-	if s.bus == nil {
-		return 0
-	}
-	return s.bus.Count(namespace)
-}
+func (s busSource) Count(namespace string) int    { return s.bus.Count(namespace) }
+func (s busSource) Observe(obj resource.Object)   { s.bus.Observe(obj) }
+func (s busSource) Forget(id resource.Identifier) { s.bus.Forget(id) }
 
-func (s *sdkSource) Observe(obj resource.Object) {
-	if s.bus != nil {
-		s.bus.Observe(obj)
-	}
-}
-
-func (s *sdkSource) Forget(id resource.Identifier) {
-	if s.bus != nil {
-		s.bus.Forget(id)
-	}
-}
-
-func (s *sdkSource) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
-	if err := s.informer.AddEventHandler(handlerWatcher{handler: handler}); err != nil {
-		return nil, err
-	}
-	return sdkRegistration{source: s}, nil
-}
-
-// Run blocks until stopCh is closed, mirroring cache.SharedIndexInformer.Run. Both goroutines it starts end with the
-// context: the informer returns when it is done, and the deferred cancel releases the sync waiter.
-func (s *sdkSource) Run(stopCh <-chan struct{}) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go func() {
-		select {
-		case <-stopCh:
-			cancel()
-		case <-ctx.Done():
-		}
-	}()
-	go func() {
-		if err := s.informer.WaitForSync(ctx); err == nil {
-			s.syncedOnce.Do(func() { close(s.syncedCh) })
-		}
-	}()
-	_ = s.informer.Run(ctx)
-}
-
-// handlerWatcher delivers the app-sdk informer's events to a client-go handler.
-type handlerWatcher struct {
+// unwrapping takes the generated type back out of the wrapper before the controller's handler sees it.
+type unwrapping struct {
 	handler cache.ResourceEventHandler
 }
 
-var _ operator.ResourceWatcher = handlerWatcher{}
+var _ cache.ResourceEventHandler = unwrapping{}
 
-func (w handlerWatcher) Add(_ context.Context, obj resource.Object) error {
-	w.handler.OnAdd(unwrapObject(obj), false)
-	return nil
+func (h unwrapping) OnAdd(obj any, isInInitialList bool) {
+	h.handler.OnAdd(unwrapObject(obj), isInInitialList)
 }
 
-func (w handlerWatcher) Update(_ context.Context, src, tgt resource.Object) error {
-	w.handler.OnUpdate(unwrapObject(src), unwrapObject(tgt))
-	return nil
+func (h unwrapping) OnUpdate(oldObj, newObj any) {
+	h.handler.OnUpdate(unwrapObject(oldObj), unwrapObject(newObj))
 }
 
-func (w handlerWatcher) Delete(_ context.Context, obj resource.Object) error {
-	w.handler.OnDelete(unwrapObject(obj))
-	return nil
+func (h unwrapping) OnDelete(obj any) {
+	if tombstone, ok := obj.(cache.DeletedFinalStateUnknown); ok {
+		tombstone.Obj = unwrapObject(tombstone.Obj)
+		h.handler.OnDelete(tombstone)
+		return
+	}
+	h.handler.OnDelete(unwrapObject(obj))
 }
-
-type sdkRegistration struct {
-	source *sdkSource
-}
-
-var _ cache.ResourceEventHandlerRegistration = sdkRegistration{}
-
-func (r sdkRegistration) HasSynced() bool { return r.source.informer.HasSynced() }
-
-func (r sdkRegistration) HasSyncedChecker() cache.DoneChecker { return sdkChecker(r) }
-
-type sdkChecker struct {
-	source *sdkSource
-}
-
-func (c sdkChecker) Name() string          { return "app-sdk-informer:" + c.source.name }
-func (c sdkChecker) Done() <-chan struct{} { return c.source.syncedCh }
 
 // BusSourceOptions configures a bus-backed delta source beyond its list and resync.
 type BusSourceOptions struct {
@@ -205,8 +143,11 @@ type BusSourceOptions struct {
 	// Announcements records what each live notification announced, for the read-freshness instrumentation. A nil
 	// tracker disables it.
 	Announcements *operator.AnnouncementTracker
-	// Metrics are the app-sdk's delivery metrics, shared across every source a process builds. Nil disables them.
+	// Metrics are the bus informer's collectors, shared across every source a process builds. Nil disables them.
 	Metrics *operator.BusInformerMetrics
+	// Delivery are the collectors the re-list reports its requests and projection on, shared with every other
+	// informer shape in the process. Nil disables them.
+	Delivery *operator.InformerDeliveryMetrics
 }
 
 // BusSource is a bus-backed DeltaSource which also exposes what the informer last reconciled with storage.
@@ -238,7 +179,10 @@ func NewBusDeltaSource(subscriber nats.Subscriber, zero resource.WrappedObjectTy
 		return nil, errors.New("nats is not enabled")
 	}
 
-	kind := sdkKind(info, resource.NewWrappedObject(zero))
+	kind, err := sdkKind(info, resource.NewWrappedObject(zero))
+	if err != nil {
+		return nil, err
+	}
 
 	lister, err := busLister(kind, opts, page)
 	if err != nil {
@@ -260,8 +204,7 @@ func NewBusDeltaSource(subscriber nats.Subscriber, zero resource.WrappedObjectTy
 		return nil, err
 	}
 
-	source := newDeltaSource(informer, info.GroupVersionKind().String())
-	source.bus = informer
+	out := busSource{source: source{operator.NewDeltaSource(informer)}, bus: informer}
 	if opts.Announcements != nil {
 		// Registered first, and the informer dispatches to its watchers in order, so the announcement is in place
 		// before a controller's handler has enqueued the key.
@@ -269,13 +212,13 @@ func NewBusDeltaSource(subscriber nats.Subscriber, zero resource.WrappedObjectTy
 			return nil, err
 		}
 	}
-	return source, nil
+	return out, nil
 }
 
 // busLister builds the re-list: identities where the server serves them, full objects otherwise. Which one served a
 // re-list is reported on the app-sdk's projection counter, alongside its other delivery metrics.
 func busLister(kind resource.Kind, opts BusSourceOptions, page operator.PageFunc) (operator.ResourceLister, error) {
-	recorder := opts.Metrics.RelistRecorder(kind)
+	recorder := opts.Delivery.RelistRecorder(kind)
 	objects, err := operator.NewPagedLister(kind, page, operator.PagedListerOptions{
 		// The controllers key off identity and re-fetch in their reconcile, and a dynamic client's unstructured
 		// items cannot be converted into the kind anyway.

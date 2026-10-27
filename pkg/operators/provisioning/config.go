@@ -71,7 +71,7 @@ type ControllerConfig struct {
 	tlsConfig             *rest.TLSClientConfig
 	decryptService        decrypt.DecryptService
 	registry              prometheus.Registerer
-	busInformerMetrics    *operator.BusInformerMetrics
+	informerMetrics       *informer.Metrics
 	freshness             *operator.FreshnessMetrics
 	repositoryFactory     repository.Factory
 	repositoryExtras      []repository.Extra
@@ -450,15 +450,16 @@ func (c *ControllerConfig) Registry() prometheus.Registerer {
 	return c.registry
 }
 
-// BusInformerMetrics returns the process's informer delivery metrics. Memoized
+// InformerMetrics returns the process's informer collectors. Memoized
 // because the collectors register on first call; building them twice would panic
 // on the duplicate.
-func (c *ControllerConfig) BusInformerMetrics() *operator.BusInformerMetrics {
-	if c.busInformerMetrics == nil {
-		c.busInformerMetrics = informer.NewBusInformerMetrics(c.Registry())
+func (c *ControllerConfig) InformerMetrics() informer.Metrics {
+	if c.informerMetrics == nil {
+		m := informer.NewMetrics(c.Registry())
+		c.informerMetrics = &m
 	}
 
-	return c.busInformerMetrics
+	return *c.informerMetrics
 }
 
 // FreshnessMetrics returns the process's reconcile read-freshness metrics.

@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana-app-sdk/operator"
+	"github.com/grafana/grafana-app-sdk/resource"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -38,18 +39,23 @@ type ConnectionGetter interface {
 // freshness instruments how the getter's reads compare to the notifications
 // that triggered them (see freshness.go); nil disables the observation, and it
 // applies to the NATS path only.
-func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *operator.BusInformerMetrics, freshness *operator.FreshnessMetrics) (DeltaSource, ConnectionGetter, error) {
+func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics Metrics, freshness *operator.FreshnessMetrics) (DeltaSource, ConnectionGetter, error) {
 	if nats.Enabled(subscriber) {
 		announced := operator.NewAnnouncementTracker(operator.AnnouncementTrackerOptions{})
 		source, err := NewConnectionInformer(subscriber, client, "", resync, keys, usinformer.BusSourceOptions{
 			Announcements: announced,
-			Metrics:       metrics,
+			Metrics:       metrics.Bus,
+			Delivery:      metrics.Delivery,
 		})
 		if err != nil {
 			return nil, nil, err
 		}
 		getter := NewClientConnectionGetter(client.ProvisioningV0alpha1())
-		return source, observeConnectionFreshness(getter, announced, freshness.Recorder(usinformer.SDKKind(&provisioningapis.ConnectionResourceInfo))), nil
+		return source, observedConnectionGetter{
+			ConnectionGetter: getter,
+			tracker:          announced,
+			recorder:         freshness.Recorder(usinformer.SDKKind(&provisioningapis.ConnectionResourceInfo)),
+		}, nil
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
 	return inf.Informer(), NewCachedConnectionGetter(inf.Lister()), nil
@@ -65,8 +71,8 @@ func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interfac
 	opts.Namespace = namespace
 	opts.Group = queueGroup
 	page := func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
-			return c.Connections(namespace).List(ctx, opts)
-		}
+		return c.Connections(namespace).List(ctx, opts)
+	}
 	return usinformer.NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{},
 		&provisioningapis.ConnectionResourceInfo, resync, page, opts)
 }
@@ -97,4 +103,18 @@ type clientConnectionGetter struct {
 
 func (g clientConnectionGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error) {
 	return g.client.Connections(namespace).Get(ctx, name, metav1.GetOptions{})
+}
+
+// observedConnectionGetter records how each reconcile read compared to the notification that triggered it.
+type observedConnectionGetter struct {
+	ConnectionGetter
+	tracker  *operator.AnnouncementTracker
+	recorder operator.FreshnessRecorder
+}
+
+func (g observedConnectionGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Connection, error) {
+	return operator.ObserveRead(ctx, g.tracker, g.recorder, resource.Identifier{Namespace: namespace, Name: name},
+		func(ctx context.Context) (*provisioningapis.Connection, error) {
+			return g.ConnectionGetter.Get(ctx, namespace, name)
+		})
 }

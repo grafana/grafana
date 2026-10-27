@@ -50,18 +50,23 @@ type RepositoryGetter interface {
 // that triggered them (see freshness.go); nil disables the observation. It
 // applies to the NATS path only — the apiserver path reads a cache the watch
 // keeps current, so there is no cross-replica read visibility to measure.
-func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *operator.BusInformerMetrics, freshness *operator.FreshnessMetrics) (DeltaSource, RepositoryGetter, error) {
+func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics Metrics, freshness *operator.FreshnessMetrics) (DeltaSource, RepositoryGetter, error) {
 	if nats.Enabled(subscriber) {
 		announced := operator.NewAnnouncementTracker(operator.AnnouncementTrackerOptions{})
 		source, err := NewRepositoryInformer(subscriber, client, "", resync, keys, usinformer.BusSourceOptions{
 			Announcements: announced,
-			Metrics:       metrics,
+			Metrics:       metrics.Bus,
+			Delivery:      metrics.Delivery,
 		})
 		if err != nil {
 			return nil, nil, err
 		}
 		getter := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), source)
-		return source, observeRepositoryFreshness(getter, announced, freshness.Recorder(usinformer.SDKKind(&provisioningapis.RepositoryResourceInfo))), nil
+		return source, observedRepositoryGetter{
+			RepositoryGetter: getter,
+			tracker:          announced,
+			recorder:         freshness.Recorder(usinformer.SDKKind(&provisioningapis.RepositoryResourceInfo)),
+		}, nil
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
 	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister()), nil
@@ -170,4 +175,19 @@ func (g *clientRepositoryGetter) ConfirmRepositoryCount(ctx context.Context, nam
 		return 0, err
 	}
 	return count, nil
+}
+
+// observedRepositoryGetter records how each reconcile read compared to the notification that triggered it. Reads
+// pass through untouched; only the observation is added.
+type observedRepositoryGetter struct {
+	RepositoryGetter
+	tracker  *operator.AnnouncementTracker
+	recorder operator.FreshnessRecorder
+}
+
+func (g observedRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
+	return operator.ObserveRead(ctx, g.tracker, g.recorder, resource.Identifier{Namespace: namespace, Name: name},
+		func(ctx context.Context) (*provisioningapis.Repository, error) {
+			return g.RepositoryGetter.Get(ctx, namespace, name)
+		})
 }
