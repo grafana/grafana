@@ -44,7 +44,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                 | Yes                |
 | `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              | Yes                |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                | Yes                |
-| `queryLibrary`                               | Enables Saved queries (query library) feature                                                                                       | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                          |                    |
 | `savedQueriesRBAC`                           | Enables Saved queries (query library) RBAC permissions                                                                              | Yes                |
 | `newSavedQueriesExperience`                  | Enables the new Saved queries (query library) modal experience                                                                      | Yes                |

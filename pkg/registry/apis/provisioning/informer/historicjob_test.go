@@ -3,6 +3,7 @@ package informer
 import (
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -61,20 +62,24 @@ func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
 // TestNewHistoricJobPeriodicInformer_ListsFromClient verifies the NATS-mode source reads
 // historic jobs through the provisioning client.
 func TestNewHistoricJobPeriodicInformer_ListsFromClient(t *testing.T) {
-	client := fake.NewClientset(
-		&provisioningapis.HistoricJob{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "old"}},
-	)
+	synctest.Test(t, func(t *testing.T) {
+		client := fake.NewClientset(
+			&provisioningapis.HistoricJob{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "old"}},
+		)
 
-	src, err := NewHistoricJobPeriodicInformer(client, "", time.Hour)
-	require.NoError(t, err)
-	h := &addRecorder{}
-	_, err = src.AddEventHandler(h)
-	require.NoError(t, err)
+		src, err := NewHistoricJobPeriodicInformer(client, "", time.Hour)
+		require.NoError(t, err)
+		h := &addRecorder{}
+		_, err = src.AddEventHandler(h)
+		require.NoError(t, err)
 
-	stop := make(chan struct{})
-	defer close(stop)
-	go src.Run(stop)
+		stop := make(chan struct{})
+		defer close(stop)
+		go src.Run(stop)
 
-	require.Eventually(t, func() bool { return len(h.got()) == 1 }, time.Second, 5*time.Millisecond)
-	assert.ElementsMatch(t, []string{"old"}, h.got())
+		// Finish the initial client list and deliver its historic job to the handler.
+		synctest.Wait()
+
+		assert.ElementsMatch(t, []string{"old"}, h.got())
+	})
 }

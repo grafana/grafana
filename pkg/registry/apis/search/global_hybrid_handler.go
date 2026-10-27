@@ -18,7 +18,7 @@ import (
 // GlobalHybridSearchFor retains known API authorization policies while the
 // backend checks manifest opt-in, collection enrollment, and result access.
 // kinds names the results of types that targets do not include.
-func (h *HybridHandler) GlobalHybridSearchFor(targets map[schema.GroupResource]schema.GroupVersionKind, kinds map[schema.GroupResource]string, auth authorizer.Authorizer) http.HandlerFunc {
+func (h *HybridHandler) GlobalHybridSearchFor(targets map[schema.GroupResource]schema.GroupVersionKind, kinds map[schema.GroupResource]string, auth authorizer.Authorizer, defaultResources []searchv0.HybridSearchResource) http.HandlerFunc {
 	names := make(map[schema.GroupResource]string, len(kinds)+len(targets))
 	maps.Copy(names, kinds)
 	for gr, gvk := range targets {
@@ -27,6 +27,9 @@ func (h *HybridHandler) GlobalHybridSearchFor(targets map[schema.GroupResource]s
 	gvr := GlobalSearchGVR()
 	kind := kindRef{group: gvr.Group, version: gvr.Version, resource: gvr.Resource, kinds: names}
 	return h.hybridSearchFor(kind, func(ctx context.Context, q *searchv0.HybridSearchQuery, namespace string) (*resourcepb.HybridSearchRequest, error) {
+		if len(q.Resources) == 0 {
+			q.Resources = defaultResources
+		}
 		req, errs := TranslateGlobalHybridSearchQuery(q, namespace)
 		if len(errs) > 0 {
 			return nil, apierrors.NewInvalid(schema.GroupKind{Group: searchv0.GROUP, Kind: searchv0.KindHybridSearchQuery}, "", errs)

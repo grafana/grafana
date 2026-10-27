@@ -15,7 +15,7 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AnnoKeyFolder, type Resource, type TableResponse } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, type Resource } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
@@ -540,21 +540,6 @@ export const browseDashboardsAPI = createApi({
             dispatch(updateDashboardName({ id: data.uid, title, url }));
           }
         });
-      },
-    }),
-
-    // RTK wrapper for the dashboard API
-    listDeletedDashboards: builder.query<TableResponse, void>({
-      providesTags: ['getFolder'],
-      queryFn: async () => {
-        try {
-          const api = await getDashboardAPI();
-          const response = await api.listDeletedDashboards({});
-
-          return { data: response };
-        } catch (error) {
-          return handleRequestError(error);
-        }
       },
     }),
 

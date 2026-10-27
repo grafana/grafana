@@ -144,4 +144,15 @@ describe('NotebooksTable tags', () => {
 
     expect(await screen.findByRole('button', { name: 'Filter by tag latency' })).toBeInTheDocument();
   });
+
+  // Overflow scrolls rather than collapsing into "+ N", so no tag is left unclickable.
+  it('renders every tag rather than truncating', async () => {
+    const tags = ['latency', 'slo', 'cost', 'errors', 'traffic'];
+    renderTable([row({ tags })]);
+
+    for (const tag of tags) {
+      expect(await screen.findByRole('button', { name: `Filter by tag ${tag}` })).toBeInTheDocument();
+    }
+    expect(screen.queryByText(/^\+/)).not.toBeInTheDocument();
+  });
 });

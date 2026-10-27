@@ -7297,6 +7297,7 @@
       "copy": "Copiar para a área de transferência",
       "learn-more": "Saiba mais",
       "no-issues": "Nenhum erro ou aviso para esta consulta.",
+      "no-panel-issues": "",
       "severity-error": "Erro",
       "severity-info": "Informações",
       "severity-warning": "Aviso"
@@ -8125,8 +8126,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abrir painel de consulta",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Abrir painel de consulta"
     },
     "viz-panel-links-renderer": {
@@ -16070,6 +16069,7 @@
       "expand": "Expandir",
       "filter": "",
       "loading": "Carregando painéis de controle",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Nenhum resultado encontrado para sua consulta",
       "noResultsForFilterClear": "Limpar pesquisa",
       "noResultsForScopes": "Nenhum painel ou link encontrado para os escopos selecionados",
@@ -16781,8 +16781,61 @@
   },
   "swagger": {
     "login": "Entrar",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Verifique a nomenclatura antes de enviar solicitações ou recarregue a página para tentar novamente.",
-    "namespace-unavailable-title": "Não foi possível carregar a nomenclatura"
+    "namespace-unavailable-title": "Não foi possível carregar a nomenclatura",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16836,6 +16889,9 @@
     "description-styling-from-field": "Um campo contendo objetos JSON com propriedades CSS",
     "description-tooltip-from-field": "Renderizar uma célula a partir de um campo (oculto ou visível) em uma dica de ferramenta",
     "description-zebra-striping": "Alternar a cor de fundo das linhas de forma intercalada",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Consulta"
     },
@@ -18384,6 +18440,7 @@
       "body_other": "Tem certeza de que deseja excluir {{count}} variáveis?"
     },
     "editor": {
+      "back": "",
       "cancel": "Cancelar",
       "delete": "Excluir",
       "delete-modal-body": "Tem certeza de que deseja excluir \"{{name}}\"?",
@@ -18392,6 +18449,7 @@
       "folder-description": "Defina o escopo da variável para uma pasta ou escolha a pasta raiz de Painéis para torná-la global (disponível para todos os painéis)",
       "folder-description-folder-only": "Defina o escopo da variável para uma pasta que você possa editar",
       "folder-label": "Pasta",
+      "load-error-title": "",
       "moved": "Variável transferida",
       "name-exists": "Já existe uma variável com este nome na pasta selecionada",
       "save": "Salvar",

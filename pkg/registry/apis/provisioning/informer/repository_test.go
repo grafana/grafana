@@ -3,6 +3,7 @@ package informer
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -55,31 +56,39 @@ func seededSnapshot(objs ...*provisioningapis.Repository) fakeSnapshot {
 // A live repository notification is delivered as an identity, the same shape the
 // re-list stores.
 func TestNewRepositoryInformer_DeliversTheProjection(t *testing.T) {
-	sub := newFakeSubscriber()
-	rec := &typeRecorder{}
-	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		rec := &typeRecorder{}
+		gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
 
-	inf, err := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, nil, usinformer.BusSourceOptions{})
-	require.NoError(t, err)
-	_, err = inf.AddEventHandler(rec)
-	require.NoError(t, err)
-	stopCh := make(chan struct{})
-	go inf.Run(stopCh)
-	t.Cleanup(func() { close(stopCh) })
+		inf, err := NewRepositoryInformer(sub, fake.NewClientset(), testNamespace, time.Minute, nil, usinformer.BusSourceOptions{})
+		require.NoError(t, err)
+		_, err = inf.AddEventHandler(rec)
+		require.NoError(t, err)
+		stopCh := make(chan struct{})
+		go inf.Run(stopCh)
+		t.Cleanup(func() { close(stopCh) })
 
-	subject := resourcewatch.Subject(gvr, testNamespace)
-	require.Eventually(t, func() bool { return sub.subscribed(subject) }, 5*time.Second, 5*time.Millisecond)
+		subject := resourcewatch.Subject(gvr, testNamespace)
 
-	sub.publish(t, subject, &resourcepb.WatchNotification{
-		Type: resourcepb.WatchNotification_MODIFIED, Group: gvr.Group, Resource: gvr.Resource,
-		Namespace: testNamespace, Name: "repo-a",
+		// Complete initial listing and establish the subscription before publishing notifications.
+		synctest.Wait()
+
+		require.True(t, sub.subscribed(subject))
+
+		sub.publish(t, subject, &resourcepb.WatchNotification{
+			Type: resourcepb.WatchNotification_MODIFIED, Group: gvr.Group, Resource: gvr.Resource,
+			Namespace: testNamespace, Name: "repo-a",
+		})
+
+		// Deliver the published notification before inspecting its projected object.
+		synctest.Wait()
+
+		got, ok := rec.last().(*metav1.PartialObjectMetadata)
+		require.True(t, ok, "expected a projection, got %T", rec.last())
+		assert.Equal(t, "repo-a", got.Name)
+		assert.Equal(t, testNamespace, got.Namespace)
 	})
-
-	require.Eventually(t, func() bool { return rec.last() != nil }, 5*time.Second, 5*time.Millisecond)
-	got, ok := rec.last().(*metav1.PartialObjectMetadata)
-	require.True(t, ok, "expected a projection, got %T", rec.last())
-	assert.Equal(t, "repo-a", got.Name)
-	assert.Equal(t, testNamespace, got.Namespace)
 }
 
 // The cached getter reads the informer's lister for both Get and the count.

@@ -260,9 +260,9 @@ func TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients(t *testing.T) 
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.Len(t, loader.aggregateTargets, 2)
+	require.Len(t, aggregateTargetsOf(loader), 2)
 
-	first, second := loader.aggregateTargets[0], loader.aggregateTargets[1]
+	first, second := aggregateTargetsOf(loader)[0], aggregateTargetsOf(loader)[1]
 	require.NotNil(t, first.client)
 	require.NotNil(t, second.client)
 	require.NotSame(t, first.client, second.client)
@@ -291,8 +291,8 @@ func TestProvideCloudRoutesLoaderFactory_PluginsURLAloneActivatesWithoutCapToken
 
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.NotNil(t, loader.pluginsTarget)
-	require.Empty(t, loader.aggregateTargets)
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourcePluginsURL))
+	require.Empty(t, aggregateTargetsOf(loader))
 }
 
 func TestProvideCloudRoutesLoaderFactory_CoreURLAloneActivatesWithoutCapToken(t *testing.T) {
@@ -306,10 +306,10 @@ func TestProvideCloudRoutesLoaderFactory_CoreURLAloneActivatesWithoutCapToken(t 
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.NotNil(t, loader.coreTarget)
-	require.Nil(t, loader.pluginsTarget)
-	require.Equal(t, sourceCoreURL, loader.coreTarget.source)
-	require.Equal(t, coreKeyPrefix, loader.coreTarget.keyPrefix)
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourceCoreURL))
+	require.Nil(t, pluginManifestsTargetOf(loader, sourcePluginsURL))
+	require.Equal(t, sourceCoreURL, pluginManifestsTargetOf(loader, sourceCoreURL).source)
+	require.Equal(t, coreKeyPrefix, pluginManifestsTargetOf(loader, sourceCoreURL).keyPrefix)
 }
 
 func TestProvideCloudRoutesLoaderFactory_CoreAndPluginsURLShareRegisterer(t *testing.T) {
@@ -324,8 +324,8 @@ func TestProvideCloudRoutesLoaderFactory_CoreAndPluginsURLShareRegisterer(t *tes
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.NotNil(t, loader.coreTarget)
-	require.NotNil(t, loader.pluginsTarget)
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourceCoreURL))
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourcePluginsURL))
 }
 
 func TestProvideCloudRoutesLoaderFactory_PluginsURLRejectsNonAbsoluteURL(t *testing.T) {
@@ -358,7 +358,7 @@ func TestProvideCloudRoutesLoaderFactory_PluginManifestsTLS(t *testing.T) {
 		require.NoError(t, err)
 		loader, ok := loaderIface.(*cloudLoader)
 		require.True(t, ok)
-		return loader.pluginsTarget, loader.coreTarget
+		return pluginManifestsTargetOf(loader, sourcePluginsURL), pluginManifestsTargetOf(loader, sourceCoreURL)
 	}
 	poll := func(target *pluginManifestsTarget) error {
 		_, err := fetchPluginManifests(context.Background(), target.client, target.url)
@@ -520,7 +520,7 @@ func TestCloudLoader_AggregateOnly(t *testing.T) {
 func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 	t.Run("disabled returns a nil interface", func(t *testing.T) {
 		loader := &cloudLoader{}
-		require.True(t, loader.SingleTenantFallback() == nil)
+		require.True(t, loader.UnregisteredGroupHandler() == nil)
 	})
 	t.Run("discovery alone enables fallback", func(t *testing.T) {
 		gcom := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -545,7 +545,7 @@ func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 		require.NoError(t, err)
 		cloud, ok := loader.(*cloudLoader)
 		require.True(t, ok)
-		require.Same(t, cloud.singleTenantFallback, cloud.SingleTenantFallback())
+		require.Same(t, cloud.singleTenantFallback, cloud.UnregisteredGroupHandler())
 		host, err := cloud.singleTenantFallback.hostForNamespace(t.Context(), "stacks-35611")
 		require.NoError(t, err)
 		require.Equal(t, "http://play-grafana-http.hosted-grafana.svc.cluster.local.:80", host.url.String())
@@ -604,7 +604,10 @@ func TestCloudLoaderSingleTenantLookupLimits(t *testing.T) {
 
 func TestCloudLoaderFallbackOnlyLifecycle(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "https://play.grafana.org/"})
+		// A host name would be resolved inside the bubble, which crashes when
+		// the lookup is shared with a goroutine outside it. Nothing listens on
+		// this port, so the poll fails at once.
+		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "http://127.0.0.1:1/"})
 		loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 		require.NoError(t, err)
 		cloud := loader.(*cloudLoader)
@@ -658,7 +661,7 @@ audience = second
 	result, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	loader := result.(*cloudLoader)
-	require.Len(t, loader.aggregateTargets, 2)
+	require.Len(t, aggregateTargetsOf(loader), 2)
 	dirty := make(chan struct{}, 1)
 	assertWinner := func(name, version string) {
 		t.Helper()
@@ -670,14 +673,14 @@ audience = second
 	}
 	// Poll completion order must not determine priority or merge group
 	// versions. The loader serves nothing until every target has polled once.
-	loader.aggregateTargets[1].poll(t.Context(), dirty)
+	aggregateTargetsOf(loader)[1].poll(t.Context(), dirty)
 	_, err = loader.Load(t.Context())
 	require.ErrorIs(t, err, errFirstPollPending)
-	loader.aggregateTargets[0].poll(t.Context(), dirty)
+	aggregateTargetsOf(loader)[0].poll(t.Context(), dirty)
 	assertWinner("z_first", "v1")
 	require.Equal(t, []shadowedGroup{{Group: "shared.ext.grafana.app", Source: "aggregate:a_second", By: "aggregate:z_first"}}, loader.shadowedGroups())
 	first.Close()
-	loader.aggregateTargets[0].poll(t.Context(), dirty)
+	aggregateTargetsOf(loader)[0].poll(t.Context(), dirty)
 	assertWinner("z_first", "v1")
 }
 
@@ -699,4 +702,27 @@ func TestPluginManifestsPollInterval(t *testing.T) {
 		"core_poll_interval": "0s",
 	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
 	require.ErrorContains(t, err, "core_poll_interval must be a positive duration")
+}
+
+// The loader tears its sources down once it stops, which closes the managed
+// plugin connections.
+func TestCloudLoaderStopClosesPluginConnections(t *testing.T) {
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, "http://127.0.0.1:1/plugins", nil, http.DefaultClient,
+		defaultPluginGRPCConfig(), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	release, err := target.acquireConnection("localhost:50051", "grafana-appsdktest-app")
+	require.NoError(t, err)
+	defer release()
+	loader, err := newCloudLoader(nil, target, nil, nil)
+	require.NoError(t, err)
+
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), loader))
+	target.connectionsMu.Lock()
+	require.Len(t, target.connections, 1, "running keeps the connections")
+	target.connectionsMu.Unlock()
+	require.NoError(t, services.StopAndAwaitTerminated(t.Context(), loader))
+	target.connectionsMu.Lock()
+	defer target.connectionsMu.Unlock()
+	require.True(t, target.closed)
+	require.Empty(t, target.connections)
 }

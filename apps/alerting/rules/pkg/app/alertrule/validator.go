@@ -83,6 +83,12 @@ func validateDurations(r *model.AlertRule) error {
 
 func ValidateDelete(cfg config.RuntimeConfig) validation.ValidateFunc[*model.AlertRule] {
 	return func(ctx context.Context, req validation.Request[*model.AlertRule]) error {
+		if cfg.AllowDeletingSequenceMembers != nil {
+			allowed, err := cfg.AllowDeletingSequenceMembers(ctx)
+			if err != nil || allowed {
+				return err
+			}
+		}
 		oldRule := req.OldObject
 		if cfg.MembershipResolver != nil {
 			memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{oldRule.Name})

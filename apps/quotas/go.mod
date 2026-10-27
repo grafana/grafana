@@ -5,7 +5,7 @@ go 1.27.3
 replace github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
 
 require (
-	github.com/grafana/grafana-app-sdk v0.61.1-0.20261026195058-268f1ae24de4
+	github.com/grafana/grafana-app-sdk v0.61.1-0.20261027080137-881e5f6d3719
 	github.com/grafana/grafana-app-sdk/logging v0.61.0
 	github.com/grafana/grafana/pkg/storage/unified/resourceclient v0.0.0-20261008094357-6ccebd1d4c59
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0

@@ -618,9 +618,6 @@
   "packages/grafana-ui/src/components/uPlot/Plot.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/uPlot/config/UPlotConfigBuilder.ts": {
@@ -1412,11 +1409,6 @@
   },
   "public/app/features/auth-config/utils/data.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/browse-dashboards/components/DeletedDashboardsLimitBanner.tsx": {
-    "react-hooks/exhaustive-deps": {
       "count": 1
     }
   },

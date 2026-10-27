@@ -49,7 +49,7 @@ affect the next poll attempt.
 
 ## Design: cooldown-paced polling with exponential backoff
 
-Each aggregate target runs its own background poll loop (`aggregateTarget.run`,
+Each aggregate target runs its own background poll loop (`polledSource.run`,
 `aggregate_poller.go`). The `core_url`, `plugins_url` and ST fallback loops use the same pattern.
 The cooldown is **not** a circuit breaker — it's a plain backoff mechanism that throttles the
 target's own outbound poll request rate, with no per-caller protection or state machine.
