@@ -4211,7 +4211,7 @@ func TestFilteringOnBooleanAndNumericFields(t *testing.T) {
 		{"boolean value that is not true or false", filter("paused", "=", "yes")},
 		{"boolean compared with a range", filter("paused", "gt", "true")},
 		{"number value that is not a number", filter("panelID", "=", "ten")},
-		{"filter on a field that only declares retrieve", filter(resource.SEARCH_FIELD_CREATED, "gt", "0")},
+		{"filter on a field that only declares retrieve", filter(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS, "=", "true")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			res, err := index.Search(context.Background(), nil, tc.query, nil, nil)

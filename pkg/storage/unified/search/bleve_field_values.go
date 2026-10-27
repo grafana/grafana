@@ -42,8 +42,6 @@ func fieldValueDefinitions(provider resource.SearchFieldsProvider, group, kindRe
 		{Name: resource.SEARCH_FIELD_SCORE, Type: resource.SearchFieldTypeDouble},
 		{Name: resource.SEARCH_FIELD_EXPLAIN, Type: resource.SearchFieldTypeUnknown},
 		{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resource.SearchFieldTypeInt64},
-		{Name: resource.SEARCH_FIELD_MANAGER_KIND, Type: resource.SearchFieldTypeString},
-		{Name: resource.SEARCH_FIELD_MANAGER_ID, Type: resource.SearchFieldTypeString},
 		{Name: resource.SEARCH_FIELD_SOURCE_TIME, Type: resource.SearchFieldTypeInt64},
 		{Name: resource.SEARCH_FIELD_SOURCE_PATH, Type: resource.SearchFieldTypeString},
 		{Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM, Type: resource.SearchFieldTypeString},
