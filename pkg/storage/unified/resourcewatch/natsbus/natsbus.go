@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/resourcebus"
 	"google.golang.org/protobuf/proto"
@@ -96,8 +97,34 @@ func (s *subscriber) onMessage(ctx context.Context, handler func(context.Context
 			// Unified storage issues a monotonic int64; the contract carries the opaque string the kubernetes API
 			// guarantees, so this is the one place a version crosses between the two.
 			ResourceVersion: strconv.FormatInt(notification.ResourceVersion, 10),
+			Metadata:        eventMetadata(notification.Metadata),
 		})
 	}
+}
+
+// eventMetadata maps the metadata a notification carries onto the contract's, or nil when none was announced: a
+// resource whose owner registered no WatchMetadataSpec sends none, and so does a publisher predating the field.
+//
+// The allowlist is the publisher's, so an absent key here means it was not announced rather than not set. A zero
+// timestamp is the publisher's "unknown", which the contract spells as the zero value and a nil.
+func eventMetadata(md *resourcepb.NotificationMetadata) *resourcebus.EventMetadata {
+	if md == nil {
+		return nil
+	}
+	out := &resourcebus.EventMetadata{
+		Labels:      md.Labels,
+		Annotations: md.Annotations,
+		Finalizers:  md.Finalizers,
+		Generation:  md.Generation,
+	}
+	if md.CreationTimestampMillis != 0 {
+		out.CreationTimestamp = time.UnixMilli(md.CreationTimestampMillis)
+	}
+	if md.DeletionTimestampMillis != 0 {
+		deletedAt := time.UnixMilli(md.DeletionTimestampMillis)
+		out.DeletionTimestamp = &deletedAt
+	}
+	return out
 }
 
 // subscription maps the contract's Close onto the NATS subscriber's Unsubscribe; WaitReady is the same method on both.

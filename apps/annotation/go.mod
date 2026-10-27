@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/annotation
 go 1.27.3
 
 require (
-	github.com/grafana/grafana-app-sdk v0.61.1-0.20261027080137-881e5f6d3719
+	github.com/grafana/grafana-app-sdk v0.61.1-0.20261027092250-200e30251b89
 	github.com/grafana/grafana-app-sdk/logging v0.61.0
 	k8s.io/apimachinery v0.37.1
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098

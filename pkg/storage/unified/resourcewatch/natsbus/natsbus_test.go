@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/resourcebus"
 	"github.com/stretchr/testify/assert"
@@ -184,6 +185,51 @@ func TestDelivery(t *testing.T) {
 			want: []resourcebus.Event{{Verb: resourcebus.VerbAdded, Namespace: "default", Name: "repo-1", ResourceVersion: "0"}},
 		},
 		{
+			name: "announced metadata is carried",
+			notification: &resourcepb.WatchNotification{
+				Type: resourcepb.WatchNotification_MODIFIED, Namespace: "default", Name: "repo-1", ResourceVersion: 45,
+				Metadata: &resourcepb.NotificationMetadata{
+					Labels:                  map[string]string{"grafana.app/managedBy": "repo"},
+					Annotations:             map[string]string{"grafana.app/sourcePath": "dashboards/a.json"},
+					Finalizers:              []string{"provisioning.grafana.app/cleanup"},
+					Generation:              7,
+					CreationTimestampMillis: 1700000000000,
+				},
+			},
+			want: []resourcebus.Event{{
+				Verb: resourcebus.VerbModified, Namespace: "default", Name: "repo-1", ResourceVersion: "45",
+				Metadata: &resourcebus.EventMetadata{
+					Labels:            map[string]string{"grafana.app/managedBy": "repo"},
+					Annotations:       map[string]string{"grafana.app/sourcePath": "dashboards/a.json"},
+					Finalizers:        []string{"provisioning.grafana.app/cleanup"},
+					Generation:        7,
+					CreationTimestamp: time.UnixMilli(1700000000000),
+				},
+			}},
+		},
+		{
+			name: "a deleting object carries its deletion timestamp",
+			notification: &resourcepb.WatchNotification{
+				Type: resourcepb.WatchNotification_MODIFIED, Namespace: "default", Name: "repo-1", ResourceVersion: 46,
+				Metadata: &resourcepb.NotificationMetadata{DeletionTimestampMillis: 1700000001000},
+			},
+			want: []resourcebus.Event{{
+				Verb: resourcebus.VerbModified, Namespace: "default", Name: "repo-1", ResourceVersion: "46",
+				Metadata: &resourcebus.EventMetadata{DeletionTimestamp: ptr(time.UnixMilli(1700000001000))},
+			}},
+		},
+		{
+			name: "unknown timestamps read as unannounced, not as the epoch",
+			notification: &resourcepb.WatchNotification{
+				Type: resourcepb.WatchNotification_ADDED, Namespace: "default", Name: "repo-1", ResourceVersion: 47,
+				Metadata: &resourcepb.NotificationMetadata{Generation: 1},
+			},
+			want: []resourcebus.Event{{
+				Verb: resourcebus.VerbAdded, Namespace: "default", Name: "repo-1", ResourceVersion: "47",
+				Metadata: &resourcebus.EventMetadata{Generation: 1},
+			}},
+		},
+		{
 			name: "an unknown type is dropped",
 			notification: &resourcepb.WatchNotification{
 				Type: resourcepb.WatchNotification_UNKNOWN, Namespace: "default", Name: "repo-1", ResourceVersion: 1,
@@ -270,3 +316,5 @@ func TestSubscribeGroupDelivery(t *testing.T) {
 		})
 	}
 }
+
+func ptr[T any](v T) *T { return &v }
