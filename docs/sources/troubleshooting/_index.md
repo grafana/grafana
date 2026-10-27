@@ -13,7 +13,21 @@ labels:
     - enterprise
     - oss
 title: Troubleshooting
-weight: 700
+cards:
+  items:
+    - title: Generate diagnostic bundle
+      height: 24
+      href: ./generate-diagnostic-bundle/
+      description: Generate a data source diagnostic bundle and send it to Grafana Labs Support for troubleshooting.
+    - title: HAR captures
+      height: 24
+      href: ./har-captures/
+      description: Generate a HAR capture to send to Grafana Labs support for troubleshooting.
+    - title: Send panel to Grafana Support
+      height: 24
+      href: ./send-panel-to-grafana-support/
+      description: Send a panel to Grafana Labs support for troubleshooting.
+weight: 900
 ---
 
 # Troubleshooting
