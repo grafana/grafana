@@ -7297,6 +7297,7 @@
       "copy": "Másolás vágólapra",
       "learn-more": "További információk",
       "no-issues": "Nincsenek hibák vagy értesítések ehhez a lekérdezéshez.",
+      "no-panel-issues": "",
       "severity-error": "Hiba",
       "severity-info": "Információ",
       "severity-warning": "Figyelmeztetés"
@@ -8125,8 +8126,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Lekérdezési ablaktábla megnyitása",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Lekérdezési ablaktábla megnyitása"
     },
     "viz-panel-links-renderer": {
@@ -16070,6 +16069,7 @@
       "expand": "Kibontás",
       "filter": "",
       "loading": "Irányítópultok betöltése",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Nincs találat a lekérdezésre",
       "noResultsForFilterClear": "Keresés törlése",
       "noResultsForScopes": "Nem található irányítópult vagy hivatkozás a kijelölt hatókörökhöz",
@@ -16781,8 +16781,61 @@
   },
   "swagger": {
     "login": "Bejelentkezés",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "A kérések elküldése előtt ellenőrizze a névteret, vagy töltse be újra az oldalt, és próbálkozzon újra.",
-    "namespace-unavailable-title": "Nem lehet betölteni a névteret"
+    "namespace-unavailable-title": "Nem lehet betölteni a névteret",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16836,6 +16889,9 @@
     "description-styling-from-field": "JSON-objektumokat tartalmazó mező CSS-tulajdonságokkal",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Minden második sor háttérszínének váltogatása",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Lekérdezés"
     },
@@ -18384,6 +18440,7 @@
       "body_other": "Biztosan törölni kíván {{count}} változót?"
     },
     "editor": {
+      "back": "",
       "cancel": "Mégse",
       "delete": "Törlés",
       "delete-modal-body": "Biztosan törölni kívánja ezt: „{{name}}”?",
@@ -18392,6 +18449,7 @@
       "folder-description": "Határozza meg a változó hatókörét egy mappára, vagy válassza az irányítópultok gyökérmappáját, hogy globálissá tegye (minden irányítópulton elérhetővé)",
       "folder-description-folder-only": "Állítsa be a változó hatókörét egy Ön által szerkeszthető mappára",
       "folder-label": "Mappa",
+      "load-error-title": "",
       "moved": "Változó áthelyezve",
       "name-exists": "Ilyen nevű változó már létezik a kijelölt mappában",
       "save": "Mentés",
