@@ -14,6 +14,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	jose "github.com/go-jose/go-jose/v4"
@@ -22,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -504,20 +506,38 @@ func TestCachingJWKHTTPResponse(t *testing.T) {
 		cfg.JWTAuth.CacheTTL = time.Minute
 	})
 
-	jwkCachingScenario(t, "fetches fresh keys after cache expiration", func(t *testing.T, sc cachingScenarioContext) {
-		token0 := sign(t, &jwKeys[0], jwt.Claims{Subject: subject}, nil)
-		token1 := sign(t, &jwKeys[1], jwt.Claims{Subject: subject}, nil)
+	t.Run("fetches fresh keys after cache expiration", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			const ttl = time.Minute
+			service, err := initAuthService(t, func(t *testing.T, cfg *setting.Cfg) {
+				cfg.JWTAuth.JWKSetURL = "https://example.com/.well-known/jwks.json"
+				cfg.JWTAuth.CacheTTL = ttl
+			})
+			require.NoError(t, err)
 
-		_, err := sc.authJWTSvc.Verify(sc.ctx, token0)
-		require.NoError(t, err)
+			// Real network I/O prevents the virtual clock from advancing.
+			requestCount := 0
+			service.keySet.(*keySetHTTP).client.Transport = httpclient.RoundTripperFunc(func(_ *http.Request) (*http.Response, error) {
+				require.Less(t, requestCount, 2, "unexpected JWKS request")
+				jwks := jose.JSONWebKeySet{Keys: []jose.JSONWebKey{jwksPublic.Keys[requestCount]}}
+				requestCount++
+				response := httptest.NewRecorder()
+				if err := json.NewEncoder(response).Encode(jwks); err != nil {
+					return nil, err
+				}
+				return response.Result(), nil
+			})
 
-		require.Eventually(t, func() bool {
-			_, err := sc.authJWTSvc.Verify(sc.ctx, token1)
-			return err == nil
-		}, 3*time.Second, 10*time.Millisecond)
-		assert.Equal(t, 2, *sc.reqCount)
-	}, func(t *testing.T, cfg *setting.Cfg) {
-		cfg.JWTAuth.CacheTTL = 50 * time.Millisecond
+			token0 := sign(t, &jwKeys[0], jwt.Claims{Subject: subject}, nil)
+			token1 := sign(t, &jwKeys[1], jwt.Claims{Subject: subject}, nil)
+			_, err = service.Verify(t.Context(), token0)
+			require.NoError(t, err)
+
+			time.Sleep(ttl + time.Nanosecond)
+			_, err = service.Verify(t.Context(), token1)
+			require.NoError(t, err)
+			assert.Equal(t, 2, requestCount)
+		})
 	})
 
 	jwkCachingScenario(t, "does not cache the response when TTL is zero", func(t *testing.T, sc cachingScenarioContext) {
