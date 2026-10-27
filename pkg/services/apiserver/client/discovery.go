@@ -12,11 +12,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 var (
 	defaultPollInterval        = 500 * time.Millisecond
 	defaultAvailabilityTimeout = 30 * time.Second
+	discoveryLogger            = log.New("apiserver.discovery")
 )
 
 type DiscoveryClient interface {
@@ -89,6 +92,7 @@ func (d *DiscoveryClientImpl) preferredResources(group string) ([]*metav1.APIRes
 			return nil, err
 		}
 	}
+	discoveryLogger.Warn("Ignoring discovery failures of other API groups", "group", group, "error", err)
 	return apiList, nil
 }
 
