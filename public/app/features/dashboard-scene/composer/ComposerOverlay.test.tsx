@@ -145,6 +145,17 @@ const item = (overrides: Partial<ComposerAnnotation> = {}): ComposerAnnotation =
   ...overrides,
 });
 
+/** Makes `element` a vertical scroll container scrolled to `top`; returns its `scrollBy`. */
+function makeScrollable(element: HTMLElement, { top = 0, height = 500, contentHeight = 2000 } = {}) {
+  element.style.overflowY = 'auto';
+  Object.defineProperty(element, 'clientHeight', { configurable: true, value: height });
+  Object.defineProperty(element, 'scrollHeight', { configurable: true, value: contentHeight });
+  Object.defineProperty(element, 'scrollTop', { configurable: true, writable: true, value: top });
+  const scrollBy = jest.fn();
+  element.scrollBy = scrollBy;
+  return scrollBy;
+}
+
 describe('picking', () => {
   it('resolves a click on a panel to its panel id and the normalised click point', async () => {
     const { startPick } = setup();
@@ -280,6 +291,27 @@ describe('annotations', () => {
     unsubscribe();
     await userEvent.click(pin);
     expect(listener).toHaveBeenCalledTimes(3);
+  });
+
+  it('scrolls the comment into view first when its pin is held at the edge, and only then', async () => {
+    const { session, annotate } = setup();
+    const listener = jest.fn();
+    session.onAnnotationClick(listener);
+    annotate([item()]);
+    const scrollIntoView = jest.fn();
+    panelRoot!.scrollIntoView = scrollIntoView;
+
+    // In view: the pin opens its comment where it is.
+    await userEvent.click(screen.getByRole('button', { name: 'Comment 1' }));
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    // Scrolled below the viewport: the pin waits at the edge, and a click brings the panel back first.
+    panelRect = { ...panelRect, top: 1200 };
+    fireEvent.scroll(window);
+    await nextFrame();
+    await userEvent.click(screen.getByRole('button', { name: 'Comment 1' }));
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    expect(listener).toHaveBeenCalledTimes(2);
   });
 
   it('reports pin hover and focus, and their end, until unsubscribed', () => {

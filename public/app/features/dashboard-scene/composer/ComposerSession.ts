@@ -492,12 +492,39 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
       : null;
   }
 
-  /** @internal A pin was clicked or activated from the keyboard. Ignored while paused. */
+  /**
+   * @internal A pin was clicked or activated from the keyboard. Ignored while paused. A pin held at the
+   * overlay's edge points at a comment out of view: that comment is scrolled into view first.
+   */
   public activateAnnotation(id: string): void {
-    if (this.ended || this.overlayState.paused || !this.findAnnotation(id)) {
+    const item = this.findAnnotation(id);
+    if (this.ended || this.overlayState.paused || !item) {
       return;
     }
+    if (!this.isPinPointInView(item)) {
+      this.revealAnnotation(id);
+    }
     this.annotationListeners.forEach((listener) => listener(id));
+  }
+
+  /** Whether the point a pin marks is within the visible part of its scroll container. True when unknown. */
+  private isPinPointInView({ ref, point }: ComposerAnnotation): boolean {
+    let rect: Box | null = null;
+    let container: HTMLElement | undefined;
+    if (ref.kind === 'region') {
+      rect = this.getRegionViewportRect(ref.regionId);
+      container = this.regions.get(ref.regionId)?.scroller;
+    } else {
+      const element = this.findElementRoot(ref);
+      rect = element?.getBoundingClientRect() ?? null;
+      container = element ? getScrollContainer(element) : undefined;
+    }
+    if (!rect || !container) {
+      return true;
+    }
+    const y = rect.top + point.y * rect.height;
+    const visible = getVisibleBounds(container);
+    return y >= visible.top && y <= visible.bottom;
   }
 
   /** @internal A pin gained (id) or lost (null) pointer hover or focus. Ignored while paused. */
