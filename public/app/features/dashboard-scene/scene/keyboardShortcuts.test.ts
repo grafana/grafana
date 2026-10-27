@@ -164,6 +164,16 @@ describe('setupKeyboardShortcuts', () => {
       expect(mockOnRefresh).toHaveBeenCalled();
     });
 
+    it.each(['view', 'composer'] as const)('should toggle cursor sync in %s mode', (mode) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      mockScene.setState({ mode, isEditing: mode === 'composer' });
+      mockCursorSync.setState({ sync: DashboardCursorSync.Off });
+
+      modOHandler();
+
+      expect(mockCursorSync.setState).toHaveBeenCalledWith({ sync: DashboardCursorSync.Crosshair });
+    });
+
     it('should handle missing CursorSync behavior gracefully', () => {
       // Create scene without CursorSync behavior by overriding state
       const sceneWithoutCursorSync = new DashboardScene({

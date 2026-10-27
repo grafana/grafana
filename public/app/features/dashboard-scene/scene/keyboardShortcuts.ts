@@ -234,9 +234,6 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'mod+o',
     onTrigger: () => {
-      if (!canManuallyEditDashboard(scene.state)) {
-        return;
-      }
       const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
       if (cursorSync instanceof behaviors.CursorSync) {
         const currentSync = cursorSync.state.sync;
