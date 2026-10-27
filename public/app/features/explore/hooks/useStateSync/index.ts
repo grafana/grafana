@@ -5,6 +5,7 @@ import { useAppNotification } from 'app/core/copy/appNotification';
 import { type ExploreQueryParams } from 'app/types/explore';
 import { addListener, useDispatch, useSelector } from 'app/types/store';
 
+import { clearPanes } from '../../state/main';
 import { selectPanes } from '../../state/selectors';
 
 import { parseURL } from './parseURL';
@@ -52,6 +53,14 @@ export function useStateSync(params: ExploreQueryParams) {
     // @ts-expect-error the return type of addListener is actually callable, but dispatch is not middleware-aware
     return () => unsubscribe();
   }, [dispatch, location]);
+
+  // Clear panes on unmount
+  useEffect(
+    () => () => {
+      dispatch(clearPanes());
+    },
+    [dispatch]
+  );
 
   useEffect(() => {
     panesStateRef.current = panesState;
