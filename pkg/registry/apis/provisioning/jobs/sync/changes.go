@@ -29,8 +29,8 @@ type ResourceFileChange struct {
 
 	// FolderRenamed is set when folder metadata reconciliation changes the folder ID
 	// (for example, a UID change in _folder.json or reverting to a hash-based ID
-	// after _folder.json deletion). The old folder needs cleanup after children
-	// have been re-parented.
+	// after _folder.json deletion when the existing UID differs from it). The old
+	// folder needs cleanup after children have been re-parented.
 	FolderRenamed bool
 
 	// Reason provides an explicit reason for folder replacement or cleanup changes
@@ -90,17 +90,14 @@ func Compare(
 	}
 	changes = attachUnsupportedPaths(changes)
 
-	var invalidFolderMetadata []*resources.InvalidFolderMetadata
-	if folderMetadataEnabled {
-		changes, invalidFolderMetadata, err = augmentChangesForFolderMetadata(ctx, repo, ref, source, target, changes)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("augment changes for folder metadata: %w", err)
-		}
+	changes, invalidFolderMetadata, err := augmentChangesForFolderMetadata(ctx, repo, ref, source, target, changes)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("augment changes for folder metadata: %w", err)
+	}
 
-		changes, err = augmentChangesForFolderMoves(ctx, repo, ref, changes)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("augment changes for folder moves: %w", err)
-		}
+	changes, err = augmentChangesForFolderMoves(ctx, repo, ref, changes)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("augment changes for folder moves: %w", err)
 	}
 
 	if len(changes) > 0 {
@@ -209,14 +206,6 @@ func Changes(
 			// For new folders the parent directory creation handles it;
 			// for existing folders we compare hashes to detect metadata changes.
 			if resources.IsFolderMetadataFile(file.Path) {
-				if !folderMetadataEnabled {
-					logger.Debug("skipping folder metadata file as feature flag is off", "path", file.Path)
-					if err := keep.Add(file.Path); err != nil {
-						return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
-					}
-					continue
-				}
-
 				logger.Debug("processing folder metadata file", "path", file.Path)
 				if err := keep.Add(file.Path); err != nil {
 					return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
@@ -341,9 +330,11 @@ func Changes(
 }
 
 // augmentChangesForFolderMetadata detects two categories of folder metadata changes:
-// (1) folders whose _folder.json was deleted, and (2) folders whose _folder.json UID
-// changed. In both cases, direct children are emitted as FileActionUpdated so they
-// are re-parented during the normal apply flow.
+// (1) folders whose _folder.json UID changed, and (2) folders whose _folder.json was
+// deleted. When the folder UID changes, direct children are emitted as
+// FileActionUpdated so they are re-parented during the normal apply flow. A deleted
+// _folder.json whose UID already matches the path-derived fallback only emits a
+// folder update, since the folder keeps its identity.
 func augmentChangesForFolderMetadata(
 	ctx context.Context,
 	repo repository.Reader,
@@ -381,20 +372,22 @@ func augmentChangesForFolderMetadata(
 		}
 	}
 
-	// Detect folders whose _folder.json was deleted.
-	deletedChanges, deletedAffected := detectDeletedFolderMetadata(target, sourceFolders, foldersWithMetadata, pathsWithChanges)
-	for _, change := range deletedChanges {
-		pathsWithChanges[change.Path] = true
-	}
-	changes = append(changes, deletedChanges...)
-	affectedFolders = mergeAffectedFolders(affectedFolders, deletedAffected)
-
-	// Detect folders whose _folder.json UID changed.
+	// Detect folders whose _folder.json UID changed. This runs before deleted
+	// metadata is detected: folders whose _folder.json was deleted have nothing
+	// to read, so checking their updates here would only add failed reads.
 	uidAffected, err := detectFolderUIDChanges(ctx, repo, ref, changes)
 	if err != nil {
 		return nil, nil, err
 	}
 	affectedFolders = mergeAffectedFolders(affectedFolders, uidAffected)
+
+	// Detect folders whose _folder.json was deleted.
+	deletedChanges, deletedAffected := detectDeletedFolderMetadata(repo.Config().Name, target, sourceFolders, foldersWithMetadata, pathsWithChanges)
+	for _, change := range deletedChanges {
+		pathsWithChanges[change.Path] = true
+	}
+	changes = append(changes, deletedChanges...)
+	affectedFolders = mergeAffectedFolders(affectedFolders, deletedAffected)
 
 	// No folders need child re-parenting, so we can return the changes as is.
 	if len(affectedFolders) == 0 {
@@ -514,8 +507,10 @@ func mergeAffectedFolders(dst, src map[string]bool) map[string]bool {
 
 // detectDeletedFolderMetadata finds folders in target that had metadata (non-empty Hash)
 // but whose _folder.json is now absent from source (while the directory still exists).
-// It emits FileActionUpdated with FolderRenamed=true.
+// It emits FileActionUpdated for each of them, with FolderRenamed=true only when the
+// existing UID differs from the path-derived fallback UID the folder reverts to.
 func detectDeletedFolderMetadata(
+	repoName string,
 	target *provisioning.ResourceList,
 	sourceFolders, foldersWithMetadata map[string]bool,
 	pathsWithChanges map[string]bool,
@@ -543,6 +538,17 @@ func detectDeletedFolderMetadata(
 		}
 		if pathsWithChanges[path] {
 			continue // this path is already marked for update
+		}
+
+		// Replacing a folder whose UID already equals the fallback would make the
+		// deferred cleanup delete the folder that apply just ensured.
+		if item.Name == resources.ParseFolder(path, repoName).ID {
+			changes = append(changes, ResourceFileChange{
+				Action:   repository.FileActionUpdated,
+				Path:     path,
+				Existing: item,
+			})
+			continue
 		}
 
 		changes = append(changes, ResourceFileChange{

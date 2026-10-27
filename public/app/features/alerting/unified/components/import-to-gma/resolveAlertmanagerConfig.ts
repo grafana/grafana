@@ -39,40 +39,63 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function loadYaml(content: string, { embedded = false } = {}): unknown {
+  try {
+    return load(content);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // Fail locally instead of shipping invalid YAML to the backend for a generic error there.
+    // Embedded errors get their own message because their line numbers are relative to the string, not the file.
+    throw new Error(
+      embedded
+        ? t(
+            'alerting.import-to-gma.step1.embedded-yaml-parse-error',
+            'The YAML in "alertmanager_config" has a syntax error: {{message}}',
+            { message }
+          )
+        : t('alerting.import-to-gma.step1.yaml-parse-error', 'Your YAML has a syntax error: {{message}}', { message })
+    );
+  }
+}
+
 /**
  * Parse an Alertmanager YAML file and separate template_files from the alertmanager config.
  *
- * YAML files may contain `template_files` at the top level alongside the config fields
- * (route, receivers, templates, time_intervals, etc.). The backend API expects them
- * as two separate fields in the request body:
+ * Accepts the flat mimirtool layout (config fields and `template_files` side by side) and the
+ * Mimir API layout, where the config is wrapped in `alertmanager_config` as an object or YAML string.
+ * The backend API expects them as two separate fields in the request body:
  *   { alertmanager_config: "<config string>", template_files: { ... } }
  *
- * This function extracts `template_files` and re-serializes the remaining config as JSON.
+ * This function extracts `template_files` and re-serializes the config as JSON.
  */
 export function parseAlertmanagerYaml(yamlContent: string): ParsedAlertmanagerYaml {
-  let parsed: unknown;
-  try {
-    parsed = load(yamlContent);
-  } catch (err) {
-    // Fail locally instead of shipping invalid YAML to the backend for a generic error there.
-    throw new Error(
-      t('alerting.import-to-gma.step1.yaml-parse-error', 'Your YAML has a syntax error: {{message}}', {
-        message: err instanceof Error ? err.message : String(err),
-      })
-    );
-  }
+  const parsed = loadYaml(yamlContent);
 
   if (!isRecord(parsed)) {
     return { alertmanagerConfig: yamlContent, templateFiles: {} };
   }
 
-  const { template_files, ...configWithoutTemplates } = parsed;
+  const { template_files, ...rest } = parsed;
   const templateFiles = isStringRecord(template_files) ? template_files : {};
 
-  return {
-    alertmanagerConfig: JSON.stringify(configWithoutTemplates),
-    templateFiles,
-  };
+  if (!('alertmanager_config' in rest)) {
+    return { alertmanagerConfig: JSON.stringify(rest), templateFiles };
+  }
+
+  const wrapped =
+    typeof rest.alertmanager_config === 'string'
+      ? loadYaml(rest.alertmanager_config, { embedded: true })
+      : rest.alertmanager_config;
+  if (!isRecord(wrapped)) {
+    throw new Error(
+      t(
+        'alerting.import-to-gma.step1.invalid-alertmanager-config',
+        'The "alertmanager_config" key must be an Alertmanager configuration object or a YAML string'
+      )
+    );
+  }
+
+  return { alertmanagerConfig: JSON.stringify(wrapped), templateFiles };
 }
 
 /**

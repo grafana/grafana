@@ -4656,8 +4656,10 @@ export type CreateOrUpdateReport = {
 export type ReportEmail = {
   /** Comma-separated list of emails to which to send the report to. */
   emails?: string;
-  /** Send the report to the emails specified in the report. Required if emails is not present. */
+  /** Numeric ID of the report. Can send either ID or UID. If both are present, UID takes precedence. */
   id?: string;
+  /** UID of the report. Can send either ID or UID. If both are present, UID takes precedence. */
+  uid?: string;
   /** Send the report to the emails specified in the report. Required if emails is not present. */
   useEmailsFromReport?: boolean;
 };

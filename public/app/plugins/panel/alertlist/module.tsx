@@ -1,4 +1,4 @@
-import { type DataSourceInstanceSettings, PanelPlugin, standardEditorsRegistry, ThresholdsMode } from '@grafana/data';
+import { type DataSourceInstanceListItem, PanelPlugin, standardEditorsRegistry, ThresholdsMode } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { BigValueColorMode, Button, Stack } from '@grafana/ui';
@@ -140,7 +140,7 @@ const unifiedAlertList = new PanelPlugin<UnifiedAlertListOptions>(UnifiedAlertLi
                 type={SUPPORTED_RULE_SOURCE_TYPES}
                 noDefault
                 current={props.value}
-                onChange={(ds: DataSourceInstanceSettings) => {
+                onChange={(ds: DataSourceInstanceListItem) => {
                   if (ds.uid !== 'grafana') {
                     props.context.options.folder = null;
                   }

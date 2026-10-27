@@ -27,7 +27,7 @@ import { getDefaults } from 'app/features/expressions/utils/expressionTypes';
 import { InspectTab } from 'app/features/inspector/types';
 import { GroupActionComponents } from 'app/features/query/components/QueryActionComponent';
 import { QueryEditorRows } from 'app/features/query/components/QueryEditorRows';
-import { QueryGroupTopSection } from 'app/features/query/components/QueryGroup';
+import { QueryGroupTopSection } from 'app/features/query/components/QueryGroupTopSection';
 import { updateQueries } from 'app/features/query/state/updateQueries';
 import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard/runSharedRequest';
 import { type QueryGroupOptions } from 'app/types/query';

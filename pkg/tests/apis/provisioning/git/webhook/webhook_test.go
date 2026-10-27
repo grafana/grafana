@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os/exec"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -432,9 +433,11 @@ func TestIntegrationProvisioning_GithubPullRequestWebhookPostsComment(t *testing
 			if tt.fork {
 				headRepoID = 2
 				forkURL = "https://github.example.com/contributor/" + repoName
-				refs, err := local.Git("ls-remote", "origin", "refs/heads/"+branchName)
-				require.NoError(t, err)
-				require.Empty(t, strings.TrimSpace(refs), "the fork branch must be absent from the configured remote")
+				// The Git helper combines stdout and stderr, so use the missing-ref exit code instead of checking output.
+				_, err := local.Git("ls-remote", "--exit-code", "origin", "refs/heads/"+branchName)
+				var exitErr *exec.ExitError
+				require.ErrorAs(t, err, &exitErr)
+				require.Equal(t, 2, exitErr.ExitCode(), "the fork branch must be absent from the configured remote")
 			} else {
 				_, err = local.Git("push", "-u", "origin", branchName)
 				require.NoError(t, err, "failed to push local feature branch")

@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/resource"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 )
 
@@ -159,13 +159,13 @@ func (m *MembershipIndex) Delete(_ context.Context, obj resource.Object) error {
 // collectRuleUIDs extracts all referenced rule UIDs from a RuleSequence spec,
 // recording rules first, then alerting rules.
 func collectRuleUIDs(seq *model.RuleSequence) []string {
-	refs := make([]string, 0, len(seq.Spec.RecordingRules)+len(seq.Spec.AlertingRules))
+	refs := make([]string, 0, len(seq.Spec.RecordingRules)+len(seq.Spec.AlertRules))
 	for _, ref := range seq.Spec.RecordingRules {
 		if uid := string(ref.Name); uid != "" {
 			refs = append(refs, uid)
 		}
 	}
-	for _, ref := range seq.Spec.AlertingRules {
+	for _, ref := range seq.Spec.AlertRules {
 		if uid := string(ref.Name); uid != "" {
 			refs = append(refs, uid)
 		}
