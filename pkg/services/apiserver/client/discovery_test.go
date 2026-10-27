@@ -51,7 +51,7 @@ func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := newTestDiscoveryClient(t, tt.groups...)
 
-			gvr, gvk, err := c.GetPreferredVersion(schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"})
+			gvr, gvk, err := c.GetPreferredVersion(t.Context(), schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"})
 			if tt.wantErr != "" {
 				require.ErrorContains(t, err, tt.wantErr)
 			} else {
@@ -60,7 +60,7 @@ func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
 				require.Equal(t, tt.wantGVK, gvk)
 			}
 
-			gvr, gvk, err = c.GetPreferredVersionForKind(schema.GroupKind{Group: "playlist.grafana.app", Kind: "Playlist"})
+			gvr, gvk, err = c.GetPreferredVersionForKind(t.Context(), schema.GroupKind{Group: "playlist.grafana.app", Kind: "Playlist"})
 			if tt.wantErr != "" {
 				require.ErrorContains(t, err, tt.wantErr)
 			} else {
