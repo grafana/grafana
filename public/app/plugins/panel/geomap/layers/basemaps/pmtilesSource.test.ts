@@ -72,7 +72,7 @@ describe('PMTilesVectorSource', () => {
       const tile = loadTile(source, 10, 163, 395);
       await settle();
 
-      expect(mockGetZxy).toHaveBeenCalledWith(10, 163, 395, expect.any(AbortSignal));
+      expect(mockGetZxy).toHaveBeenCalledWith(10, 163, 395);
       expect(tile.getState()).toBe(TileState.LOADED);
       expect(tile.getFeatures()).toBe(decoded);
     });
@@ -95,25 +95,6 @@ describe('PMTilesVectorSource', () => {
       await settle();
 
       expect(tile.getState()).toBe(TileState.ERROR);
-    });
-
-    // OpenLayers releases a tile it evicts or disposes while its request may still be in flight
-    it('cancels the request of a tile released mid-load, without marking it errored', async () => {
-      let signal: AbortSignal | undefined;
-      mockGetZxy.mockImplementation((_z, _x, _y, abortSignal: AbortSignal) => {
-        signal = abortSignal;
-        return new Promise((_resolve, reject) =>
-          abortSignal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
-        );
-      });
-      const source = createSource();
-
-      const tile = loadTile(source);
-      tile.release();
-      await settle();
-
-      expect(signal?.aborted).toBe(true);
-      expect(tile.getState()).toBe(TileState.EMPTY);
     });
   });
 });

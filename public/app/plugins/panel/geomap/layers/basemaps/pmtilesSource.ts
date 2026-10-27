@@ -1,6 +1,5 @@
 import TileState from 'ol/TileState';
 import VectorTile from 'ol/VectorTile';
-import EventType from 'ol/events/EventType';
 import type RenderFeature from 'ol/render/Feature';
 import VectorTileSource, { type Options as VectorTileSourceOptions } from 'ol/source/VectorTile';
 import { PMTiles } from 'pmtiles';
@@ -16,8 +15,7 @@ interface PMTilesVectorSourceOptions
 
 /**
  * Reads vector tiles straight out of one PMTiles archive with HTTP range requests. If the archive's
- * header can't be read the source moves to the `error` state with the cause in `getError()`, and a
- * tile OpenLayers lets go of cancels its request instead of finishing a download nobody will draw.
+ * header can't be read the source moves to the `error` state with the cause in `getError()`.
  */
 export class PMTilesVectorSource extends VectorTileSource<RenderFeature> {
   private readonly archive: PMTiles;
@@ -56,23 +54,10 @@ export class PMTilesVectorSource extends VectorTileSource<RenderFeature> {
 
   private loadTile(tile: VectorTile<RenderFeature>) {
     const [z, x, y] = tile.getTileCoord();
-    const controller = new AbortController();
-    // OpenLayers empties a tile it no longer wants, whether evicted from its cache or disposed with the layer
-    const abortIfReleased = () => {
-      if (tile.getState() === TileState.EMPTY) {
-        controller.abort();
-      }
-    };
-    tile.addEventListener(EventType.CHANGE, abortIfReleased);
-
     tile.setLoader((extent, _resolution, projection) => {
       this.archive
-        .getZxy(z, x, y, controller.signal)
+        .getZxy(z, x, y)
         .then((response) => {
-          tile.removeEventListener(EventType.CHANGE, abortIfReleased);
-          if (controller.signal.aborted) {
-            return;
-          }
           if (!response) {
             tile.setFeatures([]);
             tile.setState(TileState.EMPTY);
@@ -80,12 +65,7 @@ export class PMTilesVectorSource extends VectorTileSource<RenderFeature> {
           }
           tile.setFeatures(tile.getFormat().readFeatures(response.data, { extent, featureProjection: projection }));
         })
-        .catch(() => {
-          tile.removeEventListener(EventType.CHANGE, abortIfReleased);
-          if (!controller.signal.aborted) {
-            tile.onError();
-          }
-        });
+        .catch(() => tile.onError());
     });
   }
 }
