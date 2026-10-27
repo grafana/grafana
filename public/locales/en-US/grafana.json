@@ -5716,6 +5716,17 @@
       "ungroup-rows": "Ungroup rows",
       "ungroup-tabs": "Ungroup tabs"
     },
+    "composer": {
+      "annotation-pin": "Comment {{label}}",
+      "apply-undo-title": "Assistant Composer edit",
+      "overlay": {
+        "hint-panel": "Click to comment on a panel, or drag to draw a region",
+        "hint-region": "Drag to draw a region"
+      },
+      "region": "Region",
+      "untitled-panel": "Panel {{panelId}}",
+      "wait-for-assistant": "Wait for Assistant to finish editing"
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -6195,8 +6206,12 @@
       "tooltip-previous": "Previous"
     },
     "modes": {
-      "agent-edit": "Agent editing",
       "change-mode": "Change dashboard mode",
+      "composer": "Composer",
+      "composer-description": "Point at anything and ask Assistant to change it.",
+      "composer-no-permission": "You need permission to edit this dashboard.",
+      "composer-save-first": "Save the dashboard before using Composer.",
+      "composer-unsupported": "Composer is not available for this dashboard right now.",
       "current": "Dashboard mode: {{mode}}",
       "discard": "Discard changes",
       "discard-body": "This restores the last saved dashboard.",

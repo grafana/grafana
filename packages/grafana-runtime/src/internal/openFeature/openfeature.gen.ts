@@ -172,6 +172,8 @@ export const FlagKeys = {
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
   /** Uses auto grid as the default layout for new dashboards */
   GrafanaDashboardAutoGridDefault: "grafana.dashboardAutoGridDefault",
+  /** Enables Composer mode for editing dashboards with Grafana Assistant */
+  GrafanaDashboardComposer: "grafana.dashboardComposer",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
   /** Enables Viewing and Editing modes for dynamic dashboards */
@@ -1265,6 +1267,17 @@ export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluation
  */
 export const useFlagGrafanaDashboardAutoGridDefault = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardAutoGridDefault", true, options).value;
+};
+
+/**
+ * Enables Composer mode for editing dashboards with Grafana Assistant
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardComposer`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardComposer = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardComposer", false, options).value;
 };
 
 /**

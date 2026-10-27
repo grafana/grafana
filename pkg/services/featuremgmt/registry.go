@@ -695,6 +695,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.dashboardComposer",
+			Description: "Enables Composer mode for editing dashboards with Grafana Assistant",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.savedDashboardViews",
 			Description: "Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state",
 			Stage:       FeatureStageExperimental,
