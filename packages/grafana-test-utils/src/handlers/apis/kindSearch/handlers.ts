@@ -29,7 +29,7 @@ export const kindSearchRoute = (served: MockServedKind) =>
 /**
  * Answers aggregated API discovery (`GET /apis`) for the served kinds the way the apiserver does:
  * each group with its versions and their resources. Core resolves the version and plural of a
- * plugin kind through this.
+ * registered kind through this.
  */
 export function getKindDiscoveryHandler(...served: MockServedKind[]) {
   return http.get('/apis', () =>

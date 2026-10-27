@@ -35,7 +35,7 @@ export function DashListItem({
   const css = useStyles2(getStyles);
   const isCompact = density === 'compact';
 
-  // Rows may be dashboards, folders or plugin kinds; the star has to target the row's own kind
+  // Rows may be dashboards, folders or registered kinds; the star has to target the row's own kind
   const starredKind = findStarredKindBySearchKind(dashboard.kind);
   const starButton = starredKind ? (
     <StarToolbarButton

@@ -310,7 +310,7 @@ describe('Unified Storage Searcher', () => {
       expect(findStarredSearchRequest()).toBeUndefined();
     });
 
-    describe('with a plugin-registered starred kind', () => {
+    describe('with a registered kind', () => {
       const thingResource = { group: MOCK_STARRED_KIND.group, kind: MOCK_STARRED_KIND.kind, names: ['t1'] };
       const starredThing = { name: 't1', title: 'Thing 1', folder: 'f1' };
       const THING_URL = '/a/test-things-app/things/t1';
@@ -405,7 +405,7 @@ describe('Unified Storage Searcher', () => {
         expect(findStarredSearchRequest()).toBeUndefined();
       });
 
-      it('ignores stars of a kind no plugin registered', async () => {
+      it('ignores stars of a kind nobody registered', async () => {
         unregister();
         server.use(starsHandler([...bothStarredResources, thingResource]), captureSearchHandler(starredHits));
 

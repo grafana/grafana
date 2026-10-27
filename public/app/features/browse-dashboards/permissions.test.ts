@@ -20,7 +20,7 @@ describe('canEditItemType', () => {
     expect(canEditItemType(kind, permissions)).toBe(expected);
   });
 
-  it("never lets a plugin's objects be edited, whatever the permissions", () => {
+  it("never lets a registered kind's objects be edited, whatever the permissions", () => {
     const unregister = registerStarredKind(MOCK_STARRED_KIND);
     const everything = { ...dashboardsOnly, canEditFolders: true, canDeleteDashboards: true };
 

@@ -39,7 +39,7 @@ import { appendFrame, replaceCurrentFolderQuery } from './utils';
 const searchURI = `${v0alphaBaseURL}/search`;
 
 export type SearchHit = {
-  resource: string; // dashboards | folders, or a plugin kind's plural
+  resource: string; // dashboards | folders, or a registered kind's plural
   name: string;
   title: string;
   description?: string;
@@ -51,7 +51,7 @@ export type SearchHit = {
   // calculated in the frontend
   url: string;
   managedBy?: ManagedBy;
-  // Hits a plugin kind's search produces are built here with their kind set; dashboard search hits derive it from `resource`
+  // Hits built here from a kind's own search carry their kind; dashboard search hits derive it from `resource`
   kind?: string;
 };
 
@@ -69,7 +69,7 @@ export type SearchAPIResponse = {
 };
 
 const folderViewSort = 'name_sort';
-// Shared so each starred() call doesn't construct a collator just to order a handful of plugin-kind rows
+// Shared so each starred() call doesn't construct a collator just to order a handful of kind-search rows
 const titleCollator = new Intl.Collator();
 
 /**
@@ -118,40 +118,40 @@ export class UnifiedSearcher implements GrafanaSearcher {
         fieldSelector: userStarsFieldSelector(),
       })
     );
-    // Grafana's own kinds resolve through the dashboard search, each plugin kind through its own search endpoint
+    // Dashboards and folders resolve through the dashboard search, every other kind through its own search endpoint
     const searchNames = new Set<string>();
-    const pluginSearches: Array<Promise<SearchHit[]>> = [];
+    const kindSearches: Array<Promise<SearchHit[]>> = [];
     for (const kind of getStarredKinds()) {
       const names = findStarredNames(result.data, kind.group, kind.kind);
-      if (kind.origin === 'plugin') {
-        pluginSearches.push(this.starredKindHits(kind, names, query));
+      if (kind.source === 'kind-search') {
+        kindSearches.push(this.starredKindHits(kind, names, query));
       } else {
         names.forEach((name) => searchNames.add(name));
       }
     }
 
     const sort = query.sort ?? '';
-    const [dashboards, pluginHits] = await Promise.all([
+    const [dashboards, kindSearchHits] = await Promise.all([
       searchNames.size > 0
         ? this.doSearchQuery({ ...query, name: [...searchNames], query: query.query ?? '*' })
         : undefined,
-      Promise.all(pluginSearches).then((hits) => hits.flat()),
+      Promise.all(kindSearches).then((hits) => hits.flat()),
     ]);
 
-    if (pluginHits.length === 0) {
+    if (kindSearchHits.length === 0) {
       return dashboards ?? noDataResponse();
     }
-    const pluginRsp = { hits: pluginHits, totalHits: pluginHits.length };
-    // Without dashboard rows the plugin rows are the whole result and the frame is built from them:
-    // a view over an empty frame has no fields to show appended rows in
+    const kindSearchRsp = { hits: kindSearchHits, totalHits: kindSearchHits.length };
+    // Without dashboard rows the kind-search rows are the whole result and the frame is built from
+    // them: a view over an empty frame has no fields to show appended rows in
     if (!dashboards || dashboards.totalRows === 0) {
-      return this.toQueryResponse(pluginRsp, sort);
+      return this.toQueryResponse(kindSearchRsp, sort);
     }
-    return withTrailingRows(dashboards, toDashboardResults(pluginRsp, sort));
+    return withTrailingRows(dashboards, toDashboardResults(kindSearchRsp, sort));
   }
 
   /**
-   * Starred objects of a plugin kind as search hits, resolved through the kind's own search
+   * Starred objects of a registered kind as search hits, resolved through the kind's own search
    * endpoint since they are not in the dashboard index. Filters that only dashboards can satisfy
    * yield none. Sorted by title here: the rows trail the server-sorted dashboard rows, so they can
    * only be ordered among themselves.
@@ -164,7 +164,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       query.createdBy ||
       query.ownerReference?.length ||
       query.deleted;
-    // Plugin kinds never live at the root, so a root-folder filter cannot match one
+    // Registered kinds never live at the root, so a root-folder filter cannot match one
     if (names.length === 0 || dashboardOnlyFilter || query.location === 'general') {
       return [];
     }
@@ -544,7 +544,7 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     return {
       ...hit,
       uid: hit.name,
-      // Plugin-kind hits carry their url; dashboard search hits derive it from the resource
+      // Hits from a kind's own search carry their url; dashboard search hits derive it from the resource
       url: hit.kind ? hit.url : toURL(hit.resource, hit.name, hit.title),
       // Sort tags so we aren't reliant on the backend having done this for us
       // Sorting order can be different between APIs/search implementations

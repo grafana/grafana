@@ -457,7 +457,7 @@ function makeTypeColumn(
       let txt = 'Dashboard';
       if (kind) {
         txt = kind;
-        // Dashboards, folders and plugin kinds are what people star; the registry names them
+        // Dashboards, folders and registered kinds are what people star; the registry names them
         const starredKind = findStarredKindBySearchKind(kind);
         if (starredKind) {
           icon = starredKind.icon;

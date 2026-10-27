@@ -8,29 +8,30 @@ import { getFolderURL, starredFoldersEnabled } from 'app/features/browse-dashboa
 /**
  * A kind whose starred objects Grafana shows. The Stars resource stores names per API group and
  * kind; this describes how Grafana shows those names and where it finds their titles. Dashboards
- * and folders are built in; app plugins register their own kinds through getStarsSrv().
+ * and folders are built in; every other kind is registered at runtime, app plugins doing so
+ * through getStarsSrv().
  */
 export interface StarredKind {
   group: string;
   kind: string;
-  /** The kind string search rows and nav leaves carry: `dashboard`, `folder`, or `group/Kind` for a plugin kind. */
+  /** The kind string search rows and nav leaves carry: `dashboard`, `folder`, or `group/Kind` for a registered kind. */
   searchKind: string;
   /** Singular display name. */
   title: string;
   icon: IconName;
-  /** Starred lists group kinds by this rank, alphabetical within a rank: dashboards, folders, then plugin kinds. */
+  /** Starred lists group kinds by this rank, alphabetical within a rank: dashboards, folders, then registered kinds. */
   sortWeight: number;
   /**
-   * Grafana's own kinds resolve titles through the dashboard search index and the browse views may
-   * move or delete them; a plugin's kinds resolve through their own search endpoint and belong to
-   * the plugin.
+   * Where titles and folders come from: the dashboard search index, which holds dashboards and
+   * folders and whose objects the browse views may move or delete, or the kind's own search
+   * endpoint.
    */
-  origin: 'grafana' | 'plugin';
+  source: 'dashboard-search' | 'kind-search';
   url(name: string): string;
 }
 
-const PLUGIN_KIND_FIRST_SORT_WEIGHT = 2;
-const DEFAULT_PLUGIN_KIND_ICON: IconName = 'cube';
+const REGISTERED_KIND_FIRST_SORT_WEIGHT = 2;
+const DEFAULT_REGISTERED_KIND_ICON: IconName = 'cube';
 
 /** Nav Starred entry (url + icon + sort rank + kind) for one starred object. */
 export interface StarredNavEntry {
@@ -48,7 +49,7 @@ function dashboardKind(): StarredKind {
     title: t('stars.kinds.dashboard', 'Dashboard'),
     icon: 'apps',
     sortWeight: 0,
-    origin: 'grafana',
+    source: 'dashboard-search',
     url: (name) => locationUtil.assureBaseUrl(`/d/${name}`),
   };
 }
@@ -61,12 +62,12 @@ function folderKind(): StarredKind {
     title: t('stars.kinds.folder', 'Folder'),
     icon: 'folder',
     sortWeight: 1,
-    origin: 'grafana',
+    source: 'dashboard-search',
     url: getFolderURL,
   };
 }
 
-function pluginKind(registration: StarredKindRegistration, sortWeight: number): StarredKind {
+function registeredKind(registration: StarredKindRegistration, sortWeight: number): StarredKind {
   // An object's page is the list page plus its name, the way app platform UIs route
   const listUrl = registration.listUrl.replace(/\/$/, '');
   return {
@@ -74,36 +75,36 @@ function pluginKind(registration: StarredKindRegistration, sortWeight: number): 
     kind: registration.kind,
     searchKind: `${registration.group}/${registration.kind}`,
     title: registration.title,
-    icon: registration.icon ?? DEFAULT_PLUGIN_KIND_ICON,
+    icon: registration.icon ?? DEFAULT_REGISTERED_KIND_ICON,
     sortWeight,
-    origin: 'plugin',
+    source: 'kind-search',
     url: (name) => locationUtil.assureBaseUrl(`${listUrl}/${encodeURIComponent(name)}`),
   };
 }
 
-// Registered in the order plugins load; registering a kind again replaces its earlier registration
+// In registration order; registering a kind again replaces its earlier registration
 const registrations = new Map<string, StarredKindRegistration>();
-let pluginKinds: StarredKind[] = [];
+let registeredKinds: StarredKind[] = [];
 let version = 0;
 const listeners = new Set<() => void>();
 
-function rebuildPluginKinds() {
-  pluginKinds = [...registrations.values()].map((registration, index) =>
-    pluginKind(registration, PLUGIN_KIND_FIRST_SORT_WEIGHT + index)
+function rebuildRegisteredKinds() {
+  registeredKinds = [...registrations.values()].map((registration, index) =>
+    registeredKind(registration, REGISTERED_KIND_FIRST_SORT_WEIGHT + index)
   );
   version++;
   listeners.forEach((listener) => listener());
 }
 
-/** Registers a plugin's kind so starred lists show its objects; returns the unregister function. */
+/** Registers a kind so starred lists show its objects; returns the unregister function. */
 export function registerStarredKind(registration: StarredKindRegistration): () => void {
   const key = `${registration.group}/${registration.kind}`;
   registrations.set(key, registration);
-  rebuildPluginKinds();
+  rebuildRegisteredKinds();
   return () => {
     if (registrations.get(key) === registration) {
       registrations.delete(key);
-      rebuildPluginKinds();
+      rebuildRegisteredKinds();
     }
   };
 }
@@ -120,13 +121,13 @@ export function subscribeStarredKinds(listener: () => void): () => void {
   };
 }
 
-/** Grafana's own kinds, then the plugin-registered ones. */
+/** Grafana's own kinds, then the registered ones. */
 export function getStarredKinds(): StarredKind[] {
   const kinds = [dashboardKind()];
   if (starredFoldersEnabled()) {
     kinds.push(folderKind());
   }
-  return [...kinds, ...pluginKinds];
+  return [...kinds, ...registeredKinds];
 }
 
 export function findStarredKind(group: string, kind: string): StarredKind | undefined {

@@ -28,7 +28,7 @@ export interface StarredNavItem {
   url: string;
   icon?: IconName;
   sortWeight?: number;
-  /** As the stars registry names the kind: `dashboard`, `folder`, or a plugin kind's `group/Kind`. Not needed to remove a star. */
+  /** As the stars registry names the kind: `dashboard`, `folder`, or a registered kind's `group/Kind`. Not needed to remove a star. */
   kind?: string;
 }
 // Single shared collator avoids per-call Intl.Collator construction

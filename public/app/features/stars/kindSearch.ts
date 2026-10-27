@@ -16,7 +16,7 @@ import {
 import { type StarredKind } from './kinds';
 
 /**
- * Resolves starred names of a plugin kind to titles and folders through the kind's own search
+ * Resolves starred names of a registered kind to titles and folders through the kind's own search
  * endpoint, `POST /apis/{group}/{version}/namespaces/{ns}/{plural}/search`, which the app platform
  * mounts for every served namespaced kind whose manifest enables search. The served version and
  * plural come from API discovery, so a plugin declares only its group and kind, and a version bump

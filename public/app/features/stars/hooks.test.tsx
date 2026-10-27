@@ -185,7 +185,7 @@ describe('useSyncStarredItemsInNav', () => {
     expect(screen.getByTestId('starred-list').children).toHaveLength(0);
   });
 
-  it('turns on kind icons for dashboards once a plugin declares a starrable kind', async () => {
+  it('turns on kind icons for dashboards once a kind is registered', async () => {
     const dashUid = dashbdD.item.uid;
     setMockStarredDashboards([dashUid]);
     setMockStarredPluginKind(THING_GROUP, THING_KIND, [THING_UUID]);
@@ -258,7 +258,7 @@ describe('useSyncStarredItemsInNav', () => {
     expect(screen.queryByTestId(`synced-starred/${THING_UUID}`)).not.toBeInTheDocument();
   });
 
-  it('drops stars of a kind no installed plugin declares', async () => {
+  it('drops stars of a kind nobody registered', async () => {
     const dashUid = dashbdD.item.uid;
     setMockStarredDashboards([dashUid]);
     setMockStarredPluginKind('gone.ext.grafana.app', 'Ghost', ['g1']);

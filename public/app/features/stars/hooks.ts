@@ -53,8 +53,8 @@ const STARRED_NAV_CAP = 50;
 
 type StarredNamesByKind = Array<{ kind: StarredKind; names: string[] }>;
 
-/** Nav items for Grafana's own kinds, resolved through one dashboard search over the starred names. */
-async function resolveGrafanaKinds(byKind: StarredNamesByKind, uids: string[]): Promise<StarredNavItem[]> {
+/** Nav items for dashboards and folders, resolved through one dashboard search over the starred names. */
+async function resolveThroughDashboardSearch(byKind: StarredNamesByKind, uids: string[]): Promise<StarredNavItem[]> {
   if (byKind.length === 0) {
     return [];
   }
@@ -81,8 +81,8 @@ async function resolveGrafanaKinds(byKind: StarredNamesByKind, uids: string[]): 
   return items;
 }
 
-/** Nav items for a plugin kind, resolved through the kind's own search endpoint. */
-async function resolvePluginKind(kind: StarredKind, names: string[]): Promise<StarredNavItem[]> {
+/** Nav items for a registered kind, resolved through the kind's own search endpoint. */
+async function resolveThroughKindSearch(kind: StarredKind, names: string[]): Promise<StarredNavItem[]> {
   const resources = await searchStarredResources(kind, names);
   return resources.map((resource) => ({
     ...starredNavEntry(kind, resource.name),
@@ -92,9 +92,9 @@ async function resolvePluginKind(kind: StarredKind, names: string[]): Promise<St
 }
 
 /**
- * Resolves the user's stars to nav items. A plugin kind whose API is unavailable contributes
+ * Resolves the user's stars to nav items. A registered kind whose API is unavailable contributes
  * nothing rather than failing the sync; the dashboard search failing rejects, as it did before
- * plugin kinds existed.
+ * registered kinds existed.
  */
 async function resolveStarredNavItems(stars: StarsList): Promise<{ uids: string[]; items: StarredNavItem[] }> {
   const kinds = getStarredKinds();
@@ -107,16 +107,18 @@ async function resolveStarredNavItems(stars: StarsList): Promise<{ uids: string[
     .map((kind) => ({ kind, names: starredNames(kind).filter((name) => capped.has(name)) }))
     .filter(({ names }) => names.length > 0);
 
-  const [grafanaItems, pluginItems] = await Promise.all([
-    resolveGrafanaKinds(
-      byKind.filter(({ kind }) => kind.origin === 'grafana'),
+  const [dashboardSearchItems, kindSearchItems] = await Promise.all([
+    resolveThroughDashboardSearch(
+      byKind.filter(({ kind }) => kind.source === 'dashboard-search'),
       uids
     ),
     Promise.all(
-      byKind.filter(({ kind }) => kind.origin === 'plugin').map(({ kind, names }) => resolvePluginKind(kind, names))
+      byKind
+        .filter(({ kind }) => kind.source === 'kind-search')
+        .map(({ kind, names }) => resolveThroughKindSearch(kind, names))
     ),
   ]);
-  return { uids, items: [...grafanaItems, ...pluginItems.flat()] };
+  return { uids, items: [...dashboardSearchItems, ...kindSearchItems.flat()] };
 }
 
 /**

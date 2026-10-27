@@ -27,7 +27,7 @@ afterEach(async () => {
 });
 
 describe('getStarredKinds', () => {
-  it('lists only dashboards when folders cannot be starred and no plugin registered a kind', () => {
+  it('lists only dashboards when folders cannot be starred and no kind is registered', () => {
     expect(getStarredKinds().map((kind) => kind.searchKind)).toEqual(['dashboard']);
     expect(starredKindsNeedIcons()).toBe(false);
   });
@@ -41,11 +41,11 @@ describe('getStarredKinds', () => {
       listUrl: '/a/test-things-app/widgets',
     });
 
-    expect(getStarredKinds().map((kind) => [kind.searchKind, kind.sortWeight, kind.origin])).toEqual([
-      ['dashboard', 0, 'grafana'],
-      ['folder', 1, 'grafana'],
-      [THING, 2, 'plugin'],
-      ['things.ext.grafana.app/Widget', 3, 'plugin'],
+    expect(getStarredKinds().map((kind) => [kind.searchKind, kind.sortWeight, kind.source])).toEqual([
+      ['dashboard', 0, 'dashboard-search'],
+      ['folder', 1, 'dashboard-search'],
+      [THING, 2, 'kind-search'],
+      ['things.ext.grafana.app/Widget', 3, 'kind-search'],
     ]);
     expect(starredKindsNeedIcons()).toBe(true);
   });

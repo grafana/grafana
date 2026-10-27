@@ -11,17 +11,17 @@ export interface StarredResourceRef {
 }
 
 /**
- * A kind an app plugin serves whose objects Grafana should show wherever starred dashboards appear:
- * the Starred section of the navigation, the Home Starred tab, `/dashboards?starred` and the
- * Dashboard list panel. Titles come from the kind's own `/search` endpoint, so the kind's app
- * manifest has to enable search.
+ * A kind whose starred objects Grafana shows wherever starred dashboards appear: the Starred
+ * section of the navigation, the Home Starred tab, `/dashboards?starred` and the Dashboard list
+ * panel. Titles come from the kind's own `/search` endpoint, so the kind's app manifest has to
+ * enable search.
  */
 export interface StarredKindRegistration {
   /** API group of the kind, e.g. `irm.grafana.app`. */
   group: string;
   /** Kind name as served by the API, e.g. `Incident`. */
   kind: string;
-  /** Where the plugin lists the kind, e.g. `/a/grafana-irm-app/incidents`; an object's page is `${listUrl}/${metadata.name}`. */
+  /** Where the kind is listed, e.g. `/a/grafana-irm-app/incidents`; an object's page is `${listUrl}/${metadata.name}`. */
   listUrl: string;
   /** Singular display name of the kind, e.g. `Incident`. */
   title: string;
@@ -33,16 +33,16 @@ export interface StarredKindRegistration {
  * Stars objects on behalf of the signed-in user and reads back what they have starred.
  *
  * App plugins get this through {@link getStarsSrv}. Stars of any kind are stored; Grafana shows
- * its own kinds (dashboards, folders) and every kind a plugin has registered, and keeps its
- * Starred navigation and lists in sync as stars change.
+ * dashboards, folders and every registered kind, and keeps its Starred navigation and lists in
+ * sync as stars change.
  */
 export interface StarsSrv {
   /**
-   * Registers a kind so Grafana shows its starred objects. Call it when the plugin module loads;
+   * Registers a kind so Grafana shows its starred objects. A plugin calls it as its module loads;
    * objects of a kind registered later than that appear once it is. Returns the unregister function.
    */
   registerKind(registration: StarredKindRegistration): () => void;
-  /** Whether Grafana shows starred objects of the kind: its own kinds, or one a plugin has registered. Stars of other kinds are stored but not shown. */
+  /** Whether Grafana shows starred objects of the kind: dashboards, folders, or a registered kind. Stars of other kinds are stored but not shown. */
   canStar(group: string, kind: string): boolean;
   /** Stars the object for the signed-in user. Rejects when Grafana refuses (e.g. not signed in, server error). Grafana's Starred navigation and lists update on success. */
   star(ref: StarredResourceRef): Promise<void>;
