@@ -90,8 +90,8 @@ func (s *Service) getLegacyIdentityScopes(
 	userUID string,
 	action string,
 	skipCache bool,
-) ([]string, bool, error) {
-	permissions, hasAnyPermissions, err := s.getLegacyIdentityPermissions(
+) ([]string, error) {
+	permissions, err := s.getLegacyIdentityPermissions(
 		ctx,
 		ns,
 		idType,
@@ -100,15 +100,14 @@ func (s *Service) getLegacyIdentityScopes(
 		skipCache,
 	)
 	if err != nil {
-		return nil, false, fmt.Errorf("could not get legacy identity permissions: %w", err)
+		return nil, fmt.Errorf("could not get legacy identity permissions: %w", err)
 	}
 
-	return permissions[action], hasAnyPermissions, nil
+	return permissions[action], nil
 }
 
-// getLegacyIdentityPermissions returns grants for the requested actions and whether
-// the identity has any effective permissions. The filtered map can be empty even
-// though the identity has the SharedWithMe grant or fixed renderer grants.
+// getLegacyIdentityPermissions loads only the requested actions, including
+// implicit grants that are not stored in the permission store.
 func (s *Service) getLegacyIdentityPermissions(
 	ctx context.Context,
 	ns types.NamespaceInfo,
@@ -116,19 +115,19 @@ func (s *Service) getLegacyIdentityPermissions(
 	userUID string,
 	actions []string,
 	skipCache bool,
-) (map[string][]string, bool, error) {
+) (map[string][]string, error) {
 	permissions := make(map[string][]string, len(actions))
 	query := store.PermissionsQuery{}
 	switch idType {
 	case types.TypeUser, types.TypeServiceAccount:
 		identifiers, err := s.getUserIdentifiers(ctx, ns, userUID, skipCache)
 		if err != nil {
-			return nil, false, fmt.Errorf("could not get user identifiers: %w", err)
+			return nil, fmt.Errorf("could not get user identifiers: %w", err)
 		}
 
 		query, err = s.getLegacyUserPermissionQuery(ctx, ns, identifiers, skipCache)
 		if err != nil {
-			return nil, false, fmt.Errorf("could not get legacy user permission query: %w", err)
+			return nil, fmt.Errorf("could not get legacy user permission query: %w", err)
 		}
 	case types.TypeAnonymous:
 		query.Role = s.settings.AnonOrgRole
@@ -136,17 +135,15 @@ func (s *Service) getLegacyIdentityPermissions(
 		for _, action := range actions {
 			scopes, err := s.getRendererPermissions(ctx, action)
 			if err != nil {
-				return nil, false, fmt.Errorf("could not get renderer permissions: %w", err)
+				return nil, fmt.Errorf("could not get renderer permissions: %w", err)
 			}
 			if scopes["*"] {
 				permissions[action] = []string{"*"}
 			}
 		}
-		// Render identities always have fixed grants, even when none of the
-		// requested actions match them. Their permission set is never empty.
-		return permissions, true, nil
+		return permissions, nil
 	default:
-		return nil, false, fmt.Errorf("unsupported identity type: %s", idType)
+		return nil, fmt.Errorf("unsupported identity type: %s", idType)
 	}
 
 	for _, action := range actions {
@@ -158,7 +155,7 @@ func (s *Service) getLegacyIdentityPermissions(
 
 		grants, err := s.permissionStore.GetUserPermissions(ctx, ns, actionQuery)
 		if err != nil {
-			return nil, false, fmt.Errorf("could not get user permissions: %w", err)
+			return nil, fmt.Errorf("could not get user permissions: %w", err)
 		}
 		// Modern Kubernetes checks normalize scopes. Legacy evaluators need
 		// the original strings, including empty scopes on action-only grants.
@@ -172,11 +169,7 @@ func (s *Service) getLegacyIdentityPermissions(
 		}
 	}
 
-	// The legacy permission loader adds SharedWithMe for users, service accounts
-	// and anonymous identities even without stored grants (legacypermissions/loader.go).
-	// Their effective permission set is therefore nonempty, including when this
-	// filtered result is empty. No additional permission-existence query is needed.
-	return permissions, true, nil
+	return permissions, nil
 }
 
 func (s *Service) getLegacyUserPermissionQuery(
@@ -214,7 +207,7 @@ func (s *Service) prepareLegacyOrgEvaluation(
 	actions []string,
 	scopeRequest legacyScopeRequest,
 ) (legacyEvaluationArgs, error) {
-	permissions, hasAnyPermissions, err := s.getLegacyIdentityPermissions(
+	permissions, err := s.getLegacyIdentityPermissions(
 		ctx,
 		scopeRequest.namespace,
 		scopeRequest.identityType,
@@ -226,9 +219,13 @@ func (s *Service) prepareLegacyOrgEvaluation(
 		return legacyEvaluationArgs{}, err
 	}
 
+	// The legacy loader adds SharedWithMe for users, service accounts and anonymous
+	// identities even without stored grants (legacypermissions/loader.go). Renderers
+	// have fixed grants. Their full permission sets are nonempty even when this
+	// filtered result is empty.
 	return legacyEvaluationArgs{
 		permissions:       permissions,
-		hasAnyPermissions: hasAnyPermissions,
+		hasAnyPermissions: true,
 		scopeRequest:      scopeRequest,
 	}, nil
 }

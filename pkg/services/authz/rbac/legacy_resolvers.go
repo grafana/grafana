@@ -182,7 +182,7 @@ func (s *Service) legacyResolverRequester(
 	// we will need to address the issue that ALL resolvers load folder.ActionFoldersRead
 	// even when the resolver does not need it (f.e. datasources)
 	if _, ok := grants[folder.ActionFoldersRead]; !ok {
-		scopes, _, err := s.getLegacyIdentityScopes(
+		scopes, err := s.getLegacyIdentityScopes(
 			ctx,
 			req.namespace,
 			req.identityType,
