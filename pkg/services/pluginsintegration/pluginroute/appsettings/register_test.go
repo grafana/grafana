@@ -1,10 +1,10 @@
 package appsettings
 
 import (
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"go.uber.org/goleak"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -19,16 +19,13 @@ import (
 // TestNewBuilderStartsNoGoroutines prevents goroutine leaks in the
 // router, which builds a builder for every plugin on each poll.
 func TestNewBuilderStartsNoGoroutines(t *testing.T) {
+	defer goleak.VerifyNone(t, goleak.IgnoreCurrent())
 	plugin := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "test-app"}}
-	baseline := runtime.NumGoroutine()
 
 	for range 100 {
 		_, err := NewBuilder(plugin, struct{ PluginClient }{}, struct{ PluginContextWrapper }{}, nil, nil, Options{}, nil, nil)
 		require.NoError(t, err)
 	}
-
-	leaked := runtime.NumGoroutine() - baseline
-	require.Zero(t, leaked, "constructing builders must not start goroutines")
 }
 
 func TestNewBuilderRequiresPluginClients(t *testing.T) {
