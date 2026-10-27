@@ -173,6 +173,9 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	if err := rejectNonCreatableVersions(model.Integrations); err != nil {
+		return nil, err
+	}
 
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -208,6 +211,10 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return old, false, err
 	}
+	oldReceiver, ok := old.(*model.Receiver)
+	if !ok {
+		return nil, false, fmt.Errorf("expected receiver but got %s", old.GetObjectKind().GroupVersionKind())
+	}
 	obj, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
 		return old, false, err
@@ -225,6 +232,9 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if err != nil {
 		return old, false, err
 	}
+	if err := rejectNonCreatableVersionChanges(model.Integrations, oldReceiver.Spec.Integrations); err != nil {
+		return old, false, err
+	}
 
 	updated, err := s.service.UpdateReceiver(ctx, model, storedSecureFields, info.OrgID, user)
 	if err != nil {
@@ -233,6 +243,50 @@ func (s *legacyStorage) Update(ctx context.Context,
 
 	r, err := convertToK8sResource(info.OrgID, updated, nil, nil, s.namespacer)
 	return r, false, err
+}
+
+// rejectNonCreatableVersions rejects any integration whose resolved schema version has
+// CanCreate=false.
+func rejectNonCreatableVersions(integrations []*ngmodels.Integration) error {
+	for _, in := range integrations {
+		if !in.Config.CanCreate {
+			return apierrors.NewBadRequest(fmt.Sprintf(
+				"integration of type %q cannot be created with schema version %q", in.Config.Type(), in.Config.Version))
+		}
+	}
+	return nil
+}
+
+// rejectNonCreatableVersionChanges rejects an integration that is being introduced or
+// switched to a CanCreate=false schema version. An existing integration (matched by UID,
+// type and version together -- schema versions are only meaningful within their own type)
+// that already carries a CanCreate=false version is left alone as long as neither changes
+// -- receivers promoted via merge.MergeExtraConfig legitimately land on a legacy version
+// outside this write path, and rejecting them here would brick unrelated edits to those
+// receivers.
+func rejectNonCreatableVersionChanges(incoming []*ngmodels.Integration, existing []model.ReceiverIntegration) error {
+	type typeVersion struct {
+		Type    string
+		Version string
+	}
+	existingByUID := make(map[string]typeVersion, len(existing))
+	for _, e := range existing {
+		if e.Uid != nil && *e.Uid != "" {
+			existingByUID[*e.Uid] = typeVersion{Type: e.Type, Version: e.Version}
+		}
+	}
+	for _, in := range incoming {
+		if in.Config.CanCreate {
+			continue
+		}
+		if prev, ok := existingByUID[in.UID]; in.UID != "" && ok &&
+			prev.Type == string(in.Config.Type()) && prev.Version == string(in.Config.Version) {
+			continue
+		}
+		return apierrors.NewBadRequest(fmt.Sprintf(
+			"integration of type %q cannot be created or changed to schema version %q", in.Config.Type(), in.Config.Version))
+	}
+	return nil
 }
 
 // GracefulDeleter
