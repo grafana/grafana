@@ -233,27 +233,17 @@ func TestGetDashboard(t *testing.T) {
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashboardUnstructured, nil).Once()
 		k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 1"),
-							[]byte("folder1"),
-						},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+						{FieldIndex: 1, StringValues: []string{"folder1"}},
 					},
 				},
 			},
@@ -382,68 +372,38 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 			return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
 				req.Options.Fields[1].Values[0] == repo
 		})).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{},
-			Rows:    []*resourcepb.ResourceTableRow{},
-		},
-		TotalHits: 0,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows:         []*resourcepb.ResourceSearchRow{},
+		TotalHits:    0,
 	}, nil).Once()
 	k8sCliMock.On("Search", mock.Anything, int64(2), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 		// make sure the kind is added to the query
 		return req.Options.Fields[0].Values[0] == string(utils.ManagerKindClassicFP) && // nolint:staticcheck
 			req.Options.Fields[1].Values[0] == repo
 	})).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{
-					Name: "title",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: "folder",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_LEGACY_ID,
-					Type: resourcepb.ResourceTableColumnDefinition_INT64,
-				},
-				{
-					Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_MANAGER_ID,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_SOURCE_PATH,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_SOURCE_TIME,
-					Type: resourcepb.ResourceTableColumnDefinition_INT64,
-				},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder 1"),
-						[]byte("1"),
-						[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
-						[]byte(repo),
-						[]byte("path/to/file"),
-						[]byte("hash"),
-						[]byte("1234567"),
-					},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_INT64},
+			{Name: resource.SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_PATH, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_TIME, Type: resourcepb.ResourceSearchField_INT64},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+					{FieldIndex: 1, StringValues: []string{"folder 1"}},
+					{FieldIndex: 2, Int64Values: []int64{1}},
+					{FieldIndex: 3, StringValues: []string{string(utils.ManagerKindClassicFP)}}, //nolint:staticcheck // Check legacy provisioning metadata.
+					{FieldIndex: 4, StringValues: []string{repo}},
+					{FieldIndex: 5, StringValues: []string{"path/to/file"}},
+					{FieldIndex: 6, StringValues: []string{"hash"}},
+					{FieldIndex: 7, Int64Values: []int64{1234567}},
 				},
 			},
 		},
@@ -475,64 +435,34 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 	provisioningTimestamp := int64(1234567)
 	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	k8sCliMock.On("Search", mock.Anything, int64(1), mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{},
-			Rows:    []*resourcepb.ResourceTableRow{},
-		},
-		TotalHits: 0,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows:         []*resourcepb.ResourceSearchRow{},
+		TotalHits:    0,
 	}, nil)
 	k8sCliMock.On("Search", mock.Anything, int64(2), mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{
-					Name: "title",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: "folder",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_LEGACY_ID,
-					Type: resourcepb.ResourceTableColumnDefinition_INT64,
-				},
-				{
-					Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_MANAGER_ID,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_SOURCE_PATH,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_SOURCE_TIME,
-					Type: resourcepb.ResourceTableColumnDefinition_INT64,
-				},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder 1"),
-						[]byte("1"),
-						[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
-						[]byte("test"),
-						[]byte("path/to/file"),
-						[]byte("hash"),
-						[]byte("1234567"),
-					},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_INT64},
+			{Name: resource.SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_PATH, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_TIME, Type: resourcepb.ResourceSearchField_INT64},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+					{FieldIndex: 1, StringValues: []string{"folder 1"}},
+					{FieldIndex: 2, Int64Values: []int64{1}},
+					{FieldIndex: 3, StringValues: []string{string(utils.ManagerKindClassicFP)}}, //nolint:staticcheck // Check legacy provisioning metadata.
+					{FieldIndex: 4, StringValues: []string{"test"}},
+					{FieldIndex: 5, StringValues: []string{"path/to/file"}},
+					{FieldIndex: 6, StringValues: []string{"hash"}},
+					{FieldIndex: 7, Int64Values: []int64{1234567}},
 				},
 			},
 		},
@@ -562,57 +492,29 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 	provisioningTimestamp := int64(1234567)
 	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{
-					Name: "title",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: "folder",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_LEGACY_ID,
-					Type: resourcepb.ResourceTableColumnDefinition_INT64,
-				},
-				{
-					Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_MANAGER_ID,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_SOURCE_PATH,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_SOURCE_TIME,
-					Type: resourcepb.ResourceTableColumnDefinition_INT64,
-				},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder 1"),
-						[]byte("1"),
-						[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
-						[]byte("test"),
-						[]byte("path/to/file"),
-						[]byte("hash"),
-						[]byte("1234567"),
-					},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_INT64},
+			{Name: resource.SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_PATH, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_TIME, Type: resourcepb.ResourceSearchField_INT64},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+					{FieldIndex: 1, StringValues: []string{"folder 1"}},
+					{FieldIndex: 2, Int64Values: []int64{1}},
+					{FieldIndex: 3, StringValues: []string{string(utils.ManagerKindClassicFP)}}, //nolint:staticcheck // Check legacy provisioning metadata.
+					{FieldIndex: 4, StringValues: []string{"test"}},
+					{FieldIndex: 5, StringValues: []string{"path/to/file"}},
+					{FieldIndex: 6, StringValues: []string{"hash"}},
+					{FieldIndex: 7, Int64Values: []int64{1234567}},
 				},
 			},
 		},
@@ -674,27 +576,17 @@ func TestUnprovisionDashboard(t *testing.T) {
 	k8sCliMock.On("GetNamespace", mock.Anything).Return("default")
 	k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{
-					Name: "title",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: "folder",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder 1"),
-					},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+					{FieldIndex: 1, StringValues: []string{"folder 1"}},
 				},
 			},
 		},
@@ -731,27 +623,17 @@ func TestGetDashboardsByPluginID(t *testing.T) {
 		req.Options.Fields[0].Key == "manager.kind" && req.Options.Fields[0].Values[0] == string(utils.ManagerKindPlugin) &&
 			req.Options.Fields[1].Key == "manager.id" && req.Options.Fields[1].Values[0] == "testing")
 	})).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{
-					Name: "title",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: "folder",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder 1"),
-					},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+					{FieldIndex: 1, StringValues: []string{"folder 1"}},
 				},
 			},
 		},
@@ -985,27 +867,17 @@ func TestDeleteDashboard(t *testing.T) {
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 1"),
-							[]byte("folder1"),
-						},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+						{FieldIndex: 1, StringValues: []string{"folder1"}},
 					},
 				},
 			},
@@ -1160,43 +1032,26 @@ func TestSearchDashboards(t *testing.T) {
 		fakeFolders.ExpectedHitList = expectedFolders
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "tags",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "tags", Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid1", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+						{FieldIndex: 1, StringValues: []string{"f1"}},
+						{FieldIndex: 2, StringValues: []string{"tag1", "tag2"}},
 					},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid1",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 1"),
-							[]byte("f1"),
-							[]byte("[\"tag1\", \"tag2\"]"),
-						},
-					},
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid2",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 2"),
-							[]byte("f1"),
-							[]byte(""),
-						},
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid2", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"Dashboard 2"}},
+						{FieldIndex: 1, StringValues: []string{"f1"}},
 					},
 				},
 			},
@@ -1224,32 +1079,19 @@ func TestSearchDashboards(t *testing.T) {
 			}
 			return false
 		})).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "tags",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "shared-uid1",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Shared Dashboard 1"),
-							[]byte("f1"),
-							[]byte("[\"shared\"]"),
-						},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "tags", Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "shared-uid1", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"Shared Dashboard 1"}},
+						{FieldIndex: 1, StringValues: []string{"f1"}},
+						{FieldIndex: 2, StringValues: []string{"shared"}},
 					},
 				},
 			},
@@ -1266,32 +1108,19 @@ func TestSearchDashboards(t *testing.T) {
 			}
 			return false
 		})).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "tags",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "shared-uid1",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Shared Dashboard 1"),
-							[]byte("f1"),
-							[]byte("[\"shared\"]"),
-						},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "tags", Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "shared-uid1", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"Shared Dashboard 1"}},
+						{FieldIndex: 1, StringValues: []string{"f1"}},
+						{FieldIndex: 2, StringValues: []string{"shared"}},
 					},
 				},
 			},
@@ -1368,37 +1197,24 @@ func TestGetDashboards(t *testing.T) {
 	k8sCliMock.On("Get", mock.Anything, "uid2", mock.Anything, mock.Anything, mock.Anything).Return(uid2Unstructured, nil)
 	k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{
-					Name: "title",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: "folder",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "uid1", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+					{FieldIndex: 1, StringValues: []string{""}},
 				},
 			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid1",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte(""),
-					},
-				},
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid2",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 2"),
-						[]byte(""),
-					},
+			{
+				Key: &resourcepb.ResourceKey{Name: "uid2", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 2"}},
+					{FieldIndex: 1, StringValues: []string{""}},
 				},
 			},
 		},
@@ -1434,27 +1250,17 @@ func TestGetDashboardUIDByID(t *testing.T) {
 	ctx, k8sCliMock := setupK8sDashboardTests(service)
 	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{
-					Name: "title",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: "folder",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid1",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder1"),
-					},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "uid1", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+					{FieldIndex: 1, StringValues: []string{"folder1"}},
 				},
 			},
 		},
@@ -1896,37 +1702,24 @@ func TestCountInFolders(t *testing.T) {
 	}
 	ctx, k8sCliMock := setupK8sDashboardTests(service)
 	dashs := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{
-					Name: "title",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: "folder",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+					{FieldIndex: 1, StringValues: []string{"folder 1"}},
 				},
 			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder 1"),
-					},
-				},
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid2",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 2"),
-						[]byte("folder 1"),
-					},
+			{
+				Key: &resourcepb.ResourceKey{Name: "uid2", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 2"}},
+					{FieldIndex: 1, StringValues: []string{"folder 1"}},
 				},
 			},
 		},
@@ -1992,19 +1785,23 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		assert.Equal(t, fields, request.Fields)
 	})
 
-	t.Run("internal searches request field-value results and accept a legacy response", func(t *testing.T) {
+	t.Run("internal searches use field-value results", func(t *testing.T) {
 		k8sCliMock := new(client.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES
 		})).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{Key: &resourcepb.ResourceKey{Name: "uid"}, Cells: [][]byte{[]byte("Dashboard 1")}},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+					},
 				},
 			},
 			TotalHits: 1,
@@ -2017,7 +1814,7 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		assert.Equal(t, "Dashboard 1", result.Hits[0].Title)
 	})
 
-	t.Run("requests field-value results and accepts a legacy response", func(t *testing.T) {
+	t.Run("uses field-value results for dashboard searches", func(t *testing.T) {
 		ctx := t.Context()
 		k8sCliMock := new(client.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
@@ -2034,27 +1831,17 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 				req.SortBy[0].Field == "title" &&
 				!req.SortBy[0].Desc
 		})).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 1"),
-							[]byte("folder1"),
-						},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+						{FieldIndex: 1, StringValues: []string{"folder1"}},
 					},
 				},
 			},
@@ -2093,10 +1880,8 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 			}
 			return false
 		})).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{},
-				Rows:    []*resourcepb.ResourceTableRow{},
-			}}, nil)
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Rows:         []*resourcepb.ResourceSearchRow{}}, nil)
 		_, err := service.searchDashboardsThroughK8s(ctx, query)
 		require.NoError(t, err)
 	})
@@ -2116,27 +1901,17 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 				req.SortBy[0].Desc &&
 				slices.Contains(req.Fields, "views_last_30_days")
 		})).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("Dashboard 1"),
-							[]byte("folder1"),
-						},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+						{FieldIndex: 1, StringValues: []string{"folder1"}},
 					},
 				},
 			},
@@ -2159,8 +1934,8 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 			return slices.Contains(req.Fields, "grafana.app/deprecatedInternalID") &&
 				slices.Contains(req.Fields, "labels.grafana.app/deprecatedInternalID")
 		})).Return(&resourcepb.ResourceSearchResponse{
-			Results:   &resourcepb.ResourceTable{},
-			TotalHits: 0,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:    0,
 		}, nil)
 		_, err := service.searchDashboardsThroughK8s(ctx, query)
 		require.NoError(t, err)
@@ -2177,52 +1952,27 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 	provisioningTimestamp := int64(1234567)
 	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{
-					Name: "title",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: "folder",
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_MANAGER_KIND, // nolint:staticcheck
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_MANAGER_ID,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_SOURCE_PATH,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM,
-					Type: resourcepb.ResourceTableColumnDefinition_STRING,
-				},
-				{
-					Name: resource.SEARCH_FIELD_SOURCE_TIME,
-					Type: resourcepb.ResourceTableColumnDefinition_INT64,
-				},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder 1"),
-						[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
-						[]byte("test"),
-						[]byte("path/to/file"),
-						[]byte("hash"),
-						[]byte("1234567"),
-					},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_PATH, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_TIME, Type: resourcepb.ResourceSearchField_INT64},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+					{FieldIndex: 1, StringValues: []string{"folder 1"}},
+					{FieldIndex: 2, StringValues: []string{string(utils.ManagerKindClassicFP)}}, //nolint:staticcheck // Check legacy provisioning metadata.
+					{FieldIndex: 3, StringValues: []string{"test"}},
+					{FieldIndex: 4, StringValues: []string{"path/to/file"}},
+					{FieldIndex: 5, StringValues: []string{"hash"}},
+					{FieldIndex: 6, Int64Values: []int64{1234567}},
 				},
 			},
 		},
@@ -2250,31 +2000,27 @@ func TestCountProvisionedDashboardsInOrg(t *testing.T) {
 	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 	k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: "title", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				{Name: resource.SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				{Name: resource.SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				{Name: resource.SEARCH_FIELD_SOURCE_PATH, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				{Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				{Name: resource.SEARCH_FIELD_SOURCE_TIME, Type: resourcepb.ResourceTableColumnDefinition_INT64},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "uid",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder 1"),
-						[]byte(string(utils.ManagerKindClassicFP)), // nolint:staticcheck
-						[]byte("test"),
-						[]byte("path/to/file"),
-						[]byte("hash"),
-						[]byte("1234567"),
-					},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_PATH, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_SOURCE_TIME, Type: resourcepb.ResourceSearchField_INT64},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "uid", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
+					{FieldIndex: 1, StringValues: []string{"folder 1"}},
+					{FieldIndex: 2, StringValues: []string{string(utils.ManagerKindClassicFP)}}, //nolint:staticcheck // Check legacy provisioning metadata.
+					{FieldIndex: 3, StringValues: []string{"test"}},
+					{FieldIndex: 4, StringValues: []string{"path/to/file"}},
+					{FieldIndex: 5, StringValues: []string{"hash"}},
+					{FieldIndex: 6, Int64Values: []int64{1234567}},
 				},
 			},
 		},
@@ -2754,26 +2500,35 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 	}
 
 	searchResponse := &resourcepb.ResourceSearchResponse{
-		ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		TotalHits:    3,
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceTableColumnDefinition_INT64},
-				{Name: resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_INT64},
+			{Name: resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "dashboard1", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"folder1"}},
+					{FieldIndex: 1, Int64Values: []int64{1}},
+					{FieldIndex: 2, StringValues: []string{"1"}},
+				},
 			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key:   &resourcepb.ResourceKey{Name: "dashboard1", Resource: "dashboard"},
-					Cells: [][]byte{[]byte("folder1"), []byte("1"), []byte("1")},
+			{
+				Key: &resourcepb.ResourceKey{Name: "dashboard2", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"folder2"}},
+					{FieldIndex: 1, Int64Values: []int64{2}},
+					{FieldIndex: 2, StringValues: []string{"2"}},
 				},
-				{
-					Key:   &resourcepb.ResourceKey{Name: "dashboard2", Resource: "dashboard"},
-					Cells: [][]byte{[]byte("folder2"), []byte("2"), []byte("2")},
-				},
-				{
-					Key:   &resourcepb.ResourceKey{Name: "dashboard3", Resource: "dashboard"},
-					Cells: [][]byte{nil, []byte("3"), []byte("3")},
+			},
+			{
+				Key: &resourcepb.ResourceKey{Name: "dashboard3", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 1, Int64Values: []int64{3}},
+					{FieldIndex: 2, StringValues: []string{"3"}},
 				},
 			},
 		},
