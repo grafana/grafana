@@ -288,13 +288,6 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceConnection(ref common.Referen
 							Format:  "",
 						},
 					},
-					"version": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
 					"plugin": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -316,7 +309,7 @@ func schema_pkg_apis_datasource_v0alpha1_DataSourceConnection(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"title", "name", "group", "version"},
+				Required: []string{"title", "name", "group"},
 			},
 		},
 	}
