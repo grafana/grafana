@@ -470,6 +470,20 @@ describe('setupKeyboardShortcuts', () => {
       expect(modSBinding).toBeDefined();
     });
 
+    it.each([
+      { mode: 'view', opens: false },
+      { mode: 'edit', opens: true },
+    ] as const)('save shortcut (mod+s) opens the save drawer in $mode mode: $opens', ({ mode, opens }) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      mockScene.setState({ mode, isEditing: true });
+      const openSaveDrawer = jest.spyOn(mockScene, 'openSaveDrawer').mockResolvedValue(undefined);
+      const modSBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'mod+s');
+
+      modSBinding![0].onTrigger();
+
+      expect(openSaveDrawer).toHaveBeenCalledTimes(opens ? 1 : 0);
+    });
+
     it('should setup dashboard settings shortcut (d s) when can edit', () => {
       const dsBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'd s');
       expect(dsBinding).toBeDefined();

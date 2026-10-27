@@ -287,7 +287,12 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     if (canSave) {
       keybindings.addBinding({
         key: 'mod+s',
-        onTrigger: () => scene.openSaveDrawer({}),
+        onTrigger: () => {
+          // Viewing keeps the edit session open (isEditing stays true), so gate on the mode as well
+          if (!isViewingDashboard(scene.state)) {
+            scene.openSaveDrawer({});
+          }
+        },
       });
     }
 
