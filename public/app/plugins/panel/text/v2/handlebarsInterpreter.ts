@@ -29,6 +29,8 @@ type DeclaredBlockParams = Array<string[] | undefined>;
 type Expression = (scope: Scope) => unknown;
 type Statement = (scope: Scope) => string;
 type ProgramFactory = (scope: Scope) => Program;
+/** Renders a program body. `parent` is the scope the program was entered from. */
+type Body = (scope: Scope, parent: Scope) => string;
 
 interface HelperOptions {
   name: string;
@@ -52,7 +54,8 @@ const noop: Program = () => '';
 function lookupProperty(parent: unknown, propertyName: unknown): unknown {
   const name =
     typeof propertyName === 'string' || typeof propertyName === 'symbol' ? propertyName : String(propertyName);
-  const result: unknown = Reflect.get(Object(parent), name);
+  // Objects are read directly: boxing every value for `Reflect.get` made this the slowest step of a render.
+  const result: unknown = isIndexable(parent) ? parent[name] : Reflect.get(Object(parent), name);
 
   if (result == null) {
     return result;
@@ -70,14 +73,20 @@ export function interpret(program: hbs.AST.Program, env: Environment): (context:
   // Set while compiling, read while rendering.
   const uses = { depths: false, blockParams: false };
 
+  // Inline partials in scope, swapped in and out as programs run, like `container.partials`.
+  // A null prototype, so only defined partials are found.
+  let partials: Record<string, Program | undefined> = Object.create(null);
+
   const findHelper = (name: string): unknown => (HOOKS.has(name) ? undefined : lookupProperty(env.helpers, name));
 
   const callContext = (scope: Scope): unknown => (scope.context != null ? scope.context : nullContext);
 
-  // A block keeping its context, like `#if`, adds no depth for `../`.
+  // A block keeping its context, like `#if`, adds no depth for `../`. Handlebars compares loosely,
+  // so `1` and `"1"`, or `0` and `[0]`, also count as the same context.
   function enter(depths: unknown[], context: unknown): unknown[] {
     const current = depths[0];
-    const same = context === current || (context == null && current == null);
+    // eslint-disable-next-line eqeqeq
+    const same = context == current;
 
     return same || (context === nullContext && current === null) ? depths : [context, ...depths];
   }
@@ -218,7 +227,7 @@ export function interpret(program: hbs.AST.Program, env: Environment): (context:
         }
 
         const options = createOptions(scope, name, Object.create(null), loc, fn, inverse);
-        const value = typeof target === 'function' ? Reflect.apply(target, callContext(scope), [options]) : target;
+        const value = typeof target === 'function' ? target.call(callContext(scope), options) : target;
 
         return block && !helper ? callHook(scope.context, [value, options]) : value;
       };
@@ -257,12 +266,44 @@ export function interpret(program: hbs.AST.Program, env: Environment): (context:
 
     return (scope) =>
       (context, options = {}) =>
-        body({
-          context,
-          data: options.data || scope.data,
-          depths: uses.depths ? enter(scope.depths, context) : scope.depths,
-          blockParams: uses.blockParams ? [options.blockParams, ...scope.blockParams] : scope.blockParams,
-        });
+        body(
+          {
+            context,
+            data: options.data || scope.data,
+            depths: uses.depths ? enter(scope.depths, context) : scope.depths,
+            blockParams: uses.blockParams ? [options.blockParams, ...scope.blockParams] : scope.blockParams,
+          },
+          scope
+        );
+  }
+
+  // Only partials defined in the template, so it cannot reach anything outside itself.
+  function compilePartial(node: hbs.AST.PartialStatement, declared: DeclaredBlockParams): Statement {
+    if (node.params.length > 1) {
+      throw new Handlebars.Exception(`Unsupported number of partial arguments: ${node.params.length}`, node);
+    }
+    if (isSubExpression(node.name)) {
+      throw new Handlebars.Exception('Unsupported Handlebars expression: dynamic partial', node);
+    }
+
+    const name = String(node.name.original);
+    const [param] = node.params;
+    const context = param ? compileParam(param, declared) : (scope: Scope) => scope.context;
+    const hash = node.hash ? compileHash(node.hash, declared) : undefined;
+    const { indent } = node;
+
+    return (scope) => {
+      const partial = partials[name];
+
+      if (!partial) {
+        throw new Handlebars.Exception(`The partial ${name} could not be found`);
+      }
+
+      const base = context(scope);
+      const output = partial(hash ? Handlebars.Utils.extend({}, base, hash(scope)) : base, { data: scope.data });
+
+      return indent ? indentLines(output, indent) : output;
+    };
   }
 
   function compileStatement(node: hbs.AST.Statement, declared: DeclaredBlockParams): Statement {
@@ -287,14 +328,31 @@ export function interpret(program: hbs.AST.Program, env: Environment): (context:
       return (scope) => toOutput(expression(scope));
     }
 
-    // Partials and decorators: none registered.
+    if (isPartial(node)) {
+      return compilePartial(node, declared);
+    }
+
+    // Other decorators and partial blocks. Inline partials are taken out by `compileBody`.
     throw new Handlebars.Exception(`Unsupported Handlebars expression: ${node.type}`, node);
   }
 
-  function compileBody(program: hbs.AST.Program, declared: DeclaredBlockParams): Statement {
-    const statements = program.body.map((statement) => compileStatement(statement, declared));
+  function compileBody(program: hbs.AST.Program, declared: DeclaredBlockParams): Body {
+    const statements: Statement[] = [];
+    const inlines: Array<{ name: Expression; fn: ProgramFactory }> = [];
 
-    return (scope) => {
+    for (const node of program.body) {
+      if (isInlineDecorator(node)) {
+        const [param] = node.params;
+        inlines.push({
+          name: param ? compileParam(param, declared) : () => undefined,
+          fn: compileProgram(node.program, declared) ?? (() => noop),
+        });
+      } else {
+        statements.push(compileStatement(node, declared));
+      }
+    }
+
+    const render = (scope: Scope) => {
       let output = '';
 
       for (const statement of statements) {
@@ -303,12 +361,52 @@ export function interpret(program: hbs.AST.Program, env: Environment): (context:
 
       return output;
     };
+
+    if (!inlines.length) {
+      return render;
+    }
+
+    // Like the `inline` decorator: a partial sees the definition's parent scope and the call's data.
+    return (scope, parent) => {
+      const original = partials;
+      partials = Object.assign(Object.create(null), original);
+
+      for (const { name, fn } of inlines) {
+        partials[String(name(parent))] = fn(parent);
+      }
+
+      try {
+        return render(scope);
+      } finally {
+        partials = original;
+      }
+    };
   }
 
   // The root's empty frame keeps the stacks aligned.
   const body = compileBody(program, [program.blockParams]);
 
-  return (context) => body({ context, data: { root: context }, depths: [context], blockParams: [undefined] });
+  return (context) => {
+    const data = { root: context };
+    // Handlebars runs the root's decorators with no parent context or depths.
+    const parent: Scope = { context: undefined, data, depths: [], blockParams: [] };
+
+    return body({ context, data, depths: [context], blockParams: [undefined] }, parent);
+  };
+}
+
+// Like the runtime: every line but a trailing empty one.
+function indentLines(output: string, indent: string): string {
+  const lines = output.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    if (!lines[i] && i + 1 === lines.length) {
+      break;
+    }
+    lines[i] = indent + lines[i];
+  }
+
+  return lines.join('\n');
 }
 
 /** [frame, index] of a declared block param. */
@@ -356,11 +454,11 @@ function call(helper: unknown, name: string, thisArg: unknown, args: unknown[]):
     throw new Handlebars.Exception(`Missing helper: "${name}"`);
   }
 
-  return Reflect.apply(helper, thisArg, args);
+  return helper.apply(thisArg, args);
 }
 
 function lambda(value: unknown, context: unknown): unknown {
-  return typeof value === 'function' ? Reflect.apply(value, context, []) : value;
+  return typeof value === 'function' ? value.call(context) : value;
 }
 
 // Concatenation, like compiled templates, so objects stringify the same.
@@ -368,9 +466,16 @@ function toOutput(value: unknown): string {
   return value != null ? '' + value : '';
 }
 
-// Typed for strings, but handles any value, including SafeString.
+// Typed for strings, but handles any value, including SafeString. A method type accepts `unknown`
+// without an assertion.
+const utils: { escapeExpression(value: unknown): string } = Handlebars.Utils;
+
 function escapeValue(value: unknown): string {
-  return Reflect.apply(Handlebars.Utils.escapeExpression, undefined, [value]);
+  return utils.escapeExpression(value);
+}
+
+function isIndexable(value: unknown): value is Record<PropertyKey, unknown> {
+  return (typeof value === 'object' && value !== null) || typeof value === 'function';
 }
 
 function isScoped(path: hbs.AST.PathExpression): boolean {
@@ -414,4 +519,16 @@ function isMustache(node: hbs.AST.Node): node is hbs.AST.MustacheStatement {
 
 function isBlock(node: hbs.AST.Node): node is hbs.AST.BlockStatement {
   return node.type === 'BlockStatement';
+}
+
+function isPartial(node: hbs.AST.Node): node is hbs.AST.PartialStatement {
+  return node.type === 'PartialStatement';
+}
+
+function isDecoratorBlock(node: hbs.AST.Node): node is hbs.AST.DecoratorBlock {
+  return node.type === 'DecoratorBlock';
+}
+
+function isInlineDecorator(node: hbs.AST.Node): node is hbs.AST.DecoratorBlock {
+  return isDecoratorBlock(node) && node.path.original === 'inline';
 }

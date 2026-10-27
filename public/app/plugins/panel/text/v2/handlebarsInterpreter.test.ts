@@ -67,6 +67,18 @@ describe('interpret', () => {
         expected: 'root',
       },
       {
+        name: 'a parent path that skips a block whose context loosely equals its parent',
+        template: '{{#each a}}{{#each ../b}}[{{../this}}]{{/each}}{{/each}}',
+        context: { a: [1], b: ['1'] },
+        expected: '[[object Object]]',
+      },
+      {
+        name: 'a parent path that skips a primitive equal to its single-item array',
+        template: '{{#each a}}{{#each this}}[{{../this}}]{{/each}}{{/each}}',
+        context: { a: [[0], ['']] },
+        expected: '[[object Object]][[object Object]]',
+      },
+      {
         name: 'block params',
         template: '{{#each items as |item i|}}{{i}}={{item.name}} {{/each}}',
         context: items,
@@ -156,6 +168,106 @@ describe('interpret', () => {
     });
   });
 
+  describe('renders inline partials the way the compiled template does', () => {
+    it.each([
+      {
+        name: 'a partial with a context argument',
+        template: '{{#*inline "row"}}Hello {{this}}{{/inline}}{{> row "Paul"}}',
+        context: {},
+        expected: 'Hello Paul',
+      },
+      {
+        name: 'a partial defined after its use',
+        template: '{{> p}}{{#*inline "p"}}hoisted{{/inline}}',
+        context: {},
+        expected: 'hoisted',
+      },
+      {
+        name: 'a partial in a loop, with the caller data and the definition parents',
+        template: '{{#*inline "p"}}[{{this}}|{{../t}}|{{@index}}]{{/inline}}{{#each a}}{{> p}}{{/each}}',
+        context: { a: [1, 2], t: 'T' },
+        expected: '[1||0][2||1]',
+      },
+      {
+        name: 'a partial defined inside a loop',
+        template: '{{#each a}}{{#*inline "p"}}[{{this}}|{{../t}}]{{/inline}}{{> p}}{{/each}}',
+        context: { a: [1, 2], t: 'T' },
+        expected: '[1|T][2|T]',
+      },
+      {
+        name: 'hash arguments over the current or given context',
+        template: '{{#*inline "p"}}{{x}}{{/inline}}{{> p x=2}}{{> p this x=3}}{{> p "s" x=4}}',
+        context: { x: 1 },
+        expected: '234',
+      },
+      {
+        name: 'a partial calling another',
+        template: '{{#*inline "p"}}{{> q}}{{/inline}}{{#*inline "q"}}Q{{/inline}}{{> p}}',
+        context: {},
+        expected: 'Q',
+      },
+      {
+        name: 'an escaped value inside a partial',
+        template: '{{#*inline "p"}}<{{this}}>{{/inline}}{{> p v}}',
+        context: { v: '<b>' },
+        expected: '<&lt;b&gt;>',
+      },
+      {
+        name: 'a standalone partial, indented line by line',
+        template: '{{#*inline "p"}}\n  a\n  b\n{{/inline}}\n<ul>\n  {{> p}}\n</ul>',
+        context: {},
+        expected: '<ul>\n    a\n    b\n</ul>',
+      },
+      {
+        name: 'nested standalone partials, indented at each level',
+        template: '{{#*inline "p"}}\n  {{> q}}\n{{/inline}}{{#*inline "q"}}x\ny\n{{/inline}}\n<div>\n  {{> p}}\n</div>',
+        context: {},
+        expected: '<div>\n    x\n    y\n</div>',
+      },
+      {
+        name: 'a recursive partial',
+        template: '{{#*inline "t"}}({{name}}{{#each children}}{{> t}}{{/each}}){{/inline}}{{> t}}',
+        context: { name: 'a', children: [{ name: 'b', children: [{ name: 'c', children: [] }] }, { name: 'd' }] },
+        expected: '(a(b(c))(d))',
+      },
+      {
+        name: 'a redefined partial, where the last one wins',
+        template: '{{#*inline "p"}}1{{/inline}}{{#*inline "p"}}2{{/inline}}{{> p}}',
+        context: {},
+        expected: '2',
+      },
+      {
+        name: 'a partial shadowed inside a block, then restored',
+        template: '{{#*inline "p"}}outer{{/inline}}{{#with a}}{{#*inline "p"}}inner{{/inline}}{{> p}}{{/with}}{{> p}}',
+        context: { a: {} },
+        expected: 'innerouter',
+      },
+      {
+        name: 'a partial defined in an else block',
+        template: '{{#if false}}x{{else}}{{#*inline "p"}}E{{/inline}}{{> p}}{{/if}}',
+        context: {},
+        expected: 'E',
+      },
+      {
+        name: 'a partial named with a string literal',
+        template: '{{#*inline "my row"}}S{{/inline}}{{> "my row"}}',
+        context: {},
+        expected: 'S',
+      },
+    ])('$name', ({ template, context, expected }) => {
+      expect(compileReference(template, context)).toBe(expected);
+      expect(interpretTemplate(template, context)).toBe(expected);
+    });
+
+    it('drops a block partial after a render that failed inside the block', () => {
+      const env = Handlebars.create();
+      const render = interpret(env.parse('{{#if fail}}{{#*inline "p"}}x{{/inline}}{{nope 1}}{{/if}}{{> p}}'), env);
+
+      expect(() => render({ fail: true })).toThrow('Missing helper: "nope"');
+      expect(() => render({ fail: false })).toThrow('The partial p could not be found');
+    });
+  });
+
   describe('denies prototype access the way the compiled template does', () => {
     // Stock Handlebars logs denied properties.
     beforeEach(() => {
@@ -193,14 +305,29 @@ describe('interpret', () => {
       { name: 'an unknown helper', template: '{{nope a}}', message: 'Missing helper: "nope"' },
       { name: 'an unknown helper path', template: '{{a.b c}}', message: 'Missing helper: "a.b"' },
       { name: '#if without an argument', template: '{{#if}}x{{/if}}', message: '#if requires exactly one argument' },
+      { name: 'an undefined partial', template: '{{> row}}', message: 'The partial row could not be found' },
+      {
+        name: 'a partial out of scope',
+        template: '{{#if true}}{{#*inline "p"}}x{{/inline}}{{/if}}{{> p}}',
+        message: 'The partial p could not be found',
+      },
+      {
+        name: 'a partial with two arguments',
+        template: '{{> p a b}}',
+        message: 'Unsupported number of partial arguments: 2',
+      },
     ])('$name', ({ template, message }) => {
       expect(() => compileReference(template, {})).toThrow(message);
       expect(() => interpretTemplate(template, {})).toThrow(message);
     });
   });
 
-  it('throws on a partial, since none are registered', () => {
-    expect(() => interpretTemplate('{{> row}}', {})).toThrow('Unsupported Handlebars expression: PartialStatement');
+  it.each([
+    { name: 'a dynamic partial', template: '{{#*inline "p"}}x{{/inline}}{{> (lookup . "n")}}' },
+    { name: 'a partial block', template: '{{#*inline "p"}}x{{/inline}}{{#> p}}fallback{{/p}}' },
+    { name: 'a decorator other than inline', template: '{{#*custom}}x{{/custom}}' },
+  ])('throws on $name, which is unsupported', ({ template }) => {
+    expect(() => interpretTemplate(template, { n: 'p' })).toThrow('Unsupported Handlebars expression');
   });
 
   it('renders without generating code, as under a CSP without unsafe-eval', () => {
