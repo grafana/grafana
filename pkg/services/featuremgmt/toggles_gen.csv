@@ -259,6 +259,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-15,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-08-05,grafana.dashboardGlobalVariables,preview,@grafana/dashboards-squad,false,false,false
 2026-10-15,grafana.dashboardVariablesMigration,experimental,@grafana/dashboards-squad,false,false,false
+2026-10-28,grafana.dashboardPreferences,experimental,@grafana/dashboards-squad,false,false,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-08,pyroscopeUTF8LabelNames,preview,@grafana/observability-traces-and-profiling,false,false,false
