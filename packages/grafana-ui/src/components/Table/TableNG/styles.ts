@@ -689,7 +689,7 @@ export const getScrollShadowOffsetStyles = (_theme: GrafanaTheme2, top: number, 
   });
 
 export const getScrollShadowStyles = (theme: GrafanaTheme2) => {
-  const scrollShadowColor = theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+  const scrollShadowColor = `rgba(0, 0, 0, ${theme.isDark ? 0.25 : 0.08})`;
   return {
     scrollShadows: css({
       // The grid creates a stacking context; both pseudo-elements must paint above it.
