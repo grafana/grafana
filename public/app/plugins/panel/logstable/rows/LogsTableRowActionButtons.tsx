@@ -1,12 +1,13 @@
 import { css, cx } from '@emotion/css';
 import { useCallback, useMemo, type MouseEvent } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, LogLevel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ClipboardButton, type CustomCellRendererProps, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
 import { classifyErrorAttributes } from 'app/features/logs/components/otel/details';
 import { getIconButtonStyles } from 'app/features/logs/components/panel/activeIconButtonStyles';
 import { type LogsFrame } from 'app/features/logs/logsFrame';
+import { LogLevelColor } from 'app/features/logs/logsModel';
 
 import { useLogDetailsContext } from '../LogDetailsContext';
 import { type BuildLinkToLogLine } from '../types';
@@ -193,7 +194,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   errorIcon: css({
     alignItems: 'center',
-    color: theme.colors.error.main,
+    color: LogLevelColor[LogLevel.error],
     display: 'flex',
     flexShrink: 0,
     height: '100%',
