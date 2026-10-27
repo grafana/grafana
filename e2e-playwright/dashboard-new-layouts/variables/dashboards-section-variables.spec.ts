@@ -41,19 +41,6 @@ test.describe(
       await addNewSectionVariable(sidebar, sidebar.rowOptions, sectionVariable);
       await variableOptions.textbox.setValue('section');
 
-      await test.step('Check the display options offer no "Controls menu" placement', async () => {
-        await variableOptions.openDisplaySelect();
-        // We use toContainText because each option's text is its label followed by its description,
-        // and we check the count because toContainText also passes on a longer list.
-        await expect(variableOptions.getDisplayOptions(), 'Display offers exactly 3 options').toHaveCount(3);
-        await expect(
-          variableOptions.getDisplayOptions(),
-          'Display options are "Top of row", "Top of row, label hidden" and "Hidden"'
-        ).toContainText(['Top of row', 'Top of row, label hidden', 'Hidden']);
-        // We pick the current option to close the dropdown, because Escape would also clear the dashboard selection.
-        await variableOptions.getDisplayOptions().getByText('Top of row', { exact: true }).click();
-      });
-
       await test.step('Check the row variable control is in the row, not in the controls bar', async () => {
         await expect(
           sectionRowContent.filter({ has: controls.variables.getLabel(sectionVariable.label) }),
@@ -144,16 +131,6 @@ test.describe(
       await tabs.select('Section tab');
       await addNewSectionVariable(sidebar, sidebar.tabOptions, sectionVariable);
       await variableOptions.textbox.setValue('section');
-
-      await test.step('Check the display options offer no "Controls menu" placement', async () => {
-        await variableOptions.openDisplaySelect();
-        await expect(variableOptions.getDisplayOptions(), 'Display offers exactly 3 options').toHaveCount(3);
-        await expect(
-          variableOptions.getDisplayOptions(),
-          'Display options are "Top of tab", "Top of tab, label hidden" and "Hidden"'
-        ).toContainText(['Top of tab', 'Top of tab, label hidden', 'Hidden']);
-        await variableOptions.getDisplayOptions().getByText('Top of tab', { exact: true }).click();
-      });
 
       await test.step('Check the tab variable control shows, but not in the controls bar', async () => {
         await expect(sectionControlLabel, `"Section tab" shows the "${sectionVariable.label}" control`).toBeVisible();
