@@ -299,8 +299,8 @@ func (s *subpathServer) InstallAPIGroup(info *genericapiserver.APIGroupInfo) err
 			}
 			route := key[strings.LastIndex(key, "/")+1:]
 			for _, r := range provisioningapp.Routes {
-				if r.Path == route && r.Subpath {
-					storage[key] = &subpathConnector{SubresourceConnector: conn, route: route}
+				if r.Path == route {
+					storage[key] = &routeConnector{SubresourceConnector: conn, route: route, subpath: r.Subpath, kind: kindObject(r)}
 				}
 			}
 		}
@@ -308,17 +308,42 @@ func (s *subpathServer) InstallAPIGroup(info *genericapiserver.APIGroupInfo) err
 	return s.GenericAPIServer.InstallAPIGroup(info)
 }
 
-// subpathConnector keeps the full request URL but dispatches to the handler registered for the bare route.
-type subpathConnector struct {
-	*appsdkapiserver.SubresourceConnector
-	route string
+// kindObject is the kind the route reports in the OpenAPI spec, as the builder's connectors did.
+func kindObject(r provisioningapp.Route) runtime.Object {
+	switch r.Path {
+	case "history":
+		return &provisioning.HistoryList{} // the response is declared as a string
+	case "jobs":
+		return &provisioning.Repository{} // jobs is a sub-path of the repository
+	}
+	if obj, ok := r.Response.(runtime.Object); ok {
+		return obj
+	}
+	return &provisioning.Repository{}
 }
 
-func (*subpathConnector) NewConnectOptions() (runtime.Object, bool, string) {
+// routeConnector reports the route's own kind instead of the generic call options. Subresources that
+// take trailing path segments keep the full request URL but dispatch to the handler registered for the bare route.
+type routeConnector struct {
+	*appsdkapiserver.SubresourceConnector
+	route   string
+	subpath bool
+	kind    runtime.Object
+}
+
+func (c *routeConnector) New() runtime.Object { return c.kind.DeepCopyObject() }
+
+func (c *routeConnector) NewConnectOptions() (runtime.Object, bool, string) {
+	if !c.subpath {
+		return c.SubresourceConnector.NewConnectOptions()
+	}
 	return &appsdkapiserver.ResourceCallOptions{}, true, ""
 }
 
-func (c *subpathConnector) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (c *routeConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+	if !c.subpath {
+		return c.SubresourceConnector.Connect(ctx, name, opts, responder)
+	}
 	info, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, errors.New("unable to retrieve request info from context")

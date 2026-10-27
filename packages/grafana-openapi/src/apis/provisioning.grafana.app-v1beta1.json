@@ -821,14 +821,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "ConnectionAuthorizeRequest"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the ConnectionAuthorizeRequest",
           "required": true,
           "schema": {
             "type": "string",
@@ -879,14 +879,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "ExternalRepositoryList"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the ExternalRepositoryList",
           "required": true,
           "schema": {
             "type": "string",
@@ -2684,14 +2684,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "ResourceWrapper"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the ResourceWrapper",
           "required": true,
           "schema": {
             "type": "string",
@@ -2744,7 +2744,7 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "ResourceWrapper"
         }
       },
       "put": {
@@ -2854,7 +2854,7 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "ResourceWrapper"
         }
       },
       "post": {
@@ -2964,7 +2964,7 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "ResourceWrapper"
         }
       },
       "delete": {
@@ -3034,14 +3034,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "ResourceWrapper"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the ResourceWrapper",
           "required": true,
           "schema": {
             "type": "string",
@@ -3104,14 +3104,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "HistoryList"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the HistoryList",
           "required": true,
           "schema": {
             "type": "string",
@@ -3164,14 +3164,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "HistoryList"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the HistoryList",
           "required": true,
           "schema": {
             "type": "string",
@@ -3211,7 +3211,7 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "Repository"
         }
       },
       "post": {
@@ -3265,14 +3265,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "Repository"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the Repository",
           "required": true,
           "schema": {
             "type": "string",
@@ -3302,14 +3302,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "Repository"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the Repository",
           "required": true,
           "schema": {
             "type": "string",
@@ -3369,14 +3369,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "RefList"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the RefList",
           "required": true,
           "schema": {
             "type": "string",
@@ -3402,14 +3402,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "Repository"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the Repository",
           "required": true,
           "schema": {
             "type": "string",
@@ -3449,14 +3449,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "ResourceList"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the ResourceList",
           "required": true,
           "schema": {
             "type": "string",
@@ -3764,14 +3764,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "TestResults"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the TestResults",
           "required": true,
           "schema": {
             "type": "string",
@@ -3801,14 +3801,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v1beta1",
-          "kind": "ResourceCallOptions"
+          "kind": "WebhookResponse"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the ResourceCallOptions",
+          "description": "name of the WebhookResponse",
           "required": true,
           "schema": {
             "type": "string",
