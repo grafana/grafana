@@ -396,7 +396,7 @@ func (s *service) start(ctx context.Context) error {
 	// groupPriority reads the live scheme (discovery follows preferred); the cap ranks against the natural snapshot instead.
 	s.groupPriority = s.scheme.PrioritizedVersionsForGroup
 
-	serverConfig.Authorization.Authorizer = s.authorizer
+	serverConfig.Authorization.Authorizer = authorizer.WithWatchRestriction(s.authorizer)
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
@@ -456,7 +456,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 	if globalHybridAPIEnabled {
 		searchAndStorageRoutes = append(searchAndStorageRoutes,
-			searchroutes.BuildGlobalHybridSearch(s.tracing, s.unified, builders, s.appInstallers, s.authorizer)...)
+			searchroutes.BuildGlobalHybridSearch(s.tracing, s.unified, builders, s.appInstallers, s.authorizer, s.cfg.HybridSearchDefaultResources...)...)
 	}
 	if globalSearchAPIEnabled || globalHybridAPIEnabled {
 		// Global search has no resource of its own to hold a permission on. The

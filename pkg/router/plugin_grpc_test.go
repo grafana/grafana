@@ -74,7 +74,7 @@ func TestParsePluginGRPCConfig(t *testing.T) {
 		t.Run("invalid "+key, func(t *testing.T) {
 			cfg := cfgWithBackendGRPCSection(t, map[string]string{key: value})
 			cfg.Raw.Section(cloudRouterSection).Key("plugins_url").SetValue("http://plugins.invalid/plugins")
-			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 			require.ErrorContains(t, err, backendGRPCSection+": "+key+" must be")
 		})
 	}

@@ -33,6 +33,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/config"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/rulesequence"
@@ -103,6 +104,7 @@ func RegisterAppInstaller(
 		ReservedLabelKeys:                ngmodels.LabelsUserCannotSpecify,
 		ResolveRuleRef:                   newRuleRefResolver(ng),
 		MembershipResolver:               membershipIndex,
+		AllowDeletingSequenceMembers:     newSequenceMemberDeletionAuthorizer(ng.Api.AccessControl),
 		NotificationSettingsValidator:    newNotificationSettingsValidator(ng),
 		WatchNamespace:                   watchNamespace(cfg),
 		SearchAlertRulesHandler:          search.WithAPIStatusErrorResponse(searchHandler.SearchAlertRules),
@@ -212,6 +214,23 @@ func watchNamespace(cfg *setting.Cfg) string {
 	}
 	// The cloud mapper ignores the org ID and returns the stack namespace.
 	return reqns.GetNamespaceMapper(cfg)(0)
+}
+
+func newSequenceMemberDeletionAuthorizer(ac accesscontrol.AccessControl) func(context.Context) (bool, error) {
+	return func(ctx context.Context) (bool, error) {
+		info, ok := apirequest.RequestInfoFrom(ctx)
+		if !ok || !info.IsResourceRequest || info.Verb != "deletecollection" || info.APIGroup != alertingv0alpha1.APIGroup || info.Subresource != "" || info.Name != "" {
+			return false, nil
+		}
+		if info.Resource != alertrule.ResourceInfo.GroupResource().Resource && info.Resource != recordingrule.ResourceInfo.GroupResource().Resource {
+			return false, nil
+		}
+		if info.Namespace != apirequest.NamespaceValue(ctx) {
+			return false, errors.New("request namespace mismatch")
+		}
+		// Folder-scoped delete permission is insufficient for tenant cleanup.
+		return common.AuthorizeOrgCleanup(ctx, info.Namespace, ac, accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, "*"))
+	}
 }
 
 func resolveOrgID(ctx context.Context) int64 {

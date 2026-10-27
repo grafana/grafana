@@ -65,6 +65,10 @@ type NATSSettings struct {
 	// testing: comparison metrics only, never feeds the watch pipeline.
 	NotifierShadow bool
 
+	// NotificationMetadata adds allowlisted labels, annotations, finalizers and
+	// ObjectMeta fields to published watch notifications so consumers can skip a GET.
+	NotificationMetadata bool
+
 	// Notifier feeds the watch pipeline directly from the NATS bus instead of
 	// polling. Delivery is at-most-once; a disabled or unavailable bus degrades
 	// to polling.
@@ -149,12 +153,13 @@ func readNATSSettings(cfg *Cfg) error {
 		ClusterPort:      section.Key("cluster_port").MustInt(6222),
 		AdvertiseAddress: section.Key("advertise_address").MustString(""),
 
-		DiscoveryEnabled:    section.Key("discovery_enabled").MustBool(true),
-		DiscoveryInterval:   section.Key("discovery_interval").MustDuration(5 * time.Second),
-		DiscoveryTTL:        section.Key("discovery_ttl").MustDuration(30 * time.Second),
-		NotifierShadow:      section.Key("notifier_shadow").MustBool(false),
-		Notifier:            section.Key("notifier").MustBool(false),
-		NotifierWatchMaxAge: section.Key("notifier_watch_max_age").MustDuration(0),
+		DiscoveryEnabled:     section.Key("discovery_enabled").MustBool(true),
+		DiscoveryInterval:    section.Key("discovery_interval").MustDuration(5 * time.Second),
+		DiscoveryTTL:         section.Key("discovery_ttl").MustDuration(30 * time.Second),
+		NotifierShadow:       section.Key("notifier_shadow").MustBool(false),
+		Notifier:             section.Key("notifier").MustBool(false),
+		NotificationMetadata: section.Key("notification_metadata").MustBool(false),
+		NotifierWatchMaxAge:  section.Key("notifier_watch_max_age").MustDuration(0),
 		TLS: NATSTLSSettings{
 			Enabled:            section.Key("tls_enabled").MustBool(false),
 			CACertPath:         section.Key("tls_ca_cert_path").MustString(""),

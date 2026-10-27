@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector/filter"
 )
@@ -137,6 +138,16 @@ func newTestVectorStoreServer(store *fakeWriteStore) *VectorStoreServer {
 	s := NewVectorStoreServer(nil, newTestEmbedder(&fakeTextEmbedder{dim: 4}), []string{"g/r"}, nil, nil)
 	s.store = store // swap the nil concrete backend for the fake
 	return s
+}
+
+type countingTextEmbedder struct {
+	client *fakeTextEmbedder
+	calls  int
+}
+
+func (c *countingTextEmbedder) EmbedText(ctx context.Context, in embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
+	c.calls++
+	return c.client.EmbedText(ctx, in)
 }
 
 func vsAuthedCtx() context.Context {
@@ -434,6 +445,39 @@ func TestVectorStore_DeleteByUIDs(t *testing.T) {
 	assert.Equal(t, []string{"u1", "u2"}, store.deleteCalls[0].Sel.UIDs)
 	assert.Equal(t, "r_external", store.deleteCalls[0].Resource)
 	assert.Empty(t, store.ensured, "delete must never provision")
+}
+
+func TestVectorStoreScopeConflictStopsUpsertsBeforeEmbedding(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		write func(*VectorStoreServer) error
+	}{
+		{name: "upsert", write: func(s *VectorStoreServer) error {
+			_, err := s.Upsert(vsAuthedCtx(), validUpsertReq())
+			return err
+		}},
+		{name: "upsert subresources", write: func(s *VectorStoreServer) error {
+			_, err := s.UpsertSubresources(vsAuthedCtx(), &resourcepb.VectorUpsertSubresourcesRequest{
+				Namespace: "ns", Group: "g", Resource: "r", Uid: "same-uid",
+				Inputs: []*resourcepb.EmbeddingInput{{Subresource: "chunk/1", Content: "content", Title: "Title"}},
+			})
+			return err
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &fakeWriteStore{ensureErr: fmt.Errorf("catalog scope conflict: %w", vector.ErrCollectionScopeMismatch)}
+			s := newTestVectorStoreServer(store)
+			counter := &countingTextEmbedder{client: &fakeTextEmbedder{dim: 4}}
+			s.embedder.TextEmbedder = counter
+
+			err := tc.write(s)
+			require.Equal(t, codes.Internal, status.Code(err))
+			require.Zero(t, counter.calls, "scope conflicts must stop before embedding")
+			require.Empty(t, store.upserts)
+			require.Empty(t, store.replaceCalls)
+			require.Zero(t, store.lockCalls)
+		})
+	}
 }
 
 func TestVectorStore_DeleteAll(t *testing.T) {
