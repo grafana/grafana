@@ -645,9 +645,8 @@ describe('getObservablePluginExtensions()', () => {
       emitted = true;
     });
 
-    // Flush pending microtasks so that anything that *could* run without the loading promise resolving, does.
-    // Since loadDependentAppPlugins is still pending, this is a deterministic check, not a timing guess: the
-    // observable literally cannot emit yet, no matter how many microtasks are flushed.
+    // Flush pending microtasks. Deterministic, not a timing guess: the loading promise is still
+    // unresolved, so the observable genuinely cannot have emitted yet.
     await Promise.resolve();
     await Promise.resolve();
     expect(emitted).toBe(false);
