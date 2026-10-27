@@ -89,6 +89,9 @@ func (d *DiscoveryClientImpl) preferredResources(ctx context.Context, group stri
 	}
 	var failed *discovery.ErrGroupDiscoveryFailed
 	if !errors.As(err, &failed) {
+		if group == "" {
+			return nil, err
+		}
 		logging.FromContext(ctx).Warn("Falling back to discovery of the API group", "group", group, "error", err)
 		return d.groupResources(ctx, group)
 	}
