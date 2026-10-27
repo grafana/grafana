@@ -1,3 +1,19 @@
+<!-- 13.2.5 START -->
+
+# 13.2.5 (2026-10-27)
+
+### Features and enhancements
+
+- **Git Sync:** Ignore hidden paths in repository scans and diffs [#135028](https://github.com/grafana/grafana/pull/135028), [@ferruvich](https://github.com/ferruvich)
+- **Provisioning:** Default save from a branch preview to the previewed branch [#135174](https://github.com/grafana/grafana/pull/135174), [@Clarity-89](https://github.com/Clarity-89)
+- **Provisioning:** Never replace the repository root folder during incremental sync [#135463](https://github.com/grafana/grafana/pull/135463), [@ferruvich](https://github.com/ferruvich)
+
+### Bug fixes
+
+- **Plugins:** Don't report loaded plugins as not registered when a request times out [#135665](https://github.com/grafana/grafana/pull/135665), [@leventebalogh](https://github.com/leventebalogh)
+- **Provisioning:** Fix PR dashboard previews when served from a sub-path [#135559](https://github.com/grafana/grafana/pull/135559), [@gustaff-weldon](https://github.com/gustaff-weldon)
+
+<!-- 13.2.5 END -->
 <!-- 13.2.4 START -->
 
 # 13.2.4 (2026-10-13)
