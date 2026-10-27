@@ -25,8 +25,8 @@ export function TextBoxVariableEditor({ variable, inline }: TextBoxVariableEdito
       meta: { actionId: 'variable.changeValue', scope: 'textbox' },
       source: variable,
       description: t('dashboard.edit-actions.variable-textbox-value', 'Change variable value'),
-      perform: () => variable.setState({ value: newValue }),
-      undo: () => variable.setState({ value: oldValue }),
+      perform: () => variable.setValue(newValue),
+      undo: () => variable.setValue(oldValue),
     });
   };
 
