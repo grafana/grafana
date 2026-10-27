@@ -2850,11 +2850,6 @@
       "count": 1
     }
   },
-  "public/app/plugins/panel/stat/StatMigrations.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "public/app/plugins/panel/table/migrations.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 4
