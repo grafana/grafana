@@ -1,6 +1,6 @@
-import { useId } from 'react';
+import { type ReactNode, useId } from 'react';
 
-import { TextLink } from '@grafana/ui';
+import { Stack, TextLink } from '@grafana/ui';
 
 import { grafanaRulesNav } from '../../utils/navigation';
 import { FolderPath } from '../rule-row/FolderPath';
@@ -17,10 +17,12 @@ interface AlertRuleRowProps {
   searchHit: AlertRuleSearchHit;
   /** Absent while the folder path loads or when its lookup failed. */
   folderPath?: string[];
+  /** Plugin or provisioning badge; absent while the full rule loads or when there is no badge. */
+  badge?: ReactNode;
 }
 
 /** Presentation-only; missing state/health renders "unavailable", never healthy. */
-export function AlertRuleRow({ searchHit, folderPath }: AlertRuleRowProps) {
+export function AlertRuleRow({ searchHit, folderPath, badge }: AlertRuleRowProps) {
   const titleId = useId();
 
   return (
@@ -28,9 +30,12 @@ export function AlertRuleRow({ searchHit, folderPath }: AlertRuleRowProps) {
       aria-labelledby={titleId}
       icon={<RuleStatusIcon kind="alert" state={searchHit.state} health={searchHit.health} paused={searchHit.paused} />}
       title={
-        <TextLink id={titleId} href={grafanaRulesNav.viewLink(searchHit.uid)} color="primary" inline={false}>
-          {searchHit.title}
-        </TextLink>
+        <Stack direction="row" alignItems="center" gap={0.5} wrap={false}>
+          <TextLink id={titleId} href={grafanaRulesNav.viewLink(searchHit.uid)} color="primary" inline={false}>
+            {searchHit.title}
+          </TextLink>
+          {badge}
+        </Stack>
       }
       description={
         (searchHit.lastError || searchHit.summary) && (

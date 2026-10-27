@@ -79,6 +79,18 @@ describe('AlertRuleRow', () => {
     expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
   });
 
+  it('renders the badge inline after the title when provided', () => {
+    renderRow({ searchHit: baseHit(), badge: <span data-testid="test-badge">Badge</span> });
+
+    expect(screen.getByTestId('test-badge')).toBeInTheDocument();
+  });
+
+  it('renders no badge when badge prop is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByTestId('test-badge')).not.toBeInTheDocument();
+  });
+
   it('shows queried datasources when the hit has them', () => {
     setupDataSources(mockDataSource({ uid: 'ds-prom', name: 'Prometheus' }));
     renderRow({ searchHit: baseHit({ datasourceUIDs: ['ds-prom'] }) });
