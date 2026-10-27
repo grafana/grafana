@@ -25,7 +25,6 @@ import {
   AutoGridLayoutManager,
   getAutoRowsTemplate,
   getFitMinHeightInPixels,
-  getMaxHeightCssValue,
   getMaxHeightInPixels,
 } from './AutoGridLayoutManager';
 
@@ -448,24 +447,6 @@ describe('getFitMinHeightInPixels', () => {
   it('removes the floor entirely for "none"', () => {
     expect(getFitMinHeightInPixels('none', 'standard')).toBe(0);
     expect(getFitMinHeightInPixels('none', 250)).toBe(0);
-  });
-});
-
-describe('getMaxHeightCssValue', () => {
-  it('resolves named modes to their pixel values', () => {
-    expect(getMaxHeightCssValue('short', undefined)).toBe('168px');
-    expect(getMaxHeightCssValue('standard', undefined)).toBe('320px');
-    expect(getMaxHeightCssValue('tall', undefined)).toBe('512px');
-  });
-
-  it('resolves custom mode to the configured pixels, falling back to none', () => {
-    expect(getMaxHeightCssValue('custom', 400)).toBe('400px');
-    expect(getMaxHeightCssValue('custom', undefined)).toBe('none');
-  });
-
-  it('resolves unlimited and unset modes to none', () => {
-    expect(getMaxHeightCssValue('unlimited', 400)).toBe('none');
-    expect(getMaxHeightCssValue(undefined, 400)).toBe('none');
   });
 });
 
