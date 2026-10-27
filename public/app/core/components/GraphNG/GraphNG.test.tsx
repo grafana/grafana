@@ -27,16 +27,20 @@ jest.mock('uplot', () => {
   );
 });
 
-const custom = { drawStyle: GraphDrawStyle.Bars, stacking: { mode: StackingMode.Normal, group: 'A' } };
+const stacked = { drawStyle: GraphDrawStyle.Bars, stacking: { mode: StackingMode.Normal, group: 'A' } };
+const unstacked = { drawStyle: GraphDrawStyle.Bars, stacking: { mode: StackingMode.None, group: 'A' } };
 
-const makeFrame = (power: number[]) =>
+const makeFrame = (power: number[], custom = stacked) =>
   createDataFrame({
     fields: [
-      { name: 'time', type: FieldType.time, config: {}, values: [1000, 2000, 3000, 4000] },
+      { name: 'time', type: FieldType.time, config: {}, values: power.map((_, i) => 1000 * (i + 1)) },
       { name: 'power', type: FieldType.number, config: { custom }, values: power },
-      { name: 'loss', type: FieldType.number, config: { custom }, values: [150, 150, 150, 150] },
+      { name: 'loss', type: FieldType.number, config: { custom }, values: power.map(() => 150) },
     ],
   });
+
+// 13 of 25 values negative, or 12 of 25: a series hovering around zero
+const nearZero = (negCount: number) => Array.from({ length: 25 }, (_, i) => (i < negCount ? -10 : 10));
 
 const timeRange: TimeRange = {
   from: dateTime(1000),
@@ -82,6 +86,26 @@ describe('GraphNG', () => {
     rerender(renderTimeSeries(makeFrame([200, 200, 200, -100])));
 
     expect(mockPlotData[2]).toEqual([350, 350, 350, 50]);
+    expect(uPlot).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the existing plot when a series near zero tips back and forth across a 50/50 sign split', () => {
+    const { rerender } = render(renderTimeSeries(makeFrame(nearZero(13))));
+
+    for (let i = 0; i < 10; i++) {
+      rerender(renderTimeSeries(makeFrame(nearZero(12))));
+      rerender(renderTimeSeries(makeFrame(nearZero(13))));
+    }
+
+    expect(mockPlotData[2]).toEqual(Array(25).fill(150));
+    expect(uPlot).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the existing plot for unstacked series when their values flip sign', () => {
+    const { rerender } = render(renderTimeSeries(makeFrame([-150, -150, -150, 300], unstacked)));
+    rerender(renderTimeSeries(makeFrame([300, 300, 300, -150], unstacked)));
+
+    expect(mockPlotData[2]).toEqual([150, 150, 150, 150]);
     expect(uPlot).toHaveBeenCalledTimes(1);
   });
 });

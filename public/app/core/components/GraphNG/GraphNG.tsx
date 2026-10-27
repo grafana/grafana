@@ -255,7 +255,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
         const prevStackingGroups = this.state.config?.getStackingGroups() ?? [];
         const stackingChanged =
           prevStackingGroups.length > 0 &&
-          !sameStackingGroups(prevStackingGroups, getStackingGroups(newState.alignedFrame));
+          !sameStackingGroups(prevStackingGroups, getStackingGroups(newState.alignedFrame, prevStackingGroups));
 
         const shouldReconfig =
           this.state.config === undefined ||
