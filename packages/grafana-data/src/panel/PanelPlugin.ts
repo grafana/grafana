@@ -772,6 +772,7 @@ export class PanelPlugin<
     return this;
   }
 
+  /** @alpha */
   setPanelInteractions(interactions: PanelInteractions) {
     this._panelInteractions = interactions;
     return this;
