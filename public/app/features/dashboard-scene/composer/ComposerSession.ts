@@ -1,6 +1,7 @@
 import { ClientProviderEvents } from '@openfeature/web-sdk';
 
 import { generateUUID } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
 import { sceneGraph, SceneObjectStateChangedEvent, VizPanel, type SceneObject } from '@grafana/scenes';
@@ -43,14 +44,17 @@ export interface Box {
   height: number;
 }
 
+/** The dashboard body's scroll container in the sidebar layout, a sibling of the overlay. */
+const BODY_SCROLLER_SELECTOR = `[data-testid="${selectors.components.DashboardSidebarSplitter.bodyContainer}"]`;
+
 /**
- * A drawn region, kept relative to the content of the element that scrolls what it was drawn over, so it
- * moves with that content. The overlay itself does not scroll: in the sidebar layout the dashboard body
- * scrolls in its own container under it.
+ * A drawn region, kept relative to the scrolled content of the dashboard's scroll container, so it moves
+ * with the dashboard. The overlay itself does not scroll: in the sidebar layout the dashboard body scrolls
+ * in its own container under it. The container is found again each time rather than kept, since a rebuilt
+ * body replaces it.
  */
 interface StoredRegion {
   box: Box;
-  scroller: HTMLElement;
   /** The tabs that were selected when it was drawn; it is shown only while all of them still are. */
   tabKeys: string[];
 }
@@ -199,7 +203,7 @@ export class ComposerSession implements ComposerSessionAPI {
       return failed('busy');
     }
     const rect = this.getRegionViewportRect(regionId);
-    if (!rect || !isFullyVisible(rect, getVisibleBounds(region.scroller))) {
+    if (!rect || !isFullyVisible(rect, getVisibleBounds(getRegionScroller(overlay)))) {
       return failed('not_visible');
     }
 
@@ -348,12 +352,12 @@ export class ComposerSession implements ComposerSessionAPI {
   }
 
   private revealRegion(regionId: string, point: ElementPoint, behavior: ScrollBehavior) {
-    const region = this.regions.get(regionId);
+    const root = this.getOverlayRoot();
     const rect = this.getRegionViewportRect(regionId);
-    if (!region || !rect) {
+    if (!root || !rect) {
       return;
     }
-    const container = region.scroller;
+    const container = getRegionScroller(root);
     const visible = getVisibleBounds(container);
     let delta = 0;
     if (rect.height > visible.bottom - visible.top) {
@@ -520,11 +524,9 @@ export class ComposerSession implements ComposerSessionAPI {
     const rootRect = root.getBoundingClientRect();
     const tabs = getSelectedTabChain(this.scene);
     const regionId = `region-${generateUUID()}`;
-    const scroller = findRegionScroller(rect, root);
-    const origin = getContentOrigin(scroller);
+    const origin = getContentOrigin(getRegionScroller(root));
     this.regions.set(regionId, {
       box: { left: rect.left - origin.left, top: rect.top - origin.top, width: rect.width, height: rect.height },
-      scroller,
       tabKeys: tabs.map((tab) => tab.state.key ?? ''),
     });
 
@@ -589,7 +591,8 @@ export class ComposerSession implements ComposerSessionAPI {
     let container: HTMLElement | undefined;
     if (ref.kind === 'region') {
       rect = this.getRegionViewportRect(ref.regionId);
-      container = this.regions.get(ref.regionId)?.scroller;
+      const root = this.getOverlayRoot();
+      container = root ? getRegionScroller(root) : undefined;
     } else {
       const element = this.findElementRoot(ref);
       rect = element?.getBoundingClientRect() ?? null;
@@ -697,11 +700,12 @@ export class ComposerSession implements ComposerSessionAPI {
 
   /** The region in viewport coordinates, or null when it is unknown or its tab is not selected. */
   private getRegionViewportRect(regionId: string): Box | null {
+    const root = this.getOverlayRoot();
     const region = this.regions.get(regionId);
-    if (!region || !this.isRegionShown(region)) {
+    if (!root || !region || !this.isRegionShown(region)) {
       return null;
     }
-    const origin = getContentOrigin(region.scroller);
+    const origin = getContentOrigin(getRegionScroller(root));
     return { ...region.box, left: origin.left + region.box.left, top: origin.top + region.box.top };
   }
 
@@ -874,17 +878,12 @@ function scrollsVertically(element: HTMLElement): boolean {
 }
 
 /**
- * The element that scrolls what a region drawn at `rect` (viewport coordinates) covers: the scroller of the
- * content under its centre, below Composer's own layers. The overlay's scroller when nothing is under it.
+ * What regions are kept against: the dashboard body's scroll container beside the overlay in the sidebar
+ * layout, else the overlay's own scroller, the one the page scrolls in. Looked up each time.
  */
-function findRegionScroller(rect: Box, overlayRoot: HTMLElement): HTMLElement {
-  const under = document
-    .elementsFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
-    .find((element) => !element.closest(CAPTURE_EXCLUDE_SELECTOR));
-  if (!(under instanceof HTMLElement)) {
-    return getScrollContainer(overlayRoot);
-  }
-  return scrollsVertically(under) ? under : getScrollContainer(under);
+function getRegionScroller(overlayRoot: HTMLElement): HTMLElement {
+  const body = overlayRoot.parentElement?.querySelector(BODY_SCROLLER_SELECTOR);
+  return body instanceof HTMLElement ? body : getScrollContainer(overlayRoot);
 }
 
 /** Where the scrolled content of `scroller` starts, in viewport coordinates: it moves as `scroller` scrolls. */
