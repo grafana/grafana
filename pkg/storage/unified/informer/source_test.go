@@ -190,6 +190,48 @@ func TestBusDeltaSourceSubscribesOnTheResource(t *testing.T) {
 	assert.Equal(t, "7", delivered.ResourceVersion)
 }
 
+// Metadata the publisher announced with an event reaches the handler on the delivered object, which is what lets a
+// controller filter on a label or an annotation without reading the object. Storage announces only what the
+// resource's owner registered, so an absent key here means unannounced rather than unset.
+func TestBusDeltaSourceCarriesAnnouncedMetadata(t *testing.T) {
+	subscriber := newFakeSubscriber()
+	src, err := NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{}, testInfo{}, time.Hour,
+		func(context.Context) ([]runtime.Object, error) { return nil, nil }, BusSourceOptions{Namespace: "ns"})
+	require.NoError(t, err)
+
+	rec := &recorder{}
+	_, err = src.AddEventHandler(rec)
+	require.NoError(t, err)
+
+	stop := make(chan struct{})
+	defer close(stop)
+	go src.Run(stop)
+
+	subject := resourcewatch.Subject(testInfo{}.GroupVersionResource(), "ns")
+	require.Eventually(t, func() bool { return subscriber.subscribed(subject) }, 5*time.Second, 5*time.Millisecond)
+
+	subscriber.publish(t, subject, &resourcepb.WatchNotification{
+		Type: resourcepb.WatchNotification_MODIFIED, Namespace: "ns", Name: "one", ResourceVersion: 8,
+		Metadata: &resourcepb.NotificationMetadata{
+			Labels:                  map[string]string{"encrypted": "true"},
+			Annotations:             map[string]string{"example.grafana.app/paused": "true"},
+			Finalizers:              []string{"example.grafana.app/cleanup"},
+			Generation:              3,
+			DeletionTimestampMillis: 1700000000000,
+		},
+	})
+
+	require.Eventually(t, func() bool { return rec.last() != nil }, 5*time.Second, 5*time.Millisecond)
+	delivered, ok := rec.last().(*metav1.PartialObjectMetadata)
+	require.True(t, ok, "expected the configured type, got %T", rec.last())
+	assert.Equal(t, map[string]string{"encrypted": "true"}, delivered.Labels)
+	assert.Equal(t, map[string]string{"example.grafana.app/paused": "true"}, delivered.Annotations)
+	assert.Equal(t, []string{"example.grafana.app/cleanup"}, delivered.Finalizers)
+	assert.Equal(t, int64(3), delivered.Generation)
+	require.NotNil(t, delivered.DeletionTimestamp)
+	assert.Equal(t, int64(1700000000000), delivered.DeletionTimestamp.UnixMilli())
+}
+
 func TestBusDeltaSourceRequiresNats(t *testing.T) {
 	_, err := NewBusDeltaSource(nil, &metav1.PartialObjectMetadata{}, testInfo{}, time.Hour,
 		func(context.Context) ([]runtime.Object, error) { return nil, nil }, BusSourceOptions{})
