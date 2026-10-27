@@ -564,6 +564,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	_ "github.com/grafana/grafana/pkg/storage/unified/resourcewatch/natsbus"
 	_ "github.com/grafana/grafana/pkg/storage/unified/search"
 	_ "github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	_ "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
