@@ -639,13 +639,18 @@ describe('getObservablePluginExtensions()', () => {
         })
     );
 
+    let emitted = false;
     const emissionPromise = firstValueFrom(getObservablePluginExtensions({ extensionPointId }).pipe(first()));
+    emissionPromise.then(() => {
+      emitted = true;
+    });
 
-    const raceResult = await Promise.race([
-      emissionPromise.then(() => 'emitted'),
-      new Promise((resolve) => setTimeout(() => resolve('timed out'), 10)),
-    ]);
-    expect(raceResult).toBe('timed out');
+    // Flush pending microtasks so that anything that *could* run without the loading promise resolving, does.
+    // Since loadDependentAppPlugins is still pending, this is a deterministic check, not a timing guess: the
+    // observable literally cannot emit yet, no matter how many microtasks are flushed.
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(emitted).toBe(false);
 
     resolveLoading();
 
