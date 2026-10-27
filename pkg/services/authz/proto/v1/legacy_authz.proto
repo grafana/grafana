@@ -35,6 +35,14 @@ message LegacyCheckResponse {
   bool allowed = 1;
   // Populated when evaluation failed. Failures always deny.
   string error = 2;
+  // Classifies evaluation failures without relying on the diagnostic error text.
+  // Servers also populate error so older clients continue to deny on failure.
+  LegacyCheckErrorCode error_code = 3;
+}
+
+enum LegacyCheckErrorCode {
+  LEGACY_CHECK_ERROR_CODE_UNSPECIFIED = 0;
+  LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND = 1;
 }
 
 message LegacyExpression {
