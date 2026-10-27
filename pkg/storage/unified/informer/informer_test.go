@@ -243,6 +243,43 @@ func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
 	})
 }
 
+// SetNotificationObject lets the live-event object carry the notification's
+// metadata; re-listed objects are unaffected.
+func TestInformer_NotificationObjectCarriesMetadata(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		list := func(context.Context) ([]runtime.Object, int64, error) { return nil, 0, nil }
+		n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+		n.SetNotificationObject(func(evt *resourcepb.WatchNotification) runtime.Object {
+			o := obj(evt.Name)
+			o.Labels = evt.GetMetadata().GetLabels()
+			return o
+		})
+
+		var got []map[string]string
+		_, err := n.AddEventHandler(cache.ResourceEventHandlerFuncs{
+			UpdateFunc: func(_, newObj interface{}) {
+				got = append(got, newObj.(*metav1.PartialObjectMetadata).Labels)
+			},
+		})
+		require.NoError(t, err)
+
+		stopCh := make(chan struct{})
+		go n.Run(stopCh)
+		synctest.Wait()
+
+		evt := event(resourcepb.WatchNotification_MODIFIED, "changed")
+		evt.Metadata = &resourcepb.NotificationMetadata{Labels: map[string]string{"encrypted": "true"}}
+		sub.publish(t, subject(), evt)
+		synctest.Wait()
+
+		close(stopCh)
+		synctest.Wait()
+
+		assert.Equal(t, []map[string]string{{"encrypted": "true"}}, got)
+	})
+}
+
 // A live DELETED drops the object from the informer's snapshot so a
 // staleness-tolerant reader stops counting it before the next re-list.
 func TestInformer_LiveDeleteEvictsFromStore(t *testing.T) {

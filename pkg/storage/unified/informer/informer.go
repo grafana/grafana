@@ -141,6 +141,10 @@ type Informer struct {
 	list       ListFunc
 	log        log.Logger
 
+	// fromNotification, when set, builds the live-event object instead of newObject,
+	// so it can carry the notification's metadata. See SetNotificationObject.
+	fromNotification func(*resourcepb.WatchNotification) runtime.Object
+
 	store Store
 
 	// retryInterval is how often Run retries opening the live subscription while it
@@ -248,6 +252,15 @@ func (n *Informer) HasSynced() bool { return n.synced.Load() }
 // gating suits controllers that prefer not to start against a snapshot with no
 // live updates. Call before Run.
 func (n *Informer) AllowDegradedStart() { n.degradedStart = true }
+
+// SetNotificationObject builds the object handed to handlers on a live
+// notification from the whole notification, so it can carry the notification's
+// metadata (labels, annotations, finalizers, deletion timestamp) and let a handler
+// skip events without re-fetching. It replaces the ObjectFunc for live events only;
+// re-listed objects are unaffected. Call before Run.
+func (n *Informer) SetNotificationObject(f func(*resourcepb.WatchNotification) runtime.Object) {
+	n.fromNotification = f
+}
 
 // SetMetrics registers the observer for delivered events and reconnects; a nil
 // observer (the default) disables observation. Call before Run.
@@ -488,6 +501,9 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		}
 
 		obj := n.newObject(evt.Namespace, evt.Name)
+		if n.fromNotification != nil {
+			obj = n.fromNotification(&evt)
+		}
 		// The handlers key off namespace/name and re-fetch the object in their
 		// reconcile, so the minimal object and old == new are both fine.
 		switch evt.Type {
