@@ -838,7 +838,8 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.yarn @grafana/grafana-frontend-platform
 /.yarnrc.yml @grafana/grafana-frontend-platform
 /yarn.config.cjs @grafana/grafana-frontend-platform
-/yarn.lock @grafana/grafana-frontend-platform
+/pnpm-lock.yaml @grafana/grafana-frontend-platform
+/pnpm-workspace.yaml @grafana/grafana-frontend-platform
 /patches/ @grafana/grafana-frontend-platform
 /.prettierrc.js @grafana/grafana-frontend-platform
 /.vim @zoltanbedi
@@ -1171,6 +1172,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 scripts/build-msi.sh @grafana/grafana-operator-experience-squad
 scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/ci-* @grafana/grafana-backend-services-squad
+/scripts/pack-npm-packages.mjs @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/publish-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/validate-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/grafana-frontend-platform

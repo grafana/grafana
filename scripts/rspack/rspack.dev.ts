@@ -27,8 +27,10 @@ function getDecoupledPlugins(): string[] {
 function scenesModule(): string {
   const scenesPath = path.resolve('./node_modules/@grafana/scenes');
   try {
-    const status = fs.lstatSync(scenesPath);
-    if (status.isSymbolicLink()) {
+    // pnpm symlinks every installed package into node_modules/.pnpm, so only a link that
+    // resolves outside node_modules points at a local scenes checkout
+    const realPath = fs.realpathSync(scenesPath);
+    if (!realPath.split(path.sep).includes('node_modules')) {
       console.log(`scenes is linked to local scenes repo`);
       return path.resolve(scenesPath + '/src');
     }

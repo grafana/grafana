@@ -81,6 +81,9 @@ const config: KnipConfig = {
 
         // not imported; pinned so pnpm resolves debug's optional peer once instead of duplicating emotion per workspace
         'supports-color',
+
+        // types for yarn.config.cjs, which knip only reads when yarn.lock exists
+        '@yarnpkg/types',
       ],
       project: [
         'public/app/**!',
