@@ -73,5 +73,4 @@ compilation, edits, caching, nested helpers, row-access tracking, cancellation, 
 forged messages, nonce failures, size limits, disposal, and supported Trusted Types sinks.
 
 React tests mock only the transport and exercise panel/editor integration. Rendering/helper
-unit tests use a native reference compiler. The local strict-CSP dashboards and XY negative
-control live in `devenv/handlebars-sandbox-demo`.
+unit tests use a native reference compiler.
