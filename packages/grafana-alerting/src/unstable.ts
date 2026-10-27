@@ -5,10 +5,6 @@
 // Contact Points
 export { type ContactPoint, type Integration } from './grafana/api/notifications/v1beta1/types';
 export { useListContactPoints } from './grafana/contactPoints/hooks/v1beta1/useContactPoints';
-export {
-  useResolvedContactPoint,
-  type ResolvedContactPoint,
-} from './grafana/contactPoints/hooks/v1beta1/useResolvedContactPoint';
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
 export {
   getContactPointDescription,
@@ -39,9 +35,6 @@ export {
   isDefaultRoutingTree,
 } from './grafana/notificationPolicies/routingTree.utils';
 
-// Time intervals
-export { useListTimeIntervals } from './grafana/muteTimings/hooks/useListTimeIntervals';
-
 // Notification settings
 export {
   type NotificationSettings,
@@ -50,6 +43,7 @@ export {
   toRuleNotificationSettings,
   fromRuleNotificationSettings,
 } from './grafana/notificationSettings/notificationSettingsValue';
+export { useContactPointSettingsState } from './grafana/notificationSettings/hooks/useContactPointSettingsState';
 export { DISABLE_GROUPING } from './grafana/notificationSettings/constants';
 export { getDefaultGroupByLabels, nextGroupBy } from './grafana/notificationSettings/utils/groupBy';
 

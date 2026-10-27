@@ -4,3 +4,25 @@ import { ContactPointSelector } from './ContactPointSelector';
 # ContactPointSelector
 
 A component for selecting contact points in Grafana. Only works with the built-in Grafana Alertmanager.
+
+## Clearing the selection
+
+By default the selector can't be cleared and `onChange` receives the selected contact point. Set `isClearable` to let the
+user clear it, and `onChange` then receives `null` as well.
+
+`isClearable` and the type of `onChange` go together as a union. When `isClearable` depends on a condition, spread it and
+annotate the `onChange` parameter, because TypeScript can't infer the parameter from a spread union. Leave `isClearable`
+off while the selector is disabled: Combobox still shows its clear icon on a disabled field.
+
+```tsx
+import { type ContactPoint, ContactPointSelector } from '@grafana/alerting/unstable';
+
+const clearable: { isClearable: true } | { isClearable?: false } = disabled ? {} : { isClearable: true };
+
+<ContactPointSelector
+  {...clearable}
+  disabled={disabled}
+  value={value}
+  onChange={(contactPoint: ContactPoint | null) => setReceiver(contactPoint?.spec.title ?? null)}
+/>;
+```
