@@ -799,8 +799,7 @@ type Cfg struct {
 	VectorAllowedExternalCollections []string
 	// Exact group/resource collections readable only by the listed service identities.
 	VectorAllowedReadServices       map[string][]string
-	VectorSharedExternalCollections []string
-	VectorSharedWriteServices       []string
+	VectorSharedExternalCollections map[string][]string
 	// Registers the VectorStore write RPCs on the storage server.
 	EnableVectorStore bool
 	// Service identities allowed to call the VectorStore write RPCs.
@@ -1892,6 +1891,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
 	if err := cfg.readVectorAllowedReadServices(); err != nil {
+		return err
+	}
+	if err := cfg.readVectorSharedExternalCollections(); err != nil {
 		return err
 	}
 
