@@ -106,6 +106,13 @@ func TestEmbeddingEnrollmentDisabledWithoutSearchOrIndexing(t *testing.T) {
 	require.Equal(t, opts.Cfg.VectorAllowedExternalCollections, serverOpts.Search.AllowedExternalCollections)
 }
 
+func TestServerRejectsSharedEnrollmentWithoutPublishers(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.VectorSharedExternalCollections = []string{"docs.example.com/articles"}
+	_, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg})
+	require.ErrorContains(t, err, "publisher")
+}
+
 func TestVectorIndexersRespectSharedAllowlistAndGlobalControls(t *testing.T) {
 	for _, tc := range []struct {
 		name     string

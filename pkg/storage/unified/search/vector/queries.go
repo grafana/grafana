@@ -322,6 +322,7 @@ type sqlVectorCatalogListResponse struct {
 	Resource     string
 	PartitionKey string
 	IsExternal   bool
+	Scope        string
 }
 
 type sqlVectorCatalogInsertRequest struct {
@@ -330,13 +331,14 @@ type sqlVectorCatalogInsertRequest struct {
 	Resource     string
 	PartitionKey string
 	IsExternal   bool
+	Scope        CollectionScope
 }
 
 func (r *sqlVectorCatalogInsertRequest) Validate() error {
 	if r.GroupName == "" || r.Resource == "" || r.PartitionKey == "" {
 		return fmt.Errorf("missing required fields")
 	}
-	return nil
+	return validateCollectionScope(r.Scope, r.IsExternal)
 }
 
 type sqlVectorBackfillJobsCreateRequest struct {

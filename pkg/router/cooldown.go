@@ -16,7 +16,7 @@ func newCooldown(steady, min, max time.Duration) *cooldown {
 }
 
 // Until reports how long until the next poll attempt; zero or negative means
-// now. It is the poll loop's only pacing source (see aggregateTarget.run).
+// now. It is the poll loop's only pacing source (see polledSource.run).
 func (c *cooldown) Until(now time.Time) time.Duration {
 	return c.next.Sub(now)
 }

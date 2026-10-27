@@ -1,4 +1,5 @@
 import type * as H from 'history';
+import { isEqual } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
 import {
@@ -955,15 +956,46 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._sidebarActivation = undefined;
   }
 
+  private getSaveAsFields(
+    saveModel: Dashboard | DashboardV2Spec,
+    source: Pick<DashboardSceneState, 'title' | 'description' | 'tags'>
+  ) {
+    const current = this.state;
+    const savedFields = {
+      title: saveModel.title ?? current.title,
+      description: saveModel.description,
+      tags: saveModel.tags ?? [],
+    };
+
+    const fieldsAfterSave: typeof source = { ...savedFields };
+
+    // Preserve fields edited after the save request started.
+    if (current.title !== source.title) {
+      fieldsAfterSave.title = current.title;
+    }
+
+    if (current.description !== source.description) {
+      fieldsAfterSave.description = current.description;
+    }
+
+    if (!isEqual(current.tags, source.tags)) {
+      fieldsAfterSave.tags = current.tags;
+    }
+
+    return { savedFields, fieldsAfterSave };
+  }
+
   public async saveCompleted(
     saveModel: Dashboard | DashboardV2Spec,
     result: SaveDashboardResponseDTO,
-    folderUid?: string
+    folderUid?: string,
+    saveAsSource?: Pick<DashboardSceneState, 'title' | 'description' | 'tags'>
   ) {
     this._editSession = undefined;
-    this.serializer.onSaveComplete(saveModel, result);
+    this.serializer.onSaveComplete(sortedDeepCloneWithoutNulls(saveModel), result);
 
-    this._changeTracker.stopTrackingChanges();
+    const wasTrackingChanges = this._changeTracker.isTrackingChanges;
+    this._changeTracker.stopTrackingChanges({ discardPendingChecks: true });
 
     // Save As / first save mint a new uid; skip the refresh await below so redirect isn't delayed.
     const isNewResource = result.uid !== this.state.uid;
@@ -972,7 +1004,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       copyDashboardConsent('', result.uid);
     }
 
+    const saveAsFields = saveAsSource ? this.getSaveAsFields(saveModel, saveAsSource) : undefined;
     this.setState({
+      ...saveAsFields?.fieldsAfterSave,
       version: result.version,
       isDirty: false,
       uid: result.uid,
@@ -984,7 +1018,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         folderUid: folderUid,
         version: result.version,
       },
-      overlay: undefined,
     });
 
     this.state.editPanel?.dashboardSaved();
@@ -995,10 +1028,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       await this.refreshPredefinedVariables();
     }
 
-    this._initialState = sceneUtils.cloneSceneObjectState(this.state);
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state, {
+      ...saveAsFields?.savedFields,
+      isDirty: false,
+      overlay: undefined,
+    });
     this._initialUrlState = locationService.getLocation();
+    // Detect edits made during the save before its redirect can leave the dashboard.
+    this.setState({ isDirty: hasActualSaveChanges(this), overlay: undefined });
 
-    this._changeTracker.startTrackingChanges();
+    if (wasTrackingChanges) {
+      this._changeTracker.startTrackingChanges();
+    }
     this.publishEvent(new DashboardStateChangedEvent({ source: this }), true);
   }
 
@@ -1068,7 +1109,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.endEditPeriod(restoreInitialState ? 'discarded' : 'exited');
     this._sidebarBeforeViewing = undefined;
     // No need to listen to changes anymore
-    this._changeTracker.stopTrackingChanges();
+    this._changeTracker.stopTrackingChanges({ discardPendingChecks: true });
 
     // CUJ-only signal: ends dashboard_edit journey when the user actually leaves
     // edit mode, regardless of whether changes were discarded or there were
@@ -1132,7 +1173,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.endEditPeriod('discarded');
 
     // Stop tracking while we reset state.
-    this._changeTracker.stopTrackingChanges();
+    this._changeTracker.stopTrackingChanges({ discardPendingChecks: true });
 
     // The restored state swaps in a cloned sidebar, so release the one we activated programmatically.
     const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
@@ -1196,11 +1237,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pauseTrackingChanges() {
-    this._changeTracker.stopTrackingChanges();
+    this._changeTracker.stopTrackingChanges({ discardPendingChecks: true });
   }
 
   public resumeTrackingChanges() {
-    this._changeTracker.startTrackingChanges();
+    this._changeTracker.startTrackingChanges({ checkForChanges: true });
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {

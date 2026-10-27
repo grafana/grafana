@@ -462,6 +462,45 @@ func TestGlobalSearchCoverageOf(t *testing.T) {
 	}, got.kinds)
 }
 
+// A kind renamed between versions is named from the preferred version, or else
+// the last version that declares it, as the app SDK does.
+func TestGlobalSearchCoverageOfNamesRenamedKinds(t *testing.T) {
+	yes := true
+	widgets := schema.GroupResource{Group: "a.grafana.app", Resource: "widgets"}
+	for _, tc := range []struct {
+		preferred string
+		want      string
+	}{
+		{preferred: "", want: "Gadget"},
+		{preferred: "v1", want: "Widget"},
+		{preferred: "v2", want: "Gadget"},
+	} {
+		t.Run("preferred "+tc.preferred, func(t *testing.T) {
+			got := globalSearchCoverageOf([]*app.ManifestData{{
+				Group:            widgets.Group,
+				PreferredVersion: tc.preferred,
+				Versions: []app.ManifestVersion{
+					{Name: "v1", Kinds: []app.ManifestVersionKind{testGlobalKind("Widget", "widgets", &yes)}},
+					{Name: "v2", Kinds: []app.ManifestVersionKind{testGlobalKind("Gadget", "widgets", &yes)}},
+				},
+			}})
+			assert.Equal(t, map[schema.GroupResource]string{widgets: tc.want}, got.kinds)
+		})
+	}
+}
+
+func TestManifestKindsInclude(t *testing.T) {
+	m := &app.ManifestData{Group: "a.grafana.app", PreferredVersion: "v2", Versions: []app.ManifestVersion{
+		{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets"}}},
+		{Name: "v2", Kinds: []app.ManifestVersionKind{{Kind: "Gadget", Plural: "widgets"}}},
+	}}
+	onlyV1 := func(v app.ManifestVersion, _ app.ManifestVersionKind) bool { return v.Name == "v1" }
+	assert.Equal(t, map[schema.GroupResource]schema.GroupVersionKind{
+		{Group: "a.grafana.app", Resource: "widgets"}: {Group: "a.grafana.app", Version: "v1", Kind: "Widget"},
+	}, ManifestKinds(m, onlyV1), "a preferred version left out by include does not count")
+	assert.Empty(t, ManifestKinds(nil, nil))
+}
+
 // Manifests read at runtime replace the compiled-in ones kind by kind, so an app
 // can opt a kind in or out without a Grafana release.
 func TestGlobalSearchCoverageOfSeveralSources(t *testing.T) {
