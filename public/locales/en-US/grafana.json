@@ -5896,6 +5896,7 @@
     "edit-actions": {
       "add": "Add {{typeName}}",
       "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "change-settings": "Change dashboard settings",
       "collapse-all-rows": "Collapse all rows",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
