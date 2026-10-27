@@ -156,6 +156,20 @@ function makeScrollable(element: HTMLElement, { top = 0, height = 500, contentHe
   return scrollBy;
 }
 
+/**
+ * The dashboard body's scroll container beside the overlay, holding the panel, as the sidebar layout
+ * renders it: the body scrolls in it while the overlay stays put.
+ */
+function mountDashboardBody(): HTMLElement {
+  const body = document.createElement('div');
+  body.setAttribute('data-testid', 'data-testid DashboardSidebarSplitter body container');
+  const overlayRoot = screen.getByTestId('dashboard-composer-overlay').closest('[data-composer-capture-exclude]');
+  overlayRoot!.parentElement!.appendChild(body);
+  body.appendChild(panelRoot!);
+  makeScrollable(body, { height: 768 });
+  return body;
+}
+
 describe('picking', () => {
   it('resolves a click on a panel to its panel id and the normalised click point', async () => {
     const { startPick } = setup();
@@ -744,11 +758,7 @@ describe('regions', () => {
 
   it('stays on the content it was drawn over while the dashboard body scrolls under the overlay', async () => {
     const { startPick, annotate } = setup();
-    // The dashboard body scrolls in its own container under the overlay, as in the sidebar layout.
-    const body = document.createElement('div');
-    document.body.appendChild(body);
-    body.appendChild(panelRoot!);
-    makeScrollable(body, { height: 768 });
+    const body = mountDashboardBody();
     try {
       const { ref } = await drawRegion(startPick);
       annotate([item({ id: 'r', ref, point: { x: 1, y: 0 }, state: 'active' })]);
@@ -761,6 +771,25 @@ describe('regions', () => {
       expect(screen.getByRole('button', { name: 'Comment 1' })).toHaveStyle({ left: '350px', top: '150px' });
     } finally {
       body.remove();
+    }
+  });
+
+  it('stays on the dashboard content when the body is rebuilt and its scroll container replaced', async () => {
+    const { startPick, annotate } = setup();
+    const body = mountDashboardBody();
+    const { ref } = await drawRegion(startPick);
+    annotate([item({ id: 'r', ref, point: { x: 1, y: 0 }, state: 'active' })]);
+
+    body.remove();
+    const rebuilt = mountDashboardBody();
+    try {
+      rebuilt.scrollTop = 100;
+      fireEvent.scroll(rebuilt);
+      await nextFrame();
+
+      expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({ left: '150px', top: '150px' });
+    } finally {
+      rebuilt.remove();
     }
   });
 
@@ -1115,11 +1144,7 @@ describe('region capture', () => {
 
   it('is not_visible unless the region is fully in view, and when the page scrolls mid-capture', async () => {
     const { session } = setup();
-    // The dashboard body scrolls in its own container under the overlay, as in the sidebar layout.
-    const body = document.createElement('div');
-    document.body.appendChild(body);
-    body.appendChild(panelRoot!);
-    makeScrollable(body, { height: 768 });
+    const body = mountDashboardBody();
     try {
       const regionId = await drawRegion(session);
 
