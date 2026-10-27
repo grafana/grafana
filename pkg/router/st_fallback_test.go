@@ -722,6 +722,16 @@ func TestNewGComURLResolver(t *testing.T) {
 			wantErr: "fetching gcom instance: unexpected status code 500",
 		},
 		{
+			name: "slug that is not a DNS label", wantPath: "/instances/123",
+			status: http.StatusOK, body: `{"id":123,"slug":"evil.example.com/x","url":"https://stack.grafana.net"}`,
+			wantErr: `gcom instance 123: slug "evil.example.com/x" is not a DNS label`,
+		},
+		{
+			name: "empty slug", wantPath: "/instances/123",
+			status: http.StatusOK, body: `{"id":123,"url":"https://stack.grafana.net"}`,
+			wantErr: `gcom instance 123: slug "" is not a DNS label`,
+		},
+		{
 			name: "invalid JSON", wantPath: "/instances/123",
 			status: http.StatusOK, body: "invalid JSON",
 			wantErr: "decoding gcom instance",

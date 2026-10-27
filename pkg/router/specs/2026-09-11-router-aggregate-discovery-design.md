@@ -101,7 +101,8 @@ then republishes the group, not just a change to its versions.
 
 Targets are uniquely named `[router.aggregate.<name>]` sections. Section order sets priority: when
 two targets discover the same group, the first one wins. AGENTS.md ("Settings") lists the keys:
-`url`, `audience`, `discovery_auth`, `poll_interval`, `group_regex`, `ca_file` and `insecure`.
+`url`, `audience`, `discovery_auth`, `poll_interval`, `group_patterns` (formerly `group_regex`),
+`ca_file` and `insecure`.
 
 The older `[cloud_router] baas_apiserver.*` and `cloud_app_platform_apiserver.*` keys were read as a
 rollout shim until every deployed config used sections. They are no longer read.
@@ -119,14 +120,14 @@ Validation rules:
 - `audience` is required when `url` is set, unless `discovery_auth = none`, where setting it is an
   error.
 - `cap_token` and `token_exchange_url` in `[cloud_router]` are required only when some target polls
-  with a CAP token (the default `discovery_auth`).
+  with a CAP token (`discovery_auth` unset, `cap_token` or `bearer`).
 
-Each target's `group_regex` is optional; unset means "include every group discovered from that target".
+Each target's `group_patterns` is optional; unset means "include every group discovered from that target".
 The patterns are glob-style (`*.grafana.app` → matches any group ending in `.grafana.app`), compiled
 to anchored regexes internally: `*` → `.*`, and every other segment goes through `regexp.QuoteMeta`
 so it matches literally. Escaping only `.` (as the first implementation did) left `+`, `(`, `[` etc.
 live, which *widens* the match — `foo+.grafana.app` would have matched `foooo.grafana.app`. Since
-`group_regex` is a narrowing allowlist, over-matching is the wrong failure direction. A consequence
+`group_patterns` is a narrowing allowlist, over-matching is the wrong failure direction. A consequence
 worth knowing: `QuoteMeta` always emits a valid literal, so glob compilation is total — there is no
 reachable "invalid pattern" error.
 
