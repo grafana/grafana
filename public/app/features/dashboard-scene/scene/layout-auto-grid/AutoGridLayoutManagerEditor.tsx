@@ -68,6 +68,8 @@ function GridLayoutColumns({ layoutManager }: { layoutManager: AutoGridLayoutMan
   }, [focusInput, inputRef]);
 
   useSyncUncontrolledInput(inputRef, typeof columnWidth === 'number' ? columnWidth : undefined);
+  // Undo/redo can replace an invalid entry without a blur, so its error has to go with it.
+  useEffect(() => setCustomMinWidthError(false), [columnWidth]);
 
   const minWidthOptions: Array<ComboboxOption<AutoGridColumnWidth>> = [
     'narrow' as const,
@@ -410,6 +412,8 @@ function NamedOrCustomSizeField<T extends string | number>({
   }, [focusInput, inputRef]);
 
   useSyncUncontrolledInput(inputRef, customValue);
+  // Undo/redo can replace an invalid entry without a blur, so its error has to go with it.
+  useEffect(() => setError(false), [isCustom, customValue]);
 
   return (
     <Field
