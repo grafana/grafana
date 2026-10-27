@@ -55,6 +55,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 	_ "github.com/grafana/grafana/pkg/storage/unified/testing"
 	_ "github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
+	_ "github.com/grafana/grafana/pkg/tests/apis/provisioning/common/oauthsuite"
 	_ "github.com/grafana/grafana/pkg/tests/testinfra"
 	_ "github.com/grafana/grafana/pkg/tests/testsuite"
 	_ "github.com/grafana/grafana/pkg/util/testutil"
