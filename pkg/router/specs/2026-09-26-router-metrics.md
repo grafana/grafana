@@ -48,8 +48,8 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_stack_lookups_total` | counter | `result` | Single-tenant stack lookups: `cache_hit`, `resolved`, `not_found`, `throttled`, `error` |
 | `grafana_router_stack_discovery_cache_total` | counter | `result` | Single-tenant discovery requests looked up in the cache shared by each stack's callers: `hit`, `miss`. Absent when `st_discovery_cache_bytes = 0` |
 
-Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `local-plugin`
-and `embedded`.
+Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `local-plugin`,
+`dev` (`[router.dev.<name>]`, #135990) and `embedded`.
 
 Every cloud source (`aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`) is polled
 and records every poll, so a stale last success means the source is failing.
@@ -57,13 +57,15 @@ and records every poll, so a stale last success means the source is failing.
 A skipped backend is not served, and its group falls back to a lower-priority source if one offers
 it. Each skip is logged with its error, which says why. Backends are skipped by:
 
-- `plugins_url` and `core_url`: a manifest `NewPluginBackend` rejects, such as for a group that
+- `plugins_url` and `core_url`: a manifest `newPluginBackend` rejects, such as for a group that
   isn't a plugin group or a routable core group (`routableCoreGroups`), or one with no served
   versions;
+- `plugins_url` and `core_url`: an entry with manifests whose plugin ID isn't an app plugin ID, or,
+  for `plugins_url`, an entry with no ID (`validatePluginID`, #135273);
 - `plugins_url`, `core_url` and `aggregate:<target>`: a backend whose key could not be computed,
   which is not expected to happen.
 
-Groups filtered out by `plugins_group_regex` or a target's `group_regex` are not counted as
+Groups filtered out by `plugins_group_patterns` or a target's `group_patterns` are not counted as
 skipped.
 
 A backend whose `Load` fails in `reconcile` is not counted here. Its group keeps its last-known-good
@@ -81,6 +83,8 @@ retried with backoff.
 
 Groups on the single-tenant fallback keep one breaker per destination host and group, so they have no
 `grafana_router_breaker_state` series. Embedded groups bypass circuit breaking and also have no series.
+For `dashboard.grafana.app`, the series reflects only its multi-tenant backend: requests sent to a
+single-tenant stack count against that stack's breaker instead.
 
 ## Requests
 
@@ -118,7 +122,7 @@ use `route="not_found"` for the new behavior, or match both during a rolling upg
 
 | Metric | Type | Labels | Meaning |
 | --- | --- | --- | --- |
-| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `source`, `plugin_id`, `method`, `status_code` | Latency of gRPC calls to plugin deployments; `source` is `plugins_url` or `core_url`, and `plugin_id` is the API group for a `core_url` entry without a plugin ID |
+| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `source`, `plugin_id`, `method`, `status_code` | Latency of gRPC calls to plugin deployments; `source` is `plugins_url`, `core_url` or `dev`, and `plugin_id` is the API group for a `core_url` entry without a plugin ID |
 | `grafana_router_plugin_grpc_request_retries_total` | counter | `source`, `plugin_id`, `method` | Retries of unary gRPC calls to plugin deployments (`[router.backend_grpc]` `retry_max`) |
 
 Each plugin deployment's connection (`plugins_url` or `core_url`) records its calls with dskit's client interceptors, and propagates

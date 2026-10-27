@@ -62,6 +62,11 @@ export interface ExtensionSidebarAPI {
    * subscribe only while there is something to collapse. Returns the unsubscribe.
    */
   subscribeToCollapse(listener: () => void): () => void;
+  /**
+   * Whether dragging the extension's drag handle (`data-extension-floating-drag-handle`) out of the docked sidebar
+   * onto the page floats it there. Show a handle in the docked sidebar only while this is true.
+   */
+  canDragToFloat(): boolean;
 }
 
 interface RestrictedGrafanaApisContextTypeInternal {

@@ -537,3 +537,42 @@ func TestGlobalHandler_UsesTheKindsTheServerReports(t *testing.T) {
 	client.resp.Kinds = nil
 	assert.Equal(t, []string{"Dashboard", "", "Folder"}, kinds())
 }
+
+// Clients mark provisioned items from these fields, which every index stores.
+func TestHandler_ReturnsManagerFields(t *testing.T) {
+	cols := []*resourcepb.ResourceTableColumnDefinition{
+		col(resource.SEARCH_FIELD_MANAGER_KIND, resourcepb.ResourceTableColumnDefinition_STRING),
+		col(resource.SEARCH_FIELD_MANAGER_ID, resourcepb.ResourceTableColumnDefinition_STRING),
+	}
+	rows := []map[string]any{{
+		"__name":                           "a",
+		resource.SEARCH_FIELD_MANAGER_KIND: "repo",
+		resource.SEARCH_FIELD_MANAGER_ID:   "my-repo",
+	}}
+	body := `{"apiVersion": "` + searchv0.APIVERSION + `", "kind": "` + searchv0.KindSearchQuery + `", "fields": ["manager.kind", "manager.id"]}`
+
+	for name, do := range map[string]func(*testing.T, *Handler, string) *httptest.ResponseRecorder{
+		"one kind": doRequest,
+		"global":   doGlobalRequest,
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
+				Results: buildTable(t, cols, rows, nil), TotalHits: 1, TotalHitsExact: true,
+			}}
+			h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+			w := do(t, h, body)
+			require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+			assert.Equal(t, []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ID}, client.got.Fields)
+
+			var got struct {
+				Items []struct {
+					Fields map[string]any `json:"fields"`
+				} `json:"items"`
+			}
+			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+			require.Len(t, got.Items, 1)
+			assert.Equal(t, map[string]any{"manager.kind": "repo", "manager.id": "my-repo"}, got.Items[0].Fields)
+		})
+	}
+}

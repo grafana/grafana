@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useFlagGrafanaScopesDashboardsMegaMenu, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
 import { DRAWER_INSIDE_ATTRIBUTE } from '@grafana/ui/internal';
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
@@ -43,6 +43,7 @@ export interface Props extends PropsWithChildren<{}> {}
 export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const scopesMegaMenuEnabled = useFlagGrafanaScopesDashboardsMegaMenu();
   useVisualRefreshNudge(visualRefreshEnabled);
   const {
     isOpen: isExtensionSidebarOpen,
@@ -84,7 +85,11 @@ export function AppChrome({ children }: Props) {
 
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
-    !state.chromeless && scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
+    !state.chromeless &&
+      !scopesMegaMenuEnabled &&
+      scopes?.state.enabled &&
+      scopes?.state.drawerOpened &&
+      !scopes?.state.readOnly
   );
 
   const headerLevels = useChromeHeaderLevels();
@@ -184,7 +189,7 @@ export function AppChrome({ children }: Props) {
       )}
       <div className={contentClass}>
         <div className={cx(styles.panes, { [styles.panesWithSidebar]: isExtensionSidebarOpen })}>
-          {!state.chromeless && (
+          {!state.chromeless && !scopesMegaMenuEnabled && (
             <div
               className={cx(styles.scopesDashboardsContainer, {
                 [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,

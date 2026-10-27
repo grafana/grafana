@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
@@ -129,68 +129,74 @@ func TestConfigureInProcessManifests_PreservesProvisioning(t *testing.T) {
 		{"disabled extensions ignore provisioning", "Gadget", false, "", 0, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			root := t.TempDir()
-			dir := filepath.Join(root, "appmanifests")
-			require.NoError(t, os.Mkdir(dir, 0o700))
-			require.NoError(t, os.WriteFile(filepath.Join(dir, "widgets.json"), manifestJSON("Widget", "provisioned", 1, true), 0o600))
+			synctest.Test(t, func(t *testing.T) {
+				root := t.TempDir()
+				dir := filepath.Join(root, "appmanifests")
+				require.NoError(t, os.Mkdir(dir, 0o700))
+				require.NoError(t, os.WriteFile(filepath.Join(dir, "widgets.json"), manifestJSON("Widget", "provisioned", 1, true), 0o600))
 
-			var discovered appmanifestv1alpha2.AppManifest
-			require.NoError(t, json.Unmarshal(manifestJSON(tc.discovered, "discovered", 2, false), &discovered))
-			discovery := &gatedManifestDiscovery{
-				ready: make(chan struct{}),
-				items: []appmanifestv1alpha2.AppManifest{discovered},
-			}
-			opts := resource.SearchOptions{
-				SearchFields:         resource.NewSearchFieldsRegistry(nil, nil, nil),
-				EmbeddingConfig:      resource.NewEmbeddingConfigRegistry(),
-				HybridSearchConfig:   resource.NewHybridSearchConfigRegistry(nil),
-				GlobalSearchCoverage: resource.NewGlobalSearchCoverageRegistry(nil),
-			}
-			cfg := setting.NewCfg()
-			cfg.Logger = log.NewNopLogger()
-			cfg.ProvisioningPath = root
-			cfg.EnableEmbeddedAPIExtensions = tc.embedded
-			require.NoError(t, configureInProcessManifests(t.Context(), cfg, opts, discovery, nil))
-
-			widget := schema.GroupVersionResource{Group: "custom.ext.grafana.app", Version: "v1", Resource: "widgets"}
-			widgetKey := resource.NewLowerGroupResource(widget.Group, widget.Resource)
-			_, initialHash, initialProvider := opts.SearchFields.For(widgetKey)
-			if tc.embedded {
-				require.NotEmpty(t, initialHash)
-				require.NotNil(t, initialProvider)
-				require.Equal(t, "provisioned", initialProvider.Fields(widget)[0].Name)
-			} else {
-				require.Nil(t, initialProvider)
-			}
-
-			close(discovery.ready)
-			discoveredGVR := widget
-			discoveredGVR.Resource = strings.ToLower(tc.discovered) + "s"
-			require.Eventually(t, func() bool {
-				_, _, provider := opts.SearchFields.For(resource.NewLowerGroupResource(discoveredGVR.Group, discoveredGVR.Resource))
-				return provider != nil && len(provider.Fields(discoveredGVR)) == 1 && provider.Fields(discoveredGVR)[0].Name == "discovered"
-			}, 5*time.Second, 10*time.Millisecond)
-
-			_, hash, provider := opts.SearchFields.For(widgetKey)
-			config, found := opts.EmbeddingConfig.For(widget)
-			if tc.wantField == "" {
-				require.Nil(t, provider)
-				require.False(t, found)
-			} else {
-				require.NotNil(t, provider)
-				require.Len(t, provider.Fields(widget), 1)
-				require.Equal(t, tc.wantField, provider.Fields(widget)[0].Name)
-				require.True(t, found)
-				require.Equal(t, resource.EmbeddingConfig{
-					ReembedVersion: tc.wantRevision,
-					Fields:         []app.ManifestVersionKindEmbedField{{Name: tc.wantField, Path: "spec." + tc.wantField}},
-				}, config)
-				if tc.discovered != "Widget" {
-					require.Equal(t, initialHash, hash)
+				var discovered appmanifestv1alpha2.AppManifest
+				require.NoError(t, json.Unmarshal(manifestJSON(tc.discovered, "discovered", 2, false), &discovered))
+				discovery := &gatedManifestDiscovery{
+					ready: make(chan struct{}),
+					items: []appmanifestv1alpha2.AppManifest{discovered},
 				}
-			}
-			require.Equal(t, tc.wantEnabled, opts.GlobalSearchCoverage.Covers(widget.GroupResource()))
-			require.Equal(t, tc.wantEnabled, opts.HybridSearchConfig.Enabled(widget.Group, widget.Resource))
+				opts := resource.SearchOptions{
+					SearchFields:         resource.NewSearchFieldsRegistry(nil, nil, nil),
+					EmbeddingConfig:      resource.NewEmbeddingConfigRegistry(),
+					HybridSearchConfig:   resource.NewHybridSearchConfigRegistry(nil),
+					GlobalSearchCoverage: resource.NewGlobalSearchCoverageRegistry(nil),
+				}
+				cfg := setting.NewCfg()
+				cfg.Logger = log.NewNopLogger()
+				cfg.ProvisioningPath = root
+				cfg.EnableEmbeddedAPIExtensions = tc.embedded
+				require.NoError(t, configureInProcessManifests(t.Context(), cfg, opts, discovery, nil))
+
+				widget := schema.GroupVersionResource{Group: "custom.ext.grafana.app", Version: "v1", Resource: "widgets"}
+				widgetKey := resource.NewLowerGroupResource(widget.Group, widget.Resource)
+				_, initialHash, initialProvider := opts.SearchFields.For(widgetKey)
+				if tc.embedded {
+					require.NotEmpty(t, initialHash)
+					require.NotNil(t, initialProvider)
+					require.Equal(t, "provisioned", initialProvider.Fields(widget)[0].Name)
+				} else {
+					require.Nil(t, initialProvider)
+				}
+
+				close(discovery.ready)
+				discoveredGVR := widget
+				discoveredGVR.Resource = strings.ToLower(tc.discovered) + "s"
+
+				// Let the released discovery request update all manifest-derived registries.
+				synctest.Wait()
+
+				_, _, discoveredProvider := opts.SearchFields.For(resource.NewLowerGroupResource(discoveredGVR.Group, discoveredGVR.Resource))
+				require.NotNil(t, discoveredProvider)
+				require.Len(t, discoveredProvider.Fields(discoveredGVR), 1)
+				require.Equal(t, "discovered", discoveredProvider.Fields(discoveredGVR)[0].Name)
+
+				_, hash, provider := opts.SearchFields.For(widgetKey)
+				config, found := opts.EmbeddingConfig.For(widget)
+				if tc.wantField == "" {
+					require.Nil(t, provider)
+					require.False(t, found)
+				} else {
+					require.NotNil(t, provider)
+					require.Len(t, provider.Fields(widget), 1)
+					require.Equal(t, tc.wantField, provider.Fields(widget)[0].Name)
+					require.True(t, found)
+					require.Equal(t, resource.EmbeddingConfig{
+						ReembedVersion: tc.wantRevision,
+						Fields:         []app.ManifestVersionKindEmbedField{{Name: tc.wantField, Path: "spec." + tc.wantField}},
+					}, config)
+					if tc.discovered != "Widget" {
+						require.Equal(t, initialHash, hash)
+					}
+				}
+				require.Equal(t, tc.wantEnabled, opts.GlobalSearchCoverage.Covers(widget.GroupResource()))
+				require.Equal(t, tc.wantEnabled, opts.HybridSearchConfig.Enabled(widget.Group, widget.Resource))
+			})
 		})
 	}
 }
