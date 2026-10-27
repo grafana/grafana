@@ -1,4 +1,4 @@
-import { isEqual, noop, omit, sortBy } from 'lodash';
+import { isEqual, isUndefined, noop, omit, omitBy, sortBy } from 'lodash';
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAsync } from 'react-use';
 
@@ -270,9 +270,10 @@ export function getAdHocFilterOptions(variable: SceneVariable): OptionsPaneItemD
 }
 
 function withoutForceEdit(filters: AdHocFilterWithLabels[]) {
-  // The editors only add, update or remove filters, so a different order alone is not a change
+  // The editors only add, update or remove filters, so a different order alone is not a change.
+  // Filters rebuilt by the pills can gain keys set to undefined (e.g. meta) and list their keys in another order.
   return sortBy(
-    filters.map((filter) => omit(filter, 'forceEdit')),
-    (filter) => JSON.stringify(filter)
+    filters.map((filter) => omitBy(omit(filter, 'forceEdit'), isUndefined)),
+    (filter) => JSON.stringify(filter, Object.keys(filter).sort())
   );
 }

@@ -501,6 +501,22 @@ describe('AdHocFiltersVariableEditor undo/redo', () => {
 
     expect(sidebar.state.undoStack).toHaveLength(0);
   });
+
+  it('does not record opening a default filter when the pill adds keys set to undefined', async () => {
+    const { sidebar } = await setup(undefined, {
+      inline: true,
+      originFilters: [
+        { key: 'region', operator: '=', value: 'eu', origin: 'dashboard' },
+        { key: 'zone', operator: '=', value: 'a', origin: 'dashboard' },
+      ],
+    });
+    await waitFor(() => expect(capturedOriginController).toBeDefined());
+
+    const [regionFilter] = capturedOriginController!.useState().filters;
+    act(() => capturedOriginController!.updateFilter(regionFilter, { forceEdit: true, meta: undefined }));
+
+    expect(sidebar.state.undoStack).toHaveLength(0);
+  });
 });
 
 interface SetupOptions {
