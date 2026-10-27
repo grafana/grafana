@@ -46,7 +46,8 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     // --- Baseline: count Min values in first nested table before cross-filtering ---
     const minHeader = firstNestedTable.getByRole('columnheader').nth(minColumnIdx);
-    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button).click();
+    await page.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem).click();
     const filterContainer = dashboardPage.getByGrafanaSelector(
       selectors.components.Panels.Visualization.TableNG.Filters.Container
     );
@@ -58,7 +59,10 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     const secondNestedInfoColumnIdx = await getColumnIdx(secondNestedTable, 'Info');
     const secondNestedMinColumnIdx = await getColumnIdx(secondNestedTable, 'Min');
     const secondMinHeader = secondNestedTable.getByRole('columnheader').nth(secondNestedMinColumnIdx);
-    await secondMinHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await secondMinHeader
+      .getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button)
+      .click();
+    await page.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem).click();
     const secondNestedMinValueCountBefore = await getRangeFilterValueCount(filterContainer, selectors);
 
     // sort the info column descending to ensure the "down fast" value is first
@@ -73,7 +77,10 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     // --- Apply Info=down filter on the first nested table ---
     const infoColumnHeader = firstNestedTable.getByRole('columnheader').nth(infoColumnIdx);
-    await infoColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await infoColumnHeader
+      .getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button)
+      .click();
+    await page.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem).click();
     await expect(filterContainer, 'filter container is visible after clicking info column header').toBeVisible();
 
     // select only "down"
@@ -87,7 +94,8 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     );
 
     // --- Open Min filter popup: cross-filter should restrict values ---
-    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button).click();
+    await page.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem).click();
     await expect(filterContainer, 'filter container is visible after clicking min column header').toBeVisible();
 
     const crossFilteredMinValueCount = await getRangeFilterValueCount(filterContainer, selectors);
@@ -103,7 +111,10 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     // --- Verify filter is scoped to the first nested table only ---
     // The second nested table should be unaffected by the first nested table's filter.
-    await secondMinHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await secondMinHeader
+      .getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button)
+      .click();
+    await page.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem).click();
     const secondNestedMinValueCountAfter = await getRangeFilterValueCount(filterContainer, selectors);
 
     // Second nested table keeps its full set of Min values.

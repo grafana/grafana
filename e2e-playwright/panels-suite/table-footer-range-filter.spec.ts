@@ -32,7 +32,10 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
     const minColumnHeader = page.getByRole('columnheader').nth(minColumnIdx);
 
     // Exclude the current last Min value, then check that the footer changes.
-    await minColumnHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await minColumnHeader
+      .getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button)
+      .click();
+    await page.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem).click();
     const filterContainer = dashboardPage.getByGrafanaSelector(
       selectors.components.Panels.Visualization.TableNG.Filters.Container
     );

@@ -126,9 +126,11 @@ test.describe('Panels test: Table - ad-hoc range filters', { tag: ['@panels', '@
     await page.getByTestId(table.headerColumnMenu.filterItem).click();
     const popup = page.getByTestId(table.Filters.Container);
     await expect(popup).toBeVisible();
-    await expect(popup).toHaveCSS('width', '240px');
+    await expect(popup).toHaveCSS('width', '280px');
+    await expect(popup.getByPlaceholder('Filter values')).toBeFocused();
 
     await page.keyboard.press('Escape');
+    await expect(popup).toBeHidden();
     await panel.getByRole('button', { name: 'Column options for Long Text' }).click();
     await page.getByTestId(table.headerColumnMenu.filterItem).click();
     await expect(popup).toBeVisible();

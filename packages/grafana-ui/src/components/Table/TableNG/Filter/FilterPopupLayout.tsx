@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type ReactNode, type Ref } from 'react';
+import { type KeyboardEventHandler, type ReactNode, type Ref } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -14,14 +14,18 @@ interface FilterPopupLayoutProps {
   children: ReactNode;
   containerRef: Ref<HTMLDivElement>;
   width?: number;
+  onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
 }
 
-export function FilterPopupLayout({ children, containerRef, width }: FilterPopupLayoutProps) {
+export function FilterPopupLayout({ children, containerRef, width, onKeyDown }: FilterPopupLayoutProps) {
   const styles = useStyles2(getStyles);
 
   return (
+    // Handle Escape from child controls before the table header stops keyboard propagation.
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       ref={containerRef}
+      onKeyDown={onKeyDown}
       className={styles.container}
       style={width ? { width } : undefined}
       data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
@@ -97,7 +101,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     label: 'filterContainer',
     width: 'fit-content',
-    minWidth: 240,
+    minWidth: 280,
     maxWidth: 360,
     boxSizing: 'border-box',
     backgroundColor: theme.colors.background.primary,

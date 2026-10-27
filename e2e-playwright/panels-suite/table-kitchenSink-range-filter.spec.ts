@@ -33,7 +33,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     // --- Baseline: count finite Min values before cross-filtering ---
     const minHeader = page.getByRole('columnheader').nth(minColumnIdx);
-    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button).click();
+    await page.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem).click();
     const minFilterContainer = dashboardPage.getByGrafanaSelector(
       selectors.components.Panels.Visualization.TableNG.Filters.Container
     );
@@ -53,10 +54,11 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
       'ascending'
     );
     const firstInfoCell = getCell(table, 1, infoColumnIdx);
-    expect(firstInfoCell, 'first info cell is not "up" after sorting').not.toHaveText('up');
+    await expect(firstInfoCell, 'first info cell is not "up" after sorting').not.toHaveText('up');
 
     // --- Apply a filter on Info to only show "up" rows ---
-    await infoHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await infoHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button).click();
+    await page.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem).click();
     const infoFilterContainer = dashboardPage.getByGrafanaSelector(
       selectors.components.Panels.Visualization.TableNG.Filters.Container
     );
@@ -69,7 +71,8 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     await expect(firstInfoCell, 'first info cell is "up" after filtering').toHaveText('up');
 
     // --- Open the Min filter popup again; cross-filter should restrict its values ---
-    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.HeaderButton).click();
+    await minHeader.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button).click();
+    await page.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem).click();
     await expect(minFilterContainer, 'filter popup for min is visible after click').toBeVisible();
 
     const crossFilteredMinValueCount = await getRangeFilterValueCount(minFilterContainer, selectors);

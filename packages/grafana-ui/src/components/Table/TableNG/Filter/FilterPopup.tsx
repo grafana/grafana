@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useRef, type KeyboardEvent } from 'react';
 
 import { FieldType, type Field, type SelectableValue } from '@grafana/data';
 
@@ -35,19 +35,14 @@ const FilterPopupEditor = memo((props: FilterPopupProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const pointerStartedInside = useRef(false);
 
-  useEffect(() => {
-    function handleEscape(e: KeyboardEvent) {
-      if (e.key === 'Escape' && !e.defaultPrevented) {
-        onClose();
-        buttonElement?.focus();
-      }
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape' && !event.defaultPrevented) {
+      event.preventDefault();
+      event.stopPropagation();
+      onClose();
+      buttonElement?.focus();
     }
-    document.addEventListener('keydown', handleEscape);
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape);
-    };
-  }, [onClose, buttonElement]);
+  };
 
   // Sliders can release a pointer gesture outside the popup; dismiss only on a separate outside click.
   useEffect(() => {
@@ -98,20 +93,20 @@ const FilterPopupEditor = memo((props: FilterPopupProps) => {
     switch (field.type) {
       case FieldType.time:
         return (
-          <FilterPopupLayout containerRef={containerRef}>
+          <FilterPopupLayout containerRef={containerRef} onKeyDown={handleKeyDown}>
             <DateRangeFilter {...rangeProps} />
           </FilterPopupLayout>
         );
       case FieldType.number:
         return (
-          <FilterPopupLayout containerRef={containerRef}>
+          <FilterPopupLayout containerRef={containerRef} onKeyDown={handleKeyDown}>
             <NumericRangeFilter {...rangeProps} />
           </FilterPopupLayout>
         );
     }
   }
 
-  return <StringMatchingFilter {...props} containerRef={containerRef} />;
+  return <StringMatchingFilter {...props} containerRef={containerRef} onKeyDown={handleKeyDown} />;
 });
 
 FilterPopup.displayName = 'FilterPopup';

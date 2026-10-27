@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEventHandler, type RefObject } from 'react';
 
 import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -34,6 +34,7 @@ interface Props {
   onApplyValues: (values: SelectableValue[]) => void;
   onClear: () => void;
   onClose: () => void;
+  onKeyDown?: KeyboardEventHandler<HTMLDivElement>;
 }
 
 export function StringMatchingFilter({
@@ -48,6 +49,7 @@ export function StringMatchingFilter({
   onApplyValues,
   onClear,
   onClose,
+  onKeyDown,
 }: Props) {
   const uniqueValues = useMemo(() => calculateUniqueFieldValues(rows, field), [rows, field]);
   const options = useMemo(() => valuesToOptions(uniqueValues), [uniqueValues]);
@@ -68,19 +70,20 @@ export function StringMatchingFilter({
     }
     return { selectedRows: values.length === 0 ? totalRows : selectedRows, totalRows };
   }, [field, rows, values]);
-  const [popupWidth, setPopupWidth] = useState(240);
+  const [popupWidth, setPopupWidth] = useState(280);
   const [matchCase, setMatchCase] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const operators = Object.values(operatorSelectableValues());
   const styles = useStyles2(getStyles);
 
-  // focus the input on mount. autoFocus prop doesn't work on FilterInput, maybe due to the forwarded ref
   useEffect(() => {
-    inputRef.current?.focus();
+    // Wait for the closing column menu to restore focus before focusing the filter input.
+    const frame = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   return (
-    <FilterPopupLayout containerRef={containerRef} width={popupWidth}>
+    <FilterPopupLayout containerRef={containerRef} width={popupWidth} onKeyDown={onKeyDown}>
       <Stack direction="column" gap={1.5}>
         <Stack gap={1}>
           <FilterInput

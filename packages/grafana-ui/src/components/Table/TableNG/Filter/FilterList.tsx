@@ -101,7 +101,7 @@ export const FilterList = ({
   useEffect(() => {
     if (onWidthChange) {
       const textWidth = measureText(longestVisibleLabel, parseFloat(theme.typography.size.md)).width;
-      onWidthChange(Math.min(360, Math.max(240, Math.ceil(textWidth + 64))));
+      onWidthChange(Math.min(360, Math.max(280, Math.ceil(textWidth + 64))));
     }
   }, [longestVisibleLabel, onWidthChange, theme.typography.size.md]);
   const gutter = theme.spacing.gridSize / 2;

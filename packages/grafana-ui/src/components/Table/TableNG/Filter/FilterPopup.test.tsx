@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type Field, FieldType } from '@grafana/data';
@@ -37,7 +37,8 @@ function renderPopup(overrides: Partial<Parameters<typeof FilterPopup>[0]> = {})
       setOperator={jest.fn()}
       buttonElement={buttonElement}
       {...overrides}
-    />
+    />,
+    { wrapper: ({ children }) => <div onKeyDown={(event) => event.stopPropagation()}>{children}</div> }
   );
 
   return { onApplyValues, onClear, onClose, buttonElement, ...view };
@@ -198,13 +199,15 @@ describe('FilterPopup', () => {
   });
 
   describe('Escape key', () => {
-    it('calls onClose when Escape is pressed', async () => {
+    it('closes and restores focus when an ancestor stops keyboard propagation', async () => {
       const user = userEvent.setup();
-      const { onClose } = renderPopup();
+      const { onClose, buttonElement } = renderPopup();
+      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
 
       await user.keyboard('{Escape}');
 
       expect(onClose).toHaveBeenCalledTimes(1);
+      expect(buttonElement).toHaveFocus();
     });
 
     it('closes the date calendar before closing the filter popup', async () => {
@@ -216,13 +219,15 @@ describe('FilterPopup', () => {
         rangeFiltersEnabled: true,
       });
 
-      await user.click(screen.getAllByRole('button', { name: 'Open calendar' })[0]);
+      const calendarButton = screen.getAllByRole('button', { name: 'Open calendar' })[0];
+      await user.click(calendarButton);
       const calendar = screen.getByRole('dialog');
       calendar.focus();
 
       await user.keyboard('{Escape}');
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
       expect(onClose).not.toHaveBeenCalled();
+      await waitFor(() => expect(calendarButton).toHaveFocus());
 
       await user.keyboard('{Escape}');
       expect(onClose).toHaveBeenCalledTimes(1);
