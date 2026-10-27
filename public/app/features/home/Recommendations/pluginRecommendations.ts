@@ -1,6 +1,7 @@
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   APP_OBSERVABILITY_APP_ID,
   HOSTED_TRACES_APP_ID,
@@ -12,7 +13,6 @@ import { createBridgeURL } from 'app/features/alerting/unified/components/Plugin
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
-import { isMultiTenantHomepage } from '../multiTenant';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withDeadline } from '../solutions/probeUtils';
 import { TELEMETRY_SETUP_DOCS, type TelemetryType } from '../solutions/telemetrySetup';
@@ -215,7 +215,9 @@ const installedPlugins = createTtlCachedPromise(
 export function fetchInstalledPlugins(): Promise<LocalPlugin[]> {
   // /api/plugins is legacy-only; an empty inventory already makes plugin-backed offers fail closed. The gate
   // goes once the inventory reads the plugins.grafana.app metas and per-app settings instead.
-  return isMultiTenantHomepage() ? Promise.resolve([]) : installedPlugins.get();
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantHomepage, false)
+    ? Promise.resolve([])
+    : installedPlugins.get();
 }
 
 export function resetInstalledPlugins(): void {
