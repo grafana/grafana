@@ -2,10 +2,12 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/discovery"
@@ -21,7 +23,7 @@ type DiscoveryClient interface {
 	discovery.DiscoveryInterface
 	GetResourceForKind(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
 	GetKindForResource(gvr schema.GroupVersionResource) (schema.GroupVersionKind, error)
-	GetPreferredVesion(gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error)
+	GetPreferredVersion(gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error)
 	GetPreferredVersionForKind(gk schema.GroupKind) (schema.GroupVersionResource, schema.GroupVersionKind, error)
 	WaitForAvailability(ctx context.Context, gv schema.GroupVersion) error
 }
@@ -76,8 +78,22 @@ func (d *DiscoveryClientImpl) GetKindForResource(gvr schema.GroupVersionResource
 	return schema.GroupVersionKind{}, fmt.Errorf("kind not found for %s", gvr.String())
 }
 
-func (d *DiscoveryClientImpl) GetPreferredVesion(gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error) {
+func (d *DiscoveryClientImpl) preferredResources(group string) ([]*metav1.APIResourceList, error) {
 	apiList, err := d.ServerPreferredResources()
+	var failed *discovery.ErrGroupDiscoveryFailed
+	if err == nil || !errors.As(err, &failed) {
+		return apiList, err
+	}
+	for gv := range failed.Groups {
+		if gv.Group == group {
+			return nil, err
+		}
+	}
+	return apiList, nil
+}
+
+func (d *DiscoveryClientImpl) GetPreferredVersion(gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error) {
+	apiList, err := d.preferredResources(gr.Group)
 	if err != nil {
 		return schema.GroupVersionResource{}, schema.GroupVersionKind{}, fmt.Errorf("getting server's preferred resources: %w", err)
 	}
@@ -104,7 +120,7 @@ func (d *DiscoveryClientImpl) GetPreferredVesion(gr schema.GroupResource) (schem
 }
 
 func (d *DiscoveryClientImpl) GetPreferredVersionForKind(gk schema.GroupKind) (schema.GroupVersionResource, schema.GroupVersionKind, error) {
-	apiList, err := d.ServerPreferredResources()
+	apiList, err := d.preferredResources(gk.Group)
 	if err != nil {
 		return schema.GroupVersionResource{}, schema.GroupVersionKind{}, err
 	}
