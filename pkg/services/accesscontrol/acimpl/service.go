@@ -628,6 +628,7 @@ func (s *Service) RegisterFixedRoles(ctx context.Context) error {
 	})
 
 	s.isInitialized = true
+	s.publishRoleCatalogLocked()
 
 	rolesSnapshot := s.getBasicRolePermissionsLocked()
 	s.rolesMu.Unlock()
@@ -672,7 +673,6 @@ func (s *Service) getBasicRolePermissionsLocked() map[string][]accesscontrol.Per
 // registerRolesLocked processes a single role registration and adds permissions to basic roles.
 // Must be called with s.rolesMu locked.
 func (s *Service) registerRolesLocked(registration accesscontrol.RoleRegistration) {
-	defer s.publishRoleCatalogLocked()
 	for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 		if basicRole, ok := s.roles[br]; ok {
 			for _, p := range registration.Role.Permissions {
@@ -729,6 +729,7 @@ func (s *Service) DeclarePluginRoles(ctx context.Context, ID, name string, regs 
 		if initialized {
 			s.rolesMu.Lock()
 			s.registerRolesLocked(r)
+			s.publishRoleCatalogLocked()
 			updatedBasicRoles = true
 			s.rolesMu.Unlock()
 			s.cache.Flush()
