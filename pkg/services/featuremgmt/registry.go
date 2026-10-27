@@ -1746,6 +1746,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "authzDelegationChecks",
+			Description:  "Use AuthZ Check and LegacyCheck for single-org IAM delegation checks (resolved at startup)",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:         "kubernetesAuthzZanzanaSync",
 			Description:  "Enable sync of Zanzana authorization store on AuthZ CRD mutations",
 			Stage:        FeatureStageExperimental,

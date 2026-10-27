@@ -202,6 +202,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-04-22,alertingListViewV2PreviewToggle,preview,@grafana/alerting-squad,false,false,true
 2026-02-05,kubernetesAuthZResourcePermissionsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2025-07-31,kubernetesAuthzResourcePermissionApis,experimental,@grafana/identity-access-team,false,false,false
+2026-10-27,authzDelegationChecks,experimental,@grafana/identity-access-team,false,false,false
 2025-10-13,kubernetesAuthzZanzanaSync,experimental,@grafana/identity-access-team,false,false,false
 2026-01-15,kubernetesAuthzGlobalRolesApi,experimental,@grafana/identity-access-team,false,false,false
 2026-01-12,kubernetesAuthzRolesApi,experimental,@grafana/identity-access-team,false,false,false
