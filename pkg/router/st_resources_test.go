@@ -91,8 +91,7 @@ func newSingleTenantResourcesLoader(t *testing.T, mt, stack string) *cloudLoader
 	require.NoError(t, err)
 	dashboards := proxyBackend(t, "dashboard.grafana.app", mt, http.DefaultTransport).(*aggregateBackend)
 	dashboards.discovery = &apidiscoveryv2.APIGroupDiscovery{ObjectMeta: metav1.ObjectMeta{Name: "dashboard.grafana.app"}}
-	backends := []Backend{dashboards, proxyBackend(t, "folder.grafana.app", mt, http.DefaultTransport)}
-	target.snapshot.Store(&backends)
+	storeBackends(&target.polledSource, dashboards, proxyBackend(t, "folder.grafana.app", mt, http.DefaultTransport))
 	target.status.recordSuccess(time.Now())
 
 	st, err := newSingleTenantFallback(singleTenantFallbackOptions{cacheSize: 10, resolveHost: func(context.Context, int64) (singleTenantStack, error) {
@@ -111,7 +110,7 @@ func TestCloudLoaderWrapsSingleTenantResources(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, backends, 2)
 
-	dashboards, ok := backends[0].(*singleTenantResourcesBackend)
+	dashboards, ok := backends[0].(*wrappedBackend)
 	require.True(t, ok, "dashboard.grafana.app must be wrapped")
 	inner := dashboards.Backend.(*aggregateBackend)
 	require.Equal(t, inner.Key(), dashboards.Key())
@@ -120,13 +119,14 @@ func TestCloudLoaderWrapsSingleTenantResources(t *testing.T) {
 	require.True(t, ok, "discovery comes from the multi-tenant backend")
 	require.Equal(t, "dashboard.grafana.app", discovery.Name)
 
-	_, wrapped := backends[1].(*singleTenantResourcesBackend)
+	_, wrapped := backends[1].(*wrappedBackend)
 	require.False(t, wrapped, "only dashboard.grafana.app is wrapped")
 
-	loader.singleTenantFallback = nil
+	loader, err = newCloudLoader(aggregateTargetsOf(loader), nil, nil, nil)
+	require.NoError(t, err)
 	backends, err = loader.Load(t.Context())
 	require.NoError(t, err)
-	_, wrapped = backends[0].(*singleTenantResourcesBackend)
+	_, wrapped = backends[0].(*wrappedBackend)
 	require.False(t, wrapped, "nothing is wrapped without the ST fallback")
 }
 
@@ -150,7 +150,7 @@ func TestRouterServesSingleTenantResourcesFromStack(t *testing.T) {
 
 	serveMethod := func(method, path string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
-		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil), http.NotFoundHandler())
+		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil))
 		return rec
 	}
 	serve := func(path string) *httptest.ResponseRecorder {
@@ -184,4 +184,21 @@ func TestRouterServesSingleTenantResourcesFromStack(t *testing.T) {
 	rec := serveMethod(http.MethodPut, "/apis/dashboard.grafana.app/v1/namespaces/stacks-1/dashboards/abc")
 	require.Equal(t, "backend unavailable\n", rec.Body.String())
 	require.Equal(t, uint32(3), r.served["dashboard.grafana.app"].breaker.Counts().Requests)
+}
+
+// The split reports the breaker scope of the backend that owns the group,
+// whatever that backend is, and never the stacks' per-destination breakers.
+func TestSingleTenantResourcesBreakerScope(t *testing.T) {
+	st := newTestSingleTenantFallback(t)
+	require.Equal(t, breakerScopePerDestination, groupBreakerScope(st))
+	for _, tc := range []struct {
+		next http.Handler
+		want breakerScope
+	}{
+		{next: http.NotFoundHandler(), want: breakerScopeRequests},
+		{next: &tracedPluginHandler{}, want: breakerScopePluginCalls},
+		{next: embeddedHandler{}, want: breakerScopeNone},
+	} {
+		require.Equal(t, tc.want, groupBreakerScope(&singleTenantResourcesHandler{next: tc.next, st: st}))
+	}
 }

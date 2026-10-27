@@ -9,6 +9,10 @@ export interface RecordingRuleSearchHit {
   paused?: boolean;
   /** Absent until `alerting.ruleStatusSync` populates it; absence reads as Unavailable. */
   health?: RecordingRuleRecordingRuleHealth;
+  /** Absent until `alerting.ruleStatusSync` populates it. */
+  lastError?: string;
+  /** Evaluation interval, e.g. "1m". */
+  interval?: string;
 }
 
 // Keyed by the generated union, so a value the API adds or drops fails the type check here.
@@ -27,6 +31,9 @@ const recordingRuleSearchFieldsSchema = z.object({
   folder: z.string().optional().catch(undefined),
   paused: z.boolean().optional().catch(undefined),
   health: z.enum(RECORDING_RULE_HEALTHS).optional().catch(undefined),
+  lastError: z.string().optional().catch(undefined),
+  // annotations is requested but not mapped: recording rules have no summary concept.
+  interval: z.string().optional().catch(undefined),
 });
 
 /** Parses one search item straight into the row's shape. */
@@ -42,5 +49,7 @@ export const recordingRuleSearchHitSchema = z
       folderUid: fields.folder,
       paused: fields.paused,
       health: fields.health,
+      lastError: fields.lastError,
+      interval: fields.interval,
     })
   );

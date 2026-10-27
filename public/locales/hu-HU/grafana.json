@@ -1445,6 +1445,11 @@
         "no-rules": "",
         "rules-error": ""
       },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
       "result-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
@@ -2168,14 +2173,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Max. adatpontok",
-      "tooltip-max-data-points": "Az adatsoronkénti maximális adatpontok. Egyes adatforrások közvetlenül használják, és az automatikus intervallum kiszámításához használatos. Streamelési adatok esetén ez az érték használatos a gördülőpufferhez."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "új"
     },
     "min-interval-option": {
       "label-interval": "Intervallum",
-      "tooltip-interval": "Az adatforráshoz küldött intervallum. Javasoljuk, hogy az írási gyakoriságot állítsa be például <1>1 perc</1> értékre, ha az adatait percenként írja."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4143,6 +4148,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Ugrás a fő tartalomra",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Bejelentkezés"
     }
@@ -4612,8 +4622,7 @@
       "delete-warning": "Ez törli ezt a mappát és minden almappáját.",
       "folder-empty": "A kiválasztott mappa üres",
       "folder-not-empty": "A kiválasztott mappa erőforrásokat tartalmaz, amelyek törlődni fognak",
-      "missing-info": "Hiányzó kötelező mezők",
-      "success-message": "A mappa törlése sikeres"
+      "missing-info": "Hiányzó kötelező mezők"
     },
     "empty-state": {
       "button-title": "Irányítópult létrehozása",
@@ -7251,8 +7260,7 @@
       "delete-error": "Az irányítópult törlése nem sikerült",
       "deleting": "Törlés...",
       "drawer-title": "Kiépített irányítópult törlése",
-      "no-repository-selected": "Hiányzik a törléshez szükséges adattár",
-      "success-message": "Irányítópult sikeresen törölve"
+      "no-repository-selected": "Hiányzik a törléshez szükséges adattár"
     },
     "description-label": {
       "description": "Leírás"
@@ -7289,6 +7297,7 @@
       "copy": "Másolás vágólapra",
       "learn-more": "További információk",
       "no-issues": "Nincsenek hibák vagy értesítések ehhez a lekérdezéshez.",
+      "no-panel-issues": "",
       "severity-error": "Hiba",
       "severity-info": "Információ",
       "severity-warning": "Figyelmeztetés"
@@ -7531,14 +7540,10 @@
       "already-in-folder": "Az irányítópult már a kijelölt mappában van.",
       "api-error": "Nem sikerült áthelyezni az irányítópultot",
       "cancel-action": "Mégse",
-      "current-file-not-found": "A jelenlegi irányítópultfájl nem található",
       "drawer-title": "Kiépített irányítópult áthelyezése",
-      "file-load-error": "Hiba történt az irányítópult betöltésekor",
-      "loading-dashboard-data": "Irányítópult adatainak betöltése",
       "move-action": "Irányítópult áthelyezése",
       "move-read-only-message": "Ez az irányítópult nem helyezhető át közvetlenül a Grafanából, mert az adattár csak olvasható. Az irányítópult áthelyezéséhez helyezze át a fájlt a Git-tárba.",
       "moving": "Áthelyezés...",
-      "success-message": "Irányítópult sikeresen áthelyezve",
       "target-path-label": "Célútvonal",
       "title-this-repository-is-read-only": "Ez az adattár csak olvasható"
     },
@@ -8121,8 +8126,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Lekérdezési ablaktábla megnyitása",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Lekérdezési ablaktábla megnyitása"
     },
     "viz-panel-links-renderer": {
@@ -13161,7 +13164,8 @@
         "close": "{{title}} bezárása",
         "open": "{{title}} megnyitása",
         "open-all": "MI-asszisztensek és oldalsáv-alkalmazások megnyitása"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Belépés a munkaterületre",
@@ -14322,6 +14326,7 @@
       "description-folder": "Mappa az adattáron belül. Hagyja üresen az adattár gyökérkönyvtára esetében.",
       "description-folder-path": "A mappa útvonala az adattáron belül",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "A konfigurált ágba történő leküldés le van tiltva",
       "label-branch": "Ág",
       "label-comment": "Megjegyzés",
@@ -15867,6 +15872,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "A folytatáshoz válasszon adatforrást ehhez a lekérdezéshez.",
     "datasource-load-error-title": "A lekérdezés adatforrásának betöltése nem sikerült",
     "loading-datasource": "Adatforrás betöltése",
@@ -16063,6 +16069,7 @@
       "expand": "Kibontás",
       "filter": "",
       "loading": "Irányítópultok betöltése",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Nincs találat a lekérdezésre",
       "noResultsForFilterClear": "Keresés törlése",
       "noResultsForScopes": "Nem található irányítópult vagy hivatkozás a kijelölt hatókörökhöz",
@@ -16774,8 +16781,61 @@
   },
   "swagger": {
     "login": "Bejelentkezés",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "A kérések elküldése előtt ellenőrizze a névteret, vagy töltse be újra az oldalt, és próbálkozzon újra.",
-    "namespace-unavailable-title": "Nem lehet betölteni a névteret"
+    "namespace-unavailable-title": "Nem lehet betölteni a névteret",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16829,6 +16889,9 @@
     "description-styling-from-field": "JSON-objektumokat tartalmazó mező CSS-tulajdonságokkal",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Minden második sor háttérszínének váltogatása",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Lekérdezés"
     },
@@ -18377,6 +18440,7 @@
       "body_other": "Biztosan törölni kíván {{count}} változót?"
     },
     "editor": {
+      "back": "",
       "cancel": "Mégse",
       "delete": "Törlés",
       "delete-modal-body": "Biztosan törölni kívánja ezt: „{{name}}”?",
@@ -18385,6 +18449,7 @@
       "folder-description": "Határozza meg a változó hatókörét egy mappára, vagy válassza az irányítópultok gyökérmappáját, hogy globálissá tegye (minden irányítópulton elérhetővé)",
       "folder-description-folder-only": "Állítsa be a változó hatókörét egy Ön által szerkeszthető mappára",
       "folder-label": "Mappa",
+      "load-error-title": "",
       "moved": "Változó áthelyezve",
       "name-exists": "Ilyen nevű változó már létezik a kijelölt mappában",
       "save": "Mentés",

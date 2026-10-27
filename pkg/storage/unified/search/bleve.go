@@ -141,11 +141,6 @@ type BleveOptions struct {
 	// DiskCleanupGracePeriod. Only consulted when DiskCleanupInterval > 0.
 	DiskCleanupUnopenedGracePeriod time.Duration
 
-	// EnforceSortCapability rejects a sort on a field that does not declare the
-	// sort capability. When false the violation is only counted and logged, as an
-	// escape hatch for an instance that still depends on such sorts.
-	EnforceSortCapability bool
-
 	// PostRankAuthzEnabled enables the post-filter (post-rank) authorization
 	// path. Set from the search_post_rank_authz config option at backend init.
 	// When false, the in-searcher permissionScopedQuery path is used.
@@ -1878,8 +1873,6 @@ type bleveIndex struct {
 	// stored in Bleve internal data, so concurrent BulkIndex calls don't lose increments.
 	snapshotMutationMu sync.Mutex
 
-	enforceSortCapability bool
-
 	// postRankAuthzEnabled enables the post-ranking authz path. When false,
 	// the in-searcher permissionScopedQuery path is used.
 	postRankAuthzEnabled bool
@@ -1925,7 +1918,6 @@ func (b *bleveBackend) newBleveIndex(
 		rvPersistInterval:      rvPersistInterval,
 		rvPersistedAt:          time.Now(),
 		indexMetrics:           b.indexMetrics,
-		enforceSortCapability:  b.opts.EnforceSortCapability,
 		postRankAuthzEnabled:   b.opts.PostRankAuthzEnabled,
 		postRankAuthz:          b.opts.PostRankAuthz.effective(),
 		trashRetention:         b.opts.TrashRetention,
@@ -4070,17 +4062,13 @@ const (
 	whitespaceCharacters = " \t\r\n"
 )
 
-// checkSortCapability holds a sort to what the field declares. A field that is
-// not indexed at all (a retrieve-only number, or a name no version declares)
-// silently comes back in an arbitrary order.
+// checkSortCapability rejects a sort on a field that does not declare the sort
+// capability. Such a field is not indexed for sorting (a retrieve-only number,
+// or a name no version declares), so the results would come back in an
+// arbitrary order.
 func (b *bleveIndex) checkSortCapability(req *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
 	for _, sort := range req.SortBy {
 		if b.sortableField(sort.Field) {
-			continue
-		}
-		b.indexMetrics.SearchCapabilityViolations.WithLabelValues(b.key.Resource, string(resource.SearchCapabilitySort)).Inc()
-		if !b.enforceSortCapability {
-			b.logger.Warn("search sorts on a field that does not declare the sort capability", "field", sort.Field)
 			continue
 		}
 		return resource.NewBadRequestError(fmt.Sprintf("field %q does not support sorting", sort.Field))

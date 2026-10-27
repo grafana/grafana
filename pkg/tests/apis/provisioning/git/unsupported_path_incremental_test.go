@@ -153,11 +153,13 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovedOntoUnsupportedPath(
 
 	{
 		const repoName = "incr-unsupported-folder-move"
-		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-			"parent/old-dir/dashboard.json": common.DashboardJSON("incr-folder-move-a", "Moved Dashboard", 1),
-			"parent/other.json":             common.DashboardJSON("incr-folder-move-b", "Other Dashboard", 1),
-		})
-		common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+		// Keep old-dir implicit so moving its last dashboard exercises orphan cleanup.
+		files := common.FolderMetadataFiles(t, repoName, "parent")
+		files["parent/old-dir/dashboard.json"] = common.DashboardJSON("incr-folder-move-a", "Moved Dashboard", 1)
+		files["parent/other.json"] = common.DashboardJSON("incr-folder-move-b", "Other Dashboard", 1)
+		_, local := helper.CreateGitRepo(t, repoName, files)
+		common.SyncAndWait(t, helper, common.Repo(repoName),
+			common.Expect(common.HasOnlyMissingFolderMetadataWarnings("parent/old-dir")))
 		helper.RequireRepoDashboardCount(t, repoName, 2)
 		require.Contains(t, repoFolderTitles(t, helper, repoName), "old-dir")
 
@@ -211,8 +213,7 @@ func TestIntegrationProvisioning_IncrementalSync_NewTreeUnderUnsupportedFolder(t
 
 // A dashboard file renamed onto a path that is not a resource (README.md, another extension,
 // a hidden file or folder) is gone from the repository, so an incremental pull removes the
-// dashboard, as a full pull of the same commit does. A new folder without metadata still
-// produces a metadata warning.
+// dashboard, as a full pull of the same commit does, and reports nothing about the new path.
 func TestIntegrationProvisioning_IncrementalSync_RenameOntoReadme(t *testing.T) {
 	requireRenameOntoNonResourceRemovesDashboard(t, "readme", "README.md")
 }

@@ -3,6 +3,7 @@ package resourcekinds
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -73,8 +74,10 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 			client := rk.client(t, helper)
 
 			repo := rk.name + "-move-job-repo"
+			repoPath := filepath.Join(helper.ProvisioningPath, repo)
 			helper.CreateLocalRepo(t, common.TestRepo{
 				Name:       repo,
+				LocalPath:  repoPath,
 				SyncTarget: "folder",
 				Workflows:  []string{"write"},
 			})
@@ -92,15 +95,11 @@ func TestIntegrationProvisioning_ResourceKinds_MoveJob(t *testing.T) {
 				t.Cleanup(func() { _ = client.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{}) })
 			}
 
-			// The bulk move creates a directory without metadata, so the post-move sync warns.
-			job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			common.WriteFolderMetadata(t, repo, repoPath, "archived")
+			helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
 				Action: provisioning.JobActionMove,
 				Move:   &provisioning.MoveJobOptions{Paths: paths, TargetPath: "archived/"},
 			})
-			common.RequireJobWarning(t, job)
-			warnings := common.MustNestedStringSlice(job.Object, "status", "warnings")
-			require.Len(t, warnings, 1)
-			require.Contains(t, warnings[0], `folder "archived/" is missing folder metadata file`)
 
 			repoFiles := repositoryFilePaths(t, helper, repo)
 			for i := range paths {

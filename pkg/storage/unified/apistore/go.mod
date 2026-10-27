@@ -26,6 +26,7 @@ require (
 require (
 	cel.dev/expr v0.25.3 // indirect
 	cuelang.org/go v0.17.1 // indirect
+	github.com/andybalholm/brotli v1.2.7 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/apache/arrow-go/v18 v18.8.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect

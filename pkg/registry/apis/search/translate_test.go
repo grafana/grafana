@@ -1046,3 +1046,22 @@ func TestTranslateGlobalSearchQuery_FolderTree(t *testing.T) {
 		assert.Contains(t, errs[0].Detail, "unknown field")
 	})
 }
+
+// Storage does not model the manager fields as search fields, so only returning
+// them is known to work.
+func TestTranslateSearchQuery_ManagerFieldsCanOnlyBeReturned(t *testing.T) {
+	for _, f := range []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ID} {
+		for name, q := range map[string]*searchv0.SearchQuery{
+			"filter": searchQuery(&searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: f, Operator: "In", Values: []string{"repo"}}}),
+			"sort":   {TypeMeta: searchQuery(nil).TypeMeta, Sort: []searchv0.SortField{{Field: f, Direction: "asc"}}},
+			"facet":  {TypeMeta: searchQuery(nil).TypeMeta, Facets: []string{f}},
+		} {
+			t.Run(f+" "+name, func(t *testing.T) {
+				_, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
+				assert.Len(t, errs, 1, errs)
+				_, errs = TranslateGlobalSearchQuery(q, "default")
+				assert.Len(t, errs, 1, errs)
+			})
+		}
+	}
+}

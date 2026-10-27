@@ -32,6 +32,7 @@ func TestIntegrationGlobalHybridSearch(t *testing.T) {
 
 func testIntegrationGlobalHybridSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Setenv(setting.EnvKey("unified_storage", "hybrid_search_default_resources"), "dashboard.grafana.app/dashboards,folder.grafana.app/folders")
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:        true,
 		DisableAnonymous:         true,
@@ -79,26 +80,39 @@ func testIntegrationGlobalHybridSearch(t *testing.T) {
 	namespace := helper.Org1.Admin.Identity.GetNamespace()
 	path := fmt.Sprintf("/apis/search.grafana.app/v0alpha1/namespaces/%s/global/search/hybrid", namespace)
 	for _, tc := range []struct {
-		name string
-		user apis.User
-		want []string
+		name               string
+		user               apis.User
+		want               []string
+		wantDashboardsOnly []string
 	}{
-		{"admin", helper.Org1.Admin, []string{"dashboards/hybrid-visible", "folders/hybrid-visible", "dashboards/hybrid-hidden", "folders/hybrid-hidden"}},
-		{"viewer", helper.Org1.Viewer, []string{"dashboards/hybrid-visible", "folders/hybrid-visible"}},
+		{"admin", helper.Org1.Admin, []string{"dashboards/hybrid-visible", "folders/hybrid-visible", "dashboards/hybrid-hidden", "folders/hybrid-hidden"}, []string{"dashboards/hybrid-visible", "dashboards/hybrid-hidden"}},
+		{"viewer", helper.Org1.Viewer, []string{"dashboards/hybrid-visible", "folders/hybrid-visible"}, []string{"dashboards/hybrid-visible"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			response := postHybridSearch(t, helper, tc.user, path, query)
-			require.Equal(t, http.StatusOK, response.Response.StatusCode, string(response.Body))
-			assert.Equal(t, searchV0.APIVERSION, response.Result.APIVersion)
-			assert.Equal(t, searchV0.KindHybridSearchResults, response.Result.Kind)
-			got := make([]string, 0, len(response.Result.Items))
-			for _, item := range response.Result.Items {
-				got = append(got, item.Resource.Resource+"/"+item.Resource.Name)
-				assert.NotEmpty(t, item.Resource.Group)
-				assert.NotEmpty(t, item.Resource.Kind)
-				assert.NotEmpty(t, item.Chunks)
+			for _, search := range []struct {
+				name  string
+				query searchV0.HybridSearchQuery
+				want  []string
+			}{
+				{"explicit resources", query, tc.want},
+				{"default resources", searchV0.HybridSearchQuery{Query: query.Query}, tc.want},
+				{"explicit dashboards only", searchV0.HybridSearchQuery{Query: query.Query, Resources: query.Resources[:1]}, tc.wantDashboardsOnly},
+			} {
+				t.Run(search.name, func(t *testing.T) {
+					response := postHybridSearch(t, helper, tc.user, path, search.query)
+					require.Equal(t, http.StatusOK, response.Response.StatusCode, string(response.Body))
+					assert.Equal(t, searchV0.APIVERSION, response.Result.APIVersion)
+					assert.Equal(t, searchV0.KindHybridSearchResults, response.Result.Kind)
+					got := make([]string, 0, len(response.Result.Items))
+					for _, item := range response.Result.Items {
+						got = append(got, item.Resource.Resource+"/"+item.Resource.Name)
+						assert.NotEmpty(t, item.Resource.Group)
+						assert.NotEmpty(t, item.Resource.Kind)
+						assert.NotEmpty(t, item.Chunks)
+					}
+					assert.ElementsMatch(t, search.want, got)
+				})
 			}
-			assert.ElementsMatch(t, tc.want, got)
 		})
 	}
 

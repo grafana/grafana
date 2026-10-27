@@ -48,4 +48,28 @@ describe('RecordingRuleRow', () => {
     expect(screen.getByRole('link', { name: 'cpu:usage:rate5m' })).toBeInTheDocument();
     expect(screen.queryByText('Team Metrics') !== null).toBe(shown);
   });
+
+  it('shows the last error when the hit has one', () => {
+    renderRow({ searchHit: baseHit({ lastError: 'remote write failed' }) });
+
+    expect(screen.getByText('remote write failed')).toBeInTheDocument();
+  });
+
+  it('shows no description when no error is present', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText('remote write failed')).not.toBeInTheDocument();
+  });
+
+  it('shows the evaluation interval', () => {
+    renderRow({ searchHit: baseHit({ interval: '1m' }) });
+
+    expect(screen.getByRole('img', { name: 'Evaluated every 1m' })).toBeInTheDocument();
+  });
+
+  it('shows no interval indicator when interval is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+  });
 });
