@@ -510,7 +510,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 //
 // Connections:
 //   - CRUD: connections:create/read/write/delete
-//   - Status: connections:read
+//   - Status: connections:read/write
 //
 // Jobs:
 //   - CRUD: jobs:create/read/write/delete
@@ -687,10 +687,9 @@ func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// Status is read-only
 	case "status":
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
-			Verb:      apiutils.VerbGet,
+			Verb:      a.GetVerb(),
 			Group:     provisioning.GROUP,
 			Resource:  provisioning.ConnectionResourceInfo.GetName(),
 			Name:      a.GetName(),

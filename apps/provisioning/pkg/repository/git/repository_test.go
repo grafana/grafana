@@ -2396,6 +2396,10 @@ func TestNewGitRepository(t *testing.T) {
 				} else {
 					require.Empty(t, gitRepo.(*gitRepository).writerOptions)
 				}
+				// The hardcoded per-file content cap is always seeded into the
+				// post-read size check so oversized blobs are rejected even if
+				// WithMaxFileSize is never called explicitly.
+				require.Equal(t, int64(maxFileContentBytes), gitRepo.(*gitRepository).maxBytes.Load())
 			}
 		})
 	}

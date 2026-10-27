@@ -144,6 +144,12 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 			return
 		}
 
+		if !isAllowedResourcePath(subDataSource, req.Method, newPath) {
+			s.logger.Error("Rejected resource call to a path the datasource does not support", "method", req.Method, "path", newPath, "subDataSource", subDataSource)
+			writeErrorResponse(rw, http.StatusForbidden, "the requested resource path is not supported by this datasource")
+			return
+		}
+
 		dsInfo, err := s.getDataSourceFromHTTPReq(req)
 		if err != nil {
 			writeErrorResponse(rw, http.StatusInternalServerError, fmt.Sprintf("unexpected error %v", err))

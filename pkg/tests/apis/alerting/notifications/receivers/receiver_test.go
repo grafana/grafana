@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/grafana/alerting/receivers/line"
 	"github.com/grafana/alerting/receivers/schema"
+	"github.com/grafana/alerting/receivers/threema"
 	"github.com/grafana/grafana-app-sdk/resource"
 
 	"github.com/grafana/alerting/notify"
@@ -1395,23 +1396,33 @@ func TestIntegrationCRUD(t *testing.T) {
 	t.Run("should be able to update default receiver", func(t *testing.T) {
 		require.NotNil(t, defaultReceiver)
 		newDefault := defaultReceiver.Copy().(*v1beta1.Receiver)
-		newDefault.Spec.Integrations = append(newDefault.Spec.Integrations, createIntegration(t, line.Type))
+		newDefault.Spec.Integrations = append(newDefault.Spec.Integrations, createIntegration(t, threema.Type))
 
 		updatedReceiver, err := adminClient.Update(ctx, newDefault, resource.UpdateOptions{})
 		require.NoError(t, err)
 
 		expected := newDefault.Copy().(*v1beta1.Receiver)
-		lineIntegration := expected.Spec.Integrations[0]
-		lineIntegration.SecureFields = map[string]bool{
-			"token": true,
+		integration := expected.Spec.Integrations[0]
+		integration.SecureFields = map[string]bool{
+			"api_secret": true,
 		}
-		delete(lineIntegration.Settings, "token")
-		assert.Equal(t, "LINE", updatedReceiver.Spec.Integrations[0].Type) // this type is in the schema but not in backend
-		lineIntegration.Type = "LINE"
-		lineIntegration.Uid = updatedReceiver.Spec.Integrations[0].Uid
-		expected.Spec.Integrations[0] = lineIntegration
+		delete(integration.Settings, "api_secret")
+		integration.Uid = updatedReceiver.Spec.Integrations[0].Uid
+		expected.Spec.Integrations[0] = integration
 
 		assert.Equal(t, expected.Spec, updatedReceiver.Spec)
+	})
+
+	t.Run("should not be able to add an integration version that cannot be created", func(t *testing.T) {
+		require.NotNil(t, defaultReceiver)
+		current, err := adminClient.Get(ctx, defaultReceiver.GetStaticMetadata().Identifier())
+		require.NoError(t, err)
+
+		withLine := current.Copy().(*v1beta1.Receiver)
+		withLine.Spec.Integrations = append(withLine.Spec.Integrations, createIntegration(t, line.Type))
+
+		_, err = adminClient.Update(ctx, withLine, resource.UpdateOptions{})
+		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest, got: %s", err)
 	})
 
 	t.Run("should fail to create receiver with the existing name", func(t *testing.T) {
@@ -1440,6 +1451,9 @@ func TestIntegrationCRUD(t *testing.T) {
 		keys := slices.Collect(keysIter)
 		slices.Sort(keys)
 		for _, key := range keys {
+			if !canCreateV1(t, key) {
+				continue
+			}
 			integrations = append(integrations, createIntegration(t, key))
 		}
 		var err error
@@ -1477,6 +1491,7 @@ func TestIntegrationCRUD(t *testing.T) {
 	})
 
 	t.Run("should be able read what it is created", func(t *testing.T) {
+		require.NotNil(t, receiver)
 		get, err := adminClient.Get(ctx, receiver.GetStaticMetadata().Identifier())
 		require.NoError(t, err)
 		require.Equal(t, receiver, get)
@@ -1811,6 +1826,15 @@ func TestIntegrationEmailValidation(t *testing.T) {
 		_, err := adminClient.Create(ctx, receiver, resource.CreateOptions{})
 		require.NoError(t, err, "expected Org1 admin to be able to use the email of a user who is a member of Org1 (even if Org2 is their default org)")
 	})
+}
+
+// canCreateV1 reports whether the v1 schema of integrationType may still be used in a new
+// integration. Deprecated versions are rejected by the API, so tests must not send them.
+func canCreateV1(t *testing.T, integrationType schema.IntegrationType) bool {
+	t.Helper()
+	version, ok := notify.GetSchemaVersionForIntegration(integrationType, schema.V1)
+	require.Truef(t, ok, "no v1 schema for integration type %s", integrationType)
+	return version.CanCreate
 }
 
 func createIntegration(t *testing.T, integrationType schema.IntegrationType) v1beta1.ReceiverIntegration {

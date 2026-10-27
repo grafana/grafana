@@ -44,12 +44,6 @@ export default function createMockDatasource(overrides?: DeepPartial<Datasource>
         supportedTimeGrains: [],
         dimensions: [],
       }),
-      getProvider: jest.fn().mockResolvedValueOnce({
-        namespace: 'Microsoft.Insights',
-        resourceTypes: [
-          { resourceType: 'logs', locations: ['North Europe'], apiVersions: ['2022-11-11'], capabilities: '' },
-        ],
-      }),
       getLocations: jest
         .fn()
         .mockResolvedValue(
