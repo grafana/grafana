@@ -12,7 +12,7 @@ jest.mock('../pluginPreloader', () => ({
 const preloadPluginsMock = jest.mocked(preloadPlugins);
 
 describe('loadDependentAppPlugins()', () => {
-  const genereicAppPluginConfig = {
+  const genericAppPluginConfig = {
     path: '',
     version: '',
     preload: false,
@@ -43,8 +43,8 @@ describe('loadDependentAppPlugins()', () => {
   });
 
   test('should preload the app plugins resolved by the predicate', async () => {
-    const app1 = { ...genereicAppPluginConfig, id: 'myorg-first-app' };
-    const app2 = { ...genereicAppPluginConfig, id: 'myorg-second-app' };
+    const app1 = { ...genericAppPluginConfig, id: 'myorg-first-app' };
+    const app2 = { ...genericAppPluginConfig, id: 'myorg-second-app' };
     setAppPluginMetas({ [app1.id]: app1, [app2.id]: app2 });
 
     const predicate = jest.fn().mockResolvedValue(['myorg-first-app']);
