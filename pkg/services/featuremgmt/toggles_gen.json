@@ -1563,6 +1563,7 @@
         "name": "dashboard.recentlyDeletedViaTrash",
         "resourceVersion": "1791194326048",
         "creationTimestamp": "2026-08-26T10:13:23Z",
+        "deletionTimestamp": "2026-10-26T15:35:44Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2026-10-05 09:58:46.048328 +0000 UTC"
         }
@@ -1711,6 +1712,20 @@
         "description": "Enables dashboard validator app to run compatibility checks between a dashboard and data source",
         "stage": "experimental",
         "codeowner": "@grafana/sharing-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboards.disablePublicDashboards",
+        "resourceVersion": "1792771676544",
+        "creationTimestamp": "2026-10-23T16:07:56Z"
+      },
+      "spec": {
+        "description": "Disables public dashboards for the stack",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "hideFromDocs": true,
         "expression": "false"
       }
     },
@@ -5154,7 +5169,8 @@
       "metadata": {
         "name": "queryLibrary",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2022-10-07T18:31:45Z"
+        "creationTimestamp": "2022-10-07T18:31:45Z",
+        "deletionTimestamp": "2026-10-26T18:21:00Z"
       },
       "spec": {
         "description": "Enables Saved queries (query library) feature",

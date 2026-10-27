@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -794,6 +795,32 @@ func TestBuildGlobalHybridSearch(t *testing.T) {
 	assert.Nil(t, BuildGlobalHybridSearch(nil, nil, nil, installers, nil))
 }
 
+func TestBuildGlobalHybridSearchUsesConfiguredDefaults(t *testing.T) {
+	t.Setenv("GF_UNIFIED_STORAGE_HYBRID_SEARCH_DEFAULT_RESOURCES", " example.grafana.app/widgets, dashboard.grafana.app/dashboards ")
+	cfg := setting.NewCfg()
+	require.NoError(t, cfg.Load(setting.CommandLineArgs{HomePath: "../../../../", Config: "../../../../conf/defaults.ini"}))
+	require.Equal(t, []string{"example.grafana.app/widgets", "dashboard.grafana.app/dashboards"}, cfg.HybridSearchDefaultResources)
+
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	b := &manifestBuilder{
+		resourceBuilder: &resourceBuilder{fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}}},
+		manifest:        hybridManifest(gv),
+	}
+	var authorized []string
+	auth := authorizer.AuthorizerFunc(func(_ context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		authorized = append(authorized, attr.GetAPIGroup()+"/"+attr.GetResource())
+		return authorizer.DecisionDeny, "", nil
+	})
+	routes := BuildGlobalHybridSearch(tracing.NewNoopTracerService(), fakeClient{}, []builder.APIGroupBuilder{b}, nil, auth, cfg.HybridSearchDefaultResources...)
+	require.Len(t, routes, 1)
+	require.Len(t, routes[0].Routes.Namespace, 1)
+	r := httptest.NewRequest(http.MethodPost, "/global/search/hybrid", strings.NewReader(`{"apiVersion":"search.grafana.app/v0alpha1","kind":"HybridSearchQuery","query":"cpu"}`))
+	w := httptest.NewRecorder()
+	routes[0].Routes.Namespace[0].Handler(w, r.WithContext(request.WithNamespace(r.Context(), "default")))
+	assert.Equal(t, http.StatusForbidden, w.Code, w.Body.String())
+	assert.Equal(t, []string{"example.grafana.app/widgets"}, authorized)
+}
+
 // hybridResultsClient answers every hybrid search with the same results.
 type hybridResultsClient struct {
 	resourcepb.ResourceIndexClient
@@ -889,9 +916,9 @@ func TestGlobalHybridSearchTargets_SelectsRegisteredVersion(t *testing.T) {
 		v2Registered bool
 		want         string
 	}{
-		{"preferred", "v2", true, true, "v2"},
-		{"first when no preferred version", "", true, true, "v1"},
-		{"unknown preferred version", "v3", true, true, "v1"},
+		{"preferred", "v1", true, true, "v1"},
+		{"last when no preferred version", "", true, true, "v2"},
+		{"unknown preferred version", "v3", true, true, "v2"},
 		{"preferred opted out", "v2", false, true, "v2"},
 		{"preferred not registered here", "v2", true, false, "v1"},
 	} {
@@ -907,6 +934,36 @@ func TestGlobalHybridSearchTargets_SelectsRegisteredVersion(t *testing.T) {
 			}, got)
 		})
 	}
+}
+
+// Without registered versions there is nothing to authorize against, so a
+// missing map must not count every version.
+func TestGlobalHybridSearchTargets_NilRegisteredAllowsNoVersion(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	assert.Empty(t, globalHybridSearchTargets([]*app.ManifestData{hybridManifest(gv)}, nil))
+}
+
+// Results are named the same in every process, whatever versions it serves.
+func TestGlobalHybridSearchKinds(t *testing.T) {
+	v1 := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	v2 := schema.GroupVersion{Group: v1.Group, Version: "v2"}
+	widgets := v1.WithResource("widgets").GroupResource()
+
+	renamed := hybridManifest(v1)
+	renamed.PreferredVersion = "v2"
+	gadget := hybridManifest(v2).Versions[0]
+	gadget.Kinds[0].Kind = "Gadget"
+	renamed.Versions = append(renamed.Versions, gadget)
+	assert.Equal(t, map[schema.GroupResource]string{widgets: "Gadget"}, globalHybridSearchKinds([]*app.ManifestData{renamed}),
+		"the preferred version names the kind, even where it is not served")
+
+	clusterScoped := hybridManifest(v1)
+	clusterScoped.Versions[0].Kinds[0].Scope = "Cluster"
+	assert.Empty(t, globalHybridSearchKinds([]*app.ManifestData{clusterScoped}))
+
+	// A later manifest preferring a version that renames the kind does not win
+	// over the first manifest declaring the resource.
+	assert.Equal(t, map[schema.GroupResource]string{widgets: "Widget"}, globalHybridSearchKinds([]*app.ManifestData{nil, hybridManifest(v1), renamed}))
 }
 
 func TestGlobalHybridSearchTargets_FirstDeclarationSuppliesKind(t *testing.T) {
