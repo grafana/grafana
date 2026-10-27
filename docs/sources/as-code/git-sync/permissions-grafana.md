@@ -19,8 +19,8 @@ menuTitle: Permissions and access control
 weight: 700
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/permissions-and-access-control/
 aliases:
-  - ../../../observability-as-code/git-sync/gitsync-permissions
   - ../observability-as-code/git-sync/permissions-grafana/
+  - ../../observability-as-code/git-sync/gitsync-permissions/
 refs:
   roles-and-permissions:
     - pattern: /docs/grafana/

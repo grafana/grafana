@@ -16,9 +16,10 @@ menuTitle: Use grafanactl
 weight: 210
 canonical: https://grafana.com/docs/grafana/latest/ai-tools/grafana-cli/grafanacli-workflows/
 aliases:
-  - ../../../observability-as-code/grafana-cli/grafanacli-workflows/ # /docs/grafana/next/observability-as-code/grafana-cli/grafanacli-workflows/
-  - ../../observability-as-code/grafana-cli/grafanacli-workflows/ # /docs/grafana/next/observability-as-code/grafana-cli/grafanacli-workflows/
   - ../../../as-code/observability-as-code/grafana-cli/grafanactl/grafanacli-workflows/
+  - ../../../as-code/observability-as-code/grafana-cli/grafanacli-workflows/
+  - ../../../observability-as-code/grafana-cli/grafanacli-workflows/
+  - ../../observability-as-code/grafana-cli/grafanacli-workflows/
 ---
 
 # Manage resources with `grafanactl`

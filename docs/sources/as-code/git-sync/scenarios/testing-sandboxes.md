@@ -4,8 +4,9 @@ menuTitle: Testing sandboxes
 description: Use a shared sandbox branch for short-lived projects and experimentation before promoting changes to the main branch
 weight: 40
 aliases:
-  - ../../provision-resources/git-sync-deployment-scenarios/testing-sandboxes
   - ../../observability-as-code/git-sync/scenarios/testing-sandboxes/
+  - ../../observability-as-code/provision-resources/git-sync-deployment-scenarios/testing-sandboxes/
+  - ../../provision-resources/git-sync-deployment-scenarios/testing-sandboxes/
 ---
 
 # Testing sandboxes with Git Sync

@@ -16,8 +16,8 @@ title: Automate dashboard provisioning with CI/CD
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/foundation-sdk/dashboard-automation/
 aliases:
-  - ../../../observability-as-code/foundation-sdk/dashboard-automation/ # /docs/grafana/next/observability-as-code/foundation-sdk/dashboard-automation/
   - ../observability-as-code/foundation-sdk/dashboard-automation/
+  - ../../observability-as-code/foundation-sdk/dashboard-automation/
 ---
 
 # Automate dashboard provisioning with CI/CD

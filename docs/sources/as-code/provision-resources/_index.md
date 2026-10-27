@@ -13,8 +13,8 @@ menuTitle: On-prem file provisioning
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/provision-resources/
 aliases:
-  - ../../observability-as-code/provision-resources/ # /docs/grafana/next/observability-as-code/provision-resources/
   - ./observability-as-code/provision-resources/
+  - ../observability-as-code/provision-resources/
 ---
 
 # On-prem file provisioning

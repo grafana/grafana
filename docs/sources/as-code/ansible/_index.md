@@ -9,9 +9,9 @@ title: Grafana Ansible collection
 weight: 500
 canonical: https://grafana.com/docs/grafana/latest/as-code/ansible/
 aliases:
-  - ../../infrastructure-as-code/ansible/ansible-grafana-agent-linux
-  - ../../infrastructure-as-code/ansible/ansible-multiple-agents
   - ./infrastructure-as-code/ansible/
+  - ../infrastructure-as-code/ansible/ansible-grafana-agent-linux/
+  - ../infrastructure-as-code/ansible/ansible-multiple-agents/
 labels:
   products:
     - cloud

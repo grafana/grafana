@@ -14,9 +14,10 @@ menuTitle: Work with provisioned dashboards
 weight: 550
 canonical: https://grafana.com/docs/grafana/latest/as-code/provision-resources/provisioned-dashboards/
 aliases:
-  - ../../../observability-as-code/provision-resources/provisioned-dashboards/ # /docs/grafana/next/observability-as-code/provision-resources/provisioned-dashboards/
-  - ../provision-resources/provisioned-dashboards/
   - ../observability-as-code/git-sync/provisioned-dashboards/
+  - ../../observability-as-code/provision-resources/provisioned-dashboards/
+  - ../observability-as-code/provision-resources/provisioned-dashboards/
+  - ../provision-resources/provisioned-dashboards/
 ---
 
 # Work with provisioned dashboards in Git Sync

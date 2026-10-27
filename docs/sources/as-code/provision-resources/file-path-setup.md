@@ -13,8 +13,8 @@ title: Set up file provisioning
 weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/provision-resources/file-path-setup/
 aliases:
-  - ../../../observability-as-code/provision-resources/file-path-setup/ # /docs/grafana/next/observability-as-code/provision-resources/file-path-setup/
   - ../observability-as-code/provision-resources/file-path-setup/
+  - ../../observability-as-code/provision-resources/file-path-setup/
 ---
 
 # Set up file provisioning

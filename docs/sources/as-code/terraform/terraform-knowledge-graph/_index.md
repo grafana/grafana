@@ -1,7 +1,8 @@
 ---
 aliases:
-  - ./knowledge-graph-slo/ # /docs/grafana/latest/as-code/infrastructure-as-code/terraform/terraform-knowledge-graph/knowledge-graph-slo/
   - ../infrastructure-as-code/terraform/terraform-knowledge-graph/
+  - ../infrastructure-as-code/terraform/knowledge-graph-slo/
+  - ./knowledge-graph-slo/
 cards:
   items:
     - description: Learn how to set up Terraform provider and configure your environment for managing Knowledge Graph resources.

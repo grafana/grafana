@@ -14,6 +14,7 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/foundation-sdk/
 aliases:
   - ../../observability-as-code/foundation-sdk/ # /docs/grafana/next/observability-as-code/foundation-sdk/
   - ./observability-as-code/foundation-sdk/
+  - ../observability-as-code/foundation-sdk/
 ---
 
 # Get started with the Grafana Foundation SDK
