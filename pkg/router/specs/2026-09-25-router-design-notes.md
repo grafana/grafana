@@ -1,6 +1,6 @@
 # Router: Design notes
 
-Status: reference (updated 2026-10-10 for #134652)
+Status: reference (updated 2026-10-26 for #135946)
 Package: `pkg/router`
 
 Rationale moved out of `pkg/router/AGENTS.md` during the 2026-09-25 cleanup. AGENTS.md keeps the
@@ -13,7 +13,8 @@ A kube-aggregator-style mux (`PathRecorderMux`) flattens every route into an ano
 `map[prefix]handler` and does a longest-prefix scan. That erases the group at dispatch time and
 buries the not-found decision. Two different cases then collapse into one catch-all:
 
-- a path in a group the router doesn't own, which should fall through to `next`;
+- a path in a group the router doesn't own, which gets a 404 (or, standalone, may go to the ST
+  fallback);
 - an unknown subpath inside a group the router does own, which is the backend's problem.
 
 The router has exactly one path grammar, `/apis/<group>/<version>/...`, so the group is segment 2
@@ -26,6 +27,13 @@ Reconcile keys `served` by group, so a group is never split across backends. Tha
 `/apis/{group}` be proxied straight to the owning backend, with no merge across backends. If this
 rule is ever relaxed, `/apis/{group}` has to become a synthesized merge, and AGENTS.md and
 `discovery_handler.go` have to change together.
+
+One exception, by resource rather than by version: `dashboard.grafana.app` (#135613, #135703). Its
+owning backend serves through `singleTenantResourcesHandler`, a `requestRouter` that sends
+`librarypanels`, `snapshots` and users' writes to the caller's single-tenant stack. The group still has one backend, one key and one discovery document,
+so the rule above holds for discovery and OpenAPI. Only the breaker differs: `handlerFor` picks the
+handler per request, and only that handler's breakers apply, so the group's breaker and its
+`breaker_state` series reflect the multi-tenant backend alone.
 
 A duplicate group within one `Load` overwrites the earlier one and logs a warning; it does not
 panic. Routes are dynamic GitOps config, not static code, so a bad duplicate must not crash the
@@ -64,9 +72,9 @@ Revisit only if a concrete client is confirmed to read the field.
   `TestRunDoesNotBusyLoopOnClosedNotifyChannel`, which asserts that `Load` stays bounded after the
   close, not just that the process doesn't hang.
 - When a backend is removed, drain its in-flight requests before tearing down what it holds, and
-  never close anything eagerly on swap. Today nothing is torn down per backend: each aggregate target
-  owns one proxy transport for its lifetime, and plugin gRPC connections (keyed by host and plugin
-  ID) close only at shutdown. Per-backend teardown is R1 and R2 in `2026-10-10-router-review-plan.md`.
+  never close anything eagerly on swap. A retired plugin handler is destroyed once it drains, and a
+  managed plugin's gRPC connection closes with the last handler using it (R1, R2). Each aggregate
+  target still owns one proxy transport for its lifetime.
 
 ## Readiness: why a partial reconcile error doesn't fail `Ready`
 
@@ -83,15 +91,6 @@ The current rule: `routerState.served` records whether anything is being served.
 when there is an error **and** nothing is served. A partial error is still logged by `storeServing`.
 Both cases were found in PR review, in two passes.
 
-## Removed: the RouteBackend and AppManifest source
-
-Until #134652, the cloud loader also read `RouteBackend` and `AppManifest` resources from a
-control-plane API server, correlated them by name (`combineByName`, with a fallback to the embedded
-manifests for core groups), and watched both kinds with informers. Core APIs now come from
-`core_url` in the plugin manifests format, limited to `routableCoreGroups`. Every cloud source is
-polled, and each poll loop signals a payload-free wake only when its key set changes, so the
-level-triggered `Load` described above still applies.
-
 ## Two transports per aggregate target
 
 `ProvideCloudRoutesLoaderFactory` builds two `newAggregateBaseTransport` clones per aggregate
@@ -106,18 +105,10 @@ target:
 Each clone owns its connection pool instead of sharing the process-wide `http.DefaultTransport`,
 which allows only 2 idle connections per host.
 
-## Removed `appmanifest_apiserver_url` and `apiserver_url` are startup errors
-
-Both keys configured the removed AppManifest source (`apiserver_url` was its earlier name). If
-either were ignored, a deployment still relying on it would look like "nothing configured", fall
-through to the dummy loader, and report ready while serving no routes.
-`ProvideCloudRoutesLoaderFactory` therefore fails when either is set and no other cloud source is
-configured. With another source configured, they are ignored.
-
 ## Why `group_regex` patterns are globs
 
 `*` is the only special character, and everything else goes through `regexp.QuoteMeta`. An earlier
 version escaped only `.`, which left `+`, `(`, `[` and the rest live. That *widened* matches: for
 example, `foo+.grafana.app` matched `foooo.grafana.app`. `group_regex` is a narrowing allowlist, so
-over-matching is the wrong way to fail. A side effect is that pattern compilation can't fail in
-practice, although `compileGroupPatterns` still returns an error.
+over-matching is the wrong way to fail. A side effect is that pattern compilation can't fail, so
+`compileGroupPatterns` returns no error.

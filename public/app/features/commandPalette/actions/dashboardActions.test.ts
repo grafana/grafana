@@ -13,7 +13,12 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { searchNotebookTitles } from 'app/features/notebook/list/notebookSearchApi';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { toURL } from 'app/features/search/service/unified';
+import { extractManagerKind } from 'app/features/search/service/utils';
+import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
+
+import { searchDashboardsHybrid } from '../api/hybridSearch';
 
 import { getRecentDashboardActions, getSearchResultActions, useSearchResults } from './dashboardActions';
 
@@ -29,6 +34,7 @@ describe('dashboardActions', () => {
   const mockRecentDashboardUids = ['my-dashboard-1'];
 
   beforeEach(() => {
+    configureStore();
     mockSearchNotebookTitles.mockResolvedValue([]);
     server.use(
       getCustomSearchHandler([
@@ -287,9 +293,30 @@ describe('dashboardActions', () => {
         expect(dashboardResults).toHaveLength(20);
       });
 
-      it('falls back to the classic search for dashboards when the hybrid endpoint fails', async () => {
+      it('uses the folder title returned by hybrid search', async () => {
+        server.use(
+          getHybridSearchHandler([
+            {
+              name: 'hybrid-dashboard-1',
+              title: 'Hybrid dashboard 1',
+              folder: 'my-folder-1',
+              folderTitle: 'Renamed folder',
+            },
+          ])
+        );
+
+        const results = await getSearchResultActions('mySearchQuery', true);
+
+        expect(results[0]).toMatchObject({
+          name: 'Hybrid dashboard 1',
+          url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
+          subtitle: 'Renamed folder',
+        });
+      });
+
+      it.each([501, 503])('falls back to the classic search when the hybrid endpoint returns %s', async (status) => {
         const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-        server.use(http.get(hybridSearchRoute, () => HttpResponse.json({}, { status: 501 })));
+        server.use(http.post(hybridSearchRoute, () => HttpResponse.json({}, { status })));
 
         const results = await getSearchResultActions('mySearchQuery', true);
 
@@ -305,6 +332,71 @@ describe('dashboardActions', () => {
         ]);
         expect(consoleErrorSpy).toHaveBeenCalled();
         consoleErrorSpy.mockRestore();
+      });
+
+      describe('endpoint availability', () => {
+        let search: typeof getSearchResultActions;
+
+        beforeEach(() => {
+          // Reset page-lifetime availability while retaining the real search clients and their shared services.
+          jest.doMock('../api/hybridSearch', () => ({ searchDashboardsHybrid }));
+          jest.doMock('app/features/search/service/searcher', () => ({ getGrafanaSearcher }));
+          jest.doMock('app/core/services/context_srv', () => ({ contextSrv }));
+          jest.doMock('app/features/search/service/unified', () => ({ toURL }));
+          jest.doMock('app/features/search/service/utils', () => ({ extractManagerKind }));
+          try {
+            jest.isolateModules(() => {
+              search = require('./dashboardActions').getSearchResultActions;
+            });
+          } finally {
+            jest.dontMock('../api/hybridSearch');
+            jest.dontMock('app/features/search/service/searcher');
+            jest.dontMock('app/core/services/context_srv');
+            jest.dontMock('app/features/search/service/unified');
+            jest.dontMock('app/features/search/service/utils');
+          }
+          jest.spyOn(console, 'error').mockImplementation(() => {});
+          jest.spyOn(console, 'warn').mockImplementation(() => {});
+        });
+
+        afterEach(() => {
+          jest.restoreAllMocks();
+        });
+
+        it('uses classic results after a 404 and skips hybrid requests for subsequent queries', async () => {
+          const hybridRequests = jest.fn(() => HttpResponse.json({}, { status: 404 }));
+          server.use(http.post(hybridSearchRoute, hybridRequests));
+          const classicSearch = jest.spyOn(getGrafanaSearcher(), 'search');
+
+          const firstResults = await search('first query', true);
+          const nextResults = await search('different query', true);
+
+          expect(firstResults).toEqual([
+            expect.objectContaining({ name: 'Lexical dashboard 1', sectionId: 'dashboards' }),
+            expect.objectContaining({ name: 'My folder 1', sectionId: 'folders' }),
+          ]);
+          expect(nextResults).toEqual(firstResults);
+          expect(hybridRequests).toHaveBeenCalledTimes(1);
+          expect(classicSearch).toHaveBeenCalledWith({ query: 'different query', kind: ['dashboard'], limit: 100 });
+          expect(console.warn).toHaveBeenCalledTimes(1);
+        });
+
+        it.each([401, 403, 500, 501, 503])('retries hybrid search after a %s response', async (status) => {
+          const hybridRequests = jest.fn();
+          server.use(
+            http.post(hybridSearchRoute, () => {
+              hybridRequests();
+            }),
+            http.post(hybridSearchRoute, () => HttpResponse.json({}, { status }), { once: true })
+          );
+
+          const fallbackResults = await search('first query', true);
+          const recoveredResults = await search('different query', true);
+
+          expect(fallbackResults[0]).toMatchObject({ name: 'Lexical dashboard 1', sectionId: 'dashboards' });
+          expect(recoveredResults[0]).toMatchObject({ name: 'Hybrid dashboard 1', sectionId: 'dashboards' });
+          expect(hybridRequests).toHaveBeenCalledTimes(2);
+        });
       });
 
       it('shows hybrid results without the folder subtitle when the folder lookup fails', async () => {
@@ -426,74 +518,76 @@ describe('dashboardActions', () => {
       }
     });
 
-    it('returns hybrid dashboard actions when both the cmdkHybridSearch and vectorSearch flags are on', async () => {
-      mockContextSrv.user.isSignedIn = true;
-      setTestFlags({ 'grafana.cmdkHybridSearch': true, 'dashboard.vectorSearch': true });
-      server.use(
-        getHybridSearchHandler([
-          {
-            name: 'hybrid-dashboard-1',
-            title: 'Hybrid dashboard 1',
-            score: 0.9,
-            managedBy: { kind: ManagerKind.Repo },
+    it.each([true, false])(
+      'returns hybrid dashboard actions with cmdkHybridSearch on and vectorSearch=%s',
+      async (vectorSearch) => {
+        mockContextSrv.user.isSignedIn = true;
+        setTestFlags({ 'grafana.cmdkHybridSearch': true, 'dashboard.vectorSearch': vectorSearch });
+        server.use(
+          getHybridSearchHandler([
+            {
+              name: 'hybrid-dashboard-1',
+              title: 'Hybrid dashboard 1',
+              score: 0.9,
+              managedBy: { kind: ManagerKind.Repo },
+            },
+          ])
+        );
+
+        const { result } = renderHook(
+          () => {
+            return useSearchResults({ searchQuery: 'mySearchQuery', show: true });
           },
-        ])
-      );
+          { wrapper }
+        );
+        await waitFor(() => {
+          expect(result.current.searchResults).toEqual([
+            {
+              id: 'go/dashboard/d/hybrid-dashboard-1/hybrid-dashboard-1',
+              name: 'Hybrid dashboard 1',
+              priority: 1,
+              section: 'Dashboards',
+              sectionId: 'dashboards',
+              subtitle: 'Dashboards',
+              url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
+              managedBy: ManagerKind.Repo,
+            },
+          ]);
+        });
+      }
+    );
 
-      const { result } = renderHook(
-        () => {
-          return useSearchResults({ searchQuery: 'mySearchQuery', show: true });
-        },
-        { wrapper }
-      );
-      await waitFor(() => {
-        expect(result.current.searchResults).toEqual([
-          {
-            id: 'go/dashboard/d/hybrid-dashboard-1/hybrid-dashboard-1',
-            name: 'Hybrid dashboard 1',
-            priority: 1,
-            section: 'Dashboards',
-            sectionId: 'dashboards',
-            subtitle: 'Dashboards',
-            url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
-            managedBy: ManagerKind.Repo,
+    it.each([true, false])(
+      'uses classic search with cmdkHybridSearch off and vectorSearch=%s',
+      async (vectorSearch) => {
+        mockContextSrv.user.isSignedIn = true;
+        setTestFlags({ 'grafana.cmdkHybridSearch': false, 'dashboard.vectorSearch': vectorSearch });
+        // Spy on the hybrid endpoint so we can assert it's never requested, rather than
+        // relying only on the shape of the returned actions
+        const hybridSearchSpy = jest.fn();
+        server.use(
+          http.post(hybridSearchRoute, () => {
+            hybridSearchSpy();
+            return HttpResponse.json({ items: [] });
+          })
+        );
+
+        const { result } = renderHook(
+          () => {
+            return useSearchResults({ searchQuery: 'mySearchQuery', show: true });
           },
-        ]);
-      });
-    });
-
-    it.each([
-      ['the vectorSearch flag is off', { 'grafana.cmdkHybridSearch': true, 'dashboard.vectorSearch': false }],
-      ['the cmdkHybridSearch flag is off', { 'grafana.cmdkHybridSearch': false, 'dashboard.vectorSearch': true }],
-      ['both flags are off', { 'grafana.cmdkHybridSearch': false, 'dashboard.vectorSearch': false }],
-    ])('does not use hybrid search when %s', async (_name, flags) => {
-      mockContextSrv.user.isSignedIn = true;
-      setTestFlags(flags);
-      // Spy on the hybrid endpoint so we can assert it's never requested, rather than
-      // relying only on the shape of the returned actions
-      const hybridSearchSpy = jest.fn();
-      server.use(
-        http.get(hybridSearchRoute, () => {
-          hybridSearchSpy();
-          return HttpResponse.json({ hits: [{ name: 'hybrid-dashboard-1', title: 'Hybrid dashboard 1', score: 0.9 }] });
-        })
-      );
-
-      const { result } = renderHook(
-        () => {
-          return useSearchResults({ searchQuery: 'mySearchQuery', show: true });
-        },
-        { wrapper }
-      );
-      await waitFor(() => {
-        expect(result.current.searchResults).toEqual([
-          expect.objectContaining({
-            name: 'My dashboard 1',
-            sectionId: 'dashboards',
-          }),
-        ]);
-      });
-      expect(hybridSearchSpy).not.toHaveBeenCalled();
-    });
+          { wrapper }
+        );
+        await waitFor(() => {
+          expect(result.current.searchResults).toEqual([
+            expect.objectContaining({
+              name: 'My dashboard 1',
+              sectionId: 'dashboards',
+            }),
+          ]);
+        });
+        expect(hybridSearchSpy).not.toHaveBeenCalled();
+      }
+    );
   });
 });

@@ -11,11 +11,18 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
+import { useTrackNotebookVisitForFeedback } from '../feedback/useTrackNotebookVisitForFeedback';
 import { NotebookPrompt } from '../scene/NotebookPrompt';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookSceneControls } from '../scene/NotebookSceneControls';
-import { NOTEBOOK_NEW_URL, notebookViewUrl } from '../urls';
+import {
+  NOTEBOOK_NEW_URL,
+  newNotebookEntryPoint,
+  notebookViewUrl,
+  readNotebookLoadSource,
+  removeNotebookLoadSourceParam,
+  searchWithoutNotebookSource,
+} from '../urls';
 
 import { NotebookPageError } from './NotebookPageError';
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
@@ -38,12 +45,14 @@ export function NotebookScenePage() {
   useEffect(() => {
     if (notebooksEnabled) {
       if (uid) {
-        stateManager.loadNotebook(uid);
+        stateManager.loadNotebook(uid, readNotebookLoadSource());
+        // Taken off straight away, so a copied address is clean. Reading it again here would find nothing,
+        // which is why it is read in this effect and not while rendering: removing it changes the url.
+        removeNotebookLoadSourceParam();
       } else if (isNew) {
-        stateManager.newNotebook();
-        // The list's create button is the only link to this route today, so the source is fixed here.
-        // A second way in has to pass its own, or this event keeps naming the list.
-        NotebookAnalytics.newStarted(NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST);
+        const source = newNotebookEntryPoint();
+        stateManager.newNotebook(source);
+        NotebookAnalytics.newStarted(source);
       }
     }
 
@@ -56,7 +65,7 @@ export function NotebookScenePage() {
     return <PageNotFound />;
   }
 
-  if (!scene) {
+  if (!scene || (isNew && scene.state.uid)) {
     return loadError ? (
       <NotebookPageError error={loadError} />
     ) : (
@@ -88,14 +97,17 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   const headerHeight = useChromeHeaderHeight();
 
   useEffect(() => scene.activate(), [scene]);
+  useTrackNotebookVisitForFeedback();
 
   // A blank notebook that has just been created by its first save: point the url at it instead of the
   // route that made it. Replace rather than push, or Back lands back on the blank route and reads as a
-  // second empty notebook. Keep the current search params: they hold the scene's own time range, and
-  // dropping them would reset the range to nothing.
+  // second empty notebook. Keep the scene's time range, but discard the launcher's analytics source.
   useEffect(() => {
     if (isNew && uid) {
-      locationService.replace({ pathname: notebookViewUrl(uid), search: locationService.getLocation().search });
+      locationService.replace({
+        pathname: notebookViewUrl(uid),
+        search: searchWithoutNotebookSource(locationService.getLocation().search),
+      });
     }
   }, [isNew, uid]);
 

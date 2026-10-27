@@ -13,8 +13,11 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 type fallbackRoundTripper func(*http.Request) (*http.Response, error)
@@ -478,24 +481,72 @@ func TestSingleTenantFallbackStackHostAndOrigin(t *testing.T) {
 	}
 }
 
+func requestWithNamespace(method, target, namespace string) *http.Request {
+	req := httptest.NewRequest(method, target, nil)
+	return req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
+		Type: types.TypeUser, UserUID: "test-user", OrgID: 1, Namespace: namespace,
+	}))
+}
+
 func TestSingleTenantFallbackDiscovery(t *testing.T) {
-	for _, path := range []string{"/apis", "/apis/", "/apis/example", "/apis/example/v1", "/apis/example/v1/", "/openapi/v3", "/openapi/v3/apis/example/v1"} {
-		t.Run(path, func(t *testing.T) {
-			st := newTestSingleTenantFallback(t)
-			st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
-			var calls int
-			st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
-				calls++
-				require.Equal(t, "discovery.example.com", req.URL.Host)
-				require.Equal(t, path, req.URL.Path)
-				return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader("discovery"))}, nil
+	for _, tc := range []struct {
+		name      string
+		namespace string // "" sends no requester
+		root      string // where root discovery goes: a host, "" for a 404
+		group     string // where group discovery goes
+		status    int
+	}{
+		{name: "stack", namespace: "stacks-123", root: "stack.example.com", group: "stack.example.com", status: http.StatusOK},
+		{name: "wildcard", namespace: "*", group: "discovery.example.com", status: http.StatusOK},
+		{name: "not a stack", namespace: "default", group: "discovery.example.com", status: http.StatusOK},
+		{name: "unknown stack", namespace: "stacks-404", group: "discovery.example.com", status: http.StatusOK},
+		{name: "no requester", group: "discovery.example.com", status: http.StatusOK},
+		{name: "lookup failure", namespace: "stacks-500", status: http.StatusServiceUnavailable},
+	} {
+		for _, path := range []string{"/apis", "/apis/", "/apis/example", "/apis/example/v1", "/apis/example/v1/", "/openapi/v3", "/openapi/v3/apis/example/v1"} {
+			t.Run(tc.name+path, func(t *testing.T) {
+				st := newTestSingleTenantFallback(t)
+				st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
+				st.resolveHost = func(_ context.Context, stackID int64) (singleTenantStack, error) {
+					switch stackID {
+					case 123:
+						return singleTenantStack{URL: "https://stack.example.com"}, nil
+					case 500:
+						return singleTenantStack{}, errors.New("gcom unavailable")
+					}
+					return singleTenantStack{}, nil
+				}
+				var forwardedTo []string
+				st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+					forwardedTo = append(forwardedTo, req.URL.Host)
+					require.Equal(t, path, req.URL.Path)
+					return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader("discovery"))}, nil
+				})
+				req := httptest.NewRequest(http.MethodGet, path, nil)
+				if tc.namespace != "" {
+					req = requestWithNamespace(http.MethodGet, path, tc.namespace)
+				}
+				recorder := httptest.NewRecorder()
+				st.ServeHTTP(recorder, req)
+
+				want := tc.group
+				if isRootDiscoveryPath(path) {
+					want = tc.root
+				}
+				switch {
+				case tc.status != http.StatusOK:
+					require.Equal(t, tc.status, recorder.Code)
+					require.Empty(t, forwardedTo)
+				case want == "":
+					require.Equal(t, http.StatusNotFound, recorder.Code)
+					require.Empty(t, forwardedTo)
+				default:
+					require.Equal(t, http.StatusOK, recorder.Code)
+					require.Equal(t, "discovery", recorder.Body.String())
+					require.Equal(t, []string{want}, forwardedTo)
+				}
 			})
-			recorder := httptest.NewRecorder()
-			st.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
-			require.Equal(t, 1, calls)
-			require.Equal(t, http.StatusOK, recorder.Code)
-			require.Equal(t, "discovery", recorder.Body.String())
-		})
+		}
 	}
 }
 
@@ -520,9 +571,10 @@ func TestSingleTenantFallbackProxyFailure(t *testing.T) {
 
 func TestSingleTenantFallbackLoadWithoutDiscovery(t *testing.T) {
 	st := newTestSingleTenantFallback(t)
-	backends, err := st.Load(t.Context())
-	require.NoError(t, err)
-	require.Empty(t, backends)
+	pollDiscovery(t, st)
+	snapshot := st.current()
+	require.NoError(t, snapshot.err)
+	require.Empty(t, snapshot.backends)
 }
 
 func TestSingleTenantFallbackLoadError(t *testing.T) {
@@ -531,12 +583,11 @@ func TestSingleTenantFallbackLoadError(t *testing.T) {
 	st.transport = testFallbackTransport(func(*http.Request) (*http.Response, error) {
 		return nil, errors.New("discovery unavailable")
 	})
-	_, err := st.Load(t.Context())
-	require.ErrorIs(t, err, errSingleTenantDiscoveryPending)
+	require.Equal(t, polledSnapshot{}, st.current(), "nothing before the first poll")
 	pollDiscovery(t, st)
-	backends, err := st.Load(t.Context())
-	require.ErrorContains(t, err, "discovery unavailable")
-	require.Empty(t, backends)
+	snapshot := st.current()
+	require.ErrorContains(t, snapshot.err, "discovery unavailable")
+	require.Empty(t, snapshot.backends)
 }
 
 func TestSingleTenantFallbackRequiresResolver(t *testing.T) {
@@ -554,22 +605,19 @@ func TestSingleTenantFallbackDiscoveryVersionsChangeKey(t *testing.T) {
 		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
 	})
 	pollDiscovery(t, st)
-	first, err := st.Load(t.Context())
-	require.NoError(t, err)
+	first := st.Backends()
+	require.NoError(t, st.current().err)
 	require.Len(t, first, 1)
 	require.Equal(t, "example", first[0].Group().Name)
 	handler, err := first[0].Load(t.Context())
 	require.NoError(t, err)
 	require.Same(t, st, handler)
-	require.Same(t, st, st.SingleTenantFallback())
 	pollDiscovery(t, st)
-	unchanged, err := st.Load(t.Context())
-	require.NoError(t, err)
+	unchanged := st.Backends()
 	require.Equal(t, first[0].Key(), unchanged[0].Key())
 	version = "v2"
 	pollDiscovery(t, st)
-	second, err := st.Load(t.Context())
-	require.NoError(t, err)
+	second := st.Backends()
 	require.NotEqual(t, first[0].Key(), second[0].Key())
 }
 
@@ -701,3 +749,128 @@ func TestNewGComURLResolver(t *testing.T) {
 		})
 	}
 }
+
+func TestPrivateCacheControl(t *testing.T) {
+	for _, tc := range []struct {
+		in   []string
+		want string
+	}{
+		{nil, "private"},
+		{[]string{"public"}, "private"},
+		{[]string{"public, max-age=60"}, "max-age=60, private"},
+		{[]string{"private"}, "private"},
+		{[]string{"no-cache", "Public"}, "no-cache, private"},
+		{[]string{"no-store"}, "no-store"},
+	} {
+		require.Equal(t, tc.want, privateCacheControl(tc.in), "%q", tc.in)
+	}
+}
+
+func TestSingleTenantDiscoveryIsNeverSharedCacheable(t *testing.T) {
+	st := newTestSingleTenantFallback(t)
+	st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
+	st.resolveHost = func(_ context.Context, stackID int64) (singleTenantStack, error) {
+		if stackID == 123 {
+			return singleTenantStack{URL: "https://stack.example.com"}, nil
+		}
+		return singleTenantStack{}, nil
+	}
+	st.transport = testFallbackTransport(func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": {"public, max-age=60"}}, Body: io.NopCloser(strings.NewReader("ok"))}, nil
+	})
+	for _, tc := range []struct {
+		namespace, path, want string
+	}{
+		{"stacks-123", "/apis/example/v1", "max-age=60, private"},
+		{"stacks-123", "/openapi/v3/apis/example/v1", "max-age=60, private"},
+		{"*", "/apis/example/v1", "max-age=60, private"},
+		// Resources are namespaced, so their URL already names the stack.
+		{"stacks-123", "/apis/example/v1/namespaces/stacks-123/widgets", "public, max-age=60"},
+	} {
+		recorder := httptest.NewRecorder()
+		st.ServeHTTP(recorder, requestWithNamespace(http.MethodGet, tc.path, tc.namespace))
+		require.Equal(t, http.StatusOK, recorder.Code, tc.path)
+		require.Equal(t, tc.want, recorder.Header().Get("Cache-Control"), "%s as %s", tc.path, tc.namespace)
+	}
+}
+
+func TestSingleTenantFallbackClusterScoped(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		namespace string // "" sends no requester
+		method    string
+		path      string
+		status    int
+		forwarded bool
+		other     bool // not a cluster-scoped path, so not answered for the caller
+	}{
+		{name: "stack", namespace: "stacks-123", method: http.MethodGet, path: "/apis/iam.grafana.app/v0alpha1/whoami", status: http.StatusAccepted, forwarded: true},
+		{name: "subresource", namespace: "stacks-123", method: http.MethodGet, path: "/apis/example.grafana.app/v1/widgets/a/status", status: http.StatusAccepted, forwarded: true},
+		{name: "write", namespace: "stacks-123", method: http.MethodPost, path: "/apis/example.grafana.app/v1/widgets", status: http.StatusAccepted, forwarded: true},
+		{name: "wildcard", namespace: "*", method: http.MethodGet, path: "/apis/iam.grafana.app/v0alpha1/whoami", status: http.StatusNotFound},
+		{name: "not a stack", namespace: "default", method: http.MethodGet, path: "/apis/iam.grafana.app/v0alpha1/whoami", status: http.StatusNotFound},
+		{name: "unknown stack", namespace: "stacks-404", method: http.MethodGet, path: "/apis/iam.grafana.app/v0alpha1/whoami", status: http.StatusNotFound},
+		{name: "no requester", method: http.MethodGet, path: "/apis/iam.grafana.app/v0alpha1/whoami", status: http.StatusNotFound},
+		{name: "lookup failure", namespace: "stacks-500", method: http.MethodGet, path: "/apis/iam.grafana.app/v0alpha1/whoami", status: http.StatusServiceUnavailable},
+		{name: "namespaces without a name", namespace: "stacks-123", method: http.MethodGet, path: "/apis/example.grafana.app/v1/namespaces", status: http.StatusNotFound, other: true},
+		{name: "empty resource", namespace: "stacks-123", method: http.MethodGet, path: "/apis/example.grafana.app/v1//widgets", status: http.StatusNotFound, other: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			st := newTestSingleTenantFallback(t)
+			st.resolveHost = func(_ context.Context, stackID int64) (singleTenantStack, error) {
+				switch stackID {
+				case 123:
+					return singleTenantStack{URL: "https://stack.example.com"}, nil
+				case 500:
+					return singleTenantStack{}, errors.New("gcom unavailable")
+				}
+				return singleTenantStack{}, nil
+			}
+			var forwardedTo []string
+			st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+				forwardedTo = append(forwardedTo, req.URL.Host+req.URL.Path)
+				require.Equal(t, tc.method, req.Method)
+				return &http.Response{StatusCode: http.StatusAccepted, Header: http.Header{"Cache-Control": {"public, max-age=60"}}, Body: io.NopCloser(strings.NewReader("forwarded"))}, nil
+			})
+			req := httptest.NewRequest(tc.method, tc.path, nil)
+			if tc.namespace != "" {
+				req = requestWithNamespace(tc.method, tc.path, tc.namespace)
+			}
+			recorder := httptest.NewRecorder()
+			st.ServeHTTP(recorder, req)
+
+			require.Equal(t, tc.status, recorder.Code)
+			if !tc.forwarded {
+				require.Empty(t, forwardedTo)
+				if tc.namespace != "" && !tc.other {
+					// The answer depends on the caller, not the URL.
+					require.Equal(t, "private", recorder.Header().Get("Cache-Control"))
+				}
+				return
+			}
+			require.Equal(t, []string{"stack.example.com" + tc.path}, forwardedTo)
+			require.Equal(t, "forwarded", recorder.Body.String())
+			require.Equal(t, "max-age=60, private", recorder.Header().Get("Cache-Control"))
+		})
+	}
+}
+
+// fallbackLoader serves a single-tenant fallback's discovery as the cloud
+// loader does, for tests that route through the fallback alone.
+type fallbackLoader struct{ *singleTenantFallback }
+
+func (l fallbackLoader) Load(context.Context) ([]Backend, error) {
+	snapshot := l.current()
+	return snapshot.backends, snapshot.err
+}
+
+func (l fallbackLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
+	dirty := make(chan struct{}, 1)
+	go func() {
+		defer close(dirty)
+		l.run(ctx, dirty)
+	}()
+	return dirty, nil
+}
+
+func (l fallbackLoader) UnregisteredGroupHandler() http.Handler { return l.singleTenantFallback }

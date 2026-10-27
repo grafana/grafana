@@ -42,15 +42,37 @@ describe('<SignalCard />', () => {
     expect(
       screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
     ).toHaveAttribute('aria-label', 'Expand datasource explorer for query A (gdev-prometheus)');
+    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toHaveAttribute(
+      'aria-label',
+      'Jump to query A (gdev-prometheus)'
+    );
   });
 
-  // The chevron is decoration inside the one header button, so a click anywhere on the row
-  // lands on the same control.
-  it('makes the whole header a single control on an expandable card', () => {
+  // The chevron is decoration inside the toggle, so a click anywhere on the row but the jump
+  // button lands on the same control.
+  it('splits an expandable header into a toggle holding the chevron and a jump button', () => {
     setup();
 
-    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getAllByRole('button')).toHaveLength(2);
     expect(screen.getByRole('button', { expanded: false })).toContainElement(screen.getByTestId('icon-angle-right'));
+    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).not.toHaveAttribute(
+      'aria-expanded'
+    );
+  });
+
+  it('gives a non-expandable card the jump button as its only control', () => {
+    setup({ isExpandable: false, datasourceName: 'gdev-loki' });
+
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getByRole('button')).toHaveAccessibleName('Jump to query A (gdev-loki)');
+  });
+
+  // With no toggle to carry its label, the static header still tells two cards on the same
+  // datasource type apart on hover.
+  it('shows the datasource name as the tooltip of a non-expandable header', () => {
+    setup({ isExpandable: false, datasourceName: 'gdev-loki' });
+
+    expect(screen.getByTitle('gdev-loki')).toContainElement(screen.getByText('A'));
   });
 
   it.each([
@@ -69,13 +91,13 @@ describe('<SignalCard />', () => {
         return user.keyboard(' ');
       },
     ],
-  ])('expands the card and jumps to its query on %s', async (_, activate) => {
+  ])('expands the card without jumping to its query on %s', async (_, activate) => {
     const { user } = setup();
 
     await activate(user);
 
     expect(onToggleExpanded).toHaveBeenCalledTimes(1);
-    expect(onJumpToQuery).toHaveBeenCalledTimes(1);
+    expect(onJumpToQuery).not.toHaveBeenCalled();
   });
 
   it('collapses an expanded card without jumping to its query', async () => {
@@ -89,12 +111,26 @@ describe('<SignalCard />', () => {
     expect(onJumpToQuery).not.toHaveBeenCalled();
   });
 
-  it('only jumps to the query when a non-expandable card is clicked', async () => {
-    const { user } = setup({ isExpandable: false, datasourceName: 'gdev-loki' });
+  it.each([
+    { desc: 'a collapsed card', overrides: {}, datasourceName: 'gdev-prometheus' },
+    { desc: 'an expanded card', overrides: { isExpanded: true }, datasourceName: 'gdev-prometheus' },
+    { desc: 'a non-expandable card', overrides: { isExpandable: false }, datasourceName: 'gdev-loki' },
+  ])('jumps to the query without toggling from the jump button on $desc', async ({ overrides, datasourceName }) => {
+    const { user } = setup({ ...overrides, datasourceName });
 
-    await user.click(screen.getByRole('button', { name: 'Jump to query A (gdev-loki)' }));
+    await user.click(screen.getByRole('button', { name: `Jump to query A (${datasourceName})` }));
 
     expect(onJumpToQuery).toHaveBeenCalledTimes(1);
+    expect(onToggleExpanded).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when a non-expandable header is clicked', async () => {
+    const { user } = setup({ isExpandable: false, datasourceName: 'gdev-loki' });
+
+    await user.click(screen.getByText('A'));
+
+    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-loki)' })).toBeInTheDocument();
+    expect(onJumpToQuery).not.toHaveBeenCalled();
     expect(onToggleExpanded).not.toHaveBeenCalled();
   });
 
@@ -171,10 +207,10 @@ describe('<SignalCard />', () => {
   });
 
   it('has no chevron or expanded state and never renders a body when not expandable', () => {
-    setup({ isExpandable: false, isExpanded: true, datasourceName: 'gdev-loki' });
+    const { container } = setup({ isExpandable: false, isExpanded: true, datasourceName: 'gdev-loki' });
 
-    const header = screen.getByRole('button', { name: 'Jump to query A (gdev-loki)' });
-    expect(header).not.toHaveAttribute('aria-expanded');
+    expect(screen.getByText('A')).toBeInTheDocument();
+    expect(container.querySelector('[aria-expanded]')).not.toBeInTheDocument();
     expect(screen.queryByTestId('icon-angle-right')).not.toBeInTheDocument();
     expect(screen.queryByTestId('icon-angle-down')).not.toBeInTheDocument();
     expect(screen.queryByText('card body')).not.toBeInTheDocument();

@@ -976,13 +976,7 @@ describe('DataSourceWithBackend', () => {
   });
 
   describe('queryServiceDecision', () => {
-    let oldQsUI: boolean | undefined = undefined;
-    beforeEach(() => {
-      oldQsUI = config.featureToggles.queryServiceFromUI;
-      config.featureToggles.queryServiceFromUI = true;
-    });
     afterEach(() => {
-      config.featureToggles.queryServiceFromUI = oldQsUI;
       mockGetBooleanValue.mockReset().mockReturnValue(false);
       mockGetObjectValue.mockReset().mockReturnValue({ types: ['prometheus'] });
       mockIsQueryServiceCompatible.mockReset().mockReturnValue(false);
@@ -1097,7 +1091,8 @@ describe('DataSourceWithBackend', () => {
       expect(calls).toHaveLength(1);
 
       const [datasources, compatibilityFlag] = calls[0];
-      expect([datasources, compatibilityFlag]).toHaveLength(2);
+      expect(mockGetObjectValue).toHaveBeenCalledWith('datasources.querier.fe-allowed-types', { types: [] });
+      expect(compatibilityFlag).toEqual({ types: ['prometheus'] });
       expect((datasources as Array<{ type: string }>).map((ds) => ds.type)).toStrictEqual(expectedTypes);
     });
   });

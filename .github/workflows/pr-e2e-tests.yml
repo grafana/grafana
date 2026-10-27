@@ -184,6 +184,18 @@ jobs:
           cp -r conf/ grafana-server
           cp -r tools/ grafana-server
 
+      # conf/defaults.ini loads canvas as an external plugin, so the server needs the bundled build.
+      # Only canvas is bundled to keep the other core plugins under test unchanged.
+      - name: Download bundled catalog plugins
+        run: |
+          bash scripts/download-catalog-plugins.sh \
+            --out grafana-server/data/plugins-bundled \
+            --grafana-version "$(jq -r .version package.json)" \
+            --os linux \
+            --arch amd64 \
+            --no-default-catalog-plugins \
+            --plugins canvas
+
       # Apply E2E test configuration on top of the production-mirrored distribution
       - name: Configure for E2E testing
         run: |
@@ -408,7 +420,7 @@ jobs:
       - name: Generate RSDoctor metrics
         env:
           NO_SOURCEMAP: '1'
-        run: yarn build:stats:rspack
+        run: yarn build:stats
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node .github/workflows/scripts/publish-frontend-metrics.mts
         env:

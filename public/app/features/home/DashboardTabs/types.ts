@@ -5,7 +5,6 @@ import { isIconName } from '@grafana/data';
 const HomepageTabSchema = z.object({
   id: z.string(),
   label: z.string(),
-  activeLabel: z.string().optional(),
   icon: z.string().refine(isIconName, { error: 'Unknown icon' }).optional(),
   /** Tab is a link (rendered right-aligned) */
   href: z.string().optional(),

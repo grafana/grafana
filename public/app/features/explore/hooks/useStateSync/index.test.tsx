@@ -27,6 +27,7 @@ const fetch = jest.fn().mockResolvedValue({ correlations: [] });
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ fetch }),
+  getDataSourceInstance: (...args: Parameters<DatasourceGetter>) => currentDatasourceGetter.get(...args),
 }));
 
 jest.mock('rxjs', () => ({
@@ -45,11 +46,6 @@ type DatasourceGetter = (ref?: DataSourceRef | string | null, scopedVars?: Scope
 const currentDatasourceGetter: { get: DatasourceGetter } = {
   get: () => Promise.reject(new Error('datasources have not been seeded')),
 };
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: (...args: Parameters<DatasourceGetter>) => currentDatasourceGetter.get(...args),
-}));
 
 function defaultDsGetter(datasources: Array<ReturnType<typeof makeDatasourceSetup>>): DatasourceGetter {
   return (datasource) => {

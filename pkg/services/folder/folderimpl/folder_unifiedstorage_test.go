@@ -8,15 +8,20 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/protobuf/proto"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 	clientrest "k8s.io/client-go/rest"
 
+	dashboardapp "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -949,7 +954,7 @@ func TestSearchFolders(t *testing.T) {
 					}).UpdateCopyFields(),
 				}},
 			})
-		}, nil, false, time.Time{}, 0)
+		}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 		require.NoError(t, err)
 
 		// Both formats must be usable: unified storage/search may deploy separately from the API
@@ -1166,6 +1171,218 @@ func TestGetFolderByTitle(t *testing.T) {
 	})
 }
 
+type folderDeletionSearchClient struct {
+	client.K8sHandler
+	index         resource.ResourceIndex
+	access        *folderSearchAccessClient
+	resourceName  string
+	format        resourcepb.ResourceSearchRequest_ResultFormat
+	requester     identity.Requester
+	fields        []string
+	deleted       []string
+	calls         int
+	responseBytes int
+}
+
+func (c *folderDeletionSearchClient) Search(ctx context.Context, _ int64, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	c.calls++
+	c.requester, _ = identity.GetRequester(ctx)
+	c.fields = slices.Clone(req.Fields)
+	req.Options.Key = &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: c.resourceName}
+	if c.format != resourcepb.ResourceSearchRequest_UNSPECIFIED {
+		req.ResultFormat = c.format
+	}
+	res, err := c.index.Search(ctx, c.access, req, nil, nil)
+	if err == nil && res != nil && c.responseBytes == 0 {
+		c.responseBytes = proto.Size(res)
+	}
+	return res, err
+}
+
+func (c *folderDeletionSearchClient) Delete(_ context.Context, name string, _ int64, _ metav1.DeleteOptions) error {
+	c.deleted = append(c.deleted, name)
+	return nil
+}
+
+func newFolderDeletionSearchClient(t testing.TB, resourceName string, count int, cfg search.PostRankAuthzConfig) *folderDeletionSearchClient {
+	t.Helper()
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:                 t.TempDir(),
+		FileThreshold:        100,
+		PostRankAuthzEnabled: true,
+		PostRankAuthz:        cfg,
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", resourceName): resource.NewManifestBackedProvider(dashboardapp.LocalManifest().ManifestData),
+		}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	index, err := backend.BuildIndex(t.Context(), resource.NamespacedResource{
+		Namespace: "default", Group: "dashboard.grafana.app", Resource: resourceName,
+	}, int64(count), "test", func(idx resource.ResourceIndex) (int64, error) {
+		items := make([]*resource.BulkIndexItem, count)
+		for i := range items {
+			name := fmt.Sprintf("resource-%05d", i)
+			parent := "allowed"
+			if i%2 == 1 {
+				parent = "denied"
+			}
+			doc := &resource.IndexableDocument{
+				Key:  &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: resourceName, Name: name},
+				Name: name, Title: name, Folder: parent, RV: 1,
+				Description: "Shared observability configuration managed from a repository.",
+				Created:     1700000000000,
+				Updated:     1700000001000,
+				CreatedBy:   "user:creator",
+				UpdatedBy:   "user:editor",
+				Labels: map[string]string{
+					utils.LabelKeyDeprecatedInternalID: fmt.Sprint(i + 1), //nolint:staticcheck
+					"team":                             "observability",
+				},
+				Manager: &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repository"},
+				Source:  &utils.SourceProperties{Path: resourceName + "/" + name + ".json", Checksum: "test-checksum", TimestampMillis: 1700000001000},
+			}
+			if resourceName == "dashboards" {
+				doc.Tags = []string{"metrics", fmt.Sprintf("service-%03d", i%100)}
+			}
+			items[i] = &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: doc}
+		}
+		return int64(count), idx.BulkIndex(&resource.BulkIndexRequest{Items: items, ResourceVersion: 1})
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	return &folderDeletionSearchClient{
+		index: index, resourceName: resourceName,
+		access: &folderSearchAccessClient{AccessClient: claims.FixedAccessClient(true)},
+	}
+}
+
+func searchFolderDeletionResources(ctx context.Context, cli *folderDeletionSearchClient, fields []string, limit int64, folders []string) (dashv0alpha1.SearchResults, error) {
+	return dashboardsearch.SearchAll(ctx, 1, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Fields: []*resourcepb.Requirement{{
+			Key: resource.SEARCH_FIELD_FOLDER, Operator: string(selection.In), Values: folders,
+		}}},
+		Fields: fields, Limit: limit, ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}, cli.Search)
+}
+
+func TestFolderDeletionSearchFields(t *testing.T) {
+	for _, resourceName := range []string{"dashboards", "variables"} {
+		for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+			resourcepb.ResourceSearchRequest_FIELD_VALUES, resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		} {
+			for _, tc := range []struct {
+				name           string
+				count          int
+				allowedFolders map[string]bool
+				cfg            search.PostRankAuthzConfig
+			}{
+				{name: "empty"},
+				{name: "all readable", count: 35},
+				{name: "restricted", count: 35, allowedFolders: map[string]bool{"allowed": true}},
+				{name: "denied", count: 35, allowedFolders: map[string]bool{}},
+				{name: "candidate budget", count: 35, allowedFolders: map[string]bool{"allowed": true},
+					cfg: search.PostRankAuthzConfig{MaxWindow: 7, MaxCandidates: 9}},
+			} {
+				t.Run(fmt.Sprintf("%s/%s/%s", resourceName, format, tc.name), func(t *testing.T) {
+					cli := newFolderDeletionSearchClient(t, resourceName, tc.count, tc.cfg)
+					cli.format, cli.access.allowedFolders = format, tc.allowedFolders
+					ctx := claims.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+					folders := []string{"allowed", "denied"}
+					var want []string
+					for i := range tc.count {
+						if tc.allowedFolders == nil || tc.allowedFolders["allowed"] && i%2 == 0 {
+							want = append(want, fmt.Sprintf("resource-%05d", i))
+						}
+					}
+					for _, fields := range [][]string{nil, {resource.SEARCH_FIELD_NAME}} {
+						results, err := searchFolderDeletionResources(ctx, cli, fields, 11, folders)
+						require.NoError(t, err)
+						var got []string
+						for _, hit := range results.Hits {
+							got = append(got, hit.Name)
+						}
+						require.Equal(t, want, got, "UID order and pagination must not depend on response fields")
+					}
+				})
+			}
+		}
+	}
+}
+
+func TestDeleteVariablesInFoldersServiceIdentity(t *testing.T) {
+	cli := newFolderDeletionSearchClient(t, "variables", 6, search.PostRankAuthzConfig{})
+	service := &Service{variableK8sClient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{OrgID: 1})
+	require.NoError(t, service.deleteVariablesInFolders(ctx, 1, []string{"allowed"}))
+	require.Equal(t, []string{"resource-00000", "resource-00002", "resource-00004"}, cli.deleted)
+	_, serviceIdentity := identity.WithServiceIdentity(t.Context(), 1)
+	require.Equal(t, serviceIdentity, cli.requester)
+	require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, cli.fields)
+}
+
+func TestDeleteVariablesInFoldersSearchErrors(t *testing.T) {
+	for _, tc := range folderStorageFailures(t) {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := new(client.MockK8sHandler)
+			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+				return slices.Equal(req.Fields, []string{resource.SEARCH_FIELD_NAME})
+			})).Return(tc.searchResponse(), tc.err).Once()
+			service := &Service{variableK8sClient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+			err := service.deleteVariablesInFolders(t.Context(), 1, []string{"allowed"})
+			require.ErrorContains(t, err, tc.want.Error())
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
+			}
+			cli.AssertExpectations(t)
+		})
+	}
+}
+
+// This measures search and decoding only, without delete RPCs or real authorization-service latency.
+func BenchmarkFolderDeletionSearchFields(b *testing.B) {
+	for _, resourceName := range []string{"dashboards", "variables"} {
+		for _, count := range []int{1000, 10000} {
+			for _, restricted := range []bool{false, true} {
+				for _, selected := range []bool{false, true} {
+					b.Run(fmt.Sprintf("%s/docs=%d/restricted=%t/selected=%t", resourceName, count, restricted, selected), func(b *testing.B) {
+						cli := newFolderDeletionSearchClient(b, resourceName, count, search.PostRankAuthzConfig{})
+						ctx := identity.WithServiceIdentityContext(b.Context(), 1)
+						want := count
+						if restricted {
+							ctx = claims.WithAuthInfo(b.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+							cli.access.allowedFolders = map[string]bool{"allowed": true}
+							want = (count + 1) / 2
+						}
+						var fields []string
+						if selected {
+							fields = []string{resource.SEARCH_FIELD_NAME}
+						}
+						folders := []string{"allowed", "denied"}
+						results, err := searchFolderDeletionResources(ctx, cli, fields, folderSearchLimit, folders)
+						require.NoError(b, err)
+						require.Len(b, results.Hits, want)
+						cli.calls, cli.access.checked = 0, 0
+						b.ReportAllocs()
+						for b.Loop() {
+							results, err := searchFolderDeletionResources(ctx, cli, fields, folderSearchLimit, folders)
+							if err != nil {
+								b.Fatal(err)
+							}
+							if len(results.Hits) != want {
+								b.Fatalf("got %d UIDs, want %d", len(results.Hits), want)
+							}
+						}
+						b.ReportMetric(float64(cli.calls)/float64(b.N), "searches/op")
+						b.ReportMetric(float64(cli.access.checked)/float64(b.N), "authz-hits/op")
+						b.ReportMetric(float64(cli.responseBytes), "response-bytes")
+					})
+				}
+			}
+		}
+	}
+}
+
 func TestIntegrationDeleteFolders(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -1212,8 +1429,21 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 	require.NoError(t, service.RegisterService(lps))
 
 	fieldValueRequest := mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-		return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES
+		return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
+			slices.Equal(req.Fields, []string{resource.SEARCH_FIELD_NAME})
 	})
+
+	for _, tc := range folderStorageFailures(t) {
+		t.Run("dashboard search error/"+tc.name, func(t *testing.T) {
+			dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(tc.searchResponse(), tc.err).Once()
+			err := service.Delete(ctx, &folder.DeleteFolderCommand{UID: "uid", OrgID: 1, SignedInUser: user})
+			require.ErrorContains(t, err, tc.want.Error())
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
+			}
+			dashboardK8sclient.AssertExpectations(t)
+		})
+	}
 
 	t.Run("Should delete folder", func(t *testing.T) {
 		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{}).Return(nil).Once()
@@ -1236,6 +1466,7 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 		dashboardK8sclient.On("Delete", mock.Anything, "test2", int64(1), mock.Anything).Return(nil).Once()
 		dashboardK8sclient.On("Search", mock.Anything, int64(1), &resourcepb.ResourceSearchRequest{
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []string{resource.SEARCH_FIELD_NAME},
 			Options: &resourcepb.ListOptions{
 				Labels: []*resourcepb.Requirement{},
 				Fields: []*resourcepb.Requirement{

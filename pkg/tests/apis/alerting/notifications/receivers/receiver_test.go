@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/api"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	v1store "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
@@ -796,7 +797,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	// Prepare environment and create notification policy and rule that use receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
-	var amConfig definitions.PostableUserConfig
+	var amConfig v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
 	// Add more references to the receiver in other routes.
@@ -804,7 +805,7 @@ func TestIntegrationInUseMetadata(t *testing.T) {
 	route1.Routes = nil
 	route2 := route1
 	parentRoute := *amConfig.AlertmanagerConfig.Route.Routes[0]
-	parentRoute.Routes = []*definitions.Route{&route1, &route2}
+	parentRoute.Routes = []*v1store.RouteDB{&route1, &route2}
 	amConfig.AlertmanagerConfig.Route.Routes = append(amConfig.AlertmanagerConfig.Route.Routes, &parentRoute)
 
 	persistInitialConfig(t, amConfig, helper.Org1.Admin)
@@ -1264,7 +1265,7 @@ func TestIntegrationReferentialIntegrity(t *testing.T) {
 	// Prepare environment and create notification policy and rule that use time receiver
 	alertmanagerRaw, err := testData.ReadFile(path.Join("test-data", "notification-settings.json"))
 	require.NoError(t, err)
-	var amConfig definitions.PostableUserConfig
+	var amConfig v1store.AMConfigDB
 	require.NoError(t, json.Unmarshal(alertmanagerRaw, &amConfig))
 
 	persistInitialConfig(t, amConfig, helper.Org1.Admin)
@@ -1633,7 +1634,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 
 // persistInitialConfig helps create an initial config with new receivers using legacy json. Config API blocks receiver
 // modifications, so we need to use k8s API to create new receivers before posting the config.
-func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig, user apis.User) {
+func persistInitialConfig(t *testing.T, amConfig v1store.AMConfigDB, user apis.User) {
 	ctx := context.Background()
 
 	receiverClient, err := v1beta1.NewReceiverClientFromGenerator(user.GetClientRegistry())

@@ -18,8 +18,9 @@ Every label has a bounded set of values, so no request can create new series:
   [Requests](#requests).
 - `route`, `reason`, `state` and `result` take only the values listed in their tables.
 - `status_code` is the response's HTTP status code, so it is limited to the three-digit codes.
-- In middleware mode, requests for groups the router doesn't serve belong to the embedded API
-  server, and are not counted here. The API server's own `apiserver_request_*` metrics cover them.
+- In middleware mode, the router counts all requests in its `/apis` and `/openapi/v3` trees after
+  the startup handoff, including embedded groups and unknown paths. The embedded API server also
+  records its own `apiserver_request_*` metrics for requests that reach it.
 - Watches are long-running requests. They are counted in `grafana_router_http_requests_total`
   when they end and in `grafana_router_longrunning_requests` while they run, never in the duration
   histogram or the in-flight gauge.
@@ -45,9 +46,10 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_source_last_success_timestamp_seconds` | gauge | `source` | When each source last loaded successfully |
 | `grafana_router_source_polls_total` | counter | `source`, `result` | Load or poll attempts: `success` or `failure` |
 | `grafana_router_stack_lookups_total` | counter | `result` | Single-tenant stack lookups: `cache_hit`, `resolved`, `not_found`, `throttled`, `error` |
+| `grafana_router_stack_discovery_cache_total` | counter | `result` | Single-tenant discovery requests looked up in the cache shared by each stack's callers: `hit`, `miss`. Absent when `st_discovery_cache_bytes = 0` |
 
-Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `local-plugin`
-and `dummy`.
+Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `local-plugin`,
+`dev` (`[router.dev.<name>]`, #135990) and `embedded`.
 
 Every cloud source (`aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`) is polled
 and records every poll, so a stale last success means the source is failing.
@@ -55,9 +57,11 @@ and records every poll, so a stale last success means the source is failing.
 A skipped backend is not served, and its group falls back to a lower-priority source if one offers
 it. Each skip is logged with its error, which says why. Backends are skipped by:
 
-- `plugins_url` and `core_url`: a manifest `NewPluginBackend` rejects, such as for a group that
+- `plugins_url` and `core_url`: a manifest `newPluginBackend` rejects, such as for a group that
   isn't a plugin group or a routable core group (`routableCoreGroups`), or one with no served
   versions;
+- `plugins_url` and `core_url`: an entry with manifests whose plugin ID isn't an app plugin ID, or,
+  for `plugins_url`, an entry with no ID (`validatePluginID`, #135273);
 - `plugins_url`, `core_url` and `aggregate:<target>`: a backend whose key could not be computed,
   which is not expected to happen.
 
@@ -72,13 +76,15 @@ retried with backoff.
 
 | Metric | Type | Labels | Meaning |
 | --- | --- | --- | --- |
-| `grafana_router_breaker_state` | gauge | `group`, `state` | 1 for the group's current breaker state (`closed`, `half-open`, `open`), 0 for the others |
+| `grafana_router_breaker_state` | gauge | `group`, `state` | 1 for the group's current breaker state (`closed`, `half-open`, `open`), 0 for the others. An open breaker stays `open` past its timeout until a request makes the trial: scrapes never move it |
 | `grafana_router_breaker_transitions_total` | counter | `group`, `state` | Breaker state changes, by the state entered |
 | `grafana_router_backend_failures_total` | counter | `group`, `plugin_id`, `reason` | Requests whose backend failed: `breaker_open`, `timeout`, `transport`, `redirect_rejected`, `stack_origin_mismatch`, `auth` (a plugin token exchange failed) |
 | `grafana_router_discovery_results_total` | counter | `group`, `result` | How aggregated discovery was obtained: `provided`, `cached`, `fetched`, `stale`, `unavailable` |
 
 Groups on the single-tenant fallback keep one breaker per destination host and group, so they have no
-`grafana_router_breaker_state` series.
+`grafana_router_breaker_state` series. Embedded groups bypass circuit breaking and also have no series.
+For `dashboard.grafana.app`, the series reflects only its multi-tenant backend: requests sent to a
+single-tenant stack count against that stack's breaker instead.
 
 ## Requests
 
@@ -92,7 +98,7 @@ Groups on the single-tenant fallback keep one breaker per destination host and g
 `verb` is one of:
 
 - a Kubernetes verb, for resource requests: `get`, `list`, `watch`, `create`, `update`, `patch`,
-  `delete`, `deletecollection` or `proxy`;
+  `delete` or `deletecollection`;
 - the lowercased HTTP method, for paths outside the resource API such as `/apis`, `/apis/<group>`
   and `/openapi/v3`: `get`, `head`, `options`, `post`, `put`, `patch`, `delete`, `connect` or
   `trace`;
@@ -104,15 +110,19 @@ including watches the router rejects (for example with a 401, or a 400 for a Web
 
 `route` says how the router dispatched the request:
 `backend` (the group's backend), `fallback` (the single-tenant fallback), `discovery` (root
-discovery the router builds), `next` (not the router's; passed on), `invalid` (rejected before
-routing) or `unauthenticated` (rejected because the caller did not authenticate, in the standalone
-router).
+discovery and `/apis/discovery`, which the router builds), `not_found` (no handler for the path), `invalid` (rejected before
+routing, such as a non-canonical path or the deprecated `/watch/` or `/proxy/` path), `unauthenticated` (rejected
+because the caller did not authenticate, in the standalone router) or `forbidden` (rejected because
+the path names a namespace the caller may not use).
+
+The router previously reported unhandled paths as `route="next"`. Queries selecting that label must
+use `route="not_found"` for the new behavior, or match both during a rolling upgrade.
 
 ## Plugin calls
 
 | Metric | Type | Labels | Meaning |
 | --- | --- | --- | --- |
-| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `source`, `plugin_id`, `method`, `status_code` | Latency of gRPC calls to plugin deployments; `source` is `plugins_url` or `core_url` |
+| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `source`, `plugin_id`, `method`, `status_code` | Latency of gRPC calls to plugin deployments; `source` is `plugins_url`, `core_url` or `dev`, and `plugin_id` is the API group for a `core_url` entry without a plugin ID |
 | `grafana_router_plugin_grpc_request_retries_total` | counter | `source`, `plugin_id`, `method` | Retries of unary gRPC calls to plugin deployments (`[router.backend_grpc]` `retry_max`) |
 
 Each plugin deployment's connection (`plugins_url` or `core_url`) records its calls with dskit's client interceptors, and propagates
@@ -174,3 +184,4 @@ sum by (plugin_id) (
 | Discovery served stale | `sum by (group) (rate(grafana_router_discovery_results_total{result=~"stale|unavailable"}[5m]))` |
 | Stack lookup cache hit ratio | `rate(grafana_router_stack_lookups_total{result="cache_hit"}[5m]) / sum(rate(grafana_router_stack_lookups_total[5m]))` |
 | Throttled stack lookups | `rate(grafana_router_stack_lookups_total{result="throttled"}[5m])` |
+| Stack discovery cache hit ratio | `rate(grafana_router_stack_discovery_cache_total{result="hit"}[5m]) / sum(rate(grafana_router_stack_discovery_cache_total[5m]))` |

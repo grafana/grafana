@@ -234,8 +234,10 @@ func NewAPIService(
 	roleBindingsAuthorizer := roleBindingsApiInstaller.GetAuthorizer()
 	serviceAccountAuthorizer := newServiceAccountAuthorizer(accessClient)
 	teamLBACAuthorizer := newTeamLBACRuleAuthorizer(teamLBACApiInstaller.GetAuthorizer())
+	teamLBACUsageAuthorizer := teamLBACApiInstaller.GetTeamLBACUsageAuthorizer()
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	userAuthorizer := newUserAuthorizer(accessClient)
+	whoamiAuthorizer := newWhoamiAuthorizer()
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -280,6 +282,10 @@ func NewAPIService(
 					return authorizer.DecisionDeny, "no identity found", apierrors.NewUnauthorized("no identity found in context")
 				}
 
+				if a.GetResource() == "whoami" {
+					return whoamiAuthorizer.Authorize(ctx, a)
+				}
+
 				if a.GetResource() == "globalroles" {
 					if user.GetIdentityType() != types.TypeAccessPolicy {
 						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
@@ -295,6 +301,9 @@ func NewAPIService(
 
 				if a.GetResource() == "teamlbacrules" {
 					return teamLBACAuthorizer.Authorize(ctx, a)
+				}
+				if a.GetResource() == "teamlbacusage" {
+					return teamLBACUsageAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == "roles" {
@@ -467,6 +476,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 	}
 
+	if enableAuthInfoApi {
+		if err := b.UpdateAuthInfoAPIGroup(opts, storage); err != nil {
+			return err
+		}
+	}
+
 	if enableUserApi {
 		if err := b.UpdateUsersAPIGroup(opts, storage, enableZanzanaSync, enableTeamsApi); err != nil {
 			return err
@@ -475,12 +490,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	if enableServiceAccountsApi {
 		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableZanzanaSync, enableServiceAccountTokensApi); err != nil {
-			return err
-		}
-	}
-
-	if enableAuthInfoApi {
-		if err := b.UpdateAuthInfoAPIGroup(opts, storage); err != nil {
 			return err
 		}
 	}
@@ -593,10 +602,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	if teamStorage == nil && b.legacyTeamStore != nil {
 		teamStorage = b.legacyTeamStore
 	}
-	teamGetter, ok := teamStorage.(rest.Getter)
-	if !ok {
-		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team getter storage")
-	}
 	teamLister, ok := teamStorage.(rest.Lister)
 	if !ok {
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team lister storage")
@@ -612,7 +617,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	// /teamlbacrules/{name}/for-subject/{type}/{uid}.
 	storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")] = teamlbacapi.NewRulesForSubjectREST(
 		teamLBACRuleGetter,
-		teamGetter,
 		teamLister,
 		b.tracing,
 		b.reg,
@@ -722,10 +726,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAuthInfoAPIGroup(opts builder
 		return err
 	}
 
-	authInfoStore := rest.Storage(authInfoUniStore)
+	guardedUniStore := authinfo.NewGuardedStore(authInfoUniStore)
+	authInfoStore := rest.Storage(guardedUniStore)
 
 	if b.authInfoLegacyStore != nil {
-		dw, err := opts.DualWriteBuilder(authInfoResource.GroupResource(), b.authInfoLegacyStore, authInfoUniStore)
+		dw, err := opts.DualWriteBuilder(authInfoResource.GroupResource(), b.authInfoLegacyStore, guardedUniStore)
 		if err != nil {
 			return err
 		}
@@ -733,6 +738,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAuthInfoAPIGroup(opts builder
 	}
 
 	storage[authInfoResource.StoragePath()] = authInfoStore
+	b.authInfoStorage = authInfoStore
 	return nil
 }
 
@@ -772,6 +778,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	}
 
 	b.userGetter = userStore
+	if authInfos, ok := b.authInfoStorage.(user.AuthInfoStorage); ok && !readOnly {
+		userStore = user.NewCascadeDeleter(userStore, authInfos)
+	}
 	var userAPIStore rest.Storage = storewrapper.New(
 		userStore,
 		iamv0.UserResourceInfo.GroupResource(),
@@ -992,6 +1001,8 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 			}},
 	}
 
+	oas.Components.Schemas[compBase+"CurrentUserInfo"].Properties["identity"] = oas.Components.Schemas[compBase+"Display"].Properties["identity"]
+
 	// Patch /tokens endpoints: wire request/response schemas, rename {path} to {tokenName}.
 	serviceaccounttoken.PostProcessOpenAPI(oas)
 
@@ -1122,6 +1133,9 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		routes = append(routes, b.ssoLoginConfig.GetAPIRoutes(defs))
 	}
 	routes = append(routes, searchRoutes...)
+	if b.features.TeamLBACRulesAPI {
+		routes = append(routes, b.teamLBACApiInstaller.GetTeamLBACUsageRoutes(defs))
+	}
 	return mergeAPIRoutes(routes...)
 }
 
@@ -1156,6 +1170,8 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 		return team.ValidateOnCreate(ctx, b.teamSearchClient, typedObj, b.externalGroupReconciler)
 	case *iamv0.TeamBinding:
 		return teambinding.ValidateOnCreate(ctx, typedObj, b.teamGetter, b.userGetter)
+	case *iamv0.AuthInfo:
+		return authinfo.ValidateOnCreate(ctx, typedObj, b.userGetter)
 	case *iamv0.ResourcePermission:
 		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj, b.mappers)
 	case *iamv0.Role:
@@ -1204,6 +1220,12 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 			return fmt.Errorf("expected old object to be a TeamBinding, got %T", oldObj)
 		}
 		return teambinding.ValidateOnUpdate(ctx, typedObj, oldTeamBindingObj)
+	case *iamv0.AuthInfo:
+		oldAuthInfoObj, ok := oldObj.(*iamv0.AuthInfo)
+		if !ok {
+			return fmt.Errorf("expected old object to be an AuthInfo, got %T", oldObj)
+		}
+		return authinfo.ValidateOnUpdate(ctx, typedObj, oldAuthInfoObj)
 	case *iamv0.Role:
 		oldRoleObj, ok := oldObj.(*iamv0.Role)
 		if !ok {

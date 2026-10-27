@@ -357,10 +357,6 @@
     },
     "ai": {
       "error-boundary": {
-        "alert-rule-button": "AI 경고 규칙 버튼을 로드하지 못했습니다",
-        "feedback-button": "AI 피드백 버튼을 로드하지 못했습니다",
-        "improve-annotations-button": "AI 주석 개선 버튼을 로드하지 못했습니다",
-        "improve-labels-button": "AI 라벨 개선 버튼을 로드하지 못했습니다",
         "template-button": "AI 템플릿 버튼을 로드하지 못했습니다",
         "triage-button": "AI 분류 버튼을 로드하지 못했습니다"
       }
@@ -448,6 +444,11 @@
       "text-loading-rules": "규칙 로딩 중...",
       "title-search-alert-rule": "경고 규칙 검색",
       "title-select-alert-instances": "경고 인스턴스 선택"
+    },
+    "alert-instance-silence-action": {
+      "silence": "",
+      "subtitle": "",
+      "title": ""
     },
     "alert-instance-state-filter": {
       "state": "상태"
@@ -1136,6 +1137,8 @@
       }
     },
     "editor": {
+      "duplicate-alert-rule": "",
+      "duplicate-recording-rule": "",
       "edit-alert-rule": "경고 규칙 편집",
       "edit-recording-rule": "기록 규칙 편집",
       "new-alert-rule": "새 경고 규칙",
@@ -1430,6 +1433,39 @@
       "saving": "저장 중...",
       "title-error-saving-receiver": "수신자 저장 중 오류 발생"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "result-count": {
+        "alert-rules_other": "",
+        "recording-rules_other": ""
+      },
+      "shared": {
+        "load-more": "",
+        "load-more-error": "",
+        "loading-rules": "",
+        "refresh-error": "",
+        "retry": ""
+      },
+      "status": {
+        "error": "",
+        "firing": "",
+        "no-data": "",
+        "normal": "",
+        "paused": "",
+        "pending": "",
+        "recording": "",
+        "recovering": "",
+        "unavailable": ""
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Alertmanager 설정을 변경하려면 경고 관리 페이지로 이동하세요. 액세스 권한이 없는 경우 관리자에게 문의하세요.",
       "admin-hint-external": "Alertmanager 설정을 변경하려면 경고 관리 페이지로 이동하세요. 액세스 권한이 없는 경우 관리자에게 문의하세요.",
@@ -1695,8 +1731,12 @@
       },
       "preview": {
         "error": "콘텐츠 로딩 실패: {{error}}",
+        "hide-secrets": "",
         "loading": "콘텐츠 로딩 중...",
         "notifications-title": "알림 구성 미리 보기",
+        "redaction-error": "",
+        "reveal-disabled-tooltip": "",
+        "reveal-secrets": "",
         "rules-title": "경고 규칙 미리 보기"
       },
       "recording-rules": "기록 규칙",
@@ -1750,8 +1790,10 @@
         "autosync-tooltip-unsupported": "이 Alertmanager 유형에 대해 자동 동기화를 이용할 수 없습니다. 활성화하려면 Mimir 또는 Cortex 데이터 소스를 선택하세요.",
         "datasource": "Alertmanager 데이터 소스",
         "datasource-autosync-badge": "자동 동기화",
+        "embedded-yaml-parse-error": "",
         "heading": "알림 리소스 가져오기",
-        "next-disabled-tooltip": "필수 필드를 입력하고 검증이 완료될 때까지 기다린 후 계속하세요.",
+        "invalid-alertmanager-config": "",
+        "next-disabled-tooltip": "",
         "no-datasources": "Alertmanager 데이터 소스를 찾을 수 없습니다.",
         "no-permission-desc": "알림 리소스를 가져올 수 있는 권한이 없습니다. <strong>alerting.notifications:write</strong> 권한이 필요합니다. 이 단계를 건너뛸 수 있습니다.",
         "no-permission-title": "권한 부족",
@@ -1789,6 +1831,7 @@
         "yaml-desc": "허용되는 파일 유형: {{extensions}}",
         "yaml-file": "Alertmanager 구성 YAML",
         "yaml-invalid-type": "파일은 YAML 파일({{extensions}})이어야 합니다.",
+        "yaml-parse-error": "",
         "yaml-remove": "{{name}} 삭제",
         "templates-added-title_other": "템플릿 파일 추가됨"
       },
@@ -2097,8 +2140,8 @@
       "add-matcher": "일치 조건 추가",
       "aria-label-operator": "연산자",
       "aria-label-remove-matcher": "일치 조건 제거",
-      "label-alert-rule": "경고 규칙",
       "label-label": "라벨",
+      "label-matching-labels": "",
       "label-operator": "작업 수행자",
       "label-refine-affected-alerts": "영향을 받는 경고 수정",
       "label-value": "값",
@@ -2115,14 +2158,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "최대 데이터 포인트",
-      "tooltip-max-data-points": "시리즈당 최대 데이터 포인트. 일부 데이터 소스에 바로 사용하며 자동 간격 계산에 사용합니다. 스트리밍 데이터를 사용하면 이 값이 롤링 버퍼에 사용됩니다."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "신규"
     },
     "min-interval-option": {
       "label-interval": "간격",
-      "tooltip-interval": "데이터 소스로 전송된 간격입니다. 데이터 기록 빈도에 맞춰 설정하는 것이 좋습니다. 예를 들어, 데이터가 1분마다 기록된다면 <1>1분</1>으로 설정하세요."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -2722,7 +2765,8 @@
     "recording-rules": {
       "description-target-data-source": "기록 규칙을 저장할 Prometheus 데이터 소스",
       "label-target-data-source": "대상 데이터 소스",
-      "target-data-source-required": "대상 데이터 소스를 선택하세요."
+      "target-data-source-required": "대상 데이터 소스를 선택하세요.",
+      "target-data-sources-error": ""
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "기록 규칙에 대한 네임스페이스 및 그룹을 선택하세요.",
@@ -3381,6 +3425,7 @@
       "schedule": "일정 예약"
     },
     "silence-grafana-rule-drawer": {
+      "subtitle": "",
       "title-silence-alert-rule": "경고 규칙 끄기"
     },
     "silence-period": {
@@ -3429,7 +3474,11 @@
       "preview-affected-instances": "이 알림 끄기의 영향을 받는 경고 인스턴스를 미리보기합니다."
     },
     "silences-editor": {
+      "alert-rule-unavailable": "",
       "comment-placeholder-details-about-the-silence": "알림 끄기에 대한 세부 정보",
+      "description-alert-rule-scope": "",
+      "description-alert-rule-unavailable": "",
+      "label-alert-rule": "",
       "label-comment": "코멘트",
       "label-created-by": "생성자",
       "label-duration": "지속 시간",
@@ -3883,6 +3932,11 @@
     "viz-wrapper": {
       "table": "표"
     },
+    "watchers-banner": {
+      "description": "",
+      "open-button": "",
+      "title": ""
+    },
     "welcome-header": {
       "description-alert-activity": "현재 알림 내용을 확인하고 과거 데이터를 탐색하여 현재 또는 과거 문제를 조사합니다.",
       "description-alert-rules": "경고 규칙이 발동되기 전에 충족되어야 하는 조건을 정의합니다",
@@ -4056,6 +4110,11 @@
   },
   "app-chrome": {
     "skip-content-button": "주요 콘텐츠로 건너뛰기",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "로그인"
     }
@@ -4518,8 +4577,7 @@
       "delete-warning": "이 작업을 수행하면 이 폴더와 모든 하위 폴더가 삭제됩니다. ",
       "folder-empty": "선택한 폴더가 비어 있습니다",
       "folder-not-empty": "선택한 폴더에 삭제될 리소스가 포함되어 있습니다",
-      "missing-info": "필수 입력 항목 누락",
-      "success-message": "폴더가 삭제되었습니다"
+      "missing-info": "필수 입력 항목 누락"
     },
     "empty-state": {
       "button-title": "대시보드 생성",
@@ -4620,6 +4678,7 @@
       "empty-message": "이 폴더에 무엇이 포함되어 있는지와 올바른 대시보드를 어디에서 찾을 수 있는지 설명하는 README를 추가하세요.",
       "load-error-retry": "다시 시도",
       "load-error-title": "이 문서를 로딩하지 못했습니다.",
+      "metadata-label": "",
       "panel-label": "폴더 문서",
       "parse-error": "이 문서를 표시할 수 없습니다.",
       "tab-contributing": "기여",
@@ -5017,6 +5076,9 @@
         "auto": "자동"
       }
     },
+    "tooltip": {
+      "dialog-label": ""
+    },
     "tooltip-options": {
       "label-disable-one-click": "원클릭 요소에 대해 비활성화",
       "name-tooltip-mode": "툴팁 모드",
@@ -5109,6 +5171,7 @@
       "no-matches": "일치하는 항목 없음",
       "more-panels_other": "일치하는 패널{{count}}개 더"
     },
+    "dialog-label": "",
     "empty-state": {
       "button-title": "Grafana Assistant로 검색",
       "message": "찾은 결과 없음"
@@ -5157,6 +5220,10 @@
   },
   "connections": {
     "add-new-connection": {
+      "add-category": "",
+      "add-type": "",
+      "all-categories": "",
+      "all-types": "",
       "category": "카테고리",
       "clear": "지우기",
       "filter-by-category": "카테고리별 필터링",
@@ -5185,7 +5252,10 @@
         "by-published-date": "게시일순",
         "by-updated-date": "업데이트 날짜순"
       },
+      "remove-filter-value": "",
       "reset-filters": "필터 재설정",
+      "selected-categories": "",
+      "selected-types": "",
       "sort": "정렬",
       "sort-list": "플러그인 목록 정렬",
       "state": "상태",
@@ -5985,6 +6055,24 @@
       "tooltip-next": "다음",
       "tooltip-previous": "이전"
     },
+    "modes": {
+      "agent-edit": "",
+      "change-mode": "",
+      "current": "",
+      "discard": "",
+      "discard-body": "",
+      "discard-title": "",
+      "edit": "",
+      "edit-description": "",
+      "empty": "",
+      "label": "",
+      "save-before-viewing": "",
+      "switch-to-editing": "",
+      "switch-to-viewing": "",
+      "view": "",
+      "view-changes": "",
+      "view-description": ""
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Assistant 스키마 편집"
@@ -6061,6 +6149,20 @@
       "placeholder-search-options": "검색 옵션",
       "visualization-button-tooltip": "검색 옵션"
     },
+    "panel-editor": {
+      "ad-hoc-transformations-disabled": ""
+    },
+    "plan-building-overlay": {
+      "quip-corners": "",
+      "quip-green": "",
+      "quip-gridlines": "",
+      "quip-legend": "",
+      "quip-metrics": "",
+      "quip-pie-charts": "",
+      "quip-points": "",
+      "quip-series": "",
+      "title": ""
+    },
     "plan-placeholder-badge": {
       "text": "샘플 데이터",
       "tooltip": "표시된 숫자는 설명을 위한 샘플 데이터이며 실제 쿼리에서 가져온 값이 아닙니다."
@@ -6099,6 +6201,9 @@
           "no-template-variables-found": "템플릿 변수를 찾을 수 없습니다."
         }
       }
+    },
+    "review": {
+      "no-changes": ""
     },
     "rows-layout": {
       "cancel": "취소",
@@ -7103,8 +7208,7 @@
       "delete-error": "대시보드 삭제 실패",
       "deleting": "삭제 중…",
       "drawer-title": "프로비저닝된 대시보드 삭제",
-      "no-repository-selected": "삭제에 필요한 리포지토리 누락",
-      "success-message": "대시보드가 성공적으로 삭제되었습니다"
+      "no-repository-selected": "삭제에 필요한 리포지토리 누락"
     },
     "description-label": {
       "description": "설명"
@@ -7141,6 +7245,7 @@
       "copy": "클립보드로 복사",
       "learn-more": "자세히 알아보기",
       "no-issues": "이 쿼리에 대한 오류나 알림이 없습니다.",
+      "no-panel-issues": "",
       "severity-error": "오류",
       "severity-info": "정보",
       "severity-warning": "경고"
@@ -7303,6 +7408,56 @@
       "last-edited": "<person /> 님({{timeAgo}}에)",
       "usage-count_other": "{{count}}개의 대시보드에서 사용됨"
     },
+    "lifecycle": {
+      "applied": "",
+      "apply": "",
+      "apply-body": "",
+      "apply-failed": "",
+      "apply-needs-edit": "",
+      "breadcrumb-draft": "",
+      "breadcrumb-pending-changes": "",
+      "change-added": "",
+      "change-badge-parts": "",
+      "change-edited": "",
+      "change-layout": "",
+      "change-layout-detail": "",
+      "change-panel": "",
+      "change-removed": "",
+      "change-setting": "",
+      "change-variable": "",
+      "compare": "",
+      "compare-base": "",
+      "compare-base-unknown": "",
+      "compare-changes": "",
+      "compare-empty": "",
+      "compare-json": "",
+      "compare-latest": "",
+      "compare-loading": "",
+      "compare-title": "",
+      "discard": "",
+      "discard-draft-body": "",
+      "discard-draft-failed": "",
+      "discard-draft-title": "",
+      "discard-pending-body": "",
+      "discard-pending-failed": "",
+      "discard-pending-title": "",
+      "draft-body": "",
+      "draft-body-source": "",
+      "draft-title": "",
+      "highlight-changes": "",
+      "open-to-save": "",
+      "pending-body": "",
+      "pending-body-source": "",
+      "pending-hint": "",
+      "pending-stale": "",
+      "pending-title": "",
+      "preview-changes": "",
+      "rebase": "",
+      "save": "",
+      "show-original-dashboard": "",
+      "stop-highlighting-changes": "",
+      "apply-title_other": ""
+    },
     "link-edit-actions": {
       "add-link": "링크 추가",
       "remove-link": "링크 제거",
@@ -7331,14 +7486,10 @@
       "already-in-folder": "대시보드가 이미 선택한 폴더에 있습니다.",
       "api-error": "대시보드를 이동하지 못했습니다",
       "cancel-action": "취소",
-      "current-file-not-found": "현재 대시보드 파일을 찾을 수 없습니다",
       "drawer-title": "프로비저닝된 대시보드 이동",
-      "file-load-error": "대시보드 로딩 중 오류 발생",
-      "loading-dashboard-data": "대시보드 데이터 로딩 중",
       "move-action": "대시보드 이동",
       "move-read-only-message": "리포지토리가 읽기 전용이므로 이 대시보드를 Grafana에서 직접 이동할 수 없습니다. 이 대시보드를 이동하려면 Git 리포지토리에서 파일을 이동하세요.",
       "moving": "이동 중...",
-      "success-message": "대시보드가 성공적으로 이동되었습니다",
       "target-path-label": "대상 경로",
       "title-this-repository-is-read-only": "이 리포지토리는 읽기 전용입니다"
     },
@@ -7540,6 +7691,26 @@
       "confirmText-restore-version": "네, {{version}} 버전으로 복구해 주세요",
       "title-restore-version": "버전 복구"
     },
+    "sandbox-consent": {
+      "allow": "",
+      "allow-tooltip": "",
+      "always-allow": "",
+      "always-allow-tooltip": "",
+      "banner-description": "",
+      "modal-title": "",
+      "resources-from-urls": "",
+      "review": "",
+      "select-all": "",
+      "truncated": "",
+      "url-repeats": "",
+      "allowed-always_other": "",
+      "allowed-panels_other": "",
+      "banner-title_other": "",
+      "resources_other": "",
+      "resources-at-least_other": "",
+      "sources_other": "",
+      "url-count_other": ""
+    },
     "save-button": {
       "save": "저장",
       "save-and-overwrite": "저장 및 덮어쓰기",
@@ -7601,6 +7772,7 @@
       "show-variables-warning-alert-title": "변수 쿼리에 실패했습니다."
     },
     "save-errors": {
+      "forbidden": "",
       "unexpected": "저장하는 동안 예기치 않은 오류가 발생했습니다."
     },
     "save-library-viz-panel-modal": {
@@ -7901,7 +8073,10 @@
     "support-bundle": "<1>지원 번들 섹션</1>에서 Grafana 인스턴스 및 구성된 데이터 소스에 대한 정보가 포함된 지원 번들을 검색할 수도 있습니다."
   },
   "dashboard-schema-editor": {
+    "editor-label": "",
     "json-disabled-tooltip": "YAML 구문 오류를 수정하여 JSON으로 전환",
+    "schema-load-error": "",
+    "schema-load-error-description": "",
     "yaml-disabled-tooltip": "JSON 구문 오류를 수정하여 YAML로 전환"
   },
   "dashboard-settings": {
@@ -8320,6 +8495,7 @@
     },
     "resource-picker-popover": {
       "cancel": "취소",
+      "dialog-label": "",
       "folder": "폴더",
       "select": "선택",
       "url": "URL"
@@ -8742,6 +8918,9 @@
       "unknown-type-tooltip": "이 데이터 소스에서 이 메트릭에 대해 인식된 유형을 보고하지 못했습니다"
     },
     "metrics-list": {
+      "add-label-to-query": "",
+      "add-metric-to-query": "",
+      "add-value-to-query": "",
       "collapse-metric": "{{name}} 접기",
       "error": "메트릭을 불러오지 못했습니다",
       "expand-metric": "{{name}} 펼치기",
@@ -8940,6 +9119,7 @@
       "jump-to-query-label": "쿼리 {{refId}}({{datasourceName}})(오)로 이동"
     },
     "signal-explorer": {
+      "add-to-query": "",
       "empty-text": "데이터 소스를 찾아보려면 쿼리를 추가하세요.",
       "section-label-queries": "쿼리",
       "title-datasource-explorer": "데이터 소스 탐색기",
@@ -9577,6 +9757,9 @@
       "placeholder-numeric-value": "숫자 값",
       "placeholder-value": "값"
     },
+    "tooltip": {
+      "dialog-label": ""
+    },
     "tooltip-options": {
       "description-details": "마우스를 올리면 팝업 표시",
       "description-none": "클릭하여 내용 표시, 마우스를 올릴 때는 표시하지 않음",
@@ -10011,6 +10194,7 @@
             "name-humidity": "습도(%H)",
             "name-locale": "로케일 형식",
             "name-number": "숫자",
+            "name-ordinal": "",
             "name-percent-1": "백분율(0.0~1.0)",
             "name-percent-100": "백분율(0~100)",
             "name-pixels": "픽셀",
@@ -10136,7 +10320,8 @@
           },
           "name": "부피"
         }
-      }
+      },
+      "ordinal-suffix_ordinal_other": ""
     }
   },
   "grafana-ui": {
@@ -10290,7 +10475,8 @@
       "option": "옵션"
     },
     "carousel": {
-      "aria-label-open-image": "이미지 미리 보기 열기"
+      "aria-label-open-image": "이미지 미리 보기 열기",
+      "dialog-label": ""
     },
     "cascader": {
       "clear-button": "선택 초기화"
@@ -10422,6 +10608,7 @@
       "apply": "적용",
       "calendar-icon-label": "시간 선택기",
       "cancel": "취소",
+      "dialog-label": "",
       "next-label": "다음 달",
       "previous-label": "지난 달",
       "select-placeholder": "날짜/시간 선택"
@@ -10692,13 +10879,21 @@
       "cell-filter-out": "값 필터링하여 제외",
       "cell-inspect": "값 검사",
       "cell-inspect-tooltip": "값 검사",
+      "cell-preview": "",
+      "cell-warnings": "",
+      "close-column-visibility": "",
       "column-menu-filter": "값 필터링",
+      "column-menu-hide": "",
       "column-menu-label": "{{name}}의 열 옵션",
+      "column-menu-manage-columns": "",
       "column-menu-update-filter": "필터 업데이트",
+      "column-visibility": "",
+      "columns": "",
       "copy": "클립보드로 복사",
       "csv-counts": "행:{{rows}}, 열:{{columns}}",
       "csv-placeholder": "여기에 CSV를 입력하세요...",
       "edit-column-filter": "{{name}}의 필터 편집",
+      "field-warnings": "",
       "filter": {
         "add-all": "표시된 모든 값을 필터에 추가",
         "blanks": "(공백)",
@@ -10732,6 +10927,8 @@
           "count": "개수"
         }
       },
+      "hide-column-label": "",
+      "hover-expansion-disabled-warning": "",
       "inspect-drawer-title": "값 검사",
       "loading": "테이블 로딩",
       "nested-table": {
@@ -10741,6 +10938,8 @@
       "no-rows": "행 없음",
       "no-values-label": "값 없음",
       "pagination-summary": "{{numRows}}개의 행 중에서 {{itemsRangeStart}}~{{displayedEnd}}",
+      "reorder-column-label": "",
+      "show-column-label": "",
       "sort-by-column": "{{column}} 열 기준으로 정렬",
       "sort-by-column-ascending": "{{column}} 열 기준으로 오름차순 정렬",
       "sort-by-column-descending": "{{column}} 열 기준으로 내림차순 정렬",
@@ -10750,7 +10949,8 @@
       },
       "tooltip": {
         "trigger": "툴팁 토글"
-      }
+      },
+      "wrapping-disabled-warning": ""
     },
     "tags": {
       "list-label": "태그"
@@ -10768,6 +10968,7 @@
       "close": "닫기"
     },
     "toolbar-button-row": {
+      "dialog-label": "",
       "show-more": "더 많은 항목 표시"
     },
     "u-plot": {
@@ -11047,6 +11248,8 @@
       "incident-filter-all": "모든 인시던트",
       "incident-filter-label": "레이블로 인시던트 필터링",
       "incident-tab-label": "인시던트",
+      "on-call-now": "",
+      "on-call-tab-label": "",
       "team-filter-your-teams": "내 팀",
       "title": "경보 및 인시던트",
       "title-alerts": "경보",
@@ -11054,22 +11257,17 @@
     },
     "dashboard-tabs": {
       "most-used": "가장 많이 사용",
-      "most-used-active": "가장 많이 사용된 대시보드",
       "recent": "최근",
-      "recent-active": "최근 대시보드",
       "retry": "다시 시도",
       "starred": "별표 표시",
-      "starred-active": "별표 표시된 대시보드"
-    },
-    "dashboards": {
-      "title": "대시보드",
-      "view-all": "모두 보기"
+      "title": "",
+      "view-all-dashboards": ""
     },
     "firing-alerts-card": {
       "create": "알림 규칙 생성",
-      "empty": "발생한 발사 경보가 없습니다.",
+      "empty": "",
       "empty-selected-label": "",
-      "empty-teams": "팀에 대해 발생한 경보가 없습니다.",
+      "empty-teams": "",
       "error-title": "발생한 경보를 불러올 수 없습니다",
       "severity-critical": "심각",
       "severity-high": "높음",
@@ -11103,8 +11301,8 @@
     },
     "incidents-card": {
       "declare": "인시던트 선언",
-      "empty": "활성 인시던트가 없습니다.",
-      "empty-selected-team": "{{team}}에 활성 인시던트가 없습니다.",
+      "empty": "",
+      "empty-selected-team": "",
       "error-title": "활성 인시던트를 불러올 수 없습니다",
       "title": "활성 인시던트",
       "view-all": "모든 인시던트 보기"
@@ -11121,6 +11319,17 @@
       "error-title": "최근 블로그 게시물을 불러올 수 없습니다",
       "read-more": "Grafana Labs 블로그에서 더 읽어보기",
       "title": "블로그 최근 글"
+    },
+    "on-call-card": {
+      "current-shift": "",
+      "empty": "",
+      "error-failed": "",
+      "error-forbidden": "",
+      "error-not-available": "",
+      "next-shift": "",
+      "next-shift-multi-day": "",
+      "nobody-on-call": "",
+      "view-schedules": ""
     },
     "overview": {
       "available": {
@@ -11227,15 +11436,25 @@
       },
       "title": "옵저버빌리티 스택 개요"
     },
-    "recent-dashboards-tab": {
-      "browse": "대시보드 찾아보기",
-      "clear": "기록 지우기",
-      "create": "첫 번째 대시보드 만들기",
-      "empty": "최근에 본 대시보드가 여기에 표시됩니다.",
-      "empty-description": "데이터를 연결한 후 대시보드를 사용하여 차트, 통계, 표로 데이터를 쿼리하고 시각화하거나 목록, 마크다운 및 기타 위젯을 생성할 수 있습니다.",
-      "error-title": "최근 본 대시보드를 불러올 수 없습니다",
-      "loading": "최근 본 대시보드 로드 중...",
-      "reset": "최근 대시보드 재설정"
+    "recent-activity-tab": {
+      "browse": "",
+      "clear": "",
+      "create": "",
+      "empty": "",
+      "error-title": "",
+      "filter-alerting": "",
+      "filter-all": "",
+      "filter-apps": "",
+      "filter-dashboards": "",
+      "filter-explore": "",
+      "filter-label": "",
+      "filter-pages": "",
+      "kind-alerting": "",
+      "kind-app": "",
+      "kind-dashboard": "",
+      "kind-explore": "",
+      "kind-page": "",
+      "loading": ""
     },
     "recommendations": {
       "application-observability": {
@@ -11805,6 +12024,9 @@
     "signup": {
       "button-label": "회원 가입",
       "new-to-question": "Grafana를 처음 사용하시나요?"
+    },
+    "title": {
+      "sign-in": ""
     }
   },
   "logs": {
@@ -11861,6 +12083,11 @@
       "load-newer": "최근 로그 로딩 중...",
       "load-older": "이전 로그 로딩 중..."
     },
+    "log-details": {
+      "error": {
+        "error-details": ""
+      }
+    },
     "log-labels": {
       "collapse": "라벨 접기",
       "expand": "라벨 펼치기"
@@ -11911,6 +12138,7 @@
       "inline-mode": "인라인 표시",
       "inline-no-scrolls": "확장 보기로 전환",
       "inline-with-scrolls": "간략 보기로 전환",
+      "link-fallback-label": "",
       "link-value-tooltip": "링크 값",
       "links-section": "링크",
       "log-attributes-field": "로그 속성",
@@ -11920,13 +12148,14 @@
       "move-displayed-field-up": "위로 이동",
       "no-details": "표시할 필드가 없습니다.",
       "open-assistant": "Assistant에서 로그 줄 설명",
+      "open-value-in": "",
       "pin-line": "로그 고정",
       "prettify": "보기 좋게 정리",
       "remove-displayed-field": "필드 제거",
       "remove-log": "로그 제거",
       "scroll-to-logline": "로그 라인으로 스크롤",
       "search": {
-        "no-results": "표시할 결과가 없습니다."
+        "no-results": ""
       },
       "search-placeholder": "필드 이름 및 값 검색",
       "show-context": "맥락 보기",
@@ -11938,7 +12167,8 @@
         "loading-message": "트레이스를 불러오는 중…"
       },
       "trace-section": "",
-      "unpin-line": "로그 고정 해제"
+      "unpin-line": "로그 고정 해제",
+      "view-in-traces-drilldown": ""
     },
     "log-line-menu": {
       "copy-link": "링크를 로그 라인에 복사",
@@ -12680,6 +12910,9 @@
     "new-folder": {
       "title": "새 폴더"
     },
+    "new-notebook": {
+      "title": ""
+    },
     "notebooks": {
       "subtitle": "노트북을 생성하고 관리하여 데이터로 스토리를 전달",
       "title": "노트북"
@@ -12826,7 +13059,8 @@
         "close": "{{title}} 닫기",
         "open": "{{title}} 열기",
         "open-all": "AI 어시스턴트 및 사이드바 앱 열기"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "워크스페이스로 이동",
@@ -13006,6 +13240,7 @@
       "visualization": "시각화"
     },
     "cell": {
+      "block-actions": "",
       "code": {
         "aria-label-editor": "코드",
         "aria-label-language": "코드 언어",
@@ -13042,8 +13277,10 @@
       },
       "time-range": {
         "button": "시간 범위 업데이트",
+        "dialog": "",
+        "dialog-label": "",
         "locked": "잠김: {{range}}",
-        "sync-back": "노트북 시간 범위로 다시 동기화",
+        "remove-lock": "",
         "tooltip-default": "패널 시간 범위 잠그기"
       }
     },
@@ -13085,6 +13322,7 @@
       "created-by-me": "내가 작성함",
       "error-conflict": "추가하는 동안 이 노트북이 변경되었습니다. 패널을 최신 버전에 추가하려면 다시 시도하세요.",
       "error-generic": "패널을 노트북에 추가하지 못함",
+      "error-open-conflict": "",
       "list-error": "노트북 로딩 실패",
       "list-error-body": "노트북 로딩 중 오류 발생. 다시 시도하거나 대신 새 노트북을 생성하세요.",
       "list-no-matches": "이 필터와 일치하는 노트북이 없습니다.",
@@ -13093,6 +13331,8 @@
       "list-truncated": "모든 노트북이 표시되는 것은 아닙니다. 검색 범위를 좁혀 다른 항목을 찾습니다.",
       "lock-time-range": "",
       "lock-time-range-description": "",
+      "lock-time-ranges": "",
+      "lock-time-ranges-description": "",
       "search-placeholder": "제목으로 검색",
       "sort-alphabetical": "알파벳순(A–Z)",
       "sort-label": "노트북 정렬",
@@ -13100,13 +13340,20 @@
       "sort-updated": "최근에 업데이트됨",
       "submit": "노트북에 추가",
       "success": "{{title}}에 패널 추가됨",
+      "success-cells": "",
       "success-link": "노트북 보기",
       "tag-placeholder": "태그로 필터링",
       "target-description": "패널을 추가할 위치를 선택합니다.",
       "target-existing": "기존 노트북",
       "target-label": "대상 노트북",
       "target-new": "새 노트북",
-      "title": "노트북에 패널 추가"
+      "title": "노트북에 패널 추가",
+      "undo-label": ""
+    },
+    "add-to-notebook-form": {
+      "title": {
+        "new-panel": ""
+      }
     },
     "autosave": {
       "conflict-cancel": "",
@@ -13136,6 +13383,7 @@
       "add-block": "블록 추가",
       "add-query": "쿼리 추가",
       "add-tag": "태그 추가",
+      "change-visualization": "",
       "delete-block": "블록 삭제",
       "duplicate-block": "블록 복제",
       "duplicate-query": "쿼리 복제",
@@ -13147,13 +13395,16 @@
       "remove-query": "쿼리 제거",
       "remove-tag": "태그 제거",
       "rename": "",
+      "rename-panel": "",
       "reset-cell-time-range": "노트북 시간 범위 사용",
       "select-query": "쿼리 선택",
       "set-cell-time-range": "패널 시간 범위 설정",
       "split-block": "블록 분할",
       "switch-datasource": "데이터 소스 전환",
       "undo": "실행 취소",
-      "undo-action": "실행 취소: {{action}}"
+      "undo-action": "실행 취소: {{action}}",
+      "visualization-replay-error": "",
+      "visualization-rollback-error": ""
     },
     "incidents": {
       "attach-title": "인시던트에 첨부",
@@ -13197,6 +13448,19 @@
     },
     "new": {
       "default-title-with-date": "{{date}} 노트북"
+    },
+    "panel": {
+      "add-title": "",
+      "change-visualization": "",
+      "edit-query": "",
+      "hide-query": "",
+      "open-explore": "",
+      "rename": "",
+      "suggestions-empty": "",
+      "suggestions-error": "",
+      "suggestions-no-data": "",
+      "title-label": "",
+      "visualization-error": ""
     },
     "save-status": {
       "failed": "저장 실패",
@@ -13264,6 +13528,7 @@
         "category": "표준 옵션",
         "category-thresholds": "임계값",
         "category-value-mappings": "값 매핑",
+        "description-ad-hoc": "",
         "description-display-name": "필드 또는 계열 이름 변경",
         "description-field-min-max": "필드당 최소 최대값 계산",
         "description-max": "모든 값을 기준으로 계산하려면 비워둡니다",
@@ -13271,7 +13536,7 @@
         "description-no-value": "값이 없을 때 표시할 항목",
         "description-value-mappings": "입력 값에 따라 표시할 텍스트 수정",
         "name-actions": "작업",
-        "name-ad-hoc": "필터링 가능",
+        "name-ad-hoc": "",
         "name-color-scheme": "색상 구성표",
         "name-data-links": "데이터 링크",
         "name-decimals": "소수(decimal)",
@@ -13346,6 +13611,13 @@
       "placeholder": "이름",
       "required": "제목을 입력하세요",
       "save-tooltip": "저장"
+    }
+  },
+  "page-fallback-loader": {
+    "aria-label": "",
+    "step": {
+      "preparing": "",
+      "preparing-named": ""
     }
   },
   "page-loader": {
@@ -13771,6 +14043,9 @@
       "label-plugin-id": "플러그인 ID",
       "label-severity": "심각도"
     },
+    "marketplace-plugin-banner": {
+      "info": ""
+    },
     "no-updates-available": {
       "message": "모든 플러그인이 최신 상태입니다."
     },
@@ -13792,6 +14067,10 @@
     "plugin-details-body": {
       "needs-service-account": "{{pluginName}} 플러그인을 사용하려면 Grafana에 쿼리를 실행하기 위한 서비스 계정이 필요합니다. 다음 목록에는 서비스 계정에서 사용할 수 있는 권한이 포함되어 있습니다.",
       "page-not-found": "페이지를 찾을 수 없습니다."
+    },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "",
+      "title": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "사용 중단됨"
@@ -13936,6 +14215,7 @@
       "description-folder": "리포지토리 내부의 폴더. 리포지토리 루트의 경우 비워 둡니다.",
       "description-folder-path": "리포지토리 내 폴더 경로",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "구성된 브랜치로 푸시가 비활성화되었습니다",
       "label-branch": "브랜치",
       "label-comment": "댓글",
@@ -15148,11 +15428,6 @@
       "original-query": "원본 쿼리",
       "trace-id": "(트레이스 ID: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "쿼리 추가",
-      "expression": "표현식",
-      "title-data-source-help": "데이터 소스 도움말"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "간격 = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -15192,28 +15467,31 @@
     "accept": "수락",
     "assistant-context-title": "쿼리 공동 작성 콘텍스트",
     "assistant-instructions-title": "쿼리 공동 작성 지침",
-    "assistant-unavailable": "Assistant를 사용할 수 없습니다",
-    "assistant-unavailable-body": "쿼리 공동 작성을 하려면 Grafana Assistant가 필요합니다.",
-    "building": "쿼리 빌드 중...",
+    "assistant-unavailable": "",
+    "building": "",
+    "cancel": "",
+    "change-inside-focus": "",
+    "change-outside-focus": "",
     "checking-assistant": "Assistant 사용 가능 여부 확인 중...",
     "clarification-label": "세부 정보 추가",
     "clarification-message": "명확화 메시지",
-    "clarification-placeholder": "세부 정보 추가...",
+    "clarification-placeholder": "",
     "clarification-title": "세부 정보 요청됨",
     "close": "공동 작성 닫기",
-    "context": "컨텍스트",
-    "context-error": "선택한 쿼리 컨텍스트를 읽을 수 없습니다",
+    "context-error": "",
     "continue": "계속",
     "continue-here": "여기에서 계속하기",
     "continue-in-assistant": "Assistant에서 계속하기",
-    "continue-in-assistant-chat": "Assistant 채팅에서 계속하기",
     "dialog": "쿼리 공동 작성자",
     "dismiss": "무시하기",
     "error": "쿼리 공동 작성 오류",
     "error-accept-failed": "쿼리 제안을 수락할 수 없습니다. 다시 시도하세요.",
     "error-multiple-responses": "Assistant가 서로 상충하는 쿼리 제안을 반환했습니다. 다시 시도하세요.",
     "error-preview-failed": "쿼리 제안을 미리 볼 수 없습니다. 다시 시도하세요.",
+    "explain-failed": "",
     "explain-or-modify": "설명 또는 수정",
+    "explain-query": "",
+    "explaining": "",
     "feedback-cancel": "취소",
     "feedback-description": "피드백은 Grafana에서 쿼리 경험을 개선하는 데 도움이 됩니다.",
     "feedback-error": "피드백을 전송할 수 없습니다. 다시 시도하세요.",
@@ -15224,36 +15502,61 @@
     "feedback-not-helpful": "유용하지 않음",
     "feedback-positive-placeholder": "마음에 드신 점은 무엇인가요? 어떻게 하면 더 좋았을까요?",
     "feedback-positive-title": "잘된 점은 무엇인가요?",
-    "feedback-privacy": "평점, 의견 및 해당 내용이 제안인지 인계인지 여부가 전송됩니다. 쿼리, 프롬프트 및 Assistant 응답은 포함되지 않습니다.",
+    "feedback-privacy": "",
     "feedback-recipient": "피드백은 쿼리를 담당하는 팀으로 전송됩니다.",
     "feedback-send": "전송",
     "feedback-sending": "전송 중…",
-    "focus": "중점 분야",
-    "handoff-guidance": "변경 사항에는 현재 중점을 두고 있는 쿼리 외에 다른 데이터 소스나 추가 쿼리가 포함될 수 있습니다. 더 큰 변경 작업을 하려면 Assistant 채팅에서 계속하세요.",
+    "focus": "",
+    "follow-up-label": "",
+    "follow-up-placeholder": "",
+    "handoff-guidance": "",
     "highlighted-query": "강조 표시된 쿼리",
-    "highlighted-query-summary": "강조 표시된 쿼리 요약",
+    "hold-to-peek": "",
     "invalid-query-response": "Assistant가 제안을 수정하려고 시도했지만 유효한 {{language}}을(를) 생성하지 못했습니다. 다시 시도하거나 더 많은 세부 정보를 추가하세요.",
     "iteration-nudge": "큰 작업을 하고 계신가요? 더 넓은 공간에서 더 큰 변경 사항을 반복해서 작업해 보세요.",
-    "open-in-chat": "채팅에서 열기",
-    "original-change": "원본 {{kind}}",
+    "mention-label": "",
+    "mention-metric": "",
+    "mention-option": "",
+    "mention-suggestions": "",
+    "modify-query": "",
+    "next-option": "",
+    "open-in-chat": "",
+    "option": "",
+    "options": "",
+    "original": "",
+    "original-query": "",
+    "preview-error": "",
+    "preview-error-title": "",
+    "preview-no-data": "",
+    "preview-no-data-suggestion": "",
+    "preview-no-signal": "",
+    "preview-no-signal-title": "",
+    "preview-option": "",
+    "preview-original": "",
+    "preview-result": "",
     "previewing-query": "쿼리 미리 보기 중",
+    "previous-option": "",
     "prompt-label": "쿼리 변경 사항 설명",
-    "prompt-placeholder": "빠른 변경 사항 설명...",
+    "prompt-placeholder": "",
     "proposal-details": "쿼리 제안 세부 정보",
-    "proposed-change": "제안된 {{kind}}",
-    "reading-highlighted-query": "강조 표시된 쿼리 읽기 중...",
+    "query-diff": "",
     "relevant-context": "관련 쿼리 컨텍스트",
     "request-failed": "Assistant가 쿼리 제안을 생성하지 못했습니다. 다시 시도하세요.",
+    "resize-left": "",
+    "resize-right": "",
     "retry": "다시 시도",
+    "retry-context": "",
     "running-updated-query": "업데이트된 쿼리 실행 중...",
+    "select-to-accept": "",
     "selection-ready": "선택 영역은 이 {{language}} 쿼리의 일부입니다.",
     "selection-whole-query": "전체 {{language}} 쿼리가 공동 작성을 위해 선택되었습니다.",
     "selection-with-type": "{{name}}은(는) {{type}} {{kind}}입니다.",
     "stale-query-response": "제안이 준비되기 전에 강조 표시된 쿼리가 변경되었습니다. 무시하고 다시 강조 표시하세요.",
     "stop": "중지",
     "submit": "공동 작성자",
-    "suggestion-updated": "제안이 업데이트됨",
+    "submit-follow-up": "",
     "unchanged-query-response": "Assistant가 변경 없이 현재 쿼리를 반환했습니다. 다시 시도하거나 더 많은 세부 정보를 추가하세요.",
+    "unconfirmed-prefix": "",
     "unsaved-safe": "저장하지 않은 패널 수정 사항은 손실되지 않습니다.",
     "working-focus": "쿼리 포커스"
   },
@@ -15433,6 +15736,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "계속하려면 이 쿼리에 대한 데이터 소스를 선택하세요.",
     "datasource-load-error-title": "이 쿼리에 대한 데이터 소스 로딩 실패",
     "loading-datasource": "데이터 소스 로딩 중",
@@ -15626,6 +15930,7 @@
       "expand": "펼치기",
       "filter": "",
       "loading": "대시보드 로딩 중",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "쿼리에 대해 찾은 결과 없음",
       "noResultsForFilterClear": "검색 초기화",
       "noResultsForScopes": "선택한 범위에 대해 찾은 대시보드 또는 링크 없음",
@@ -15859,14 +16164,7 @@
       "time-range": "시간 범위 잠그기"
     },
     "export": {
-      "back-button": "내보내기 구성으로 돌아가기",
-      "cancel-button": "취소",
-      "info-text": "이 대시보드를 내보냅니다.",
-      "loading": "로딩 중...",
-      "save-button": "파일로 저장",
-      "share-externally-label": "외부 공유를 위해 내보내기",
-      "view-button": "JSON 보기",
-      "view-button-yaml": "YAML 보기"
+      "share-externally-label": "외부 공유를 위해 내보내기"
     },
     "image": {
       "actions": "이미지 내보내기 작업",
@@ -15924,9 +16222,6 @@
       "dark": "다크",
       "field-name": "테마",
       "light": "라이트"
-    },
-    "view-json": {
-      "copy-button": "클립보드로 복사"
     }
   },
   "share-panel": {
@@ -16345,8 +16640,61 @@
   },
   "swagger": {
     "login": "로그인",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "요청을 보내기 전에 네임스페이스를 확인하거나 페이지를 새로고친 후 다시 시도하세요.",
-    "namespace-unavailable-title": "네임스페이스 로딩 불가"
+    "namespace-unavailable-title": "네임스페이스 로딩 불가",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16396,9 +16744,13 @@
     "description-frozen-columns": "테이블의 왼쪽부터 열이 고정되어 있습니다.",
     "description-min-column-width": "열 자동 크기 조정을 위한 최소 너비",
     "description-page-size": "페이지당 행 수. 비어 있는 경우 페이지 크기는 패널 높이를 기준으로 합니다.",
+    "description-show-columns-sidebar": "",
     "description-styling-from-field": "CSS 속성이 있는 JSON 객체가 포함된 필드",
     "description-tooltip-from-field": "툴팁에서 (숨겨져 있거나 표시된) 필드의 셀을 렌더링합니다.",
     "description-zebra-striping": "한 행씩 번갈아 배경색 적용",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "쿼리"
     },
@@ -16434,7 +16786,9 @@
     "name-max-height": "",
     "name-min-column-width": "열 최소 너비",
     "name-page-size": "페이지 크기",
+    "name-show-columns-sidebar": "",
     "name-show-table-header": "테이블 머리말 표시",
+    "name-sparkline-show-tooltip": "",
     "name-styling-from-field": "필드에서 스타일링",
     "name-tooltip-from-field": "필드 툴팁",
     "name-tooltip-placement": "툴팁 배치",
@@ -16597,6 +16951,7 @@
     "editor": {
       "aria-label-content": "텍스트 내용",
       "aria-label-mode": "텍스트 모드: {{mode}}",
+      "feedback": "",
       "footer-line-numbers": "라인 번호",
       "format-bold": "B",
       "format-heading": "H",
@@ -16642,6 +16997,10 @@
     "sandbox": {
       "diagram-error": "",
       "title": ""
+    },
+    "truncation": {
+      "label": "",
+      "tooltip": ""
     }
   },
   "theme-playground": {
@@ -16710,6 +17069,7 @@
     "range-picker": {
       "backwards-time-aria-label": "시간 범위를 이전으로 변경",
       "current-time-selected": "선택한 시간 범위: {{currentTimeRange}}",
+      "dialog-label": "",
       "forwards-time-aria-label": "시간 범위를 이후로 변경",
       "to": "종료",
       "zoom-out-button": "시간 범위 확대",
@@ -16719,6 +17079,7 @@
       "apply": "시간 범위 적용",
       "aria-role": "시간 범위 선택",
       "default-title": "시간 범위",
+      "dialog-label": "",
       "example-title": "시간 범위 예시",
       "from-label": "최저",
       "from-to": "{{timeOptionFrom}}~{{timeOptionTo}}",
@@ -17094,6 +17455,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "정규식 패턴을 사용하여 쿼리 결과의 일부를 제거합니다."
       },
+      "deselect-all": "",
       "label-from-variable": "변수에서",
       "label-identifier": "식별자",
       "label-use-variable": "변수 사용",
@@ -17101,7 +17463,8 @@
       "name": {
         "filter-fields-by-name": "이름으로 필드 필터링"
       },
-      "placeholder-regular-expression-pattern": "정규 표현식 패턴"
+      "placeholder-regular-expression-pattern": "정규 표현식 패턴",
+      "select-all": ""
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {
@@ -17932,6 +18295,7 @@
       "body_other": "변수 {{count}}개를 삭제하시겠습니까?"
     },
     "editor": {
+      "back": "",
       "cancel": "취소",
       "delete": "삭제",
       "delete-modal-body": "\"{{name}}\"을(를) 삭제하시겠습니까?",
@@ -17940,6 +18304,7 @@
       "folder-description": "변수의 범위를 폴더로 지정하거나, 루트 대시보드 폴더를 선택하여 전역으로 설정하세요(모든 대시보드에서 사용 가능)",
       "folder-description-folder-only": "변수의 범위를 편집 가능한 폴더로 지정하세요.",
       "folder-label": "폴더",
+      "load-error-title": "",
       "moved": "변수 이동됨",
       "name-exists": "선택한 폴더에 이 이름의 변수가 이미 존재합니다",
       "save": "저장",

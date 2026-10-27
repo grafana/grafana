@@ -3,6 +3,8 @@ import { render, screen } from 'test/test-utils';
 import { config } from '@grafana/runtime';
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 
+import { NotebookAnalytics } from '../analytics/main';
+
 import { AttachToIncidentModal } from './AttachToIncidentModal';
 import { STUB_ATTACH_TESTID, notebookIncidents, stubAttachForm } from './testHelpers';
 import { useNotebookIncidents } from './useNotebookIncidents';
@@ -60,6 +62,32 @@ describe('AttachToIncidentModal', () => {
 
     expect(screen.getByRole('dialog', { name: 'Attach to incident' })).toBeInTheDocument();
     expect(screen.getByTestId(STUB_ATTACH_TESTID)).toBeInTheDocument();
+  });
+
+  // `incident_action_clicked` is the form opening. This is the incident actually having the notebook.
+  describe('reporting the action', () => {
+    beforeEach(() => {
+      jest.spyOn(NotebookAnalytics, 'incidentActionCompleted').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('reports the attach once IRM says the notebook was attached', async () => {
+      const { user } = setup({ incidentTitle: 'Checkout 5xx' });
+
+      await user.click(screen.getByTestId(STUB_ATTACH_TESTID));
+
+      expect(NotebookAnalytics.incidentActionCompleted).toHaveBeenCalledTimes(1);
+      expect(NotebookAnalytics.incidentActionCompleted).toHaveBeenCalledWith('nb1', 'attach');
+    });
+
+    it('reports nothing for a form that was only opened', () => {
+      setup();
+
+      expect(NotebookAnalytics.incidentActionCompleted).not.toHaveBeenCalled();
+    });
   });
 
   // The caption is data IRM persists as the attachment's label, and t() escapes interpolated values

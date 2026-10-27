@@ -1032,7 +1032,15 @@ class MomentCompat implements MomentLike {
       return this._dt.zoneName ?? undefined;
     }
 
-    return this._setDt(this._dt.setZone(normalizeZone(zone), { keepLocalTime }));
+    const normalized = normalizeZone(zone);
+    if (!normalized.isValid) {
+      // Moment clears an unknown named zone but retains its current offset, including across DST.
+      return this._dt.zone.type === 'iana'
+        ? this._setDt(this._dt.setZone(FixedOffsetZone.instance(this._dt.offset)))
+        : this;
+    }
+
+    return this._setDt(this._dt.setZone(normalized, { keepLocalTime }));
   }
 
   clone(): MomentLike {
@@ -1252,12 +1260,15 @@ proto.seconds = proto.second;
 proto.milliseconds = proto.millisecond;
 
 function makeMoment(input?: MomentInput, options?: MomentOptions, parseOptions?: ParseOptions): MomentLike {
+  const zone = options?.zone != null ? normalizeZone(options.zone) : undefined;
+  // The static Moment timezone factory starts in UTC when the requested zone is unknown.
+  const resolvedZone = zone && !zone.isValid ? FixedOffsetZone.instance(0) : zone;
   // Custom valueOf implementations retain the generic Moment-like conversion behavior.
   if (input instanceof MomentCompat && input.valueOf === MomentCompat.prototype.valueOf) {
     const copy = input.clone();
-    return options?.zone ? copy.tz(typeof options.zone === 'string' ? options.zone : options.zone.name) : copy;
+    return resolvedZone ? copy.tz(resolvedZone.name) : copy;
   }
-  const normalizedOptions = options?.zone ? { ...options, zone: normalizeZone(options.zone) } : options;
+  const normalizedOptions = resolvedZone ? { ...options, zone: resolvedZone } : options;
   const dt = normalizeInput(input, normalizedOptions, parseOptions);
   const locale = DateTime.isDateTime(input)
     ? (input.locale ?? DEFAULT_LOCALE)

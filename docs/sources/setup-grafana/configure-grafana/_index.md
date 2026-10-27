@@ -1088,6 +1088,16 @@ This is a comma-separated list of usernames. Users specified here are hidden in 
 
 <hr>
 
+### `[service_accounts]`
+
+#### `token_expiration_day_limit`
+
+The maximum number of days a new service account token can be valid for. When set, Grafana rejects new tokens that have no expiration date or that expire later than this limit. Existing tokens aren't affected. By default, there is no limit.
+
+For more information, refer to [Service account token expiration dates](../../administration/service-accounts/#service-account-token-expiration-dates).
+
+<hr>
+
 ### `[auth]`
 
 Grafana provides many ways to authenticate users. Refer to the Grafana [Authentication overview](../configure-access/configure-authentication/) and other authentication documentation for detailed instructions on how to set up and configure authentication.
@@ -2784,6 +2794,46 @@ Default is `false`.
 
 Set to `true` if you want to test alpha plugins that are not yet ready for general usage. Default is `false`.
 
+#### `enable_local_plugin_auth`
+
+Set to `false` to stop Grafana from signing access tokens for the backend plugins it starts when no external plugin token signer is configured.
+Default is `true`.
+Local signing also requires the `appplugins.loadAppManifest` feature toggle, which is off by default.
+
+With local signing, Grafana passes each plugin process the public key that verifies Grafana's requests, and gives app plugins with an app manifest credentials to call the Grafana API.
+When you set this to `false`, plugins get neither, and the Grafana API doesn't accept locally signed plugin tokens.
+Plugins that verify requests then reject requests from Grafana, unless they skip authentication for local development.
+
+#### `local_api_url`
+
+The URL that app plugins started by this Grafana process use to call the Grafana API and to get access tokens for it.
+Grafana uses this setting only when no external plugin token signer is configured.
+That's when neither `v3_cap_token` nor `v3_token_exchange_url` is set in `[plugins]`, `jwks_url` isn't set in `[auth.extended_jwt]`, and neither the `GRAFANA_JWKS` nor the `GRAFANA_JWKS_URL` environment variable is set.
+Default is empty.
+
+When it's empty, Grafana derives a loopback URL, such as `http://127.0.0.1:3000`, from `[server]` settings.
+This works when `protocol` is `http`, `http_addr` is empty, a loopback address, or all interfaces, and `http_port` is a fixed port.
+If `serve_from_sub_path` is `true`, the URL includes the sub-path from `root_url`.
+
+Set `local_api_url` when Grafana can't derive the URL, for example when it serves HTTPS, listens on a socket or a specific address, or has `enforce_domain` enabled.
+The URL must reach this Grafana process directly, not a load balancer, because each Grafana process signs its own tokens.
+Include the port and any sub-path.
+
+The following example sets the URL for a Grafana process that serves HTTPS on an internal host name:
+
+```ini
+[plugins]
+local_api_url = https://<GRAFANA_HOST>:8443/grafana
+```
+
+Replace _`<GRAFANA_HOST>`_ with a host name that resolves to this Grafana process and matches its TLS certificate.
+If `enforce_domain` is enabled, the host must match `[server] domain`.
+
+Grafana doesn't start if `local_api_url` is invalid.
+If it's empty and Grafana can't derive a URL, Grafana logs a warning and app plugins can't call its API.
+The same happens if `[auth.extended_jwt] audiences` doesn't include `grafana`, which it does by default.
+Grafana still authenticates its own requests to plugins.
+
 #### `allow_loading_unsigned_plugins`
 
 Enter a comma-separated list of plugin identifiers to identify plugins to load even if they are unsigned. Plugins with modified signatures are never loaded.
@@ -3022,9 +3072,11 @@ Properties described in this section are available for all plugins, but you must
 
 If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
 
-### `as_external`
+#### `as_external`
 
-Load an external version of a core plugin if it has been installed.
+If `true`, load the standalone (external) version of a core plugin instead of the core version.
+For most plugins this requires the standalone plugin to be installed. Some plugins, such as
+[canvas](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/canvas/), default to `true` and are bundled with Grafana.
 
 <hr>
 

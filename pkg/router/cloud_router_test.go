@@ -260,9 +260,9 @@ func TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients(t *testing.T) 
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.Len(t, loader.aggregateTargets, 2)
+	require.Len(t, aggregateTargetsOf(loader), 2)
 
-	first, second := loader.aggregateTargets[0], loader.aggregateTargets[1]
+	first, second := aggregateTargetsOf(loader)[0], aggregateTargetsOf(loader)[1]
 	require.NotNil(t, first.client)
 	require.NotNil(t, second.client)
 	require.NotSame(t, first.client, second.client)
@@ -291,8 +291,8 @@ func TestProvideCloudRoutesLoaderFactory_PluginsURLAloneActivatesWithoutCapToken
 
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.NotNil(t, loader.pluginsTarget)
-	require.Empty(t, loader.aggregateTargets)
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourcePluginsURL))
+	require.Empty(t, aggregateTargetsOf(loader))
 }
 
 func TestProvideCloudRoutesLoaderFactory_CoreURLAloneActivatesWithoutCapToken(t *testing.T) {
@@ -306,10 +306,10 @@ func TestProvideCloudRoutesLoaderFactory_CoreURLAloneActivatesWithoutCapToken(t 
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.NotNil(t, loader.coreTarget)
-	require.Nil(t, loader.pluginsTarget)
-	require.Equal(t, sourceCoreURL, loader.coreTarget.source)
-	require.Equal(t, coreKeyPrefix, loader.coreTarget.keyPrefix)
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourceCoreURL))
+	require.Nil(t, pluginManifestsTargetOf(loader, sourcePluginsURL))
+	require.Equal(t, sourceCoreURL, pluginManifestsTargetOf(loader, sourceCoreURL).source)
+	require.Equal(t, coreKeyPrefix, pluginManifestsTargetOf(loader, sourceCoreURL).keyPrefix)
 }
 
 func TestProvideCloudRoutesLoaderFactory_CoreAndPluginsURLShareRegisterer(t *testing.T) {
@@ -324,8 +324,8 @@ func TestProvideCloudRoutesLoaderFactory_CoreAndPluginsURLShareRegisterer(t *tes
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.NotNil(t, loader.coreTarget)
-	require.NotNil(t, loader.pluginsTarget)
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourceCoreURL))
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourcePluginsURL))
 }
 
 func TestProvideCloudRoutesLoaderFactory_PluginsURLRejectsNonAbsoluteURL(t *testing.T) {
@@ -337,6 +337,66 @@ func TestProvideCloudRoutesLoaderFactory_PluginsURLRejectsNonAbsoluteURL(t *test
 
 	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "must be absolute")
+}
+
+// TestProvideCloudRoutesLoaderFactory_PluginManifestsTLS checks that each
+// plugin manifests source polls an HTTPS endpoint with its own TLS settings.
+func TestProvideCloudRoutesLoaderFactory_PluginManifestsTLS(t *testing.T) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"plugins":[]}`))
+	}))
+	t.Cleanup(srv.Close)
+	caFile := filepath.Join(t.TempDir(), "ca.crt")
+	require.NoError(t, os.WriteFile(caFile, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: srv.Certificate().Raw}), 0o600))
+
+	targets := func(t *testing.T, kv map[string]string) (pluginsTarget, coreTarget *pluginManifestsTarget) {
+		t.Helper()
+		kv["plugins_url"] = srv.URL + "/plugins"
+		kv["core_url"] = srv.URL + "/core"
+		loaderIface, err := ProvideCloudRoutesLoaderFactory(cfgWithCloudRouterSection(t, kv), PluginDependencies{})
+		require.NoError(t, err)
+		loader, ok := loaderIface.(*cloudLoader)
+		require.True(t, ok)
+		return pluginManifestsTargetOf(loader, sourcePluginsURL), pluginManifestsTargetOf(loader, sourceCoreURL)
+	}
+	poll := func(target *pluginManifestsTarget) error {
+		_, err := fetchPluginManifests(context.Background(), target.client, target.url)
+		return err
+	}
+
+	t.Run("an unknown CA is rejected", func(t *testing.T) {
+		pluginsTarget, coreTarget := targets(t, map[string]string{})
+		require.ErrorContains(t, poll(pluginsTarget), "certificate")
+		require.ErrorContains(t, poll(coreTarget), "certificate")
+	})
+
+	t.Run("ca_file trusts the CA for its own source only", func(t *testing.T) {
+		pluginsTarget, coreTarget := targets(t, map[string]string{"plugins_ca_file": caFile})
+		require.NoError(t, poll(pluginsTarget))
+		require.ErrorContains(t, poll(coreTarget), "certificate")
+
+		pluginsTarget, coreTarget = targets(t, map[string]string{"core_ca_file": caFile})
+		require.ErrorContains(t, poll(pluginsTarget), "certificate")
+		require.NoError(t, poll(coreTarget))
+	})
+
+	t.Run("insecure skips verification", func(t *testing.T) {
+		pluginsTarget, coreTarget := targets(t, map[string]string{"plugins_insecure": "true", "core_insecure": "true"})
+		require.NoError(t, poll(pluginsTarget))
+		require.NoError(t, poll(coreTarget))
+	})
+
+	t.Run("a missing ca_file is a startup error", func(t *testing.T) {
+		for _, prefix := range []string{"plugins", "core"} {
+			cfg := cfgWithCloudRouterSection(t, map[string]string{
+				prefix + "_url":     srv.URL,
+				prefix + "_ca_file": "/does/not/exist.crt",
+			})
+			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			require.ErrorContains(t, err, prefix+"_url: reading ca_file")
+		}
+	})
 }
 
 // TestCloudLoader_PluginsAndAggregateCombineInLoad exercises plugins_url
@@ -460,7 +520,7 @@ func TestCloudLoader_AggregateOnly(t *testing.T) {
 func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 	t.Run("disabled returns a nil interface", func(t *testing.T) {
 		loader := &cloudLoader{}
-		require.True(t, loader.SingleTenantFallback() == nil)
+		require.True(t, loader.UnregisteredGroupHandler() == nil)
 	})
 	t.Run("discovery alone enables fallback", func(t *testing.T) {
 		gcom := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -485,7 +545,7 @@ func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 		require.NoError(t, err)
 		cloud, ok := loader.(*cloudLoader)
 		require.True(t, ok)
-		require.Same(t, cloud.singleTenantFallback, cloud.SingleTenantFallback())
+		require.Same(t, cloud.singleTenantFallback, cloud.UnregisteredGroupHandler())
 		host, err := cloud.singleTenantFallback.hostForNamespace(t.Context(), "stacks-35611")
 		require.NoError(t, err)
 		require.Equal(t, "http://play-grafana-http.hosted-grafana.svc.cluster.local.:80", host.url.String())
@@ -544,7 +604,10 @@ func TestCloudLoaderSingleTenantLookupLimits(t *testing.T) {
 
 func TestCloudLoaderFallbackOnlyLifecycle(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "https://play.grafana.org/"})
+		// A host name would be resolved inside the bubble, which crashes when
+		// the lookup is shared with a goroutine outside it. Nothing listens on
+		// this port, so the poll fails at once.
+		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "http://127.0.0.1:1/"})
 		loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 		require.NoError(t, err)
 		cloud := loader.(*cloudLoader)
@@ -560,37 +623,6 @@ func TestProvideCloudRoutesLoaderFactory_PluginsWithoutTokenVerificationConfig(t
 	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.NotNil(t, loader)
-}
-
-func TestProvideCloudRoutesLoaderFactory_LegacyAggregateSettings(t *testing.T) {
-	for _, name := range []string{"baas_apiserver", "cloud_app_platform_apiserver"} {
-		for _, fromEnv := range []bool{false, true} {
-			t.Run(fmt.Sprintf("%s/env=%t", name, fromEnv), func(t *testing.T) {
-				cfg := cfgWithCloudRouterSection(t, map[string]string{
-					"cap_token":          "token",
-					"token_exchange_url": "https://exchange.invalid",
-				})
-				values := map[string]string{"url": "https://old.invalid", "audience": "legacy", "group_regex": "*.ext.grafana.app", "insecure": "true"}
-				for key, value := range values {
-					if fromEnv {
-						t.Setenv(setting.EnvKey(cloudRouterSection, name+"."+key), value)
-					} else {
-						cfg.Raw.Section(cloudRouterSection).Key(name + "." + key).SetValue(value)
-					}
-				}
-				result, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-				require.NoError(t, err)
-				loader := result.(*cloudLoader)
-				require.Len(t, loader.aggregateTargets, 1)
-				target := loader.aggregateTargets[0]
-				require.Equal(t, name, target.name)
-				require.Equal(t, "https://old.invalid", target.base.String())
-				require.True(t, matchesAnyPattern("test.ext.grafana.app", target.patterns))
-				require.False(t, matchesAnyPattern("other.grafana.app", target.patterns))
-				require.True(t, target.proxyTransport.(*http.Transport).TLSClientConfig.InsecureSkipVerify)
-			})
-		}
-	}
 }
 
 func TestCloudLoaderAggregateSectionPriority(t *testing.T) {
@@ -629,7 +661,7 @@ audience = second
 	result, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	loader := result.(*cloudLoader)
-	require.Len(t, loader.aggregateTargets, 2)
+	require.Len(t, aggregateTargetsOf(loader), 2)
 	dirty := make(chan struct{}, 1)
 	assertWinner := func(name, version string) {
 		t.Helper()
@@ -639,13 +671,58 @@ audience = second
 		require.Equal(t, "aggregate:"+name, backends[0].Source())
 		require.Equal(t, []metav1.GroupVersionForDiscovery{{GroupVersion: "shared.ext.grafana.app/" + version, Version: version}}, backends[0].Group().Versions)
 	}
-	// Poll completion order must not determine priority or merge group versions.
-	loader.aggregateTargets[1].poll(t.Context(), dirty)
-	assertWinner("a_second", "v2")
-	loader.aggregateTargets[0].poll(t.Context(), dirty)
+	// Poll completion order must not determine priority or merge group
+	// versions. The loader serves nothing until every target has polled once.
+	aggregateTargetsOf(loader)[1].poll(t.Context(), dirty)
+	_, err = loader.Load(t.Context())
+	require.ErrorIs(t, err, errFirstPollPending)
+	aggregateTargetsOf(loader)[0].poll(t.Context(), dirty)
 	assertWinner("z_first", "v1")
 	require.Equal(t, []shadowedGroup{{Group: "shared.ext.grafana.app", Source: "aggregate:a_second", By: "aggregate:z_first"}}, loader.shadowedGroups())
 	first.Close()
-	loader.aggregateTargets[0].poll(t.Context(), dirty)
+	aggregateTargetsOf(loader)[0].poll(t.Context(), dirty)
 	assertWinner("z_first", "v1")
+}
+
+func TestPluginManifestsPollInterval(t *testing.T) {
+	section := func(t *testing.T, kv map[string]string) *setting.DynamicSection {
+		return cfgWithCloudRouterSection(t, kv).SectionWithEnvOverrides(cloudRouterSection)
+	}
+	plugins, core, err := newPluginManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+		"plugins_url":           "https://plugins.invalid/plugins",
+		"core_url":              "https://core.invalid/plugins",
+		"plugins_poll_interval": "5m",
+	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	require.Equal(t, 5*time.Minute, plugins.cooldown.steady)
+	require.Equal(t, defaultAggregatePollInterval, core.cooldown.steady)
+
+	_, _, err = newPluginManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+		"core_url":           "https://core.invalid/plugins",
+		"core_poll_interval": "0s",
+	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.ErrorContains(t, err, "core_poll_interval must be a positive duration")
+}
+
+// The loader tears its sources down once it stops, which closes the managed
+// plugin connections.
+func TestCloudLoaderStopClosesPluginConnections(t *testing.T) {
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, "http://127.0.0.1:1/plugins", nil, http.DefaultClient,
+		defaultPluginGRPCConfig(), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	release, err := target.acquireConnection("localhost:50051", "grafana-appsdktest-app")
+	require.NoError(t, err)
+	defer release()
+	loader, err := newCloudLoader(nil, target, nil, nil)
+	require.NoError(t, err)
+
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), loader))
+	target.connectionsMu.Lock()
+	require.Len(t, target.connections, 1, "running keeps the connections")
+	target.connectionsMu.Unlock()
+	require.NoError(t, services.StopAndAwaitTerminated(t.Context(), loader))
+	target.connectionsMu.Lock()
+	defer target.connectionsMu.Unlock()
+	require.True(t, target.closed)
+	require.Empty(t, target.connections)
 }

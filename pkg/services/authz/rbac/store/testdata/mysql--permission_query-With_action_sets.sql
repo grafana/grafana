@@ -1,4 +1,4 @@
-SELECT p.kind, p.attribute, p.identifier, p.scope FROM `grafana`.`permission` as p
+SELECT p.kind, p.attribute, p.identifier, p.scope FROM `grafana`.`permission` as p FORCE INDEX (IDX_permission_role_id_action)
 INNER JOIN (
   SELECT role_id FROM `grafana`.`builtin_role` as br WHERE (br.role = 'Viewer' AND (br.org_id = 1 OR br.org_id = 0))
   UNION ALL

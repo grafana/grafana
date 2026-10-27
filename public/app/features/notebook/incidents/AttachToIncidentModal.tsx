@@ -5,6 +5,8 @@ import { notifyApp } from 'app/core/reducers/appNotification';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { dispatch } from 'app/store/store';
 
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_INCIDENT_ACTION } from '../analytics/types';
 import { notebookShareUrl } from '../urls';
 
 import { type AttachToIncidentFormData, useNotebookIncidents } from './useNotebookIncidents';
@@ -33,6 +35,7 @@ export function AttachToIncidentModal({ uid, title, onDismiss }: Props) {
     // Belt and braces: their form calls onDismiss right after, but the props are transcribed by
     // hand, so nothing enforces that.
     onDismiss();
+    NotebookAnalytics.incidentActionCompleted(uid, NOTEBOOK_INCIDENT_ACTION.ATTACH);
 
     const incident = data.selectedIncident?.incident;
     if (!incident) {

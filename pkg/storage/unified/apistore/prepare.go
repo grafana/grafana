@@ -202,13 +202,13 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
 
-	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
 	createdBy := info.GetUID()
 	if metaUID, ok := identity.MetadataIdentityUIDFrom(ctx); ok {
 		createdBy = metaUID
 	}
 	obj.SetCreatedBy(createdBy)
+	obj.SetUpdatedBy(createdBy)
 	obj.SetGeneration(1) // the first time we write
 
 	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, s.ownerReference(obj), &v)

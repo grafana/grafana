@@ -64,13 +64,14 @@ func TestRouterNeedsWritableStorageBackend(t *testing.T) {
 
 func TestDefaultRouterCoreURL(t *testing.T) {
 	for _, tc := range []struct {
-		name     string
-		target   []string
-		httpAddr string
-		protocol setting.Scheme
-		coreURL  string
-		envURL   string
-		want     string
+		name      string
+		target    []string
+		httpAddr  string
+		protocol  setting.Scheme
+		coreURL   string
+		envURL    string
+		manifests string
+		want      string
 	}{
 		{
 			name:   "router without cloud-core-apps-server",
@@ -106,6 +107,17 @@ func TestDefaultRouterCoreURL(t *testing.T) {
 			want:   "http://manifests:8080/cloud-core-apps-server/apps",
 		},
 		{
+			name:      "cloud-core-apps-server serving only its operator",
+			target:    []string{"router", "cloud-core-apps-server"},
+			manifests: "false",
+		},
+		{
+			name:      "cloud-core-apps-server serving manifests",
+			target:    []string{"router", "cloud-core-apps-server"},
+			manifests: "true",
+			want:      "http://127.0.0.1:3000/cloud-core-apps-server/apps",
+		},
+		{
 			name:     "instrumentation server over HTTPS",
 			target:   []string{"router", "cloud-core-apps-server"},
 			protocol: setting.HTTPSScheme,
@@ -122,6 +134,10 @@ func TestDefaultRouterCoreURL(t *testing.T) {
 			}
 			if tc.coreURL != "" {
 				_, err := cfg.Raw.Section("cloud_router").NewKey("core_url", tc.coreURL)
+				require.NoError(t, err)
+			}
+			if tc.manifests != "" {
+				_, err := cfg.Raw.Section("cloud_core_apps_server").NewKey("manifests", tc.manifests)
 				require.NoError(t, err)
 			}
 			if tc.envURL != "" {

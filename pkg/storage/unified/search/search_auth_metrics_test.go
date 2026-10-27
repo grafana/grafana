@@ -31,7 +31,7 @@ func newAuthMetricsIndex(t *testing.T, postRank bool, cfg search.PostRankAuthzCo
 	}, metrics)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
-	index, err := backend.BuildIndex(context.Background(), postRankKey, 100, "test", noop, nil, false, time.Time{}, 0)
+	index, err := backend.BuildIndex(context.Background(), postRankKey, 100, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	for i := range 100 {
 		indexDocs(t, index, []*resource.BulkIndexItem{newDocWithTags(fmt.Sprintf("doc-%03d", i), "allowed", []string{"tag"})})

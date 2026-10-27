@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { type DashboardScene } from '../DashboardScene';
@@ -18,7 +19,9 @@ export const DASHBOARD_CONTROLS_MENU_TITLE = 'Dashboard controls';
 
 export function DashboardControlsButton({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
-  const { uid, isEditing } = dashboard.useState();
+  const dashboardState = dashboard.useState();
+  const { uid } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
   const { variables, links, annotations } = useDashboardControls(dashboard);
   const dashboardControlsCount = variables.length + links.length + annotations.length;
   const hasDashboardControls = dashboardControlsCount > 0;

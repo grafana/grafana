@@ -18,6 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -137,6 +138,13 @@ type Service interface {
 	List(ctx context.Context, selector metav1.LabelSelector) ([]*Setting, error)
 }
 
+// FieldSelectorService keeps field-filtered queries separate so existing Service implementations remain compatible.
+type FieldSelectorService interface {
+	Service
+	ListWithFieldSelector(ctx context.Context, selector metav1.LabelSelector, fieldSelector fields.Selector) ([]*Setting, error)
+	ListAsIniWithFieldSelector(ctx context.Context, selector metav1.LabelSelector, fieldSelector fields.Selector) (*ini.File, error)
+}
+
 type remoteSettingService struct {
 	restClient   *rest.RESTClient
 	log          logging.Logger
@@ -147,7 +155,7 @@ type remoteSettingService struct {
 	fetchMu      sync.Mutex                          // guards fetchMutexes get-or-create
 }
 
-var _ Service = (*remoteSettingService)(nil)
+var _ FieldSelectorService = (*remoteSettingService)(nil)
 var _ prometheus.Collector = (*remoteSettingService)(nil)
 
 // Config configures a Service.
@@ -212,7 +220,7 @@ type settingListMetadata struct {
 }
 
 // New creates a Service from the provided configuration.
-func New(config Config) (Service, error) {
+func New(config Config) (FieldSelectorService, error) {
 	log := logging.New(LogPrefix)
 	metrics := initMetrics(resolveServiceName(config))
 
@@ -254,6 +262,10 @@ func New(config Config) (Service, error) {
 }
 
 func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector metav1.LabelSelector) (*ini.File, error) {
+	return s.ListAsIniWithFieldSelector(ctx, labelSelector, nil)
+}
+
+func (s *remoteSettingService) ListAsIniWithFieldSelector(ctx context.Context, labelSelector metav1.LabelSelector, fieldSelector fields.Selector) (*ini.File, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
 	ns := attribute.String("grafana.namespace.name", namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.ListAsIni",
@@ -264,7 +276,7 @@ func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector meta
 		return nil, tracing.Errorf(span, "missing namespace in context")
 	}
 
-	settings, err := s.List(ctx, labelSelector)
+	settings, err := s.ListWithFieldSelector(ctx, labelSelector, fieldSelector)
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +287,11 @@ func (s *remoteSettingService) ListAsIni(ctx context.Context, labelSelector meta
 	return iniFile, nil
 }
 
-func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.LabelSelector) (settings []*Setting, oErr error) {
+func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.LabelSelector) ([]*Setting, error) {
+	return s.ListWithFieldSelector(ctx, labelSelector, nil)
+}
+
+func (s *remoteSettingService) ListWithFieldSelector(ctx context.Context, labelSelector metav1.LabelSelector, fieldSelector fields.Selector) (settings []*Setting, oErr error) {
 	namespace, ok := request.NamespaceFrom(ctx)
 	ns := attribute.String("grafana.namespace.name", namespace)
 	ctx, span := tracer.Start(ctx, "remoteSettingService.List",
@@ -309,12 +325,16 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 		oErr = tracing.Error(span, err)
 		return nil, oErr
 	}
-	if selector.Empty() {
+	fSelector := ""
+	if fieldSelector != nil {
+		fSelector = fieldSelector.String()
+	}
+	if selector.Empty() && fSelector == "" {
 		log.Debug("empty selector. Fetching all settings")
 	}
 
 	lSelector := selector.String()
-	cacheKey := namespace + "|" + lSelector
+	cacheKey := namespace + "|" + lSelector + "|" + fSelector
 
 	if s.cache != nil {
 		if cached, ok := s.cache.Get(cacheKey); ok {
@@ -337,7 +357,7 @@ func (s *remoteSettingService) List(ctx context.Context, labelSelector metav1.La
 	}
 
 	s.metrics.cacheMissTotal.Inc()
-	allSettings, err := s.fetch(ctx, namespace, lSelector, span)
+	allSettings, err := s.fetch(ctx, namespace, lSelector, fSelector, span)
 	if err != nil {
 		oErr = err
 		return nil, oErr
@@ -364,7 +384,7 @@ func (s *remoteSettingService) getOrCreateFetchMutex(key string) *sync.Mutex {
 }
 
 // fetch retrieves all settings from the remote service using paginated requests.
-func (s *remoteSettingService) fetch(ctx context.Context, namespace string, lSelector string, span trace.Span) ([]*Setting, error) {
+func (s *remoteSettingService) fetch(ctx context.Context, namespace, lSelector, fSelector string, span trace.Span) ([]*Setting, error) {
 	// Pre-allocate with estimated capacity
 	allSettings := make([]*Setting, 0, s.pageSize*8)
 	var continueToken string
@@ -374,7 +394,7 @@ func (s *remoteSettingService) fetch(ctx context.Context, namespace string, lSel
 	for hasNext && totalPages < 1000 {
 		totalPages++
 
-		settings, nextToken, lErr := s.fetchPage(ctx, namespace, lSelector, continueToken)
+		settings, nextToken, lErr := s.fetchPage(ctx, namespace, lSelector, fSelector, continueToken)
 		if lErr != nil {
 			return nil, tracing.Error(span, lErr)
 		}
@@ -389,7 +409,7 @@ func (s *remoteSettingService) fetch(ctx context.Context, namespace string, lSel
 	return allSettings, nil
 }
 
-func (s *remoteSettingService) fetchPage(ctx context.Context, namespace, labelSelector, continueToken string) ([]*Setting, string, error) {
+func (s *remoteSettingService) fetchPage(ctx context.Context, namespace, labelSelector, fieldSelector, continueToken string) ([]*Setting, string, error) {
 	ctx, span := tracer.Start(ctx, "remoteSettingService.fetchPage")
 	defer span.End()
 
@@ -400,6 +420,9 @@ func (s *remoteSettingService) fetchPage(ctx context.Context, namespace, labelSe
 
 	if labelSelector != "" {
 		req = req.Param("labelSelector", labelSelector)
+	}
+	if fieldSelector != "" {
+		req = req.Param("fieldSelector", fieldSelector)
 	}
 	if continueToken != "" {
 		req = req.Param("continue", continueToken)

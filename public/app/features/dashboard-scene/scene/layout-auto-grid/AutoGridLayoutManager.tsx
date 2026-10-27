@@ -16,6 +16,11 @@ import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
+import {
+  isDashboardReviewing,
+  isDashboardSceneLike,
+  isFullDashboardEditing,
+} from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
@@ -25,7 +30,7 @@ import { NewObjectAddedToCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { trackDropItemCrossLayout } from '../../utils/tracking';
 import { forceRenderChildren, getDashboardSceneFor, useDashboard } from '../../utils/utils';
-import { getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
+import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
@@ -137,6 +142,10 @@ export class AutoGridLayoutManager
     });
 
     this.addActivationHandler(() => {
+      const root = this.getRoot();
+      if (isDashboardSceneLike(root) && isDashboardReviewing(root.state)) {
+        this.editModeChanged(false);
+      }
       // Children changes (add/remove/drag between grids, undo/redo) can change
       // whether any panel opts into content-fit, so autoRows must be recomputed.
       this._subs.add(
@@ -295,36 +304,6 @@ export class AutoGridLayoutManager
     this.state.layout.setState({ children: [...this.state.layout.state.children, ...movedChildren] });
   }
 
-  public duplicatePanel(panel: VizPanel) {
-    const gridItem = panel.parent;
-    if (!(gridItem instanceof AutoGridItem)) {
-      console.error('Trying to duplicate a panel that is not inside a DashboardGridItem');
-      return;
-    }
-
-    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
-    const grid = this.state.layout;
-
-    const newPanel = panel.clone({
-      key: getVizPanelKeyForPanelId(newPanelId),
-    });
-
-    const newGridItem = gridItem.clone({
-      key: getGridItemKeyForPanelId(newPanelId),
-      body: newPanel,
-    });
-
-    const sourceIndex = grid.state.children.indexOf(gridItem);
-    const newChildren = [...grid.state.children];
-
-    // insert after
-    newChildren.splice(sourceIndex + 1, 0, newGridItem);
-
-    grid.setState({ children: newChildren });
-
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
-  }
-
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
 
@@ -467,7 +446,7 @@ export class AutoGridLayoutManager
     const layoutManager = AutoGridLayoutManager.createEmpty();
     layoutManager.state.layout.setState({
       children,
-      isDraggable: getDashboardSceneFor(layout).state.isEditing,
+      isDraggable: isFullDashboardEditing(getDashboardSceneFor(layout).state),
     });
 
     return layoutManager;

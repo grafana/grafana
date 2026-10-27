@@ -42,9 +42,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `timeComparison`                             | Enables time comparison option in supported panels                                                                                  | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                   |                    |
 | `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                 | Yes                |
-| `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              |                    |
+| `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              | Yes                |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                | Yes                |
-| `queryLibrary`                               | Enables Saved queries (query library) feature                                                                                       | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                          |                    |
 | `savedQueriesRBAC`                           | Enables Saved queries (query library) RBAC permissions                                                                              | Yes                |
 | `newSavedQueriesExperience`                  | Enables the new Saved queries (query library) modal experience                                                                      | Yes                |
@@ -54,7 +53,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorPrometheusExemplars`            | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                        | Yes                |
 | `cloudWatchRoundUpEndTime`                   | Round up end time for metric queries to the next minute to avoid missing data                                                       | Yes                |
 | `useSessionStorageForRedirection`            | Use session storage for handling the redirection after login                                                                        | Yes                |
-| `pluginsSriChecks`                           | Enables SRI checks for plugin assets                                                                                                |                    |
 | `azureMonitorDisableLogLimit`                | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                    |                    |
 | `enableSCIM`                                 | Enables SCIM support for user and group management                                                                                  | Yes                |
 | `azureMonitorEnableUserAuth`                 | Enables user auth for Azure Monitor datasource only                                                                                 | Yes                |
@@ -68,11 +66,11 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `panelTimeSettings`                          | Enables a new panel time settings drawer                                                                                            | Yes                |
 | `inlineLogDetailsNoScrolls`                  | Enables an inline version of Log Details that creates no new scrolls                                                                | Yes                |
 | `lokiAlignedQuerySplitting`                  | Aligns query splitting chunks with UTC midnight                                                                                     | Yes                |
+| `profilesHeatmap`                            | Enables heatmap visualization support for Pyroscope profiles                                                                        | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                    | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |
-| `grafana.thresholdsInterpolation`            | Enables using dashboard variables in panel threshold values                                                                         |                    |
-| `grafana.unifiedDataSourcePicker`            | Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins                     | Yes                |
+| `grafana.thresholdsInterpolation`            | Enables using dashboard variables in panel threshold values                                                                         | Yes                |
 | `grafana.dashboardAutoGridDefault`           | Uses auto grid as the default layout for new dashboards                                                                             | Yes                |
 
 ## Public preview feature toggles
@@ -83,8 +81,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `panelTitleSearch`                 | Search for dashboards using panel title                                                                                        |
 | `faroDatasourceSelector`           | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                 |
-| `provisioning.userAttribution`     | Author Git Sync commits as the acting Grafana user                                                                             |
 | `externalServiceAccounts`          | Automatic service account and token setup for plugins                                                                          |
+| `dashboard.notebooks`              | Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels            |
 | `feedbackButton`                   | Enables the feedback button in the dashboard edit sidebar                                                                      |
 | `pdfTables`                        | Enables generating table data as PDF in reporting                                                                              |
 | `canvasPanelPanZoom`               | Allow pan and zoom in canvas panel                                                                                             |
@@ -98,6 +96,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `datasources.azureMonitorBatchAPI` | Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request |
 | `alertingListViewV2PreviewToggle`  | Enables the alerting list view v2 preview toggle                                                                               |
 | `alertingImportAlertmanagerAPI`    | Enables the API to import Alertmanager configuration                                                                           |
+| `grafana.newTextPanel`             | Enables the new text panel                                                                                                     |
+| `text.newFeatures`                 | Enables the new features in text panel                                                                                         |
 | `interactiveLearning`              | Enables the interactive learning app                                                                                           |
 | `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |
 | `pyroscopeUTF8LabelNames`          | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |

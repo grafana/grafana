@@ -42,3 +42,5 @@ Both types of alert rules can be configured in Grafana using the **+ New alert r
 - [Configure data source-managed alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-data-source-managed-rule/)
 
 In Grafana Alerting, you can also [configure recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/), which pre-compute queries and save the results as new time series metrics for use in other alert rules or dashboard queries.
+
+When your Grafana-managed rules depend on recording rule results, use [Configure rule sequences](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/rule-sequences/) to define their evaluation order and shared interval through the API or Terraform.

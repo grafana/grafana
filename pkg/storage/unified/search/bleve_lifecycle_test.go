@@ -270,7 +270,7 @@ func newFileBackedDashboardIndex(t *testing.T, key resource.NamespacedResource, 
 
 	resourceIndex, err := backend.BuildIndex(ctx, key, docCount, "test", func(index resource.ResourceIndex) (int64, error) {
 		return 0, nil
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	idx, ok := resourceIndex.(*bleveIndex)

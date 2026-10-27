@@ -25,7 +25,7 @@ import {
   useCommonTableProps,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
-import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
+import { getCurrentFrameIndex, notifyTableFilterError, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { type Options } from './options/types';
@@ -46,6 +46,7 @@ export function TableNGWrap({
   height,
   width: tableWidth,
   transparent,
+  timeZone,
   fieldConfig,
   onFieldConfigChange,
   replaceVariables,
@@ -126,7 +127,9 @@ export function TableNGWrap({
         sortByBehavior="managed"
         initialRowIndex={initialRowIndex}
         data={data.series[getCurrentFrameIndex(data.series, options)]}
+        onFilterError={notifyTableFilterError}
         timeRange={data.timeRange}
+        timeZone={timeZone}
         width={Math.max(tableWidth - fieldSelectorWidth - controlsWidth, 0)}
         height={height}
         onDisplayedRowIndicesChange={setDisplayedRowIndices}

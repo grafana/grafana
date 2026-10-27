@@ -51,14 +51,10 @@ var dependencyMap = map[string][]string{
 	UnifiedBackend: {NATS, UnifiedVectorBackend},
 
 	ZanzanaServer:           {InstrumentationServer},
-	AuthnServer:             {InstrumentationServer},
 	SearchServerDistributor: {InstrumentationServer, GRPCServer, MemberlistKV, SearchServerRing},
 	Core:                    {},
 	All:                     {Core},
 	FrontendServer:          {},
 	Router:                  {InstrumentationServer, UnifiedBackend},
 	OperatorServer:          {InstrumentationServer},
-	CloudCoreAppsServer:     {InstrumentationServer},
-	CloudPluginOperator:     {InstrumentationServer, GRPCServer},
-	CloudPluginManifests:    {InstrumentationServer},
 }

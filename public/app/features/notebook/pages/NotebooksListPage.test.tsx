@@ -229,7 +229,7 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     const link = await screen.findByRole('link', { name: 'Checkout error spike' });
-    expect(link).toHaveAttribute('href', '/notebooks/nb1');
+    expect(link).toHaveAttribute('href', '/notebooks/nb1?source=notebook_list');
     expect(screen.getByText('Marcus Chen')).toBeInTheDocument();
     expect(screen.getByText('errors')).toBeInTheDocument();
     expect(screen.getByText('1 notebook')).toBeInTheDocument();
@@ -241,7 +241,10 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
-    expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute('href', '/notebooks/nb1?edit=true');
+    expect(await screen.findByRole('link', { name: 'Edit' })).toHaveAttribute(
+      'href',
+      '/notebooks/nb1?edit=true&source=notebook_list'
+    );
   });
 
   it('hides the Edit action from a user who cannot edit notebooks', async () => {

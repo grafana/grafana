@@ -1113,94 +1113,123 @@ func TestReconciler_PendingDeleteLabel_RestoreReembeds(t *testing.T) {
 	require.Len(t, vec.upserts, 1, "unlabeled (restored) resource embeds again")
 }
 
-// TestReconciler_Run_BroadcasterSeedsSweep pins the watch
-// path: Subscribe is called, events pushed onto the channel reach the
-// queue, and the next cycle drains them.
-func TestReconciler_Run_BroadcasterSeedsSweep(t *testing.T) {
+// TestReconciler_Run_WrittenKeySeedsSweep pins the seed path: Run watches
+// written keys of the enrolled types, the first one seeds the checkpoint, the
+// sweep embeds it, and the watch is closed once the checkpoint is persisted.
+func TestReconciler_Run_WrittenKeySeedsSweep(t *testing.T) {
 	vec := newFakeVector()
 	st := &fakeStorage{changes: []*resource.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "watched", snowflakeRV(500), minimalDashboard("watched", "Watched")),
 	}}
 	s, _ := newRunnable(t, st, vec)
-	bcast := newFakeBroadcaster()
-	s.UseBroadcaster(bcast)
+	done := runReconciler(t, s)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	t.Cleanup(cancel)
-	done := make(chan error, 1)
-	go func() { done <- s.Run(ctx) }()
-
-	// Subscribe should happen as part of Run startup.
 	require.Eventually(t, func() bool {
-		bcast.mu.Lock()
-		defer bcast.mu.Unlock()
-		return bcast.subscribeCalls == 1
+		_, _, calls := st.keysWatch()
+		return calls == 1
 	}, time.Second, time.Millisecond)
+	assert.Equal(t, []schema.GroupResource{{Group: dashGroup, Resource: dashRes}}, st.keysTypes)
 
-	bcast.emit(&resource.WrittenEvent{
-		Type: resourcepb.WatchEvent_MODIFIED,
-		Key: &resourcepb.ResourceKey{
-			Group:     dashGroup,
-			Resource:  dashRes,
-			Namespace: "ns",
-			Name:      "watched",
-		},
-		Value:           minimalDashboard("watched", "Watched"),
+	keys, watchCtx, _ := st.keysWatch()
+	keys <- &resource.WrittenEvent{
+		Key:             &resourcepb.ResourceKey{Group: dashGroup, Resource: dashRes, Namespace: "ns", Name: "watched"},
 		ResourceVersion: snowflakeRV(500),
-	})
-
-	require.Eventually(t, func() bool {
-		vec.mu.Lock()
-		defer vec.mu.Unlock()
-		return len(vec.upserts) >= 1
-	}, time.Second, time.Millisecond, "watch event should reach the vector backend")
-
-	cancel()
-	select {
-	case err := <-done:
-		require.ErrorIs(t, err, context.Canceled)
-	case <-time.After(time.Second):
-		t.Fatal("Run did not exit after ctx cancel")
 	}
 
-	bcast.mu.Lock()
-	defer bcast.mu.Unlock()
-	assert.NotNil(t, bcast.unsubscribeCh, "Unsubscribe must run on Run exit")
+	require.Eventually(t, func() bool {
+		return vec.hasUpsertFor("ns", dashRes, "watched")
+	}, time.Second, time.Millisecond, "the seeded sweep should embed the written resource")
+	require.Eventually(t, func() bool {
+		return watchCtx.Err() != nil
+	}, time.Second, time.Millisecond, "the watch must close once the checkpoint is persisted")
+
+	done()
+	_, _, calls := st.keysWatch()
+	assert.Equal(t, 1, calls, "a seeded reconciler must not watch again")
 }
 
-// TestReconciler_Run_BroadcasterSubscribeErrorContinues asserts the
-// reconciler tolerates a broadcaster Subscribe failure: it logs and
-// proceeds in poll-only mode rather than aborting Run. This matters
-// for partial environments where the broadcaster isn't ready yet.
-func TestReconciler_Run_BroadcasterSubscribeErrorContinues(t *testing.T) {
+// Without the NATS notifier the seed comes from the watch stream instead.
+func TestReconciler_Run_SeedFallsBackToWatchStream(t *testing.T) {
 	vec := newFakeVector()
-	s, _ := newRunnable(t, &fakeStorage{}, vec)
-	bcast := newFakeBroadcaster()
-	bcast.subscribeErr = fmt.Errorf("broadcaster not ready")
-	s.UseBroadcaster(bcast)
+	st := &fakeStorage{
+		changes: []*resource.ModifiedResource{
+			dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "watched", snowflakeRV(500), minimalDashboard("watched", "Watched")),
+		},
+		keysErr: resource.ErrWrittenKeysUnsupported,
+		watchCh: make(chan *resource.WrittenEvent, 1),
+	}
+	s, _ := newRunnable(t, st, vec)
+	done := runReconciler(t, s)
 
-	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan error, 1)
-	go func() { done <- s.Run(ctx) }()
+	st.watchCh <- &resource.WrittenEvent{
+		Type:            resourcepb.WatchEvent_MODIFIED,
+		Key:             &resourcepb.ResourceKey{Group: dashGroup, Resource: dashRes, Namespace: "ns", Name: "watched"},
+		Value:           minimalDashboard("watched", "Watched"),
+		ResourceVersion: snowflakeRV(500),
+	}
 
-	// Subscribe is attempted and lock is acquired even though Subscribe failed.
 	require.Eventually(t, func() bool {
-		bcast.mu.Lock()
-		defer bcast.mu.Unlock()
-		return bcast.subscribeCalls == 1
+		return vec.hasUpsertFor("ns", dashRes, "watched")
+	}, time.Second, time.Millisecond, "a write from the watch stream should seed the sweep")
+	done()
+}
+
+// A watch that cannot be opened, as while the bus is unreachable, must not
+// stop the reconciler from holding the lock and sweeping.
+func TestReconciler_Run_SeedWatchErrorContinues(t *testing.T) {
+	vec := newFakeVector()
+	st := &fakeStorage{keysErr: errBoom}
+	s, _ := newRunnable(t, st, vec)
+	done := runReconciler(t, s)
+
+	require.Eventually(t, func() bool {
+		_, _, calls := st.keysWatch()
+		return calls == 1
 	}, time.Second, time.Millisecond)
 	require.Eventually(t, func() bool {
 		vec.mu.Lock()
 		defer vec.mu.Unlock()
 		return vec.lockReleases == 0 && vec.lockAttempts >= 1
-	}, time.Second, time.Millisecond, "lock acquired despite Subscribe error")
+	}, time.Second, time.Millisecond, "lock acquired despite the watch error")
+	done()
+}
 
-	cancel()
-	select {
-	case err := <-done:
-		require.ErrorIs(t, err, context.Canceled)
-	case <-time.After(time.Second):
-		t.Fatal("Run did not exit after ctx cancel")
+// Writes only seed the first checkpoint, so a reconciler that starts with one
+// opens no watch.
+func TestReconciler_Run_NoSeedWatchWithCheckpoint(t *testing.T) {
+	vec := newFakeVector()
+	vec.latestRV = snowflakeRV(50)
+	st := &fakeStorage{}
+	s, _ := newRunnable(t, st, vec)
+	done := runReconciler(t, s)
+
+	require.Eventually(t, func() bool {
+		st.mu.Lock()
+		defer st.mu.Unlock()
+		return len(st.lastCalledWith) > 0
+	}, time.Second, time.Millisecond, "the sweep should run")
+	done()
+	_, _, calls := st.keysWatch()
+	assert.Zero(t, calls)
+}
+
+// runReconciler runs s until the returned function is called, which cancels
+// Run and checks that it exits with the context's error.
+func runReconciler(t *testing.T, s *Reconciler) func() {
+	t.Helper()
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	done := make(chan error, 1)
+	go func() { done <- s.Run(ctx) }()
+	return func() {
+		t.Helper()
+		cancel()
+		select {
+		case err := <-done:
+			require.ErrorIs(t, err, context.Canceled)
+		case <-time.After(time.Second):
+			t.Fatal("Run did not exit after ctx cancel")
+		}
 	}
 }
 
@@ -1718,7 +1747,7 @@ func TestReconciler_Sweep_SeedSurvivesProviderFailure(t *testing.T) {
 	addStoredEvent(t, s, dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), st.changes[0].Value))
 	text.failNext = &embedder.RetryableError{Err: errBoom}
 	s.sweep(t.Context())
-	require.Equal(t, resource.SubtractDurationFromSnowflake(snowflakeRV(100), time.Millisecond), vec.latestRV)
+	require.Equal(t, resource.SubtractDurationFromSnowflake(snowflakeRV(100), seedLookback), vec.latestRV)
 	s, _ = newReconciler(t, st, vec)
 	s.sweep(t.Context())
 	assert.Len(t, vec.upserts, 1)
@@ -1780,7 +1809,7 @@ func TestReconciler_SeedLookback(t *testing.T) {
 			st.lookback = 8192
 			s.observeWrite(&resource.WrittenEvent{Key: &st.changes[0].Key, ResourceVersion: snowflakeRV(100)})
 			vec.onSetLatestRV = func(rv int64) {
-				if rv != resource.SubtractDurationFromSnowflake(snowflakeRV(100), time.Millisecond) {
+				if rv != resource.SubtractDurationFromSnowflake(snowflakeRV(100), seedLookback) {
 					return
 				}
 				late := dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "late", snowflakeRV(90), minimalDashboard("late", "Late"))
@@ -1800,7 +1829,7 @@ func TestReconciler_SeedLookback(t *testing.T) {
 			if restart {
 				st.listErr = errBoom
 				s.sweep(t.Context())
-				require.Equal(t, resource.SubtractDurationFromSnowflake(snowflakeRV(100), time.Millisecond), vec.latestRV)
+				require.Equal(t, resource.SubtractDurationFromSnowflake(snowflakeRV(100), seedLookback), vec.latestRV)
 				require.Empty(t, vec.upserts)
 				st.listErr = nil
 				s, _ = newReconciler(t, st, vec)
@@ -1863,6 +1892,50 @@ func setupRuntimeReconciler(t *testing.T, customBuilders ...embed.Builder) *runt
 		reconciler: s, storage: storage, vectors: vectors,
 		configs: configs, provider: provider, metrics: metrics,
 	}
+}
+
+// The seed watch covers every type that may be enrolled, so the first write to
+// a type enrolled while it is open seeds the checkpoint without another write.
+func TestReconciler_Run_SeedsFromFirstWriteAfterEnrollment(t *testing.T) {
+	env := setupRuntimeReconciler(t)
+	s, st, vec, configs := env.reconciler, env.storage, env.vectors, env.configs
+	s.interval = 5 * time.Millisecond
+	s.lockRetryInterval = time.Millisecond
+	const partition = "folder_documents"
+	vec.collections = map[schema.GroupResource]vector.Collection{
+		folderGR: {Group: folderGR.Group, Resource: folderGR.Resource, PartitionKey: partition},
+	}
+	done := runReconciler(t, s)
+
+	// Folders are allowed but not yet enrolled: no manifest declares them.
+	require.Eventually(t, func() bool {
+		_, _, calls := st.keysWatch()
+		return calls == 1
+	}, time.Second, time.Millisecond)
+	configs.Reload([]*app.ManifestData{foldermanifest.LocalManifest().ManifestData})
+	ev := folderEvent(t, "folder", "v1", "Operations", "", "", 200)
+	st.mu.Lock()
+	st.changes = append(st.changes, &resource.ModifiedResource{
+		Key:    resourcepb.ResourceKey{Group: ev.group, Resource: ev.resource, Namespace: ev.namespace, Name: ev.name},
+		Action: ev.action, ResourceVersion: ev.rv, Value: ev.value,
+	})
+	st.mu.Unlock()
+	st.publishKey(&resource.WrittenEvent{
+		Key:             &resourcepb.ResourceKey{Group: ev.group, Resource: ev.resource, Namespace: ev.namespace, Name: ev.name},
+		ResourceVersion: ev.rv,
+	})
+
+	require.Eventually(t, func() bool {
+		return vec.hasUpsertFor("ns", partition, "folder")
+	}, time.Second, time.Millisecond, "the first write after enrollment should seed and be embedded")
+	vec.mu.Lock()
+	assert.Positive(t, vec.latestRV, "the checkpoint is persisted")
+	require.Len(t, vec.backfillJobs, 1)
+	assert.Equal(t, snowflakeRV(200), vec.backfillJobs[0].StoppingRV)
+	vec.mu.Unlock()
+	done()
+	_, _, calls := st.keysWatch()
+	assert.Equal(t, 1, calls, "the watch is never reopened")
 }
 
 func TestReconciler_RuntimeFolderEnrollment(t *testing.T) {
@@ -2051,12 +2124,40 @@ func TestReconciler_MultipleBuildersKeepRetriesSeparate(t *testing.T) {
 	assert.Equal(t, snowflakeRV(100), vec.latestRV)
 }
 
+// Written keys arrive in no particular order, so a write to another type can be
+// delivered only after a newer write has seeded the checkpoint. The seed sits
+// far enough below the newer write for the sweep to list the older one and
+// create its type's backfill job.
+func TestReconciler_Sweep_SeedCoversOlderWriteDeliveredLate(t *testing.T) {
+	widgets := fakeBuilder{group: "test.grafana.app", resource: "widgets"}
+	newer := snowflakeRV(100)
+	older := resource.SubtractDurationFromSnowflake(newer, 2*time.Second)
+	st := &fakeStorage{changes: []*resource.ModifiedResource{
+		change(widgets.group, widgets.resource, "ns", "widget", older, []byte("widget")),
+	}}
+	vec := newFakeVector()
+	s := newReconcilerWithBuilders(t, st, vec, dashboard.New(), widgets)
+
+	// Only the newer dashboard write has been delivered.
+	addStoredEvent(t, s, dashEvent(resourcepb.WatchEvent_ADDED, "ns", "dash", newer, minimalDashboard("dash", "Dash")))
+	s.sweep(t.Context())
+
+	assert.True(t, vec.hasUpsertFor("ns", widgets.resource, "widget"), "the older write is listed")
+	var stoppingRVs []int64
+	for _, job := range vec.backfillJobs {
+		if job.Resource == widgets.resource {
+			stoppingRVs = append(stoppingRVs, job.StoppingRV)
+		}
+	}
+	assert.Equal(t, []int64{older}, stoppingRVs, "the older write's type gets its backfill job")
+}
+
 func TestReconciler_SeedPredecessorSurvivesSQLRVConversion(t *testing.T) {
 	sqlSeed := time.Now().Truncate(time.Millisecond).UnixMicro()
 	seed := rvmanager.SnowflakeFromRV(sqlSeed)
 	legacyPredecessor := rvmanager.RVFromSnowflake(seed - 1)
 	assert.Greater(t, legacyPredecessor, sqlSeed, "subtracting one Snowflake tick can cross into the next millisecond when converted to SQL RV")
 
-	predecessor := resource.SubtractDurationFromSnowflake(seed, time.Millisecond)
+	predecessor := resource.SubtractDurationFromSnowflake(seed, seedLookback)
 	assert.Less(t, rvmanager.RVFromSnowflake(predecessor), sqlSeed)
 }

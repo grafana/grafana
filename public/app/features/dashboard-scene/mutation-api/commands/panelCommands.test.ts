@@ -126,6 +126,7 @@ function buildPanelScene(panels: VizPanel[] = [], elementMap: Record<string, num
     serializer: mockSerializer(elementMap),
     canEditDashboard: jest.fn(() => true),
     isPlanning: jest.fn(() => false),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -159,6 +160,7 @@ function buildAutoGridPanelScene(panels: VizPanel[] = [], elementMap: Record<str
     serializer: mockSerializer(elementMap),
     canEditDashboard: jest.fn(() => true),
     isPlanning: jest.fn(() => false),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -1555,14 +1557,6 @@ describe('Panel mutation commands', () => {
   });
 
   describe('MOVE_PANEL', () => {
-    beforeEach(() => {
-      setTestFlags({ dashboardNewLayouts: true });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     it('repositions panel within current group using layoutItem', async () => {
       const scene = buildPanelScene();
       const client = new DashboardMutationClient(scene);

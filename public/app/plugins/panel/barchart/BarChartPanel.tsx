@@ -14,7 +14,7 @@ import {
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
+import { FILTER_FOR_OPERATOR, shouldShowLegend, TooltipHoverMode } from '@grafana/ui/internal';
 import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
@@ -143,7 +143,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   }
 
   const legendComp =
-    legend.showLegend && hasVisibleLegendSeries(builder, info.series!) ? (
+    shouldShowLegend(legend) && hasVisibleLegendSeries(builder, info.series!) ? (
       <BarChartLegend data={info.series!} colorField={info.color} {...legend} />
     ) : null;
 

@@ -3,15 +3,18 @@ package meta
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
 
 func TestNewProviderManager(t *testing.T) {
@@ -467,5 +470,46 @@ func TestCallerIdentity(t *testing.T) {
 		ctx := authtypes.WithAuthInfo(context.Background(), authInfo)
 
 		assert.Equal(t, "advisor", callerIdentity(ctx))
+	})
+}
+
+func TestProviderManager_GetMeta_RecordsFetchErrors(t *testing.T) {
+	counter := func(reason string) float64 {
+		return testutil.ToFloat64(metrics.MetaFetchErrorsTotal.WithLabelValues("mock", reason))
+	}
+	ref := PluginRef{ID: "test-plugin", Version: "1.0.0"}
+
+	t.Run("counts FetchError by reason and preserves ErrMetaNotFound semantics", func(t *testing.T) {
+		pm := NewProviderManager(&mockProvider{getMetaFunc: func(context.Context, PluginRef) (*Result, error) {
+			return nil, &FetchError{Reason: "timeout", Err: ErrMetaNotFound}
+		}})
+		before := counter("timeout")
+
+		_, err := pm.GetMeta(context.Background(), ref)
+
+		require.ErrorIs(t, err, ErrMetaNotFound)
+		assert.Equal(t, before+1, counter("timeout"))
+	})
+
+	t.Run("counts FetchError that is not a not-found", func(t *testing.T) {
+		pm := NewProviderManager(&mockProvider{getMetaFunc: func(context.Context, PluginRef) (*Result, error) {
+			return nil, fmt.Errorf("wrapped: %w", &FetchError{Reason: "missing_cdn_url", Err: ErrMissingCDNURL})
+		}})
+		before := counter("missing_cdn_url")
+
+		_, err := pm.GetMeta(context.Background(), ref)
+
+		require.ErrorIs(t, err, ErrMissingCDNURL)
+		assert.Equal(t, before+1, counter("missing_cdn_url"))
+	})
+
+	t.Run("does not count plain ErrMetaNotFound", func(t *testing.T) {
+		pm := NewProviderManager(&mockProvider{})
+		before := counter("not found")
+
+		_, err := pm.GetMeta(context.Background(), ref)
+
+		require.ErrorIs(t, err, ErrMetaNotFound)
+		assert.Equal(t, before, counter("not found"))
 	})
 }

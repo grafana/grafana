@@ -8,7 +8,6 @@ import {
   BLOCKS_ATTR,
   clampPageSize,
   CONTENT_PADDING,
-  countRows,
   fitPageSize,
   usePagination,
   type PaginationOptions,
@@ -55,16 +54,6 @@ function boxOfRows(rowHeight: number, available: number, rowsOnPage: () => numbe
 function numberedFrame(rows: number) {
   return toDataFrame({ fields: [{ name: 'n', values: Array.from({ length: rows }, (_, i) => i) }] });
 }
-
-describe('countRows', () => {
-  it('sums the rows of every frame', () => {
-    expect(countRows([numberedFrame(3), numberedFrame(4)])).toBe(7);
-  });
-
-  it('ignores a frame without fields, which renders no blocks', () => {
-    expect(countRows([{ fields: [], length: 12 }, numberedFrame(2)])).toBe(2);
-  });
-});
 
 describe('clampPageSize', () => {
   it.each([

@@ -15,8 +15,8 @@ import { defaultPanelKind, type PanelKind, type Spec as NotebookSpec } from '../
 import {
   addPanelErrorMessage,
   addPanelFailureReason,
-  addPanelToExistingNotebook,
-  createNotebookWithPanel,
+  addToExistingNotebook,
+  createNotebookWithContent,
 } from './addPanelToNotebook';
 
 jest.mock('../analytics/main', () => ({
@@ -117,11 +117,15 @@ function captureCreate(name: string | null = 'nb2'): CapturedRequest {
   return captured;
 }
 
-describe('addPanelToExistingNotebook', () => {
+describe('addToExistingNotebook', () => {
   it('writes back the fetched notebook with the panel appended', async () => {
     const captured = captureWrite();
 
-    const added = await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE, false);
+    const added = await addToExistingNotebook(
+      'nb1',
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+      NOTEBOOK_ENTRY_POINT.EXPLORE
+    );
 
     expect(added).toEqual({ uid: 'nb1', title: 'Checkout error spike' });
     expect(Object.keys(captured.body!.spec!.elements)).toEqual(['p95-latency']);
@@ -130,12 +134,29 @@ describe('addPanelToExistingNotebook', () => {
     expect(captured.body!.spec!.tags).toEqual(['incident']);
   });
 
+  it('attributes the panel to the source given', async () => {
+    const captured = captureWrite();
+
+    await addToExistingNotebook(
+      'nb1',
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+      NOTEBOOK_ENTRY_POINT.PLUGIN,
+      'assistant'
+    );
+
+    expect(captured.body!.spec!.layout.spec.cells.map((cell) => cell.spec.source)).toEqual(['assistant']);
+  });
+
   // Without this the apiserver has nothing to compare against and a concurrent edit is silently
   // overwritten instead of rejected.
   it('sends the resourceVersion it read back with the write', async () => {
     const captured = captureWrite();
 
-    await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE, false);
+    await addToExistingNotebook(
+      'nb1',
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+      NOTEBOOK_ENTRY_POINT.EXPLORE
+    );
 
     expect(captured.body!.metadata?.resourceVersion).toBe('42');
   });
@@ -148,7 +169,11 @@ describe('addPanelToExistingNotebook', () => {
     );
 
     await expect(
-      addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE, false)
+      addToExistingNotebook(
+        'nb1',
+        [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+        NOTEBOOK_ENTRY_POINT.EXPLORE
+      )
     ).rejects.toBeInstanceOf(NotebookConflictError);
   });
 
@@ -159,24 +184,33 @@ describe('addPanelToExistingNotebook', () => {
     );
 
     await expect(
-      addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE, false)
+      addToExistingNotebook(
+        'nb1',
+        [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+        NOTEBOOK_ENTRY_POINT.EXPLORE
+      )
     ).rejects.toThrow('notebook is too large');
   });
 
-  // The notebook is not open, so no layout manager sees this cell. appendPanelToNotebook puts the
+  // The notebook is not open, so no layout manager sees this cell. appendElementsToNotebook puts the
   // panel at the end, so the position is the last index. The panel goes along so the event can say
   // what was added.
   it('reports the added cell with the caller entry point, the index it landed on and the panel', async () => {
     captureWrite();
 
-    await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL, false);
+    await addToExistingNotebook(
+      'nb1',
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL
+    );
 
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledTimes(1);
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledWith(
       'nb1',
       NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
       0,
-      { panel: panel('p95 latency'), isLibraryPanel: false }
+      { panel: panel('p95 latency'), isLibraryPanel: false },
+      false
     );
   });
 
@@ -185,13 +219,72 @@ describe('addPanelToExistingNotebook', () => {
   it('passes on that the panel came from the library', async () => {
     captureWrite();
 
-    await addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL, true);
+    await addToExistingNotebook(
+      'nb1',
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: true }],
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL
+    );
 
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledWith(
       'nb1',
       NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
       0,
-      { panel: panel('p95 latency'), isLibraryPanel: true }
+      { panel: panel('p95 latency'), isLibraryPanel: true },
+      false
+    );
+  });
+
+  // A chat answer sends its text next to its panels. The markdown has no panel to describe, so it goes
+  // without one, and its position follows the cells before it.
+  it('reports a markdown cell with no panel, at the index it landed on', async () => {
+    captureWrite();
+
+    await addToExistingNotebook(
+      'nb1',
+      [
+        { kind: 'markdown', text: 'p95 is up' },
+        { kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false },
+      ],
+      NOTEBOOK_ENTRY_POINT.PLUGIN
+    );
+
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledTimes(2);
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenNthCalledWith(
+      1,
+      'nb1',
+      NOTEBOOK_ENTRY_POINT.PLUGIN,
+      0,
+      undefined,
+      false
+    );
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenNthCalledWith(
+      2,
+      'nb1',
+      NOTEBOOK_ENTRY_POINT.PLUGIN,
+      1,
+      { panel: panel('p95 latency'), isLibraryPanel: false },
+      false
+    );
+  });
+
+  // The modal's choice, handed over for the event: the cells already carry whatever it did to them.
+  it('passes on whether the modal locked the time range', async () => {
+    captureWrite();
+
+    await addToExistingNotebook(
+      'nb1',
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
+      'user',
+      true
+    );
+
+    expect(NotebookAnalytics.cellAddedFromAddToNotebook).toHaveBeenCalledWith(
+      'nb1',
+      NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
+      0,
+      { panel: panel('p95 latency'), isLibraryPanel: false },
+      true
     );
   });
 
@@ -202,24 +295,27 @@ describe('addPanelToExistingNotebook', () => {
     );
 
     await expect(
-      addPanelToExistingNotebook('nb1', panel('p95 latency'), NOTEBOOK_ENTRY_POINT.EXPLORE, false)
+      addToExistingNotebook(
+        'nb1',
+        [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+        NOTEBOOK_ENTRY_POINT.EXPLORE
+      )
     ).rejects.toThrow();
 
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).not.toHaveBeenCalled();
   });
 });
 
-describe('createNotebookWithPanel', () => {
+describe('createNotebookWithContent', () => {
   // The modal asks for a name only, so the rest of the header is the schema's empty default: no
   // tags, and no description key at all rather than an empty one nobody wrote.
   it('creates a notebook carrying the panel under the given name, with no tags or description', async () => {
     const captured = captureCreate();
 
-    const added = await createNotebookWithPanel(
+    const added = await createNotebookWithContent(
       { title: 'Checkout latency investigation' },
-      panel('p95 latency'),
-      'dashboard_panel',
-      false
+      [{ kind: 'panel', panel: panel('p95 latency'), isLibraryPanel: false }],
+      'dashboard_panel'
     );
 
     expect(added).toEqual({ uid: 'nb2', title: 'Checkout latency investigation' });
@@ -228,11 +324,28 @@ describe('createNotebookWithPanel', () => {
     expect(Object.keys(captured.body!.spec!.elements)).toEqual(['p95-latency']);
   });
 
+  it('attributes the panel to the source given', async () => {
+    const captured = captureCreate();
+
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
+      'plugin',
+      'assistant'
+    );
+
+    expect(captured.body!.spec!.layout.spec.cells.map((cell) => cell.spec.source)).toEqual(['assistant']);
+  });
+
   // A k8s create body carries its own type; the apiserver does not infer it from the endpoint.
   it('sends a create body the apiserver can type', async () => {
     const captured = captureCreate();
 
-    await createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'dashboard_panel', false);
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
+      'dashboard_panel'
+    );
 
     expect(captured.body!.apiVersion).toBe('dashboard.grafana.app/v2beta1');
     expect(captured.body!.kind).toBe('Notebook');
@@ -245,20 +358,87 @@ describe('createNotebookWithPanel', () => {
     captureCreate(null);
 
     await expect(
-      createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'dashboard_panel', false)
+      createNotebookWithContent(
+        { title: 'Untitled' },
+        [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
+        'dashboard_panel'
+      )
     ).rejects.toThrow(/carried no name/);
+  });
+
+  it('describes the panel when the new notebook holds exactly one, alongside text', async () => {
+    captureCreate();
+
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [
+        { kind: 'markdown', text: 'Latency rose.' },
+        { kind: 'panel', panel: panel('Chart'), isLibraryPanel: true },
+      ],
+      'plugin'
+    );
+
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith(
+      'nb2',
+      'plugin',
+      2,
+      { panel: panel('Chart'), isLibraryPanel: true },
+      false
+    );
+  });
+
+  it('describes no panel when the new notebook holds several', async () => {
+    captureCreate();
+
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [
+        { kind: 'panel', panel: panel('A') },
+        { kind: 'panel', panel: panel('B') },
+      ],
+      'plugin'
+    );
+
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'plugin', 2, undefined, false);
+  });
+
+  it('passes on whether the modal locked the time range', async () => {
+    captureCreate();
+
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
+      'explore',
+      'user',
+      true
+    );
+
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith(
+      'nb2',
+      'explore',
+      1,
+      { panel: panel('Chart'), isLibraryPanel: false },
+      true
+    );
   });
 
   it('reports the caller entry point and cell count once the notebook is created', async () => {
     captureCreate();
 
-    await createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'explore', false);
+    await createNotebookWithContent(
+      { title: 'Untitled' },
+      [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
+      'explore'
+    );
 
     expect(NotebookAnalytics.created).toHaveBeenCalledTimes(1);
-    expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'explore', 1, {
-      panel: panel('Chart'),
-      isLibraryPanel: false,
-    });
+    expect(NotebookAnalytics.created).toHaveBeenCalledWith(
+      'nb2',
+      'explore',
+      1,
+      { panel: panel('Chart'), isLibraryPanel: false },
+      false
+    );
     // The cell arrived as part of the creation, and `created` already carries the cell count.
     expect(NotebookAnalytics.cellAddedFromAddToNotebook).not.toHaveBeenCalled();
   });
@@ -266,7 +446,13 @@ describe('createNotebookWithPanel', () => {
   it('does not report a create when the write fails', async () => {
     captureCreate(null);
 
-    await expect(createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'explore', false)).rejects.toThrow();
+    await expect(
+      createNotebookWithContent(
+        { title: 'Untitled' },
+        [{ kind: 'panel', panel: panel('Chart'), isLibraryPanel: false }],
+        'explore'
+      )
+    ).rejects.toThrow();
 
     expect(NotebookAnalytics.created).not.toHaveBeenCalled();
   });

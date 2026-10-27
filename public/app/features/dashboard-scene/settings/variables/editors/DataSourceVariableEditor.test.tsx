@@ -43,13 +43,8 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     getList: () => dsList,
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceList: jest.fn(async () => dsList),
 }));
-
 describe('DataSourceVariableEditor', () => {
   it('shoud render correctly with multi and all not checked', async () => {
     const variable = new DataSourceVariable({

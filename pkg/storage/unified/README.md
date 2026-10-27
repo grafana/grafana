@@ -26,6 +26,12 @@ packet (such as MySQL's `max_allowed_packet`).
 
 There are 2 main tables, the `resource` table stores a "current" view of the objects, and the `resource_history` table stores a record of each revision of a given object.
 
+## Quota checks
+
+In `[unified_storage]`, `enforce_quotas_resources` selects resource kinds whose quotas block creates, while `log_quotas_resources` selects additional kinds whose exceeded quotas are logged without blocking. Both settings accept comma-separated `group/resource` names.
+
+Kinds in neither list skip the quota lookup and usage count. The log-only list is empty by default; add any unenforced kinds whose advisory quota logging you want to retain. A kind in both lists is counted once and its quota is enforced. Explicit quota-usage requests are unaffected by these lists.
+
 ## Running Unified Storage
 
 ### Playlists: baseline configuration

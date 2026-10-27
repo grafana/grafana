@@ -79,6 +79,10 @@ The following screenshot demonstrates how groupings work:
 
 In addition to the option to add groupings from the sidebar, when you hover your cursor over relevant parts of the dashboard, **+ Add panel**, **+ New row**, **+ New tab**, **Group panels**, and ungroup buttons are visible.
 
+To see a repeating row in action, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="Repeat rows" url="https://play.grafana.org/d/000000153/" >}}
+
 The following sections describe:
 
 - [Grouping configuration options](#grouping-configuration-options)

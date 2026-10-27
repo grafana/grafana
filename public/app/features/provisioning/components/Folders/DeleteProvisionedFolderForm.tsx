@@ -1,34 +1,27 @@
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Stack } from '@grafana/ui';
-import {
-  type Job,
-  type RepositoryView,
-  useDeleteRepositoryFilesWithPathMutation,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
-import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
-import { type StepStatusInfo } from 'app/features/provisioning/Wizard/types';
 import { type FolderDTO } from 'app/types/folders';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
-import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
-import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
+import { useResourceJob } from '../../hooks/useResourceJob';
 import { type BaseProvisionedFormData } from '../../types/form';
+import { type DeleteJobSpec } from '../../types/job';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
-import { buildResourceBranchRedirectUrl } from '../../utils/redirect';
-import { useBulkActionJob } from '../BulkActions/useBulkActionJob';
+import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
+import { ResourceJobStatus } from '../Shared/ResourceJobStatus';
 import { getProvisionedRequestError } from '../utils/errors';
 
 interface FormProps extends DeleteProvisionedFolderFormProps {
@@ -45,18 +38,10 @@ interface DeleteProvisionedFolderFormProps {
 function FormContent({ initialValues, parentFolder, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
   const resourceId = parentFolder?.uid || '';
 
-  // state
-  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
-  const [job, setJob] = useState<Job>();
-
-  // hooks
-  const { createBulkJob, isLoading } = useBulkActionJob();
-  const [deleteRepoFile, request] = useDeleteRepositoryFilesWithPathMutation();
-  const navigate = useNavigate();
   const methods = useForm<BaseProvisionedFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch } = methods;
-  const [ref, workflow] = watch(['ref', 'workflow']);
+  const ref = watch('ref') ?? '';
 
   const templateVars: CommitTemplateVars = {
     action: 'delete',
@@ -73,15 +58,19 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { locked: lockBranch } = useBranchTemplate({
+  const { workflow, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
-    workflow,
-    value: ref ?? '',
-    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+    ref,
+    isRefDirty: Boolean(methods.formState.dirtyFields.ref),
+    setRef: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
 
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
+  const { submitted, submit, isCreating, handleSuccess } = useResourceJob({
+    repository,
+    prTitle,
+    onBeforeLeave: onDismiss,
+  });
 
   const showError = (error: unknown) => {
     setError(
@@ -92,36 +81,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     );
   };
 
-  const onBranchSuccess = ({ urls }: { urls?: Record<string, string> }, info: ProvisionedOperationInfo) => {
-    const prUrl = urls?.newPullRequestURL;
-    if (prUrl) {
-      const url = buildResourceBranchRedirectUrl({
-        paramName: 'new_pull_request_url',
-        paramValue: prUrl,
-        repoType: info.repoType,
-        action: 'delete',
-        prTitle,
-      });
-      navigate(url);
-    }
-  };
-
-  const { handleSuccess } = useProvisionedRequestHandler({
-    workflow,
-    resourceType: 'folder',
-    repository,
-    selectedBranch: ref,
-    successMessage: t(
-      'browse-dashboards.delete-provisioned-folder-form.success-message',
-      'Folder deleted successfully'
-    ),
-    handlers: {
-      onDismiss,
-      onBranchSuccess,
-    },
-  });
-
-  const handleSubmitForm = async ({ repo, path }: BaseProvisionedFormData) => {
+  const handleSubmitForm = async ({ repo }: BaseProvisionedFormData) => {
     setError(undefined);
     if (!repo || !repository) {
       showError(t('browse-dashboards.delete-provisioned-folder-form.missing-info', 'Missing required fields'));
@@ -131,70 +91,29 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
     reportInteraction('grafana_provisioning_folder_delete_submitted', {
       workflow,
       repositoryName: repo,
-      repositoryType: repository?.type ?? 'unknown',
+      repositoryType: repository.type ?? 'unknown',
     });
 
-    // Branch workflow: use /files API for direct file operations
-    if (workflow === 'branch') {
-      const branchRef = ref;
-
-      try {
-        const data = await deleteRepoFile({
-          name: repo,
-          path,
-          ref: branchRef,
-          message,
-        }).unwrap();
-        handleSuccess(data);
-      } catch (error) {
-        showError(error);
-      }
-      return;
-    }
-
-    // Write workflow: use Job API
-    const jobSpec = {
-      action: 'delete' as const,
+    const jobSpec: DeleteJobSpec = {
+      action: 'delete',
       message,
       delete: {
-        ref: undefined,
-        resources: [
-          {
-            name: resourceId,
-            group: 'folder.grafana.app' as const,
-            kind: 'Folder' as const,
-          },
-        ],
+        ref: getRequestRef(repository, ref),
+        resources: [{ name: resourceId, group: 'folder.grafana.app', kind: 'Folder' }],
       },
     };
 
     try {
-      const result = await createBulkJob(repository, jobSpec);
-      if (!result.success) {
-        showError(result.error);
-        return;
-      }
-
-      if (result.job) {
-        setJob(result.job);
-        setHasSubmitted(true);
-      }
+      await submit(jobSpec);
     } catch (error) {
       showError(error);
     }
   };
 
-  const handleJobStatusChange = (statusInfo: StepStatusInfo) => {
-    if (statusInfo.status === 'success') {
-      onDismiss?.();
-      navigate('/dashboards');
-    }
-  };
-
   return (
     <>
-      {hasSubmitted && job ? (
-        <JobStatus watch={job} jobType="delete" onStatusChange={handleJobStatusChange} />
+      {submitted ? (
+        <ResourceJobStatus job={submitted.job} jobType="delete" onSuccess={handleSuccess} />
       ) : (
         <FormProvider {...methods}>
           <form onSubmit={handleSubmit(handleSubmitForm)}>
@@ -232,8 +151,8 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
                 <Button variant="secondary" fill="outline" onClick={onDismiss}>
                   <Trans i18nKey="browse-dashboards.delete-provisioned-folder-form.button-cancel">Cancel</Trans>
                 </Button>
-                <Button type="submit" disabled={isLoading || request.isLoading} variant="destructive">
-                  {isLoading || request.isLoading
+                <Button type="submit" disabled={isCreating || isResolving} variant="destructive">
+                  {isCreating
                     ? t('browse-dashboards.delete-provisioned-folder-form.button-deleting', 'Deleting...')
                     : t('browse-dashboards.delete-provisioned-folder-form.button-delete', 'Delete')}
                 </Button>
