@@ -157,6 +157,9 @@ func (s *serverWrapper) configureStoragePath(
 			}
 		}
 	}
+	if wrapper, ok := s.installer.(StorageWrapper); ok {
+		storage = wrapper.WrapStorage(gr.WithVersion(v).GroupVersion(), gr, storage)
+	}
 	apiGroupInfo.VersionedResourcesStorageMap[v][storagePath] = storage
 	return nil
 }

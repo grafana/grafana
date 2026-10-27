@@ -16,17 +16,30 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 )
 
+// StrategyOptions tune the storage strategies of an installer's kinds. The zero value keeps the app-sdk defaults.
+type StrategyOptions struct {
+	// AllowCreateOnUpdate and AllowUnconditionalUpdate give kinds the semantics of Grafana's registry stores:
+	// a conditional update of a missing object surfaces as a Conflict from storage, and updates by name need no resourceVersion.
+	AllowCreateOnUpdate      bool
+	AllowUnconditionalUpdate bool
+	// ValidateSpecOnStatusUpdate lets a status write carry its spec, so admission validates it instead of the
+	// spec being silently replaced with the stored one.
+	ValidateSpecOnStatusUpdate bool
+}
+
 type strategy struct {
 	ObjectTyper runtime.ObjectTyper
 	kind        resource.Kind
 	namer       names.NameGenerator
+	opts        StrategyOptions
 }
 
-func newStrategy(scheme *runtime.Scheme, kind resource.Kind) *strategy {
+func newStrategy(scheme *runtime.Scheme, kind resource.Kind, opts StrategyOptions) *strategy {
 	return &strategy{
 		ObjectTyper: scheme,
 		kind:        kind,
 		namer:       names.SimpleNameGenerator,
+		opts:        opts,
 	}
 }
 
@@ -57,8 +70,8 @@ func (*strategy) Validate(_ context.Context, _ runtime.Object) field.ErrorList {
 func (*strategy) Canonicalize(_ runtime.Object) {
 }
 
-func (*strategy) AllowCreateOnUpdate(_ context.Context) bool {
-	return false
+func (s *strategy) AllowCreateOnUpdate(_ context.Context) bool {
+	return s.opts.AllowCreateOnUpdate
 }
 
 func (*strategy) WarningsOnCreate(_ context.Context, _ runtime.Object) []string {
@@ -88,8 +101,8 @@ func (*strategy) ValidateUpdate(_ context.Context, _, _ runtime.Object) field.Er
 	return field.ErrorList{}
 }
 
-func (*strategy) AllowUnconditionalUpdate(_ context.Context) bool {
-	return false
+func (s *strategy) AllowUnconditionalUpdate(_ context.Context) bool {
+	return s.opts.AllowUnconditionalUpdate
 }
 
 func (*strategy) WarningsOnUpdate(_ context.Context, _, _ runtime.Object) []string {
@@ -129,11 +142,12 @@ type genericStatusStrategy struct {
 
 	gv         schema.GroupVersion
 	namespaced bool
+	opts       StrategyOptions
 }
 
 // NewStatusStrategy creates a new genericStatusStrategy.
-func newStatusStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion, namespaced bool) *genericStatusStrategy {
-	return &genericStatusStrategy{typer, names.SimpleNameGenerator, gv, namespaced}
+func newStatusStrategy(typer runtime.ObjectTyper, gv schema.GroupVersion, namespaced bool, opts StrategyOptions) *genericStatusStrategy {
+	return &genericStatusStrategy{typer, names.SimpleNameGenerator, gv, namespaced, opts}
 }
 
 func (g *genericStatusStrategy) NamespaceScoped() bool {
@@ -151,7 +165,7 @@ func (g *genericStatusStrategy) GetResetFields() map[fieldpath.APIVersion]*field
 	return fields
 }
 
-func (*genericStatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
+func (g *genericStatusStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {
 	if obj == nil || old == nil {
 		return
 	}
@@ -165,6 +179,9 @@ func (*genericStatusStrategy) PrepareForUpdate(ctx context.Context, obj, old run
 	newObj.SetLabels(oldObj.GetLabels())
 	newObj.SetFinalizers(oldObj.GetFinalizers())
 	newObj.SetOwnerReferences(oldObj.GetOwnerReferences())
+	if g.opts.ValidateSpecOnStatusUpdate {
+		return
+	}
 	// TODO: we shouldn't have to do this, right? It's not being done in OSS grafana, but we lose the spec otherwise here...
 	err := newObj.SetSpec(oldObj.GetSpec())
 	if err != nil {

@@ -40,24 +40,34 @@ type Route struct {
 	Response any
 }
 
-// Routes is the single source of truth for the manifest, the OpenAPI wiring and the handler registration.
-var Routes = []Route{
+// RouteTable is the set of custom routes the app serves. It drives the manifest, the OpenAPI wiring,
+// the handler registration and the response types.
+type RouteTable []Route
+
+// BaseRoutes are the subresources the provisioning API itself serves. Extras that add connectors
+// contribute their own routes (see NewRouteTable).
+var BaseRoutes = RouteTable{
 	{Kind: KindRepository, Path: "test", Methods: []string{http.MethodPost}, Response: &provisioning.TestResults{}},
 	{Kind: KindRepository, Path: "files", Methods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete}, Subpath: true, Response: &provisioning.ResourceWrapper{}},
 	{Kind: KindRepository, Path: "refs", Methods: []string{http.MethodGet}, Response: &provisioning.RefList{}},
 	{Kind: KindRepository, Path: "resources", Methods: []string{http.MethodGet}, Response: &provisioning.ResourceList{}},
 	{Kind: KindRepository, Path: "history", Methods: []string{http.MethodGet}, Subpath: true, Response: ""},
 	{Kind: KindRepository, Path: "jobs", Methods: []string{http.MethodPost, http.MethodGet}, Subpath: true, Response: &provisioning.Job{}},
-	{Kind: KindRepository, Path: "webhook", Methods: []string{http.MethodPost}, Response: &provisioning.WebhookResponse{}},
-	{Kind: KindRepository, Path: "render", Methods: []string{http.MethodGet}, Subpath: true, Response: &provisioning.Repository{}},
 	{Kind: KindConnection, Path: "repositories", Methods: []string{http.MethodGet}, Response: &provisioning.ExternalRepositoryList{}},
 	{Kind: KindConnection, Path: "authorize", Methods: []string{http.MethodPost}, Response: &provisioning.ConnectionAuthorizeRequest{}},
 }
 
-// RoutesFor returns the custom routes attached to the given kind.
-func RoutesFor(kind string) []Route {
+// NewRouteTable returns the base routes plus the routes added by extras.
+func NewRouteTable(extra ...Route) RouteTable {
+	t := make(RouteTable, 0, len(BaseRoutes)+len(extra))
+	t = append(t, BaseRoutes...)
+	return append(t, extra...)
+}
+
+// For returns the custom routes attached to the given kind.
+func (t RouteTable) For(kind string) []Route {
 	var out []Route
-	for _, r := range Routes {
+	for _, r := range t {
 		if r.Kind == kind {
 			out = append(out, r)
 		}
@@ -166,15 +176,15 @@ func KindFor(kind, version string) (resource.Kind, bool) {
 }
 
 // WithRoutes adds the custom subresource routes to the generated manifest, which only declares the kinds.
-func WithRoutes(m sdkapp.ManifestData) sdkapp.ManifestData {
+func WithRoutes(m sdkapp.ManifestData, routes RouteTable) sdkapp.ManifestData {
 	versions := make([]sdkapp.ManifestVersion, len(m.Versions))
 	for i, v := range m.Versions {
 		kinds := make([]sdkapp.ManifestVersionKind, len(v.Kinds))
 		for j, k := range v.Kinds {
-			routes := RoutesFor(k.Kind)
-			if len(routes) > 0 {
-				k.Routes = make(map[string]spec3.PathProps, len(routes))
-				for _, r := range routes {
+			kindRoutes := routes.For(k.Kind)
+			if len(kindRoutes) > 0 {
+				k.Routes = make(map[string]spec3.PathProps, len(kindRoutes))
+				for _, r := range kindRoutes {
 					k.Routes[r.Path] = pathProps(r)
 				}
 			}
@@ -188,14 +198,14 @@ func WithRoutes(m sdkapp.ManifestData) sdkapp.ManifestData {
 }
 
 // GoTypeAssociator resolves manifest kinds and custom route responses to Go types.
-type GoTypeAssociator struct{}
+type GoTypeAssociator struct{ Routes RouteTable }
 
 func (GoTypeAssociator) KindToGoType(kind, version string) (resource.Kind, bool) {
 	return KindFor(kind, version)
 }
 
-func (GoTypeAssociator) CustomRouteReturnGoType(kind, _, path, verb string) (any, bool) {
-	for _, r := range RoutesFor(kind) {
+func (a GoTypeAssociator) CustomRouteReturnGoType(kind, _, path, verb string) (any, bool) {
+	for _, r := range a.Routes.For(kind) {
 		if r.Path != path {
 			continue
 		}

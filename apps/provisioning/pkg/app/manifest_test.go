@@ -10,19 +10,21 @@ import (
 )
 
 func TestManifestWithRoutesIsValid(t *testing.T) {
-	m := WithRoutes(*manifestdata.LocalManifest().ManifestData)
+	routes := NewRouteTable(Route{Kind: KindRepository, Path: "extra", Methods: []string{http.MethodGet}})
+	m := WithRoutes(*manifestdata.LocalManifest().ManifestData, routes)
 	require.NoError(t, m.Validate())
 	require.Len(t, m.Versions, len(Versions))
 	for _, v := range m.Versions {
 		for _, k := range v.Kinds {
-			require.Len(t, k.Routes, len(RoutesFor(k.Kind)), "%s %s", v.Name, k.Kind)
+			require.Len(t, k.Routes, len(routes.For(k.Kind)), "%s %s", v.Name, k.Kind)
 		}
 	}
 }
 
 func TestRoutesResolveToGoTypes(t *testing.T) {
-	assoc := GoTypeAssociator{}
-	for _, r := range Routes {
+	routes := NewRouteTable()
+	assoc := GoTypeAssociator{Routes: routes}
+	for _, r := range routes {
 		for _, method := range r.Methods {
 			got, ok := assoc.CustomRouteReturnGoType(r.Kind, "v0alpha1", r.Path, method)
 			require.True(t, ok, "%s %s/%s", method, r.Kind, r.Path)

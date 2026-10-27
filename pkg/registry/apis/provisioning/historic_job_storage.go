@@ -18,6 +18,11 @@ type historicJobStorage struct {
 	*genericregistry.Store
 }
 
+// NewHistoricJobStorage wraps the HistoricJob store so jobs written by the provisioning service keep their original author.
+func NewHistoricJobStorage(store *genericregistry.Store) rest.Storage {
+	return &historicJobStorage{Store: store}
+}
+
 func (s *historicJobStorage) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
 	if auth, ok := authlib.AuthInfoFrom(ctx); ok && identity.IsProvisioningServiceIdentity(auth) {
 		if meta, err := apiutils.MetaAccessor(obj); err == nil && meta.GetCreatedBy() != "" {

@@ -55,8 +55,8 @@ func restOptionsGetterForResource(
 	return optsGetter
 }
 
-func newGenericStoreForKind(scheme *runtime.Scheme, kind resource.Kind, optsGetter generic.RESTOptionsGetter) (*genericregistry.Store, error) {
-	strategy := newStrategy(scheme, kind)
+func newGenericStoreForKind(scheme *runtime.Scheme, kind resource.Kind, optsGetter generic.RESTOptionsGetter, strategyOpts StrategyOptions) (*genericregistry.Store, error) {
+	strategy := newStrategy(scheme, kind, strategyOpts)
 
 	store := &genericregistry.Store{
 		NewFunc: func() runtime.Object {
@@ -135,8 +135,8 @@ func matchKindFunc(kind resource.Kind) func(label labels.Selector, field fields.
 	}
 }
 
-func newRegistryStatusStoreForKind(scheme *runtime.Scheme, kind resource.Kind, specStore *genericregistry.Store) *StatusREST {
-	strategy := newStatusStrategy(scheme, kind.GroupVersionKind().GroupVersion(), kind.Scope() != resource.ClusterScope)
+func newRegistryStatusStoreForKind(scheme *runtime.Scheme, kind resource.Kind, specStore *genericregistry.Store, strategyOpts StrategyOptions) *StatusREST {
+	strategy := newStatusStrategy(scheme, kind.GroupVersionKind().GroupVersion(), kind.Scope() != resource.ClusterScope, strategyOpts)
 	return newStatusREST(specStore, strategy)
 }
 

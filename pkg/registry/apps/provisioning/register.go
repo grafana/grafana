@@ -20,6 +20,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic"
+	genericstore "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	clientrest "k8s.io/client-go/rest"
@@ -35,7 +36,9 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningapp "github.com/grafana/grafana/apps/provisioning/pkg/app"
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
+	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -43,6 +46,7 @@ import (
 var (
 	_ appsdkapiserver.AppInstaller       = (*AppInstaller)(nil)
 	_ builder.GroupVersionRoutesProvider = (*AppInstaller)(nil)
+	_ appinstaller.StorageWrapper        = (*AppInstaller)(nil)
 )
 
 // AppInstaller serves the provisioning API group via the app-sdk.
@@ -53,8 +57,9 @@ type AppInstaller struct {
 
 	scheme *runtime.Scheme
 	codecs serializer.CodecFactory
-	// legacy holds the builders' storages per version, keyed by "<plural>[/<subresource>]".
-	legacy map[string]map[string]rest.Storage
+	routes provisioningapp.RouteTable
+	// legacy holds the connectors the builder creates, keyed by "<plural>/<subresource>".
+	legacy map[string]rest.Storage
 }
 
 // RegisterAppInstaller returns nil when provisioning is not served through the app installer.
@@ -64,18 +69,47 @@ func RegisterAppInstaller(cfg *setting.Cfg, builders *provisioningapis.APIBuilde
 	}
 	b := builders.V0Alpha1
 
-	i := &AppInstaller{builder: b, builders: builders, legacy: map[string]map[string]rest.Storage{}}
-	manifest := provisioningapp.WithRoutes(*manifestdata.LocalManifest().ManifestData)
+	routes := provisioningapp.NewRouteTable(b.ExtraSubresourceRoutes()...)
+	i := &AppInstaller{builder: b, builders: builders, routes: routes, legacy: map[string]rest.Storage{}}
+
+	manifest := *manifestdata.LocalManifest().ManifestData
+	if !b.StoresHistoricJobs() {
+		manifest = withoutKind(manifest, provisioningapp.KindHistoric)
+	}
+	manifest = provisioningapp.WithRoutes(manifest, routes)
 	provider := simple.NewAppProvider(sdkapp.NewEmbeddedManifest(manifest), nil, i.newApp)
 	inner, err := appsdkapiserver.NewDefaultAppInstaller(provider, sdkapp.Config{
 		KubeConfig:   clientrest.Config{}, // overridden by InitializeApp
 		ManifestData: manifest,
-	}, provisioningapp.GoTypeAssociator{})
+	}, provisioningapp.GoTypeAssociator{Routes: routes})
 	if err != nil {
 		return nil, err
 	}
+	// Same store semantics as the Grafana registry stores the builder used.
+	inner.SetStrategyOptions(appsdkapiserver.StrategyOptions{
+		AllowCreateOnUpdate:        true,
+		AllowUnconditionalUpdate:   true,
+		ValidateSpecOnStatusUpdate: true,
+	})
 	i.AppInstaller = inner
 	return i, nil
+}
+
+// withoutKind drops a kind from every version, e.g. HistoricJobs while job history is kept in Loki.
+func withoutKind(m sdkapp.ManifestData, kind string) sdkapp.ManifestData {
+	versions := make([]sdkapp.ManifestVersion, len(m.Versions))
+	for n, v := range m.Versions {
+		kinds := make([]sdkapp.ManifestVersionKind, 0, len(v.Kinds))
+		for _, k := range v.Kinds {
+			if k.Kind != kind {
+				kinds = append(kinds, k)
+			}
+		}
+		v.Kinds = kinds
+		versions[n] = v
+	}
+	m.Versions = versions
+	return m
 }
 
 func (i *AppInstaller) newApp(cfg sdkapp.Config) (sdkapp.App, error) {
@@ -83,7 +117,7 @@ func (i *AppInstaller) newApp(cfg sdkapp.Config) (sdkapp.App, error) {
 	for _, version := range provisioningapp.Versions {
 		for _, kind := range provisioningapp.Kinds(version) {
 			routes := simple.AppCustomRouteHandlers{}
-			for _, r := range provisioningapp.RoutesFor(kind.Kind()) {
+			for _, r := range i.routes.For(kind.Kind()) {
 				for _, method := range r.Methods {
 					routes[simple.AppCustomRoute{Method: simple.AppCustomRouteMethod(method), Path: r.Path}] = i.connectorRoute(kind.Plural() + "/" + r.Path)
 				}
@@ -155,24 +189,19 @@ func (i *AppInstaller) GetOpenAPIDefinitions(ref common.ReferenceCallback) map[s
 	return defs
 }
 
-// InstallAPIs lets the builders construct their storages, then installs the app's APIs with the
+// InstallAPIs lets the builder construct its connectors, then installs the app's APIs with the
 // subresources routed through the app's custom route handlers.
 func (i *AppInstaller) InstallAPIs(server appsdkapiserver.GenericAPIServer, optsGetter genericregistry.RESTOptionsGetter) error {
-	for version, b := range map[string]*provisioningapis.APIBuilder{
-		provisioning.VERSION:        i.builders.V0Alpha1,
-		provisioningapp.VersionBeta: i.builders.V1Beta1,
-	} {
-		info := genericapiserver.NewDefaultAPIGroupInfo(provisioning.GROUP, i.scheme, runtime.NewParameterCodec(i.scheme), serializer.NewCodecFactory(i.scheme))
-		if err := b.UpdateAPIGroupInfo(&info, builder.APIGroupOptions{Scheme: i.scheme, OptsGetter: optsGetter}); err != nil {
-			return fmt.Errorf("build provisioning storage for %s: %w", version, err)
-		}
-		i.legacy[version] = info.VersionedResourcesStorageMap[version]
+	info := genericapiserver.NewDefaultAPIGroupInfo(provisioning.GROUP, i.scheme, runtime.NewParameterCodec(i.scheme), serializer.NewCodecFactory(i.scheme))
+	if err := i.builder.UpdateAPIGroupInfo(&info, builder.APIGroupOptions{Scheme: i.scheme, OptsGetter: optsGetter}); err != nil {
+		return fmt.Errorf("build provisioning connectors: %w", err)
 	}
-	return i.AppInstaller.InstallAPIs(&subpathServer{
-		GenericAPIServer:   server,
-		legacy:             i.legacy,
-		storesHistoricJobs: i.builder.StoresHistoricJobs(),
-	}, optsGetter)
+	for key, st := range info.VersionedResourcesStorageMap[provisioning.VERSION] {
+		if _, ok := st.(rest.Connecter); ok {
+			i.legacy[key] = st
+		}
+	}
+	return i.AppInstaller.InstallAPIs(&storageServer{GenericAPIServer: server, routes: i.routes}, optsGetter)
 }
 
 // AdmissionPlugin delegates to the builder's admission handler, which already knows every kind.
@@ -210,7 +239,7 @@ func (p *admissionPlugin) Validate(ctx context.Context, a admission.Attributes, 
 // connectorRoute adapts a legacy rest.Connecter to an app custom route handler.
 func (i *AppInstaller) connectorRoute(key string) simple.AppCustomRouteHandler {
 	return func(ctx context.Context, w sdkapp.CustomRouteResponseWriter, req *sdkapp.CustomRouteRequest) error {
-		connector, ok := i.legacy[req.ResourceIdentifier.Version][key].(rest.Connecter)
+		connector, ok := i.legacy[key].(rest.Connecter)
 		if !ok {
 			return apierrors.NewNotFound(schema.GroupResource{Group: provisioning.GROUP, Resource: key}, req.ResourceIdentifier.Name)
 		}
@@ -268,39 +297,53 @@ func (r *responder) Error(err error) {
 	}
 }
 
-// graftedStores keep the builder's stores: the generic app-sdk store differs on conditional updates of
-// missing objects, its status store silently drops bundled spec changes instead of rejecting them, and
-// it does not carry the original identity onto the HistoricJobs the provisioning service creates.
-var graftedStores = []string{"repositories", "repositories/status", "connections", "connections/status", "historicjobs"}
-
-// subpathServer wraps the generic server to customise the storages the app-sdk builds: it grafts the
-// builder's stores, lets subresource connectors that take trailing path segments (files/{path}, history/{uid})
-// accept them, and drops HistoricJobs when they are served from Loki.
-type subpathServer struct {
-	appsdkapiserver.GenericAPIServer
-	legacy             map[string]map[string]rest.Storage
-	storesHistoricJobs bool
+// tableConverters keep the `kubectl get` columns the builder's stores had.
+var tableConverters = map[string]rest.TableConvertor{
+	"repositories": provisioning.RepositoryResourceInfo.TableConverter(),
+	"connections":  provisioning.ConnectionResourceInfo.TableConverter(),
+	"jobs":         provisioning.JobResourceInfo.TableConverter(),
+	"historicjobs": provisioning.HistoricJobResourceInfo.TableConverter(),
 }
 
-func (s *subpathServer) InstallAPIGroup(info *genericapiserver.APIGroupInfo) error {
-	for version, storage := range info.VersionedResourcesStorageMap {
-		if !s.storesHistoricJobs {
-			delete(storage, "historicjobs")
-		}
-		for _, key := range graftedStores {
-			if st, ok := s.legacy[version][key]; ok {
-				storage[key] = st
-			}
-		}
+// WrapStorage runs after the server configured the store, which needs to see the plain registry store. It
+// carries the original identity onto the HistoricJobs the provisioning service creates, and re-stamps the items
+// listed through v1beta1, which shares its Go types with v0alpha1.
+func (i *AppInstaller) WrapStorage(gv schema.GroupVersion, gr schema.GroupResource, storage rest.Storage) rest.Storage {
+	store, ok := storage.(*genericstore.Store)
+	if !ok {
+		return storage
+	}
+	if gv.Version != provisioning.VERSION {
+		return grafanaregistry.NewVersionedStore(store, gv)
+	}
+	if gr.Resource == "historicjobs" {
+		return provisioningapis.NewHistoricJobStorage(store)
+	}
+	return storage
+}
+
+// storageServer wraps the generic server to customise the storages the app-sdk builds: it keeps the table
+// columns, and lets subresource connectors report their own kind and accept trailing path segments
+// (files/{path}, history/{uid}).
+type storageServer struct {
+	appsdkapiserver.GenericAPIServer
+	routes provisioningapp.RouteTable
+}
+
+func (s *storageServer) InstallAPIGroup(info *genericapiserver.APIGroupInfo) error {
+	for _, storage := range info.VersionedResourcesStorageMap {
 		for key, st := range storage {
-			conn, ok := st.(*appsdkapiserver.SubresourceConnector)
-			if !ok {
-				continue
-			}
-			route := key[strings.LastIndex(key, "/")+1:]
-			for _, r := range provisioningapp.Routes {
-				if r.Path == route {
-					storage[key] = &routeConnector{SubresourceConnector: conn, route: route, subpath: r.Subpath, kind: kindObject(r)}
+			switch st := st.(type) {
+			case *genericstore.Store:
+				if tc, ok := tableConverters[key]; ok {
+					st.TableConvertor = tc
+				}
+			case *appsdkapiserver.SubresourceConnector:
+				route := key[strings.LastIndex(key, "/")+1:]
+				for _, r := range s.routes {
+					if r.Path == route {
+						storage[key] = &routeConnector{SubresourceConnector: st, route: route, subpath: r.Subpath, kind: kindObject(r)}
+					}
 				}
 			}
 		}
