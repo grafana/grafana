@@ -30,7 +30,8 @@ export function useStateSync(params: ExploreQueryParams) {
   useEffect(() => {
     // This happens when the user navigates to an explore "empty page" while within Explore.
     // ie. by clicking on the explore when explore is active.
-    if (!params.panes) {
+    // Skipped while an init is pending so a second, concurrent init with new random pane ids can't start.
+    if (!params.panes && initState.current === 'done') {
       initState.current = 'notstarted';
       prevParams.current = params;
     }
