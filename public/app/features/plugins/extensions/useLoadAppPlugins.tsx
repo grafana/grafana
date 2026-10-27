@@ -1,26 +1,10 @@
 import { useAsync } from 'react-use';
 
-import { preloadPlugins } from '../pluginPreloader';
+import { loadDependentAppPlugins, type PluginDependencyPredicate } from './utils';
 
-import { getAppPluginConfigs } from './utils';
-
-type Predicate = (pluginId: string) => Promise<string[]>;
-
-export function useLoadAppPlugins(pluginId: string, predicate: Predicate): { isLoading: boolean } {
+export function useLoadAppPlugins(pluginId: string, predicate: PluginDependencyPredicate): { isLoading: boolean } {
   const { loading: isLoading } = useAsync(async () => {
-    const filteredConfigs = await predicate(pluginId);
-
-    if (!filteredConfigs.length) {
-      return;
-    }
-
-    const appConfigs = await getAppPluginConfigs(filteredConfigs);
-
-    if (!appConfigs.length) {
-      return;
-    }
-
-    await preloadPlugins(appConfigs);
+    await loadDependentAppPlugins(pluginId, predicate);
   }, [pluginId, predicate]);
 
   return { isLoading };

@@ -1,4 +1,4 @@
-import { combineLatest, from, map, type Observable, switchMap } from 'rxjs';
+import { catchError, combineLatest, from, map, type Observable, of, switchMap } from 'rxjs';
 
 import { PluginExtensionTypes, type PluginExtension, type PluginExtensionComponent } from '@grafana/data';
 import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
@@ -10,6 +10,8 @@ import {
   addedLinkToExtensionLink,
   getReadOnlyProxy,
   generateExtensionId,
+  getExtensionPointPluginDependencies,
+  loadDependentAppPlugins,
   wrapWithPluginContext,
   getLinkExtensionOverrides,
 } from './utils';
@@ -18,6 +20,10 @@ import {
  * Returns an observable that emits plugin extensions whenever the core extensions registries change.
  * The observable will emit the initial state of the extensions and then emit again whenever
  * either the added components registry or the added links registry changes.
+ *
+ * Unlike the registries themselves, the app plugins contributing to an extension point are not loaded
+ * automatically - the same way the `usePluginLinks`/`usePluginComponents` hooks do via `useLoadAppPlugins`,
+ * this ensures those plugins are loaded before relying on the registries' contents.
  *
  * @param options - The options for getting plugin extensions
  * @returns An Observable that emits the plugin extensions for the given extension point any time the registries change
@@ -28,8 +34,15 @@ export const getObservablePluginExtensions = (
 ): Observable<ReturnType<GetExtensions>> => {
   const { extensionPointId } = options;
 
-  return from(getPluginExtensionRegistries()).pipe(
-    switchMap((registries) =>
+  const pluginsLoaded = from(loadDependentAppPlugins(extensionPointId, getExtensionPointPluginDependencies)).pipe(
+    catchError((error) => {
+      log.error(error instanceof Error ? error.message : String(error));
+      return of(undefined);
+    })
+  );
+
+  return combineLatest([from(getPluginExtensionRegistries()), pluginsLoaded]).pipe(
+    switchMap(([registries]) =>
       combineLatest([
         registries.addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
         registries.addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),

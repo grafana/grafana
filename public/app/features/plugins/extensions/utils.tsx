@@ -29,6 +29,7 @@ import {
 } from 'app/types/events';
 
 import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaApis/RestrictedGrafanaApisProvider';
+import { preloadPlugins } from '../pluginPreloader';
 
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import {
@@ -586,6 +587,32 @@ export function addedLinkToExtensionLink(
 export async function getAppPluginConfigs(pluginIds: string[] = []): Promise<AppPluginConfig[]> {
   const apps = await getAppPluginMetas();
   return getAppPluginConfigsSync(pluginIds, apps);
+}
+
+export type PluginDependencyPredicate = (id: string) => Promise<string[]>;
+
+/**
+ * Preloads the app plugins required to use an extension point or exposed component, resolved via `predicate`
+ * (e.g. `getExtensionPointPluginDependencies` or `getExposedComponentPluginDependencies`).
+ *
+ * This is the loading logic shared by the React hooks (through `useLoadAppPlugins`) and the observable-based
+ * plugin extension APIs (e.g. `getObservablePluginLinks`), so that non-React consumers get the same on-demand
+ * plugin loading the hooks provide.
+ */
+export async function loadDependentAppPlugins(id: string, predicate: PluginDependencyPredicate): Promise<void> {
+  const filteredConfigs = await predicate(id);
+
+  if (!filteredConfigs.length) {
+    return;
+  }
+
+  const appConfigs = await getAppPluginConfigs(filteredConfigs);
+
+  if (!appConfigs.length) {
+    return;
+  }
+
+  await preloadPlugins(appConfigs);
 }
 
 /**

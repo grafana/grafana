@@ -21,7 +21,7 @@ import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { getPluginExtensionRegistries } from './registry/setup';
-import { isReadOnlyProxy } from './utils';
+import { getExtensionPointPluginDependencies, isReadOnlyProxy, loadDependentAppPlugins } from './utils';
 import { assertPluginExtensionLink } from './validators';
 
 jest.mock('@grafana/runtime', () => {
@@ -46,7 +46,13 @@ jest.mock('./registry/setup', () => ({
   getPluginExtensionRegistries: jest.fn(),
 }));
 
+jest.mock('./utils', () => ({
+  ...jest.requireActual('./utils'),
+  loadDependentAppPlugins: jest.fn().mockResolvedValue(undefined),
+}));
+
 const getPluginExtensionRegistriesMock = jest.mocked(getPluginExtensionRegistries);
+const loadDependentAppPluginsMock = jest.mocked(loadDependentAppPlugins);
 
 async function createRegistries(
   preloadResults: Array<{
@@ -580,6 +586,8 @@ describe('getObservablePluginExtensions()', () => {
     };
 
     getPluginExtensionRegistriesMock.mockResolvedValue(registries);
+    loadDependentAppPluginsMock.mockClear();
+    loadDependentAppPluginsMock.mockResolvedValue(undefined);
 
     addedLinksRegistry.register({
       pluginId,
@@ -607,6 +615,24 @@ describe('getObservablePluginExtensions()', () => {
         },
       ],
     });
+  });
+
+  it('should load the app plugins contributing to the extension point before emitting', async () => {
+    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(first());
+
+    await firstValueFrom(observable);
+
+    expect(loadDependentAppPluginsMock).toHaveBeenCalledWith(extensionPointId, getExtensionPointPluginDependencies);
+  });
+
+  it('should catch and log errors thrown while loading the app plugins for the extension point', async () => {
+    loadDependentAppPluginsMock.mockRejectedValueOnce(new Error('Failed to load plugin'));
+
+    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(first());
+    const { extensions } = await firstValueFrom(observable);
+
+    expect(extensions).toHaveLength(2);
+    expect(log.error).toHaveBeenCalledWith('Failed to load plugin');
   });
 
   it('should emit the initial state when no changes are made to the registries', async () => {
