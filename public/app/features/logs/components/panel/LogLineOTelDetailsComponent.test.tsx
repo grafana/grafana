@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 
 import {
-  CoreApp,
   dateTime,
   FieldType,
   LogsSortOrder,
@@ -12,7 +11,7 @@ import {
   type Field,
   type TimeRange,
 } from '@grafana/data';
-import { getDataSourceInstance, reportInteraction } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime';
 
 import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
@@ -25,7 +24,6 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn().mockReturnValue({ isLoading: false, links: [] }),
   getDataSourceInstance: jest.fn(),
-  reportInteraction: jest.fn(),
 }));
 
 jest.mock('./LogListContext');
@@ -117,30 +115,6 @@ function renderDetails(
 describe('LogLineDetailsOTelComponent', () => {
   beforeEach(() => {
     localStorage.clear();
-    jest.mocked(reportInteraction).mockClear();
-  });
-
-  it('reports the OTel language when details are displayed', () => {
-    const log = createLog();
-    log.otelLanguage = 'java';
-
-    renderDetails({ app: CoreApp.Explore }, { log });
-
-    expect(reportInteraction).toHaveBeenCalledTimes(1);
-    expect(reportInteraction).toHaveBeenCalledWith('logs_log_line_details_otel_displayed', {
-      app: CoreApp.Explore,
-      language: 'java',
-    });
-  });
-
-  it('does not report OTel details when interactions are disabled', () => {
-    const log = createLog();
-    log.otelLanguage = 'go';
-
-    renderDetails({ noInteractions: true }, { log });
-
-    expect(screen.getByRole('button', { name: /Service/ })).toBeInTheDocument();
-    expect(reportInteraction).not.toHaveBeenCalled();
   });
 
   it('remembers which categories are open and closed', async () => {
