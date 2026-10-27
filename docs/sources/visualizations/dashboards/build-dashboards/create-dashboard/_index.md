@@ -147,7 +147,7 @@ To create a dashboard, follow these steps:
 1. Select a folder, if applicable.
 1. Click **Save**
 1. Click **Back**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< /docs/list >}}
 
@@ -230,7 +230,7 @@ To edit a dashboard, follow these steps:
 <!-- prettier-ignore-start -->
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Do one of the following:
 
    | Update                 | Action                        |
@@ -248,7 +248,7 @@ To edit a dashboard, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Back**, if needed.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 <!-- prettier-ignore-end -->
 
@@ -289,14 +289,14 @@ For repeated panels, this interaction is available on the last panel in the grou
 To update the panel layout, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the dashboard or the grouping that contains the panel layout you want to update.
 1. Click the **Dashboard options** icon to open the sidebar, if needed.
 1. Under **Layout**, select **Custom** or **Auto**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Configure repeat options
 
@@ -310,7 +310,7 @@ To configure repeats, follow these steps:
 {{< docs/list >}}
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
@@ -329,7 +329,7 @@ To configure repeats, follow these steps:
 1. When you've finished setting the repeat option, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< /shared >}}
 
@@ -426,7 +426,7 @@ For this rule type, you can select time ranges from **5 minutes** to **5 years**
 To configure a show/hide rule, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the panel, row, or tab you want to update to open the sidebar, or click the **Dashboard options** icon to open it.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
@@ -446,7 +446,7 @@ To configure a show/hide rule, follow these steps:
 1. When you've finished setting rules, save the dashboard.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 Hidden panels, rows, or tabs aren't visible when the dashboard is in view mode.
 In edit mode, hidden dashboard elements are displayed with an icon or overlay indicating this.
@@ -456,7 +456,7 @@ In edit mode, hidden dashboard elements are displayed with an icon or overlay in
 To move a panel, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Navigate to the panel you want to move.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the panel.
@@ -469,7 +469,7 @@ To move a panel, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save** again.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Resize a panel
 
@@ -478,7 +478,7 @@ When your dashboard or grouping has a **Custom** layout, you can manually resize
 To resize a panel, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Navigate to the panel you want to resize.
 
    If the dashboard is large, open the **Content outline** and use it to navigate to the panel.
@@ -487,7 +487,7 @@ To resize a panel, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Copy, duplicate, or delete dashboard elements
 
@@ -496,7 +496,7 @@ You can copy and paste, duplicate, or delete any dashboard elements using the si
 To manage dashboard elements, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Do one of the following:
    - For panels, rows, or tabs, click the element you want to update to open the sidebar. If the dashboard is large, open the **Content outline** and use it to navigate to the part of the dashboard you want to update.
    - For dashboard controls&mdash;filters, variables, annotations, or links&mdash; click the control at the top of the dashboard to display the edit and delete options, and then click the edit icon for the control. This opens the sidebar.
@@ -511,14 +511,14 @@ To manage dashboard elements, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Copy a dashboard
 
 To make a copy of a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Save** drop-down list and select **Save as copy**.
 1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
 
