@@ -184,7 +184,7 @@ describe('RowItemRenderer', () => {
       });
       
       // Activate the sidebar to enable edit actions
-      const deactivateSidebar = scene.activateSidebar();
+      const deactivateSidebar = scene.state.sidebar.activate();
       
       render(<scene.Component model={scene} />);
 
@@ -212,7 +212,7 @@ describe('RowItemRenderer', () => {
       });
       
       // Activate the sidebar to enable edit actions
-      const deactivateSidebar = scene.activateSidebar();
+      const deactivateSidebar = scene.state.sidebar.activate();
       
       render(<scene.Component model={scene} />);
 
