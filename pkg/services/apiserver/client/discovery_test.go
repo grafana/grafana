@@ -20,8 +20,8 @@ func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
 		groups           []apidiscoveryv2.APIGroupDiscovery
 		unauthorizedRoot bool
 		wantGVR          schema.GroupVersionResource
-		wantGVK schema.GroupVersionKind
-		wantErr string
+		wantGVK          schema.GroupVersionKind
+		wantErr          string
 	}{
 		{
 			name: "all groups current",
