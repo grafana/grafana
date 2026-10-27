@@ -154,7 +154,7 @@ export const InspectDataTab = memo(function InspectDataTab({
   const getProcessedData = (): DataFrame[] => {
     if (!options.withFieldConfig) {
       const rawOverriddenData = applyRawFieldOverrides(transformedData);
-      cacheFieldDisplayNames(rawOverriddenData);
+      rawOverriddenData.forEach((frame) => cacheFieldDisplayNames([frame]));
       return rawOverriddenData;
     }
 
@@ -176,7 +176,7 @@ export const InspectDataTab = memo(function InspectDataTab({
     // applyFieldOverrides always clears any previously cached displayName (it can change during the
     // override process), so caching has to happen here on its output — caching transformedData
     // beforehand would just get wiped out again.
-    cacheFieldDisplayNames(overriddenData);
+    overriddenData.forEach((frame) => cacheFieldDisplayNames([frame]));
     return overriddenData;
   };
 
