@@ -58,8 +58,9 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].textWrap === key[1].textWrap;
 
 // Geometry shared by the two header corner masks (see their use in `getGridStyles`). react-data-grid
-// gives every cell `position: relative`, so the pseudo-element anchors to the header cell itself, and
-// `::after` is free — rdg only takes `::before`, on the grid root, for its Firefox scrollbar fix.
+// gives every cell `position: relative`, so the pseudo-element anchors to the header cell itself.
+// Separate pseudo-elements preserve both corners when one cell is both first and last.
+// rdg only takes `::before` on the grid root for its Firefox scrollbar fix.
 const headerCornerMask = (radius: string) =>
   ({
     content: '""',
@@ -172,6 +173,8 @@ export const getGridStyles = memoize(
 
         blockSize: '100%',
         scrollbarWidth: 'thin',
+        // Keep elastic overscroll from pulling the header away from the fixed frame and sidebar divider.
+        ...(tableRefreshEnabled && { overscrollBehaviorY: 'none' }),
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
         border: 'none',
@@ -362,7 +365,7 @@ export const getGridStyles = memoize(
           // Filling everything outside the arc with the table's own background — the same colour as
           // the gap beside the table, and as whatever the table sits on — makes the corner opaque, so
           // there is nothing left to show through wherever it lands.
-          [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}::after`]: {
+          [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}::before`]: {
             ...headerCornerMask(cornerRadius),
             insetInlineStart: 0,
             background: `radial-gradient(circle at 100% 100%, transparent calc(${cornerRadius} - 0.5px), var(--rdg-background-color) ${cornerRadius})`,
