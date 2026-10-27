@@ -19,6 +19,36 @@ const SOURCE_ID = 'protomaps';
 /** Protomaps planet builds stop at zoom 15; OpenLayers overzooms the last level beyond that */
 const MAX_TILE_ZOOM = 15;
 
+/**
+ * Protomaps names minor roads, paths and roads of kind `other` from zoom 15. In dense cities that is
+ * thousands of line labels, each split into pieces that are placed and drawn every frame, which
+ * drops panning to about 15 fps. The default basemap waits until zoom 16 and leaves paths unnamed.
+ */
+const MINOR_ROAD_LABELS = 'roads_labels_minor';
+const MINOR_ROAD_LABEL_MIN_ZOOM = 16;
+/**
+ * Replaces the upstream filter instead of joining it with `all`: that filter is legacy syntax, and an
+ * expression beside it makes the style spec read the whole filter as an expression.
+ */
+const MINOR_ROAD_LABEL_FILTER: GlValue = ['==', ['get', 'kind'], 'minor_road'];
+
+/**
+ * The light and dark flavors label shops, restaurants and street furniture from the zoom each
+ * feature allows. The default basemap only names parks, plus stadiums and attractions prominent enough to appear
+ * by zoom 13, and only from zoom 15.
+ */
+const POI_LABELS = 'pois';
+const POI_LABEL_MIN_ZOOM = 15;
+const POI_LABEL_KINDS = ['park', 'stadium', 'attraction'];
+const PROMINENT_POI: GlValue = [
+  'all',
+  ['in', ['get', 'kind'], ['literal', POI_LABEL_KINDS]],
+  ['any', ['==', ['get', 'kind'], 'park'], ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13]],
+];
+
+/** The map sits under the panel's data, so like the default basemap it shows no house numbers, shields or one-way arrows */
+const UNLABELLED_LAYERS = new Set(['address_label', 'roads_shields', 'roads_oneway']);
+
 export enum ProtomapsFlavor {
   Auto = 'auto',
   Light = 'light',
@@ -49,9 +79,16 @@ const defaultProtomapsConfig: ProtomapsConfig = {
   server: DEV_SERVER_URL,
 };
 
+/** Style filters and expressions are plain JSON */
+type GlValue = string | number | boolean | null | GlValue[] | { [key: string]: GlValue };
+
 interface GlLayer {
+  id: string;
   type: string;
+  minzoom?: number;
+  filter?: GlValue;
   layout?: Record<string, unknown>;
+  paint?: Record<string, unknown>;
 }
 
 interface GlStyle {
@@ -133,13 +170,31 @@ export function isProtomapsBasemapEnabled() {
 
 function adaptStyle<T extends GlStyle>(glStyle: T, showLabels: boolean): T {
   const layers = glStyle.layers
-    .filter((layer) => showLabels || layer.type !== 'symbol')
-    .map((layer) =>
-      layer.layout?.['text-font']
-        ? { ...layer, layout: { ...layer.layout, 'text-font': toGrafanaFonts(layer.layout['text-font']) } }
-        : layer
-    );
+    .filter((layer) => (showLabels || layer.type !== 'symbol') && !UNLABELLED_LAYERS.has(layer.id))
+    .map(adaptLayer);
   return { ...glStyle, layers };
+}
+
+function adaptLayer<T extends GlLayer>(layer: T): T {
+  let adapted = layer;
+  if (adapted.layout?.['text-font']) {
+    adapted = { ...adapted, layout: { ...adapted.layout, 'text-font': toGrafanaFonts(adapted.layout['text-font']) } };
+  }
+  if (adapted.id === MINOR_ROAD_LABELS) {
+    adapted = {
+      ...adapted,
+      minzoom: Math.max(adapted.minzoom ?? 0, MINOR_ROAD_LABEL_MIN_ZOOM),
+      filter: MINOR_ROAD_LABEL_FILTER,
+    };
+  }
+  if (adapted.id === POI_LABELS) {
+    adapted = {
+      ...adapted,
+      minzoom: Math.max(adapted.minzoom ?? 0, POI_LABEL_MIN_ZOOM),
+      filter: adapted.filter ? ['all', adapted.filter, PROMINENT_POI] : PROMINENT_POI,
+    };
+  }
+  return adapted;
 }
 
 export const protomaps: MapLayerRegistryItem<ProtomapsConfig> = {

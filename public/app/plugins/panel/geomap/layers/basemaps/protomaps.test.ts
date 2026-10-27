@@ -22,7 +22,7 @@ const eventBus = {} as EventBus;
 const lightTheme = { isDark: false } as GrafanaTheme2;
 const darkTheme = { isDark: true } as GrafanaTheme2;
 
-/** Trimmed from a generated Protomaps style: one fill, one label */
+/** Trimmed from a generated Protomaps style: one fill, four labels */
 const STYLE = {
   version: 8,
   sources: { protomaps: { type: 'vector' } },
@@ -37,6 +37,35 @@ const STYLE = {
         'text-font': ['step', ['zoom'], ['literal', ['Noto Sans Regular']], 8, ['literal', ['Noto Sans Medium']]],
       },
     },
+    {
+      id: 'roads_labels_minor',
+      type: 'symbol',
+      source: 'protomaps',
+      'source-layer': 'roads',
+      minzoom: 15,
+      filter: ['in', 'kind', 'minor_road', 'other', 'path'],
+      layout: { 'symbol-placement': 'line', 'text-font': ['Noto Sans Regular'], 'text-size': 12 },
+      paint: { 'text-color': '#525252', 'text-halo-color': '#1f1f1f', 'text-halo-width': 1 },
+    },
+    {
+      id: 'pois',
+      type: 'symbol',
+      source: 'protomaps',
+      'source-layer': 'pois',
+      filter: [
+        'all',
+        ['in', ['get', 'kind'], ['literal', ['park', 'restaurant', 'museum', 'stadium']]],
+        ['>=', ['zoom'], ['+', ['get', 'min_zoom'], 0]],
+      ],
+      layout: {
+        'icon-image': ['get', 'kind'],
+        'text-font': ['Noto Sans Regular'],
+        'text-offset': [1.1, 0],
+        'text-variable-anchor': ['left', 'right'],
+      },
+      paint: { 'text-color': '#30C573', 'text-halo-color': '#1f1f1f', 'text-halo-width': 1 },
+    },
+    { id: 'address_label', type: 'symbol', source: 'protomaps', 'source-layer': 'buildings', minzoom: 18 },
   ],
 };
 
@@ -55,6 +84,10 @@ async function initLayer(config: ProtomapsConfig, theme = lightTheme) {
 
 function appliedStyle() {
   return applyStyleMock.mock.calls[0][1];
+}
+
+function appliedLayer(id: string) {
+  return appliedStyle().layers.find((layer: { id: string }) => layer.id === id);
 }
 
 describe('Protomaps basemap', () => {
@@ -141,13 +174,49 @@ describe('Protomaps basemap', () => {
   it('draws labels in Grafana’s own Inter instead of Noto Sans', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[1].layout['text-font']).toEqual([
+    expect(appliedLayer('places_locality').layout['text-font']).toEqual([
       'step',
       ['zoom'],
       ['literal', ['Inter Regular']],
       8,
       ['literal', ['Inter Medium']],
     ]);
+  });
+
+  it('names minor roads from zoom 16 instead of 15, and leaves paths and other roads unnamed', async () => {
+    await initLayer({ showLabels: true });
+
+    expect(appliedLayer('roads_labels_minor')).toMatchObject({
+      minzoom: 16,
+      filter: ['==', ['get', 'kind'], 'minor_road'],
+    });
+  });
+
+  it('labels only the places the default basemap labels, from zoom 15', async () => {
+    await initLayer({ showLabels: true });
+
+    expect(appliedLayer('pois')).toMatchObject({
+      minzoom: 15,
+      filter: [
+        'all',
+        [
+          'all',
+          ['in', ['get', 'kind'], ['literal', ['park', 'restaurant', 'museum', 'stadium']]],
+          ['>=', ['zoom'], ['+', ['get', 'min_zoom'], 0]],
+        ],
+        [
+          'all',
+          ['in', ['get', 'kind'], ['literal', ['park', 'stadium', 'attraction']]],
+          ['any', ['==', ['get', 'kind'], 'park'], ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13]],
+        ],
+      ],
+    });
+  });
+
+  it('leaves out house numbers, which the default basemap never shows', async () => {
+    await initLayer({ showLabels: true });
+
+    expect(appliedStyle().layers.map((layer: { id: string }) => layer.id)).not.toContain('address_label');
   });
 
   it('drops label layers when labels are off', async () => {
