@@ -27,6 +27,7 @@ func TestLegacyCheckRegistrationDoesNotExposeEnumeration(t *testing.T) {
 	allowed, err := LegacyCheck(t.Context(), client, &legacyv1.LegacyCheckRequest{Namespace: "default", Subject: "user:subject", Expression: &legacyv1.LegacyExpression{Node: &legacyv1.LegacyExpression_Permission{Permission: &legacyv1.LegacyPermission{Action: "ldap:read"}}}})
 	require.NoError(t, err)
 	require.True(t, allowed)
+	//nolint:staticcheck // Intentionally call the deprecated RPC to verify check-only registration rejects enumeration.
 	stream, err := client.LegacyGetUserPermissions(t.Context(), &legacyv1.LegacyGetUserPermissionsRequest{})
 	if err == nil {
 		_, err = stream.Recv()
