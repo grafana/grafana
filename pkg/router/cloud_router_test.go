@@ -19,6 +19,7 @@ import (
 	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -26,6 +27,9 @@ import (
 	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -118,6 +122,102 @@ func TestProvideCloudRoutesLoaderFactory_AnonymousDiscoveryAggregateDoesNotExemp
 
 	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "cap_token and token_exchange_url are required")
+}
+
+func TestProvideCloudRoutesLoaderFactory_InternalGroups(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{})
+	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{
+		"url":             "https://baas.invalid",
+		"discovery_auth":  "none",
+		"internal_groups": "mobile.ext.grafana.app",
+	})
+
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	require.NoError(t, err)
+	targets := loader.(*cloudLoader).aggregateTargets
+	require.Len(t, targets, 1)
+	require.Equal(t, []string{"mobile.ext.grafana.app"}, targets[0].internalGroups)
+}
+
+// tokenIdentity is a requester authenticated by an access token with subject
+// sub, as Grafana's middleware builds it.
+func tokenIdentity(typ types.IdentityType, sub, serviceIdentity string) *authn.Identity {
+	return &authn.Identity{
+		ID: "123", Type: typ, OrgID: 1,
+		AuthenticatedBy: login.ExtendedJWTModule,
+		AuthID:          sub,
+		AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{
+			Rest: authnlib.AccessTokenClaims{ServiceIdentity: serviceIdentity},
+		},
+	}
+}
+
+// standaloneRequester stands in for the router's own token requester, whose
+// extra comes from authlib: the outermost signer and the innermost one.
+type standaloneRequester struct {
+	*authn.Identity
+	extra map[string][]string
+}
+
+func (r standaloneRequester) GetExtra() map[string][]string { return r.extra }
+
+func TestInternalCallerPolicy(t *testing.T) {
+	resigned := standaloneRequester{
+		Identity: tokenIdentity(types.TypeUser, "access-policy:authn-cap", "grafana-authn-service"),
+		extra: map[string][]string{
+			authnlib.ServiceIdentityKey:          {"grafana-authn-service"},
+			authnlib.InnermostServiceIdentityKey: {"mobile-operator"},
+		},
+	}
+	operator := standaloneRequester{
+		Identity: tokenIdentity(types.TypeAccessPolicy, "access-policy:operator-cap", "mobile-operator"),
+		extra: map[string][]string{
+			authnlib.ServiceIdentityKey:          {"mobile-operator"},
+			authnlib.InnermostServiceIdentityKey: {"mobile-operator"},
+		},
+	}
+
+	for _, tc := range []struct {
+		name      string
+		requester identity.Requester
+		internal  bool
+	}{
+		{name: "allowlisted service", requester: tokenIdentity(types.TypeAccessPolicy, "access-policy:operator-cap", "mobile-operator"), internal: true},
+		{name: "allowlisted service on behalf of a user", requester: tokenIdentity(types.TypeUser, "access-policy:operator-cap", "mobile-operator"), internal: true},
+		{name: "allowlisted service in standalone mode", requester: operator, internal: true},
+		{name: "end user through the gateway", requester: tokenIdentity(types.TypeUser, "access-policy:authn-cap", "grafana-authn-service")},
+		{name: "allowlisted service re-signed by the gateway", requester: resigned},
+		{name: "unlisted service", requester: tokenIdentity(types.TypeAccessPolicy, "access-policy:other-cap", "some-other-service")},
+		{name: "allowlisted sub without a service identity", requester: tokenIdentity(types.TypeAccessPolicy, "access-policy:legacy-cap", ""), internal: true},
+		{name: "unlisted sub without a service identity", requester: tokenIdentity(types.TypeAccessPolicy, "access-policy:other-cap", "")},
+		{name: "allowlisted service name as a sub", requester: tokenIdentity(types.TypeAccessPolicy, "mobile-operator", "")},
+		{name: "session user", requester: &authn.Identity{ID: "123", Type: types.TypeUser, OrgID: 1, AuthenticatedBy: login.PasswordAuthModule}},
+		{name: "anonymous", requester: &authn.Identity{Type: types.TypeAnonymous, OrgID: 1}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			policy := newInternalCallerPolicy(cfgWithCloudRouterSection(t, map[string]string{
+				"internal_identities": "mobile-operator, access-policy:legacy-cap",
+			}))
+			req := httptest.NewRequest(http.MethodGet, "/apis/mobile.ext.grafana.app/v1", nil)
+			require.Equal(t, tc.internal, policy(req.WithContext(identity.WithRequester(req.Context(), tc.requester))))
+
+			empty := newInternalCallerPolicy(cfgWithCloudRouterSection(t, map[string]string{}))
+			require.False(t, empty(req.WithContext(identity.WithRequester(req.Context(), tc.requester))), "an empty list trusts no token")
+		})
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/apis/mobile.ext.grafana.app/v1", nil)
+	empty := newInternalCallerPolicy(setting.NewCfg())
+	require.False(t, empty(req), "no requester")
+	require.True(t, empty(req.WithContext(identity.WithServiceIdentityContext(req.Context(), 1))), "Grafana itself")
+}
+
+func TestInternalCallerPolicyReadsEnvOverrides(t *testing.T) {
+	t.Setenv("GF_CLOUD_ROUTER_INTERNAL_IDENTITIES", "mobile-operator")
+	policy := newInternalCallerPolicy(cfgWithCloudRouterSection(t, map[string]string{}))
+	req := httptest.NewRequest(http.MethodGet, "/apis/mobile.ext.grafana.app/v1", nil)
+	requester := tokenIdentity(types.TypeAccessPolicy, "access-policy:operator-cap", "mobile-operator")
+	require.True(t, policy(req.WithContext(identity.WithRequester(req.Context(), requester))))
 }
 
 // TestNewAggregateBaseTransport_IsPerCallClone pins the property that keeps

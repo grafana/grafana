@@ -14,6 +14,7 @@ const (
 	routeDiscovery = "discovery" // root discovery (/apis, /openapi/v3) and /apis/discovery, built by the router
 	routeNext      = "next"      // not the router's; passed to the next handler
 	routeInvalid   = "invalid"   // rejected before routing, such as a non-canonical path
+	routeHidden    = "hidden"    // a restricted group the caller may not see, handled as an unknown group
 
 	routeUnauthenticated = "unauthenticated" // rejected because the caller did not authenticate
 )

@@ -69,6 +69,9 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, loade
 		return nil, fmt.Errorf("routes loader is required")
 	}
 	router.loader = loader
+	// Set in every mode: Grafana's own authentication carries the same token
+	// claims as the router's.
+	router.internalCaller = newInternalCallerPolicy(cfg)
 
 	s := newService(router, reg)
 	s.standalone = standaloneRouter(cfg)

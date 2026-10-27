@@ -263,6 +263,36 @@ func TestAggregateTarget_PollUsesDedicatedProxyTransportNotDiscoveryClient(t *te
 	require.Equal(t, discoveryCalls, discoveryTransport.calls, "resource requests must not use the discovery credentials")
 }
 
+func TestAggregateTarget_MarksInternalGroups(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(metav1.APIGroupList{Groups: []metav1.APIGroup{
+			{Name: "mobile.ext.grafana.app"},
+			{Name: "dashboard.grafana.app"},
+		}})
+	}))
+	defer srv.Close()
+
+	restricted := func(internalGroups []string) map[string]bool {
+		target, err := newAggregateTarget(aggregateTargetConfig{
+			Name:           "baas_apiserver",
+			URL:            srv.URL,
+			InternalGroups: internalGroups,
+		}, srv.Client(), srv.Client().Transport)
+		require.NoError(t, err)
+		target.poll(t.Context(), make(chan struct{}, 1))
+		groups := map[string]bool{}
+		for _, b := range target.Backends() {
+			groups[b.Group().Name] = restrictedBackend(b)
+		}
+		return groups
+	}
+	require.Equal(t, map[string]bool{"mobile.ext.grafana.app": true, "dashboard.grafana.app": false}, restricted([]string{"mobile.ext.grafana.app"}))
+	require.Equal(t, map[string]bool{"mobile.ext.grafana.app": false, "dashboard.grafana.app": false}, restricted([]string{"mobile.*", "*"}),
+		"names are matched exactly, so * is not a wildcard")
+	require.Equal(t, map[string]bool{"mobile.ext.grafana.app": false, "dashboard.grafana.app": false}, restricted(nil),
+		"no internal_groups marks no group, unlike group_regex")
+}
+
 // TestNewAggregateTarget_RejectsNonAbsoluteURL pins the construction-time URL
 // check: url.Parse accepts all of these, so without the explicit scheme/host
 // rejection a misconfigured target would be built and its breakage would show

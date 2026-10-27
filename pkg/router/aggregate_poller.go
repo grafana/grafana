@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -34,6 +35,8 @@ type aggregateTarget struct {
 	base     *url.URL
 	client   *http.Client
 	patterns []*regexp.Regexp
+	// internalGroups are the groups only internal callers may see.
+	internalGroups []string
 
 	// proxyTransport carries caller traffic with the caller's own credentials.
 	// client is separate: it signs the router's own discovery polls.
@@ -76,6 +79,7 @@ func newAggregateTarget(cfg aggregateTargetConfig, client *http.Client, proxyTra
 		client:         client,
 		proxyTransport: proxyTransport,
 		patterns:       patterns,
+		internalGroups: cfg.InternalGroups,
 		cooldown:       newCooldown(interval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 	}
 	empty := []Backend{}
@@ -134,7 +138,8 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 		if !matchesAnyPattern(discovered.group.Name, t.patterns) {
 			continue
 		}
-		backend, err := newDiscoveredAggregateBackend(t.name, discovered, t.base, t.proxyTransport)
+		internal := slices.Contains(t.internalGroups, discovered.group.Name)
+		backend, err := newDiscoveredAggregateBackend(t.name, discovered, t.base, t.proxyTransport, internal)
 		if err != nil {
 			logging.FromContext(ctx).Warn("router: skipping unfingerprintable discovered group", "target", t.name, "group", discovered.group.Name, "err", err)
 			skipped++

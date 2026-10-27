@@ -129,39 +129,55 @@ type aggregateBackend struct {
 	group      metav1.APIGroup
 	discovery  *apidiscoveryv2.APIGroupDiscovery
 	key        string
-	proxy      *httputil.ReverseProxy
+	// internal is set for a group listed in the target's internal_groups.
+	internal bool
+	proxy    *httputil.ReverseProxy
 }
 
 var (
 	_ Backend           = (*aggregateBackend)(nil)
 	_ DiscoveryProvider = (*aggregateBackend)(nil)
+	_ RestrictedGroup   = (*aggregateBackend)(nil)
 )
 
 // newDiscoveredAggregateBackend keeps the group's resources from the poll, so
 // /apis can be built without asking the target again. They are part
-// of the key, so a resource change on the target republishes discovery.
-func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup, base *url.URL, transport http.RoundTripper) (Backend, error) {
+// of the key, so a resource change on the target republishes discovery, and
+// so is internal, so a group turning internal or public does too.
+func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup, base *url.URL, transport http.RoundTripper, internal bool) (Backend, error) {
 	group := discovered.group
 	key, err := discoveredGroupKey(discovered)
 	if err != nil {
 		return nil, fmt.Errorf("router: fingerprinting discovered group %q: %w", group.Name, err)
 	}
 	key = "aggregate:" + targetName + ":" + key
+	if internal {
+		key += ":internal"
+	}
 
 	// Copy base, since every group on the target shares it, and drop any
 	// trailing slash.
 	target := *base
 	target.Path = strings.TrimRight(target.Path, "/")
 
+	modifyResponse := rejectBackendRedirects
+	if internal {
+		modifyResponse = func(resp *http.Response) error {
+			resp.Header.Set("Cache-Control", privateCacheControl(resp.Header.Values("Cache-Control")))
+			return rejectBackendRedirects(resp)
+		}
+	}
+
 	return &aggregateBackend{
 		targetName: targetName,
 		group:      group,
 		discovery:  discovered.discovery,
 		key:        key,
+		internal:   internal,
 		proxy: &httputil.ReverseProxy{
 			Rewrite:        func(pr *httputil.ProxyRequest) { rewriteOutbound(pr, &target) },
 			Transport:      newBackendTransport(transport),
-			ModifyResponse: rejectBackendRedirects,
+			ModifyResponse: modifyResponse,
 			ErrorHandler:   proxyErrorHandler,
 			FlushInterval:  streamingFlushInterval,
 		},
@@ -171,6 +187,7 @@ func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup
 func (b *aggregateBackend) Group() metav1.APIGroup { return b.group }
 func (b *aggregateBackend) Key() string            { return b.key }
 func (b *aggregateBackend) Source() string         { return aggregateSource(b.targetName) }
+func (b *aggregateBackend) RestrictedGroup() bool  { return b.internal }
 func (b *aggregateBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) {
 	if b.discovery == nil {
 		return apidiscoveryv2.APIGroupDiscovery{}, false

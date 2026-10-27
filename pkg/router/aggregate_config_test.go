@@ -155,6 +155,15 @@ func TestParseAggregateTargets_InvalidPollInterval(t *testing.T) {
 	}
 }
 
+func TestParseAggregateTargets_InternalGroups(t *testing.T) {
+	cfg := setting.NewCfg()
+	addAggregateSection(t, cfg, "baas", map[string]string{"url": "https://baas.invalid", "audience": "baas", "internal_groups": " mobile.ext.grafana.app, ,billing.ext.grafana.app,"})
+	targets, err := parseAggregateTargets(cfg)
+	require.NoError(t, err)
+	require.Len(t, targets, 1)
+	require.Equal(t, []string{"mobile.ext.grafana.app", "billing.ext.grafana.app"}, targets[0].InternalGroups)
+}
+
 func TestParseAggregateTargets_NoneConfigured(t *testing.T) {
 	targets, err := parseAggregateTargets(setting.NewCfg())
 	require.NoError(t, err)

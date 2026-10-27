@@ -224,7 +224,7 @@ func TestAggregateBackendKeepsPolledResources(t *testing.T) {
 	discovered, err := discoverGroupResources(t.Context(), upstream.Client(), upstream.URL)
 	require.NoError(t, err)
 	require.Len(t, discovered, 1)
-	backend, err := newDiscoveredAggregateBackend("target", discovered[0], base, http.DefaultTransport)
+	backend, err := newDiscoveredAggregateBackend("target", discovered[0], base, http.DefaultTransport, false)
 	require.NoError(t, err)
 	d, ok := backend.(DiscoveryProvider).Discovery()
 	require.True(t, ok)
@@ -235,7 +235,7 @@ func TestAggregateBackendKeepsPolledResources(t *testing.T) {
 	changedDiscovery := *changed.discovery
 	changedDiscovery.Versions = nil
 	changed.discovery = &changedDiscovery
-	other, err := newDiscoveredAggregateBackend("target", changed, base, http.DefaultTransport)
+	other, err := newDiscoveredAggregateBackend("target", changed, base, http.DefaultTransport, false)
 	require.NoError(t, err)
 	require.NotEqual(t, backend.Key(), other.Key())
 

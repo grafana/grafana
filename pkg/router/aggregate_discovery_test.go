@@ -27,7 +27,7 @@ func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([
 }
 
 func newAggregateBackend(targetName string, group metav1.APIGroup, base *url.URL, transport http.RoundTripper) (Backend, error) {
-	return newDiscoveredAggregateBackend(targetName, discoveredGroup{group: group}, base, transport)
+	return newDiscoveredAggregateBackend(targetName, discoveredGroup{group: group}, base, transport, false)
 }
 
 // proxyBackend serves group by proxying to rawURL.
@@ -204,4 +204,34 @@ func TestAggregateBackend_TrailingSlashBaseDoesNotDoubleSlash(t *testing.T) {
 	// newAggregateBackend must normalize on a copy, leaving the caller's URL
 	// (aggregateTarget.base, shared across every group on that target) alone.
 	require.Equal(t, "/", base.Path)
+}
+
+func TestAggregateBackend_Internal(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=60")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer upstream.Close()
+	base, err := url.Parse(upstream.URL)
+	require.NoError(t, err)
+	discovered := discoveredGroup{group: metav1.APIGroup{Name: "mobile.ext.grafana.app"}}
+
+	serve := func(backend Backend) *httptest.ResponseRecorder {
+		handler, err := backend.Load(t.Context())
+		require.NoError(t, err)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/apis/mobile.ext.grafana.app/v1", nil))
+		return rec
+	}
+	public, err := newDiscoveredAggregateBackend("baas_apiserver", discovered, base, http.DefaultTransport, false)
+	require.NoError(t, err)
+	internal, err := newDiscoveredAggregateBackend("baas_apiserver", discovered, base, http.DefaultTransport, true)
+	require.NoError(t, err)
+
+	require.False(t, restrictedBackend(public))
+	require.True(t, restrictedBackend(internal))
+	require.Equal(t, public.Key()+":internal", internal.Key(), "turning internal or public republishes the group")
+	require.Equal(t, "public, max-age=60", serve(public).Header().Get("Cache-Control"))
+	require.Equal(t, "max-age=60, private", serve(internal).Header().Get("Cache-Control"),
+		"a shared cache must not replay an internal caller's response")
 }

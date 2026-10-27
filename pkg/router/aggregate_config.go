@@ -19,8 +19,11 @@ type aggregateTargetConfig struct {
 	// DiscoveryAuth is how the router authenticates its own discovery polls:
 	// discoveryAuthCAPToken (also the empty default) or discoveryAuthNone.
 	// Proxied requests always carry the caller's credentials regardless.
-	DiscoveryAuth      string
-	GroupPatterns      []string
+	DiscoveryAuth string
+	GroupPatterns []string
+	// InternalGroups names the discovered groups that only internal callers
+	// may reach or discover. Empty means none.
+	InternalGroups     []string
 	CAFile             string
 	InsecureSkipVerify bool
 }
@@ -75,6 +78,7 @@ func parseAggregateTargets(cfg *setting.Cfg) ([]aggregateTargetConfig, error) {
 			Audience:           audience,
 			DiscoveryAuth:      discoveryAuth,
 			GroupPatterns:      splitGroupPatterns(section.Key("group_regex").MustString("")),
+			InternalGroups:     splitList(section.Key("internal_groups").MustString("")),
 			CAFile:             section.Key("ca_file").MustString(""),
 			InsecureSkipVerify: section.Key("insecure").MustBool(false),
 		})
@@ -93,6 +97,18 @@ func splitGroupPatterns(raw string) []string {
 		patterns = append(patterns, strings.TrimSpace(p))
 	}
 	return patterns
+}
+
+// splitList splits a comma-separated list of names, trimming spaces and
+// dropping empty entries.
+func splitList(raw string) []string {
+	var names []string
+	for _, name := range strings.Split(raw, ",") {
+		if name = strings.TrimSpace(name); name != "" {
+			names = append(names, name)
+		}
+	}
+	return names
 }
 
 // compileGroupPatterns turns glob patterns ("*.grafana.app") into anchored

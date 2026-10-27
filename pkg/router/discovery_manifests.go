@@ -158,7 +158,10 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, "watch"), w)
 		return
 	}
-	docs := r.manifestDocs.Load()
+	docs, public := r.manifestDocs.Load(), r.publicManifestDocs.Load()
+	if docs != public && !r.seesFullVariant(w, req) {
+		docs = public
+	}
 	switch path := strings.TrimSuffix(req.URL.Path, "/"); path {
 	case discoveryPrefix:
 		serveCachedDoc(w, req, &discoveryGroupDoc)
@@ -302,20 +305,31 @@ func (d *manifestDocs) indexDocs() (index, page *cachedDoc) {
 	return &d.index, &d.indexHTML
 }
 
-// publishManifestDocs publishes the documents for backends. It does nothing
-// when the served group/key pairs are unchanged, which covers most reconciles,
-// and converts only the manifests whose backend key is new: a manifest changes
-// only when its key does. Called only from the reconcile goroutine.
+// publishManifestDocs publishes the documents for backends, and their public
+// variant without the restricted groups. It does nothing when the served
+// group/key pairs are unchanged, which covers most reconciles, and converts
+// only the manifests whose backend key is new: a manifest changes only when
+// its key does. Called only from the reconcile goroutine.
 func (r *GrafanaRouter) publishManifestDocs(ctx context.Context, backends []Backend) {
 	sorted := sortedManifestBackends(backends)
 	var fingerprint strings.Builder
 	for _, b := range sorted {
-		fingerprint.WriteString(b.Group().Name + "=" + b.Key() + ";")
+		fingerprint.WriteString(b.Group().Name + "=" + b.Key())
+		if restrictedBackend(b) {
+			fingerprint.WriteString("!")
+		}
+		fingerprint.WriteString(";")
 	}
 	if r.manifestDocs.Load() != nil && fingerprint.String() == r.manifestFingerprint {
 		return
 	}
 	docs, cache := buildManifestDocsFrom(ctx, sorted, r.manifestCache)
+	public := docs
+	if publicBackends := slices.DeleteFunc(slices.Clone(sorted), restrictedBackend); len(publicBackends) != len(sorted) {
+		// Every public backend is in cache, so nothing is converted again.
+		public, _ = buildManifestDocsFrom(ctx, publicBackends, cache)
+	}
+	r.publicManifestDocs.Store(public)
 	r.manifestDocs.Store(docs)
 	r.manifestCache = cache
 	r.manifestFingerprint = fingerprint.String()
@@ -372,8 +386,9 @@ func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[stri
 var _ resource.ManifestDiscovery = (*GrafanaRouter)(nil)
 
 // ListManifests returns the published manifests, decoded from the documents
-// /apis/discovery serves, so in-process readers see exactly what HTTP clients
-// do. Each call decodes fresh copies the caller may keep or change.
+// /apis/discovery serves, so in-process readers see exactly what internal HTTP
+// clients do, restricted groups included. Each call decodes fresh copies the
+// caller may keep or change.
 func (r *GrafanaRouter) ListManifests(ctx context.Context) (*appmanifestv1alpha2.AppManifestList, error) {
 	docs := r.manifestDocs.Load()
 	list := &appmanifestv1alpha2.AppManifestList{

@@ -11,10 +11,12 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -165,6 +167,50 @@ func TestProvideServiceHonorsFeatureToggle(t *testing.T) {
 	svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, manifestDiscoveryList, nil), next)
 	require.Equal(t, http.StatusOK, recorder.Code)
 	require.Contains(t, recorder.Body.String(), `"kind":"AppManifestList"`)
+}
+
+// Restricted groups are served to allowlisted services in both modes, since
+// Grafana's own authentication carries the same token claims as the router's.
+func TestProvideServiceSetsTheInternalCallerPolicy(t *testing.T) {
+	operator := tokenIdentity(types.TypeUser, "access-policy:operator-cap", "mobile-operator")
+	endUser := tokenIdentity(types.TypeUser, "access-policy:authn-cap", "grafana-authn-service")
+	request := func(requester identity.Requester) *http.Request {
+		req := httptest.NewRequest(http.MethodGet, "/apis/"+hiddenGroup+"/v1/things", nil)
+		return req.WithContext(identity.WithRequester(req.Context(), requester))
+	}
+	build := func(t *testing.T, features featuremgmt.FeatureToggles, target ...string) *Service {
+		cfg := cfgWithCloudRouterSection(t, map[string]string{"internal_identities": "mobile-operator"})
+		cfg.Target = target
+		cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+		cfg.ExtJWTAuth.Audiences = []string{"grafana"}
+		svc, err := provideTestService(cfg, features, &mutableLoader{backends: []Backend{newRestrictedTestBackend(hiddenGroup, true)}})
+		require.NoError(t, err)
+		require.NoError(t, svc.router.reconcile(t.Context()))
+		return svc
+	}
+
+	t.Run("middleware", func(t *testing.T) {
+		svc := build(t, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware))
+		next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
+		served := httptest.NewRecorder()
+		svc.HandleFunc(served, request(operator), next)
+		require.Equal(t, hiddenGroup, served.Body.String())
+		hidden := httptest.NewRecorder()
+		svc.HandleFunc(hidden, request(endUser), next)
+		require.Equal(t, http.StatusTeapot, hidden.Code)
+	})
+
+	t.Run("router target", func(t *testing.T) {
+		svc := build(t, featuremgmt.WithFeatures(), "router")
+		httpRouter := mux.NewRouter()
+		require.NoError(t, svc.RegisterTargetRoutes(httpRouter, nil))
+		served := httptest.NewRecorder()
+		httpRouter.ServeHTTP(served, request(operator))
+		require.Equal(t, hiddenGroup, served.Body.String())
+		hidden := httptest.NewRecorder()
+		httpRouter.ServeHTTP(hidden, request(endUser))
+		require.Equal(t, http.StatusNotFound, hidden.Code)
+	})
 }
 
 // provideTestService builds the service the way wire does: the router first,

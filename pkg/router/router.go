@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -98,6 +99,10 @@ type servingEntry struct {
 
 	// callerScoped is set when the backend is a CallerScopedDiscovery.
 	callerScoped bool
+
+	// restricted is set when the backend is a RestrictedGroup that reports
+	// true: only internal callers may reach or discover the group.
+	restricted bool
 }
 
 type phase int
@@ -151,6 +156,18 @@ type GrafanaRouter struct {
 	manifestFingerprint string
 	manifestCache       map[string]*cachedDoc
 
+	// The public variants of the documents above leave out restricted
+	// groups, for callers that are not internal. Each points to the same
+	// document as its full variant while no served group is restricted.
+	publicAPIGroupList atomic.Pointer[cachedDoc]
+	publicOpenAPIIndex atomic.Pointer[cachedDoc]
+	publicManifestDocs atomic.Pointer[manifestDocs]
+
+	// internalCaller reports whether a request's caller may reach and
+	// discover restricted groups. Nil means no caller may. Set before serving
+	// by the service, which owns the policy.
+	internalCaller func(*http.Request) bool
+
 	// openapiDocs caches per-group-version OpenAPI v3 documents, keyed by
 	// "group/version". Serving goroutines write it on cache misses, so it is a
 	// sync.Map rather than an atomic swap. publish drops entries for groups
@@ -193,11 +210,7 @@ func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *Gra
 	r.watches, r.endWatches = context.WithCancel(context.Background())
 	empty := map[string]servingEntry{}
 	r.snapshot.Store(&empty)
-	emptyGroups := buildAPIGroupList(context.Background(), nil)
-	r.apiGroupList.Store(&emptyGroups)
-	emptyIndex := buildOpenAPIV3Index(context.Background(), nil)
-	r.openapiIndex.Store(&emptyIndex)
-	r.publishManifestDocs(context.Background(), nil)
+	r.publishRootDocs(context.Background(), nil)
 	return r
 }
 
@@ -254,8 +267,7 @@ func (r *GrafanaRouter) handle(w http.ResponseWriter, req *http.Request, next ht
 
 	// An invalid group name gets no group, so it goes to next: no backend
 	// can serve it.
-	handlers := *r.snapshot.Load()
-	entry, ok := handlers[group]
+	entry, ok := r.servedGroup(req, group)
 	if !ok {
 		r.serveUnregisteredGroup(w, req, next, group)
 		return
@@ -321,6 +333,79 @@ func (r *GrafanaRouter) authenticate(w http.ResponseWriter, req *http.Request) *
 	}
 
 	return req.WithContext(identity.WithRequester(req.Context(), info))
+}
+
+// servedGroup returns the entry serving group, as req's caller may see it: a
+// restricted group the caller may not see is not served, and req is recorded
+// as hidden.
+func (r *GrafanaRouter) servedGroup(req *http.Request, group string) (servingEntry, bool) {
+	entry, ok := (*r.snapshot.Load())[group]
+	if ok && r.visibilityFor(req).hides(entry) {
+		setRoute(req, routeHidden)
+		return servingEntry{}, false
+	}
+	return entry, ok
+}
+
+// isInternal reports whether req's caller may reach and discover restricted
+// groups.
+func (r *GrafanaRouter) isInternal(req *http.Request) bool {
+	return r.internalCaller != nil && r.internalCaller(req)
+}
+
+// visibility decides which served groups one request's caller may see. It
+// classifies the caller at most once, on the first restricted group it is
+// asked about, so no request pays for the policy while no served group is
+// restricted.
+type visibility struct {
+	router *GrafanaRouter
+	req    *http.Request
+	// restricted records that a restricted group was asked about, so the
+	// response depends on the caller.
+	restricted bool
+	internal   bool
+}
+
+func (r *GrafanaRouter) visibilityFor(req *http.Request) *visibility {
+	return &visibility{router: r, req: req}
+}
+
+// hides reports whether entry's group must look unserved to the caller.
+func (v *visibility) hides(entry servingEntry) bool {
+	if !entry.restricted {
+		return false
+	}
+	if !v.restricted {
+		v.restricted, v.internal = true, v.router.isInternal(v.req)
+	}
+	return !v.internal
+}
+
+// keepPrivate keeps a response that depended on the caller out of shared
+// caches. Call it before the response is written.
+func (v *visibility) keepPrivate(w http.ResponseWriter) {
+	if v.restricted {
+		w.Header().Set("Cache-Control", "private")
+	}
+}
+
+// seesFullVariant reports whether req's caller sees the full variant of a
+// published document that differs from its public one. The response then
+// depends on the caller, so it is kept out of shared caches.
+func (r *GrafanaRouter) seesFullVariant(w http.ResponseWriter, req *http.Request) bool {
+	w.Header().Set("Cache-Control", "private")
+	return r.isInternal(req)
+}
+
+// rootDocFor returns the variant of a published root document that req's
+// caller may see. The two are the same document while no served group is
+// restricted.
+func (r *GrafanaRouter) rootDocFor(w http.ResponseWriter, req *http.Request, full, public *atomic.Pointer[cachedDoc]) *cachedDoc {
+	f, p := full.Load(), public.Load()
+	if f != p && r.seesFullVariant(w, req) {
+		return f
+	}
+	return p
 }
 
 func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.Request, next http.Handler, group string) {
@@ -454,8 +539,7 @@ func (r *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request,
 // serveOpenAPIGroupVersion proxies one group-version's OpenAPI v3 document
 // from its owning backend, cached and validated against the backend key.
 func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *http.Request, next http.Handler, group, version string) {
-	handlers := *r.snapshot.Load()
-	entry, ok := handlers[group]
+	entry, ok := r.servedGroup(req, group)
 	if !ok {
 		r.serveUnregisteredGroup(w, req, next, group)
 		return
@@ -779,6 +863,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 			}
 			_, entry.hasManifest = backendManifest(e.backend)
 			_, entry.callerScoped = e.backend.(CallerScopedDiscovery)
+			entry.restricted = restrictedBackend(e.backend)
 		}
 		snap[group] = entry
 	}
@@ -786,13 +871,32 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	r.discoveryCache.retain(snap)
 	r.retainOpenAPIDocs(snap)
 
-	groupList := buildAPIGroupList(ctx, backends)
-	r.apiGroupList.Store(&groupList)
+	r.publishRootDocs(ctx, backends)
+}
 
+// publishRootDocs publishes the root documents and the /discovery tree for
+// backends, in a full and a public variant.
+func (r *GrafanaRouter) publishRootDocs(ctx context.Context, backends []Backend) {
+	public := slices.DeleteFunc(slices.Clone(backends), restrictedBackend)
+
+	groupList := buildAPIGroupList(ctx, backends)
 	index := buildOpenAPIV3Index(ctx, backends)
+	publicGroupList, publicIndex := &groupList, &index
+	if len(public) != len(backends) {
+		builtGroupList, builtIndex := buildAPIGroupList(ctx, public), buildOpenAPIV3Index(ctx, public)
+		publicGroupList, publicIndex = &builtGroupList, &builtIndex
+	}
+	r.publicAPIGroupList.Store(publicGroupList)
+	r.publicOpenAPIIndex.Store(publicIndex)
+	r.apiGroupList.Store(&groupList)
 	r.openapiIndex.Store(&index)
 
 	r.publishManifestDocs(ctx, backends)
+}
+
+func restrictedBackend(b Backend) bool {
+	restricted, ok := b.(RestrictedGroup)
+	return ok && restricted.RestrictedGroup()
 }
 
 // retainOpenAPIDocs drops cached OpenAPI documents for groups that are no

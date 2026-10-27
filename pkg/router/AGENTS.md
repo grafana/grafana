@@ -75,6 +75,22 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
   must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
   router never serves settings (`standaloneRouter`): it has no SQL settings store or dual writer.
+- **A restricted group is unserved for every caller that isn't internal.** A backend that implements
+  `RestrictedGroup` (an aggregate target's `internal_groups`) is served and advertised only when
+  `internalCaller` finds the caller internal. The service sets that policy
+  (`newInternalCallerPolicy`); the engine never learns what makes a caller internal. See
+  `specs/2026-10-22-router-internal-groups.md`.
+  - Any other caller gets exactly what an unknown group gets: its requests go to
+    `serveUnregisteredGroup` (with route `hidden`), and every document that lists groups leaves it
+    out: `/apis` in both formats, `/openapi/v3`, the manifests, `AGENTS` and the status page.
+  - The root documents and manifests are published twice, in full and without restricted groups,
+    and are the same documents while none is restricted. Per-request documents filter with
+    `visibilityFor`, which asks the policy at most once, and only once it meets a restricted group,
+    so nothing pays for the policy while no group is restricted.
+  - A response that depended on the caller is sent with `Cache-Control: private`. A restricted
+    backend keeps its own responses out of shared caches too.
+  - A `Backend` wrapper must forward `RestrictedGroup`, or the group becomes public.
+  - In-process readers (`ListManifests`, `GetManifest`) see every group.
 - **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
@@ -154,8 +170,9 @@ Entries from `plugins_url` must have an app plugin ID (with a hyphen and no dots
 must, since the tokens the router sends them name that ID as their audience. Entries from
 `core_url` may have no ID; their tokens name their API group instead.
 
-Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
-`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `p:<hash>` or `st:<hash>`.
+Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>` (with an `:internal` suffix for
+a group in the target's `internal_groups`), `managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`,
+`p:<hash>` or `st:<hash>`.
 
 ## Serving and discovery
 
@@ -258,7 +275,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     just its text. Link text drops `[` and `]`, which a code span cannot escape.
   - It needs authentication like `/apis`, GET and HEAD only. In middleware mode it covers only
     the router's groups; the embedded server's groups are listed in `/apis` only.
-- **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
+- **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone. So does
+  a restricted group for a caller that isn't internal.
 - **Size limits:** nothing the router buffers or decodes can grow without bound.
   - `captureWriter` buffers OpenAPI documents up to `maxCachedOpenAPIDocBytes` (32 MiB). A larger
     one streams to the client and isn't cached.
@@ -330,6 +348,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
 | `st_resources` | Comma-separated `group/version/resource` entries whose requests, namespaced or across namespaces, always go to the ST fallback, even when another source serves the rest of the group. Only applies with `st_discovery_url`. Default `dashboard.grafana.app/v0alpha1/librarypanels, dashboard.grafana.app/v0alpha1/snapshots`; set it empty to disable. |
 | `st_discovery_cache_bytes` | Total size of the discovery documents the ST fallback caches per stack. Default 64 MiB; `0` disables the cache. |
+| `internal_identities` | Comma-separated access token signers, matched exactly, whose callers may reach and discover the groups in any target's `internal_groups`. A token's signer is its `serviceIdentity`, or its `access-policy:<id>` subject when it has none. One list covers every restricted group. Unset hides them from every caller except Grafana itself. Never list `grafana-authn-service`, which signs every request through the gateway. |
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
 priority order. Repeating a section name merges its keys; it does not create another target.
@@ -347,6 +366,7 @@ longer read. A deployment that still sets them gets no aggregate target, so conf
 | `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. |
 | `poll_interval` | Positive discovery polling duration, default `30s`. |
 | `group_regex` | Comma-separated globs that narrow discovered groups. Unset matches all. |
+| `internal_groups` | Comma-separated group names, matched exactly (no globs, unlike `group_regex`), for the discovered groups that only callers allowed by `[cloud_router]` `internal_identities` may reach or discover. Unset hides no group. |
 | `ca_file`, `insecure` | Per-target TLS settings. |
 
 ```ini
@@ -397,6 +417,8 @@ Before landing, scan with semgrep. The sensitive surface:
 - the `InsecureSkipVerify` path in `buildAggregateTLSConfig`, which is deliberately enabled by
   config, for aggregate targets, plugin manifests sources and plugin gRPC connections;
 - the CAP token exchange and credential handling in `cloud_router.go`;
+- the caller policy for restricted groups (`newInternalCallerPolicy`), and every document that
+  lists groups, which must leave them out for callers that aren't internal;
 - the OBO exchange for plugin storage clients (`storage.go`, which delegates to unified storage);
 - the ST fallback's stack lookup and host selection.
 
@@ -413,3 +435,5 @@ Dispatch by group has no injection sinks, since the group is only ever used as a
   config history.
 - `specs/2026-09-26-router-metrics.md`: every metric, and dashboard queries.
 - `specs/2026-10-10-router-review-plan.md`: open work.
+- `specs/2026-10-22-router-internal-groups.md`: restricted groups, who signs which tokens, and why
+  `internal_identities` is one allowlist.

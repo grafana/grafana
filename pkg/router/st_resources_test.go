@@ -131,6 +131,14 @@ func TestCloudLoaderWrapsSingleTenantResources(t *testing.T) {
 	require.False(t, wrapped, "nothing is wrapped without the ST fallback")
 }
 
+func TestSingleTenantResourcesBackendForwardsRestrictedGroup(t *testing.T) {
+	for _, restricted := range []bool{false, true} {
+		wrapped := &singleTenantResourcesBackend{Backend: newRestrictedTestBackend(hiddenGroup, restricted)}
+		require.Equal(t, restricted, restrictedBackend(wrapped))
+	}
+	require.False(t, restrictedBackend(&singleTenantResourcesBackend{Backend: &fakeBackend{}}))
+}
+
 func TestRouterServesSingleTenantResourcesFromStack(t *testing.T) {
 	mt := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// #nosec G705 -- test-only upstream echoing the path; never rendered by a browser.

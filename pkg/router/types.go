@@ -69,6 +69,18 @@ type CallerScopedDiscovery interface {
 	CallerScopedDiscovery()
 }
 
+// RestrictedGroup is an optional Backend interface for a backend whose group
+// only internal callers may reach or discover. To any other caller the router
+// treats the group as unserved: its requests go where an unknown group's do,
+// and no discovery document lists it. Which callers are internal is decided by
+// the service, not the backend. The backend's own responses must stay out of
+// shared caches, or one could replay them to a caller that is not internal.
+// It reports a value rather than being a marker so that wrappers can forward
+// it. The result must change only when Key does.
+type RestrictedGroup interface {
+	RestrictedGroup() bool
+}
+
 type RoutesLoader interface {
 	// Load all known routes
 	// NOTE: this implies that the set of ALL routes is always reasonable to hold in memory

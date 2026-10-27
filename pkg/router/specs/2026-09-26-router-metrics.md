@@ -106,8 +106,10 @@ including watches the router rejects (for example with a 401, or a 400 for a Web
 `route` says how the router dispatched the request:
 `backend` (the group's backend), `fallback` (the single-tenant fallback), `discovery` (root
 discovery and `/apis/discovery`, which the router builds), `next` (not the router's; passed on), `invalid` (rejected before
-routing) or `unauthenticated` (rejected because the caller did not authenticate, in the standalone
-router).
+routing), `unauthenticated` (rejected because the caller did not authenticate, in the standalone
+router) or `hidden` (a restricted group the caller may not see, handled as an unknown group: passed
+to the single-tenant fallback or `next`). A `hidden` request keeps its restricted group as its
+`group` label, since that group is served.
 
 ## Plugin calls
 

@@ -43,7 +43,7 @@ func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Reque
 	var fallback metav1.APIGroupList
 	scoped, err := r.readRootDiscovery(req, next, apisPrefix, "application/json", &fallback)
 	if err != nil || fallback.Kind != "APIGroupList" {
-		serveCachedDoc(w, req, r.apiGroupList.Load())
+		serveCachedDoc(w, req, r.rootDocFor(w, req, &r.apiGroupList, &r.publicAPIGroupList))
 		return
 	}
 	r.serveMergedAPIGroupList(w, req, fallback, scoped)
@@ -51,15 +51,17 @@ func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Reque
 
 // serveMergedAPIGroupList serves the source's APIGroupList with the router's
 // groups added. When scoped, the source's answer replaces the caller-scoped
-// defaults.
+// defaults. A group hidden from the caller keeps the source's answer, since
+// its requests go to the source too.
 func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http.Request, fallback metav1.APIGroupList, scoped bool) {
 	groups := make(map[string]metav1.APIGroup, len(fallback.Groups))
 	for _, group := range fallback.Groups {
 		groups[group.Name] = group
 	}
+	vis := r.visibilityFor(req)
 	for name, entry := range *r.snapshot.Load() {
 		// The source answered for this caller, so it replaces the defaults.
-		if !entry.callerScoped || !scoped {
+		if !vis.hides(entry) && (!entry.callerScoped || !scoped) {
 			groups[name] = entry.group
 		}
 	}
@@ -69,6 +71,7 @@ func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http
 		fallback.Groups = append(fallback.Groups, group)
 	}
 	sort.Slice(fallback.Groups, func(i, j int) bool { return fallback.Groups[i].Name < fallback.Groups[j].Name })
+	vis.keepPrivate(w)
 	serveDiscoveryJSON(w, req, fallback)
 }
 
@@ -110,8 +113,11 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 	snapshot := *r.snapshot.Load()
 	fetches := make([]*fetch, 0, len(snapshot))
 	var wg sync.WaitGroup
+	vis := r.visibilityFor(req)
 	for name, entry := range snapshot {
-		if entry.callerScoped && scoped {
+		// A group hidden from the caller keeps the fallback's answer, since
+		// its requests go to the fallback too.
+		if vis.hides(entry) || entry.callerScoped && scoped {
 			continue
 		}
 		if entry.discovery != nil {
@@ -149,7 +155,7 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 			manager.SetGroupVersionPriority(metav1.GroupVersion{Group: group.Name, Version: version.Version}, 1000, len(group.Versions)-i)
 		}
 	}
-	if _, callerScoped := r.discoverySource(next); callerScoped {
+	if _, callerScoped := r.discoverySource(next); callerScoped || vis.restricted {
 		w = &privateCacheWriter{ResponseWriter: w}
 	}
 	manager.ServeHTTP(w, req)
@@ -222,20 +228,23 @@ func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Reque
 	var fallback handler3.OpenAPIV3Discovery
 	scoped, err := r.readRootDiscovery(req, next, openapiV3Prefix, "application/json", &fallback)
 	if err != nil || fallback.Paths == nil {
-		serveCachedDoc(w, req, r.openapiIndex.Load())
+		serveCachedDoc(w, req, r.rootDocFor(w, req, &r.openapiIndex, &r.publicOpenAPIIndex))
 		return
 	}
 	handlers := *r.snapshot.Load()
 	discoveryPath, discoveryURL := discoveryOpenAPIEntry()
 	fallback.Paths[discoveryPath] = handler3.OpenAPIV3DiscoveryGroupVersion{ServerRelativeURL: discoveryURL}
+	// A group hidden from the caller keeps the source's paths, since its
+	// requests go to the source too.
+	vis := r.visibilityFor(req)
 	for path := range fallback.Paths {
 		group, _, ok := parseOpenAPIGroupVersionPath(openapiV3Prefix + "/" + path)
-		if entry, owned := handlers[group]; ok && owned && (!entry.callerScoped || !scoped) {
+		if entry, owned := handlers[group]; ok && owned && !vis.hides(entry) && (!entry.callerScoped || !scoped) {
 			delete(fallback.Paths, path)
 		}
 	}
 	for _, entry := range handlers {
-		if entry.callerScoped && scoped {
+		if vis.hides(entry) || entry.callerScoped && scoped {
 			continue
 		}
 		for _, gv := range entry.group.Versions {
@@ -245,6 +254,7 @@ func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Reque
 			}
 		}
 	}
+	vis.keepPrivate(w)
 	serveDiscoveryJSON(w, req, fallback)
 }
 

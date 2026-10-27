@@ -68,6 +68,7 @@ var (
 	_ DiscoveryProvider    = (*singleTenantResourcesBackend)(nil)
 	_ ManifestProvider     = (*singleTenantResourcesBackend)(nil)
 	_ PluginStatusProvider = (*singleTenantResourcesBackend)(nil)
+	_ RestrictedGroup      = (*singleTenantResourcesBackend)(nil)
 )
 
 // singleTenantResourcesBackend serves a group from its own backend, except
@@ -114,6 +115,12 @@ func (b *singleTenantResourcesBackend) PluginStatus() (PluginStatus, bool) {
 		return p.PluginStatus()
 	}
 	return PluginStatus{}, false
+}
+
+// RestrictedGroup implements [RestrictedGroup]; the embedded Backend
+// interface does not promote it.
+func (b *singleTenantResourcesBackend) RestrictedGroup() bool {
+	return restrictedBackend(b.Backend)
 }
 
 type singleTenantResourcesHandler struct {

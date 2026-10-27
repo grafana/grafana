@@ -3,6 +3,7 @@ package router
 import (
 	"encoding/json"
 	"net/http"
+	"slices"
 	"sort"
 	"time"
 
@@ -122,14 +123,22 @@ func (r *GrafanaRouter) routerStatus(req *http.Request) routerStatusDoc {
 		t := time.Unix(0, ns).UTC()
 		doc.Reconciler.Last = &t
 	}
+	// Groups hidden from the caller are left out, along with the shadowed
+	// entries that name them.
+	snapshot, vis := *r.snapshot.Load(), r.visibilityFor(req)
 	if status, ok := r.loader.(loaderStatus); ok {
 		doc.Sources = status.sourceStatuses()
-		doc.Shadowed = status.shadowedGroups()
+		doc.Shadowed = slices.DeleteFunc(slices.Clone(status.shadowedGroups()), func(s shadowedGroup) bool {
+			entry, served := snapshot[s.Group]
+			return served && vis.hides(entry)
+		})
 		doc.StackLookups = status.stackLookups()
 	}
 
-	for name, entry := range *r.snapshot.Load() {
-		doc.Groups = append(doc.Groups, r.groupStatus(name, entry))
+	for name, entry := range snapshot {
+		if !vis.hides(entry) {
+			doc.Groups = append(doc.Groups, r.groupStatus(name, entry))
+		}
 	}
 	sort.Slice(doc.Groups, func(i, j int) bool { return doc.Groups[i].Group < doc.Groups[j].Group })
 	return doc

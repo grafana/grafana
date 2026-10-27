@@ -14,13 +14,16 @@ import (
 	"sync/atomic"
 
 	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"golang.org/x/sync/errgroup"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/clientauth"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,6 +40,48 @@ func SetDefaultCoreURL(cfg *setting.Cfg, url string) bool {
 	}
 	cfg.Raw.Section(cloudRouterSection).Key("core_url").SetValue(url)
 	return true
+}
+
+// internalIdentities returns the [cloud_router] internal_identities set: the
+// token signers whose callers may reach and discover restricted groups.
+func internalIdentities(cfg *setting.Cfg) map[string]struct{} {
+	identities := map[string]struct{}{}
+	for _, id := range splitList(cfg.SectionWithEnvOverrides(cloudRouterSection).Key("internal_identities").MustString("")) {
+		identities[id] = struct{}{}
+	}
+	return identities
+}
+
+// newInternalCallerPolicy decides which callers may reach and discover
+// restricted groups. Grafana itself always may. Any other caller may only
+// with an access token whose signer is in internal_identities: the token's
+// serviceIdentity, or for a token without one, its access-policy sub.
+func newInternalCallerPolicy(cfg *setting.Cfg) func(*http.Request) bool {
+	allowed := internalIdentities(cfg)
+	return func(req *http.Request) bool {
+		requester, err := identity.GetRequester(req.Context())
+		if err != nil {
+			return false
+		}
+		if requester.GetAuthenticatedBy() != login.ExtendedJWTModule {
+			return identity.IsServiceIdentity(req.Context())
+		}
+		_, ok := allowed[tokenSigner(requester)]
+		return ok
+	}
+}
+
+// tokenSigner returns the outermost signer of requester's access token, or ""
+// when the token names none.
+func tokenSigner(requester identity.Requester) string {
+	if ids := requester.GetExtra()[authnlib.ServiceIdentityKey]; len(ids) > 0 && ids[0] != "" {
+		return ids[0]
+	}
+	// The sub stays prefixed, so it can never match a service identity.
+	if typ, _, err := types.ParseTypeID(requester.GetAuthID()); err == nil && typ == types.TypeAccessPolicy {
+		return requester.GetAuthID()
+	}
+	return ""
 }
 
 // newPluginManifestsTargets builds the targets for plugins_url and core_url,
@@ -111,6 +156,11 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 	aggregateTargetConfigs, err := parseAggregateTargets(cfg)
 	if err != nil {
 		return nil, err
+	}
+	hasInternalGroups := slices.ContainsFunc(aggregateTargetConfigs, func(t aggregateTargetConfig) bool { return len(t.InternalGroups) > 0 })
+	if hasInternalGroups && len(internalIdentities(cfg)) == 0 {
+		logging.DefaultLogger.Warn("router: internal_groups is set but internal_identities is empty, so those groups are hidden from every caller",
+			"section", cloudRouterSection)
 	}
 
 	// plugins_url and core_url need no CAP token (they are unauthenticated
