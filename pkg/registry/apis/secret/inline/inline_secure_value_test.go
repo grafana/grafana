@@ -81,6 +81,19 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 		require.Error(t, err)
 	})
 
+	t.Run("dynamic secure values are rejected without reading storage", func(t *testing.T) {
+		t.Parallel()
+
+		// No secure value service: reading storage would panic
+		svc := inline.NewLocalInlineSecureValueService(tracer, nil, nil)
+
+		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
+
+		err := svc.CanReference(ctx, owner, "dynamic:metrics-read")
+		require.ErrorIs(t, err, contracts.ErrInlineSecureValueCannotReference)
+		require.ErrorContains(t, err, "not supported")
+	})
+
 	t.Run("when the owner namespace is empty it returns an error", func(t *testing.T) {
 		t.Parallel()
 

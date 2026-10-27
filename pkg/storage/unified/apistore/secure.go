@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	authlib "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -52,6 +53,10 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		// Keep exactly what we had before
 		if len(secure) == 0 {
 			if len(previous) > 0 {
+				// Kept references still need checking: the rest of the object may have changed
+				if err := verifyDynamicSecureValues(ctx, store, obj, owner, previous); err != nil {
+					return err
+				}
 				return obj.SetSecureValues(previous)
 			}
 			return nil
@@ -66,7 +71,9 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		before := previous[k]
 		if val.Name == "" {
 			if before.Name != "" { // implicitly delete previous secure value if the same field no longer references it
-				v.deleteSecureValues = append(v.deleteSecureValues, before.Name)
+				if !secret.IsDynamicSecureValueName(before.Name) {
+					v.deleteSecureValues = append(v.deleteSecureValues, before.Name)
+				}
 				delete(previous, k)
 			}
 			if !val.Create.IsZero() {
@@ -103,7 +110,9 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		// The name changed from the previously stored value
 		if before.Name != "" && before.Name != val.Name {
 			// This can happen when explicitly shifting from an inline value to a shared secret
-			v.deleteSecureValues = append(v.deleteSecureValues, before.Name)
+			if !secret.IsDynamicSecureValueName(before.Name) {
+				v.deleteSecureValues = append(v.deleteSecureValues, before.Name)
+			}
 			v.hasChanged = true
 		}
 
@@ -122,7 +131,48 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 		}
 	}
 
+	// Check the merged result, so references kept from the previous object are checked too
+	if err := verifyDynamicSecureValues(ctx, store, obj, owner, secure); err != nil {
+		return err
+	}
+
 	return cleanupSecureValues(v, obj, secure)
+}
+
+// verifyDynamicSecureValues requires that only grafana cloud writes an object holding a dynamic
+// secure value, on every create and update. To change such an object, anyone else must first drop
+// the reference. The secrets service separately checks which owners may reference each value.
+// The owner is the same reference used for inline secure values, so shared storage groups match.
+func verifyDynamicSecureValues(ctx context.Context, store secret.InlineSecureValueSupport, obj utils.GrafanaMetaAccessor, owner common.ObjectReference, secure common.InlineSecureValues) error {
+	for k, v := range secure {
+		if !secret.IsDynamicSecureValueName(v.Name) {
+			continue
+		}
+		if store == nil {
+			return newSecureValueError("secure value support is not configured (dynamic)", k)
+		}
+
+		// The manager is not enforced for ManagerKindGrafana (see enforceManagerProperties), so this
+		// only marks the object; the identity check below is what restricts the writer.
+		m, ok := obj.GetManagerProperties()
+		if !ok || m.Kind != utils.ManagerKindGrafana || m.Identity != "cloud" {
+			return newSecureValueError("dynamic secure values may only be configured by grafana cloud", k)
+		}
+		auth, ok := authlib.AuthInfoFrom(ctx)
+		if !ok {
+			return newSecureValueError("missing auth info", k)
+		}
+		// TODO: any access policy in the namespace passes. Restrict this to the grafana cloud service identity.
+		if auth.GetIdentityType() != authlib.TypeAccessPolicy {
+			return newSecureValueError("dynamic secure values must be written by an access policy", k)
+		}
+
+		// Verify the dynamic secure value for a given owner
+		if err := store.CanReference(ctx, owner, v.Name); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // make sure the registered changes are unique and valid
@@ -162,6 +212,9 @@ func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValu
 	}
 
 	for _, v := range secure {
+		if secret.IsDynamicSecureValueName(v.Name) {
+			continue // nothing is stored
+		}
 		if err = store.DeleteWhenOwnedByResource(ctx, owner, v.Name); err != nil {
 			return err
 		}

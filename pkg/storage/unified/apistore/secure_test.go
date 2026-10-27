@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -543,4 +544,130 @@ func TestCreateCleansUpSecretsWhenPermissionCreationFails(t *testing.T) {
 	err := s.Create(ctx, "/default/customkinds/test", obj, &unstructured.Unstructured{}, 0)
 	require.ErrorContains(t, err, "invalid permissions value")
 	secureStore.AssertExpectations(t) // secret created during preparation, then deleted
+}
+
+func TestDynamicSecureValues(t *testing.T) {
+	const dynamicName = secret.DYNAMIC_SECURE_VALUE_NAME_PREFIX + "metrics-read"
+	// A new map each time: prepareSecureValues modifies the map it is given
+	dynamicRef := func() common.InlineSecureValues {
+		return common.InlineSecureValues{"basicAuthPassword": {Name: dynamicName}}
+	}
+
+	datasource := func(url string, sv common.InlineSecureValues, managed bool) utils.GrafanaMetaAccessor {
+		tmp := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "prometheus.datasource.grafana.app/v0alpha1",
+			"kind":       "DataSource",
+			"metadata":   map[string]any{"namespace": "stacks-123", "name": "grafanacloud-prom"},
+			"spec":       map[string]any{"url": url},
+		}}
+		obj, err := utils.MetaAccessor(tmp)
+		require.NoError(t, err)
+		if sv != nil {
+			require.NoError(t, obj.SetSecureValues(sv))
+		}
+		if managed {
+			obj.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindGrafana, Identity: "cloud"})
+		}
+		return obj
+	}
+
+	userCtx := claims.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "stacks-123"})
+	cloudCtx := claims.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: claims.TypeAccessPolicy, Namespace: "stacks-123"})
+
+	// Datasources use shared storage, so the owner group differs from the served group
+	owner := common.ObjectReference{APIGroup: "datasource.grafana.app", APIVersion: "v0alpha1", Kind: "DataSource", Namespace: "stacks-123", Name: "grafanacloud-prom"}
+
+	// The store must only be asked whether the owner can reference the dynamic value
+	allowingStore := func(t *testing.T) *secret.MockInlineSecureValueSupport {
+		store := secret.NewMockInlineSecureValueSupport(t)
+		store.On("CanReference", mock.Anything, owner, dynamicName).Return(nil)
+		return store
+	}
+
+	prepareWith := func(ctx context.Context, store secret.InlineSecureValueSupport, obj, previous utils.GrafanaMetaAccessor) (*objectForStorage, error) {
+		info := &objectForStorage{}
+		return info, prepareSecureValues(ctx, store, obj, previous, owner, info)
+	}
+
+	prepare := func(t *testing.T, ctx context.Context, obj, previous utils.GrafanaMetaAccessor) (*objectForStorage, error) {
+		return prepareWith(ctx, secret.NewMockInlineSecureValueSupport(t), obj, previous)
+	}
+
+	stored := func() utils.GrafanaMetaAccessor {
+		return datasource("https://prom.grafana.net", dynamicRef(), true)
+	}
+
+	t.Run("grafana cloud can create and update", func(t *testing.T) {
+		store := allowingStore(t)
+		_, err := prepareWith(cloudCtx, store, stored(), nil)
+		require.NoError(t, err)
+
+		_, err = prepareWith(cloudCtx, store, datasource("https://prom-2.grafana.net", nil, true), stored())
+		require.NoError(t, err)
+		store.AssertNumberOfCalls(t, "CanReference", 2)
+	})
+
+	t.Run("a secrets service without dynamic support rejects the reference", func(t *testing.T) {
+		store := secret.NewMockInlineSecureValueSupport(t)
+		store.On("CanReference", mock.Anything, owner, dynamicName).Return(errors.New("secure value cannot be referenced by the owner"))
+
+		_, err := prepareWith(cloudCtx, store, stored(), nil)
+		require.ErrorContains(t, err, "cannot be referenced")
+	})
+
+	t.Run("a kept reference without secure value support is an error", func(t *testing.T) {
+		_, err := prepareWith(cloudCtx, nil, datasource("https://prom.grafana.net", nil, true), stored())
+		require.ErrorContains(t, err, "not configured")
+	})
+
+	t.Run("a user cannot create", func(t *testing.T) {
+		_, err := prepare(t, userCtx, stored(), nil)
+		require.ErrorContains(t, err, "access policy")
+	})
+
+	t.Run("an unmanaged object cannot hold a dynamic value", func(t *testing.T) {
+		_, err := prepare(t, cloudCtx, datasource("https://prom.grafana.net", dynamicRef(), false), nil)
+		require.ErrorContains(t, err, "only be configured by grafana cloud")
+	})
+
+	// Each of these keeps the stored reference while changing the url.
+	for name, update := range map[string]utils.GrafanaMetaAccessor{
+		"secure omitted":        datasource("https://evil.example", nil, true),
+		"another field changed": datasource("https://evil.example", common.InlineSecureValues{"httpHeaderValue1": {Remove: true}}, true),
+		"reference resent":      datasource("https://evil.example", dynamicRef(), true),
+		"manager removed":       datasource("https://evil.example", nil, false),
+	} {
+		t.Run("a user update is rejected when "+name, func(t *testing.T) {
+			_, err := prepare(t, userCtx, update, stored())
+			require.Error(t, err)
+
+			var statusErr *apierrors.StatusError
+			require.ErrorAs(t, err, &statusErr)
+			require.Equal(t, "secure.basicAuthPassword", statusErr.ErrStatus.Details.Causes[0].Field)
+		})
+	}
+
+	t.Run("a user can drop the reference, which is not deleted from the store", func(t *testing.T) {
+		removed := common.InlineSecureValues{"basicAuthPassword": {Remove: true}}
+		info, err := prepare(t, userCtx, datasource("https://other.example", removed, true), stored())
+		require.NoError(t, err)
+		require.Empty(t, info.deleteSecureValues)
+
+		replaced := common.InlineSecureValues{"basicAuthPassword": {Name: "shared-secret"}}
+		info, err = prepare(t, userCtx, datasource("https://other.example", replaced, true), stored())
+		require.NoError(t, err)
+		require.Empty(t, info.deleteSecureValues)
+	})
+
+	t.Run("deleting the object skips dynamic values", func(t *testing.T) {
+		secureStore := secret.NewMockInlineSecureValueSupport(t)
+		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, mock.Anything, "inline-abc").Return(nil).Once()
+
+		obj := datasource("https://prom.grafana.net", common.InlineSecureValues{
+			"basicAuthPassword": {Name: dynamicName},
+			"httpHeaderValue1":  {Name: "inline-abc"},
+		}, true)
+		require.NoError(t, handleSecureValuesDelete(context.Background(), secureStore, obj, utils.ToObjectReference(obj)))
+		secureStore.AssertExpectations(t)
+	})
 }
