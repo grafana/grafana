@@ -30,9 +30,14 @@ import {
 /** Left out of region captures: Composer's own layer and the extension sidebar. */
 const CAPTURE_EXCLUDE_SELECTOR = '[data-composer-capture-exclude], [data-extension-sidebar]';
 
-/** A drawn region, kept in overlay (dashboard content) coordinates so it scrolls with the content. */
+/**
+ * A drawn region, kept relative to the content of the element that scrolls what it was drawn over, so it
+ * moves with that content. The overlay itself does not scroll: in the sidebar layout the dashboard body
+ * scrolls in its own container under it.
+ */
 interface StoredRegion {
   box: Box;
+  scroller: HTMLElement;
   /** The tabs that were selected when it was drawn; it is shown only while all of them still are. */
   tabKeys: string[];
 }
@@ -194,7 +199,7 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
       return failed('busy');
     }
     const rect = this.getRegionViewportRect(regionId);
-    if (!rect || !isFullyVisible(rect, getVisibleBounds(getScrollContainer(overlay)))) {
+    if (!rect || !isFullyVisible(rect, getVisibleBounds(region.scroller))) {
       return failed('not_visible');
     }
 
@@ -342,12 +347,12 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
   }
 
   private revealRegion(regionId: string, point: ElementPoint, behavior: ScrollBehavior) {
-    const root = this.getOverlayRoot();
+    const region = this.regions.get(regionId);
     const rect = this.getRegionViewportRect(regionId);
-    if (!root || !rect) {
+    if (!region || !rect) {
       return;
     }
-    const container = getScrollContainer(root);
+    const container = region.scroller;
     const visible = getVisibleBounds(container);
     let delta = 0;
     if (rect.height > visible.bottom - visible.top) {
@@ -440,8 +445,11 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
     const rootRect = root.getBoundingClientRect();
     const { tabKeys, tabPath, timeRange } = this.document.regionContext();
     const regionId = `region-${generateUUID()}`;
+    const scroller = findRegionScroller(rect, root);
+    const origin = getContentOrigin(scroller);
     this.regions.set(regionId, {
-      box: { left: rect.left - rootRect.left, top: rect.top - rootRect.top, width: rect.width, height: rect.height },
+      box: { left: rect.left - origin.left, top: rect.top - origin.top, width: rect.width, height: rect.height },
+      scroller,
       tabKeys,
     });
 
@@ -470,8 +478,8 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
   /** @internal Where a ref sits relative to the overlay, or null when it is not on screen to draw. */
   public resolveBox(ref: ElementRef, rootRect: DOMRect): Box | null {
     if (ref.kind === 'region') {
-      const region = this.regions.get(ref.regionId);
-      return region && this.isRegionShown(region) ? region.box : null;
+      const rect = this.getRegionViewportRect(ref.regionId);
+      return rect && { ...rect, left: rect.left - rootRect.left, top: rect.top - rootRect.top };
     }
     const rect = this.findElementRoot(ref)?.getBoundingClientRect();
     return rect
@@ -479,12 +487,39 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
       : null;
   }
 
-  /** @internal A pin was clicked or activated from the keyboard. Ignored while paused. */
+  /**
+   * @internal A pin was clicked or activated from the keyboard. Ignored while paused. A pin held at the
+   * overlay's edge points at a comment out of view: that comment is scrolled into view first.
+   */
   public activateAnnotation(id: string): void {
-    if (this.ended || this.overlayState.paused || !this.findAnnotation(id)) {
+    const item = this.findAnnotation(id);
+    if (this.ended || this.overlayState.paused || !item) {
       return;
     }
+    if (!this.isPinPointInView(item)) {
+      this.revealAnnotation(id);
+    }
     this.annotationListeners.forEach((listener) => listener(id));
+  }
+
+  /** Whether the point a pin marks is within the visible part of its scroll container. True when unknown. */
+  private isPinPointInView({ ref, point }: ComposerAnnotation): boolean {
+    let rect: Box | null = null;
+    let container: HTMLElement | undefined;
+    if (ref.kind === 'region') {
+      rect = this.getRegionViewportRect(ref.regionId);
+      container = this.regions.get(ref.regionId)?.scroller;
+    } else {
+      const element = this.findElementRoot(ref);
+      rect = element?.getBoundingClientRect() ?? null;
+      container = element ? getScrollContainer(element) : undefined;
+    }
+    if (!rect || !container) {
+      return true;
+    }
+    const y = rect.top + point.y * rect.height;
+    const visible = getVisibleBounds(container);
+    return y >= visible.top && y <= visible.bottom;
   }
 
   /** @internal A pin gained (id) or lost (null) pointer hover or focus. Ignored while paused. */
@@ -538,13 +573,12 @@ export class ComposerSession<Spec = ComposerDashboardSpec> implements ComposerSe
 
   /** The region in viewport coordinates, or null when it is unknown or its tab is not selected. */
   private getRegionViewportRect(regionId: string): Box | null {
-    const root = this.getOverlayRoot();
     const region = this.regions.get(regionId);
-    if (!root || !region || !this.isRegionShown(region)) {
+    if (!region || !this.isRegionShown(region)) {
       return null;
     }
-    const rootRect = root.getBoundingClientRect();
-    return { ...region.box, left: rootRect.left + region.box.left, top: rootRect.top + region.box.top };
+    const origin = getContentOrigin(region.scroller);
+    return { ...region.box, left: origin.left + region.box.left, top: origin.top + region.box.top };
   }
 
   /** The overlay root: the parent of the anchor host the overlay registers. */
@@ -582,12 +616,39 @@ function isFullyVisible(rect: Box, visible: { top: number; bottom: number }): bo
 /** The nearest ancestor that scrolls vertically, else the document's scroller. */
 function getScrollContainer(element: HTMLElement): HTMLElement {
   for (let parent = element.parentElement; parent; parent = parent.parentElement) {
-    const { overflowY } = getComputedStyle(parent);
-    if (/(auto|scroll|overlay)/.test(overflowY) && parent.scrollHeight > parent.clientHeight) {
+    if (scrollsVertically(parent)) {
       return parent;
     }
   }
   return document.scrollingElement instanceof HTMLElement ? document.scrollingElement : document.documentElement;
+}
+
+function scrollsVertically(element: HTMLElement): boolean {
+  const { overflowY } = getComputedStyle(element);
+  return /(auto|scroll|overlay)/.test(overflowY) && element.scrollHeight > element.clientHeight;
+}
+
+/**
+ * The element that scrolls what a region drawn at `rect` (viewport coordinates) covers: the scroller of the
+ * content under its centre, below Composer's own layers. The overlay's scroller when nothing is under it.
+ */
+function findRegionScroller(rect: Box, overlayRoot: HTMLElement): HTMLElement {
+  const under = document
+    .elementsFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    .find((element) => !element.closest(CAPTURE_EXCLUDE_SELECTOR));
+  if (!(under instanceof HTMLElement)) {
+    return getScrollContainer(overlayRoot);
+  }
+  return scrollsVertically(under) ? under : getScrollContainer(under);
+}
+
+/** Where the scrolled content of `scroller` starts, in viewport coordinates: it moves as `scroller` scrolls. */
+function getContentOrigin(scroller: HTMLElement): { left: number; top: number } {
+  if (scroller === document.scrollingElement || scroller === document.documentElement) {
+    return { left: -window.scrollX, top: -window.scrollY };
+  }
+  const rect = scroller.getBoundingClientRect();
+  return { left: rect.left - scroller.scrollLeft, top: rect.top - scroller.scrollTop };
 }
 
 function getVisibleBounds(container: HTMLElement): { top: number; bottom: number } {

@@ -21,6 +21,8 @@ const EXTENSION_SIDEBAR_SELECTOR = '[data-extension-sidebar]';
 const MIN_REGION_SIZE = 8;
 /** How far from the pointer the pick hint sits. */
 const HINT_OFFSET = 12;
+/** Pixels per line for a wheel that reports its delta in lines. */
+const WHEEL_LINE_HEIGHT = 16;
 
 interface Layout {
   highlight: Box | null;
@@ -37,7 +39,7 @@ const EMPTY_LAYOUT: Layout = { highlight: null, items: {}, width: 0, height: 0 }
  * A layer over the dashboard controls and body while Composer is active.
  *
  * The blocking layer takes every pointer event, so clicks, menus, drag and resize, and links underneath
- * never fire, while wheel events still scroll the page. While a pick is pending it hit-tests the panel
+ * never fire, while the wheel scrolls what is under the pointer. While a pick is pending it hit-tests the panel
  * under the pointer. Above it sit the annotation pins and the anchors the plugin portals its editor into.
  * All positions are relative to this layer and re-measured on scroll, resize and layout changes.
  */
@@ -334,6 +336,34 @@ export function ComposerOverlay({
       overControlsRef.current = false;
     };
   }, [isOverControls, hideHint]);
+
+  // The blocking layer is not inside the dashboard's scroll container, so a wheel over it would scroll
+  // nothing. Scroll what is under the pointer instead, as the wheel would without the layer: a scrollable
+  // panel first, then the dashboard body once the panel can scroll no further that way.
+  useEffect(() => {
+    const blocker = blockerRef.current;
+    const root = rootRef.current;
+    if (!blocker || !root) {
+      return;
+    }
+    const onWheel = (event: WheelEvent) => {
+      // Ctrl+wheel and trackpad pinch zoom the page.
+      if (event.ctrlKey) {
+        return;
+      }
+      const target = findWheelTarget(root, event.clientX, event.clientY, event.deltaX, event.deltaY);
+      if (!target) {
+        return;
+      }
+      event.preventDefault();
+      target.scrollBy({
+        left: wheelDeltaToPixels(event.deltaX, event.deltaMode, target.clientWidth),
+        top: wheelDeltaToPixels(event.deltaY, event.deltaMode, target.clientHeight),
+      });
+    };
+    blocker.addEventListener('wheel', onWheel, { passive: false });
+    return () => blocker.removeEventListener('wheel', onWheel);
+  }, []);
 
   /** A drag that started on the controls has ended: the click it would end in must not reach a control. */
   const swallowControlsClickRef = useRef(false);
@@ -781,6 +811,47 @@ const PIN_SIZE_ACTIVE = 28;
 interface Size {
   width: number;
   height: number;
+}
+
+/**
+ * What a wheel at (`x`, `y`) would scroll without Composer's layers: the nearest element under the point,
+ * or an ancestor of it, that can still scroll in the wheel's direction.
+ */
+function findWheelTarget(root: HTMLElement, x: number, y: number, deltaX: number, deltaY: number) {
+  const under = document.elementsFromPoint(x, y).find((element) => !root.contains(element));
+  for (let node = under instanceof HTMLElement ? under : null; node; node = node.parentElement) {
+    if (canScrollBy(node, deltaX, deltaY)) {
+      return node;
+    }
+  }
+  return undefined;
+}
+
+function canScrollBy(element: HTMLElement, deltaX: number, deltaY: number): boolean {
+  const style = getComputedStyle(element);
+  const scrollable = (overflow: string) => overflow === 'auto' || overflow === 'scroll' || overflow === 'overlay';
+  const maxTop = element.scrollHeight - element.clientHeight;
+  const maxLeft = element.scrollWidth - element.clientWidth;
+  // One pixel of slack: scroll positions can be fractional at the end.
+  const canY =
+    scrollable(style.overflowY) &&
+    maxTop > 0 &&
+    ((deltaY > 0 && element.scrollTop < maxTop - 1) || (deltaY < 0 && element.scrollTop > 0));
+  const canX =
+    scrollable(style.overflowX) &&
+    maxLeft > 0 &&
+    ((deltaX > 0 && element.scrollLeft < maxLeft - 1) || (deltaX < 0 && element.scrollLeft > 0));
+  return canY || canX;
+}
+
+function wheelDeltaToPixels(delta: number, mode: number, pageSize: number): number {
+  if (mode === WheelEvent.DOM_DELTA_LINE) {
+    return delta * WHEEL_LINE_HEIGHT;
+  }
+  if (mode === WheelEvent.DOM_DELTA_PAGE) {
+    return delta * pageSize;
+  }
+  return delta;
 }
 
 function getStyles(theme: GrafanaTheme2) {
