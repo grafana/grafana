@@ -384,7 +384,7 @@ type hybridResourcesTestVectorBackend struct {
 }
 
 func (b *hybridResourcesTestVectorBackend) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
-	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource, IsExternal: resource == b.external}, resource != b.missing, nil
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource, IsExternal: resource == b.external, Scope: vector.ScopeTenant}, resource != b.missing, nil
 }
 
 func (b *hybridResourcesTestVectorBackend) Search(_ context.Context, _, _, resource string, dense []float32, _ int, _ ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {

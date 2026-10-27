@@ -117,15 +117,15 @@ func TestEmbeddingEnrollmentRefreshesForQueries(t *testing.T) {
 	s.embeddingBuilders = embeddingBuilderProvider{has: func(group, resource string) bool {
 		return available && group == "g" && resource == "r"
 	}}
-	_, allowed, err := s.resolveAllowedCollection(t.Context(), "g", "r")
+	_, allowed, err := s.resolveAllowedCollection(t.Context(), "ns", "g", "r")
 	require.NoError(t, err)
 	require.True(t, allowed)
 	available = false
-	_, allowed, err = s.resolveAllowedCollection(t.Context(), "g", "r")
+	_, allowed, err = s.resolveAllowedCollection(t.Context(), "ns", "g", "r")
 	require.NoError(t, err)
 	require.False(t, allowed)
 	available = true
-	_, allowed, err = s.resolveAllowedCollection(t.Context(), "g", "r")
+	_, allowed, err = s.resolveAllowedCollection(t.Context(), "ns", "g", "r")
 	require.NoError(t, err)
 	require.True(t, allowed)
 }

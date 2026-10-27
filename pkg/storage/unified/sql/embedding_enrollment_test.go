@@ -106,6 +106,17 @@ func TestEmbeddingEnrollmentDisabledWithoutSearchOrIndexing(t *testing.T) {
 	require.Equal(t, opts.Cfg.VectorAllowedExternalCollections, serverOpts.Search.AllowedExternalCollections)
 }
 
+func TestSearchEnrolsExactlySharedPublisherMapKeys(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.VectorSharedExternalCollections = map[string][]string{"support.example.com/articles": {"support"}, "docs.example.com/articles": {"docs"}}
+	cfg.VectorAllowedReadServices = map[string][]string{"docs.example.com/articles": {"reader"}}
+	opts := &ServerOptions{Cfg: cfg}
+	serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
+	require.NoError(t, withSearch(opts, &serverOpts))
+	require.Equal(t, []string{"docs.example.com/articles", "support.example.com/articles"}, serverOpts.Search.SharedExternalCollections)
+	require.Equal(t, map[string][]string{"docs.example.com/articles": {"reader"}}, cfg.VectorAllowedReadServices)
+}
+
 func TestServerRejectsSharedEnrollmentWithoutPublishers(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.VectorSharedExternalCollections = map[string][]string{"docs.example.com/articles": {}}

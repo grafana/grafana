@@ -349,9 +349,9 @@ An unset value or `{}` leaves both search methods unchanged; invalid values prev
 Deploy support to every serving storage and search server before setting the restriction because older versions ignore it.
 Before rolling back server support, disable the collection on every serving route.
 
-### Publish a shared external collection
+### Publish and search a shared external collection
 
-In `custom.ini` on every serving storage server, map each shared `group/resource` collection to its allowed publisher service identities.
+In `custom.ini` on every serving storage and search server, map each shared `group/resource` collection to its allowed publisher service identities.
 Use a collection identity that is absent from registered API resources and both existing collection enrollment lists.
 Each collection must list at least one publisher.
 
@@ -364,11 +364,17 @@ Each cluster's publishing client sends documents through the existing `VectorSto
 Publish the collection in each cluster where you need it; shared content does not replicate between clusters.
 Shared documents cannot have a folder.
 
-Shared content is stored in `__SHARED__`; tenant deletion preserves it.
+Readers select the shared `group/resource` explicitly in `VectorSearch` or `HybridSearch` and send their own authenticated namespace.
+Every authenticated tenant with access to the collection can read its published documents, without per-document tenant checks.
+If you set `vector_allowed_read_services` for that collection, only its listed service identities can read it.
+Search responses, query caches, and quotas use the caller's namespace; the stored collection uses `__SHARED__`.
+Tenant deletion preserves shared content.
 
 A publisher can change only the collections that list its service identity, so verify publisher identities and collection names before enabling enrollment.
 
 Removing enrollment disables access but retains stored content.
+Collection scope is immutable; republish an existing tenant corpus under a new shared collection identity.
+For permanent removal, use the existing all-model `Delete` while an approved publisher is still enrolled, then remove enrollment.
 
 ## Running load tests
 Load tests and instructions can be found [here](https://github.com/grafana/grafana-api-tests/tree/main/simulation/src/unified_storage).

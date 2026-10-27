@@ -44,82 +44,110 @@ func serviceReadContext(subject authlib.IdentityType, identities ...string) cont
 }
 
 func TestHybridSearch_AllowedReadServices(t *testing.T) {
-	for _, tc := range []struct {
-		name       string
-		subject    authlib.IdentityType
-		identities []string
-		policy     map[string][]string
-		wantDenied bool
-	}{
-		{name: "another service", subject: authlib.TypeAccessPolicy, identities: []string{"other"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
-		{name: "missing identity", subject: authlib.TypeAccessPolicy, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
-		{name: "multiple identities", subject: authlib.TypeAccessPolicy, identities: []string{"assistant", "other"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
-		{name: "user with assistant claim and delegated grant", subject: authlib.TypeUser, identities: []string{"assistant"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
-		{name: "unconfigured user", subject: authlib.TypeUser},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			backend := &fakeVectorBackend{results: []vector.VectorSearchResult{{UID: "memory", Title: "Memory", Score: 0.1}}}
-			s, index, embedder := newHybridTestServer(lexTableResponse(), backend)
-			s.allowedReadServices = tc.policy
-			resp, err := s.HybridSearch(serviceReadContext(tc.subject, tc.identities...), &resourcepb.HybridSearchRequest{Key: validKey(), Query: "memory"})
-			if tc.wantDenied {
-				require.Equal(t, codes.PermissionDenied, status.Code(err))
-				require.Nil(t, resp)
-				require.Zero(t, backend.resolveCalls)
-				require.Nil(t, index.gotReq)
-				require.Empty(t, embedder.gotIn.Texts)
-				return
+	for _, shared := range []bool{false, true} {
+		for _, tc := range []struct {
+			name       string
+			subject    authlib.IdentityType
+			identities []string
+			policy     map[string][]string
+			wantDenied bool
+		}{
+			{name: "another service", subject: authlib.TypeAccessPolicy, identities: []string{"other"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+			{name: "missing identity", subject: authlib.TypeAccessPolicy, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+			{name: "multiple identities", subject: authlib.TypeAccessPolicy, identities: []string{"assistant", "other"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+			{name: "user with assistant claim and delegated grant", subject: authlib.TypeUser, identities: []string{"assistant"}, policy: map[string][]string{"g/r": {"assistant"}}, wantDenied: true},
+			{name: "unconfigured user", subject: authlib.TypeUser},
+		} {
+			name := tc.name
+			if shared {
+				name += " shared"
 			}
-			require.NoError(t, err)
-			require.NotNil(t, resp)
-			require.NotNil(t, index.gotReq)
-		})
+			t.Run(name, func(t *testing.T) {
+				backend := &fakeVectorBackend{results: []vector.VectorSearchResult{{UID: "memory", Title: "Memory", Score: 0.1}}}
+				s, index, embedder := newHybridTestServer(lexTableResponse(), backend)
+				if shared {
+					backend.collection = &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true, Scope: vector.ScopeShared}
+					s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"g/r"})
+					s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
+					s.externalLexical = &fakeLexicalSearcher{hits: []vector.LexicalHit{{UID: "memory", Title: "Memory"}}}
+				}
+				s.allowedReadServices = tc.policy
+				resp, err := s.HybridSearch(serviceReadContext(tc.subject, tc.identities...), &resourcepb.HybridSearchRequest{Key: validKey(), Query: "memory"})
+				if tc.wantDenied {
+					require.Equal(t, codes.PermissionDenied, status.Code(err))
+					require.Nil(t, resp)
+					require.Zero(t, backend.resolveCalls)
+					require.Nil(t, index.gotReq)
+					require.Empty(t, embedder.gotIn.Texts)
+					return
+				}
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				if shared {
+					require.Nil(t, index.gotReq)
+					require.Len(t, resp.Results, 1)
+				} else {
+					require.NotNil(t, index.gotReq)
+				}
+			})
+		}
 	}
 }
 
 func TestVectorSearch_AllowedReadServices(t *testing.T) {
-	for _, tc := range []struct {
-		name       string
-		subject    authlib.IdentityType
-		identity   string
-		restricted bool
-		wantDenied bool
-	}{
-		{name: "other service with get grant", subject: authlib.TypeAccessPolicy, identity: "other", restricted: true, wantDenied: true},
-		{name: "allowed service with get grant", subject: authlib.TypeAccessPolicy, identity: "assistant", restricted: true},
-		{name: "user with assistant identity and get grant", subject: authlib.TypeUser, identity: "assistant", restricted: true, wantDenied: true},
-		{name: "unconfigured user", subject: authlib.TypeUser},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			backend := &fakeVectorBackend{
-				collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true},
-				results:    []vector.VectorSearchResult{{UID: "memory", Title: "Memory", Score: 0.1}},
+	for _, shared := range []bool{false, true} {
+		for _, tc := range []struct {
+			name       string
+			subject    authlib.IdentityType
+			identity   string
+			restricted bool
+			wantDenied bool
+		}{
+			{name: "other service with get grant", subject: authlib.TypeAccessPolicy, identity: "other", restricted: true, wantDenied: true},
+			{name: "allowed service with get grant", subject: authlib.TypeAccessPolicy, identity: "assistant", restricted: true},
+			{name: "user with assistant identity and get grant", subject: authlib.TypeUser, identity: "assistant", restricted: true, wantDenied: true},
+			{name: "unconfigured user", subject: authlib.TypeUser},
+		} {
+			name := tc.name
+			if shared {
+				name += " shared"
 			}
-			access := NewAuthzLimitedClient(authzlib.NewClient(nil), AuthzOptions{Registry: prometheus.NewRegistry()})
-			embedder := &fakeTextEmbedder{dim: 4}
-			s := newTestSearchServer(newTestEmbedder(embedder), backend, access)
-			if tc.restricted {
-				s.allowedReadServices = map[string][]string{"g/r": {"assistant"}}
-			}
-			caller := &identity.StaticRequester{
-				Type: tc.subject, Namespace: "ns", AccessToken: "verified-access-token",
-				AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{
-					ServiceIdentity: tc.identity, Permissions: []string{"g/r:get"},
-				}},
-			}
-			resp, err := s.VectorSearch(authlib.WithAuthInfo(t.Context(), caller), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "memory"})
-			if tc.wantDenied {
-				require.Equal(t, codes.PermissionDenied, status.Code(err))
-				require.Nil(t, resp)
-				require.Zero(t, backend.resolveCalls)
-				require.Empty(t, embedder.gotIn.Texts)
-				return
-			}
-			require.NoError(t, err)
-			require.Nil(t, resp.Error)
-			require.Len(t, resp.Results, 1)
-			require.Equal(t, "memory", resp.Results[0].Name)
-		})
+			t.Run(name, func(t *testing.T) {
+				backend := &fakeVectorBackend{
+					collection: &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true},
+					results:    []vector.VectorSearchResult{{UID: "memory", Title: "Memory", Score: 0.1}},
+				}
+				access := NewAuthzLimitedClient(authzlib.NewClient(nil), AuthzOptions{Registry: prometheus.NewRegistry()})
+				embedder := &fakeTextEmbedder{dim: 4}
+				s := newTestSearchServer(newTestEmbedder(embedder), backend, access)
+				if shared {
+					backend.collection.Scope = vector.ScopeShared
+					s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"g/r"})
+					s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
+				}
+				if tc.restricted {
+					s.allowedReadServices = map[string][]string{"g/r": {"assistant"}}
+				}
+				caller := &identity.StaticRequester{
+					Type: tc.subject, Namespace: "ns", AccessToken: "verified-access-token",
+					AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{Rest: authnlib.AccessTokenClaims{
+						ServiceIdentity: tc.identity, Permissions: []string{"g/r:get"},
+					}},
+				}
+				resp, err := s.VectorSearch(authlib.WithAuthInfo(t.Context(), caller), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "memory"})
+				if tc.wantDenied {
+					require.Equal(t, codes.PermissionDenied, status.Code(err))
+					require.Nil(t, resp)
+					require.Zero(t, backend.resolveCalls)
+					require.Empty(t, embedder.gotIn.Texts)
+					return
+				}
+				require.NoError(t, err)
+				require.Nil(t, resp.Error)
+				require.Len(t, resp.Results, 1)
+				require.Equal(t, "memory", resp.Results[0].Name)
+			})
+		}
 	}
 }
 
@@ -181,22 +209,36 @@ func TestHybridSearch_ExternalServiceStillNeedsGetPermission(t *testing.T) {
 }
 
 func TestHybridSearch_RestrictedLaterTargetRejectsWholeRequest(t *testing.T) {
-	for _, lexicalOnly := range []bool{false, true} {
-		t.Run(map[bool]string{false: "semantic", true: "lexical fallback"}[lexicalOnly], func(t *testing.T) {
-			s, index, embedder := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
-			s.allowedReadServices = map[string][]string{"g/secret": {"assistant"}}
-			if lexicalOnly {
-				s.embedder, s.vectorBackend = nil, nil
+	for _, shared := range []bool{false, true} {
+		for _, lexicalOnly := range []bool{false, true} {
+			name := map[bool]string{false: "semantic", true: "lexical fallback"}[lexicalOnly]
+			if shared {
+				name += " with shared first target"
 			}
-			resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
-				Namespace: "ns", Query: "memory",
-				Resources: []*resourcepb.HybridSearchRequest_Resource{{Group: "g", Resource: "r"}, {Group: "g", Resource: "secret"}},
+			t.Run(name, func(t *testing.T) {
+				backend := &fakeVectorBackend{}
+				s, index, embedder := newHybridTestServer(lexTableResponse(), backend)
+				if shared {
+					backend.collection = &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true, Scope: vector.ScopeShared}
+					s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"g/r"})
+					s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
+					s.externalLexical = &fakeLexicalSearcher{}
+				}
+				s.allowedReadServices = map[string][]string{"g/secret": {"assistant"}}
+				if lexicalOnly {
+					s.embedder, s.vectorBackend = nil, nil
+				}
+				resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
+					Namespace: "ns", Query: "memory",
+					Resources: []*resourcepb.HybridSearchRequest_Resource{{Group: "g", Resource: "r"}, {Group: "g", Resource: "secret"}},
+				})
+				require.Equal(t, codes.PermissionDenied, status.Code(err))
+				require.Nil(t, resp)
+				require.Nil(t, index.gotReq)
+				require.Empty(t, embedder.gotIn.Texts)
+				require.Zero(t, backend.resolveCalls)
 			})
-			require.Equal(t, codes.PermissionDenied, status.Code(err))
-			require.Nil(t, resp)
-			require.Nil(t, index.gotReq)
-			require.Empty(t, embedder.gotIn.Texts)
-		})
+		}
 	}
 }
 

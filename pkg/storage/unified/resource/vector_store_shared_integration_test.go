@@ -63,7 +63,7 @@ func (e *sharedIntegrationEmbedder) calls() []embedder.EmbedTextInput {
 	return append([]embedder.EmbedTextInput(nil), e.inputs...)
 }
 
-func sharedIntegrationFixture(t *testing.T) (resourcepb.VectorStoreClient, vector.VectorBackend, *xorm.Engine, *sharedIntegrationEmbedder, string, map[string]string) {
+func sharedIntegrationFixture(t *testing.T) (resourcepb.VectorStoreClient, vector.VectorBackend, *xorm.Engine, *sharedIntegrationEmbedder, string, map[string]string, resourcepb.ResourceIndexClient) {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
 	connStr := os.Getenv("PGVECTOR_TEST_DB")
@@ -100,13 +100,18 @@ func sharedIntegrationFixture(t *testing.T) (resourcepb.VectorStoreClient, vecto
 	}))
 	resourcepb.RegisterVectorStoreServer(server, NewVectorStoreServer(backend, emb, nil, nil,
 		map[string][]string{group + "/" + resources["manual"]: {"publisher-a", "publisher-b"}, group + "/" + resources["reference"]: {"publisher-b"}, group + "/" + resources["denied"]: {"publisher-a"}, group + "/" + resources["lifecycle"]: {"publisher-a", "publisher-b"}, group + "/" + resources["concurrent"]: {"publisher-a", "publisher-b"}}, nil))
+	searchServer := newTestSearchServer(emb, backend, authlib.FixedAccessClient(false))
+	searchServer.search = &fakeSearchBackend{}
+	searchServer.externalLexical = backend
+	searchServer.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{group + "/" + resources["manual"], group + "/" + resources["reference"]})
+	resourcepb.RegisterResourceIndexServer(server, searchServer)
 	listener := bufconn.Listen(1 << 20)
 	go func() { _ = server.Serve(listener) }()
 	t.Cleanup(server.Stop)
 	conn, err := grpc.NewClient("passthrough:///bufnet", grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, conn.Close()) })
-	return resourcepb.NewVectorStoreClient(conn), backend, engine, provider, group, resources
+	return resourcepb.NewVectorStoreClient(conn), backend, engine, provider, group, resources, resourcepb.NewResourceIndexClient(conn)
 }
 
 func sharedPublisherContext(t *testing.T, namespace, service string) context.Context {
@@ -115,7 +120,7 @@ func sharedPublisherContext(t *testing.T, namespace, service string) context.Con
 }
 
 func TestIntegrationSharedVectorStorePublication(t *testing.T) {
-	client, backend, engine, provider, group, resources := sharedIntegrationFixture(t)
+	client, backend, engine, provider, group, resources, _ := sharedIntegrationFixture(t)
 	first := sharedPublisherContext(t, "tenant-a", "publisher-a")
 	second := sharedPublisherContext(t, "tenant-b", "publisher-b")
 	chunk := func(content, title string) *resourcepb.EmbeddingInput {
@@ -184,7 +189,7 @@ func TestIntegrationSharedVectorStorePublication(t *testing.T) {
 func embModel() string { return "shared-integration-model" }
 
 func TestIntegrationSharedVectorStoreRejectsUnauthorizedWritesWithoutProvisioning(t *testing.T) {
-	client, backend, _, provider, group, resources := sharedIntegrationFixture(t)
+	client, backend, _, provider, group, resources, _ := sharedIntegrationFixture(t)
 	req := &resourcepb.VectorUpsertRequest{Namespace: "tenant-a", Group: group, Resource: resources["denied"], Inputs: []*resourcepb.EmbeddingInput{{Uid: "u", Title: "title", Content: "body"}}}
 	for _, tc := range []struct {
 		name string
@@ -232,7 +237,7 @@ func TestIntegrationSharedVectorStoreRejectsUnauthorizedWritesWithoutProvisionin
 }
 
 func TestIntegrationSharedVectorStoreConcurrentPublishersShareContentDiff(t *testing.T) {
-	client, backend, engine, provider, group, resources := sharedIntegrationFixture(t)
+	client, backend, engine, provider, group, resources, _ := sharedIntegrationFixture(t)
 	provider.firstEntered = make(chan struct{})
 	provider.releaseFirst = make(chan struct{})
 	provider.secondRPC = make(chan struct{})
@@ -307,7 +312,7 @@ func TestIntegrationSharedVectorStoreConcurrentPublishersShareContentDiff(t *tes
 }
 
 func TestIntegrationSharedVectorStoreDistinctCollectionsDoNotShareEntityLock(t *testing.T) {
-	client, backend, _, provider, group, resources := sharedIntegrationFixture(t)
+	client, backend, _, provider, group, resources, _ := sharedIntegrationFixture(t)
 	provider.firstEntered = make(chan struct{})
 	provider.releaseFirst = make(chan struct{})
 	defer func() {
@@ -366,7 +371,7 @@ func TestIntegrationSharedVectorStoreDistinctCollectionsDoNotShareEntityLock(t *
 }
 
 func TestIntegrationSharedVectorStoreMetadataAndAllModelDelete(t *testing.T) {
-	client, backend, engine, _, group, resources := sharedIntegrationFixture(t)
+	client, backend, engine, _, group, resources, _ := sharedIntegrationFixture(t)
 	ctx := sharedPublisherContext(t, "tenant-a", "publisher-a")
 	missingDelete := &resourcepb.VectorDeleteRequest{Namespace: "tenant-a", Group: group, Resource: resources["lifecycle"], Selector: &resourcepb.VectorDeleteRequest_DeleteAll{DeleteAll: true}}
 	_, err := client.Delete(ctx, missingDelete)
@@ -401,4 +406,41 @@ func TestIntegrationSharedVectorStoreMetadataAndAllModelDelete(t *testing.T) {
 	var remaining int
 	require.NoError(t, engine.DB().QueryRowContext(t.Context(), `SELECT count(*) FROM embeddings WHERE resource = $1 AND namespace = $2`, collection.PartitionKey, vector.SharedNamespace).Scan(&remaining))
 	require.Zero(t, remaining)
+}
+
+func TestIntegrationSharedPublicationSearchableByTwoTenants(t *testing.T) {
+	writer, backend, engine, provider, group, resources, reader := sharedIntegrationFixture(t)
+	_, err := writer.UpsertSubresources(sharedPublisherContext(t, "tenant-a", "publisher-a"), &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "tenant-a", Group: group, Resource: resources["manual"], Uid: "guide",
+		Inputs: []*resourcepb.EmbeddingInput{{Subresource: "section", Title: "Octopus Guide", Content: "octopus handbook"}},
+	})
+	require.NoError(t, err)
+	collection, found, err := backend.ResolveCollection(t.Context(), group, resources["manual"])
+	require.NoError(t, err)
+	require.True(t, found)
+	var rowCount int
+	require.NoError(t, engine.DB().QueryRowContext(t.Context(), `SELECT count(*) FROM embeddings WHERE resource = $1 AND uid = 'guide'`, collection.PartitionKey).Scan(&rowCount))
+	require.Equal(t, 1, rowCount)
+	for _, namespace := range []string{"tenant-a", "tenant-b"} {
+		t.Run(namespace, func(t *testing.T) {
+			ctx := sharedPublisherContext(t, namespace, "")
+			key := &resourcepb.ResourceKey{Namespace: namespace, Group: group, Resource: resources["manual"]}
+			vectors, err := reader.VectorSearch(ctx, &resourcepb.VectorSearchRequest{Key: key, Query: "octopus"})
+			require.NoError(t, err)
+			require.Nil(t, vectors.GetError())
+			require.Len(t, vectors.GetResults(), 1)
+			require.Equal(t, "guide", vectors.GetResults()[0].GetName())
+			hybrid, err := reader.HybridSearch(ctx, &resourcepb.HybridSearchRequest{Key: key, Query: "octopus", SkipRerank: true})
+			require.NoError(t, err)
+			require.Len(t, hybrid.GetResults(), 1)
+			require.Equal(t, namespace, hybrid.GetResults()[0].GetKey().GetNamespace())
+			require.Equal(t, "guide", hybrid.GetResults()[0].GetKey().GetName())
+			require.InDelta(t, 2.0/61.0, hybrid.GetResults()[0].GetScore(), 1e-12)
+		})
+	}
+	calls := provider.calls()
+	require.Len(t, calls, 5)
+	for _, call := range calls[1:] {
+		require.Contains(t, []string{"tenant-a", "tenant-b"}, call.Tenant)
+	}
 }
