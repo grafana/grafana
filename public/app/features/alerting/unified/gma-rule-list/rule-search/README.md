@@ -61,10 +61,14 @@ parser applies a token when one of the page's definitions accepts it.
 - `tokenizer.ts`: the query into `RawToken`s.
 - `ruleSearchFilter.ts`: the `RuleSearchFilter` model, and the API values each `state:` and `health:`
   value matches.
-- `filterDefinitions.ts`, `alertFilters.ts`, `recordingFilters.ts`: each page's filters, in the order
-  the search help lists them, with each kind's key type.
-- `parser.ts`: `parse(query, kind)`, the parsing and feedback steps above. Label matchers reuse
-  `parseMatcher` from `utils/matchers.ts`, as RuleList.v2 does.
+- `filterDefinitions.ts`: the `FilterDefinition` type and each kind's key type. A definition owns
+  everything about one filter: its help, `apply` for the parsing step, `feedback` for the feedback step,
+  and the renamed values it suggests a replacement for.
+- `sharedFilters.ts`, `alertFilters.ts`, `recordingFilters.ts`: the filters both pages share and each
+  page's filters, in the order the search help lists them. Label matchers reuse `parseMatcher` from
+  `utils/matchers.ts`, as RuleList.v2 does.
+- `parser.ts`: `parse(query, kind)`, which runs the page's definitions through the parsing and
+  feedback steps above. It knows no filter itself, except free text and its wildcards.
 - `useRuleListSearchState.ts`: the applied query, kept in the `search` URL parameter exactly as typed, and its filter.
 - `RuleSearchInput.tsx`: the input and its help, built from the filter definitions.
 - `searchRejection.ts`: a refused search (422) as issues, each naming the filter of the rejected leaf.
