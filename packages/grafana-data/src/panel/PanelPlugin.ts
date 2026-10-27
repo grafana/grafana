@@ -178,7 +178,7 @@ export interface PluginViewOptionsQuickToggles {
   fieldConfigProperties: string[];
 }
 
-export type PanelInteractionMutation = 'TRANSFORMATION' | 'PANEL_SETTING' | 'FIELD_OVERRIDE';
+type PanelInteractionMutation = 'TRANSFORMATION' | 'PANEL_SETTING' | 'FIELD_OVERRIDE';
 
 export interface PanelInteraction {
   id: number;
