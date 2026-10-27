@@ -15,14 +15,14 @@ jest.mock('ol-mapbox-style', () => ({
   applyBackground: (...args: unknown[]) => applyBackgroundMock(...args),
 }));
 
-import { protomaps, ProtomapsFlavor, type ProtomapsConfig, TileDelivery } from './protomaps';
+import { protomaps, ProtomapsFlavor, type ProtomapsConfig, TileDelivery, toExpressionFilter } from './protomaps';
 
 const map = {} as OpenLayersMap;
 const eventBus = {} as EventBus;
 const lightTheme = { isDark: false } as GrafanaTheme2;
 const darkTheme = { isDark: true } as GrafanaTheme2;
 
-/** Trimmed from a generated Protomaps style: one fill, six labels, one border, four roads */
+/** Trimmed from a generated Protomaps style: one fill, six labels, two borders, four roads */
 const STYLE = {
   version: 8,
   sources: { protomaps: { type: 'vector' } },
@@ -97,6 +97,14 @@ const STYLE = {
       },
     },
     {
+      id: 'boundaries',
+      type: 'line',
+      source: 'protomaps',
+      'source-layer': 'boundaries',
+      filter: ['>', 'kind_detail', 2],
+      paint: { 'line-color': '#adadad', 'line-width': 0.4 },
+    },
+    {
       id: 'places_region',
       type: 'symbol',
       source: 'protomaps',
@@ -113,6 +121,7 @@ const STYLE = {
       type: 'symbol',
       source: 'protomaps',
       'source-layer': 'places',
+      filter: ['==', 'kind', 'locality'],
       layout: { 'text-font': ['Noto Sans Regular'], 'text-size': 12 },
     },
   ],
@@ -317,6 +326,89 @@ describe('Protomaps basemap', () => {
     ]);
   });
 
+  it('starts roads and labels at the zooms the default basemap starts them', async () => {
+    await initLayer({ showLabels: true });
+
+    const layer = (id: string) => appliedStyle().layers.find((candidate: { id: string }) => candidate.id === id);
+    expect(layer('roads_highway')).toMatchObject({ minzoom: 5 });
+    expect(layer('places_region')).toMatchObject({ minzoom: 5, maxzoom: 10 });
+    expect(layer('boundaries_country').minzoom).toBeUndefined();
+  });
+
+  it('draws macroregion borders up to zoom 6 and state borders only from zoom 6, like the default basemap', async () => {
+    await initLayer({ showLabels: true });
+
+    const boundaries = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'boundaries');
+    expect(boundaries.filter).toEqual([
+      'all',
+      ['>', ['get', 'kind_detail'], 2],
+      [
+        'any',
+        ['all', ['==', ['get', 'kind'], 'macroregion'], ['<', ['zoom'], 6]],
+        ['match', ['get', 'kind_detail'], 4, ['>=', ['zoom'], 6], 6, ['>=', ['zoom'], 9], false],
+      ],
+    ]);
+  });
+
+  it.each([
+    [
+      ['has', 'name'],
+      ['has', 'name'],
+    ],
+    [
+      ['!has', 'is_tunnel'],
+      ['!', ['has', 'is_tunnel']],
+    ],
+    [
+      ['in', 'kind', 'lake', 'water'],
+      ['in', ['get', 'kind'], ['literal', ['lake', 'water']]],
+    ],
+    [
+      ['!in', 'kind', 'path', 'other'],
+      ['!', ['in', ['get', 'kind'], ['literal', ['path', 'other']]]],
+    ],
+    [
+      ['==', 'kind', 'locality'],
+      ['==', ['get', 'kind'], 'locality'],
+    ],
+    [
+      ['!=', 'kind_detail', 'service'],
+      ['!=', ['get', 'kind_detail'], 'service'],
+    ],
+    [
+      ['>', 'kind_detail', 2],
+      ['>', ['get', 'kind_detail'], 2],
+    ],
+    [
+      ['<=', 'kind_detail', 2],
+      ['<=', ['get', 'kind_detail'], 2],
+    ],
+    [
+      ['all', ['!has', 'is_bridge'], ['any', ['==', 'kind', 'major_road'], ['in', 'kind', 'highway']]],
+      [
+        'all',
+        ['!', ['has', 'is_bridge']],
+        ['any', ['==', ['get', 'kind'], 'major_road'], ['in', ['get', 'kind'], ['literal', ['highway']]]],
+      ],
+    ],
+    [
+      ['==', ['get', 'kind'], 'sea'],
+      ['==', ['get', 'kind'], 'sea'],
+    ],
+  ])('converts the legacy filter %j to %j', (legacy, expression) => {
+    expect(toExpressionFilter(legacy)).toEqual(expression);
+  });
+
+  it('keeps the generator’s legacy filter working when it adds the default basemap’s classes', async () => {
+    await initLayer({ showLabels: true });
+
+    const locality = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'places_locality');
+    const [all, generated, byClass] = locality.filter;
+    expect([all, generated]).toEqual(['all', ['==', ['get', 'kind'], 'locality']]);
+    expect(byClass[0]).toBe('any');
+    expect(byClass[2].slice(0, 3)).toEqual(['match', ['get', 'kind_detail'], 'city']);
+  });
+
   it('uppercases capitals from zoom 7, cities from zoom 8 and hamlets from zoom 14, like the default basemap', async () => {
     await initLayer({ showLabels: true });
 
@@ -342,6 +434,7 @@ describe('Protomaps basemap', () => {
       'roads_minor_service',
       'roads_tunnels_major',
       'boundaries_country',
+      'boundaries',
     ]);
   });
 
