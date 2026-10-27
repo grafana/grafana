@@ -1,9 +1,5 @@
-import { type RuleKind } from '../shared/ruleKind';
-
-import { alertFilters } from './alertFilters';
-import { type FilterDefinition, indexByKey } from './filterDefinitions';
-import { recordingFilters } from './recordingFilters';
-import { type RuleSearchFilter, createEmptyFilter } from './ruleSearchFilter';
+import { type FilterDefinition, type RuleSearchSchema } from './filterDefinitions';
+import { type SharedRuleFilter } from './sharedRuleFilter';
 import { tokenize } from './tokenizer';
 
 /** A reason the page can't search the query as typed; the page shows each one and sends no request. */
@@ -14,8 +10,8 @@ export type FilterIssue =
   /** The rule search refused the request; `key` is null when the refusal names no filter, or the search text. */
   | { key: string | null; reason: 'rejected'; message: string };
 
-export interface ParsedSearch {
-  filter: RuleSearchFilter;
+export interface ParsedSearch<Filter extends SharedRuleFilter> {
+  filter: Filter;
   issues: FilterIssue[];
 }
 
@@ -24,14 +20,12 @@ export interface ParsedSearch {
  * filter can't hold; feedback judges what parsing accepted, so `state:bogus` is a parse rejection and
  * `folder:f*` is feedback.
  */
-export function parse(query: string, kind: RuleKind): ParsedSearch {
-  const filters = filtersFor(kind);
-  const { filter, rejected } = parseFilter(query, filters);
-  return { filter, issues: getFeedback(filter, rejected, filters) };
-}
-
-export function filtersFor(kind: RuleKind): FilterDefinition[] {
-  return kind === 'alert' ? alertFilters : recordingFilters;
+export function parse<Filter extends SharedRuleFilter>(
+  query: string,
+  schema: RuleSearchSchema<Filter>
+): ParsedSearch<Filter> {
+  const { filter, rejected } = parseFilter(query, schema);
+  return { filter, issues: getFeedback(filter, rejected, schema.filters) };
 }
 
 // Parsing
@@ -43,11 +37,11 @@ interface RejectedToken {
   renamed?: { from: string; to: string };
 }
 
-function parseFilter(
+function parseFilter<Filter extends SharedRuleFilter>(
   query: string,
-  filters: FilterDefinition[]
-): { filter: RuleSearchFilter; rejected: RejectedToken[] } {
-  const byKey = indexByKey(filters);
+  { filters, createEmptyFilter }: RuleSearchSchema<Filter>
+): { filter: Filter; rejected: RejectedToken[] } {
+  const byKey = new Map<string, FilterDefinition<Filter>>(filters.map((definition) => [definition.key, definition]));
   const filter = createEmptyFilter();
   const rejected: RejectedToken[] = [];
 
@@ -78,7 +72,11 @@ function parseFilter(
 
 // Feedback
 
-function getFeedback(filter: RuleSearchFilter, rejected: RejectedToken[], filters: FilterDefinition[]): FilterIssue[] {
+function getFeedback<Filter extends SharedRuleFilter>(
+  filter: Filter,
+  rejected: RejectedToken[],
+  filters: Array<FilterDefinition<Filter>>
+): FilterIssue[] {
   const issues: FilterIssue[] = rejected.map(({ key, renamed }) => {
     if (key === null) {
       return { key, reason: 'unclosedQuote' };

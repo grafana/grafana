@@ -4,8 +4,15 @@ import { t } from '@grafana/i18n';
 
 import { parseMatcher } from '../../utils/matchers';
 
-import { type FilterDefinition, type SharedFilterKey } from './filterDefinitions';
-import { HEALTH_API_VALUES, type HealthValue, type SearchLabelMatcher } from './ruleSearchFilter';
+import { type FilterDefinition } from './filterDefinitions';
+import {
+  HEALTH_API_VALUES,
+  type HealthValue,
+  type SearchLabelMatcher,
+  type SharedRuleFilter,
+} from './sharedRuleFilter';
+
+export type SharedFilterKey = 'rule' | 'folder' | 'datasource' | 'label' | 'plugins' | 'health';
 
 /** The filters both pages support. */
 export const sharedFilters = {
@@ -94,7 +101,7 @@ export const sharedFilters = {
       return true;
     },
   },
-} satisfies Record<SharedFilterKey, FilterDefinition>;
+} satisfies { [Key in SharedFilterKey]: FilterDefinition<SharedRuleFilter, Key> };
 
 /** Exact-match filters refuse `*`, since the rule search would treat it as a wildcard. */
 export function hasWildcard(value: string): boolean {

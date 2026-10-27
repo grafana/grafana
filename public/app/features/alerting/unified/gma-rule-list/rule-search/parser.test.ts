@@ -1,10 +1,13 @@
+import { type AlertRuleFilter, alertRuleSearchSchema } from '../alert-rules/alertRuleFilters';
+import { type RecordingRuleFilter, recordingRuleSearchSchema } from '../recording-rules/recordingRuleFilters';
+
 import { parse } from './parser';
-import { type RuleSearchFilter, createEmptyFilter } from './ruleSearchFilter';
+import { createEmptyFilter } from './sharedRuleFilter';
 
 interface Row {
   name: string;
   query: string;
-  filter: Partial<RuleSearchFilter>;
+  filter: Partial<AlertRuleFilter & RecordingRuleFilter>;
 }
 
 describe('parsing', () => {
@@ -112,7 +115,7 @@ describe('parsing', () => {
       filter: { state: 'normal' },
     },
   ])('reads $name on the Alert rules page', ({ query, filter }) => {
-    expect(parse(query, 'alert').filter).toEqual({ ...createEmptyFilter(), ...filter });
+    expect(parse(query, alertRuleSearchSchema).filter).toEqual({ ...createEmptyFilter(), ...filter });
   });
 
   it.each<Row>([
@@ -121,7 +124,7 @@ describe('parsing', () => {
     { name: 'health:ok', query: 'health:ok', filter: { health: 'ok' } },
     { name: "the Alert rules page's keys as title text", query: 'state:firing', filter: { text: ['state:firing'] } },
   ])('reads $name on the Recording rules page', ({ query, filter }) => {
-    expect(parse(query, 'recording').filter).toEqual({ ...createEmptyFilter(), ...filter });
+    expect(parse(query, recordingRuleSearchSchema).filter).toEqual({ ...createEmptyFilter(), ...filter });
   });
 
   it.each([
@@ -136,24 +139,27 @@ describe('parsing', () => {
     ['health:err', 'health'],
     ['folder:"My Fol', 'folder'],
   ])('rejects %j as an invalid %s value and leaves the filter empty', (query, key) => {
-    expect(parse(query, 'alert')).toEqual({ filter: createEmptyFilter(), issues: [{ key, reason: 'invalid' }] });
+    expect(parse(query, alertRuleSearchSchema)).toEqual({
+      filter: createEmptyFilter(),
+      issues: [{ key, reason: 'invalid' }],
+    });
   });
 
   it.each(['"cpu high', 'foo:"a b'])('rejects the unclosed quote in %j and leaves the filter empty', (query) => {
-    expect(parse(query, 'alert')).toEqual({
+    expect(parse(query, alertRuleSearchSchema)).toEqual({
       filter: createEmptyFilter(),
       issues: [{ key: null, reason: 'unclosedQuote' }],
     });
   });
 
   it('rejects a renamed value with the value that replaces it', () => {
-    expect(parse('state:Inactive', 'alert').issues).toEqual([
+    expect(parse('state:Inactive', alertRuleSearchSchema).issues).toEqual([
       { key: 'state', reason: 'renamed', from: 'Inactive', to: 'normal' },
     ]);
   });
 
   it('applies a valid value even when an earlier one was rejected', () => {
-    expect(parse('state:bogus state:firing', 'alert')).toMatchObject({
+    expect(parse('state:bogus state:firing', alertRuleSearchSchema)).toMatchObject({
       filter: { state: 'firing' },
       issues: [{ key: 'state', reason: 'invalid' }],
     });
@@ -161,7 +167,7 @@ describe('parsing', () => {
 });
 
 function alertIssues(query: string) {
-  return parse(query, 'alert').issues;
+  return parse(query, alertRuleSearchSchema).issues;
 }
 
 describe('feedback', () => {
@@ -210,6 +216,6 @@ describe('feedback', () => {
     ['metric:cpu_*', 'metric'],
     ['targetDatasource:t*', 'targetDatasource'],
   ])('reports %j as an invalid %s filter on the Recording rules page', (query, key) => {
-    expect(parse(query, 'recording').issues).toEqual([{ key, reason: 'invalid' }]);
+    expect(parse(query, recordingRuleSearchSchema).issues).toEqual([{ key, reason: 'invalid' }]);
   });
 });

@@ -35,7 +35,7 @@ An empty value matches any value, so `label:team=` is `label:team`. As in Promet
 
 ## Invalid filters
 
-`parse(query, kind)` returns the filter and its issues, in two steps:
+`parse(query, schema)` returns the page's filter and its issues, in two steps:
 
 1. **Parsing** turns the text into the filter. It rejects a token only when the filter can't hold its
    value: a missing value (`label:`), a value outside the filter's set (`state:bogus`,
@@ -59,22 +59,25 @@ A _token_ is a piece of the typed query. A _filter definition_ describes a filte
 parser applies a token when one of the page's definitions accepts it.
 
 - `tokenizer.ts`: the query into `RawToken`s.
-- `ruleSearchFilter.ts`: the `RuleSearchFilter` model, and the API values each `state:` and `health:`
-  value matches.
-- `filterDefinitions.ts`: the `FilterDefinition` type and each kind's key type. A definition owns
+- `sharedRuleFilter.ts`: `SharedRuleFilter`, what both pages' filters hold, and the API values each
+  `health:` value matches. Each page extends it: `AlertRuleFilter` in `alert-rules/alertRuleFilters.ts`
+  and `RecordingRuleFilter` in `recording-rules/recordingRuleFilters.ts`, with the page's search schema.
+- `filterDefinitions.ts`: `RuleSearchSchema`, `FilterDefinition` and `FilterHelp`. A definition owns
   everything about one filter: its help, `apply` for the parsing step, `feedback` for the feedback step,
-  and the renamed values it suggests a replacement for.
-- `sharedFilters.ts`, `alertFilters.ts`, `recordingFilters.ts`: the filters both pages share and each
-  page's filters, in the order the search help lists them. Label matchers reuse `parseMatcher` from
+  and the renamed values it suggests a replacement for. The search input reads only the `FilterHelp` part. A schema is typed by its page's key union, so a definition can't
+  join a page that has no such filter.
+- `sharedFilters.ts`: the filters both pages share. Label matchers reuse `parseMatcher` from
   `utils/matchers.ts`, as RuleList.v2 does.
-- `parser.ts`: `parse(query, kind)`, which runs the page's definitions through the parsing and
+- `parser.ts`: `parse(query, schema)`, which runs the page's definitions through the parsing and
   feedback steps above. It knows no filter itself, except free text and its wildcards.
-- `useRuleListSearchState.ts`: the applied query, kept in the `search` URL parameter exactly as typed, and its filter.
+- `useRuleListSearchState.ts`: the applied query, kept in the `search` URL parameter exactly as typed, and the
+  page's filter.
 - `RuleSearchInput.tsx`: the input and its help, built from the filter definitions.
 - `searchRejection.ts`: a refused search (422) as issues, each naming the filter of the rejected leaf.
-- `searchQueryLeaves.ts`: the request leaves both kinds share. `alert-rules/alertRuleSearchQuery.ts`
-  builds the Alert request from them. The builder tests assert the exact `where` clause per query,
-  typed by the generated request type; whether the server accepts it is the server's job.
+- `searchQueryLeaves.ts`: the request leaves both kinds share. `alert-rules/alertRuleSearchQuery.ts` and
+  `recording-rules/recordingRuleSearchQuery.ts` build each page's request from them. The builder tests
+  assert the exact `where` clause per query, typed by the generated request type; whether the server
+  accepts it is the server's job.
 
 ## New filters
 
