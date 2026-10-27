@@ -31,8 +31,9 @@ export function ViewPanelQuickToggles({ panel, plugin }: Props) {
       currentOptions: options,
       currentFieldConfig: fieldConfig,
       reportInteractionUI: 'view-panel',
-      onOptionsChange: (newOptions) => changeViewPanelOptions(panel, newOptions),
-      onFieldConfigChange: (newFieldConfig) => changeViewPanelFieldConfig(panel, newFieldConfig),
+      onOptionsChange: (newOptions, name, category) => changeViewPanelOptions(panel, newOptions, name, category),
+      onFieldConfigChange: (newFieldConfig, name, category) =>
+        changeViewPanelFieldConfig(panel, newFieldConfig, name, category),
     });
 
     const toggles: OptionsPaneItemDescriptor[] = [];

@@ -5973,7 +5973,7 @@
       "variable-switch-values": "Change variable switch values",
       "variable-textbox-value": "Change variable value",
       "variable-type": "Change variable type",
-      "view-panel-options": "Change panel quick toggle"
+      "view-panel-option": "{{category}}: {{name}}"
     },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",

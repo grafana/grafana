@@ -233,8 +233,8 @@ export interface OptionPaneRenderProps2 {
   currentOptions: Record<string, unknown>;
   currentFieldConfig: FieldConfigSource;
   reportInteractionUI: 'panel-edit' | 'view-panel';
-  onOptionsChange?: (options: Record<string, unknown>) => void;
-  onFieldConfigChange?: (fieldConfig: FieldConfigSource) => void;
+  onOptionsChange?: (options: Record<string, unknown>, name: string, category: string) => void;
+  onFieldConfigChange?: (fieldConfig: FieldConfigSource, name: string, category: string) => void;
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
@@ -264,7 +264,8 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       // key — clearing requires setting it to undefined. Documented on StandardEditorProps.onChange.
       // Switching to replace here would break editors that emit partial values for their own path.
       if (props.onOptionsChange) {
-        props.onOptionsChange(newOptions);
+        const option = panelOptionItems.find((item) => item.path === path);
+        props.onOptionsChange(newOptions, option?.name ?? path, option?.category?.[0] ?? plugin.meta.name);
       } else {
         panel.onOptionsChange(newOptions);
       }
@@ -287,7 +288,13 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
   });
 
   // Load the options into categories
-  fillOptionsPaneItems('', plugin.getPanelOptionsSupplier(), access, getOptionsPaneCategory, context);
+  const panelOptionItems = fillOptionsPaneItems(
+    '',
+    plugin.getPanelOptionsSupplier(),
+    access,
+    getOptionsPaneCategory,
+    context
+  );
 
   // Field options
   for (const fieldOption of plugin.fieldConfigRegistry.list()) {
@@ -327,7 +334,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
               fieldOption.isCustom
             );
             if (props.onFieldConfigChange) {
-              props.onFieldConfigChange(newFieldConfig);
+              props.onFieldConfigChange(newFieldConfig, fieldOption.name, category.props.title);
             } else {
               panel.onFieldConfigChange(newFieldConfig, true);
             }
@@ -420,4 +427,6 @@ export function fillOptionsPaneItems(
       })
     );
   }
+
+  return builder.getItems();
 }

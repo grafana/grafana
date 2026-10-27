@@ -17,11 +17,21 @@ import { ViewPanelQuickToggles } from './ViewPanelQuickToggles';
 
 const plugin = getPanelPlugin({ id: 'quick-toggles' })
   .setPanelOptions((builder) =>
-    builder.addBooleanSwitch({ path: 'legend.showLegend', name: 'Show legend', defaultValue: true })
+    builder.addBooleanSwitch({
+      path: 'legend.showLegend',
+      name: 'Show legend',
+      category: ['Legend'],
+      defaultValue: true,
+    })
   )
   .useFieldConfig({
     useCustomConfig: (builder) =>
-      builder.addBooleanSwitch({ path: 'axisBorderShow', name: 'Axis border', defaultValue: false }),
+      builder.addBooleanSwitch({
+        path: 'axisBorderShow',
+        name: 'Axis border',
+        category: ['Axis'],
+        defaultValue: false,
+      }),
   })
   .setViewPanelOptions({
     quickToggles: { optionProperties: ['legend.showLegend'], fieldConfigProperties: ['custom.axisBorderShow'] },
@@ -49,13 +59,17 @@ function setup(isEditing = true) {
   return { panel, dashboard, sidebar: dashboard.state.sidebar, user: userEvent.setup() };
 }
 
-it.each(['Show legend', 'Axis border'])('undoes and redoes the %s quick toggle', async (label) => {
+it.each([
+  { label: 'Show legend', category: 'Legend', description: 'Legend: Show legend' },
+  { label: 'Axis border', category: 'Axis', description: 'Axis: Axis border' },
+])('undoes and redoes the $label quick toggle with its description', async ({ label, category, description }) => {
   const { panel, sidebar, user, dashboard } = setup();
   const before = { options: panel.state.options, fieldConfig: panel.state.fieldConfig };
   const initiallyChecked = label === 'Show legend';
-  await user.click(screen.getByRole('switch', { name: `quick-toggles ${label}` }));
-  expect(screen.getByRole('switch', { name: `quick-toggles ${label}` })).toHaveProperty('checked', !initiallyChecked);
+  await user.click(screen.getByRole('switch', { name: `${category} ${label}` }));
+  expect(screen.getByRole('switch', { name: `${category} ${label}` })).toHaveProperty('checked', !initiallyChecked);
   expect(sidebar.state.undoStack).toHaveLength(1);
+  expect(sidebar.state.undoStack[0].description).toBe(description);
   const after = { options: panel.state.options, fieldConfig: panel.state.fieldConfig };
   act(() => {
     dashboard.setState({ viewPanel: undefined });
@@ -63,28 +77,30 @@ it.each(['Show legend', 'Axis border'])('undoes and redoes the %s quick toggle',
   });
   expect(panel.state.options).toEqual(before.options);
   expect(panel.state.fieldConfig).toEqual(before.fieldConfig);
-  expect(screen.getByRole('switch', { name: `quick-toggles ${label}` })).toHaveProperty('checked', initiallyChecked);
+  expect(screen.getByRole('switch', { name: `${category} ${label}` })).toHaveProperty('checked', initiallyChecked);
+  expect(sidebar.state.redoStack[0].description).toBe(description);
   act(() => sidebar.redoAction());
   expect(panel.state.options).toEqual(after.options);
   expect(panel.state.fieldConfig).toEqual(after.fieldConfig);
-  expect(screen.getByRole('switch', { name: `quick-toggles ${label}` })).toHaveProperty('checked', !initiallyChecked);
+  expect(screen.getByRole('switch', { name: `${category} ${label}` })).toHaveProperty('checked', !initiallyChecked);
+  expect(sidebar.state.undoStack[0].description).toBe(description);
 });
 
 it('clears redo history when another quick toggle is changed', async () => {
   const { sidebar, user } = setup();
-  await user.click(screen.getByRole('switch', { name: 'quick-toggles Show legend' }));
+  await user.click(screen.getByRole('switch', { name: 'Legend Show legend' }));
   act(() => sidebar.undoAction());
   expect(sidebar.state.redoStack).toHaveLength(1);
-  await user.click(screen.getByRole('switch', { name: 'quick-toggles Axis border' }));
-  expect(screen.getByRole('switch', { name: 'quick-toggles Axis border' })).toBeChecked();
+  await user.click(screen.getByRole('switch', { name: 'Axis Axis border' }));
+  expect(screen.getByRole('switch', { name: 'Axis Axis border' })).toBeChecked();
   expect(sidebar.state.redoStack).toHaveLength(0);
   expect(sidebar.state.undoStack).toHaveLength(1);
 });
 
 it('applies quick toggles outside edit mode without recording history', async () => {
   const { sidebar, user, panel } = setup(false);
-  await user.click(screen.getByRole('switch', { name: 'quick-toggles Show legend' }));
-  await user.click(screen.getByRole('switch', { name: 'quick-toggles Axis border' }));
+  await user.click(screen.getByRole('switch', { name: 'Legend Show legend' }));
+  await user.click(screen.getByRole('switch', { name: 'Axis Axis border' }));
   expect(panel.state.options.legend?.showLegend).toBe(false);
   expect(panel.state.fieldConfig.defaults.custom?.axisBorderShow).toBe(true);
   expect(sidebar.state.undoStack).toHaveLength(0);
@@ -92,11 +108,11 @@ it('applies quick toggles outside edit mode without recording history', async ()
 
 it('preserves redo history for unchanged quick-toggle values', async () => {
   const { panel, sidebar, user } = setup();
-  await user.click(screen.getByRole('switch', { name: 'quick-toggles Show legend' }));
+  await user.click(screen.getByRole('switch', { name: 'Legend Show legend' }));
   act(() => sidebar.undoAction());
   act(() => {
-    changeViewPanelOptions(panel, { ...panel.state.options });
-    changeViewPanelFieldConfig(panel, { ...panel.state.fieldConfig });
+    changeViewPanelOptions(panel, { ...panel.state.options }, 'Show legend', 'Legend');
+    changeViewPanelFieldConfig(panel, { ...panel.state.fieldConfig }, 'Axis border', 'Axis');
   });
   expect(panel.state.options.legend?.showLegend).toBe(true);
   expect(panel.state.fieldConfig.defaults.custom?.axisBorderShow).toBe(false);
