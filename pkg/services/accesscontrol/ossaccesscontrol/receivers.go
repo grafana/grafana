@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -127,12 +128,11 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 
 	if _, err := r.SetPermissions(ctx, orgID, resourceId, permissions...); err != nil {
 		r.log.Error("Could not set default permissions", "receiver_uid", uid, "resource_id", resourceId, "id", "error", err)
+		return
 	}
 
 	if clearCache {
-		// Clear permission cache for the user who created the receiver, so that new permissions are fetched for their next call
-		// Required for cases when caller wants to immediately interact with the newly created object
-		r.ac.ClearUserPermissionCache(user)
+		permissioncache.RefreshAfterCommit(ctx, r.ac, user)
 	}
 }
 

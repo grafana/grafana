@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -133,7 +134,7 @@ func (r RoutePermissionsService) SetDefaultPermissions(ctx context.Context, orgI
 		return err
 	}
 	if clearCache {
-		r.ac.ClearUserPermissionCache(user)
+		permissioncache.RefreshAfterCommit(ctx, r.ac, user)
 	}
 	return nil
 }

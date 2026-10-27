@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
@@ -1229,11 +1230,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 		return err
 	}
 
-	// Clear permission cache for the user who created the dashboard, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly created object
-	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
-		dr.acService.ClearUserPermissionCache(user)
-	}
+	permissioncache.RefreshAfterCommit(ctx, dr.acService, user)
 
 	return nil
 }
@@ -1281,12 +1278,11 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 	svc := dr.getPermissionsService(dash.IsFolder)
 	if _, err := svc.SetPermissions(ctx, dto.OrgID, dash.UID, permissions...); err != nil {
 		dr.log.Error("Could not set default permissions", "dashboard", dash.Title, "error", err)
+		return
 	}
 
-	// Clear permission cache for the user who created the dashboard, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly created object
-	if !provisioned && dto.User.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
-		dr.acService.ClearUserPermissionCache(dto.User)
+	if !provisioned {
+		permissioncache.RefreshAfterCommit(ctx, dr.acService, dto.User)
 	}
 }
 

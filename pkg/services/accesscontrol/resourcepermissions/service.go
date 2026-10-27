@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -314,7 +315,10 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 		return nil, err
 	}
 
-	s.clearUserPermissionCache(orgID, user.ID)
+	// A concurrent reader can repopulate stale permissions if we clear before commit.
+	sqlstore.AfterCommit(ctx, func(context.Context) {
+		s.clearUserPermissionCache(orgID, user.ID)
+	})
 
 	return result, nil
 }
@@ -489,7 +493,11 @@ func (s *Service) SetPermissions(
 		return nil, err
 	}
 
-	s.clearUserPermissionCaches(orgID, commands)
+	// The caller can reuse its command slice before an outer transaction commits.
+	commands = slices.Clone(commands)
+	sqlstore.AfterCommit(ctx, func(context.Context) {
+		s.clearUserPermissionCaches(orgID, commands)
+	})
 
 	return result, nil
 }
