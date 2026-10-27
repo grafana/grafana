@@ -1,4 +1,4 @@
-import { catchError, combineLatest, from, map, type Observable, of, switchMap } from 'rxjs';
+import { catchError, combineLatest, defer, forkJoin, from, map, type Observable, of, switchMap } from 'rxjs';
 
 import { PluginExtensionTypes, type PluginExtension, type PluginExtensionComponent } from '@grafana/data';
 import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
@@ -34,14 +34,22 @@ export const getObservablePluginExtensions = (
 ): Observable<ReturnType<GetExtensions>> => {
   const { extensionPointId } = options;
 
-  const pluginsLoaded = from(loadDependentAppPlugins(extensionPointId, getExtensionPointPluginDependencies)).pipe(
-    catchError((error) => {
-      log.error(error instanceof Error ? error.message : String(error));
-      return of(undefined);
-    })
-  );
+  // Wrapped in `defer()` so that nothing (fetching registries, loading app plugins) happens until
+  // something actually subscribes to the returned observable, matching normal Observable semantics.
+  return defer(() => {
+    const pluginsLoaded = from(loadDependentAppPlugins(extensionPointId, getExtensionPointPluginDependencies)).pipe(
+      catchError((error) => {
+        if (error instanceof Error) {
+          log.error(error.message, { stack: error.stack ?? '', message: error.message });
+        } else {
+          log.error(String(error));
+        }
+        return of(undefined);
+      })
+    );
 
-  return combineLatest([from(getPluginExtensionRegistries()), pluginsLoaded]).pipe(
+    return forkJoin([from(getPluginExtensionRegistries()), pluginsLoaded]);
+  }).pipe(
     switchMap(([registries]) =>
       combineLatest([
         registries.addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),

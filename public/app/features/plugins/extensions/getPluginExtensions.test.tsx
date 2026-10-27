@@ -617,12 +617,44 @@ describe('getObservablePluginExtensions()', () => {
     });
   });
 
-  it('should load the app plugins contributing to the extension point before emitting', async () => {
+  it('should request loading of the app plugins contributing to the extension point', async () => {
     const observable = getObservablePluginExtensions({ extensionPointId }).pipe(first());
 
     await firstValueFrom(observable);
 
     expect(loadDependentAppPluginsMock).toHaveBeenCalledWith(extensionPointId, getExtensionPointPluginDependencies);
+  });
+
+  it('should not emit until the app plugins have finished loading', async () => {
+    let resolveLoading: () => void = () => {};
+    loadDependentAppPluginsMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveLoading = resolve;
+        })
+    );
+
+    const emissionPromise = firstValueFrom(getObservablePluginExtensions({ extensionPointId }).pipe(first()));
+
+    const raceResult = await Promise.race([
+      emissionPromise.then(() => 'emitted'),
+      new Promise((resolve) => setTimeout(() => resolve('timed out'), 10)),
+    ]);
+    expect(raceResult).toBe('timed out');
+
+    resolveLoading();
+
+    const { extensions } = await emissionPromise;
+    expect(extensions).toHaveLength(2);
+  });
+
+  it('should not perform the plugin loading side effect until subscribed to', async () => {
+    getObservablePluginExtensions({ extensionPointId });
+
+    // Give any eagerly-started work a chance to run before asserting it didn't.
+    await Promise.resolve();
+
+    expect(loadDependentAppPluginsMock).not.toHaveBeenCalled();
   });
 
   it('should catch and log errors thrown while loading the app plugins for the extension point', async () => {
@@ -632,7 +664,10 @@ describe('getObservablePluginExtensions()', () => {
     const { extensions } = await firstValueFrom(observable);
 
     expect(extensions).toHaveLength(2);
-    expect(log.error).toHaveBeenCalledWith('Failed to load plugin');
+    expect(log.error).toHaveBeenCalledWith('Failed to load plugin', {
+      stack: expect.stringContaining('Error: Failed to load plugin'),
+      message: 'Failed to load plugin',
+    });
   });
 
   it('should emit the initial state when no changes are made to the registries', async () => {
