@@ -49,7 +49,7 @@ const HOOKS = new Set(['helperMissing', 'blockHelperMissing']);
 const noop: Program = () => '';
 
 /** Own properties only. A prototype's own `constructor` is denied, as it reaches `Function`. */
-export function lookupProperty(parent: unknown, propertyName: unknown): unknown {
+function lookupProperty(parent: unknown, propertyName: unknown): unknown {
   const name =
     typeof propertyName === 'string' || typeof propertyName === 'symbol' ? propertyName : String(propertyName);
   const result: unknown = Reflect.get(Object(parent), name);
