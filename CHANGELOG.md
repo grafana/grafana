@@ -1110,6 +1110,11 @@
 - **TextLink:** Fix icon positioning if text wraps [#118233](https://github.com/grafana/grafana/pull/118233), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.0.0 END -->
+<!-- 12.4.14 START -->
+
+# 12.4.14 (2026-10-27)
+
+<!-- 12.4.14 END -->
 <!-- 12.4.13 START -->
 
 # 12.4.13 (2026-10-13)
