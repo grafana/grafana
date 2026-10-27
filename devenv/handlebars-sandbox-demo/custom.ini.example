@@ -1,0 +1,36 @@
+app_mode = development
+
+[server]
+http_addr = 127.0.0.1
+http_port = 3011
+root_url = http://localhost:3011/
+
+[paths]
+data = data/handlebars-sandbox-demo
+logs = data/handlebars-sandbox-demo/log
+plugins = data/handlebars-sandbox-demo/plugins
+provisioning = devenv/handlebars-sandbox-demo/provisioning
+
+[security]
+content_security_policy = true
+content_security_policy_template = """script-src 'self' 'strict-dynamic' $NONCE;object-src 'none';font-src 'self' data:;style-src 'self' 'unsafe-inline' blob:;img-src * data: blob:;base-uri 'self';connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;manifest-src 'self';media-src 'none';form-action 'self';"""
+
+[auth.anonymous]
+enabled = true
+org_role = Viewer
+
+[analytics]
+reporting_enabled = false
+check_for_updates = false
+check_for_plugin_updates = false
+
+[feature_toggles]
+grafana.newTextPanel = true
+text.newFeatures = true
+grafana.rspackBuild = true
+
+[log]
+mode = console
+
+[plugins]
+preinstall_disabled = true

@@ -16,6 +16,13 @@ The sandbox protects:
 
 ## Boundaries
 
+### Template execution
+
+Text v2 runs Handlebars compilation and rendering in a separate hidden opaque frame before
+sanitization. See [Handlebars execution sandbox](templateSandbox/README.md) for its nonce
+compiler, helper bridge, limits, and tests. It does not require `unsafe-eval`. Changes to that
+compiler, its Trusted Types policies, or its message bridge also require security review.
+
 ### Frame isolation
 
 `SandboxFrame` renders content in an iframe with these sandbox flags:

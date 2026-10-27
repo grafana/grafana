@@ -13,7 +13,8 @@ import { TextNGCodeView } from '../TextNGCodeView';
 import { TextNGHtmlView } from '../TextNGHtmlView';
 import { TextNGTruncationNotice } from '../TextNGTruncationNotice';
 import { type TextSandboxProps } from '../TextSandbox';
-import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
+import { type RowWindow } from '../renderContent';
+import { useTemplateContent } from '../useTemplateContent';
 import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
@@ -159,17 +160,11 @@ export function TextNGEditor({
     content: interpolatedContent,
     error: previewError,
     truncated,
-  } = useMemo(
-    () =>
-      catchTemplateError(() =>
-        showPreview
-          ? interpolateTemplate(
-              { content: previewSource, mode, series, renderMode, rowWindow, format },
-              replaceVariables
-            )
-          : { content: '', truncated: false }
-      ),
-    [showPreview, previewSource, mode, series, renderMode, rowWindow, format, replaceVariables]
+    pending,
+  } = useTemplateContent(
+    { content: previewSource, mode, series, renderMode, rowWindow, format },
+    replaceVariables,
+    showPreview
   );
 
   const previewHtml = useMemo(
@@ -248,6 +243,9 @@ export function TextNGEditor({
   const truncationNotice = truncated ? <TextNGTruncationNotice /> : null;
 
   const renderOutput = (testId: string) => {
+    if (pending) {
+      return null;
+    }
     if (previewError) {
       return <Alert severity="error" title={previewError} data-testid={testId} />;
     }

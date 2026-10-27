@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -30,6 +30,7 @@ import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
 jest.mock('./SandboxFrame');
+jest.mock('./templateSandbox/client');
 
 beforeAll(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
@@ -833,21 +834,25 @@ describe('TextNGPanel', () => {
 
     const html = () => screen.getByTestId('TextNGPanel-converted-content').innerHTML;
 
-    it('re-renders the content when new query data arrives', () => {
+    it('re-renders the content when new query data arrives', async () => {
       const props = createProps((target) => target, {
         data: createData([toDataFrame({ fields: [{ name: 'host', values: ['web-1'] }] })]),
         options: { content: '{{#each data}}{{host}}{{/each}}', mode: TextMode.Markdown },
       });
 
       const { rerender } = render(viewing(props));
-      settle();
+      await act(async () => {
+        jest.advanceTimersByTime(200);
+      });
       expect(html()).toContain('web-1');
 
       const refreshed = Object.assign({}, props, {
         data: createData([toDataFrame({ fields: [{ name: 'host', values: ['web-2'] }] })]),
       });
       rerender(viewing(refreshed));
-      settle();
+      await act(async () => {
+        jest.advanceTimersByTime(200);
+      });
 
       expect(html()).toContain('web-2');
       expect(html()).not.toContain('web-1');
@@ -869,7 +874,7 @@ describe('TextNGPanel', () => {
     });
 
     // Both passes cut on the ceiling, so the output is byte-identical and only the flag moves.
-    it('shows the truncation notice when a refresh crosses the ceiling without changing the output', () => {
+    it('shows the truncation notice when a refresh crosses the ceiling without changing the output', async () => {
       const dataOf = (length: number) =>
         createData([toDataFrame({ fields: [{ name: 'n', values: ['x'.repeat(length)] }] })]);
       const props = createProps((target) => target, {
@@ -878,12 +883,16 @@ describe('TextNGPanel', () => {
       });
 
       const { rerender } = render(viewing(props));
-      settle();
+      await act(async () => {
+        jest.advanceTimersByTime(200);
+      });
       const before = html();
       expect(screen.queryByTestId(TRUNCATION_NOTICE_TEST_ID)).not.toBeInTheDocument();
 
       rerender(viewing(Object.assign({}, props, { data: dataOf(MAX_RENDERED_CHARS + 1) })));
-      settle();
+      await act(async () => {
+        jest.advanceTimersByTime(200);
+      });
 
       expect(html()).toBe(before);
       expect(screen.getByTestId(TRUNCATION_NOTICE_TEST_ID)).toBeInTheDocument();
@@ -1015,7 +1024,7 @@ describe('TextNGPanel', () => {
     expect(frame().policy).toContain(origin);
   });
 
-  it('evaluates handlebars expressions against the query data', () => {
+  it('evaluates handlebars expressions against the query data', async () => {
     const series = [toDataFrame({ fields: [{ name: 'host', values: ['web-1', 'web-2'] }] })];
     const props = createProps((target) => target, {
       data: createData(series),
@@ -1024,20 +1033,20 @@ describe('TextNGPanel', () => {
 
     setup(props, CoreApp.Dashboard);
 
-    const html = screen.getByTestId('TextNGPanel-converted-content').innerHTML;
-    expect(html).toContain('web-1');
-    expect(html).toContain('web-2');
+    expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('web-1'));
+    expect(screen.getByTestId('TextNGPanel-converted-content')).toHaveTextContent('web-2');
   });
 
-  it('shows an alert instead of the content when the handlebars template is broken', () => {
+  it('shows an alert instead of the content when the handlebars template is broken', async () => {
     const props = createProps((target) => target, {
       options: { content: '{{#each data}}', mode: TextMode.Markdown },
     });
 
     setup(props, CoreApp.Dashboard);
 
-    expect(screen.getByTestId('TextNGPanel-error')).toHaveTextContent('Handlebars error:');
-    expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByTestId('TextNGPanel-error')).toHaveTextContent('Handlebars error:'));
+    await waitFor(() => expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument());
   });
 
   describe('truncation notice', () => {

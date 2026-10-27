@@ -16,6 +16,7 @@ import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 import { type ViewMode } from './viewMode';
 
 jest.mock('../SandboxFrame');
+jest.mock('../templateSandbox/client');
 
 beforeAll(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
@@ -637,7 +638,7 @@ describe('TextNGEditor handlebars preview', () => {
     }),
   ];
 
-  it('evaluates expressions in the preview', () => {
+  it('evaluates expressions in the preview', async () => {
     render(
       <TextNGEditor
         content="{{#each data}}- {{host}}\n{{/each}}"
@@ -651,11 +652,11 @@ describe('TextNGEditor handlebars preview', () => {
       />
     );
 
-    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-1');
-    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-2');
+    await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-1'));
+    await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('web-2'));
   });
 
-  it('shows an alert in the preview when the template is broken', () => {
+  it('shows an alert in the preview when the template is broken', async () => {
     render(
       <TextNGEditor
         content="{{#each data}}"
@@ -669,6 +670,6 @@ describe('TextNGEditor handlebars preview', () => {
       />
     );
 
-    expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Handlebars error:');
+    await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID)).toHaveTextContent('Handlebars error:'));
   });
 });

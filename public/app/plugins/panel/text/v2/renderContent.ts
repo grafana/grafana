@@ -13,7 +13,8 @@ import { t } from '@grafana/i18n';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
-import { buildAllRowsContext, buildRows, type CompiledTemplate, compileTemplate } from './handlebars';
+import { buildAllRowsContext, buildRows } from './handlebars';
+import { type TemplateInput, type TemplateResult } from './templateSandbox/protocol';
 import { isTextNewFeaturesEnabled, transformContent } from './utils';
 
 /** Hard ceiling on the rows a single render pass may cover, so a large query cannot hang the panel. */
@@ -45,6 +46,7 @@ export interface TextTemplate {
 /** A finished render pass, or the error that stopped it. */
 export interface RenderedContent {
   content: string;
+  pending?: boolean;
   error?: string;
   /** The character ceiling cut the output short, so what renders is incomplete. */
   truncated?: boolean;
@@ -79,33 +81,30 @@ export function countRows(series: DataFrame[]): number {
   return series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
 }
 
-export function interpolateTemplate(
+export function* interpolateTemplateSteps(
   template: TextTemplate,
   replaceVariables: InterpolateFunction
-): InterpolatedContent {
+): Generator<TemplateInput, InterpolatedContent, TemplateResult> {
   const { content, mode, series = [], renderMode, format } = template;
 
   // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
   const compiled =
-    isTextNewFeaturesEnabled() && mode !== TextMode.Code
-      ? compileTemplate(escapeCommentedTemplates(content), replaceVariables)
+    isTextNewFeaturesEnabled() && mode !== TextMode.Code && content.includes('{{')
+      ? escapeCommentedTemplates(content)
       : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
-    return interpolateEveryRow(template, series, replaceVariables, compiled);
+    return yield* interpolateEveryRow(template, series, replaceVariables, compiled);
   }
 
   const scopedVars = buildOnceContext(series);
 
-  if (!compiled) {
+  if (compiled === undefined) {
     return { content: replaceVariables(content, scopedVars, format), truncated: false };
   }
 
-  let readRows = false;
-  const context = buildAllRowsContext(series, MAX_RENDERED_ROWS, () => {
-    readRows = true;
-  });
-  const rendered = replaceVariables(compiled(context), scopedVars, format);
+  const result = yield { template: compiled, data: buildAllRowsContext(series, MAX_RENDERED_ROWS), trackRows: true };
+  const rendered = replaceVariables(result.content, scopedVars, format);
 
   // A Once template emits one string, so the row ceiling cannot bound its size.
   const cut = cutToMaxChars(rendered);
@@ -114,7 +113,7 @@ export function interpolateTemplate(
   // unreported the panel reads as complete, and `{{data.length}}` states the ceiling as the count.
   // Only counts against a template that read a row: the default content ignores its data, and a
   // panel showing a title over a thousand-row query has lost nothing.
-  const rowsDropped = readRows && countRows(series) > MAX_RENDERED_ROWS;
+  const rowsDropped = result.readRows && countRows(series) > MAX_RENDERED_ROWS;
 
   return { ...cut, truncated: cut.truncated || rowsDropped };
 }
@@ -198,12 +197,12 @@ function joinBlocks(blocks: string[], mode: TextMode): string {
   return blocks.join(mode === TextMode.Markdown ? '\n\n' : '\n');
 }
 
-function interpolateEveryRow(
+function* interpolateEveryRow(
   template: TextTemplate,
   series: DataFrame[],
   replaceVariables: InterpolateFunction,
-  compiled?: CompiledTemplate
-): InterpolatedContent {
+  compiled?: string
+): Generator<TemplateInput, InterpolatedContent, TemplateResult> {
   const { content, mode, format, rowWindow } = template;
   const windowStart = rowWindow?.start ?? 0;
   const maxBlocks = Math.min(rowWindow?.count ?? MAX_RENDERED_ROWS, MAX_RENDERED_ROWS);
@@ -222,7 +221,7 @@ function interpolateEveryRow(
     skipped += firstRow;
 
     const rowCount = Math.min(frame.length - firstRow, maxBlocks - blocks.length);
-    const rows = compiled ? buildRows(frame, series, rowCount, firstRow) : [];
+    const rows = compiled !== undefined ? buildRows(frame, series, rowCount, firstRow) : [];
 
     for (let offset = 0; offset < rowCount; offset++) {
       const rowIndex = firstRow + offset;
@@ -230,7 +229,9 @@ function interpolateEveryRow(
         __dataContext: { value: { data: series, frame, field, rowIndex, frameIndex } },
       };
 
-      const block = replaceVariables(compiled ? compiled(rows[offset]) : content, scopedVars, format);
+      const output =
+        compiled !== undefined ? (yield { template: compiled, data: rows[offset], trackRows: false }).content : content;
+      const block = replaceVariables(output, scopedVars, format);
 
       blocks.push(block);
       renderedChars += block.length;
@@ -256,12 +257,29 @@ function interpolateEveryRow(
   return { ...cut, truncated: cut.truncated || blocks.length < requestedRows };
 }
 
+export function interpolateTemplate(
+  template: TextTemplate,
+  replaceVariables: InterpolateFunction,
+  renderTemplate?: (input: TemplateInput) => TemplateResult
+): InterpolatedContent {
+  const steps = interpolateTemplateSteps(template, replaceVariables);
+  let step = steps.next();
+  while (!step.done) {
+    if (!renderTemplate) {
+      throw new Error('Handlebars templates require the asynchronous sandbox renderer');
+    }
+    step = steps.next(renderTemplate(step.value));
+  }
+  return step.value;
+}
+
 export function renderContent(
   template: TextTemplate,
   replaceVariables: InterpolateFunction,
-  disableSanitizeHtml: boolean
+  disableSanitizeHtml: boolean,
+  renderTemplate?: (input: TemplateInput) => TemplateResult
 ): InterpolatedContent {
-  const { content, truncated } = interpolateTemplate(template, replaceVariables);
+  const { content, truncated } = interpolateTemplate(template, replaceVariables, renderTemplate);
 
   return { content: transformContent(template.mode, content, disableSanitizeHtml), truncated };
 }

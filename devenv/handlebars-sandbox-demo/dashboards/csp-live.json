@@ -1,0 +1,115 @@
+{
+  "uid": "handlebars-csp-live",
+  "title": "Handlebars CSP \u2014 live queries and variables",
+  "schemaVersion": 41,
+  "version": 1,
+  "editable": true,
+  "tags": ["handlebars", "csp", "sandbox"],
+  "timezone": "browser",
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "refresh": "5s",
+  "templating": {
+    "list": [
+      {
+        "name": "demo_label",
+        "label": "Environment",
+        "type": "custom",
+        "query": "Production,Staging",
+        "current": {
+          "text": "Production",
+          "value": "Production"
+        },
+        "options": [
+          {
+            "text": "Production",
+            "value": "Production",
+            "selected": true
+          },
+          {
+            "text": "Staging",
+            "value": "Staging",
+            "selected": false
+          }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "Live query data \u2192 sandbox template",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 16,
+        "h": 16
+      },
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "csp-demo-testdata"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "alias": "Value",
+          "seriesCount": 1,
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "csp-demo-testdata"
+          }
+        }
+      ],
+      "options": {
+        "mode": "html",
+        "content": "<h2>Live data \u00b7 $demo_label</h2><p>Refreshes every 5 seconds. Change Environment above to test parent variable interpolation.</p><table><tr><th>Time</th><th>Value</th></tr>{{#each data}}<tr><td>{{fmt.time}}</td><td>{{fmt.Value}}</td></tr>{{/each}}</table>",
+        "renderMode": "once"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "maxDataPoints": 8
+    },
+    {
+      "id": 2,
+      "type": "text",
+      "title": "Per-row template with pagination",
+      "gridPos": {
+        "x": 16,
+        "y": 0,
+        "w": 8,
+        "h": 16
+      },
+      "datasource": {
+        "type": "grafana-testdata-datasource",
+        "uid": "csp-demo-testdata"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "raw_frame",
+          "rawFrameContent": "[{\"schema\": {\"refId\": \"A\", \"fields\": [{\"name\": \"Service\", \"type\": \"string\"}, {\"name\": \"Lat\", \"type\": \"number\"}, {\"name\": \"Lng\", \"type\": \"number\"}, {\"name\": \"Price\", \"type\": \"number\"}]}, \"data\": {\"values\": [[\"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\", \"checkout\", \"payments\", \"search\", \"catalog\"], [30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45, 30, 35, 40, 45], [10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30, 10, 20, 15, 30], [120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900, 120, 650, 240, 900]]}}]",
+          "datasource": {
+            "type": "grafana-testdata-datasource",
+            "uid": "csp-demo-testdata"
+          }
+        }
+      ],
+      "options": {
+        "mode": "html",
+        "content": "<h3>{{Service}}</h3><p>{{variableValue \"demo_label\"}}: {{Price}}</p>",
+        "renderMode": "perRow",
+        "pageSize": 1
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+apiVersion: 1
+datasources:
+  - name: CSP Demo TestData
+    uid: csp-demo-testdata
+    type: grafana-testdata-datasource
+    access: proxy
+    isDefault: true

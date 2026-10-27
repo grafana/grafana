@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
 import { lazy, Suspense, useEffect, useMemo, useState, type Ref } from 'react';
-import { useDebounce } from 'react-use';
 
 import {
   CoreApp,
@@ -45,9 +44,10 @@ import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
 import { usePagination } from './pagination';
-import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
+import { type RenderedContent, type RowWindow } from './renderContent';
+import { useTemplateContent } from './useTemplateContent';
 import { useThemedReplaceVariables } from './useThemedReplaceVariables';
-import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
+import { getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled, transformContent } from './utils';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
@@ -89,7 +89,6 @@ export function TextNGPanel(props: Props) {
   const renderMode = newFeatures ? options.renderMode : RenderMode.Once;
 
   const frames = data.series;
-  const hasData = frames.length > 0;
   // Withheld with the selector: a saved index would otherwise pick a frame the reader
   // has no UI to change, and the macros read every frame again, as they did before it.
   const currentFrameIndex = newFeatures ? getCurrentFrameIndex(frames, options) : 0;
@@ -146,65 +145,14 @@ export function TextNGPanel(props: Props) {
   // A capped panel fitting pages to its cap lays out at the cap, as a fixed-height panel would.
   const fitContentOn = fitContent && !isEditing && fitHeight === undefined;
 
-  const [processed, setProcessed] = useState<ProcessedContent>(() =>
-    // The editor renders its own preview, so skip the render pass on entry.
-    isEditing
-      ? { mode: options.mode, content: EMPTY_CONTENT, hasData }
-      : renderPanelContent(options, renderMode, series, replaceVariables, rowWindow)
-  );
-
-  // Recompute synchronously when leaving edit mode so pre-edit content never flashes,
-  // when the page moves, which should land as directly as a scroll would, and on a
-  // template change, which auto-fit measures.
-  const [wasEditing, setWasEditing] = useState(isEditing);
-  const [prevWindow, setPrevWindow] = useState(rowWindow);
-  const [prevTemplate, setPrevTemplate] = useState(() => templateOf(options, renderMode));
-  const template = templateOf(options, renderMode);
-  if (
-    wasEditing !== isEditing ||
-    prevWindow?.start !== rowWindow?.start ||
-    prevWindow?.count !== rowWindow?.count ||
-    prevTemplate !== template ||
-    (!isEditing && processed.hasData !== hasData)
-  ) {
-    setWasEditing(isEditing);
-    setPrevWindow(rowWindow);
-    setPrevTemplate(template);
-    if (!isEditing) {
-      setProcessed(renderPanelContent(options, renderMode, series, replaceVariables, rowWindow));
-    }
-  }
-
-  // Batches bursts of change (data/variable refresh) so the interpolate and
-  // markdown/sanitize pass runs once per burst. renderCounter covers a
-  // referenced variable changing, which leaves options and data untouched.
-  useDebounce(
-    () => {
-      if (isEditing) {
-        return;
-      }
-      const next = renderPanelContent(options, renderMode, series, replaceVariables, rowWindow);
-      if (
-        next.content !== processed.content ||
-        next.mode !== processed.mode ||
-        next.error !== processed.error ||
-        next.truncated !== processed.truncated ||
-        next.hasData !== processed.hasData
-      ) {
-        setProcessed(next);
-      }
-    },
-    100,
-    [
-      isEditing,
-      options.content,
-      options.mode,
-      renderMode,
-      options.code?.language,
-      series,
-      replaceVariables,
-      renderCounter,
-    ]
+  const processed = usePanelContent(
+    options,
+    renderMode,
+    series,
+    replaceVariables,
+    rowWindow,
+    !isEditing,
+    renderCounter
   );
 
   const frameOptions = useMemo(
@@ -325,11 +273,6 @@ export function TextNGPanel(props: Props) {
   );
 }
 
-// What a render pass turns into blocks, leaving data and variables to the debounce.
-function templateOf(options: Options, renderMode?: RenderMode): string {
-  return `${options.content}|${options.mode}|${renderMode}|${options.code?.language}`;
-}
-
 interface ProcessedContent extends RenderedContent {
   mode: TextMode;
   hasData: boolean;
@@ -353,6 +296,7 @@ function TextNGView({
   transparent,
   hasData,
   consent,
+  pending,
 }: TextNGViewProps) {
   const styles = useStyles2(getStyles);
 
@@ -381,7 +325,8 @@ function TextNGView({
     );
   }
 
-  const rendered = (
+  // Do not let pagination measure the empty placeholder before the asynchronous render finishes.
+  const rendered = pending ? null : (
     <TextNGHtmlView
       html={content}
       hasData={hasData}
@@ -427,10 +372,7 @@ function EditorLoadingFallback({
 }) {
   const theme = useTheme2();
   const layout = useStyles2(getEditorLayoutStyles);
-  const rendered = useMemo(
-    () => renderPanelContent(options, renderMode, series, replaceVariables, rowWindow),
-    [options, renderMode, series, replaceVariables, rowWindow]
-  );
+  const rendered = usePanelContent(options, renderMode, series, replaceVariables, rowWindow);
   const isCode = options.mode === TextMode.Code;
 
   return (
@@ -470,31 +412,33 @@ function applyEditorChange(options: Options, change: TextNGEditorChange): Option
   return { ...options, content, mode, code };
 }
 
-function renderPanelContent(
+function usePanelContent(
   options: Options,
   renderMode: RenderMode | undefined,
   series: DataFrame[],
   replaceVariables: InterpolateFunction,
-  rowWindow?: RowWindow
+  rowWindow?: RowWindow,
+  enabled = true,
+  renderCounter?: number
 ): ProcessedContent {
-  return {
-    mode: options.mode,
-    hasData: series.length > 0,
-    ...catchTemplateError(() =>
-      renderContent(
-        {
-          content: options.content ?? '',
-          mode: options.mode,
-          series,
-          renderMode,
-          rowWindow,
-          format: getInterpolateFormat(options.mode, options.code?.language),
-        },
-        replaceVariables,
-        config.disableSanitizeHtml
-      )
-    ),
-  };
+  const rendered = useTemplateContent(
+    {
+      content: options.content ?? '',
+      mode: options.mode,
+      series,
+      renderMode,
+      rowWindow,
+      format: getInterpolateFormat(options.mode, options.code?.language),
+    },
+    replaceVariables,
+    enabled,
+    renderCounter
+  );
+  const content = useMemo(
+    () => transformContent(options.mode, rendered.content, config.disableSanitizeHtml),
+    [options.mode, rendered.content]
+  );
+  return { ...rendered, content, mode: options.mode, hasData: series.length > 0 };
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

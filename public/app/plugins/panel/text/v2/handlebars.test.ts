@@ -2,7 +2,8 @@ import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import { FieldType, type InterpolateFunction, toDataFrame } from '@grafana/data';
 
-import { buildAllRowsContext, buildRows, compileTemplate, type TemplateContext } from './handlebars';
+import { buildAllRowsContext, buildRows, type TemplateContext } from './handlebars';
+import { compileTemplate } from './templateTestUtils';
 
 const hosts = toDataFrame({
   name: 'frameA',

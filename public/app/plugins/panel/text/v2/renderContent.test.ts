@@ -23,12 +23,26 @@ import {
   catchTemplateError,
   countRows,
   hasRenderableData,
-  interpolateTemplate,
+  interpolateTemplate as interpolateTemplateImpl,
   MAX_RENDERED_CHARS,
   MAX_RENDERED_ROWS,
-  renderContent,
+  renderContent as renderContentImpl,
   type RowWindow,
+  type TextTemplate,
 } from './renderContent';
+import { createSyncTemplateRenderer } from './templateTestUtils';
+
+function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction) {
+  return interpolateTemplateImpl(template, replaceVariables, createSyncTemplateRenderer(replaceVariables));
+}
+function renderContent(template: TextTemplate, replaceVariables: InterpolateFunction, disableSanitizeHtml: boolean) {
+  return renderContentImpl(
+    template,
+    replaceVariables,
+    disableSanitizeHtml,
+    createSyncTemplateRenderer(replaceVariables)
+  );
+}
 
 beforeEach(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
