@@ -11,8 +11,7 @@ import (
 )
 
 func TestCompileGroupPatterns(t *testing.T) {
-	patterns, err := compileGroupPatterns([]string{"*.grafana.app", "*.grafana.com"})
-	require.NoError(t, err)
+	patterns := compileGroupPatterns([]string{"*.grafana.app", "*.grafana.com"})
 
 	require.True(t, matchesAnyPattern("dashboard.grafana.app", patterns))
 	require.True(t, matchesAnyPattern("billing.grafana.com", patterns))
@@ -23,8 +22,7 @@ func TestCompileGroupPatterns(t *testing.T) {
 func TestCompileGroupPatterns_DotsAreLiteral(t *testing.T) {
 	// Regression test: dots in the pattern must match literal dots, not any character.
 	// *.grafana.app should NOT match evilXgrafanaXapp (where X is any non-dot).
-	patterns, err := compileGroupPatterns([]string{"*.grafana.app"})
-	require.NoError(t, err)
+	patterns := compileGroupPatterns([]string{"*.grafana.app"})
 
 	require.True(t, matchesAnyPattern("dashboard.grafana.app", patterns))
 	require.False(t, matchesAnyPattern("evilXgrafanaXapp", patterns), "pattern must not treat . as wildcard")
@@ -39,8 +37,7 @@ func TestCompileGroupPatterns_RegexMetacharactersAreLiteral(t *testing.T) {
 	// regex metacharacter live, so "*.grafana+app" compiled to
 	// ^.*\.grafana+app$ and over-matched "x.grafanaaaapp" -- the wrong
 	// direction for a narrowing allowlist.
-	patterns, err := compileGroupPatterns([]string{"*.grafana+app"})
-	require.NoError(t, err)
+	patterns := compileGroupPatterns([]string{"*.grafana+app"})
 
 	require.False(t, matchesAnyPattern("dashboard.grafanaaaapp", patterns), "+ must not act as a regex quantifier")
 	require.False(t, matchesAnyPattern("dashboard.grafanaapp", patterns), "+ must not act as a regex quantifier")
@@ -52,8 +49,7 @@ func TestCompileGroupPatterns_RegexMetacharactersAreLiteral(t *testing.T) {
 // valid literal, so glob compilation is total -- input that looks like broken
 // regex syntax is just a literal group name, never a compile error.
 func TestCompileGroupPatterns_NoPatternFailsToCompile(t *testing.T) {
-	patterns, err := compileGroupPatterns([]string{"[unterminated"})
-	require.NoError(t, err)
+	patterns := compileGroupPatterns([]string{"[unterminated"})
 	require.Len(t, patterns, 1)
 
 	require.True(t, matchesAnyPattern("[unterminated", patterns))

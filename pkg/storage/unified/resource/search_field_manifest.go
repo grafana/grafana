@@ -99,6 +99,30 @@ func ManifestBackedProvider(manifests ...*app.ManifestData) (SearchFieldsProvide
 	return newMapProvider(fields, preferred)
 }
 
+// ManifestKinds names the kind of each resource a manifest declares, with the
+// version it is taken from: the manifest's preferred version, or else the first
+// version that declares the resource. A kind renamed between versions then has
+// one name, whatever order the versions are in. include, when set, limits the
+// versions and kinds considered.
+func ManifestKinds(m *app.ManifestData, include func(app.ManifestVersion, app.ManifestVersionKind) bool) map[schema.GroupResource]schema.GroupVersionKind {
+	kinds := map[schema.GroupResource]schema.GroupVersionKind{}
+	if m == nil {
+		return kinds
+	}
+	for _, version := range m.Versions {
+		for _, kind := range version.Kinds {
+			if include != nil && !include(version, kind) {
+				continue
+			}
+			gr := schema.GroupResource{Group: m.Group, Resource: ManifestResourceName(kind)}
+			if _, ok := kinds[gr]; !ok || version.Name == m.PreferredVersion {
+				kinds[gr] = schema.GroupVersionKind{Group: m.Group, Version: version.Name, Kind: kind.Kind}
+			}
+		}
+	}
+	return kinds
+}
+
 // ManifestResourceName returns the lower-cased resource (plural) name for a
 // kind, defaulting to the kind name plus "s" when the manifest omits the
 // plural, which mirrors the app-sdk default.

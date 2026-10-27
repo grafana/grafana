@@ -101,7 +101,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     quickRanges,
     hideQuickRanges,
     widthOverride,
-    isOnCanvas,
+    isOnCanvas = true,
     onToolbarTimePickerClick,
     weekStart,
     initialIsSynced,
@@ -177,7 +177,10 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     },
     overlayRef
   );
-  const { dialogProps } = useDialog({}, overlayRef);
+  const { dialogProps } = useDialog(
+    { 'aria-label': t('time-picker.range-picker.dialog-label', 'Time range picker') },
+    overlayRef
+  );
 
   const styles = useStyles2(getStyles);
   const { modalBackdrop } = useStyles2(getModalStyles);

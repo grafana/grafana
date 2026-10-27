@@ -77,9 +77,7 @@ func BuildOpenAPI(pluginID string, manifest *app.ManifestData, version string, o
 		Storage: func(*runtime.Scheme, serializer.CodecFactory, []schema.GroupVersion) (generic.RESTOptionsGetter, error) {
 			return appinstaller.NewNoopRESTOptionsGetter(), nil
 		},
-		PluginClient:    offlinePluginClient{},
-		ClientV3:        offlineClientV3{},
-		ContextProvider: offlinePluginContext{},
+		ClientV3: offlineClientV3{},
 		AccessChecker: func(context.Context, identity.Requester, string) (authorizer.Decision, string, error) {
 			return authorizer.DecisionAllow, "", nil
 		},

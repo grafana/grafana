@@ -177,6 +177,12 @@
       "types": "./dist/types/clients/rtkq/preferences/v1/index.d.ts",
       "import": "./dist/esm/clients/rtkq/preferences/v1/index.mjs",
       "require": "./dist/cjs/clients/rtkq/preferences/v1/index.cjs"
+    },
+    "./rtkq/rules.alerting/v1beta1": {
+      "@grafana-app/source": "./src/clients/rtkq/rules.alerting/v1beta1/index.ts",
+      "types": "./dist/types/clients/rtkq/rules.alerting/v1beta1/index.d.ts",
+      "import": "./dist/esm/clients/rtkq/rules.alerting/v1beta1/index.mjs",
+      "require": "./dist/cjs/clients/rtkq/rules.alerting/v1beta1/index.cjs"
     }
   },
   "publishConfig": {

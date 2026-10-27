@@ -571,9 +571,10 @@ func TestSingleTenantFallbackProxyFailure(t *testing.T) {
 
 func TestSingleTenantFallbackLoadWithoutDiscovery(t *testing.T) {
 	st := newTestSingleTenantFallback(t)
-	backends, err := st.Load(t.Context())
-	require.NoError(t, err)
-	require.Empty(t, backends)
+	pollDiscovery(t, st)
+	snapshot := st.current()
+	require.NoError(t, snapshot.err)
+	require.Empty(t, snapshot.backends)
 }
 
 func TestSingleTenantFallbackLoadError(t *testing.T) {
@@ -582,12 +583,11 @@ func TestSingleTenantFallbackLoadError(t *testing.T) {
 	st.transport = testFallbackTransport(func(*http.Request) (*http.Response, error) {
 		return nil, errors.New("discovery unavailable")
 	})
-	_, err := st.Load(t.Context())
-	require.ErrorIs(t, err, errSingleTenantDiscoveryPending)
+	require.Equal(t, polledSnapshot{}, st.current(), "nothing before the first poll")
 	pollDiscovery(t, st)
-	backends, err := st.Load(t.Context())
-	require.ErrorContains(t, err, "discovery unavailable")
-	require.Empty(t, backends)
+	snapshot := st.current()
+	require.ErrorContains(t, snapshot.err, "discovery unavailable")
+	require.Empty(t, snapshot.backends)
 }
 
 func TestSingleTenantFallbackRequiresResolver(t *testing.T) {
@@ -605,22 +605,19 @@ func TestSingleTenantFallbackDiscoveryVersionsChangeKey(t *testing.T) {
 		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
 	})
 	pollDiscovery(t, st)
-	first, err := st.Load(t.Context())
-	require.NoError(t, err)
+	first := st.Backends()
+	require.NoError(t, st.current().err)
 	require.Len(t, first, 1)
 	require.Equal(t, "example", first[0].Group().Name)
 	handler, err := first[0].Load(t.Context())
 	require.NoError(t, err)
 	require.Same(t, st, handler)
-	require.Same(t, st, st.SingleTenantFallback())
 	pollDiscovery(t, st)
-	unchanged, err := st.Load(t.Context())
-	require.NoError(t, err)
+	unchanged := st.Backends()
 	require.Equal(t, first[0].Key(), unchanged[0].Key())
 	version = "v2"
 	pollDiscovery(t, st)
-	second, err := st.Load(t.Context())
-	require.NoError(t, err)
+	second := st.Backends()
 	require.NotEqual(t, first[0].Key(), second[0].Key())
 }
 
@@ -857,3 +854,23 @@ func TestSingleTenantFallbackClusterScoped(t *testing.T) {
 		})
 	}
 }
+
+// fallbackLoader serves a single-tenant fallback's discovery as the cloud
+// loader does, for tests that route through the fallback alone.
+type fallbackLoader struct{ *singleTenantFallback }
+
+func (l fallbackLoader) Load(context.Context) ([]Backend, error) {
+	snapshot := l.current()
+	return snapshot.backends, snapshot.err
+}
+
+func (l fallbackLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
+	dirty := make(chan struct{}, 1)
+	go func() {
+		defer close(dirty)
+		l.run(ctx, dirty)
+	}()
+	return dirty, nil
+}
+
+func (l fallbackLoader) UnregisteredGroupHandler() http.Handler { return l.singleTenantFallback }

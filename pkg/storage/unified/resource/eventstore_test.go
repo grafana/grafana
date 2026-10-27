@@ -29,6 +29,7 @@ func setupTestEventStore(t *testing.T) *eventStore {
 
 // TestMain verifies that all background goroutines are properly shut down after tests.
 func TestMain(m *testing.M) {
+	useTestGlobalSearchCoverage()
 	db.SetupTestDB()
 	goleak.VerifyTestMain(m,
 		goleak.Cleanup(func(exitCode int) {

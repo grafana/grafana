@@ -211,17 +211,21 @@ describe('DashboardSidebarRenderer', () => {
     });
   });
 
-  it('hides the Editing sidebar when switching to Viewing with an active edit session', async () => {
+  it('keeps the viewing sidebar but drops editing actions when switching to Viewing with an active edit session', async () => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     const scene = buildTestScene();
     scene.setState({ uid: 'saved-dashboard', mode: 'edit', meta: { canEdit: true, canSave: true } });
     act(() => activateFullSceneTree(scene));
-    render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
-    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+    function SidebarWithMode() {
+      const state = scene.useState();
+      return <DashboardSidebarSplitter dashboard={scene} isEditing={isFullDashboardEditing(state)} />;
+    }
+    render(<SidebarWithMode />);
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.addButton)).toBeInTheDocument();
 
     act(() => scene.setDashboardMode('view'));
     expect(scene.state.isEditing).toBe(true);
-    expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).not.toBeInTheDocument();
+    expect(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
     expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.addButton)).not.toBeInTheDocument();
   });
 

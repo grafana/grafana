@@ -117,7 +117,7 @@ func (m *MockResourceIndex) SearchFieldDefinitions() []SearchFieldDefinition {
 	return StandardSearchFieldDefinitions()
 }
 
-func (m *MockResourceIndex) Search(_ context.Context, _ types.AccessClient, _ *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
+func (m *MockResourceIndex) Search(_ context.Context, _ types.AccessClient, _ *resourcepb.ResourceSearchRequest, _ *SearchIndexes, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
 	return nil, fmt.Errorf("not expected")
 }
 
@@ -2785,6 +2785,134 @@ func TestMaybeInjectFailure(t *testing.T) {
 			require.Equal(t, "injected search failure", err.Error())
 		}
 	})
+}
+
+func TestSearchUsesRequestScopedFolderIndex(t *testing.T) {
+	folderKey := NamespacedResource{Namespace: "default", Group: "folder.grafana.app", Resource: "folders"}
+	dashKey := NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	for _, tc := range []struct {
+		name         string
+		primary      NamespacedResource
+		recursive    bool
+		federated    bool
+		refreshError bool
+		wantFolder   bool
+	}{
+		{name: "non-recursive", primary: dashKey},
+		{name: "recursive", primary: dashKey, recursive: true, wantFolder: true},
+		{name: "folder search", primary: folderKey, recursive: true},
+		{name: "federated folder search", primary: dashKey, recursive: true, federated: true, wantFolder: true},
+		{name: "global search", primary: GlobalSearchKey("default"), recursive: true},
+		{name: "folder refresh failure", primary: dashKey, recursive: true, refreshError: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			primary := &recordingIndex{MockResourceIndex: &MockResourceIndex{}}
+			folderIndex := ResourceIndex(&MockResourceIndex{})
+			if tc.primary == folderKey {
+				folderIndex = primary
+			}
+			if tc.refreshError {
+				folderIndex.(*MockResourceIndex).updateIndexError = errors.New("folder refresh failed")
+			}
+			backend := &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{folderKey: folderIndex, tc.primary: primary}}
+			s := &searchServer{search: backend, globalIndexEnabled: true, indexMetrics: ProvideIndexMetrics(nil), log: log.NewNopLogger()}
+			field := SEARCH_FIELD_FOLDER
+			if tc.recursive {
+				field = SEARCH_FIELD_FOLDER_TREE
+			}
+			req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: tc.primary.Namespace, Group: tc.primary.Group, Resource: tc.primary.Resource},
+				Fields: []*resourcepb.Requirement{{Key: field, Operator: "in", Values: []string{"top"}}},
+			}}
+			if tc.federated {
+				req.Federated = []*resourcepb.ResourceKey{{Namespace: folderKey.Namespace, Group: folderKey.Group, Resource: folderKey.Resource}}
+			}
+			rsp, err := s.searchIndex(t.Context(), NewSearchStats("test"), req, tc.primary, nil)
+			require.NoError(t, err)
+			if tc.refreshError {
+				require.NotNil(t, rsp.Error)
+				require.Contains(t, rsp.Error.Message, "folder refresh failed")
+				require.Nil(t, primary.req, "a failed folder refresh must prevent searching")
+				return
+			}
+			require.Nil(t, rsp.Error)
+			require.Same(t, req, primary.req)
+			if tc.wantFolder {
+				require.Same(t, folderIndex, primary.indexes.Folders)
+			} else {
+				require.Nil(t, primary.indexes.Folders)
+			}
+			wantUpdates := 1
+			if tc.primary.IsGlobal() {
+				wantUpdates = 0
+			}
+			require.Equal(t, wantUpdates, primary.updateIndexCalls)
+			if folders, ok := folderIndex.(*MockResourceIndex); ok {
+				wantFolderUpdates := 0
+				if tc.wantFolder {
+					wantFolderUpdates = 1
+				}
+				require.Equal(t, wantFolderUpdates, folders.updateIndexCalls)
+			}
+			if tc.federated {
+				require.Equal(t, []ResourceIndex{folderIndex}, primary.indexes.Federated)
+			} else {
+				require.Empty(t, primary.indexes.Federated, "the helper must not add folders to the results")
+			}
+		})
+	}
+}
+
+func TestSearchResolvesReplacementFolderIndex(t *testing.T) {
+	folderKey := NamespacedResource{Namespace: "default", Group: "folder.grafana.app", Resource: "folders"}
+	dashKey := NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	primary := &recordingIndex{MockResourceIndex: &MockResourceIndex{}}
+	oldFolders, newFolders := &MockResourceIndex{}, &MockResourceIndex{}
+	backend := &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{dashKey: primary, folderKey: oldFolders}}
+	s := &searchServer{search: backend, indexMetrics: ProvideIndexMetrics(nil), log: log.NewNopLogger()}
+	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
+		Key:    &resourcepb.ResourceKey{Namespace: dashKey.Namespace, Group: dashKey.Group, Resource: dashKey.Resource},
+		Fields: []*resourcepb.Requirement{{Key: SEARCH_FIELD_FOLDER_TREE, Operator: "in", Values: []string{"top"}}},
+	}}
+	for _, folders := range []*MockResourceIndex{oldFolders, newFolders} {
+		backend.cache[folderKey] = folders
+		rsp, err := s.searchIndex(t.Context(), NewSearchStats("test"), req, dashKey, nil)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.Same(t, folders, primary.indexes.Folders)
+	}
+	require.Equal(t, 1, oldFolders.updateIndexCalls)
+	require.Equal(t, 1, newFolders.updateIndexCalls)
+}
+
+func TestSearchRejectsInvalidFolderTreeBeforeResolvingIndexes(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		operator string
+		values   []string
+		deleted  bool
+	}{
+		{name: "unsupported operator", operator: "notin", values: []string{"top"}},
+		{name: "multiple equality values", operator: "=", values: []string{"top", "other"}},
+		{name: "trash", operator: "in", values: []string{"top"}, deleted: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := &mockSearchBackend{}
+			s := &searchServer{search: backend}
+			rsp, err := s.Search(t.Context(), &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"},
+					Fields: []*resourcepb.Requirement{{Key: SEARCH_FIELD_FOLDER_TREE, Operator: tc.operator, Values: tc.values}},
+				},
+				IsDeleted: tc.deleted,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, rsp.Error)
+			require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+			require.Zero(t, backend.getIndexCalls)
+			require.Empty(t, backend.buildIndexCalls)
+		})
+	}
 }
 
 func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {

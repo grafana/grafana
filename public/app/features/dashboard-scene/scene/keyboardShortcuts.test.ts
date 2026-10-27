@@ -366,6 +366,26 @@ describe('setupKeyboardShortcuts', () => {
     }
   );
 
+  it.each([
+    { mode: 'view' as const, editable: true },
+    { mode: 'view' as const, editable: false },
+    { mode: 'agent' as const, editable: true },
+    { mode: 'agent' as const, editable: false },
+  ])('dashboard settings shortcut enters Editing from $mode only when editable=$editable', ({ mode, editable }) => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    try {
+      mockScene.setState({ mode, isEditing: true, editable });
+      locationService.replace('/d/test-uid');
+      setupKeyboardShortcuts(mockScene);
+      const binding = mockKeybindingSet.addBinding.mock.calls.find(([binding]) => binding.key === 'd s')![0];
+      binding.onTrigger();
+      expect(mockScene.state.mode).toBe(editable ? 'edit' : mode);
+      expect(locationService.getSearchObject().editview).toBe(editable ? 'settings' : undefined);
+    } finally {
+      setTestFlags({});
+    }
+  });
+
   describe('navigation when Grafana is served from a sub-path', () => {
     const originalLocationService = locationService;
     let panel: VizPanel;

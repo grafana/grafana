@@ -28,6 +28,7 @@ function buildScene(
     canEditDashboard: jest.fn(() => canEdit),
     managedResourceCannotBeEdited: jest.fn(() => managedLocked),
     isPlanning: jest.fn(() => false),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       scene.state.isEditing = true;
     }),

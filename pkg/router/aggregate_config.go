@@ -49,13 +49,9 @@ func parseAggregateTargets(cfg *setting.Cfg) ([]aggregateTargetConfig, error) {
 		if url == "" {
 			continue
 		}
-		interval := defaultAggregatePollInterval
-		if value := section.Key("poll_interval").String(); value != "" {
-			var err error
-			interval, err = time.ParseDuration(value)
-			if err != nil || interval <= 0 {
-				return nil, fmt.Errorf("%s: poll_interval must be a positive duration, got %q", raw.Name(), value)
-			}
+		interval, err := parsePositiveDurationKey(section, "poll_interval", defaultAggregatePollInterval)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", raw.Name(), err)
 		}
 		audience := section.Key("audience").MustString("")
 		discoveryAuth := section.Key("discovery_auth").MustString("")
@@ -98,7 +94,8 @@ func splitGroupPatterns(raw string) []string {
 // compileGroupPatterns turns glob patterns ("*.grafana.app") into anchored
 // regexps. "*" is the only special character; everything else is quoted,
 // since the patterns are an allowlist and a live metacharacter would widen it.
-func compileGroupPatterns(patterns []string) ([]*regexp.Regexp, error) {
+// Quoting also means no pattern can fail to compile.
+func compileGroupPatterns(patterns []string) []*regexp.Regexp {
 	compiled := make([]*regexp.Regexp, 0, len(patterns))
 	for _, p := range patterns {
 		var b strings.Builder
@@ -112,15 +109,9 @@ func compileGroupPatterns(patterns []string) ([]*regexp.Regexp, error) {
 			}
 		}
 		b.WriteString("$")
-		regexPattern := b.String()
-
-		re, err := regexp.Compile(regexPattern)
-		if err != nil {
-			return nil, fmt.Errorf("router: invalid group pattern %q: %w", p, err)
-		}
-		compiled = append(compiled, re)
+		compiled = append(compiled, regexp.MustCompile(b.String()))
 	}
-	return compiled, nil
+	return compiled
 }
 
 // matchesAnyPattern reports whether groupName matches any of patterns. No

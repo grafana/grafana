@@ -148,12 +148,21 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(scene).toBeInstanceOf(NotebookScene);
     expect(scene.state.title).toBe('Checkout latency investigation');
     expect(scene.state.uid).toBe('nb-1');
-    expect(scene.state.hideTimeControls).toBe(false);
     expect(scene.state.$timeRange.state.from).toBe('now-6h');
     expect(scene.state.body.state.cells).toHaveLength(4);
     // Title and tags are surfaced on the layout manager for the document header.
     expect(scene.state.body.state.title).toBe('Checkout latency investigation');
     expect(scene.state.body.state.tags).toEqual(['incident', 'checkout']);
+  });
+
+  // A notebook has no way to show the picker again, so a stored `true` must neither hide it nor survive a save.
+  it('ignores a stored hideTimepicker and saves it back as false', () => {
+    const resource = notebookResource();
+    resource.spec.timeSettings.hideTimepicker = true;
+
+    const scene = transformNotebookToScene(resource);
+
+    expect(transformNotebookSceneToSaveModel(scene).timeSettings.hideTimepicker).toBe(false);
   });
 
   it("seeds autosave's savedResourceVersion from the resource this scene was loaded from", () => {

@@ -804,14 +804,28 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 type fakeResourceIndexClient struct {
 	resourcepb.ResourceIndexClient
 	statsResponse *resourcepb.ResourceStatsResponse
+	statsError    error
+	statsRequests []*resourcepb.ResourceStatsRequest
+}
+
+type quotaLogRecorder struct {
+	log.Logger
+	messages []string
+}
+
+func (l *quotaLogRecorder) FromContext(context.Context) log.Logger { return l }
+
+func (l *quotaLogRecorder) Info(message string, _ ...any) {
+	l.messages = append(l.messages, message)
 }
 
 func newFakeResourceIndexClient() *fakeResourceIndexClient {
 	return &fakeResourceIndexClient{}
 }
 
-func (f *fakeResourceIndexClient) GetStats(context.Context, *resourcepb.ResourceStatsRequest, ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
-	return f.statsResponse, nil
+func (f *fakeResourceIndexClient) GetStats(_ context.Context, req *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	f.statsRequests = append(f.statsRequests, req)
+	return f.statsResponse, f.statsError
 }
 
 func TestGetQuotaUsage(t *testing.T) {
@@ -934,18 +948,22 @@ func TestCheckQuotas(t *testing.T) {
 		name              string
 		limit             int
 		enforcedResources map[string]bool
+		loggedResources   map[string]bool
+		expectStats       int
 		expectError       bool
 	}{
 		{
 			name:              "enforced resource returns error if quota exceeded",
 			limit:             1,
 			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
 			expectError:       true,
 		},
 		{
 			name:              "enforced resource returns nil if within quota",
 			limit:             2,
 			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
 			expectError:       false,
 		},
 		{
@@ -959,6 +977,44 @@ func TestCheckQuotas(t *testing.T) {
 			limit:             1,
 			enforcedResources: nil,
 			expectError:       false,
+		},
+		{
+			name:            "log-only resource counts and logs without enforcement",
+			limit:           1,
+			loggedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:     1,
+		},
+		{
+			name:            "log-only resource within quota counts without logging an exceeded quota",
+			limit:           2,
+			loggedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:     1,
+		},
+		{
+			name:              "enforced and logged resource counts once and enforces",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			loggedResources:   map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
+			expectError:       true,
+		},
+		{
+			name:              "zero quota is still enforced",
+			limit:             0,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
+			expectError:       true,
+		},
+		{
+			name:              "false entries do not request counts",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": false},
+			loggedResources:   map[string]bool{"grafana.dashboard.app/dashboards": false},
+		},
+		{
+			name:            "same resource name in another group is not selected",
+			limit:           1,
+			loggedResources: map[string]bool{"other.group/dashboards": true},
 		},
 	}
 
@@ -1000,14 +1056,26 @@ func TestCheckQuotas(t *testing.T) {
 				Backend:          &mockStorageBackend{},
 				SearchClient:     searchClient,
 				OverridesService: overridesService,
-				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources},
+				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources, LoggedResources: tt.loggedResources},
 			})
 			require.NoError(t, err)
 			t.Cleanup(func() {
 				_ = server.Stop(ctx)
 			})
 
+			logger := &quotaLogRecorder{Logger: log.NewNopLogger()}
+			server.log = logger
 			err = server.checkQuota(ctx, nsr)
+			require.Len(t, searchClient.statsRequests, tt.expectStats)
+			if tt.expectStats > 0 {
+				require.Equal(t, nsr.Namespace, searchClient.statsRequests[0].Namespace)
+				require.Equal(t, []string{nsr.GroupResource()}, searchClient.statsRequests[0].Kinds)
+			}
+			if tt.expectStats > 0 && tt.limit <= 1 {
+				require.Equal(t, []string{"Quota exceeded on create"}, logger.messages)
+			} else {
+				require.Empty(t, logger.messages)
+			}
 			if tt.expectError {
 				require.Error(t, err)
 				return
@@ -1016,52 +1084,148 @@ func TestCheckQuotas(t *testing.T) {
 		})
 	}
 
-	t.Run("stats response error fails open (no quota error returned)", func(t *testing.T) {
-		ctx := t.Context()
+	for _, transportError := range []bool{false, true} {
+		t.Run(fmt.Sprintf("stats error fails open (transport=%v)", transportError), func(t *testing.T) {
+			ctx := t.Context()
 
-		overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
-		overrides := `overrides:
+			overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
+			overrides := `overrides:
   "123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1
 `
-		require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
+			require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
 
-		tcr := tracing.NewNoopTracerService()
-		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
-			FilePath: overridesFile,
+			tcr := tracing.NewNoopTracerService()
+			overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
+				FilePath: overridesFile,
+			})
+			require.NoError(t, err)
+
+			nsr := NamespacedResource{
+				Namespace: "stacks-123",
+				Group:     "grafana.dashboard.app",
+				Resource:  "dashboards",
+			}
+
+			searchClient := newFakeResourceIndexClient()
+			searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
+				Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
+			}
+
+			if transportError {
+				searchClient.statsResponse = nil
+				searchClient.statsError = status.Error(codes.Unavailable, "stats unavailable")
+			}
+
+			metrics := ProvideStorageMetrics(prometheus.NewRegistry())
+			server, err := NewResourceServer(ResourceServerOptions{
+				Backend:          &mockStorageBackend{},
+				SearchClient:     searchClient,
+				OverridesService: overridesService,
+				StorageMetrics:   metrics,
+				QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = server.Stop(ctx)
+			})
+
+			require.NoError(t, server.checkQuota(ctx, nsr))
+			require.Equal(t, float64(1), testutil.ToFloat64(
+				metrics.DegradedOperations.WithLabelValues("check_quota", "stats_error", nsr.Group, nsr.Resource)))
+			require.Len(t, searchClient.statsRequests, 1)
 		})
-		require.NoError(t, err)
+	}
+}
 
-		nsr := NamespacedResource{
-			Namespace: "stacks-123",
-			Group:     "grafana.dashboard.app",
-			Resource:  "dashboards",
-		}
-
-		searchClient := newFakeResourceIndexClient()
-		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
-			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
-		}
-
-		metrics := ProvideStorageMetrics(prometheus.NewRegistry())
-		server, err := NewResourceServer(ResourceServerOptions{
-			Backend:          &mockStorageBackend{},
-			SearchClient:     searchClient,
-			OverridesService: overridesService,
-			StorageMetrics:   metrics,
-			QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
+func TestCheckQuotaSkipsUnselectedKindsBeforeLookup(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		config QuotasConfig
+		key    NamespacedResource
+	}{
+		{
+			name:   "plugin kind not selected",
+			config: QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+			key:    NamespacedResource{Namespace: "stacks-123", Group: "plugins.grafana.app", Resource: "plugins"},
+		},
+		{
+			name: "no kinds selected",
+			key:  NamespacedResource{Namespace: "stacks-123", Group: "plugins.grafana.app", Resource: "plugins"},
+		},
+		{
+			name:   "namespace missing even for selected kind",
+			config: QuotasConfig{LoggedResources: map[string]bool{"plugins.grafana.app/plugins": true}},
+			key:    NamespacedResource{Group: "plugins.grafana.app", Resource: "plugins"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// An uninitialized overrides service would fail if the lookup were reached.
+			s := &server{quotasConfig: tc.config, overridesService: &OverridesService{}}
+			require.NoError(t, s.checkQuota(t.Context(), tc.key))
 		})
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			_ = server.Stop(ctx)
-		})
+	}
+}
 
-		require.NoError(t, server.checkQuota(ctx, nsr))
-		require.Equal(t, float64(1), testutil.ToFloat64(
-			metrics.DegradedOperations.WithLabelValues("check_quota", "stats_error", nsr.Group, nsr.Resource)))
-	})
+func TestQuotaSelectionOnCreate(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		config    QuotasConfig
+		wantStats int
+		wantCode  int32
+	}{
+		{
+			name:   "ignored plugin create is stored without stats",
+			config: QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+		},
+		{
+			name:      "log-only plugin create is stored despite zero quota",
+			config:    QuotasConfig{LoggedResources: map[string]bool{"plugins.grafana.app/plugins": true}},
+			wantStats: 1,
+		},
+		{
+			name:      "enforced plugin create is rejected at zero quota",
+			config:    QuotasConfig{EnforcedResources: map[string]bool{"plugins.grafana.app/plugins": true}},
+			wantStats: 1,
+			wantCode:  http.StatusForbidden,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := identity.WithServiceIdentityForSingleNamespaceContext(t.Context(), "stacks-123")
+			db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, db.Close()) })
+			backend, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+			require.NoError(t, err)
+			file := filepath.Join(t.TempDir(), "overrides.yaml")
+			require.NoError(t, os.WriteFile(file, []byte("overrides:\n  \"123\":\n    quotas:\n      plugins.grafana.app/plugins:\n        limit: 0\n"), 0o600))
+			overrides, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tracing.NewNoopTracerService(), ReloadOptions{FilePath: file})
+			require.NoError(t, err)
+			stats := newFakeResourceIndexClient()
+			stats.statsResponse = &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{{Group: "plugins.grafana.app", Resource: "plugins"}}}
+			s, err := NewResourceServer(ResourceServerOptions{Backend: backend, SearchClient: stats, OverridesService: overrides, QuotasConfig: tc.config})
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, s.Stop(context.WithoutCancel(ctx))) })
+			key := &resourcepb.ResourceKey{Namespace: "stacks-123", Group: "plugins.grafana.app", Resource: "plugins", Name: "test-plugin"}
+			response, err := s.Create(ctx, &resourcepb.CreateRequest{
+				Key:   key,
+				Value: []byte(`{"apiVersion":"plugins.grafana.app/v0alpha1","kind":"Plugin","metadata":{"name":"test-plugin","namespace":"stacks-123"},"spec":{"id":"test-plugin"}}`),
+			})
+			require.NoError(t, err)
+			require.Equal(t, tc.wantCode, response.GetError().GetCode())
+			require.Len(t, stats.statsRequests, tc.wantStats)
+			read, err := s.Read(ctx, &resourcepb.ReadRequest{Key: key})
+			require.NoError(t, err)
+			if tc.wantCode != 0 {
+				require.Equal(t, int32(http.StatusNotFound), read.GetError().GetCode())
+			} else {
+				require.Nil(t, read.Error)
+				require.NotEmpty(t, read.Value)
+			}
+		})
+	}
 }
 
 func TestNewResourceServer_RequiresStatsSourceWhenQuotasEnabled(t *testing.T) {

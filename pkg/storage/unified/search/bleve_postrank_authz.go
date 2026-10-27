@@ -583,7 +583,7 @@ windows:
 			}
 		}
 
-		for info, err := range authorizeHits(ctx, access, candidateSeq, extractFn, trashAuthz) {
+		for info, err := range authorizeHits(ctx, access, candidateSeq, len(res.Hits), extractFn, trashAuthz) {
 			if err != nil {
 				return nil, err
 			}
@@ -665,18 +665,20 @@ windows:
 
 // authorizeHits filters ranked hits by the trash rule when trashAuthz is set,
 // otherwise by the read check. Same shape either way, so the scan loops do not
-// need to know which is running.
+// need to know which is running. sizeHint is how many hits candidates yields
+// at most.
 func authorizeHits(
 	ctx context.Context,
 	access authlib.AccessClient,
 	candidates iter.Seq[docInfo],
+	sizeHint int,
 	extractFn func(docInfo) authz.BatchCheckItem,
 	trashAuthz *resource.TrashAuthorizer,
 ) iter.Seq2[docInfo, error] {
 	if trashAuthz != nil {
 		return trashAuthorized(ctx, candidates, trashAuthz)
 	}
-	return authz.FilterAuthorized(ctx, access, candidates, extractFn, authz.WithTracer(tracer))
+	return authz.FilterAuthorized(ctx, access, candidates, extractFn, authz.WithTracer(tracer), authz.WithSizeHint(sizeHint))
 }
 
 func (b *bleveIndex) prepareFacetAggregation(
@@ -767,7 +769,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 				}
 			}
 		}
-		for info, err := range authorizeHits(ctx, access, candidateSeq, extractFn, trashAuthz) {
+		for info, err := range authorizeHits(ctx, access, candidateSeq, len(windowHits), extractFn, trashAuthz) {
 			if err != nil {
 				return nil, 0, false, err
 			}

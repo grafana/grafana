@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 
@@ -197,6 +198,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
 			env.Cfg.Logger, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, nil, nil, grpcService)
 		require.NoError(t, err)
+		grpcService.Health.Register(storage, resourcepb.ResourceStore_ServiceDesc.ServiceName)
 		err = grpcService.StartAsync(ctx)
 		require.NoError(t, err)
 		err = grpcService.AwaitRunning(ctx)

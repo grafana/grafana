@@ -116,6 +116,25 @@ Choose what data to display, repeat content for each row with `{{#each}}`, and a
 
 ![Text visualization with Handlebars support](/media/docs/grafana/panels-visualizations/screenshot-text-handlebars-v13.3.png)
 
+## Style content with theme colors
+
+Use the [`$__theme` variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables/#__theme) in inline styles to match the current Grafana theme.
+The content updates when a user switches between light and dark themes.
+
+For example, the following HTML shows a card with the theme's background, border, and secondary text colors:
+
+```html
+<div
+  style="padding: 12px; background: ${__theme.colors.background.secondary}; border: 1px solid ${__theme.colors.border.weak}; border-radius: ${__theme.shape.radius.default}"
+>
+  <strong>checkout</strong>
+  <div style="color: ${__theme.colors.text.secondary}; font-size: ${__theme.typography.size.sm}">182 ms</div>
+</div>
+```
+
+The variable works in Markdown and HTML modes, and in the output of Handlebars templates.
+For example, use `{{#if}}` to choose a success or error color for each row.
+
 ## Security and external content
 
 When a text visualization has query data, Grafana renders its content in an isolated frame.

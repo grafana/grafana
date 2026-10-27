@@ -3153,7 +3153,7 @@ func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildInde
 }
 
 func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
-	if nsr.Namespace == "" {
+	if nsr.Namespace == "" || !s.quotasConfig.ShouldCheck(nsr.Group, nsr.Resource) {
 		return nil
 	}
 

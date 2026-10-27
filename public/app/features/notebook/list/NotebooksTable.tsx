@@ -146,12 +146,16 @@ export function NotebooksTable({ notebooks, onTagClick }: Props) {
         cell: ({ row: { original } }) => (
           <TagList
             tags={original.tags}
-            displayMax={3}
             className={styles.tagList}
             onClick={onTagClick}
             // A clickable Tag renders a button, whose only accessible name would otherwise be the tag
             // itself — "cost, button" says nothing about what pressing it does.
-            getAriaLabel={(tag) => t('notebooks.list.filter-by-tag', 'Filter by tag {{tag}}', { tag })}
+            getAriaLabel={(tag) =>
+              t('notebooks.list.filter-by-tag', 'Filter by tag {{tag}}', {
+                tag,
+                interpolation: { escapeValue: false },
+              })
+            }
           />
         ),
       },
@@ -314,6 +318,7 @@ const NotebookRowActions = memo(function NotebookRowActions({
 // inline arrow would rebuild the styles on every render of every row.
 const getStyles = () => ({
   // TagList centers its tags by default; in a table column they need to line up with the header.
-  tagList: css({ justifyContent: 'flex-start' }),
+  // One scrolling line, as in the dashboards list, so every tag stays reachable without growing the row.
+  tagList: css({ justifyContent: 'flex-start', flexWrap: 'nowrap', overflowX: 'auto' }),
   nowrap: css({ whiteSpace: 'nowrap' }),
 });

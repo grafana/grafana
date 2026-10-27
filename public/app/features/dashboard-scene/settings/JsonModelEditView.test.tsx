@@ -213,6 +213,7 @@ describe('JsonModelEditView save failures', () => {
 
   it.each([
     {
+      scenario: 'Invalid',
       reason: 'Invalid',
       status: 422,
       message: 'Dashboard is invalid',
@@ -221,6 +222,7 @@ describe('JsonModelEditView save failures', () => {
       expectedMessage: 'spec.title: title cannot be empty',
     },
     {
+      scenario: 'Forbidden',
       reason: 'Forbidden',
       status: 403,
       message: 'Permission to update this dashboard was revoked',
@@ -228,14 +230,24 @@ describe('JsonModelEditView save failures', () => {
       expectedMessage: 'Permission to update this dashboard was revoked',
     },
     {
+      scenario: 'InternalError',
       reason: 'InternalError',
       status: 500,
       message: 'Failed to write to storage',
       expectedTitle: 'Failed to save dashboard',
       expectedMessage: 'Failed to write to storage',
     },
+    // Unified storage's create permission check sends a 403 with neither a reason nor a message.
+    {
+      scenario: 'a 403 with no reason or message',
+      reason: undefined,
+      status: 403,
+      message: '',
+      expectedTitle: 'You do not have permission to save this dashboard',
+      expectedMessage: 'Ask your Grafana administrator for access.',
+    },
   ])(
-    'displays the server explanation for $reason',
+    'displays the save failure for $scenario',
     async ({ status, reason, message, details, expectedTitle, expectedMessage }) => {
       const error: FetchError<MetaStatus> = {
         status,

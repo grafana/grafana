@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -35,57 +36,61 @@ func (l *staticAggregateLoader) Notify(context.Context) (<-chan struct{}, error)
 }
 
 // TestGrafanaRouter_AggregatedGroupIsServedAndFiltered is an end-to-end proof
-// that a group learned purely through active discovery (no RouteBackend CR)
+// that a group learned purely through active discovery
 // reaches a real GrafanaRouter's reconcile/serve pipeline: NewGrafanaRouter,
 // Run's initial reconcile plus its dirty-triggered reconcile, and HandleFunc
 // actually proxying a request -- with a non-matching group filtered out by
 // group_regex before it ever becomes a served group.
 func TestGrafanaRouter_AggregatedGroupIsServedAndFiltered(t *testing.T) {
-	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/apis":
-			list := metav1.APIGroupList{Groups: []metav1.APIGroup{
-				{Name: "dashboard.grafana.app"},
-				{Name: "coordination.k8s.io"}, // must be filtered out by group_regex
-			}}
-			_ = json.NewEncoder(w).Encode(list)
-		default:
-			w.WriteHeader(http.StatusOK)
-			// #nosec G705 -- test-only upstream stub reflecting the request path back so
-			// the assertion below can confirm proxying reached it; never rendered by a browser.
-			_, _ = w.Write([]byte("proxied:" + r.URL.Path))
-		}
-	}))
-	defer upstream.Close()
+	synctest.Test(t, func(t *testing.T) {
+		upstream := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			switch r.URL.Path {
+			case "/apis":
+				list := metav1.APIGroupList{Groups: []metav1.APIGroup{
+					{Name: "dashboard.grafana.app"},
+					{Name: "coordination.k8s.io"}, // must be filtered out by group_regex
+				}}
+				_ = json.NewEncoder(w).Encode(list)
+			default:
+				w.WriteHeader(http.StatusOK)
+				// #nosec G705 -- test-only upstream stub reflecting the request path back so
+				// the assertion below can confirm proxying reached it; never rendered by a browser.
+				_, _ = w.Write([]byte("proxied:" + r.URL.Path))
+			}
+		}))
+		_ = upstream.Client()
+		defer upstream.Close()
 
-	target, err := newAggregateTarget(aggregateTargetConfig{
-		Name:          "baas_apiserver",
-		URL:           upstream.URL,
-		GroupPatterns: []string{"*.grafana.app"},
-	}, upstream.Client(), upstream.Client().Transport)
-	require.NoError(t, err)
-	// The cooldown is the poll loop's only pacing source, so shortening it is
-	// what makes this test fast.
-	target.cooldown = newCooldown(10*time.Millisecond, 10*time.Millisecond, 100*time.Millisecond)
+		target, err := newAggregateTarget(aggregateTargetConfig{
+			Name:          "baas_apiserver",
+			URL:           upstream.URL,
+			GroupPatterns: []string{"*.grafana.app"},
+		}, upstream.Client(), upstream.Client().Transport)
+		require.NoError(t, err)
+		target.cooldown = newCooldown(10*time.Millisecond, 10*time.Millisecond, 100*time.Millisecond)
 
-	loader := &staticAggregateLoader{target: target}
-	r := NewGrafanaRouter(loader, nil)
+		loader := &staticAggregateLoader{target: target}
+		r := NewGrafanaRouter(loader, nil)
 
-	ctx, cancel := context.WithCancel(t.Context())
-	defer cancel()
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
 
-	// Run calls loader.Notify synchronously before it spawns the reconcile
-	// goroutine (see router.go's Run), so loader.dirty is already set by the
-	// time Run returns -- only then is it safe to hand it to target.run.
-	require.NoError(t, r.Run(ctx))
-	go target.run(ctx, loader.dirty)
+		// Run calls loader.Notify synchronously before it spawns the reconcile
+		// goroutine (see router.go's Run), so loader.dirty is already set by the
+		// time Run returns -- only then is it safe to hand it to target.run.
+		require.NoError(t, r.Run(ctx))
+		go target.run(ctx, loader.dirty)
 
-	require.Eventually(t, func() bool { return r.KnownGroup("dashboard.grafana.app") }, 2*time.Second, 10*time.Millisecond)
-	require.False(t, r.KnownGroup("coordination.k8s.io"))
+		// Finish discovery and reconciliation before inspecting the served groups.
+		synctest.Wait()
 
-	req := newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/things", nil)
-	rec := httptest.NewRecorder()
-	r.HandleFunc(rec, req, http.NotFoundHandler())
-	require.Equal(t, http.StatusOK, rec.Code)
-	require.Contains(t, rec.Body.String(), "proxied:/apis/dashboard.grafana.app/v1/things")
+		require.True(t, r.KnownGroup("dashboard.grafana.app"))
+		require.False(t, r.KnownGroup("coordination.k8s.io"))
+
+		req := newAuthenticatedRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1/things", nil)
+		rec := httptest.NewRecorder()
+		r.HandleFunc(rec, req)
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Contains(t, rec.Body.String(), "proxied:/apis/dashboard.grafana.app/v1/things")
+	})
 }

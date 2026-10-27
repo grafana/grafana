@@ -3329,7 +3329,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		t.Helper()
 		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: dashKey.Namespace}
 		ctx := authlib.WithAuthInfo(context.Background(), requester)
-		res, err := dash.Search(ctx, ac, q, []resource.ResourceIndex{folderIdx}, nil)
+		res, err := dash.Search(ctx, ac, q, &resource.SearchIndexes{Federated: []resource.ResourceIndex{folderIdx}}, nil)
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		out := make([][2]string, 0, len(res.Results.GetRows()))

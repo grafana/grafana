@@ -320,6 +320,29 @@ func UnknownIndexRequirements(requirements []IndexFeature) []IndexFeature {
 	return unknown
 }
 
+// Folders supplies an external hierarchy without adding folder documents to the
+// results. Folder and global indexes use their own hierarchy instead.
+type SearchIndexes struct {
+	Federated []ResourceIndex
+	Folders   ResourceIndex
+}
+
+// ValidateFolderTreeRequirement is shared by request handling and query conversion
+// so invalid filters are refused before their folder index is built.
+func ValidateFolderTreeRequirement(req *resourcepb.Requirement) *resourcepb.ErrorResult {
+	switch selection.Operator(req.Operator) {
+	case selection.In:
+		return nil
+	case selection.Equals, selection.DoubleEquals:
+		if len(req.Values) == 1 {
+			return nil
+		}
+		return NewBadRequestError(SEARCH_FIELD_FOLDER_TREE + " takes one value with =, and several with in")
+	default:
+		return NewBadRequestError(SEARCH_FIELD_FOLDER_TREE + " only supports in and =")
+	}
+}
+
 type ResourceIndex interface {
 	// BulkIndex allows for multiple index actions to be performed in a single call.
 	// The order of the items is guaranteed to be the same as the input
@@ -330,8 +353,8 @@ type ResourceIndex interface {
 	SearchFieldDefinitions() []SearchFieldDefinition
 
 	// Search within a namespaced resource
-	// When working with federated queries, the additional indexes will be passed in explicitly
-	Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, federate []ResourceIndex, stats *SearchStats) (*resourcepb.ResourceSearchResponse, error)
+	// Additional indexes are request-scoped because they can be rebuilt independently.
+	Search(ctx context.Context, access types.AccessClient, req *resourcepb.ResourceSearchRequest, indexes *SearchIndexes, stats *SearchStats) (*resourcepb.ResourceSearchResponse, error)
 
 	// List within an response
 	ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest, stats *SearchStats) (*resourcepb.ListManagedObjectsResponse, error)
@@ -946,6 +969,18 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 		}, nil
 	}
 
+	for _, field := range req.Options.Fields {
+		if field.Key != SEARCH_FIELD_FOLDER_TREE {
+			continue
+		}
+		if req.IsDeleted {
+			return &resourcepb.ResourceSearchResponse{Error: NewBadRequestError("searching deleted resources does not support " + SEARCH_FIELD_FOLDER_TREE)}, nil
+		}
+		if err := ValidateFolderTreeRequirement(field); err != nil {
+			return &resourcepb.ResourceSearchResponse{Error: err}, nil
+		}
+	}
+
 	stats := NewSearchStats("Search")
 	defer s.logStats(ctx, stats, span, "namespace", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "query", req.Query)
 
@@ -1021,21 +1056,33 @@ func (s *searchServer) searchIndex(ctx context.Context, stats *SearchStats, req 
 		}, nil
 	}
 
-	federate := make([]ResourceIndex, len(req.Federated))
+	indexes := &SearchIndexes{Federated: make([]ResourceIndex, len(req.Federated))}
+	folderKey := NamespacedResource{Namespace: nsr.Namespace, Group: folders.GROUP, Resource: folders.RESOURCE}
 	for i, f := range req.Federated {
 		key := NamespacedResource{Namespace: nsr.Namespace, Group: f.Group, Resource: f.Resource}
-		federate[i], err = s.getOrCreateIndex(ctx, stats, key, "federatedSearch")
+		indexes.Federated[i], err = s.getOrCreateIndex(ctx, stats, key, "federatedSearch")
 		if err != nil {
 			return &resourcepb.ResourceSearchResponse{
 				Error: AsErrorResult(err),
 			}, nil
+		}
+		if key == folderKey {
+			indexes.Folders = indexes.Federated[i]
 		}
 	}
 
 	if prepare != nil {
 		prepare(idx)
 	}
-	return idx.Search(ctx, s.access, req, federate, stats)
+	if !nsr.IsGlobal() && nsr != folderKey && indexes.Folders == nil && slices.ContainsFunc(req.Options.Fields, func(field *resourcepb.Requirement) bool {
+		return field.Key == SEARCH_FIELD_FOLDER_TREE
+	}) {
+		indexes.Folders, err = s.getOrCreateIndex(ctx, stats, folderKey, "recursiveSearch")
+		if err != nil {
+			return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
+		}
+	}
+	return idx.Search(ctx, s.access, req, indexes, stats)
 }
 
 // VectorSearch implements ResourceIndexServer. Embeds the query string with

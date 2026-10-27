@@ -8,7 +8,12 @@ import { type Resource } from 'app/features/apiserver/types';
 import { dispatch } from 'app/store/store';
 
 import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_LOAD_SOURCE, type NotebookLoadSource } from '../analytics/types';
+import {
+  NOTEBOOK_ENTRY_POINT,
+  NOTEBOOK_LOAD_SOURCE,
+  type NotebookEntryPoint,
+  type NotebookLoadSource,
+} from '../analytics/types';
 import { notebookResourceFor } from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookDeletedEvent } from '../scene/events';
@@ -183,7 +188,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
    * what leaves `uid` unset here. It is deliberately not cached either, because the cache is keyed by
    * uid and this notebook has none.
    */
-  public async newNotebook(): Promise<void> {
+  public async newNotebook(source: NotebookEntryPoint = NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST): Promise<void> {
     // A load already in flight would otherwise resolve on top of this and replace the blank notebook
     // with whichever one the page was previously asked for.
     const seq = ++this.requestSeq;
@@ -207,6 +212,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
       // Held so the page can keep this exact scene once its first save gives it a uid.
       this.unsavedScene = transformNotebookToScene(notebookResourceFor(undefined, spec));
+      this.unsavedScene.autosave.setEntryPoint(source);
 
       this.setState({ scene: this.unsavedScene, isLoading: false, loadError: undefined });
     } catch (error) {

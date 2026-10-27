@@ -270,6 +270,7 @@ export enum PluginExtensionExposedComponents {
   OpenQueryLibraryV1 = 'grafana/query-library-context/v1',
   NotebookViewV1 = 'grafana/notebook-view/v1',
   StarToolbarButtonV1 = 'grafana/star-toolbar-button/v1',
+  DashboardViewV1 = 'grafana/dashboard-view/v1',
 }
 
 export type PluginExtensionPanelContext = {
