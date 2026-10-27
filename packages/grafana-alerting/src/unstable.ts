@@ -39,6 +39,17 @@ export {
   isDefaultRoutingTree,
 } from './grafana/notificationPolicies/routingTree.utils';
 
+// Notification settings
+export {
+  type NotificationSettings,
+  simplifiedRouting,
+  namedRoutingTree,
+  toRuleNotificationSettings,
+  fromRuleNotificationSettings,
+} from './grafana/notificationSettings/notificationSettingsValue';
+export { DISABLE_GROUPING } from './grafana/notificationSettings/constants';
+export { getRequiredGroupByLabels, nextGroupBy } from './grafana/notificationSettings/utils/groupBy';
+
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
 export { StateIcon } from './grafana/rules/components/state/StateIcon';
