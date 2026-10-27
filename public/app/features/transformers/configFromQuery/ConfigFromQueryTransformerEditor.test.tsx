@@ -1,5 +1,5 @@
-import { fireEvent, render, screen } from '@testing-library/react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
+import { render, screen, fireEvent } from 'test/test-utils';
 
 import { toDataFrame, FieldType } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
