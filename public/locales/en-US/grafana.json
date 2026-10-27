@@ -4210,9 +4210,9 @@
   "app-chrome": {
     "skip-content-button": "Skip to main content",
     "st-loading": {
-      "background-tooltip": "{{itemName}} is starting up",
-      "pending-dots-aria-label": "Page is starting up",
-      "pending-dots-aria-label-named": "{{itemName}} is starting up"
+      "background-tooltip": "Preparing {{itemName}}",
+      "pending-dots-aria-label": "Preparing page",
+      "pending-dots-aria-label-named": "Preparing {{itemName}}"
     },
     "top-bar": {
       "sign-in": "Sign in"
