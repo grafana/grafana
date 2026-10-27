@@ -70,8 +70,8 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
-		names := make([]string, 0, len(rsp.Results.Rows))
-		for _, row := range rsp.Results.Rows {
+		names := make([]string, 0, len(rsp.Rows))
+		for _, row := range rsp.Rows {
 			names = append(names, row.Key.Name)
 		}
 		return names
@@ -117,8 +117,8 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
 
-		names := make([]string, 0, len(rsp.Results.Rows))
-		for _, row := range rsp.Results.Rows {
+		names := make([]string, 0, len(rsp.Rows))
+		for _, row := range rsp.Rows {
 			names = append(names, row.Key.Name)
 		}
 		assert.ElementsMatch(t, []string{"folder-a"}, names)
@@ -133,7 +133,7 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 		require.Nil(t, rsp.Error)
 
 		found := map[string]string{}
-		for _, row := range rsp.Results.Rows {
+		for _, row := range rsp.Rows {
 			found[row.Key.Name] = row.Key.Group + "/" + row.Key.Resource
 		}
 		assert.Equal(t, map[string]string{
@@ -160,25 +160,17 @@ func TestSearchResponseResourceVersion(t *testing.T) {
 			idx, err := backend.BuildIndex(ctx, tc.key, 1, "test", indexTestDocs(src, 1, 42), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 			require.NoError(t, err)
 
-			for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
-				resourcepb.ResourceSearchRequest_UNSPECIFIED,
-				resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-				resourcepb.ResourceSearchRequest_FIELD_VALUES,
-			} {
-				t.Run(format.String(), func(t *testing.T) {
-					response, err := idx.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
-						Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-							Namespace: src.Namespace, Group: src.Group, Resource: src.Resource,
-						}},
-						Limit:        10,
-						ResultFormat: format,
-					}, nil, nil)
-					require.NoError(t, err)
-					require.Nil(t, response.Error)
-					assert.Equal(t, int64(1), response.TotalHits)
-					assert.Equal(t, tc.rv, response.ResourceVersion)
-				})
-			}
+			response, err := idx.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Namespace: src.Namespace, Group: src.Group, Resource: src.Resource,
+				}},
+				Limit:        10,
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			}, nil, nil)
+			require.NoError(t, err)
+			require.Nil(t, response.Error)
+			assert.Equal(t, int64(1), response.TotalHits)
+			assert.Equal(t, tc.rv, response.ResourceVersion)
 		})
 	}
 }
@@ -317,10 +309,10 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
-		if len(rsp.Results.Rows) == 0 {
+		if len(rsp.Rows) == 0 {
 			break
 		}
-		row := rsp.Results.Rows[0]
+		row := rsp.Rows[0]
 		seen = append(seen, row.Key.Group+"/"+row.Key.Resource+"/"+row.Key.Name)
 		after = row.SortFields
 	}
@@ -523,8 +515,8 @@ func searchFolderTree(t *testing.T, index resource.ResourceIndex, folders ...str
 	}, nil, nil)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
-	names := make([]string, 0, len(rsp.Results.Rows))
-	for _, row := range rsp.Results.Rows {
+	names := make([]string, 0, len(rsp.Rows))
+	for _, row := range rsp.Rows {
 		names = append(names, row.Key.Name)
 	}
 	return names
@@ -694,8 +686,8 @@ func TestPerResourceFolderTreeSearch(t *testing.T) {
 					require.NoError(t, err)
 					require.Nil(t, rsp.Error)
 					assert.True(t, proto.Equal(before, req), "the caller's filters must not change")
-					names := make([]string, 0, len(rsp.Results.Rows))
-					for _, row := range rsp.Results.Rows {
+					names := make([]string, 0, len(rsp.Rows))
+					for _, row := range rsp.Rows {
 						assert.Equal(t, "dashboards", row.Key.Resource)
 						names = append(names, row.Key.Name)
 					}
@@ -759,7 +751,7 @@ func TestPerResourceFolderTreeUsesCurrentFolderIndex(t *testing.T) {
 	rsp, err := search(folders)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
-	require.Len(t, rsp.Results.Rows, 1)
+	require.Len(t, rsp.Rows, 1)
 
 	current, err := backend.BuildIndex(ctx, folderKey, 1, "test", func(index resource.ResourceIndex) (int64, error) {
 		return 2, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{folderTreeDoc(folderKey, "folders", "mid", "other")}})
@@ -772,7 +764,7 @@ func TestPerResourceFolderTreeUsesCurrentFolderIndex(t *testing.T) {
 	rsp, err = search(current)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
-	assert.Empty(t, rsp.Results.Rows)
+	assert.Empty(t, rsp.Rows)
 
 	for name, source := range map[string]resource.ResourceIndex{
 		"wrong resource":  dashboards,
@@ -815,8 +807,8 @@ func TestPerResourceFolderTreeReopensFromDisk(t *testing.T) {
 	}, &resource.SearchIndexes{Folders: folders}, nil)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
-	require.Len(t, rsp.Results.Rows, 1)
-	assert.Equal(t, "dash", rsp.Results.Rows[0].Key.Name)
+	require.Len(t, rsp.Rows, 1)
+	assert.Equal(t, "dash", rsp.Rows[0].Key.Name)
 }
 
 func TestPerResourceFolderTreeRestoresSnapshot(t *testing.T) {
@@ -847,8 +839,8 @@ func TestPerResourceFolderTreeRestoresSnapshot(t *testing.T) {
 	}, Limit: 10}, &resource.SearchIndexes{Folders: folderIndex}, nil)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
-	require.Len(t, rsp.Results.Rows, 1)
-	assert.Equal(t, "dash", rsp.Results.Rows[0].Key.Name)
+	require.Len(t, rsp.Rows, 1)
+	assert.Equal(t, "dash", rsp.Rows[0].Key.Name)
 }
 
 func TestPerResourceFolderTreeSharedDuringMoves(t *testing.T) {
@@ -1026,10 +1018,10 @@ func TestFolderTreeSearchOperators(t *testing.T) {
 
 	rsp := search(string(selection.Equals), "top")
 	require.Nil(t, rsp.Error)
-	assert.Len(t, rsp.Results.Rows, 1)
+	assert.Len(t, rsp.Rows, 1)
 	rsp = search(string(selection.Equals), "general")
 	require.Nil(t, rsp.Error)
-	assert.Len(t, rsp.Results.Rows, 2, "everything is below the top")
+	assert.Len(t, rsp.Rows, 2, "everything is below the top")
 
 	for _, tc := range []struct {
 		operator string
@@ -1205,7 +1197,7 @@ func BenchmarkGlobalFolderTree(b *testing.B) {
 		}, nil, nil)
 		require.NoError(b, err)
 		require.Nil(b, rsp.Error)
-		require.Len(b, rsp.Results.Rows, 10)
+		require.Len(b, rsp.Rows, 10)
 	}
 
 	for _, st := range subtrees[:3] {
@@ -1382,8 +1374,8 @@ func TestFolderSetCheckErrorsReachTheSearchWithATextQuery(t *testing.T) {
 		}, nil, nil)
 	require.NoError(t, err)
 	require.Nil(t, rsp.Error)
-	require.Len(t, rsp.Results.Rows, 1)
-	assert.Equal(t, "dash-top", rsp.Results.Rows[0].Key.Name)
+	require.Len(t, rsp.Rows, 1)
+	assert.Equal(t, "dash-top", rsp.Rows[0].Key.Name)
 
 	_, err = run(func(index.IndexReader) (index.DocValueReader, error) { return failingDocValues{}, nil })
 	require.ErrorContains(t, err, "doc values are unreadable")
