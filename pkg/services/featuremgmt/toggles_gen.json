@@ -3012,6 +3012,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.mobileEditDeprecation",
+        "resourceVersion": "1792599255577",
+        "creationTimestamp": "2026-10-21T16:14:15Z"
+      },
+      "spec": {
+        "description": "Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports",
+        "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.mtFallback",
         "resourceVersion": "1789554399473",
         "creationTimestamp": "2026-09-16T10:52:51Z",
