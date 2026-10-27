@@ -612,6 +612,15 @@ describe('DashboardControls', () => {
       expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
       expect(screen.queryByText('Save as copy')).not.toBeInTheDocument();
     });
+
+    it('should not show save button in Viewing mode, even with unsaved changes', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const controls = buildTestSceneWithEditable({ canSave: true, canEdit: true, isEditing: true });
+      getDashboard(controls).setState({ mode: 'view', isDirty: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
+    });
   });
 
   describe('Panel edit buttons', () => {
