@@ -7,7 +7,6 @@ import { takeWhile } from 'rxjs/operators';
 
 import { type GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { previewAlertRule } from '../../api/preview';
@@ -88,18 +87,21 @@ export function usePreview(): [PreviewRuleResponse | undefined, () => void] {
 
 function createPreviewRequest(values: any[]): PreviewRuleRequest {
   const [type, dataSourceName, condition, queries, expression] = values;
-  const dsSettings = getDataSourceSrv().getInstanceSettings(dataSourceName);
-  if (!dsSettings) {
-    throw new Error(`Cannot find data source settings for ${dataSourceName}`);
-  }
 
   switch (type) {
-    case RuleFormType.cloudAlerting:
+    case RuleFormType.cloudAlerting: {
+      // The cloud data source picker writes the selected data source uid into the first query.
+      const dataSourceUid = queries[0]?.datasourceUid;
+      if (!dataSourceUid) {
+        throw new Error(`Cannot find data source settings for ${dataSourceName}`);
+      }
+
       return {
-        dataSourceUid: dsSettings.uid,
+        dataSourceUid,
         dataSourceName,
         expr: expression,
       };
+    }
 
     case RuleFormType.grafana:
       return {
