@@ -476,6 +476,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/dashboard-time-zone.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-timepicker.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/section-login-title.spec.ts @grafana/grafana-frontend-navigation
+/e2e-playwright/dashboards-suite/dashboard-login-title.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards-suite/embedded-dashboard.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/general-dashboards.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/import-dashboard.spec.ts @grafana/dashboards-squad
