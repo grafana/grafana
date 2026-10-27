@@ -16,16 +16,6 @@ export {
 // Notification Policies / Routing Trees
 export { useRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
 export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
-export {
-  useResolvedRoutingTree,
-  type ResolvedRoutingTree,
-} from './grafana/notificationPolicies/hooks/useResolvedRoutingTree';
-export {
-  useRoutingTreePreview,
-  type RoutingTreePreviewResult,
-  type RoutingTreePreviewRoute,
-} from './grafana/notificationPolicies/hooks/useRoutingTreePreview';
-export { type RoutingTreeView } from './grafana/notificationPolicies/routingTreeView';
 export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
 export {
   buildRoutingTreeOptions,
@@ -44,6 +34,7 @@ export {
   fromRuleNotificationSettings,
 } from './grafana/notificationSettings/notificationSettingsValue';
 export { useContactPointSettingsState } from './grafana/notificationSettings/hooks/useContactPointSettingsState';
+export { useNotificationPolicySettingsState } from './grafana/notificationSettings/hooks/useNotificationPolicySettingsState';
 export { DISABLE_GROUPING } from './grafana/notificationSettings/constants';
 export { getDefaultGroupByLabels, nextGroupBy } from './grafana/notificationSettings/utils/groupBy';
 
