@@ -1,6 +1,6 @@
 import { type Locator, test } from '@playwright/test';
 
-import { PageObject } from '../../PageObject';
+import { PageObject, type PageObjectArgs } from '../../PageObject';
 
 type ConditionalRenderingRuleId = 'data' | 'timeRangeSize' | 'variable';
 
@@ -9,9 +9,16 @@ type ConditionalRenderingRuleId = 'data' | 'timeRangeSize' | 'variable';
  * visibility toggle, match all/any, and the rule builder (variable, time range, query result)
  */
 export class ConditionalRenderingOptions extends PageObject {
+  constructor(
+    args: PageObjectArgs,
+    private readonly container = args.getByGrafanaSelector(args.selectors.components.Sidebar.container)
+  ) {
+    super(args);
+  }
+
   /** Returns the Show / Hide visibility radio */
   getVisibilityRadio(visibility: 'show' | 'hide'): Locator {
-    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container)
+    return this.container
       .getByTestId(this.selectors.components.RadioButton.container)
       .getByRole('radio', { name: visibility === 'show' ? 'Show' : 'Hide' });
   }
@@ -27,7 +34,7 @@ export class ConditionalRenderingOptions extends PageObject {
 
   /** Returns the Match type radio (Match all / Match any) */
   getMatchTypeRadio(matchType: 'all' | 'any'): Locator {
-    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container)
+    return this.container
       .getByTestId(this.selectors.components.RadioButton.container)
       .getByRole('radio', { name: matchType === 'all' ? 'Match all' : 'Match any' });
   }
@@ -43,7 +50,7 @@ export class ConditionalRenderingOptions extends PageObject {
 
   /** Returns the wrapper for a Query result, Time range, or Template variable rule */
   getRule(ruleId: ConditionalRenderingRuleId): Locator {
-    return this.getByGrafanaSelector(this.selectors.pages.Dashboard.Sidebar.conditionalRendering.rule(ruleId));
+    return this.container.getByTestId(this.selectors.pages.Dashboard.Sidebar.conditionalRendering.rule(ruleId));
   }
 
   /** Removes a rule by type (Query result, Time range, or Template variable) */
@@ -55,7 +62,7 @@ export class ConditionalRenderingOptions extends PageObject {
 
   /** Returns the "+ Add rule" button */
   getAddRuleButton(): Locator {
-    return this.getByGrafanaSelector(this.selectors.components.ValuePicker.button('Add rule'));
+    return this.container.getByTestId(this.selectors.components.ValuePicker.button('Add rule'));
   }
 
   readonly templateVariable = {

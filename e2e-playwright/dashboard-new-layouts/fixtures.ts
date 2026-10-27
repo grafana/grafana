@@ -3,7 +3,7 @@ import { type APIRequestContext, type Page, type TestInfo } from '@playwright/te
 
 import { DashboardPage, type E2ESelectorGroups, test as base } from '@grafana/plugin-e2e';
 
-import { Canvas, Controls, Panels, Rows, Sidebar, Tabs } from './page-objects';
+import { Canvas, Controls, PanelEditor, Panels, Rows, Sidebar, Tabs } from './page-objects';
 import { type GetByGrafanaSelector } from './page-objects/PageObject';
 
 interface PageObjectFixtures {
@@ -13,6 +13,7 @@ interface PageObjectFixtures {
   rows: Rows;
   tabs: Tabs;
   canvas: Canvas;
+  panelEditor: PanelEditor;
 }
 
 interface BaseArgs {
@@ -50,6 +51,10 @@ function buildGetByGrafanaSelector(
  * ```
  */
 export const test = base.extend<PageObjectFixtures>({
+  panelEditor: async ({ page, request, selectors, components, grafanaVersion }, use, testInfo) => {
+    const getByGrafanaSelector = buildGetByGrafanaSelector({ page, request, selectors, grafanaVersion }, testInfo);
+    await use(new PanelEditor({ page, selectors, components, getByGrafanaSelector }));
+  },
   controls: async ({ page, request, selectors, components, grafanaVersion }, use, testInfo) => {
     const getByGrafanaSelector = buildGetByGrafanaSelector({ page, request, selectors, grafanaVersion }, testInfo);
     await use(new Controls({ page, selectors, components, getByGrafanaSelector }));

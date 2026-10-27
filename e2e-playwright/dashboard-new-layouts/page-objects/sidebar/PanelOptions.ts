@@ -13,15 +13,18 @@ export class PanelOptions extends PageObject {
   readonly conditionalRenderingOptions: ConditionalRenderingOptions;
   readonly repeatOptions: RepeatOptions;
 
-  constructor(args: PageObjectArgs) {
+  constructor(
+    args: PageObjectArgs,
+    private readonly container = args.getByGrafanaSelector(args.selectors.components.Sidebar.container)
+  ) {
     super(args);
-    this.conditionalRenderingOptions = new ConditionalRenderingOptions(args);
-    this.repeatOptions = new RepeatOptions(args, 'repeat-options');
+    this.conditionalRenderingOptions = new ConditionalRenderingOptions(args, container);
+    this.repeatOptions = new RepeatOptions(args, 'repeat-options', container);
   }
 
   /** Returns the panel title input */
   getTitleInput(): Locator {
-    return this.getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
+    return this.container.getByTestId(this.selectors.components.PanelEditor.OptionsPane.fieldInput('Title'));
   }
 
   /** Sets the panel title */
@@ -35,21 +38,33 @@ export class PanelOptions extends PageObject {
 
   /** Returns the panel description textarea */
   getDescriptionTextarea(): Locator {
-    return this.getByGrafanaSelector(
-      this.selectors.components.PanelEditor.OptionsPane.fieldLabel('Panel options Description')
-    ).locator('textarea');
+    return this.container
+      .getByTestId(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('Panel options Description'))
+      .locator('textarea');
   }
 
   getSubtitleSwitch() {
-    return this.getByGrafanaSelector(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('subtitle-switch'));
+    return this.container.getByTestId(this.selectors.components.PanelEditor.OptionsPane.fieldLabel('subtitle-switch'));
+  }
+
+  getSubtitleInput(): Locator {
+    return this.container.getByRole('switch', { name: /Use as subtitle/ });
+  }
+
+  getTransparentBackgroundSwitch(): Locator {
+    return this.container.getByRole('switch', { name: 'Transparent background', exact: true });
+  }
+
+  async editVisualization() {
+    await test.step('Open the visualization editor', async () => {
+      await this.container.getByRole('button', { name: 'Edit visualization', exact: true }).click();
+    });
   }
 
   /** Toggles the panel's transparent background switch */
   async toggleTransparentBackground() {
     await test.step('Toggle transparent background', async () => {
-      await this.getByGrafanaSelector(this.selectors.components.Sidebar.container)
-        .getByRole('switch', { name: 'Transparent background' })
-        .click({ force: true });
+      await this.getTransparentBackgroundSwitch().click({ force: true });
     });
   }
 }
