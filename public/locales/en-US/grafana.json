@@ -5972,7 +5972,8 @@
       "variable-refresh": "Change variable refresh",
       "variable-switch-values": "Change variable switch values",
       "variable-textbox-value": "Change variable value",
-      "variable-type": "Change variable type"
+      "variable-type": "Change variable type",
+      "view-panel-option": "{{category}}: {{name}}"
     },
     "empty": {
       "add-library-panel-body": "Add visualizations that are shared with other dashboards.",
