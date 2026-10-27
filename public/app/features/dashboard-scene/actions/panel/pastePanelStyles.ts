@@ -3,6 +3,7 @@ import { type VizPanel } from '@grafana/scenes';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { edit } from '../utils/edit';
 
 type PanelStyles = Pick<VizPanel['state'], 'fieldConfig' | 'options'>;
@@ -10,7 +11,12 @@ type PanelStyles = Pick<VizPanel['state'], 'fieldConfig' | 'options'>;
 export function pastePanelStyles(dashboard: DashboardScene, panel: VizPanel) {
   // Nothing gets pasted then, the paste still runs to report errors.
   // Legacy layouts have no active sidebar to perform edit actions, so they paste directly.
-  if (!isDashboardNewLayoutsEnabled() || !DashboardScene.hasPanelStylesToPaste(panel.state.pluginId)) {
+  // Repeat clones are rebuilt from their source after every edit action, which would discard the pasted styles.
+  if (
+    !isDashboardNewLayoutsEnabled() ||
+    isRepeatCloneOrChildOf(panel) ||
+    !DashboardScene.hasPanelStylesToPaste(panel.state.pluginId)
+  ) {
     dashboard.pastePanelStyles(panel);
     return;
   }

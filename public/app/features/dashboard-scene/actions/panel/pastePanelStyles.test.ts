@@ -1,12 +1,13 @@
 import { store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, SceneVariableSet, TestVariable, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
@@ -105,6 +106,50 @@ describe('pastePanelStyles', () => {
   it.each(['invalid', [], { options: [] }, { fieldConfig: null }])('rejects malformed styles %j', (styles) => {
     store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles }));
     expect(DashboardScene.hasPanelStylesToPaste('timeseries')).toBe(false);
+  });
+
+  it('keeps styles pasted onto a repeat clone, which edit actions would rebuild from its source', async () => {
+    const gridItem = new DashboardGridItem({
+      variableName: 'server',
+      body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries', options: { legend: { showLegend: true } } }),
+    });
+    const dashboard = new DashboardScene({
+      isEditing: true,
+      $variables: new SceneVariableSet({
+        variables: [
+          new TestVariable({
+            name: 'server',
+            query: 'A.*',
+            value: ['1', '2'],
+            text: ['A', 'B'],
+            isMulti: true,
+            delayMs: 0,
+            optionsToReturn: [
+              { label: 'A', value: '1' },
+              { label: 'B', value: '2' },
+            ],
+          }),
+        ],
+      }),
+      body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [gridItem] }) }),
+    });
+    const deactivateDashboard = activateFullSceneTree(dashboard);
+    // wait for the variable to load and create the clones
+    await new Promise((r) => setTimeout(r, 1));
+    const clone = gridItem.state.repeatedPanels![0];
+    const deactivateClone = clone.activate();
+    deactivate = () => {
+      deactivateClone();
+      deactivateDashboard();
+    };
+    // wait for the clone's panel plugin to load
+    await new Promise((r) => setTimeout(r, 1));
+    copyStyles(false);
+
+    pastePanelStyles(dashboard, clone);
+
+    expect(gridItem.state.repeatedPanels![0].state.options).toEqual({ legend: { showLegend: false } });
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
   });
 
   it('does not record pasting when there are no styles to paste', async () => {
