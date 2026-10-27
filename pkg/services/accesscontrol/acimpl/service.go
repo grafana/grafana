@@ -84,7 +84,7 @@ func ProvideService(
 		legacyClient, roleCatalog,
 	)
 
-	service.legacyShadow = NewLegacyUserPermissionsShadow(reg)
+	service.legacyShadow = NewLegacyUserPermissionsShadow(reg, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
 	if err := accesscontrol.DeclareFixedRoles(service); err != nil {
@@ -130,7 +130,7 @@ func ProvideOSSService(
 		permRegistry:              permRegistry,
 		sql:                       db,
 		serverLock:                lock,
-		legacyShadow:              NewLegacyUserPermissionsShadow(nil),
+		legacyShadow:              NewLegacyUserPermissionsShadow(nil, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent),
 		legacyClient:              legacyClient,
 		roleCatalog:               roleCatalog,
 	}

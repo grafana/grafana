@@ -63,7 +63,7 @@ func TestPermissionSetDifference(t *testing.T) {
 
 func TestPermissionShadowDoesNotBlockAndSnapshotsInput(t *testing.T) {
 	registry := prometheus.NewRegistry()
-	s := NewLegacyUserPermissionsShadow(registry)
+	s := NewLegacyUserPermissionsShadow(registry, 32)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	usr := shadowRequester()
@@ -117,7 +117,7 @@ func TestPermissionShadowDoesNotBlockAndSnapshotsInput(t *testing.T) {
 func TestPermissionShadowFailures(t *testing.T) {
 	for _, mode := range []string{"mismatch", "shadow error", "primary error", "missing client", "panic"} {
 		t.Run(mode, func(t *testing.T) {
-			s := NewLegacyUserPermissionsShadow(prometheus.NewRegistry())
+			s := NewLegacyUserPermissionsShadow(prometheus.NewRegistry(), 32)
 			primaryErr := error(nil)
 			if mode == "primary error" {
 				primaryErr = errors.New("primary failed")
@@ -156,7 +156,7 @@ func TestPermissionShadowRouting(t *testing.T) {
 					cfg: setting.NewCfg(), features: featuremgmt.WithFeatures(),
 					store:          actest.FakeStore{},
 					actionResolver: resourcepermissions.NewActionSetService(),
-					legacyShadow:   NewLegacyUserPermissionsShadow(nil),
+					legacyShadow:   NewLegacyUserPermissionsShadow(nil, 32),
 					legacyClient: shadowLegacyClient{get: func(context.Context, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
 						return legacyclient.LegacyGetUserPermissionsResponse{}, nil
 					}},
@@ -186,13 +186,22 @@ func TestPermissionShadowRouting(t *testing.T) {
 }
 
 func TestPermissionShadowConcurrencyLimit(t *testing.T) {
-	s := NewLegacyUserPermissionsShadow(nil)
-	for range cap(s.inFlight) {
-		s.inFlight <- struct{}{}
+	for _, limit := range []int{1, 4, 32, 64, 0, -1} {
+		t.Run(fmt.Sprint(limit), func(t *testing.T) {
+			s := NewLegacyUserPermissionsShadow(nil, limit)
+			expected := limit
+			if expected < 1 {
+				expected = setting.DefaultLegacyUserPermissionsShadowMaxConcurrent
+			}
+			require.Equal(t, expected, cap(s.inFlight))
+			for range expected {
+				s.inFlight <- struct{}{}
+			}
+			want := []ac.Permission{{Action: "read"}}
+			got, err := s.GetUserPermissions(t.Context(), nil, shadowRequester(), ac.Options{}, setting.NewCfg(), func() ([]ac.Permission, error) { return want, nil })
+			require.NoError(t, err)
+			require.Equal(t, want, got)
+			require.Equal(t, float64(1), testutil.ToFloat64(s.skipped))
+		})
 	}
-	want := []ac.Permission{{Action: "read"}}
-	got, err := s.GetUserPermissions(t.Context(), nil, shadowRequester(), ac.Options{}, setting.NewCfg(), func() ([]ac.Permission, error) { return want, nil })
-	require.NoError(t, err)
-	require.Equal(t, want, got)
-	require.Equal(t, float64(1), testutil.ToFloat64(s.skipped))
 }

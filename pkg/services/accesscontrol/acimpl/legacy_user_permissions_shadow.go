@@ -30,10 +30,13 @@ type LegacyUserPermissionsShadow struct {
 	logger   log.Logger
 }
 
-func NewLegacyUserPermissionsShadow(reg prometheus.Registerer) *LegacyUserPermissionsShadow {
+func NewLegacyUserPermissionsShadow(reg prometheus.Registerer, maxConcurrent int) *LegacyUserPermissionsShadow {
+	if maxConcurrent < 1 {
+		maxConcurrent = setting.DefaultLegacyUserPermissionsShadowMaxConcurrent
+	}
 	factory := promauto.With(reg)
 	return &LegacyUserPermissionsShadow{
-		inFlight: make(chan struct{}, 32),
+		inFlight: make(chan struct{}, maxConcurrent),
 		logger:   log.New("accesscontrol.legacy-shadow"),
 		duration: factory.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_accesscontrol_user_permissions_duration_milliseconds",
