@@ -3,7 +3,9 @@ import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -73,10 +75,8 @@ afterEach(() => {
 });
 
 describe('canViewFiringAlerts', () => {
-  const originalMode = window.__grafanaLegacyAPIMode;
-
   afterEach(() => {
-    window.__grafanaLegacyAPIMode = originalMode;
+    setTestFlags({});
   });
 
   it('is true when the user has AlertingInstanceRead permission', () => {
@@ -89,8 +89,8 @@ describe('canViewFiringAlerts', () => {
     expect(canViewFiringAlerts()).toBe(false);
   });
 
-  it('is false when the legacy API is blocked even with permission', () => {
-    window.__grafanaLegacyAPIMode = 'block';
+  it('is false on a multi-tenant homepage even with permission', () => {
+    setTestFlags({ [FlagKeys.GrafanaMultiTenantHomepage]: true });
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     expect(canViewFiringAlerts()).toBe(false);
   });

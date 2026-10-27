@@ -3030,6 +3030,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.multiTenantHomepage",
+        "resourceVersion": "1793110470486",
+        "creationTimestamp": "2026-10-27T14:14:30Z"
+      },
+      "spec": {
+        "description": "Hides homepage sections whose only backend is a legacy /api endpoint (firing alerts, IRM incidents and on-call, plugin offers) and skips the legacy datasource health probe, for multi-tenant stacks that do not serve /api",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.multiTenantNavTree",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-15T15:43:42Z"

@@ -13,7 +13,8 @@ import {
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { isLegacyAPIBlocked } from 'app/legacyAPIHandling';
+
+import { isMultiTenantHomepage } from '../multiTenant';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { type ScheduleLoadError, classifyScheduleError } from './scheduleErrors';
@@ -69,10 +70,11 @@ export interface OnCallSchedulesData {
 function useIrmPlugin() {
   const { installed, loading: probeLoading, settings } = usePluginBridge(PLUGIN_ID);
   const schedulesHref = createBridgeURL(PLUGIN_ID, '/schedules');
-  // IRM's schedules API is served under the legacy /api/plugins path only.
-  const blocked = isLegacyAPIBlocked();
-  const loading = !blocked && probeLoading;
-  const available = !blocked && !!installed;
+  // IRM's schedules API is reached through the legacy /api/plugins resources path only; the gate goes
+  // once the frontend calls the /apis app resources route instead.
+  const unavailable = isMultiTenantHomepage();
+  const loading = !unavailable && probeLoading;
+  const available = !unavailable && !!installed;
   return {
     loading,
     // Queries wait for the probe, so the hooks can run before it is known whether IRM is installed.

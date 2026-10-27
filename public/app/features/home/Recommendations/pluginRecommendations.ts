@@ -11,8 +11,8 @@ import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
-import { isLegacyAPIBlocked } from 'app/legacyAPIHandling';
 
+import { isMultiTenantHomepage } from '../multiTenant';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withDeadline } from '../solutions/probeUtils';
 import { TELEMETRY_SETUP_DOCS, type TelemetryType } from '../solutions/telemetrySetup';
@@ -213,8 +213,9 @@ const installedPlugins = createTtlCachedPromise(
 );
 
 export function fetchInstalledPlugins(): Promise<LocalPlugin[]> {
-  // /api/plugins is legacy-only; an empty inventory already makes plugin-backed offers fail closed.
-  return isLegacyAPIBlocked() ? Promise.resolve([]) : installedPlugins.get();
+  // /api/plugins is legacy-only; an empty inventory already makes plugin-backed offers fail closed. The gate
+  // goes once the inventory reads the plugins.grafana.app metas and per-app settings instead.
+  return isMultiTenantHomepage() ? Promise.resolve([]) : installedPlugins.get();
 }
 
 export function resetInstalledPlugins(): void {

@@ -206,6 +206,8 @@ export const FlagKeys = {
   GrafanaLogLevelInference: "grafana.logLevelInference",
   /** Enables multi-tenant fallback behavior */
   GrafanaMtFallback: "grafana.mtFallback",
+  /** Hides homepage sections whose only backend is a legacy /api endpoint (firing alerts, IRM incidents and on-call, plugin offers) and skips the legacy datasource health probe, for multi-tenant stacks that do not serve /api */
+  GrafanaMultiTenantHomepage: "grafana.multiTenantHomepage",
   /** Builds the navigation tree client-side instead of reading it from /bootdata */
   GrafanaMultiTenantNavTree: "grafana.multiTenantNavTree",
   /** Read the current user's permissions from the IAM app platform API instead of /api/access-control/user/actions */
@@ -1450,6 +1452,17 @@ export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaMtFallback = (options?: ReactFlagEvaluationOptions): JsonValue => {
   return useFlag("grafana.mtFallback", {}, options).value;
+};
+
+/**
+ * Hides homepage sections whose only backend is a legacy /api endpoint (firing alerts, IRM incidents and on-call, plugin offers) and skips the legacy datasource health probe, for multi-tenant stacks that do not serve /api
+ *
+ * **Details:**
+ * - flag key: `grafana.multiTenantHomepage`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMultiTenantHomepage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.multiTenantHomepage", false, options).value;
 };
 
 /**

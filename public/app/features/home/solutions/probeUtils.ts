@@ -10,7 +10,8 @@ import {
   getDataSourceInstanceList,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
-import { isLegacyAPIBlocked } from 'app/legacyAPIHandling';
+
+import { isMultiTenantHomepage } from '../multiTenant';
 
 /**
  * A lazily-started, shared solution fact derived from the solution's datasource: the first read
@@ -223,9 +224,9 @@ const healthCache = new Map<string, TtlCachedPromise<boolean>>();
  * health check owns its cutoff, which cancels the request.
  */
 export function isDatasourceHealthy(uid: string): Promise<boolean> {
-  // /health is legacy-only; when the legacy API is blocked the probe query (which has its own
-  // deadline) decides on its own.
-  if (isLegacyAPIBlocked()) {
+  // /api/datasources/.../health is legacy-only; on a multi-tenant stack the probe query (which has its own
+  // deadline) decides on its own. The gate goes once this uses DataSourceWithBackend.callHealthCheck().
+  if (isMultiTenantHomepage()) {
     return Promise.resolve(true);
   }
   let cache = healthCache.get(uid);

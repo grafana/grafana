@@ -1,4 +1,6 @@
 import { type BackendSrv, getBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { PROBE_TIMEOUT_MS } from '../solutions/probeUtils';
 
@@ -22,14 +24,13 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-it('resolves an empty inventory without a request when the legacy API is blocked', async () => {
-  const originalMode = window.__grafanaLegacyAPIMode;
-  window.__grafanaLegacyAPIMode = 'block';
+it('resolves an empty inventory without a request on a multi-tenant homepage', async () => {
+  setTestFlags({ [FlagKeys.GrafanaMultiTenantHomepage]: true });
   try {
     await expect(fetchInstalledPlugins()).resolves.toEqual([]);
     expect(get).not.toHaveBeenCalled();
   } finally {
-    window.__grafanaLegacyAPIMode = originalMode;
+    setTestFlags({});
   }
 });
 

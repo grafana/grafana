@@ -9,6 +9,8 @@ import {
   getDataSourceInstanceList,
   getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
   abortNotifier,
@@ -366,14 +368,13 @@ describe('isDatasourceHealthy', () => {
     }
   });
 
-  it('skips the legacy health request and reads as healthy while the legacy API is blocked', async () => {
-    const originalMode = window.__grafanaLegacyAPIMode;
-    window.__grafanaLegacyAPIMode = 'block';
+  it('skips the legacy health request and reads as healthy on a multi-tenant homepage', async () => {
+    setTestFlags({ [FlagKeys.GrafanaMultiTenantHomepage]: true });
     try {
       await expect(isDatasourceHealthy('unprobed')).resolves.toBe(true);
       expect(healthGetMock).not.toHaveBeenCalled();
     } finally {
-      window.__grafanaLegacyAPIMode = originalMode;
+      setTestFlags({});
     }
 
     // Nothing was cached for the uid, so the next read with the legacy API available probes it.

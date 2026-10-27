@@ -10,10 +10,11 @@ import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/fi
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { ALERTING_PATHS, alertListPageLink } from 'app/features/alerting/unified/utils/navigation';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
-import { isLegacyAPIBlocked } from 'app/legacyAPIHandling';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
+
+import { isMultiTenantHomepage } from '../multiTenant';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { type FilterScope, type FilterSelection, resolveFilterScope } from './filterSelection';
@@ -70,11 +71,11 @@ function resolveMatchers(scope: FilterScope, userTeamNames: string[]) {
   }
 }
 
-// Exported so the homepage skeleton reserves the card slot using the same gate. The alertmanager
-// and user-teams endpoints are legacy-only, so with the legacy API blocked the view has nothing
-// to show and is hidden like a missing plugin.
+// Exported so the homepage skeleton reserves the card slot using the same gate. Alert instances
+// (/api/alertmanager) and user teams (/api/user/teams) have no /apis equivalent yet, so on a
+// multi-tenant stack the view has nothing to show and is hidden like a missing plugin.
 export const canViewFiringAlerts = () =>
-  !isLegacyAPIBlocked() && contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
+  !isMultiTenantHomepage() && contextSrv.hasPermission(AccessControlAction.AlertingInstanceRead);
 
 export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
 

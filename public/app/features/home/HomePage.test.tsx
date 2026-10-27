@@ -159,40 +159,34 @@ describe('HomePage', () => {
     expect(queries[0]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`);
   });
 
-  it('hides the alerts, incidents and on-call tabs and sends no legacy requests when the legacy API is blocked', async () => {
-    const originalMode = window.__grafanaLegacyAPIMode;
-    window.__grafanaLegacyAPIMode = 'block';
-    try {
-      setTestFlags({ 'grafana.growthHomepage': true });
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-      mockUsePluginBridge.mockReturnValue({
-        installed: true,
-        loading: false,
-        settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
-      });
-      // jsdom has no fetch patch, so any legacy request the page still made would reach msw.
-      const legacyRequests: string[] = [];
-      const count = ({ request }: { request: Request }) => {
-        legacyRequests.push(new URL(request.url).pathname);
-        return HttpResponse.json([]);
-      };
-      server.use(
-        http.get('/api/user/teams', count),
-        http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', count),
-        http.all('/api/plugins/grafana-irm-app/resources/*', count)
-      );
+  it('hides the alerts, incidents and on-call tabs and sends no legacy requests on a multi-tenant homepage', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true, 'grafana.multiTenantHomepage': true });
+    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+    mockUsePluginBridge.mockReturnValue({
+      installed: true,
+      loading: false,
+      settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
+    });
+    // Any legacy request the page still made would reach msw.
+    const legacyRequests: string[] = [];
+    const count = ({ request }: { request: Request }) => {
+      legacyRequests.push(new URL(request.url).pathname);
+      return HttpResponse.json([]);
+    };
+    server.use(
+      http.get('/api/user/teams', count),
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', count),
+      http.all('/api/plugins/grafana-irm-app/resources/*', count)
+    );
 
-      render(<HomePage />);
+    render(<HomePage />);
 
-      expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: /firing alerts/i })).not.toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: /^incidents$/i })).not.toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: /on-call/i })).not.toBeInTheDocument();
-      expect(screen.queryByRole('heading', { name: /alerts/i })).not.toBeInTheDocument();
-      expect(legacyRequests).toEqual([]);
-    } finally {
-      window.__grafanaLegacyAPIMode = originalMode;
-    }
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /firing alerts/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /^incidents$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('tab', { name: /on-call/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /alerts/i })).not.toBeInTheDocument();
+    expect(legacyRequests).toEqual([]);
   });
 
   it('renders the OSS welcome message', async () => {
