@@ -2,6 +2,13 @@
 
 # 13.2.5 (2026-10-27)
 
+### Security
+
+- Security: Fix CVE-2026-100105
+- Security: Fix CVE-2026-103506
+- Security: Fix CVE-2026-88858
+- Security: Fix CVE-2026-88967
+
 ### Features and enhancements
 
 - **Git Sync:** Ignore hidden paths in repository scans and diffs [#135028](https://github.com/grafana/grafana/pull/135028), [@ferruvich](https://github.com/ferruvich)
