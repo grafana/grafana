@@ -1517,7 +1517,7 @@ describe('Plugin Extensions / Utils', () => {
   });
 
   describe('loadDependentAppPlugins()', () => {
-    const genereicAppPluginConfig = {
+    const genericAppPluginConfig = {
       path: '',
       version: '',
       preload: false,
