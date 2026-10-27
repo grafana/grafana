@@ -40,3 +40,37 @@ func TestServiceAccountPermissionTranslations(t *testing.T) {
 		})
 	}
 }
+
+func TestServiceAccountActionSetTranslations(t *testing.T) {
+	for _, tc := range []struct{ action, relation string }{
+		{"serviceaccounts:edit", RelationSetEdit},
+		{"serviceaccounts:admin", RelationSetAdmin},
+	} {
+		t.Run(tc.action, func(t *testing.T) {
+			for _, scope := range []struct{ kind, name string }{
+				{KindServiceAccounts, "sa1"},
+				{KindServiceAccounts, "*"},
+			} {
+				if tc.action == "serviceaccounts:edit" && scope.name == "*" {
+					_, ok := TranslateToResourceTuple("role:sa-manager#assignee", tc.action, scope.kind, scope.name)
+					require.False(t, ok)
+					tuples, ok := TranslateToResourceTuples("role:sa-manager#assignee", tc.action, scope.kind, scope.name)
+					require.True(t, ok)
+					require.Equal(t, []*openfgav1.TupleKey{
+						{User: "role:sa-manager#assignee", Relation: RelationGet, Object: "group_resource:iam.grafana.app/serviceaccounts"},
+						{User: "role:sa-manager#assignee", Relation: RelationUpdate, Object: "group_resource:iam.grafana.app/serviceaccounts"},
+					}, tuples)
+					continue
+				}
+				tuple, ok := TranslateToResourceTuple("role:sa-manager#assignee", tc.action, scope.kind, scope.name)
+				require.True(t, ok)
+				require.Equal(t, tc.relation, tuple.Relation)
+				expectedObject := "service-account:sa1"
+				if scope.name == "*" {
+					expectedObject = "group_resource:iam.grafana.app/serviceaccounts"
+				}
+				require.Equal(t, expectedObject, tuple.Object)
+			}
+		})
+	}
+}

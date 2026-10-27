@@ -364,6 +364,14 @@ func TranslateToResourceTuples(subject, action, kind, name string) ([]*openfgav1
 	if !ok {
 		return nil, false
 	}
+	// The generic group_resource edit relation implies delete. Service-account
+	// Edit only grants get and update, so preserve that narrower wildcard meaning.
+	if kind == KindServiceAccounts && action == "serviceaccounts:edit" && name == "*" {
+		return []*openfgav1.TupleKey{
+			NewGroupResourceTuple(subject, RelationGet, translation.group, translation.resource, ""),
+			NewGroupResourceTuple(subject, RelationUpdate, translation.group, translation.resource, ""),
+		}, true
+	}
 	tuples := make([]*openfgav1.TupleKey, 1, 2)
 	tuples[0] = translateResourceTuple(subject, translation, m, name)
 	switch action {
@@ -381,6 +389,9 @@ func TranslateToResourceTuples(subject, action, kind, name string) ([]*openfgav1
 // TranslateToResourceTuple translates only the base action. Permission writers
 // must use TranslateToResourceTuples to include action-set creation grants.
 func TranslateToResourceTuple(subject string, action, kind, name string) (*openfgav1.TupleKey, bool) {
+	if kind == KindServiceAccounts && action == "serviceaccounts:edit" && name == "*" {
+		return nil, false
+	}
 	translation, m, ok := lookupActionMapping(kind, action)
 	if !ok {
 		return nil, false

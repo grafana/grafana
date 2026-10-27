@@ -183,6 +183,8 @@ var resourceTranslations = map[string]resourceTranslation{
 		mapping: map[string]actionMapping{
 			"serviceaccounts:create":            newUnscopedMapping(RelationCreate),
 			"serviceaccounts:read":              newMapping(RelationGet, ""),
+			"serviceaccounts:edit":              newMapping(RelationSetEdit, ""),
+			"serviceaccounts:admin":             newMapping(RelationSetAdmin, ""),
 			"serviceaccounts:write":             newMapping(RelationUpdate, ""),
 			"serviceaccounts:delete":            newMapping(RelationDelete, ""),
 			"serviceaccounts.permissions:read":  newMapping(RelationGetPermissions, ""),
