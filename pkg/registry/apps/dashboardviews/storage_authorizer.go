@@ -134,11 +134,19 @@ func (s *savedViewStorageAuthorizer) checkDashboardExists(ctx context.Context, o
 		return storewrapper.ErrUnauthorized
 	}
 
-	if _, err := s.dashboardSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-		UID:   view.Spec.DashboardUID,
-		OrgID: nsInfo.OrgID,
-	}); err != nil {
+	// Run as a service identity: checkAccess already authorized the caller, this only checks existence.
+	_, err = identity.WithServiceIdentityFn(ctx, nsInfo.OrgID, func(ctx context.Context) (*dashboards.Dashboard, error) {
+		return s.dashboardSvc.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+			UID:   view.Spec.DashboardUID,
+			OrgID: nsInfo.OrgID,
+		})
+	})
+	switch {
+	case err == nil:
+		return nil
+	case errors.Is(err, dashboards.ErrDashboardNotFound):
 		return storewrapper.ErrUnauthorized
+	default:
+		return apierrors.NewInternalError(err)
 	}
-	return nil
 }

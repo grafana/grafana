@@ -200,6 +200,24 @@ func TestCheckDashboardExists(t *testing.T) {
 		svc.AssertExpectations(t)
 	})
 
+	t.Run("looks the dashboard up as a service identity, not the caller", func(t *testing.T) {
+		svc := &dashboards.FakeDashboardService{}
+		svc.On("GetDashboard", mock.MatchedBy(identity.IsServiceIdentity), mock.Anything).Return(&dashboards.Dashboard{}, nil)
+		authz := newTestAuthorizerWithDashboardService(svc)
+
+		require.NoError(t, authz.BeforeCreate(allowedCtx, viewWithDashboardUID(testDashboardUID)))
+		svc.AssertExpectations(t)
+	})
+
+	t.Run("surfaces dashboard service failures as internal errors, not denials", func(t *testing.T) {
+		svc := &dashboards.FakeDashboardService{}
+		svc.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, errors.New("dashboard service unreachable"))
+		authz := newTestAuthorizerWithDashboardService(svc)
+
+		err := authz.BeforeCreate(allowedCtx, viewWithDashboardUID(testDashboardUID))
+		require.True(t, apierrors.IsInternalError(err), "got %v", err)
+	})
+
 	t.Run("does not affect update/delete/get, which never repeat this check", func(t *testing.T) {
 		svc := &dashboards.FakeDashboardService{}
 		svc.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, errors.New("dashboard service unreachable"))
