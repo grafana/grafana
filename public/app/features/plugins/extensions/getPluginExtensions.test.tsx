@@ -54,6 +54,13 @@ jest.mock('./utils', () => ({
 const getPluginExtensionRegistriesMock = jest.mocked(getPluginExtensionRegistries);
 const loadDependentAppPluginsMock = jest.mocked(loadDependentAppPlugins);
 
+// Reset file-wide so call history/implementation overrides from one describe block (e.g. mockRejectedValueOnce)
+// never leak into another.
+beforeEach(() => {
+  loadDependentAppPluginsMock.mockClear();
+  loadDependentAppPluginsMock.mockResolvedValue(undefined);
+});
+
 async function createRegistries(
   preloadResults: Array<{
     pluginId: string;
@@ -586,8 +593,6 @@ describe('getObservablePluginExtensions()', () => {
     };
 
     getPluginExtensionRegistriesMock.mockResolvedValue(registries);
-    loadDependentAppPluginsMock.mockClear();
-    loadDependentAppPluginsMock.mockResolvedValue(undefined);
 
     addedLinksRegistry.register({
       pluginId,
@@ -665,6 +670,7 @@ describe('getObservablePluginExtensions()', () => {
 
     expect(extensions).toHaveLength(2);
     expect(log.error).toHaveBeenCalledWith('Failed to load plugin', {
+      extensionPointId,
       stack: expect.stringContaining('Error: Failed to load plugin'),
       message: 'Failed to load plugin',
     });
