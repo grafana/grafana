@@ -108,6 +108,33 @@ describe('LogsTableCustomCellRenderer', () => {
       expect(await screen.findByText('This log line contains a stack trace.')).toBeInTheDocument();
     });
 
+    it.each([
+      {
+        source: 'label',
+        key: 'error.type',
+        fields: [
+          { name: LOGS_DATAPLANE_TIMESTAMP_NAME, type: FieldType.time, values: [1] },
+          { name: LOGS_DATAPLANE_BODY_NAME, type: FieldType.string, values: ['log 1'] },
+          { name: 'labels', type: FieldType.other, values: [{ 'error.type': 'TimeoutError' }] },
+        ],
+      },
+      {
+        source: 'field',
+        key: 'exception.type',
+        fields: [
+          { name: LOGS_DATAPLANE_TIMESTAMP_NAME, type: FieldType.time, values: [1] },
+          { name: LOGS_DATAPLANE_BODY_NAME, type: FieldType.string, values: ['log 1'] },
+          { name: 'labels', type: FieldType.other, values: [{}] },
+          { name: 'exception.type', type: FieldType.string, values: ['TimeoutError'] },
+        ],
+      },
+    ])('says the row has error fields when the only error attribute is $key on a $source', ({ fields }) => {
+      renderRow(fields, 0);
+
+      expect(screen.getByLabelText('Has error fields')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Has a stack trace')).not.toBeInTheDocument();
+    });
+
     it('says when the row contains error fields and no stack trace', async () => {
       const user = userEvent.setup();
       renderRow(
