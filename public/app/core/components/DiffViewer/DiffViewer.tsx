@@ -7,7 +7,7 @@ import { CodeMirrorDiffEditor as DiffEditor, type CodeMirrorDiffEditorProps } fr
 import { InlineDiffToggle, useInlineDiffPreference } from '../MonacoDiffEditor/inlineDiffPreference';
 
 /** Read-only CodeMirror diff with the shared, persisted view preference. */
-export function CodeMirrorDiffEditor({ height, inline, ...props }: CodeMirrorDiffEditorProps) {
+export function DiffViewer({ height, inline, ...props }: CodeMirrorDiffEditorProps) {
   const styles = useStyles2(getStyles);
   const [inlinePreference, setInlinePreference] = useInlineDiffPreference();
   const inlineDiff = inline ?? inlinePreference;
