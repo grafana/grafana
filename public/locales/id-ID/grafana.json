@@ -7245,6 +7245,7 @@
       "copy": "Salin ke papan klip",
       "learn-more": "Pelajari lebih lanjut",
       "no-issues": "Tidak ada kesalahan atau pemberitahuan untuk kueri ini.",
+      "no-panel-issues": "",
       "severity-error": "Kesalahan",
       "severity-info": "Info",
       "severity-warning": "Peringatan Awal"
@@ -8062,8 +8063,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Buka panel kueri",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Buka panel kueri"
     },
     "viz-panel-links-renderer": {
@@ -15931,6 +15930,7 @@
       "expand": "Perluas",
       "filter": "",
       "loading": "Memuat dasbor",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Hasil untuk kueri Anda tidak ditemukan",
       "noResultsForFilterClear": "Hapus pencarian",
       "noResultsForScopes": "Tidak ada dasbor atau tautan yang ditemukan untuk cakupan yang dipilih",
@@ -16640,8 +16640,61 @@
   },
   "swagger": {
     "login": "Login",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Periksa namespace sebelum mengirim permintaan, atau muat ulang halaman untuk mencoba lagi.",
-    "namespace-unavailable-title": "Tidak dapat memuat namespace"
+    "namespace-unavailable-title": "Tidak dapat memuat namespace",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16695,6 +16748,9 @@
     "description-styling-from-field": "Bidang yang berisi objek JSON dengan properti CSS",
     "description-tooltip-from-field": "Render sel dari bidang (tersembunyi atau terlihat) dalam tooltip",
     "description-zebra-striping": "Ganti warna latar belakang setiap baris berikutnya",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Kueri"
     },
@@ -18239,6 +18295,7 @@
       "body_other": "Yakin ingin menghapus {{count}} variabel?"
     },
     "editor": {
+      "back": "",
       "cancel": "Batalkan",
       "delete": "Hapus",
       "delete-modal-body": "Yakin ingin menghapus '{{name}}'?",
@@ -18247,6 +18304,7 @@
       "folder-description": "Tentukan cakupan variabel ke folder, atau pilih folder Dasbor root untuk menjadikannya global (tersedia di semua dasbor)",
       "folder-description-folder-only": "Atur ruang lingkup variabel ke folder yang dapat Anda edit",
       "folder-label": "Folder",
+      "load-error-title": "",
       "moved": "Variabel dipindahkan",
       "name-exists": "Variabel dengan nama ini sudah ada di folder yang dipilih",
       "save": "Simpan",

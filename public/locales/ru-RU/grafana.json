@@ -7401,6 +7401,7 @@
       "copy": "Копировать в буфер обмена",
       "learn-more": "Подробнее",
       "no-issues": "По запросу нет ошибок или сообщений.",
+      "no-panel-issues": "",
       "severity-error": "Ошибка",
       "severity-info": "Информация",
       "severity-warning": "Предупреждение"
@@ -8251,8 +8252,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Открыть панель запросов",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Открыть панель запросов"
     },
     "viz-panel-links-renderer": {
@@ -16348,6 +16347,7 @@
       "expand": "Развернуть",
       "filter": "",
       "loading": "Загрузка дашбордов",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "По вашему запросу ничего не найдено",
       "noResultsForFilterClear": "Очистить поиск",
       "noResultsForScopes": "Не найдены дашборды или ссылки для выбранных областей",
@@ -17063,8 +17063,61 @@
   },
   "swagger": {
     "login": "Вход",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Проверьте пространство имен перед отправкой запросов или перезагрузите страницу и повторите попытку.",
-    "namespace-unavailable-title": "Не удалось загрузить пространство имен"
+    "namespace-unavailable-title": "Не удалось загрузить пространство имен",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17118,6 +17171,9 @@
     "description-styling-from-field": "Поле, содержащее объекты JSON со свойствами CSS",
     "description-tooltip-from-field": "Отобразите ячейку из поля (скрытого или видимого) в подсказке",
     "description-zebra-striping": "Чередовать цвет фона каждой второй строки",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Запрос"
     },
@@ -18674,6 +18730,7 @@
       "body_other": "Точно удалить {{count}} переменных?"
     },
     "editor": {
+      "back": "",
       "cancel": "Отменить",
       "delete": "Удалить",
       "delete-modal-body": "Точно удалить «{{name}}»?",
@@ -18682,6 +18739,7 @@
       "folder-description": "Ограничьте область действия переменной одной папкой или сделайте ее глобальной (доступной для всех дашбордов). Для этого выберите корневую папку «Дашборды»",
       "folder-description-folder-only": "Определите область действия переменной папкой, которую вы можете редактировать",
       "folder-label": "Папка",
+      "load-error-title": "",
       "moved": "Переменная перемещена",
       "name-exists": "В выбранной папке уже существует переменная с таким именем",
       "save": "Сохранить",

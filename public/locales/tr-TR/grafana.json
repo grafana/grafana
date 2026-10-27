@@ -7297,6 +7297,7 @@
       "copy": "Panoya kopyala",
       "learn-more": "Daha fazla bilgi edinin",
       "no-issues": "Bu sorgu için hata veya bildirim yok.",
+      "no-panel-issues": "",
       "severity-error": "Hata",
       "severity-info": "Bilgi",
       "severity-warning": "Uyarı"
@@ -8125,8 +8126,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Sorgu bölmesini aç",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Sorgu bölmesini aç"
     },
     "viz-panel-links-renderer": {
@@ -16070,6 +16069,7 @@
       "expand": "Genişlet",
       "filter": "",
       "loading": "Panolar yükleniyor",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Sorgunuz için sonuç bulunamadı",
       "noResultsForFilterClear": "Aramayı temizle",
       "noResultsForScopes": "Seçilen kapsamlar için pano veya bağlantı bulunamadı",
@@ -16781,8 +16781,61 @@
   },
   "swagger": {
     "login": "Oturum Aç",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "İstekleri göndermeden önce ad alanını kontrol edin veya tekrar denemek için sayfayı yeniden yükleyin.",
-    "namespace-unavailable-title": "Ad alanı yüklenemedi"
+    "namespace-unavailable-title": "Ad alanı yüklenemedi",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16836,6 +16889,9 @@
     "description-styling-from-field": "CSS özellikleri içeren JSON nesnelerinden oluşan bir alan",
     "description-tooltip-from-field": "Araç ipucunda (gizli veya görünür) bir alandaki hücreyi göster",
     "description-zebra-striping": "Arka plan rengini birer satır atlayarak değiştirin",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Sorgu"
     },
@@ -18384,6 +18440,7 @@
       "body_other": "{{count}} değişkeni silmek istediğinizden emin misiniz?"
     },
     "editor": {
+      "back": "",
       "cancel": "İptal et",
       "delete": "Sil",
       "delete-modal-body": "\"{{name}}\" ögesini silmek istediğinizden emin misiniz?",
@@ -18392,6 +18449,7 @@
       "folder-description": "Değişkeni bir klasör kapsamına alın veya genel (tüm panolarda kullanılabilir) yapmak için kök Panolar klasörünü seçin",
       "folder-description-folder-only": "Değişkeni düzenleyebildiğiniz bir klasörle sınırlandırın",
       "folder-label": "Klasör",
+      "load-error-title": "",
       "moved": "Değişken taşındı",
       "name-exists": "Seçili klasörde bu ada sahip bir değişken zaten var",
       "save": "Kaydet",
