@@ -80,8 +80,8 @@ func TestTrashRetentionWindow(t *testing.T) {
 			require.NoError(t, err)
 			require.Nil(t, res.Error)
 
-			got := make([]string, 0, len(res.Results.Rows))
-			for _, row := range res.Results.Rows {
+			got := make([]string, 0, len(res.Rows))
+			for _, row := range res.Rows {
 				got = append(got, row.Key.Name)
 			}
 			require.ElementsMatch(t, tc.want, got)
@@ -104,8 +104,8 @@ func TestTrashRetentionLeavesLiveSearchAlone(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, res.Error)
 
-	got := make([]string, 0, len(res.Results.Rows))
-	for _, row := range res.Results.Rows {
+	got := make([]string, 0, len(res.Rows))
+	for _, row := range res.Rows {
 		got = append(got, row.Key.Name)
 	}
 	require.Equal(t, []string{"live"}, got)

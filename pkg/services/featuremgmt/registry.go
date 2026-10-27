@@ -647,6 +647,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "grafana.mobileEditDeprecation",
+			Description: "Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports",
+			Stage:       FeatureStagePublicPreview,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboards.libraryPanelRepeatFromServerResolution",
 			Description: "Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state",
 			Stage:       FeatureStageExperimental,
@@ -684,6 +692,14 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.dashboardComposer",
+			Description: "Enables Composer mode for editing dashboards with Grafana Assistant",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
 		{
@@ -2187,7 +2203,7 @@ var (
 		{
 			Name:        "grafana.dashboardGlobalVariables",
 			Description: "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
