@@ -3,6 +3,7 @@ package acimpl
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 
 	"github.com/grafana/authlib/types"
@@ -32,9 +33,10 @@ func (a *AccessControl) buildLegacyCheckRequest(
 	namespace := user.GetNamespace()
 	var global *authzextv1.LegacyGlobalEvaluation
 	if user.GetOrgID() == accesscontrol.NoOrgID || user.GetOrgID() == accesscontrol.GlobalOrgID {
+		permissions := user.GetGlobalPermissions()
 		global = &authzextv1.LegacyGlobalEvaluation{
-			RequesterOrgId: user.GetOrgID(),
-			HasPermissions: len(user.GetGlobalPermissions()) > 0,
+			RequesterOrgId:   user.GetOrgID(),
+			PermittedActions: slices.Sorted(maps.Keys(permissions)),
 		}
 		// Global org IDs describe requester state. Use the configured instance
 		// namespace for transport; evaluation still uses global grants.

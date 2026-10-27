@@ -2,6 +2,8 @@ package rbac
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"testing"
 	"time"
 
@@ -99,9 +101,10 @@ func TestIntegrationLegacyCheckGlobalParity(t *testing.T) {
 							s.basicRoleCache.Set(t.Context(), cacheKey, cachedRole)
 
 							for _, tc := range []struct {
-								name      string
-								evaluator accesscontrol.Evaluator
-								allowed   bool
+								name            string
+								evaluator       accesscontrol.Evaluator
+								restrictActions []string
+								allowed         bool
 							}{
 								{
 									name:      "global direct",
@@ -158,9 +161,69 @@ func TestIntegrationLegacyCheckGlobalParity(t *testing.T) {
 									evaluator: accesscontrol.EvalAny(),
 									allowed:   false,
 								},
+								{
+									name:            "delegation excludes stored action",
+									evaluator:       accesscontrol.EvalPermission("users:read", "users:id:global"),
+									restrictActions: []string{"dashboards:read"},
+									allowed:         false,
+								},
+								{
+									name:            "delegation preserves permitted action set grant",
+									evaluator:       accesscontrol.EvalPermission("dashboards:read", "dashboards:uid:global"),
+									restrictActions: []string{"dashboards:read"},
+									allowed:         true,
+								},
+								{
+									name:            "delegation excludes shared with me",
+									evaluator:       accesscontrol.EvalPermission("folders:read", "folders:uid:sharedwithme"),
+									restrictActions: []string{"users:read"},
+									allowed:         false,
+								},
+								{
+									name: "any allows permitted alternative",
+									evaluator: accesscontrol.EvalAny(
+										accesscontrol.EvalPermission("users:read", "users:id:global"),
+										accesscontrol.EvalPermission("dashboards:read", "dashboards:uid:global"),
+									),
+									restrictActions: []string{"dashboards:read"},
+									allowed:         true,
+								},
+								{
+									name: "all denies restricted action",
+									evaluator: accesscontrol.EvalAll(
+										accesscontrol.EvalPermission("users:read", "users:id:global"),
+										accesscontrol.EvalPermission("dashboards:read", "dashboards:uid:global"),
+									),
+									restrictActions: []string{"dashboards:read"},
+									allowed:         false,
+								},
+								{
+									name:            "nonempty delegation allows empty all",
+									evaluator:       accesscontrol.EvalAll(),
+									restrictActions: []string{"users:read"},
+									allowed:         true,
+								},
+								{
+									name:            "empty delegation denies empty all",
+									evaluator:       accesscontrol.EvalAll(),
+									restrictActions: []string{},
+									allowed:         false,
+								},
 							} {
 								t.Run(tc.name, func(t *testing.T) {
-									allowed, err := acimpl.ProvideAccessControlTest().Evaluate(t.Context(), requester, tc.evaluator)
+									checkedRequester := *requester
+									if tc.restrictActions != nil {
+										// Authentication keeps only delegated action keys, retaining their scopes.
+										permitted := make(map[string][]string)
+										for _, action := range tc.restrictActions {
+											if scopes, ok := requester.GetGlobalPermissions()[action]; ok {
+												permitted[action] = scopes
+											}
+										}
+										checkedRequester.Permissions = map[int64]map[string][]string{accesscontrol.GlobalOrgID: permitted}
+									}
+
+									allowed, err := acimpl.ProvideAccessControlTest().Evaluate(t.Context(), &checkedRequester, tc.evaluator)
 									require.NoError(t, err)
 									require.Equal(t, tc.allowed, allowed)
 									expression, err := accesscontrol.ToLegacyExpression(tc.evaluator)
@@ -168,7 +231,10 @@ func TestIntegrationLegacyCheckGlobalParity(t *testing.T) {
 
 									got, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
 										Namespace: "org-12", Subject: requester.GetUID(), Expression: expression,
-										GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: requesterOrgID, HasPermissions: true},
+										GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{
+											RequesterOrgId:   requesterOrgID,
+											PermittedActions: slices.Sorted(maps.Keys(checkedRequester.GetGlobalPermissions())),
+										},
 									})
 
 									require.NoError(t, err)

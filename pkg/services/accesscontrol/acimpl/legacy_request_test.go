@@ -301,95 +301,103 @@ func TestBuildLegacyCheckRequestRejectsInvalidInput(t *testing.T) {
 
 func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
 	for _, tc := range []struct {
-		name           string
-		orgID          int64
-		namespace      string
-		stackID        string
-		permissions    map[int64]map[string][]string
-		wantNamespace  string
-		hasPermissions bool
+		name             string
+		orgID            int64
+		namespace        string
+		stackID          string
+		permissions      map[int64]map[string][]string
+		wantNamespace    string
+		permittedActions []string
 	}{
 		{
-			name:           "NoOrgID with a global map",
-			orgID:          accesscontrol.NoOrgID,
-			namespace:      "stacks-123",
-			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
-			wantNamespace:  "stacks-123",
-			hasPermissions: true,
+			name:             "NoOrgID with a global map",
+			orgID:            accesscontrol.NoOrgID,
+			namespace:        "stacks-123",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "stacks-123",
+			permittedActions: []string{"users:read"},
 		},
 		{
-			name:           "organization map does not count as global",
-			orgID:          accesscontrol.NoOrgID,
-			namespace:      "org--1",
-			permissions:    map[int64]map[string][]string{12: {"users:read": {"users:*"}}},
-			wantNamespace:  "default",
-			hasPermissions: false,
+			name:          "organization map does not count as global",
+			orgID:         accesscontrol.NoOrgID,
+			namespace:     "org--1",
+			permissions:   map[int64]map[string][]string{12: {"users:read": {"users:*"}}},
+			wantNamespace: "default",
 		},
 		{
-			name:           "minus one map does not count as global",
-			orgID:          accesscontrol.NoOrgID,
-			permissions:    map[int64]map[string][]string{-1: {"users:read": {"users:*"}}},
-			wantNamespace:  "default",
-			hasPermissions: false,
+			name:          "minus one map does not count as global",
+			orgID:         accesscontrol.NoOrgID,
+			permissions:   map[int64]map[string][]string{-1: {"users:read": {"users:*"}}},
+			wantNamespace: "default",
 		},
 		{
-			name:           "explicit global identity",
-			orgID:          accesscontrol.GlobalOrgID,
-			namespace:      "org-0",
-			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
-			wantNamespace:  "default",
-			hasPermissions: true,
+			name:             "explicit global identity",
+			orgID:            accesscontrol.GlobalOrgID,
+			namespace:        "org-0",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "default",
+			permittedActions: []string{"users:read"},
 		},
 		{
-			name:           "global identity with empty global map",
-			orgID:          accesscontrol.GlobalOrgID,
-			namespace:      "stacks-123",
-			permissions:    map[int64]map[string][]string{0: {}},
-			wantNamespace:  "stacks-123",
-			hasPermissions: false,
+			name:          "global identity with empty global map",
+			orgID:         accesscontrol.GlobalOrgID,
+			namespace:     "stacks-123",
+			permissions:   map[int64]map[string][]string{0: {}},
+			wantNamespace: "stacks-123",
 		},
 		{
-			name:           "cloud NoOrgID with empty namespace",
-			orgID:          accesscontrol.NoOrgID,
-			stackID:        "123",
-			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
-			wantNamespace:  "stacks-123",
-			hasPermissions: true,
+			name:             "cloud NoOrgID with empty namespace",
+			orgID:            accesscontrol.NoOrgID,
+			stackID:          "123",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "stacks-123",
+			permittedActions: []string{"users:read"},
 		},
 		{
-			name:           "cloud global identity with empty namespace",
-			orgID:          accesscontrol.GlobalOrgID,
-			stackID:        "123",
-			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
-			wantNamespace:  "stacks-123",
-			hasPermissions: true,
+			name:             "cloud global identity with empty namespace",
+			orgID:            accesscontrol.GlobalOrgID,
+			stackID:          "123",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "stacks-123",
+			permittedActions: []string{"users:read"},
 		},
 		{
-			name:           "cloud NoOrgID with sentinel namespace",
-			orgID:          accesscontrol.NoOrgID,
-			namespace:      "org--1",
-			stackID:        "123",
-			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
-			wantNamespace:  "stacks-123",
-			hasPermissions: true,
+			name:             "cloud NoOrgID with sentinel namespace",
+			orgID:            accesscontrol.NoOrgID,
+			namespace:        "org--1",
+			stackID:          "123",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "stacks-123",
+			permittedActions: []string{"users:read"},
 		},
 		{
-			name:           "cloud global identity with sentinel namespace",
-			orgID:          accesscontrol.GlobalOrgID,
-			namespace:      "org-0",
-			stackID:        "123",
-			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
-			wantNamespace:  "stacks-123",
-			hasPermissions: true,
+			name:             "cloud global identity with sentinel namespace",
+			orgID:            accesscontrol.GlobalOrgID,
+			namespace:        "org-0",
+			stackID:          "123",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "stacks-123",
+			permittedActions: []string{"users:read"},
 		},
 		{
-			name:           "explicit namespace is preserved for server validation",
-			orgID:          accesscontrol.GlobalOrgID,
-			namespace:      "stacks-456",
-			stackID:        "123",
-			permissions:    map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
-			wantNamespace:  "stacks-456",
-			hasPermissions: true,
+			name:             "explicit namespace is preserved for server validation",
+			orgID:            accesscontrol.GlobalOrgID,
+			namespace:        "stacks-456",
+			stackID:          "123",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "stacks-456",
+			permittedActions: []string{"users:read"},
+		},
+		{
+			name:      "effective action list includes resolver dependencies in sorted order",
+			orgID:     accesscontrol.NoOrgID,
+			namespace: "stacks-123",
+			permissions: map[int64]map[string][]string{
+				0:  {"users:read": {"users:*"}, "folders:read": {"folders:*"}},
+				12: {"users:delete": {"users:*"}},
+			},
+			wantNamespace:    "stacks-123",
+			permittedActions: []string{"folders:read", "users:read"},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -408,8 +416,8 @@ func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
 				Subject:    "user:user-uid",
 				Expression: legacyRequestPermissionExpression("users:read"),
 				GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{
-					RequesterOrgId: tc.orgID,
-					HasPermissions: tc.hasPermissions,
+					RequesterOrgId:   tc.orgID,
+					PermittedActions: tc.permittedActions,
 				},
 			}
 

@@ -16,7 +16,8 @@ import (
 )
 
 type legacyGlobalIdentity struct {
-	requester identity.StaticRequester
+	requester        identity.StaticRequester
+	permittedActions map[string]struct{}
 }
 
 type legacyGlobalPermissionLoader interface {
@@ -47,7 +48,7 @@ func (s *Service) validateLegacyGlobalEvaluation(
 func (s *Service) getLegacyGlobalIdentity(
 	ctx context.Context,
 	req legacyScopeRequest,
-	requesterOrgID int64,
+	global *authzextv1.LegacyGlobalEvaluation,
 ) (*legacyGlobalIdentity, error) {
 	identifiers, err := s.getUserIdentifiers(ctx, req.namespace, req.userUID, req.skipCache)
 	if err != nil {
@@ -67,17 +68,23 @@ func (s *Service) getLegacyGlobalIdentity(
 		return nil, errors.New("global user admin state is missing")
 	}
 
+	permittedActions := make(map[string]struct{}, len(global.GetPermittedActions()))
+	for _, action := range global.GetPermittedActions() {
+		permittedActions[action] = struct{}{}
+	}
+
 	return &legacyGlobalIdentity{
 		requester: identity.StaticRequester{
 			Type:           req.identityType,
 			UserID:         identifiers.ID,
 			UserUID:        identifiers.UID,
-			OrgID:          requesterOrgID,
+			OrgID:          global.GetRequesterOrgId(),
 			OrgRole:        identity.RoleNone,
 			IsGrafanaAdmin: role.IsAdmin,
 			Namespace:      req.namespace.Value,
-			CacheKey:       fmt.Sprintf("%s:global:%d:%s", req.namespace.Value, requesterOrgID, types.NewTypeID(req.identityType, identifiers.UID)),
+			CacheKey:       fmt.Sprintf("%s:global:%d:%s", req.namespace.Value, global.GetRequesterOrgId(), types.NewTypeID(req.identityType, identifiers.UID)),
 		},
+		permittedActions: permittedActions,
 	}, nil
 }
 
@@ -86,6 +93,18 @@ func (s *Service) getLegacyGlobalPermissions(
 	checkedIdentity *legacyGlobalIdentity,
 	actions []string,
 ) (map[string][]string, error) {
+	// Reloading grants must not restore actions removed by authentication, even
+	// when a resolver needs permissions beyond the original check expression.
+	permittedActions := make([]string, 0, len(actions))
+	for _, action := range actions {
+		if _, ok := checkedIdentity.permittedActions[action]; ok {
+			permittedActions = append(permittedActions, action)
+		}
+	}
+	if len(permittedActions) == 0 {
+		return map[string][]string{}, nil
+	}
+
 	loader, ok := s.userPermissionsEvaluator.(legacyGlobalPermissionLoader)
 	if !ok {
 		return nil, errors.New("filtered global permission loader is not configured")
@@ -96,7 +115,7 @@ func (s *Service) getLegacyGlobalPermissions(
 	requester := checkedIdentity.requester
 	requester.OrgID = accesscontrol.GlobalOrgID
 
-	permissions, err := loader.GetGlobalUserPermissions(ctx, &requester, actions)
+	permissions, err := loader.GetGlobalUserPermissions(ctx, &requester, permittedActions)
 	if err != nil {
 		return nil, fmt.Errorf("could not get global user permissions: %w", err)
 	}
@@ -126,7 +145,11 @@ func (s *Service) legacyGlobalResolverRequester(
 		if err != nil {
 			return nil, err
 		}
-		grants[folder.ActionFoldersRead] = additional[folder.ActionFoldersRead]
+		// An absent action must stay absent: even a nil scope slice grants
+		// action-only checks when its key is present.
+		if scopes, ok := additional[folder.ActionFoldersRead]; ok {
+			grants[folder.ActionFoldersRead] = scopes
+		}
 	}
 
 	requester.Permissions = map[int64]map[string][]string{accesscontrol.GlobalOrgID: grants}
@@ -146,11 +169,11 @@ func (s *Service) prepareLegacyGlobalEvaluation(
 
 	// NoOrgID selects Permissions[0], not Permissions[-1]. Loading grants must
 	// not turn an absent or empty global map into an allowed empty ALL expression.
-	if !global.GetHasPermissions() {
+	if len(global.GetPermittedActions()) == 0 {
 		return legacyEvaluationArgs{hasAnyPermissions: false, scopeRequest: scopeRequest}, nil
 	}
 
-	checkedIdentity, err := s.getLegacyGlobalIdentity(ctx, scopeRequest, global.GetRequesterOrgId())
+	checkedIdentity, err := s.getLegacyGlobalIdentity(ctx, scopeRequest, global)
 	if err != nil {
 		return legacyEvaluationArgs{}, err
 	}
@@ -162,8 +185,8 @@ func (s *Service) prepareLegacyGlobalEvaluation(
 
 	scopeRequest.globalIdentity = checkedIdentity
 
-	// Global loading includes SharedWithMe, so the full effective set remains
-	// nonempty even when none of the requested actions has a matching grant.
+	// The trusted caller has a nonempty effective permission map, even when
+	// none of its permitted actions is requested by this expression.
 	return legacyEvaluationArgs{
 		permissions:       permissions,
 		hasAnyPermissions: true,

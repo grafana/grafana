@@ -694,11 +694,12 @@ type LegacyGlobalEvaluation struct {
 	// Preserve the requester's org for resolver callbacks: 0 (global) or -1 (NoOrgID).
 	// Both evaluate permissions from org 0, never from the transport namespace's org.
 	RequesterOrgId int64 `protobuf:"varint,1,opt,name=requester_org_id,json=requesterOrgId,proto3" json:"requester_org_id,omitempty"`
-	// Trusted caller's effective global map is nonempty. False preserves Access
-	// Control's early denial; true does not grant access without server evaluation.
-	HasPermissions bool `protobuf:"varint,2,opt,name=has_permissions,json=hasPermissions,proto3" json:"has_permissions,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Actions in the trusted caller's effective global permission map, after
+	// authentication restrictions. Empty permits no actions. Resolver dependency
+	// lookups use the same restriction; scopes are still checked by the server.
+	PermittedActions []string `protobuf:"bytes,2,rep,name=permitted_actions,json=permittedActions,proto3" json:"permitted_actions,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *LegacyGlobalEvaluation) Reset() {
@@ -738,11 +739,11 @@ func (x *LegacyGlobalEvaluation) GetRequesterOrgId() int64 {
 	return 0
 }
 
-func (x *LegacyGlobalEvaluation) GetHasPermissions() bool {
+func (x *LegacyGlobalEvaluation) GetPermittedActions() []string {
 	if x != nil {
-		return x.HasPermissions
+		return x.PermittedActions
 	}
-	return false
+	return nil
 }
 
 var File_legacy_authz_proto protoreflect.FileDescriptor
@@ -805,10 +806,10 @@ const file_legacy_authz_proto_rawDesc = "" +
 	"\x06action\x18\x01 \x01(\tR\x06action\x12\x14\n" +
 	"\x05scope\x18\x02 \x01(\tR\x05scope\"n\n" +
 	" LegacyGetUserPermissionsResponse\x12J\n" +
-	"\vpermissions\x18\x01 \x03(\v2(.authz.extention.v1.LegacyUserPermissionR\vpermissions\"k\n" +
+	"\vpermissions\x18\x01 \x03(\v2(.authz.extention.v1.LegacyUserPermissionR\vpermissions\"o\n" +
 	"\x16LegacyGlobalEvaluation\x12(\n" +
-	"\x10requester_org_id\x18\x01 \x01(\x03R\x0erequesterOrgId\x12'\n" +
-	"\x0fhas_permissions\x18\x02 \x01(\bR\x0ehasPermissions2\x83\x02\n" +
+	"\x10requester_org_id\x18\x01 \x01(\x03R\x0erequesterOrgId\x12+\n" +
+	"\x11permitted_actions\x18\x02 \x03(\tR\x10permittedActions2\x83\x02\n" +
 	"\x12LegacyAuthzService\x12^\n" +
 	"\vLegacyCheck\x12&.authz.extention.v1.LegacyCheckRequest\x1a'.authz.extention.v1.LegacyCheckResponse\x12\x8c\x01\n" +
 	"\x18LegacyGetUserPermissions\x123.authz.extention.v1.LegacyGetUserPermissionsRequest\x1a4.authz.extention.v1.LegacyGetUserPermissionsResponse\"\x03\x88\x02\x010\x01B8Z6github.com/grafana/grafana/pkg/services/authz/proto/v1b\x06proto3"

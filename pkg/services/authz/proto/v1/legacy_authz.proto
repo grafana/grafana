@@ -116,7 +116,9 @@ message LegacyGlobalEvaluation {
   // Preserve the requester's org for resolver callbacks: 0 (global) or -1 (NoOrgID).
   // Both evaluate permissions from org 0, never from the transport namespace's org.
   int64 requester_org_id = 1;
-  // Trusted caller's effective global map is nonempty. False preserves Access
-  // Control's early denial; true does not grant access without server evaluation.
-  bool has_permissions = 2;
+
+  // Actions in the trusted caller's effective global permission map, after
+  // authentication restrictions. Empty permits no actions. Resolver dependency
+  // lookups use the same restriction; scopes are still checked by the server.
+  repeated string permitted_actions = 2;
 }

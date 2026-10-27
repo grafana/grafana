@@ -22,70 +22,95 @@ import (
 
 func TestLegacyCheckGlobalEvaluation(t *testing.T) {
 	for _, tc := range []struct {
-		name           string
-		evaluator      accesscontrol.Evaluator
-		hasPermissions bool
-		globalGrants   []accesscontrol.Permission
-		want           *authzextv1.LegacyCheckResponse
+		name             string
+		evaluator        accesscontrol.Evaluator
+		permittedActions []string
+		globalGrants     []accesscontrol.Permission
+		want             *authzextv1.LegacyCheckResponse
 	}{
 		{
-			name:           "global direct grant",
-			evaluator:      accesscontrol.EvalPermission("users:read", "users:id:7"),
-			hasPermissions: true,
-			globalGrants:   []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
-			want:           &authzextv1.LegacyCheckResponse{Allowed: true},
+			name:             "global direct grant",
+			evaluator:        accesscontrol.EvalPermission("users:read", "users:id:7"),
+			permittedActions: []string{"users:read"},
+			globalGrants:     []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			want:             &authzextv1.LegacyCheckResponse{Allowed: true},
 		},
 		{
-			name:           "organization grant is excluded",
-			evaluator:      accesscontrol.EvalPermission("users:read", "users:id:7"),
-			hasPermissions: true,
-			want:           &authzextv1.LegacyCheckResponse{Allowed: false},
+			name:             "organization grant is excluded",
+			evaluator:        accesscontrol.EvalPermission("users:read", "users:id:7"),
+			permittedActions: []string{"users:read"},
+			want:             &authzextv1.LegacyCheckResponse{Allowed: false},
 		},
 		{
-			name:           "caller presence alone does not grant requested action",
-			evaluator:      accesscontrol.EvalPermission("users:delete", "users:id:7"),
-			hasPermissions: true,
-			globalGrants:   []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
-			want:           &authzextv1.LegacyCheckResponse{Allowed: false},
+			name:             "caller presence alone does not grant requested action",
+			evaluator:        accesscontrol.EvalPermission("users:delete", "users:id:7"),
+			permittedActions: []string{"users:read"},
+			globalGrants:     []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			want:             &authzextv1.LegacyCheckResponse{Allowed: false},
 		},
 		{
-			name:           "empty global map denies empty all even with stored grants",
-			evaluator:      accesscontrol.EvalAll(),
-			hasPermissions: false,
-			globalGrants:   []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
-			want:           &authzextv1.LegacyCheckResponse{Allowed: false},
+			name:         "empty global map denies empty all even with stored grants",
+			evaluator:    accesscontrol.EvalAll(),
+			globalGrants: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			want:         &authzextv1.LegacyCheckResponse{Allowed: false},
 		},
 		{
-			name:           "empty global map denies a stored matching grant",
-			evaluator:      accesscontrol.EvalPermission("users:read", "users:id:7"),
-			hasPermissions: false,
-			globalGrants:   []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
-			want:           &authzextv1.LegacyCheckResponse{Allowed: false},
+			name:         "empty global map denies a stored matching grant",
+			evaluator:    accesscontrol.EvalPermission("users:read", "users:id:7"),
+			globalGrants: []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			want:         &authzextv1.LegacyCheckResponse{Allowed: false},
 		},
 		{
-			name:           "nonempty global map allows empty all",
-			evaluator:      accesscontrol.EvalAll(),
-			hasPermissions: true,
-			want:           &authzextv1.LegacyCheckResponse{Allowed: true},
+			name:             "nonempty global map allows empty all",
+			evaluator:        accesscontrol.EvalAll(),
+			permittedActions: []string{"users:read"},
+			want:             &authzextv1.LegacyCheckResponse{Allowed: true},
 		},
 		{
-			name:           "empty any denies",
-			evaluator:      accesscontrol.EvalAny(),
-			hasPermissions: true,
-			want:           &authzextv1.LegacyCheckResponse{Allowed: false},
+			name:             "empty any denies",
+			evaluator:        accesscontrol.EvalAny(),
+			permittedActions: []string{"users:read"},
+			want:             &authzextv1.LegacyCheckResponse{Allowed: false},
 		},
 		{
-			name:           "global loader includes shared with me",
-			evaluator:      accesscontrol.EvalPermission("folders:read", "folders:uid:sharedwithme"),
-			hasPermissions: true,
-			want:           &authzextv1.LegacyCheckResponse{Allowed: true},
+			name:             "global loader includes shared with me",
+			evaluator:        accesscontrol.EvalPermission("folders:read", "folders:uid:sharedwithme"),
+			permittedActions: []string{"folders:read"},
+			want:             &authzextv1.LegacyCheckResponse{Allowed: true},
 		},
 		{
-			name:           "global action set",
-			evaluator:      accesscontrol.EvalPermission("dashboards:read", "dashboards:uid:one"),
-			hasPermissions: true,
-			globalGrants:   []accesscontrol.Permission{{Action: "dashboards:view", Scope: "dashboards:uid:one"}},
-			want:           &authzextv1.LegacyCheckResponse{Allowed: true},
+			name:             "global action set",
+			evaluator:        accesscontrol.EvalPermission("dashboards:read", "dashboards:uid:one"),
+			permittedActions: []string{"dashboards:read"},
+			globalGrants:     []accesscontrol.Permission{{Action: "dashboards:view", Scope: "dashboards:uid:one"}},
+			want:             &authzextv1.LegacyCheckResponse{Allowed: true},
+		},
+		{
+			name:             "restricted action is not restored from stored grants",
+			evaluator:        accesscontrol.EvalPermission("users:read", "users:id:7"),
+			permittedActions: []string{"folders:read"},
+			globalGrants:     []accesscontrol.Permission{{Action: "users:read", Scope: "users:*"}},
+			want:             &authzextv1.LegacyCheckResponse{Allowed: false},
+		},
+		{
+			name:             "permitted action still requires matching stored scope",
+			evaluator:        accesscontrol.EvalPermission("users:read", "users:id:7"),
+			permittedActions: []string{"users:read"},
+			globalGrants:     []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:8"}},
+			want:             &authzextv1.LegacyCheckResponse{Allowed: false},
+		},
+		{
+			name:             "restricted action is not restored by action set",
+			evaluator:        accesscontrol.EvalPermission("dashboards:read", "dashboards:uid:one"),
+			permittedActions: []string{"users:read"},
+			globalGrants:     []accesscontrol.Permission{{Action: "dashboards:view", Scope: "dashboards:uid:one"}},
+			want:             &authzextv1.LegacyCheckResponse{Allowed: false},
+		},
+		{
+			name:             "shared with me does not restore restricted folders read",
+			evaluator:        accesscontrol.EvalPermission("folders:read", "folders:uid:sharedwithme"),
+			permittedActions: []string{"users:read"},
+			want:             &authzextv1.LegacyCheckResponse{Allowed: false},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -100,8 +125,8 @@ func TestLegacyCheckGlobalEvaluation(t *testing.T) {
 							Subject:    types.NewTypeID(identityType, "checked-user"),
 							Expression: expression,
 							GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{
-								RequesterOrgId: orgID,
-								HasPermissions: tc.hasPermissions,
+								RequesterOrgId:   orgID,
+								PermittedActions: tc.permittedActions,
 							},
 						}
 
@@ -111,12 +136,13 @@ func TestLegacyCheckGlobalEvaluation(t *testing.T) {
 						require.True(t, proto.Equal(tc.want, got), "want %v, got %v", tc.want, got)
 						require.Empty(t, permissions.presenceQueries)
 						require.Zero(t, s.identityStore.(*fakeIdentityStore).calls)
-						if !tc.hasPermissions {
+						if len(tc.permittedActions) == 0 {
 							require.Empty(t, permissions.queries)
 							require.Zero(t, s.store.(*fakeStore).calls)
 						}
 						for _, query := range permissions.queries {
 							require.NotEmpty(t, query.Action)
+							require.Contains(t, tc.permittedActions, query.Action)
 							require.Equal(t, "None", query.Role)
 							require.Empty(t, query.TeamIDs)
 						}
@@ -166,7 +192,10 @@ func TestLegacyCheckGlobalValidation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s, permissions := newLegacyGlobalTestService(nil)
 			req := legacyPermissionRequest("user:checked-user", "users:read")
-			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: accesscontrol.NoOrgID, HasPermissions: true}
+			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{
+				RequesterOrgId:   accesscontrol.NoOrgID,
+				PermittedActions: []string{"users:read"},
+			}
 			tc.mutate(s, req)
 
 			got, err := s.LegacyCheck(legacyCheckContext(t), req)
@@ -204,7 +233,10 @@ func TestLegacyCheckGlobalResolverContext(t *testing.T) {
 			))
 			s = s.WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
 			req := legacyPermissionRequest("user:checked-user", "users:read", "users:login:alice")
-			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: orgID, HasPermissions: true}
+			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{
+				RequesterOrgId:   orgID,
+				PermittedActions: []string{"users:read"},
+			}
 
 			got, err := s.LegacyCheck(legacyCheckContext(t), req)
 
@@ -235,13 +267,93 @@ func TestLegacyCheckGlobalFailureDenies(t *testing.T) {
 			s, permissions := newLegacyGlobalTestService(nil)
 			tc.fail(s, permissions)
 			req := legacyPermissionRequest("user:checked-user", "folders:read", "folders:uid:sharedwithme")
-			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: accesscontrol.NoOrgID, HasPermissions: true}
+			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{
+				RequesterOrgId:   accesscontrol.NoOrgID,
+				PermittedActions: []string{"folders:read"},
+			}
 
 			got, err := s.LegacyCheck(legacyCheckContext(t), req)
 
 			require.NoError(t, err)
 			require.False(t, got.GetAllowed())
 			require.NotEmpty(t, got.GetError())
+		})
+	}
+}
+
+func TestLegacyCheckGlobalResolverRestrictedPermissions(t *testing.T) {
+	for _, tc := range []struct {
+		name             string
+		permittedActions []string
+		folderCheck      accesscontrol.Evaluator
+		want             *authzextv1.LegacyCheckResponse
+	}{
+		{
+			name:             "permitted folder lookup",
+			permittedActions: []string{"users:read", "folders:read"},
+			folderCheck:      accesscontrol.EvalPermission("folders:read", "folders:uid:parent"),
+			want:             &authzextv1.LegacyCheckResponse{Allowed: true},
+		},
+		{
+			name:             "restricted folder lookup",
+			permittedActions: []string{"users:read"},
+			folderCheck:      accesscontrol.EvalPermission("folders:read", "folders:uid:parent"),
+			want: &authzextv1.LegacyCheckResponse{
+				Allowed: false,
+				Error:   "could not evaluate legacy expression: could not resolve users:login:alice: folder visibility denied",
+			},
+		},
+		{
+			name:             "restricted action-only folder lookup",
+			permittedActions: []string{"users:read"},
+			folderCheck:      accesscontrol.EvalPermission("folders:read"),
+			want: &authzextv1.LegacyCheckResponse{
+				Allowed: false,
+				Error:   "could not evaluate legacy expression: could not resolve users:login:alice: folder visibility denied",
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s, permissions := newLegacyGlobalTestService([]accesscontrol.Permission{
+				{Action: "users:read", Scope: "users:id:7"},
+				{Action: "folders:read", Scope: "folders:uid:parent"},
+			})
+			ac := acimpl.ProvideAccessControlTest()
+			calls := 0
+			ac.RegisterScopeAttributeResolver("users:login:", accesscontrol.ScopeAttributeResolverFunc(
+				func(ctx context.Context, _ int64, _ string) ([]string, error) {
+					calls++
+					requester, err := identity.GetRequester(ctx)
+					if err != nil {
+						return nil, err
+					}
+
+					allowed, err := ac.WithoutResolvers().Evaluate(ctx, requester, tc.folderCheck)
+					if err != nil {
+						return nil, err
+					}
+					if !allowed {
+						return nil, errors.New("folder visibility denied")
+					}
+
+					return []string{"users:id:7"}, nil
+				},
+			))
+			s = s.WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
+			req := legacyPermissionRequest("user:checked-user", "users:read", "users:login:alice")
+			req.GlobalEvaluation = &authzextv1.LegacyGlobalEvaluation{
+				RequesterOrgId:   accesscontrol.NoOrgID,
+				PermittedActions: tc.permittedActions,
+			}
+
+			got, err := s.LegacyCheck(legacyCheckContext(t), req)
+
+			require.NoError(t, err)
+			require.True(t, proto.Equal(tc.want, got), "got %v", got)
+			require.Equal(t, 1, calls)
+			for _, query := range permissions.queries {
+				require.Contains(t, tc.permittedActions, query.Action)
+			}
 		})
 	}
 }
