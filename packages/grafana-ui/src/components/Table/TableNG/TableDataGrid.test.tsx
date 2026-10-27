@@ -22,7 +22,7 @@ function shadowStyle(element: HTMLElement | null, edge: 'before' | 'after', prop
       }
     }
   }
-  return value;
+  return value.replace(/var\((--[\w-]+)\)/g, (_, name: string) => element?.style.getPropertyValue(name) ?? '');
 }
 
 function makeProps(overrides: Partial<TableDataGridProps> = {}): TableDataGridProps {
