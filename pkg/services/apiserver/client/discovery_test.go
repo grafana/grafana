@@ -16,9 +16,10 @@ import (
 func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
 	playlists := discoveryResource("playlists", "Playlist")
 	tests := []struct {
-		name    string
-		groups  []apidiscoveryv2.APIGroupDiscovery
-		wantGVR schema.GroupVersionResource
+		name             string
+		groups           []apidiscoveryv2.APIGroupDiscovery
+		unauthorizedRoot bool
+		wantGVR          schema.GroupVersionResource
 		wantGVK schema.GroupVersionKind
 		wantErr string
 	}{
@@ -40,6 +41,15 @@ func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
 			wantGVK: schema.GroupVersionKind{Group: "playlist.grafana.app", Version: "v1", Kind: "Playlist"},
 		},
 		{
+			name: "root discovery unauthorized",
+			groups: []apidiscoveryv2.APIGroupDiscovery{
+				discoveryGroup("playlist.grafana.app", "v1", apidiscoveryv2.DiscoveryFreshnessCurrent, playlists),
+			},
+			unauthorizedRoot: true,
+			wantGVR:          schema.GroupVersionResource{Group: "playlist.grafana.app", Version: "v1", Resource: "playlists"},
+			wantGVK:          schema.GroupVersionKind{Group: "playlist.grafana.app", Version: "v1", Kind: "Playlist"},
+		},
+		{
 			name: "target group stale",
 			groups: []apidiscoveryv2.APIGroupDiscovery{
 				discoveryGroup("playlist.grafana.app", "v1", apidiscoveryv2.DiscoveryFreshnessStale),
@@ -49,7 +59,7 @@ func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := newTestDiscoveryClient(t, tt.groups...)
+			c := newTestDiscoveryClient(t, tt.unauthorizedRoot, tt.groups...)
 
 			gvr, gvk, err := c.GetPreferredVersion(t.Context(), schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"})
 			if tt.wantErr != "" {
@@ -74,9 +84,13 @@ func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
 
 const aggregatedDiscoveryContentType = "application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList"
 
-func newTestDiscoveryClient(t *testing.T, groups ...apidiscoveryv2.APIGroupDiscovery) *DiscoveryClientImpl {
+func newTestDiscoveryClient(t *testing.T, unauthorizedRoot bool, groups ...apidiscoveryv2.APIGroupDiscovery) *DiscoveryClientImpl {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if unauthorizedRoot {
+			serveGroupDiscovery(w, r, groups)
+			return
+		}
 		list := apidiscoveryv2.APIGroupDiscoveryList{
 			TypeMeta: metav1.TypeMeta{Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2"},
 		}
@@ -91,6 +105,35 @@ func newTestDiscoveryClient(t *testing.T, groups ...apidiscoveryv2.APIGroupDisco
 	c, err := NewDiscoveryClient(&rest.Config{Host: server.URL})
 	require.NoError(t, err)
 	return c
+}
+
+func serveGroupDiscovery(w http.ResponseWriter, r *http.Request, groups []apidiscoveryv2.APIGroupDiscovery) {
+	for _, g := range groups {
+		v := g.Versions[0]
+		gv := g.Name + "/" + v.Version
+		switch r.URL.Path {
+		case "/apis/" + g.Name:
+			version := metav1.GroupVersionForDiscovery{GroupVersion: gv, Version: v.Version}
+			_ = json.NewEncoder(w).Encode(metav1.APIGroup{
+				TypeMeta:         metav1.TypeMeta{Kind: "APIGroup", APIVersion: "v1"},
+				Name:             g.Name,
+				Versions:         []metav1.GroupVersionForDiscovery{version},
+				PreferredVersion: version,
+			})
+			return
+		case "/apis/" + gv:
+			list := metav1.APIResourceList{TypeMeta: metav1.TypeMeta{Kind: "APIResourceList", APIVersion: "v1"}, GroupVersion: gv}
+			for _, res := range v.Resources {
+				list.APIResources = append(list.APIResources,
+					metav1.APIResource{Name: res.Resource + "/status", Kind: res.ResponseKind.Kind, Namespaced: true, Verbs: []string{"get"}},
+					metav1.APIResource{Name: res.Resource, Kind: res.ResponseKind.Kind, Namespaced: true, Verbs: res.Verbs},
+				)
+			}
+			_ = json.NewEncoder(w).Encode(list)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusUnauthorized)
 }
 
 func discoveryGroup(name, version string, freshness apidiscoveryv2.DiscoveryFreshness, resources ...apidiscoveryv2.APIResourceDiscovery) apidiscoveryv2.APIGroupDiscovery {

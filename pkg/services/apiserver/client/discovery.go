@@ -2,8 +2,10 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -82,9 +84,13 @@ func (d *DiscoveryClientImpl) GetKindForResource(gvr schema.GroupVersionResource
 
 func (d *DiscoveryClientImpl) preferredResources(ctx context.Context, group string) ([]*metav1.APIResourceList, error) {
 	apiList, err := d.ServerPreferredResources()
+	if err == nil {
+		return apiList, nil
+	}
 	var failed *discovery.ErrGroupDiscoveryFailed
-	if err == nil || !errors.As(err, &failed) {
-		return apiList, err
+	if !errors.As(err, &failed) {
+		logging.FromContext(ctx).Warn("Falling back to discovery of the API group", "group", group, "error", err)
+		return d.groupResources(ctx, group)
 	}
 	for gv := range failed.Groups {
 		if gv.Group == group {
@@ -92,6 +98,33 @@ func (d *DiscoveryClientImpl) preferredResources(ctx context.Context, group stri
 		}
 	}
 	logging.FromContext(ctx).Warn("Ignoring discovery failures of other API groups", "group", group, "error", err)
+	return apiList, nil
+}
+
+func (d *DiscoveryClientImpl) groupResources(ctx context.Context, group string) ([]*metav1.APIResourceList, error) {
+	body, err := d.RESTClient().Get().AbsPath("/apis", group).DoRaw(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var apiGroup metav1.APIGroup
+	if err := json.Unmarshal(body, &apiGroup); err != nil {
+		return nil, err
+	}
+	versions := append([]metav1.GroupVersionForDiscovery{apiGroup.PreferredVersion}, apiGroup.Versions...)
+	apiList := make([]*metav1.APIResourceList, 0, len(versions))
+	for i, v := range versions {
+		if i > 0 && v.Version == apiGroup.PreferredVersion.Version {
+			continue
+		}
+		list, err := d.ServerResourcesForGroupVersion(v.GroupVersion)
+		if err != nil {
+			return nil, err
+		}
+		list.APIResources = slices.DeleteFunc(list.APIResources, func(r metav1.APIResource) bool {
+			return strings.Contains(r.Name, "/")
+		})
+		apiList = append(apiList, list)
+	}
 	return apiList, nil
 }
 
