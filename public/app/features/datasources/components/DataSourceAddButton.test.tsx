@@ -97,6 +97,10 @@ describe('DataSourceAddButton', () => {
       {},
       { silent: true }
     );
+    expect(mockReportInteraction).toHaveBeenCalledWith('assistant_setup_dropdown_option_selected', {
+      source: 'datasources_list',
+      option: 'manual',
+    });
   });
 
   it('opens the assistant when "Set up with assistant" is selected', async () => {
@@ -116,6 +120,10 @@ describe('DataSourceAddButton', () => {
     await user.click(await screen.findByText('Set up with assistant'));
 
     await waitFor(() => expect(openAssistant).toHaveBeenCalledTimes(1));
+    expect(mockReportInteraction).toHaveBeenCalledWith('assistant_setup_dropdown_option_selected', {
+      source: 'datasources_list',
+      option: 'assistant',
+    });
 
     expect(openAssistant).toHaveBeenCalledWith(
       expect.objectContaining({
