@@ -12254,10 +12254,14 @@
     },
     "log-line": {
       "has-error": "Has errors",
+      "has-error-fields": "Has error fields",
+      "has-stacktrace": "Has a stack trace",
       "is-sampled": "Is sampled",
       "show-less": "show less",
       "show-more": "show more",
-      "tooltip-error": "Error: {{errorMessage}}"
+      "tooltip-error": "Error: {{errorMessage}}",
+      "tooltip-error-fields": "This log line contains error-related fields.",
+      "tooltip-stacktrace": "This log line contains a stack trace."
     },
     "log-line-context": {
       "center-matched-line": "Center matched line",
