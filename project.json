@@ -38,6 +38,16 @@
       "outputs": ["{workspaceRoot}/public/build", "{workspaceRoot}/public/build-swagger"],
       "cache": true
     },
+    "build:nominify": {
+      "dependsOn": [
+        "themes-generate",
+        {
+          "projects": ["tag:scope:plugin"],
+          "target": "build"
+        }
+      ],
+      "cache": false
+    },
     "dev": {
       "dependsOn": [
         "build:boot:dev",

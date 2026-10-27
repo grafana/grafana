@@ -123,8 +123,9 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "initial",
-			Limit: 10,
+			Query:        "initial",
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
@@ -203,8 +204,9 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "Document",
-			Limit: 10,
+			Query:        "Document",
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
@@ -221,8 +223,9 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "hello",
-			Limit: 10,
+			Query:        "hello",
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
@@ -245,7 +248,8 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Values:   []string{"hello"},
 				}},
 			},
-			Limit: 10,
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
@@ -262,8 +266,9 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "tag1",
-			Limit: 10,
+			Query:        "tag1",
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
@@ -286,7 +291,8 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Values:   []string{"tag1"},
 				}},
 			},
-			Limit: 10,
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)

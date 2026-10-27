@@ -116,6 +116,10 @@ function appliedStyle() {
   return applyStyleMock.mock.calls[0][1];
 }
 
+function appliedLayer(id: string) {
+  return appliedStyle().layers.find((layer: { id: string }) => layer.id === id);
+}
+
 describe('Protomaps basemap', () => {
   afterAll(() => setTestFlags({}));
 
@@ -200,7 +204,7 @@ describe('Protomaps basemap', () => {
   it('draws labels in Grafana’s own Inter instead of Noto Sans', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[1].layout['text-font']).toEqual([
+    expect(appliedLayer('places_locality').layout['text-font']).toEqual([
       'step',
       ['zoom'],
       ['literal', ['Inter Regular']],
@@ -212,26 +216,29 @@ describe('Protomaps basemap', () => {
   it('names minor roads from zoom 16 instead of 15, and leaves paths and other roads unnamed', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[2]).toMatchObject({
-      id: 'roads_labels_minor',
+    expect(appliedLayer('roads_labels_minor')).toMatchObject({
       minzoom: 16,
-      filter: ['in', 'kind', 'minor_road'],
+      filter: ['==', ['get', 'kind'], 'minor_road'],
     });
   });
 
   it('labels only the places the default basemap labels, from zoom 15', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[3]).toMatchObject({
+    expect(appliedLayer('pois')).toMatchObject({
       minzoom: 15,
       filter: [
         'all',
         [
           'all',
-          ['in', ['get', 'kind'], ['literal', ['park', 'stadium']]],
+          ['in', ['get', 'kind'], ['literal', ['park', 'restaurant', 'museum', 'stadium']]],
           ['>=', ['zoom'], ['+', ['get', 'min_zoom'], 0]],
         ],
-        ['any', ['==', ['get', 'kind'], 'park'], ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13]],
+        [
+          'all',
+          ['in', ['get', 'kind'], ['literal', ['park', 'stadium', 'attraction']]],
+          ['any', ['==', ['get', 'kind'], 'park'], ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13]],
+        ],
       ],
     });
   });
