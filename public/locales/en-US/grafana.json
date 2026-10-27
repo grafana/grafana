@@ -17254,6 +17254,9 @@
     "truncation": {
       "label": "Content truncated",
       "tooltip": "The render hit a ceiling of {{maxChars, number}} characters or {{maxRows, number}} rows, so the rest was dropped. Shorten the template, or query fewer rows, to see all of it."
+    },
+    "variable-suggestions": {
+      "reduced-field": "Last non-null value of the field. Replace lastNotNull with another reducer, such as mean or max."
     }
   },
   "theme-playground": {
