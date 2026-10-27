@@ -112,7 +112,7 @@ function clampStyleToWidestTile(layer: VectorTileLayer) {
 
 function resolveFlavor(flavor: ProtomapsFlavor | undefined, theme: GrafanaTheme2) {
   if (!flavor || flavor === ProtomapsFlavor.Auto) {
-    return theme.isDark ? ProtomapsFlavor.Dark : ProtomapsFlavor.Light;
+    return theme.isDark ? ProtomapsFlavor.Black : ProtomapsFlavor.White;
   }
   return flavor;
 }
@@ -252,7 +252,7 @@ function createHandler(config: ProtomapsConfig | undefined, theme: GrafanaTheme2
           name: 'Flavor',
           settings: {
             options: [
-              { value: ProtomapsFlavor.Auto, label: 'Auto', description: 'Light or dark to match the Grafana theme' },
+              { value: ProtomapsFlavor.Auto, label: 'Auto', description: 'White or black to match the Grafana theme' },
               { value: ProtomapsFlavor.Light, label: 'Light' },
               { value: ProtomapsFlavor.Dark, label: 'Dark' },
               { value: ProtomapsFlavor.White, label: 'White', description: 'Muted light map for data on top' },
