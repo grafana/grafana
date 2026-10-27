@@ -76,7 +76,7 @@ func TestParseAggregateTargets(t *testing.T) {
 url = https://first.invalid
 audience = first
 poll_interval = 10m
-group_regex = '*.ext.grafana.app, *.grafana.com'
+group_patterns = '*.ext.grafana.app, *.grafana.com'
 ca_file = /etc/certs/first.crt
 [unrelated]
 url = https://ignored.invalid
@@ -117,12 +117,41 @@ func TestParseAggregateTargets_Auth(t *testing.T) {
 	cfg := setting.NewCfg()
 	addAggregateSection(t, cfg, "open", map[string]string{"url": "https://open.invalid", "discovery_auth": "none"})
 	addAggregateSection(t, cfg, "signed", map[string]string{"url": "https://signed.invalid", "discovery_auth": "cap_token", "audience": "signed"})
+	addAggregateSection(t, cfg, "bearer", map[string]string{"url": "https://bearer.invalid", "discovery_auth": "bearer", "audience": "bearer"})
 	targets, err := parseAggregateTargets(cfg)
 	require.NoError(t, err)
 	require.Equal(t, []aggregateTargetConfig{
 		{Name: "open", URL: "https://open.invalid", DiscoveryAuth: discoveryAuthNone, PollInterval: defaultAggregatePollInterval},
 		{Name: "signed", URL: "https://signed.invalid", Audience: "signed", DiscoveryAuth: discoveryAuthCAPToken, PollInterval: defaultAggregatePollInterval},
+		{Name: "bearer", URL: "https://bearer.invalid", Audience: "bearer", DiscoveryAuth: discoveryAuthBearer, PollInterval: defaultAggregatePollInterval},
 	}, targets)
+}
+
+func TestParseAggregateTargets_GroupPatterns(t *testing.T) {
+	for name, tc := range map[string]struct {
+		values  map[string]string
+		want    []string
+		wantErr string
+	}{
+		"group_patterns":         {values: map[string]string{"group_patterns": "*.ext.grafana.app"}, want: []string{"*.ext.grafana.app"}},
+		"deprecated group_regex": {values: map[string]string{"group_regex": "*.ext.grafana.app"}, want: []string{"*.ext.grafana.app"}},
+		"both":                   {values: map[string]string{"group_patterns": "*.a", "group_regex": "*.b"}, wantErr: "router.aggregate.custom: set group_patterns or group_regex, not both"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			tc.values["url"] = "https://example.invalid"
+			tc.values["discovery_auth"] = "none"
+			addAggregateSection(t, cfg, "custom", tc.values)
+			targets, err := parseAggregateTargets(cfg)
+			if tc.wantErr != "" {
+				require.EqualError(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Len(t, targets, 1)
+			require.Equal(t, tc.want, targets[0].GroupPatterns)
+		})
+	}
 }
 
 func TestParseAggregateTargets_InvalidAuth(t *testing.T) {

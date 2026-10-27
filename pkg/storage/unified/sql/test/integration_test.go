@@ -459,6 +459,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 					Resource:  "playlists",
 				},
 			},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)
