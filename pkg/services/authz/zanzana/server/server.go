@@ -35,6 +35,7 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -54,9 +55,10 @@ type Server struct {
 	authzv1.UnimplementedAuthzServiceServer
 	authzextv1.UnimplementedAuthzExtentionServiceServer
 
-	openFGAServer OpenFGAServer
-	openFGAClient openfgav1.OpenFGAServiceClient
-	store         storage.OpenFGADatastore
+	openFGAServer           OpenFGAServer
+	openFGAClient           openfgav1.OpenFGAServiceClient
+	store                   storage.OpenFGADatastore
+	permissionScopeResolver legacyscopes.IDResolver
 
 	cfg      setting.ZanzanaServerSettings
 	stores   map[string]zanzana.StoreInfo
@@ -105,16 +107,17 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 	zanzanaCfg := cfg.ZanzanaServer
 
 	s := &Server{
-		openFGAServer: openfga,
-		openFGAClient: openFGAClient,
-		store:         store,
-		stores:        make(map[string]zanzana.StoreInfo),
-		cfg:           zanzanaCfg,
-		cache:         localcache.New(zanzanaCfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),
-		logger:        logger,
-		tracer:        tracer,
-		metrics:       newZanzanaServerMetrics(reg),
-		nsLimiterSize: int64(zanzanaCfg.MaxConcurrentRequestsPerNamespace),
+		openFGAServer:           openfga,
+		openFGAClient:           openFGAClient,
+		store:                   store,
+		permissionScopeResolver: newPermissionScopeResolver(cfg, restConfig),
+		stores:                  make(map[string]zanzana.StoreInfo),
+		cfg:                     zanzanaCfg,
+		cache:                   localcache.New(zanzanaCfg.CacheSettings.CheckQueryCacheTTL, cacheCleanInterval),
+		logger:                  logger,
+		tracer:                  tracer,
+		metrics:                 newZanzanaServerMetrics(reg),
+		nsLimiterSize:           int64(zanzanaCfg.MaxConcurrentRequestsPerNamespace),
 	}
 
 	if zanzanaCfg.MaxConcurrentRequests > 0 {

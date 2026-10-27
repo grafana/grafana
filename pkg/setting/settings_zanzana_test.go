@@ -159,3 +159,22 @@ grpc_client_timeout = 10s
 		assert.Equal(t, 10*time.Second, cfg.ZanzanaClient.CallTimeout)
 	})
 }
+
+func TestReadZanzanaSettings_UserPermissions(t *testing.T) {
+	t.Run("disabled by default", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(nil)
+		require.NoError(t, err)
+		assert.False(t, cfg.ZanzanaServer.UserPermissionsEnabled)
+	})
+	t.Run("enabled explicitly", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte("[zanzana.server]\nuser_permissions_enabled = true\n"))
+		require.NoError(t, err)
+		assert.True(t, cfg.ZanzanaServer.UserPermissionsEnabled)
+	})
+	t.Run("environment override", func(t *testing.T) {
+		t.Setenv("GF_ZANZANA_SERVER_USER_PERMISSIONS_ENABLED", "true")
+		cfg, err := NewCfgFromBytes(nil)
+		require.NoError(t, err)
+		assert.True(t, cfg.ZanzanaServer.UserPermissionsEnabled)
+	})
+}
