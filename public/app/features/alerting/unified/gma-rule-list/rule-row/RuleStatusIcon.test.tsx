@@ -62,7 +62,10 @@ describe('RuleStatusIcon', () => {
     { name: 'Firing', props: { kind: 'alert', state: 'Firing' }, shape: 'icon-fire' },
     { name: 'Pending', props: { kind: 'alert', state: 'Pending' }, shape: 'icon-hourglass' },
     { name: 'Paused', props: { kind: 'alert', state: 'Firing', paused: true }, shape: 'icon-pause' },
-  ])('draws $name as $shape, not as a circle', ({ name, props, shape }) => {
+    { name: 'Recording', props: { kind: 'recording', health: 'Recording' }, shape: 'icon-square-shape' },
+    { name: 'Status unavailable', props: { kind: 'recording' }, shape: 'icon-square-shape' },
+    { name: 'Status unavailable', props: { kind: 'alert' }, shape: 'icon-circle' },
+  ])('draws $name as $shape', ({ name, props, shape }) => {
     render(<RuleStatusIcon {...props} />);
 
     expect(screen.getByLabelText(name)).toHaveAttribute('data-testid', shape);

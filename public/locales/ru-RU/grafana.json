@@ -1454,6 +1454,45 @@
       "saving": "Сохранение...",
       "title-error-saving-receiver": "Ошибка при сохранении получателя"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "result-count": {
+        "alert-rules_one": "",
+        "alert-rules_few": "",
+        "alert-rules_many": "",
+        "alert-rules_other": "",
+        "recording-rules_one": "",
+        "recording-rules_few": "",
+        "recording-rules_many": "",
+        "recording-rules_other": ""
+      },
+      "shared": {
+        "load-more": "",
+        "load-more-error": "",
+        "loading-rules": "",
+        "refresh-error": "",
+        "retry": ""
+      },
+      "status": {
+        "error": "",
+        "firing": "",
+        "no-data": "",
+        "normal": "",
+        "paused": "",
+        "pending": "",
+        "recording": "",
+        "recovering": "",
+        "unavailable": ""
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Чтобы изменить настройки обработчика оповещений Alertmanager, перейдите на страницу администратора Alerting. Если у вас нет доступа, обратитесь к администратору.",
       "admin-hint-external": "Чтобы изменить настройки обработчика оповещений Alertmanager, перейдите на страницу администратора Alerting. Если у вас нет доступа, обратитесь к администратору.",
@@ -1781,7 +1820,9 @@
         "autosync-tooltip-unsupported": "Для этого типа Alertmanager автосинхронизация недоступна. Если вы хотите ее включить, выберите источник данных Mimir или Cortex.",
         "datasource": "Источник данных Alertmanager",
         "datasource-autosync-badge": "Автосинхронизация",
+        "embedded-yaml-parse-error": "",
         "heading": "Импорт ресурсов уведомлений",
+        "invalid-alertmanager-config": "",
         "next-disabled-tooltip": "",
         "no-datasources": "Источники данных Alertmanager не найдены",
         "no-permission-desc": "У вас нет разрешения на импорт ресурсов уведомлений. Необходимо разрешение <strong>alerting.notifications:write</strong>. Вы можете пропустить этот шаг.",
@@ -2162,14 +2203,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Макс. количество точек данных",
-      "tooltip-max-data-points": "Максимальное количество точек данных на ряд. Используется непосредственно некоторыми источниками данных и при расчете автоматического интервала. При потоковой передаче данных это значение используется для кольцевого буфера."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "новая"
     },
     "min-interval-option": {
       "label-interval": "Интервал",
-      "tooltip-interval": "Интервал отправлен в источник данных. Рекомендуем установить частоту записи, например <1>1 мин</1>, если ваши данные записываются каждую минуту."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4183,6 +4224,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Перейти к основному контенту",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Вход"
     }
@@ -4666,8 +4712,7 @@
       "delete-warning": "Эта папка и все вложенные элементы будут удалены.",
       "folder-empty": "Выбранная папка пуста",
       "folder-not-empty": "Выбранная папка содержит ресурсы, которые будут удалены",
-      "missing-info": "Отсутствуют обязательные поля",
-      "success-message": "Папка удалена"
+      "missing-info": "Отсутствуют обязательные поля"
     },
     "empty-state": {
       "button-title": "Создать дашборд",
@@ -7319,8 +7364,7 @@
       "delete-error": "Не удалось удалить дашборд",
       "deleting": "Удаление...",
       "drawer-title": "Удалить подготовленный дашборд",
-      "no-repository-selected": "Отсутствует нужный репозиторий для удаления",
-      "success-message": "Дашборд удален"
+      "no-repository-selected": "Отсутствует нужный репозиторий для удаления"
     },
     "description-label": {
       "description": "Описание"
@@ -7357,6 +7401,7 @@
       "copy": "Копировать в буфер обмена",
       "learn-more": "Подробнее",
       "no-issues": "По запросу нет ошибок или сообщений.",
+      "no-panel-issues": "",
       "severity-error": "Ошибка",
       "severity-info": "Информация",
       "severity-warning": "Предупреждение"
@@ -7522,6 +7567,59 @@
       "usage-count_many": "Используется на {{count}} дашбордах",
       "usage-count_other": "Используется на {{count}} дашбордах"
     },
+    "lifecycle": {
+      "applied": "",
+      "apply": "",
+      "apply-body": "",
+      "apply-failed": "",
+      "apply-needs-edit": "",
+      "breadcrumb-draft": "",
+      "breadcrumb-pending-changes": "",
+      "change-added": "",
+      "change-badge-parts": "",
+      "change-edited": "",
+      "change-layout": "",
+      "change-layout-detail": "",
+      "change-panel": "",
+      "change-removed": "",
+      "change-setting": "",
+      "change-variable": "",
+      "compare": "",
+      "compare-base": "",
+      "compare-base-unknown": "",
+      "compare-changes": "",
+      "compare-empty": "",
+      "compare-json": "",
+      "compare-latest": "",
+      "compare-loading": "",
+      "compare-title": "",
+      "discard": "",
+      "discard-draft-body": "",
+      "discard-draft-failed": "",
+      "discard-draft-title": "",
+      "discard-pending-body": "",
+      "discard-pending-failed": "",
+      "discard-pending-title": "",
+      "draft-body": "",
+      "draft-body-source": "",
+      "draft-title": "",
+      "highlight-changes": "",
+      "open-to-save": "",
+      "pending-body": "",
+      "pending-body-source": "",
+      "pending-hint": "",
+      "pending-stale": "",
+      "pending-title": "",
+      "preview-changes": "",
+      "rebase": "",
+      "save": "",
+      "show-original-dashboard": "",
+      "stop-highlighting-changes": "",
+      "apply-title_one": "",
+      "apply-title_few": "",
+      "apply-title_many": "",
+      "apply-title_other": ""
+    },
     "link-edit-actions": {
       "add-link": "Добавить ссылку",
       "remove-link": "Удалить ссылку",
@@ -7550,14 +7648,10 @@
       "already-in-folder": "Дашборд уже находится в выбранной папке.",
       "api-error": "Не удалось переместить дашборд",
       "cancel-action": "Отмена",
-      "current-file-not-found": "Текущий файл дашборда не найден",
       "drawer-title": "Переместить подготовленный дашборд",
-      "file-load-error": "Ошибка при загрузке дашборда",
-      "loading-dashboard-data": "Загрузка данных дашборда",
       "move-action": "Переместить дашборд",
       "move-read-only-message": "Дашборд невозможно переместить непосредственно из Grafana, поскольку репозиторий доступен только для чтения. Чтобы переместить этот дашборд, переместите файл в репозиторий Git.",
       "moving": "Перемещение...",
-      "success-message": "Дашборд перемещен",
       "target-path-label": "Целевой путь",
       "title-this-repository-is-read-only": "Репозиторий предназначен только для чтения"
     },
@@ -7861,6 +7955,7 @@
       "show-variables-warning-alert-title": "Не удалось выполнить запросы переменных"
     },
     "save-errors": {
+      "forbidden": "",
       "unexpected": "Непредвиденная ошибка при сохранении."
     },
     "save-library-viz-panel-modal": {
@@ -13279,7 +13374,8 @@
         "close": "Закрыть {{title}}",
         "open": "Открыть {{title}}",
         "open-all": "Открыть ИИ-помощников и приложения боковой панели"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Войти в рабочее пространство",
@@ -13848,6 +13944,13 @@
       "placeholder": "Имя",
       "required": "Введите заголовок",
       "save-tooltip": "Сохранить"
+    }
+  },
+  "page-fallback-loader": {
+    "aria-label": "",
+    "step": {
+      "preparing": "",
+      "preparing-named": ""
     }
   },
   "page-loader": {
@@ -14445,6 +14548,7 @@
       "description-folder": "Папка в репозитории. Оставьте поле пустым, если это корневой каталог репозитория.",
       "description-folder-path": "Путь к папке внутри репозитория",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "Отправка данных в заданную ветвь отключена",
       "label-branch": "Ветвь",
       "label-comment": "Комментарий",
@@ -15714,11 +15818,6 @@
       "original-query": "Исходный запрос",
       "trace-id": "(Идентификатор трассировки: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Добавить запрос",
-      "expression": "Выражение",
-      "title-data-source-help": "Справка по источнику данных"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Интервал = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -15758,28 +15857,31 @@
     "accept": "Принять",
     "assistant-context-title": "Контекст соавторства по запросу",
     "assistant-instructions-title": "Соавторство по запросу: инструкции",
-    "assistant-unavailable": "Assistant недоступен",
-    "assistant-unavailable-body": "Для соавторства по запросам требуется Grafana Assistant.",
-    "building": "Создание запроса...",
+    "assistant-unavailable": "",
+    "building": "",
+    "cancel": "",
+    "change-inside-focus": "",
+    "change-outside-focus": "",
     "checking-assistant": "Проверка доступности Assistant...",
     "clarification-label": "Добавить больше информации",
     "clarification-message": "Пояснительное сообщение",
-    "clarification-placeholder": "Добавить больше информации...",
+    "clarification-placeholder": "",
     "clarification-title": "Информация запрошена",
     "close": "Закрыть интерфейс соавторства",
-    "context": "КОНТЕКСТ",
-    "context-error": "Не удалось прочитать контекст выбранного запроса",
+    "context-error": "",
     "continue": "Продолжить",
     "continue-here": "Продолжить здесь",
     "continue-in-assistant": "Продолжить в Assistant",
-    "continue-in-assistant-chat": "Продолжить в чате Assistant",
     "dialog": "Соавтор запроса",
     "dismiss": "Закрыть",
     "error": "Ошибка соавторства по запросу",
     "error-accept-failed": "Вариант запроса не принят. Повторите попытку.",
     "error-multiple-responses": "Assistant выдал противоречивые варианты запроса. Повторите попытку.",
     "error-preview-failed": "Невозможно просмотреть вариант запроса. Повторите попытку.",
+    "explain-failed": "",
     "explain-or-modify": "Объяснить или изменить",
+    "explain-query": "",
+    "explaining": "",
     "feedback-cancel": "Отменить",
     "feedback-description": "Ваш отзыв поможет улучшить работу с запросами в Grafana.",
     "feedback-error": "Не удалось отправить отзыв. Повторите попытку.",
@@ -15790,36 +15892,61 @@
     "feedback-not-helpful": "Бесполезно",
     "feedback-positive-placeholder": "Что вам понравилось? Что можно дополнительно улучшить?",
     "feedback-positive-title": "Что прошло хорошо?",
-    "feedback-privacy": "Ваша оценка, комментарий и тип действия (предложение или передача) были отправлены. Сведения о запросе, подсказка и ответ Assistant в отзыв не включены.",
+    "feedback-privacy": "",
     "feedback-recipient": "Предоставленная вами информация будет передана командам, занимающимся функцией создания запросов.",
     "feedback-send": "Отправить",
     "feedback-sending": "Отправка...",
-    "focus": "ФОКУС",
-    "handoff-guidance": "Для внесения этих изменений может потребоваться другой источник данных или дополнительные запросы, выходящие за рамки того, на котором мы сейчас сосредоточены. Перейдите в чат Assistant, чтобы внести более масштабные изменения.",
+    "focus": "",
+    "follow-up-label": "",
+    "follow-up-placeholder": "",
+    "handoff-guidance": "",
     "highlighted-query": "Выделенный запрос",
-    "highlighted-query-summary": "Сводка по выделенному запросу",
+    "hold-to-peek": "",
     "invalid-query-response": "Assistant не смог сгенерировать корректный код {{language}} после попытки исправить предложенный вариант. Добавьте больше информации и попробуйте еще раз.",
     "iteration-nudge": "Работаете над чем-то масштабным? Вносите крупные правки, используя больше пространства для работы.",
-    "open-in-chat": "Открыть в чате",
-    "original-change": "Исходный: {{kind}}",
+    "mention-label": "",
+    "mention-metric": "",
+    "mention-option": "",
+    "mention-suggestions": "",
+    "modify-query": "",
+    "next-option": "",
+    "open-in-chat": "",
+    "option": "",
+    "options": "",
+    "original": "",
+    "original-query": "",
+    "preview-error": "",
+    "preview-error-title": "",
+    "preview-no-data": "",
+    "preview-no-data-suggestion": "",
+    "preview-no-signal": "",
+    "preview-no-signal-title": "",
+    "preview-option": "",
+    "preview-original": "",
+    "preview-result": "",
     "previewing-query": "Предпросмотр запроса",
+    "previous-option": "",
     "prompt-label": "Опишите изменение в запросе",
-    "prompt-placeholder": "Опишите быстрое изменение...",
+    "prompt-placeholder": "",
     "proposal-details": "Сведения о варианте запроса",
-    "proposed-change": "Предложенный: {{kind}}",
-    "reading-highlighted-query": "Чтение выделенного запроса...",
+    "query-diff": "",
     "relevant-context": "Релевантный контекст запроса",
     "request-failed": "Assistant не смог сгенерировать вариант запроса. Повторите попытку.",
+    "resize-left": "",
+    "resize-right": "",
     "retry": "Повторить попытку",
+    "retry-context": "",
     "running-updated-query": "Выполняется обновленный запрос...",
+    "select-to-accept": "",
     "selection-ready": "Выделенный фрагмент входит в состав этого запроса {{language}}.",
     "selection-whole-query": "Для соавторства выбран полный запрос {{language}}.",
     "selection-with-type": "{{name}} — это {{type}} {{kind}}.",
     "stale-query-response": "Выделенный запрос был изменен до предоставления рекомендации. Закройте и выделите его снова.",
     "stop": "Остановить",
     "submit": "Соавтор",
-    "suggestion-updated": "Рекомендация обновлена",
+    "submit-follow-up": "",
     "unchanged-query-response": "Assistant выдал текущий запрос без изменений. Добавьте больше информации и попробуйте еще раз.",
+    "unconfirmed-prefix": "",
     "unsaved-safe": "Несохраненные изменения панели потеряны не будут.",
     "working-focus": "Фокус запроса"
   },
@@ -16017,6 +16144,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "Чтобы продолжить, выберите источник данных для этого запроса.",
     "datasource-load-error-title": "Не удалось загрузить источник данных для этого запроса",
     "loading-datasource": "Загрузка источника данных",
@@ -16219,6 +16347,7 @@
       "expand": "Развернуть",
       "filter": "",
       "loading": "Загрузка дашбордов",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "По вашему запросу ничего не найдено",
       "noResultsForFilterClear": "Очистить поиск",
       "noResultsForScopes": "Не найдены дашборды или ссылки для выбранных областей",
@@ -16455,14 +16584,7 @@
       "time-range": "Заблокировать временной диапазон"
     },
     "export": {
-      "back-button": "Назад к конфигурации экспорта",
-      "cancel-button": "Отмена",
-      "info-text": "Экспортируйте этот дашборд.",
-      "loading": "Загрузка…",
-      "save-button": "Сохранить в файл",
-      "share-externally-label": "Экспорт для внешнего доступа",
-      "view-button": "Просмотр JSON-файла",
-      "view-button-yaml": "Просмотр YAML"
+      "share-externally-label": "Экспорт для внешнего доступа"
     },
     "image": {
       "actions": "Действия по экспорту изображения",
@@ -16520,9 +16642,6 @@
       "dark": "Темная",
       "field-name": "Тема",
       "light": "Светлая"
-    },
-    "view-json": {
-      "copy-button": "Копировать в буфер обмена"
     }
   },
   "share-panel": {
@@ -16944,8 +17063,61 @@
   },
   "swagger": {
     "login": "Вход",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Проверьте пространство имен перед отправкой запросов или перезагрузите страницу и повторите попытку.",
-    "namespace-unavailable-title": "Не удалось загрузить пространство имен"
+    "namespace-unavailable-title": "Не удалось загрузить пространство имен",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16999,6 +17171,9 @@
     "description-styling-from-field": "Поле, содержащее объекты JSON со свойствами CSS",
     "description-tooltip-from-field": "Отобразите ячейку из поля (скрытого или видимого) в подсказке",
     "description-zebra-striping": "Чередовать цвет фона каждой второй строки",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Запрос"
     },
@@ -17703,6 +17878,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "Удалите части результатов запроса с помощью шаблона регулярного выражения."
       },
+      "deselect-all": "",
       "label-from-variable": "Из переменной",
       "label-identifier": "Идентификатор",
       "label-use-variable": "Использовать переменную",
@@ -17710,7 +17886,8 @@
       "name": {
         "filter-fields-by-name": "Фильтр полей по имени"
       },
-      "placeholder-regular-expression-pattern": "Шаблон регулярного выражения"
+      "placeholder-regular-expression-pattern": "Шаблон регулярного выражения",
+      "select-all": ""
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {
@@ -18553,6 +18730,7 @@
       "body_other": "Точно удалить {{count}} переменных?"
     },
     "editor": {
+      "back": "",
       "cancel": "Отменить",
       "delete": "Удалить",
       "delete-modal-body": "Точно удалить «{{name}}»?",
@@ -18561,6 +18739,7 @@
       "folder-description": "Ограничьте область действия переменной одной папкой или сделайте ее глобальной (доступной для всех дашбордов). Для этого выберите корневую папку «Дашборды»",
       "folder-description-folder-only": "Определите область действия переменной папкой, которую вы можете редактировать",
       "folder-label": "Папка",
+      "load-error-title": "",
       "moved": "Переменная перемещена",
       "name-exists": "В выбранной папке уже существует переменная с таким именем",
       "save": "Сохранить",

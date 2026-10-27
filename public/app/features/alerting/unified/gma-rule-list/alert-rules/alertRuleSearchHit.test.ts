@@ -51,4 +51,44 @@ describe('alertRuleSearchHitSchema', () => {
     expect(hit.health).toBeUndefined();
     expect(hit.state).toBe(state === 'Firing' ? 'Firing' : undefined);
   });
+
+  it('reads lastError from the search hit', () => {
+    const hit = toHit({ lastError: 'remote write failed' });
+
+    expect(hit.lastError).toBe('remote write failed');
+  });
+
+  it('leaves lastError unset when absent or not a string', () => {
+    expect(toHit({}).lastError).toBeUndefined();
+    expect(toHit({ lastError: 42 }).lastError).toBeUndefined();
+  });
+
+  it('reads the summary annotation from the JSON-encoded annotations field', () => {
+    const annotations = JSON.stringify({ summary: 'CPU is high', runbook_url: 'https://example.com' });
+    const hit = toHit({ annotations });
+
+    expect(hit.summary).toBe('CPU is high');
+  });
+
+  it('leaves summary unset when annotations has no summary key', () => {
+    const hit = toHit({ annotations: JSON.stringify({ runbook_url: 'https://example.com' }) });
+
+    expect(hit.summary).toBeUndefined();
+  });
+
+  it('leaves summary unset when annotations is malformed JSON', () => {
+    expect(toHit({ annotations: 'not-json' }).summary).toBeUndefined();
+    expect(toHit({ annotations: 42 }).summary).toBeUndefined();
+  });
+
+  it('reads interval from the search hit', () => {
+    const hit = toHit({ interval: '5m' });
+
+    expect(hit.interval).toBe('5m');
+  });
+
+  it('leaves interval unset when absent or not a string', () => {
+    expect(toHit({}).interval).toBeUndefined();
+    expect(toHit({ interval: 60 }).interval).toBeUndefined();
+  });
 });

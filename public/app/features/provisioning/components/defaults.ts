@@ -1,35 +1,31 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { generateNewBranchName } from './utils/newBranchName';
+import { isBranchTemplateEnforced } from '../utils/branchName';
 
-export function getDefaultWorkflow(config?: RepositoryView, loadedFromRef?: string) {
-  // An enforced branch name template has to be created and sent as `ref`, which a write default
-  // would drop, so it wins even over an explicit ref. Same conditions useBranchTemplate needs to
-  // apply the template (usable template, branch workflow available), so the default only switches
-  // when the template will actually be applied.
-  const { enforceTemplate, nameTemplate } = config?.branchOptions ?? {};
-  if (enforceTemplate && nameTemplate?.trim() && config?.workflows?.includes('branch')) {
-    return 'branch';
-  }
-  if (loadedFromRef && loadedFromRef !== config?.branch) {
-    return 'write'; // use write when the value targets an explicit ref
-  }
-  return config?.workflows?.[0];
-}
+import { generateNewBranchName } from './utils/newBranchName';
 
 export function getCanPushToConfiguredBranch(repository?: RepositoryView) {
   return repository?.workflows?.includes('write') ?? false;
 }
 
-export function getDefaultRef(repository: RepositoryView | undefined, branchPrefix: string, loadedFromRef?: string) {
-  const workflow = getDefaultWorkflow(repository, loadedFromRef);
-  if (workflow === 'branch') {
+export function getDefaultRef(
+  repository: RepositoryView | undefined,
+  branchPrefix: string,
+  loadedFromRef?: string
+): string {
+  const canBranch = repository?.workflows?.includes('branch') ?? false;
+  // An enforced name template only ever names a new branch, so start on one; useBranchTemplate
+  // replaces this placeholder with the rendered template. It wins over an explicit preview ref.
+  if (isBranchTemplateEnforced(repository)) {
     return generateNewBranchName(branchPrefix);
   }
-  // Opened from a branch preview, the write default saves back to that branch; the configured branch
-  // is only the target when the repository can't push anywhere else.
-  if (loadedFromRef && loadedFromRef !== repository?.branch && repository?.workflows?.includes('branch')) {
+  // Opened from a branch preview: keep saving to that branch.
+  if (canBranch && loadedFromRef && loadedFromRef !== repository?.branch) {
     return loadedFromRef;
+  }
+  // The repository lists its preferred workflow first; branch-first repositories start on a new branch.
+  if (repository?.workflows?.[0] === 'branch') {
+    return generateNewBranchName(branchPrefix);
   }
   return repository?.branch ?? '';
 }

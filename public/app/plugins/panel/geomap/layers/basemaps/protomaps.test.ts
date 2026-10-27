@@ -245,13 +245,12 @@ describe('Protomaps basemap', () => {
     await initLayer({ showLabels: true });
 
     expect(appliedLayer('roads_labels_minor')).toMatchObject({
-      id: 'roads_labels_minor',
       minzoom: 16,
-      filter: ['in', 'kind', 'minor_road'],
+      filter: ['==', ['get', 'kind'], 'minor_road'],
     });
   });
 
-  it('labels only the places CARTO labels, from zoom 15', async () => {
+  it('labels only the places the default basemap labels, from zoom 15', async () => {
     await initLayer({ showLabels: true });
 
     expect(appliedLayer('pois')).toMatchObject({
@@ -260,10 +259,14 @@ describe('Protomaps basemap', () => {
         'all',
         [
           'all',
-          ['in', ['get', 'kind'], ['literal', ['park', 'stadium']]],
+          ['in', ['get', 'kind'], ['literal', ['park', 'restaurant', 'museum', 'stadium']]],
           ['>=', ['zoom'], ['+', ['get', 'min_zoom'], 0]],
         ],
-        ['any', ['==', ['get', 'kind'], 'park'], ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13]],
+        [
+          'all',
+          ['in', ['get', 'kind'], ['literal', ['park', 'stadium', 'attraction']]],
+          ['any', ['==', ['get', 'kind'], 'park'], ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13]],
+        ],
       ],
     });
   });
@@ -415,7 +418,7 @@ describe('Protomaps basemap', () => {
     expect(stops[3]).toEqual(['match', ['get', 'kind_detail'], 'city', 'uppercase', 'none']);
   });
 
-  it('leaves out house numbers, which CARTO never shows', async () => {
+  it('leaves out house numbers, which the default basemap never shows', async () => {
     await initLayer({ showLabels: true });
 
     expect(appliedStyle().layers.map((layer: { id: string }) => layer.id)).not.toContain('address_label');
