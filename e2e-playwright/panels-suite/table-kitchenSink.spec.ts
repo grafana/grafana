@@ -275,8 +275,6 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
   });
 
   test('Tests DataLinks (single and multi) and actions', async ({ gotoDashboardPage, selectors, page }) => {
-    test.slow();
-
     // section is collapsed when the panel has no links, so we need to open it first
     const expandDataLinksGroup = async () => {
       const toggle = dashboardPage.getByGrafanaSelector(
