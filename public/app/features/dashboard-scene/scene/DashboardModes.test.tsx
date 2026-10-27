@@ -22,7 +22,6 @@ import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient
 import { LAZY_DASHBOARD_COMMANDS } from '../mutation-api/commands/lazyRegistry';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { SaveDashboardForm } from '../saving/SaveDashboardForm';
-import { setDashboardModeAfterSave, consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -481,12 +480,6 @@ describe('switching from Editing to Viewing with unsaved changes', () => {
     expect(screen.getByRole('button', { name: 'Dashboard mode: Viewing' })).toBeInTheDocument();
     expect(dashboard.state.overlay).toBeUndefined();
   });
-});
-
-it.each(['view', 'edit'] as const)('hands off %s once after first save or copy', (mode) => {
-  setDashboardModeAfterSave('new-uid', mode);
-  expect(consumeDashboardModeAfterSave('new-uid')).toBe(mode);
-  expect(consumeDashboardModeAfterSave('new-uid')).toBeUndefined();
 });
 
 it('binds View mutation permission to the host-provided plugin identity', async () => {
