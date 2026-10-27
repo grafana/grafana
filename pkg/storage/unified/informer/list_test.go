@@ -8,20 +8,18 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-
-	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
-// pagedJobList builds one page of a paginated job LIST: the named jobs plus the
+// pagedList builds one page of a paginated LIST: the named objects plus the
 // continue token pointing at the next page (empty on the last page) and the
 // snapshot resource version (pinned across pages by the continue token).
-func pagedJobList(continueToken, resourceVersion string, names ...string) *provisioningapis.JobList {
-	l := &provisioningapis.JobList{
+func pagedList(continueToken, resourceVersion string, names ...string) *metav1.PartialObjectMetadataList {
+	l := &metav1.PartialObjectMetadataList{
 		ListMeta: metav1.ListMeta{Continue: continueToken, ResourceVersion: resourceVersion},
 	}
 	for _, name := range names {
-		l.Items = append(l.Items, provisioningapis.Job{
-			ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name},
+		l.Items = append(l.Items, metav1.PartialObjectMetadata{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: name},
 		})
 	}
 	return l
@@ -32,37 +30,37 @@ func TestListAllPages(t *testing.T) {
 		name string
 		// pages is keyed by the continue token the page func receives; "" is the
 		// first call.
-		pages      map[string]*provisioningapis.JobList
+		pages      map[string]*metav1.PartialObjectMetadataList
 		errOn      string // continue token whose page fails
 		wantNames  []string
-		wantListRV int64 // resource version listAllPages reports for the snapshot
+		wantListRV string // resource version ListAllPages reports for the snapshot
 		wantErr    bool
 		wantCalls  []string // continue tokens received, in order
 	}{
 		{
 			name: "single page",
-			pages: map[string]*provisioningapis.JobList{
-				"": pagedJobList("", "100", "a", "b"),
+			pages: map[string]*metav1.PartialObjectMetadataList{
+				"": pagedList("", "100", "a", "b"),
 			},
 			wantNames:  []string{"a", "b"},
-			wantListRV: 100,
+			wantListRV: "100",
 			wantCalls:  []string{""},
 		},
 		{
 			name: "follows continue tokens across pages",
-			pages: map[string]*provisioningapis.JobList{
-				"":      pagedJobList("page2", "200", "a", "b"),
-				"page2": pagedJobList("page3", "200", "c", "d"),
-				"page3": pagedJobList("", "200", "e"),
+			pages: map[string]*metav1.PartialObjectMetadataList{
+				"":      pagedList("page2", "200", "a", "b"),
+				"page2": pagedList("page3", "200", "c", "d"),
+				"page3": pagedList("", "200", "e"),
 			},
 			wantNames:  []string{"a", "b", "c", "d", "e"},
-			wantListRV: 200, // pinned to the first page's version across pages
+			wantListRV: "200", // pinned to the first page's version across pages
 			wantCalls:  []string{"", "page2", "page3"},
 		},
 		{
 			name: "error on a later page fails the whole list",
-			pages: map[string]*provisioningapis.JobList{
-				"": pagedJobList("page2", "300", "a", "b"),
+			pages: map[string]*metav1.PartialObjectMetadataList{
+				"": pagedList("page2", "300", "a", "b"),
 			},
 			errOn:     "page2",
 			wantErr:   true,
@@ -83,7 +81,7 @@ func TestListAllPages(t *testing.T) {
 				return l, nil
 			}
 
-			out, listRV, err := listAllPages(context.Background(), page)
+			out, listRV, err := ListAllPages(context.Background(), page)
 			require.Equal(t, tt.wantCalls, calls)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -93,9 +91,9 @@ func TestListAllPages(t *testing.T) {
 			require.Equal(t, tt.wantListRV, listRV)
 			names := make([]string, 0, len(out))
 			for _, obj := range out {
-				job, ok := obj.(*provisioningapis.Job)
+				item, ok := obj.(*metav1.PartialObjectMetadata)
 				require.True(t, ok)
-				names = append(names, job.Name)
+				names = append(names, item.Name)
 			}
 			require.Equal(t, tt.wantNames, names)
 		})

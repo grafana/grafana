@@ -64,13 +64,10 @@ func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interfac
 	}
 	opts.Namespace = namespace
 	opts.Group = queueGroup
-	// Delivered as a projection rather than the generated type: a live event carries the identity alone, and a
-	// zero-valued spec on a real object would read as a spec that is set to nothing.
-	list := func(ctx context.Context) ([]runtime.Object, error) {
-		objs, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+	list := func(ctx context.Context) ([]runtime.Object, string, error) {
+		return usinformer.ListAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			return c.Connections(namespace).List(ctx, opts)
 		})
-		return projectObjects(objs), err
 	}
 	return usinformer.NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{},
 		&provisioningapis.ConnectionResourceInfo, resync, list, opts)

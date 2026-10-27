@@ -91,11 +91,10 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 			return fmt.Errorf("failed to start NATS subscriber: %w", err)
 		}
 
-		list := func(ctx context.Context) ([]runtime.Object, error) {
-			objs, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		list := func(ctx context.Context) ([]runtime.Object, string, error) {
+			return usinformer.ListAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 				return dynClient.Resource(folderGVR).Namespace("").List(ctx, opts)
 			})
-			return objs, err
 		}
 
 		inf, err := usinformer.NewBusDeltaSource(subscriber, &folderv1.Folder{}, folderResourceInfo{},

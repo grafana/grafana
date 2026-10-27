@@ -224,7 +224,9 @@ func TestClientRepositoryGetter_ADeleteStopsItCounting(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
 
-	forgetDeleted{getter: g}.OnDelete(identity("ns", "fresh", "8"))
+	forgetDeleted{getter: g}.OnDelete(&metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{
+		Namespace: "ns", Name: "fresh", ResourceVersion: "8",
+	}})
 
 	count, err = g.CountRepositories(context.Background(), "ns")
 	require.NoError(t, err)

@@ -43,11 +43,10 @@ func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, r
 // to cover every namespace.
 func NewJobBusDeltaSource(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, busMetrics *operator.BusInformerMetrics) (DeltaSource, error) {
 	c := client.ProvisioningV0alpha1()
-	list := func(ctx context.Context) ([]runtime.Object, error) {
-		objs, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+	list := func(ctx context.Context) ([]runtime.Object, string, error) {
+		return usinformer.ListAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			return c.Jobs(namespace).List(ctx, opts)
 		})
-		return objs, err
 	}
 	return usinformer.NewBusDeltaSource(subscriber, &provisioningapis.Job{}, &provisioningapis.JobResourceInfo,
 		resync, list, usinformer.BusSourceOptions{Namespace: namespace, Group: queueGroup, Metrics: busMetrics})

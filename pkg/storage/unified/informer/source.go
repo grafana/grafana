@@ -68,11 +68,13 @@ func SDKKind(info ResourceInfo) resource.Kind {
 	return sdkKind(info, &resource.UntypedObject{})
 }
 
-// PeriodicListFunc returns every object of one resource kind, read straight from the API.
-type PeriodicListFunc func(ctx context.Context) ([]runtime.Object, error)
+// PeriodicListFunc returns every object of one resource kind, read straight from the API, with the resource version
+// the snapshot was read at. An empty version leaves the bus informer unable to tell a queued event its re-list
+// already accounts for from one it does not, so it stops superseding them; a re-list-only informer has no live
+// stream to arbitrate against and may return it empty.
+type PeriodicListFunc func(ctx context.Context) ([]runtime.Object, string, error)
 
-// periodicLister adapts a list of the controllers' own types to the app-sdk's lister contract. The resource version
-// is dropped: a re-list-only informer has no live stream to arbitrate against.
+// periodicLister adapts a list of the controllers' own types to the app-sdk's lister contract.
 type periodicLister struct {
 	list     PeriodicListFunc
 	recorder operator.RelistRecorder
@@ -80,7 +82,7 @@ type periodicLister struct {
 
 func (l periodicLister) List(ctx context.Context) ([]resource.Object, string, error) {
 	l.recorder.Request()
-	objs, err := l.list(ctx)
+	objs, listRV, err := l.list(ctx)
 	if err != nil {
 		return nil, "", err
 	}
@@ -93,7 +95,7 @@ func (l periodicLister) List(ctx context.Context) ([]resource.Object, string, er
 		out = append(out, wrapped)
 	}
 	l.recorder.Projection(operator.ProjectionObjects)
-	return out, "", nil
+	return out, listRV, nil
 }
 
 // wrapObject presents a kubernetes object as the app-sdk's Object without the kind implementing it: WrappedObject

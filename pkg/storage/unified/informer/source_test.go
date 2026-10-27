@@ -126,8 +126,8 @@ func runPeriodicSource(t *testing.T, list PeriodicListFunc) (*recorder, cache.Re
 // to come back off before delivery.
 func TestPeriodicDeltaSourceDeliversTheListedObject(t *testing.T) {
 	listed := entry("ns", "one")
-	rec, _ := runPeriodicSource(t, func(context.Context) ([]runtime.Object, error) {
-		return []runtime.Object{listed}, nil
+	rec, _ := runPeriodicSource(t, func(context.Context) ([]runtime.Object, string, error) {
+		return []runtime.Object{listed}, "", nil
 	})
 
 	require.Eventually(t, func() bool { return rec.last() != nil }, 5*time.Second, 5*time.Millisecond)
@@ -139,16 +139,16 @@ func TestPeriodicDeltaSourceDeliversTheListedObject(t *testing.T) {
 
 // A failed list must not report the source as synced, or the handler is released against nothing.
 func TestPeriodicDeltaSourceRetriesTheInitialList(t *testing.T) {
-	_, registration := runPeriodicSource(t, func(context.Context) ([]runtime.Object, error) {
-		return nil, errors.New("api unavailable")
+	_, registration := runPeriodicSource(t, func(context.Context) ([]runtime.Object, string, error) {
+		return nil, "", errors.New("api unavailable")
 	})
 
 	assert.Never(t, registration.HasSynced, 200*time.Millisecond, 20*time.Millisecond)
 }
 
 func TestPeriodicListerRejectsANonKubernetesObject(t *testing.T) {
-	_, _, err := periodicLister{list: func(context.Context) ([]runtime.Object, error) {
-		return []runtime.Object{&notAnObject{}}, nil
+	_, _, err := periodicLister{list: func(context.Context) ([]runtime.Object, string, error) {
+		return []runtime.Object{&notAnObject{}}, "", nil
 	}}.List(context.Background())
 
 	assert.ErrorContains(t, err, "not a kubernetes object")
@@ -165,7 +165,7 @@ func (o *notAnObject) DeepCopyObject() runtime.Object   { return &notAnObject{} 
 func TestBusDeltaSourceSubscribesOnTheResource(t *testing.T) {
 	subscriber := newFakeSubscriber()
 	src, err := NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{}, testInfo{}, time.Hour,
-		func(context.Context) ([]runtime.Object, error) { return nil, nil }, BusSourceOptions{Namespace: "ns"})
+		func(context.Context) ([]runtime.Object, string, error) { return nil, "", nil }, BusSourceOptions{Namespace: "ns"})
 	require.NoError(t, err)
 
 	rec := &recorder{}
@@ -197,7 +197,7 @@ func TestBusDeltaSourceSubscribesOnTheResource(t *testing.T) {
 func TestBusDeltaSourceCarriesAnnouncedMetadata(t *testing.T) {
 	subscriber := newFakeSubscriber()
 	src, err := NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{}, testInfo{}, time.Hour,
-		func(context.Context) ([]runtime.Object, error) { return nil, nil }, BusSourceOptions{Namespace: "ns"})
+		func(context.Context) ([]runtime.Object, string, error) { return nil, "", nil }, BusSourceOptions{Namespace: "ns"})
 	require.NoError(t, err)
 
 	rec := &recorder{}
@@ -233,9 +233,22 @@ func TestBusDeltaSourceCarriesAnnouncedMetadata(t *testing.T) {
 	assert.Equal(t, int64(1700000000000), delivered.DeletionTimestamp.UnixMilli())
 }
 
+// The bus informer drops a queued event a completed re-list already accounts for, and it decides that by comparing
+// the event against the version the list was read at. A lister which reports no version silently disables it, so the
+// list contract carries the version through rather than discarding it.
+func TestBusDeltaSourceReportsTheListVersion(t *testing.T) {
+	var got string
+	lister := periodicLister{list: func(context.Context) ([]runtime.Object, string, error) {
+		return []runtime.Object{entry("ns", "one")}, "42", nil
+	}}
+	_, got, err := lister.List(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, "42", got)
+}
+
 func TestBusDeltaSourceRequiresNats(t *testing.T) {
 	_, err := NewBusDeltaSource(nil, &metav1.PartialObjectMetadata{}, testInfo{}, time.Hour,
-		func(context.Context) ([]runtime.Object, error) { return nil, nil }, BusSourceOptions{})
+		func(context.Context) ([]runtime.Object, string, error) { return nil, "", nil }, BusSourceOptions{})
 	assert.ErrorContains(t, err, "nats is not enabled")
 }
 
@@ -245,7 +258,9 @@ func TestBusDeltaSourceAnnouncesOnlyLiveDeliveries(t *testing.T) {
 	announced := operator.NewAnnouncementTracker(operator.AnnouncementTrackerOptions{})
 	subscriber := newFakeSubscriber()
 	src, err := NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{}, testInfo{}, time.Hour,
-		func(context.Context) ([]runtime.Object, error) { return []runtime.Object{entry("ns", "listed")}, nil },
+		func(context.Context) ([]runtime.Object, string, error) {
+			return []runtime.Object{entry("ns", "listed")}, "5", nil
+		},
 		BusSourceOptions{Namespace: "ns", Announcements: announced})
 	require.NoError(t, err)
 
