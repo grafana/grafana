@@ -92,6 +92,10 @@ describe('table module', () => {
     );
   });
 
+  it('replaces inherited footer calculations with override values', () => {
+    expect(customConfigItem('footer.reducers').arrayOverrideStrategy).toBe('replace');
+  });
+
   describe('"Cell value inspect" visibility', () => {
     const showIf = (type: TableCellDisplayMode) =>
       // showIf receives the custom field config; only cellOptions.type gates this switch
