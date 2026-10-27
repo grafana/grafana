@@ -1,12 +1,11 @@
-import { css } from '@emotion/css';
 import { type KeyboardEventHandler, type ReactNode, type Ref } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
-import { useStyles2 } from '../../../../themes/ThemeContext';
+import { useTheme2 } from '../../../../themes/ThemeContext';
 import { Button } from '../../../Button/Button';
+import { Box } from '../../../Layout/Box/Box';
 import { Stack } from '../../../Layout/Stack/Stack';
 import { Text } from '../../../Text/Text';
 
@@ -18,22 +17,28 @@ interface FilterPopupLayoutProps {
 }
 
 export function FilterPopupLayout({ children, containerRef, width, onKeyDown }: FilterPopupLayoutProps) {
-  const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   return (
     // Handle Escape from child controls before the table header stops keyboard propagation.
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div
+    <Box
       ref={containerRef}
       onKeyDown={onKeyDown}
-      className={styles.container}
-      style={width ? { width } : undefined}
+      width={width ? `${width}px` : 'fit-content'}
+      minWidth="280px"
+      maxWidth="360px"
+      backgroundColor="elevated"
+      borderColor="weak"
+      borderStyle="solid"
+      borderRadius={theme.components.menu.borderRadius}
+      boxShadow={theme.flags.visualDesignRefresh ? 'z2' : 'z3'}
+      padding={2}
       data-testid={selectors.components.Panels.Visualization.TableNG.Filters.Container}
     >
       <Stack direction="column" gap={1.5}>
         {children}
       </Stack>
-    </div>
+    </Box>
   );
 }
 
@@ -96,18 +101,3 @@ const compactCount = new Intl.NumberFormat('en-US', {
 export function formatRowCount(count: number): string {
   return count > 1000 ? compactCount.format(count).replace('K', 'k') : String(count);
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  container: css({
-    label: 'filterContainer',
-    width: 'fit-content',
-    minWidth: 280,
-    maxWidth: 360,
-    boxSizing: 'border-box',
-    backgroundColor: theme.colors.background.primary,
-    border: `1px solid ${theme.colors.border.weak}`,
-    padding: theme.spacing(2),
-    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
-    borderRadius: theme.shape.radius.default,
-  }),
-});
