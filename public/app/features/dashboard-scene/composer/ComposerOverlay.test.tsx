@@ -145,6 +145,80 @@ const item = (overrides: Partial<ComposerAnnotation> = {}): ComposerAnnotation =
   ...overrides,
 });
 
+/** Makes `element` a vertical scroll container scrolled to `top`; returns its `scrollBy`. */
+function makeScrollable(element: HTMLElement, { top = 0, height = 500, contentHeight = 2000 } = {}) {
+  element.style.overflowY = 'auto';
+  Object.defineProperty(element, 'clientHeight', { configurable: true, value: height });
+  Object.defineProperty(element, 'scrollHeight', { configurable: true, value: contentHeight });
+  Object.defineProperty(element, 'scrollTop', { configurable: true, writable: true, value: top });
+  const scrollBy = jest.fn();
+  element.scrollBy = scrollBy;
+  return scrollBy;
+}
+
+describe('wheel', () => {
+  let dashboardBody: HTMLElement;
+
+  /** The dashboard's scroll container: around the panel, and not around the overlay, as in the splitter. */
+  const setupInBody = () => {
+    const result = setup();
+    dashboardBody = document.createElement('div');
+    document.body.appendChild(dashboardBody);
+    dashboardBody.appendChild(panelRoot!);
+    return result;
+  };
+
+  const wheel = (init: WheelEventInit) => {
+    const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, clientX: 200, clientY: 350, ...init });
+    screen.getByTestId('dashboard-composer-overlay').dispatchEvent(event);
+    return event;
+  };
+
+  afterEach(() => dashboardBody?.remove());
+
+  it('scrolls the dashboard under the layer, though the layer is not inside it', () => {
+    setupInBody();
+    const scrollBy = makeScrollable(dashboardBody);
+
+    const event = wheel({ deltaY: 120 });
+
+    expect(scrollBy).toHaveBeenCalledWith({ left: 0, top: 120 });
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('scrolls a scrollable panel first, then the dashboard once the panel is at its end', () => {
+    setupInBody();
+    const bodyScrollBy = makeScrollable(dashboardBody);
+    const panelScrollBy = makeScrollable(panelRoot!);
+
+    wheel({ deltaY: 120 });
+    expect(panelScrollBy).toHaveBeenCalledTimes(1);
+    expect(bodyScrollBy).not.toHaveBeenCalled();
+
+    makeScrollable(panelRoot!, { top: 1500 });
+    wheel({ deltaY: 120 });
+    expect(bodyScrollBy).toHaveBeenCalledWith({ left: 0, top: 120 });
+  });
+
+  it('scrolls by lines for a wheel that counts in lines', () => {
+    setupInBody();
+    const scrollBy = makeScrollable(dashboardBody);
+
+    wheel({ deltaY: 3, deltaMode: WheelEvent.DOM_DELTA_LINE });
+
+    expect(scrollBy).toHaveBeenCalledWith({ left: 0, top: 48 });
+  });
+
+  it('leaves the wheel alone when nothing under it can scroll that way, and Ctrl+wheel to zoom', () => {
+    setupInBody();
+    const scrollBy = makeScrollable(dashboardBody);
+
+    expect(wheel({ deltaY: -120 }).defaultPrevented).toBe(false);
+    expect(wheel({ deltaY: 120, ctrlKey: true }).defaultPrevented).toBe(false);
+    expect(scrollBy).not.toHaveBeenCalled();
+  });
+});
+
 describe('picking', () => {
   it('resolves a click on a panel to its panel id and the normalised click point', async () => {
     const { startPick } = setup();
