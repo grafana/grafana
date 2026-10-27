@@ -29,7 +29,6 @@ import {
 } from 'app/types/events';
 
 import { RestrictedGrafanaApisProvider } from '../components/restrictedGrafanaApis/RestrictedGrafanaApisProvider';
-import { preloadPlugins } from '../pluginPreloader';
 
 import { ExtensionErrorBoundary } from './ExtensionErrorBoundary';
 import {
@@ -587,28 +586,6 @@ export function addedLinkToExtensionLink(
 export async function getAppPluginConfigs(pluginIds: string[] = []): Promise<AppPluginConfig[]> {
   const apps = await getAppPluginMetas();
   return getAppPluginConfigsSync(pluginIds, apps);
-}
-
-export type PluginDependencyPredicate = (id: string) => Promise<string[]>;
-
-/**
- * Shared by `useLoadAppPlugins` and the observable extension APIs (e.g. `getObservablePluginLinks`) so both
- * get identical on-demand plugin loading for a given predicate (e.g. `getExtensionPointPluginDependencies`).
- */
-export async function loadDependentAppPlugins(id: string, predicate: PluginDependencyPredicate): Promise<void> {
-  const filteredConfigs = await predicate(id);
-
-  if (!filteredConfigs.length) {
-    return;
-  }
-
-  const appConfigs = await getAppPluginConfigs(filteredConfigs);
-
-  if (!appConfigs.length) {
-    return;
-  }
-
-  await preloadPlugins(appConfigs);
 }
 
 /**

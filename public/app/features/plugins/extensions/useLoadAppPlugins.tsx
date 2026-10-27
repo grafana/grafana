@@ -1,6 +1,6 @@
 import { useAsync } from 'react-use';
 
-import { loadDependentAppPlugins, type PluginDependencyPredicate } from './utils';
+import { loadDependentAppPlugins, type PluginDependencyPredicate } from './loadDependentAppPlugins';
 
 export function useLoadAppPlugins(pluginId: string, predicate: PluginDependencyPredicate): { isLoading: boolean } {
   const { loading: isLoading } = useAsync(async () => {

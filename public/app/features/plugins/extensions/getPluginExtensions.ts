@@ -3,6 +3,7 @@ import { catchError, combineLatest, defer, forkJoin, from, map, type Observable,
 import { PluginExtensionTypes, type PluginExtension, type PluginExtensionComponent } from '@grafana/data';
 import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
 
+import { loadDependentAppPlugins } from './loadDependentAppPlugins';
 import { log } from './logs/log';
 import { getPluginExtensionRegistries } from './registry/setup';
 import { type GetExtensions, type GetExtensionsOptions } from './types';
@@ -11,7 +12,6 @@ import {
   getReadOnlyProxy,
   generateExtensionId,
   getExtensionPointPluginDependencies,
-  loadDependentAppPlugins,
   wrapWithPluginContext,
   getLinkExtensionOverrides,
 } from './utils';

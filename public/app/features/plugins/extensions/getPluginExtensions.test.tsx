@@ -14,6 +14,7 @@ import {
   getObservablePluginLinks,
   getPluginExtensions,
 } from './getPluginExtensions';
+import { loadDependentAppPlugins } from './loadDependentAppPlugins';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
@@ -21,7 +22,7 @@ import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { getPluginExtensionRegistries } from './registry/setup';
-import { getExtensionPointPluginDependencies, isReadOnlyProxy, loadDependentAppPlugins } from './utils';
+import { getExtensionPointPluginDependencies, isReadOnlyProxy } from './utils';
 import { assertPluginExtensionLink } from './validators';
 
 jest.mock('@grafana/runtime', () => {
@@ -46,8 +47,7 @@ jest.mock('./registry/setup', () => ({
   getPluginExtensionRegistries: jest.fn(),
 }));
 
-jest.mock('./utils', () => ({
-  ...jest.requireActual('./utils'),
+jest.mock('./loadDependentAppPlugins', () => ({
   loadDependentAppPlugins: jest.fn().mockResolvedValue(undefined),
 }));
 
