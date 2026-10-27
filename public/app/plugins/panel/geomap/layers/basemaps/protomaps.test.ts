@@ -236,9 +236,8 @@ describe('Protomaps basemap', () => {
     await initLayer({ showLabels: true });
 
     expect(appliedLayer('roads_labels_minor')).toMatchObject({
-      id: 'roads_labels_minor',
       minzoom: 16,
-      filter: ['in', 'kind', 'minor_road'],
+      filter: ['==', ['get', 'kind'], 'minor_road'],
     });
   });
 
@@ -251,10 +250,14 @@ describe('Protomaps basemap', () => {
         'all',
         [
           'all',
-          ['in', ['get', 'kind'], ['literal', ['park', 'stadium']]],
+          ['in', ['get', 'kind'], ['literal', ['park', 'restaurant', 'museum', 'stadium']]],
           ['>=', ['zoom'], ['+', ['get', 'min_zoom'], 0]],
         ],
-        ['any', ['==', ['get', 'kind'], 'park'], ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13]],
+        [
+          'all',
+          ['in', ['get', 'kind'], ['literal', ['park', 'stadium', 'attraction']]],
+          ['any', ['==', ['get', 'kind'], 'park'], ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13]],
+        ],
       ],
     });
   });

@@ -320,8 +320,6 @@ export const FlagKeys = {
   QueryHistoryLocalOnly: "queryHistory.localOnly",
   /** Replace the Query History drawer with a new Recent Queries modal UI */
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
-  /** Enables Saved queries (query library) feature */
-  QueryLibrary: "queryLibrary",
   /** Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query */
   QueryService: "queryService",
   /** Adds datasource connections to the query service */
@@ -2079,17 +2077,6 @@ export const useFlagQueryHistoryLocalOnly = (options?: ReactFlagEvaluationOption
  */
 export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryHistory.recentQueriesUI", false, options).value;
-};
-
-/**
- * Enables Saved queries (query library) feature
- *
- * **Details:**
- * - flag key: `queryLibrary`
- * - default value: `true`
- */
-export const useFlagQueryLibrary = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("queryLibrary", true, options).value;
 };
 
 /**

@@ -8,28 +8,18 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"reflect"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
-	"github.com/grafana/authlib/types"
 	lru "github.com/hashicorp/golang-lru/v2"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/singleflight"
 	"golang.org/x/time/rate"
-	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
-
-// loaderWithSingleTenantFallback supplies the standalone router's handler for unregistered API groups.
-type loaderWithSingleTenantFallback interface {
-	SingleTenantFallback() http.Handler
-}
 
 const (
 	// Bound stale routing after a rename, move, or deletion; cache hits do not extend this TTL.
@@ -52,63 +42,26 @@ const (
 	singleTenantDiscoveryInterval = 10 * time.Minute
 )
 
-// singleTenantStack is what a resolver reports for a stack; the zero value means not found.
-type singleTenantStack struct {
-	URL       string // where the router connects
-	PublicURL string // its host is sent as the Host header, when set
-	Slug      string // expected grafana-stack response header, when set
-}
-
-type singleTenantTarget struct {
-	url  *url.URL
-	host string
-	slug string
-}
-
-type singleTenantHost struct {
-	host      *singleTenantTarget
-	expiresAt time.Time
-}
-
 // errStackOriginMismatch means the response came from a different stack than the one resolved.
 var errStackOriginMismatch = errors.New("router: response came from an unexpected stack")
 
-// stackLookupCounts counts grafana.com stack lookups by result, for metrics.
-type stackLookupCounts struct {
-	cacheHit, resolved, notFound, throttled, failed atomic.Uint64
-}
-
-func (c *stackLookupCounts) record(target *singleTenantTarget, err error) {
-	switch {
-	case errors.Is(err, errStackLookupThrottled):
-		c.throttled.Add(1)
-	case err != nil:
-		c.failed.Add(1)
-	case target == nil:
-		c.notFound.Add(1)
-	default:
-		c.resolved.Add(1)
+// counters reports the fallback's stack lookups and, when it caches
+// discovery, its discovery cache lookups.
+func (st *singleTenantFallback) counters() []loaderCounter {
+	counters := []loaderCounter{{
+		Metric:   "stack_lookups_total",
+		Help:     "Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.",
+		Status:   "stackLookups",
+		ByResult: st.lookupsBy.byResult(),
+	}}
+	if st.discoveryDocs != nil {
+		counters = append(counters, loaderCounter{
+			Metric:   "stack_discovery_cache_total",
+			Help:     "Single-tenant discovery requests looked up in the cache shared by each stack's callers, by result: hit or miss.",
+			ByResult: map[string]uint64{"hit": st.discoveryHits.Load(), "miss": st.discoveryMisses.Load()},
+		})
 	}
-}
-
-func (c *stackLookupCounts) byResult() map[string]uint64 {
-	return map[string]uint64{
-		"cache_hit": c.cacheHit.Load(), "resolved": c.resolved.Load(), "not_found": c.notFound.Load(),
-		"throttled": c.throttled.Load(), "error": c.failed.Load(),
-	}
-}
-
-// errStackLookupThrottled means the lookup rate limit was reached. It is never cached.
-var errStackLookupThrottled = errors.New("router: stack lookup throttled")
-
-// errSingleTenantDiscoveryPending keeps the router unready until the first discovery attempt.
-var errSingleTenantDiscoveryPending = errors.New("router: single-tenant discovery has not run yet")
-
-// singleTenantDiscovery is the result of the latest discovery poll: the
-// last-known-good backends, and the error if that poll failed.
-type singleTenantDiscovery struct {
-	backends []Backend
-	err      error
+	return counters
 }
 
 // singleTenantFallback forwards requests without a matching multi-tenant route to
@@ -117,6 +70,9 @@ type singleTenantDiscovery struct {
 // not an ideal routing path, it gives clients a single entry point that will
 // resolve ALL /apis requests regardless where they live (MT, or ST)
 type singleTenantFallback struct {
+	// polledSource polls the default discovery from discoveryHost.
+	polledSource
+
 	cache         *lru.Cache[int64, singleTenantHost]
 	breakerMu     sync.Mutex
 	breakers      *lru.Cache[string, *groupBreaker]
@@ -129,10 +85,6 @@ type singleTenantFallback struct {
 	// transport it wraps instead of on every request.
 	tracedTransport atomic.Pointer[tracedTransport]
 
-	// discovery is written only by run's goroutine; nil until the first poll.
-	discovery atomic.Pointer[singleTenantDiscovery]
-	cooldown  *cooldown
-	status    pollStatus
 	lookupsBy stackLookupCounts
 
 	// discoveryDocs is nil when discovery is not cached. discoveryFetches
@@ -217,7 +169,7 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 		opts.transport.MaxIdleConns = singleTenantMaxIdleConns
 	}
 
-	return &singleTenantFallback{
+	st := &singleTenantFallback{
 		breakers:      breakers,
 		cache:         cache,
 		lookupLimiter: limiter,
@@ -225,83 +177,14 @@ func newSingleTenantFallback(opts singleTenantFallbackOptions) (*singleTenantFal
 		resolveHost:   opts.resolveHost,
 		discoveryHost: opts.discoveryHost,
 		transport:     opts.transport,
-		cooldown:      newCooldown(singleTenantDiscoveryInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
-	}, nil
-}
-
-func (st *singleTenantFallback) cachedHost(stackID int64) (*singleTenantTarget, bool) {
-	entry, ok := st.cache.Get(stackID)
-	return entry.host, ok && time.Now().Before(entry.expiresAt)
-}
-
-func (st *singleTenantFallback) hostForNamespace(ctx context.Context, namespace string) (*singleTenantTarget, error) {
-	info, err := types.ParseNamespace(namespace)
-	if err != nil || info.StackID < 1 {
-		return nil, nil
 	}
-	if err := ctx.Err(); err != nil {
-		return nil, err
+	st.polledSource = polledSource{
+		source:   sourceSingleTenant,
+		fetcher:  st,
+		fallback: true,
+		cooldown: newCooldown(singleTenantDiscoveryInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 	}
-	if host, ok := st.cachedHost(info.StackID); ok {
-		st.lookupsBy.cacheHit.Add(1)
-		return host, nil
-	}
-
-	result := st.lookups.DoChan(strconv.FormatInt(info.StackID, 10), func() (any, error) {
-		return st.lookupHost(ctx, info.StackID)
-	})
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case result := <-result:
-		if result.Err != nil {
-			return nil, result.Err
-		}
-		return result.Val.(*singleTenantTarget), nil
-	}
-}
-
-func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (target *singleTenantTarget, err error) {
-	if host, ok := st.cachedHost(stackID); ok {
-		st.lookupsBy.cacheHit.Add(1)
-		return host, nil
-	}
-	defer func() { st.lookupsBy.record(target, err) }()
-	// Fail fast rather than queue: waiting would hold requests open under a flood.
-	if st.lookupLimiter != nil && !st.lookupLimiter.Allow() {
-		return nil, errStackLookupThrottled
-	}
-	// One caller cancelling must not cancel the lookup shared by other callers.
-	lookupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), singleTenantLookupTimeout)
-	defer cancel()
-	host, err := st.resolveHost(lookupCtx, stackID)
-	if err != nil {
-		return nil, err
-	}
-	if host.URL != "" {
-		u, err := url.Parse(host.URL)
-		if err != nil {
-			return nil, err
-		}
-		if (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-			return nil, fmt.Errorf("invalid stack host URL: %q", host.URL)
-		}
-		target = &singleTenantTarget{url: u, slug: host.Slug}
-		// Stacks enforce their domain, redirecting any other Host to their public URL.
-		if host.PublicURL != "" {
-			public, err := url.Parse(host.PublicURL)
-			if err != nil {
-				return nil, fmt.Errorf("invalid stack public URL: %w", err)
-			}
-			target.host = public.Host
-		}
-	}
-	ttl := singleTenantCacheTTL
-	if target == nil {
-		ttl = singleTenantNotFoundTTL
-	}
-	st.cache.Add(stackID, singleTenantHost{host: target, expiresAt: time.Now().Add(ttl)})
-	return target, nil
+	return st, nil
 }
 
 func (st *singleTenantFallback) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -539,195 +422,4 @@ func (st *singleTenantFallback) breakerForDestination(host *url.URL, group strin
 	breaker := newGroupBreaker(key)
 	st.breakers.Add(key, breaker)
 	return breaker
-}
-
-// Backends returns the last-known-good discovered backends, and the error from
-// the latest poll if it failed.
-func (st *singleTenantFallback) Backends() ([]Backend, error) {
-	if st.discoveryHost == nil {
-		return nil, nil
-	}
-	d := st.discovery.Load()
-	if d == nil {
-		return nil, errSingleTenantDiscoveryPending
-	}
-	return d.backends, d.err
-}
-
-func (st *singleTenantFallback) discover(ctx context.Context) ([]Backend, error) {
-	client := &http.Client{Transport: st.transport, Timeout: singleTenantLookupTimeout}
-
-	groups, err := discoverGroupResources(ctx, client, st.discoveryHost.String())
-	if err != nil {
-		return nil, err
-	}
-
-	backends := make([]Backend, 0, len(groups))
-	for _, discovered := range groups {
-		key, err := discoveredGroupKey(discovered)
-		if err != nil {
-			return nil, fmt.Errorf("fingerprinting single-tenant discovery: %w", err)
-		}
-		backends = append(backends, &fallbackBackend{
-			group:     discovered.group,
-			discovery: discovered.discovery,
-			key:       "st:" + key,
-			st:        st,
-		})
-	}
-	return backends, nil
-}
-
-// run polls discovery until ctx is done, paced only by st.cooldown, the same
-// way as aggregateTarget.run.
-func (st *singleTenantFallback) run(ctx context.Context, dirty chan<- struct{}) {
-	if st.discoveryHost == nil {
-		<-ctx.Done()
-		return
-	}
-	timer := time.NewTimer(0)
-	defer timer.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-timer.C:
-			st.poll(ctx, dirty)
-			timer.Reset(st.cooldown.Until(time.Now()))
-		}
-	}
-}
-
-// poll runs one discovery attempt. It wakes the router only when the result
-// can change what Load returns: the first success, a success after a
-// failure, or a change in the discovered groups.
-func (st *singleTenantFallback) poll(ctx context.Context, dirty chan<- struct{}) {
-	now := time.Now()
-	prev := st.discovery.Load()
-
-	backends, err := st.discover(ctx)
-	if err != nil {
-		st.cooldown.OnFailure(now)
-		logging.FromContext(ctx).Warn("router: single-tenant discovery failed, keeping last-known-good routes", "err", err)
-		next := &singleTenantDiscovery{err: err}
-		if prev != nil {
-			next.backends = prev.backends
-		}
-		st.discovery.Store(next)
-		if st.status.recordFailure() {
-			wake(dirty)
-		}
-		return
-	}
-	st.cooldown.OnSuccess(now)
-	st.discovery.Store(&singleTenantDiscovery{backends: backends})
-	st.status.recordSuccess(now)
-
-	if prev != nil && prev.err == nil && sameKeySet(backendKeys(prev.backends), backendKeys(backends)) {
-		return
-	}
-	select {
-	case dirty <- struct{}{}:
-	default: // already pending; coalesce
-	}
-}
-
-func backendKeys(backends []Backend) map[string]struct{} {
-	keys := make(map[string]struct{}, len(backends))
-	for _, b := range backends {
-		keys[b.Key()] = struct{}{}
-	}
-	return keys
-}
-
-var (
-	_ Backend               = (*fallbackBackend)(nil)
-	_ CallerScopedDiscovery = (*fallbackBackend)(nil)
-)
-
-type fallbackBackend struct {
-	group     v1.APIGroup
-	discovery *apidiscoveryv2.APIGroupDiscovery
-	key       string
-	st        http.Handler
-}
-
-// Discovery implements [DiscoveryProvider] with the resources from the last poll.
-func (f *fallbackBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) {
-	if f.discovery == nil {
-		return apidiscoveryv2.APIGroupDiscovery{}, false
-	}
-	return *f.discovery, true
-}
-
-// Group implements [Backend].
-func (f *fallbackBackend) Group() v1.APIGroup {
-	return f.group
-}
-
-// Source implements [Backend].
-func (f *fallbackBackend) Source() string { return sourceSingleTenant }
-
-// Key implements [Backend].
-func (f *fallbackBackend) Key() string {
-	return f.key
-}
-
-// Load implements [Backend].
-func (f *fallbackBackend) Load(context.Context) (http.Handler, error) {
-	return f.st, nil
-}
-
-// CallerScopedDiscovery implements [CallerScopedDiscovery]: the discovery
-// host's view of the group is only the default for callers without a stack.
-func (f *fallbackBackend) CallerScopedDiscovery() {}
-
-// maxStackResponseBytes bounds a grafana.com instance response.
-const maxStackResponseBytes = 1 << 20 // 1MB
-
-// The results of this call are cached
-func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Context, int64) (singleTenantStack, error) {
-	// mirroring grafana's pkg/services/gcom
-	type instance struct {
-		ID   int    `json:"id"`
-		Slug string `json:"slug"`
-		URL  string `json:"url"`
-	}
-
-	return func(ctx context.Context, stackID int64) (singleTenantStack, error) {
-		url, err := url.JoinPath(gcomBaseURL, "instances", strconv.FormatInt(stackID, 10))
-		if err != nil {
-			return singleTenantStack{}, err
-		}
-
-		// #nosec G704 -- the base URL is operator-controlled Grafana configuration and stackID is an integer.
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-		if err != nil {
-			return singleTenantStack{}, fmt.Errorf("creating gcom instance request: %w", err)
-		}
-		req.Header.Set("Authorization", "Bearer "+gcomToken)
-		// #nosec G704 -- req targets the operator-controlled Grafana.com API URL constructed above.
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return singleTenantStack{}, fmt.Errorf("fetching gcom instance: %w", err)
-		}
-		defer func() { _ = resp.Body.Close() }()
-
-		if resp.StatusCode == http.StatusNotFound {
-			return singleTenantStack{}, nil
-		}
-		if resp.StatusCode != http.StatusOK {
-			return singleTenantStack{}, fmt.Errorf("fetching gcom instance: unexpected status code %d", resp.StatusCode)
-		}
-
-		var result instance
-		if err := decodeLimitedJSON(resp.Body, maxStackResponseBytes, &result); err != nil {
-			return singleTenantStack{}, fmt.Errorf("decoding gcom instance: %w", err)
-		}
-		return singleTenantStack{
-			URL:       fmt.Sprintf("http://%s-grafana-http.%s.svc.cluster.local.:80", result.Slug, "hosted-grafana"),
-			PublicURL: result.URL,
-			Slug:      result.Slug,
-		}, nil
-	}
 }

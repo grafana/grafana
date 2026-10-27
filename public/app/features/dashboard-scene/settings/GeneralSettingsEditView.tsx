@@ -1,6 +1,8 @@
+import { isEqual } from 'lodash';
 import { lazy, Suspense } from 'react';
 
-import { type SceneComponentProps, SceneObjectBase, behaviors, sceneGraph } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
+import { behaviors, type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
 import { Spinner, type WeekStart } from '@grafana/ui';
 
@@ -32,10 +34,172 @@ export interface GeneralSettingsEditViewState extends DashboardEditViewState {
   };
 }
 
+interface SettingChange {
+  perform(): void;
+  undo(): void;
+}
+
+function captureSetting<T>(
+  read: () => T,
+  write: (value: T) => void,
+  equals: (before: T, after: T) => boolean = isEqual
+): () => SettingChange | undefined {
+  const before = read();
+
+  return () => {
+    const after = read();
+    if (equals(before, after)) {
+      return undefined;
+    }
+
+    return {
+      perform: () => write(after),
+      undo: () => write(before),
+    };
+  };
+}
+
 export class GeneralSettingsEditView
   extends SceneObjectBase<GeneralSettingsEditViewState>
   implements DashboardEditView
 {
+  constructor(state: GeneralSettingsEditViewState) {
+    super(state);
+
+    this.addActivationHandler(() => this.onActivate());
+  }
+
+  private onActivate() {
+    const dashboard = this._dashboard;
+    const sidebar = dashboard.state.sidebar;
+    const timeRange = this.getTimeRange();
+    const controls = dashboard.state.controls;
+    const captures = this.captureSettings(dashboard);
+
+    return () => {
+      // Discard and schema edits can close settings while replacing the objects being edited.
+      if (
+        !dashboard.state.isEditing ||
+        dashboard.state.sidebar !== sidebar ||
+        dashboard.state.controls !== controls ||
+        sceneGraph.getTimeRange(dashboard) !== timeRange
+      ) {
+        return;
+      }
+
+      const changes = captures
+        .map((finish) => finish())
+        .filter((change): change is SettingChange => change !== undefined);
+      if (changes.length === 0) {
+        return;
+      }
+
+      sidebar.recordCompletedEdit({
+        source: dashboard,
+        meta: { actionId: 'dashboard.changeSettings' },
+        description: t('dashboard.edit-actions.change-settings', 'Change dashboard settings'),
+        perform: () => changes.forEach((change) => change.perform()),
+        undo: () => [...changes].reverse().forEach((change) => change.undo()),
+      });
+    };
+  }
+
+  private captureSettings(dashboard: DashboardScene) {
+    const timeRange = this.getTimeRange();
+    const controls = dashboard.state.controls;
+    const refreshPicker = controls?.state.refreshPicker;
+    const cursorSync = this.getCursorSync();
+    const liveNow = sceneGraph.findObject(dashboard, (object) => object instanceof behaviors.LiveNowTimer);
+
+    const captures = [
+      captureSetting(
+        () => dashboard.state.title,
+        (title) => dashboard.setState({ title })
+      ),
+      captureSetting(
+        () => dashboard.state.description,
+        (description) => dashboard.setState({ description })
+      ),
+      captureSetting(
+        () => dashboard.state.tags?.slice(),
+        (tags) => dashboard.setState({ tags: tags?.slice() })
+      ),
+      captureSetting(
+        () => dashboard.state.editable,
+        (editable) => dashboard.setState({ editable })
+      ),
+      captureSetting(
+        () => dashboard.state.preload,
+        (preload) => dashboard.setState({ preload })
+      ),
+      captureSetting(
+        () => timeRange.state.timeZone,
+        (timeZone) => timeRange.setState({ timeZone })
+      ),
+      captureSetting(
+        () => timeRange.state.weekStart,
+        (weekStart) => timeRange.setState({ weekStart })
+      ),
+      captureSetting(
+        () => timeRange.state.UNSAFE_nowDelay,
+        (UNSAFE_nowDelay) => timeRange.setState({ UNSAFE_nowDelay })
+      ),
+      captureSetting(
+        () => dashboard.state.preferences,
+        (preferences) => dashboard.setState({ preferences }),
+        (before, after) => before?.defaultLayoutTemplate?.descriptor.id === after?.defaultLayoutTemplate?.descriptor.id
+      ),
+    ];
+
+    if (controls) {
+      captures.push(
+        captureSetting(
+          () => controls.state.hideTimeControls,
+          (hideTimeControls) => controls.setState({ hideTimeControls })
+        )
+      );
+    }
+    if (refreshPicker) {
+      captures.push(
+        captureSetting(
+          () => refreshPicker.state.intervals?.slice(),
+          (intervals) => refreshPicker.setState({ intervals: intervals?.slice() })
+        )
+      );
+    }
+    if (cursorSync) {
+      captures.push(
+        captureSetting(
+          () => cursorSync.state.sync,
+          (sync) => cursorSync.setState({ sync })
+        )
+      );
+    }
+    if (liveNow instanceof behaviors.LiveNowTimer) {
+      captures.push(
+        captureSetting(
+          () => liveNow.state.enabled,
+          (enabled) => (enabled ? liveNow.enable() : liveNow.disable())
+        )
+      );
+    }
+    if (!dashboard.isManagedRepository()) {
+      captures.push(
+        captureSetting(
+          () => ({ folderUid: dashboard.state.meta.folderUid, folderTitle: dashboard.state.meta.folderTitle }),
+          (folder) => {
+            dashboard.setState({ meta: { ...dashboard.state.meta, ...folder } });
+            if (folder.folderUid) {
+              void updateNavModel(folder.folderUid);
+            }
+          }
+        )
+      );
+    }
+
+    return captures;
+  }
+
   private get _dashboard(): DashboardScene {
     return getDashboardSceneFor(this);
   }
@@ -86,17 +250,18 @@ export class GeneralSettingsEditView
   };
 
   public onFolderChange = async (newUID: string | undefined, newTitle: string | undefined) => {
+    const dashboard = this._dashboard;
     const newMeta = {
-      ...this._dashboard.state.meta,
-      folderUid: newUID || this._dashboard.state.meta.folderUid,
-      folderTitle: newTitle || this._dashboard.state.meta.folderTitle,
+      ...dashboard.state.meta,
+      folderUid: newUID || dashboard.state.meta.folderUid,
+      folderTitle: newTitle || dashboard.state.meta.folderTitle,
     };
+
+    dashboard.setState({ meta: newMeta });
 
     if (newMeta.folderUid) {
       await updateNavModel(newMeta.folderUid);
     }
-
-    this._dashboard.setState({ meta: newMeta });
   };
 
   public onEditableChange = (value: boolean) => {
