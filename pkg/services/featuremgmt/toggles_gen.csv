@@ -72,11 +72,13 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-10-30,alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 2023-10-31,annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 2024-10-23,dashboardNewLayouts,GA,@grafana/dashboards-squad,false,false,true
+2026-10-21,grafana.mobileEditDeprecation,preview,@grafana/dashboards-squad,false,false,true
 2026-10-06,dashboards.libraryPanelRepeatFromServerResolution,experimental,@grafana/dashboards-squad,false,false,true
 2026-10-06,dashboards.publicDashboardBadgeFromApi,experimental,@grafana/dashboards-squad,false,false,true
 2026-10-08,dashboards.libraryPanelHorizontalRepeatFullWidth,experimental,@grafana/dashboards-squad,false,false,true
 2026-08-05,disableScriptedDashboards,deprecated,@grafana/dashboards-squad,false,false,true
 2026-07-09,dashboard.notebooks,preview,@grafana/sharing-squad,false,false,false
+2026-10-19,grafana.dashboardComposer,experimental,@grafana/dashboards-squad,false,false,true
 2026-10-22,grafana.savedDashboardViews,experimental,@grafana/sharing-squad,false,false,false
 2026-09-23,grafana.dashboardPreviewMode,experimental,@grafana/dashboards-squad,false,false,true
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
@@ -113,7 +115,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-05,cloudWatchNewLabelParsing,GA,@grafana/data-sources-plugins,false,false,false
 2024-04-16,disableNumericMetricsSortingInExpressions,experimental,@grafana/data-sources-plugins,false,true,false
 2024-04-22,grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
-2022-10-07,queryLibrary,GA,@grafana/sharing-squad,false,false,false
 2026-09-25,grafana.savedQueriesSearch,experimental,@grafana/sharing-squad,false,false,false
 2026-07-15,grafana.savedQueriesPage,experimental,@grafana/sharing-squad,false,false,false
 2026-03-19,playlistsRBAC,GA,@grafana/sharing-squad,false,false,false
@@ -254,7 +255,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-07,grafana.publishLegacySQLEvents,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-08,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-15,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
-2026-08-05,grafana.dashboardGlobalVariables,experimental,@grafana/dashboards-squad,false,false,false
+2026-08-05,grafana.dashboardGlobalVariables,preview,@grafana/dashboards-squad,false,false,false
 2026-10-15,grafana.dashboardVariablesMigration,experimental,@grafana/dashboards-squad,false,false,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,preview,@grafana/grafana-operator-experience-squad,false,false,false
@@ -284,7 +285,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-06,appplugins.registerAPIServer,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-06,appplugins.handleProxyRequests,experimental,@grafana/grafana-catalog,false,true,false
 2026-02-12,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
-2026-08-26,dashboard.recentlyDeletedViaTrash,GA,@grafana/search-and-storage,false,false,true
 2026-07-14,deletedFolderResourceCleanup,experimental,@grafana/search-and-storage,false,true,false
 2026-08-13,libraryElementFolderUIDRepair,experimental,@grafana/search-and-storage,false,true,false
 2026-02-25,managedPluginsV2,experimental,@grafana/grafana-catalog,false,false,false
@@ -368,6 +368,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-14,grafana.navigationInfoArchRefresh,experimental,@grafana/grafana-frontend-navigation,false,false,false
 2026-07-20,grafana.exploreMetricsSidebar,experimental,@grafana/datapro,false,false,true
 2026-07-24,grafana.dynamicTraceToLogs,preview,@grafana/observability-logs,false,false,true
+2026-09-17,grafana.configFromQueryDynamicName,experimental,@grafana/datapro,false,false,true
 2026-07-28,grafana.thresholdsInterpolation,GA,@grafana/dashboards-squad,false,false,true
 2026-07-28,authz.listFoldersViaSearch,experimental,@grafana/identity-access-team,false,false,false
 2026-07-28,libraryElements.folderTreeViaSearch,experimental,@grafana/identity-access-team,false,false,false
