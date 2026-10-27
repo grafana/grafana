@@ -1199,6 +1199,49 @@ func TestGetOrgUsersForCurrentOrg_UIDAuthFallback(t *testing.T) {
 	}
 }
 
+func TestGetOrgUsersForCurrentOrg_ExactLookupHiddenUsers(t *testing.T) {
+	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+	for _, lookup := range []string{"userUid=target", "userId=42"} {
+		for _, tc := range []struct {
+			name      string
+			login     string
+			admin     bool
+			hidden    bool
+			wantCount int
+		}{
+			{name: "hidden user excluded", login: "reader", hidden: true},
+			{name: "hidden user sees self", login: "target", hidden: true, wantCount: 1},
+			{name: "server admin sees hidden user", login: "reader", admin: true, hidden: true, wantCount: 1},
+			{name: "visible user included", login: "reader", wantCount: 1},
+		} {
+			t.Run(lookup+"/"+tc.name, func(t *testing.T) {
+				cfg := setting.NewCfg()
+				if tc.hidden {
+					cfg.HiddenUsers = map[string]struct{}{"target": {}}
+				}
+				hs := &HTTPServer{
+					Cfg: cfg, authInfoService: &authinfotest.FakeService{},
+					userService: &usertest.FakeUserService{ExpectedUser: &user.User{
+						ID: 42, UID: "target", Login: "target", OrgID: 7, OrgRole: "Viewer",
+					}},
+				}
+				ctx := &contextmodel.ReqContext{
+					Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/api/org/users?"+lookup, nil)},
+					SignedInUser: &user.SignedInUser{OrgID: 7, UserID: 1, Login: tc.login, IsGrafanaAdmin: tc.admin},
+				}
+				resp := hs.GetOrgUsersForCurrentOrg(ctx).(*response.NormalResponse)
+				require.Equal(t, http.StatusOK, resp.Status())
+				var result []org.OrgUserDTO
+				require.NoError(t, json.Unmarshal(resp.Body(), &result))
+				require.Len(t, result, tc.wantCount)
+				if tc.wantCount > 0 {
+					require.Equal(t, "target", result[0].UID)
+				}
+			})
+		}
+	}
+}
+
 func TestGetOrgUsersForCurrentOrg_UIDRedirectErrors(t *testing.T) {
 	setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
 	for _, tc := range []struct {
