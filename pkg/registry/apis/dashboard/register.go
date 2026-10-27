@@ -1743,9 +1743,9 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 }
 
 // GetAuthorizer returns a composite authorizer that dispatches by resource type.
-// Notebooks, snapshots, and variables use dedicated authorizers; other resources
-// fall back to ServiceAuthorizer. Variables with no classic accessControl (standalone)
-// fall through to ServiceAuthorizer after the feature flag.
+// Notebooks, snapshots, variables, and dashboard settings use dedicated authorizers;
+// other resources fall back to ServiceAuthorizer. Variables with no classic accessControl
+// (standalone) fall through to ServiceAuthorizer after the feature flag.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
 	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
@@ -1755,6 +1755,9 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	// Variables use classic variables:* when accessControl is wired; otherwise
 	// they fall through to the service authorizer (standalone / Cloud).
 	variableAuthorizer := newVariableAuthorizer(b.accessControl, serviceAuthorizer)
+	// Dashboard settings have no RBAC actions of their own: org role, folder
+	// access, and ownership decide each tier.
+	dashboardSettingsAuthorizer := newDashboardSettingsAuthorizer(b.accessClient, serviceAuthorizer)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -1764,6 +1767,8 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return notebookAuthorizer.Authorize(ctx, attr)
 				case dashv2beta1.VariableResourceInfo.GetName():
 					return variableAuthorizer.Authorize(ctx, attr)
+				case dashv2beta1.DashboardSettingsResourceInfo.GetName():
+					return dashboardSettingsAuthorizer.Authorize(ctx, attr)
 				case dashv0.SnapshotResourceInfo.GetName():
 					return snapshotAuthorizer.Authorize(ctx, attr)
 				}
