@@ -94,6 +94,7 @@ The **Trace ID** field accepts only a trace ID.
 
 {{< admonition type="note" >}}
 Span pruning is an experimental Tempo feature and requires Tempo 3.1 or later.
+If your Tempo version doesn't support the span pruning or filter options, Tempo ignores them and Grafana shows the full trace without an error.
 The span pruning and filter options might change in future releases.
 For details about the underlying request parameters, refer to the [Tempo HTTP API documentation](https://grafana.com/docs/tempo/<TEMPO_VERSION>/api_docs/#query-v2).
 {{< /admonition >}}
