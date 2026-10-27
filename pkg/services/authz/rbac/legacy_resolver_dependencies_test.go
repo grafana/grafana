@@ -95,7 +95,7 @@ func TestLegacyResolverLoadsDependenciesAfterFirstResolver(t *testing.T) {
 					require.True(t, got.GetAllowed())
 					require.Empty(t, got.GetError())
 					require.Equal(t, []string{"datasources:name:one", "library.panels:uid:one", "library.panels:uid:two"}, resolved)
-					var actions []string
+					actions := make([]string, 0, len(permissions.queries))
 					for _, query := range permissions.queries {
 						actions = append(actions, query.Action)
 					}
