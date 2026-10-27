@@ -104,12 +104,8 @@ export function NotebookBlockTypeMenu({ onPick, onPickSavedQuery }: Props) {
           );
         }
 
-        // A plain array, not a component that could render null: Menu.Item opens a submenu based on
-        // childItems.length alone, which would still be > 0 for a null child.
-        //
-        // Child clicks must keep bubbling — a host Dropdown only closes on a click that reaches its
-        // overlay wrapper — so the parent's own onClick filters them out instead of children stopping
-        // propagation.
+        // A plain array: Menu.Item opens a submenu on childItems.length, so a null child would still count.
+        // Child clicks must bubble for a host Dropdown to close, so the parent's onClick filters them out.
         const childItems = [
           <Menu.Item
             key="new-visualization"

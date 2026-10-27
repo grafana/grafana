@@ -111,7 +111,7 @@ import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 const DRAG_HANDLE_SELECTOR = '[data-rfd-drag-handle-draggable-id]';
 
-// The suggestion pipeline itself has its own dedicated coverage — see getVizSuggestionForQuery's tests.
+// The suggestion pipeline is covered by getVizSuggestionForQuery's own tests.
 jest.mock('app/features/dashboard-scene/utils/getVizSuggestionForQuery', () => ({
   getVizSuggestionForQuery: jest.fn(),
 }));
@@ -1172,8 +1172,7 @@ describe('NotebookLayoutManager', () => {
       expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
     });
 
-    // A toast inviting a retry here would be wrong — the query is applied regardless (asserted
-    // below), so retrying from the menu would insert or convert a second cell.
+    // No retry toast: the query still applies (asserted below), so a retry would add a second cell.
     it('still applies the query when the suggestion lookup fails, warning rather than erroring', async () => {
       mockGetVizSuggestionForQuery.mockRejectedValue(new Error('datasource unreachable'));
       const emit = jest.spyOn(appEvents, 'emit');

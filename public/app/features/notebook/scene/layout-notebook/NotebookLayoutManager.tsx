@@ -874,7 +874,7 @@ export class NotebookLayoutManager
     return { cell, index: clampedIndex };
   }
 
-  /** Clamps an insert past the trailing empty slot to just before it, so it isn't stranded once the invariant appends a replacement. Shared by addCell and addCellFromSavedQuery. */
+  /** Keeps an insert before the trailing empty slot so it isn't stranded when the invariant appends a new one. */
   private clampBeforeTrailingSlot(index: number): number {
     const trailing = this.state.cells.at(-1);
     if (index >= this.state.cells.length && trailing && isEmptyMarkdown(trailing.state.content)) {
@@ -893,8 +893,7 @@ export class NotebookLayoutManager
     index: number,
     via?: NotebookBlockInsertVia
   ): NotebookCellItem | undefined => {
-    // convertCell would skip the undo stack for Paragraph (identical empty markdown, so only
-    // appendSystemCell ran) and record Heading/Code as "Edit block".
+    // Not convertCell: it skips undo for Paragraph and records Heading/Code as "Edit block".
     index = this.clampBeforeTrailingSlot(index);
 
     const built = this.buildCellFor(type, index);
@@ -916,11 +915,7 @@ export class NotebookLayoutManager
     return built.cell;
   };
 
-  /**
-   * Inserts a query-configured visualization block at `index` — the "+" button's "New from Saved
-   * Queries" option. Unlike addCell, the caller only invokes this once a query is actually picked,
-   * so cancelling the picker leaves nothing to build or undo.
-   */
+  /** "+" → "New from Saved Queries". Only called once a query is picked, so cancelling leaves nothing to undo. */
   public addCellFromSavedQuery = async (
     index: number,
     query: DataQuery,
@@ -950,7 +945,7 @@ export class NotebookLayoutManager
     return built.cell;
   };
 
-  /** The "/" menu's analogue of addCellFromSavedQuery: converts `cell` in place instead of inserting a fresh one. */
+  /** "/" menu counterpart of addCellFromSavedQuery: converts `cell` in place. */
   public convertCellFromSavedQuery = async (
     cell: NotebookCellItem,
     query: DataQuery,
@@ -969,17 +964,12 @@ export class NotebookLayoutManager
   };
 
   /**
-   * Builds a detached panel carrying `query`'s top viz suggestion, title and query — mirrors
-   * Dashboards' Unconfigured Panel "Use saved query" flow, minus its DashboardScene coupling.
-   * Fully configured before it's attached so the whole pick lands as one undo step, and nothing
-   * is inserted until the (async) suggestion lookup is done.
-   *
-   * The panel (and so its id) is only built after the lookup: the id generator scans the scene, so
-   * a detached panel holding an id across the await would be handed out again to anything added meanwhile.
+   * Builds a fully configured detached panel so the pick lands as one undo step. Built only after
+   * the suggestion lookup: the id generator scans the scene, so an id claimed before the await
+   * could be handed out again.
    */
   private async buildSavedQueryPanel(query: DataQuery, title?: string): Promise<VizPanel> {
-    // A lookup miss or failure still applies the query with the default viz, so this is a warning,
-    // not an error — an "apply failed, try again" toast would invite a retry that adds a second cell.
+    // Warning, not error: the query still applies with the default viz, and a retry would add a second cell.
     const warnNoSuggestion = () =>
       appEvents.emit(AppEvents.alertWarning, [
         t('notebook.add-block.saved-query-no-suggestion', 'No visualization found'),
@@ -997,7 +987,6 @@ export class NotebookLayoutManager
       suggestion = undefined;
     }
 
-    // Nothing awaits from here on, so the panel's id is claimed and inserted in one synchronous run.
     const panel = this.buildVisualizationPanel();
     if (suggestion) {
       // Plain state, not changePluginType: the plugin loads (and fills in defaults) on activation.
@@ -1014,8 +1003,7 @@ export class NotebookLayoutManager
       panel.setState({ title, hoverHeader: false });
     }
 
-    // Written straight to the runner, not through applyQueries, which would record its own undo step.
-    // The runner runs it on activation.
+    // Straight to the runner: applyQueries would record its own undo step. Runs on activation.
     const runner = getQueryRunnerFor(panel);
     if (runner) {
       setQueryRunnerQueries(runner, [{ ...query, refId: query.refId || 'A' }]);

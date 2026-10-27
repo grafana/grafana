@@ -376,8 +376,7 @@ function SpecialMarkdownCell({
     onFocusRequest?.();
   };
 
-  // Unlike handlePick, this cell isn't converted until a query is actually selected — cancelling the
-  // drawer leaves the "/" markdown cell exactly as it was.
+  // Unlike handlePick, nothing converts until a query is picked, so cancelling leaves the cell as is.
   const handlePickSavedQuery = () => {
     setMenuOpen(false);
     openDrawer({

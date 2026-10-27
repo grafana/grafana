@@ -56,8 +56,7 @@ describe('NotebookCellAddButton', () => {
     expect(wrapper).toHaveClass(NOTEBOOK_CELL_CONTROLS_PINNED_CLASS);
   });
 
-  // keyDown rather than user.type: typing clicks first, and any click inside the overlay closes the
-  // Dropdown (see IrmMenuItem.test.tsx for why activation itself isn't reachable in jsdom).
+  // keyDown, not user.type: typing clicks first, which closes the Dropdown (see IrmMenuItem.test.tsx).
   it('offers "New from Saved Queries" under Visualization when onAddSavedQuery is given', async () => {
     const { user } = render(<NotebookCellAddButton index={1} onAddSavedQuery={jest.fn()} />);
 

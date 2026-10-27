@@ -18,7 +18,7 @@ beforeEach(() => {
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 });
 
-/** Opens the Visualization item's submenu and returns it, scoped. Contents only — see IrmMenuItem.test.tsx for why activation itself isn't reachable in jsdom. */
+/** Opens the Visualization submenu and returns it. Activation isn't reachable in jsdom (see IrmMenuItem.test.tsx). */
 async function openVisualizationSubmenu(user: ReturnType<typeof render>['user']) {
   await user.type(screen.getByRole('menuitem', { name: 'Visualization' }), '{ArrowRight}');
   return within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
