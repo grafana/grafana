@@ -79,7 +79,7 @@ function getDevServerOrigin(): { hostname: string; port: number } {
 // keep the DNS-rebinding protection the headers/allowedHosts comments describe.
 const LOOPBACK_HOSTNAMES = [
   /^localhost$/,
-  /^[\w-]+\.localhost$/,
+  /^(?:[\w-]+\.)+localhost$/, // any-depth `*.localhost` alias, matching allowedHosts' `.localhost`
   /^127(?:\.\d+){1,3}$/, // any 127.x loopback address
   /^\[::1\]$/,
 ];
