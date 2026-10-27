@@ -27,7 +27,7 @@ export function promoteAdHocChanges(panel: VizPanel): DashboardV2Spec | undefine
   const context = {
     elementKey: dashboardSceneGraph.getElementIdentifierForVizPanel(panel),
     transformations: panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER),
-  };
+  } satisfies PanelInteractionPromotionContext;
 
   // Panels declare one interaction today. Once applied interactions are tracked (URL or local storage),
   // only those will be promoted.
