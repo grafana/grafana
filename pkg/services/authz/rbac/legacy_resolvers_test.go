@@ -356,12 +356,6 @@ func TestLegacyCheckResolverPresenceQuery(t *testing.T) {
 			Action:     "dashboards:read",
 			ActionSets: []string{"dashboards:view", "dashboards:edit"},
 		},
-		{
-			UserID:  1,
-			Role:    "Viewer",
-			TeamIDs: []int64{10},
-			Action:  "folders:read",
-		},
 	}, permissions.queries)
 	require.Equal(t, []store.PermissionsQuery{
 		{
