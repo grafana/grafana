@@ -1,3 +1,18 @@
+<!-- 13.0.12 START -->
+
+# 13.0.12 (2026-10-27)
+
+### Security
+
+- Security: Fix CVE-2026-100105
+- Security: Fix CVE-2026-88858
+- Security: Fix CVE-2026-88967
+
+### Features and enhancements
+
+- **Provisioning:** Default save from a branch preview to the previewed branch [#135173](https://github.com/grafana/grafana/pull/135173), [@Clarity-89](https://github.com/Clarity-89)
+
+<!-- 13.0.12 END -->
 <!-- 13.0.11 START -->
 
 # 13.0.11 (2026-10-13)
