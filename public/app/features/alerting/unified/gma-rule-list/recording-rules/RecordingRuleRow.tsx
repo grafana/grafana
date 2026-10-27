@@ -1,6 +1,6 @@
-import { useId } from 'react';
+import { type ReactNode, useId } from 'react';
 
-import { TextLink } from '@grafana/ui';
+import { Stack, TextLink } from '@grafana/ui';
 
 import { grafanaRulesNav } from '../../utils/navigation';
 import { FolderPath } from '../rule-row/FolderPath';
@@ -18,10 +18,12 @@ interface RecordingRuleRowProps {
   searchHit: RecordingRuleSearchHit;
   /** Absent while the folder path loads or when its lookup failed. */
   folderPath?: string[];
+  /** Plugin or provisioning badge; absent while the full rule loads or when there is no badge. */
+  badge?: ReactNode;
 }
 
 /** Presentation-only; missing health renders "unavailable", never recording. */
-export function RecordingRuleRow({ searchHit, folderPath }: RecordingRuleRowProps) {
+export function RecordingRuleRow({ searchHit, folderPath, badge }: RecordingRuleRowProps) {
   const titleId = useId();
   const href = grafanaRulesNav.viewLink(searchHit.uid, { includeReturnTo: true });
   // The write target is already shown in RuleRecordedMetric; exclude it from the queried list.
@@ -32,9 +34,12 @@ export function RecordingRuleRow({ searchHit, folderPath }: RecordingRuleRowProp
       aria-labelledby={titleId}
       icon={<RuleStatusIcon kind="recording" health={searchHit.health} paused={searchHit.paused} />}
       title={
-        <TextLink id={titleId} href={href} color="primary" inline={false}>
-          {searchHit.title}
-        </TextLink>
+        <Stack direction="row" alignItems="center" gap={0.5} wrap={false}>
+          <TextLink id={titleId} href={href} color="primary" inline={false}>
+            {searchHit.title}
+          </TextLink>
+          {badge}
+        </Stack>
       }
       description={searchHit.lastError && <RuleDescription lastError={searchHit.lastError} />}
       right={searchHit.interval && <RuleInterval interval={searchHit.interval} />}

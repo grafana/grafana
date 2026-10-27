@@ -116,4 +116,16 @@ describe('RecordingRuleRow', () => {
 
     expect(screen.queryByText(/label/)).not.toBeInTheDocument();
   });
+
+  it('renders the badge inline after the title when provided', () => {
+    renderRow({ searchHit: baseHit(), badge: <span data-testid="test-badge">Badge</span> });
+
+    expect(screen.getByTestId('test-badge')).toBeInTheDocument();
+  });
+
+  it('renders no badge when badge prop is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByTestId('test-badge')).not.toBeInTheDocument();
+  });
 });
