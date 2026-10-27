@@ -1,15 +1,10 @@
 package router
 
 import (
-	"context"
 	"net/http"
 	"slices"
 
-	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
-
 	"github.com/grafana/authlib/types"
-
-	"github.com/grafana/grafana-app-sdk/app"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
@@ -41,56 +36,22 @@ func resourceFromPath(path string) (string, bool) {
 	return resource, resource != ""
 }
 
-var (
-	_ Backend              = (*singleTenantResourcesBackend)(nil)
-	_ DiscoveryProvider    = (*singleTenantResourcesBackend)(nil)
-	_ ManifestProvider     = (*singleTenantResourcesBackend)(nil)
-	_ PluginStatusProvider = (*singleTenantResourcesBackend)(nil)
-)
-
-// singleTenantResourcesBackend serves singleTenantResourcesGroup from its own
-// backend and the ST fallback, per request. The group's discovery and OpenAPI
-// come from its own backend.
-// It is never wrapped around a caller-scoped (ST) backend, so it does not
-// forward CallerScopedDiscovery.
-type singleTenantResourcesBackend struct {
-	Backend
-	st http.Handler
-}
-
-func (b *singleTenantResourcesBackend) Load(ctx context.Context) (http.Handler, error) {
-	next, err := b.Backend.Load(ctx)
-	if err != nil {
-		return nil, err
+// splitSingleTenantResources is the cloud loader's merge step that splits
+// singleTenantResourcesGroup per request between its own backend and st. The
+// group's discovery and OpenAPI still come from its own backend. A group only
+// the stacks serve is left to them.
+func splitSingleTenantResources(st http.Handler) mergeStep {
+	return func(backends map[string]Backend) {
+		b, ok := backends[singleTenantResourcesGroup]
+		// A caller-scoped backend is the stacks' own, and wrappedBackend can't
+		// forward that marker.
+		if _, callerScoped := b.(CallerScopedDiscovery); !ok || callerScoped {
+			return
+		}
+		backends[singleTenantResourcesGroup] = &wrappedBackend{Backend: b, wrap: func(next http.Handler) http.Handler {
+			return &singleTenantResourcesHandler{next: next, st: st}
+		}}
 	}
-	return &singleTenantResourcesHandler{next: next, st: b.st}, nil
-}
-
-// Discovery implements [DiscoveryProvider]; the embedded Backend interface
-// does not promote it.
-func (b *singleTenantResourcesBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) {
-	if p, ok := b.Backend.(DiscoveryProvider); ok {
-		return p.Discovery()
-	}
-	return apidiscoveryv2.APIGroupDiscovery{}, false
-}
-
-// Manifest implements [ManifestProvider]; the embedded Backend interface does
-// not promote it.
-func (b *singleTenantResourcesBackend) Manifest() (*app.ManifestData, bool) {
-	if p, ok := b.Backend.(ManifestProvider); ok {
-		return p.Manifest()
-	}
-	return nil, false
-}
-
-// PluginStatus implements [PluginStatusProvider]; the embedded Backend
-// interface does not promote it.
-func (b *singleTenantResourcesBackend) PluginStatus() (PluginStatus, bool) {
-	if p, ok := b.Backend.(PluginStatusProvider); ok {
-		return p.PluginStatus()
-	}
-	return PluginStatus{}, false
 }
 
 type singleTenantResourcesHandler struct {
@@ -116,6 +77,12 @@ func (h *singleTenantResourcesHandler) handlerFor(req *http.Request) http.Handle
 	if requester != nil && requester.IsIdentityType(types.TypeUser) {
 		return h.st
 	}
+	return h.next
+}
+
+// groupHandler implements [requestRouter]: the group is the multi-tenant
+// backend's, and its breaker is the one the group reports.
+func (h *singleTenantResourcesHandler) groupHandler() http.Handler {
 	return h.next
 }
 

@@ -77,7 +77,8 @@ func parseDevTargets(cfg *setting.Cfg) ([]devTargetConfig, error) {
 // loader, with the managed plugins' clients and connection handling.
 type devTargets struct {
 	configs []devTargetConfig
-	conns   *pluginManifestsTarget
+	conns   *pluginConnections
+	deps    PluginDependencies
 }
 
 // newDevTargets returns nil when no dev target is configured.
@@ -95,15 +96,8 @@ func newDevTargets(cfg *setting.Cfg, deps PluginDependencies) (*devTargets, erro
 	deps.AccessControl = pluginManifestAccessControl{}
 	return &devTargets{
 		configs: configs,
-		conns: &pluginManifestsTarget{
-			keyPrefix:       devKeyPrefix,
-			source:          sourceDev,
-			deps:            deps,
-			grpcConfig:      grpcConfig,
-			httpTransport:   baasbridge.NewTransport(grpcConfig.TLS, backendResponseHeaderTimeout), //nolint:staticcheck
-			requestDuration: newPluginGRPCRequestDuration(deps.MetricsRegister, sourceDev),
-			requestRetries:  newPluginGRPCRequestRetries(deps.MetricsRegister, sourceDev),
-		},
+		conns:   newPluginConnections(sourceDev, grpcConfig, deps.MetricsRegister),
+		deps:    deps,
 	}, nil
 }
 
@@ -174,7 +168,7 @@ func (d *devTargets) backend(c devTargetConfig) (Backend, error) {
 	clients := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
 		return d.conns.pluginClients(c.Host, c.PluginID, manifest)
 	}
-	backend, err := newPluginBackend(c.PluginID, manifest, clients, d.conns.deps, nil)
+	backend, err := newPluginBackend(c.PluginID, manifest, clients, d.deps, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +182,8 @@ func (d *devTargets) backend(c devTargetConfig) (Backend, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &pluginDeploymentBackend{Backend: backend, key: key, source: sourceDev}, nil
+	backend.key, backend.source = key, sourceDev
+	return backend, nil
 }
 
 // notify wakes the router when a manifest file changes. A changed manifest

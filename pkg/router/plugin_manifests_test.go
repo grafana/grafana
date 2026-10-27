@@ -165,8 +165,8 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 	// Seed a snapshot as if a previous poll had succeeded, then confirm a
 	// failed poll doesn't clear it -- same last-known-good invariant as
 	// aggregateTarget.
-	seeded := []Backend{&pluginDeploymentBackend{key: "seeded"}}
-	target.snapshot.Store(&seeded)
+	seeded := []Backend{&PluginBackend{key: "seeded"}}
+	storeBackends(&target.polledSource, seeded...)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Equal(t, seeded, target.Backends())
@@ -256,7 +256,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		body = strings.ReplaceAll(pluginManifestsFixture, "grafana-appsdktest-app-operator.grafana-router-plugins.svc.cluster.local.:50051", host)
 		target.poll(t.Context(), make(chan struct{}, 1))
 		require.Len(t, target.Backends(), 1)
-		plugin := target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
+		plugin := target.Backends()[0].(*PluginBackend)
 		legacy, client, err := plugin.client(t.Context(), plugin.pluginID)
 		require.NoError(t, err)
 		require.NotNil(t, legacy)
@@ -317,7 +317,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		conn := target.connections[key]
 		require.NotNil(t, conn)
 		target.poll(t.Context(), make(chan struct{}, 1))
-		plugin = target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
+		plugin = target.Backends()[0].(*PluginBackend)
 		_, _, err = plugin.client(t.Context(), plugin.pluginID)
 		require.NoError(t, err)
 		require.Same(t, conn, target.connections[key])
@@ -334,7 +334,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 }
 
 func TestPluginManifestsTargetWithoutBackendClient(t *testing.T) {
-	target := &pluginManifestsTarget{}
+	target := &pluginConnections{}
 	clientV2, clientV3, err := target.pluginClients("", "grafana-appsdktest-app", nil)
 	require.NoError(t, err)
 	require.Nil(t, clientV2)
@@ -500,7 +500,7 @@ func TestPluginManifestsTargetMultipleManifests(t *testing.T) {
 	target.poll(t.Context(), dirty)
 	for i, backend := range target.Backends() {
 		require.NotEqual(t, updated[i].Key(), backend.Key(), "shared metadata changes affect every group")
-		require.Equal(t, "2", backend.(*pluginDeploymentBackend).Backend.(*PluginBackend).info.Version)
+		require.Equal(t, "2", backend.(*PluginBackend).info.Version)
 	}
 }
 
@@ -621,7 +621,7 @@ func TestPluginManifestsTargetValidatesPluginIDs(t *testing.T) {
 
 // An HTTP operator gets only a v3 client, from baasbridge, and no connection.
 func TestPluginManifestsTargetHTTPClient(t *testing.T) {
-	target := &pluginManifestsTarget{}
+	target := &pluginConnections{}
 	clientV2, clientV3, err := target.pluginClients("http://127.0.0.1:8080", "grafana-appsdktest-app", &app.ManifestData{})
 	require.NoError(t, err)
 	require.Nil(t, clientV2)
@@ -729,7 +729,7 @@ func TestPluginManifestsTargetAcquiresConnectionsOnlyForGRPCHosts(t *testing.T) 
 			require.NoError(t, err)
 			target.poll(t.Context(), make(chan struct{}, 1))
 			require.Len(t, target.Backends(), 1)
-			backend := target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
+			backend := target.Backends()[0].(*PluginBackend)
 			require.Equal(t, acquires, backend.acquire != nil)
 		})
 	}
@@ -748,7 +748,7 @@ func TestCoreEntryWithoutPluginID(t *testing.T) {
 	require.NoError(t, err)
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Len(t, target.Backends(), 1)
-	backend := target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
+	backend := target.Backends()[0].(*PluginBackend)
 
 	_, ok := backend.PluginStatus()
 	require.False(t, ok)

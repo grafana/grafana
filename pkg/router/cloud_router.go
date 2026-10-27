@@ -233,23 +233,18 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 }
 
 // cloudLoader is a RoutesLoader and a dskit service. It merges the configured
-// cloud sources (see Load for their priority).
+// cloud sources by group (see newCloudLoader for their priority).
 type cloudLoader struct {
 	*services.BasicService
 
 	dirty chan struct{} // buffered 1; pure coalescing wake signal, no payload
 
-	// aggregateTargets are the configured upstream apiservers this loader
-	// polls for API groups, in priority order: the first wins a shared group.
-	aggregateTargets []*aggregateTarget
+	// sources are polled for backends, highest priority first: a source's
+	// group overrides the same group from every later one.
+	sources []*polledSource
 
-	// pluginsTarget serves managed plugins: nil unless plugins_url is
-	// configured.
-	pluginsTarget *pluginManifestsTarget
-
-	// coreTarget serves core APIs in the plugin manifests format: nil unless
-	// core_url is configured.
-	coreTarget *pluginManifestsTarget
+	// mergeSteps change the merged backends, by group, in order.
+	mergeSteps []mergeStep
 
 	// Until all requests are moved to MT, we can fallback to ST instances
 	singleTenantFallback *singleTenantFallback
@@ -257,6 +252,17 @@ type cloudLoader struct {
 	shadowed atomic.Pointer[[]shadowedGroup]
 }
 
+// mergeStep changes the backends a load merged from every source, by group.
+type mergeStep func(backends map[string]Backend)
+
+// newCloudLoader merges its sources in this order of priority:
+//
+//  1. managed plugins (pluginsTarget);
+//  2. core APIs (coreTarget);
+//  3. the aggregate targets, the first one winning a shared group;
+//  4. the single-tenant fallback, which every other source overrides.
+//
+// Any of them may be nil or empty.
 func newCloudLoader(aggregateTargets []*aggregateTarget,
 	pluginsTarget *pluginManifestsTarget,
 	coreTarget *pluginManifestsTarget,
@@ -264,13 +270,22 @@ func newCloudLoader(aggregateTargets []*aggregateTarget,
 ) (*cloudLoader, error) {
 	l := &cloudLoader{
 		dirty:                make(chan struct{}, 1),
-		aggregateTargets:     aggregateTargets,
-		pluginsTarget:        pluginsTarget,
-		coreTarget:           coreTarget,
 		singleTenantFallback: singleTenantFallback,
 	}
+	for _, target := range []*pluginManifestsTarget{pluginsTarget, coreTarget} {
+		if target != nil {
+			l.sources = append(l.sources, &target.polledSource)
+		}
+	}
+	for _, target := range aggregateTargets {
+		l.sources = append(l.sources, &target.polledSource)
+	}
+	if singleTenantFallback != nil {
+		l.sources = append(l.sources, &singleTenantFallback.polledSource)
+		l.mergeSteps = append(l.mergeSteps, splitSingleTenantResources(singleTenantFallback))
+	}
 
-	l.BasicService = services.NewBasicService(nil, l.running, nil).WithName("cloud-apps-routes-loader")
+	l.BasicService = services.NewBasicService(nil, l.running, l.stopping).WithName("cloud-apps-routes-loader")
 	return l, nil
 }
 
@@ -279,23 +294,9 @@ func newCloudLoader(aggregateTargets []*aggregateTarget,
 // silently stopped updating.
 func (l *cloudLoader) running(ctx context.Context) error {
 	g, gctx := errgroup.WithContext(ctx)
-	for _, target := range l.aggregateTargets {
+	for _, source := range l.sources {
 		g.Go(func() error {
-			target.run(gctx, l.dirty)
-			return nil
-		})
-	}
-	for _, target := range []*pluginManifestsTarget{l.coreTarget, l.pluginsTarget} {
-		if target != nil {
-			g.Go(func() error {
-				target.run(gctx, l.dirty)
-				return nil
-			})
-		}
-	}
-	if l.singleTenantFallback != nil {
-		g.Go(func() error {
-			l.singleTenantFallback.run(gctx, l.dirty)
+			source.run(gctx, l.dirty)
 			return nil
 		})
 	}
@@ -304,6 +305,14 @@ func (l *cloudLoader) running(ctx context.Context) error {
 	}
 	// An empty loader still remains available until shutdown.
 	<-ctx.Done()
+	return nil
+}
+
+// stopping tears down each source once every poll loop has stopped.
+func (l *cloudLoader) stopping(error) error {
+	for _, source := range l.sources {
+		source.teardown()
+	}
 	return nil
 }
 
@@ -331,60 +340,34 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	}
 
 	lookup := make(map[string]Backend)
-	var discoveryErr error
+	fromFallback := make(map[string]bool)
+	var fallbackErr error
 	var shadowed []shadowedGroup
-	// put adds b, recording any backend for the same group it overrides.
-	// Overriding the single-tenant fallback is the expected migration path,
-	// not a conflict, so it is not recorded.
-	put := func(b Backend) {
-		group := b.Group().Name
-		if previous, ok := lookup[group]; ok && previous.Source() != sourceSingleTenant {
-			shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source()})
+	// Lowest priority first, so each source overrides the ones before it.
+	// Overriding a fallback source is the expected migration path, not a
+	// conflict, so it is not recorded.
+	for _, source := range slices.Backward(l.sources) {
+		snapshot := source.current()
+		if source.fallback && snapshot.err != nil {
+			fallbackErr = fmt.Errorf("%s discovery: %w", source.source, snapshot.err)
 		}
-		lookup[group] = b
-	}
-
-	// Lowest priority first -- the MT backends will replace the ST flavors
-	if l.singleTenantFallback != nil {
-		backends, err := l.singleTenantFallback.Backends()
-		if err != nil {
-			discoveryErr = fmt.Errorf("single-tenant discovery: %w", err)
-		}
-		for _, b := range backends {
-			put(b)
-		}
-	}
-
-	// Aggregate targets override ST; reverse order makes the first target win.
-	for _, target := range slices.Backward(l.aggregateTargets) {
-		for _, b := range target.Backends() {
-			put(b)
-		}
-	}
-
-	// Core APIs
-	if l.coreTarget != nil {
-		for _, b := range l.coreTarget.Backends() {
-			put(b)
-		}
-	}
-
-	// Managed plugins
-	if l.pluginsTarget != nil {
-		for _, b := range l.pluginsTarget.Backends() {
-			put(b)
+		for _, b := range snapshot.backends {
+			group := b.Group().Name
+			if previous, ok := lookup[group]; ok && !fromFallback[group] {
+				shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source()})
+			}
+			lookup[group] = b
+			fromFallback[group] = source.fallback
 		}
 	}
 	l.recordShadowed(ctx, shadowed)
 
-	if l.singleTenantFallback != nil {
-		if b, ok := lookup[singleTenantResourcesGroup]; ok && b.Source() != sourceSingleTenant {
-			lookup[singleTenantResourcesGroup] = &singleTenantResourcesBackend{Backend: b, st: l.singleTenantFallback}
-		}
+	for _, step := range l.mergeSteps {
+		step(lookup)
 	}
 
-	if len(lookup) == 0 && discoveryErr != nil {
-		return nil, discoveryErr
+	if len(lookup) == 0 && fallbackErr != nil {
+		return nil, fallbackErr
 	}
 
 	backends := slices.Collect(maps.Values(lookup))
@@ -415,39 +398,24 @@ func (l *cloudLoader) shadowedGroups() []shadowedGroup {
 	return nil
 }
 
-func (l *cloudLoader) stackLookups() map[string]uint64 {
+func (l *cloudLoader) counters() []loaderCounter {
 	if l.singleTenantFallback == nil {
 		return nil
 	}
-	return l.singleTenantFallback.lookupsBy.byResult()
-}
-
-func (l *cloudLoader) stackDiscoveryCache() map[string]uint64 {
-	if l.singleTenantFallback == nil || l.singleTenantFallback.discoveryDocs == nil {
-		return nil
-	}
-	st := l.singleTenantFallback
-	return map[string]uint64{"hit": st.discoveryHits.Load(), "miss": st.discoveryMisses.Load()}
+	return l.singleTenantFallback.counters()
 }
 
 func (l *cloudLoader) sourceStatuses() []sourceStatus {
-	var statuses []sourceStatus
-	if l.singleTenantFallback != nil {
-		statuses = append(statuses, l.singleTenantFallback.status.status(sourceSingleTenant))
-	}
-	for _, target := range l.aggregateTargets {
-		statuses = append(statuses, target.status.status(aggregateSource(target.name)))
-	}
-	if l.coreTarget != nil {
-		statuses = append(statuses, l.coreTarget.status.status(sourceCoreURL))
-	}
-	if l.pluginsTarget != nil {
-		statuses = append(statuses, l.pluginsTarget.status.status(sourcePluginsURL))
+	statuses := make([]sourceStatus, 0, len(l.sources))
+	for _, source := range l.sources {
+		statuses = append(statuses, source.status.status(source.source))
 	}
 	return statuses
 }
 
-func (l *cloudLoader) SingleTenantFallback() http.Handler {
+// UnregisteredGroupHandler implements [unregisteredGroupLoader]: the
+// single-tenant fallback serves the groups no other source does.
+func (l *cloudLoader) UnregisteredGroupHandler() http.Handler {
 	if l.singleTenantFallback == nil {
 		return nil
 	}

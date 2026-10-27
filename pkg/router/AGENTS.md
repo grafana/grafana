@@ -14,9 +14,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 - **Never delete or narrow an interface in `types.go` without human sign-off.** `Router`,
   `RoutesLoader` and `Backend` mark seams for planned work, even where they look unused (an earlier
   refactor dropped `Router` by mistake). Adding an interface is fine.
-- **Keep deployment-specific knowledge out of the engine** (`router.go`, `types.go`, `discovery*.go`,
-  `breaker.go`, `openapi_cache.go`). It belongs in the source files: `cloud_router.go`,
-  `aggregate_*.go`, `plugin_manifests*.go` and `st_fallback.go`.
+- **Keep deployment-specific knowledge out of the engine** (`router.go`, `reconcile.go`, `auth.go`,
+  `types.go`, `discovery*.go`, `breaker.go`, `openapi_cache.go`). It belongs in the source files:
+  `cloud_router.go`, `aggregate_*.go`, `plugin_manifests*.go` and `st_*.go`.
 - **One backend owns every version of a group.** Dispatch is keyed by group (segment 2 of
   `/apis/<group>/...`). Don't reintroduce a path mux that flattens routes into prefixes. A duplicate
   group in one `Load` makes the last one win, with a warning, and must never panic. The one
@@ -58,7 +58,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   (`plugin_breaker.go`), and the ST fallback keeps one breaker per destination host and group. A
   handler that implements `handlerFor(*http.Request)` picks the handler for each request first,
   and only that handler's breakers apply, so requests the stacks serve never count against the group
-  breaker. A
+  breaker. Its `groupHandler` names the handler that owns the group, whose breaker scope `publish`
+  records once per entry (`groupBreakerScope`) for metrics and the status page. A
   rejected backend redirect is not a breaker failure. Read a group breaker's state from its
   `breakerView` (`servingEntry.breakerState`), never `breaker.State()`: gobreaker's `State` moves an
   open breaker whose timeout passed to half-open, so a metrics scrape or status read would change
@@ -133,10 +134,12 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 
 | Area | Files |
 | --- | --- |
-| Engine: reconcile loop, dispatch, `Ready`/`Alive` | `router.go`, `types.go` |
+| Engine: dispatch, `Ready`/`Alive` | `router.go`, `types.go` |
+| Engine: reconcile loop (`Run`, `reconcile`, `publish`) | `reconcile.go` |
+| Authentication and the namespace check | `auth.go` |
 | Root discovery (`/apis`, `/openapi/v3`) and the per-backend discovery cache | `discovery.go`, `discovery_handler.go`, `discovery_cache.go` |
-| Per-group-version OpenAPI cache | `openapi_cache.go` |
-| App manifest discovery (`/apis/discovery`) | `discovery_manifests.go`, `discovery_openapi.go`, `discovery_status.go` |
+| OpenAPI serving and the per-group-version OpenAPI cache | `openapi_cache.go` |
+| App manifest discovery (`/apis/discovery`), its markdown and HTML index | `discovery_manifests.go`, `discovery_index.go`, `discovery_openapi.go`, `discovery_status.go` |
 | Circuit breaker, status recorder | `breaker.go`, `plugin_breaker.go` |
 | dskit service, middleware entry point | `service.go` |
 | The embedded API server's groups (middleware mode) | `embedded.go` |
@@ -144,14 +147,14 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Watch handling, upgrade rejection, verb classification | `watch.go` |
 | Outbound header policy, proxy failure labels, request outcomes | `outbound.go`, `proxy_errors.go`, `request_outcome.go` |
 | Metrics, access logs, tracing | `metrics.go`, `logging.go`, `tracing.go`, `plugin_tracing.go` |
-| Source names and loader status | `sources.go` |
+| Source names, loader status, the shared poll loop (`polledSource`) and backend wrapper (`wrappedBackend`) | `sources.go` |
 | Loader selection | `loader_factory.go` |
 | Cloud loader: settings, source priority | `cloud_router.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Dev targets (`router.dev.<name>`), served by the local plugin loader | `dev_targets.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
-| Single-tenant (ST) fallback, its per-stack discovery cache, and the `dashboard.grafana.app` split | `st_fallback.go`, `st_discovery_cache.go`, `st_resources.go` |
+| Single-tenant (ST) fallback: serving (`st_fallback.go`), stack resolution (`st_stacks.go`), its discovery poll and backends (`st_poll.go`), its per-stack discovery cache, and the `dashboard.grafana.app` split | `st_*.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
 
 ## Route sources
@@ -171,6 +174,12 @@ The cloud loader serves nothing until each of its sources has polled once, succe
 (`errFirstPollPending`), so the router doesn't go ready with groups missing from discovery. A
 source's first attempt wakes the router either way, even when it finds nothing. A source records a
 poll only after storing its snapshot, so a `Load` that sees the poll also sees its groups.
+
+Every cloud source is a `polledSource`: one poll loop, paced by its cooldown, that keeps the last
+backends it found when a poll fails. The loader holds them in one ordered list (`newCloudLoader`),
+which drives its poll loops, `Load`, status and teardown: each source is torn down once the loader
+stops, which closes the managed plugin connections. Add a source there, never as a special case.
+A change to the merged result, such as the `dashboard.grafana.app` split, is a `mergeStep`.
 
 The cloud loader merges its sources by group. When sources conflict, later entries override
 earlier ones:
@@ -206,7 +215,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
 | `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served group with a manifest: the backend's own (`ManifestProvider`), or, as a fallback when it advertises none, the one compiled in for the group. |
 | `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
-| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, the ST fallback's stack lookup counts by result (`stackLookups`), and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
+| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, the loader's own counters (`loaderCounter`, such as the ST fallback's stack lookup counts by result, `stackLookups`), and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
 | `/apis/discovery/v1alpha2/AGENTS.md` | Synthesized markdown index of every served group, for agents. |
 | `/openapi/v3/apis/discovery/v1alpha2` | Synthesized OpenAPI v3 document for the discovery group. |
 | `/apis/discovery/v1alpha2/AGENTS` | The same index rendered as a static HTML page for browsers, with a CSP that allows no scripts. Not in the OpenAPI document. |
@@ -344,9 +353,10 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - In middleware mode, every request in the `/apis` and `/openapi/v3` trees is instrumented,
     the embedded server's groups included; other paths go to `next` and are not.
   - New backends must name their source (`Backend.Source`), and new sources should report through
-    `loaderStatus`, or their loads don't appear in the metrics. A source that skips a backend logs
+    `loaderStatus`, or their loads don't appear in the metrics. A source's own counters go through
+    `loaderStatus.counters`, never as a field or series named in the engine. A source that skips a backend logs
     why, counts it, and stores the count once per load (`pollStatus.recordSkipped`).
-  - Managed plugin connections (`pluginManifestsTarget.pluginClients`) use dskit's gRPC client
+  - Managed plugin connections (`pluginConnections.pluginClients`) use dskit's gRPC client
     instrumentation interceptors and `otelgrpc`, which propagates the caller's trace to the plugin.
     The instrumentation wraps the retries (`plugin_grpc.go`), so a call is recorded once, and
     `grafana_router_plugin_grpc_request_retries_total` counts the retries.

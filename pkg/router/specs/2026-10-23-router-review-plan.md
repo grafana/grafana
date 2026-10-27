@@ -70,7 +70,10 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 | D2–D4, D6–D9, D11 (partly): the dead-code sweep | #135744 |
 | R1, R2: retired plugin handlers are destroyed once they drain, and managed plugin connections close with their last handler | #135809 |
 | R4, O4: a failing backend backs off per group, reconcile warnings are logged once, and the status page lists load failures | #135818 |
-| C7, C8: docs and specs caught up with #135946 and #135949, `mdCode` bounded, `cooldown.go` | `router-docs-c7-c8` (unmerged) |
+| C7, C8: docs and specs caught up with #135946 and #135949, `mdCode` bounded, `cooldown.go` | #136005 |
+| A2, A5, A8: one `polledSource`, an ordered source list with a `mergeStep` for the dashboard split, teardown on stop, one `wrappedBackend` | #136088 |
+| A6: generic loader counters, the unregistered-group handler named generically, breaker scope recorded once in `publish` and seen through the dashboard split | #136088 |
+| A7: `router.go` split into `reconcile.go`, `auth.go` and `openapi_cache.go`; `st_fallback.go` into `st_stacks.go` and `st_poll.go`; the index into `discovery_index.go` | #136088 |
 | O5–O9: 4xx at Debug, no panic on a second registration, ready only after each source's first poll, `plugins_poll_interval` and `core_poll_interval`, no `plugin_id=""` | #135820 |
 | P14, P17, P20, P21: the `/watch/` path rejected, router deadlines counted against the breaker, the ST discovery cache bounded, partial discovery kept | #135823 |
 | F7, F8, F9 (partly), F11 (partly), F12 (partly): one request-state value, a `status_code` table, one ST transport, a cheaper flush, `strings.Cut`, streamed ETag hashing, an ST forward benchmark | #135946, #135827 |
@@ -82,6 +85,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 | R5: no plugin handlers when nothing routes them | Loading them inside Grafana exercises their setup, and they will be routed soon (user decision, 2026-10-23). |
 | D5: drop the `/apis/discovery/v1alpha2/AGENTS` page and index | Kept (user decision, 2026-10-23). |
 | D10: config knobs to constants | Every knob is kept (user decision, 2026-10-23). |
+| A1: a subpackage per source | Each source uses 16 to 35 unexported engine identifiers, and the cloud loader imports every source, so the engine would need its own lower package and an exported internal API, with most tests crossing the line. A6 and A7 keep the sources apart by file and by rule instead. Revisit if the package gets a second consumer (user decision, 2026-10-27). |
 
 ### Left from partly done items
 
@@ -123,7 +127,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 3. **Metrics:** M5–M12 in `2026-10-08-router-metrics-review.md`, plus metrics for the
    `baasbridge` calls (#135815).
 4. **Config:** A4, while nothing depends on the old key names.
-5. **Restructure:** A2 with A5 and A8, then A6, then A1 and A7.
+5. **Restructure:** A2 with A5 and A8, then A6, then A7, each on its own branch (A1 not pursued).
 6. **Performance leftovers, if profiles call for them:** F1's memo, F2, F9's proxy, F10, F11's sort.
 
 ---
@@ -253,12 +257,9 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 
 ## A: Architecture
 
-- [ ] **A1. Split the generic engine from the source-specific code.**
-  - Move each source to a subpackage, for example
-    `pkg/router/sources/{aggregate,pluginmanifests,stfallback}`.
-  - `st_resources.go` and the settings backends now add to the source-specific side.
+A1 is not pursued (see "Not pursued").
 
-- [ ] **A2. Replace `cloudLoader`'s hardcoded merge with an ordered list of sources.**
+- [x] **A2. Replace `cloudLoader`'s hardcoded merge with an ordered list of sources.**
   - **Problem:**
     - `cloudLoader.Load` writes the priority order out by hand, and now ends with a post-merge step
       that wraps `dashboard.grafana.app`.
@@ -281,10 +282,10 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
     example as `newCloudRoutesLoader`. Rename it in `2026-09-25-router-design-notes.md` ("Two
     transports per aggregate target") in the same change.
 
-- [ ] **A5. A source teardown contract.** With A2, the loader tears down each source on shutdown.
+- [x] **A5. A source teardown contract.** With A2, the loader tears down each source on shutdown.
   That replaces `defer t.closeConnections()` in `pluginManifestsTarget.run`.
 
-- [ ] **A6. Keep ST knowledge out of the engine.**
+- [x] **A6. Keep ST knowledge out of the engine.**
   - **Problem:**
     - `loaderStatus.stackLookups` and `stackDiscoveryCache` (`sources.go`) put ST details in
       engine-side code: `discovery_status.go` `StackLookups`, the `routerCollector` series, and the
@@ -298,14 +299,14 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
     - Record each entry's breaker scope once in `publish`. That replaces the three repeated
       `managesCircuitBreaking || breaker == nil` checks.
 
-- [ ] **A7. Split the largest files.** Line counts as of 2026-10-26.
+- [x] **A7. Split the largest files.** Line counts as of 2026-10-26.
   - `router.go` (980 lines): OpenAPI serving into `openapi_cache.go`, `authenticate` into `auth.go`,
     and `Run`/`reconcile`/`publish` into `reconcile.go`.
   - `st_fallback.go` (733 lines): stack resolution into `st_stacks.go`, and poll plus `fallbackBackend`
     into `st_poll.go`.
   - `discovery_manifests.go` (789 lines): index rendering into `discovery_index.go` (D5 keeps it).
 
-- [ ] **A8. One backend wrapper.**
+- [x] **A8. One backend wrapper.**
   - `pluginDeploymentBackend` (`plugin_manifests.go`) and `singleTenantResourcesBackend`
     (`st_resources.go`) each forward the optional interfaces by hand: `Manifest`, `PluginStatus` and
     `DiscoveryProvider`.
