@@ -59,13 +59,10 @@ export function RuleDatasources({ datasourceUIDs }: RuleDatasourcesProps) {
  * Thin forwardRef wrapper around the shared DataSourceLogo so that Tooltip
  * (Tippy.js) can attach a ref for positioning. The shared component does not
  * forward refs itself.
- * Exported for use in other row metadata components (e.g. RuleRecordedMetric).
  */
-export const DataSourceLogo = forwardRef<HTMLDivElement, { dataSource: DataSourceInstanceSettings }>(
-  ({ dataSource }, ref) => (
-    <span ref={ref}>
-      <SharedDataSourceLogo dataSource={dataSource} size={12} />
-    </span>
-  )
-);
+const DataSourceLogo = forwardRef<HTMLDivElement, { dataSource: DataSourceInstanceSettings }>(({ dataSource }, ref) => (
+  <span ref={ref}>
+    <SharedDataSourceLogo dataSource={dataSource} size={12} />
+  </span>
+));
 DataSourceLogo.displayName = 'DataSourceLogo';
