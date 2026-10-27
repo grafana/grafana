@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -12,6 +13,8 @@ import (
 )
 
 type ScopeResolverFunc func(scope string) (string, error)
+
+var errReportUIDLookup = errors.New("report UID lookup failed")
 
 func (s *Service) fetchServiceAccounts(ctx context.Context, ns types.NamespaceInfo) (map[int64]string, error) {
 	saIDs := make(map[int64]string)
@@ -178,6 +181,38 @@ func (s *Service) newUserNameResolver(ctx context.Context, ns types.NamespaceInf
 	}, nil
 }
 
+// The converter in GE ./pkg/accesscontrol/acimpl/id_scopes_convert.go handles report ID/UID scopes at the role API boundary.
+// RBAC authorization reads persisted permissions directly, so it must also resolve legacy IDs to UIDs here.
+func (s *Service) newReportNameResolver(ctx context.Context, ns types.NamespaceInfo) (ScopeResolverFunc, error) {
+	return func(scope string) (string, error) {
+		id, err := strconv.ParseInt(strings.TrimPrefix(scope, "reports:id:"), 10, 64)
+		if err != nil || id <= 0 {
+			return "", fmt.Errorf("invalid report ID scope %q", scope)
+		}
+
+		key := fmt.Sprintf("%s_reportUID_%d", ns.Value, id)
+		res, err, _ := s.sf.Do(key, func() (any, error) {
+			uid, found, err := s.store.GetReportUIDByID(ctx, ns, id)
+			if err != nil {
+				return "", err
+			}
+			if !found {
+				return "", nil
+			}
+			return uid, nil
+		})
+		if err != nil {
+			return "", fmt.Errorf("%w for report %d: %w", errReportUIDLookup, id, err)
+		}
+
+		if uid := res.(string); uid != "" {
+			return "reports:uid:" + uid, nil
+		}
+
+		return "", fmt.Errorf("report ID %d not found", id)
+	}, nil
+}
+
 func permissionsTypeResolverFunc(scope string) (string, error) {
 	switch strings.TrimPrefix(scope, "permissions:type:") {
 	case "delegate":
@@ -204,6 +239,9 @@ func isRoleManagementAction(action string) bool {
 }
 
 func (s *Service) nameResolver(ctx context.Context, ns types.NamespaceInfo, action, scopePrefix string) (ScopeResolverFunc, error) {
+	if scopePrefix == "reports:id:" {
+		return s.newReportNameResolver(ctx, ns)
+	}
 	if scopePrefix == "teams:id:" {
 		return s.newTeamNameResolver(ctx, ns)
 	}
@@ -252,7 +290,8 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, a
 				return nil, err
 			}
 			if scopeResolver == nil {
-				break // No resolver found for this prefix
+				prefix = ""
+				continue // UID grants must not prevent resolving ID grants in the same map.
 			}
 		}
 
@@ -262,6 +301,10 @@ func (s *Service) resolveScopeMap(ctx context.Context, ns types.NamespaceInfo, a
 		}
 		resolved, err := scopeResolver(scope)
 		if err != nil {
+			// Backend failures must not become cached permission denials.
+			if errors.Is(err, errReportUIDLookup) {
+				return nil, err
+			}
 			s.logger.FromContext(ctx).Warn("could not resolve scope name", "scope", scope, "error", err)
 			continue // Still want to process other scopes even if one fails.
 		}

@@ -82,6 +82,26 @@ var (
 )
 
 var resourceTranslations = map[string]resourceTranslation{
+	"reports": {
+		typ:      TypeResource,
+		group:    "reporting.grafana.app",
+		resource: "reports",
+		mapping: map[string]actionMapping{
+			"reports:read":   newMapping(RelationGet, ""),
+			"reports:create": newUnscopedMapping(RelationCreate),
+			"reports:write":  newMapping(RelationUpdate, ""),
+			"reports:delete": newMapping(RelationDelete, ""),
+		},
+	},
+	"reportsettings": {
+		typ:      TypeResource,
+		group:    "reporting.grafana.app",
+		resource: "reportsettings",
+		mapping: map[string]actionMapping{
+			"reports.settings:read":  newUnscopedMapping(RelationGet),
+			"reports.settings:write": newUnscopedMapping(RelationUpdate),
+		},
+	},
 	"datasources": {
 		typ:      TypeResource,
 		group:    "datasource.grafana.app",

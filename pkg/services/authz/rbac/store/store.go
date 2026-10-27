@@ -2,6 +2,8 @@ package store
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
@@ -12,6 +14,7 @@ import (
 )
 
 type Store interface {
+	GetReportUIDByID(ctx context.Context, ns claims.NamespaceInfo, reportID int64) (string, bool, error)
 	GetUserIdentifiers(ctx context.Context, query UserIdentifierQuery) (*UserIdentifiers, error)
 	GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, query BasicRoleQuery) (*BasicRole, error)
 }
@@ -101,4 +104,37 @@ func (s *StoreImpl) GetBasicRoles(ctx context.Context, ns claims.NamespaceInfo, 
 	}
 
 	return &role, nil
+}
+
+func (s *StoreImpl) GetReportUIDByID(ctx context.Context, ns claims.NamespaceInfo, reportID int64) (string, bool, error) {
+	ctx, span := s.tracer.Start(ctx, "authz_direct_db.database.GetReportUIDByID")
+	defer span.End()
+
+	helper, err := s.sql(ctx)
+	if err != nil {
+		return "", false, err
+	}
+
+	req := getReportUIDQuery{
+		SQLTemplate: sqltemplate.New(helper.DialectForDriver()),
+		ReportTable: helper.Table("report"),
+		OrgID:       ns.OrgID,
+		ReportID:    reportID,
+	}
+
+	query, err := sqltemplate.Execute(sqlReportUID, &req)
+	if err != nil {
+		return "", false, err
+	}
+
+	var uid sql.NullString
+	err = helper.DB.GetSqlxSession().Get(ctx, &uid, query, req.GetArgs()...)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, err
+	}
+
+	return uid.String, uid.Valid && uid.String != "", nil
 }

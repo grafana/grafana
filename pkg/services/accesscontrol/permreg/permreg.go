@@ -167,6 +167,10 @@ func (pr *permissionRegistry) RegisterPermission(action, scope string) error {
 
 	// Add a new entry in case the scope is not empty
 	validScopePrefixes[scopePrefix] = true
+	if kind == "reports" {
+		// Reports created in unified storage have UIDs without legacy numeric IDs.
+		validScopePrefixes["reports:uid:"] = true
+	}
 	return nil
 }
 

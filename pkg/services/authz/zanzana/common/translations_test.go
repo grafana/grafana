@@ -60,3 +60,35 @@ func TestDatasourceLegacyActionsUseSharedResource(t *testing.T) {
 		})
 	}
 }
+
+func TestReportingPermissionTranslations(t *testing.T) {
+	for _, tc := range []struct {
+		action, kind, resource, verb string
+		unscoped                     bool
+	}{
+		{"reports:read", "reports", "reports", "get", false},
+		{"reports:create", "reports", "reports", "create", true},
+		{"reports:write", "reports", "reports", "update", false},
+		{"reports:delete", "reports", "reports", "delete", false},
+		{"reports.settings:read", "reportsettings", "reportsettings", "get", true},
+		{"reports.settings:write", "reportsettings", "reportsettings", "update", true},
+	} {
+		t.Run(tc.action, func(t *testing.T) {
+			req, ok := TranslateToCheckRequest("default", tc.action, tc.kind, "weekly")
+			require.True(t, ok)
+			require.Equal(t, "reporting.grafana.app", req.Group)
+			require.Equal(t, tc.resource, req.Resource)
+			require.Equal(t, tc.verb, req.Verb)
+			tuple, ok := TranslateToResourceTuple("user:1", tc.action, tc.kind, "*")
+			require.True(t, ok)
+			require.Equal(t, "group_resource:reporting.grafana.app/"+tc.resource, tuple.Object)
+			_, ok = TranslateToResourceTuple("user:1", tc.action, "", "")
+			require.Equal(t, tc.unscoped, ok)
+			if !tc.unscoped {
+				tuple, ok = TranslateToResourceTuple("user:1", tc.action, tc.kind, "weekly")
+				require.True(t, ok)
+				require.Equal(t, "resource:reporting.grafana.app/reports/weekly", tuple.Object)
+			}
+		})
+	}
+}
