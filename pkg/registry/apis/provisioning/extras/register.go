@@ -108,7 +108,11 @@ func ProvideConnectionFactoryFromConfig(cfg *setting.Cfg, tracer tracing.Tracer,
 	types := cfg.ProvisioningConnectionTypes
 	if len(types) == 0 {
 		// Enforcing default connection values if settings are not set
-		types = []string{string(apisprovisioning.GithubConnectionType)}
+		types = []string{
+			string(apisprovisioning.GithubConnectionType),
+			string(apisprovisioning.GithubOAuthConnectionType),
+			string(apisprovisioning.GitOAuthConnectionType),
+		}
 	}
 
 	return connection.ProvideFactory(connection.ToConnectionTypes(types), extras, tracer)

@@ -49,7 +49,7 @@ If you're using Grafana Enterprise v12.4.0 and want to set up Git Sync with pure
 
 ## Enable OAuth connection types
 
-If you're using self-managed Grafana and the OAuth App connection type for your provider isn't available, add it to `connection_types` in your configuration file:
+Grafana enables the OAuth App connection types by default. If you set `connection_types` in your configuration file, add the OAuth App connection type for your provider to the list:
 
 1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
 1. Add the connection types:
