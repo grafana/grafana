@@ -27,7 +27,10 @@ type jobQueueCleaner interface {
 	// CleanupQueue deletes all queued jobs for the repository that are not
 	// currently being executed. Returns the number of jobs deleted.
 	CleanupQueue(ctx context.Context, namespace, repository string) (int, error)
+	CountRunning(ctx context.Context, namespace, repository string) (int, error)
 }
+
+var errJobsRunning = fmt.Errorf("repository has running jobs")
 
 type finalizer struct {
 	lister        resources.ResourceLister
@@ -78,7 +81,7 @@ func (f *finalizer) process(ctx context.Context,
 		}
 		logger.Info("running finalizer", "finalizer", finalizer)
 		var err error
-		var count int
+		var count, running int
 		start := time.Now()
 
 		switch finalizer {
@@ -87,6 +90,8 @@ func (f *finalizer) process(ctx context.Context,
 			count, err = f.jobs.CleanupQueue(ctx, cfg.Namespace, cfg.Name)
 			if err != nil {
 				err = fmt.Errorf("clear job queue: %w", err)
+			} else if running, err = f.jobs.CountRunning(ctx, cfg.Namespace, cfg.Name); err != nil {
+				err = fmt.Errorf("count running jobs: %w", err)
 			}
 
 		case repository.CleanFinalizer:
@@ -134,6 +139,10 @@ func (f *finalizer) process(ctx context.Context,
 
 		if err != nil {
 			return &finalizerError{finalizer: finalizer, err: err}
+		}
+		if running > 0 {
+			logger.Info("waiting for running jobs before the remaining finalizers", "running", running)
+			return errJobsRunning
 		}
 	}
 	return nil

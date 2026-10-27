@@ -44,7 +44,8 @@ import (
 const loggerName = "provisioning-repository-controller"
 
 const (
-	maxAttempts = 3
+	maxAttempts           = 3
+	runningJobsRetryDelay = 2 * time.Second
 )
 
 //go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
@@ -467,6 +468,9 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 	// Process any finalizers
 	if len(obj.Finalizers) > 0 {
 		err := rc.finalizer.process(ctx, obj)
+		if errors.Is(err, errJobsRunning) {
+			return err
+		}
 		if err != nil {
 			rc.deletionMetrics.recordError(deletionStageFinalizers)
 			if statusErr := rc.updateDeleteStatus(ctx, obj, fmt.Errorf("remove finalizers: %w", err)); statusErr != nil {
@@ -992,6 +996,11 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		phase = reconcilePhaseDelete
 		err := rc.handleDelete(ctx, obj)
 		if err == nil {
+			return repoType, nil
+		}
+		if errors.Is(err, errJobsRunning) {
+			rc.queueLag.add(key)
+			rc.queue.AddAfter(key, runningJobsRetryDelay)
 			return repoType, nil
 		}
 

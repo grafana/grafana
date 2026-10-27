@@ -95,6 +95,25 @@ func TestCleanupQueue_DeletesOnlyUnclaimedJobsForRepository(t *testing.T) {
 	assert.ElementsMatch(t, []string{"repo-a-running", "repo-b-pending"}, names)
 }
 
+func TestCountRunning_CountsClaimedJobsForRepository(t *testing.T) {
+	fakeClient := newFilteringClientset()
+	store := newTestStore(fakeClient.ProvisioningV0alpha1())
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	claimed := map[string]string{LabelRepository: "repo-a", LabelJobClaim: "123456789", LabelJobClaimOwner: "worker-1"}
+	createJob(ctx, t, fakeClient, "stacks-123", "repo-a-pending", "repo-a", false)
+	createJob(ctx, t, fakeClient, "stacks-123", "repo-a-running", "repo-a", true)
+	createJob(ctx, t, fakeClient, "stacks-123", "repo-b-running", "repo-b", true)
+	createJobWith(ctx, t, fakeClient, "stacks-123", "repo-a-release", claimed,
+		provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionReleaseResources})
+
+	running, err := store.CountRunning(ctx, "stacks-123", "repo-a")
+	require.NoError(t, err)
+	assert.Equal(t, 1, running)
+}
+
 // TestCleanupQueue_NoJobs verifies that clearing an empty queue is a no-op.
 func TestCleanupQueue_NoJobs(t *testing.T) {
 	fakeClient := newFilteringClientset()

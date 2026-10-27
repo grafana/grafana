@@ -76,6 +76,8 @@ type Queue interface {
 	// Jobs already claimed by a worker are left to finish. Returns the number
 	// of jobs deleted.
 	CleanupQueue(ctx context.Context, namespace, repository string) (int, error)
+
+	CountRunning(ctx context.Context, namespace, repository string) (int, error)
 }
 
 var (
@@ -663,6 +665,30 @@ func (s *persistentStore) CleanupQueue(ctx context.Context, namespace, repositor
 
 	logger.Info("cleanup queue complete", "deleted", deleted)
 	return deleted, nil
+}
+
+func (s *persistentStore) CountRunning(ctx context.Context, namespace, repository string) (int, error) {
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
+	if err != nil {
+		return 0, err
+	}
+	claimReq, err := labels.NewRequirement(LabelJobClaim, selection.Exists, nil)
+	if err != nil {
+		return 0, err
+	}
+	list, err := s.client.Jobs(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: labels.NewSelector().Add(*claimReq).String(),
+	})
+	if err != nil {
+		return 0, err
+	}
+	var running int
+	for i := range list.Items {
+		if isCleanupCandidate(&list.Items[i], repository) {
+			running++
+		}
+	}
+	return running, nil
 }
 
 // cleanupConflictRetries bounds the re-fetch/retry loop in deleteUnclaimedJob so

@@ -1290,6 +1290,7 @@ func TestReleaseExistingItems_ReturnsErrorWhenConflictPersists(t *testing.T) {
 func TestProcess_RemovePendingJobsFinalizer(t *testing.T) {
 	jobs := NewMockJobQueueCleaner(t)
 	jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(3, nil)
+	jobs.On("CountRunning", mock.Anything, "default", "my-repo").Once().Return(0, nil)
 
 	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
 	f := &finalizer{
@@ -1322,6 +1323,46 @@ func TestProcess_RemovePendingJobsFinalizer_Error(t *testing.T) {
 	err := f.process(context.Background(), cfg)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "clear job queue")
+}
+
+func TestProcess_RemovePendingJobsFinalizer_WaitsForRunningJobs(t *testing.T) {
+	jobs := NewMockJobQueueCleaner(t)
+	jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(2, nil)
+	jobs.On("CountRunning", mock.Anything, "default", "my-repo").Once().Return(1, nil)
+
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{
+		jobs:    jobs,
+		lister:  resources.NewMockResourceLister(t),
+		metrics: &metrics,
+	}
+
+	repo := mockRepo{name: "my-repo", namespace: "default"}
+	cfg := repo.Config()
+	cfg.Finalizers = []string{repository.RemovePendingJobsFinalizer, repository.RemoveOrphanResourcesFinalizer}
+	err := f.process(context.Background(), cfg)
+	assert.ErrorIs(t, err, errJobsRunning)
+}
+
+func TestProcess_RemovePendingJobsFinalizer_CountRunningError(t *testing.T) {
+	jobs := NewMockJobQueueCleaner(t)
+	jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(0, nil)
+	jobs.On("CountRunning", mock.Anything, "default", "my-repo").Once().Return(0, assert.AnError)
+
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{
+		jobs:    jobs,
+		metrics: &metrics,
+	}
+
+	repo := mockRepo{name: "my-repo", namespace: "default"}
+	cfg := repo.Config()
+	cfg.Finalizers = []string{repository.RemovePendingJobsFinalizer}
+	err := f.process(context.Background(), cfg)
+	var fe *finalizerError
+	require.ErrorAs(t, err, &fe)
+	assert.Equal(t, repository.RemovePendingJobsFinalizer, fe.finalizer)
+	assert.ErrorContains(t, err, "count running jobs")
 }
 
 // TestProcess_CleanFinalizer_BuildFailureBlocks verifies that when the cleanup

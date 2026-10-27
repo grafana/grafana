@@ -275,6 +275,23 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			expectedErr: "process finalizers: " + assert.AnError.Error(),
 		},
 		{
+			name: "Running jobs do not record a delete error",
+			finalizer: func() finalizerProcessor {
+				f := NewMockFinalizerProcessor(t)
+				f.On("process", mock.Anything, mock.Anything).Once().Return(errJobsRunning)
+				return f
+			}(),
+			statusPatcher: mocks.NewStatusPatcher(t),
+			repo: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Finalizers: []string{
+						repository.RemovePendingJobsFinalizer,
+					},
+				},
+			},
+			expectedErr: errJobsRunning.Error(),
+		},
+		{
 			name: "Error when patching finalizers",
 			finalizer: func() finalizerProcessor {
 				f := NewMockFinalizerProcessor(t)
@@ -2264,6 +2281,49 @@ func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus
 	}
 	require.NotNil(t, readyCond, "expected Ready condition to be present")
 	assert.Equal(t, metav1.ConditionFalse, readyCond.Status)
+}
+
+func TestRepositoryController_process_DeleteWaitsForRunningJobs(t *testing.T) {
+	now := metav1.Now()
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "test-repo",
+			Namespace:         "default",
+			DeletionTimestamp: &now,
+			Finalizers:        []string{repository.RemovePendingJobsFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	f := NewMockFinalizerProcessor(t)
+	f.On("process", mock.Anything, mock.Anything).Once().Return(errJobsRunning)
+
+	patcher := &capturePatcher{}
+	rc := &RepositoryController{
+		repos:     informer.NewCachedRepositoryGetter(mockLister),
+		finalizer: f,
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-running-jobs"},
+		),
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+	t.Cleanup(rc.queue.ShutDown)
+
+	_, err := rc.process("default/test-repo")
+	require.NoError(t, err)
+
+	_, ok := patcher.findPatchOp("/status/health")
+	assert.False(t, ok, "waiting for running jobs must not mark the repository unhealthy")
+
+	require.Eventually(t, func() bool { return rc.queue.Len() == 1 },
+		2*runningJobsRetryDelay, 50*time.Millisecond, "repository must be requeued while jobs run")
 }
 
 // TestRepositoryController_process_DeleteStatusPatchFailure verifies how a
