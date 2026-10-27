@@ -1,7 +1,7 @@
 import { BehaviorSubject } from 'rxjs';
 
 import { useObservable } from '@grafana/data/unstable';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 
 import { ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from './stPodReadyConstants';
 
@@ -10,7 +10,10 @@ export enum StPodStatus {
   Waiting = 'waiting',
   Ready = 'ready',
   Timeout = 'timeout',
+  Error = 'error',
 }
+
+const POD_BUSY_STATUS = 503;
 
 interface PendingResolver {
   promise: Promise<void>;
@@ -63,7 +66,7 @@ export class StPodReadyService {
     if (status === StPodStatus.Ready) {
       return;
     }
-    if (status === StPodStatus.Timeout) {
+    if (status === StPodStatus.Timeout || status === StPodStatus.Error) {
       this.reset();
     }
     this.beginPolling();
@@ -111,7 +114,8 @@ export class StPodReadyService {
   private beginPolling(): void {
     this.clearTimers();
     this.timeoutTimer = setTimeout(() => {
-      if (this.state.getValue() === StPodStatus.Waiting) {
+      const status = this.state.getValue();
+      if (status === StPodStatus.Waiting || status === StPodStatus.Unknown) {
         this.transitionToTimeout();
       }
     }, ST_POD_TIMEOUT_MS);
@@ -132,13 +136,17 @@ export class StPodReadyService {
       if (response?.database === 'ok') {
         this.transitionToReady();
       } else {
-        this.transitionToWaiting();
+        this.transitionToBusy();
       }
-    } catch {
+    } catch (err) {
       if (abort.signal.aborted) {
         return;
       }
-      this.transitionToWaiting();
+      if (isFetchError(err) && err.status === POD_BUSY_STATUS) {
+        this.transitionToBusy();
+      } else {
+        this.transitionToError();
+      }
     } finally {
       if (this.pollAbort === abort) {
         this.pollAbort = null;
@@ -148,10 +156,8 @@ export class StPodReadyService {
   }
 
   private schedulePoll(): void {
-    if (this.state.getValue() !== StPodStatus.Waiting && this.state.getValue() !== StPodStatus.Unknown) {
-      return;
-    }
-    if (this.timeoutTimer === null) {
+    const status = this.state.getValue();
+    if (status === StPodStatus.Ready || status === StPodStatus.Error) {
       return;
     }
     this.pollTimer = setTimeout(() => this.poll(), ST_POD_POLL_INTERVAL_MS);
@@ -167,8 +173,9 @@ export class StPodReadyService {
     this.clearTimers();
   }
 
-  private transitionToWaiting(): void {
-    if (this.state.getValue() === StPodStatus.Waiting) {
+  private transitionToBusy(): void {
+    const status = this.state.getValue();
+    if (status === StPodStatus.Waiting || status === StPodStatus.Timeout) {
       return;
     }
     this.readyAt = null;
@@ -181,7 +188,16 @@ export class StPodReadyService {
       return;
     }
     this.readyAt = null;
+    this.ensurePending();
     this.state.next(StPodStatus.Timeout);
+  }
+
+  private transitionToError(): void {
+    if (this.state.getValue() === StPodStatus.Error) {
+      return;
+    }
+    this.readyAt = null;
+    this.state.next(StPodStatus.Error);
     this.clearTimers();
   }
 

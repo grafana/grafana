@@ -67,4 +67,13 @@ describe('StPodReadyGate', () => {
     expect(await screen.findByText('waiting for pod')).toBeInTheDocument();
     expect(screen.queryByText('the page')).not.toBeInTheDocument();
   });
+
+  it('keeps suspending on error so the loader fallback can render the error card', async () => {
+    service.state.next(StPodStatus.Error);
+
+    await renderGate(false, service);
+
+    expect(await screen.findByText('waiting for pod')).toBeInTheDocument();
+    expect(screen.queryByText('the page')).not.toBeInTheDocument();
+  });
 });

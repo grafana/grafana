@@ -90,7 +90,7 @@ describe('GrafanaRoute', () => {
   });
 
   it('shows the fallback loader once the pod reports it is not ready for a route outside the allow list', async () => {
-    server.use(http.get('/api/health', () => HttpResponse.json({ code: 'NotFound' }, { status: 404 })));
+    server.use(http.get('/api/health', () => HttpResponse.json({ database: 'failing' }, { status: 503 })));
     await act(async () => {
       setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards/*'] } });
     });

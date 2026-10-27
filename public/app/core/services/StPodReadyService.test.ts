@@ -5,7 +5,9 @@ import { ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from 
 
 const podUp = () => Promise.resolve({ database: 'ok' });
 const podDown = () => Promise.resolve({ database: 'failing' });
-const podError = () => Promise.reject(new Error('network'));
+const podBusyFetchError = () => Promise.reject({ status: 503, data: { database: 'failing' } });
+const podNetworkError = () => Promise.reject(new Error('network'));
+const podServerError = () => Promise.reject({ status: 500, data: { message: 'boom' } });
 
 const installBackend = (handler: () => Promise<unknown>): jest.Mock => {
   const get = jest.fn(handler);
@@ -56,7 +58,7 @@ describe('StPodReadyService', () => {
     await expect(pending).resolves.toBeUndefined();
   });
 
-  it('transitions unknown to waiting when the pod reports not ok', async () => {
+  it('transitions unknown to waiting when the pod reports not ok in a 200 body', async () => {
     installBackend(podDown);
 
     service.start();
@@ -65,8 +67,8 @@ describe('StPodReadyService', () => {
     expect(service.getStatus()).toBe(StPodStatus.Waiting);
   });
 
-  it('treats network errors as waiting', async () => {
-    installBackend(podError);
+  it('transitions unknown to waiting when the pod responds with 503 service unavailable', async () => {
+    installBackend(podBusyFetchError);
 
     service.start();
     await flushMicrotasks();
@@ -74,8 +76,26 @@ describe('StPodReadyService', () => {
     expect(service.getStatus()).toBe(StPodStatus.Waiting);
   });
 
+  it('transitions unknown to error on a network failure', async () => {
+    installBackend(podNetworkError);
+
+    service.start();
+    await flushMicrotasks();
+
+    expect(service.getStatus()).toBe(StPodStatus.Error);
+  });
+
+  it('transitions unknown to error on a 500 server error', async () => {
+    installBackend(podServerError);
+
+    service.start();
+    await flushMicrotasks();
+
+    expect(service.getStatus()).toBe(StPodStatus.Error);
+  });
+
   it('suppresses the global error toast on failed health requests', async () => {
-    const get = installBackend(podError);
+    const get = installBackend(podNetworkError);
 
     service.start();
     await flushMicrotasks();
@@ -148,46 +168,78 @@ describe('StPodReadyService', () => {
     expect(service.getStatus()).toBe(StPodStatus.Ready);
   });
 
-  it('start after timeout resets and begins fresh polling', async () => {
+  it('keeps polling after timeout so the pod can still auto-recover', async () => {
     jest.useFakeTimers();
-    installBackend(podDown);
+    const get = installBackend(podDown);
+
+    service.start();
+    await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS);
+    expect(service.getStatus()).toBe(StPodStatus.Timeout);
+    const callsAtTimeout = get.mock.calls.length;
+
+    await jest.advanceTimersByTimeAsync(ST_POD_POLL_INTERVAL_MS * 2);
+
+    expect(get.mock.calls.length).toBeGreaterThan(callsAtTimeout);
+  });
+
+  it('auto-recovers from timeout to ready when the pod eventually responds ok', async () => {
+    jest.useFakeTimers();
+    let databaseStatus = 'failing';
+    const get = jest.fn(() => Promise.resolve({ database: databaseStatus }));
+    setBackendSrv({ get } as unknown as BackendSrv);
 
     service.start();
     await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS);
     expect(service.getStatus()).toBe(StPodStatus.Timeout);
 
+    databaseStatus = 'ok';
+    await jest.advanceTimersByTimeAsync(ST_POD_POLL_INTERVAL_MS);
+
+    expect(service.getStatus()).toBe(StPodStatus.Ready);
+  });
+
+  it('start after error resets and begins fresh polling', async () => {
+    jest.useFakeTimers();
+    installBackend(podNetworkError);
+
     service.start();
-    await jest.advanceTimersByTimeAsync(0);
+    await flushMicrotasks();
+    expect(service.getStatus()).toBe(StPodStatus.Error);
+
+    installBackend(podDown);
+    service.start();
+    await flushMicrotasks();
 
     expect(service.getStatus()).toBe(StPodStatus.Waiting);
   });
 
-  it('resolves the stale pending promise when reset so suspended consumers can re-render', async () => {
+  it('resolves the stale pending promise when start recovers from error', async () => {
     jest.useFakeTimers();
-    installBackend(podDown);
+    installBackend(podNetworkError);
 
     service.start();
     const stale = service.getReadyPromise();
-    await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS);
-    expect(service.getStatus()).toBe(StPodStatus.Timeout);
+    await flushMicrotasks();
+    expect(service.getStatus()).toBe(StPodStatus.Error);
 
     service.start();
 
     await expect(stale).resolves.toBeUndefined();
   });
 
-  it('hands out a fresh pending promise after recovering from timeout', async () => {
+  it('hands out a fresh pending promise after recovering from error', async () => {
     jest.useFakeTimers();
-    installBackend(podDown);
+    installBackend(podNetworkError);
 
     service.start();
-    const timedOut = service.getReadyPromise();
-    await jest.advanceTimersByTimeAsync(ST_POD_TIMEOUT_MS);
-    expect(service.getStatus()).toBe(StPodStatus.Timeout);
+    const errored = service.getReadyPromise();
+    await flushMicrotasks();
+    expect(service.getStatus()).toBe(StPodStatus.Error);
 
+    installBackend(podDown);
     service.start();
     const fresh = service.getReadyPromise();
-    expect(fresh).not.toBe(timedOut);
+    expect(fresh).not.toBe(errored);
 
     const stillPending = Symbol('still-pending');
     await expect(Promise.race([fresh, Promise.resolve(stillPending)])).resolves.toBe(stillPending);
