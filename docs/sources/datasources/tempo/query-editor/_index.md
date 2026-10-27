@@ -132,7 +132,7 @@ Keep Hierarchy
 : Includes each matched span's ancestor path back to the root, so the result displays as a complete waterfall instead of only the matching spans. Default value is **Off**.
 
 Match Depth
-: How many levels of descendants to keep below each matched span, independent of **Keep Hierarchy**. Use `-1` for the full subtree, `0` for only the matched spans, or `n` for a bounded depth. Default value is `0`.
+: How many levels of descendants to keep below each matched span, independent of **Keep Hierarchy**. Use `-1` to keep all descendants, `0` for only the matched spans, or `n` for a bounded depth. Default value is `0`.
 
 Ancestor Depth
 : How many levels of ancestors to keep above each matched span. Use `-1` for the whole path to the root, `0` for none, or `n` for a bounded depth. Only used when **Keep Hierarchy** is on. Default value is `-1`.
@@ -154,7 +154,7 @@ To show only the work that starts in `checkout`:
 1. Run the query.
 
 The filter matches every span that belongs to the `checkout` service.
-Because **Match Depth** is `-1`, Tempo also keeps the full subtree below each matched span, so you still see everything those spans called downstream.
+Because **Match Depth** is `-1`, Tempo also keeps all descendants of each matched span, so you still see everything those spans called downstream.
 The rest of the trace is left out.
 
 To see where `checkout` sits in the wider request, turn **Keep Hierarchy** on.
