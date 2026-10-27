@@ -1,6 +1,6 @@
 import { language } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
 
@@ -54,6 +54,37 @@ describe('CodeMirror DiffEditor', () => {
     expect(container.querySelector('.cm-lineNumbers')).not.toBeInTheDocument();
     expect(container.firstChild).toHaveStyle({ height: '320px' });
   });
+
+  it.each([false, true])(
+    'updates and clears supplied values without changing language (inline: %s)',
+    async (inline) => {
+      const { container, rerender } = render(<DiffEditor original="before" modified="after" inline={inline} />);
+
+      rerender(<DiffEditor original="previous" modified="current" inline={inline} />);
+
+      expect(EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Modified' }))?.state.doc.toString()).toBe(
+        'current'
+      );
+      expect(container.querySelector('.cm-deletedChunk, .cm-merge-a .cm-changedLine')).toHaveTextContent('previous');
+
+      // jsdom cannot position a selection in a non-editable CodeMirror view.
+      act(() => {
+        for (const editor of screen.getAllByRole('textbox')) {
+          const view = EditorView.findFromDOM(editor);
+          if (view) {
+            view.dispatch({ selection: { anchor: view.state.doc.length } });
+          }
+        }
+      });
+
+      rerender(<DiffEditor original="" modified="" inline={inline} />);
+
+      for (const editor of screen.getAllByRole('textbox')) {
+        expect(EditorView.findFromDOM(editor)?.state.doc.toString()).toBe('');
+      }
+      expect(container.querySelector('.cm-deletedChunk')).not.toBeInTheDocument();
+    }
+  );
 
   it('keeps deleted inline text highlighted after language loading and theme changes', async () => {
     const lightTheme = createTheme({ colors: { mode: 'light' } });

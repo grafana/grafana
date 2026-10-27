@@ -117,6 +117,7 @@
     "ol": "^10.7.0",
     "prismjs": "^1.30.0",
     "react-calendar": "^6.0.0",
+    "react-codemirror-merge": "^4.25.12",
     "react-colorful": "^5.6.1",
     "react-custom-scrollbars-2": "^4.5.0",
     "react-dropzone": "^14.3.8",

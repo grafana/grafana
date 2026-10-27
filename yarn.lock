@@ -878,7 +878,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@codemirror/merge@npm:^6.12.3":
+"@codemirror/merge@npm:^6.1.2, @codemirror/merge@npm:^6.12.3":
   version: 6.12.3
   resolution: "@codemirror/merge@npm:6.12.3"
   dependencies:
@@ -3131,6 +3131,7 @@ __metadata:
     prismjs: "npm:^1.30.0"
     react: "npm:19.2.8"
     react-calendar: "npm:^6.0.0"
+    react-codemirror-merge: "npm:^4.25.12"
     react-colorful: "npm:^5.6.1"
     react-custom-scrollbars-2: "npm:^4.5.0"
     react-dom: "npm:19.2.8"
@@ -11374,7 +11375,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uiw/react-codemirror@npm:^4.25.9":
+"@uiw/react-codemirror@npm:4.25.12, @uiw/react-codemirror@npm:^4.25.9":
   version: 4.25.12
   resolution: "@uiw/react-codemirror@npm:4.25.12"
   dependencies:
@@ -25699,6 +25700,25 @@ __metadata:
     "@types/react":
       optional: true
   checksum: 10/02772e7725c6a6abeebe3214f46fc2355ab574e498f08054c0135c7f49207b52c34afa8cffd5a347c6a61f0a040b343380605380a1eccdeecf43c48ab5e9709f
+  languageName: node
+  linkType: hard
+
+"react-codemirror-merge@npm:^4.25.12":
+  version: 4.25.12
+  resolution: "react-codemirror-merge@npm:4.25.12"
+  dependencies:
+    "@babel/runtime": "npm:^7.18.6"
+    "@codemirror/merge": "npm:^6.1.2"
+    "@uiw/react-codemirror": "npm:4.25.12"
+  peerDependencies:
+    "@babel/runtime": ">=7.11.0"
+    "@codemirror/state": ">=6.0.0"
+    "@codemirror/theme-one-dark": ">=6.0.0"
+    "@codemirror/view": ">=6.0.0"
+    codemirror: ">=6.0.0"
+    react: ">=16.8.0"
+    react-dom: ">=16.8.0"
+  checksum: 10/ac7df0e95ce6a1929f80998f222bb5dd25126e86f376acec176921e8537e96a4de2f2fa17dcbfaf46d9b9bd2c48c1e7aacede10eed91a0d7d390865a627320ad
   languageName: node
   linkType: hard
 

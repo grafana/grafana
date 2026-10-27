@@ -1,8 +1,10 @@
-import { MergeView, getOriginalDoc, originalDocChangeEffect, unifiedMergeView } from '@codemirror/merge';
-import { ChangeSet, Compartment, EditorState } from '@codemirror/state';
+import { getOriginalDoc, originalDocChangeEffect, unifiedMergeView } from '@codemirror/merge';
+import { ChangeSet, Text } from '@codemirror/state';
 import { EditorView, drawSelection, lineNumbers as lineNumbersExtension } from '@codemirror/view';
 import { css } from '@emotion/css';
+import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { useEffect, useMemo, useRef } from 'react';
+import CodeMirrorMerge from 'react-codemirror-merge';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -13,6 +15,8 @@ import { Alert } from '../Alert/Alert';
 import { createCodeEditorTheme } from './theme';
 import { type CodeMirrorDiffEditorProps } from './types';
 import { useLanguageExtension } from './useLanguageExtension';
+
+const readOnlyOptions = { readOnly: true, editable: false, basicSetup: false, indentWithTab: false };
 
 export function DiffEditor({
   original,
@@ -25,15 +29,9 @@ export function DiffEditor({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { extension: languageExtension, error: languageError } = useLanguageExtension(language);
-  const container = useRef<HTMLDivElement>(null);
-  const viewRef = useRef<MergeView | EditorView | null>(null);
-  const configuration = useMemo(() => new Compartment(), []);
-  const extensions = useMemo(
+  const inlineEditor = useRef<ReactCodeMirrorRef>(null);
+  const editorTheme = useMemo(
     () => [
-      EditorState.readOnly.of(true),
-      EditorView.editable.of(false),
-      EditorView.contentAttributes.of({ tabindex: '0' }),
-      drawSelection(),
       createCodeEditorTheme(theme),
       EditorView.theme({
         '&.cm-merge-b .cm-changedLine': { backgroundColor: theme.colors.success.transparent },
@@ -43,80 +41,52 @@ export function DiffEditor({
         '&.cm-merge-b .cm-changedLineGutter': { backgroundColor: theme.colors.success.main },
         '&.cm-merge-a .cm-changedLineGutter, .cm-deletedLineGutter': { backgroundColor: theme.colors.error.main },
       }),
+    ],
+    [theme]
+  );
+  const extensions = useMemo(
+    () => [
+      EditorView.contentAttributes.of({ tabindex: '0' }),
+      drawSelection(),
       ...(lineNumbers ? [lineNumbersExtension()] : []),
       ...(languageExtension ? [languageExtension] : []),
     ],
-    [theme, lineNumbers, languageExtension]
+    [lineNumbers, languageExtension]
   );
-  const latest = useRef({ original, modified, extensions });
-  latest.current = { original, modified, extensions };
-
-  // Inline deletion widgets cache syntax styles, so language and theme changes need a fresh view.
-  useEffect(() => {
-    if (!container.current) {
-      return;
-    }
-
-    const { original, modified, extensions } = latest.current;
-    const modifiedExtensions = [
-      configuration.of(extensions),
+  const originalExtensions = useMemo(
+    () => [
+      ...extensions,
+      EditorView.contentAttributes.of({ 'aria-label': t('grafana-ui.code-mirror.diff-original', 'Original') }),
+    ],
+    [extensions]
+  );
+  const modifiedExtensions = useMemo(
+    () => [
+      ...extensions,
       EditorView.contentAttributes.of({ 'aria-label': t('grafana-ui.code-mirror.diff-modified', 'Modified') }),
-    ];
-    const view = inline
-      ? new EditorView({
-          parent: container.current,
-          doc: modified,
-          extensions: [modifiedExtensions, unifiedMergeView({ original, mergeControls: false })],
-        })
-      : new MergeView({
-          parent: container.current,
-          a: {
-            doc: original,
-            extensions: [
-              configuration.of(extensions),
-              EditorView.contentAttributes.of({ 'aria-label': t('grafana-ui.code-mirror.diff-original', 'Original') }),
-            ],
-          },
-          b: { doc: modified, extensions: modifiedExtensions },
-        });
-    viewRef.current = view;
-
-    return () => {
-      viewRef.current = null;
-      view.destroy();
-    };
-  }, [inline, configuration, languageExtension, theme]);
+    ],
+    [extensions]
+  );
+  const inlineExtensions = useMemo(
+    () => (inline ? [...modifiedExtensions, unifiedMergeView({ original, mergeControls: false })] : []),
+    [inline, modifiedExtensions, original]
+  );
 
   useEffect(() => {
-    const view = viewRef.current;
-    if (!view) {
+    const view = inlineEditor.current?.view;
+    if (!inline || !view) {
       return;
     }
 
-    const update = (editor: EditorView, value: string) => {
-      editor.dispatch({
-        changes:
-          editor.state.doc.toString() === value ? undefined : { from: 0, to: editor.state.doc.length, insert: value },
-        effects: configuration.reconfigure(extensions),
-      });
-    };
-
-    if (view instanceof MergeView) {
-      update(view.a, original);
-      update(view.b, modified);
-    } else {
-      const previousOriginal = getOriginalDoc(view.state);
-      if (previousOriginal.toString() !== original) {
-        view.dispatch({
-          effects: originalDocChangeEffect(
-            view.state,
-            ChangeSet.of({ from: 0, to: previousOriginal.length, insert: original }, previousOriginal.length)
-          ),
-        });
-      }
-      update(view, modified);
-    }
-  }, [original, modified, extensions, configuration, inline]);
+    // Refresh the baseline and cached deletion styles after language or theme changes.
+    const previousOriginal = getOriginalDoc(view.state);
+    view.dispatch({
+      effects: originalDocChangeEffect(
+        view.state,
+        ChangeSet.of({ from: 0, to: previousOriginal.length, insert: original }, previousOriginal.length)
+      ),
+    });
+  }, [inline, original, languageExtension, theme]);
 
   return (
     <>
@@ -128,7 +98,32 @@ export function DiffEditor({
           )}
         </Alert>
       )}
-      <div ref={container} className={styles.container} style={{ height }} />
+      <div className={styles.container} style={{ height }}>
+        {inline ? (
+          <CodeMirror
+            {...readOnlyOptions}
+            ref={inlineEditor}
+            value={modified}
+            height="100%"
+            theme={editorTheme}
+            extensions={inlineExtensions}
+          />
+        ) : (
+          <CodeMirrorMerge theme={editorTheme} destroyRerender>
+            {/* Text.empty makes the merge wrapper update cleared panes before restoring their selections. */}
+            <CodeMirrorMerge.Original
+              {...readOnlyOptions}
+              value={original || Text.empty}
+              extensions={originalExtensions}
+            />
+            <CodeMirrorMerge.Modified
+              {...readOnlyOptions}
+              value={modified || Text.empty}
+              extensions={modifiedExtensions}
+            />
+          </CodeMirrorMerge>
+        )}
+      </div>
     </>
   );
 }
@@ -136,8 +131,8 @@ export function DiffEditor({
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     minHeight: 0,
-    '& > .cm-editor': { height: '100%' },
-    '& > .cm-mergeView': { height: '100%', overflow: 'auto' },
+    '.cm-theme, .cm-merge-theme': { height: '100%' },
+    '.cm-mergeView': { height: '100%', overflow: 'auto' },
     '.cm-mergeViewEditor': { minWidth: 0 },
     '.cm-mergeViewEditor + .cm-mergeViewEditor': { borderLeft: `1px solid ${theme.colors.border.weak}` },
   }),
