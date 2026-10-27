@@ -52,7 +52,7 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
     ).not.toHaveText(minReducerValue);
   });
 
-  test('Footer unaffected by sorting', async ({ gotoDashboardPage, selectors, page }) => {
+  test('Footer affected by sorting', async ({ gotoDashboardPage, selectors, page }) => {
     const dashboardPage = await gotoDashboardPage({
       uid: DASHBOARD_UID,
       queryParams: new URLSearchParams({ editPanel: '4' }),
@@ -79,11 +79,10 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
     // get the first value in the "State" column, filter it out, then check that it went away.
     await minColumnHeader.getByText('Min').click();
     await expect(minColumnHeader).toHaveAttribute('aria-sort', 'ascending');
-    await expect(
-      dashboardPage
-        .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
-        .nth(minColumnIdx)
-    ).toHaveText(minReducerValue);
+    const ascendingReducerValue = await dashboardPage
+      .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
+      .nth(minColumnIdx)
+      .innerText();
 
     await minColumnHeader.getByText('Min').click();
     await expect(minColumnHeader).toHaveAttribute('aria-sort', 'descending');
@@ -91,7 +90,7 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
       dashboardPage
         .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.Footer.Value)
         .nth(minColumnIdx)
-    ).toHaveText(minReducerValue);
+    ).not.toHaveText(ascendingReducerValue);
 
     await minColumnHeader.getByText('Min').click();
     await expect(minColumnHeader).not.toHaveAttribute('aria-sort');
