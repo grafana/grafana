@@ -28,6 +28,7 @@ import * as libAPI from 'app/features/library-panels/state/api';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
 import { dispatch } from 'app/store/store';
 
+import { edit } from '../actions/utils/edit';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
@@ -135,6 +136,43 @@ describe('PanelEditor', () => {
 
   describe('Entering panel edit', () => {
     beforeEach(() => jest.mocked(dispatch).mockClear());
+
+    it('applies panel options and tracks changes after the preview layout item remounts', async () => {
+      const { panelEditor, panel, gridItem, deactivatePanel } = await setup({ activateFullTree: false });
+      let observedDisplayMode = panel.state.displayMode;
+      const subscription = panel.subscribeToState((state) => {
+        observedDisplayMode = state.displayMode;
+      });
+
+      const unmountPreview = gridItem.activate();
+      unmountPreview();
+      deactivatePanel!();
+      const unmountRemountedPreview = gridItem.activate();
+      const unmountRemountedPanel = panel.activate();
+
+      try {
+        edit({
+          meta: { actionId: 'panel.changeBackground' },
+          source: panel,
+          description: 'Change panel background',
+          perform: () => panel.setState({ displayMode: 'transparent' }),
+          undo: () => panel.setState({ displayMode: 'default' }),
+        });
+
+        expect(panel.state.displayMode).toBe('transparent');
+        expect(observedDisplayMode).toBe('transparent');
+        expect(panelEditor.state.isDirty).toBe(true);
+      } finally {
+        subscription.unsubscribe();
+        unmountRemountedPanel();
+        unmountRemountedPreview();
+      }
+
+      deactivate!();
+      deactivate = undefined;
+      expect(gridItem.isActive).toBe(false);
+      expect(panel.isActive).toBe(false);
+    });
 
     it('pauses ad hoc table transformations and restores them on exit', async () => {
       const transformations: DataTransformerConfig[] = [{ id: 'organize', options: { indexByName: { B: 0, A: 1 } } }];
@@ -503,6 +541,7 @@ describe('PanelEditor', () => {
 });
 
 interface SetupOptions {
+  activateFullTree?: boolean;
   isNewPanel?: boolean;
   pluginId?: string;
   pluginSkipDataQuery?: boolean;
@@ -566,7 +605,13 @@ async function setup(options: SetupOptions = {}) {
 
   panelEditor.debounceSaveModelDiff = false;
 
-  deactivate = activateFullSceneTree(dashboard);
+  let deactivatePanel: CancelActivationHandler | undefined;
+  if (options.activateFullTree === false) {
+    deactivatePanel = panel.activate();
+    deactivate = panelEditor.activate();
+  } else {
+    deactivate = activateFullSceneTree(dashboard);
+  }
 
   if (!options.skipWait) {
     //console.log('pluginResolve(pluginToLoad)');
@@ -574,5 +619,5 @@ async function setup(options: SetupOptions = {}) {
     await new Promise((r) => setTimeout(r, 1));
   }
 
-  return { dashboard, panel, gridItem, panelEditor, pluginResolve };
+  return { dashboard, panel, gridItem, panelEditor, pluginResolve, deactivatePanel };
 }
