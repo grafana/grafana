@@ -13,6 +13,9 @@ labels:
     - oss
 title: What's new in Grafana v13.3
 posts:
+  - title: Look and feel
+    items:
+      - whats-new/2026-09-21-grafana-visual-ui-refresh.md
   - title: AI
     items:
       - whats-new/2026-09-18-try-dashboard-changes-confidently-with-grafana-assistant-undo.md
@@ -36,10 +39,9 @@ posts:
       - whats-new/2026-09-21-import-of-alertmanager-configuration-to-grafana-alerting.md
       - whats-new/2026-09-24-improve-alert-rule-quality.md
       - whats-new/2026-10-22-manage-prometheus-mimir-and-loki-alerting-with-a-dedicated-plugin.md
-  - title: Other
+  - title: Administration
     items:
       - whats-new/2026-10-16-announcement-banners-can-now-be-dismissible.md
-      - whats-new/2026-09-21-grafana-visual-ui-refresh.md
   - title: Breaking changes
     items:
       - whats-new/2026-10-02-role-managers-can-revoke-access-they-do-not-hold.md
