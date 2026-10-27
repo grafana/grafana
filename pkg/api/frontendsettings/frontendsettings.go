@@ -200,9 +200,8 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 			Backend: cfg.UnifiedAlerting.StateHistory.Backend,
 			Primary: cfg.UnifiedAlerting.StateHistory.MultiPrimary,
 		}
-		// Only sent when alert states are actually written there, so the frontend can rely on it being set
-		// to decide whether to show the alert activity page.
-		if cfg.UnifiedAlerting.StateHistory.WritesToPrometheus() {
+		// The frontend shows the alert activity page when this is set, using the same check as the nav tree.
+		if cfg.UnifiedAlerting.StateHistory.HasAlertStateMetrics() {
 			frontendSettings.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID = cfg.UnifiedAlerting.StateHistory.PrometheusTargetDatasourceUID
 		}
 		if cfg.UnifiedAlerting.StateHistory.PrometheusMetricName != "" {

@@ -133,12 +133,6 @@ func WithNatsNotifier(s resource.EventSubscriber, invalidator resource.Invalidat
 	}
 }
 
-// WithExperimentalKV routes flagged experimental use-cases to an alternative
-// KV. Nil preserves existing behavior. KV backend only.
-func WithExperimentalKV(e *resource.ExperimentalKVOptions) StorageBackendOption {
-	return func(o *resource.KVBackendOptions) { o.ExperimentalKV = e }
-}
-
 // NewStorageBackend creates the unified storage backend based on options.StorageType.
 // It supports file-based KV backend using BadgerDB (options.StorageTypeFile).
 // Returns a nil backend if options.StorageTypeUnifiedGrpc, a remote gRPC client is expected to be used instead.
@@ -273,6 +267,7 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 		Log:                     logging.DefaultLogger.With("logger", "storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
 		ResourceVersionMaxWait:  cfg.ResourceVersionMaxWait,
+		FastLatestKeyLookup:     cfg.FastLatestKeyLookupEnabled,
 	})
 }
 

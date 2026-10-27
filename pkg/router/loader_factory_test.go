@@ -38,8 +38,8 @@ func TestProvideCloudRoutesLoader_Decrypter(t *testing.T) {
 		require.NoError(t, err)
 		cloud, ok := loader.(*cloudLoader)
 		require.True(t, ok)
-		require.NotNil(t, cloud.pluginsTarget)
-		return cloud.pluginsTarget.deps
+		require.NotNil(t, pluginManifestsTargetOf(cloud, sourcePluginsURL))
+		return pluginManifestsTargetOf(cloud, sourcePluginsURL).deps
 	}
 
 	t.Run("secrets manager gRPC client", func(t *testing.T) {
@@ -69,19 +69,37 @@ func TestProvideCloudRoutesLoader_Decrypter(t *testing.T) {
 	})
 }
 
-func TestProvideRoutesLoader_MiddlewareSkipsCloudSources(t *testing.T) {
-	middleware := PluginLoaderDependencies{PluginDependencies: PluginDependencies{
-		Features: featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), //nolint:staticcheck
-	}}
-	for key, value := range map[string]string{
-		"st_discovery_url": "https://discovery.example.com",
-		"plugins_url":      "https://plugins.invalid/plugins",
-		"core_url":         "https://core.invalid/plugins",
+// ProvideRoutesLoader never loads the cloud sources: the standalone router
+// builds them with ProvideCloudRoutesLoader, and Grafana itself never polls
+// them, in middleware mode or not.
+func TestProvideRoutesLoader_NeverLoadsCloudSources(t *testing.T) {
+	for name, features := range map[string]featuremgmt.FeatureToggles{
+		"grafana":    featuremgmt.WithFeatures(),
+		"middleware": featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), //nolint:staticcheck
 	} {
-		t.Run(key, func(t *testing.T) {
-			loader, err := ProvideRoutesLoader(cfgWithCloudRouterSection(t, map[string]string{key: value}), middleware)
-			require.NoError(t, err)
-			require.IsType(t, dummyRoutesLoader{}, loader)
-		})
+		for key, value := range map[string]string{
+			"st_discovery_url": "https://discovery.example.com",
+			"plugins_url":      "https://plugins.invalid/plugins",
+			"core_url":         "https://core.invalid/plugins",
+		} {
+			t.Run(name+"/"+key, func(t *testing.T) {
+				deps := PluginLoaderDependencies{PluginDependencies: PluginDependencies{Features: features}}
+				loader, err := ProvideRoutesLoader(cfgWithCloudRouterSection(t, map[string]string{key: value}), deps)
+				require.NoError(t, err)
+				require.IsType(t, noRoutesLoader{}, loader)
+			})
+		}
 	}
+}
+
+// The standalone router builds the cloud loader whatever the middleware flag
+// says, since it is never middleware.
+func TestProvideCloudRoutesLoader_StandaloneIgnoresMiddlewareFlag(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
+	cfg.Target = []string{"router"}
+	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
+	loader, err := ProvideCloudRoutesLoader(cfg, RoutesLoaderClients{}, tracing.InitializeTracerForTest(), features, prometheus.NewRegistry())
+	require.NoError(t, err)
+	require.IsType(t, &cloudLoader{}, loader)
+	require.False(t, middlewareEnabled(cfg, features))
 }

@@ -1878,12 +1878,10 @@ func (st RuleStore) GetAlertRulesForScheduling(ctx context.Context, query *ngmod
 }
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
+//
+// All folders are permission-checked before any deletion starts, so a denial partway through
+// the list leaves every folder's rules intact rather than only the ones checked first.
 func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
-	// Attach the requester to ctx: ListAlertRuleUIDsInFolder has no requester parameter of its
-	// own, so a context-dependent LegacyDatabaseProvider can only resolve the target database
-	// from here.
-	ctx = identity.WithRequester(ctx, user)
-
 	for _, folderUID := range folderUIDs {
 		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
 		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
@@ -1892,10 +1890,33 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 			return err
 		}
 		if !canSave {
-			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user")
+			// GetUID() isn't safe to call on a typed-nil user, which AccessControl.Evaluate above tolerates.
+			userUID := ""
+			if user != nil && !user.IsNil() {
+				userUID = user.GetUID()
+			}
+			st.Logger.Error("user is not allowed to delete alert rules in folder", "folder", folderUID, "user", userUID)
 			return folder.ErrAccessDenied
 		}
+	}
+	// Reaching here means every folder's AccessControl check above passed.
+	return st.DeleteInFoldersUnchecked(folder.WithUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs, true), orgID, folderUIDs, user)
+}
 
+// DeleteInFoldersUnchecked is DeleteInFolders without the AccessControl check, for callers that have
+// already authorized the requester through a different mechanism (e.g. a standalone folder
+// apiserver's cascade delete, which authorizes via authlib.AccessClient before calling in) and
+// marked ctx with folder.WithUncheckedDeleteAuthorized to prove it.
+func (st RuleStore) DeleteInFoldersUnchecked(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
+	if err := folder.RequireUncheckedDeleteAuthorized(ctx, orgID, user, folderUIDs); err != nil {
+		return err
+	}
+
+	// Attach the requester to ctx: ListAlertRuleUIDsInFolder has no requester parameter of its own,
+	// so a context-dependent LegacyDatabaseProvider can only resolve the target database from here.
+	ctx = identity.WithRequester(ctx, user)
+
+	for _, folderUID := range folderUIDs {
 		uids, err := st.ListAlertRuleUIDsInFolder(ctx, orgID, folderUID)
 		if err != nil {
 			return err

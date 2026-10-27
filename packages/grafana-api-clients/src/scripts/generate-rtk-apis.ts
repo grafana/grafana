@@ -156,6 +156,7 @@ const config: ConfigFile = {
     ...createAPIConfig('quotas', 'v0alpha1'),
     ...createAPIConfig('plugins', 'v0alpha1'),
     ...createAPIConfig('preferences', 'v1'),
+    ...createAPIConfig('rules.alerting', 'v1beta1'),
     // GENERATED:API_CLIENT — used by the API client generator
   },
 };

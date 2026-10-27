@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/sony/gobreaker/v2"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // statusRecorder is a passthrough http.ResponseWriter that records the status
@@ -19,8 +20,18 @@ type statusRecorder struct {
 	status      int
 	wroteHeader bool
 
-	// onStatus, when set, is called once with the final status as soon as it is written.
-	onStatus func(status int)
+	// Set by serveThroughBreaker: the breaker's done, called once with the
+	// call's outcome as soon as the final status is written, and what that
+	// outcome is read from.
+	breakerDone func(error)
+	breakerReq  *http.Request
+	breakerCall *backendCall
+	reportOnce  sync.Once
+
+	// span and spanCtx are the router span traceRouterRequest started, which
+	// endSpan ends.
+	span    trace.Span
+	spanCtx context.Context
 }
 
 func newStatusRecorder(w http.ResponseWriter) *statusRecorder {
@@ -34,11 +45,16 @@ func (r *statusRecorder) WriteHeader(code int) {
 	if code >= 200 || code == http.StatusSwitchingProtocols {
 		r.status = code
 		r.wroteHeader = true
-		if r.onStatus != nil {
-			r.onStatus(code)
+		if r.breakerDone != nil {
+			r.reportBreaker(breakerOutcome(r.breakerReq, code, r.breakerCall))
 		}
 	}
 	r.ResponseWriter.WriteHeader(code)
+}
+
+// reportBreaker gives the breaker the call's outcome, once.
+func (r *statusRecorder) reportBreaker(outcome error) {
+	r.reportOnce.Do(func() { r.breakerDone(outcome) })
 }
 
 func (r *statusRecorder) Write(body []byte) (int, error) {
@@ -51,6 +67,15 @@ func (r *statusRecorder) Write(body []byte) (int, error) {
 func (r *statusRecorder) FlushError() error {
 	if !r.wroteHeader {
 		r.WriteHeader(http.StatusOK)
+	}
+	// A watch flushes after every event, so skip building a controller when
+	// the writer flushes itself.
+	switch w := r.ResponseWriter.(type) {
+	case interface{ FlushError() error }:
+		return w.FlushError()
+	case http.Flusher:
+		w.Flush()
+		return nil
 	}
 	return http.NewResponseController(r.ResponseWriter).Flush()
 }
@@ -106,10 +131,6 @@ func isBackendFailure(status int) bool {
 	return status == http.StatusBadGateway || status == http.StatusServiceUnavailable || status == http.StatusGatewayTimeout
 }
 
-// clientBreakerKey carries the group breaker to handlers that gate individual
-// client calls instead of the entire HTTP request.
-type clientBreakerKey struct{}
-
 // groupBreaker is two-step, so an outcome can be reported when the response
 // status is known rather than when the handler returns.
 type groupBreaker = gobreaker.TwoStepCircuitBreaker[struct{}]
@@ -117,6 +138,22 @@ type groupBreaker = gobreaker.TwoStepCircuitBreaker[struct{}]
 // errCallerGone marks a request whose own context ended: the caller left or
 // its deadline passed. That says nothing about the backend's health.
 var errCallerGone = errors.New("router: caller's request ended")
+
+// errRouterDeadline is the cause of a deadline the router sets on its own
+// fetches, such as discovery. Unlike the caller leaving, missing it says the
+// backend was too slow, so it counts against the backend's breaker.
+var errRouterDeadline = errors.New("router: fetch deadline exceeded")
+
+// callerGone returns errCallerGone when ctx ended because its caller left or
+// the caller's own deadline passed, and nil otherwise, including when only a
+// deadline the router set has passed.
+func callerGone(ctx context.Context) error {
+	err := ctx.Err()
+	if err == nil || errors.Is(context.Cause(ctx), errRouterDeadline) {
+		return nil
+	}
+	return fmt.Errorf("%w: %w", errCallerGone, err)
+}
 
 // newGroupBreaker returns a circuit breaker with gobreaker's defaults (trips
 // after more than 5 consecutive failures, stays open 60s). Only errCallerGone
@@ -187,20 +224,92 @@ func newObservedGroupBreaker(group string, onChange func(group string, to gobrea
 // ended (checked first, so a disconnect is never counted against the
 // backend), the recorded proxy failure, a backend-failure error for
 // isBackendFailure statuses, or nil.
-func breakerOutcome(req *http.Request, status int, failure *proxyFailure) error {
-	if err := req.Context().Err(); err != nil {
-		return fmt.Errorf("%w: %w", errCallerGone, err)
+func breakerOutcome(req *http.Request, status int, call *backendCall) error {
+	if err := callerGone(req.Context()); err != nil {
+		return err
 	}
-	if failure.err != nil {
-		if errors.Is(failure.err, errBackendRedirect) {
+	if call.proxyErr != nil {
+		if errors.Is(call.proxyErr, errBackendRedirect) {
 			return nil // the backend answered; the router refused to relay it
 		}
-		return fmt.Errorf("router: proxy failed: %w", failure.err)
+		return fmt.Errorf("router: proxy failed: %w", call.proxyErr)
 	}
 	if isBackendFailure(status) {
 		return fmt.Errorf("router: backend returned status %d", status)
 	}
 	return nil
+}
+
+// requestRouter is a handler that hands each request to another handler.
+type requestRouter interface {
+	handlerFor(*http.Request) http.Handler
+	// groupHandler is the handler of the backend that owns the group, whose
+	// breaker the group reports.
+	groupHandler() http.Handler
+}
+
+// breakerScope is what a group's breaker counts. publish records it once
+// per entry, for metrics and the status page.
+type breakerScope int
+
+const (
+	// breakerScopeRequests counts the proxied requests.
+	breakerScopeRequests breakerScope = iota
+	// breakerScopePluginCalls counts only the plugin's client calls
+	// (breaksOnClientCalls).
+	breakerScopePluginCalls
+	// breakerScopePerDestination counts nothing here: the handler keeps a
+	// breaker per destination itself (managesCircuitBreaking).
+	breakerScopePerDestination
+	// breakerScopeNone means the group has no breaker (hasNoCircuitBreaker).
+	breakerScopeNone
+)
+
+func (s breakerScope) String() string {
+	switch s {
+	case breakerScopePluginCalls:
+		return "plugin-calls"
+	case breakerScopePerDestination:
+		return "per-destination"
+	case breakerScopeNone:
+		return "none"
+	default:
+		return "requests"
+	}
+}
+
+// counted reports whether the group breaker counts anything.
+func (s breakerScope) counted() bool {
+	return s == breakerScopeRequests || s == breakerScopePluginCalls
+}
+
+// groupBreakerScope returns the scope of the group breaker in front of h. A
+// requestRouter reports the scope of the handler that owns the group.
+func groupBreakerScope(h http.Handler) breakerScope {
+	if router, ok := h.(requestRouter); ok {
+		h = router.groupHandler()
+	}
+	switch h.(type) {
+	case interface{ managesCircuitBreaking() }:
+		return breakerScopePerDestination
+	case interface{ hasNoCircuitBreaker() }:
+		return breakerScopeNone
+	case interface{ breaksOnClientCalls() }:
+		return breakerScopePluginCalls
+	}
+	return breakerScopeRequests
+}
+
+// withoutGroupBreaker reports whether h is served without the group breaker:
+// it keeps a breaker per destination itself (managesCircuitBreaking, the
+// single-tenant fallback), which must not also share a group-wide one, or it
+// has none (hasNoCircuitBreaker, the embedded API server, in process).
+func withoutGroupBreaker(h http.Handler) bool {
+	switch h.(type) {
+	case interface{ managesCircuitBreaking() }, interface{ hasNoCircuitBreaker() }:
+		return true
+	}
+	return false
 }
 
 // serveThroughBreaker proxies one request to h through cb, streaming the
@@ -212,17 +321,22 @@ func breakerOutcome(req *http.Request, status int, failure *proxyFailure) error 
 // the body ends. A watch streams for as long as it lasts; holding its outcome
 // until then would keep a half-open breaker's only trial slot for that long.
 func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.ResponseWriter, req *http.Request) {
-	// A handler spanning multiple destinations must not also share a group-wide breaker.
-	if _, ownsBreakers := h.(interface{ managesCircuitBreaking() }); ownsBreakers {
+	// A handler that sends some of a group's requests elsewhere picks the
+	// handler first, so only that handler's breakers see the request.
+	if router, ok := h.(requestRouter); ok {
+		h = router.handlerFor(req)
+	}
+	if withoutGroupBreaker(h) {
 		h.ServeHTTP(w, req)
 		return
 	}
-	rec, req, endSpan := traceRouterRequest(w, req, "router.backend", group)
-	defer endSpan()
+	rec, req, call := traceRouterRequest(w, req, "router.backend", group)
+	defer rec.endSpan()
 	w = rec.writer()
 	// Client-scoped breakers leave requests that do not call the client available.
 	if _, clientScoped := h.(interface{ breaksOnClientCalls() }); clientScoped {
-		h.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), clientBreakerKey{}, cb)))
+		call.breaker = cb
+		h.ServeHTTP(w, req)
 		return
 	}
 	done, err := cb.Allow()
@@ -231,22 +345,19 @@ func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.
 		http.Error(w, "backend unavailable", http.StatusServiceUnavailable)
 		return
 	}
-	req, failure := withProxyFailure(req)
-	var once sync.Once
-	report := func(outcome error) { once.Do(func() { done(outcome) }) }
-	rec.onStatus = func(status int) { report(breakerOutcome(req, status, failure)) }
+	rec.breakerDone, rec.breakerReq, rec.breakerCall = done, req, call
 	defer func() {
 		if p := recover(); p != nil {
-			outcome := breakerOutcome(req, rec.status, failure)
+			outcome := breakerOutcome(req, rec.status, call)
 			if outcome == nil {
 				outcome = fmt.Errorf("router: backend handler panicked: %v", p)
 			}
-			report(outcome)
+			rec.reportBreaker(outcome)
 			panic(p)
 		}
-		report(breakerOutcome(req, rec.status, failure))
-		if failure.err != nil {
-			if reason := failureReason(req, failure.err); reason != "" {
+		rec.reportBreaker(breakerOutcome(req, rec.status, call))
+		if call.proxyErr != nil {
+			if reason := failureReason(req, call.proxyErr); reason != "" {
 				setFailure(req, reason)
 			}
 		}

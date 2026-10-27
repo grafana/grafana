@@ -49,7 +49,7 @@ affect the next poll attempt.
 
 ## Design: cooldown-paced polling with exponential backoff
 
-Each aggregate target runs its own background poll loop (`aggregateTarget.run`,
+Each aggregate target runs its own background poll loop (`polledSource.run`,
 `aggregate_poller.go`). The `core_url`, `plugins_url` and ST fallback loops use the same pattern.
 The cooldown is **not** a circuit breaker — it's a plain backoff mechanism that throttles the
 target's own outbound poll request rate, with no per-caller protection or state machine.
@@ -195,7 +195,7 @@ because the cooldown is the loop's only timing source (see the Design section).
    own credentials; the CAP token is only for discovery polls.
 7. **Readiness vs. first poll** — still open. `GrafanaRouter.Ready()` doesn't wait for a target's
    first poll, so a router with only aggregate targets can report ready while serving empty
-   discovery. Tracked as O7 in `2026-10-10-router-review-plan.md`.
+   discovery. Tracked as O7 in `2026-10-23-router-review-plan.md`.
 
 ## Testing
 

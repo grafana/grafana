@@ -29,7 +29,6 @@ export interface GeneralSettingsEditViewState extends DashboardEditViewState {
   showMoveModal?: boolean;
   moveModalProps?: {
     targetFolderUID?: string;
-    targetFolderTitle?: string;
   };
 }
 
@@ -162,14 +161,11 @@ export class GeneralSettingsEditView
 
   public onDeleteDashboard = () => {};
 
-  public onProvisionedFolderChange = async (newUID?: string, newTitle?: string) => {
+  public onProvisionedFolderChange = async (newUID?: string) => {
     if (newUID !== this._dashboard.state.meta.folderUid) {
       this.setState({
         showMoveModal: true,
-        moveModalProps: {
-          targetFolderUID: newUID,
-          targetFolderTitle: newTitle,
-        },
+        moveModalProps: { targetFolderUID: newUID },
       });
     }
   };
@@ -179,16 +175,6 @@ export class GeneralSettingsEditView
       showMoveModal: false,
       moveModalProps: undefined,
     });
-  };
-
-  public onMoveSuccess = (folderUID: string, folderTitle: string) => {
-    const newMeta = {
-      ...this._dashboard.state.meta,
-      folderUid: folderUID,
-      folderTitle: folderTitle,
-    };
-    this._dashboard.setState({ meta: newMeta });
-    this.onMoveModalDismiss();
   };
 
   static Component = LazyGeneralSettingsEditViewRenderer;

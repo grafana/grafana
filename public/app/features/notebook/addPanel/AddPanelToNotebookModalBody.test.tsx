@@ -242,7 +242,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'nb2',
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
-          'user'
+          'user',
+          false
         )
       );
       // Built on submit, so a panel edited while the modal was open is the one that lands.
@@ -264,7 +265,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'nb2',
           [{ kind: 'panel', panel: panel(), isLibraryPanel: true }],
           'dashboard_panel',
-          'user'
+          'user',
+          false
         )
       );
     });
@@ -386,6 +388,18 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(component).toBeDefined();
     });
 
+    // t() HTML-escapes interpolated values by default, which the toast would show as `Checkout&#39;s`.
+    it('leaves punctuation in the success toast alone', async () => {
+      createWithContent.mockResolvedValue({ uid: 'nb3', title: "Checkout's errors/sec" });
+      const { user, onDismiss } = renderModal();
+
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), "Checkout's errors/sec");
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(onDismiss).toHaveBeenCalled());
+      expect(mockCreateSuccessNotification.mock.calls[0][0]).toBe("Panel added to Checkout's errors/sec");
+    });
+
     // Saving a dashboard refuses a name already in use; a notebook that silently becomes the second
     // "Checkout latency" is the same confusion, one list further down.
     it('refuses a name another notebook already has', async () => {
@@ -450,7 +464,8 @@ describe('AddPanelToNotebookModalBody', () => {
           { title: 'New investigation' },
           [{ kind: 'panel', panel: panel(), isLibraryPanel: true }],
           'dashboard_panel',
-          'user'
+          'user',
+          false
         )
       );
     });
@@ -467,7 +482,8 @@ describe('AddPanelToNotebookModalBody', () => {
           { title: 'Checkout latency' },
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
-          'user'
+          'user',
+          false
         )
       );
       expect(onDismiss).toHaveBeenCalled();
@@ -534,7 +550,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'nb2',
           [{ kind: 'panel', panel: lockedPanel(), isLibraryPanel: false }],
           'dashboard_panel',
-          'user'
+          'user',
+          true
         )
       );
     });
@@ -552,7 +569,8 @@ describe('AddPanelToNotebookModalBody', () => {
           'nb2',
           [{ kind: 'panel', panel: panel(), isLibraryPanel: false }],
           'dashboard_panel',
-          'user'
+          'user',
+          false
         )
       );
     });
@@ -800,7 +818,14 @@ describe('AddPanelToNotebookModalBody', () => {
 
       await waitFor(() =>
         expect(failures).toEqual([
-          { notebookUid: 'nb1', source: 'dashboard_panel', target: 'existing', reason: 'conflict' },
+          {
+            notebookUid: 'nb1',
+            source: 'dashboard_panel',
+            target: 'existing',
+            reason: 'conflict',
+            lockTimeRange: false,
+            schema_version: 1,
+          },
         ])
       );
     });
@@ -815,7 +840,14 @@ describe('AddPanelToNotebookModalBody', () => {
 
       await waitFor(() =>
         expect(failures).toEqual([
-          { notebookUid: '', source: 'dashboard_panel', target: 'new', reason: 'write_failed' },
+          {
+            notebookUid: '',
+            source: 'dashboard_panel',
+            target: 'new',
+            reason: 'write_failed',
+            lockTimeRange: false,
+            schema_version: 1,
+          },
         ])
       );
     });
@@ -832,7 +864,14 @@ describe('AddPanelToNotebookModalBody', () => {
 
       await waitFor(() =>
         expect(failures).toEqual([
-          { notebookUid: '', source: 'dashboard_panel', target: 'new', reason: 'build_failed' },
+          {
+            notebookUid: '',
+            source: 'dashboard_panel',
+            target: 'new',
+            reason: 'build_failed',
+            lockTimeRange: false,
+            schema_version: 1,
+          },
         ])
       );
       expect(createWithContent).not.toHaveBeenCalled();
@@ -890,7 +929,8 @@ describe('AddPanelToNotebookModalBody', () => {
             { kind: 'markdown', text: 'Done.' },
           ],
           'plugin',
-          'assistant'
+          'assistant',
+          false
         )
       );
       expect(mockCreateSuccessNotification).toHaveBeenCalledWith(

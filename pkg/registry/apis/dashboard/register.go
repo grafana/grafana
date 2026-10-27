@@ -1065,9 +1065,15 @@ func (b *DashboardsAPIBuilder) dashboardStorageOpts() apistore.StorageOptions {
 // is rejected with "folders are not supported". The folder is optional (panels may live
 // at the root), so RequireFolder stays false.
 func (b *DashboardsAPIBuilder) libraryPanelStorageOpts() apistore.StorageOptions {
+	deprecatedID := apistore.DeprecatedID_None
+	if !b.isStandalone {
+		// The embedded dual writer copies the legacy SQL ID into unified storage.
+		deprecatedID = apistore.DeprecatedID_Optional
+	}
 	return apistore.StorageOptions{
-		Index:               b.unified,
-		EnableFolderSupport: true,
+		Index:                b.unified,
+		EnableFolderSupport:  true,
+		DeprecatedInternalID: deprecatedID,
 	}
 }
 
@@ -1743,8 +1749,9 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
 	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
-	// Notebooks defer to the service authorizer when the feature is enabled.
-	notebookAuthorizer := newNotebookAuthorizer(serviceAuthorizer)
+	// Notebooks use classic notebooks:* when accessControl is wired; otherwise
+	// they fall through to the service authorizer (standalone / Cloud).
+	notebookAuthorizer := newNotebookAuthorizer(b.accessControl, serviceAuthorizer)
 	// Variables use classic variables:* when accessControl is wired; otherwise
 	// they fall through to the service authorizer (standalone / Cloud).
 	variableAuthorizer := newVariableAuthorizer(b.accessControl, serviceAuthorizer)

@@ -90,7 +90,7 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 // SyncAndApplyConfigFromDatabase looks for the admin configuration in the database
 // and adjusts the sender(s) and alert handling mechanism accordingly.
 func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error {
-	cfgs, err := d.adminConfigStore.GetAdminConfigurations()
+	cfgs, err := d.adminConfigStore.GetAdminConfigurations(ctx)
 	if err != nil {
 		return err
 	}

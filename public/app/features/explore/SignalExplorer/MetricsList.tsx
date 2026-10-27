@@ -4,21 +4,26 @@ import { useDebounce } from 'react-use';
 
 import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { Button, FilterInput, ScrollContainer, Spinner, Text, useStyles2 } from '@grafana/ui';
+
+import { type ExprTextKind, getPrometheusDefaultEditor, type PrometheusEditorMode } from '../utils/prometheus';
 
 import { MetricLabels } from './MetricLabels';
 import { MetricRow } from './MetricRow';
 import { blockId } from './blockId';
 import { dsKey, rangeKey } from './data/metricResourceClient';
+import { useAsyncResource } from './data/useAsyncResource';
 import { useMetricCatalog } from './data/useMetricCatalog';
 import { useLoadMoreSentinel } from './hooks/useLoadMoreSentinel';
 import { useVisibleBatch } from './hooks/useVisibleBatch';
 import {
+  trackSignalExplorerAddToQueryClicked,
   trackSignalExplorerMetricExpanded,
   trackSignalExplorerMetricsMetadataViewed,
   trackSignalExplorerSearchPerformed,
 } from './tracking';
-import { type MetricSelection } from './types';
+import { type AddToQueryItemType, type MetricSelection } from './types';
 
 /** How long the row count has to hold still before the screen reader status announces it. */
 export const STATUS_SETTLE_MS = 300;
@@ -44,6 +49,13 @@ interface Props {
    * own. Must be stable, or the `memo()` above stops earning its keep.
    */
   onSelectMetric: (selection: MetricSelection) => void;
+  /** The card's query editor mode; `undefined` leaves it to the datasource's default editor. */
+  editorMode?: PrometheusEditorMode;
+  /**
+   * Appends a row's text to the card's query. Rows only offer it in Code mode, since the builder has
+   * no free text to append to. Must be stable, like `onSelectMetric`.
+   */
+  onAddToQuery?: (refId: string, text: string, kind: ExprTextKind) => void;
 }
 
 /**
@@ -67,6 +79,8 @@ export const MetricsList = memo(function MetricsList({
   timeRange,
   selectedMetric,
   onSelectMetric,
+  editorMode,
+  onAddToQuery,
 }: Props) {
   const styles = useStyles2(getStyles);
   const [searchTerm, setSearchTerm] = useState('');
@@ -115,6 +129,26 @@ export const MetricsList = memo(function MetricsList({
   // a ref object without one identity change per render turning into a refetch.
   const dsRef = useMemo<DataSourceRef>(() => ({ uid: dsUid, type: dsType }), [dsUid, dsType]);
   const { metrics, truncated, loading, error } = useMetricCatalog(dsRef, timeRange, { searchText: searchTerm });
+
+  // Only a query with no mode of its own falls back to the datasource's default editor.
+  const { data: defaultEditor } = useAsyncResource(
+    onAddToQuery && !editorMode ? dsKey(dsRef) : null,
+    async () => getPrometheusDefaultEditor((await getDataSourceInstanceSettings(dsRef))?.jsonData),
+    undefined
+  );
+  const codeMode = (editorMode ?? defaultEditor) === 'code';
+  const addToQuery = useCallback(
+    (text: string, itemType: AddToQueryItemType) => {
+      trackSignalExplorerAddToQueryClicked({
+        data_source_type: dsType,
+        stacked_queries_count: stackedQueriesCount,
+        item_type: itemType,
+      });
+      onAddToQuery?.(refId, text, itemType === 'value' ? 'value' : 'name');
+    },
+    [onAddToQuery, refId, dsType, stackedQueriesCount]
+  );
+  const rowAddToQuery = onAddToQuery && codeMode ? addToQuery : undefined;
 
   // The last term reported. `loading` is a dependency below and rises again on every refetch — a
   // range change, a card switching datasource, an invalidation — and none of those are a search.
@@ -284,6 +318,7 @@ export const MetricsList = memo(function MetricsList({
                     labelsId={labelsId}
                     onToggle={toggleMetric}
                     onSelect={selectMetric}
+                    onAddToQuery={rowAddToQuery}
                   />
                   {expanded && (
                     <MetricLabels
@@ -293,6 +328,7 @@ export const MetricsList = memo(function MetricsList({
                       metric={metric.name}
                       expandedLabel={expandedLabel}
                       onToggleLabel={toggleLabel}
+                      onAddToQuery={rowAddToQuery}
                     />
                   )}
                 </li>

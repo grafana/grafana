@@ -179,6 +179,7 @@ func globalSearchCoverageOf(sources ...[]*app.ManifestData) globalSearchTypes {
 			if m == nil {
 				continue
 			}
+			names := ManifestKinds(m, nil)
 			kinds := map[schema.GroupResource]string{}
 			excluded := map[schema.GroupResource]bool{}
 			for _, version := range m.Versions {
@@ -188,7 +189,7 @@ func globalSearchCoverageOf(sources ...[]*app.ManifestData) globalSearchTypes {
 						continue
 					}
 					if kind.InGlobalSearchIndex() {
-						kinds[gr] = kind.Kind
+						kinds[gr] = names[gr].Kind
 					}
 					if !kind.HasSearchEndpoint() || !kind.HasListKeysEndpoint() || kind.Scope != namespacedScope {
 						excluded[gr] = true
@@ -358,7 +359,7 @@ func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []Namespa
 		if !key.IsGlobal() {
 			continue
 		}
-		idx := s.search.GetIndex(key)
+		idx := s.search.PeekIndex(key)
 		if idx == nil {
 			continue
 		}
@@ -458,7 +459,7 @@ func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResourc
 // once done. Each type is checked again first, so a request that waited behind a
 // full rebuild does nothing.
 func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, only []schema.GroupResource) error {
-	idx := s.search.GetIndex(key)
+	idx := s.search.PeekIndex(key)
 	if idx == nil {
 		return nil
 	}
@@ -528,7 +529,7 @@ func (s *searchServer) queueDueReconciles(keys []NamespacedResource, now time.Ti
 		if !key.IsGlobal() || !s.ownsGlobalIndex(key) {
 			continue
 		}
-		idx := s.search.GetIndex(key)
+		idx := s.search.PeekIndex(key)
 		if idx == nil {
 			continue
 		}
@@ -572,7 +573,7 @@ func lastReconcileSlot(key NamespacedResource, now time.Time) time.Time {
 // is compared again at the next scan rather than an hour later.
 func (s *searchServer) reconcileGlobalIndex(ctx context.Context, key NamespacedResource) (repairResult, error) {
 	var total repairResult
-	idx := s.search.GetIndex(key)
+	idx := s.search.PeekIndex(key)
 	if idx == nil {
 		return total, nil
 	}
@@ -1080,7 +1081,7 @@ func (s *searchServer) watchWrittenKeys(ctx context.Context) (<-chan *WrittenEve
 func (s *searchServer) queueReconcileAfterLostKeys(namespace string) {
 	if namespace != "" {
 		key := GlobalSearchKey(namespace)
-		if s.ownsGlobalIndex(key) && s.search.GetIndex(key) != nil {
+		if s.ownsGlobalIndex(key) && s.search.PeekIndex(key) != nil {
 			s.queueReconcile(key)
 		}
 		return
@@ -1165,7 +1166,7 @@ func (s *searchServer) applyWrittenKeys(ctx context.Context, batch []*WrittenEve
 			continue
 		}
 		// Looked up for each batch, so a replaced index is not written to.
-		idx := s.search.GetIndex(key)
+		idx := s.search.PeekIndex(key)
 		if idx == nil {
 			continue
 		}

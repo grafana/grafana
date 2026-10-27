@@ -268,18 +268,29 @@ describe('TableDataGrid', () => {
       expect(edgeRules.map((rule) => rule.style.getPropertyValue('inset-inline-end'))).toContain('1px');
     });
 
-    it('renders the refreshed outer border unless the table is flush with its panel', () => {
+    it.each(['grid', 'treegrid'] as const)('preserves the refreshed frame for transparent %s panels', (role) => {
       const theme = createTheme();
-      const props = makeProps({ tableRefreshEnabled: true });
+      const props = makeProps({ tableRefreshEnabled: true, role });
       const { rerender } = render(<TableDataGrid {...props} />);
 
-      expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border')).toBe(
+      expect(getGridFrameOverlayStyleRule(role)?.style.getPropertyValue('border')).toBe(
         `1px solid ${theme.components.table.border}`
       );
 
       rerender(<TableDataGrid {...props} noPanelPadding />);
 
-      expect(getGridFrameOverlayStyleRule()).toBeUndefined();
+      expect(getGridFrameOverlayStyleRule(role)).toBeUndefined();
+
+      rerender(<TableDataGrid {...props} noPanelPadding transparent />);
+
+      expect(getGridFrameOverlayStyleRule(role)?.style.getPropertyValue('border')).toBe(
+        `1px solid ${theme.components.table.border}`
+      );
+      expect(window.getComputedStyle(screen.getByRole(role).parentElement!.parentElement!).overflow).toBe('hidden');
+
+      rerender(<TableDataGrid {...props} noPanelPadding transparent tableRefreshEnabled={false} />);
+
+      expect(getGridFrameOverlayStyleRule(role)).toBeUndefined();
     });
 
     it.each([
@@ -332,10 +343,12 @@ describe('TableDataGrid', () => {
         });
         render(<TableDataGrid {...props} />);
 
-        const summaryRow = screen.getByRole('gridcell', { name: 'Total' }).closest('[role="row"]')!;
+        const summaryRow = (await screen.findByRole('gridcell', { name: 'Total' })).closest('[role="row"]')!;
         const summaryZIndex = Number(window.getComputedStyle(summaryRow).zIndex);
         for (const [idx, name] of ['Frozen value', 'Body value'].entries()) {
-          await act(async () => props.gridRef.current?.setActivePosition({ rowIdx: 0, idx }));
+          await act(async () => {
+            props.gridRef.current?.setActivePosition({ rowIdx: 0, idx });
+          });
           const cell = screen.getByRole('gridcell', { name });
           expect(cell).toHaveAttribute('aria-selected', 'true');
           expect(summaryZIndex).toBeGreaterThan(Number(window.getComputedStyle(cell).zIndex));

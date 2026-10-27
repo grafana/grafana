@@ -18,7 +18,6 @@ function connection(overrides: Partial<DataSourceConnection>): DataSourceConnect
     title: 'Prom',
     name: 'uid-prom',
     group: 'prometheus.datasource.grafana.app',
-    version: 'v0alpha1',
     plugin: 'prometheus',
     ...overrides,
   };
@@ -37,9 +36,7 @@ describe('toListSnapshot', () => {
   it('maps a connection to a list item with the plugin meta and the served version', () => {
     const { snapshot } = toListSnapshot([connection({})], [prometheus]);
 
-    expect(snapshot.items).toEqual([
-      { uid: 'uid-prom', name: 'Prom', type: 'prometheus', apiVersion: 'v0alpha1', meta: prometheus },
-    ]);
+    expect(snapshot.items).toEqual([{ uid: 'uid-prom', name: 'Prom', type: 'prometheus', meta: prometheus }]);
   });
 
   it('takes the default from the default label', () => {
@@ -109,7 +106,6 @@ describe('toInstanceSettings', () => {
     uid: 'uid-prom',
     name: 'Prom',
     type: 'prometheus',
-    apiVersion: 'v0alpha1',
     meta: prometheus,
   };
 

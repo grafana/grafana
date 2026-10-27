@@ -14,6 +14,7 @@ import { Alert, ErrorBoundaryAlert, Spinner, Stack, Text } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 import { QueryErrorAlert } from 'app/features/query/components/QueryErrorAlert';
 
+import { DatasourceErrorAlert } from './DatasourceErrorAlert';
 import { useActionsContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 import { QueryCoauthoringSurface } from './coauthoring/QueryCoauthoringSurface';
 import {
@@ -87,10 +88,14 @@ export function QueryEditorPanel({
     () => ({
       datasourceType: coauthoringDatasourceType,
       previewPhase: proposalTransaction.previewPhase,
+      previewData: proposalTransaction.previewData,
+      readPreviewData: proposalTransaction.readPreviewData,
       timeRange: filteredData?.timeRange
         ? { from: filteredData.timeRange.from.valueOf(), to: filteredData.timeRange.to.valueOf() }
         : undefined,
       preview: proposalTransaction.preview,
+      peek: proposalTransaction.peek,
+      stopPeek: proposalTransaction.stopPeek,
       accept: proposalTransaction.accept,
       revert: proposalTransaction.revert,
     }),
@@ -99,7 +104,11 @@ export function QueryEditorPanel({
       filteredData?.timeRange,
       proposalTransaction.accept,
       proposalTransaction.preview,
+      proposalTransaction.peek,
+      proposalTransaction.stopPeek,
       proposalTransaction.previewPhase,
+      proposalTransaction.previewData,
+      proposalTransaction.readPreviewData,
       proposalTransaction.revert,
     ]
   );
@@ -188,16 +197,19 @@ export function QueryEditorRenderer() {
   const { updateSelectedQuery, addQuery, runQueries, startQueryPreview } = useActionsContext();
 
   return (
-    <QueryEditorPanel
-      query={selectedQuery}
-      queryDsData={selectedQueryDsData}
-      queryDsLoading={selectedQueryDsLoading}
-      queries={queries}
-      data={data}
-      updateQuery={updateSelectedQuery}
-      addQuery={addQuery}
-      runQueries={runQueries}
-      startQueryPreview={startQueryPreview}
-    />
+    <>
+      <DatasourceErrorAlert />
+      <QueryEditorPanel
+        query={selectedQuery}
+        queryDsData={selectedQueryDsData}
+        queryDsLoading={selectedQueryDsLoading}
+        queries={queries}
+        data={data}
+        updateQuery={updateSelectedQuery}
+        addQuery={addQuery}
+        runQueries={runQueries}
+        startQueryPreview={startQueryPreview}
+      />
+    </>
   );
 }

@@ -2,11 +2,12 @@ import { css } from '@emotion/css';
 import { take, takeRight, uniqueId } from 'lodash';
 import { type FC } from 'react';
 
+import { MatcherBadge as MatcherBadgeView } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Stack, getTagColorsFromName, useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
 import { type ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
 
-import { type MatcherFormatter, matcherFormatter } from '../../utils/matchers';
+import { type MatcherFormatter, matcherPartsFormatter } from '../../utils/matchers';
 import { PopupCard } from '../HoverCard';
 
 type MatchersProps = { matchers: ObjectMatcher[]; formatter?: MatcherFormatter };
@@ -53,34 +54,13 @@ interface MatcherBadgeProps {
 }
 
 export const MatcherBadge: FC<MatcherBadgeProps> = ({ matcher, formatter = 'default' }) => {
-  const styles = useStyles2(getStyles);
+  const [name, operator, value] = matcherPartsFormatter[formatter](matcher);
 
-  return <div className={styles.matcher(matcher[0]).wrapper}>{matcherFormatter[formatter](matcher)}</div>;
+  // color by the raw label name so the color doesn't change between formatters
+  return <MatcherBadgeView name={name} operator={operator} value={value} color={matcher[0]} />;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  matcher: (label: string) => {
-    const { background, text } = getTagColorsFromName(label, theme);
-
-    return {
-      wrapper: css({
-        color: '#fff',
-        background,
-        padding: `${theme.spacing(0.33)} ${theme.spacing(0.66)}`,
-        fontSize: theme.typography.bodySmall.fontSize,
-
-        border: `solid 1px ${text}`,
-        borderRadius: theme.shape.borderRadius(2),
-
-        // Ensure we preserve whitespace, as otherwise it's not noticeable _at all_
-        // when rendering the matcher, and is only noticeable when editing
-        whiteSpace: 'pre',
-
-        textOverflow: 'ellipsis',
-        overflow: 'hidden',
-      }),
-    };
-  },
   metadata: css({
     color: theme.colors.text.secondary,
 
