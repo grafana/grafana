@@ -710,6 +710,28 @@ describe('regions', () => {
     expect(screen.getByTestId('composer-annotation-outline-r')).toHaveAttribute('data-state', 'active');
   });
 
+  it('stays on the content it was drawn over while the dashboard body scrolls under the overlay', async () => {
+    const { startPick, annotate } = setup();
+    // The dashboard body scrolls in its own container under the overlay, as in the sidebar layout.
+    const body = document.createElement('div');
+    document.body.appendChild(body);
+    body.appendChild(panelRoot!);
+    makeScrollable(body, { height: 768 });
+    try {
+      const { ref } = await drawRegion(startPick);
+      annotate([item({ id: 'r', ref, point: { x: 1, y: 0 }, state: 'active' })]);
+
+      body.scrollTop = 100;
+      fireEvent.scroll(body);
+      await nextFrame();
+
+      expect(screen.getByTestId('composer-annotation-outline-r')).toHaveStyle({ left: '150px', top: '150px' });
+      expect(screen.getByRole('button', { name: 'Comment 1' })).toHaveStyle({ left: '350px', top: '150px' });
+    } finally {
+      body.remove();
+    }
+  });
+
   it('names the tab it was drawn on and hides while another tab is selected', async () => {
     const overview = new TabItem({ title: 'Overview' });
     const errors = new TabItem({ title: 'Errors' });
@@ -1061,20 +1083,29 @@ describe('region capture', () => {
 
   it('is not_visible unless the region is fully in view, and when the page scrolls mid-capture', async () => {
     const { session } = setup();
-    const regionId = await drawRegion(session);
+    // The dashboard body scrolls in its own container under the overlay, as in the sidebar layout.
+    const body = document.createElement('div');
+    document.body.appendChild(body);
+    body.appendChild(panelRoot!);
+    makeScrollable(body, { height: 768 });
+    try {
+      const regionId = await drawRegion(session);
 
-    contentRect = { ...contentRect, top: -300 };
-    await expect(capture(session, regionId)).resolves.toEqual({ status: 'failed', reason: 'not_visible' });
-    expect(mockRenderNode).not.toHaveBeenCalled();
+      body.scrollTop = 300;
+      await expect(capture(session, regionId)).resolves.toEqual({ status: 'failed', reason: 'not_visible' });
+      expect(mockRenderNode).not.toHaveBeenCalled();
 
-    contentRect = { ...contentRect, top: 0 };
-    mockRenderNode.mockReturnValue(deferred<HTMLCanvasElement>().promise);
-    const pending = start(session, regionId);
-    await act(async () => {
-      fireEvent.scroll(window);
-      await pending;
-    });
-    await expect(pending).resolves.toEqual({ status: 'failed', reason: 'not_visible' });
+      body.scrollTop = 0;
+      mockRenderNode.mockReturnValue(deferred<HTMLCanvasElement>().promise);
+      const pending = start(session, regionId);
+      await act(async () => {
+        fireEvent.scroll(window);
+        await pending;
+      });
+      await expect(pending).resolves.toEqual({ status: 'failed', reason: 'not_visible' });
+    } finally {
+      body.remove();
+    }
   });
 
   it('reports tainted content as unsupported and an oversized dashboard as too_large', async () => {
