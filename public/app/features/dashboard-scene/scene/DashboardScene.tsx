@@ -1178,12 +1178,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     saveDashboardTemplate,
     saveAsDashboardTemplate,
     onSaveSuccess,
+    onDismiss,
     recoverToNewBranch,
   }: {
     saveAsCopy?: boolean;
     saveDashboardTemplate?: boolean;
     saveAsDashboardTemplate?: boolean;
     onSaveSuccess?: () => void;
+    onDismiss?: () => void;
     recoverToNewBranch?: RecoverToNewBranch;
     showDiff?: boolean;
   }) {
@@ -1214,6 +1216,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           saveAsDashboardTemplate,
           saveDashboardTemplate,
           onSaveSuccess,
+          onDismiss,
           recoverToNewBranch,
         },
         () => this.hasVariableErrors()

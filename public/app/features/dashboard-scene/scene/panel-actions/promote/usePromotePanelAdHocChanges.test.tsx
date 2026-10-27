@@ -71,15 +71,30 @@ async function requestPromotion(panel: VizPanel) {
   });
 }
 
-async function saveFromDrawer(dashboard: DashboardScene) {
+async function renderSaveForm(dashboard: DashboardScene) {
   await waitFor(() => expect(dashboard.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
   const drawer = dashboard.state.overlay;
   if (!(drawer instanceof SaveDashboardDrawer)) {
     throw new Error('Expected the save drawer');
   }
   render(<SaveDashboardForm dashboard={dashboard} drawer={drawer} changeInfo={dashboard.getDashboardChanges()} />);
+}
+
+async function saveFromDrawer(dashboard: DashboardScene) {
+  await renderSaveForm(dashboard);
   await userEvent.click(screen.getByRole('button', { name: 'Save' }));
   await waitFor(() => expect(mockSaveDashboard).toHaveBeenCalledTimes(1));
+}
+
+async function cancelFromDrawer(dashboard: DashboardScene) {
+  await renderSaveForm(dashboard);
+  await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  await waitFor(() => expect(dashboard.state.overlay).toBeUndefined());
+}
+
+function getAdHocTransformations(dashboard: DashboardScene) {
+  const [currentPanel] = dashboardSceneGraph.getVizPanels(dashboard);
+  return currentPanel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER);
 }
 
 let deactivate: Array<() => void> = [];
@@ -158,5 +173,29 @@ describe('usePromotePanelAdHocChanges', () => {
     await waitFor(() => expect(dashboard.state.overlay).toBeUndefined());
     expect(dashboard.state.isEditing).toBe(true);
     expect(dashboard.state.isDirty).toBe(false);
+  });
+
+  it('takes the promoted changes out and gives them back to the panel as ad hoc changes when cancelled', async () => {
+    const { panel, dashboard } = await buildScene();
+
+    await requestPromotion(panel);
+    await cancelFromDrawer(dashboard);
+
+    expect(dashboard.state.isEditing).toBe(false);
+    expect(dashboard.state.title).toBe('My dashboard');
+    expect(getAdHocTransformations(dashboard)).toEqual([adHocChange]);
+    expect(mockSaveDashboard).not.toHaveBeenCalled();
+  });
+
+  it('undoes only the promotion and stays in edit mode when cancelled while the user was editing', async () => {
+    const { panel, dashboard } = await buildScene({ startEditing: true });
+
+    await requestPromotion(panel);
+    await cancelFromDrawer(dashboard);
+
+    expect(dashboard.state.isEditing).toBe(true);
+    expect(dashboard.state.title).toBe('My dashboard');
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+    expect(getAdHocTransformations(dashboard)).toEqual([adHocChange]);
   });
 });

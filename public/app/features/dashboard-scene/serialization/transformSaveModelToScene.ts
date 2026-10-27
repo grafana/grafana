@@ -512,7 +512,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
-    _UNSAFE_clearPreviousFieldValues: true,
+    _UNSAFE_clearPreviousFieldValues: false, // TEMP: testing cancel bug, revert
   };
 
   if (panel.libraryPanel) {
