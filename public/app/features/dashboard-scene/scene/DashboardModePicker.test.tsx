@@ -26,7 +26,7 @@ import {
 } from '../composer/composerEntryRequests';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 
-import { DashboardModePicker } from './DashboardModePicker';
+import { COMPOSER_SEEN_KEY, DashboardModePicker } from './DashboardModePicker';
 import { type DashboardScene } from './DashboardScene';
 import { getDashboardMode } from './dashboardModes';
 
@@ -178,9 +178,26 @@ it("shows Composer with the Assistant sparkle in the Chat button's gradient", as
   expect(gradient?.querySelectorAll('stop')).toHaveLength(2);
 });
 
-it('marks Composer as new until it is the current mode', async () => {
-  await openPicker();
-  expect(composerItem()).toHaveTextContent('New');
+describe('the New badge', () => {
+  beforeEach(() => window.localStorage.removeItem(COMPOSER_SEEN_KEY));
+  afterEach(() => window.localStorage.removeItem(COMPOSER_SEEN_KEY));
+
+  it('marks Composer as new until Composer has been entered in this browser', async () => {
+    const { scene } = await openPicker();
+    expect(composerItem()).toHaveTextContent('New');
+
+    act(() => scene.setState({ mode: 'composer' }));
+    act(() => scene.setState({ mode: 'view' }));
+
+    expect(composerItem()).not.toHaveTextContent('New');
+    expect(window.localStorage.getItem(COMPOSER_SEEN_KEY)).toBe('true');
+  });
+
+  it('stays away on later visits', async () => {
+    window.localStorage.setItem(COMPOSER_SEEN_KEY, 'true');
+    await openPicker();
+    expect(composerItem()).not.toHaveTextContent('New');
+  });
 });
 
 describe('the main button', () => {
