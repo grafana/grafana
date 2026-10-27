@@ -1,13 +1,10 @@
 import v2DashboardWithTabs from '../dashboards/V2DashRowsWithTabs.json';
 
-import { test, expect } from './fixtures';
-import { flows, dragTo } from './helpers';
+import { expect, test } from './fixtures';
+import { dragTo, flows } from './helpers';
 import { type Tabs } from './page-objects';
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
   viewport: { width: 1920, height: 1080 },
 });
 

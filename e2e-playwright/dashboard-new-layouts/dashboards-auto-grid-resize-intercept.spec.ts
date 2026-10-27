@@ -2,15 +2,9 @@ import { type Page } from '@playwright/test';
 
 import { type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import { flows } from './helpers';
 import { type Controls, type Sidebar } from './page-objects';
-
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
 
 test.use({
   viewport: { width: 1920, height: 1080 },

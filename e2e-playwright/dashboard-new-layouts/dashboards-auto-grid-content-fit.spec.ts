@@ -1,6 +1,6 @@
 import { type Locator } from '@playwright/test';
 
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 
 // Provisioned from devenv/dev-dashboards/dashboard-auto-grid/content-fit-scenarios.json.
 // Each tab is one content-fit scenario; specs only assert rendered panel heights in view mode.
@@ -20,9 +20,6 @@ const HEIGHT_TOLERANCE = 2;
 const GROWTH_MARGIN = 40;
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
   openFeature: { flags: { 'grafana.dashboardsAutoHeightPanels': true } },
 });
 

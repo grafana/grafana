@@ -1,10 +1,7 @@
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import { expectRowVisibility, flows } from './helpers';
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
   viewport: { width: 1920, height: 1080 },
 });
 

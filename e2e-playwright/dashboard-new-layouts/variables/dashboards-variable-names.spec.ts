@@ -3,12 +3,6 @@ import { flows, type Variable } from '../helpers';
 
 import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
-
 const invalidNames = [
   {
     desc: 'starts with a double underscore',

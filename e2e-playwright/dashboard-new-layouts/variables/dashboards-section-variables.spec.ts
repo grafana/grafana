@@ -5,12 +5,6 @@ import sectionVariablesRowsDashboard from './fixtures/SectionVariablesRowsDashbo
 import sectionVariablesTabsDashboard from './fixtures/SectionVariablesTabsDashboard.json';
 import { addNewSectionVariable, importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
-
 // Both fixtures define a dashboard-level "SharedVariable" textbox with the value "dashboard",
 // and two sections whose panels render "SectionVariable: $SectionVariable | SharedVariable: $SharedVariable".
 const sectionVariable = { type: 'textbox', name: 'SectionVariable', label: 'Section variable' };
