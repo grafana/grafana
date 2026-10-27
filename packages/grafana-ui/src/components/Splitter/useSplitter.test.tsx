@@ -1,4 +1,4 @@
-import { fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Button } from '../Button/Button';
@@ -22,14 +22,19 @@ function Splitter(options: UseSplitterOptions) {
 interface TestProps extends UseSplitterOptions {
   primaryWidth: number;
   containerWidth: number;
+  showPanes?: boolean;
 }
 
 /**
  * jsdom has no layout, so every getBoundingClientRect is 0. The hook reads widths from the DOM to
  * decide how far a drag may go, so each pane is stubbed with the width the test needs.
  */
-function TestSplitter({ primaryWidth, containerWidth, ...options }: TestProps) {
+function TestSplitter({ primaryWidth, containerWidth, showPanes = true, ...options }: TestProps) {
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter(options);
+
+  if (!showPanes) {
+    return null;
+  }
 
   const stubWidth = (width: number) => (el: HTMLDivElement | null) => {
     if (el) {
@@ -323,6 +328,60 @@ describe('useSplitter', () => {
 
   // `aria-valuenow` must sit inside the 0-100 range the separator declares, whatever the sizing mode.
   describe('aria-valuenow', () => {
+    let originalResizeObserver: typeof ResizeObserver;
+    let resizeObservers: TestResizeObserver[];
+
+    class TestResizeObserver implements ResizeObserver {
+      private targets = new Set<Element>();
+      disconnect = jest.fn(() => this.targets.clear());
+
+      constructor(private callback: ResizeObserverCallback) {
+        resizeObservers.push(this);
+      }
+
+      observe(target: Element) {
+        this.targets.add(target);
+      }
+
+      unobserve(target: Element) {
+        this.targets.delete(target);
+      }
+
+      notify(target: Element) {
+        if (this.targets.has(target)) {
+          this.callback(
+            [
+              {
+                target,
+                contentRect: target.getBoundingClientRect(),
+                borderBoxSize: [],
+                contentBoxSize: [],
+                devicePixelContentBoxSize: [],
+              },
+            ],
+            this
+          );
+        }
+      }
+    }
+
+    beforeEach(() => {
+      originalResizeObserver = global.ResizeObserver;
+      resizeObservers = [];
+      global.ResizeObserver = TestResizeObserver;
+    });
+
+    afterEach(() => {
+      global.ResizeObserver = originalResizeObserver;
+      jest.restoreAllMocks();
+    });
+
+    function resize(element: Element, width: number) {
+      const rect = { ...element.getBoundingClientRect(), width, right: width };
+      jest.spyOn(element, 'getBoundingClientRect').mockReturnValue(rect);
+      act(() => resizeObservers.forEach((observer) => observer.notify(element)));
+    }
+
     it('reports the primary pane share of the container for a pixel splitter', () => {
       render(
         <TestSplitter
@@ -342,27 +401,129 @@ describe('useSplitter', () => {
     // The query editor sidebar calls the hook before its panes render, so a mount-only measurement
     // finds no elements and the separator never gets a value.
     it('reports a value for panes that mount after the hook', () => {
-      function LateSplitter({ showPanes }: { showPanes: boolean }) {
-        const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
-          direction: 'row',
-          usePixels: true,
-          pixelPane: 'primary',
-          initialSize: 350,
-        });
+      const options = { direction: 'row', usePixels: true, pixelPane: 'primary', initialSize: 350 } as const;
+      const { rerender } = render(
+        <TestSplitter {...options} primaryWidth={350} containerWidth={1016} showPanes={false} />
+      );
+      rerender(<TestSplitter {...options} primaryWidth={350} containerWidth={1016} />);
 
-        return showPanes ? (
-          <div {...containerProps}>
-            <div {...primaryProps} />
-            <div {...splitterProps} />
-            <div {...secondaryProps} />
-          </div>
-        ) : null;
+      expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '35');
+    });
+
+    it('waits for a measurable container and updates without a render or drag', () => {
+      const { container } = render(
+        <TestSplitter
+          direction="row"
+          usePixels
+          pixelPane="primary"
+          initialSize={350}
+          primaryWidth={0}
+          containerWidth={0}
+        />
+      );
+      const handle = screen.getByRole('separator');
+      const splitter = container.firstElementChild!;
+      const primaryPane = splitter.firstElementChild!;
+      expect(handle).not.toHaveAttribute('aria-valuenow');
+
+      resize(splitter, 1016);
+      resize(primaryPane, 350);
+
+      expect(handle).toHaveAttribute('aria-valuenow', '35');
+    });
+
+    it.each([
+      {
+        pixelPane: 'primary',
+        initialSize: 350,
+        primaryWidth: 350,
+        resizedPrimaryWidth: 350,
+        before: '35',
+        after: '50',
+      },
+      {
+        pixelPane: 'secondary',
+        initialSize: 330,
+        primaryWidth: 670,
+        resizedPrimaryWidth: 370,
+        before: '67',
+        after: '53',
+      },
+    ] as const)(
+      'updates the percentage when the container resizes around a fixed $pixelPane pixel pane',
+      ({ pixelPane, initialSize, primaryWidth, resizedPrimaryWidth, before, after }) => {
+        const { container } = render(
+          <TestSplitter
+            direction="row"
+            usePixels
+            pixelPane={pixelPane}
+            initialSize={initialSize}
+            primaryWidth={primaryWidth}
+            containerWidth={1016}
+          />
+        );
+        const handle = screen.getByRole('separator');
+        const splitter = container.firstElementChild!;
+        expect(handle).toHaveAttribute('aria-valuenow', before);
+
+        resize(splitter.firstElementChild!, resizedPrimaryWidth);
+        resize(splitter, 716);
+
+        expect(handle).toHaveAttribute('aria-valuenow', after);
       }
+    );
 
-      const { rerender } = render(<LateSplitter showPanes={false} />);
-      rerender(<LateSplitter showPanes />);
+    it('updates the percentage when the primary pane changes size', () => {
+      const { container } = render(
+        <TestSplitter
+          direction="row"
+          usePixels
+          pixelPane="primary"
+          initialSize={350}
+          primaryWidth={350}
+          containerWidth={1016}
+        />
+      );
+      const handle = screen.getByRole('separator');
+      expect(handle).toHaveAttribute('aria-valuenow', '35');
 
-      expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow');
+      resize(container.firstElementChild!.firstElementChild!, 500);
+
+      expect(handle).toHaveAttribute('aria-valuenow', '50');
+    });
+
+    it('reports zero for a collapsed primary pane in a measurable container', () => {
+      render(
+        <TestSplitter
+          direction="row"
+          usePixels
+          pixelPane="primary"
+          initialSize={0}
+          primaryWidth={0}
+          containerWidth={1016}
+        />
+      );
+
+      expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '0');
+    });
+
+    it('disconnects resize observation when the splitter unmounts', () => {
+      const { unmount } = render(
+        <TestSplitter
+          direction="row"
+          usePixels
+          pixelPane="primary"
+          initialSize={350}
+          primaryWidth={350}
+          containerWidth={1016}
+        />
+      );
+      expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '35');
+      expect(resizeObservers).toHaveLength(1);
+
+      unmount();
+
+      expect(resizeObservers[0].disconnect).toHaveBeenCalledTimes(1);
     });
 
     it('stays in range while dragging a pixel splitter', async () => {
