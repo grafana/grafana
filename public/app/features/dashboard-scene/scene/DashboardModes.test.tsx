@@ -34,6 +34,7 @@ import { toggleVizPanelLegend } from './PanelMenuBehavior';
 import { dashboardModesEnabled, getDashboardMode, canManuallyEditDashboard } from './dashboardModes';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
+import { Actions } from './new-toolbar/Actions';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { isFullDashboardEditing } from './types/dashboard';
 
@@ -525,6 +526,22 @@ it('discards changes while preserving Viewing mode', () => {
   expect(scene.state.title).toBe('Original title');
   expect(getDashboardMode(scene.state)).toBe('view');
   expect(scene.state.isDirty).toBe(false);
+});
+
+it('shows the toolbar Save button in Editing but not in Viewing', () => {
+  const dashboard = setup();
+  dashboard.setDashboardMode('edit');
+  dashboard.setState({ title: 'Unsaved title', isDirty: true });
+  render(
+    <TestProvider>
+      <Actions dashboard={dashboard} />
+    </TestProvider>
+  );
+  expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+
+  act(() => dashboard.setDashboardMode('view'));
+  expect(dashboard.state.isEditing).toBe(true);
+  expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
 });
 
 it('opens Changes in the existing save drawer without dropping save options', async () => {
