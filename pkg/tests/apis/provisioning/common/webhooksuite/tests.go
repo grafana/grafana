@@ -61,7 +61,7 @@ func testPushWebhookTriggersSync(t *testing.T, helper *common.GitTestHelper, p P
 	WaitForWebhook(t, helper, repoName, p.HookID(repoName))
 	helper.SyncAndWait(t, repoName)
 
-	const pushedPath = "pushed.json"
+	pushedPath := "pushed.json"
 	require.NoError(t, local.CreateFile(pushedPath, string(common.DashboardJSON("pushed-dash", "Pushed Dashboard", 1))))
 	_, err := local.Git("add", pushedPath)
 	require.NoError(t, err, "failed to add dashboard")
@@ -142,7 +142,7 @@ func testPushOverIncrementalLimitUsesFullSync(t *testing.T, helper *common.GitTe
 
 func testPullRequestWebhookPostsComment(t *testing.T, helper *common.GitTestHelper, p Provider) {
 	repoName := p.Name() + "-pr-comment"
-	const dashboardPath = "dashboard.json"
+	dashboardPath := "dashboard.json"
 	local := p.CreateRepo(t, helper, repoName, map[string][]byte{
 		dashboardPath: common.DashboardJSON("pr-comment-dash", "PR Comment Dashboard", 1),
 	}, RepoOptions{})
@@ -150,7 +150,7 @@ func testPullRequestWebhookPostsComment(t *testing.T, helper *common.GitTestHelp
 	helper.SyncAndWait(t, repoName)
 	common.RequireRepoManagedDashboard(t, helper.DashboardsV1, "pr-comment-dash", repoName, dashboardPath)
 
-	const branchName = "feature-pr-comment"
+	branchName := "feature-pr-comment"
 	_, err := local.Git("checkout", "-b", branchName)
 	require.NoError(t, err, "failed to create feature branch")
 	require.NoError(t, local.UpdateFile(dashboardPath, string(common.DashboardJSON("pr-comment-dash", "PR Comment Dashboard Updated", 2))))
@@ -198,14 +198,14 @@ func testPullRequestWebhookPostsComment(t *testing.T, helper *common.GitTestHelp
 
 func testPullRequestFromForkSkipsPreview(t *testing.T, helper *common.GitTestHelper, p Provider) {
 	repoName := p.Name() + "-pr-fork"
-	const dashboardPath = "dashboard.json"
+	dashboardPath := "dashboard.json"
 	local := p.CreateRepo(t, helper, repoName, map[string][]byte{
 		dashboardPath: common.DashboardJSON("pr-fork-dash", "PR Fork Dashboard", 1),
 	}, RepoOptions{})
 	WaitForWebhook(t, helper, repoName, p.HookID(repoName))
 	helper.SyncAndWait(t, repoName)
 
-	const branchName = "feature-pr-fork"
+	branchName := "feature-pr-fork"
 	sha := CommitDashboardOnBranch(t, local, branchName, dashboardPath, common.DashboardJSON("pr-fork-dash", "PR Fork Dashboard Updated", 2))
 	_, err := local.Git("ls-remote", "--exit-code", "origin", "refs/heads/"+branchName)
 	var exitErr *exec.ExitError
@@ -225,7 +225,7 @@ func testPullRequestFromForkSkipsPreview(t *testing.T, helper *common.GitTestHel
 	require.Equal(t, string(provisioning.JobStateSuccess), common.MustNestedString(finished.Object, "status", "state"))
 	require.Empty(t, common.MustNestedStringSlice(finished.Object, "status", "errors"))
 
-	const message = "Grafana doesn't currently support previews for pull requests from forks."
+	message := "Grafana doesn't currently support previews for pull requests from forks."
 	require.Equal(t, message, common.MustNestedString(finished.Object, "status", "message"))
 	require.Zero(t, p.State(repoName).MergeBaseCalls, "fork pull requests must be skipped before resolving refs")
 
@@ -333,7 +333,7 @@ func testWebhookSecretRotatedWhenExpired(t *testing.T, helper *common.GitTestHel
 	require.Positive(t, status.LastRotated, "LastRotated should be set on creation")
 	previousSecret := requireProviderSecret(t, helper, p, repoName)
 
-	const expiredTimestamp = int64(1)
+	expiredTimestamp := int64(1)
 	status.LastRotated = expiredTimestamp
 	patch := common.AsJSON(map[string]any{"status": map[string]any{"webhook": status}})
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {

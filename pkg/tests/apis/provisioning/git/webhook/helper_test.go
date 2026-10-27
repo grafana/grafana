@@ -42,7 +42,7 @@ func requireWebhookRemoved(t *testing.T, helper *common.GitTestHelper, repoName 
 func waitForStableCount(t *testing.T, count func() int, stableFor, timeout time.Duration) int {
 	t.Helper()
 
-	const pollInterval = 50 * time.Millisecond
+	pollInterval := 50 * time.Millisecond
 	deadline := time.Now().Add(timeout)
 	last := count()
 	stableSince := time.Now()

@@ -17,7 +17,7 @@ import (
 
 func TestIntegrationProvisioning_WebhookNotCreatedWhenDisabled(t *testing.T) {
 	helper := githubHelper(t)
-	const repoName = "webhook-disabled"
+	repoName := "webhook-disabled"
 	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{WebhookDisabled: true})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -37,7 +37,7 @@ func TestIntegrationProvisioning_WebhookNotCreatedWhenDisabled(t *testing.T) {
 
 func TestIntegrationProvisioning_WebhookRemovedWhenDisabled(t *testing.T) {
 	helper := githubHelper(t)
-	const repoName = "webhook-removed-when-disabled"
+	repoName := "webhook-removed-when-disabled"
 	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{})
 	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
 
@@ -49,7 +49,7 @@ func TestIntegrationProvisioning_WebhookRemovedWhenDisabled(t *testing.T) {
 
 func TestIntegrationProvisioning_WebhookRemovedWhenWorkflowsCleared(t *testing.T) {
 	helper := githubHelper(t)
-	const repoName = "webhook-removed-without-workflows"
+	repoName := "webhook-removed-without-workflows"
 	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{})
 	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
 
@@ -61,7 +61,7 @@ func TestIntegrationProvisioning_WebhookRemovedWhenWorkflowsCleared(t *testing.T
 
 func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testing.T) {
 	helper := githubHelper(t)
-	const repoName = "webhook-create-failure"
+	repoName := "webhook-create-failure"
 	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{HookCreateFails: true})
 
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
@@ -87,7 +87,7 @@ func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testin
 
 func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testing.T) {
 	helper := githubHelper(t)
-	const repoName = "webhook-unhealthy-repo"
+	repoName := "webhook-unhealthy-repo"
 	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{HookCreateFails: true, SyncEnabled: true})
 	helper.WaitForUnhealthyRepository(t, repoName)
 
@@ -101,7 +101,7 @@ func TestIntegrationProvisioning_WebhookRejectedForUnhealthyRepository(t *testin
 
 func TestIntegrationProvisioning_WebhookForceDeleteSkipsProvider(t *testing.T) {
 	helper := githubHelper(t)
-	const repoName = "webhook-force-delete"
+	repoName := "webhook-force-delete"
 	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{})
 	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
 
@@ -114,7 +114,7 @@ func TestIntegrationProvisioning_WebhookForceDeleteSkipsProvider(t *testing.T) {
 
 func TestIntegrationProvisioning_WebhookIgnoredEvents(t *testing.T) {
 	helper := githubHelper(t)
-	const repoName = "webhook-ignored-events"
+	repoName := "webhook-ignored-events"
 	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{SyncEnabled: true})
 	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
 	helper.SyncAndWait(t, repoName)
@@ -146,7 +146,7 @@ func TestIntegrationProvisioning_WebhookIgnoredEvents(t *testing.T) {
 
 func TestIntegrationProvisioning_WebhookPushWithSyncDisabledIgnored(t *testing.T) {
 	helper := githubHelper(t)
-	const repoName = "webhook-sync-disabled"
+	repoName := "webhook-sync-disabled"
 	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{})
 	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
 
@@ -158,7 +158,7 @@ func TestIntegrationProvisioning_WebhookPushWithSyncDisabledIgnored(t *testing.T
 
 func TestIntegrationProvisioning_WebhookRepositoryMismatchRejected(t *testing.T) {
 	helper := githubHelper(t)
-	const repoName = "webhook-repository-mismatch"
+	repoName := "webhook-repository-mismatch"
 	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{SyncEnabled: true})
 	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
 
@@ -171,7 +171,7 @@ func TestIntegrationProvisioning_WebhookRepositoryMismatchRejected(t *testing.T)
 
 func TestIntegrationProvisioning_WebhookReplayedDeliveryDropped(t *testing.T) {
 	helper := githubHelper(t)
-	const repoName = "webhook-replayed-delivery"
+	repoName := "webhook-replayed-delivery"
 	createGithubRepo(t, helper, repoName, webhooksuite.RepoOptions{SyncEnabled: true})
 	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
 	helper.SyncAndWait(t, repoName)
@@ -186,14 +186,14 @@ func TestIntegrationProvisioning_WebhookReplayedDeliveryDropped(t *testing.T) {
 
 func TestIntegrationProvisioning_PullRequestMissingRefCompletesWithWarning(t *testing.T) {
 	helper := githubHelper(t)
-	const repoName = "pr-missing-ref"
-	const dashboardPath = "dashboard.json"
+	repoName := "pr-missing-ref"
+	dashboardPath := "dashboard.json"
 	local := githubMock.CreateRepo(t, helper, repoName, map[string][]byte{
 		dashboardPath: common.DashboardJSON("pr-missing-ref-dash", "PR Missing Ref Dashboard", 1),
 	}, webhooksuite.RepoOptions{})
 	webhooksuite.WaitForWebhook(t, helper, repoName, githubMock.HookID(repoName))
 
-	const branchName = "feature-pr-missing-ref"
+	branchName := "feature-pr-missing-ref"
 	sha := webhooksuite.CommitDashboardOnBranch(t, local, branchName, dashboardPath, common.DashboardJSON("pr-missing-ref-dash", "PR Missing Ref Dashboard Updated", 2))
 	_, err := local.Git("push", "-u", "origin", branchName)
 	require.NoError(t, err, "failed to push feature branch")
