@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -1328,68 +1329,67 @@ func TestProcess_RemovePendingJobsFinalizer_Error(t *testing.T) {
 }
 
 func TestProcess_OrphanFinalizers_WaitForRunningJobs(t *testing.T) {
-	for _, finalizerName := range []string{repository.ReleaseOrphanResourcesFinalizer, repository.RemoveOrphanResourcesFinalizer} {
-		t.Run(finalizerName, func(t *testing.T) {
+	testCases := []struct {
+		name              string
+		finalizers        []string
+		countErr          error
+		blockingFinalizer string
+	}{
+		{name: "release orphan waits for running jobs", finalizers: []string{repository.ReleaseOrphanResourcesFinalizer}},
+		{name: "remove orphan waits for running jobs", finalizers: []string{repository.RemoveOrphanResourcesFinalizer}},
+		{
+			name: "waits after clearing the queue and before the cleanup finalizer",
+			finalizers: []string{
+				repository.RemovePendingJobsFinalizer,
+				repository.CleanFinalizer,
+				repository.RemoveOrphanResourcesFinalizer,
+			},
+		},
+		{
+			name:              "count error blames release orphan when both orphan finalizers are set",
+			finalizers:        []string{repository.ReleaseOrphanResourcesFinalizer, repository.RemoveOrphanResourcesFinalizer},
+			countErr:          assert.AnError,
+			blockingFinalizer: repository.ReleaseOrphanResourcesFinalizer,
+		},
+		{
+			name:              "count error blames remove orphan",
+			finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+			countErr:          assert.AnError,
+			blockingFinalizer: repository.RemoveOrphanResourcesFinalizer,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
 			jobs := NewMockJobQueueCleaner(t)
-			jobs.On("CountRunning", mock.Anything, "default", "my-repo").Once().Return(1, nil)
+			if slices.Contains(tc.finalizers, repository.RemovePendingJobsFinalizer) {
+				jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(0, nil)
+			}
+			jobs.On("CountRunning", mock.Anything, "default", "my-repo").Once().Return(1, tc.countErr)
 
 			metrics := registerFinalizerMetrics(prometheus.NewRegistry())
 			f := &finalizer{
-				jobs:    jobs,
-				lister:  resources.NewMockResourceLister(t),
-				metrics: &metrics,
+				jobs:        jobs,
+				lister:      resources.NewMockResourceLister(t),
+				repoFactory: repository.NewMockFactory(t),
+				metrics:     &metrics,
 			}
 
 			repo := mockRepo{name: "my-repo", namespace: "default"}
 			cfg := repo.Config()
-			cfg.Finalizers = []string{finalizerName}
+			cfg.Finalizers = tc.finalizers
 			err := f.process(context.Background(), cfg)
-			assert.ErrorIs(t, err, errJobsRunning)
+
+			if tc.blockingFinalizer == "" {
+				assert.ErrorIs(t, err, errJobsRunning)
+				return
+			}
+			var fe *finalizerError
+			require.ErrorAs(t, err, &fe)
+			assert.Equal(t, tc.blockingFinalizer, fe.finalizer)
+			assert.ErrorContains(t, err, "count running jobs")
 		})
 	}
-}
-
-func TestProcess_OrphanFinalizers_WaitForRunningJobsBeforeCleanFinalizer(t *testing.T) {
-	jobs := NewMockJobQueueCleaner(t)
-	jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(0, nil)
-	jobs.On("CountRunning", mock.Anything, "default", "my-repo").Once().Return(1, nil)
-
-	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
-	f := &finalizer{
-		jobs:        jobs,
-		repoFactory: repository.NewMockFactory(t),
-		metrics:     &metrics,
-	}
-
-	repo := mockRepo{name: "my-repo", namespace: "default"}
-	cfg := repo.Config()
-	cfg.Finalizers = []string{
-		repository.RemovePendingJobsFinalizer,
-		repository.CleanFinalizer,
-		repository.RemoveOrphanResourcesFinalizer,
-	}
-	err := f.process(context.Background(), cfg)
-	assert.ErrorIs(t, err, errJobsRunning)
-}
-
-func TestProcess_OrphanFinalizers_CountRunningError(t *testing.T) {
-	jobs := NewMockJobQueueCleaner(t)
-	jobs.On("CountRunning", mock.Anything, "default", "my-repo").Once().Return(0, assert.AnError)
-
-	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
-	f := &finalizer{
-		jobs:    jobs,
-		metrics: &metrics,
-	}
-
-	repo := mockRepo{name: "my-repo", namespace: "default"}
-	cfg := repo.Config()
-	cfg.Finalizers = []string{repository.RemoveOrphanResourcesFinalizer}
-	err := f.process(context.Background(), cfg)
-	var fe *finalizerError
-	require.ErrorAs(t, err, &fe)
-	assert.Equal(t, repository.RemoveOrphanResourcesFinalizer, fe.finalizer)
-	assert.ErrorContains(t, err, "count running jobs")
 }
 
 // TestProcess_CleanFinalizer_BuildFailureBlocks verifies that when the cleanup

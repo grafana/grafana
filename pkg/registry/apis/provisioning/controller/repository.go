@@ -553,6 +553,29 @@ func (rc *RepositoryController) updateDeleteStatus(ctx context.Context, obj *pro
 	)
 }
 
+func (rc *RepositoryController) clearDeleteStatus(ctx context.Context, obj *provisioning.Repository) error {
+	var ops []map[string]interface{}
+	if obj.Status.DeleteError != "" {
+		ops = append(ops, map[string]interface{}{"op": "remove", "path": "/status/deleteError"})
+	}
+	if obj.Status.Deletion != nil {
+		ops = append(ops, map[string]interface{}{"op": "remove", "path": "/status/deletion"})
+	}
+	if slices.Equal(obj.Status.Health.Message, []string{deleteErrorHealthMessage}) {
+		healthyStatus := provisioning.HealthStatus{
+			Healthy: true,
+			Checked: obj.Status.Health.Checked,
+		}
+		ops = append(ops, rc.healthPatchIfChanged(obj, healthyStatus)...)
+		readyCondition := buildReadyConditionWithReason(healthyStatus, provisioning.ReasonAvailable)
+		ops = append(ops, BuildConditionPatchOpsFromExisting(obj.Status.Conditions, obj.GetGeneration(), readyCondition)...)
+	}
+	if len(ops) == 0 {
+		return nil
+	}
+	return rc.statusPatcher.Patch(ctx, obj, ops...)
+}
+
 // buildDeletionStatus turns a finalizer failure into the structured
 // status.deletion the frontend consumes: the deletion state, the finalizer that
 // is blocking it (so the client can force-remove exactly that finalizer), and a
@@ -1001,30 +1024,8 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			return repoType, nil
 		}
 		if errors.Is(err, errJobsRunning) {
-			var clearOps []map[string]interface{}
-			if obj.Status.DeleteError != "" {
-				clearOps = append(clearOps, map[string]interface{}{"op": "remove", "path": "/status/deleteError"})
-			}
-			if obj.Status.Deletion != nil {
-				clearOps = append(clearOps, map[string]interface{}{"op": "remove", "path": "/status/deletion"})
-			}
-			if slices.Equal(obj.Status.Health.Message, []string{deleteErrorHealthMessage}) {
-				healthyStatus := provisioning.HealthStatus{
-					Healthy: true,
-					Checked: obj.Status.Health.Checked,
-				}
-				clearOps = append(clearOps, rc.healthPatchIfChanged(obj, healthyStatus)...)
-				readyCondition := buildReadyConditionWithReason(healthyStatus, provisioning.ReasonAvailable)
-				if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-					obj.Status.Conditions, obj.GetGeneration(), readyCondition,
-				); conditionPatchOps != nil {
-					clearOps = append(clearOps, conditionPatchOps...)
-				}
-			}
-			if len(clearOps) > 0 {
-				if err := rc.statusPatcher.Patch(ctx, obj, clearOps...); err != nil {
-					logger.Warn("failed to clear repository delete error while waiting for running jobs", "error", err)
-				}
+			if err := rc.clearDeleteStatus(ctx, obj); err != nil {
+				logger.Warn("failed to clear repository delete error while waiting for running jobs", "error", err)
 			}
 			rc.queueLag.add(key)
 			rc.queue.AddAfter(key, runningJobsRetryDelay)

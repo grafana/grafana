@@ -87,10 +87,13 @@ func (f *finalizer) process(ctx context.Context,
 }
 
 func (f *finalizer) waitForRunningJobs(ctx context.Context, cfg *provisioning.Repository) error {
-	orphan := repository.RemoveOrphanResourcesFinalizer
-	if slices.Contains(cfg.Finalizers, repository.ReleaseOrphanResourcesFinalizer) {
+	var orphan string
+	switch {
+	case slices.Contains(cfg.Finalizers, repository.ReleaseOrphanResourcesFinalizer):
 		orphan = repository.ReleaseOrphanResourcesFinalizer
-	} else if !slices.Contains(cfg.Finalizers, orphan) {
+	case slices.Contains(cfg.Finalizers, repository.RemoveOrphanResourcesFinalizer):
+		orphan = repository.RemoveOrphanResourcesFinalizer
+	default:
 		return nil
 	}
 
