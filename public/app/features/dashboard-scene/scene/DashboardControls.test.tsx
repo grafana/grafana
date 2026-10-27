@@ -506,6 +506,14 @@ describe('DashboardControls', () => {
       expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
     });
 
+    it('should not show Exit edit for a new dashboard in edit mode', () => {
+      const controls = buildTestSceneWithEditable({ hasUid: false, editable: true, canEdit: true, isEditing: true });
+
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).not.toBeInTheDocument();
+    });
+
     it('should show playlist nav buttons when hidePlaylistNav is undefined', async () => {
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
 

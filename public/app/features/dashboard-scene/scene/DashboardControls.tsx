@@ -332,7 +332,7 @@ function DashboardControlActions({
     (!modesEnabled || getDashboardMode(dashboard.state) !== 'view' || hasChanges || !hasUid);
   // A draft (a new dashboard proposed as pending changes) has no uid until it's saved.
   const isDraft = Boolean(meta.newDashboardUid);
-  const showEditButton = (hasUid || isDraft || isEditing) && !isPlaying && canEditDashboard && isEditable && !editPanel;
+  const showEditButton = (hasUid || isDraft) && !isPlaying && canEditDashboard && isEditable && !editPanel;
   const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
   const showPanelEditButtons = Boolean(editPanel);
 
