@@ -684,7 +684,7 @@ func (s *persistentStore) CountRunning(ctx context.Context, namespace, repositor
 	}
 	var running int
 	for i := range list.Items {
-		if isCleanupCandidate(&list.Items[i], repository) {
+		if list.Items[i].Spec.Repository == repository {
 			running++
 		}
 	}

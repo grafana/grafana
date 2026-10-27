@@ -75,17 +75,28 @@ func (f *finalizer) process(ctx context.Context,
 		repository.ReleaseOrphanResourcesFinalizer,
 		repository.RemoveOrphanResourcesFinalizer}
 
+	var orphanFinalizer string
+	for _, finalizer := range orderedFinalizers {
+		if (finalizer == repository.ReleaseOrphanResourcesFinalizer || finalizer == repository.RemoveOrphanResourcesFinalizer) &&
+			slices.Contains(cfg.Finalizers, finalizer) {
+			orphanFinalizer = finalizer
+			break
+		}
+	}
+	runningJobsChecked := orphanFinalizer == ""
+
 	for _, finalizer := range orderedFinalizers {
 		if !slices.Contains(cfg.Finalizers, finalizer) {
 			continue
 		}
-		if finalizer == repository.ReleaseOrphanResourcesFinalizer || finalizer == repository.RemoveOrphanResourcesFinalizer {
+		if !runningJobsChecked && finalizer != repository.RemovePendingJobsFinalizer {
+			runningJobsChecked = true
 			running, err := f.jobs.CountRunning(ctx, cfg.Namespace, cfg.Name)
 			if err != nil {
-				return &finalizerError{finalizer: finalizer, err: fmt.Errorf("count running jobs: %w", err)}
+				return &finalizerError{finalizer: orphanFinalizer, err: fmt.Errorf("count running jobs: %w", err)}
 			}
 			if running > 0 {
-				logger.Info("waiting for running jobs before the finalizer", "finalizer", finalizer, "running", running)
+				logger.Info("waiting for running jobs before the finalizer", "finalizer", orphanFinalizer, "running", running)
 				return errJobsRunning
 			}
 		}

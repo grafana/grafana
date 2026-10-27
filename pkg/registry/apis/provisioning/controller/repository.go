@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -44,8 +45,9 @@ import (
 const loggerName = "provisioning-repository-controller"
 
 const (
-	maxAttempts           = 3
-	runningJobsRetryDelay = 2 * time.Second
+	maxAttempts              = 3
+	runningJobsRetryDelay    = 2 * time.Second
+	deleteErrorHealthMessage = "Repository deletion error"
 )
 
 //go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
@@ -1006,12 +1008,24 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			if obj.Status.Deletion != nil {
 				clearOps = append(clearOps, map[string]interface{}{"op": "remove", "path": "/status/deletion"})
 			}
-			if len(clearOps) > 0 {
-				if err := rc.statusPatcher.Patch(ctx, obj, clearOps...); err != nil {
-					return repoType, err
+			if slices.Equal(obj.Status.Health.Message, []string{deleteErrorHealthMessage}) {
+				healthyStatus := provisioning.HealthStatus{
+					Healthy: true,
+					Checked: obj.Status.Health.Checked,
+				}
+				clearOps = append(clearOps, rc.healthPatchIfChanged(obj, healthyStatus)...)
+				readyCondition := buildReadyConditionWithReason(healthyStatus, provisioning.ReasonAvailable)
+				if conditionPatchOps := BuildConditionPatchOpsFromExisting(
+					obj.Status.Conditions, obj.GetGeneration(), readyCondition,
+				); conditionPatchOps != nil {
+					clearOps = append(clearOps, conditionPatchOps...)
 				}
 			}
-			rc.queueLag.add(key)
+			if len(clearOps) > 0 {
+				if err := rc.statusPatcher.Patch(ctx, obj, clearOps...); err != nil {
+					logger.Warn("failed to clear repository delete error while waiting for running jobs", "error", err)
+				}
+			}
 			rc.queue.AddAfter(key, runningJobsRetryDelay)
 			return repoType, nil
 		}
@@ -1021,7 +1035,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			Healthy: false,
 			Error:   provisioning.HealthFailureHealth,
 			Checked: time.Now().UnixMilli(),
-			Message: []string{"Repository deletion error"},
+			Message: []string{deleteErrorHealthMessage},
 		}
 		patchOps := rc.healthPatchIfChanged(obj, deleteHealthStatus)
 		// handleDelete builds the repository to run its finalizers, so the failure

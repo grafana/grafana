@@ -2339,6 +2339,18 @@ func TestRepositoryController_process_DeleteWaitClearsStaleDeleteError(t *testin
 		Status: provisioning.RepositoryStatus{
 			DeleteError: "remove finalizers: count running jobs: boom",
 			Deletion:    &provisioning.DeletionStatus{State: provisioning.DeletionStateBlocked, Message: "boom"},
+			Health: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: 1234,
+				Message: []string{deleteErrorHealthMessage},
+			},
+			Conditions: []metav1.Condition{{
+				Type:    provisioning.ConditionTypeReady,
+				Status:  metav1.ConditionFalse,
+				Reason:  provisioning.ReasonServiceUnavailable,
+				Message: deleteErrorHealthMessage,
+			}},
 		},
 	}
 
@@ -2349,7 +2361,28 @@ func TestRepositoryController_process_DeleteWaitClearsStaleDeleteError(t *testin
 	f := NewMockFinalizerProcessor(t)
 	f.On("process", mock.Anything, mock.Anything).Once().Return(errJobsRunning)
 
-	patcher := &capturePatcher{}
+	patcher := mocks.NewStatusPatcher(t)
+	patcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				return op["op"] == "remove" && op["path"] == "/status/deleteError"
+			}),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				return op["op"] == "remove" && op["path"] == "/status/deletion"
+			}),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				health, ok := op["value"].(provisioning.HealthStatus)
+				return op["path"] == "/status/health" && ok && health.Healthy && len(health.Message) == 0 &&
+					health.Checked == 1234
+			}),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				ready, ok := op["value"].(metav1.Condition)
+				return op["path"] == "/status/conditions/0" && ok &&
+					ready.Type == provisioning.ConditionTypeReady && ready.Status == metav1.ConditionTrue && ready.Reason == provisioning.ReasonAvailable
+			}),
+		).
+		Once().
+		Return(nil)
 	rc := &RepositoryController{
 		repos:     informer.NewCachedRepositoryGetter(mockLister),
 		finalizer: f,
@@ -2365,12 +2398,114 @@ func TestRepositoryController_process_DeleteWaitClearsStaleDeleteError(t *testin
 
 	_, err := rc.process("default/test-repo")
 	require.NoError(t, err)
+}
 
-	for _, path := range []string{"/status/deleteError", "/status/deletion"} {
-		op, ok := patcher.findPatchOp(path)
-		require.True(t, ok, "%s must be cleared while waiting for running jobs", path)
-		assert.Equal(t, "remove", op["op"])
+func TestRepositoryController_process_DeleteWaitKeepsOtherHealthFailure(t *testing.T) {
+	now := metav1.Now()
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "test-repo",
+			Namespace:         "default",
+			DeletionTimestamp: &now,
+			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		Status: provisioning.RepositoryStatus{
+			DeleteError: "remove finalizers: count running jobs: boom",
+			Deletion:    &provisioning.DeletionStatus{State: provisioning.DeletionStateBlocked, Message: "boom"},
+			Health: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Message: []string{"authentication failed"},
+			},
+		},
 	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	f := NewMockFinalizerProcessor(t)
+	f.On("process", mock.Anything, mock.Anything).Once().Return(errJobsRunning)
+
+	patcher := mocks.NewStatusPatcher(t)
+	patcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				return op["op"] == "remove" && op["path"] == "/status/deleteError"
+			}),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				return op["op"] == "remove" && op["path"] == "/status/deletion"
+			}),
+		).
+		Once().
+		Return(nil)
+	rc := &RepositoryController{
+		repos:     informer.NewCachedRepositoryGetter(mockLister),
+		finalizer: f,
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-running-jobs-other-health"},
+		),
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+	t.Cleanup(rc.queue.ShutDown)
+
+	_, err := rc.process("default/test-repo")
+	require.NoError(t, err)
+}
+
+func TestRepositoryController_process_DeleteWaitRequeuesWhenClearPatchFails(t *testing.T) {
+	now := metav1.Now()
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "test-repo",
+			Namespace:         "default",
+			DeletionTimestamp: &now,
+			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		Status: provisioning.RepositoryStatus{
+			DeleteError: "remove finalizers: count running jobs: boom",
+		},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	f := NewMockFinalizerProcessor(t)
+	f.On("process", mock.Anything, mock.Anything).Once().Return(errJobsRunning)
+
+	patcher := mocks.NewStatusPatcher(t)
+	patcher.
+		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				return op["op"] == "remove" && op["path"] == "/status/deleteError"
+			}),
+		).
+		Once().
+		Return(assert.AnError)
+	rc := &RepositoryController{
+		repos:     informer.NewCachedRepositoryGetter(mockLister),
+		finalizer: f,
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-running-jobs-patch-failure"},
+		),
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+	t.Cleanup(rc.queue.ShutDown)
+
+	_, err := rc.process("default/test-repo")
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool { return rc.queue.Len() == 1 },
+		2*runningJobsRetryDelay, 50*time.Millisecond, "repository must be requeued even when the clear patch fails")
 }
 
 // TestRepositoryController_process_DeleteStatusPatchFailure verifies how a

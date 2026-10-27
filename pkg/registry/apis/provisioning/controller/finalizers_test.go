@@ -1349,6 +1349,29 @@ func TestProcess_OrphanFinalizers_WaitForRunningJobs(t *testing.T) {
 	}
 }
 
+func TestProcess_OrphanFinalizers_WaitForRunningJobsBeforeCleanFinalizer(t *testing.T) {
+	jobs := NewMockJobQueueCleaner(t)
+	jobs.On("CleanupQueue", mock.Anything, "default", "my-repo").Once().Return(0, nil)
+	jobs.On("CountRunning", mock.Anything, "default", "my-repo").Once().Return(1, nil)
+
+	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+	f := &finalizer{
+		jobs:        jobs,
+		repoFactory: repository.NewMockFactory(t),
+		metrics:     &metrics,
+	}
+
+	repo := mockRepo{name: "my-repo", namespace: "default"}
+	cfg := repo.Config()
+	cfg.Finalizers = []string{
+		repository.RemovePendingJobsFinalizer,
+		repository.CleanFinalizer,
+		repository.RemoveOrphanResourcesFinalizer,
+	}
+	err := f.process(context.Background(), cfg)
+	assert.ErrorIs(t, err, errJobsRunning)
+}
+
 func TestProcess_OrphanFinalizers_CountRunningError(t *testing.T) {
 	jobs := NewMockJobQueueCleaner(t)
 	jobs.On("CountRunning", mock.Anything, "default", "my-repo").Once().Return(0, assert.AnError)

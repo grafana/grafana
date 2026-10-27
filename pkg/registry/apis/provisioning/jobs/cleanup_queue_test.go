@@ -111,7 +111,7 @@ func TestCountRunning_CountsClaimedJobsForRepository(t *testing.T) {
 
 	running, err := store.CountRunning(ctx, "stacks-123", "repo-a")
 	require.NoError(t, err)
-	assert.Equal(t, 1, running)
+	assert.Equal(t, 2, running)
 }
 
 // TestCleanupQueue_NoJobs verifies that clearing an empty queue is a no-op.
