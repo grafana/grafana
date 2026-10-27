@@ -7401,6 +7401,7 @@
       "copy": "Kopiuj do schowka",
       "learn-more": "Dowiedz się więcej",
       "no-issues": "Brak błędów i powiadomień dla tego zapytania.",
+      "no-panel-issues": "",
       "severity-error": "Błąd",
       "severity-info": "Informacje",
       "severity-warning": "Ostrzeżenie"
@@ -8251,8 +8252,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Otwórz okienko zapytania",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Otwórz okienko zapytania"
     },
     "viz-panel-links-renderer": {
@@ -16348,6 +16347,7 @@
       "expand": "Rozwiń",
       "filter": "",
       "loading": "Ładowanie pulpitów",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Nie znaleziono wyników dla tego zapytania",
       "noResultsForFilterClear": "Wyczyść wyszukiwanie",
       "noResultsForScopes": "Nie znaleziono pulpitów ani linków dla wybranych zakresów",
@@ -17063,8 +17063,61 @@
   },
   "swagger": {
     "login": "Logowanie",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Przed wysłaniem żądań sprawdź przestrzeń nazw lub odśwież stronę, aby spróbować ponownie.",
-    "namespace-unavailable-title": "Nie można wczytać przestrzeni nazw"
+    "namespace-unavailable-title": "Nie można wczytać przestrzeni nazw",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -17118,6 +17171,9 @@
     "description-styling-from-field": "Pole zawierające obiekty JSON z właściwościami CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Naprzemiennie zmieniaj kolor tła co drugi wiersz",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Zapytanie"
     },
@@ -18674,6 +18730,7 @@
       "body_other": "Czy na pewno chcesz usunąć {{count}} zmiennej?"
     },
     "editor": {
+      "back": "",
       "cancel": "Anuluj",
       "delete": "Usuń",
       "delete-modal-body": "Czy na pewno chcesz usunąć „{{name}}”?",
@@ -18682,6 +18739,7 @@
       "folder-description": "Ogranicz zakres zmiennej do folderu lub wybierz główny folder pulpitów, aby zmienna stała się globalna (dostępna dla wszystkich pulpitów)",
       "folder-description-folder-only": "Ogranicz zakres zmiennej do folderu, który możesz edytować",
       "folder-label": "Folder",
+      "load-error-title": "",
       "moved": "Zmienna została przeniesiona",
       "name-exists": "Zmienna o tej nazwie już istnieje w wybranym folderze",
       "save": "Zapisz",
