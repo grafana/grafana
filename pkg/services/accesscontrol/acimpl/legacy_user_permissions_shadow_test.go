@@ -168,8 +168,10 @@ func TestPermissionShadowRouting(t *testing.T) {
 				} else {
 					require.Empty(t, got)
 				}
-				if shadow {
+				if shadow && replacement {
 					waitForShadow(t, s.legacyShadow, "error")
+				} else {
+					require.Zero(t, testutil.CollectAndCount(s.legacyShadow.duration))
 				}
 				s.cfg.RBAC.SingleOrganization = true
 				s.userPermissionsAPIEnabled = true

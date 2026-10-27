@@ -388,7 +388,7 @@ const (
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
 	// FlagAuthzLegacyUserPermissionsShadow
-	// Compare local permissions with embedded AuthZ in the background. This overrides authz.legacyUserPermissions.
+	// Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.
 	FlagAuthzLegacyUserPermissionsShadow = "authz.legacyUserPermissionsShadow"
 
 	// FlagAuthzLegacyUserPermissions

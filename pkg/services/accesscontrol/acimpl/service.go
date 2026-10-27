@@ -184,8 +184,9 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	defer span.End()
 
 	delegate := s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && s.userPermissionsAPIEnabled
-	shadow := !delegate && LegacyUserPermissionsShadowEnabled(ctx)
-	legacy := !delegate && !shadow && LegacyUserPermissionsEnabled(ctx)
+	legacyEnabled := !delegate && LegacyUserPermissionsEnabled(ctx)
+	shadow := legacyEnabled && LegacyUserPermissionsShadowEnabled(ctx)
+	legacy := legacyEnabled && !shadow
 	// The legacy loader owns timing on this route.
 	if !legacy {
 		timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)

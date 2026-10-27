@@ -1172,7 +1172,7 @@ var (
 		},
 		{
 			Name:         "authz.legacyUserPermissionsShadow",
-			Description:  "Compare local permissions with embedded AuthZ in the background. This overrides authz.legacyUserPermissions.",
+			Description:  "Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

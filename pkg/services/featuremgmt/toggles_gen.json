@@ -1151,11 +1151,14 @@
     {
       "metadata": {
         "name": "authz.legacyUserPermissionsShadow",
-        "resourceVersion": "1793093505498",
-        "creationTimestamp": "2026-10-27T09:31:45Z"
+        "resourceVersion": "1793097096771",
+        "creationTimestamp": "2026-10-27T09:31:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-27 10:31:36.771288517 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Compare local permissions with embedded AuthZ in the background. This overrides authz.legacyUserPermissions.",
+        "description": "Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
