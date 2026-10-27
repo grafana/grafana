@@ -1,13 +1,25 @@
 package dashboard
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/admission"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
+
+	authlib "github.com/grafana/authlib/types"
 
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	dashsvc "github.com/grafana/grafana/pkg/services/dashboards/service"
 )
 
 func TestGetDashboardSettingsScope(t *testing.T) {
@@ -208,6 +220,143 @@ func TestValidateDashboardSettingsMetadataName(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
+		})
+	}
+}
+
+func TestDashboardsAPIBuilderValidateDashboardSettings(t *testing.T) {
+	const repositoryManaged = "dashboard settings can't be managed by a repository"
+
+	admin := dashboardSettingsRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
+	// The access client in the loop makes every caller an admin of the folders f1 and missing.
+	editor := dashboardSettingsRequester(authlib.TypeUser, "editor", identity.RoleEditor)
+	u1 := dashboardSettingsRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	// Grafana admins pass the namespace authorizer for every namespace.
+	otherStackAdmin := dashboardSettingsRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
+	otherStackAdmin.Namespace = "stacks-2"
+	otherStackAdmin.IsGrafanaAdmin = true
+	_, service := identity.WithServiceIdentity(context.Background(), 1)
+
+	create := func(obj runtime.Object) admission.Attributes {
+		return dashboardSettingsAttributesForOp(admission.Create, obj, nil)
+	}
+	update := func(newObj, oldObj runtime.Object) admission.Attributes {
+		return dashboardSettingsAttributesForOp(admission.Update, newObj, oldObj)
+	}
+	dryRunCreate := func(obj *dashv2beta1.DashboardSettings) admission.Attributes {
+		return admission.NewAttributesRecord(
+			obj,
+			nil,
+			dashv2beta1.DashboardSettingsResourceInfo.GroupVersionKind(),
+			"stacks-1",
+			obj.GetName(),
+			dashv2beta1.DashboardSettingsResourceInfo.GroupVersionResource(),
+			"",
+			admission.Create,
+			&metav1.CreateOptions{DryRun: []string{metav1.DryRunAll}},
+			true,
+			nil,
+		)
+	}
+	u1Settings := func() *dashv2beta1.DashboardSettings {
+		return newDashboardSettings("user-u1", "", new("u1"))
+	}
+	withSpec := func(obj *dashv2beta1.DashboardSettings, spec string) *dashv2beta1.DashboardSettings {
+		require.NoError(t, json.Unmarshal([]byte(spec), &obj.Spec))
+		return obj
+	}
+	withAnnotations := func(obj *dashv2beta1.DashboardSettings, annotations map[string]string) *dashv2beta1.DashboardSettings {
+		obj.SetAnnotations(annotations)
+		return obj
+	}
+	isMissingFolder := func(err error) bool {
+		var se *apierrors.StatusError
+		return apierrors.IsNotFound(err) && errors.As(err, &se) && se.ErrStatus.Details != nil && se.ErrStatus.Details.Group == "folder.grafana.app"
+	}
+	// Not an API status, so the apiserver serves it as a 500.
+	isPlainError := func(err error) bool {
+		var status apierrors.APIStatus
+		return err != nil && !errors.As(err, &status)
+	}
+
+	tests := []struct {
+		name      string
+		attrs     admission.Attributes
+		requester identity.Requester
+		// Runs Mutate before Validate, as the admission chain does.
+		mutate        bool
+		folderMissing bool
+		wantErr       func(error) bool
+		wantErrMsg    string
+	}{
+		{name: "org create by admin", attrs: create(newDashboardSettings("namespace", "", nil)), requester: admin},
+		// The authorizer can't see the name of a POST, so admission has to authorize the name Mutate derives.
+		{name: "org create by editor", attrs: create(newDashboardSettings("", "", nil)), mutate: true, requester: editor, wantErr: apierrors.IsForbidden, wantErrMsg: "only org admins can change org dashboard settings"},
+		{name: "user create for someone else", attrs: create(newDashboardSettings("user-u2", "", new("u2"))), requester: u1, wantErr: apierrors.IsForbidden, wantErrMsg: "only the owner can access user dashboard settings"},
+		{name: "folder create by folder admin", attrs: create(newDashboardSettings("folder-f1", "f1", nil)), requester: editor},
+		{name: "missing folder", attrs: create(newDashboardSettings("folder-missing", "missing", nil)), requester: editor, folderMissing: true, wantErr: isMissingFolder},
+		{name: "missing folder in dry-run", attrs: dryRunCreate(newDashboardSettings("folder-missing", "missing", nil)), requester: editor, folderMissing: true},
+		// Authorizing before the lookup keeps a caller without access from learning whether the folder exists.
+		{name: "missing folder without folder admin", attrs: create(newDashboardSettings("folder-nope", "nope", nil)), requester: editor, folderMissing: true, wantErr: apierrors.IsForbidden, wantErrMsg: "only folder admins can change folder dashboard settings"},
+		{name: "dry-run still applies the tier rules", attrs: dryRunCreate(newDashboardSettings("namespace", "", nil)), requester: editor, wantErr: apierrors.IsForbidden, wantErrMsg: "only org admins can change org dashboard settings"},
+		// The tier rules would deny it, so only skipping them lets this through.
+		{name: "service identity skips the tier rules", attrs: create(u1Settings()), requester: service},
+		// Each would be allowed in the admin's own stack, so only judging the request's namespace denies it.
+		{name: "org create from another stack", attrs: create(newDashboardSettings("namespace", "", nil)), requester: otherStackAdmin, wantErr: apierrors.IsForbidden, wantErrMsg: "only org members can access org dashboard settings"},
+		{name: "user create from another stack", attrs: create(newDashboardSettings("user-admin", "", new("admin"))), requester: otherStackAdmin, wantErr: apierrors.IsForbidden, wantErrMsg: "only the owner can access user dashboard settings"},
+		{name: "folder create from another stack", attrs: create(newDashboardSettings("folder-f1", "f1", nil)), requester: otherStackAdmin, wantErr: apierrors.IsForbidden, wantErrMsg: "only folder admins can change folder dashboard settings"},
+		{name: "name mismatch", attrs: create(newDashboardSettings("folder-f1", "", new("u1"))), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: `expected "user-u1"`},
+		// Mutate rejects this first, but Validate must not rely on it.
+		{name: "both scopes", attrs: create(newDashboardSettings("folder-f1", "f1", new("u1"))), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "not both"},
+		{name: "repository-managed", attrs: create(withAnnotations(u1Settings(), map[string]string{utils.AnnoKeyManagerKind: "repo"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
+		{name: "repository manager identity", attrs: create(withAnnotations(u1Settings(), map[string]string{utils.AnnoKeyManagerIdentity: "repo-1"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
+		{name: "invalid spec", attrs: create(withSpec(u1Settings(), `{"panels":{"decimals":99}}`)), requester: u1, wantErr: apierrors.IsInvalid},
+		{name: "refresh below minimum", attrs: create(withSpec(u1Settings(), `{"autoRefresh":"5s"}`)), requester: u1, wantErr: apierrors.IsBadRequest},
+		{name: "refresh off", attrs: create(withSpec(u1Settings(), `{"autoRefresh":""}`)), requester: u1},
+		{name: "refresh auto", attrs: create(withSpec(u1Settings(), `{"autoRefresh":"auto"}`)), requester: u1},
+		{name: "wrong type", attrs: create(&dashv2beta1.Notebook{}), requester: u1, wantErr: isPlainError, wantErrMsg: "unsupported dashboard settings version"},
+
+		{name: "scope change", attrs: update(newDashboardSettings("folder-f1", "f2", nil), newDashboardSettings("folder-f1", "f1", nil)), requester: editor, wantErr: apierrors.IsBadRequest, wantErrMsg: "cannot be changed"},
+		// Root-parented objects can carry the general sentinel, which means the same as no annotation.
+		{name: "general vs empty is no change", attrs: update(newDashboardSettings("user-u1", "general", new("u1")), u1Settings()), requester: u1},
+		{name: "general vs empty is no change on the org tier", attrs: update(newDashboardSettings("namespace", "general", nil), newDashboardSettings("namespace", "", nil)), requester: admin},
+		{name: "update with both scopes", attrs: update(newDashboardSettings("user-u1", "f1", new("u1")), u1Settings()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "not both"},
+		{name: "repository-managed update", attrs: update(withAnnotations(u1Settings(), map[string]string{utils.AnnoKeyManagerKind: "repo"}), u1Settings()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
+		// The stored object has the same name, so only the check against the scope rejects it.
+		{name: "update name mismatch", attrs: update(newDashboardSettings("folder-f1", "", new("u1")), newDashboardSettings("folder-f1", "", new("u1"))), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: `expected "user-u1"`},
+		{name: "update with invalid spec", attrs: update(withSpec(u1Settings(), `{"panels":{"decimals":99}}`), u1Settings()), requester: u1, wantErr: apierrors.IsInvalid},
+		{name: "update with refresh below minimum", attrs: update(withSpec(u1Settings(), `{"autoRefresh":"5s"}`), u1Settings()), requester: u1, wantErr: apierrors.IsBadRequest},
+		{name: "update without an old object", attrs: update(u1Settings(), nil), requester: u1, wantErr: isPlainError, wantErrMsg: "old dashboard settings"},
+
+		{name: "delete", attrs: dashboardSettingsAttributesForOp(admission.Delete, nil, u1Settings()), requester: u1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			builder := &DashboardsAPIBuilder{
+				dashboardService:   &dashsvc.DashboardServiceImpl{},
+				minRefreshInterval: "10s",
+				accessClient: &dashboardSettingsAccessClient{grants: map[string][]string{
+					"f1":      {utils.VerbSetPermissions},
+					"missing": {utils.VerbSetPermissions},
+				}},
+				folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{notFoundAccessSubresource: tt.folderMissing}},
+			}
+			ctx := identity.WithRequester(k8srequest.WithNamespace(context.Background(), "stacks-1"), tt.requester)
+			if tt.mutate {
+				require.NoError(t, builder.Mutate(ctx, tt.attrs, nil))
+			}
+
+			err := builder.Validate(ctx, tt.attrs, nil)
+
+			if tt.wantErr == nil {
+				require.NoError(t, err)
+				return
+			}
+			require.True(t, tt.wantErr(err), "unexpected error: %v", err)
+			if tt.wantErrMsg != "" {
+				require.ErrorContains(t, err, tt.wantErrMsg)
+			}
 		})
 	}
 }
