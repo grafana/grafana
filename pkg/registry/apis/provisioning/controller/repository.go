@@ -1026,6 +1026,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 					logger.Warn("failed to clear repository delete error while waiting for running jobs", "error", err)
 				}
 			}
+			rc.queueLag.add(key)
 			rc.queue.AddAfter(key, runningJobsRetryDelay)
 			return repoType, nil
 		}
