@@ -3,6 +3,7 @@ package vector
 import (
 	"context"
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -15,6 +16,7 @@ import (
 )
 
 const unifiedParent = "embeddings"
+const promoterAdvisoryLockName = "vectorpromoter"
 
 var sanitizeRe = regexp.MustCompile(`[^a-zA-Z0-9]`)
 
@@ -92,13 +94,52 @@ func (s *Promoter) Run(ctx context.Context) error {
 }
 
 // Promote runs one pass over every resource sub-tree. Exported for tests.
-func (s *Promoter) Promote(ctx context.Context) error {
-	resources, err := s.discoverResources(ctx)
+func (s *Promoter) Promote(ctx context.Context) (retErr error) {
+	// Cleanup and concurrent index builds must share both this lock and its
+	// connection so another replica cannot remove an index being built here.
+	conn, err := s.db.SqlDB().Conn(ctx)
+	if err != nil {
+		return fmt.Errorf("acquire promoter connection: %w", err)
+	}
+	var acquired bool
+	if err := conn.QueryRowContext(ctx, `SELECT pg_try_advisory_lock(hashtext($1)::bigint)`, promoterAdvisoryLockName).Scan(&acquired); err != nil {
+		// The server may have acquired the lock before the response was lost.
+		_ = conn.Raw(func(any) error { return driver.ErrBadConn })
+		_ = conn.Close()
+		return fmt.Errorf("acquire promoter lock: %w", err)
+	}
+	if !acquired {
+		s.log.Debug("vector promoter pass skipped; lock held by another replica")
+		if err := conn.Close(); err != nil {
+			return fmt.Errorf("close skipped promoter connection: %w", err)
+		}
+		return nil
+	}
+	defer func() {
+		unlockCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
+		defer cancel()
+		var released bool
+		err := conn.QueryRowContext(unlockCtx, `SELECT pg_advisory_unlock(hashtext($1)::bigint)`, promoterAdvisoryLockName).Scan(&released)
+		if err != nil || !released {
+			_ = conn.Raw(func(any) error { return driver.ErrBadConn })
+			if err == nil {
+				err = errors.New("promoter advisory lock was not held")
+			}
+			retErr = errors.Join(retErr, fmt.Errorf("release promoter lock: %w", err))
+			_ = conn.Close()
+			return
+		}
+		if err := conn.Close(); err != nil {
+			retErr = errors.Join(retErr, fmt.Errorf("close promoter connection: %w", err))
+		}
+	}()
+
+	resources, err := s.discoverResources(ctx, conn)
 	if err != nil {
 		return fmt.Errorf("discover resource sub-trees: %w", err)
 	}
 	for _, resource := range resources {
-		if err := s.promoteResource(ctx, resource); err != nil {
+		if err := s.promoteResource(ctx, conn, resource); err != nil {
 			return fmt.Errorf("promote %s: %w", resource, err)
 		}
 	}
@@ -107,8 +148,8 @@ func (s *Promoter) Promote(ctx context.Context) error {
 
 // discoverResources returns resource names from leaf tables attached to the
 // unified parent. Filters relkind='r' (regular leaf tables).
-func (s *Promoter) discoverResources(ctx context.Context) ([]string, error) {
-	rows, err := s.db.QueryContext(ctx, `
+func (s *Promoter) discoverResources(ctx context.Context, conn *sql.Conn) ([]string, error) {
+	rows, err := conn.QueryContext(ctx, `
 		SELECT c.relname FROM pg_inherits i
 		JOIN pg_class c ON c.oid = i.inhrelid
 		JOIN pg_class p ON p.oid = i.inhparent
@@ -131,14 +172,14 @@ func (s *Promoter) discoverResources(ctx context.Context) ([]string, error) {
 	return resources, rows.Err()
 }
 
-func (s *Promoter) promoteResource(ctx context.Context, resource string) error {
+func (s *Promoter) promoteResource(ctx context.Context, conn *sql.Conn, resource string) error {
 	subtree := subtreeName(resource)
 
-	if err := s.dropInvalidIndexes(ctx, subtree); err != nil {
+	if err := s.dropInvalidIndexes(ctx, conn, subtree); err != nil {
 		return err
 	}
 
-	rows, err := s.db.QueryContext(ctx, fmt.Sprintf(
+	rows, err := conn.QueryContext(ctx, fmt.Sprintf(
 		`SELECT namespace FROM %s GROUP BY namespace HAVING COUNT(*) > $1`, subtree),
 		s.threshold)
 	if err != nil {
@@ -165,7 +206,10 @@ func (s *Promoter) promoteResource(ctx context.Context, resource string) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		if err := s.promote(ctx, resource, ns); err != nil {
+		if err := s.promote(ctx, conn, resource, ns); err != nil {
+			if errors.Is(err, sql.ErrConnDone) || errors.Is(err, driver.ErrBadConn) {
+				return err
+			}
 			// One bad tenant shouldn't stop the pass.
 			s.log.Warn("promote failed", "resource", resource, "namespace", ns, "err", err)
 		}
@@ -180,11 +224,11 @@ func (s *Promoter) promoteResource(ctx context.Context, resource string) error {
 // Concurrency: CREATE INDEX CONCURRENTLY takes only SHARE UPDATE EXCLUSIVE
 // on the table, so reads and writes proceed during the build. Build cost
 // scales with rows matching the predicate, not the whole table.
-func (s *Promoter) promote(ctx context.Context, resource, namespace string) error {
+func (s *Promoter) promote(ctx context.Context, conn *sql.Conn, resource, namespace string) error {
 	subtree := subtreeName(resource)
 	idxName := partialHNSWName(resource, namespace)
 
-	valid, err := s.indexExistsValid(ctx, idxName)
+	valid, err := s.indexExistsValid(ctx, conn, idxName)
 	if err != nil {
 		return err
 	}
@@ -202,18 +246,18 @@ func (s *Promoter) promote(ctx context.Context, resource, namespace string) erro
 	)
 
 	s.log.Info("promoting tenant", "resource", resource, "namespace", namespace, "index", idxName)
-	if _, err := s.db.ExecContext(ctx, ddl); err != nil {
+	if _, err := conn.ExecContext(ctx, ddl); err != nil {
 		return fmt.Errorf("create partial index %s: %w", idxName, err)
 	}
 
 	// ANALYZE so the planner's row estimate for the partial index reflects
 	// reality.
-	if _, err := s.db.ExecContext(ctx, fmt.Sprintf(`ANALYZE %s`, subtree)); err != nil {
+	if _, err := conn.ExecContext(ctx, fmt.Sprintf(`ANALYZE %s`, subtree)); err != nil {
 		s.log.Warn("ANALYZE after promote failed", "subtree", subtree, "err", err)
 	}
 
 	// Best-effort observability — pg_indexes is the source of truth.
-	if _, err := s.db.ExecContext(ctx,
+	if _, err := conn.ExecContext(ctx,
 		`INSERT INTO vector_promoted (namespace, resource, promoted_at)
 		 VALUES ($1, $2, CURRENT_TIMESTAMP)
 		 ON CONFLICT (namespace, resource) DO UPDATE SET promoted_at = EXCLUDED.promoted_at`,
@@ -224,9 +268,9 @@ func (s *Promoter) promote(ctx context.Context, resource, namespace string) erro
 	return nil
 }
 
-func (s *Promoter) indexExistsValid(ctx context.Context, idxName string) (bool, error) {
+func (s *Promoter) indexExistsValid(ctx context.Context, conn *sql.Conn, idxName string) (bool, error) {
 	var valid bool
-	err := s.db.QueryRowContext(ctx, `
+	err := conn.QueryRowContext(ctx, `
 		SELECT i.indisvalid FROM pg_class c
 		JOIN pg_index i ON i.indexrelid = c.oid
 		WHERE c.relname = $1 AND c.relkind = 'i'
@@ -242,8 +286,8 @@ func (s *Promoter) indexExistsValid(ctx context.Context, idxName string) (bool, 
 
 // dropInvalidIndexes drops INVALID indexes on the resource sub-tree —
 // leftovers from a prior CREATE INDEX CONCURRENTLY that failed mid-build.
-func (s *Promoter) dropInvalidIndexes(ctx context.Context, subtree string) error {
-	rows, err := s.db.QueryContext(ctx, `
+func (s *Promoter) dropInvalidIndexes(ctx context.Context, conn *sql.Conn, subtree string) error {
+	rows, err := conn.QueryContext(ctx, `
 		SELECT c.relname FROM pg_class c
 		JOIN pg_index i ON i.indexrelid = c.oid
 		JOIN pg_class t ON t.oid = i.indrelid
@@ -268,7 +312,7 @@ func (s *Promoter) dropInvalidIndexes(ctx context.Context, subtree string) error
 	_ = rows.Close()
 	for _, n := range names {
 		s.log.Warn("dropping invalid index", "index", n)
-		if _, err := s.db.ExecContext(ctx, fmt.Sprintf(`DROP INDEX CONCURRENTLY IF EXISTS %s`, n)); err != nil {
+		if _, err := conn.ExecContext(ctx, fmt.Sprintf(`DROP INDEX CONCURRENTLY IF EXISTS %s`, n)); err != nil {
 			s.log.Warn("DROP INDEX failed", "index", n, "err", err)
 		}
 	}

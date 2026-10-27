@@ -889,6 +889,96 @@ func TestIntegrationPromoterSkipsSmallTenant(t *testing.T) {
 		"small tenant should not be promoted")
 }
 
+func TestIntegrationPromoterDoesNotCleanAnotherPassIndexes(t *testing.T) {
+	backend, engine, ctx := setupIntegrationTest(t)
+	const ns = "integration-test-promoter-lock"
+	const failedIndex = "dashboards_integration_test_promoter_failed"
+	require.NoError(t, backend.Upsert(ctx, []Vector{
+		{Namespace: ns, Resource: testResource, UID: "one", Title: "One", Subresource: "panel/1", ResourceVersion: 1, Content: "one", Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.1, 0.2), Model: testModel},
+		{Namespace: ns, Resource: testResource, UID: "two", Title: "Two", Subresource: "panel/1", ResourceVersion: 1, Content: "two", Metadata: json.RawMessage(`{}`), Embedding: makeEmbedding(0.2, 0.1), Model: testModel},
+	}))
+	_, err := engine.DB().ExecContext(ctx, fmt.Sprintf(`CREATE UNIQUE INDEX CONCURRENTLY %s ON %s (namespace)`, failedIndex, testSubtree))
+	require.Error(t, err, "duplicate namespace should leave an invalid concurrent index")
+	var invalid bool
+	indexInvalid := func() bool {
+		t.Helper()
+		require.NoError(t, engine.DB().QueryRowContext(ctx, `SELECT NOT i.indisvalid FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid WHERE c.relname = $1`, failedIndex).Scan(&invalid))
+		return invalid
+	}
+	require.True(t, indexInvalid())
+
+	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
+	first := NewPromoter(database, 1, 0)
+	second := NewPromoter(database, 1, 0)
+	conn, err := engine.DB().Conn(ctx)
+	require.NoError(t, err)
+	defer func() { _ = conn.Close() }()
+	var acquired bool
+	require.NoError(t, conn.QueryRowContext(ctx, `SELECT pg_try_advisory_lock(hashtext('vectorpromoter')::bigint)`).Scan(&acquired))
+	require.True(t, acquired)
+	defer func() {
+		_, _ = conn.ExecContext(context.Background(), `SELECT pg_advisory_unlock(hashtext('vectorpromoter')::bigint)`)
+	}()
+
+	require.NoError(t, second.Promote(ctx))
+	require.True(t, indexInvalid(), "another pass must not drop an index while promotion is active")
+	var released bool
+	require.NoError(t, conn.QueryRowContext(ctx, `SELECT pg_advisory_unlock(hashtext('vectorpromoter')::bigint)`).Scan(&released))
+	require.True(t, released)
+	require.NoError(t, first.Promote(ctx))
+	var present bool
+	require.NoError(t, engine.DB().QueryRowContext(ctx, `SELECT EXISTS (SELECT 1 FROM pg_class WHERE relname = $1)`, failedIndex).Scan(&present))
+	require.False(t, present, "a later pass should clean the failed index")
+	require.True(t, indexExists(t, engine, partialHNSWName(testResource, ns)), "a later pass should build the tenant index")
+	require.NoError(t, conn.QueryRowContext(ctx, `SELECT pg_try_advisory_lock(hashtext('vectorpromoter')::bigint)`).Scan(&acquired))
+	require.True(t, acquired, "a completed pass should release its advisory lock")
+}
+
+func TestIntegrationPromoterReleasesLockAfterCancellation(t *testing.T) {
+	_, engine, ctx := setupIntegrationTest(t)
+	database := dbimpl.NewDB(engine.DB().DB, engine.Dialect().DriverName())
+	first := NewPromoter(database, 100, 0)
+	second := NewPromoter(database, 100, 0)
+
+	blocker, err := engine.DB().BeginTx(ctx, nil)
+	require.NoError(t, err)
+	defer func() { _ = blocker.Rollback() }()
+	_, err = blocker.ExecContext(ctx, fmt.Sprintf(`LOCK TABLE %s IN ACCESS EXCLUSIVE MODE`, testSubtree))
+	require.NoError(t, err)
+
+	passCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	firstDone := make(chan error, 1)
+	go func() { firstDone <- first.Promote(passCtx) }()
+	require.Eventually(t, func() bool {
+		var blocked bool
+		err := engine.DB().QueryRowContext(ctx, `
+			SELECT EXISTS (SELECT 1 FROM pg_stat_activity
+			WHERE query LIKE 'SELECT namespace FROM embeddings_dashboards GROUP BY namespace%'
+			AND wait_event_type = 'Lock')`).Scan(&blocked)
+		return err == nil && blocked
+	}, 5*time.Second, 20*time.Millisecond, "first promotion pass should reach the locked table")
+
+	skipCtx, stopSkip := context.WithTimeout(ctx, time.Second)
+	defer stopSkip()
+	require.NoError(t, second.Promote(skipCtx), "overlapping pass should skip without waiting on the table")
+	cancel()
+	select {
+	case err := <-firstDone:
+		require.Error(t, err, "cancelled promotion should stop")
+	case <-time.After(5 * time.Second):
+		t.Fatal("cancelled promotion did not finish")
+	}
+	var acquired bool
+	require.NoError(t, blocker.QueryRowContext(ctx, `SELECT pg_try_advisory_lock(hashtext('vectorpromoter')::bigint)`).Scan(&acquired))
+	require.True(t, acquired, "cancelled pass must release its advisory lock")
+	var released bool
+	require.NoError(t, blocker.QueryRowContext(ctx, `SELECT pg_advisory_unlock(hashtext('vectorpromoter')::bigint)`).Scan(&released))
+	require.True(t, released)
+	require.NoError(t, blocker.Rollback())
+	require.NoError(t, second.Promote(ctx), "a later pass should acquire the released lock")
+}
+
 func indexExists(t *testing.T, engine *xorm.Engine, idxName string) bool {
 	t.Helper()
 	var exists bool
