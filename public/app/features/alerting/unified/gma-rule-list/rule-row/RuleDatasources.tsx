@@ -1,9 +1,7 @@
-import { forwardRef } from 'react';
-
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Stack, Text, TextLink, Tooltip } from '@grafana/ui';
-import { DataSourceLogo as SharedDataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
+import { DataSourceLogo } from 'app/features/datasources/components/picker/DataSourceLogo';
 
 import { getDataSourceByUid } from '../../utils/datasource';
 import { makeDataSourceLink } from '../../utils/misc';
@@ -34,11 +32,13 @@ export function RuleDatasources({ datasourceUIDs }: RuleDatasourcesProps) {
     <Stack direction="row" alignItems="center" gap={0.5}>
       {singleSource ? (
         // Single source: the name link right next to the logo makes a tooltip redundant.
-        <DataSourceLogo dataSource={firstSource} />
+        <DataSourceLogo dataSource={firstSource} size={12} />
       ) : (
         dataSources.map((ds) => (
           <Tooltip key={ds.uid} content={ds.name}>
-            <DataSourceLogo dataSource={ds} />
+            <span>
+              <DataSourceLogo dataSource={ds} size={12} />
+            </span>
           </Tooltip>
         ))
       )}
@@ -54,15 +54,3 @@ export function RuleDatasources({ datasourceUIDs }: RuleDatasourcesProps) {
     </Stack>
   );
 }
-
-/**
- * Thin forwardRef wrapper around the shared DataSourceLogo so that Tooltip
- * (Tippy.js) can attach a ref for positioning. The shared component does not
- * forward refs itself.
- */
-const DataSourceLogo = forwardRef<HTMLDivElement, { dataSource: DataSourceInstanceSettings }>(({ dataSource }, ref) => (
-  <span ref={ref}>
-    <SharedDataSourceLogo dataSource={dataSource} size={12} />
-  </span>
-));
-DataSourceLogo.displayName = 'DataSourceLogo';
