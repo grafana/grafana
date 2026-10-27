@@ -18,6 +18,18 @@ import (
 	examplev1alpha1 "github.com/grafana/grafana/apps/example/pkg/apis/example/v1alpha1"
 )
 
+// The finalizers the opinionated reconciler attaches. Named here rather than left to the app-sdk's defaults because
+// a publisher announces an allowlist of exact strings, and a name derived from a default could drift out from under
+// it. Their values are what those defaults produce today.
+const (
+	Finalizer           = "example-examples-finalizer"
+	InProgressFinalizer = "example-wip"
+)
+
+// AnnouncedFinalizers are the finalizers a bus must announce for an identity payload to carry what the opinionated
+// reconciler reads.
+var AnnouncedFinalizers = []string{Finalizer, InProgressFinalizer}
+
 // New creates a new instance of the Example App. It gets called after the app's APIs have been registered,
 // and is used for routing non-storage API requests, admission control, conversion, and can run
 // reconcilers on kinds.
@@ -33,9 +45,11 @@ func New(cfg app.Config) (app.App, error) {
 	// The delta source the reconciler's informer runs on. A nil subscriber selects the kubernetes watch.
 	var resourceBus resourcebus.Subscriber
 	var busKeyLister func(resource.Kind, operator.ListWatchOptions) (operator.ResourceKeyLister, error)
+	var busAnnouncesMetadata bool
 	exampleConfig, ok := cfg.SpecificConfig.(*ExampleConfig)
 	if ok {
 		resourceBus, busKeyLister = exampleConfig.ResourceBus, exampleConfig.BusKeyLister
+		busAnnouncesMetadata = exampleConfig.BusAnnouncesMetadata
 	}
 	if ok && exampleConfig.EnableReconciler {
 		reconciler = NewExampleReconciler(client)
@@ -46,21 +60,32 @@ func New(cfg app.Config) (app.App, error) {
 		}))
 	}
 
+	// The reconciler is wrapped in the app-sdk's OpinionatedReconciler, which reads the deletion timestamp, the
+	// finalizers and the generation off the delivered object. An identity payload carries those only where the bus
+	// announces them, and only the host knows whether this one does — so where it does not, each event is delivered
+	// as a fetched object instead.
+	payload := operator.PayloadHydrated
+	var announced operator.AnnouncedMetadata
+	if busAnnouncesMetadata {
+		payload = operator.PayloadIdentity
+		announced = operator.AnnouncedMetadata{DeletionTimestamp: true, Finalizers: true, Generation: true}
+	}
+
 	// This is the configuration for our App.
 	simpleConfig := simple.AppConfig{
 		Name:       "example",
 		KubeConfig: cfg.KubeConfig,
 		InformerConfig: simple.AppInformerConfig{
+			// The finalizer names the publisher's announce list has to match.
+			FinalizerSupplier:           func(resource.Schema) string { return Finalizer },
+			InProgressFinalizerSupplier: func(resource.Schema) string { return InProgressFinalizer },
 			// Take the reconciler's deltas from the resource change bus instead of a kubernetes watch, when the host
 			// injected one. The informer keeps no per-object cache; a periodic re-list is what keeps it reconciled
 			// with storage, so its cadence is a bound on staleness rather than a tuning knob.
-			//
-			// The payload is hydrated because the reconciler is wrapped in the app-sdk's OpinionatedReconciler, which
-			// reads the deletion timestamp and the finalizer list off the delivered object. An identity payload
-			// carries neither, and simple.NewApp refuses that pairing.
 			InformerSupplier: simple.BusInformerSupplier(resourceBus, simple.BusInformerConfig{
-				Payload:          operator.PayloadHydrated,
-				KeyListerFactory: busKeyLister,
+				Payload:           payload,
+				AnnouncedMetadata: announced,
+				KeyListerFactory:  busKeyLister,
 			}),
 		},
 		// ManagedKinds is the list of all kinds our app manages (the kinds owned by our app).

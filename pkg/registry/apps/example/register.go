@@ -58,6 +58,9 @@ func ProvideAppInstaller(
 		// An app-sdk interface value, so the app depends on neither the bus nor the keys client below. A nil
 		// subscriber selects the kubernetes watch, which is what an instance with NATS off gets.
 		ResourceBus: resourceBus,
+		// The spec registered in watch_metadata.go only reaches the wire when the publisher was configured to send
+		// metadata at all, so the app is told what this deployment actually announces, not what it asked for.
+		BusAnnouncesMetadata: cfg.NATS.NotificationMetadata,
 	}
 	if keyslister.Enabled(cfg) {
 		specificConfig.BusKeyLister = keyslister.Factory(func(gvr schema.GroupVersionResource) keysapi.Lister {
