@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Global } from '@emotion/react';
 import { useEffect } from 'react';
 import { useMatch, useParams } from 'react-router-dom-v5-compat';
 
@@ -131,6 +132,10 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
       layout={PageLayoutType.Custom}
       className={sidebarFloats ? styles.belowFloatingSidebar : undefined}
     >
+      {/* The page scrolls on `body`, so undo and redo make the scrollbar come and go and the content
+          would shift by its width. Only this surface: the embedded view and the PDF capture do not
+          use this page. */}
+      <Global styles={{ html: { scrollbarGutter: 'stable' } }} />
       {/* Composed here rather than by the scene: whether a surface shows the controls row is a
           property of the surface. Page's own wrapper is already a flex column, so this and the
           document below sit in it as siblings. The toolbar rides inside the row. */}

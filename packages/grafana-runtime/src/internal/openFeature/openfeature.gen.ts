@@ -206,6 +206,8 @@ export const FlagKeys = {
   GrafanaLogDetailsDisplayedFieldControls: "grafana.logDetailsDisplayedFieldControls",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports */
+  GrafanaMobileEditDeprecation: "grafana.mobileEditDeprecation",
   /** Enables multi-tenant fallback behavior */
   GrafanaMtFallback: "grafana.mtFallback",
   /** Builds the navigation tree client-side instead of reading it from /bootdata */
@@ -1454,6 +1456,17 @@ export const useFlagGrafanaLogDetailsDisplayedFieldControls = (options?: ReactFl
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports
+ *
+ * **Details:**
+ * - flag key: `grafana.mobileEditDeprecation`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMobileEditDeprecation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.mobileEditDeprecation", false, options).value;
 };
 
 /**
