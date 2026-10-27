@@ -12,7 +12,8 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
+import { MENU_WIDTH } from './MegaMenu/MegaMenu';
+import { MegaMenuOrPrototype } from './MegaMenuPrototype/PrototypeMegaMenu';
 import { getChromeHeaderLevelHeight } from './TopBar/useChromeHeaderHeight';
 
 interface Props {}
@@ -42,7 +43,9 @@ export function AppChromeMenu({}: Props) {
         const isSelectMenu = document
           .querySelector(`[data-testid="${selectors.components.Select.menu}"]`)
           ?.contains(element);
-        return !isSelectMenu;
+        // PROTOTYPE: mega menu solutions — its popouts render in a body portal.
+        const isPrototypeFloating = Boolean(element.closest('[data-proto-floating]'));
+        return !isSelectMenu && !isPrototypeFloating;
       },
     },
     ref
@@ -63,7 +66,13 @@ export function AppChromeMenu({}: Props) {
           <>
             {isOpen && (
               <FocusScope contain autoFocus restoreFocus>
-                <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
+                <MegaMenuOrPrototype
+                  className={styles.menu}
+                  onClose={onClose}
+                  ref={ref}
+                  {...overlayProps}
+                  {...dialogProps}
+                />
               </FocusScope>
             )}
           </>
