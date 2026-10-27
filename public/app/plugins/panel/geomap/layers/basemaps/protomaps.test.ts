@@ -86,6 +86,10 @@ function appliedStyle() {
   return applyStyleMock.mock.calls[0][1];
 }
 
+function appliedLayer(id: string) {
+  return appliedStyle().layers.find((layer: { id: string }) => layer.id === id);
+}
+
 describe('Protomaps basemap', () => {
   afterAll(() => setTestFlags({}));
 
@@ -170,7 +174,7 @@ describe('Protomaps basemap', () => {
   it('draws labels in Grafana’s own Inter instead of Noto Sans', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[1].layout['text-font']).toEqual([
+    expect(appliedLayer('places_locality').layout['text-font']).toEqual([
       'step',
       ['zoom'],
       ['literal', ['Inter Regular']],
@@ -182,8 +186,7 @@ describe('Protomaps basemap', () => {
   it('names minor roads from zoom 16 instead of 15, and leaves paths and other roads unnamed', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[2]).toMatchObject({
-      id: 'roads_labels_minor',
+    expect(appliedLayer('roads_labels_minor')).toMatchObject({
       minzoom: 16,
       filter: ['==', ['get', 'kind'], 'minor_road'],
     });
@@ -192,7 +195,7 @@ describe('Protomaps basemap', () => {
   it('labels only the places the default basemap labels, from zoom 15', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[3]).toMatchObject({
+    expect(appliedLayer('pois')).toMatchObject({
       minzoom: 15,
       filter: [
         'all',
