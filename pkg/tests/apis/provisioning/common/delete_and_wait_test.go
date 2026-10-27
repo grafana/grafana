@@ -16,6 +16,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
 // fakeResourceClient lists and deletes named items. deleteErrs holds, per name, the errors the
@@ -172,6 +173,46 @@ func TestDeleteAndWait(t *testing.T) {
 
 	t.Run("nothing to delete", func(t *testing.T) {
 		require.NoError(t, deleteAndWait(t.Context(), newFakeResourceClient(), time.Minute, metav1.DeleteOptions{}))
+	})
+}
+
+// flakyJobsClient fails the first listErrs lists, then lists no jobs.
+type flakyJobsClient struct {
+	dynamic.ResourceInterface
+	listErrs int
+	lists    int
+}
+
+func (f *flakyJobsClient) List(context.Context, metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	f.lists++
+	if f.lists <= f.listErrs {
+		return nil, apierrors.NewServiceUnavailable("not ready")
+	}
+	return &unstructured.UnstructuredList{}, nil
+}
+
+func TestWaitForJobsToFinish(t *testing.T) {
+	newHelper := func(client dynamic.ResourceInterface) *ProvisioningTestHelper {
+		return &ProvisioningTestHelper{Jobs: &apis.K8sResourceClient{Resource: client}}
+	}
+
+	t.Run("a failed list is retried", func(t *testing.T) {
+		client := &flakyJobsClient{listErrs: 2}
+
+		stuck, err := newHelper(client).waitForJobsToFinish(t.Context(), time.Minute)
+
+		require.NoError(t, err)
+		require.Empty(t, stuck)
+		require.Equal(t, 3, client.lists)
+	})
+
+	t.Run("a list that keeps failing is returned when the time runs out", func(t *testing.T) {
+		client := &flakyJobsClient{listErrs: 1 << 30}
+
+		_, err := newHelper(client).waitForJobsToFinish(t.Context(), 300*time.Millisecond)
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "list jobs")
 	})
 }
 

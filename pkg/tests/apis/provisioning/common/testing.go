@@ -2010,7 +2010,9 @@ func (h *ProvisioningTestHelper) cleanupOrphanedResources(ctx context.Context, t
 			Body(AsJSON(provisioning.JobSpec{Action: provisioning.JobActionDeleteResources})).
 			SetHeader("Content-Type", "application/json").
 			Do(ctx).StatusCode(&status)
-		if err := result.Error(); err != nil {
+		// The job name is fixed per repository. AlreadyExists means a cleanup job is still in flight, and
+		// the wait below ends when its work is done.
+		if err := result.Error(); err != nil && !apierrors.IsAlreadyExists(err) {
 			return fmt.Errorf("create the orphan cleanup job for repository %q: %w", name, err)
 		}
 	}
@@ -2088,25 +2090,25 @@ func (h *ProvisioningTestHelper) activeJobs(ctx context.Context) ([]string, erro
 }
 
 // waitForJobsToFinish waits until no job is active and returns the jobs that still were when the time ran
-// out. It never fails the test, so a cleanup can report the stuck jobs and carry on.
+// out. It never fails the test, so a cleanup can report the stuck jobs and carry on. A failed list is
+// retried until the time runs out, and is returned only if the last list also failed.
 func (h *ProvisioningTestHelper) waitForJobsToFinish(ctx context.Context, timeout time.Duration) ([]string, error) {
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
 	ticker := time.NewTicker(WaitIntervalDefault)
 	defer ticker.Stop()
+	var active []string
+	var listErr error
 	for {
-		active, err := h.activeJobs(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if len(active) == 0 {
+		active, listErr = h.activeJobs(ctx)
+		if listErr == nil && len(active) == 0 {
 			return nil, nil
 		}
 		select {
 		case <-ctx.Done():
 			return active, ctx.Err()
 		case <-timer.C:
-			return active, nil
+			return active, listErr
 		case <-ticker.C:
 		}
 	}
