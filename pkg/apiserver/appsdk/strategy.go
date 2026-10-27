@@ -25,6 +25,9 @@ type StrategyOptions struct {
 	// ValidateSpecOnStatusUpdate lets a status write carry its spec, so admission validates it instead of the
 	// spec being silently replaced with the stored one.
 	ValidateSpecOnStatusUpdate bool
+	// ResetStatusOnCreate selects the kinds that start with generation 1 and a zero status, ignoring the status the
+	// client sent, as Grafana's registry stores do. Other kinds keep the status they are created with.
+	ResetStatusOnCreate func(kind string) bool
 }
 
 type strategy struct {
@@ -60,7 +63,18 @@ func (s *strategy) GenerateName(base string) string {
 	return s.namer.GenerateName(base)
 }
 
-func (*strategy) PrepareForCreate(_ context.Context, _ runtime.Object) {
+func (s *strategy) PrepareForCreate(_ context.Context, obj runtime.Object) {
+	if s.opts.ResetStatusOnCreate == nil || !s.opts.ResetStatusOnCreate(s.kind.Kind()) {
+		return
+	}
+	o, ok := obj.(resource.Object)
+	if !ok {
+		return
+	}
+	o.SetGeneration(1)
+	if status, ok := s.kind.ZeroValue().GetSubresource(string(resource.SubresourceStatus)); ok {
+		_ = o.SetSubresource(string(resource.SubresourceStatus), status)
+	}
 }
 
 func (*strategy) Validate(_ context.Context, _ runtime.Object) field.ErrorList {

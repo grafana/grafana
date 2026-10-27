@@ -90,6 +90,10 @@ func RegisterAppInstaller(cfg *setting.Cfg, builders *provisioningapis.APIBuilde
 		AllowCreateOnUpdate:        true,
 		AllowUnconditionalUpdate:   true,
 		ValidateSpecOnStatusUpdate: true,
+		// jobs are created with the status they carry
+		ResetStatusOnCreate: func(kind string) bool {
+			return kind == provisioningapp.KindRepository || kind == provisioningapp.KindConnection
+		},
 	})
 	i.AppInstaller = inner
 	return i, nil
@@ -145,8 +149,9 @@ func (i *AppInstaller) GroupVersionRoutes() []builder.GroupVersionRoutes {
 		gv := b.GetGroupVersion()
 		out = append(out, builder.GroupVersionRoutes{
 			GroupVersion: gv,
-			Routes:       b.GetAPIRoutes(gv),
-			PostProcess:  b.PostProcessOpenAPI,
+			// both versions use the handlers of the initialised builder; only the OpenAPI is per version
+			Routes:      i.builder.GetAPIRoutes(gv),
+			PostProcess: b.PostProcessOpenAPI,
 		})
 	}
 	return out
@@ -254,8 +259,12 @@ func (i *AppInstaller) connectorRoute(key string) simple.AppCustomRouteHandler {
 	}
 }
 
+type remoteAddrKey struct{}
+
 func httpRequest(ctx context.Context, req *sdkapp.CustomRouteRequest) *http.Request {
+	remoteAddr, _ := ctx.Value(remoteAddrKey{}).(string)
 	r := &http.Request{
+		RemoteAddr: remoteAddr,
 		Method:     req.Method,
 		URL:        req.URL,
 		Header:     req.Headers,
@@ -383,16 +392,15 @@ func (c *routeConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return &appsdkapiserver.ResourceCallOptions{}, true, ""
 }
 
-func (c *routeConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	if !c.subpath {
-		return c.SubresourceConnector.Connect(ctx, name, opts, responder)
-	}
+// Connect dispatches to the handler registered for the bare route, keeping the full request URL. It passes the
+// peer address along, which the custom route request does not carry (webhook rate limiting is per sender).
+func (c *routeConnector) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	info, ok := request.RequestInfoFrom(ctx)
 	if !ok {
 		return nil, errors.New("unable to retrieve request info from context")
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		err := c.Route.Handler(r.Context(), w, &sdkapp.CustomRouteRequest{
+		err := c.Route.Handler(context.WithValue(r.Context(), remoteAddrKey{}, r.RemoteAddr), w, &sdkapp.CustomRouteRequest{
 			ResourceIdentifier: resourceIdentifier(info, c.Kind.Kind(), name),
 			Path:               c.route,
 			URL:                r.URL,
