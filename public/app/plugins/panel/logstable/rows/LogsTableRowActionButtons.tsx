@@ -41,7 +41,7 @@ export function logsFrameHasErrorAttributes(logsFrame: LogsFrame): boolean {
 
 const logsFrameHasErrorAttributesCache = new WeakMap<LogsFrame, boolean>();
 
-export function getRowErrorAttributeKind(logsFrame: LogsFrame, rowIndex: number): ErrorAttributeKind | undefined {
+function getRowErrorAttributeKind(logsFrame: LogsFrame, rowIndex: number): ErrorAttributeKind | undefined {
   const labels = logsFrame.getLogFrameLabelsAsLabels()?.[rowIndex];
   const labelKeys = labels ? Object.keys(labels) : [];
   const fieldKeys = logsFrame.extraFields
