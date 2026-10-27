@@ -14,6 +14,7 @@ import {
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringSnapshotV1,
 } from './internalCoauthoringContract';
+import { trackQueryCoauthoringSelectionPromptShown } from './queryCoauthoringTracking';
 import { type QueryPreviewSelection } from './queryPreview';
 
 interface Props {
@@ -104,6 +105,16 @@ function QueryCoauthoringAdapterSurface({
   onBaseline,
   snapshot,
 }: Props & { snapshot: QueryEditorCoauthoringSnapshotV1 }) {
+  const wasSelectionVisible = useRef(false);
+
+  useEffect(() => {
+    const isSelectionVisible = snapshot.mode === 'selection';
+    if (isSelectionVisible && !wasSelectionVisible.current) {
+      trackQueryCoauthoringSelectionPromptShown({ datasourceType: host.datasourceType });
+    }
+    wasSelectionVisible.current = isSelectionVisible;
+  }, [snapshot.mode, host.datasourceType]);
+
   if (snapshot.mode === 'hidden') {
     return null;
   }

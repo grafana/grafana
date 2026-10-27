@@ -50,7 +50,7 @@ function resolveStatusName(props: RuleStatusIconProps): StatusName {
     return 'no-data';
   }
   if (props.kind === 'recording') {
-    return props.health === 'Recording' ? 'recording' : 'unavailable';
+    return props.health === 'Recording' ? 'recording' : 'recording-unavailable';
   }
   // Health OK alone says nothing about whether the alert fires.
   return props.state ? ALERT_STATE_STATUS[props.state] : 'unavailable';
@@ -94,6 +94,11 @@ const STATUSES = {
   }),
   unavailable: () => ({
     icon: 'circle',
+    color: 'secondary',
+    label: t('alerting.gma-rule-list.status.unavailable', 'Status unavailable'),
+  }),
+  'recording-unavailable': () => ({
+    icon: 'square-shape',
     color: 'secondary',
     label: t('alerting.gma-rule-list.status.unavailable', 'Status unavailable'),
   }),

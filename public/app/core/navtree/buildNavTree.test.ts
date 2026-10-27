@@ -452,6 +452,19 @@ describe('pruneEmptyNavSections', () => {
     expect(findById(tree, NavID.explore)).toBeDefined();
   });
 
+  // More apps is created on demand, so it is only empty when an override has
+  // moved its last app elsewhere — maintenance windows, nested under SLO
+  it('removes an emptied More apps section but keeps a populated one', () => {
+    setup();
+    const empty: NavModelItem[] = [{ id: NavID.apps, text: 'More apps', url: '/apps', children: [] }];
+    const populated: NavModelItem[] = [
+      { id: NavID.apps, text: 'More apps', url: '/apps', children: [{ id: 'plugin-page-some-app', text: 'Some app' }] },
+    ];
+
+    expect(findById(pruneEmptyNavSections(empty), NavID.apps)).toBeUndefined();
+    expect(findById(pruneEmptyNavSections(populated), NavID.apps)).toBeDefined();
+  });
+
   it('keeps sections that gained children', () => {
     setup({
       orgRole: 'Admin',

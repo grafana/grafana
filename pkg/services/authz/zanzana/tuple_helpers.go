@@ -212,6 +212,21 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 			continue
 		}
 
+		if perm.Kind == common.KindServiceAccounts && perm.Identifier != "" && strings.HasPrefix(perm.Action, "serviceaccounts:") {
+			if relations := serviceAccountActionSetRelations(strings.TrimPrefix(perm.Action, "serviceaccounts:")); len(relations) > 0 {
+				for _, relation := range relations {
+					var tuple *openfgav1.TupleKey
+					if perm.Identifier == "*" {
+						tuple = NewGroupResourceTuple(subject, relation, iamGroup, common.KindServiceAccounts, "")
+					} else {
+						tuple = common.NewTypedTuple(TypeServiceAccount, subject, relation, perm.Identifier)
+					}
+					tupleMap[tuple.String()] = tuple
+				}
+				continue
+			}
+		}
+
 		// Convert RBAC action/kind to Zanzana tuples.
 		translated, ok := TranslateToResourceTuples(subject, perm.Action, perm.Kind, perm.Identifier)
 		if !ok {
@@ -538,6 +553,18 @@ func GetResourcePermissionDeleteTuples(req *authzextv1.DeletePermissionOperation
 	return deleteTuples, nil
 }
 
+// Service-account Edit deliberately excludes delete, unlike the generic edit relation.
+func serviceAccountActionSetRelations(permission string) []string {
+	switch permission {
+	case RelationSetEdit:
+		return []string{RelationGet, RelationUpdate}
+	case RelationSetAdmin:
+		return []string{RelationGet, RelationUpdate, RelationDelete, RelationGetPermissions, RelationSetPermissions}
+	default:
+		return nil
+	}
+}
+
 func resourcePermissionToTuples(resource *authzextv1.Resource, permission *authzextv1.Permission) ([]*openfgav1.TupleKey, error) {
 	if resource.GetResource() == "datasources" && strings.HasSuffix(resource.GetGroup(), datasourcek8s.K8sDatasourceAPIGroupSuffix) {
 		return nil, fmt.Errorf("datasource permissions must use the %s group", datasourcek8s.Group)
@@ -548,6 +575,17 @@ func resourcePermissionToTuples(resource *authzextv1.Resource, permission *authz
 	}
 
 	relation := strings.ToLower(permission.GetVerb())
+	if resource.GetGroup() == iamGroup && resource.GetResource() == common.KindServiceAccounts {
+		relations := serviceAccountActionSetRelations(relation)
+		if len(relations) == 0 {
+			relations = []string{relation}
+		}
+		tuples := make([]*openfgav1.TupleKey, 0, len(relations))
+		for _, relation := range relations {
+			tuples = append(tuples, common.NewTypedTuple(TypeServiceAccount, subject, relation, resource.GetName()))
+		}
+		return tuples, nil
+	}
 	if isDatasourcePermission(resource) {
 		return datasourcePermissionToTuples(subject, relation, resource), nil
 	}

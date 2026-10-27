@@ -957,6 +957,8 @@ export type HybridSearchResultItem = {
   resource: ResourceRef;
   /** Score is opaque: higher scores rank first, but scores are meaningful only for ordering within this response. Do not compare scores across queries or treat them as probabilities or distances. */
   score: number;
+  /** Tags from the lexical index. Omitted when unavailable. */
+  tags?: string[];
   title: string;
 };
 export type HybridSearchResults = {
@@ -989,7 +991,7 @@ export type HybridSearchQuery = {
   minRelevance?: string;
   /** Query supplies the lexical query and, unless SemanticQuery is set, the text embedded for semantic search. Required, with a maximum of 1000 bytes. */
   query: string;
-  /** Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs. */
+  /** Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it. */
   resources?: HybridSearchResource[];
   /** SemanticQuery supplies optional richer phrasing for semantic search. When provided, it must not be whitespace and must fit within 1000 bytes. */
   semanticQuery?: string;

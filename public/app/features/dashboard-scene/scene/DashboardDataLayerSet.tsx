@@ -41,9 +41,11 @@ export class DashboardDataLayerSet
     this._subs.add(
       this.subscribeToState((newState, oldState) => {
         if (newState.annotationLayers !== oldState.annotationLayers && this._shouldRunLayers()) {
-          this.querySub?.unsubscribe();
+          const previousSubscription = this.querySub;
           this.querySub = undefined;
+          // Keep retained layers active so their mounted controls do not lose state subscriptions.
           this.subscribeToAllLayers(this.getAllLayers());
+          previousSubscription?.unsubscribe();
         }
       })
     );

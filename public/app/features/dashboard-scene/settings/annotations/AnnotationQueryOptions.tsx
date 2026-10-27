@@ -8,10 +8,9 @@ import { Box, Button, ButtonGroup } from '@grafana/ui';
 import { updateAnnotationFromSavedQuery } from 'app/features/annotations/utils/savedQueryUtils';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 
-import { edit } from '../../actions/utils/edit';
-
 import { type AnnotationLayer } from './AnnotationEditableElement';
 import { AnnotationQueryEditorModal } from './AnnotationQueryEditorModal';
+import { annotationEditActions } from './actions';
 
 export function AnnotationQueryEditorButton({ layer }: { layer: AnnotationLayer }) {
   const { queryLibraryEnabled } = useQueryLibraryContext();
@@ -54,18 +53,11 @@ function QueryLibraryButton({ layer, onQuerySelected }: { layer: AnnotationLayer
       onSelectQuery: async (selectedQuery: DataQuery) => {
         try {
           const updatedQuery = await updateAnnotationFromSavedQuery(query, selectedQuery);
-          edit({
-            meta: { actionId: 'annotation.changeQuery', scope: 'query-library' },
-            description: t('dashboard.sidebar.annotation.change-query', 'Change annotation query'),
+          annotationEditActions.changeAnnotationQuery({
             source: layer,
-            perform: () => {
-              layer.setState({ query: updatedQuery });
-              layer.runLayer();
-            },
-            undo: () => {
-              layer.setState({ query });
-              layer.runLayer();
-            },
+            oldValue: query,
+            newValue: updatedQuery,
+            scope: 'query-library',
           });
         } catch (error) {
           console.error('Failed to replace annotation query!', error);

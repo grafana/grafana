@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv, useScopes } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DRAWER_INSIDE_ATTRIBUTE } from '@grafana/ui/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
@@ -62,6 +63,8 @@ const closedSidebarContext: ExtensionSidebarContextType = {
   availableComponents: new Map(),
   extensionSidebarWidth: 300,
   setExtensionSidebarWidth: jest.fn(),
+  floatingExtensionSidebarWidth: 480,
+  setFloatingExtensionSidebarWidth: jest.fn(),
   presentation: 'docked',
   floatingHidden: false,
 };
@@ -134,7 +137,12 @@ describe('AppChrome', () => {
     mockUseScopes.mockReturnValue(undefined);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates
+    // while the component may still be mounted (RTL's own cleanup afterEach runs after this one).
+    await act(async () => {
+      setTestFlags({});
+    });
     jest.clearAllMocks();
   });
 
@@ -212,6 +220,18 @@ describe('AppChrome', () => {
         expect(parseFloat(getComputedStyle(mainContent).paddingLeft) || 0).toBe(0);
       });
     });
+
+    it('does not render the docked drawer when the mega-menu flag is on', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.scopesDashboardsMegaMenu': true });
+      });
+
+      setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('scopes-dashboards-container')).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe('extension sidebar mobile floating', () => {
@@ -269,6 +289,17 @@ describe('AppChrome', () => {
       rerender();
       // Drawers and their mask sit at modalBackdrop (1050), modal dialogs at modal (1060).
       expect(stylesFor(container)).toContain('z-index: 1051');
+    });
+
+    it('keeps the docked minimum width off the floating sidebar', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      const { rerender } = setup(<Page navId="child1">Children</Page>);
+      const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+      expect(container.style.minWidth).toBe('460px');
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
+      rerender();
+      expect(container.style.minWidth).toBe('');
     });
 
     it('marks only the floating sidebar as inside open drawers', async () => {

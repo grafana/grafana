@@ -446,6 +446,16 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
           )
       ),
     });
+    routes.push({
+      path: '/alerting/rules/recording',
+      roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "GmaRecordingRulesPage" */ 'app/features/alerting/unified/gma-rule-list/recording-rules/RecordingRulesPage'
+          )
+      ),
+    });
   }
 
   return routes;

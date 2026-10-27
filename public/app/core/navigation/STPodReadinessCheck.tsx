@@ -2,8 +2,8 @@ import { use } from 'react';
 
 import { createStPodTimeoutError, getStPodReadyPromise, getStPodStatus, StPodStatus } from './stPodReadiness';
 
-export const STPodReadinessCheck = ({ isUrlAllowed }: { isUrlAllowed: boolean }) => {
-  if (isUrlAllowed) {
+export const STPodReadinessCheck = ({ skip }: { skip: boolean }) => {
+  if (skip) {
     return null;
   }
 

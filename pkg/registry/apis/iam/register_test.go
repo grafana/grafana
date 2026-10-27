@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -288,6 +289,20 @@ func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {
 	err = b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
 	require.NoError(t, err)
 	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
+}
+
+func TestUpdateTeamLBACRulesAPIGroupWithoutTeamAPI(t *testing.T) {
+	tracer := tracing.InitializeTracerForTest()
+	b := &IdentityAccessManagementAPIBuilder{
+		teamLBACApiInstaller: ProvideNoopTeamLBACApiInstaller(),
+		legacyTeamStore:      team.NewLegacyStore(nil, nil, tracer, nil),
+		tracing:              tracer,
+	}
+	storage := map[string]rest.Storage{}
+	err := b.UpdateTeamLBACRulesAPIGroup(&genericapiserver.APIGroupInfo{}, builder.APIGroupOptions{}, storage)
+	require.NoError(t, err)
+	require.NotNil(t, storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")])
+	require.NotContains(t, storage, iamv0.TeamResourceInfo.StoragePath())
 }
 
 func TestUpdateUsersAPIGroup_TeamsSubresourceRequiresTeamsAPI(t *testing.T) {

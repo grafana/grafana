@@ -179,18 +179,13 @@ func (b *aggregateBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) 
 	return *b.discovery, true
 }
 
-// discoveredGroupKey fingerprints a discovered group. A group without
-// resources hashes exactly as before resources were kept, so its key is
-// unchanged.
+// discoveredGroupKey fingerprints a discovered group and its resources, so a
+// change to either is a new key.
 func discoveredGroupKey(d discoveredGroup) (string, error) {
-	var value any = d.group
-	if d.discovery != nil {
-		value = struct {
-			Group     metav1.APIGroup
-			Discovery *apidiscoveryv2.APIGroupDiscovery
-		}{d.group, d.discovery}
-	}
-	body, err := json.Marshal(value)
+	body, err := json.Marshal(struct {
+		Group     metav1.APIGroup
+		Discovery *apidiscoveryv2.APIGroupDiscovery
+	}{d.group, d.discovery})
 	if err != nil {
 		return "", err
 	}
@@ -198,7 +193,5 @@ func discoveredGroupKey(d discoveredGroup) (string, error) {
 	return hex.EncodeToString(sum[:])[:16], nil
 }
 func (b *aggregateBackend) Load(context.Context) (http.Handler, error) {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		b.proxy.ServeHTTP(w, req)
-	}), nil
+	return b.proxy, nil
 }

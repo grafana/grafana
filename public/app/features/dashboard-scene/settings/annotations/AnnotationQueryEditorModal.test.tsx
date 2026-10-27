@@ -3,6 +3,9 @@ import { act, render, screen } from '@testing-library/react';
 import { type DataSourceInstanceSettings } from '@grafana/data';
 
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
+import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { DashboardScene } from '../../scene/DashboardScene';
+import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { AnnotationQueryEditorModal } from './AnnotationQueryEditorModal';
 
@@ -29,6 +32,11 @@ describe('AnnotationQueryEditorModal', () => {
       } as DashboardAnnotationsDataLayer['state']['query'],
     });
     jest.spyOn(layer, 'runLayer').mockImplementation(() => undefined);
+    const dashboard = new DashboardScene({
+      isEditing: true,
+      $data: new DashboardDataLayerSet({ annotationLayers: [layer] }),
+    });
+    const deactivate = activateFullSceneTree(dashboard);
 
     render(<AnnotationQueryEditorModal layer={layer} onClose={jest.fn()} />);
     // Let the query editor's async data source lookups settle
@@ -39,5 +47,6 @@ describe('AnnotationQueryEditorModal', () => {
     expect(layer.state.query.datasource).toEqual({ uid: 'loki-uid', type: 'loki' });
     expect(layer.state.query.placement).toBe('inControlsMenu');
     expect(layer.state.query.hide).toBe(true);
+    act(() => deactivate());
   });
 });

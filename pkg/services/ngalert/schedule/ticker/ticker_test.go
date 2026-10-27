@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -100,41 +101,44 @@ func TestTicker(t *testing.T) {
 	})
 
 	t.Run("should put the tick in the channel immediately if it is behind", func(t *testing.T) {
-		clk := clock.NewMock()
-		interval := time.Duration(rand.Int63n(9)+1) * time.Second
-		ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"), &logtest.Fake{})
+		synctest.Test(t, func(t *testing.T) {
+			clk := clock.New()
+			interval := time.Second
+			ticker := New(clk, interval, NewMetrics(prometheus.NewRegistry(), "test"), &logtest.Fake{})
+			defer ticker.Stop()
 
-		//  We can expect the first tick to be at a consistent interval. Take a snapshot of the clock now, before we advance it.
-		expectedTick := clk.Now().Add(interval)
+			//  We can expect the first tick to be at a consistent interval. Take a snapshot of the clock now, before we advance it.
+			expectedTick := clk.Now().Add(interval)
 
-		require.Empty(t, ticker.C)
+			require.Empty(t, ticker.C)
 
-		clk.Add(interval) // advance the clock by the interval to make the ticker tick the first time.
-		clk.Add(interval) // advance the clock by the interval to make the ticker tick the second time.
+			// Reach the first tick; it stays queued until the consumer reads it.
+			synctest.Sleep(interval)
 
-		// Irregardless of wall time, the first tick should be initial clock + interval.
-		actual1 := readChanOrFail(t, ticker.C)
-		require.Equal(t, expectedTick, actual1)
+			// Advance another interval while the first tick is still unconsumed.
+			synctest.Sleep(interval)
 
-		var actual2 time.Time
-		require.Eventually(t, func() bool {
-			actual2 = readChanOrFail(t, ticker.C)
-			return true
-		}, time.Second, 10*time.Millisecond)
+			// Irregardless of wall time, the first tick should be initial clock + interval.
+			actual1 := readChanOrFail(t, ticker.C)
+			require.Equal(t, expectedTick, actual1)
 
-		// Similarly, the second tick should be last tick + interval irregardless of wall time.
-		require.Equal(t, expectedTick.Add(interval), actual2)
+			actual2 := readChanOrFail(t, ticker.C)
+
+			// Similarly, the second tick should be last tick + interval irregardless of wall time.
+			require.Equal(t, expectedTick.Add(interval), actual2)
+		})
 	})
 
 	t.Run("should report metrics", func(t *testing.T) {
-		clk := clock.NewMock()
-		clk.Set(time.Now())
-		interval := time.Duration(rand.Int63n(9)+1) * time.Second
-		registry := prometheus.NewPedanticRegistry()
-		ticker := New(clk, interval, NewMetrics(registry, "test"), &logtest.Fake{})
-		expectedTick := getStartTick(clk, interval).Add(interval)
+		synctest.Test(t, func(t *testing.T) {
+			clk := clock.New()
+			interval := time.Second
+			registry := prometheus.NewPedanticRegistry()
+			ticker := New(clk, interval, NewMetrics(registry, "test"), &logtest.Fake{})
+			defer ticker.Stop()
+			expectedTick := getStartTick(clk, interval).Add(interval)
 
-		expectedMetricFmt := `# HELP grafana_test_ticker_interval_seconds Interval at which the ticker is meant to tick.
+			expectedMetricFmt := `# HELP grafana_test_ticker_interval_seconds Interval at which the ticker is meant to tick.
                     # TYPE grafana_test_ticker_interval_seconds gauge
                     grafana_test_ticker_interval_seconds %v
                     # HELP grafana_test_ticker_last_consumed_tick_timestamp_seconds Timestamp of the last consumed tick in seconds.
@@ -145,29 +149,25 @@ func TestTicker(t *testing.T) {
                     grafana_test_ticker_next_tick_timestamp_seconds %v
 					`
 
-		expectedMetric := fmt.Sprintf(expectedMetricFmt, interval.Seconds(), 0, float64(expectedTick.UnixNano())/1e9)
+			expectedMetric := fmt.Sprintf(expectedMetricFmt, interval.Seconds(), 0, float64(expectedTick.UnixNano())/1e9)
 
-		errs := make(map[string]error, 1)
-		require.Eventuallyf(t, func() bool {
-			err := testutil.GatherAndCompare(registry, bytes.NewBufferString(expectedMetric), "grafana_test_ticker_last_consumed_tick_timestamp_seconds", "grafana_test_ticker_next_tick_timestamp_seconds", "grafana_test_ticker_interval_seconds")
-			if err != nil {
-				errs["error"] = err
-			}
-			return err == nil
-		}, 1*time.Second, 100*time.Millisecond, "failed to wait for metrics to match expected values:\n%v", errs)
+			// Finish ticker bookkeeping before checking its published metrics.
+			synctest.Wait()
 
-		clk.Add(interval)
-		actual := readChanOrFail(t, ticker.C)
+			require.NoError(t, testutil.GatherAndCompare(registry, bytes.NewBufferString(expectedMetric), "grafana_test_ticker_last_consumed_tick_timestamp_seconds", "grafana_test_ticker_next_tick_timestamp_seconds", "grafana_test_ticker_interval_seconds"))
 
-		expectedMetric = fmt.Sprintf(expectedMetricFmt, interval.Seconds(), float64(actual.UnixNano())/1e9, float64(expectedTick.Add(interval).UnixNano())/1e9)
+			// Advance to the next tick without waiting on wall time.
+			synctest.Sleep(interval)
 
-		require.Eventuallyf(t, func() bool {
-			err := testutil.GatherAndCompare(registry, bytes.NewBufferString(expectedMetric), "grafana_test_ticker_last_consumed_tick_timestamp_seconds", "grafana_test_ticker_next_tick_timestamp_seconds", "grafana_test_ticker_interval_seconds")
-			if err != nil {
-				errs["error"] = err
-			}
-			return err == nil
-		}, 1*time.Second, 100*time.Millisecond, "failed to wait for metrics to match expected values:\n%v", errs)
+			actual := readChanOrFail(t, ticker.C)
+
+			expectedMetric = fmt.Sprintf(expectedMetricFmt, interval.Seconds(), float64(actual.UnixNano())/1e9, float64(expectedTick.Add(interval).UnixNano())/1e9)
+
+			// Finish ticker bookkeeping before checking its published metrics.
+			synctest.Wait()
+
+			require.NoError(t, testutil.GatherAndCompare(registry, bytes.NewBufferString(expectedMetric), "grafana_test_ticker_last_consumed_tick_timestamp_seconds", "grafana_test_ticker_next_tick_timestamp_seconds", "grafana_test_ticker_interval_seconds"))
+		})
 	})
 
 	t.Run("should stop", func(t *testing.T) {
