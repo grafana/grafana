@@ -8,6 +8,7 @@ import { ConstantVariable, SceneVariableSet, sceneGraph } from '@grafana/scenes'
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
   createDashboardMutationApi,
@@ -514,6 +515,31 @@ it('blocks the legend shortcut from changing panel options in View', () => {
   scene.setDashboardMode('edit');
   toggleVizPanelLegend(panel);
   expect(changeOptions).toHaveBeenCalledWith({ legend: { showLegend: false } });
+});
+
+it('lets a plugin-managed dashboard enter Editing and save as a copy', async () => {
+  const dashboard = setup();
+  dashboard.setState({
+    meta: { ...dashboard.state.meta, k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Plugin } } },
+  });
+  expect(dashboard.managedResourceCannotBeEdited()).toBe(true);
+  render(
+    <TestProvider>
+      <DashboardModePicker dashboard={dashboard} />
+    </TestProvider>
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Dashboard mode: Viewing' }));
+  expect(getDashboardMode(dashboard.state)).toBe('edit');
+
+  cleanup();
+  render(
+    <TestProvider>
+      <SaveDashboard dashboard={dashboard} />
+    </TestProvider>
+  );
+  await user.click(screen.getByRole('button', { name: 'More save options' }));
+  expect(screen.getByRole('menuitem', { name: 'Save as copy' })).toBeInTheDocument();
 });
 
 it('discards changes while preserving Viewing mode', () => {
