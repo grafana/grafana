@@ -31,7 +31,7 @@ func newUploadTestIndex(t *testing.T, be *bleveBackend, key resource.NamespacedR
 	require.NoError(t, idx.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(idx, rv))
 
-	wrapped := be.newBleveIndex(key, idx, indexStorageFile, nil, nil, nil, nil, be.log)
+	wrapped := be.newBleveIndex(key, idx, indexStorageFile, nil, nil, nil, be.log)
 	wrapped.resourceVersion.Store(rv)
 	return wrapped
 }
@@ -47,7 +47,7 @@ func newCachedUploadTestIndex(t *testing.T, be *bleveBackend, key resource.Names
 	require.NoError(t, idx.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(idx, rv))
 
-	wrapped := be.newBleveIndex(key, idx, indexStorageFile, nil, nil, nil, nil, be.log)
+	wrapped := be.newBleveIndex(key, idx, indexStorageFile, nil, nil, nil, be.log)
 	wrapped.resourceVersion.Store(rv)
 
 	be.cacheMx.Lock()
@@ -190,7 +190,7 @@ func TestUploadSnapshot_PreservesOriginalBuildStartTime(t *testing.T) {
 	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(index, 42))
 
-	wrapped := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, nil, be.log)
+	wrapped := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, be.log)
 	wrapped.resourceVersion.Store(42)
 
 	require.NoError(t, be.uploadSnapshot(context.Background(), key, wrapped))
