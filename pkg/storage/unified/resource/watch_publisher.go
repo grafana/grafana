@@ -41,8 +41,28 @@ func actionToWatchNotificationType(action kv.DataAction) resourcepb.WatchNotific
 	}
 }
 
+// defaultMaxWatchNotificationBytes is NATS's default max_payload, used when the
+// publisher cannot report the server's applied one.
+const defaultMaxWatchNotificationBytes = 1024 * 1024
+
+// maxPayloadReporter is implemented by publishers that know the max_payload the
+// bus applies. Above it the publish fails and the notification is lost.
+type maxPayloadReporter interface {
+	MaxPayload() int64
+}
+
+func (k *kvStorageBackend) maxWatchNotificationBytes() int {
+	if r, ok := k.eventPublisher.(maxPayloadReporter); ok {
+		if n := r.MaxPayload(); n > 0 {
+			return int(n)
+		}
+	}
+	return defaultMaxWatchNotificationBytes
+}
+
 // publishWatchNotification announces a committed write on the NATS resource
-// subject as a metadata-only WatchNotification. Consumers re-fetch the object at
+// subject as a metadata-only WatchNotification (identity, labels and a few
+// ObjectMeta fields). Consumers re-fetch the object at
 // their own API version, so no object body is sent. Errors are logged and
 // swallowed: the write is already durable in the event store.
 func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event Event) {
@@ -55,7 +75,7 @@ func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event E
 		Resource: event.Resource,
 	}, event.Namespace)
 
-	payload, err := proto.Marshal(&resourcepb.WatchNotification{
+	n := &resourcepb.WatchNotification{
 		Type:                    actionToWatchNotificationType(event.Action),
 		Group:                   event.Group,
 		Resource:                event.Resource,
@@ -66,16 +86,25 @@ func (k *kvStorageBackend) publishWatchNotification(ctx context.Context, event E
 		PreviousResourceVersion: event.PreviousRV,
 		PreviousType:            actionToWatchNotificationType(event.PreviousAction),
 		PreviousFolder:          event.PreviousFolder,
-	})
+		Metadata:                event.Metadata,
+	}
+	payload, err := proto.Marshal(n)
+	if err == nil && event.Metadata != nil && len(payload) > k.maxWatchNotificationBytes() {
+		// Identity alone is enough for consumers to fall back to a GET.
+		k.metrics.recordWatchNotificationMetadataDropped(event)
+		k.log.Warn("watch notification too large, publishing without metadata", "subject", subject, "name", event.Name, "bytes", len(payload))
+		n.Metadata = nil
+		payload, err = proto.Marshal(n)
+	}
 	if err != nil {
 		k.metrics.recordWatchNotificationPublishFailure(event)
-		k.log.Warn("failed to marshal watch notification", "subject", subject, "error", err)
+		k.log.Warn("failed to marshal watch notification", "subject", subject, "name", event.Name, "error", err)
 		return
 	}
 
 	if err := k.eventPublisher.Publish(ctx, subject, payload); err != nil {
 		k.metrics.recordWatchNotificationPublishFailure(event)
-		k.log.Warn("failed to publish watch notification", "subject", subject, "error", err)
+		k.log.Warn("failed to publish watch notification", "subject", subject, "name", event.Name, "error", err)
 		return
 	}
 	k.metrics.recordWatchNotificationPublished(event)

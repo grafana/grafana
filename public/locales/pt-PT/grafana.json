@@ -7297,6 +7297,7 @@
       "copy": "Copiar para a área de transferência",
       "learn-more": "Saiba mais",
       "no-issues": "Não há erros ou avisos para esta consulta.",
+      "no-panel-issues": "",
       "severity-error": "Erro",
       "severity-info": "Informação",
       "severity-warning": "Aviso"
@@ -8125,8 +8126,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abrir painel de consulta",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Abrir painel de consulta"
     },
     "viz-panel-links-renderer": {
@@ -16070,6 +16069,7 @@
       "expand": "Expandir",
       "filter": "",
       "loading": "A carregar painéis de controlo",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Não foram encontrados resultados para a sua consulta",
       "noResultsForFilterClear": "Limpar a pesquisa",
       "noResultsForScopes": "Não foram encontrados painéis de controlo ou links para os âmbitos selecionados",
@@ -16781,8 +16781,61 @@
   },
   "swagger": {
     "login": "Entrar",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Verifique o espaço de nomes antes de enviar pedidos ou atualize a página para tentar novamente.",
-    "namespace-unavailable-title": "Não foi possível carregar o espaço de nomes"
+    "namespace-unavailable-title": "Não foi possível carregar o espaço de nomes",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16836,6 +16889,9 @@
     "description-styling-from-field": "Um campo que contém objetos JSON com propriedades CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alternar a cor de fundo de uma linha sim, outra não",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Consulta"
     },
@@ -18384,6 +18440,7 @@
       "body_other": "Tem a certeza de que pretende eliminar {{count}} variáveis?"
     },
     "editor": {
+      "back": "",
       "cancel": "Cancelar",
       "delete": "Eliminar",
       "delete-modal-body": "Tem a certeza de que pretende eliminar \"{{name}}\"?",
@@ -18392,6 +18449,7 @@
       "folder-description": "Defina o âmbito da variável para uma pasta ou escolha a pasta de raiz de Painéis de controlo para a tornar global (disponível para todos os painéis de controlo)",
       "folder-description-folder-only": "Defina o âmbito da variável para uma pasta que possa editar",
       "folder-label": "Pasta",
+      "load-error-title": "",
       "moved": "Variável movida",
       "name-exists": "Já existe uma variável com este nome na pasta selecionada",
       "save": "Guardar",

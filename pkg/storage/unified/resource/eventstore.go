@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 const (
@@ -93,6 +94,10 @@ type Event struct {
 	PreviousRV      int64         `json:"previous_rv"`
 	PreviousAction  kv.DataAction `json:"previous_action,omitempty"`
 	PreviousFolder  string        `json:"previous_folder"`
+
+	// Metadata is the allowlisted object metadata the watch notification carries.
+	// Absent on events written without it, including by older versions.
+	Metadata *resourcepb.NotificationMetadata `json:"metadata,omitempty"`
 }
 
 func newEventStore(kv KV) *eventStore {

@@ -113,8 +113,8 @@
       "name": "Debug UI test",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "yarn",
-      "runtimeArgs": ["run", "jest", "--runInBand", "${file}"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["exec", "--no", "--", "jest", "--runInBand", "${file}"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "env": {
@@ -125,8 +125,8 @@
       "name": "Debug ESLint",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "yarn",
-      "runtimeArgs": ["run", "eslint", "${file}"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["exec", "--no", "--", "eslint", "${file}"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
     },
@@ -134,8 +134,8 @@
       "name": "Debug ESLint with stats reporter",
       "type": "node",
       "request": "launch",
-      "runtimeExecutable": "yarn",
-      "runtimeArgs": ["run", "eslint", "${file}", "--format", "./scripts/cli/eslint-stats-reporter.mjs"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["exec", "--no", "--", "eslint", "${file}", "--format", "./scripts/cli/eslint-stats-reporter.mjs"],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
     },

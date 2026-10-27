@@ -7245,6 +7245,7 @@
       "copy": "クリップボードにコピー",
       "learn-more": "詳しく見る",
       "no-issues": "このクエリにエラーや通知はありません。",
+      "no-panel-issues": "",
       "severity-error": "エラー",
       "severity-info": "インフォメーション",
       "severity-warning": "警告"
@@ -8062,8 +8063,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "クエリペインを開く",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "クエリペインを開く"
     },
     "viz-panel-links-renderer": {
@@ -15931,6 +15930,7 @@
       "expand": "展開",
       "filter": "",
       "loading": "ダッシュボードを読み込んでいます",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "クエリに一致する結果が見つかりませんでした。",
       "noResultsForFilterClear": "検索結果をクリア",
       "noResultsForScopes": "選択したスコープのダッシュボードまたはリンクが見つかりません",
@@ -16640,8 +16640,61 @@
   },
   "swagger": {
     "login": "ログイン",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "リクエストを送信する前に名前空間を確認するか、ページを再読み込みしてもう一度お試しください。",
-    "namespace-unavailable-title": "名前空間を読み込めません"
+    "namespace-unavailable-title": "名前空間を読み込めません",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16695,6 +16748,9 @@
     "description-styling-from-field": "CSSプロパティを持つJSONオブジェクトを含むフィールド",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "1行おきに背景色を交互に切り替えます",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "クエリ"
     },
@@ -18239,6 +18295,7 @@
       "body_other": "{{count}}件の変数を削除してもよろしいですか？"
     },
     "editor": {
+      "back": "",
       "cancel": "キャンセル",
       "delete": "削除",
       "delete-modal-body": "「{{name}}」を削除してもよろしいですか？",
@@ -18247,6 +18304,7 @@
       "folder-description": "変数のスコープをフォルダに設定するか、ルートのDashboardsフォルダを選択してグローバルにします（すべてのダッシュボードで利用可能）",
       "folder-description-folder-only": "変数のスコープを編集可能なフォルダに設定します",
       "folder-label": "フォルダ",
+      "load-error-title": "",
       "moved": "変数を移動しました",
       "name-exists": "この名前の変数は選択したフォルダにすでに存在します",
       "save": "保存",

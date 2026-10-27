@@ -163,41 +163,34 @@ func TestUserSearchFieldsAcceptedByIndex(t *testing.T) {
 		resource.SEARCH_FIELD_CREATED,
 		resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
 	}
-	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
-		resourcepb.ResourceSearchRequest_FIELD_VALUES,
-		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-	} {
-		t.Run(format.String(), func(t *testing.T) {
-			response, err := index.Search(t.Context(), nil, &resourcepb.ResourceSearchRequest{
-				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-					Namespace: key.Namespace,
-					Group:     key.Group,
-					Resource:  key.Resource,
-				}},
-				Fields:       fields,
-				Limit:        1,
-				ResultFormat: format,
-			}, nil, nil)
-			require.NoError(t, err)
-			require.Nil(t, response.GetError())
-			require.Equal(t, format, response.GetResultFormat())
+	response, err := index.Search(t.Context(), nil, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}},
+		Fields:       fields,
+		Limit:        1,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, response.GetError())
+	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, response.GetResultFormat())
 
-			parsed, err := parseResults(response)
-			require.NoError(t, err)
-			require.Len(t, parsed.Hits, 1)
-			hit := parsed.Hits[0]
-			require.Equal(t, "user-1", hit.Name)
-			require.Equal(t, "User One", hit.Title)
-			require.Equal(t, "user@example.com", hit.Email)
-			require.Equal(t, "user-one", hit.Login)
-			require.Equal(t, lastSeenAt, hit.LastSeenAt)
-			require.Equal(t, "Admin", hit.Role)
-			require.True(t, hit.Disabled)
-			require.Equal(t, []string{"oauth", "saml"}, hit.ExternalAuthModules)
-			require.Equal(t, createdAt, hit.Created)
-			require.Equal(t, int64(42), hit.InternalId)
-		})
-	}
+	parsed, err := parseResults(response)
+	require.NoError(t, err)
+	require.Len(t, parsed.Hits, 1)
+	hit := parsed.Hits[0]
+	require.Equal(t, "user-1", hit.Name)
+	require.Equal(t, "User One", hit.Title)
+	require.Equal(t, "user@example.com", hit.Email)
+	require.Equal(t, "user-one", hit.Login)
+	require.Equal(t, lastSeenAt, hit.LastSeenAt)
+	require.Equal(t, "Admin", hit.Role)
+	require.True(t, hit.Disabled)
+	require.Equal(t, []string{"oauth", "saml"}, hit.ExternalAuthModules)
+	require.Equal(t, createdAt, hit.Created)
+	require.Equal(t, int64(42), hit.InternalId)
 }
 
 // MockClient implements the ResourceIndexClient interface for testing

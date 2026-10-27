@@ -38,7 +38,7 @@ jobs:
     # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
     if: (github.event_name == 'pull_request' || (github.event_name == 'push' && github.repository == 'grafana/grafana'))
     name: ${{ matrix.name }}
-    runs-on: ubuntu-x64-large-io
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
     strategy:
@@ -84,12 +84,24 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
         run: make build-go
+      - name: Verify binary target (${{ matrix.name }})
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+        run: |
+          build_info=$(go version -m "bin/$GOOS/$GOARCH/grafana$(go env GOEXE)")
+          grep -Fx $'\tbuild\tGOOS='"$GOOS" <<< "$build_info"
+          grep -Fx $'\tbuild\tGOARCH='"$GOARCH" <<< "$build_info"
+          if [ -n "$GOARM" ]; then
+            grep -E $'^\tbuild\tGOARM='"${GOARM}(,|$)" <<< "$build_info"
+          fi
 
   build-go-enterprise:
     # Run on pushes to `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
     if: (github.event_name == 'push' && github.repository == 'grafana/grafana') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     name: ${{ matrix.name }} (enterprise)
-    runs-on: ubuntu-x64-large-io
+    runs-on: ubuntu-x64-large
     permissions:
       contents: read
       id-token: write
@@ -141,10 +153,22 @@ jobs:
       - name: Build Go (${{ matrix.name }})
         env:
           CGO_ENABLED: "0"
-          GO_BUILD_OS: ${{ matrix.goos }}
-          GO_BUILD_ARCH: ${{ matrix.goarch }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
           GOARM: ${{ matrix.goarm }}
         run: make build-go
+      - name: Verify binary target (${{ matrix.name }})
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+        run: |
+          build_info=$(go version -m "bin/$GOOS/$GOARCH/grafana$(go env GOEXE)")
+          grep -Fx $'\tbuild\tGOOS='"$GOOS" <<< "$build_info"
+          grep -Fx $'\tbuild\tGOARCH='"$GOARCH" <<< "$build_info"
+          if [ -n "$GOARM" ]; then
+            grep -E $'^\tbuild\tGOARM='"${GOARM}(,|$)" <<< "$build_info"
+          fi
 
   # TODO: Build rpm in another workflow
   verify-rpm-stig:

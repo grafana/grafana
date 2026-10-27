@@ -44,13 +44,13 @@ jobs:
           cwd: './pr'
 
       - name: Build packages
-        run: yarn packages:build
+        run: npm run packages:build
 
       - name: Pack packages
-        run: yarn packages:pack --out ./%s.tgz
+        run: npm run packages:pack
 
       - name: Zip built tarballed packages
-        run: zip -r ./pr_built_packages.zip ./packages/**/*.tgz
+        run: zip -r ./pr_built_packages.zip ./npm-artifacts/*.tgz
 
       - name: Upload build output as artifact
         uses: actions/upload-artifact@v5
@@ -91,13 +91,13 @@ jobs:
           cwd: './base'
 
       - name: Build packages
-        run: yarn packages:build
+        run: npm run packages:build
 
       - name: Pack packages
-        run: yarn packages:pack --out ./%s.tgz
+        run: npm run packages:pack
 
       - name: Zip built tarballed packages
-        run: zip -r ./base_built_packages.zip ./packages/**/*.tgz
+        run: zip -r ./base_built_packages.zip ./npm-artifacts/*.tgz
 
       - name: Upload build output as artifact
         uses: actions/upload-artifact@v5

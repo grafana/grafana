@@ -574,6 +574,22 @@ describe('TextNGPanel', () => {
       expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
     });
 
+    it('pages a panel sized to its content when the layout caps its height', () => {
+      const props = createProps(reportRowIndex, {
+        width: 1000,
+        height: 0,
+        fitContent: true,
+        fitMaxHeight: 400,
+        data: createData([numberedFrame(150)]),
+        options: { content: 'row', mode: TextMode.Markdown, renderMode: RenderMode.PerRow },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      expect(renderedRows().length).toBeLessThan(150);
+      expect(screen.getByRole('navigation')).toBeInTheDocument();
+    });
+
     it('renders a once template whole, having no per-row blocks to page', () => {
       setupPaged({ renderMode: RenderMode.Once });
 

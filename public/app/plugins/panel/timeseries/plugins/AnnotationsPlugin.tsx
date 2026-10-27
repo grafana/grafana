@@ -122,6 +122,9 @@ export const AnnotationsPlugin = ({
   const newRangeRef = useRef(newRange);
   newRangeRef.current = newRange;
 
+  const annotationsRef = useRef(annotations);
+  annotationsRef.current = annotations;
+
   const xAxisRef = useRef<HTMLDivElement | undefined>(undefined);
 
   useLayoutEffect(() => {
@@ -129,7 +132,7 @@ export const AnnotationsPlugin = ({
       xAxisRef.current = u.root.querySelector<HTMLDivElement>('.u-axis')!;
       plotRef.current = u;
       // If annos were defined before uPlot ready is called, we need to force the component to re-render annos now that uplot is available
-      if (annotations?.length) {
+      if (annotationsRef.current?.length) {
         forceUpdate();
       }
     });

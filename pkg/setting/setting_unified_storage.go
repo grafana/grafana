@@ -1,15 +1,48 @@
 package setting
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"slices"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
+
+func (cfg *Cfg) readVectorAllowedReadServices() error {
+	raw := strings.TrimSpace(cfg.Raw.Section("unified_storage").Key("vector_allowed_read_services").String())
+	if raw == "" {
+		cfg.VectorAllowedReadServices = nil
+		return nil
+	}
+	var policies map[string][]string
+	if err := json.Unmarshal([]byte(raw), &policies); err != nil {
+		return fmt.Errorf("unified_storage.vector_allowed_read_services: parse JSON object: %w", err)
+	}
+	if policies == nil {
+		return fmt.Errorf("unified_storage.vector_allowed_read_services: expected JSON object")
+	}
+	for key, identities := range policies {
+		group, resource, ok := strings.Cut(key, "/")
+		if !ok || group == "" || resource == "" || strings.Contains(resource, "/") || strings.IndexFunc(key, unicode.IsSpace) >= 0 || strings.ContainsAny(key, "*?") {
+			return fmt.Errorf("unified_storage.vector_allowed_read_services: invalid collection %q", key)
+		}
+		if len(identities) == 0 {
+			return fmt.Errorf("unified_storage.vector_allowed_read_services: collection %q requires a nonempty identity list", key)
+		}
+		for _, identity := range identities {
+			if identity == "" || strings.TrimSpace(identity) != identity {
+				return fmt.Errorf("unified_storage.vector_allowed_read_services: collection %q has an empty or invalid identity", key)
+			}
+		}
+	}
+	cfg.VectorAllowedReadServices = policies
+	return nil
+}
 
 // knownUnifiedStorageKeys maps uppercased env-var-style key suffixes to their
 // actual camelCase ini key names used in [unified_storage.*] sections.

@@ -370,7 +370,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		if renamed {
 			if newReceiverCreated {
 				// Copy receiver permissions
-				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, nil, string(oldReceiver.UID), string(newReceiver.UID))
+				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, user, string(oldReceiver.UID), string(newReceiver.UID))
 				if err != nil {
 					return err
 				}

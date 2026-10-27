@@ -5,14 +5,20 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
+	k8srest "k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -22,7 +28,54 @@ import (
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	migrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
+
+type ruleCleanupStatusReader struct {
+	migrations.MigrationStatusReader
+	mode migrations.StorageMode
+}
+
+func (r *ruleCleanupStatusReader) GetStorageMode(context.Context, schema.GroupResource) (migrations.StorageMode, error) {
+	return r.mode, nil
+}
+
+type ruleCleanupStorage struct {
+	rest.Storage
+	deleteFn func(context.Context, k8srest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error)
+}
+
+func (s ruleCleanupStorage) DeleteCollection(ctx context.Context, validate k8srest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	return s.deleteFn(ctx, validate, options, listOptions)
+}
+
+func TestDeleteCollection_afterMigrationRoutesToUnifiedStorage(t *testing.T) {
+	reader := &ruleCleanupStatusReader{
+		MigrationStatusReader: dualwrite.NewFakeMigrationStatusReader(),
+		mode:                  migrations.StorageModeDualWrite,
+	}
+	svc, err := dualwrite.ProvideService(dualwrite.NewFakeConfig(), dualwrite.NewFakeMigrator(), reader, prometheus.NewRegistry())
+	require.NoError(t, err)
+	deleted := false
+	unified := ruleCleanupStorage{deleteFn: func(_ context.Context, _ k8srest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
+		deleted = true
+		return &v1beta1.AlertRuleList{}, nil
+	}}
+	storage, err := svc.NewStorage(ResourceInfo.GroupResource(), &legacyStorage{}, unified)
+	require.NoError(t, err)
+	collectionDeleter, ok := storage.(k8srest.CollectionDeleter)
+	require.True(t, ok)
+	_, err = collectionDeleter.DeleteCollection(context.Background(), nil, &metav1.DeleteOptions{}, &internalversion.ListOptions{})
+	require.True(t, apierrors.IsMethodNotSupported(err), "legacy collection deletion remains unsupported")
+	require.False(t, deleted)
+
+	reader.mode = migrations.StorageModeUnified
+	result, err := collectionDeleter.DeleteCollection(context.Background(), nil, &metav1.DeleteOptions{}, &internalversion.ListOptions{})
+	require.NoError(t, err)
+	require.IsType(t, &v1beta1.AlertRuleList{}, result)
+	require.True(t, deleted, "migration must enable collection cleanup without recreating storage")
+}
 
 func TestToAPIError(t *testing.T) {
 	t.Run("validation failure becomes BadRequest", func(t *testing.T) {

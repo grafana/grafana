@@ -268,7 +268,7 @@ describe('DashboardScenePageStateManager v1', () => {
       consumeDashboardModeAfterSave('');
     });
 
-    it.each(['view', 'edit', 'agent'] as const)(
+    it.each(['view', 'edit'] as const)(
       'restores %s once after saving and starts later Assistant edits in the right mode',
       async (presentation) => {
         setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
@@ -281,7 +281,7 @@ describe('DashboardScenePageStateManager v1', () => {
         await loader.loadDashboard({ uid: 'saved-copy', route: DashboardRoutes.Normal });
         const dashboard = loader.state.dashboard!;
         dashboard.onEnterEditMode('assistant');
-        expect(dashboard.state.mode).toBe(presentation === 'view' ? 'agent' : presentation);
+        expect(dashboard.state.mode).toBe('edit');
         expect(dashboard.state.isEditing).toBe(true);
         expect(dashboard.getInitialState()?.title).toBe('Saved title');
         dashboard.setState({ title: 'Later edit' });

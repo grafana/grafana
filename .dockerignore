@@ -20,7 +20,6 @@ node_modules
 !.yarnrc.yml
 *.md
 .yarn/*
-!.yarn/patches
 !.yarn/releases
 !.yarn/plugins
 !.yarn/versions

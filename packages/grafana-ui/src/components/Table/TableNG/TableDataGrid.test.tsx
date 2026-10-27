@@ -268,18 +268,29 @@ describe('TableDataGrid', () => {
       expect(edgeRules.map((rule) => rule.style.getPropertyValue('inset-inline-end'))).toContain('1px');
     });
 
-    it('renders the refreshed outer border unless the table is flush with its panel', () => {
+    it.each(['grid', 'treegrid'] as const)('preserves the refreshed frame for transparent %s panels', (role) => {
       const theme = createTheme();
-      const props = makeProps({ tableRefreshEnabled: true });
+      const props = makeProps({ tableRefreshEnabled: true, role });
       const { rerender } = render(<TableDataGrid {...props} />);
 
-      expect(getGridFrameOverlayStyleRule()?.style.getPropertyValue('border')).toBe(
+      expect(getGridFrameOverlayStyleRule(role)?.style.getPropertyValue('border')).toBe(
         `1px solid ${theme.components.table.border}`
       );
 
       rerender(<TableDataGrid {...props} noPanelPadding />);
 
-      expect(getGridFrameOverlayStyleRule()).toBeUndefined();
+      expect(getGridFrameOverlayStyleRule(role)).toBeUndefined();
+
+      rerender(<TableDataGrid {...props} noPanelPadding transparent />);
+
+      expect(getGridFrameOverlayStyleRule(role)?.style.getPropertyValue('border')).toBe(
+        `1px solid ${theme.components.table.border}`
+      );
+      expect(window.getComputedStyle(screen.getByRole(role).parentElement!.parentElement!).overflow).toBe('hidden');
+
+      rerender(<TableDataGrid {...props} noPanelPadding transparent tableRefreshEnabled={false} />);
+
+      expect(getGridFrameOverlayStyleRule(role)).toBeUndefined();
     });
 
     it.each([
@@ -465,7 +476,7 @@ describe('TableDataGrid', () => {
       expect(onScroll).toHaveBeenCalledTimes(3);
     });
 
-    it('keeps visible shadows colored for the current theme after switching themes', () => {
+    it('matches ScrollContainer shadow colors and sizes after switching themes', () => {
       const props = makeProps({ tableRefreshEnabled: true });
       const { rerender } = render(
         <ThemeContext.Provider value={createTheme({ colors: { mode: 'dark' } })}>
@@ -480,13 +491,15 @@ describe('TableDataGrid', () => {
             <TableDataGrid {...props} />
           </ThemeContext.Provider>
         );
-        const color = mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+        const color = mode === 'dark' ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.08)';
         expect(shadowStyle(grid.parentElement, 'before', 'background')).toBe(
           `linear-gradient(0deg, transparent, ${color})`
         );
         expect(shadowStyle(grid.parentElement, 'after', 'background')).toBe(
           `linear-gradient(180deg, transparent, ${color})`
         );
+        expect(shadowStyle(grid.parentElement, 'before', 'block-size')).toBe('max(5%, 24px)');
+        expect(shadowStyle(grid.parentElement, 'after', 'block-size')).toBe('max(5%, 24px)');
         expect(shadowStyle(grid.parentElement, 'before', 'opacity')).toBe('1');
         expect(shadowStyle(grid.parentElement, 'after', 'opacity')).toBe('1');
       }

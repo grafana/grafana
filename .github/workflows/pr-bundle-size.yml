@@ -91,7 +91,7 @@ jobs:
         env:
           OUTPUT_NAME: ${{ matrix.target }}
         run: |
-          stats="$(yarn bundle-size:stats)"
+          stats="$(npm run --silent bundle-size:stats)"
           {
             echo "${OUTPUT_NAME}<<EOF"
             printf '%s\n' "$stats"

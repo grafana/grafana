@@ -7297,6 +7297,7 @@
       "copy": "Copier dans le presse-papiers",
       "learn-more": "En savoir plus",
       "no-issues": "Aucune erreur ni notification pour cette requête.",
+      "no-panel-issues": "",
       "severity-error": "Erreur",
       "severity-info": "Infos",
       "severity-warning": "Avertissement"
@@ -8125,8 +8126,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Ouvrir le volet de requête",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Ouvrir le volet de requête"
     },
     "viz-panel-links-renderer": {
@@ -16070,6 +16069,7 @@
       "expand": "Développer",
       "filter": "",
       "loading": "Chargement des tableaux de bord",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Aucun résultat n'a été trouvé pour votre requête",
       "noResultsForFilterClear": "Effacer la recherche",
       "noResultsForScopes": "Aucun tableau de bord ou lien trouvé pour les portées sélectionnées",
@@ -16781,8 +16781,61 @@
   },
   "swagger": {
     "login": "Connecter",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Vérifiez le namespace avant d’envoyer des requêtes, ou rechargez la page pour réessayer.",
-    "namespace-unavailable-title": "Impossible de charger le namespace"
+    "namespace-unavailable-title": "Impossible de charger le namespace",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16836,6 +16889,9 @@
     "description-styling-from-field": "Un champ contenant des objets JSON avec des propriétés CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alterner la couleur d’arrière-plan d’une ligne sur deux",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Requête"
     },
@@ -18384,6 +18440,7 @@
       "body_other": "Voulez-vous vraiment supprimer {{count}} variables ?"
     },
     "editor": {
+      "back": "",
       "cancel": "Annuler",
       "delete": "Supprimer",
       "delete-modal-body": "Voulez-vous vraiment supprimer « {{name}} » ?",
@@ -18392,6 +18449,7 @@
       "folder-description": "Définissez la portée de la variable dans un dossier, ou choisissez le dossier racine « Tableaux de bord » pour la rendre globale (disponible pour tous les tableaux de bord)",
       "folder-description-folder-only": "Définissez la portée de la variable à un dossier que vous pouvez modifier",
       "folder-label": "Dossier",
+      "load-error-title": "",
       "moved": "Variable déplacée",
       "name-exists": "Une variable portant ce nom existe déjà dans le dossier sélectionné",
       "save": "Enregistrer",

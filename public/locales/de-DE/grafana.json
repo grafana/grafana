@@ -7297,6 +7297,7 @@
       "copy": "In die Zwischenablage kopieren",
       "learn-more": "Mehr erfahren",
       "no-issues": "Keine Fehler oder Hinweise für diese Abfrage.",
+      "no-panel-issues": "",
       "severity-error": "Fehler",
       "severity-info": "Info",
       "severity-warning": "Warnung"
@@ -8125,8 +8126,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abfragebereich öffnen",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Abfragebereich öffnen"
     },
     "viz-panel-links-renderer": {
@@ -16070,6 +16069,7 @@
       "expand": "Ausklappen",
       "filter": "",
       "loading": "Dashboards werden geladen",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Keine Ergebnisse für deine Abfrage gefunden",
       "noResultsForFilterClear": "Suche löschen",
       "noResultsForScopes": "Es wurden keine Dashboards oder Links für die ausgewählten Bereiche gefunden",
@@ -16781,8 +16781,61 @@
   },
   "swagger": {
     "login": "Anmelden",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Überprüfen Sie den Namensraum, bevor Sie Abfragen senden, oder laden Sie die Seite neu, um es erneut zu versuchen.",
-    "namespace-unavailable-title": "Namensraum kann nicht geladen werden"
+    "namespace-unavailable-title": "Namensraum kann nicht geladen werden",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16836,6 +16889,9 @@
     "description-styling-from-field": "Ein Feld, das JSON-Objekte mit CSS-Eigenschaften enthält",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Hintergrundfarbe jeder zweiten Zeile abwechseln",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Abfrage"
     },
@@ -18384,6 +18440,7 @@
       "body_other": "Sind Sie sicher, dass Sie {{count}} Variablen löschen möchten?"
     },
     "editor": {
+      "back": "",
       "cancel": "Abbrechen",
       "delete": "Löschen",
       "delete-modal-body": "Sind Sie sicher, dass Sie „{{name}}“ löschen möchten?",
@@ -18392,6 +18449,7 @@
       "folder-description": "Ordnen Sie die Variable einem Ordner zu oder wählen Sie den Stammordner der Dashboards aus, um sie global zugänglich zu machen (für alle Dashboards verfügbar)",
       "folder-description-folder-only": "Ordnen Sie die Variable einem Ordner zu, den Sie bearbeiten können",
       "folder-label": "Ordner",
+      "load-error-title": "",
       "moved": "Variable verschoben",
       "name-exists": "Eine Variable mit diesem Namen ist im ausgewählten Ordner bereits vorhanden",
       "save": "Speichern",

@@ -23,4 +23,4 @@ jobs:
         uses: ./.github/actions/yarn-install
 
       - name: Generate analytics report
-        run: yarn analytics-report
+        run: npm run analytics-report

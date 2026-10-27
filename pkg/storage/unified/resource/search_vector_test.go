@@ -90,6 +90,10 @@ func (f *fakeVectorBackend) ResolveCollection(_ context.Context, group, resource
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
 }
 
+func (f *fakeVectorBackend) EnsureCollectionWithScope(ctx context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error) {
+	return f.EnsureCollection(ctx, group, resource, isExternal)
+}
+
 func (f *fakeVectorBackend) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
 	key := resource
 	if isExternal {

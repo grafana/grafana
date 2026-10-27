@@ -640,6 +640,41 @@ describe('AnnotationsPlugin', () => {
           expect(uplotMockInstance.redraw).toHaveBeenCalledTimes(1);
           expect(uplotMockInstance.redraw).toHaveBeenCalledWith(false, true);
         });
+        it('renders markers for annotations that arrive after the plot is constructed but before it is ready', () => {
+          // uPlot copies hooks when it is constructed, so only the first registered `ready` hook ever fires.
+          const firstHooks: Record<string, (u: uPlot) => void> = {};
+          const constructedConfig = {
+            ...config,
+            addHook: jest.fn((type, hook) => {
+              firstHooks[type] ??= hook;
+            }),
+          } as unknown as UPlotConfigBuilder;
+
+          const { rerender } = setUp({ annotations: [] }, constructedConfig, undefined, false);
+
+          rerender(
+            <div>
+              <AnnotationsPlugin
+                options={{}}
+                config={constructedConfig}
+                timeZone={'browser'}
+                newRange={null}
+                setNewRange={function (_newRange: TimeRange2 | null): void {}}
+                replaceVariables={(value) => value}
+                annotations={[createDataFrame(mockAnnotationFrame)]}
+              />
+              <div id="grafana-portal-container"></div>
+            </div>
+          );
+          expect(screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)).toHaveLength(0);
+
+          act(() => {
+            //@ts-expect-error
+            firstHooks.ready(new uPlot());
+          });
+
+          expect(screen.queryAllByTestId(selectors.pages.Dashboard.Annotations.marker)).toHaveLength(4);
+        });
       });
 
       it('should not cluster', async () => {

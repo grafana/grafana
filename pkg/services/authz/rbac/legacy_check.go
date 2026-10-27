@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 )
@@ -19,7 +20,7 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	// TODO: Complete in subsequent PRs:
 	//   - Standalone scope resolution: replace embedded service dependencies with namespace-aware providers.
 	//			MT AuthZ: https://github.com/grafana/identity-access-team/issues/2436
-	//   - Permissions: NoOrgID globals, contextual team grants and SharedWithMe.
+	//   - Permissions: contextual team grants and SharedWithMe for organization checks.
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
@@ -40,52 +41,41 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
 
-	// AccessControl denies an identity when its full permission map is empty.
-	// See pkg/services/accesscontrol/acimpl/accesscontrol.go:71 (AccessControl.evaluate).
-	//
-	// Our queries only load permissions for the actions in this request. An empty
-	// result may mean the identity has permissions for other actions.
-	// An empty ALL returns true even with no permissions. Evaluate(nil) checks
-	// whether this expression can do that.
-	//
-	// After direct evaluation denies, AccessControl attempts scope mutation if
-	// the full permission map is non-empty, even if it only contains other actions.
-	// See pkg/services/accesscontrol/acimpl/accesscontrol.go:82 (AccessControl.evaluate).
-	//
-	// If either case applies and our queries return nothing, check for other
-	// permissions before allowing the request or skipping resolution.
-	checkUnrelatedPermissions := evaluator.Evaluate(nil) ||
-		(!req.GetSkipScopeResolution() && s.legacyScopeResolvers.HasResolvers())
+	scopeRequest := legacyScopeRequest{
+		namespace:    ns,
+		identityType: idType,
+		userUID:      userUID,
+		skipCache:    req.GetSkipCache(),
+	}
 
-	permissions, hasAnyPermissions, err := s.getLegacyIdentityPermissions(
-		ctx,
-		ns,
-		idType,
-		userUID,
-		actions,
-		checkUnrelatedPermissions,
-		req.GetSkipCache(),
-	)
+	var args legacyEvaluationArgs
+	if global := req.GetGlobalEvaluation(); global != nil {
+		args, err = s.prepareLegacyGlobalEvaluation(ctx, global, actions, scopeRequest)
+	} else {
+		args, err = s.prepareLegacyOrgEvaluation(
+			ctx,
+			evaluator,
+			actions,
+			req.GetSkipScopeResolution(),
+			scopeRequest,
+		)
+	}
+
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
 
-	if !hasAnyPermissions {
+	if !args.hasAnyPermissions {
 		return &authzextv1.LegacyCheckResponse{Allowed: false}, nil
 	}
 
 	allowed, err := s.evaluateLegacyWithResolvers(
 		ctx,
 		evaluator,
-		permissions,
-		hasAnyPermissions,
+		args.permissions,
+		args.hasAnyPermissions,
 		req.GetSkipScopeResolution(),
-		legacyScopeRequest{
-			namespace:    ns,
-			identityType: idType,
-			userUID:      userUID,
-			skipCache:    req.GetSkipCache(),
-		},
+		args.scopeRequest,
 	)
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{
@@ -226,5 +216,55 @@ func (s *Service) getLegacyUserPermissionQuery(
 		TeamIDs:       teamIDs,
 		Role:          basicRole.Role,
 		IsServerAdmin: basicRole.IsAdmin,
+	}, nil
+}
+
+type legacyEvaluationArgs struct {
+	permissions       map[string][]string
+	hasAnyPermissions bool
+	scopeRequest      legacyScopeRequest
+}
+
+func (s *Service) prepareLegacyOrgEvaluation(
+	ctx context.Context,
+	evaluator accesscontrol.Evaluator,
+	actions []string,
+	skipScopeResolution bool,
+	scopeRequest legacyScopeRequest,
+) (legacyEvaluationArgs, error) {
+	// AccessControl denies an identity when its full permission map is empty.
+	// See pkg/services/accesscontrol/acimpl/accesscontrol.go:71 (AccessControl.evaluate).
+	//
+	// Our queries only load permissions for the actions in this request. An empty
+	// result may mean the identity has permissions for other actions.
+	// An empty ALL returns true even with no permissions. Evaluate(nil) checks
+	// whether this expression can do that.
+	//
+	// After direct evaluation denies, AccessControl attempts scope mutation if
+	// the full permission map is non-empty, even if it only contains other actions.
+	// See pkg/services/accesscontrol/acimpl/accesscontrol.go:82 (AccessControl.evaluate).
+	//
+	// If either case applies and our queries return nothing, check for other
+	// permissions before allowing the request or skipping resolution.
+	checkUnrelatedPermissions := evaluator.Evaluate(nil) ||
+		(!skipScopeResolution && s.legacyScopeResolvers.HasResolvers())
+
+	permissions, hasAnyPermissions, err := s.getLegacyIdentityPermissions(
+		ctx,
+		scopeRequest.namespace,
+		scopeRequest.identityType,
+		scopeRequest.userUID,
+		actions,
+		checkUnrelatedPermissions,
+		scopeRequest.skipCache,
+	)
+	if err != nil {
+		return legacyEvaluationArgs{}, err
+	}
+
+	return legacyEvaluationArgs{
+		permissions:       permissions,
+		hasAnyPermissions: hasAnyPermissions,
+		scopeRequest:      scopeRequest,
 	}, nil
 }

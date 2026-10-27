@@ -509,7 +509,8 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
 
   // ISO_8601 is the only non-string MomentFormat member and it is handled above, so this
   // fallback never changes behavior; it only narrows the type for the format conversions below.
-  const fmt = convertMomentToLuxonForParsing(typeof format === 'string' ? format : 'ISO_8601', options?.locale);
+  const momentFormat = typeof format === 'string' ? format : 'ISO_8601';
+  const fmt = convertMomentToLuxonForParsing(momentFormat, options?.locale);
 
   const parsed = parseFromCachedFormat(value, fmt, options);
   if (parsed.isValid || parsed.invalidReason !== 'unparsable') {
@@ -547,7 +548,11 @@ function parseWithFormat(value: string, format: MomentFormat, options?: MomentOp
   // try to handle partial parse 'yyyy' from '2017-07-19 00:00:00.000'
   const fallbackParsed = parseWithFallbacks(value, options);
   if (fallbackParsed.isValid) {
-    const formatted = fallbackParsed.toFormat(fmt, options);
+    // padded output keeps compact formats like YYYYMMDD readable by the one-or-two digit parse tokens
+    const formatted = fallbackParsed.toFormat(
+      convertMomentToLuxonForParsing(momentFormat, options?.locale, true),
+      options
+    );
     // re-parse with only the requested tokens; if that truncation loses validity, keep the full
     // fallback parse (the same result normalizeInput would otherwise recompute via its own
     // parseWithFallbacks pass)

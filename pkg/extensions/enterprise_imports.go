@@ -250,6 +250,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/registry/apis/collections"
 	_ "github.com/grafana/grafana/pkg/registry/apis/collections/legacy"
 	_ "github.com/grafana/grafana/pkg/registry/apis/dashboard"
+	_ "github.com/grafana/grafana/pkg/registry/apis/dashboard/folderresolver"
 	_ "github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	_ "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	_ "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"

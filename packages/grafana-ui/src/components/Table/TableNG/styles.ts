@@ -127,7 +127,7 @@ export const getGridStyles = memoize(
         blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
         boxSizing: 'border-box',
         ...(tableRefreshEnabled &&
-          !noPanelPadding && {
+          (!noPanelPadding || transparent) && {
             // Reserve the same space as the visible frame without putting that frame underneath the
             // grid. Native scrollbars paint over an ancestor's ordinary border at their bottom corner.
             border: `${TABLE.FRAME_BORDER_WIDTH}px solid transparent`,
@@ -192,7 +192,7 @@ export const getGridStyles = memoize(
         },
 
         ...(tableRefreshEnabled &&
-          !noPanelPadding && {
+          (!noPanelPadding || transparent) && {
             // The frame is painted above the grid so native scrollbars cannot erase its
             // corners. Repaint the selected edge just inside that frame so it cannot cover the cell's
             // outermost selection outline.
@@ -689,7 +689,7 @@ export const getScrollShadowOffsetStyles = (_theme: GrafanaTheme2, top: number, 
   });
 
 export const getScrollShadowStyles = (theme: GrafanaTheme2) => {
-  const scrollShadowColor = theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+  const scrollShadowColor = `rgba(0, 0, 0, ${theme.isDark ? 0.25 : 0.08})`;
   return {
     scrollShadows: css({
       // The grid creates a stacking context; both pseudo-elements must paint above it.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -40,23 +41,28 @@ func testTypedAppManifest(t *testing.T, name, appName, group, kind string, searc
 // The router publishes nothing until its first reconcile, which runs after
 // storage is built, so the local watcher keeps retrying until it lists a set.
 func TestLocalManifestWatcher_ReadsDiscoveryOnceRouterPublishes(t *testing.T) {
-	router := &fakeManifestDiscovery{}
-	got := make(chan []*app.ManifestData, 1)
-	w := NewLocalManifestWatcher(router, prometheus.NewPedanticRegistry(), func(m []*app.ManifestData) { got <- m }, nil)
-	require.NoError(t, w.StartAsync(t.Context()))
-	t.Cleanup(func() { w.StopAsync() })
+	synctest.Test(t, func(t *testing.T) {
+		router := &fakeManifestDiscovery{}
+		got := make(chan []*app.ManifestData, 1)
+		w := NewLocalManifestWatcher(router, prometheus.NewPedanticRegistry(), func(m []*app.ManifestData) { got <- m }, nil)
+		require.NoError(t, w.StartAsync(t.Context()))
+		t.Cleanup(func() { w.StopAsync() })
 
-	require.Eventually(t, func() bool { return w.State().String() == "Running" }, 5*time.Second, 10*time.Millisecond)
-	require.Empty(t, w.Manifests())
+		// Finish startup and the empty discovery poll before the router publishes manifests.
+		synctest.Wait()
 
-	items := []appmanifestv1alpha2.AppManifest{testTypedAppManifest(t, "folder.grafana.app", "folders", "folder.grafana.app", "Folder", "title")}
-	router.items.Store(&items)
-	select {
-	case m := <-got:
-		require.Len(t, m, 1)
-		require.Equal(t, "folder.grafana.app", m[0].Group)
-		require.Equal(t, "title", m[0].Versions[0].Kinds[0].SearchFields[0].Name)
-	case <-time.After(3 * manifestRetryMin):
-		t.Fatal("watcher did not retry after an empty first poll")
-	}
+		require.Equal(t, "Running", w.State().String())
+		require.Empty(t, w.Manifests())
+
+		items := []appmanifestv1alpha2.AppManifest{testTypedAppManifest(t, "folder.grafana.app", "folders", "folder.grafana.app", "Folder", "title")}
+		router.items.Store(&items)
+		select {
+		case m := <-got:
+			require.Len(t, m, 1)
+			require.Equal(t, "folder.grafana.app", m[0].Group)
+			require.Equal(t, "title", m[0].Versions[0].Kinds[0].SearchFields[0].Name)
+		case <-time.After(3 * manifestRetryMin):
+			t.Fatal("watcher did not retry after an empty first poll")
+		}
+	})
 }

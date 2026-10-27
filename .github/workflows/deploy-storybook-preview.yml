@@ -43,7 +43,7 @@ jobs:
         uses: ./.github/actions/yarn-install
 
       - name: Build storybook
-        run: yarn storybook:build
+        run: npm run storybook:build
 
       # Create the GCS folder name for the preview. Creates a consistent name for all deploys for the PR.
       # Matches format of `pr_<PR_NUMBER>_<SANITIZED_BRANCH>`.

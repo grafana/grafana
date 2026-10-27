@@ -1157,11 +1157,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rules/Filter/useRuleFilterAutocomplete.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rules/RuleDetailsDataSources.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -1195,9 +1190,6 @@
   "public/app/features/alerting/unified/components/silences/SilencesEditor.tsx": {
     "@grafana/require-no-margin": {
       "count": 3
-    },
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/featureToggles.ts": {
@@ -2847,11 +2839,6 @@
   },
   "public/app/plugins/panel/nodeGraph/layout.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/panel/stat/StatMigrations.ts": {
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },

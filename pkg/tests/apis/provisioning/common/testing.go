@@ -3213,7 +3213,7 @@ func (h *GitTestHelper) GitServer() *gittest.Server {
 	return h.gitServer
 }
 
-func (h *GitTestHelper) githubTransportUser(t *testing.T) *gittest.User {
+func (h *GitTestHelper) GithubTransportUser(t *testing.T) *gittest.User {
 	t.Helper()
 
 	h.githubUserOnce.Do(func() {
@@ -3417,7 +3417,7 @@ func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialF
 		waitForReady:      true,
 		initialFiles:      initialFiles,
 		templateVariables: extraValues,
-		user:              h.githubTransportUser(t),
+		user:              h.GithubTransportUser(t),
 		workflows:         workflows,
 	})
 }
@@ -3436,7 +3436,7 @@ func (h *GitTestHelper) CreateGithubRepoWithoutWaitingForReady(t *testing.T, rep
 		waitForReady:      false,
 		initialFiles:      initialFiles,
 		templateVariables: extraValues,
-		user:              h.githubTransportUser(t),
+		user:              h.GithubTransportUser(t),
 		workflows:         workflows,
 	})
 }
@@ -3448,7 +3448,7 @@ func (h *GitTestHelper) CreateGithubRepoWithWebhookDisabled(t *testing.T, repoNa
 		templateVariables: map[string]any{
 			"WebhookDisabled": true,
 		},
-		user:      h.githubTransportUser(t),
+		user:      h.GithubTransportUser(t),
 		workflows: workflows,
 	})
 }

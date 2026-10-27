@@ -22,7 +22,7 @@ const eventBus = {} as EventBus;
 const lightTheme = { isDark: false } as GrafanaTheme2;
 const darkTheme = { isDark: true } as GrafanaTheme2;
 
-/** Trimmed from a generated Protomaps style: one fill, one label */
+/** Trimmed from a generated Protomaps style: one fill, four labels, one border, four roads */
 const STYLE = {
   version: 8,
   sources: { protomaps: { type: 'vector' } },
@@ -35,6 +35,65 @@ const STYLE = {
       'source-layer': 'places',
       layout: {
         'text-font': ['step', ['zoom'], ['literal', ['Noto Sans Regular']], 8, ['literal', ['Noto Sans Medium']]],
+      },
+    },
+    {
+      id: 'roads_labels_minor',
+      type: 'symbol',
+      source: 'protomaps',
+      'source-layer': 'roads',
+      minzoom: 15,
+      filter: ['in', 'kind', 'minor_road', 'other', 'path'],
+      layout: { 'symbol-placement': 'line', 'text-font': ['Noto Sans Regular'], 'text-size': 12 },
+      paint: { 'text-color': '#525252', 'text-halo-color': '#1f1f1f', 'text-halo-width': 1 },
+    },
+    {
+      id: 'pois',
+      type: 'symbol',
+      source: 'protomaps',
+      'source-layer': 'pois',
+      filter: [
+        'all',
+        ['in', ['get', 'kind'], ['literal', ['park', 'restaurant', 'museum', 'stadium']]],
+        ['>=', ['zoom'], ['+', ['get', 'min_zoom'], 0]],
+      ],
+      layout: {
+        'icon-image': ['get', 'kind'],
+        'text-font': ['Noto Sans Regular'],
+        'text-offset': [1.1, 0],
+        'text-variable-anchor': ['left', 'right'],
+      },
+      paint: { 'text-color': '#30C573', 'text-halo-color': '#1f1f1f', 'text-halo-width': 1 },
+    },
+    { id: 'address_label', type: 'symbol', source: 'protomaps', 'source-layer': 'buildings', minzoom: 18 },
+    {
+      id: 'roads_highway',
+      type: 'line',
+      source: 'protomaps',
+      'source-layer': 'roads',
+      paint: {
+        'line-color': '#ebebeb',
+        'line-width': ['interpolate', ['exponential', 1.6], ['zoom'], 3, 0, 6, 1.1, 12, 1.6, 15, 5, 18, 15],
+      },
+    },
+    {
+      id: 'roads_major',
+      type: 'line',
+      source: 'protomaps',
+      'source-layer': 'roads',
+      paint: { 'line-color': '#292929' },
+    },
+    { id: 'roads_minor_service', type: 'line', source: 'protomaps', 'source-layer': 'roads' },
+    { id: 'roads_tunnels_major', type: 'line', source: 'protomaps', 'source-layer': 'roads' },
+    {
+      id: 'boundaries_country',
+      type: 'line',
+      source: 'protomaps',
+      'source-layer': 'boundaries',
+      paint: {
+        'line-color': '#adadad',
+        'line-width': 0.7,
+        'line-dasharray': ['step', ['zoom'], ['literal', [2, 0]], 4, ['literal', [2, 1]]],
       },
     },
   ],
@@ -55,6 +114,10 @@ async function initLayer(config: ProtomapsConfig, theme = lightTheme) {
 
 function appliedStyle() {
   return applyStyleMock.mock.calls[0][1];
+}
+
+function appliedLayer(id: string) {
+  return appliedStyle().layers.find((layer: { id: string }) => layer.id === id);
 }
 
 describe('Protomaps basemap', () => {
@@ -85,9 +148,9 @@ describe('Protomaps basemap', () => {
   });
 
   it.each([
-    { desc: 'light for auto in a light theme', flavor: ProtomapsFlavor.Auto, theme: lightTheme, file: 'light' },
-    { desc: 'dark for auto in a dark theme', flavor: ProtomapsFlavor.Auto, theme: darkTheme, file: 'dark' },
-    { desc: 'an explicit flavor regardless of theme', flavor: ProtomapsFlavor.White, theme: darkTheme, file: 'white' },
+    { desc: 'white for auto in a light theme', flavor: ProtomapsFlavor.Auto, theme: lightTheme, file: 'white' },
+    { desc: 'black for auto in a dark theme', flavor: ProtomapsFlavor.Auto, theme: darkTheme, file: 'black' },
+    { desc: 'an explicit flavor regardless of theme', flavor: ProtomapsFlavor.Light, theme: darkTheme, file: 'light' },
   ])('loads $desc', async ({ flavor, theme, file }) => {
     await initLayer({ flavor }, theme);
 
@@ -112,12 +175,12 @@ describe('Protomaps basemap', () => {
     {
       desc: 'keeps a path prefix on the configured server',
       server: 'https://tiles.example.com/basemap/v1',
-      style: 'https://tiles.example.com/basemap/v1/styles/light.json',
+      style: 'https://tiles.example.com/basemap/v1/styles/white.json',
     },
     {
       desc: 'falls back to the dev server for a non-http URL',
       server: 'javascript:alert(1)',
-      style: 'http://localhost:8095/styles/light.json',
+      style: 'http://localhost:8095/styles/white.json',
     },
   ])('$desc', async ({ server, style }) => {
     jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -134,14 +197,14 @@ describe('Protomaps basemap', () => {
     expect(applyStyleMock.mock.calls[0][2]).toEqual({
       source: 'protomaps',
       updateSource: false,
-      styleUrl: 'http://localhost:8095/styles/light.json',
+      styleUrl: 'http://localhost:8095/styles/white.json',
     });
   });
 
   it('draws labels in Grafana’s own Inter instead of Noto Sans', async () => {
     await initLayer({ showLabels: true });
 
-    expect(appliedStyle().layers[1].layout['text-font']).toEqual([
+    expect(appliedLayer('places_locality').layout['text-font']).toEqual([
       'step',
       ['zoom'],
       ['literal', ['Inter Regular']],
@@ -150,10 +213,149 @@ describe('Protomaps basemap', () => {
     ]);
   });
 
+  it('names minor roads from zoom 16 instead of 15, and leaves paths and other roads unnamed', async () => {
+    await initLayer({ showLabels: true });
+
+    expect(appliedLayer('roads_labels_minor')).toMatchObject({
+      minzoom: 16,
+      filter: ['==', ['get', 'kind'], 'minor_road'],
+    });
+  });
+
+  it('labels only the places the default basemap labels, from zoom 15', async () => {
+    await initLayer({ showLabels: true });
+
+    expect(appliedLayer('pois')).toMatchObject({
+      minzoom: 15,
+      filter: [
+        'all',
+        [
+          'all',
+          ['in', ['get', 'kind'], ['literal', ['park', 'restaurant', 'museum', 'stadium']]],
+          ['>=', ['zoom'], ['+', ['get', 'min_zoom'], 0]],
+        ],
+        [
+          'all',
+          ['in', ['get', 'kind'], ['literal', ['park', 'stadium', 'attraction']]],
+          ['any', ['==', ['get', 'kind'], 'park'], ['<=', ['coalesce', ['get', 'min_zoom'], 0], 13]],
+        ],
+      ],
+    });
+  });
+
+  it('leaves out house numbers, which the default basemap never shows', async () => {
+    await initLayer({ showLabels: true });
+
+    expect(appliedStyle().layers.map((layer: { id: string }) => layer.id)).not.toContain('address_label');
+  });
+
   it('drops label layers when labels are off', async () => {
     await initLayer({ showLabels: false });
 
-    expect(appliedStyle().layers.map((layer: { id: string }) => layer.id)).toEqual(['earth']);
+    expect(appliedStyle().layers.map((layer: { id: string }) => layer.id)).toEqual([
+      'earth',
+      'roads_highway',
+      'roads_major',
+      'roads_minor_service',
+      'roads_tunnels_major',
+      'boundaries_country',
+    ]);
+  });
+
+  it.each([
+    { flavor: ProtomapsFlavor.White, land: '#fafaf8', border: '#f2e6e7' },
+    { flavor: ProtomapsFlavor.Black, land: '#0e0e0e', border: '#5c5e5e' },
+  ])('paints $flavor in the colors of the default basemap it stands in for', async ({ flavor, land, border }) => {
+    await initLayer({ flavor, showLabels: true });
+
+    const layers = appliedStyle().layers;
+    const layer = (id: string) => layers.find((candidate: { id: string }) => candidate.id === id);
+    expect(layer('earth').paint).toEqual({ 'fill-color': land });
+    const borders = layer('boundaries_country').paint;
+    expect(borders['line-color'].slice(0, 5)).toEqual(['interpolate', ['linear'], ['zoom'], 4, border]);
+    // The default basemap draws country borders solid
+    expect(borders).not.toHaveProperty('line-dasharray');
+  });
+
+  it('draws highways as thin and light as the default basemap’s further out, where they would compete with data', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.White });
+
+    const highway = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'roads_highway');
+    expect(highway.paint['line-color']).toEqual([
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      5,
+      '#e6e6e6',
+      12,
+      '#dddddd',
+      15,
+      '#ffffff',
+    ]);
+    // Under a pixel until zoom 8, then Protomaps' own widths from zoom 12
+    expect(highway.paint['line-width']).toEqual([
+      'interpolate',
+      ['exponential', 1.6],
+      ['zoom'],
+      ...[3, 0, 6, 0.5, 7, 0.7, 8, 0.8, 10, 1.3, 12, 1.6, 15, 5, 18, 15],
+    ]);
+  });
+
+  it('draws secondary roads in the dark default basemap’s blue-grey at every zoom, unlike primary roads', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.Black });
+
+    const major = appliedStyle().layers.find((layer: { id: string }) => layer.id === 'roads_major');
+    const bySecondary = (primary: string) => [
+      'match',
+      ['get', 'kind_detail'],
+      ['secondary', 'tertiary', 'secondary_link', 'tertiary_link'],
+      '#414758',
+      primary,
+    ];
+    expect(major.paint['line-color']).toEqual([
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      ...[5, bySecondary('#1a1a1a'), 12, bySecondary('#232323'), 15, bySecondary('#535666')],
+    ]);
+  });
+
+  it('draws tunnels in the default basemap’s flat colors, and the dark default basemap’s service roads darker than the land', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.Black });
+
+    const layer = (id: string) => appliedStyle().layers.find((candidate: { id: string }) => candidate.id === id);
+    expect(layer('roads_tunnels_major').paint['line-color']).toEqual([
+      'match',
+      ['get', 'kind_detail'],
+      ['secondary', 'tertiary', 'secondary_link', 'tertiary_link'],
+      '#161616',
+      '#414758',
+    ]);
+    expect(layer('roads_minor_service').paint['line-color']).toEqual([
+      'interpolate',
+      ['linear'],
+      ['zoom'],
+      ...[5, '#1c1c1c', 12, '#1c1c1c', 15, '#0b0b0b'],
+    ]);
+  });
+
+  it('paints only colors, leaving which labels show and from which zoom as they were', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.White, showLabels: true });
+    const white = appliedStyle().layers;
+    applyStyleMock.mockClear();
+    await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
+    const light = appliedStyle().layers;
+
+    const placement = ({ id, minzoom, filter, layout }: Record<string, unknown>) => ({ id, minzoom, filter, layout });
+    expect(white.map(placement)).toEqual(light.map(placement));
+  });
+
+  it('leaves the other flavors in their generated colors', async () => {
+    await initLayer({ flavor: ProtomapsFlavor.Light, showLabels: true });
+
+    const layers = appliedStyle().layers;
+    expect(layers[0].paint).toBeUndefined();
+    expect(layers.at(-1).paint['line-color']).toBe('#adadad');
   });
 
   it('credits OpenStreetMap before the style request resolves', async () => {
@@ -177,7 +379,7 @@ describe('Protomaps basemap', () => {
     const layer = await initLayer({});
 
     expect(warn).toHaveBeenCalledWith(
-      'Failed to load Protomaps basemap style from http://localhost:8095/styles/light.json:',
+      'Failed to load Protomaps basemap style from http://localhost:8095/styles/white.json:',
       new Error('404 Not Found')
     );
     expect(layer.getStyle()).toBeNull();

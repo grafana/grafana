@@ -3,6 +3,7 @@ package acimpl
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 
 	"github.com/grafana/authlib/types"
@@ -12,20 +13,16 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
+const legacyGlobalNamespaceAnchorOrgID int64 = 1
+
 func (a *AccessControl) buildLegacyCheckRequest(
 	user identity.Requester,
 	evaluator accesscontrol.Evaluator,
 	useExternalGroups bool,
+	namespaceMapper types.NamespaceFormatter,
 ) (*authzextv1.LegacyCheckRequest, error) {
 	if user == nil || user.IsNil() {
 		return nil, errors.New("legacy check requester is required")
-	}
-
-	// TODO: will be implemented in the follow up PR related to the issue https://github.com/grafana/identity-access-team/issues/2436
-	// The current request contract cannot distinguish global evaluation from
-	// evaluation in the requester's namespace.
-	if user.GetOrgID() == accesscontrol.NoOrgID {
-		return nil, errors.New("legacy check does not yet support global evaluation")
 	}
 
 	expression, err := accesscontrol.ToLegacyExpression(evaluator)
@@ -34,8 +31,21 @@ func (a *AccessControl) buildLegacyCheckRequest(
 	}
 
 	namespace := user.GetNamespace()
+	var global *authzextv1.LegacyGlobalEvaluation
+	if user.GetOrgID() == accesscontrol.NoOrgID || user.GetOrgID() == accesscontrol.GlobalOrgID {
+		permissions := user.GetGlobalPermissions()
+		global = &authzextv1.LegacyGlobalEvaluation{
+			RequesterOrgId:   user.GetOrgID(),
+			PermittedActions: slices.Sorted(maps.Keys(permissions)),
+		}
+		// Global org IDs describe requester state. Use the configured instance
+		// namespace for transport; evaluation still uses global grants.
+		if namespace == "" || namespace == types.OrgNamespaceFormatter(user.GetOrgID()) {
+			namespace = namespaceMapper(legacyGlobalNamespaceAnchorOrgID)
+		}
+	}
 	if namespace == "" {
-		namespace = types.OrgNamespaceFormatter(user.GetOrgID())
+		namespace = namespaceMapper(user.GetOrgID())
 	}
 
 	groups := user.GetGroups()
@@ -49,5 +59,6 @@ func (a *AccessControl) buildLegacyCheckRequest(
 		Expression:          expression,
 		Teams:               slices.Clone(groups),
 		SkipScopeResolution: a.skipScopeResolution,
+		GlobalEvaluation:    global,
 	}, nil
 }

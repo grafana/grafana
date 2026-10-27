@@ -7297,6 +7297,7 @@
       "copy": "Kopiëren naar klembord",
       "learn-more": "Meer informatie",
       "no-issues": "Geen fouten of meldingen voor deze query.",
+      "no-panel-issues": "",
       "severity-error": "Fout",
       "severity-info": "Info",
       "severity-warning": "Waarschuwing"
@@ -8125,8 +8126,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Querydeelvenster openen",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Querydeelvenster openen"
     },
     "viz-panel-links-renderer": {
@@ -16070,6 +16069,7 @@
       "expand": "Uitvouwen",
       "filter": "",
       "loading": "Dashboards laden",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Geen resultaten gevonden voor je zoekopdracht",
       "noResultsForFilterClear": "Zoekopdracht wissen",
       "noResultsForScopes": "Geen dashboards gevonden voor de geselecteerd bereik",
@@ -16781,8 +16781,61 @@
   },
   "swagger": {
     "login": "Inloggen",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Controleer de namespace voordat je verzoeken verzendt of laad de pagina opnieuw om het opnieuw te proberen.",
-    "namespace-unavailable-title": "Kan namespace niet laden"
+    "namespace-unavailable-title": "Kan namespace niet laden",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16836,6 +16889,9 @@
     "description-styling-from-field": "Een veld met JSON-objecten met CSS-eigenschappen",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "De achtergrondkleur van elke tweede rij afwisselen",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Query"
     },
@@ -18384,6 +18440,7 @@
       "body_other": "Weet je zeker dat je {{count}} variabelen wilt verwijderen?"
     },
     "editor": {
+      "back": "",
       "cancel": "Annuleren",
       "delete": "Verwijderen",
       "delete-modal-body": "Weet je zeker dat je '{{name}}' wilt verwijderen?",
@@ -18392,6 +18449,7 @@
       "folder-description": "De variabele beperken tot een map of de hoofdmap Dashboards kiezen om deze globaal te maken (beschikbaar voor alle dashboards)",
       "folder-description-folder-only": "Stel het bereik van de variabele in op een map die je kunt bewerken",
       "folder-label": "Map",
+      "load-error-title": "",
       "moved": "Variabele verplaatst",
       "name-exists": "Er bestaat al een variabele met deze naam in de geselecteerde map",
       "save": "Opslaan",

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 
 	"github.com/gorilla/mux"
 	"github.com/grafana/dskit/services"
@@ -37,39 +38,44 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 	httpRouter := mux.NewRouter()
 	ready := &testReadyNotifier{}
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
-	svc, err := provideTestService(cfg, features, dummyRoutesLoader{})
+	router, err := ProvideGrafanaRouter(cfg)
 	require.NoError(t, err)
-	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, ready))
+	synctest.Test(t, func(t *testing.T) {
+		svc, err := ProvideService(cfg, features, dummyRoutesLoader{}, prometheus.NewRegistry(), router)
+		require.NoError(t, err)
+		require.NoError(t, svc.RegisterTargetRoutes(httpRouter, ready))
 
-	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
-	t.Cleanup(func() {
-		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc))
-	})
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
+		t.Cleanup(func() {
+			require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc))
+		})
 
-	require.Eventually(t, func() bool {
+		// Complete initial reconciliation before asking the service to publish readiness.
+		synctest.Wait()
+
 		svc.reportReady(t.Context())
-		return ready.ready.Load()
-	}, readinessPollInterval, readinessPollInterval/10)
+		require.True(t, ready.ready.Load())
 
-	recorder := httptest.NewRecorder()
-	httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, "/apis", nil))
-	require.Equal(t, http.StatusOK, recorder.Code)
-	require.JSONEq(t, `{"kind":"APIGroupList","apiVersion":"v1","groups":[
+		recorder := httptest.NewRecorder()
+		httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, "/apis", nil))
+		require.Equal(t, http.StatusOK, recorder.Code)
+		require.JSONEq(t, `{"kind":"APIGroupList","apiVersion":"v1","groups":[
 		{"name":"discovery","versions":[{"groupVersion":"discovery/v1alpha2","version":"v1alpha2"}],"preferredVersion":{"groupVersion":"discovery/v1alpha2","version":"v1alpha2"}}
 	]}`, recorder.Body.String())
 
-	recorder = httptest.NewRecorder()
-	httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, "/not-owned", nil))
-	require.Equal(t, http.StatusNotFound, recorder.Code)
-
-	for _, path := range []string{
-		"/apis/unknown.grafana.app/v1/widgets",
-		"/openapi/v3/apis/unknown.grafana.app/v1",
-	} {
 		recorder = httptest.NewRecorder()
-		httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, path, nil))
-		require.Equal(t, http.StatusNotFound, recorder.Code, path)
-	}
+		httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, "/not-owned", nil))
+		require.Equal(t, http.StatusNotFound, recorder.Code)
+
+		for _, path := range []string{
+			"/apis/unknown.grafana.app/v1/widgets",
+			"/openapi/v3/apis/unknown.grafana.app/v1",
+		} {
+			recorder = httptest.NewRecorder()
+			httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, path, nil))
+			require.Equal(t, http.StatusNotFound, recorder.Code, path)
+		}
+	})
 }
 
 func TestProvideServiceRequiresCollaborators(t *testing.T) {
@@ -105,54 +111,58 @@ func TestServiceRegistersTargetPathPrefixes(t *testing.T) {
 }
 
 func TestServiceMiddlewareServesTheAPITree(t *testing.T) {
-	cfg := setting.NewCfg()
-	httpRouter := mux.NewRouter()
-	httpRouter.HandleFunc("/apis/legacy.grafana.app/v1", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusNoContent)
-	})
-	httpRouter.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusTeapot)
-	})
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
+	synctest.Test(t, func(t *testing.T) {
+		cfg := setting.NewCfg()
+		httpRouter := mux.NewRouter()
+		httpRouter.HandleFunc("/apis/legacy.grafana.app/v1", func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusNoContent)
+		})
+		httpRouter.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusTeapot)
+		})
+		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
 
-	svc, err := provideTestService(cfg, features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}})
-	require.NoError(t, err)
-	svc.SetUpstream(&fakeEmbeddedAPIServer{groups: []string{"legacy.grafana.app"}, status: http.StatusNoContent})
-	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
-	t.Cleanup(func() {
-		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc))
-	})
-	require.Eventually(t, func() bool {
-		return svc.router.KnownGroup("dummy-backend-1.ext.grafana.app")
-	}, readinessPollInterval, readinessPollInterval/10)
+		svc, err := provideTestService(cfg, features, dummyRoutesLoader{groups: []string{"dummy-backend-1.ext.grafana.app"}})
+		require.NoError(t, err)
+		svc.SetUpstream(&fakeEmbeddedAPIServer{groups: []string{"legacy.grafana.app"}, status: http.StatusNoContent})
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
+		t.Cleanup(func() {
+			require.NoError(t, services.StopAndAwaitTerminated(context.Background(), svc))
+		})
 
-	t.Run("router-only group", func(t *testing.T) {
-		recorder := httptest.NewRecorder()
-		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/dummy-backend-1.ext.grafana.app/v0alpha1", nil), httpRouter)
+		// Finish initial route reconciliation before sending middleware requests.
+		synctest.Wait()
 
-		require.Equal(t, http.StatusOK, recorder.Code)
-		require.Equal(t, "dummy backend for group: dummy-backend-1.ext.grafana.app", recorder.Body.String())
-	})
+		require.True(t, svc.router.KnownGroup("dummy-backend-1.ext.grafana.app"))
 
-	t.Run("embedded group is served by the embedded server", func(t *testing.T) {
-		recorder := httptest.NewRecorder()
-		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/legacy.grafana.app/v1", nil), httpRouter)
+		{
+			recorder := httptest.NewRecorder()
+			svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/dummy-backend-1.ext.grafana.app/v0alpha1", nil), httpRouter)
 
-		require.Equal(t, http.StatusNoContent, recorder.Code)
-	})
+			require.Equal(t, http.StatusOK, recorder.Code)
+			require.Equal(t, "dummy backend for group: dummy-backend-1.ext.grafana.app", recorder.Body.String())
+		}
 
-	t.Run("unknown route is not found", func(t *testing.T) {
-		recorder := httptest.NewRecorder()
-		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/unknown.grafana.app/v1", nil), httpRouter)
+		{
+			recorder := httptest.NewRecorder()
+			svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/legacy.grafana.app/v1", nil), httpRouter)
 
-		require.Equal(t, http.StatusNotFound, recorder.Code)
-	})
+			require.Equal(t, http.StatusNoContent, recorder.Code)
+		}
 
-	t.Run("other paths go to next", func(t *testing.T) {
-		recorder := httptest.NewRecorder()
-		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/api/health", nil), httpRouter)
+		{
+			recorder := httptest.NewRecorder()
+			svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/unknown.grafana.app/v1", nil), httpRouter)
 
-		require.Equal(t, http.StatusTeapot, recorder.Code)
+			require.Equal(t, http.StatusNotFound, recorder.Code)
+		}
+
+		{
+			recorder := httptest.NewRecorder()
+			svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/api/health", nil), httpRouter)
+
+			require.Equal(t, http.StatusTeapot, recorder.Code)
+		}
 	})
 }
 
@@ -234,7 +244,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 	cfg.Target = []string{"router"}
 	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	cloud := loader.(*cloudLoader)
 	cloud.singleTenantFallback.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {

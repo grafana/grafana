@@ -21,7 +21,7 @@ async function generateCodeownersRawAudit(codeownersPath, outputPath) {
   return new Promise((resolve, reject) => {
     const outputStream = fs.createWriteStream(outputPath);
 
-    const child = spawn('yarn', ['github-codeowners', 'audit', '--output', 'jsonl'], {
+    const child = spawn('npm', ['exec', '--no', '--', 'github-codeowners', 'audit', '--output', 'jsonl'], {
       stdio: ['ignore', 'pipe', 'pipe'],
       cwd: process.cwd(),
       shell: true,

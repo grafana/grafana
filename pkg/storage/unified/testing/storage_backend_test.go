@@ -134,12 +134,14 @@ func TestPerResourceFolderTreeSearchAndStorage(t *testing.T) {
 			Options: &resourcepb.ListOptions{
 				Key:    &resourcepb.ResourceKey{Namespace: dashKey.Namespace, Group: dashKey.Group, Resource: dashKey.Resource},
 				Fields: []*resourcepb.Requirement{{Key: field, Operator: "in", Values: []string{root}}},
-			}, Limit: 100,
+			},
+			Limit:        100,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
-		names := make([]string, 0, len(rsp.Results.Rows))
-		for _, row := range rsp.Results.Rows {
+		names := make([]string, 0, len(rsp.Rows))
+		for _, row := range rsp.Rows {
 			names = append(names, row.Key.Name)
 		}
 		return names

@@ -6,22 +6,21 @@ import { flows, type Variable } from '../../helpers';
 import { type Controls, type Panels, type Sidebar } from '../../page-objects';
 import variablePersistenceDashboard from '../fixtures/VariablePersistenceDashboard.json';
 
+/**
+ * Imports a variable test dashboard with a unique identity and returns its view URL
+ * @param dashboard the v2 dashboard to import; it must have a "Variable output" markdown panel
+ */
 export async function importVariableTestDashboard(
   page: Page,
   selectors: E2ESelectorGroups,
-  panels: Panels
+  panels: Panels,
+  dashboard: object = variablePersistenceDashboard
 ): Promise<string> {
   return test.step('Import an isolated variable test dashboard', async () => {
-    await flows.dashboards.importTestDashboard(
-      page,
-      selectors,
-      test.info().title,
-      JSON.stringify(variablePersistenceDashboard),
-      {
-        requiresDataSourceSelection: false,
-        checkPanelsVisible: false,
-      }
-    );
+    await flows.dashboards.importTestDashboard(page, selectors, test.info().title, JSON.stringify(dashboard), {
+      requiresDataSourceSelection: false,
+      checkPanelsVisible: false,
+    });
 
     await expect(panels.getBody('Variable output').locator('.markdown-html')).toBeVisible();
 
