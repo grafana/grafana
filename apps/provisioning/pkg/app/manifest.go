@@ -46,7 +46,7 @@ var Routes = []Route{
 	{Kind: KindRepository, Path: "files", Methods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete}, Subpath: true, Response: &provisioning.ResourceWrapper{}},
 	{Kind: KindRepository, Path: "refs", Methods: []string{http.MethodGet}, Response: &provisioning.RefList{}},
 	{Kind: KindRepository, Path: "resources", Methods: []string{http.MethodGet}, Response: &provisioning.ResourceList{}},
-	{Kind: KindRepository, Path: "history", Methods: []string{http.MethodGet}, Subpath: true, Response: &provisioning.HistoryList{}},
+	{Kind: KindRepository, Path: "history", Methods: []string{http.MethodGet}, Subpath: true, Response: ""},
 	{Kind: KindRepository, Path: "jobs", Methods: []string{http.MethodPost, http.MethodGet}, Subpath: true, Response: &provisioning.Job{}},
 	{Kind: KindRepository, Path: "webhook", Methods: []string{http.MethodPost}, Response: &provisioning.WebhookResponse{}},
 	{Kind: KindRepository, Path: "render", Methods: []string{http.MethodGet}, Subpath: true, Response: &provisioning.Repository{}},

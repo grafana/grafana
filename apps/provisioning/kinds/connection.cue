@@ -16,12 +16,12 @@ connection: {
 			workspace: string
 		}
 		#Condition: {
-			type: string
-			status: "True" | "False" | "Unknown"
+			type:                string
+			status:              "True" | "False" | "Unknown"
 			observedGeneration?: int64
-			lastTransitionTime: string
-			reason: string
-			message: string
+			lastTransitionTime:  string
+			reason:              string
+			message:             string
 		}
 		#ConnectionOAuthConfig: {
 			// The OAuth app client ID
@@ -33,6 +33,7 @@ connection: {
 			// webhook events. Use this when Grafana is not reachable from the public internet.
 			disabled?: bool
 		}
+
 		// ErrorDetails describes an individual field error intended to help users identify and fix issues
 		// in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same
 		// purpose: to deliver actionable feedback about fields in the spec that require attention.
@@ -65,6 +66,7 @@ connection: {
 			// GitHub App installation ID
 			installationID: string
 		}
+
 		// GitHubEnterpriseConnectionConfig describes a GitHub App installation against a
 		// self-managed GitHub Enterprise Server (GHES) instance.
 		#GitHubEnterpriseConnectionConfig: {
@@ -79,6 +81,7 @@ connection: {
 			// The GitHub Enterprise Server URL (e.g. `https://ghes.example.com`).
 			serverUrl: string
 		}
+
 		// GitOAuthConnectionConfig describes a provider-agnostic OAuth 2.0 app used to
 		// authenticate pure git repositories.
 		#GitOAuthConnectionConfig: {
@@ -102,7 +105,7 @@ connection: {
 		}
 		#TokenStatus: {
 			lastUpdated?: int64
-			expiration?: int64
+			expiration?:  int64
 		}
 		spec: {
 			// The connection display name (shown in the UI)

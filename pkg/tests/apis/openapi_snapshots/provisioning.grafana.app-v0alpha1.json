@@ -3315,7 +3315,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HistoryList"
+                  "type": "string"
                 }
               }
             }
@@ -3387,7 +3387,7 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HistoryList"
+                  "type": "string"
                 }
               }
             }
@@ -5286,9 +5286,7 @@
         "properties": {
           "authors": {
             "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Author"
-            },
+            "items": {},
             "x-kubernetes-list-type": "atomic"
           },
           "createdAt": {
@@ -5319,9 +5317,7 @@
           },
           "items": {
             "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.HistoryItem"
-            },
+            "items": {},
             "x-kubernetes-list-type": "atomic"
           },
           "kind": {
@@ -5329,21 +5325,9 @@
             "type": "string"
           },
           "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
+            "default": {}
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "provisioning.grafana.app",
-            "kind": "HistoryList",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
       "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Job": {
         "type": "object",
@@ -7517,22 +7501,6 @@
             "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.search.v0alpha1.TextPredicate"
           }
         }
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.ConnectionJSONCodec": {
-        "description": "ConnectionJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding",
-        "type": "object"
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.HistoricJobJSONCodec": {
-        "description": "HistoricJobJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding",
-        "type": "object"
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.JobJSONCodec": {
-        "description": "JobJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding",
-        "type": "object"
-      },
-      "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1.RepositoryJSONCodec": {
-        "description": "RepositoryJSONCodec is an implementation of resource.Codec for kubernetes JSON encoding",
-        "type": "object"
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.APIResource": {
         "description": "APIResource specifies the name of a resource and whether it is namespaced.",

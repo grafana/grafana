@@ -1,6 +1,5 @@
 package v0alpha1
 
-
 // +enum
 type JobAction string
 

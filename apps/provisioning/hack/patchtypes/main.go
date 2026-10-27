@@ -118,6 +118,7 @@ type decl struct {
 	fn         string
 }
 
+//nolint:gocyclo // code generation tool, a linear pipeline of steps
 func main() {
 	dir := os.Args[1]
 	files, _ := filepath.Glob(filepath.Join(dir, "*_gen.go"))
@@ -135,7 +136,7 @@ func main() {
 	// The app-sdk resource clients are not used: the provisioning code uses the k8s typed clientset.
 	for _, f := range files {
 		if strings.HasSuffix(f, "_client_gen.go") {
-			must(os.Remove(f))
+			must(os.Remove(f)) //nolint:gosec // the files are generated output in the package directory
 		}
 	}
 	kept := make([]string, 0, len(targets))
@@ -149,7 +150,7 @@ func main() {
 	src := map[string][]byte{}
 	decls := map[string][]decl{}
 	for _, f := range targets {
-		b, err := os.ReadFile(f)
+		b, err := os.ReadFile(f) //nolint:gosec // the files are generated output in the package directory
 		must(err)
 		src[f] = b
 		decls[f] = parse(f, b)
@@ -161,7 +162,7 @@ func main() {
 	owner := map[string]string{} // base name -> kind that owns it
 	for _, k := range kinds {
 		for _, f := range targets {
-			if !strings.HasPrefix(filepath.Base(f), strings.ToLower(k)+"_") || !(strings.HasSuffix(f, "_spec_gen.go") || strings.HasSuffix(f, "_status_gen.go")) {
+			if !strings.HasPrefix(filepath.Base(f), strings.ToLower(k)+"_") || (!strings.HasSuffix(f, "_spec_gen.go") && !strings.HasSuffix(f, "_status_gen.go")) {
 				continue
 			}
 			for _, d := range decls[f] {
@@ -207,15 +208,15 @@ func main() {
 	renameRe := buildRenameRe(rename)
 	for _, f := range targets {
 		out := patch(f, src[f], decls[f], deleteType, renameRe, rename)
-		must(os.WriteFile(f, out, 0o644))
+		must(os.WriteFile(f, out, 0o644)) //nolint:gosec // the files are generated output in the package directory
 	}
 	// fix imports and formatting
 	for _, f := range targets {
-		b, err := os.ReadFile(f)
+		b, err := os.ReadFile(f) //nolint:gosec // the files are generated output in the package directory
 		must(err)
 		out, err := imports.Process(f, b, nil)
 		must(err)
-		must(os.WriteFile(f, out, 0o644))
+		must(os.WriteFile(f, out, 0o644)) //nolint:gosec // the files are generated output in the package directory
 	}
 }
 
@@ -314,6 +315,7 @@ var (
 	scalarPtr = regexp.MustCompile(`^\*(string|bool|int64|float64)$`)
 )
 
+//nolint:gocyclo,gocognit // code generation tool, a linear pipeline of text edits
 func patch(path string, b []byte, ds []decl, deleteType map[string]bool, re *regexp.Regexp, rename map[string]string) []byte {
 	isObject := strings.HasSuffix(path, "_object_gen.go")
 	isTypes := strings.HasSuffix(path, "_spec_gen.go") || strings.HasSuffix(path, "_status_gen.go")

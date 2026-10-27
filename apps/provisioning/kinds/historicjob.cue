@@ -55,14 +55,14 @@ historicjob: {
 			ref?: string
 		}
 		#JobResourceSummary: {
-			group?: string
-			kind?: string
-			total?: int64
-			create?: int64
-			update?: int64
-			delete?: int64
-			write?: int64
-			error?: int64
+			group?:   string
+			kind?:    string
+			total?:   int64
+			create?:  int64
+			update?:  int64
+			delete?:  int64
+			write?:   int64
+			error?:   int64
 			warning?: int64
 			// No action required (useful for sync)
 			noop?: int64
@@ -153,6 +153,7 @@ historicjob: {
 			// Incremental synchronization for versioned repositories
 			incremental: bool
 		}
+
 		// TestJobOptions configures a synthetic performance-testing job. The job does
 		// no real work; it sleeps for Duration and then completes. It is only usable
 		// when the provisioning.performance feature flag is enabled.
@@ -202,10 +203,10 @@ historicjob: {
 			test?: #TestJobOptions
 		}
 		status: {
-			state?: "pending" | "working" | "success" | "error" | "warning"
-			started?: int64
+			state?:    "pending" | "working" | "success" | "error" | "warning"
+			started?:  int64
 			finished?: int64
-			message?: string
+			message?:  string
 			errors?: [...string]
 			warnings?: [...string]
 			// Optional value 0-100 that can be set while running

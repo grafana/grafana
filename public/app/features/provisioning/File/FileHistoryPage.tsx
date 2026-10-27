@@ -61,6 +61,7 @@ export default function FileHistoryPage() {
           <div>
             {history.data ? (
               <HistoryView
+                //@ts-expect-error OpenAPI generated response type is `string`; actual payload is HistoryList - causing type discrepancy error
                 history={history.data}
                 path={path}
                 repo={name}

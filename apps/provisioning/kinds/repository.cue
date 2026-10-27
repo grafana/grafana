@@ -75,16 +75,17 @@ repository: {
 			smimeCertificate?: string
 		}
 		#Condition: {
-			type: string
-			status: "True" | "False" | "Unknown"
+			type:                string
+			status:              "True" | "False" | "Unknown"
 			observedGeneration?: int64
-			lastTransitionTime: string
-			reason: string
-			message: string
+			lastTransitionTime:  string
+			reason:              string
+			message:             string
 		}
 		#ConnectionInfo: {
 			name: string
 		}
+
 		// DeletionStatus reports the progress of an in-progress deletion and the problem
 		// blocking it. It is populated while the repository is Terminating and its
 		// finalizers run, so a client can explain the holdup and force-remove the
@@ -102,6 +103,7 @@ repository: {
 			// Cause classifies the blocking error. It may be absent on older statuses.
 			cause?: "user" | "system"
 		}
+
 		// ErrorDetails describes an individual field error intended to help users identify and fix issues
 		// in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same
 		// purpose: to deliver actionable feedback about fields in the spec that require attention.
@@ -128,6 +130,7 @@ repository: {
 			// This can be any type. This field is optional and may be omitted if not relevant.
 			badValue?: _
 		}
+
 		// GitHubEnterpriseRepositoryConfig describes a repository hosted on a self-managed
 		// GitHub Enterprise Server (GHES) instance.
 		#GitHubEnterpriseRepositoryConfig: {
@@ -210,6 +213,7 @@ repository: {
 			// By default, this is false (i.e. we will not create previews).
 			generateDashboardPreviews?: bool
 		}
+
 		// QuotaStatus represents the quota limits configured for this repository.
 		#QuotaStatus: {
 			// MaxRepositories is the maximum number of repositories allowed.
@@ -223,9 +227,9 @@ repository: {
 			updatedAt?: int64
 		}
 		#ResourceCount: {
-			group: string
+			group:    string
 			resource: string
-			count: int64
+			count:    int64
 		}
 		#SyncOptions: {
 			// Enabled must be saved as true before any sync job will run
@@ -259,7 +263,7 @@ repository: {
 		}
 		#TokenStatus: {
 			lastUpdated?: int64
-			expiration?: int64
+			expiration?:  int64
 		}
 		#WebhookConfig: {
 			// Base URL of the Grafana instance used to construct the webhook endpoint
@@ -276,11 +280,11 @@ repository: {
 		}
 		#WebhookStatus: {
 			// TODO: consolidate ID and UUID into a single string identifier in the next api version.
-			id?: int64
+			id?:   int64
 			uuid?: string
-			url?: string
+			url?:  string
 			subscribedEvents?: [...string]
-			lastEvent?: int64
+			lastEvent?:   int64
 			lastRotated?: int64
 		}
 		spec: {
