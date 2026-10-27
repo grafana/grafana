@@ -90,10 +90,7 @@ To look up a trace:
    The field is marked invalid if the value doesn't start with letters and numbers.
 1. Press <kbd>Enter</kbd> to run the query.
 
-The trace ID field supports Grafana variables, for example `$traceId`.
-Grafana expands variables before it sends the query to Tempo.
-
-When you switch to the **Trace ID** query type from another query type, Grafana keeps the current query text only if it looks like a trace ID.
+The **Trace ID** field accepts only a trace ID.
 
 {{< admonition type="note" >}}
 Span pruning is an experimental Tempo feature and requires Tempo 3.1 or later.
@@ -128,7 +125,7 @@ Expand **Filter Options** to set them.
 You can expand **Span Pruning Options** and **Filter Options** independently.
 
 Filter
-: A TraceQL spanset filter evaluated against the spans in the trace, for example `{ status = error && name = "foo" }`. The filter supports a single `{ ... }` block. Chained filters and pipelines aren't supported. Leave the field empty to skip filtering. The field shows an error when the filter isn't valid. Grafana variables are expanded before the query runs.
+: A TraceQL spanset filter evaluated against the spans in the trace, for example `{ status = error && name = "foo" }`. The filter supports a single `{ ... }` block. Chained filters and pipelines aren't supported. Leave the field empty to skip filtering. The field shows an error when the filter isn't valid.
 
 Keep Hierarchy
 : Includes each matched span's ancestor path back to the root, so the result displays as a complete waterfall instead of only the matching spans. Default value is **Off**.
@@ -142,6 +139,29 @@ Ancestor Depth
 **Keep Hierarchy**, **Match Depth**, and **Ancestor Depth** are disabled until **Filter** contains a valid filter.
 **Ancestor Depth** is also disabled while **Keep Hierarchy** is off.
 Select **Clear Filter** to remove the filter and reset all filter options.
+
+##### Example: focus on one service in a large trace
+
+A trace that spans many services can contain thousands of spans, and most of them are rarely relevant to the problem you're investigating.
+Use **Filter** and **Match Depth** to load only the part of the trace you care about.
+
+For example, you're investigating slow requests in the `checkout` service, and the trace passes through dozens of other services.
+To show only the work that starts in `checkout`:
+
+1. In **Filter Options**, set **Filter** to `{ resource.service.name = "checkout" }`.
+1. Set **Match Depth** to `-1`.
+1. Run the query.
+
+The filter matches every span that belongs to the `checkout` service.
+Because **Match Depth** is `-1`, Tempo also keeps the full subtree below each matched span, so you still see everything those spans called downstream.
+The rest of the trace is left out.
+
+To see where `checkout` sits in the wider request, turn **Keep Hierarchy** on.
+Tempo then also keeps each matched span's ancestors back to the root, so the result displays as a complete waterfall.
+Use **Ancestor Depth** to limit how many ancestor levels are kept.
+
+To narrow the result further, add conditions to the filter, for example `{ resource.service.name = "checkout" && status = error }`.
+You can combine the filter with span pruning to also collapse repeated spans in the part of the trace you kept.
 
 ### Service graph view
 
