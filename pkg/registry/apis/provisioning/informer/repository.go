@@ -6,9 +6,11 @@ import (
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -62,6 +64,11 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 			return nil, nil, err
 		}
 		getter := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), source)
+		// The getter remembers what it read until the snapshot catches up, and a vanished repository never appears
+		// there, so the delete has to reach it from the same event stream the snapshot is pruned by.
+		if _, err := source.AddEventHandler(forgetDeleted{getter: getter}); err != nil {
+			return nil, nil, err
+		}
 		return source, observeRepositoryFreshness(getter, announced, freshness.Recorder(gvr.Resource)), nil
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
@@ -76,6 +83,7 @@ func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interfac
 		opts.Keys = keyslister.New(keys)
 	}
 	opts.Namespace = namespace
+	opts.Group = queueGroup
 	// Delivered as a projection rather than the generated type: a live event carries the identity alone, and a
 	// zero-valued spec on a real object would read as a spec that is set to nothing.
 	list := func(ctx context.Context) ([]runtime.Object, error) {
@@ -133,6 +141,36 @@ func NewClientRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, snap
 	return &clientRepositoryGetter{client: c, snapshot: snapshot, recent: map[resource.Identifier]struct{}{}}
 }
 
+// forgetDeleted drops a deleted repository from the getter's remembered set. Without it a repository that is gone
+// is in neither the snapshot nor the set's pruning path, so the namespace would stay at its quota forever.
+type forgetDeleted struct {
+	getter RepositoryGetter
+}
+
+var _ cache.ResourceEventHandler = forgetDeleted{}
+
+func (forgetDeleted) OnAdd(any, bool)   {}
+func (forgetDeleted) OnUpdate(any, any) {}
+
+func (h forgetDeleted) OnDelete(obj any) {
+	getter, ok := h.getter.(*clientRepositoryGetter)
+	if !ok {
+		return
+	}
+	acc, err := meta.Accessor(obj)
+	if err != nil {
+		return
+	}
+	getter.forget(resource.Identifier{Namespace: acc.GetNamespace(), Name: acc.GetName()})
+}
+
+// forget drops one repository from the remembered set.
+func (g *clientRepositoryGetter) forget(id resource.Identifier) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	delete(g.recent, id)
+}
+
 type clientRepositoryGetter struct {
 	client   typedclient.ProvisioningV0alpha1Interface
 	snapshot RepositorySnapshot
@@ -145,9 +183,7 @@ func (g *clientRepositoryGetter) Get(ctx context.Context, namespace, name string
 	repo, err := g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
 	id := resource.Identifier{Namespace: namespace, Name: name}
 	if apierrors.IsNotFound(err) {
-		g.mu.Lock()
-		delete(g.recent, id)
-		g.mu.Unlock()
+		g.forget(id)
 		return nil, err
 	}
 	if err != nil {

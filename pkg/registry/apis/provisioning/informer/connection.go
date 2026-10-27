@@ -64,6 +64,7 @@ func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interfac
 		opts.Keys = keyslister.New(keys)
 	}
 	opts.Namespace = namespace
+	opts.Group = queueGroup
 	// Delivered as a projection rather than the generated type: a live event carries the identity alone, and a
 	// zero-valued spec on a real object would read as a spec that is set to nothing.
 	list := func(ctx context.Context) ([]runtime.Object, error) {

@@ -21,12 +21,15 @@ import (
 // NewJobDeltaSource returns the job delta source: an app-sdk bus informer when the subscriber is enabled, otherwise
 // an apiserver-backed SharedIndexInformer. The job controller reads no lister, so callers need only the DeltaSource.
 //
-// The two paths report their deliveries on different metrics: the bus informer carries the app-sdk's own families
-// (registered on reg), while the apiserver path keeps this package's. A nil reg disables both.
-func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer) (DeltaSource, error) {
+// The two paths report their deliveries on different metrics: the bus informer carries the app-sdk's own families,
+// in busMetrics, while the apiserver path keeps this package's, on reg. A nil value disables either.
+//
+// busMetrics is passed in rather than built here because its collectors register on construction: a process that
+// built a second set for another kind would panic on the duplicate.
+func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, resync time.Duration, reg prometheus.Registerer, busMetrics *operator.BusInformerMetrics) (DeltaSource, error) {
 	resourceName := provisioningapis.JobResourceInfo.GroupVersionResource().Resource
 	if nats.Enabled(subscriber) {
-		return NewJobBusDeltaSource(subscriber, client, "", resync, reg)
+		return NewJobBusDeltaSource(subscriber, client, "", resync, busMetrics)
 	}
 	metrics := newInformerMetrics(reg)
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Jobs().Informer()
@@ -38,7 +41,7 @@ func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, r
 
 // NewJobBusDeltaSource builds the NATS-mode job source. namespace scopes the subscription and the re-list; pass ""
 // to cover every namespace.
-func NewJobBusDeltaSource(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, reg prometheus.Registerer) (DeltaSource, error) {
+func NewJobBusDeltaSource(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, busMetrics *operator.BusInformerMetrics) (DeltaSource, error) {
 	c := client.ProvisioningV0alpha1()
 	list := func(ctx context.Context) ([]runtime.Object, error) {
 		objs, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
@@ -47,7 +50,7 @@ func NewJobBusDeltaSource(subscriber nats.Subscriber, client versioned.Interface
 		return objs, err
 	}
 	return usinformer.NewBusDeltaSource(subscriber, &provisioningapis.Job{}, &provisioningapis.JobResourceInfo,
-		resync, list, usinformer.BusSourceOptions{Namespace: namespace, Metrics: NewBusInformerMetrics(reg)})
+		resync, list, usinformer.BusSourceOptions{Namespace: namespace, Group: queueGroup, Metrics: busMetrics})
 }
 
 // NewBusInformerMetrics builds the app-sdk's delivery metrics and registers them under this repository's prefix, so

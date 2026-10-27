@@ -1165,12 +1165,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				return err
 			}
 
+			// One per process: the collectors register on construction, so a second set panics on the duplicate.
+			busInformerMetrics := informer.NewBusInformerMetrics(b.registry)
+
 			// Feed the driver's work queue from the jobs informer: live create
 			// events plus the periodic resync/re-list, which re-delivers unclaimed
 			// jobs and is the driver's only recovery path. The handler must be
 			// registered before the informer runs: the NATS-backed source has no
 			// cache to replay for late handlers.
-			jobSource, err := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry)
+			jobSource, err := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry, busInformerMetrics)
 			if err != nil {
 				return fmt.Errorf("build job delta source: %w", err)
 			}
@@ -1197,8 +1200,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
-			// One per process; see BusInformerMetrics.
-			busInformerMetrics := informer.NewBusInformerMetrics(b.registry)
 			// Likewise one per process; see FreshnessMetrics.
 			freshnessMetrics := informer.NewFreshnessMetrics(b.registry)
 

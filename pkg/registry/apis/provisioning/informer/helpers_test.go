@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -120,10 +119,4 @@ func counterValue(t *testing.T, reg *prometheus.Registry, name string, labels ma
 		}
 	}
 	return 0
-}
-
-func projectionCount(t *testing.T, reg *prometheus.Registry, gvr schema.GroupVersionResource, projection string) float64 {
-	t.Helper()
-	return counterValue(t, reg, "grafana_provisioning_informer_relist_projection_total",
-		map[string]string{"group": gvr.Group, "resource": gvr.Resource, "projection": projection})
 }

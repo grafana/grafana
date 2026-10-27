@@ -499,6 +499,7 @@ func TestNewConnectionDeltaSource_ObservesReadFreshness(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	sub := newFakeSubscriber()
 	source, getter, err := NewConnectionDeltaSource(sub, client, nil, time.Minute, nil, NewFreshnessMetrics(reg))
+	require.NoError(t, err)
 
 	stop := make(chan struct{})
 	t.Cleanup(func() { close(stop) })

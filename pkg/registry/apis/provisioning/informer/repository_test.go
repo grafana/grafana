@@ -203,3 +203,21 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 		assert.True(t, apierrors.IsNotFound(err))
 	})
 }
+
+// A repository that is gone is absent from the snapshot too, so nothing there could prune it: the delete has to
+// reach the getter from the event stream, or the namespace stays at its quota forever.
+func TestClientRepositoryGetter_ADeleteStopsItCounting(t *testing.T) {
+	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), fakeSnapshot{})
+
+	_, err := g.Get(context.Background(), "ns", "fresh")
+	require.NoError(t, err)
+	count, err := g.CountRepositories(context.Background(), "ns")
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+
+	forgetDeleted{getter: g}.OnDelete(identity("ns", "fresh", "8"))
+
+	count, err = g.CountRepositories(context.Background(), "ns")
+	require.NoError(t, err)
+	assert.Zero(t, count)
+}
