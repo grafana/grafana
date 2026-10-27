@@ -4,12 +4,12 @@ import { useAsync } from 'react-use';
 
 import {
   type DataSourceInstanceSettings,
+  getDataSourceRef,
   type MetricFindValue,
   type SelectableValue,
-  getDataSourceRef,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
+import { getDataSourceInstance, reportInteraction } from '@grafana/runtime';
 import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
@@ -94,7 +94,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
         },
         undo: () => {
           variable.setOriginalFilters(oldOriginalFilters);
-          variable.setState({ originFilters: oldOriginFilters });
+          variable.setState({ originFilters: oldOriginFilters ?? [] });
         },
       });
       lastOriginalFilters.current = variable.getOriginalFilters();
