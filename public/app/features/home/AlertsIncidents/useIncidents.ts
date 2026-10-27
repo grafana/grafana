@@ -2,12 +2,11 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 
 import { isFetchError } from '@grafana/runtime';
+import { useFlagGrafanaMultiTenantHomepage } from '@grafana/runtime/internal';
 import { incidentsApi } from 'app/features/alerting/unified/api/incidentsApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-
-import { isMultiTenantHomepage } from '../multiTenant';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { type FilterSelection, resolveFilterScope } from './filterSelection';
@@ -25,7 +24,7 @@ export function useIncidents(selectedFilter: FilterSelection = '') {
   const { installed, loading: probeLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
   // IRM's incidents API is reached through the legacy /api/plugins resources path only; the gate goes
   // once the frontend calls the /apis app resources route instead.
-  const unavailable = isMultiTenantHomepage();
+  const unavailable = useFlagGrafanaMultiTenantHomepage();
   const pluginLoading = !unavailable && probeLoading;
   const available = !unavailable && !!installed;
   const pluginId = SupportedPlugin.Irm;

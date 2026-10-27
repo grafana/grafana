@@ -12,7 +12,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { canViewFiringAlerts, useFiringAlerts } from './useFiringAlerts';
+import { useFiringAlerts } from './useFiringAlerts';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -74,25 +74,54 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe('canViewFiringAlerts', () => {
-  afterEach(() => {
-    setTestFlags({});
+describe('enabled', () => {
+  afterEach(async () => {
+    // setTestFlags fires OpenFeature events that update React state while the hook is still mounted
+    // (RTL cleanup runs in a later afterEach).
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
-  it('is true when the user has AlertingInstanceRead permission', () => {
+  it('is true when the user has AlertingInstanceRead permission', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-    expect(canViewFiringAlerts()).toBe(true);
+
+    const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+
+    expect(result.current.enabled).toBe(true);
+    await waitFor(() => expect(result.current.loading).toBe(false));
   });
 
-  it('is false when the user lacks AlertingInstanceRead permission', () => {
+  it('is false when the user lacks AlertingInstanceRead permission', async () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-    expect(canViewFiringAlerts()).toBe(false);
+
+    const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+
+    expect(result.current.enabled).toBe(false);
+    // The skipped teams lookup still settles useAsync a tick later.
+    await act(async () => {});
   });
 
-  it('is false on a multi-tenant homepage even with permission', () => {
+  it('is false on a multi-tenant homepage even with permission, without requesting teams or alerts', async () => {
     setTestFlags({ [FlagKeys.GrafanaMultiTenantHomepage]: true });
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
-    expect(canViewFiringAlerts()).toBe(false);
+    const requests: string[] = [];
+    server.use(
+      http.get('/api/user/teams', ({ request }) => {
+        requests.push(request.url);
+        return HttpResponse.json([]);
+      })
+    );
+    const alertRequests = captureAlertFilters();
+
+    const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+
+    await waitFor(() => expect(result.current.enabled).toBe(false));
+    expect(result.current.loading).toBe(false);
+    // The skipped teams lookup still settles useAsync a tick later.
+    await act(async () => {});
+    expect(requests).toEqual([]);
+    expect(alertRequests).toEqual([]);
   });
 });
 

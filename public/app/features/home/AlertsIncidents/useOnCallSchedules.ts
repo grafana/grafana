@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useInterval } from 'react-use';
 
 import { getTimeZone, getTimeZoneInfo } from '@grafana/data';
+import { useFlagGrafanaMultiTenantHomepage } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   onCallApi,
@@ -13,8 +14,6 @@ import {
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-
-import { isMultiTenantHomepage } from '../multiTenant';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { type ScheduleLoadError, classifyScheduleError } from './scheduleErrors';
@@ -72,7 +71,7 @@ function useIrmPlugin() {
   const schedulesHref = createBridgeURL(PLUGIN_ID, '/schedules');
   // IRM's schedules API is reached through the legacy /api/plugins resources path only; the gate goes
   // once the frontend calls the /apis app resources route instead.
-  const unavailable = isMultiTenantHomepage();
+  const unavailable = useFlagGrafanaMultiTenantHomepage();
   const loading = !unavailable && probeLoading;
   const available = !unavailable && !!installed;
   return {
