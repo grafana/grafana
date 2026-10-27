@@ -1872,14 +1872,20 @@ func startBookmarkWatch(t *testing.T, req *resourcepb.WatchRequest, configure fu
 	t.Cleanup(func() {
 		cancel()
 		srv.cancel()
+
+		// Finish watch cancellation before checking that the watch goroutine returned.
 		synctest.Wait()
+
 		select {
 		case err := <-done:
 			assert.NoError(t, err)
 		default: // An error-path test already consumed the result.
 		}
 	})
+
+	// Start the watch and its bookmark timer before returning control to the test.
 	synctest.Wait()
+
 	return events, stream, done
 }
 
@@ -1904,7 +1910,10 @@ func bookmarkWrittenEvent(rv int64) *WrittenEvent {
 
 func requireBookmarkEvent(t *testing.T, stream *bookmarkWatchServer, eventType resourcepb.WatchEvent_Type, rv int64) {
 	t.Helper()
+
+	// Finish pending watch delivery before reading the expected event or bookmark.
 	synctest.Wait()
+
 	require.NotEmpty(t, stream.events, "expected %s at RV %d", eventType, rv)
 	event := <-stream.events
 	require.Equal(t, eventType, event.Type)
@@ -1928,6 +1937,8 @@ func TestWatchPreviousReadError(t *testing.T) {
 		event.Type = resourcepb.WatchEvent_MODIFIED
 		event.PreviousRV = 150
 		events <- event
+
+		// Process the failed previous-version read before checking that the watch remains open.
 		synctest.Wait()
 
 		require.Empty(t, done, "watch should remain open after the previous version read fails")
@@ -1983,6 +1994,8 @@ func TestWatchDeleteRetainsPreviousJobRevisionAfterPruning(t *testing.T) {
 			PreviousRV:      previousRV,
 			Value:           objectToJSONBytes(t, previous),
 		}
+
+		// Finish the previous-version lookup and its error handling before checking watch shutdown.
 		synctest.Wait()
 
 		select {
@@ -2030,13 +2043,22 @@ func TestIncrementalBookmarksProgressLag(t *testing.T) {
 				}
 
 				time.Sleep(10 * time.Second)
+
+				// Finish the bookmark tick before verifying that elapsed time alone establishes no progress.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "the clock alone must not establish progress")
 
 				events <- filteredEvent(rvAt(time.Now()) + 1)
+
+				// Consume the filtered write before testing the bookmark's lag window.
 				synctest.Wait()
+
 				time.Sleep(20 * time.Second)
+
+				// Finish the lagged bookmark tick before checking that it cannot precede Since.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "lagged progress must not precede Since")
 				time.Sleep(10 * time.Second)
 				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rvAt(time.Now().Add(-time.Minute)))
@@ -2045,7 +2067,10 @@ func TestIncrementalBookmarksProgressLag(t *testing.T) {
 				// postponing all progress until the newest event is a minute old.
 				for range 2 {
 					events <- filteredEvent(rvAt(time.Now()) + 1)
+
+					// Consume each filtered write before advancing the next bookmark interval.
 					synctest.Wait()
+
 					time.Sleep(10 * time.Second)
 					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rvAt(time.Now().Add(-time.Minute)))
 				}
@@ -2071,7 +2096,10 @@ func TestIncrementalBookmarksLagDoesNotDelayObjects(t *testing.T) {
 		filtered := bookmarkWrittenEvent(objectRV + 1)
 		filtered.Key.Name = "other"
 		events <- filtered
+
+		// Consume the filtered write before checking that it cannot move progress past the delivered object.
 		synctest.Wait()
+
 		time.Sleep(10 * time.Second)
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, objectRV)
 
@@ -2080,7 +2108,10 @@ func TestIncrementalBookmarksLagDoesNotDelayObjects(t *testing.T) {
 		events <- bookmarkWrittenEvent(olderRV)
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, olderRV)
 		time.Sleep(10 * time.Second)
+
+		// Finish the next bookmark tick before checking that an older event cannot repeat progress.
 		synctest.Wait()
+
 		require.Empty(t, stream.events)
 	})
 }
@@ -2098,12 +2129,18 @@ func TestIncrementalBookmarksLaggedResume(t *testing.T) {
 		foreign := bookmarkWrittenEvent(snowflakeFromTime(now))
 		foreign.Key.Resource = "other"
 		events <- foreign
+
+		// Process the foreign collection's write before measuring progress for the watched collection.
 		synctest.Wait()
+
 		time.Sleep(10 * time.Second)
 		resumeRV := snowflakeFromTime(time.Now().Add(-time.Minute))
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, resumeRV)
 		close(events)
+
+		// Finish watch shutdown after its input closes before checking its returned error.
 		synctest.Wait()
+
 		require.NoError(t, <-done)
 
 		// The lagged bookmark leaves a late lower-RV notification eligible.
@@ -2165,12 +2202,18 @@ func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
 					tt.filter(event)
 				}
 				events <- event
+
+				// Process the filtered object before checking that only its progress can produce a bookmark.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "filtered objects must not be sent")
 				time.Sleep(time.Second)
 				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 101)
 				time.Sleep(2 * time.Second)
+
+				// Finish later bookmark ticks before checking that unchanged progress is not repeated.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "unchanged progress must not repeat")
 			})
 		})
@@ -2183,9 +2226,15 @@ func TestIncrementalBookmarksLegacySQLCollectionOrdering(t *testing.T) {
 		foreign := bookmarkWrittenEvent(300)
 		foreign.Key.Resource = "other"
 		events <- foreign
+
+		// Consume the foreign collection's event before checking SQL watch progress.
 		synctest.Wait()
+
 		time.Sleep(2 * time.Second)
+
+		// Finish bookmark ticks before verifying that another collection cannot establish progress.
 		synctest.Wait()
+
 		require.Empty(t, stream.events, "other collections cannot establish SQL progress")
 
 		events <- bookmarkWrittenEvent(110)
@@ -2197,7 +2246,10 @@ func TestIncrementalBookmarksLegacySQLCollectionOrdering(t *testing.T) {
 		events <- bookmarkWrittenEvent(105)
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 105)
 		time.Sleep(time.Second)
+
+		// Finish the bookmark tick before checking that progress cannot regress.
 		synctest.Wait()
+
 		require.Empty(t, stream.events, "bookmarks must not regress")
 	})
 }
@@ -2226,7 +2278,10 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 					}
 				})
 				events <- bookmarkWrittenEvent(101)
+
+				// Enter the blocked Send before supplying the next pending event.
 				synctest.Wait()
+
 				select {
 				case <-entered:
 				default:
@@ -2236,11 +2291,17 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				pending.Key.Resource = "other"
 				events <- pending
 				time.Sleep(2 * time.Second)
+
+				// Finish bookmark ticks while Send is blocked before checking that pending events are not covered.
 				synctest.Wait()
+
 				require.Empty(t, stream.events, "blocked events must not be covered")
 
 				close(release)
+
+				// Finish the released Send and its error handling before inspecting the watch result.
 				synctest.Wait()
+
 				if fail {
 					require.ErrorIs(t, <-done, sendErr)
 					require.Empty(t, stream.events)
@@ -2248,7 +2309,10 @@ func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
 				}
 
 				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 101)
+
+				// Finish the pending bookmark after the delivered object before reading it.
 				synctest.Wait()
+
 				require.NotEmpty(t, stream.events)
 				bookmark := <-stream.events
 				require.Equal(t, resourcepb.WatchEvent_BOOKMARK, bookmark.Type)
@@ -2299,9 +2363,15 @@ func TestIncrementalBookmarksInitialBackfill(t *testing.T) {
 		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 2)
 
 		events <- bookmarkWrittenEvent(initialRV + 1)
+
+		// Consume the live write while the initial-list bookmark is still blocked.
 		synctest.Wait()
+
 		time.Sleep(2 * time.Second)
+
+		// Finish bookmark ticks before checking that live delivery is held behind the initial list.
 		synctest.Wait()
+
 		require.Empty(t, stream.events, "live events must wait for backfill")
 
 		close(release)
@@ -2644,12 +2714,18 @@ func TestWatchEventMetricsPhaseIncludesInitialBookmark(t *testing.T) {
 		})
 		// Let the blocked bookmark send finish.
 		time.Sleep(3 * time.Second)
+
+		// Finish the released initial-list bookmark before inspecting its write timestamp.
 		synctest.Wait()
+
 		require.False(t, wroteAt.IsZero())
 
 		events <- bookmarkWrittenEvent(snowflakeFromTime(wroteAt))
 		events <- bookmarkWrittenEvent(snowflakeFromTime(time.Now()))
+
+		// Process the writes on both sides of readiness before comparing their metric phases.
 		synctest.Wait()
+
 		requireReadyPhaseCounts(t, metrics, 1, 1)
 	})
 }
@@ -4967,55 +5043,61 @@ func TestResourceServerQOSTenantIsolation(t *testing.T) {
 		require.Nil(t, rsp.Error)
 		keys[namespace] = key
 	}
-	q := scheduler.NewQueue(&scheduler.QueueOptions{MaxConcurrentPerTenant: 4})
-	startQOSTestService(t, q)
-	worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 32})
-	require.NoError(t, err)
-	startQOSTestService(t, worker)
-	srv.queue = q
-	srv.queueConfig.Timeout = 5 * time.Second
+	synctest.Test(t, func(t *testing.T) {
+		q := scheduler.NewQueue(&scheduler.QueueOptions{MaxConcurrentPerTenant: 4})
+		startQOSTestService(t, q)
+		worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 32})
+		require.NoError(t, err)
+		startQOSTestService(t, worker)
+		srv.queue = q
+		srv.queueConfig.Timeout = 5 * time.Second
 
-	started := make(chan struct{}, 5)
-	release := make(chan struct{})
-	unblock := sync.OnceFunc(func() { close(release) })
-	t.Cleanup(unblock)
-	access.fn = func(req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
-		if req.Namespace == "slow" {
-			started <- struct{}{}
-			<-release
+		started := make(chan struct{}, 5)
+		release := make(chan struct{})
+		unblock := sync.OnceFunc(func() { close(release) })
+		t.Cleanup(unblock)
+		access.fn = func(req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+			if req.Namespace == "slow" {
+				started <- struct{}{}
+				<-release
+			}
+			return authlib.CheckResponse{Allowed: true}, nil
 		}
-		return authlib.CheckResponse{Allowed: true}, nil
-	}
-	type result struct {
-		rsp *resourcepb.ReadResponse
-		err error
-	}
-	read := func(namespace string) result {
-		rsp, err := srv.Read(ctxFor(namespace), &resourcepb.ReadRequest{Key: keys[namespace]})
-		return result{rsp: rsp, err: err}
-	}
-	assertRead := func(r result) {
-		t.Helper()
-		require.NoError(t, r.err)
-		require.NotNil(t, r.rsp)
-		require.Nil(t, r.rsp.Error)
-		require.NotEmpty(t, r.rsp.Value)
-	}
-	slowResults := make(chan result, 5)
-	for range 5 {
-		go func() { slowResults <- read("slow") }()
-	}
-	for range 4 {
-		awaitQOSTestResult(t, started)
-	}
-	require.Eventually(t, func() bool { return q.Len() == 1 }, time.Second, time.Millisecond)
-	assertRead(read("healthy"))
-	require.Equal(t, 1, q.Len())
-	require.Empty(t, started, "fifth authorization must stay queued")
-	unblock()
-	for range 5 {
-		assertRead(awaitQOSTestResult(t, slowResults))
-	}
+		type result struct {
+			rsp *resourcepb.ReadResponse
+			err error
+		}
+		read := func(namespace string) result {
+			rsp, err := srv.Read(ctxFor(namespace), &resourcepb.ReadRequest{Key: keys[namespace]})
+			return result{rsp: rsp, err: err}
+		}
+		assertRead := func(r result) {
+			t.Helper()
+			require.NoError(t, r.err)
+			require.NotNil(t, r.rsp)
+			require.Nil(t, r.rsp.Error)
+			require.NotEmpty(t, r.rsp.Value)
+		}
+		slowResults := make(chan result, 5)
+		for range 5 {
+			go func() { slowResults <- read("slow") }()
+		}
+		for range 4 {
+			awaitQOSTestResult(t, started)
+		}
+
+		// Finish queue admission while execution remains blocked.
+		synctest.Wait()
+
+		require.Equal(t, 1, q.Len())
+		assertRead(read("healthy"))
+		require.Equal(t, 1, q.Len())
+		require.Empty(t, started, "fifth authorization must stay queued")
+		unblock()
+		for range 5 {
+			assertRead(awaitQOSTestResult(t, slowResults))
+		}
+	})
 }
 
 func TestResourceServerQOSQueueWaitSpan(t *testing.T) {
@@ -5046,25 +5128,35 @@ func TestResourceServerQOSQueueWaitSpan(t *testing.T) {
 		require.Contains(t, spans[0].Attributes(), attribute.String("stack", "cs"))
 	})
 	t.Run("ends on queued cancellation", func(t *testing.T) {
-		recorder := newQOSTestSpanRecorder(t)
-		q := scheduler.NewQueue(&scheduler.QueueOptions{})
-		startQOSTestService(t, q)
-		srv := &server{queue: q, queueConfig: QueueConfig{Timeout: time.Minute}}
-		ctx, cancel := context.WithCancel(t.Context())
-		defer cancel()
-		result := make(chan error, 1)
-		go func() {
-			result <- srv.runInQueue(ctx, "stack-a", "read", func(context.Context) { t.Error("canceled work ran") })
-		}()
-		require.Eventually(t, func() bool { return q.Len() == 1 }, time.Second, time.Millisecond)
-		cancel()
-		require.ErrorIs(t, awaitQOSTestResult(t, result), context.Canceled)
-		spans := recorder.Ended()
-		require.Len(t, spans, 1)
-		require.Equal(t, otelcodes.Error, spans[0].Status().Code)
-		require.Len(t, spans[0].Events(), 1)
-		require.Equal(t, "exception", spans[0].Events()[0].Name)
-		require.Eventually(t, func() bool { return q.Len() == 0 }, time.Second, time.Millisecond)
+		synctest.Test(t, func(t *testing.T) {
+			recorder := newQOSTestSpanRecorder(t)
+			q := scheduler.NewQueue(&scheduler.QueueOptions{})
+			startQOSTestService(t, q)
+			srv := &server{queue: q, queueConfig: QueueConfig{Timeout: time.Minute}}
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			result := make(chan error, 1)
+			go func() {
+				result <- srv.runInQueue(ctx, "stack-a", "read", func(context.Context) { t.Error("canceled work ran") })
+			}()
+
+			// Finish queue admission while execution remains blocked.
+			synctest.Wait()
+
+			require.Equal(t, 1, q.Len())
+			cancel()
+			require.ErrorIs(t, awaitQOSTestResult(t, result), context.Canceled)
+			spans := recorder.Ended()
+			require.Len(t, spans, 1)
+			require.Equal(t, otelcodes.Error, spans[0].Status().Code)
+			require.Len(t, spans[0].Events(), 1)
+			require.Equal(t, "exception", spans[0].Events()[0].Name)
+
+			// Let the queued cancellation callback release its queue slot.
+			synctest.Wait()
+
+			require.Zero(t, q.Len())
+		})
 	})
 	t.Run("execution cancellation leaves the completed wait successful", func(t *testing.T) {
 		recorder := newQOSTestSpanRecorder(t)

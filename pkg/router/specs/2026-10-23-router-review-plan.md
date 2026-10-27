@@ -41,6 +41,9 @@ the plan and changed what some items mean:
 - **#135949: status and manifests pages** in the swagger UI, and compiled-in app manifests for
   groups whose backend advertises none.
 
+Updated on 2026-10-27 from `main` at af1cc0cd8a5. #136088 landed the restructure (A2, A5–A8), and
+A1 was dropped. Open: A4, T1–T3, the metrics follow-ups, and the performance leftovers.
+
 The new sections in this plan:
 
 - **D**: dangling features and dead code to remove.
@@ -70,7 +73,10 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 | D2–D4, D6–D9, D11 (partly): the dead-code sweep | #135744 |
 | R1, R2: retired plugin handlers are destroyed once they drain, and managed plugin connections close with their last handler | #135809 |
 | R4, O4: a failing backend backs off per group, reconcile warnings are logged once, and the status page lists load failures | #135818 |
-| C7, C8: docs and specs caught up with #135946 and #135949, `mdCode` bounded, `cooldown.go` | `router-docs-c7-c8` (unmerged) |
+| C7, C8: docs and specs caught up with #135946 and #135949, `mdCode` bounded, `cooldown.go` | #136005 |
+| A2, A5, A8: one `polledSource`, an ordered source list with a `mergeStep` for the dashboard split, teardown on stop, one `wrappedBackend` | #136088 |
+| A6: generic loader counters, the unregistered-group handler named generically, breaker scope recorded once in `publish` and seen through the dashboard split | #136088 |
+| A7: `router.go` split into `reconcile.go`, `auth.go` and `openapi_cache.go`; `st_fallback.go` into `st_stacks.go` and `st_poll.go`; the index into `discovery_index.go` | #136088 |
 | O5–O9: 4xx at Debug, no panic on a second registration, ready only after each source's first poll, `plugins_poll_interval` and `core_poll_interval`, no `plugin_id=""` | #135820 |
 | P14, P17, P20, P21: the `/watch/` path rejected, router deadlines counted against the breaker, the ST discovery cache bounded, partial discovery kept | #135823 |
 | F7, F8, F9 (partly), F11 (partly), F12 (partly): one request-state value, a `status_code` table, one ST transport, a cheaper flush, `strings.Cut`, streamed ETag hashing, an ST forward benchmark | #135946, #135827 |
@@ -82,6 +88,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 | R5: no plugin handlers when nothing routes them | Loading them inside Grafana exercises their setup, and they will be routed soon (user decision, 2026-10-23). |
 | D5: drop the `/apis/discovery/v1alpha2/AGENTS` page and index | Kept (user decision, 2026-10-23). |
 | D10: config knobs to constants | Every knob is kept (user decision, 2026-10-23). |
+| A1: a subpackage per source | Each source uses 16 to 35 unexported engine identifiers, and the cloud loader imports every source, so the engine would need its own lower package and an exported internal API, with most tests crossing the line. A6 and A7 keep the sources apart by file and by rule instead. Revisit if the package gets a second consumer (user decision, 2026-10-27). |
 
 ### Left from partly done items
 
@@ -92,7 +99,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
   generation and the negotiated version alone. A caller-scoped ST answer still needs the source
   bytes in the key, as does F2.
 - **F9:** the ST transport is built once (#135827), but `forward` still builds a `ReverseProxy` per
-  request.
+  request (`st_fallback.go`).
 - **F11:** sorting the manifest backends once per `publish` (`sortedManifestBackends` is still
   called from `discovery.go` twice and `discovery_manifests.go` once).
 - **F12:** benchmarks for a per-event watch flush and a plugin call.
@@ -109,8 +116,7 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 - **`router-review-3`**: forked 2026-09-28. `main` is now more than 1100 commits ahead of it, 48
   of them in `pkg/router`.
   - R1, R2, R4, P14, O5 and O6 have landed on `main` on their own, so those commits are moot.
-  - A4.2 and A4.3 (ac69ebc3ce1) are the only ports left, and they should still fit with light
-    work.
+  - A4.2 and A4.3 (ac69ebc3ce1) are redone on `router/a4-config` instead, not ported (see A4).
   - A2 and A5 (56915e172f8) are obsolete, since they were built around the removed RouteBackend
     source. Keep only the design.
 
@@ -118,13 +124,12 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 
 ## Suggested order
 
-1. **Done:** every R, P, O and C item, the dead-code sweep, and most of F.
-2. **Tests:** T1 and T2, before the restructure moves the code they cover.
-3. **Metrics:** M5–M12 in `2026-10-08-router-metrics-review.md`, plus metrics for the
+1. **Done:** every R, P, O and C item, every A item except A4, the dead-code sweep, and most of F.
+2. **Config:** A4, while nothing depends on the old key names.
+3. **Tests:** T1–T3, and F12's watch-flush and plugin-call benchmarks.
+4. **Metrics:** M5–M7 and M9–M12 in `2026-10-08-router-metrics-review.md`, plus metrics for the
    `baasbridge` calls (#135815).
-4. **Config:** A4, while nothing depends on the old key names.
-5. **Restructure:** A2 with A5 and A8, then A6, then A1 and A7.
-6. **Performance leftovers, if profiles call for them:** F1's memo, F2, F9's proxy, F10, F11's sort.
+5. **Performance leftovers, if profiles call for them:** F1's memo, F2, F9's proxy, F10, F11's sort.
 
 ---
 
@@ -157,7 +162,8 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
     resets the count.
   - Do O4 in the same change.
 
-- [x] **R5. Inside Grafana without the middleware flag, every plugin backend is still built.**
+- [x] **R5. Inside Grafana without the middleware flag, every plugin backend is still built.** Not
+  pursued (see "Not pursued").
   - **Problem:** the `Service` now always runs, so that `/apis/discovery` stays current. `reconcile`
     therefore calls `Backend.Load` for every local manifest-bearing plugin and settings backend, and
     `HandleFunc` never serves one of them. The cost is an API server per plugin at startup (leaked,
@@ -253,12 +259,9 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
 
 ## A: Architecture
 
-- [ ] **A1. Split the generic engine from the source-specific code.**
-  - Move each source to a subpackage, for example
-    `pkg/router/sources/{aggregate,pluginmanifests,stfallback}`.
-  - `st_resources.go` and the settings backends now add to the source-specific side.
+A1 is not pursued (see "Not pursued").
 
-- [ ] **A2. Replace `cloudLoader`'s hardcoded merge with an ordered list of sources.**
+- [x] **A2. Replace `cloudLoader`'s hardcoded merge with an ordered list of sources.**
   - **Problem:**
     - `cloudLoader.Load` writes the priority order out by hand, and now ends with a post-merge step
       that wraps `dashboard.grafana.app`.
@@ -269,22 +272,36 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
     - Extract one `polledSource`, and keep an ordered `[]source`.
     - Model the dashboard split as an explicit post-merge step, not inline code.
 
-- [ ] **A4. Finish reshaping the config before anyone depends on it.**
+- [ ] **A4. Finish reshaping the config before anyone depends on it.** Step 1 is on
+  `router/a4-config`. The cloud config is `ksonnet/environments/grafana-router/main.jsonnet` in
+  `deployment_tools`. It sets `group_regex` on `cloud_app_platform_apiserver` and `baas_apiserver`,
+  and only `cloud_app_platform_apiserver` signs its discovery polls; every other target sets
+  `discovery_auth = none`.
   - **A4.1.** Rename `group_regex` and `plugins_group_regex` to `group_patterns` and
-    `plugins_group_patterns`, and keep reading the old names with a warning.
-  - **A4.2.** Replace the `cloud_app_platform_apiserver` name check in `aggregateTokenWrapper` with a
-    per-target `auth = bearer | access_token`.
-  - **A4.3.** Move the hardcoded stack URL template (`st_fallback.go`) into an `st_stack_url` key.
-    Check that the slug is a DNS label before putting it into the host.
-  - **A4.4 (changed).** A new `ProvideCloudRoutesLoader` wraps the factory, so the old "fold into it"
-    plan would collide with that name. Instead, unexport `ProvideCloudRoutesLoaderFactory`, for
-    example as `newCloudRoutesLoader`. Rename it in `2026-09-25-router-design-notes.md` ("Two
-    transports per aggregate target") in the same change.
+    `plugins_group_patterns`. The old names are still read, with a warning, and setting both is an
+    error. They must be: an image that ignored them would match every group the target serves.
+  - **A4.2 (changed).** The token header only matters for the router's own discovery polls, so it
+    is a new `discovery_auth = bearer` value (`Authorization`), next to `cap_token`
+    (`X-Access-Token`) and `none`, instead of a separate `auth` key. Until the deployment sets it,
+    `cloud_app_platform_apiserver` without `discovery_auth` still gets `bearer` by name.
+  - **A4.3 (changed).** The slug from grafana.com must be a DNS label before it goes into the stack
+    host. No `st_stack_url` key: every cluster uses the same template, so it is a constant
+    (`singleTenantStackURLFormat`) until one needs another.
+  - **A4.4 (changed).** Rename `ProvideCloudRoutesLoaderFactory` to `NewCloudRoutesLoader`. It
+    isn't a Wire provider, and it stays exported because tests in `pkg/server` and
+    `pkg/tests/apis/appplugin` build it with their own dependencies.
+  - **Rollout.** Each config change follows the image. An older image ignores `group_patterns` and
+    fails at startup on `discovery_auth = bearer`.
+    1. The router change above, which keeps today's config working.
+    2. Once that image is in every wave, `main.jsonnet`: `group_regex` to `group_patterns`, and
+       `discovery_auth: 'bearer'` on `cloud_app_platform_apiserver`.
+    3. Then drop the name check, and either drop the old key names or fail on them at startup, as
+       `appmanifest_apiserver_url` does.
 
-- [ ] **A5. A source teardown contract.** With A2, the loader tears down each source on shutdown.
+- [x] **A5. A source teardown contract.** With A2, the loader tears down each source on shutdown.
   That replaces `defer t.closeConnections()` in `pluginManifestsTarget.run`.
 
-- [ ] **A6. Keep ST knowledge out of the engine.**
+- [x] **A6. Keep ST knowledge out of the engine.**
   - **Problem:**
     - `loaderStatus.stackLookups` and `stackDiscoveryCache` (`sources.go`) put ST details in
       engine-side code: `discovery_status.go` `StackLookups`, the `routerCollector` series, and the
@@ -298,14 +315,14 @@ IDs from earlier plans are kept. Tick an item here when it lands, and note the P
     - Record each entry's breaker scope once in `publish`. That replaces the three repeated
       `managesCircuitBreaking || breaker == nil` checks.
 
-- [ ] **A7. Split the largest files.** Line counts as of 2026-10-26.
+- [x] **A7. Split the largest files.** Line counts as of 2026-10-26.
   - `router.go` (980 lines): OpenAPI serving into `openapi_cache.go`, `authenticate` into `auth.go`,
     and `Run`/`reconcile`/`publish` into `reconcile.go`.
   - `st_fallback.go` (733 lines): stack resolution into `st_stacks.go`, and poll plus `fallbackBackend`
     into `st_poll.go`.
   - `discovery_manifests.go` (789 lines): index rendering into `discovery_index.go` (D5 keeps it).
 
-- [ ] **A8. One backend wrapper.**
+- [x] **A8. One backend wrapper.**
   - `pluginDeploymentBackend` (`plugin_manifests.go`) and `singleTenantResourcesBackend`
     (`st_resources.go`) each forward the optional interfaces by hand: `Manifest`, `PluginStatus` and
     `DiscoveryProvider`.
@@ -371,14 +388,16 @@ or impossible configurations reach. No config in this repo sets any `[cloud_rout
   - If it ever ran, it would advertise fake `dummy-backend-*` groups.
   - Move it into a `_test.go` file. Production should return an empty loader or an error.
 
-- [x] **D3. `singleTenantFallback` as a `RoutesLoader` is test-only.**
+- [x] **D3. `singleTenantFallback` as a `RoutesLoader` is test-only.** Partly done; see "Left from
+  partly done items".
   - Delete `SingleTenantFallback()`, `Load`, `Notify` and the `discoveryHost == nil` branches
     (`st_fallback.go`). Tests can build it through `newCloudLoader`.
   - Unexport `LoaderWithSingleTenantFallback`, which has one production implementation and no
     external users.
   - **Saves:** about 40 lines.
 
-- [x] **D4. Remove test-only paths from production code.**
+- [x] **D4. Remove test-only paths from production code.** Partly done; see "Left from partly done
+  items".
   - The `breakerState()` fallback to `breaker.State()` (`router.go`) breaks the AGENTS.md rule against
     reading `State()`. It runs only for test entries built without `newHandlerEntry`.
   - Remove the nil checks that only test literals need:
@@ -392,7 +411,8 @@ or impossible configurations reach. No config in this repo sets any `[cloud_rout
   - Add a test helper for `servingEntry`.
   - **Saves:** about 35 lines.
 
-- [x] **D5. The `/apis/discovery/v1alpha2/AGENTS` HTML page (product call).**
+- [x] **D5. The `/apis/discovery/v1alpha2/AGENTS` HTML page (product call).** Not pursued (see
+  "Not pursued").
   - **Problem:** nothing in the repo uses it except tests. It is the router's only use of
     `russross/blackfriday/v2`, and the largest place where plugin-controlled text is rendered.
   - **Options:**
@@ -413,14 +433,16 @@ or impossible configurations reach. No config in this repo sets any `[cloud_rout
 - [x] **D8. `compileGroupPatterns` returns an error that can't happen.** `QuoteMeta` parts joined by
   `.*` always compile. Drop the error and its two call-site checks.
 
-- [x] **D9. Leftovers from removed sources.**
+- [x] **D9. Leftovers from removed sources.** Done except the legacy-key guard; see "Left from
+  partly done items".
   - The `appmanifest_apiserver_url`/`apiserver_url` guard (`cloud_router.go`, #134652): delete it once
     deployments are confirmed migrated.
   - The key-compatibility branch in `discoveredGroupKey`: keys live only in memory, so always hash.
   - Stale comments that mention forward backends or RouteBackend CRs: `discovery_cache.go`,
     `aggregate_router_test.go`, `metrics_test.go`.
 
-- [x] **D10. Config knobs to constants (check the deployment config first).**
+- [x] **D10. Config knobs to constants (check the deployment config first).** Not pursued (see
+  "Not pursued").
   - `[router.backend_grpc]`: keep `tls_*` and `retry_max`. Make `connect_*`, `keepalive_*`,
     `max_*_msg_size`, `retry_backoff` and `retry_jitter` constants unless something sets them. That
     saves about 80 lines of parsing.
@@ -428,7 +450,7 @@ or impossible configurations reach. No config in this repo sets any `[cloud_rout
     `st_lookup_rate`.
   - Keep `discovery_auth = none`; it was added on purpose (#134461).
 
-- [x] **D11. Small duplications, about 50 lines.**
+- [x] **D11. Small duplications, about 50 lines.** Partly done; see "Left from partly done items".
   - Five sha256-hex helpers.
   - Three "write a cached doc with ETag and 304" paths: `serveCachedDoc`, the OpenAPI cache hit, and
     `serveStackDiscovery`.
@@ -463,6 +485,7 @@ GC was about 28% of CPU on the middleware path, so cutting allocations was the m
 open items with real gains left are aggregated `/apis` (F1) and reconcile (F11's sort).
 
 - [x] **F1. Aggregated `/apis` is rebuilt on every request, and logs a line per group-version.**
+  Done except the memo; see "Left from partly done items".
   - **Problem:**
     - `serveAggregatedDiscovery` (`discovery_handler.go`) builds a new
       `aggregated.NewResourceManager` and calls `SetGroups` per request.
@@ -494,6 +517,8 @@ open items with real gains left are aggregated `/apis` (F1) and reconcile (F11's
   - **Fix:** memoize the merged document, keyed by the source body's ETag or hash plus the snapshot
     pointer.
   - Update the AGENTS.md wording "built on every request" to say "merged per source answer".
+  - The local branch `router/perf-discovery-memo` (24186ee3e90) has an LRU memo for both paths, from
+    before #135946. Redo it for the ST path only.
 
 - [x] **F3. No `BufferPool` on any `ReverseProxy`.** Each proxied request allocates a 32 KB buffer.
   One shared `sync.Pool`-backed `httputil.BufferPool` takes a 1 KB proxied request from 41 KB to
@@ -545,7 +570,7 @@ open items with real gains left are aggregated `/apis` (F1) and reconcile (F11's
   - An entry must expire well before `localTokenTTL`, and never after its subject token.
   - This needs the plugins squad's review.
 
-- [ ] **F11. Small, cheap fixes.**
+- [ ] **F11. Small, cheap fixes.** Only the sort is left.
   - `statusRecorder.FlushError` allocates a `ResponseController` on every flush, which for a watch is
     every event. Type-assert first. (Done, ported from #135827.)
   - Use `strings.Cut` instead of `strings.Split` on the per-request paths: OpenAPI path parsing
@@ -554,7 +579,8 @@ open items with real gains left are aggregated `/apis` (F1) and reconcile (F11's
   - Sort the manifest backends once per `publish`, not three times. That is about 30% of an
     unchanged reconcile.
 
-- [x] **F12. Add benchmarks for the real hot paths:**
+- [x] **F12. Add benchmarks for the real hot paths.** Done except the watch flush and the plugin
+  call:
   - a proxy through an aggregate backend;
   - aggregated `/apis`;
   - middleware root discovery with a real `next`;
@@ -583,12 +609,13 @@ Not pursued:
   - the breaker scope shown in status and metrics.
 
   Also confirm that a user's write to ST is visible to a later read from MT.
-  `st_resources_test.go` covers path classification and plain dispatch only.
-- [ ] **T2. Plugin gRPC.** No end-to-end test against a real `grpc.Server` for retries, keepalive
-  (P18) or a dropped connection. `plugin_grpc_test.go` tests config parsing and dial options only.
-- [ ] **T3. Embedded groups in middleware mode (#135946).** Check coverage for a watch on an
-  embedded group, and for in-process clients (`GetDirectRestConfig`, `DirectlyServeHTTP`) before
-  the router is `Ready`.
+  `st_resources_test.go` covers path classification, plain dispatch and, since #136088, the breaker
+  scope (`TestSingleTenantResourcesBreakerScope`).
+- [ ] **T2. Plugin gRPC.** No end-to-end test against a real `grpc.Server` for keepalive (P18) or a
+  dropped connection. Retries are covered (`TestPluginGRPCDialOptionsCountRetries`).
+- [ ] **T3. Embedded groups in middleware mode (#135946).** No test for a watch on an embedded
+  group, or for in-process clients (`GetDirectRestConfig`, `DirectlyServeHTTP`). Requests before
+  the router is `Ready` are covered (`TestMiddlewareLeavesRequestsToTheServerUntilReady`).
 
 ---
 

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -424,6 +425,8 @@ func newPluginSettingsBackend(plugin definition.PluginDefinition, client PluginC
 
 type PluginBackend struct {
 	key string
+	// source is reported by Source; empty for a local plugin.
+	source string
 
 	pluginID string
 	info     plugins.Info
@@ -459,7 +462,7 @@ func (b *PluginBackend) Group() metav1.APIGroup {
 }
 
 // Source implements [Backend].
-func (b *PluginBackend) Source() string { return sourceLocalPlugin }
+func (b *PluginBackend) Source() string { return cmp.Or(b.source, sourceLocalPlugin) }
 
 // Manifest implements [ManifestProvider].
 func (b *PluginBackend) Manifest() (*app.ManifestData, bool) {

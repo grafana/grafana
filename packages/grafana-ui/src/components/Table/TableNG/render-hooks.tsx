@@ -45,7 +45,7 @@ import { AutoCellRenderer, getCellRenderer, getCellSpecificStyles } from './Cell
 import { getCellMenuOptions } from './cellMenuOptions';
 import { HeaderCell } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
-import { TableCellActions } from './components/TableCellActions';
+import { handleCellActionsKeyDown, TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
 import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS, TABLE } from './constants';
 import {
@@ -61,7 +61,6 @@ import {
 } from './styles';
 import {
   type CellRootRenderer,
-  type FilterType,
   type FromFieldsResult,
   type GetActionsFunctionLocal,
   type InspectCellProps,
@@ -162,7 +161,6 @@ export interface ColumnBuildConfig {
   disableSanitizeHtml?: boolean;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
-  filter: FilterType;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
    * `firstColumnInset` style, applied under `noPanelPadding`). It comes out of the cell's content
@@ -187,7 +185,6 @@ export interface ColumnBuildConfig {
   onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   rowHeightFn: (row: TableRow) => number;
-  setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
   settlingColumnKeys?: ReadonlySet<string>;
   showTypeIcons?: boolean;
@@ -195,6 +192,7 @@ export interface ColumnBuildConfig {
   jsonSyntaxHighlightingEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
+  timeZone?: string;
   typographyCtx: TypographyCtx;
 }
 
@@ -271,8 +269,6 @@ function buildColumnsFromFields(
     getTextColorForBackground,
     rowHeight,
     rowHeightFn,
-    filter,
-    setFilter,
     setInspectCell,
     gridRef,
     getCellActions,
@@ -295,6 +291,7 @@ function buildColumnsFromFields(
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
     timeRange,
+    timeZone,
     firstColumnExtraPadding = 0,
     lastColumnExtraPadding = 0,
     typographyCtx,
@@ -483,6 +480,7 @@ function buildColumnsFromFields(
             cellSpecificStyles != null && maxRowHeight == null ? cellSpecificStyles : ''
           )}
           style={style}
+          onKeyDown={tableRefreshEnabled && !disableKeyboardEvents ? handleCellActionsKeyDown : undefined}
         />
       );
     };
@@ -678,8 +676,7 @@ function buildColumnsFromFields(
           column={column}
           rows={rawRows}
           field={field}
-          filter={filter}
-          setFilter={setFilter}
+          timeZone={timeZone}
           disableKeyboardEvents={disableKeyboardEvents}
           direction={sortDirection}
           showTypeIcons={showTypeIcons}

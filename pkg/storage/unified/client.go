@@ -100,6 +100,9 @@ func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subsc
 	var opts []sql.StorageBackendOption
 	if publisher != nil {
 		opts = append(opts, sql.WithEventPublisher(publisher))
+		if cfg.NATS.NotificationMetadata {
+			opts = append(opts, sql.WithWatchNotificationMetadata())
+		}
 	}
 	if subscriber == nil {
 		return opts
