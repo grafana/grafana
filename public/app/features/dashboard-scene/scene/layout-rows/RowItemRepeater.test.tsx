@@ -52,7 +52,7 @@ describe('RowItemRepeater', () => {
     it('keeps repeated rows expanded when collapsing the source row through edit history', async () => {
       const { scene, rowToRepeat } = renderScene({ variableQueryTime: 0 });
       await waitFor(() => expect(rowToRepeat.state.repeatedRows).toHaveLength(2));
-      act(() => {
+      await act(async () => {
         scene.onEnterEditMode();
         scene.state.sidebar.activate();
       });
