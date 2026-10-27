@@ -504,7 +504,7 @@ describe('HeaderCell', () => {
       expect(container.querySelector('.table-ng-header-cell')).toBeInTheDocument();
     });
 
-    it('opens the filter popup from the column menu', async () => {
+    it('keeps the menu trigger visible while its filter is open and clears its open state on Escape', async () => {
       render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
 
       await userEvent.click(screen.getByLabelText(menuLabel));
@@ -513,9 +513,15 @@ describe('HeaderCell', () => {
       await userEvent.click(filterItem);
       // FilterPopup renders the value list with its own Ok/Cancel controls
       expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '1' });
+      expect(screen.getByLabelText(menuLabel)).toHaveAttribute('data-filter-open', 'true');
+
+      await userEvent.keyboard('{Escape}');
+      expect(screen.queryByRole('button', { name: 'Ok' })).not.toBeInTheDocument();
+      expect(screen.getByLabelText(menuLabel)).not.toHaveAttribute('data-filter-open');
     });
 
-    it('marks an active filter in the refreshed header', async () => {
+    it('highlights only the funnel while its filter is open and clears the state on Cancel', async () => {
       const field = filterableField();
       const data = { fields: [field], length: 3 };
       const FilteredHeader = () => {
@@ -533,6 +539,14 @@ describe('HeaderCell', () => {
 
       expect(await screen.findByLabelText(filterIconLabel)).toHaveAttribute('aria-haspopup', 'dialog');
       expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '0' });
+
+      await userEvent.click(screen.getByLabelText(filterIconLabel));
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+      expect(screen.getByLabelText(filterIconLabel)).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByLabelText(menuLabel)).not.toHaveAttribute('data-filter-open');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(screen.getByLabelText(filterIconLabel)).toHaveAttribute('aria-expanded', 'false');
     });
   });
 
