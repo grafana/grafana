@@ -17,6 +17,8 @@ const usedByRules = ['grafana-default-email'];
 const cannotBeEdited = ['grafana-default-email'];
 const cannotBeDeleted = ['grafana-default-email'];
 
+export const receiverUidFor = (title: string) => `uid-${title}`;
+
 const getReceiversList = () => {
   const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
 
@@ -33,8 +35,8 @@ const getReceiversList = () => {
         apiVersion: `${API_GROUP}/${API_VERSION}`,
         kind: 'Receiver',
         metadata: {
-          // This isn't exactly accurate, but its the cleanest way to use the same data for AM config and K8S responses
-          uid: contactPoint.name,
+          // Deliberately different from spec.title so tests catch code that confuses the two
+          uid: receiverUidFor(contactPoint.name),
           annotations: {
             [K8sAnnotations.Provenance]: provenance,
             [K8sAnnotations.CanUse]: canUse ? 'true' : 'false',
@@ -110,12 +112,16 @@ const deleteNamespacedReceiverHandler = () =>
     ({ params }) => {
       const { name } = params;
       const config = getAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME);
-      const matchedReceiver = config.alertmanager_config?.receivers?.find((receiver) => receiver.name === name);
+      const matchedReceiver = config.alertmanager_config?.receivers?.find(
+        (receiver) => receiverUidFor(receiver.name) === name
+      );
       if (!matchedReceiver) {
         return HttpResponse.json({}, { status: 404 });
       }
 
-      const newConfig = config.alertmanager_config?.receivers?.filter((receiver) => receiver.name !== name);
+      const newConfig = config.alertmanager_config?.receivers?.filter(
+        (receiver) => receiverUidFor(receiver.name) !== name
+      );
       setAlertmanagerConfig(GRAFANA_RULES_SOURCE_NAME, {
         ...config,
         alertmanager_config: {
