@@ -108,10 +108,12 @@ func TestCountRunning_CountsClaimedJobsForRepository(t *testing.T) {
 	createJob(ctx, t, fakeClient, "stacks-123", "repo-b-running", "repo-b", true)
 	createJobWith(ctx, t, fakeClient, "stacks-123", "repo-a-release", claimed,
 		provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionReleaseResources})
+	createJobWith(ctx, t, fakeClient, "stacks-123", "repo-a-delete-pending", map[string]string{LabelRepository: "repo-a"},
+		provisioning.JobSpec{Repository: "repo-a", Action: provisioning.JobActionDeleteResources})
 
 	running, err := store.CountRunning(ctx, "stacks-123", "repo-a")
 	require.NoError(t, err)
-	assert.Equal(t, 2, running)
+	assert.Equal(t, 3, running)
 }
 
 // TestCleanupQueue_NoJobs verifies that clearing an empty queue is a no-op.

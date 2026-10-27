@@ -672,19 +672,16 @@ func (s *persistentStore) CountRunning(ctx context.Context, namespace, repositor
 	if err != nil {
 		return 0, err
 	}
-	claimReq, err := labels.NewRequirement(LabelJobClaim, selection.Exists, nil)
-	if err != nil {
-		return 0, err
-	}
-	list, err := s.client.Jobs(namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: labels.NewSelector().Add(*claimReq).String(),
-	})
+	list, err := s.client.Jobs(namespace).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return 0, err
 	}
 	var running int
-	for i := range list.Items {
-		if list.Items[i].Spec.Repository == repository {
+	for _, job := range list.Items {
+		if job.Spec.Repository != repository {
+			continue
+		}
+		if _, claimed := job.Labels[LabelJobClaim]; claimed || IsOrphanCleanupAction(job.Spec.Action) {
 			running++
 		}
 	}
