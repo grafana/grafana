@@ -33,6 +33,7 @@ import { type MatcherScope } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
+import { useTableFilters, useHeaderFilterState } from './TableFilterContext';
 import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
@@ -44,8 +45,8 @@ import {
 } from './constants';
 import { getColumnMenuOptions } from './menuOptions';
 import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
+import { transformTableFilters } from './transformations/rowProjection';
 import {
-  type FilterType,
   type FooterFieldState,
   type GetActionsFunctionLocal,
   type NestedRowEntry,
@@ -67,19 +68,16 @@ import {
   buildNestedColumnWidthsMap,
   buildHeaderHeightMeasurers,
   buildCellHeightMeasurers,
-  applyFilter,
   compileFrameToRecords,
   createTypographyContext,
   extractPixelValue,
+  isFieldFilterable,
 } from './utils';
 
-export function useFilteredRows(rows: TableRow[], fields: Field[], hasNestedFrames?: boolean) {
-  const [filter, setFilter] = useState<FilterType>({});
-  const filterResult = useMemo(
-    () => applyFilter(rows, filter, fields, hasNestedFrames),
-    [rows, filter, fields, hasNestedFrames]
-  );
-  return { rows: filterResult.filteredRows, filter, setFilter, filterResult };
+export function useFilteredRows(rows: TableRow[], fields: Field[]) {
+  const view = useTableFilters();
+  const filterResult = useMemo(() => transformTableFilters(rows, fields, view?.filters ?? []), [rows, fields, view]);
+  return { rows: filterResult.filteredRows, filterResult };
 }
 
 export interface SortedRowsOptions {
@@ -191,6 +189,7 @@ export function useNotifyDisplayedRowIndices(
 
 export interface PaginatedRowsOptions {
   tableRefreshEnabled?: boolean;
+  transparent?: boolean;
   height: number;
   width: number;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
@@ -230,6 +229,7 @@ export function usePaginatedRows(
     pageSize,
     noPanelPadding,
     tableRefreshEnabled = false,
+    transparent,
   }: PaginatedRowsOptions
 ): PaginatedRowsResult {
   // TODO: allow persisted page selection via url
@@ -286,7 +286,7 @@ export function usePaginatedRows(
       // ensure at least one row per page so a fractional size in (0, 1) doesn't floor to 0
       rowsPerPage = Math.max(1, Math.floor(pageSize));
     } else {
-      const frameHeight = tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
+      const frameHeight = tableRefreshEnabled && (!noPanelPadding || transparent) ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
       const rowAreaHeight =
         height - headerHeight - footerHeight - getPaginationChromeHeight(noPanelPadding) - frameHeight;
       const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
@@ -319,6 +319,7 @@ export function usePaginatedRows(
     pageSize,
     noPanelPadding,
     tableRefreshEnabled,
+    transparent,
   ]);
 
   // safeguard against page overflow on panel resize or other factors
@@ -387,9 +388,9 @@ export const useNestedRows = (
   nestedData: DataFrame[] | undefined,
   hasNestedFrames: boolean,
   nestedFramesFieldName: string | undefined,
-  filter: FilterType,
   sortColumns: SortColumn[]
 ): NestedRowEntry[] => {
+  const view = useTableFilters();
   const frameToRecords = useRowCompiler(nestedData?.[0] ?? createDataFrame({ fields: [] }));
 
   return useMemo(() => {
@@ -406,7 +407,7 @@ export const useNestedRows = (
       }
 
       const rawRows = frameToRecords(nestedFrame, parentRow.__index);
-      const filterResult = applyFilter(rawRows, filter, nestedFrame.fields, false, parentRow.__index);
+      const filterResult = transformTableFilters(rawRows, nestedFrame.fields, view?.filters ?? [], parentRow.__index);
       const sortedRows = applySort(
         filterResult.filteredRows,
         nestedFrame.fields,
@@ -417,7 +418,7 @@ export const useNestedRows = (
     }
 
     return result;
-  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, filter, frameToRecords, nestedData]);
+  }, [hasNestedFrames, nestedFramesFieldName, rows, sortColumns, frameToRecords, nestedData, view]);
 };
 
 interface UseHeaderHeightOptions {
@@ -435,9 +436,9 @@ interface UseHeaderHeightOptions {
   showTypeIcons?: boolean;
   noPanelPadding?: boolean;
   tableRefreshEnabled?: boolean;
-  /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
-  filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
+  filterParentCount?: number;
 }
 
 export function useHeaderHeight({
@@ -448,13 +449,14 @@ export function useHeaderHeight({
   showTypeIcons = false,
   noPanelPadding = false,
   tableRefreshEnabled = false,
-  filter,
   lastColumnExtraPadding = 0,
   hasColumnSidebar = false,
+  reorderable = false,
   hasAssistantAction = false,
+  filterParentCount,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
-  const filteredKeys = useMemo(() => new Set(Object.values(filter ?? {}).map((f) => f.displayName)), [filter]);
+  const headerFilterState = useHeaderFilterState();
 
   const columnAvailableWidths = useMemo(
     () =>
@@ -464,6 +466,8 @@ export function useHeaderHeight({
         }
 
         const field = fields[idx];
+        const filterState = headerFilterState?.(field, filterParentCount);
+        const filterable = isFieldFilterable(field) && (filterState?.controlVisible ?? true);
         let width = c - CELL_HORIZONTAL_CHROME;
         if (idx === fields.length - 1) {
           width -= lastColumnExtraPadding;
@@ -474,10 +478,12 @@ export function useHeaderHeight({
         width -= getHeaderAffordanceWidth(field, {
           showTypeIcons,
           tableRefreshEnabled,
-          isFiltered: filteredKeys.has(getDisplayName(field)),
+          isFiltered: filterable && (filterState?.filterEnabled ?? false),
+          filterable,
+          reorderable,
           hasColumnOptions:
             getColumnMenuOptions({
-              filterable: field.config.custom?.filterable,
+              filterable,
               hideable: field.config.custom?.hideable,
               hasColumnSidebar,
               hasAssistantAction,
@@ -491,9 +497,11 @@ export function useHeaderHeight({
       showTypeIcons,
       noPanelPadding,
       tableRefreshEnabled,
-      filteredKeys,
+      headerFilterState,
+      filterParentCount,
       lastColumnExtraPadding,
       hasColumnSidebar,
+      reorderable,
       hasAssistantAction,
     ]
   );
@@ -1054,8 +1062,11 @@ export interface ContentAwareWidths {
   hasHeader?: boolean;
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
-  filter?: FilterType;
+  isFiltered?: (field: Field) => boolean;
+  headerFilterState?: (field: Field, parentCount?: number) => { controlVisible: boolean; filterEnabled: boolean };
+  filterParentCount?: number;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1105,10 +1116,11 @@ interface UseContentAwareWidthsOptions {
   hasHeader?: boolean;
   getActions?: GetActionsFunctionLocal;
   tableRefreshEnabled?: boolean;
-  filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
+  filterParentCount?: number;
 }
 
 /**
@@ -1123,12 +1135,14 @@ export function useContentAwareWidths({
   hasHeader = true,
   getActions,
   tableRefreshEnabled = false,
-  filter,
   hasColumnSidebar = false,
+  reorderable = false,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
   hasAssistantAction = false,
+  filterParentCount,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
+  const headerFilterState = useHeaderFilterState();
   const theme = useTheme2();
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
   return useMemo(
@@ -1143,8 +1157,10 @@ export function useContentAwareWidths({
             hasHeader,
             getActions,
             tableRefreshEnabled,
-            filter,
+            headerFilterState,
+            filterParentCount,
             hasColumnSidebar,
+            reorderable,
             noPanelPadding,
             preventHorizontalOverflow,
           }
@@ -1157,10 +1173,12 @@ export function useContentAwareWidths({
       showTypeIcons,
       hasHeader,
       getActions,
-      filter,
+      headerFilterState,
+      filterParentCount,
       tableRefreshEnabled,
       theme,
       hasColumnSidebar,
+      reorderable,
       noPanelPadding,
       preventHorizontalOverflow,
     ]
@@ -1373,13 +1391,17 @@ export const useReducerEntries = (
 };
 
 interface ColumnViewStateOptions {
+  columnOrder?: string[];
+  onColumnOrderChange?: (columnOrder: string[]) => void;
   hiddenColumns?: ReadonlySet<string>;
   onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
   structureRev?: number;
 }
 
 interface ColumnViewState {
+  columnOrder?: string[];
   hiddenColumns: ReadonlySet<string>;
+  setColumnOrder: (columnOrder: string[]) => void;
   setHiddenColumns: (hiddenColumns: ReadonlySet<string>) => void;
 }
 
@@ -1387,18 +1409,29 @@ const NO_HIDDEN_COLUMNS: ReadonlySet<string> = new Set();
 
 // Change handlers select controlled mode because controlled values may initially be empty.
 export function useColumnViewState({
+  columnOrder,
+  onColumnOrderChange,
   hiddenColumns,
   onHiddenColumnsChange,
   structureRev,
 }: ColumnViewStateOptions): ColumnViewState {
+  const [localColumnOrder, setLocalColumnOrder] = useState<string[]>();
   const [localHiddenColumns, setLocalHiddenColumns] = useState<ReadonlySet<string>>(NO_HIDDEN_COLUMNS);
 
   useEffect(() => {
+    if (!onColumnOrderChange) {
+      setLocalColumnOrder(undefined);
+    }
     if (!onHiddenColumnsChange) {
       setLocalHiddenColumns(NO_HIDDEN_COLUMNS);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [structureRev]);
+
+  const setColumnOrder = useCallback(
+    (next: string[]) => (onColumnOrderChange ? onColumnOrderChange(next) : setLocalColumnOrder(next)),
+    [onColumnOrderChange]
+  );
 
   const setHiddenColumns = useCallback(
     (next: ReadonlySet<string>) => (onHiddenColumnsChange ? onHiddenColumnsChange(next) : setLocalHiddenColumns(next)),
@@ -1406,7 +1439,9 @@ export function useColumnViewState({
   );
 
   return {
+    columnOrder: onColumnOrderChange ? columnOrder : localColumnOrder,
     hiddenColumns: (onHiddenColumnsChange ? hiddenColumns : localHiddenColumns) ?? NO_HIDDEN_COLUMNS,
+    setColumnOrder,
     setHiddenColumns,
   };
 }

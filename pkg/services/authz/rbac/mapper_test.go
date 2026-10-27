@@ -591,6 +591,63 @@ func TestMapperRegistry_Silences(t *testing.T) {
 	}
 }
 
+// TestMapperRegistry_AlertingConfigs verifies the notifications and rules app
+// Config singletons map to their own decoupled scopes and actions, with status
+// writes gated on the service-only status action and delete left unmapped.
+func TestMapperRegistry_AlertingConfigs(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	tests := []struct {
+		group        string
+		prefix       string
+		readAction   string
+		updateAction string
+		statusAction string
+	}{
+		{
+			group:        "notifications.alerting.grafana.app",
+			prefix:       "configs:uid:",
+			readAction:   accesscontrol.ActionAlertingConfigRead,
+			updateAction: accesscontrol.ActionAlertingConfigUpdate,
+			statusAction: accesscontrol.ActionAlertingConfigStatusUpdate,
+		},
+		{
+			group:        "rules.alerting.grafana.app",
+			prefix:       "rules-configs:uid:",
+			readAction:   accesscontrol.ActionAlertingRulesConfigRead,
+			updateAction: accesscontrol.ActionAlertingRulesConfigUpdate,
+			statusAction: accesscontrol.ActionAlertingRulesConfigStatusUpdate,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.group, func(t *testing.T) {
+			for subresource, writeAction := range map[string]string{"": tt.updateAction, "status": tt.statusAction} {
+				mapping, ok := reg.Get(tt.group, "configs", subresource)
+				require.True(t, ok, "configs (subresource %q) should be registered in the mapper", subresource)
+
+				assert.False(t, mapping.HasFolderSupport())
+				assert.Equal(t, tt.prefix, mapping.Prefix())
+				assert.Equal(t, tt.prefix+"default", mapping.Scope("default"))
+
+				for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch} {
+					action, ok := mapping.Action(verb)
+					assert.True(t, ok)
+					assert.Equal(t, tt.readAction, action, "verb %q", verb)
+				}
+				for _, verb := range []string{utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch} {
+					action, ok := mapping.Action(verb)
+					assert.True(t, ok)
+					assert.Equal(t, writeAction, action, "verb %q", verb)
+				}
+				for _, verb := range []string{utils.VerbDelete, utils.VerbDeleteCollection} {
+					_, ok := mapping.Action(verb)
+					assert.False(t, ok, "verb %q should not be mapped", verb)
+				}
+			}
+		})
+	}
+}
+
 // TestMapperRegistry_AssistantAlertRules verifies the assistant's external collection authorizes like the native rule kinds.
 func TestMapperRegistry_AssistantAlertRules(t *testing.T) {
 	reg := NewMapperRegistry()

@@ -2160,7 +2160,7 @@ func TestApiGetSnapshots(t *testing.T) {
 	cfg := policy_exports.Config()
 
 	// Route
-	cfg.AlertmanagerConfig.Route = v1.RouteToModel(legacy_storage.WithManagedRoutes(cfg))
+	cfg.AlertmanagerConfig.Route = notifier.RouteFromAPI(notifier.WithManagedRoutes(cfg))
 
 	// Templates
 	t1 := v1.NewTemplateGroup("", "templateA", "{{ define \"templateA\" }}A{{ end }}", v1.TemplateKindGrafana, models.ProvenanceAPI)
@@ -2538,7 +2538,7 @@ func (f *fakeNotificationPolicyService) UpdatePolicyTree(ctx context.Context, or
 	if orgID != 1 {
 		return definitions.Route{}, "", store.ErrNoAlertmanagerConfiguration
 	}
-	f.config.Config.AlertmanagerConfig.Route = v1.RouteToModel(&tree)
+	f.config.Config.AlertmanagerConfig.Route = notifier.RouteFromAPI(&tree)
 	f.prov = p
 	return tree, "some", nil
 }
@@ -2911,3 +2911,22 @@ var testContactPointConfig = `
 	}
 }
 `
+
+func TestEscapeContactPointReturnsErrorOnInvalidSettings(t *testing.T) {
+	cp := definitions.ContactPointExport{
+		Name: "invalid-settings",
+		Receivers: []definitions.ReceiverExport{
+			{UID: "uid", Type: "webhook", Settings: definitions.RawMessage(`{`)},
+		},
+	}
+
+	t.Run("escapeContactPoint returns an error instead of panicking", func(t *testing.T) {
+		_, err := escapeContactPoint(cp)
+		require.ErrorContains(t, err, "failed to marshal settings to JSON")
+	})
+
+	t.Run("escapeAlertingFileExport propagates the error", func(t *testing.T) {
+		_, err := escapeAlertingFileExport(definitions.AlertingFileExport{ContactPoints: []definitions.ContactPointExport{cp}})
+		require.ErrorContains(t, err, "failed to marshal settings to JSON")
+	})
+}

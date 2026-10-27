@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -740,6 +741,39 @@ func TestIntegrationContactPointServiceProtectedFields(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "user is not authorized")
 	})
+}
+
+func TestCheckProtectedFields_HasUpdateProtectedError(t *testing.T) {
+	settings, err := simplejson.NewJson([]byte(`{"url":"https://example.com/webhook"}`))
+	require.NoError(t, err)
+	cp := definitions.EmbeddedContactPoint{UID: "uid", Name: "test-webhook", Type: "webhook", Settings: settings}
+	typeSchema, ok := notify.GetSchemaVersionForIntegration(schema.WebhookType, schema.V1)
+	require.True(t, ok)
+	usr := &user.SignedInUser{OrgID: 1}
+
+	for _, tc := range []struct {
+		name        string
+		hasErr      error
+		expectedErr string
+	}{
+		{name: "backend error is returned", hasErr: errors.New("boom"), expectedErr: "failed to check protected fields permission"},
+		{name: "authorization error is treated as no permission", hasErr: ac.NewAuthorizationErrorGeneric("update protected")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := &ContactPointService{authz: &acfakes.FakeReceiverAccessService[*models.Receiver]{
+				HasUpdateProtectedFunc: func(context.Context, identity.Requester, *models.Receiver) (bool, error) {
+					return false, tc.hasErr
+				},
+			}}
+			err := svc.checkProtectedFields(context.Background(), usr, typeSchema, cp, cp)
+			if tc.expectedErr != "" {
+				require.ErrorIs(t, err, tc.hasErr)
+				require.ErrorContains(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+		})
+	}
 }
 
 func TestRemoveSecretsForContactPoint(t *testing.T) {

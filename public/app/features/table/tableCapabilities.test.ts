@@ -11,18 +11,27 @@ const frame = () =>
   });
 
 describe('withAdHocTransformCapabilities', () => {
-  it('opts every column into hiding', () => {
+  it('opts every column into filtering and hiding', () => {
     const withCapabilities = withAdHocTransformCapabilities(frame());
 
     for (const field of withCapabilities.fields) {
-      expect(field.config.custom).toMatchObject({ hideable: true });
+      expect(field.config.custom).toMatchObject({ filterable: true, hideable: true });
+      expect(field.config.custom).not.toHaveProperty('reorderable');
     }
   });
 
-  it('preserves the existing filter setting', () => {
+  it('overrides a capability the field config turned off', () => {
     const [, b] = withAdHocTransformCapabilities(frame()).fields;
 
-    expect(b.config.custom?.filterable).toBe(false);
+    expect(b.config.custom?.filterable).toBe(true);
+  });
+
+  it('allows filtering when column management is unavailable', () => {
+    const [a, b] = withAdHocTransformCapabilities(frame(), false).fields;
+
+    expect(a.config.custom?.filterable).toBe(true);
+    expect(b.config.custom?.filterable).toBe(true);
+    expect(a.config.custom?.hideable).toBe(false);
   });
 
   it('leaves the rest of the field config alone', () => {
@@ -58,7 +67,7 @@ describe('withAdHocTransformCapabilities', () => {
     expect(supportsColumnManagement(nested)).toBe(false);
 
     for (const field of withAdHocTransformCapabilities(nested).fields) {
-      expect(field.config.custom).toMatchObject({ hideable: false });
+      expect(field.config.custom).toMatchObject({ filterable: true, hideable: false });
     }
   });
 });

@@ -71,21 +71,20 @@ func (r *DisplayHandler) selfRouteSpec() *spec3.PathProps {
 func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
 	authInfo, ok := authlib.AuthInfoFrom(ctx)
-	if !ok {
+	if !ok || authInfo == nil {
 		errhttp.Write(ctx, apierrors.NewUnauthorized("missing auth info"), w)
 		return
 	}
 
 	rsp := iam.CurrentUserInfo{
-		Display: iam.Display{
-			Identity: iam.IdentityRef{
-				Type: authInfo.GetIdentityType(),
-				Name: authInfo.GetIdentifier(),
-			},
-			DisplayName: authInfo.GetName(),
+		Identity: iam.IdentityRef{
+			Type: authInfo.GetIdentityType(),
+			Name: authInfo.GetIdentifier(),
 		},
+		DisplayName:     authInfo.GetName(),
 		Namespace:       authInfo.GetNamespace(),
 		Email:           authInfo.GetEmail(),
+		Teams:           authInfo.GetGroups(),
 		AuthenticatedBy: authInfo.GetAuthenticatedBy(),
 	}
 
@@ -134,7 +133,10 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	// Preserve identity details for namespace discovery even when display resolution fails.
-	w.WriteHeader(http.StatusUnauthorized)
+	// If a user fails to resolve, it should be a 401 response
+	if authInfo.GetIdentityType() == authlib.TypeUser {
+		w.WriteHeader(http.StatusUnauthorized)
+	}
+
 	_ = json.NewEncoder(w).Encode(rsp)
 }

@@ -708,6 +708,7 @@ type Cfg struct {
 	UnifiedStorageClusterSlug             string
 	UnifiedStorageAuthzExemptionEnabled   bool
 	UnifiedStorageAuthzExemptResources    []string
+	HybridSearchDefaultResources          []string
 	UnifiedStorageGRPCErrorResultToStatus bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
@@ -741,6 +742,7 @@ type Cfg struct {
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
 	GlobalSearchIndexEnabled                   bool          // Build one index per namespace covering several resource types, alongside the per-resource indexes.
+	GlobalSearchIndexStartupBuild              bool          // Temporary: build global indexes before readiness instead of in the background. To be removed once environments restore them from snapshots at startup.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
@@ -756,6 +758,7 @@ type Cfg struct {
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
 	QOSMaxSizePerTenant                        int
+	QOSMaxConcurrentPerTenant                  int
 	MemberlistBindAddr                         string
 	MemberlistAdvertiseAddr                    string
 	MemberlistAdvertisePort                    int
@@ -774,10 +777,6 @@ type Cfg struct {
 	EnableSearch                               bool
 	EnableSearchClient                         bool
 	SearchClientForwardAuthEnabled             bool
-	// SearchEnforceSortCapability rejects a sort on a field that does not declare
-	// sorting. Off by default: violations are counted first, so they can be fixed
-	// before requests start failing.
-	SearchEnforceSortCapability bool
 	// SearchPostRankAuthz enables the post-filter authorization search path:
 	// bleve ranks without the in-searcher authz wrapper and authorization runs
 	// app-side in rank order with early exit once the page is filled.
@@ -798,6 +797,8 @@ type Cfg struct {
 	// defaults to dashboards; external defaults to none.
 	VectorAllowedInternalCollections []string
 	VectorAllowedExternalCollections []string
+	VectorSharedExternalCollections  []string
+	VectorSharedWriteServices        []string
 	// Registers the VectorStore write RPCs on the storage server.
 	EnableVectorStore bool
 	// Service identities allowed to call the VectorStore write RPCs.
@@ -857,6 +858,7 @@ type Cfg struct {
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
 	EnforcedQuotaResources        []string
+	LoggedQuotaResources          []string
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend           bool
@@ -887,6 +889,9 @@ type Cfg struct {
 	SearchLookback       time.Duration
 	NotifierSettleDelay  time.Duration
 	SeededWatchesEnabled bool
+	// FastLatestKeyLookupEnabled makes the KV backend resolve latest-version reads with a
+	// single-row descending lookup instead of scanning the resource's history.
+	FastLatestKeyLookupEnabled bool
 	// ResourceVersionBatchTransactionTimeout bounds one batched WithTx in the
 	// resource version manager (all WriteEventFunc calls + RV stamp updates).
 	ResourceVersionBatchTransactionTimeout time.Duration
@@ -904,6 +909,8 @@ type Cfg struct {
 	TenantDeleterInterval         time.Duration
 
 	ManifestApiServerAddress        string
+	ManifestDiscoveryAddress        string
+	ManifestDiscoveryAudience       string
 	ManifestWatcherAllowInsecureTLS bool
 	ManifestWatcherCAFile           string
 	ManifestWatcherPollInterval     time.Duration
@@ -2109,6 +2116,9 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	for plug := range strings.SplitSeq(enableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
 		cfg.EnableFrontendSandboxForPlugins = append(cfg.EnableFrontendSandboxForPlugins, plug)
+	}
+	if strings.TrimSpace(enableFrontendSandboxForPlugins) != "" {
+		cfg.Logger.Warn("[Deprecated] The enable_frontend_sandbox_for_plugins configuration setting is deprecated and the Plugin Frontend Sandbox will be removed in Grafana 13.4.")
 	}
 
 	if cfg.CSPEnabled && cfg.CSPTemplate == "" {

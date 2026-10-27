@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -183,9 +184,9 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 									ParameterProps: spec3.ParameterProps{
 										Name:        "permission",
 										In:          "query",
-										Description: "permission needed for the resource (view, edit, admin)",
+										Description: "permission needed for the resource (view, edit, admin, create). create is only valid with type=folder",
 										Required:    false,
-										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin"),
+										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin", "create"),
 									},
 								},
 								{
@@ -541,6 +542,9 @@ func permissionToActions(p dashboardaccess.PermissionType) (dashboardAction stri
 		return dashboards.ActionDashboardsWrite, foldermodel.ActionFoldersWrite
 	case dashboardaccess.PERMISSION_ADMIN:
 		return dashboards.ActionDashboardsPermissionsWrite, foldermodel.ActionFoldersPermissionsWrite
+	case dashboardaccess.PERMISSION_CREATE:
+		// dashboards:create is granted on folder scopes, so it is read as the folder action.
+		return dashboards.ActionDashboardsCreate, dashboards.ActionDashboardsCreate
 	case dashboardaccess.PERMISSION_VIEW:
 		fallthrough
 	default:
@@ -556,9 +560,20 @@ func permissionFromQueryParams(queryParams url.Values) dashboardaccess.Permissio
 		return dashboardaccess.PERMISSION_VIEW
 	case "admin":
 		return dashboardaccess.PERMISSION_ADMIN
+	case "create":
+		return dashboardaccess.PERMISSION_CREATE
 	default:
 		return 0
 	}
+}
+
+// effectivePermission treats create as edit while folderPickerCreatePermission is off.
+func effectivePermission(ctx context.Context, p dashboardaccess.PermissionType) dashboardaccess.PermissionType {
+	if p == dashboardaccess.PERMISSION_CREATE &&
+		!openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagFolderPickerCreatePermission, false, openfeature.TransactionContext(ctx)) {
+		return dashboardaccess.PERMISSION_EDIT
+	}
+	return p
 }
 
 func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
@@ -577,7 +592,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
+	searchRequest, err := convertHttpSearchRequestToResourceSearchRequest(ctx, queryParams, user, func(requestedPermission dashboardaccess.PermissionType) ([]string, error) {
 		return s.getDashboardsUIDsSharedWithUser(ctx, user, requestedPermission)
 	})
 	if err != nil {
@@ -813,6 +828,7 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 			Title:    r.GetTitle(),
 			Folder:   r.GetFolder(),
 			Score:    r.GetScore(),
+			Tags:     r.GetTags(),
 			ManagedBy: dashboardv0alpha1.ManagedBy{
 				Kind: utils.ManagerKind(r.GetManagedByKind()),
 				ID:   r.GetManagedById(),
@@ -863,7 +879,7 @@ func isDashboardSearchResponseField(field string) bool {
 // convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.
 // Supplied function is used to get dashboards shared with user.
 // nolint:gocyclo
-func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func(requestedPermission dashboardaccess.PermissionType) ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
+func convertHttpSearchRequestToResourceSearchRequest(ctx context.Context, queryParams url.Values, user identity.Requester, getDashboardsUIDsSharedWithUser func(requestedPermission dashboardaccess.PermissionType) ([]string, error)) (*resourcepb.ResourceSearchRequest, error) {
 	// get limit and offset from query params
 	limit := 50
 	facetLimit := 50
@@ -900,7 +916,8 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		}
 	}
 	searchRequest.Fields = fields
-	accessPermission := permissionFromQueryParams(queryParams)
+	requestedPermission := permissionFromQueryParams(queryParams)
+	accessPermission := effectivePermission(ctx, requestedPermission)
 	if accessPermission > 0 {
 		searchRequest.Permission = int64(accessPermission)
 	}
@@ -909,6 +926,9 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	types := queryParams["type"]
 	hasDash := len(types) == 0 || slices.Contains(types, "dashboard")
 	hasFolder := len(types) == 0 || slices.Contains(types, "folder")
+	if requestedPermission == dashboardaccess.PERMISSION_CREATE && (hasDash || !hasFolder) {
+		return nil, apierrors.NewBadRequest("permission=create is only supported with type=folder")
+	}
 	// If both types are present, we need to search both dashboards and folders, by default is nothing is set we also search both.
 	var err error
 	if (hasDash && hasFolder) || (!hasDash && !hasFolder) {
@@ -1184,6 +1204,10 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 			}},
 		},
 	}
+	if requestedPermission == dashboardaccess.PERMISSION_CREATE {
+		// Federated folders are authorized as read, which would drop create-only folders.
+		dashboardSearchRequest = nameLookupRequest(folderKey, dashboardUids, requestedPermission)
+	}
 	// get all dashboards user has access to, along with their parent folder uid
 	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
 	if err := resource.StatusErrorFromResponse(dashboardResult.GetError(), err); err != nil {
@@ -1208,20 +1232,7 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 
-	folderSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
-		Limit:        int64(len(allFolders)),
-		Permission:   int64(requestedPermission),
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-		Options: &resourcepb.ListOptions{
-			Key: folderKey,
-			Fields: []*resourcepb.Requirement{{
-				Key:      "name",
-				Operator: "in",
-				Values:   allFolders,
-			}},
-		},
-	}
+	folderSearchRequest := nameLookupRequest(folderKey, allFolders, requestedPermission)
 	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
 	if err := resource.StatusErrorFromResponse(foldersResult.GetError(), err); err != nil {
@@ -1245,6 +1256,24 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 		}
 	}
 	return sharedDashboards, nil
+}
+
+// nameLookupRequest finds resources of one type by name, returning their parent folder.
+func nameLookupRequest(key *resourcepb.ResourceKey, names []string, permission dashboardaccess.PermissionType) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		Limit:        int64(len(names)),
+		Permission:   int64(permission),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Options: &resourcepb.ListOptions{
+			Key: key,
+			Fields: []*resourcepb.Requirement{{
+				Key:      "name",
+				Operator: "in",
+				Values:   names,
+			}},
+		},
+	}
 }
 
 func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name string) bool {

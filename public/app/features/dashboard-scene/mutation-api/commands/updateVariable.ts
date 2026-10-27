@@ -8,6 +8,7 @@ import type * as z from 'zod';
 
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
+import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToVariables';
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { payloads } from './schemas';
@@ -61,6 +62,10 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
       }
 
       const previousState = currentVariables[existingIndex].state;
+      const previousSet = scopeOwner.state.$variables;
+      const previousValue = previousSet
+        ? sceneVariablesSetToSchemaV2Variables(previousSet).find((variable) => variable.spec.name === name)
+        : undefined;
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Zod output is structurally compatible with VariableKind
       const newSceneVariable = createSceneVariableFromVariableModel(variableKind as VariableKind);
@@ -69,7 +74,12 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
       newSceneVariable.setState({ key: previousState.key });
       currentVariables[existingIndex] = newSceneVariable;
 
-      replaceScopeVariableSet(scopeOwner, currentVariables);
+      const newSet = replaceScopeVariableSet(scopeOwner, currentVariables);
+      const newValue = newSet
+        ? sceneVariablesSetToSchemaV2Variables(newSet).find(
+            (variable) => variable.spec.name === newSceneVariable.state.name
+          )
+        : undefined;
 
       // The element edit pane memoizes its editable element per selection, so a pane
       // open on the replaced variable would keep editing the detached object.
@@ -88,8 +98,8 @@ export const updateVariableCommand: MutationCommand<UpdateVariablePayload> = {
         changes: [
           {
             path: changePath,
-            previousValue: previousState,
-            newValue: variableKind,
+            previousValue,
+            newValue,
           },
         ],
       };

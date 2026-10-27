@@ -1,6 +1,7 @@
 package search
 
 import (
+	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
@@ -14,6 +15,22 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
+
+func TestNewSearchOptionsGlobalIndexStartupBuild(t *testing.T) {
+	for _, startupBuild := range []bool{false, true} {
+		t.Run(fmt.Sprint(startupBuild), func(t *testing.T) {
+			cfg := snapshotOptionsTestCfg(t)
+			cfg.EnableSearch = true
+			cfg.GlobalSearchIndexEnabled = true
+			cfg.GlobalSearchIndexStartupBuild = startupBuild
+			opts, err := NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+			require.NoError(t, err)
+			t.Cleanup(opts.Backend.Stop)
+			require.True(t, opts.GlobalIndexEnabled)
+			require.Equal(t, startupBuild, opts.GlobalIndexStartupBuild)
+		})
+	}
+}
 
 func TestNewSearchOptionsEmbeddingConfig(t *testing.T) {
 	for _, tc := range []struct {

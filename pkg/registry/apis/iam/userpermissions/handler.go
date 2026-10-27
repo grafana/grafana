@@ -18,7 +18,7 @@ import (
 )
 
 const userPermissionsDelegatedGrant = "authz.grafana.app/userpermissions:get"
-const currentUserPermissionsPath = "users/~/permissions"
+const currentUserPermissionsPath = "whoami/permissions"
 
 // Handler serves the current identity's effective permissions.
 type Handler struct {
@@ -33,20 +33,13 @@ func NewHandler(client authlib.UserPermissionsClient, useExternalGroups bool) *H
 
 // GetAPIRoutes returns the current-user permissions route.
 func (h *Handler) GetAPIRoutes(_ map[string]common.OpenAPIDefinition) *builder.APIRoutes {
-	return &builder.APIRoutes{Namespace: []builder.APIRouteHandler{{
+	route := builder.APIRouteHandler{
 		Path: currentUserPermissionsPath,
 		Spec: &spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{
-			OperationId: "getCurrentUserPermissions",
+			OperationId: "getWhoAmIPermissions",
 			Tags:        []string{"User"},
 			Description: "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
 			Deprecated:  true,
-			Parameters: []*spec3.Parameter{{ParameterProps: spec3.ParameterProps{
-				Name:        "namespace",
-				In:          "path",
-				Required:    true,
-				Description: "workspace",
-				Schema:      spec.StringProperty(),
-			}}},
 			Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{StatusCodeResponses: map[int]*spec3.Response{
 				200: {ResponseProps: spec3.ResponseProps{Content: map[string]*spec3.MediaType{
 					"application/json": {MediaTypeProps: spec3.MediaTypeProps{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{
@@ -56,7 +49,20 @@ func (h *Handler) GetAPIRoutes(_ map[string]common.OpenAPIDefinition) *builder.A
 			}}},
 		}}},
 		Handler: h.handle,
+	}
+	legacyOperation := *route.Spec.Get
+	legacyOperation.OperationId = "getCurrentUserPermissions"
+	legacyOperation.Parameters = []*spec3.Parameter{{ParameterProps: spec3.ParameterProps{
+		Name: "namespace", In: "path", Required: true, Description: "workspace", Schema: spec.StringProperty(),
 	}}}
+	return &builder.APIRoutes{
+		Root: []builder.APIRouteHandler{route},
+		Namespace: []builder.APIRouteHandler{{
+			Path:    "users/~/permissions",
+			Spec:    &spec3.PathProps{Get: &legacyOperation},
+			Handler: h.handleNamespaced,
+		}},
+	}
 }
 
 func (h *Handler) handle(w http.ResponseWriter, req *http.Request) {
@@ -67,11 +73,26 @@ func (h *Handler) handle(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	h.writePermissions(w, req, info, info.GetNamespace())
+}
+
+func (h *Handler) handleNamespaced(w http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
+	info, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		errhttp.Write(ctx, apierrors.NewUnauthorized("missing auth info"), w)
+		return
+	}
 	namespace := genericapirequest.NamespaceValue(ctx)
 	if !authlib.NamespaceMatches(info.GetNamespace(), namespace) {
 		errhttp.Write(ctx, apierrors.NewForbidden(iam.Resource("users"), "~", fmt.Errorf("identity namespace does not match request namespace")), w)
 		return
 	}
+	h.writePermissions(w, req, info, namespace)
+}
+
+func (h *Handler) writePermissions(w http.ResponseWriter, req *http.Request, info authlib.AuthInfo, namespace string) {
+	ctx := req.Context()
 	groups := info.GetGroups()
 	if h.useExternalGroups {
 		if externalGroupsInfo, ok := info.(interface{ GetExternalGroups() []string }); ok {

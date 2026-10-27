@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
@@ -297,4 +298,104 @@ func (ts *testSpan) SetAttributes(kv ...attribute.KeyValue) {}
 
 func (ts *testSpan) SpanContext() trace.SpanContext {
 	return trace.SpanContext{}
+}
+
+func TestSQLCommandLabelNamedLikeGeneratedColumn(t *testing.T) {
+	times := []time.Time{time.Unix(10, 0), time.Unix(20, 0)}
+	input := data.Frames{
+		data.NewFrame("",
+			data.NewField("time", nil, times),
+			data.NewField("cpu", data.Labels{"host": "a", "time": "nightly"}, []float64{1, 2}),
+		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+		data.NewFrame("",
+			data.NewField("time", nil, times),
+			data.NewField("cpu", data.Labels{"host": "b"}, []float64{3, 4}),
+		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+	}
+
+	tracer := tracing.NewNoopTracerService()
+
+	run := func(t *testing.T, format, query string) mathexp.Results {
+		t.Helper()
+		converted, _ := handleSqlInput(t.Context(), tracer, "A", map[string]struct{}{"B": {}}, "fakeDS", input)
+		require.NoError(t, converted.Error)
+
+		cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "B", format, query, 0, 0, 0)
+		require.NoError(t, err)
+		res, err := cmd.Execute(t.Context(), time.Now(), mathexp.Vars{"A": converted}, tracer, metrics.NewTestMetrics())
+		require.NoError(t, err)
+		require.NoError(t, res.Error)
+		return res
+	}
+
+	fieldNames := func(f *data.Frame) []string {
+		names := make([]string, 0, len(f.Fields))
+		for _, field := range f.Fields {
+			names = append(names, field.Name)
+		}
+		return names
+	}
+
+	t.Run("SELECT * keeps the generated column names and renames only the clashing label", func(t *testing.T) {
+		res := run(t, "", "SELECT * FROM A")
+		require.Len(t, res.Values, 1)
+		frame := res.Values[0].(mathexp.TableData).Frame
+		require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName, "host", "label_time"}, fieldNames(frame))
+	})
+
+	t.Run("time filter and label column can both be read", func(t *testing.T) {
+		res := run(t, "", "SELECT time, __value__, host, label_time FROM A WHERE time > '1970-01-01 00:00:15' ORDER BY host")
+		require.Len(t, res.Values, 1)
+		frame := res.Values[0].(mathexp.TableData).Frame
+		require.Equal(t, []string{"time", SQLValueFieldName, "host", "label_time"}, fieldNames(frame))
+		require.Equal(t, 2, frame.Rows())
+
+		v, err := frame.Fields[1].FloatAt(0)
+		require.NoError(t, err)
+		require.Equal(t, 2.0, v)
+		require.Equal(t, "nightly", *frame.Fields[3].At(0).(*string))
+		require.Nil(t, frame.Fields[3].At(1))
+	})
+
+	t.Run("alerting labels come from the renamed column", func(t *testing.T) {
+		res := run(t, "alerting", "SELECT host, label_time, SUM(__value__) AS total FROM A GROUP BY host, label_time")
+		got := map[string]float64{}
+		for _, val := range res.Values {
+			n := val.(mathexp.Number)
+			got[n.GetLabels().String()] = *n.GetFloat64Value()
+		}
+		require.Equal(t, map[string]float64{
+			data.Labels{"host": "a", "label_time": "nightly"}.String(): 3,
+			data.Labels{"host": "b"}.String():                          7,
+		}, got)
+	})
+}
+
+func TestSQLCommandTableInputWithRepeatedColumnNames(t *testing.T) {
+	input := data.Frames{
+		data.NewFrame("",
+			data.NewField("host", nil, []string{"a", "a", "b"}),
+			data.NewField("host", nil, []string{"x", "y", "x"}),
+			data.NewField("value", nil, []float64{1, 2, 3}),
+		),
+	}
+	converted, _ := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", input)
+	require.NoError(t, converted.Error)
+
+	cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "B", "alerting", "SELECT host, host_2, value FROM A", 0, 0, 0)
+	require.NoError(t, err)
+	res, err := cmd.Execute(t.Context(), time.Now(), mathexp.Vars{"A": converted}, tracing.NewNoopTracerService(), metrics.NewTestMetrics())
+	require.NoError(t, err)
+	require.NoError(t, res.Error)
+
+	got := map[string]float64{}
+	for _, val := range res.Values {
+		n := val.(mathexp.Number)
+		got[n.GetLabels().String()] = *n.GetFloat64Value()
+	}
+	require.Equal(t, map[string]float64{
+		data.Labels{"host": "a", "host_2": "x"}.String(): 1,
+		data.Labels{"host": "a", "host_2": "y"}.String(): 2,
+		data.Labels{"host": "b", "host_2": "x"}.String(): 3,
+	}, got)
 }

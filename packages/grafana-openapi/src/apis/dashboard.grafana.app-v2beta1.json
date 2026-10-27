@@ -6890,7 +6890,7 @@
         "required": ["field", "values"],
         "properties": {
           "field": {
-            "description": "Field is uid or folder for all resources. Dashboards additionally support datasource_uid and language (promql, logql, traceql or sql).",
+            "description": "Field is uid or folder for all resources. A single dashboard resource type additionally supports datasource_uid and language (promql, logql, traceql or sql). Searches across multiple types support only uid and folder.",
             "type": "string",
             "default": ""
           },
@@ -6920,7 +6920,7 @@
         }
       },
       "HybridSearchQuery": {
-        "description": "HybridSearchQuery is the request body for POST .../{resource}/search/hybrid. It returns the top matching resources, with no pagination, sorting or facets.",
+        "description": "HybridSearchQuery is the request body for POST .../{resource}/search/hybrid and POST .../global/search/hybrid. It returns the top matching resources, with no pagination, sorting or facets.",
         "type": "object",
         "required": ["query"],
         "properties": {
@@ -6941,7 +6941,7 @@
             "type": "string"
           },
           "limit": {
-            "description": "Limit is the maximum number of results. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected.",
+            "description": "Limit is the maximum number of results across all requested resource types. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected.",
             "type": "integer",
             "format": "int64"
           },
@@ -6954,13 +6954,36 @@
             "type": "string",
             "default": ""
           },
+          "resources": {
+            "description": "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchResource"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
           "semanticQuery": {
             "description": "SemanticQuery supplies optional richer phrasing for semantic search. When provided, it must not be whitespace and must fit within 1000 bytes.",
             "type": "string"
           },
           "skipRerank": {
-            "description": "SkipRerank returns the fused lexical and semantic ordering without reranking, even when a reranker is configured.",
+            "description": "SkipRerank skips reranking even when a reranker is configured. Multiple resource types are interleaved in request order, preserving each type's ranking.",
             "type": "boolean"
+          }
+        }
+      },
+      "HybridSearchResource": {
+        "description": "HybridSearchResource identifies a resource type for global hybrid search.",
+        "type": "object",
+        "required": ["group", "resource"],
+        "properties": {
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -7000,6 +7023,14 @@
             "format": "double",
             "default": 0
           },
+          "tags": {
+            "description": "Tags from the lexical index. Omitted when unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
           "title": {
             "type": "string",
             "default": ""
@@ -7007,7 +7038,7 @@
         }
       },
       "HybridSearchResults": {
-        "description": "HybridSearchResults is the response body for POST .../{resource}/search/hybrid. Items are ordered by relevance. They are a bounded top-k result set, not an exhaustive list, so the response carries no total count or pagination token.",
+        "description": "HybridSearchResults is the response body for per-resource and global hybrid search. Items are ordered by relevance. They are a bounded top-k result set, not an exhaustive list, so the response carries no total count or pagination token.",
         "type": "object",
         "required": ["items"],
         "properties": {
@@ -7193,7 +7224,7 @@
         }
       },
       "SearchResults": {
-        "description": "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
+        "description": "SearchResults is the response body for POST .../{resource}/search.",
         "type": "object",
         "required": ["metadata", "items"],
         "properties": {

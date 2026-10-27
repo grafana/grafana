@@ -17,33 +17,30 @@ import (
 
 func TestLegacyCheck_Evaluators(t *testing.T) {
 	groups := []struct {
-		name          string
-		cases         []accesscontrol.EvaluationTestCase
-		pendingReason string
+		name  string
+		cases []accesscontrol.EvaluationTestCase
 	}{
-		{name: "Permission", cases: accesscontrol.PermissionEvaluateTestCases},
-		{name: "All", cases: accesscontrol.AllEvaluateTestCases, pendingReason: "pending: LegacyCheck request and server do not support EvalAll"},
-		{name: "Any", cases: accesscontrol.AnyEvaluateTestCases, pendingReason: "pending: LegacyCheck request and server do not support EvalAny"},
-		{name: "Combined", cases: accesscontrol.CombinedEvaluateTestCases, pendingReason: "pending: LegacyCheck request and server do not support nested EvalAll/EvalAny expressions"},
+		{
+			name:  "Permission",
+			cases: accesscontrol.PermissionEvaluateTestCases,
+		},
+		{
+			name:  "All",
+			cases: accesscontrol.AllEvaluateTestCases,
+		},
+		{
+			name:  "Any",
+			cases: accesscontrol.AnyEvaluateTestCases,
+		},
+		{
+			name:  "Combined",
+			cases: accesscontrol.CombinedEvaluateTestCases,
+		},
 	}
 	for _, group := range groups {
 		t.Run(group.name, func(t *testing.T) {
 			for _, tc := range group.cases {
 				t.Run(tc.Description(), func(t *testing.T) {
-					if group.pendingReason != "" {
-						t.Skip(group.pendingReason)
-					}
-
-					permission, ok := tc.Evaluator().(accesscontrol.PermissionEvaluatorForTest)
-					require.True(t, ok, "wire the complete expression request before enabling this case")
-					switch len(permission.Scopes) {
-					case 0:
-						t.Skip("pending: LegacyCheck request cannot distinguish action-only checks from an explicit empty scope")
-					case 1: // we only support single-scope checks for now.
-					default:
-						t.Skip("pending: LegacyCheck request cannot represent multiple alternative scopes")
-					}
-
 					var permissions []accesscontrol.Permission
 					for action, scopes := range tc.Permissions() {
 						if len(scopes) == 0 {
@@ -65,18 +62,54 @@ func TestLegacyCheck_Evaluators(t *testing.T) {
 					})
 
 					response, err := service.LegacyCheck(types.WithAuthInfo(t.Context(), caller), &authzextv1.LegacyCheckRequest{
-						Namespace: namespace,
-						Subject:   "user:user-1",
-						Action:    permission.Action,
-						Scope:     permission.Scopes[0],
+						Namespace:  namespace,
+						Subject:    "user:user-1",
+						Expression: legacyExpressionForEvaluator(t, tc.Evaluator()),
 					})
 					require.NoError(t, err)
 					require.NotNil(t, response)
 
 					assert.Empty(t, response.GetError())
-					assert.Equal(t, tc.Expected(), response.GetAllowed())
+					// Full AccessControl denies empty permission maps before
+					// evaluation, including expressions containing an empty ALL.
+					expected := len(tc.Permissions()) > 0 && tc.Expected()
+					assert.Equal(t, expected, response.GetAllowed())
 				})
 			}
 		})
+	}
+}
+
+func legacyExpressionForEvaluator(
+	t *testing.T,
+	evaluator accesscontrol.Evaluator,
+) *authzextv1.LegacyExpression {
+	t.Helper()
+	switch evaluator := evaluator.(type) {
+	case accesscontrol.PermissionEvaluatorForTest:
+		return &authzextv1.LegacyExpression{
+			Node: &authzextv1.LegacyExpression_Permission{
+				Permission: &authzextv1.LegacyPermission{Action: evaluator.Action, Scopes: evaluator.Scopes},
+			},
+		}
+	case accesscontrol.AllEvaluatorForTest:
+		children := make([]*authzextv1.LegacyExpression, 0, len(evaluator.ChildrenForTest()))
+		for _, child := range evaluator.ChildrenForTest() {
+			children = append(children, legacyExpressionForEvaluator(t, child))
+		}
+		return &authzextv1.LegacyExpression{
+			Node: &authzextv1.LegacyExpression_All{All: &authzextv1.LegacyExpressionList{Expressions: children}},
+		}
+	case accesscontrol.AnyEvaluatorForTest:
+		children := make([]*authzextv1.LegacyExpression, 0, len(evaluator.ChildrenForTest()))
+		for _, child := range evaluator.ChildrenForTest() {
+			children = append(children, legacyExpressionForEvaluator(t, child))
+		}
+		return &authzextv1.LegacyExpression{
+			Node: &authzextv1.LegacyExpression_Any{Any: &authzextv1.LegacyExpressionList{Expressions: children}},
+		}
+	default:
+		t.Fatalf("unsupported evaluator type %T", evaluator)
+		return nil
 	}
 }

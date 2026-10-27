@@ -192,9 +192,21 @@ The global search (`.../namespaces/{namespace}/global/search`) also offers `fold
 { "filter": { "field": "folderTree", "operator": "In", "values": ["team-a"] } }
 ```
 
-Several values are ORed. Only `In` is supported. The named folders themselves are not returned, only what they hold; to match only what is directly in a folder, filter on `folder` instead. The root folder is named `general`, and an empty value is rejected: `folderTree` with `general` matches everything, the same as no filter. A search of one kind rejects `folderTree` as an unknown field, because only the global index holds folders together with what is in them.
+Several values are ORed. Only `In` is supported. The named folders themselves are not returned, only what they hold; to match only what is directly in a folder, filter on `folder` instead. The root folder is named `general`, and an empty value is rejected: `folderTree` with `general` matches everything, the same as no filter.
 
 `folderTree` is not stored with each item: the global search works it out from the folders it has indexed when it searches. Like the rest of that index it is eventually consistent, so just after a folder moves, a search can still find what is below it in its old place.
+
+The global search answers with `GlobalSearchResults`. When it cannot search a type, because the calling service may not search it on the user's behalf or because the deployment does not check its results against the user, it leaves that type out instead of failing, and names it in `metadata.skippedTypes`. The results are then incomplete. It fails only when no type is left.
+
+##### Experimental recursive searches of one kind
+
+The same `folderTree` filter is available on per-resource `/search` endpoints only when `search.perResourceFolderTree` is enabled. This experimental flag defaults to off and is evaluated for each request, so it can be enabled for selected stacks during load and latency testing. With the flag off, the API rejects the field with 422 before calling the search server. Existing global search is unaffected.
+
+The search stays scoped to the resource type in the URL. Its folder index supplies the hierarchy without adding folder documents to the results. The filter supports only `In` and cannot be returned, sorted, faceted, or searched as text or regex. It is not available on `/trash`, even with the flag enabled.
+
+Deploy search-server support for recursive per-resource queries before enabling the flag. An older server rejects the filter; the API returns that error rather than silently running a non-recursive search.
+
+The folder and resource indexes use the existing per-resource refresh policy. The hierarchy and results are not read in one snapshot, so concurrent folder moves can affect results. This query must not be the sole check that a folder is empty before deletion; preventing concurrent writes requires coordination with those writes.
 
 #### Requiring every value
 
@@ -560,6 +572,58 @@ errors instead of implementing a separate fallback.
 
 The storage service authorizes individual results in both modes. Its embedding
 query rate limit applies only when semantic search is enabled (429 when exceeded).
+
+### Search across resources
+
+Deploy hybrid eligibility checks to all search-api instances before setting
+`[grafana-apiserver] enable_global_hybrid_api = true`; older servers ignore the
+opt-in check. The existing `enable_hybrid_api` switch must also remain enabled.
+Send the same request envelope to
+`POST /apis/search.grafana.app/v0alpha1/namespaces/{namespace}/global/search/hybrid`,
+adding the resource types to search:
+
+```json
+{
+  "apiVersion": "search.grafana.app/v0alpha1",
+  "kind": "HybridSearchQuery",
+  "resources": [
+    { "group": "dashboard.grafana.app", "resource": "dashboards" },
+    { "group": "folder.grafana.app", "resource": "folders" },
+    { "group": "assistant.alertrules.ext.grafana.app", "resource": "alertrules" }
+  ],
+  "query": "production",
+  "limit": 10
+}
+```
+
+The search backend requires `search.hybrid: true` in its built-in or watched
+manifest for each internal resource. Externally pushed collections, identified
+by the collection catalog rather than the group name, use existing enrollment
+and authorization rules. API versions are not needed in the resource list.
+
+Storage authorizes individual results; Grafana also checks API authorization for
+locally known resources. Global search cannot run custom authorization from a
+remote app handler. Resources needing it must keep hybrid disabled on all served
+versions unless storage enforces the same policy. Let the opt-out reach all search
+servers before relying on it. Existing direct RPC callers and custom handlers
+are unchanged.
+
+Results are reranked together, and `limit` applies to the combined response.
+Without reranking, resource types are interleaved in request order. Filters apply
+to every requested type; multi-resource queries support only `uid` and `folder`.
+A failure searching any resource fails the request. Each result includes its own
+group and resource; `kind` is empty when no manifest supplies it.
+
+To let clients omit `resources`, configure defaults in the Grafana HTTP process:
+
+```ini
+[unified_storage]
+hybrid_search_default_resources = dashboard.grafana.app/dashboards,folder.grafana.app/folders
+```
+
+An omitted or empty list uses these defaults; an explicit list overrides them.
+Keep group/resource pairs unique; an empty setting still requires explicit resources.
+Configured targets pass existing validation and authorization checks.
 
 ## Where to look
 

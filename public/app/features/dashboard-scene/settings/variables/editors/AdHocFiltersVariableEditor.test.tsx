@@ -13,7 +13,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, setRunRequest } from '@grafana/runtime';
+import { setRunRequest } from '@grafana/runtime';
 import { AdHocFiltersVariable } from '@grafana/scenes';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -169,12 +169,7 @@ describe('AdHocFiltersVariableEditor', () => {
   });
 
   describe('enableGroupBy', () => {
-    afterEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-    });
-
     it('should preserve enableGroupBy from deserialization', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
       getGroupByKeysMock = () => Promise.resolve([]);
 
       const { variable } = await setup(undefined, { enableGroupBy: true });
@@ -182,8 +177,7 @@ describe('AdHocFiltersVariableEditor', () => {
       expect(variable.state.enableGroupBy).toBe(true);
     });
 
-    it('should show Enable group by toggle when datasource supports getGroupByKeys and feature flag is on', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    it('should show Enable group by toggle when datasource supports getGroupByKeys', async () => {
       getGroupByKeysMock = () => Promise.resolve([]);
 
       const { renderer } = await setup();
@@ -194,7 +188,6 @@ describe('AdHocFiltersVariableEditor', () => {
     });
 
     it('should not show Enable group by toggle when datasource does not support getGroupByKeys', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
       getGroupByKeysMock = undefined;
 
       const { renderer } = await setup();
@@ -204,19 +197,7 @@ describe('AdHocFiltersVariableEditor', () => {
       });
     });
 
-    it('should not show Enable group by toggle when feature flag is off', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-      getGroupByKeysMock = () => Promise.resolve([]);
-
-      const { renderer } = await setup();
-
-      await waitFor(() => {
-        expect(renderer.queryByText('Enable group by')).not.toBeInTheDocument();
-      });
-    });
-
     it('should toggle enableGroupBy when Enable group by switch is clicked', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
       getGroupByKeysMock = () => Promise.resolve([]);
 
       const { renderer, variable, user } = await setup(undefined, { enableGroupBy: true });
@@ -234,8 +215,6 @@ describe('AdHocFiltersVariableEditor', () => {
     });
 
     it('should show Enable group by toggle as on when no datasource is selected', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-
       const { renderer } = await setup(undefined, { datasource: null });
 
       await waitFor(() => {
@@ -247,8 +226,6 @@ describe('AdHocFiltersVariableEditor', () => {
     });
 
     it('should not show default group by editor when no datasource is selected', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-
       const { renderer } = await setup(undefined, { datasource: null, enableGroupBy: true });
 
       await waitFor(() => {
@@ -259,12 +236,7 @@ describe('AdHocFiltersVariableEditor', () => {
   });
 
   describe('default group-by origin', () => {
-    afterEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-    });
-
-    it('should show default group by editor when both flags are on and enableGroupBy is true', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    it('should show default group by editor when enableGroupBy is true', async () => {
       getGroupByKeysMock = () => Promise.resolve([]);
 
       const { renderer } = await setup(undefined, { enableGroupBy: true });
@@ -276,7 +248,6 @@ describe('AdHocFiltersVariableEditor', () => {
     });
 
     it('should not show default group by editor when enableGroupBy is off', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
       getGroupByKeysMock = () => Promise.resolve([]);
 
       const { renderer } = await setup();
@@ -287,18 +258,7 @@ describe('AdHocFiltersVariableEditor', () => {
       expect(renderer.queryByTestId('default-groupby-editor')).not.toBeInTheDocument();
     });
 
-    it('should not show origin filters or default group by editor when dashboardUnifiedDrilldownControls is off', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-      getGroupByKeysMock = () => Promise.resolve([]);
-
-      const { renderer } = await setup(undefined, { enableGroupBy: true });
-
-      expect(renderer.queryByTestId('origin-filters-editor')).not.toBeInTheDocument();
-      expect(renderer.queryByTestId('default-groupby-editor')).not.toBeInTheDocument();
-    });
-
     it('should update originFilters when group-by selection changes', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
       getGroupByKeysMock = () => Promise.resolve([]);
 
       const { variable } = await setup(undefined, { enableGroupBy: true });
@@ -323,7 +283,6 @@ describe('AdHocFiltersVariableEditor', () => {
     });
 
     it('adhoc controller should not have enableGroupBy property', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
       getGroupByKeysMock = () => Promise.resolve([]);
 
       const { renderer } = await setup(undefined, { enableGroupBy: true });

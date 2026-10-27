@@ -1,6 +1,9 @@
 package resource
 
 import (
+	"context"
+	"errors"
+	"io"
 	"time"
 
 	"github.com/fullstorydev/grpchan"
@@ -38,12 +41,12 @@ func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
 	return resourceclient.NewAuthlessResourceClient(cc)
 }
 
-func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
-	return resourceclient.NewRemoteResourceClient(tracer, conn, indexConn, cfg)
+func NewEmbeddedRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+	return resourceclient.NewEmbeddedRemoteResourceClient(tracer, conn, indexConn, cfg)
 }
 
-func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClientConfig) (*authnlib.GrpcClientInterceptor, error) {
-	return resourceclient.NewAuthnGrpcClientInterceptor(tracer, cfg)
+func NewStandaloneRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+	return resourceclient.NewStandaloneRemoteResourceClient(tracer, conn, indexConn, cfg)
 }
 
 func ProvideInProcExchanger() authnlib.StaticTokenExchanger {
@@ -58,7 +61,7 @@ func NewResourceClient(conn, indexConn grpc.ClientConnInterface, cfg *setting.Cf
 
 	clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
 
-	return NewRemoteResourceClient(tracer, conn, indexConn, RemoteResourceClientConfig{
+	return NewEmbeddedRemoteResourceClient(tracer, conn, indexConn, RemoteResourceClientConfig{
 		Token:            clientCfg.Token,
 		TokenExchangeURL: clientCfg.TokenExchangeURL,
 		Audiences:        []string{"resourceStore"},
@@ -139,7 +142,8 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 		authnlib.WithClientInterceptorIDTokenExtractor(IDTokenExtractor),
 	)
 
-	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
+	cc := grpchan.InterceptClientConn(channel, nil, localStreamClientInterceptor)
+	cc = grpchan.InterceptClientConn(cc, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 
 	// Retry transient failures, but leave resource-version conflicts to callers that can re-read.
 	retryInterceptor := grpc_retry.UnaryClientInterceptor(
@@ -150,4 +154,33 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 	cc = grpchan.InterceptClientConn(cc, retryInterceptor, nil)
 
 	return resourceclient.NewResourceClientFromConns(cc, cc)
+}
+
+// localStreamClientInterceptor matches gRPC's send-side EOF handling for in-process
+// server-streaming RPCs. If the server rejects a stream before the request is sent,
+// the in-process transport can return io.EOF from SendMsg. The generated client then
+// returns without receiving the server's status, exposing Unknown instead of the
+// actual error (for example, ResourceExhausted when blob transfer slots are full).
+//
+// Suppressing only this send-side EOF lets the generated client receive the real
+// status through RecvMsg; it does not suppress the server's failure. Client-streaming
+// RPCs retain EOF so callers can stop sending and receive the final response.
+func localStreamClientInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
+	stream, err := streamer(ctx, desc, cc, method, opts...)
+	if err != nil || desc.ClientStreams {
+		return stream, err
+	}
+	return localServerStreamingClientStream{ClientStream: stream}, nil
+}
+
+type localServerStreamingClientStream struct {
+	grpc.ClientStream
+}
+
+func (s localServerStreamingClientStream) SendMsg(msg any) error {
+	err := s.ClientStream.SendMsg(msg)
+	if errors.Is(err, io.EOF) {
+		return nil
+	}
+	return err
 }

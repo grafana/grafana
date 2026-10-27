@@ -4,7 +4,6 @@ import { useCallback, useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   useFlagDashboardUndoRedo,
   useFlagGrafanaViewPanelPane,
@@ -14,6 +13,7 @@ import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/sc
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { DashboardLoadingBar } from '../scene/DashboardLoadingBar';
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -41,7 +41,9 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const { openPane, selectionContext, outlinePane, isLoading } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
-  const { isEditing, meta, uid, viewPanel } = dashboard.useState();
+  const dashboardState = dashboard.useState();
+  const { meta, uid, viewPanel } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
@@ -75,7 +77,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
 
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
-      sidebar.closePane();
+      sidebar.closePane('explicit');
       sidebarContext?.setIsHidden(true);
       e.currentTarget.blur();
     },
@@ -168,9 +170,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane instanceof DashboardOutline}
           />
-          {dashboardNewLayoutsEnabled && config.featureToggles.dashboardUnifiedDrilldownControls && (
-            <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />
-          )}
+          {dashboardNewLayoutsEnabled && <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
           <DashboardSidebarExtensionPoint />

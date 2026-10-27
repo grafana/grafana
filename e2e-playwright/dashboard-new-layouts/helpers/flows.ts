@@ -3,11 +3,11 @@ import test, { expect, type Page } from '@playwright/test';
 import { type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import testV2Dashboard from '../../dashboards/TestV2Dashboard.json';
-import { type Sidebar, type Controls } from '../page-objects';
+import { type Controls, type Sidebar } from '../page-objects';
 
 /**
  * Multi-step user flows composed from page objects, grouped by domain
- * (`flows.dashboards.*`, `flows.variables.*`, `flows.navigation.*`).
+ * (`flows.dashboards.*`, `flows.variables.*`, `flows.contentOutline.*`, `flows.navigation.*`).
  *
  * A flow IS a reusable sequence of user actions that several specs need
  * verbatim: test setup (provisioning, import), save-and-confirm cycles,
@@ -22,7 +22,7 @@ import { type Sidebar, type Controls } from '../page-objects';
  * - pixel/timing-sensitive mechanics like drag-and-drop or `boundingBox()`
  *   geometry — those live in `utils.ts`.
  *
- * Add a new flow only when a second spec needs the same sequence, in the
+ * Add a new flow only when three specs need the same sequence, in the
  * domain namespace it acts on (create it if missing).
  */
 export const flows = {
@@ -81,8 +81,17 @@ export const flows = {
       { reloadPageAfterSave = true, title }: { reloadPageAfterSave?: boolean; title?: string } = {}
     ): Promise<string | undefined> {
       const uniqueTitle = title ? buildUniqueDashboardTitle(title) : undefined;
+      const pathnameBeforeSave = new URL(page.url()).pathname;
 
       await controls.saveDashboard(uniqueTitle);
+
+      // A first "Save"/"Save as" creates a new dashboard, then the app redirects to its /d/<uid> URL
+      // so we wait for that redirect to make sure that a reload (or the next step) targets the saved dashboard
+      if (uniqueTitle) {
+        await expect(page, 'Expected a redirect to the newly saved dashboard').toHaveURL(
+          (url) => url.pathname.startsWith('/d/') && url.pathname !== pathnameBeforeSave
+        );
+      }
 
       // wait for the toast
       const toast = page.getByRole('status', { name: 'Dashboard saved' });
@@ -105,10 +114,16 @@ export const flows = {
       }
 
       await sidebar.toolbar.clickButton('Add');
-      await sidebar.addOptions.addVariable();
-      await sidebar.variableOptions.selectVariableType(variable.type);
 
-      await expect(sidebar.variableOptions.getNameInput()).toBeFocused();
+      // Ad hoc filters are not in the variable type picker; they have their own "Filter and Group by" entry
+      if (variable.type === 'adhoc') {
+        await sidebar.addOptions.addFilter();
+      } else {
+        await sidebar.addOptions.addVariable();
+        await sidebar.variableOptions.selectVariableType(variable.type);
+        // Only the variable type picker autofocuses the name input; adding a Filter does not
+        await expect(sidebar.variableOptions.getNameInput()).toBeFocused();
+      }
 
       await sidebar.variableOptions.setName(variable.name);
       if (variable.label) {
@@ -144,10 +159,22 @@ export const flows = {
     },
     async delete(sidebar: Sidebar, variableLabel: string) {
       return test.step(`Delete variable "${variableLabel}"`, async () => {
+        await flows.contentOutline.selectVariable(sidebar, variableLabel);
+        await sidebar.deleteSelection({ confirm: true });
+      });
+    },
+  },
+  contentOutline: {
+    /**
+     * Opens the content outline and selects a variable from it, which shows the variable's pane in the sidebar.
+     * The "Variables" node is toggled, not just expanded: call this once per page load, as the outline keeps its expanded state until a reload.
+     * @param variableLabel the variable's label when set, otherwise its name
+     */
+    async selectVariable(sidebar: Sidebar, variableLabel: string) {
+      await test.step(`Select variable "${variableLabel}" in the content outline`, async () => {
         await sidebar.toolbar.clickButton('Outline');
         await sidebar.contentOutline.toggleNode('Variables');
         await sidebar.contentOutline.clickItem(variableLabel);
-        await sidebar.deleteSelection({ confirm: true });
       });
     },
   },

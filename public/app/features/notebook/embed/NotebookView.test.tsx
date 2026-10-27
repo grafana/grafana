@@ -38,10 +38,10 @@ function captureStateManager() {
   return { instances, loadedUids };
 }
 
-function aNotebookScene(title = 'Checkout latency investigation') {
+function aNotebookScene(title = 'Checkout latency investigation', uid = 'nb-1') {
   return new NotebookScene({
     title,
-    uid: 'nb-1',
+    uid,
     body: new NotebookLayoutManager({ cells: [] }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     timePicker: new SceneTimePicker({}),
@@ -185,6 +185,121 @@ describe('NotebookView', () => {
     });
 
     expect(instances[0].state.scene).toBeUndefined();
+  });
+
+  // The assistant opens a notebook right after adding to it; what was added should be editable there.
+  describe('enterEditMode', () => {
+    async function renderLoaded(scene: NotebookScene, enterEditMode?: boolean) {
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const { instances } = captureStateManager();
+      const view = render(<NotebookView uid="nb-1" enterEditMode={enterEditMode} />);
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene });
+      });
+      return view;
+    }
+
+    it('opens the notebook in edit mode', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const scene = aNotebookScene();
+
+      await renderLoaded(scene, true);
+
+      expect(scene.state.isEditing).toBe(true);
+    });
+
+    it('enters edit mode when it turns on after the notebook is shown', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const scene = aNotebookScene();
+      const { rerender } = await renderLoaded(scene);
+      expect(scene.state.isEditing).toBeFalsy();
+
+      await act(async () => {
+        rerender(<NotebookView uid="nb-1" enterEditMode />);
+      });
+
+      expect(scene.state.isEditing).toBe(true);
+    });
+
+    // The assistant clears its request as soon as it has passed it on, which is before a new notebook loads.
+    it('still enters edit mode when the prop turns off again before the notebook has loaded', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const { instances } = captureStateManager();
+      const scene = aNotebookScene();
+      const { rerender } = render(<NotebookView uid="nb-1" enterEditMode />);
+      rerender(<NotebookView uid="nb-1" enterEditMode={false} />);
+
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene });
+      });
+
+      expect(scene.state.isEditing).toBe(true);
+    });
+
+    it('edits only the notebook it was asked for when the host switches notebooks', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const { instances } = captureStateManager();
+      const previous = aNotebookScene('Previous', 'nb-1');
+      const next = aNotebookScene('Next', 'nb-2');
+      const { rerender } = render(<NotebookView uid="nb-1" />);
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene: previous });
+      });
+      // Spied rather than read back: leaving the view deactivates the scene, which ends edit mode anyway.
+      const enterPrevious = jest.spyOn(previous, 'onEnterEditMode');
+
+      await act(async () => {
+        rerender(<NotebookView uid="nb-2" enterEditMode />);
+      });
+      expect(enterPrevious).not.toHaveBeenCalled();
+
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene: next });
+      });
+      expect(next.state.isEditing).toBe(true);
+    });
+
+    it('drops a request still waiting on its notebook when the host moves to another one', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+      const { instances } = captureStateManager();
+      const next = aNotebookScene('Next', 'nb-2');
+      const { rerender } = render(<NotebookView uid="nb-1" enterEditMode />);
+      rerender(<NotebookView uid="nb-1" enterEditMode={false} />);
+
+      await act(async () => {
+        rerender(<NotebookView uid="nb-2" />);
+      });
+      await act(async () => {
+        instances[0].setState({ isLoading: false, scene: next });
+      });
+
+      expect(next.state.isEditing).toBeFalsy();
+    });
+
+    it('leaves a reader without write permission in view mode', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      const scene = aNotebookScene();
+
+      await renderLoaded(scene, true);
+
+      expect(scene.state.isEditing).toBeFalsy();
+    });
+
+    // An add through the open scene already started editing; starting again would reset its session.
+    it('does not restart a session that is already open', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      const scene = aNotebookScene();
+      scene.onEnterEditMode();
+      const start = jest.spyOn(scene.editSession, 'start');
+
+      await renderLoaded(scene, true);
+
+      expect(scene.state.isEditing).toBe(true);
+      expect(start).not.toHaveBeenCalled();
+    });
   });
 
   // A host holding a document nobody has chosen to save: the assistant's canvas, where a notebook is

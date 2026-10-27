@@ -64,6 +64,7 @@ func TestIntegrationBlobGarbageCollection(t *testing.T) {
 	response, err := b.PutResourceBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, ContentType: "application/json", Value: []byte(`{}`)})
 	require.NoError(t, err)
 	require.Nil(t, response.Error)
+	require.Equal(t, byte('7'), response.Uid[14], "uid %q must be a UUIDv7", response.Uid)
 	for i := 1; i < blobCount; i++ {
 		response, err := b.PutResourceBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, ContentType: "application/json", Value: []byte(`{}`)})
 		require.NoError(t, err)

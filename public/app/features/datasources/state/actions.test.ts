@@ -1,7 +1,7 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
 import { type AppPluginMeta, type DataSourceSettings, type PluginMetaInfo, PluginType } from '@grafana/data';
-import { type DataSourceSrv, type FetchError } from '@grafana/runtime';
+import { type DataSourceSrv, type FetchError, HealthCheckError } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import { type getBackendSrv } from 'app/core/services/backend_srv';
 import { type ThunkResult, type ThunkDispatch } from 'app/types/store';
@@ -337,6 +337,21 @@ describe('testDataSource', () => {
         data: {},
         statusText: 'Bad Request',
         status: 400,
+      };
+      const dispatchedActions = await failDataSourceTest(error);
+      expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);
+    });
+
+    it('then testDataSourceFailed should be dispatched with HealthCheckError message and details', async () => {
+      const result = {
+        message: 'Health check failed',
+        details: { message: 'Connection timed out', verboseMessage: 'stack trace' },
+      };
+      const error = {
+        error: new HealthCheckError('Health check failed', {
+          message: 'Connection timed out',
+          verboseMessage: 'stack trace',
+        }),
       };
       const dispatchedActions = await failDataSourceTest(error);
       expect(dispatchedActions).toEqual([testDataSourceStarting(), testDataSourceFailed(result)]);

@@ -29,16 +29,15 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
-import { getHeaderCellStyles } from './styles';
+import { getColumnSettleStyles, getHeaderCellStyles } from './styles';
 import {
-  type FilterType,
   type NestedRowEntry,
   type TableCellRendererProps,
   type TableColumn,
   type TableRow,
   type TableSummaryRow,
 } from './types';
-import { type ApplyFilterResult, applyFilter, createTypographyContext, getCellColorInlineStylesFactory } from './utils';
+import { type ApplyFilterResult, createTypographyContext, getCellColorInlineStylesFactory } from './utils';
 
 // -----------------------------------------------------------------------------
 // useDataGridRows
@@ -280,7 +279,7 @@ describe('useDataGridRows', () => {
  * gives each filter result an identifiable fingerprint to assert on.
  */
 function makeFilterResult(scopedRows: TableRow[] = []): ApplyFilterResult {
-  return applyFilter(scopedRows, {}, []);
+  return { filteredRows: scopedRows, crossFilterOrder: [], crossFilterRows: {}, crossFilterTailRows: scopedRows };
 }
 
 /**
@@ -340,8 +339,6 @@ function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConf
     getTextColorForBackground: memoize(getTextColorForBackground, { maxSize: 100 }),
     rowHeight: 36,
     rowHeightFn: () => 36,
-    filter: {} as FilterType,
-    setFilter: jest.fn(),
     setInspectCell: jest.fn(),
     gridRef: createRef(),
     getCellActions: jest.fn().mockReturnValue([]),
@@ -445,6 +442,32 @@ describe('useColumnBuilderFromFields', () => {
     const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
     expect(result.columns[0].width).toBe(150);
     expect(result.columns[1].width).toBe(200);
+  });
+
+  describe('table.refresh column reorder', () => {
+    it.each([
+      { reorderable: true, expected: [true, true] },
+      { reorderable: false, expected: [false, false] },
+      { reorderable: undefined, expected: [false, false] },
+    ])('sets dragging for every column when reorderable=$reorderable', ({ reorderable, expected }) => {
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ reorderable }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(result.columns.map((c) => c.draggable)).toEqual(expected);
+    });
+
+    it('adds the settle class to headerCellClass only for settling columns', () => {
+      const theme = createTheme();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ theme, settlingColumnKeys: new Set(['A']) }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(result.columns[0].headerCellClass).toContain(getColumnSettleStyles(theme));
+      expect(result.columns[1].headerCellClass).not.toContain(getColumnSettleStyles(theme));
+    });
   });
 
   describe('table.refresh column hide', () => {

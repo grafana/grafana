@@ -224,6 +224,16 @@ message ResourceSearchResponse {
 
   // Populated only when result_format is FIELD_VALUES.
   repeated ResourceSearchRow rows = 12;
+
+  // Types a global search left out, as {group}/{resource}, so the results are
+  // incomplete: the calling service may not search them on the user's behalf,
+  // or this server does not check their results against the user.
+  repeated string skipped_types = 13;
+
+  // The Kubernetes kind of each type a global search covers, keyed by
+  // {group}/{resource}, for the results to report. The API layer may not know
+  // the kinds this server takes from manifests read at runtime.
+  map<string, string> kinds = 14;
 }
 
 message ResourceSearchField {
@@ -415,6 +425,11 @@ message HybridSearchRequest {
   // Nonempty list of unique group/resource pairs to search in namespace.
   // Required with namespace; must be unset when key is set.
   repeated Resource resources = 9;
+
+  // Global HTTP search requires manifest hybrid opt-in for internal resources.
+  // Externally pushed collections retain their existing enrollment checks.
+  // Custom API handlers may leave this unset and apply their own authorization.
+  bool require_hybrid_enabled = 10;
 }
 
 message HybridSearchResponse {
@@ -423,6 +438,10 @@ message HybridSearchResponse {
   // Request failures are gRPC status errors (e.g. INVALID_ARGUMENT for
   // bad filters), never payload-embedded errors.
   repeated HybridSearchResult results = 1;
+
+  // Manifest Kind names for requested internal group/resource pairs.
+  // Entries are present even when the search returns no results.
+  map<string, string> kinds = 2;
 }
 
 message HybridSearchResult {
@@ -470,6 +489,9 @@ message HybridSearchResult {
   // or array elements omitted. Empty values are omitted.
   // Absent for semantic-only hits, external collections, and legacy table responses.
   map<string, google.protobuf.Value> lexical = 9;
+
+  // Tags from the lexical index. Omitted when unavailable.
+  repeated string tags = 10;
 }
 
 message HybridSearchChunk {

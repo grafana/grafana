@@ -15,25 +15,37 @@ describe('classifyPage', () => {
   it.each([
     ['/d/abc', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc' }],
     ['/d/abc/some-slug', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc/some-slug' }],
-    ['/d/abc/', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc' }],
-    ['/d/abc?from=now-1h&to=now', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc' }],
+    // Search and a trailing slash change nothing.
+    ['/d/abc/?from=now-1h&to=now', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc' }],
     [`/explore${exploreSearch({ abc: { queries: [] } })}`, { kind: 'explore', session: 'abc', pathname: '/explore' }],
     // The left pane identifies the session; a split adds a pane on the right.
     [
-      `/explore/${exploreSearch({ abc: {}, def: {} }, '&orgId=1')}`,
+      `/explore${exploreSearch({ abc: {}, def: {} }, '&orgId=1')}`,
       { kind: 'explore', session: 'abc', pathname: '/explore' },
     ],
     ['/a/grafana-irm-app/incidents', { kind: 'app', pathname: '/a/grafana-irm-app/incidents' }],
     ['/a/grafana-irm-app/incidents/5987', { kind: 'app', pathname: '/a/grafana-irm-app/incidents/5987' }],
     [
-      '/a/grafana-assistant-app/investigations/abc-def/',
+      '/a/grafana-assistant-app/investigations/abc-def',
       { kind: 'app', pathname: '/a/grafana-assistant-app/investigations/abc-def' },
     ],
+    [
+      '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b',
+      { kind: 'page', pathname: '/a/grafana-assistant-app/pages/grafana-org-tenure-cb1e1e23764b' },
+    ],
+    // A page whose id merely starts with "new" is still a Page; only the `new` segment is the create flow.
+    [
+      '/a/grafana-assistant-app/pages/newsletter-metrics-1a2b3c',
+      { kind: 'page', pathname: '/a/grafana-assistant-app/pages/newsletter-metrics-1a2b3c' },
+    ],
+    // Another plugin's `/pages/<id>` is an ordinary app page.
+    ['/a/other-app/pages/abc', { kind: 'app', pathname: '/a/other-app/pages/abc' }],
     ['/a/grafana-k8s-app/navigation/cluster', { kind: 'app', pathname: '/a/grafana-k8s-app/navigation/cluster' }],
-    ['/alerting/list', { kind: 'alerting', pathname: '/alerting/list' }],
-    ['/alerting/list/', { kind: 'alerting', pathname: '/alerting/list' }],
-    ['/alerting/grafana/abc/view', { kind: 'alerting', pathname: '/alerting/grafana/abc/view' }],
     ['/alerting', { kind: 'alerting', pathname: '/alerting' }],
+    ['/alerting/list', { kind: 'alerting', pathname: '/alerting/list' }],
+    ['/alerting/grafana/abc/view', { kind: 'alerting', pathname: '/alerting/grafana/abc/view' }],
+    // Create forms and menu destinations are pages too; whether a visit earns a row is hasNothingToResume's call.
+    ['/alerting/new/alerting', { kind: 'alerting', pathname: '/alerting/new/alerting' }],
   ])('classifies %s', (url, expected) => {
     expect(classify(url)).toEqual(expected);
   });
@@ -58,6 +70,13 @@ describe('classifyPage', () => {
     '/explore/metrics/trail',
     '/a',
     '/a/',
+    // The Pages list and the create flow under `new` are not pages to come back to; only existing Pages are.
+    '/a/grafana-assistant-app/pages',
+    '/a/grafana-assistant-app/pages/',
+    '/a/grafana-assistant-app/pages?orgId=1',
+    '/a/grafana-assistant-app/pages/new',
+    '/a/grafana-assistant-app/pages/new/da8d0a5c-4e58-4fd4-ad0c-9bd84aad94a1',
+    '/a/grafana-assistant-app/pages/new/da8d0a5c-4e58-4fd4-ad0c-9bd84aad94a1?orgId=1',
     '/connections/datasources',
     '/profile',
     '/admin/users',

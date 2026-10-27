@@ -146,7 +146,7 @@ func TestGlobalSearchRoute_DescribesItsFieldsAndHasAValidExample(t *testing.T) {
 
 	const pkg = "com.github.grafana.grafana.pkg.apis.search.v0alpha1."
 	assert.Contains(t, r.Schemas, pkg+"SearchQuery")
-	assert.Contains(t, r.Schemas, pkg+"SearchResults")
+	assert.Contains(t, r.Schemas, pkg+"GlobalSearchResults")
 	for name, schema := range r.Schemas {
 		for _, ref := range collectRefs(&schema) {
 			assert.Contains(t, r.Schemas, ref, "%s references %s, which is not published", name, ref)

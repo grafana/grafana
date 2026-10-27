@@ -117,6 +117,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -190,6 +191,7 @@ type HTTPServer struct {
 	folderService                folder.Service
 	dsGuardian                   guardian.DatasourceGuardianProvider
 	dashboardsnapshotsService    dashboardsnapshots.Service
+	migrationStatusReader        unifiedmigrations.MigrationStatusReader
 	PluginSettings               pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
@@ -266,7 +268,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	dsGuardian guardian.DatasourceGuardianProvider,
-	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
+	dashboardsnapshotsService dashboardsnapshots.Service, migrationStatusReader unifiedmigrations.MigrationStatusReader, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	preferenceK8sHandler *prefapi.K8sHandler,
 	annotationMigrationProxy *annotationsapi.MigrationProxy,
@@ -356,6 +358,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		folderService:                folderService,
 		dsGuardian:                   dsGuardian,
 		dashboardsnapshotsService:    dashboardsnapshotsService,
+		migrationStatusReader:        migrationStatusReader,
 		PluginSettings:               pluginSettings,
 		AvatarCacheServer:            avatarCacheServer,
 		preferenceService:            preferenceService,

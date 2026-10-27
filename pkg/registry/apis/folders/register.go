@@ -292,7 +292,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
 
-	b.parents = newParentsGetter(b.storage, b.maxNestedFolderDepth) // used for validation
+	b.parents = newParentsGetter(b.storage) // used for validation
 	storage[folders.StoragePath("parents")] = &subParentsREST{
 		getter:  b.storage,
 		parents: b.parents,
@@ -578,7 +578,7 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if err := validateOwnerReferencesOnManagedFolder(f, nil); err != nil {
 			return err
 		}
-		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth, a.IsDryRun())
+		return validateOnCreate(ctx, f, newCreateParentsGetter(b.storage), b.maxNestedFolderDepth, a.IsDryRun())
 	case admission.Delete:
 		deleteOptions, _ := a.GetOperationOptions().(*metav1.DeleteOptions)
 		return validateOnDelete(ctx, f, b.searcher, deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx))

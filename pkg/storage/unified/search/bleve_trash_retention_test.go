@@ -155,7 +155,7 @@ func newTrashRetentionIndex(t testing.TB, group, res string, retention search.Tr
 				Title: "live",
 			}},
 		}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }

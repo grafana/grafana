@@ -12,10 +12,11 @@ import {
 } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
-import { getSingleResourceCommitMessage } from 'app/features/provisioning/utils/commitMessage';
+import { getResourceCommitMessage } from 'app/features/provisioning/utils/commitMessage';
 import { buildResourceBranchRedirectUrl } from 'app/features/provisioning/utils/redirect';
 
 import { getProvisionedRequestError } from '../components/utils/errors';
+import { getRequestRef } from '../utils/workflow';
 
 import { useCreateOrUpdateRepositoryFile } from './useCreateOrUpdateRepositoryFile';
 import { useProvisionedRequestHandler } from './useProvisionedRequestHandler';
@@ -31,12 +32,13 @@ export interface ImportProvisionedSaveParams {
   folderUid: string;
   /** Dashboard title — used for the default commit message and post-save URL slug. */
   title: string;
+  /** The commit creates `form.ref`; the destination page shows the PR banner instead of a toast. */
+  isNewBranch?: boolean;
   /** Form values from the provisioning fields. */
   form: {
     ref: string;
     path: string;
     comment?: string;
-    workflow?: string;
   };
 }
 
@@ -60,7 +62,15 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
   });
 
   const save = useCallback(
-    async ({ spec, apiVersion, uid, folderUid: targetFolderUid, title, form }: ImportProvisionedSaveParams) => {
+    async ({
+      spec,
+      apiVersion,
+      uid,
+      folderUid: targetFolderUid,
+      title,
+      isNewBranch,
+      form,
+    }: ImportProvisionedSaveParams) => {
       if (!repository) {
         return;
       }
@@ -84,8 +94,8 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         const data = await createFile({
           name: repository.name,
           path: form.path,
-          ref: form.ref === repository.branch ? undefined : form.ref,
-          message: getSingleResourceCommitMessage({
+          ref: getRequestRef(repository, form.ref),
+          message: getResourceCommitMessage({
             comment: form.comment,
             repository,
             action: 'create',
@@ -97,9 +107,8 @@ export function useImportProvisionedSave({ repository }: { repository?: Reposito
         }).unwrap();
 
         handleSuccess(data, {
-          workflow: form.workflow,
+          isNewBranch,
           folderUID: targetFolderUid,
-          selectedBranch: form.ref,
           handlers: {
             onWriteSuccess: (upsert) => {
               // Sync-disabled repositories can return success without creating a

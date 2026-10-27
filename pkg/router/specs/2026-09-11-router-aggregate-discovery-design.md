@@ -1,8 +1,8 @@
 # Router: Active discovery for aggregate apiservers
 
 Status: implemented. Amended 2026-10-10 for the configured target list (#134381),
-`discovery_auth = none` (#134461), per-target TLS and `poll_interval`, aggregated-discovery
-polling, and the removal of the AppManifest source (#134652).
+`discovery_auth = none` (#134461), per-target TLS and `poll_interval`, and aggregated-discovery
+polling.
 Package: `pkg/router`
 
 ## Context
@@ -20,8 +20,8 @@ known only from the target's own `/apis` endpoint, and the router must poll that
 them. The design also covers how that active discovery fits with the passive health model.
 
 The original design had a fixed pair of targets, `baas_apiserver` and
-`cloud_app_platform_apiserver`, plus a separate AppManifest CR source. #134381 replaced the fixed pair
-with a configured list, and #134652 removed the CR source.
+`cloud_app_platform_apiserver`. #134381 replaced the fixed pair
+with a configured list.
 
 ## Active discovery vs. passive health: distinct concerns
 
@@ -49,7 +49,7 @@ affect the next poll attempt.
 
 ## Design: cooldown-paced polling with exponential backoff
 
-Each aggregate target runs its own background poll loop (`aggregateTarget.run`,
+Each aggregate target runs its own background poll loop (`polledSource.run`,
 `aggregate_poller.go`). The `core_url`, `plugins_url` and ST fallback loops use the same pattern.
 The cooldown is **not** a circuit breaker — it's a plain backoff mechanism that throttles the
 target's own outbound poll request rate, with no per-caller protection or state machine.
@@ -101,7 +101,8 @@ then republishes the group, not just a change to its versions.
 
 Targets are uniquely named `[router.aggregate.<name>]` sections. Section order sets priority: when
 two targets discover the same group, the first one wins. AGENTS.md ("Settings") lists the keys:
-`url`, `audience`, `discovery_auth`, `poll_interval`, `group_regex`, `ca_file` and `insecure`.
+`url`, `audience`, `discovery_auth`, `poll_interval`, `group_patterns` (formerly `group_regex`),
+`ca_file` and `insecure`.
 
 The older `[cloud_router] baas_apiserver.*` and `cloud_app_platform_apiserver.*` keys were read as a
 rollout shim until every deployed config used sections. They are no longer read.
@@ -119,14 +120,14 @@ Validation rules:
 - `audience` is required when `url` is set, unless `discovery_auth = none`, where setting it is an
   error.
 - `cap_token` and `token_exchange_url` in `[cloud_router]` are required only when some target polls
-  with a CAP token (the default `discovery_auth`).
+  with a CAP token (`discovery_auth` unset, `cap_token` or `bearer`).
 
-Each target's `group_regex` is optional; unset means "include every group discovered from that target".
+Each target's `group_patterns` is optional; unset means "include every group discovered from that target".
 The patterns are glob-style (`*.grafana.app` → matches any group ending in `.grafana.app`), compiled
 to anchored regexes internally: `*` → `.*`, and every other segment goes through `regexp.QuoteMeta`
 so it matches literally. Escaping only `.` (as the first implementation did) left `+`, `(`, `[` etc.
 live, which *widens* the match — `foo+.grafana.app` would have matched `foooo.grafana.app`. Since
-`group_regex` is a narrowing allowlist, over-matching is the wrong failure direction. A consequence
+`group_patterns` is a narrowing allowlist, over-matching is the wrong failure direction. A consequence
 worth knowing: `QuoteMeta` always emits a valid literal, so glob compilation is total — there is no
 reachable "invalid pattern" error.
 
@@ -195,7 +196,7 @@ because the cooldown is the loop's only timing source (see the Design section).
    own credentials; the CAP token is only for discovery polls.
 7. **Readiness vs. first poll** — still open. `GrafanaRouter.Ready()` doesn't wait for a target's
    first poll, so a router with only aggregate targets can report ready while serving empty
-   discovery. Tracked as O7 in `2026-10-10-router-review-plan.md`.
+   discovery. Tracked as O7 in `2026-10-23-router-review-plan.md`.
 
 ## Testing
 

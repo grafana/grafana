@@ -357,7 +357,7 @@ export function vizPanelToSchemaV2(
   const subtitle =
     bakeRepeatValues && vizPanel.state.subtitle
       ? sceneGraph.interpolate(vizPanel, vizPanel.state.subtitle, undefined, 'text')
-      : undefined;
+      : vizPanel.state.subtitle;
 
   const elementSpec: PanelKind = {
     kind: 'Panel',

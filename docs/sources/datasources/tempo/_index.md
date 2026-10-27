@@ -121,6 +121,10 @@ The following pages help you set up and use the Tempo data source:
 - [Grafana Traces Drilldown](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/simplified-exploration/traces/): Explore tracing data visually using RED metrics, without writing queries.
 - [Service Graph and Service Graph view](service-graph/): Visualize service dependencies and monitor request rate, error rate, and duration. Requires a linked Prometheus data source with service graph metrics.
 
+To explore tracing data from a Tempo data source, try Grafana Traces Drilldown on Grafana Play:
+
+{{< docs/play title="Grafana Traces Drilldown" url="https://play.grafana.org/a/grafana-exploretraces-app/explore" >}}
+
 ## Connect traces to other signals
 
 After you've connected Grafana to Tempo, you can configure correlations between traces and other signals:

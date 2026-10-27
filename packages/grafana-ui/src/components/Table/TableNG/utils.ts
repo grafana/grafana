@@ -41,6 +41,7 @@ import {
   COLUMN,
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
+  HEADER_DRAG_HANDLE_SPACE,
   HEADER_ICON_SPACE,
   HEADER_MENU_SPACE,
   HEADER_TOOLTIP_SPACE,
@@ -59,10 +60,8 @@ import type {
   TypographyCtx,
   MeasureCellHeight,
   MeasureCellHeightEntry,
-  FilterType,
   GetActionsFunctionLocal,
   TableColumn,
-  FromFieldsResult,
   TextWrapFallback,
 } from './types';
 
@@ -921,70 +920,10 @@ export function applySort(
 
 export interface ApplyFilterResult {
   crossFilterOrder: string[];
-  crossFilterRows: Record<string, TableRow[]>;
+  /** Compute a column's cross-filter rows only when its popup opens. */
+  crossFilterRows: Record<string, () => TableRow[]>;
   crossFilterTailRows: TableRow[];
   filteredRows: TableRow[];
-}
-
-/**
- * @internal
- * Applies active filters to `rows` and computes cross-filter metadata for filter popup UIs.
- *
- * Filters are chained sequentially so that for each filter key, `crossFilterRows[key]`
- * holds the rows available *before* that filter was applied (i.e. the rows that passed all
- * preceding filters in the same scope). `crossFilterTailRows` holds the rows that survive
- * *all* filters — used for new filters that have not yet been applied.
- *
- * `filteredRows` is the display-ready result: equal to `crossFilterTailRows` for flat tables,
- * or wrapped with `processNestedTableRows` to preserve parent-child structure when
- * `hasNestedFrames` is true.
- *
- * When called for a nested table instance, pass `parentIndex` to scope filters to that level.
- */
-export function applyFilter(
-  rows: TableRow[],
-  filter: FilterType,
-  fields: Field[],
-  hasNestedFrames?: boolean,
-  parentIndex?: number
-): ApplyFilterResult {
-  // Scope rows to the relevant nesting level
-  const isNested = parentIndex !== undefined;
-  const scopedRows = !isNested ? rows.filter((r) => r.__depth === 0) : rows;
-
-  // Collect filter keys that belong to this scope (preserving JS insertion order)
-  const crossFilterOrder = Object.keys(filter).filter((key) => {
-    const entry = filter[key];
-    return !isNested ? entry.parentIndex == null : entry.parentIndex === parentIndex;
-  });
-
-  const crossFilterRows: Record<string, TableRow[]> = {};
-  let crossFilterTailRows = scopedRows;
-
-  for (const filterKey of crossFilterOrder) {
-    const filterEntry = filter[filterKey];
-    // Store rows available *before* this filter is applied
-    crossFilterRows[filterKey] = crossFilterTailRows;
-    // Advance the chain by applying this filter
-    crossFilterTailRows = crossFilterTailRows.filter((row) => {
-      const field = fields.find((f) => getDisplayName(f) === filterEntry.displayName);
-      if (!field || !field.display) {
-        return true;
-      }
-      const displayedValue = formattedValueToString(field.display(row[filterEntry.displayName]));
-      return filterEntry.filteredSet.has(displayedValue);
-    });
-  }
-
-  // For nested frames, wrap with processNestedTableRows so parent rows that have matching
-  // children are preserved for the expander UI. Use a Set for O(1) membership checks.
-  let filteredRows = crossFilterTailRows;
-  if (hasNestedFrames) {
-    const tailSet = new Set(crossFilterTailRows);
-    filteredRows = processNestedTableRows(rows, (parents) => parents.filter((row) => tailSet.has(row)));
-  }
-
-  return { crossFilterOrder, crossFilterRows, crossFilterTailRows, filteredRows };
 }
 
 /* ----------------------------- Data grid mapping ---------------------------- */
@@ -1228,6 +1167,28 @@ export function getVisibleFields(fields: Field[]): Field[] {
   return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hideFrom?.viz !== true);
 }
 
+/** Reorders fields by display name and appends unmentioned fields. @internal */
+export function orderFieldsByDisplayNames(fields: Field[], order?: string[]): Field[] {
+  if (!order || order.length === 0) {
+    return fields;
+  }
+  const byDisplayName = new Map(fields.map((field) => [getDisplayName(field), field]));
+  const ordered: Field[] = [];
+  for (const name of order) {
+    const field = byDisplayName.get(name);
+    if (field) {
+      ordered.push(field);
+      byDisplayName.delete(name);
+    }
+  }
+  for (const field of fields) {
+    if (byDisplayName.has(getDisplayName(field))) {
+      ordered.push(field);
+    }
+  }
+  return ordered;
+}
+
 /** Removes fields hidden through table controls. @internal */
 export function filterFieldsByHiddenColumns(fields: Field[], hiddenColumns?: ReadonlySet<string>): Field[] {
   if (!hiddenColumns || hiddenColumns.size === 0) {
@@ -1340,8 +1301,11 @@ export interface ContentAwareColWidthsOptions {
    * Active filters. Under `table.refresh` a filtered column also reserves space for the persistent
    * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
    */
-  filter?: FilterType;
+  isFiltered?: (field: Field) => boolean;
+  headerFilterState?: (field: Field, parentCount?: number) => { controlVisible: boolean; filterEnabled: boolean };
+  filterParentCount?: number;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   /** The first column carries extra inline-start padding to line up with the panel title. */
   noPanelPadding?: boolean;
   /**
@@ -1472,6 +1436,8 @@ export interface HeaderAffordanceOptions {
   tableRefreshEnabled: boolean;
   /** Whether a filter is currently active on this column — only the refreshed header marks that. */
   isFiltered: boolean;
+  filterable?: boolean;
+  reorderable?: boolean;
 }
 
 /**
@@ -1483,9 +1449,16 @@ export interface HeaderAffordanceOptions {
  */
 export function getHeaderAffordanceWidth(
   field: Field,
-  { showTypeIcons, tableRefreshEnabled, isFiltered, hasColumnOptions = false }: HeaderAffordanceOptions
+  {
+    showTypeIcons,
+    tableRefreshEnabled,
+    isFiltered,
+    filterable,
+    hasColumnOptions = false,
+    reorderable = false,
+  }: HeaderAffordanceOptions
 ): number {
-  const isFilterable = isFieldFilterable(field);
+  const isFilterable = filterable ?? isFieldFilterable(field);
   let width = 0;
   width += showTypeIcons ? HEADER_ICON_SPACE : 0;
   // reserved on every sortable column, not just the currently-sorted one, so a wrapped header doesn't
@@ -1494,6 +1467,7 @@ export function getHeaderAffordanceWidth(
   // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
   // is there for as long as the option is set rather than only while some state holds.
   width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
+  width += reorderable ? HEADER_DRAG_HANDLE_SPACE : 0;
   if (tableRefreshEnabled) {
     width += hasColumnOptions ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
@@ -1799,9 +1773,12 @@ export function computeContentAwareColWidths(
     getActions,
     tableRefreshEnabled = false,
     theme,
-    filter,
+    isFiltered,
+    headerFilterState,
+    filterParentCount,
     sampleSize,
     hasColumnSidebar = false,
+    reorderable = false,
     noPanelPadding = false,
     preventHorizontalOverflow = false,
   }: ContentAwareColWidthsOptions
@@ -1834,25 +1811,21 @@ export function computeContentAwareColWidths(
   const shrinkFloors = new Map<number, number>();
 
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions, theme };
-  // Filter entries are keyed per parent on nested tables, so match on the display name they carry
-  // rather than the key: nested columns share one width, so any active filter widens the column.
-  const filteredKeys = new Set(
-    Object.values(filter ?? {})
-      .filter((entry) => entry.filtered != null)
-      .map((entry) => entry.displayName)
-  );
-
   for (const i of autoIdxs) {
     const field = fields[i];
+    const filterState = headerFilterState?.(field, filterParentCount);
+    const filterable = isFieldFilterable(field) && (filterState?.controlVisible ?? true);
     // A hidden header row has no label to fit, so it doesn't bound the column at all.
     const headerWidth = hasHeader
       ? measureHeaderWidth(field, headerTypographyCtx, {
           showTypeIcons,
           tableRefreshEnabled,
-          isFiltered: filteredKeys.has(getDisplayName(field)),
+          isFiltered: filterable && (filterState?.filterEnabled ?? isFiltered?.(field) ?? false),
+          filterable,
+          reorderable,
           hasColumnOptions:
             getColumnMenuOptions({
-              filterable: isFieldFilterable(field),
+              filterable,
               hideable: isFieldHideable(field),
               hasColumnSidebar,
               hasAssistantAction,
@@ -1946,37 +1919,28 @@ type CellClass<TRow> = string | null | undefined | ((row: TRow) => string | null
 const appendCellClass = <TRow>(existing: CellClass<TRow>, edgeClass: string): CellClass<TRow> =>
   typeof existing === 'function' ? (row: TRow) => clsx(existing(row), edgeClass) : clsx(existing, edgeClass);
 
-// react-data-grid types these fields `readonly` for callers building a column once; here we're
-// intentionally mutating an already-built one in place, so we cast that guard away locally.
-type MutableColumnClasses = {
-  -readonly [K in 'headerCellClass' | 'cellClass' | 'summaryCellClass']?: TableColumn[K];
-};
-
-const addEdgeClass = (column: TableColumn, edgeClass: string): void => {
-  const mutable: MutableColumnClasses = column;
-  mutable.headerCellClass = clsx(column.headerCellClass, edgeClass);
-  mutable.cellClass = appendCellClass(column.cellClass, edgeClass);
-  mutable.summaryCellClass = appendCellClass(column.summaryCellClass, edgeClass);
-};
+const withEdgeClass = (column: TableColumn, edgeClass: string): TableColumn => ({
+  ...column,
+  headerCellClass: clsx(column.headerCellClass, edgeClass),
+  cellClass: appendCellClass(column.cellClass, edgeClass),
+  summaryCellClass: appendCellClass(column.summaryCellClass, edgeClass),
+});
 
 /**
  * @internal
  * Tags the edge columns with {@link FIRST_COLUMN_CLASS}/{@link LAST_COLUMN_CLASS}. Call this on the
  * finished column list, after any programmatically injected columns (the nested table's row
  * expander) are in place — a field's own index isn't enough to tell whether it ends up on an edge.
- *
- * Mutates `columns` (and the edge column objects) in place rather than copying: the list is always
- * freshly built by the caller right before this call, so there's nothing else holding a reference
- * that immutability would protect, and it's the same assumption `result.columns.unshift(...)`
- * already makes elsewhere for the nested expander column.
  */
-export function markEdgeColumns(fromFieldsResult: FromFieldsResult): undefined {
-  const { columns } = fromFieldsResult;
+export function markEdgeColumns(columns: TableColumn[]): TableColumn[] {
   if (columns.length === 0) {
-    return;
+    return columns;
   }
-  addEdgeClass(columns[0], FIRST_COLUMN_CLASS);
-  addEdgeClass(columns[columns.length - 1], LAST_COLUMN_CLASS);
+  const marked = [...columns];
+  marked[0] = withEdgeClass(marked[0], FIRST_COLUMN_CLASS);
+  const lastIdx = marked.length - 1;
+  marked[lastIdx] = withEdgeClass(marked[lastIdx], LAST_COLUMN_CLASS);
+  return marked;
 }
 
 /**

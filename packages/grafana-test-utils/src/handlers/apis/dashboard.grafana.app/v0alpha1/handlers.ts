@@ -128,11 +128,11 @@ export function getVectorSearchHandler(hits: VectorSearchHitInput[] = []) {
   });
 }
 
-export const hybridSearchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search/hybrid';
+export const hybridSearchRoute = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/dashboards/search/hybrid';
 
 /**
  * Friendly input shape for the hybrid search handler. One entry is one matched
- * dashboard; the handler maps it to the SearchResults response shape the real
+ * dashboard; the handler maps it to the HybridSearchResults response shape the real
  * `/search/hybrid` endpoint returns (one hit per dashboard, best match first).
  */
 export interface HybridSearchHitInput {
@@ -140,8 +140,10 @@ export interface HybridSearchHitInput {
   name: string;
   /** Dashboard title. */
   title: string;
-  /** Folder UID (title is resolved client-side via the folder lookup). */
+  /** Folder UID. */
   folder?: string;
+  /** Best-effort folder display name. */
+  folderTitle?: string;
   /** Relevance score (higher = better). */
   score?: number;
   /** Resource manager metadata. */
@@ -152,34 +154,27 @@ export interface HybridSearchHitInput {
 
 /**
  * Mocks the dashboard API's hybrid (lexical + semantic) search endpoint.
- * Returns the same SearchResults shape as lexical search: one hit per
- * dashboard, with the best chunk's snippet and score on its `field`.
- * Honors the `limit` query param.
+ * Returns one item per dashboard with its matching chunks.
+ * Honors the request body's `limit`.
  */
 export function getHybridSearchHandler(hits: HybridSearchHitInput[] = []) {
-  return http.get(hybridSearchRoute, ({ request }) => {
-    const limit = parseInt(new URL(request.url).searchParams.get('limit') || '', 10) || hits.length;
+  return http.post(hybridSearchRoute, async ({ request }) => {
+    const body = (await request.json()) as { limit?: number };
+    const limit = body.limit || hits.length;
     const mapped = hits.slice(0, limit).map((hit) => ({
-      resource: 'dashboards',
-      name: hit.name,
+      resource: { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', name: hit.name },
       title: hit.title,
-      folder: hit.folder,
+      folder: hit.folder ?? '',
+      folderTitle: hit.folderTitle,
       score: hit.score ?? 0,
       managedBy: hit.managedBy,
-      field: {
-        score: hit.score ?? 0,
-        ...(hit.snippet !== undefined && {
-          snippet: hit.snippet,
-          subresource: '',
-          chunks: [{ subresource: '', snippet: hit.snippet }],
-        }),
-      },
+      chunks: [{ subresource: '', content: hit.snippet ?? hit.title }],
     }));
 
     return HttpResponse.json({
-      totalHits: mapped.length,
-      hits: mapped,
-      maxScore: mapped[0]?.score ?? 0,
+      apiVersion: 'search.grafana.app/v0alpha1',
+      kind: 'HybridSearchResults',
+      items: mapped,
     });
   });
 }

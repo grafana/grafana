@@ -20,8 +20,8 @@ runs:
       run: |
         yarn install
         npm version "$VERSION" --no-git-tag-version
-        yarn run lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
-        yarn install
+        yarn nx release version "$VERSION"
+        yarn install --no-immutable
         yarn prettier:write
     - name: make gen-cue
       shell: bash

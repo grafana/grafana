@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/react';
 import { of } from 'rxjs';
 import { testWithFeatureToggles } from 'test/test-utils';
 
@@ -68,6 +69,15 @@ describe('panelMenuBehavior', () => {
     locationService.push('/d/dash-1?from=now-5m&to=now');
   });
 
+  // The exact item counts asserted below assume the menu has no Time settings item.
+  beforeEach(() => {
+    setTestFlags({ panelTimeSettings: false });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   it('Given standard panel', async () => {
     const { menu, panel } = await buildTestScene({});
 
@@ -100,6 +110,44 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);
+  });
+
+  it('adds a Time settings item after Inspect when panelTimeSettings is on', async () => {
+    setTestFlags({ panelTimeSettings: true });
+    const { menu, panel } = await buildTestScene({});
+
+    panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+    mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+    mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+    menu.activate();
+
+    await new Promise((r) => setTimeout(r, 1));
+
+    expect(menu.state.items?.length).toBe(7);
+    expect(menu.state.items?.[4].text).toBe('Inspect');
+    expect(menu.state.items?.[5].text).toBe('Time settings');
+  });
+
+  it.each(['view', 'agent'] as const)('opens panel editing from the %s menu and enters Editing', async (mode) => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    const { scene, panel, menu } = await buildTestScene({});
+    let deactivateMenu = () => {};
+    try {
+      scene.setState({ mode, isEditing: true, editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      deactivateMenu = menu.activate();
+      await waitFor(() =>
+        expect(menu.state.items?.find((item) => item.text === 'Edit')?.href).toContain('editPanel=12')
+      );
+      scene.urlSync?.updateFromUrl({ editPanel: 'panel-12' });
+      await waitFor(() => expect(scene.state.editPanel?.getUrlKey()).toBe('12'));
+      expect(scene.state.mode).toBe('edit');
+    } finally {
+      deactivateMenu();
+      setTestFlags({});
+    }
   });
 
   describe('legend toggle', () => {

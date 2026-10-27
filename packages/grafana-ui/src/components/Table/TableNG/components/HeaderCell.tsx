@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { type Field, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { faro, LogLevel } from '@grafana/faro-web-sdk';
 import { t } from '@grafana/i18n';
 import { type Column, type SortDirection } from '@grafana/react-data-grid';
 
@@ -17,9 +18,10 @@ import { Popover } from '../../../Tooltip/Popover';
 import { Filter } from '../Filter/Filter';
 import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
-import { TABLE } from '../constants';
+import { useTableFilters } from '../TableFilterContext';
+import { HEADER_DRAG_HANDLE_WIDTH, TABLE } from '../constants';
 import { getColumnMenuOptions } from '../menuOptions';
-import { type FilterType, type TableRow, type TableSummaryRow, type TableWarning } from '../types';
+import { type TableRow, type TableSummaryRow, type TableWarning } from '../types';
 import { getDisplayName, isFieldFilterable, isFieldHideable, isSortableField } from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
@@ -31,20 +33,19 @@ interface HeaderCellProps {
   column: Column<TableRow, TableSummaryRow>;
   rows: TableRow[];
   field: Field;
+  timeZone?: string;
   direction?: SortDirection;
-  filter: FilterType;
-  setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   showTypeIcons?: boolean;
   selectFirstCell: () => void;
   disableKeyboardEvents?: boolean;
   parentIndex?: number;
-  crossFilterRows: Record<string, TableRow[]>;
+  crossFilterRows: Record<string, () => TableRow[]>;
   crossFilterTailRows: TableRow[];
   tableRefreshEnabled?: boolean;
   hasColumnSidebar?: boolean;
   onHideColumn?: () => void;
   canHideColumn?: boolean;
-  onOpenColumnPanel?: () => void;
+  onOpenColumnPanel?: (columnKey: string) => void;
 }
 
 const TABBABLE_SELECTOR = 'button:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -56,10 +57,9 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   direction,
   disableKeyboardEvents,
   field,
-  filter,
+  timeZone,
   rows,
   selectFirstCell,
-  setFilter,
   showTypeIcons,
   parentIndex,
   crossFilterRows,
@@ -79,31 +79,42 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const controlAlignment = headerCellWrap ? 'flex-end' : 'center';
   const displayName = getDisplayName(field);
   const filterable = isFieldFilterable(field);
+  const tableFilters = useTableFilters();
+  const filteringDisabled = tableFilters?.filteringDisabled;
   const hideable = isFieldHideable(field);
+  const reorderable = column.draggable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const headerTooltip = field.config.custom?.headerTooltip ?? field.config.description;
-
-  const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
-  const hasActiveFilter = filterable && filter[filterKey]?.filtered != null;
-  const columnOptions = getColumnMenuOptions({
-    filterable,
-    hideable: hideable && Boolean(onHideColumn),
-    hasColumnSidebar: Boolean(hasColumnSidebar && onOpenColumnPanel),
-    hasAssistantAction: Boolean(onAddToAssistant),
-  });
 
   // The menu item and active-filter icon share this popup.
   const filterIconRef = useRef<HTMLButtonElement>(null);
   const [filterAnchor, setFilterAnchor] = useState<HTMLButtonElement | null>(null);
-  const { isPopoverVisible, setPopoverVisible, popupProps } = useFilterPopupState({
+  const { isPopoverVisible, setPopoverVisible, popupProps, filterEnabled, unsupportedReason } = useFilterPopupState({
     name: column.key,
-    filter,
-    setFilter,
     field,
+    timeZone,
     parentIndex,
     crossFilterRows,
     crossFilterTailRows,
   });
+
+  const showFilterControl = filterable && !unsupportedReason;
+  const columnOptions = getColumnMenuOptions({
+    filterable: showFilterControl && !filteringDisabled,
+    hideable: hideable && Boolean(onHideColumn),
+    hasColumnSidebar: Boolean(hasColumnSidebar && onOpenColumnPanel),
+    hasAssistantAction: Boolean(onAddToAssistant),
+  });
+  const hasActiveFilter = showFilterControl && filterEnabled && !filteringDisabled;
+
+  useEffect(() => {
+    if (filterable && unsupportedReason) {
+      faro?.api?.pushLog(['Table filter is not editable in the header; filter control hidden.'], {
+        level: LogLevel.WARN,
+        context: { source: 'TableNG.HeaderCell', reason: unsupportedReason },
+      });
+    }
+  }, [filterable, unsupportedReason]);
 
   const openFilter = useCallback(
     (anchor: HTMLButtonElement | null) => {
@@ -113,16 +124,11 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     [setPopoverVisible]
   );
 
-  // we have to remove/reset the filter if the column is not filterable
   useEffect(() => {
-    if (!filterable && filter[displayName]) {
-      setFilter((filter: FilterType) => {
-        const newFilter = { ...filter };
-        delete newFilter[displayName];
-        return newFilter;
-      });
+    if (!filteringDisabled && !filterable && filterEnabled && !unsupportedReason) {
+      tableFilters?.clearFilter(field, parentIndex);
     }
-  }, [filterable, displayName, filter, setFilter]);
+  }, [filterable, filterEnabled, filteringDisabled, unsupportedReason, tableFilters, field, parentIndex]);
 
   if (hideHeader) {
     return null;
@@ -205,7 +211,10 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               ref={filterIconRef}
               type="button"
               className={styles.headerCellFilterButton}
-              aria-label={t('grafana-ui.table.edit-column-filter', 'Edit filter on {{name}}', { name: displayName })}
+              aria-label={t('grafana-ui.table.edit-column-filter', 'Edit filter on {{name}}', {
+                name: displayName,
+                interpolation: { escapeValue: false },
+              })}
               aria-haspopup="dialog"
               aria-expanded={isPopoverVisible && filterAnchor === filterIconRef.current}
               data-testid={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.activeFilterButton}
@@ -228,6 +237,18 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
     return (
       // Scope hover styles to this header instead of an ancestor nested-table cell.
       <div ref={ref} className={clsx(styles.headerCellRoot, 'table-ng-header-cell')} onKeyDown={onKeyDown}>
+        {reorderable && (
+          // Chrome requires an interactive drag target inside the draggable header.
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            className={styles.headerCellDragHandle}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Icon name="draggabledots" aria-hidden="true" />
+          </button>
+        )}
         <Stack direction="row" gap={0.5} alignItems={controlAlignment} grow={1} minWidth={0}>
           {label}
         </Stack>
@@ -241,7 +262,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               onOpenFilter={openFilter}
               onHideColumn={hideable ? onHideColumn : undefined}
               canHideColumn={canHideColumn}
-              onOpenColumnPanel={onOpenColumnPanel}
+              onOpenColumnPanel={() => onOpenColumnPanel?.(column.key)}
               onAddToAssistant={onAddToAssistant}
             />
           </Stack>
@@ -268,14 +289,13 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
       {/* eslint-enable jsx-a11y/no-static-element-interactions */}
       {label}
 
-      {filterable && (
+      {showFilterControl && (
         <Stack alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
           <Filter
             name={column.key}
             rows={rows}
-            filter={filter}
-            setFilter={setFilter}
             field={field}
+            timeZone={timeZone}
             iconClassName={styles.headerCellIcon}
             parentIndex={parentIndex}
             crossFilterRows={crossFilterRows}
@@ -296,6 +316,35 @@ const getStyles = memoize(
       gap: theme.spacing(0.5),
       flex: 1,
       minWidth: 0,
+      // Prevent text selection from stealing the column drag gesture.
+      userSelect: 'none',
+    }),
+    // Keep the handle mounted so its width can animate without shifting the label abruptly.
+    headerCellDragHandle: css({
+      label: 'headerCellDragHandle',
+      display: 'flex',
+      alignItems: 'center',
+      flexShrink: 0,
+      background: 'transparent',
+      border: 'none',
+      padding: 0,
+      color: theme.colors.text.secondary,
+      cursor: 'grab',
+      width: 0,
+      opacity: 0,
+      overflow: 'hidden',
+      marginInlineEnd: theme.spacing(-0.5),
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['width', 'opacity', 'margin-inline-end'], {
+          duration: theme.transitions.duration.shorter,
+        }),
+      },
+      // The custom class avoids matching the outer cell of a nested table.
+      '.table-ng-header-cell:hover &': {
+        width: HEADER_DRAG_HANDLE_WIDTH,
+        opacity: 1,
+        marginInlineEnd: 0,
+      },
     }),
     // The `table.refresh` differences live in this one rule rather than in a second class composed
     // over it: two rules of equal specificity are resolved by their order in the stylesheet, and this

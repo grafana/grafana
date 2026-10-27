@@ -646,7 +646,7 @@ export const getStyles = (
     }),
     currentLog: css({
       background: hoverColor,
-      fontWeight: theme.typography.fontWeightBold,
+      fontWeight: theme.flags.visualDesignRefresh ? theme.typography.fontWeightMedium : theme.typography.fontWeightBold,
       '& .log-line-menu': {
         background: hoverColor,
       },

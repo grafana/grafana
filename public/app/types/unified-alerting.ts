@@ -72,12 +72,12 @@ export interface RecordingRule extends RuleBase {
 
 export type Rule = AlertingRule | RecordingRule;
 
-export interface GrafanaAlertingRule extends AlertingRule {
+interface GrafanaAlertingRule extends AlertingRule {
   uid: string;
   folderUid: string;
 }
 
-export interface GrafanaRecordingRule extends RecordingRule {
+interface GrafanaRecordingRule extends RecordingRule {
   uid: string;
   folderUid: string;
 }

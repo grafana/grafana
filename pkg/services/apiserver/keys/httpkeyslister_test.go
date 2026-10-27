@@ -57,16 +57,17 @@ func serveKeys(t *testing.T, handler func(i int, opts storagev0.ListKeyRequest) 
 	return NewHTTPLister(client, gvr, opts...), &seen
 }
 
-func keysPage(rv, cont string, items ...metav1.PartialObjectMetadata) metav1.PartialObjectMetadataList {
-	return metav1.PartialObjectMetadataList{
-		TypeMeta: metav1.TypeMeta{APIVersion: "meta.k8s.io/v1", Kind: listKeysKind},
-		ListMeta: metav1.ListMeta{ResourceVersion: rv, Continue: cont},
-		Items:    items,
+func keysPage(rv, cont string, items ...storagev0.ListKeyItem) storagev0.ListKeyResponse {
+	return storagev0.ListKeyResponse{
+		TypeMeta:        metav1.TypeMeta{APIVersion: storagev0.APIVERSION, Kind: storagev0.KindListKeyResponse},
+		ResourceVersion: rv,
+		Continue:        cont,
+		Items:           items,
 	}
 }
 
-func partial(namespace, name, rv string) metav1.PartialObjectMetadata {
-	return metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: name, ResourceVersion: rv}}
+func partial(namespace, name, rv string) storagev0.ListKeyItem {
+	return storagev0.ListKeyItem{Namespace: namespace, Name: name, ResourceVersion: rv}
 }
 
 func drain(t *testing.T, lister Lister) ([]Key, error) {
@@ -108,7 +109,9 @@ func TestHTTPLister_FollowsContinue(t *testing.T) {
 		if i == 0 {
 			return http.StatusOK, keysPage("100", "tok", partial("ns1", "a", "10"))
 		}
-		return http.StatusOK, keysPage("100", "", partial("ns2", "b", "11"))
+		b := partial("ns2", "b", "11")
+		b.Folder = "f1"
+		return http.StatusOK, keysPage("100", "", b)
 	})
 
 	listRV, seq := lister.ListKeys(t.Context())
@@ -122,7 +125,7 @@ func TestHTTPLister_FollowsContinue(t *testing.T) {
 
 	require.Len(t, keys, 2)
 	assert.Equal(t, Key{Namespace: "ns1", Name: "a", ResourceVersion: "10"}, keys[0])
-	assert.Equal(t, Key{Namespace: "ns2", Name: "b", ResourceVersion: "11"}, keys[1])
+	assert.Equal(t, Key{Namespace: "ns2", Name: "b", ResourceVersion: "11", Folder: "f1"}, keys[1])
 	require.Len(t, *seen, 2)
 	assert.Equal(t, "tok", (*seen)[1].opts.Continue, "the continue token is forwarded")
 }
@@ -162,6 +165,22 @@ func TestHTTPLister_SurfacesForbidden(t *testing.T) {
 func TestHTTPLister_RefusesAnotherKind(t *testing.T) {
 	lister, _ := serveKeys(t, func(int, storagev0.ListKeyRequest) (int, any) {
 		return http.StatusOK, map[string]any{"kind": "ConnectionList", "items": []any{}}
+	})
+
+	_, err := drain(t, lister)
+	require.ErrorIs(t, err, ErrUnsupported)
+}
+
+// A server from before the storage.grafana.app envelope answers with the
+// meta.k8s.io projection. Unsupported, so the caller falls back to a full list
+// while the two sides deploy separately.
+func TestHTTPLister_RefusesPartialObjectMetadataList(t *testing.T) {
+	lister, _ := serveKeys(t, func(int, storagev0.ListKeyRequest) (int, any) {
+		return http.StatusOK, metav1.PartialObjectMetadataList{
+			TypeMeta: metav1.TypeMeta{APIVersion: "meta.k8s.io/v1", Kind: "PartialObjectMetadataList"},
+			ListMeta: metav1.ListMeta{ResourceVersion: "100"},
+			Items:    []metav1.PartialObjectMetadata{{ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "a", ResourceVersion: "10"}}},
+		}
 	})
 
 	_, err := drain(t, lister)

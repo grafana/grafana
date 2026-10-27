@@ -226,7 +226,7 @@ jobs:
       - name: "Prettify CHANGELOG.md"
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         run: node ./.grafana-main/.github/actions/changelog/sort.js && npx prettier --write CHANGELOG.md
-      # Remove the main checkout before lerna runs so nx doesn't see duplicate plugin
+      # Remove the main checkout before the version bump so nx doesn't see duplicate plugin
       # package.json files across .grafana-main and the release-branch tree.
       - name: Remove main checkout before bump
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
@@ -239,7 +239,12 @@ jobs:
           current_version=$(node -p "require('./package.json').version")
           if [ "$current_version" != "$VERSION" ]; then
             npm version "$VERSION" --no-git-tag-version
-            yarn run lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
+            # Release branches cut before lerna was replaced with nx release still have lerna.json
+            if [ -f lerna.json ]; then
+              yarn run lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
+            else
+              yarn nx release version "$VERSION"
+            fi
           fi
           yarn install
           yarn prettier:write

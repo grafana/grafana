@@ -1,8 +1,7 @@
 import { renderHook, waitFor } from 'test/test-utils';
 
 import type { PluginMeta } from '@grafana/data';
-import { isAppPluginInstalled } from '@grafana/runtime';
-import { getPluginSettings } from '@grafana/runtime/unstable';
+import { getPluginSettings, isAppPluginInstalled } from '@grafana/runtime';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
 import { canAccessPluginPage } from 'app/features/alerting/unified/hooks/usePluginBridge';
@@ -16,12 +15,8 @@ jest.mock('@grafana/i18n', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  isAppPluginInstalled: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getPluginSettings: jest.fn(),
+  isAppPluginInstalled: jest.fn(),
 }));
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({

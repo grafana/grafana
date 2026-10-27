@@ -40,3 +40,5 @@ export type { QueryFieldConfig, QueryFieldConfigOptions } from './components/Que
 export { TableNG } from './components/Table/TableNG/TableNG';
 export { RangeSliderG14 } from './components/Slider/RangeSliderG14';
 export type { RangeSliderG14Props } from './components/Slider/types';
+export { usePanelNotices, usePanelStatusSnapshot, PanelStatusActions } from './components/PanelChrome';
+export { SanitizedSVG } from './components/SanitizedSVG/SanitizedSVG';

@@ -6,6 +6,7 @@ import (
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -16,6 +17,8 @@ import (
 const (
 	ConfigSection   = "grafana-apiserver"
 	ConfigKeyHybrid = "enable_hybrid_api"
+	// Global hybrid search requires the storage service's multi-resource RPC support.
+	ConfigKeyGlobalHybrid = "enable_global_hybrid_api"
 	// ConfigKeyGlobalSearch turns on the search that spans resource types. Off by
 	// default, and useless without the global index it reads
 	// (global_search_index_enabled), which is also off by default.
@@ -69,7 +72,7 @@ func (h *Handler) GlobalSearchRoute(kinds map[schema.GroupResource]string) Route
 		Path:    resource.GlobalSearchResource + "/" + searchPathSegment,
 		Spec:    globalSearchRouteSpec(),
 		Handler: h.GlobalSearchFor(kinds),
-		Schemas: envelopeSchemas(searchQueryGoName, searchResultsGoName),
+		Schemas: envelopeSchemas(searchQueryGoName, globalSearchResultsGoName),
 	}
 }
 
@@ -95,6 +98,15 @@ func (h *HybridHandler) HybridSearchRoute(group, version, resourceName, kindName
 		Path:    resourceName + "/" + searchPathSegment + "/" + searchv0.HybridSearchPathSegment,
 		Spec:    hybridSearchRouteSpec(kindName, version),
 		Handler: h.HybridSearchFor(kind),
+		Schemas: envelopeSchemas(hybridSearchQueryGoName, hybridSearchResultsGoName),
+	}
+}
+
+func (h *HybridHandler) GlobalHybridSearchRoute(targets map[schema.GroupResource]schema.GroupVersionKind, kinds map[schema.GroupResource]string, auth authorizer.Authorizer, defaultResources []searchv0.HybridSearchResource) Route {
+	return Route{
+		Path:    resource.GlobalSearchResource + "/" + searchPathSegment + "/" + searchv0.HybridSearchPathSegment,
+		Spec:    globalHybridSearchRouteSpec(),
+		Handler: h.GlobalHybridSearchFor(targets, kinds, auth, defaultResources),
 		Schemas: envelopeSchemas(hybridSearchQueryGoName, hybridSearchResultsGoName),
 	}
 }
@@ -144,8 +156,8 @@ func globalSearchRouteSpec() *spec3.PathProps {
 		description:  globalSearchDescription(),
 		requestKind:  searchv0.KindSearchQuery,
 		requestGo:    searchQueryGoName,
-		responseKind: searchv0.KindSearchResults,
-		responseGo:   searchResultsGoName,
+		responseKind: searchv0.KindGlobalSearchResults,
+		responseGo:   globalSearchResultsGoName,
 		example:      globalSearchExample(),
 	})
 }
@@ -212,6 +224,28 @@ func hybridSearchRouteSpec(kindName, version string) *spec3.PathProps {
 		},
 	})
 	s.Post.RequestBody.Description = "A " + searchv0.KindHybridSearchQuery + " describing what to match and return."
+	return s
+}
+
+func globalHybridSearchRouteSpec() *spec3.PathProps {
+	s := routeSpec(routeSpecArgs{
+		operationID:  hybridSearchOperationID("Global", searchv0.VERSION),
+		description:  "Hybrid search across the requested resource types in one namespace. The search backend requires manifest hybrid opt-in for internal resources; externally pushed collections use existing enrollment and authorization. Results are reranked together. Limit applies to the combined results; failure searching any resource fails the request. No pagination, totals, sorting or facets.",
+		requestKind:  searchv0.KindHybridSearchQuery,
+		requestGo:    hybridSearchQueryGoName,
+		responseKind: searchv0.KindHybridSearchResults,
+		responseGo:   hybridSearchResultsGoName,
+		example: &searchv0.HybridSearchQuery{
+			TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindHybridSearchQuery},
+			Resources: []searchv0.HybridSearchResource{
+				{Group: "dashboard.grafana.app", Resource: "dashboards"},
+				{Group: "folder.grafana.app", Resource: "folders"},
+			},
+			Query: "production",
+			Limit: 10,
+		},
+	})
+	s.Post.RequestBody.Description = "A " + searchv0.KindHybridSearchQuery + " with a nonempty resources list."
 	return s
 }
 
