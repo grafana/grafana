@@ -169,8 +169,8 @@ describe('table module', () => {
       expect.objectContaining({
         id: 0,
         name: 'organize',
-        mutates: 'TRANSFORMATION',
-        settings: ['hiddenColumns', 'reindexedColumns'],
+        mutates: ['TRANSFORMATION'],
+        schema: ['hiddenColumns', 'reindexedColumns'],
       }),
     ]);
   });

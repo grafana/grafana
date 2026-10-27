@@ -32,7 +32,7 @@ setPluginImportUtils({
   importPanelPlugin: () =>
     Promise.resolve(
       getPanelPlugin({ id: 'table' }).setPanelInteractions({
-        interactions: [{ id: 0, name: 'organize', mutates: 'TRANSFORMATION', settings: [], promotionPath }],
+        interactions: [{ id: 0, name: 'organize', mutates: ['TRANSFORMATION'], schema: [], promotionPath }],
       })
     ),
   getPanelPluginFromCache: () => undefined,

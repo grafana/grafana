@@ -1,3 +1,4 @@
+import { type PanelInteractionPromotionContext } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';

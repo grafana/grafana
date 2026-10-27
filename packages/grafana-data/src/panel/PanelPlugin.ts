@@ -178,13 +178,15 @@ export interface PluginViewOptionsQuickToggles {
   fieldConfigProperties: string[];
 }
 
+export type PanelInteractionMutation = 'TRANSFORMATION' | 'PANEL_SETTING' | 'FIELD_OVERRIDE';
+
 export interface PanelInteraction {
   id: number;
   name: string;
   description?: string;
-  /** What part of the panel the interaction changes when it is promoted. */
-  mutates: 'TRANSFORMATION' | 'PANEL_SETTING' | 'FIELD_OVERRIDE';
-  settings: unknown[];
+  /** What parts of the panel the interaction changes when it is promoted. */
+  mutates: PanelInteractionMutation[];
+  schema: unknown[];
   /** Writes the interaction into the v2 dashboard JSON and returns the updated JSON. */
   promotionPath: (dashboard: DashboardV2Spec, context: PanelInteractionPromotionContext) => DashboardV2Spec;
 }

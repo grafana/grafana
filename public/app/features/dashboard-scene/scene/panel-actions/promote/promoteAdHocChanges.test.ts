@@ -19,7 +19,7 @@ const promotions: Record<string, jest.Mock> = {
 };
 
 function interaction(name: string): PanelInteraction {
-  return { id: 0, name, mutates: 'TRANSFORMATION', settings: [], promotionPath: promotions[name] };
+  return { id: 0, name, mutates: ['TRANSFORMATION'], schema: [], promotionPath: promotions[name] };
 }
 
 setPluginImportUtils({

@@ -29,8 +29,8 @@ setPluginImportUtils({
           {
             id: 0,
             name: 'organize',
-            mutates: 'TRANSFORMATION',
-            settings: [],
+            mutates: ['TRANSFORMATION'],
+            schema: [],
             promotionPath,
           },
         ],

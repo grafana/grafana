@@ -162,9 +162,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         id: 0,
         name: 'organize',
         description: 'Manipulate columns',
-        mutates: 'TRANSFORMATION',
+        mutates: ['TRANSFORMATION'],
         // Hidden and reordered columns share one organize fields transformation per frame.
-        settings: ['hiddenColumns', 'reindexedColumns'],
+        schema: ['hiddenColumns', 'reindexedColumns'],
         // Appends the ad hoc transformations to the panel's saved transformations. They go last because ad hoc
         // transformations run after the saved ones and refer to their output.
         promotionPath: (dashboard, { elementKey, transformations }) => {
