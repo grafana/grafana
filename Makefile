@@ -787,12 +787,20 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
 	buf generate pkg/registry/apps/annotation/proto --template pkg/registry/apps/annotation/proto/buf.gen.yaml
+	$(MAKE) -C pkg/storage/dbproxy provision-tools generate
 
 .PHONY: protobuf-breaking
 protobuf-breaking: ## Check protobuf definitions for breaking changes against main
 	bash scripts/protobuf-check.sh
 	buf breaking pkg/registry/apps/annotation/proto --against '.git#branch=main,subdir=pkg/registry/apps/annotation/proto'
 	buf breaking pkg/storage/unified/proto --against '.git#branch=main,subdir=pkg/storage/unified/proto'
+	@if git cat-file -e main:pkg/storage/dbproxy/proto 2>/dev/null; then \
+		base=$$(mktemp -d); trap 'rm -rf "$$base"' EXIT; \
+		git archive main -- pkg/storage/dbproxy/proto | tar -x -C "$$base"; \
+		$(MAKE) -C pkg/storage/dbproxy provision-tools proto-breaking PROTO_BASE="$$base/pkg/storage/dbproxy/proto"; \
+	else \
+		echo 'Skipping dbproxy breaking comparison: schema is absent from main'; \
+	fi
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.

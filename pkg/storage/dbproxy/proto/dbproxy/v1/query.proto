@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package dbproxy.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1;dbproxyv1";
+
+service DatabaseProxyService {
+  // Sends columns first, followed by messages containing rows and/or warnings.
+  // The final gRPC status determines whether the query succeeded.
+  rpc Query(QueryRequest) returns (stream QueryResponse);
+}
+
+message QueryRequest {
+  // Stack namespace used for authorization and settings lookups, e.g. stacks-123.
+  string namespace = 1;
+  // Stable caller-defined name for query attribution.
+  string query_name = 2;
+  // One read statement with unqualified database table names and ? placeholders.
+  string sql = 3;
+  // Values in placeholder order.
+  repeated Value parameters = 4;
+}
+
+message QueryResponse {
+  // The first response contains at least one column and only columns.
+  // Columns follow SQL projection order, preserving aliases and duplicate names.
+  repeated Column columns = 1;
+  // Subsequent responses contain rows and/or warnings, with no columns.
+  repeated Row rows = 2;
+  repeated Warning warnings = 3;
+}
+
+message Column {
+  string name = 1;
+  // Database type name, e.g. BIGINT, VARCHAR, or DATETIME.
+  string database_type_name = 2;
+  // Wire type for non-NULL values.
+  ValueType value_type = 3;
+  // True allows NULL; false requires a non-NULL value. Omit when unknown.
+  optional bool nullable = 4;
+  // Omit when length is unknown.
+  optional int64 length = 5;
+  DecimalSize decimal_size = 6;
+}
+
+message DecimalSize {
+  int64 precision = 1;
+  int64 scale = 2;
+}
+
+enum ValueType {
+  VALUE_TYPE_UNSPECIFIED = 0;
+  VALUE_TYPE_NULL = 1;
+  VALUE_TYPE_INT64 = 2;
+  VALUE_TYPE_UINT64 = 3;
+  VALUE_TYPE_FLOAT64 = 4;
+  VALUE_TYPE_BOOL = 5;
+  VALUE_TYPE_STRING = 6;
+  VALUE_TYPE_BYTES = 7;
+  VALUE_TYPE_TIMESTAMP = 8;
+}
+
+message Value {
+  // Every value must select a kind, including explicit SQL NULL.
+  oneof kind {
+    google.protobuf.NullValue null_value = 1;
+    sint64 int64_value = 2;
+    uint64 uint64_value = 3;
+    double float64_value = 4;
+    bool bool_value = 5;
+    string string_value = 6;
+    // Decimals use their exact base-10 text bytes, preserving precision and scale.
+    bytes bytes_value = 7;
+    // UTC. Encode MySQL zero dates as 0001-01-01T00:00:00Z.
+    google.protobuf.Timestamp timestamp_value = 8;
+  }
+}
+
+message Row {
+  // Exactly one value per schema column, in the same order.
+  repeated Value values = 1;
+}
+
+message Warning {
+  string code = 1;
+  string message = 2;
+}
+
+// Attached to a failed gRPC status using status.WithDetails.
+// Details are optional for transport failures.
+message QueryError {
+  ErrorReason reason = 1;
+  // Populated for errors originating in the database.
+  DatabaseError database_error = 2;
+}
+
+message DatabaseError {
+  string code = 1;
+  // Five-character SQLSTATE, or empty when unavailable.
+  string sql_state = 2;
+}
+
+enum ErrorReason {
+  ERROR_REASON_UNSPECIFIED = 0;
+  ERROR_REASON_INVALID_REQUEST = 1;
+  ERROR_REASON_UNAUTHENTICATED = 2;
+  ERROR_REASON_PERMISSION_DENIED = 3;
+  ERROR_REASON_STACK_NOT_FOUND = 4;
+  ERROR_REASON_STACK_STATE_UNSUPPORTED = 5;
+  ERROR_REASON_QUERY_UNSUPPORTED = 6;
+  ERROR_REASON_ROUTING_UNAVAILABLE = 7;
+  ERROR_REASON_DATABASE_UNAVAILABLE = 8;
+  ERROR_REASON_SQL_ERROR = 9;
+  ERROR_REASON_LIMIT_EXCEEDED = 10;
+  ERROR_REASON_DEADLINE_EXCEEDED = 11;
+  ERROR_REASON_CANCELLED = 12;
+  ERROR_REASON_INTERNAL = 13;
+}
