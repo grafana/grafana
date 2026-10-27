@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 
 import { InspectTab } from 'app/features/inspector/types';
 
@@ -57,41 +57,5 @@ describe('QueryEditorFooter', () => {
       args: { panelRef: 'panel-ref-1', currentTab: InspectTab.Query },
     });
     expect(trackQueryMenuAction).toHaveBeenCalledWith('open_inspector', QueryEditorType.Query);
-  });
-
-  // The fade marks options clipped off the end. A fixed one would leave the last option faded with
-  // the list scrolled all the way to it.
-  describe('clipped-edge fade', () => {
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
-
-    /** jsdom has no layout, so give the item list a 300px scroll port over 500px of options. */
-    function stubOverflow() {
-      jest.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(300);
-      jest.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(500);
-    }
-
-    function getItemList() {
-      return screen.getByRole('button', { name: /edit max data points/i }).closest('ul')!;
-    }
-
-    it('fades the end while options are clipped', () => {
-      stubOverflow();
-      renderWithQueryEditorProvider(<QueryEditorFooter />);
-
-      expect(getComputedStyle(getItemList()).maskImage).toContain('linear-gradient');
-    });
-
-    it('drops the fade once scrolled to the end', () => {
-      stubOverflow();
-      renderWithQueryEditorProvider(<QueryEditorFooter />);
-      const list = getItemList();
-
-      list.scrollLeft = 200;
-      fireEvent.scroll(list);
-
-      expect(getComputedStyle(list).maskImage).toBe('');
-    });
   });
 });

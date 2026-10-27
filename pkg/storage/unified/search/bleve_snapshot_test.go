@@ -1679,8 +1679,9 @@ func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
 		t.Fatal("background build did not start")
 	}
 	req := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
-		Limit:   10,
+		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+		Limit:        10,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	rsp, err := server.Search(ctx, req)
 	require.NoError(t, err)
