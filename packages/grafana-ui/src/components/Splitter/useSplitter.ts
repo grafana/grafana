@@ -387,6 +387,26 @@ export function useSplitter(options: UseSplitterOptions) {
     );
   });
 
+  // Floating overlays hide background controls from screen readers. Resize handles must also
+  // leave the tab order until the overlay restores them, including when an ancestor is hidden.
+  useLayoutEffect(() => {
+    const handle = splitterRef.current;
+    if (!handle) {
+      return;
+    }
+
+    const updateTabIndex = () => {
+      handle.tabIndex = handle.closest('[aria-hidden="true"]') ? -1 : 0;
+    };
+    const observer = new MutationObserver(updateTabIndex);
+    for (let element: HTMLElement | null = handle; element; element = element.parentElement) {
+      observer.observe(element, { attributes: true, attributeFilter: ['aria-hidden'] });
+    }
+    updateTabIndex();
+
+    return () => observer.disconnect();
+  });
+
   const styles = useStyles2(getStyles, direction);
   const dragStyles = useStyles2(getDragStyles, dragPosition);
   const dragHandleStyle = direction === 'column' ? dragStyles.dragHandleHorizontal : dragStyles.dragHandleVertical;

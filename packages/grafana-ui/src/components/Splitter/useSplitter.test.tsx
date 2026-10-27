@@ -1,5 +1,9 @@
-import { fireEvent, render, renderHook, screen } from '@testing-library/react';
+import { fireEvent, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
+import { Button } from '../Button/Button';
+import { Dropdown } from '../Dropdown/Dropdown';
+import { Menu } from '../Menu/Menu';
 
 import { useSplitter, type UseSplitterOptions } from './useSplitter';
 
@@ -83,6 +87,53 @@ async function dragSplitterBy(pixels: number) {
 }
 
 describe('useSplitter', () => {
+  describe('accessibility', () => {
+    it('removes an aria-hidden handle from the tab order and restores it when shown', async () => {
+      render(<Splitter direction="row" />);
+      const handle = screen.getByRole('separator', { name: 'Pane resize widget' });
+      expect(handle).toHaveAttribute('tabindex', '0');
+
+      handle.setAttribute('aria-hidden', 'true');
+      await waitFor(() => expect(handle).toHaveAttribute('tabindex', '-1'));
+
+      handle.removeAttribute('aria-hidden');
+      await waitFor(() => expect(handle).toHaveAttribute('tabindex', '0'));
+      handle.focus();
+      expect(handle).toHaveFocus();
+    });
+
+    it('keeps a handle out of the tab order while a dropdown hides its ancestor', async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          <Splitter direction="row" />
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item label="Example action" />
+              </Menu>
+            }
+          >
+            <Button>Open menu</Button>
+          </Dropdown>
+        </>
+      );
+      const handle = screen.getByRole('separator', { name: 'Pane resize widget' });
+      const trigger = screen.getByRole('button', { name: 'Open menu' });
+
+      await user.click(trigger);
+      expect(await screen.findByRole('menuitem', { name: 'Example action' })).toBeVisible();
+      expect(handle.closest('[aria-hidden="true"]')).not.toBeNull();
+      await waitFor(() => expect(handle).toHaveAttribute('tabindex', '-1'));
+
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(trigger).toHaveAttribute('aria-expanded', 'false'));
+      await waitFor(() => expect(handle).toHaveAttribute('tabindex', '0'));
+      handle.focus();
+      expect(handle).toHaveFocus();
+    });
+  });
+
   // `handlePressedKeys` measures the pane, then resizes it. Reporting that measurement on key-up
   // reports where the pane was a frame ago, which a consumer persisting the size would save.
   describe('keyboard', () => {
