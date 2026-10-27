@@ -549,19 +549,35 @@ func TestCreateCleansUpSecretsWhenPermissionCreationFails(t *testing.T) {
 }
 
 func TestDynamicSecureValues(t *testing.T) {
-	const dynamicName = secret.DYNAMIC_SECURE_VALUE_NAME_PREFIX + "metrics-read:grafanacloud-prom"
+	const dynamicName = secret.DYNAMIC_SECURE_VALUE_NAME_PREFIX + "prometheus:grafanacloud-prom"
 	const promURL = "https://prometheus-prod-01.grafana.net/api/prom"
 	// A new map each time: prepareSecureValues modifies the map it is given
 	dynamicRef := func() common.InlineSecureValues {
 		return common.InlineSecureValues{"basicAuthPassword": {Name: dynamicName}}
 	}
 
-	datasourceWithTitle := func(title, url string, sv common.InlineSecureValues, managed bool) utils.GrafanaMetaAccessor {
+	// The spec stack-state-service provisions, with edit applied to a copy
+	hostedSpec := func(edit func(spec map[string]any)) map[string]any {
+		spec := map[string]any{
+			"title":         "grafanacloud-prom",
+			"url":           promURL,
+			"access":        "proxy",
+			"basicAuth":     true,
+			"basicAuthUser": "987654",
+			"jsonData":      map[string]any{"timeInterval": "60s"},
+		}
+		if edit != nil {
+			edit(spec)
+		}
+		return spec
+	}
+
+	datasourceWithSpec := func(spec map[string]any, sv common.InlineSecureValues, managed bool) utils.GrafanaMetaAccessor {
 		tmp := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "prometheus.datasource.grafana.app/v0alpha1",
 			"kind":       "DataSource",
 			"metadata":   map[string]any{"namespace": "stacks-123", "name": "grafanacloud-prom"},
-			"spec":       map[string]any{"title": title, "url": url},
+			"spec":       spec,
 		}}
 		obj, err := utils.MetaAccessor(tmp)
 		require.NoError(t, err)
@@ -573,8 +589,11 @@ func TestDynamicSecureValues(t *testing.T) {
 		}
 		return obj
 	}
-	datasource := func(url string, sv common.InlineSecureValues, managed bool) utils.GrafanaMetaAccessor {
-		return datasourceWithTitle("grafanacloud-prom", url, sv, managed)
+	datasource := func(edit func(spec map[string]any), sv common.InlineSecureValues) utils.GrafanaMetaAccessor {
+		return datasourceWithSpec(hostedSpec(edit), sv, true)
+	}
+	setURL := func(url string) func(spec map[string]any) {
+		return func(spec map[string]any) { spec["url"] = url }
 	}
 
 	userCtx := claims.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "stacks-123"})
@@ -595,13 +614,13 @@ func TestDynamicSecureValues(t *testing.T) {
 		return info, prepareSecureValues(ctx, store, obj, previous, owner, info)
 	}
 
-	// A mock with no expectations: users never reach CanReference
+	// A mock with no expectations: users never reach the store for dynamic values
 	prepare := func(t *testing.T, ctx context.Context, obj, previous utils.GrafanaMetaAccessor) (*objectForStorage, error) {
 		return prepareWith(ctx, secret.NewMockInlineSecureValueSupport(t), obj, previous)
 	}
 
 	stored := func() utils.GrafanaMetaAccessor {
-		return datasource(promURL, dynamicRef(), true)
+		return datasource(nil, dynamicRef())
 	}
 
 	causeField := func(t *testing.T, err error) string {
@@ -611,14 +630,23 @@ func TestDynamicSecureValues(t *testing.T) {
 		return statusErr.ErrStatus.Details.Causes[0].Field
 	}
 
-	t.Run("grafana cloud can create, update and change the url", func(t *testing.T) {
+	t.Run("grafana cloud can create, update and change any field", func(t *testing.T) {
 		store := allowingStore(t)
 		_, err := prepareWith(cloudCtx, store, stored(), nil)
 		require.NoError(t, err)
 
-		_, err = prepareWith(cloudCtx, store, datasource("https://prometheus-internal.grafana.net/api/prom", nil, true), stored())
+		changed := datasource(func(spec map[string]any) {
+			spec["url"] = "https://prometheus-internal.grafana.net/api/prom"
+			spec["basicAuthUser"] = "123456"
+			spec["jsonData"] = map[string]any{"enableSecureSocksProxy": true}
+		}, nil)
+		_, err = prepareWith(cloudCtx, store, changed, stored())
 		require.NoError(t, err)
 		store.AssertNumberOfCalls(t, "CanReference", 2)
+
+		removed := common.InlineSecureValues{"basicAuthPassword": {Remove: true}}
+		_, err = prepare(t, cloudCtx, datasource(nil, removed), stored())
+		require.NoError(t, err)
 	})
 
 	t.Run("a secrets service without dynamic support rejects the reference", func(t *testing.T) {
@@ -630,20 +658,28 @@ func TestDynamicSecureValues(t *testing.T) {
 	})
 
 	t.Run("a kept reference without secure value support is an error", func(t *testing.T) {
-		_, err := prepareWith(cloudCtx, nil, datasource(promURL, nil, true), stored())
+		_, err := prepareWith(cloudCtx, nil, datasource(nil, nil), stored())
 		require.ErrorContains(t, err, "not configured")
 	})
 
 	t.Run("an unmanaged object cannot hold a dynamic value", func(t *testing.T) {
-		_, err := prepare(t, cloudCtx, datasource(promURL, dynamicRef(), false), nil)
+		_, err := prepare(t, cloudCtx, datasourceWithSpec(hostedSpec(nil), dynamicRef(), false), nil)
 		require.ErrorContains(t, err, "only be configured by grafana cloud")
 	})
 
 	// Hosted datasources are editable, so users may change anything that does not move the credential.
+	rename := func(spec map[string]any) {
+		spec["title"] = "My metrics"
+		spec["jsonData"] = map[string]any{"timeInterval": "30s"}
+	}
 	for name, update := range map[string]utils.GrafanaMetaAccessor{
-		"secure omitted":        datasourceWithTitle("My metrics", promURL, nil, true),
-		"another field changed": datasourceWithTitle("My metrics", promURL, common.InlineSecureValues{"httpHeaderValue1": {Remove: true}}, true),
-		"reference resent":      datasourceWithTitle("My metrics", promURL, dynamicRef(), true),
+		"secure omitted":        datasource(rename, nil),
+		"another field changed": datasource(rename, common.InlineSecureValues{"httpHeaderValue1": {Remove: true}}),
+		"reference resent":      datasource(rename, dynamicRef()),
+		"zero values sent": datasource(func(spec map[string]any) {
+			rename(spec)
+			spec["jsonData"] = map[string]any{"timeInterval": "30s", "enableSecureSocksProxy": false}
+		}, nil),
 	} {
 		t.Run("a user can edit the datasource when "+name, func(t *testing.T) {
 			info, err := prepare(t, userCtx, update, stored())
@@ -656,21 +692,41 @@ func TestDynamicSecureValues(t *testing.T) {
 		})
 	}
 
-	// Each of these keeps the stored reference while changing the url.
-	for name, update := range map[string]utils.GrafanaMetaAccessor{
-		"secure omitted":        datasource("https://evil.example", nil, true),
-		"another field changed": datasource("https://evil.example", common.InlineSecureValues{"httpHeaderValue1": {Remove: true}}, true),
-		"reference resent":      datasource("https://evil.example", dynamicRef(), true),
+	// Each of these decides where the credential is sent, or with which user.
+	for field, edit := range map[string]func(spec map[string]any){
+		"spec.url":           setURL("https://evil.example"),
+		"spec.access":        func(spec map[string]any) { spec["access"] = "direct" },
+		"spec.basicAuth":     func(spec map[string]any) { delete(spec, "basicAuth") },
+		"spec.basicAuthUser": func(spec map[string]any) { spec["basicAuthUser"] = "1" },
+		"spec.jsonData.enableSecureSocksProxy": func(spec map[string]any) {
+			spec["jsonData"] = map[string]any{"timeInterval": "60s", "enableSecureSocksProxy": true}
+		},
+		"spec.jsonData.secureSocksProxyUsername": func(spec map[string]any) {
+			spec["jsonData"] = map[string]any{"timeInterval": "60s", "secureSocksProxyUsername": "me"}
+		},
 	} {
-		t.Run("a user cannot change the url when "+name, func(t *testing.T) {
-			_, err := prepare(t, userCtx, update, stored())
-			require.ErrorContains(t, err, "url can not change")
-			require.Equal(t, "spec.url", causeField(t, err))
+		t.Run("a user cannot change "+field, func(t *testing.T) {
+			for name, sv := range map[string]common.InlineSecureValues{"secure omitted": nil, "reference resent": dynamicRef()} {
+				_, err := prepare(t, userCtx, datasource(edit, sv), stored())
+				require.ErrorContains(t, err, "can not change while a dynamic secure value is configured", name)
+				require.Equal(t, field, causeField(t, err), name)
+			}
+		})
+	}
+
+	for name, sv := range map[string]common.InlineSecureValues{
+		"removing the dynamic value":    {"basicAuthPassword": {Remove: true}},
+		"replacing it with a secret":    {"basicAuthPassword": {Name: "shared-secret"}},
+		"adding a socks proxy password": {"secureSocksProxyPassword": {Name: "proxy-secret"}},
+	} {
+		t.Run("a user cannot change the credential by "+name, func(t *testing.T) {
+			_, err := prepare(t, userCtx, datasource(nil, sv), stored())
+			require.ErrorContains(t, err, "can not change while a dynamic secure value is configured")
 		})
 	}
 
 	t.Run("a user cannot remove the manager while keeping the reference", func(t *testing.T) {
-		_, err := prepare(t, userCtx, datasource(promURL, nil, false), stored())
+		_, err := prepare(t, userCtx, datasourceWithSpec(hostedSpec(nil), nil, false), stored())
 		require.ErrorContains(t, err, "only be configured by grafana cloud")
 		require.Equal(t, "secure.basicAuthPassword", causeField(t, err))
 	})
@@ -679,36 +735,32 @@ func TestDynamicSecureValues(t *testing.T) {
 		_, err := prepare(t, userCtx, stored(), nil)
 		require.ErrorContains(t, err, "only be configured by grafana cloud")
 
-		other := common.InlineSecureValues{"basicAuthPassword": {Name: secret.DYNAMIC_SECURE_VALUE_NAME_PREFIX + "logs-read:grafanacloud-prom"}}
-		_, err = prepare(t, userCtx, datasource(promURL, other, true), stored())
+		other := common.InlineSecureValues{"basicAuthPassword": {Name: secret.DYNAMIC_SECURE_VALUE_NAME_PREFIX + "logs:grafanacloud-prom"}}
+		_, err = prepare(t, userCtx, datasource(nil, other), stored())
 		require.ErrorContains(t, err, "only be configured by grafana cloud")
 
 		added := common.InlineSecureValues{"httpHeaderValue1": {Name: dynamicName}}
-		_, err = prepare(t, userCtx, datasource(promURL, added, true), stored())
+		_, err = prepare(t, userCtx, datasource(nil, added), stored())
 		require.ErrorContains(t, err, "only be configured by grafana cloud")
 		require.Equal(t, "secure.httpHeaderValue1", causeField(t, err))
 	})
 
-	t.Run("a user can drop the reference and then change the url", func(t *testing.T) {
-		removed := common.InlineSecureValues{"basicAuthPassword": {Remove: true}}
-		info, err := prepare(t, userCtx, datasource("https://other.example", removed, true), stored())
+	t.Run("datasources without a dynamic value are not locked", func(t *testing.T) {
+		plain := func(url string) utils.GrafanaMetaAccessor {
+			return datasourceWithSpec(hostedSpec(setURL(url)), common.InlineSecureValues{"basicAuthPassword": {Name: "inline-abc"}}, false)
+		}
+		_, err := prepare(t, userCtx, plain("https://other.example"), plain(promURL))
 		require.NoError(t, err)
-		require.Empty(t, info.deleteSecureValues, "nothing is stored for a dynamic value")
-
-		replaced := common.InlineSecureValues{"basicAuthPassword": {Name: "shared-secret"}}
-		info, err = prepare(t, userCtx, datasource("https://other.example", replaced, true), stored())
-		require.NoError(t, err)
-		require.Empty(t, info.deleteSecureValues)
 	})
 
-	t.Run("typed datasource objects compare the url too", func(t *testing.T) {
+	t.Run("typed datasource objects are checked too", func(t *testing.T) {
 		typed := func(url string) utils.GrafanaMetaAccessor {
 			ds := &datasourceV0.DataSource{
 				TypeMeta:   metav1.TypeMeta{APIVersion: "prometheus.datasource.grafana.app/v0alpha1", Kind: "DataSource"},
 				ObjectMeta: metav1.ObjectMeta{Namespace: "stacks-123", Name: "grafanacloud-prom"},
 				Secure:     dynamicRef(),
 			}
-			ds.Spec.SetURL(url)
+			ds.Spec.SetURL(url).SetBasicAuth(true)
 			obj, err := utils.MetaAccessor(ds)
 			require.NoError(t, err)
 			obj.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindGrafana, Identity: "cloud"})
@@ -719,17 +771,18 @@ func TestDynamicSecureValues(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = prepare(t, userCtx, typed("https://evil.example"), typed(promURL))
-		require.ErrorContains(t, err, "url can not change")
+		require.ErrorContains(t, err, "can not change while a dynamic secure value is configured")
+		require.Equal(t, "spec.url", causeField(t, err))
 	})
 
 	t.Run("deleting the object skips dynamic values", func(t *testing.T) {
 		secureStore := secret.NewMockInlineSecureValueSupport(t)
 		secureStore.On("DeleteWhenOwnedByResource", mock.Anything, mock.Anything, "inline-abc").Return(nil).Once()
 
-		obj := datasource(promURL, common.InlineSecureValues{
+		obj := datasource(nil, common.InlineSecureValues{
 			"basicAuthPassword": {Name: dynamicName},
 			"httpHeaderValue1":  {Name: "inline-abc"},
-		}, true)
+		})
 		require.NoError(t, handleSecureValuesDelete(context.Background(), secureStore, obj, utils.ToObjectReference(obj)))
 		secureStore.AssertExpectations(t)
 	})

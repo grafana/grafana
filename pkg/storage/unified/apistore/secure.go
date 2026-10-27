@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"reflect"
+	"slices"
 	"strings"
 
 	authlib "github.com/grafana/authlib/types"
@@ -147,8 +149,12 @@ func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupp
 // verifyDynamicSecureValues checks every dynamic secure value an object will hold after this write.
 // Only grafana cloud may add or change one; it must also pass CanReference with the same owner
 // used for inline secure values, so shared storage groups match. Anyone else may edit an object
-// that keeps its dynamic values unchanged, but not its url, since that is where the credential goes.
+// that holds a dynamic value, but not the settings that decide where its credential is sent.
 func verifyDynamicSecureValues(ctx context.Context, store secret.InlineSecureValueSupport, obj, previousObject utils.GrafanaMetaAccessor, stored common.InlineSecureValues, owner common.ObjectReference, secure common.InlineSecureValues) error {
+	auth, hasAuth := authlib.AuthInfoFrom(ctx)
+	// TODO: any access policy in the namespace passes. Restrict this to the grafana cloud service identity.
+	isCloud := hasAuth && auth.GetIdentityType() == authlib.TypeAccessPolicy
+
 	for k, v := range secure {
 		if !secret.IsDynamicSecureValueName(v.Name) {
 			continue
@@ -163,44 +169,101 @@ func verifyDynamicSecureValues(ctx context.Context, store secret.InlineSecureVal
 		if !ok || m.Kind != utils.ManagerKindGrafana || m.Identity != "cloud" {
 			return newSecureValueError("dynamic secure values may only be configured by grafana cloud", k)
 		}
-		auth, ok := authlib.AuthInfoFrom(ctx)
-		if !ok {
+		if !hasAuth {
 			return newSecureValueError("missing auth info", k)
 		}
 
-		// TODO: any access policy in the namespace passes. Restrict this to the grafana cloud service identity.
-		if auth.GetIdentityType() == authlib.TypeAccessPolicy {
+		if isCloud {
 			if err := store.CanReference(ctx, owner, v.Name); err != nil {
 				return err
 			}
 			continue
 		}
 
-		// Anyone else may only keep a dynamic value that is already saved, at the same url
+		// Anyone else may only keep a dynamic value that is already saved
 		if stored[k].Name != v.Name {
 			return newSecureValueError("dynamic secure values may only be configured by grafana cloud", k)
 		}
-		if dataSourceURL(obj) != dataSourceURL(previousObject) {
-			return newSpecFieldError("url can not change while a dynamic secure value is configured", "url")
+	}
+
+	if isCloud || !holdsDynamicSecureValue(stored) {
+		return nil
+	}
+
+	// The saved object holds a dynamic value: only grafana cloud may change where requests go,
+	// how they authenticate, or remove the dynamic value.
+	for _, k := range lockedSecureFields(stored) {
+		if secure[k].Name != stored[k].Name {
+			return newSecureValueError("can not change while a dynamic secure value is configured", k)
+		}
+	}
+	for _, path := range lockedSpecFields {
+		if !sameSpecValue(obj, previousObject, path) {
+			return newSpecFieldError("can not change while a dynamic secure value is configured", strings.Join(path, "."))
 		}
 	}
 	return nil
 }
 
-// dataSourceURL reads spec.url. This proof of concept only protects the datasource url.
-func dataSourceURL(obj utils.GrafanaMetaAccessor) string {
+// lockedSpecFields decide where a datasource sends its credential, and with which user. This proof
+// of concept only protects datasources.
+var lockedSpecFields = [][]string{
+	{"url"},
+	{"access"},
+	{"basicAuth"},
+	{"basicAuthUser"},
+	{"jsonData", "enableSecureSocksProxy"},
+	{"jsonData", "secureSocksProxyUsername"},
+}
+
+func holdsDynamicSecureValue(secure common.InlineSecureValues) bool {
+	for _, v := range secure {
+		if secret.IsDynamicSecureValueName(v.Name) {
+			return true
+		}
+	}
+	return false
+}
+
+// lockedSecureFields are the secure values only grafana cloud may change once a dynamic value is saved.
+func lockedSecureFields(stored common.InlineSecureValues) []string {
+	fields := []string{"basicAuthPassword", "secureSocksProxyPassword"}
+	for k, v := range stored {
+		if secret.IsDynamicSecureValueName(v.Name) && !slices.Contains(fields, k) {
+			fields = append(fields, k)
+		}
+	}
+	return fields
+}
+
+func sameSpecValue(obj, previousObject utils.GrafanaMetaAccessor, path []string) bool {
+	a, _, _ := unstructured.NestedFieldNoCopy(specMap(obj), path...)
+	b, _, _ := unstructured.NestedFieldNoCopy(specMap(previousObject), path...)
+	return reflect.DeepEqual(emptyAsNil(a), emptyAsNil(b))
+}
+
+// emptyAsNil treats a missing field and its zero value the same, as the datasource spec omits them.
+func emptyAsNil(v any) any {
+	if v == nil || v == false || v == "" {
+		return nil
+	}
+	return v
+}
+
+// specMap reads the spec of a datasource, typed or unstructured.
+func specMap(obj utils.GrafanaMetaAccessor) map[string]any {
 	if obj == nil {
-		return ""
+		return nil
 	}
 	raw, _ := obj.GetRuntimeObject()
 	switch ds := raw.(type) {
 	case *datasourceV0.DataSource:
-		return ds.Spec.URL()
+		return ds.Spec.Object
 	case *unstructured.Unstructured:
-		url, _, _ := unstructured.NestedString(ds.Object, "spec", "url")
-		return url
+		spec, _ := ds.Object["spec"].(map[string]any)
+		return spec
 	}
-	return ""
+	return nil
 }
 
 // make sure the registered changes are unique and valid

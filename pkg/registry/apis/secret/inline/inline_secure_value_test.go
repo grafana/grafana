@@ -89,7 +89,7 @@ func TestIntegration_InlineSecureValue_CanReference(t *testing.T) {
 
 		ctx := testutils.CreateUserAuthContext(t.Context(), defaultNs, map[string][]string{})
 
-		err := svc.CanReference(ctx, owner, "dynamic:metrics-read")
+		err := svc.CanReference(ctx, owner, "dynamic:prometheus")
 		require.ErrorIs(t, err, contracts.ErrInlineSecureValueCannotReference)
 		require.ErrorContains(t, err, "not supported")
 	})
