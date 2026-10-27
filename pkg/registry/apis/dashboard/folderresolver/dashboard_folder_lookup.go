@@ -1,4 +1,4 @@
-package annotation
+package folderresolver
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"time"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/singleflight"
@@ -25,11 +26,21 @@ import (
 
 const defaultFolderFetchTimeout = 10 * time.Second
 
-// NewDashboardFolderResolver returns a DashboardFolderResolver that fetches the dashboard's
+type Metrics struct {
+	CacheHits   prometheus.Counter
+	CacheMisses prometheus.Counter
+}
+
+// New returns a Resolver that fetches the dashboard's
 // parent folder via dashboard.grafana.app. restConfig is called once (lazily on first request)
 // to build the underlying client: loopback in ST, remote URL with token exchange in MT.
-func NewDashboardFolderResolver(restConfig func(context.Context) (*rest.Config, error), tracer trace.Tracer, metrics *Metrics, cacheEnabled bool, cacheTTL time.Duration) DashboardFolderResolver {
-	r := &dashboardFolderResolver{client: newDashboardClient(restConfig), tracer: tracer, metrics: metrics, fetchTimeout: defaultFolderFetchTimeout}
+func New(restConfig func(context.Context) (*rest.Config, error), tracer trace.Tracer, metrics *Metrics, cacheEnabled bool, cacheTTL time.Duration) *Resolver {
+	r := &Resolver{
+		client:       newDashboardClient(restConfig),
+		tracer:       tracer,
+		metrics:      metrics,
+		fetchTimeout: defaultFolderFetchTimeout,
+	}
 	if cacheEnabled {
 		r.cache = localcache.New(cacheTTL, 5*time.Minute)
 		r.cacheTTL = cacheTTL
@@ -37,11 +48,11 @@ func NewDashboardFolderResolver(restConfig func(context.Context) (*rest.Config, 
 	return r
 }
 
-// NoopDashboardFolderResolver returns an empty folder for every dashboard. Use when authz is
+// NoopResolver returns an empty folder for every dashboard. Use when authz is
 // bypassed (e.g. --skip-auth in tests) and the folder UID is irrelevant.
-type NoopDashboardFolderResolver struct{}
+type NoopResolver struct{}
 
-func (NoopDashboardFolderResolver) ResolveFolder(_ context.Context, _, _ string) (string, error) {
+func (NoopResolver) ResolveFolder(_ context.Context, _, _ string) (string, error) {
 	return "", nil
 }
 
@@ -50,7 +61,7 @@ type dashboardGetter interface {
 	Get(ctx context.Context, namespace, name string) (*unstructured.Unstructured, error)
 }
 
-type dashboardFolderResolver struct {
+type Resolver struct {
 	client       dashboardGetter
 	tracer       trace.Tracer
 	metrics      *Metrics
@@ -60,8 +71,8 @@ type dashboardFolderResolver struct {
 	sf           singleflight.Group
 }
 
-func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, dashboardUID string) (string, error) {
-	ctx, span := r.tracer.Start(ctx, "annotation.authz.dashboardFolderResolver.ResolveFolder", trace.WithAttributes(
+func (r *Resolver) ResolveFolder(ctx context.Context, namespace, dashboardUID string) (string, error) {
+	ctx, span := r.tracer.Start(ctx, "dashboard.folderresolver.ResolveFolder", trace.WithAttributes(
 		attribute.String("dashboard_uid", dashboardUID),
 	))
 	defer span.End()
@@ -71,12 +82,12 @@ func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, 
 		if v, ok := r.cache.Get(key); ok {
 			span.SetAttributes(attribute.Bool("cache_hit", true))
 			if r.metrics != nil {
-				r.metrics.FolderCacheHits.Inc()
+				r.metrics.CacheHits.Inc()
 			}
 			return v.(string), nil
 		}
 		if r.metrics != nil {
-			r.metrics.FolderCacheMisses.Inc()
+			r.metrics.CacheMisses.Inc()
 		}
 	}
 
@@ -90,7 +101,7 @@ func (r *dashboardFolderResolver) ResolveFolder(ctx context.Context, namespace, 
 		}
 
 		// The downstream apiserver authorizes the fetch against the service identity, not the caller's -
-		// so a viewer without dashboards:read can still resolve the folder for annotation inheritance checks.
+		// so a viewer without dashboards:read can still resolve the folder for permission inheritance checks.
 		svcCtx := identity.WithServiceIdentityContext(fetchCtx, nsInfo.OrgID)
 
 		dash, err := r.client.Get(svcCtx, namespace, dashboardUID)
