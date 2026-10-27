@@ -7245,6 +7245,7 @@
       "copy": "複製至剪貼簿",
       "learn-more": "了解詳情",
       "no-issues": "此查詢沒有錯誤或通知。",
+      "no-panel-issues": "",
       "severity-error": "錯誤",
       "severity-info": "相關資訊",
       "severity-warning": "警告"
@@ -8062,8 +8063,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "開啟查詢窗格",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "開啟查詢窗格"
     },
     "viz-panel-links-renderer": {
@@ -15931,6 +15930,7 @@
       "expand": "展開",
       "filter": "",
       "loading": "正在載入儀表板",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "未找到您的查詢結果",
       "noResultsForFilterClear": "清除搜尋",
       "noResultsForScopes": "未找到所選範圍的儀表板或連結",
@@ -16640,8 +16640,61 @@
   },
   "swagger": {
     "login": "登入",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "請在傳送請求前檢查命名空間，或重新載入頁面並再試一次。",
-    "namespace-unavailable-title": "無法載入命名空間"
+    "namespace-unavailable-title": "無法載入命名空間",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16695,6 +16748,9 @@
     "description-styling-from-field": "包含 JSON 物件與 CSS 屬性的欄位",
     "description-tooltip-from-field": "在工具提示中從欄位（無論隱藏或顯示）轉譯儲存格",
     "description-zebra-striping": "每隔一列變更背景色彩",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "查詢"
     },
@@ -18239,6 +18295,7 @@
       "body_other": "確定要刪除 {{count}} 個變數嗎？"
     },
     "editor": {
+      "back": "",
       "cancel": "取消",
       "delete": "刪除",
       "delete-modal-body": "確定要刪除「{{name}}」嗎？",
@@ -18247,6 +18304,7 @@
       "folder-description": "將變數範圍限定於某個資料夾，或選擇根「儀表板」資料夾，使其成為全域變數（可供所有儀表板使用）",
       "folder-description-folder-only": "將變數範圍設定為您可以編輯的資料夾",
       "folder-label": "資料夾",
+      "load-error-title": "",
       "moved": "變數已移動",
       "name-exists": "所選資料夾中已存在使用此名稱的變數",
       "save": "儲存",

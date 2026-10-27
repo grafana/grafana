@@ -708,6 +708,7 @@ type Cfg struct {
 	UnifiedStorageClusterSlug             string
 	UnifiedStorageAuthzExemptionEnabled   bool
 	UnifiedStorageAuthzExemptResources    []string
+	HybridSearchDefaultResources          []string
 	UnifiedStorageGRPCErrorResultToStatus bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
@@ -796,6 +797,8 @@ type Cfg struct {
 	// defaults to dashboards; external defaults to none.
 	VectorAllowedInternalCollections []string
 	VectorAllowedExternalCollections []string
+	VectorSharedExternalCollections  []string
+	VectorSharedWriteServices        []string
 	// Registers the VectorStore write RPCs on the storage server.
 	EnableVectorStore bool
 	// Service identities allowed to call the VectorStore write RPCs.

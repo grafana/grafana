@@ -647,6 +647,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "grafana.mobileEditDeprecation",
+			Description: "Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports",
+			Stage:       FeatureStagePublicPreview,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboards.libraryPanelRepeatFromServerResolution",
 			Description: "Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state",
 			Stage:       FeatureStageExperimental,
@@ -989,14 +997,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "queryLibrary",
-			Description: "Enables Saved queries (query library) feature",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "true",                                                      // enabled by default
 		},
 		{
 			Name:        "grafana.savedQueriesSearch",
@@ -2458,15 +2458,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "dashboard.recentlyDeletedViaTrash",
-			Description:  "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "true", // enabled by default
-			Generate:     Generate{React: true},
-		},
-		{
 			Name:            "deletedFolderResourceCleanup",
 			Description:     "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair",
 			Stage:           FeatureStageExperimental,
@@ -3419,6 +3410,15 @@ var (
 			Generate:    Generate{React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "dashboards.disablePublicDashboards",
+			Description:  "Disables public dashboards for the stack",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

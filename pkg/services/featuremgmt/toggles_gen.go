@@ -327,10 +327,6 @@ const (
 	// Enables Grafana-managed recording rules.
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
 
-	// FlagQueryLibrary
-	// Enables Saved queries (query library) feature
-	FlagQueryLibrary = "queryLibrary"
-
 	// FlagGrafanaSavedQueriesSearch
 	// Enables unified search for saved queries
 	FlagGrafanaSavedQueriesSearch = "grafana.savedQueriesSearch"
@@ -1033,4 +1029,8 @@ const (
 	// FlagDatasourcesGatewayAuditPolicy
 	// Enable support for the query gateway audit policies
 	FlagDatasourcesGatewayAuditPolicy = "datasources.gatewayAuditPolicy"
+
+	// FlagDashboardsDisablePublicDashboards
+	// Disables public dashboards for the stack
+	FlagDashboardsDisablePublicDashboards = "dashboards.disablePublicDashboards"
 )

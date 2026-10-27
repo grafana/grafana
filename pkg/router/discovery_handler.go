@@ -92,9 +92,9 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 			groups[group.Name] = group
 		}
 	case "APIGroupList":
-		// The caller's stack only serves legacy discovery. Answer in that format,
-		// as kube-apiserver does, rather than with defaults that may not be the
-		// caller's: the client then reads each group version itself.
+		// The source has only legacy discovery for the caller. Answer in that
+		// format, as kube-apiserver does, rather than with defaults that may
+		// not be the caller's: the client then reads each group version itself.
 		r.serveLegacyInsteadOfAggregated(w, req, raw)
 		return
 	}
@@ -272,12 +272,12 @@ func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Reque
 func (r *GrafanaRouter) serveLegacyInsteadOfAggregated(w http.ResponseWriter, req *http.Request, raw json.RawMessage) {
 	var list metav1.APIGroupList
 	if err := json.Unmarshal(raw, &list); err != nil {
-		http.Error(w, "invalid discovery from the caller's stack", http.StatusBadGateway)
+		http.Error(w, "invalid discovery for the caller", http.StatusBadGateway)
 		return
 	}
 	mediaType, ok := negotiation.NegotiateMediaTypeOptions(req.Header.Get("Accept"), discoveryCodecs.SupportedMediaTypes(), negotiation.DefaultEndpointRestrictions)
 	if !ok || mediaType.Accepted.MediaType != "application/json" {
-		http.Error(w, "the caller's stack serves only legacy discovery", http.StatusNotAcceptable)
+		http.Error(w, "only legacy discovery is served for the caller", http.StatusNotAcceptable)
 		return
 	}
 	r.serveMergedAPIGroupList(w, req, list)
@@ -300,7 +300,7 @@ func (r *GrafanaRouter) readRootDiscovery(req *http.Request, path, accept string
 	if source == nil {
 		return errNoDiscoverySource
 	}
-	// The fallback forwards to the caller's stack, and a slow stack must
+	// The source may ask another server for the caller, and a slow one must
 	// not hold discovery open when the defaults are available.
 	ctx, cancel := context.WithTimeoutCause(req.Context(), discoveryFetchTimeout, errRouterDeadline)
 	defer cancel()

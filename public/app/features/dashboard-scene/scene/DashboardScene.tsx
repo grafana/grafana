@@ -679,7 +679,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this._editSessionSource = source;
       this._sidebarBeforeViewing = undefined;
 
-      this.state.sidebar.setState({ undoStack: [], redoStack: [] });
+      this.state.sidebar.clearHistory();
 
       // Capture the discard baseline only once per edit session. A plan's building screen is
       // transient: the build's first write enters edit mode while it is still up, and discarding

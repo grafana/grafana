@@ -54,7 +54,7 @@ func (noRoutesLoader) Notify(context.Context) (<-chan struct{}, error) {
 
 // ProvideCloudRoutesLoader builds the cloud routes loader from the router
 // module's clients, without ProvideRoutesLoader's dependencies: those open the
-// SQL database and run migrations. Like ProvideCloudRoutesLoaderFactory, it
+// SQL database and run migrations. Like NewCloudRoutesLoader, it
 // returns (nil, nil) when [cloud_router] configures no source.
 //
 // Managed plugins get no plugin store, plugin settings, legacy access control
@@ -71,7 +71,7 @@ func ProvideCloudRoutesLoader(
 	if err != nil {
 		return nil, err
 	}
-	return ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{
+	return NewCloudRoutesLoader(cfg, PluginDependencies{
 		SecureValues:       clients.SecureValues,
 		MetricsRegister:    reg,
 		RESTConfigProvider: clients.RESTConfigProvider,
