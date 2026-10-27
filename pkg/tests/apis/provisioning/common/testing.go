@@ -1837,7 +1837,7 @@ func isTransientDeleteError(err error) bool {
 
 // isManagerRepositoryNotFound reports whether a NotFound names the repository that manages item.
 // A managed resource is deleted through its repository, so the NotFound can be about the
-// repository, not the resource. The resource is then still there.
+// repository, not the resource. The resource is then orphaned and still there.
 func isManagerRepositoryNotFound(err error, item unstructured.Unstructured) bool {
 	statusErr, ok := errors.AsType[*apierrors.StatusError](err)
 	if !ok || statusErr.ErrStatus.Reason != metav1.StatusReasonNotFound {
@@ -1860,7 +1860,7 @@ func deleteAndWait(ctx context.Context, client dynamic.ResourceInterface, timeou
 			err := client.Delete(ctx, item.GetName(), deleteOpts)
 			switch {
 			case err != nil && isManagerRepositoryNotFound(err, item):
-				return fmt.Errorf("deleteAndWait: delete %q: its repository no longer exists: %w", item.GetName(), err)
+				return fmt.Errorf("deleteAndWait: delete %q: the resource is orphaned, its repository no longer exists: %w", item.GetName(), err)
 			case err == nil, apierrors.IsNotFound(err):
 			case isTransientDeleteError(err):
 				lastTransient = fmt.Errorf("delete %q: %w", item.GetName(), err)
@@ -1931,7 +1931,7 @@ func (h *ProvisioningTestHelper) supportedResourceClients() (map[string]dynamic.
 		if err != nil {
 			return nil, fmt.Errorf("resolve supported resource %s: %w", supported.GroupKind, err)
 		}
-		clients[supported.String()] = dyn.Resource(mapping.Resource).Namespace("default")
+		clients[supported.String()] = dyn.Resource(mapping.Resource).Namespace(h.Namespace)
 	}
 	return clients, nil
 }
@@ -2003,7 +2003,7 @@ func (h *ProvisioningTestHelper) cleanupOrphanedResources(ctx context.Context, t
 	for name := range orphaned {
 		var status int
 		result := h.AdminREST.Post().
-			Namespace("default").
+			Namespace(h.Namespace).
 			Resource("repositories").
 			Name(name).
 			SubResource("jobs").
