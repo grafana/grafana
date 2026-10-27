@@ -17,6 +17,7 @@ import { loadDependentAppPlugins } from './loadDependentAppPlugins';
 import { log } from './logs/log';
 import { addedFunctionsRegistrySlice, type AddedFunctionsRegistryItem } from './registry/AddedFunctionsRegistry';
 import { getPluginExtensionRegistries } from './registry/setup';
+import { type PluginExtensionRegistries } from './registry/types';
 import { type GetExtensions, type GetExtensionsOptions } from './types';
 import {
   addedLinkToExtensionLink,
@@ -28,25 +29,14 @@ import {
 } from './utils';
 
 /**
- * Returns an observable that emits plugin extensions whenever the core extensions registries change.
- * The observable will emit the initial state of the extensions and then emit again whenever
- * either the added components registry or the added links registry changes.
+ * Loads the dependent app plugins for an extension point and fetches the extension registries, in parallel.
+ * Shared by all the `getObservablePlugin*` functions below, so each gets the registries only once the
+ * plugins that could be contributing to the extension point have had a chance to register.
  *
- * Unlike the registries, the dependent app plugins for an extension point are not loaded automatically.
- * This function loads them explicitly, the same way the `usePluginLinks`/`usePluginComponents` hooks do via
- * `useLoadAppPlugins`, ensuring they're loaded before the registries are read.
- *
- * @param options - The options for getting plugin extensions
- * @returns An Observable that emits the plugin extensions for the given extension point any time the registries change
+ * Wrapped in `defer()` so that neither step runs until something actually subscribes, matching normal
+ * Observable semantics.
  */
-
-export const getObservablePluginExtensions = (
-  options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
-): Observable<ReturnType<GetExtensions>> => {
-  const { extensionPointId } = options;
-
-  // Wrapped in `defer()` so that nothing (fetching registries, loading app plugins) happens until
-  // something actually subscribes to the returned observable, matching normal Observable semantics.
+function loadPluginsAndRegistries(extensionPointId: string): Observable<PluginExtensionRegistries> {
   return defer(() => {
     const pluginsLoaded = from(loadDependentAppPlugins(extensionPointId, getExtensionPointPluginDependencies)).pipe(
       catchError((error) => {
@@ -63,8 +53,25 @@ export const getObservablePluginExtensions = (
     // getPluginExtensionRegistries() needs no catchError of its own: it already catches its own
     // initialization errors and falls back to empty registries (see registry/setup.ts).
     return forkJoin([from(getPluginExtensionRegistries()), pluginsLoaded]);
-  }).pipe(
-    switchMap(([registries]) =>
+  }).pipe(map(([registries]) => registries));
+}
+
+/**
+ * Returns an observable that emits plugin extensions whenever the core extensions registries change.
+ * The observable will emit the initial state of the extensions and then emit again whenever
+ * either the added components registry or the added links registry changes.
+ *
+ * @param options - The options for getting plugin extensions
+ * @returns An Observable that emits the plugin extensions for the given extension point any time the registries change
+ */
+
+export const getObservablePluginExtensions = (
+  options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
+): Observable<ReturnType<GetExtensions>> => {
+  const { extensionPointId } = options;
+
+  return loadPluginsAndRegistries(extensionPointId).pipe(
+    switchMap((registries) =>
       combineLatest([
         registries.addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
         registries.addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
@@ -136,7 +143,7 @@ export const getObservablePluginFunctions: GetObservablePluginFunctions = <Signa
 ) => {
   const { extensionPointId, limitPerPlugin } = options;
 
-  return from(getPluginExtensionRegistries()).pipe(
+  return loadPluginsAndRegistries(extensionPointId).pipe(
     switchMap((registries) =>
       addedFunctionsRegistrySlice<Signature>(registries.addedFunctionsRegistry, extensionPointId)
     ),

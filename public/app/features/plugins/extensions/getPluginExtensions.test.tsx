@@ -984,6 +984,14 @@ describe('getObservablePluginFunctions()', () => {
     });
   });
 
+  it('should request loading of the app plugins contributing to the extension point', async () => {
+    const observable = getObservablePluginFunctions({ extensionPointId }).pipe(first());
+
+    await firstValueFrom(observable);
+
+    expect(loadDependentAppPluginsMock).toHaveBeenCalledWith(extensionPointId, getExtensionPointPluginDependencies);
+  });
+
   it('should only emit the functions', async () => {
     const observable = getObservablePluginFunctions({ extensionPointId }).pipe(first());
 
