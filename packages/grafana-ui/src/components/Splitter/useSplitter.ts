@@ -363,28 +363,33 @@ export function useSplitter(options: UseSplitterOptions) {
     }
   }, [onSizeChanged, handleSize, measurementProp, getPrimaryFlexSize]);
 
-  // A pixel size has no 0-100 value to render up front, since that depends on the container. Measure
-  // it once laid out; drags and resets keep it current from then on. Checks after every render, not
-  // just the first: the panes can mount later than the hook, or remount as new elements.
+  // Pixel-pane percentages also change with the surrounding layout. Observe live sizes so an
+  // initially hidden container or a later resize cannot leave the announced value stale.
   useLayoutEffect(() => {
-    if (
-      !usePixels ||
-      !firstPaneRef.current ||
-      !containerRef.current ||
-      !splitterRef.current ||
-      splitterRef.current.hasAttribute('aria-valuenow')
-    ) {
+    const primaryPane = firstPaneRef.current;
+    const container = containerRef.current;
+    const handle = splitterRef.current;
+    if (!usePixels || !primaryPane || !container || !handle) {
       return;
     }
 
-    splitterRef.current.setAttribute(
-      'aria-valuenow',
-      pixelAriaValue(
-        firstPaneRef.current.getBoundingClientRect()[measurementProp],
-        containerRef.current.getBoundingClientRect()[measurementProp],
-        handleSize
-      )
-    );
+    const updateAriaValue = () => {
+      const containerPixels = container.getBoundingClientRect()[measurementProp];
+      if (containerPixels <= handleSize) {
+        return;
+      }
+
+      handle.setAttribute(
+        'aria-valuenow',
+        pixelAriaValue(primaryPane.getBoundingClientRect()[measurementProp], containerPixels, handleSize)
+      );
+    };
+    const observer = new ResizeObserver(updateAriaValue);
+    observer.observe(container, { box: 'border-box' });
+    observer.observe(primaryPane, { box: 'border-box' });
+    updateAriaValue();
+
+    return () => observer.disconnect();
   });
 
   // Floating overlays hide background controls from screen readers. Resize handles must also
