@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	dashboardV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	searchV0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -61,6 +63,22 @@ func TestIntegrationNotebooksAuthorization(t *testing.T) {
 
 		err = c.Resource.Delete(ctx, seeded, metav1.DeleteOptions{})
 		require.True(t, apierrors.IsForbidden(err), "delete: expected Forbidden, got %v", err)
+	})
+
+	// A search is a POST the API server parses as a create. Through the full authorizer
+	// chain it is restated as a list, so it follows the read permission.
+	t.Run("search follows the read permission", func(t *testing.T) {
+		query := searchV0.SearchQuery{Limit: 10}
+
+		_, code := search(t, ctx, helper.Org1.None, gvr, query)
+		require.Equal(t, http.StatusForbidden, code, "role none must not search")
+
+		results, code := search(t, ctx, helper.Org1.Viewer, gvr, query)
+		require.Equal(t, http.StatusOK, code, "viewer must be able to search")
+		require.Contains(t, names(results), seeded)
+
+		_, code = search(t, ctx, helper.Org1.Editor, gvr, query)
+		require.Equal(t, http.StatusOK, code, "editor must be able to search")
 	})
 
 	t.Run("viewer can read but not mutate", func(t *testing.T) {
