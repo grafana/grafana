@@ -680,33 +680,30 @@ function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
 
   const handleClick = React.useCallback(
     (evt: React.MouseEvent) => {
-      // Check if Alt key is pressed
+      // Only handle Alt+click
       if (!evt.altKey) {
         return;
       }
 
-      // Check if the click is on a button (the collapse/expand toggle)
+      // Check if the click target is a button or inside a button
       const target = evt.target as HTMLElement;
       const button = target.closest('button');
 
-      // The collapse button is typically the first button in the row header
-      // and should contain an icon with angle-right or angle-down
       if (button) {
-        const icon = button.querySelector('[data-icon="angle-right"], [data-icon="angle-down"]');
-        if (icon) {
-          evt.preventDefault();
-          evt.stopPropagation();
+        // Any button click with Alt should trigger collapse/expand all
+        // (the main toggle button is what we're interested in)
+        evt.preventDefault();
+        evt.stopPropagation();
 
-          // Alt+click: collapse/expand all rows (GitHub-style)
-          const dashboard = getDashboardSceneFor(model);
-          const layout = getRowCollapseTarget(dashboard);
+        // Alt+click: collapse/expand all rows (GitHub-style)
+        const dashboard = getDashboardSceneFor(model);
+        const layout = getRowCollapseTarget(dashboard);
 
-          if (layout) {
-            if (isCollapsed) {
-              layout.expandAllRows();
-            } else {
-              layout.collapseAllRows();
-            }
+        if (layout) {
+          if (isCollapsed) {
+            layout.expandAllRows();
+          } else {
+            layout.collapseAllRows();
           }
         }
       }
@@ -723,7 +720,7 @@ function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   }
 
   return (
-    <div onClick={handleClick} style={{ display: 'contents' }}>
+    <div onClickCapture={handleClick} style={{ display: 'contents' }}>
       <OriginalSceneGridRowRenderer model={model} />
     </div>
   );

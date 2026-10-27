@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { render, userEvent } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -190,10 +190,8 @@ describe('RowItemRenderer', () => {
 
       const toggle1 = screen.getByTestId(selectors.components.DashboardRow.toggle(row1.state.title!));
 
-      // Alt+click the first row toggle using keyboard modifier
-      await userEvent.keyboard('[AltLeft>]');
-      await userEvent.click(toggle1);
-      await userEvent.keyboard('[/AltLeft]');
+      // Alt+click the first row toggle
+      fireEvent.click(toggle1, { altKey: true });
 
       // Both rows should be collapsed
       expect(row1.getCollapsedState()).toBe(true);
@@ -218,10 +216,8 @@ describe('RowItemRenderer', () => {
 
       const toggle1 = screen.getByTestId(selectors.components.DashboardRow.toggle(row1.state.title!));
 
-      // Alt+click the first row toggle using keyboard modifier
-      await userEvent.keyboard('[AltLeft>]');
-      await userEvent.click(toggle1);
-      await userEvent.keyboard('[/AltLeft]');
+      // Alt+click the first row toggle
+      fireEvent.click(toggle1, { altKey: true });
 
       // Both rows should be expanded
       expect(row1.getCollapsedState()).toBe(false);
