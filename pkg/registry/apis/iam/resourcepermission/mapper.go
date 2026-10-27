@@ -135,7 +135,7 @@ type MappersRegistry struct {
 	reverse map[string]schema.GroupResource // scope prefix -> GroupResource
 }
 
-// NewMappersRegistry initialises the always-enabled resource permission mappers.
+// NewMappersRegistry initialises the registry with folders and dashboards (always enabled).
 func NewMappersRegistry() *MappersRegistry {
 	m := &MappersRegistry{
 		entries: make(map[schema.GroupResource]mapperEntry),
@@ -148,10 +148,6 @@ func NewMappersRegistry() *MappersRegistry {
 	m.RegisterMapper(
 		schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"},
 		NewMapper("dashboards", defaultLevels), nil,
-	)
-	m.RegisterMapper(
-		schema.GroupResource{Group: "secret.grafana.app", Resource: "securevalues"},
-		NewMapper("secret.securevalues", defaultLevels), nil,
 	)
 	return m
 }

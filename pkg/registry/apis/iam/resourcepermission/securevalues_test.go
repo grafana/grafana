@@ -11,12 +11,17 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestIntegrationSecureValueResourcePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 	backend := setupBackend(t)
+	backend.mappers.RegisterMapper(
+		schema.GroupResource{Group: "secret.grafana.app", Resource: "securevalues"},
+		NewMapper("secret.securevalues", defaultLevels), nil,
+	)
 	backend.identityStore = NewFakeIdentityStore(t)
 	db, err := backend.dbProvider(ctx)
 	require.NoError(t, err)
