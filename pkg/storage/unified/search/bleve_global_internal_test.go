@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -248,10 +249,10 @@ func TestGlobalIndexSearchFields(t *testing.T) {
 	_, ok = perResource.keywordFields[resource.SEARCH_FIELD_GROUP_RESOURCE]
 	assert.False(t, ok, "the resource type must stay unavailable to per-resource search")
 
-	// Timestamps are sortable here and nowhere else.
+	// Timestamps are sortable in both, so results can be ordered by time.
 	for _, name := range []string{resource.SEARCH_FIELD_CREATED, resource.SEARCH_FIELD_UPDATED} {
 		assert.True(t, global.sortableFields[name], name)
-		assert.False(t, perResource.sortableFields[name], name)
+		assert.True(t, perResource.sortableFields[name], name)
 	}
 
 	// A namespace-wide index holds no deleted documents, so it does not offer the
@@ -1387,4 +1388,73 @@ func TestFolderSetCheckErrorsReachTheSearchWithATextQuery(t *testing.T) {
 
 	_, err = run(func(index.IndexReader) (index.DocValueReader, error) { return failingDocValues{}, nil })
 	require.ErrorContains(t, err, "doc values are unreadable")
+}
+
+// Clients lock provisioned resources whose manager does not allow edits, so
+// false must come back as false, not be left out like a resource with no manager.
+func TestSearchReturnsManagerAllowEdits(t *testing.T) {
+	src := newTestNsResource()
+	for _, key := range []resource.NamespacedResource{src, resource.GlobalSearchKey(src.Namespace)} {
+		t.Run(key.String(), func(t *testing.T) {
+			backend, _ := setupBleveBackend(t)
+			ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: src.Namespace})
+			doc := func(name string, manager *utils.ManagerProperties) *resource.BulkIndexItem {
+				return &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+					RV: 1, Name: name, Title: name, Manager: manager,
+					Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
+				}}
+			}
+			idx, err := backend.BuildIndex(ctx, key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+				return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+					doc("editable", &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo", AllowsEdits: true}),
+					doc("locked", &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo"}),
+					doc("unmanaged", nil),
+				}})
+			}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+
+			for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+				resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+				resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			} {
+				t.Run(format.String(), func(t *testing.T) {
+					rsp, err := idx.Search(ctx, NewStubAccessClient(map[string]bool{src.Resource: true}), &resourcepb.ResourceSearchRequest{
+						Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource}},
+						Fields:       []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS},
+						Limit:        10,
+						ResultFormat: format,
+					}, nil, nil)
+					require.NoError(t, err)
+					require.Nil(t, rsp.Error)
+					assert.Equal(t, map[string]any{"editable": true, "locked": false, "unmanaged": nil}, allowEditsByName(t, rsp))
+				})
+			}
+		})
+	}
+}
+
+func allowEditsByName(t *testing.T, rsp *resourcepb.ResourceSearchResponse) map[string]any {
+	t.Helper()
+	got := map[string]any{}
+	if rsp.Results != nil {
+		col := slices.IndexFunc(rsp.Results.Columns, func(c *resourcepb.ResourceTableColumnDefinition) bool {
+			return c.Name == resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS
+		})
+		require.GreaterOrEqual(t, col, 0, "no %s column", resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS)
+		for _, row := range rsp.Results.Rows {
+			got[row.Key.Name] = nil
+			if cell := row.Cells[col]; len(cell) > 0 {
+				v, err := resource.DecodeCell(rsp.Results.Columns[col], col, cell)
+				require.NoError(t, err)
+				got[row.Key.Name] = v
+			}
+		}
+		return got
+	}
+	for _, row := range rsp.Rows {
+		values, err := resource.DecodeSearchValues(rsp.Fields, row)
+		require.NoError(t, err)
+		got[row.Key.Name] = values[resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS]
+	}
+	return got
 }
