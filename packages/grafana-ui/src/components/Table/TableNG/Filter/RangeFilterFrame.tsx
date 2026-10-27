@@ -66,12 +66,13 @@ export function RangeFilterFrame({
           {t('grafana-ui.table.range.invalid', 'Enter valid bounds with minimum no greater than maximum.')}
         </FieldValidationMessage>
       )}
-      <FilterMissingValues
-        value={unbounded || includeMissing}
-        disabled={unbounded}
-        onChange={setIncludeMissing}
-        testId={rangeSelectors.includeMissingCheckbox}
-      />
+      {!unbounded && (
+        <FilterMissingValues
+          value={includeMissing}
+          onChange={setIncludeMissing}
+          testId={rangeSelectors.includeMissingCheckbox}
+        />
+      )}
       <FilterPopupFooter
         selectedRows={count}
         totalRows={values.length}

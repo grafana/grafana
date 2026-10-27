@@ -278,3 +278,25 @@ it.each([
   expect(onClear).toHaveBeenCalledTimes(1);
   expect(onApply).not.toHaveBeenCalled();
 });
+
+it.each([
+  [FieldType.number, 'Minimum', '1'],
+  [FieldType.time, 'Start', '1970-01-01 00:00:00.001'],
+])('shows missing-value control only while a %s range has a bound', async (type, label, bound) => {
+  const { user } = setup(type, [1, null, 2]);
+  expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
+  expect(screen.queryByRole('checkbox', { name: 'Include missing values' })).not.toBeInTheDocument();
+
+  const input = screen.getByRole('textbox', { name: label });
+  await user.type(input, bound);
+  const checkbox = screen.getByRole('checkbox', { name: 'Include missing values' });
+  expect(checkbox).toBeEnabled();
+  await user.click(checkbox);
+
+  await user.clear(input);
+  expect(screen.queryByRole('checkbox', { name: 'Include missing values' })).not.toBeInTheDocument();
+  expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
+
+  await user.type(input, bound);
+  expect(screen.getByRole('checkbox', { name: 'Include missing values' })).toBeChecked();
+});
