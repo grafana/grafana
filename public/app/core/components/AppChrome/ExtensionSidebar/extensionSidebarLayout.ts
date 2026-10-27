@@ -233,4 +233,5 @@ export function resetExtensionSidebarPresentationForTests({ keepStorage = false 
   floatingHolds.clear();
   listeners.clear();
   collapseListeners.clear();
+  closeListeners.clear();
 }
