@@ -45,7 +45,7 @@ import { AutoCellRenderer, getCellRenderer, getCellSpecificStyles } from './Cell
 import { getCellMenuOptions } from './cellMenuOptions';
 import { HeaderCell } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
-import { TableCellActions } from './components/TableCellActions';
+import { handleCellActionsKeyDown, TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
 import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS, TABLE } from './constants';
 import {
@@ -480,6 +480,7 @@ function buildColumnsFromFields(
             cellSpecificStyles != null && maxRowHeight == null ? cellSpecificStyles : ''
           )}
           style={style}
+          onKeyDown={tableRefreshEnabled && !disableKeyboardEvents ? handleCellActionsKeyDown : undefined}
         />
       );
     };
