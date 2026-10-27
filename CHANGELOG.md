@@ -2,6 +2,19 @@
 
 # 13.3.0 (2026-10-27)
 
+### Security
+
+- Security: Fix CVE-2026-100105
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-15577
+- Security: Fix CVE-2026-33374
+- Security: Fix CVE-2026-81841
+- Security: Fix CVE-2026-88858
+- Security: Fix CVE-2026-88967
+- Security: Fix CVE-2026-93294
+- Security: Fix CVE-2026-95502
+
 ### Features and enhancements
 
 - **Access control:** reject global role creation in single-org mode (Enterprise)
@@ -31,7 +44,7 @@
 - **Chore:** Upgrade to k8s v0.37.0 (and grafana-app-sdk v0.60.0) [#132571](https://github.com/grafana/grafana/pull/132571), [@stevesg](https://github.com/stevesg)
 - **Dashboard:** Adds new a subtitle option for panel descriptions [#129164](https://github.com/grafana/grafana/pull/129164), [@torkelo](https://github.com/torkelo)
 - **Dashboard:** Fall back when collection deletion is unsupported [#128259](https://github.com/grafana/grafana/pull/128259), [@bestend](https://github.com/bestend)
-- **Dashboards:** Add $__namespace global variable [#132167](https://github.com/grafana/grafana/pull/132167), [@ivanortegaalba](https://github.com/ivanortegaalba)
+- **Dashboards:** Add $\_\_namespace global variable [#132167](https://github.com/grafana/grafana/pull/132167), [@ivanortegaalba](https://github.com/ivanortegaalba)
 - **Dashboards:** Allow `Add variable +` btn to add filters, links and annos as well [#130841](https://github.com/grafana/grafana/pull/130841), [@mdvictor](https://github.com/mdvictor)
 - **Dashboards:** Hide links to deleted folders in Recently Deleted [#134469](https://github.com/grafana/grafana/pull/134469), [@Clarity-89](https://github.com/Clarity-89)
 - **Dashboards:** Improve Recently Deleted performance with server-side search [#134126](https://github.com/grafana/grafana/pull/134126), [@pstibrany](https://github.com/pstibrany)
@@ -72,7 +85,7 @@
 - **Provisioning:** Default save from a branch preview to the previewed branch [#135136](https://github.com/grafana/grafana/pull/135136), [@Clarity-89](https://github.com/Clarity-89)
 - **Provisioning:** GitHub-style doc tabs for folder README [#129073](https://github.com/grafana/grafana/pull/129073), [@MissingRoberto](https://github.com/MissingRoberto)
 - **Provisioning:** Handle repository build timeouts and branch outages [#135072](https://github.com/grafana/grafana/pull/135072), [@ferruvich](https://github.com/ferruvich)
-- **Provisioning:** Keep folder when removing _folder.json leaves its UID unchanged [#135574](https://github.com/grafana/grafana/pull/135574), [@ferruvich](https://github.com/ferruvich)
+- **Provisioning:** Keep folder when removing \_folder.json leaves its UID unchanged [#135574](https://github.com/grafana/grafana/pull/135574), [@ferruvich](https://github.com/ferruvich)
 - **Provisioning:** Link README items to Grafana pages when viewed in Grafana [#128455](https://github.com/grafana/grafana/pull/128455), [@MissingRoberto](https://github.com/MissingRoberto)
 - **Provisioning:** Make backend user attribution unconditional [#134709](https://github.com/grafana/grafana/pull/134709), [@ferruvich](https://github.com/ferruvich)
 - **Provisioning:** Never replace the repository root folder during incremental sync [#135397](https://github.com/grafana/grafana/pull/135397), [@ferruvich](https://github.com/ferruvich)
@@ -171,6 +184,13 @@
 <!-- 13.2.5 START -->
 
 # 13.2.5 (2026-10-27)
+
+### Security
+
+- Security: Fix CVE-2026-100105
+- Security: Fix CVE-2026-103506
+- Security: Fix CVE-2026-88858
+- Security: Fix CVE-2026-88967
 
 ### Features and enhancements
 
@@ -440,6 +460,12 @@
 <!-- 13.1.9 START -->
 
 # 13.1.9 (2026-10-27)
+
+### Security
+
+- Security: Fix CVE-2026-100105
+- Security: Fix CVE-2026-88858
+- Security: Fix CVE-2026-88967
 
 ### Features and enhancements
 
@@ -785,6 +811,12 @@
 <!-- 13.0.12 START -->
 
 # 13.0.12 (2026-10-27)
+
+### Security
+
+- Security: Fix CVE-2026-100105
+- Security: Fix CVE-2026-88858
+- Security: Fix CVE-2026-88967
 
 ### Features and enhancements
 
@@ -1317,6 +1349,12 @@
 <!-- 12.4.14 START -->
 
 # 12.4.14 (2026-10-27)
+
+### Security
+
+- Security: Fix CVE-2026-100105
+- Security: Fix CVE-2026-88858
+- Security: Fix CVE-2026-88967
 
 <!-- 12.4.14 END -->
 <!-- 12.4.13 START -->
