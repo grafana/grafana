@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/peer"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -149,6 +150,45 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 				return false
 			}
 		}, 5*time.Second, time.Millisecond)
+	})
+
+	t.Run("metadata survives the marshal/transport/unmarshal round trip", func(t *testing.T) {
+		ctx, pub, sub := startNatsRoundTrip(t)
+		backend := newTestKVStorageBackend(pub)
+		assert.Equal(t, int64(defaultMaxWatchNotificationBytes), pub.MaxPayload(), "the embedded server applies the NATS default")
+		assert.Equal(t, defaultMaxWatchNotificationBytes, backend.maxWatchNotificationBytes())
+		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, NewWatchExpiry(), nil, &logging.NoOpLogger{})
+		out := notifier.Watch(ctx, WatchOptions{})
+
+		event := Event{
+			Namespace:       "default",
+			Group:           "playlist.grafana.app",
+			Resource:        "playlists",
+			Name:            "p-1",
+			ResourceVersion: 5,
+			Action:          DataActionUpdated,
+			Metadata: &resourcepb.NotificationMetadata{
+				Labels:                  map[string]string{"env": "prod"},
+				Annotations:             map[string]string{"example.grafana.app/note": "x"},
+				Finalizers:              []string{"example.grafana.app/cleanup"},
+				Generation:              3,
+				CreationTimestampMillis: 1000,
+				DeletionTimestampMillis: 2000,
+			},
+		}
+
+		var got Event
+		require.Eventually(t, func() bool {
+			backend.publishWatchNotification(ctx, event)
+			select {
+			case got = <-out:
+				return true
+			case <-time.After(20 * time.Millisecond):
+				return false
+			}
+		}, 5*time.Second, time.Millisecond)
+
+		assert.True(t, proto.Equal(event.Metadata, got.Metadata))
 	})
 
 	t.Run("malformed and unknown-type notifications are dropped, not delivered", func(t *testing.T) {

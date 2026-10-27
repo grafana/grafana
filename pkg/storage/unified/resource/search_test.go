@@ -871,7 +871,8 @@ func TestBackgroundGlobalBuildsStartAfterBlockingIndexes(t *testing.T) {
 	require.NotNil(t, backend.GetIndex(dashboardType("large")))
 	for _, namespace := range []string{"large", "previously-open"} {
 		rsp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: namespace, Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
+			Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: namespace, Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.Equal(t, NewServiceUnavailableError("the global search index for this namespace is still being built"), rsp.Error,
@@ -2904,7 +2905,8 @@ func TestSearchRejectsInvalidFolderTreeBeforeResolvingIndexes(t *testing.T) {
 					Key:    &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"},
 					Fields: []*resourcepb.Requirement{{Key: SEARCH_FIELD_FOLDER_TREE, Operator: tc.operator, Values: tc.values}},
 				},
-				IsDeleted: tc.deleted,
+				IsDeleted:    tc.deleted,
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			})
 			require.NoError(t, err)
 			require.NotNil(t, rsp.Error)
@@ -2939,7 +2941,8 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 					Resource:  "resource",
 				},
 			},
-			Limit: -100,
+			Limit:        -100,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
 		rsp, err := support.Search(context.Background(), req)
 		require.NoError(t, err)
@@ -2957,8 +2960,9 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 					Resource:  "resource",
 				},
 			},
-			Limit:  10,
-			Offset: -50,
+			Limit:        10,
+			Offset:       -50,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
 		rsp, err := support.Search(context.Background(), req)
 		require.NoError(t, err)
@@ -3001,8 +3005,9 @@ func TestSearchRejectsFederatedTrashQueries(t *testing.T) {
 			Group:     "group",
 			Resource:  "resource",
 		}},
-		Limit:     10,
-		IsDeleted: true,
+		Limit:        10,
+		IsDeleted:    true,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
 	rsp, err := support.Search(context.Background(), req)

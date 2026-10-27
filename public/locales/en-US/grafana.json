@@ -1443,7 +1443,8 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "No alert rules found",
-        "rules-error": "Failed to load rules"
+        "rules-error": "Failed to load rules",
+        "search-issues": "Change the search to see results"
       },
       "interval": "Evaluated every {{interval}}",
       "recording-rules": {
@@ -1455,6 +1456,58 @@
         "alert-rules_other": "{{formatted}} alert rules",
         "recording-rules_one": "{{formatted}} recording rule",
         "recording-rules_other": "{{formatted}} recording rules"
+      },
+      "search": {
+        "default-policy-unavailable": "Filtering by the default policy isn't available yet.",
+        "help": {
+          "contact-point": "Direct contact point (mutually exclusive with policy:).",
+          "dashboard": "Dashboard the rule is linked to (canonical value is the dashboard UID).",
+          "datasource": "Query data source referenced by the rule (canonical value is the UID).",
+          "folder": "Folder (canonical value is the folder UID).",
+          "health": "Rule health: ok, nodata, error or unknown.",
+          "label": "Label matcher: label:key (exists), label:!key (absent), label:key=value (equal), label:key!=value (not equal), label:key=~re (regex), label:key!~re (not regex). Quote a value with spaces: label:team=\"a b\".",
+          "metric": "Recorded metric name (exact match).",
+          "panel-id": "Panel the rule is linked to. Panel IDs are dashboard-local; pair with dashboard:.",
+          "paused": "Whether the rule is paused (true/false).",
+          "plugins": "plugins:hide excludes rules created by plugins.",
+          "policy": "Named notification policy (mutually exclusive with contactPoint:).",
+          "rule": "Rule title text search (equivalent to free text).",
+          "state": "Alert state: firing, pending, recovering or normal.",
+          "target-datasource": "Data source the recorded metric is written to (canonical value is the UID)."
+        },
+        "help-availability": "Availability",
+        "help-available": "Available",
+        "help-expression": "Expression",
+        "help-filter-type": "Filter type",
+        "help-intro": "Search syntax allows you to query rules by the filters below.",
+        "help-title": "Search help",
+        "invalid-tokens": "Some filters could not be applied: {{tokens}}",
+        "invalid-value": "Use one of these values for {{key}}: {{values}}",
+        "label": "Search",
+        "not-paused-unavailable": "Filtering by not paused isn't available yet.",
+        "placeholder": "Search by name or enter filter query...",
+        "property": {
+          "contact-point": "Contact point",
+          "dashboard": "Dashboard",
+          "datasource": "Query data source",
+          "folder": "Folder",
+          "health": "Health",
+          "labels": "Labels",
+          "metric": "Recorded metric",
+          "panel": "Panel ID",
+          "paused": "Paused",
+          "plugins": "Plugin rules",
+          "policy": "Notification policy",
+          "rule-name": "Rule name",
+          "state": "Alert state",
+          "target-datasource": "Target data source"
+        },
+        "rejected-filter": "{{key}} was rejected: {{message}}",
+        "rejected-search": "The search was rejected: {{message}}",
+        "renamed-value": "Use {{to}} instead of {{from}}.",
+        "unavailable-tokens": "Some filters are not available yet: {{tokens}}",
+        "unclosed-quote": "A quote in the search is not closed.",
+        "wildcard-in-text": "Search text cannot contain * or %."
       },
       "shared": {
         "load-more": "Load more",
@@ -5843,6 +5896,7 @@
     "edit-actions": {
       "add": "Add {{typeName}}",
       "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "change-settings": "Change dashboard settings",
       "collapse-all-rows": "Collapse all rows",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
@@ -5867,6 +5921,7 @@
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
       "remove-multiple": "Remove {{typeName}} ({{num}})",
+      "rename": "Rename {{typeName}}",
       "replace-panel": "Replace panel",
       "row-fill-screen-disable": "Disable row fill screen",
       "row-fill-screen-enable": "Enable row fill screen",
@@ -7297,6 +7352,7 @@
       "copy": "Copy to clipboard",
       "learn-more": "Learn more",
       "no-issues": "No errors or notices for this query.",
+      "no-panel-issues": "No errors or notices for this panel.",
       "severity-error": "Error",
       "severity-info": "Info",
       "severity-warning": "Warning"
@@ -8125,8 +8181,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Open query pane",
-      "open-query-pane": "Open query pane",
-      "open-sidebar": "Open sidebar",
       "tooltip-open-query-pane": "Open query pane"
     },
     "viz-panel-links-renderer": {
@@ -12202,10 +12256,14 @@
     },
     "log-line": {
       "has-error": "Has errors",
+      "has-error-fields": "Has error fields",
+      "has-stacktrace": "Has a stack trace",
       "is-sampled": "Is sampled",
       "show-less": "show less",
       "show-more": "show more",
-      "tooltip-error": "Error: {{errorMessage}}"
+      "tooltip-error": "Error: {{errorMessage}}",
+      "tooltip-error-fields": "This log line contains error-related fields.",
+      "tooltip-stacktrace": "This log line contains a stack trace."
     },
     "log-line-context": {
       "center-matched-line": "Center matched line",
@@ -13427,7 +13485,6 @@
     "add-panel": {
       "cancel": "Cancel",
       "card-author": "By {{author}}",
-      "card-selected": "{{title}} (selected)",
       "card-updated": "Updated {{when}}",
       "create-name": "Notebook name",
       "create-name-required": "A notebook name is required",
@@ -13438,6 +13495,7 @@
       "error-open-conflict": "This notebook changed since it was opened. Reload it and try again.",
       "list-error": "Failed to load notebooks",
       "list-error-body": "Something went wrong loading your notebooks. Try again, or create a new one instead.",
+      "list-label": "Notebooks",
       "list-no-matches": "No notebooks match these filters.",
       "list-none": "You have no notebooks yet. Create one instead.",
       "list-none-read-only": "You have no notebooks yet, and no permission to create one.",
@@ -16072,6 +16130,7 @@
       "expand": "Expand",
       "filter": "Filter...",
       "loading": "Loading dashboards",
+      "megaMenuSectionHeading": "Suggested dashboards",
       "noResultsForFilter": "No results found for your query",
       "noResultsForFilterClear": "Clear search",
       "noResultsForScopes": "No dashboards or links found for the selected scopes",
@@ -16891,6 +16950,9 @@
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "description-zebra-striping": "Alternate the background color of every other row",
+    "filter": {
+      "error": "Table filters could not be applied. Showing unfiltered rows."
+    },
     "frame-picker": {
       "label": "Query"
     },

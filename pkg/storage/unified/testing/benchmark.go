@@ -538,7 +538,8 @@ func runStorageAndSearchBenchmark(
 						Name: resource.SEARCH_FIELD_TITLE_PHRASE,
 					},
 				},
-				Limit: 10,
+				Limit:        10,
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			}
 			idx := job.idx
 			searchG.Go(func() error {
@@ -584,8 +585,9 @@ func runStorageAndSearchBenchmark(
 						Resource:  pair.resource,
 					},
 				},
-				Query: "*",
-				Limit: 10,
+				Query:        "*",
+				Limit:        10,
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			})
 			if err != nil && bgSearchCtx.Err() == nil {
 				t.Errorf("background search failed for %s/%s: %v", pair.group, pair.resource, err)
