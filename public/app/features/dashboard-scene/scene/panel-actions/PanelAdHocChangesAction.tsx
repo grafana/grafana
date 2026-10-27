@@ -27,9 +27,15 @@ export function PanelAdHocChangesAction({ panel }: Props) {
   const canPromote = Boolean(meta.canSave) && canPromoteAdHocChanges(panel);
 
   // The dashboard saves the changes, see usePromotePanelAdHocChanges.
-  const onSaveToDashboard = () => panel.publishEvent(new PromotePanelAdHocChangesEvent({ panel }), true);
+  const onSaveToDashboard = useCallback(
+    () => panel.publishEvent(new PromotePanelAdHocChangesEvent({ panel }), true),
+    [panel]
+  );
 
-  const onRemoveChanges = () => panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, []);
+  const onRemoveChanges = useCallback(
+    () => panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, []),
+    [panel]
+  );
 
   if (!hasChanges) {
     return null;
