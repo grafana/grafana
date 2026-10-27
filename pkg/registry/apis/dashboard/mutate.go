@@ -49,6 +49,13 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	case dashboardV2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
 		return mutateNotebook(a)
 
+	// Reachability invariant: dashboard settings storage is always registered, but
+	// FlagGrafanaDashboardSettings is enforced per request in GetAuthorizer. With
+	// the flag off no identity may create or update, so this case only fires when
+	// the feature is enabled.
+	case dashboardV2beta1.DashboardSettingsResourceInfo.GroupVersionResource().Resource:
+		return mutateDashboardSettings(a)
+
 	case dashboardV0.LIBRARY_PANEL_RESOURCE:
 		return nil // nothing needed
 	case dashboardV0.SNAPSHOT_RESOURCE:
@@ -210,6 +217,51 @@ func mutateVariable(a admission.Attributes) error {
 
 	if a.GetOperation() == admission.Create && variable.GetName() == "" {
 		variable.SetName(deriveVariableMetadataName(getVariableName(variable.Spec), meta.GetFolder()))
+	}
+
+	return nil
+}
+
+// Create and update differ only in the name: a PATCH that creates a missing object runs against a
+// placeholder with a UID, so it is admitted as an update, and everything else has to hold on both.
+func mutateDashboardSettings(a admission.Attributes) error {
+	obj, ok := a.GetObject().(*dashboardV2beta1.DashboardSettings)
+	if !ok {
+		return fmt.Errorf("mutation error: expected dashboard settings, got %T", a.GetObject())
+	}
+
+	// Without a scope there is no tier label to set, and a nameless object that got past here would be
+	// rejected with a generic 422 before Validate could say why.
+	scope, err := dashboardSettingsScopeOf(obj)
+	if err != nil {
+		return apierrors.NewBadRequest(err.Error())
+	}
+
+	// Rebuilt from the scope on every write, never taken from the client: List finds folder-tier objects
+	// by the tier label, so a client-chosen value could hide a folder's settings from its readers.
+	labels := obj.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
+	// No folder label: a label value must start and end with an alphanumeric character, and a folder UID
+	// need not. Lookups go by name, and List needs only the tier label.
+	delete(labels, dashboardSettingsFolderLabelKey)
+	labels[dashboardSettingsTierLabelKey] = string(scope.Tier)
+	obj.SetLabels(labels)
+
+	// A merge-patch that sets the last panel field to null leaves an empty object behind, and absent is
+	// the one spelling of "inherit everything".
+	if obj.Spec.Panels != nil && *obj.Spec.Panels == (dashboardV2beta1.DashboardSettingsPanelDefaults{}) {
+		obj.Spec.Panels = nil
+	}
+
+	// No controller owns these objects, so a finalizer would keep a deleted tier, which is personal data
+	// for the user tier, in storage forever.
+	obj.SetFinalizers(nil)
+	obj.SetOwnerReferences(nil)
+
+	if a.GetOperation() == admission.Create && obj.GetName() == "" {
+		obj.SetName(deriveDashboardSettingsMetadataName(scope))
 	}
 
 	return nil

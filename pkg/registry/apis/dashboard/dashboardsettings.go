@@ -23,6 +23,9 @@ const (
 	dashboardSettingsUserNamePrefix        = "user-"
 	dashboardSettingsMergedName            = "merged"
 	dashboardSettingsMetadataNameMaxLength = 253
+	dashboardSettingsFolderLabelKey        = utils.AnnoKeyFolder
+	// Lets List read folder-tier objects with an indexable label selector instead of scanning user objects.
+	dashboardSettingsTierLabelKey = "dashboard.grafana.app/settings-tier"
 )
 
 // Comparable with ==; FolderUID is set only for the folder tier, UserUID only for the user tier.
