@@ -15,6 +15,9 @@ type service-account
     define update: [user, service-account, team#member, role#assignee]
     define delete: [user, service-account, team#member, role#assignee]
 
+    define get_permissions: [user, service-account, team#member, role#assignee]
+    define set_permissions: [user, service-account, team#member, role#assignee]
+
 type render
 
 type anonymous

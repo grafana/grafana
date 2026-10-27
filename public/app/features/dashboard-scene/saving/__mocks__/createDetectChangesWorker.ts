@@ -4,10 +4,11 @@ const worker = {
   terminate: jest.fn(),
 };
 
-jest.mocked(worker.postMessage).mockImplementation(() => {
+jest.mocked(worker.postMessage).mockImplementation(({ generation }) => {
   worker.onmessage?.({
     data: {
       hasChanges: true,
+      generation,
     },
   } as unknown as MessageEvent);
 });

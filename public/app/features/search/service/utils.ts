@@ -1,5 +1,5 @@
 import { type ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { type DataFrame, type DataFrameView, type IconName, fuzzySearch } from '@grafana/data';
+import { type DataFrame, type DataFrameView, type IconName } from '@grafana/data';
 import { type DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import {
   isSharedWithMe,
@@ -12,7 +12,6 @@ import { type ManagerKind } from '../../apiserver/types';
 import { type DashboardViewItem, type DashboardViewItemKind } from '../types';
 
 import { type DashboardQueryResult, type SearchQuery, type SearchResultMeta } from './types';
-import { type SearchHit } from './unified';
 
 /**
  * Marker stored in `field.deletedBy` when IAM lookup succeeded but the deleter UID had no
@@ -182,80 +181,6 @@ export function parseDeletionTimestamp(value: string | number | undefined | null
   }
   const parsed = Date.parse(value);
   return isNaN(parsed) ? undefined : new Date(parsed);
-}
-
-/**
- * Orders hits by a key, putting those without one last whichever way the sort runs. Sorting
- * by a value an item does not have would otherwise place it arbitrarily.
- */
-function absentLast<T>(
-  key: (hit: SearchHit) => T | undefined,
-  compare: (a: T, b: T) => number,
-  mult: number
-): (a: SearchHit, b: SearchHit) => number {
-  return (a, b) => {
-    const keyA = key(a);
-    const keyB = key(b);
-    if (keyA === undefined) {
-      return keyB === undefined ? 0 : 1;
-    }
-    if (keyB === undefined) {
-      return -1;
-    }
-    return mult * compare(keyA, keyB);
-  };
-}
-
-/**
- * Filters search results based on query parameters
- * This is used when backend filtering is not available (e.g., for deleted dashboards)
- * Supports fuzzy search for tags and titles, alphabetical sorting, and deletion timestamp sorting
- */
-export function filterSearchResults(
-  results: SearchHit[],
-  query: {
-    query?: string;
-    tag?: string[];
-    sort?: string;
-  }
-): SearchHit[] {
-  let filtered = results;
-
-  if ((query.query && query.query.trim() !== '' && query.query !== '*') || (query.tag && query.tag.length > 0)) {
-    const searchString = query.query || query.tag?.join(',') || '';
-    const haystack = results.map((hit) => `${hit.title},${hit.tags.join(',')}`);
-    const indices = fuzzySearch(haystack, searchString);
-    filtered = indices.map((index) => results[index]);
-  }
-
-  if (query.sort) {
-    if (query.sort === 'deleted-asc' || query.sort === 'deleted-desc') {
-      const mult = query.sort === 'deleted-desc' ? -1 : 1;
-      filtered.sort(
-        absentLast(
-          (hit) => parseDeletionTimestamp(hit.field.deletionTimestamp)?.getTime(),
-          (a, b) => a - b,
-          mult
-        )
-      );
-    } else if (query.sort === 'deletedby-asc' || query.sort === 'deletedby-desc') {
-      const collator = new Intl.Collator();
-      const mult = query.sort === 'deletedby-desc' ? -1 : 1;
-      // A missing or sentinel deleter value is not something to order by.
-      const deleter = (hit: SearchHit): string | undefined => {
-        const v = hit.field.deletedBy;
-        return typeof v === 'string' && v !== DELETED_BY_REMOVED && v !== DELETED_BY_UNKNOWN ? v : undefined;
-      };
-      filtered.sort(absentLast(deleter, (a, b) => collator.compare(a, b), mult));
-    } else {
-      // Alphabetical sorting
-      const collator = new Intl.Collator();
-      const mult = query.sort === 'alpha-desc' ? -1 : 1;
-      filtered.sort((a, b) => mult * collator.compare(a.title, b.title));
-    }
-  }
-
-  return filtered;
 }
 
 /**

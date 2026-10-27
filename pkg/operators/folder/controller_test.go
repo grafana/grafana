@@ -32,11 +32,11 @@ func TestFolderControllerOwnsNATSSubscriber(t *testing.T) {
 
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if r.Method == http.MethodPost {
+		if r.URL.Path == "/" {
 			_, _ = io.WriteString(w, `{"data":{"token":"test-access-token"}}`)
 			return
 		}
-		_, _ = io.WriteString(w, `{"apiVersion":"folder.grafana.app/v1","kind":"FolderList","metadata":{"resourceVersion":"1"},"items":[]}`)
+		_, _ = io.WriteString(w, `{"apiVersion":"storage.grafana.app/v0alpha1","kind":"ListKeyResponse","resourceVersion":"1","items":[]}`)
 	}))
 	t.Cleanup(api.Close)
 	cfg := setting.NewCfg()
@@ -81,7 +81,7 @@ func TestFolderControllerCacheSyncFailureCause(t *testing.T) {
 	release := make(chan struct{})
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if r.Method == http.MethodPost {
+		if r.URL.Path == "/" {
 			_, _ = io.WriteString(w, `{"data":{"token":"test-access-token"}}`)
 			return
 		}

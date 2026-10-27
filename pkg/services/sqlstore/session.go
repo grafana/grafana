@@ -31,6 +31,19 @@ type DBSession struct {
 
 type DBTransactionFunc func(sess *DBSession) error
 
+// SessionFromContext returns the session that InTransaction stored in ctx.
+// It returns nil if ctx has no session. A typed nil session also gives nil.
+func SessionFromContext(ctx context.Context) *DBSession {
+	sess, _ := ctx.Value(ContextSessionKey{}).(*DBSession)
+	return sess
+}
+
+// IsInTransaction reports whether ctx carries an open transaction from InTransaction.
+// Work in that transaction commits only when the outermost InTransaction call returns.
+func IsInTransaction(ctx context.Context) bool {
+	return SessionFromContext(ctx) != nil
+}
+
 func (sess *DBSession) PublishAfterCommit(msg any) {
 	sess.events = append(sess.events, msg)
 }

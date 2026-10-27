@@ -157,7 +157,6 @@ var BasicSet = wire.NewSet(
 	resource.NewGCGate,
 	resource.NewWatchExpiry,
 	unified.ProvideUnifiedStorageClient,
-	sql.ProvideExperimentalKV,
 	sql.ProvideKV,
 	sql.ProvideResourceDB,
 	vector.ProvideVectorBackend,

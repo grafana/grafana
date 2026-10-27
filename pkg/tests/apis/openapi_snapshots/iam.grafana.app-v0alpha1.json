@@ -5266,6 +5266,11 @@
             "type": "string",
             "default": ""
           },
+          "teamInternalId": {
+            "description": "Deprecated numeric team ID, when available, for legacy references.",
+            "type": "integer",
+            "format": "int64"
+          },
           "user": {
             "type": "string",
             "default": ""

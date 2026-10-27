@@ -29,6 +29,17 @@ export interface DashboardChangeInfo {
   hasMigratedToV2?: boolean;
 }
 
+export interface DashboardChangesRequest {
+  initial: Dashboard | DashboardV2Spec;
+  changed: Dashboard | DashboardV2Spec;
+  generation: number;
+}
+
+export interface DashboardChangesResponse {
+  hasChanges: boolean;
+  generation: number;
+}
+
 /**
  * A dashboard that has never been saved: no uid and no k8s name yet. Not the save model's version: a
  * previewed repo file reports version 0 while it already has a uid, and saving it updates the file

@@ -2,6 +2,7 @@ import { distinctUntilChanged, takeUntil, takeWhile, timer } from 'rxjs';
 
 import { createAssistantContextItem, isAssistantAvailable, openAssistant } from '@grafana/assistant';
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
+import { getPanelDataStatusItems } from '@grafana/data/internal';
 import { reportInteraction, getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
 import {
@@ -30,6 +31,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type DashboardScene } from './DashboardScene';
 import { refuseWhilePlanning } from './refuseWhilePlanning';
+import { setupPanelNotices } from './setupPanelNotices';
 
 // How long to wait for the assistant app plugin to report availability before giving up. Preloaded
 // app plugins finish importing before the rest of Grafana boots, so this window is normally
@@ -250,6 +252,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
   // Unreachable while the sample generator never reports an error for this popover to attach to;
   // would need this guard the moment that changes, so it stays guarded directly.
   if (isNewPanelQueryErrorsUIEnabled()) {
+    setupPanelNotices(vizPanel, context);
     context.onOpenInspector = () => {
       if (refuseWhilePlanning(getDashboardSceneFor(vizPanel))) {
         return;
@@ -288,8 +291,28 @@ function investigatePanelErrorsWithAssistant(vizPanel: VizPanel) {
   }
 
   const panelData = sceneGraph.getData(vizPanel).state.data;
-  const errors = panelData?.errors ?? (panelData?.error ? [panelData.error] : []);
-  const entries = buildEntries(panelData?.series, errors);
+  const snapshot = vizPanel.getPanelContext().notices?.getSnapshot();
+  const visibleStatusIds = snapshot?.hostInitialized
+    ? new Set(snapshot.items.filter((item) => item.assistant !== 'hidden').map((item) => item.id))
+    : undefined;
+  const visibleStatuses = getPanelDataStatusItems(panelData, vizPanel.state._pluginLoadError).filter(
+    (item) =>
+      (item.origin === 'query' || item.origin === 'notice') &&
+      (!visibleStatusIds || visibleStatusIds.has(`external:${item.id}`))
+  );
+  const visibleErrors = new Set(visibleStatuses.filter((item) => item.origin === 'query').map((item) => item.error));
+  const errors = (panelData?.errors ?? (panelData?.error ? [panelData.error] : [])).filter((error) =>
+    visibleErrors.has(error)
+  );
+  const visibleNotices = new Set(visibleStatuses.filter((item) => item.origin === 'notice').map((item) => item.notice));
+  const series = panelData?.series?.map((frame) => ({
+    ...frame,
+    meta: frame.meta && {
+      ...frame.meta,
+      notices: frame.meta.notices?.filter((notice) => visibleNotices.has(notice)),
+    },
+  }));
+  const entries = buildEntries(series, errors);
 
   if (entries.length === 0) {
     return;
@@ -300,12 +323,13 @@ function investigatePanelErrorsWithAssistant(vizPanel: VizPanel) {
   const panelTitle = vizPanel.interpolate(vizPanel.state.title, undefined, 'text') || 'Untitled';
   const panelKey = vizPanel.state.key;
   const hasError = entries.some((entry) => entry.severity === 'error');
+  const visibleStatusList = visibleStatuses.map((item) => `- ${item.severity}: ${item.text}`).join('\n');
   // Prompt text sent to the assistant is intentionally not translated (matching
   // QueryErrorAlert.tsx/AnalyzeRuleButton.tsx): it's an instruction to the LLM, not rendered
   // UI copy, so it stays in English regardless of UI locale.
   const prompt = hasError
-    ? 'Investigate and fix the query errors causing this panel to fail.'
-    : 'Investigate the query notices for this panel and explain what they mean and what I should do about them.';
+    ? `Investigate and fix the query errors listed below. Ignore other query errors or notices on this panel.\n\n${visibleStatusList}`
+    : `Investigate the query notices listed below and explain what they mean and what I should do about them. Ignore other query errors or notices on this panel.\n\n${visibleStatusList}`;
 
   openAssistant({
     origin: 'grafana/panel-status-popover',

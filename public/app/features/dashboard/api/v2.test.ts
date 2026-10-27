@@ -11,7 +11,6 @@ import {
   AnnoKeyMessage,
   AnnoKeySavedFromUI,
   DeprecatedInternalId,
-  EMPTY_TABLE_RESPONSE,
 } from 'app/features/apiserver/types';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
@@ -270,6 +269,16 @@ describe('v2 dashboard API', () => {
       );
     });
 
+    it('should create a dashboard under the name given when the command asks to create it', async () => {
+      const api = new K8sDashboardV2API();
+
+      await api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s: { name: 'reserved-uid' }, create: true });
+
+      expect(mockPut).not.toHaveBeenCalled();
+      expect(mockPost).toHaveBeenCalledTimes(1);
+      expect(mockPost.mock.calls[0][1].metadata.name).toBe('reserved-uid');
+    });
+
     it('should suppress the global error toast when the caller sets showErrorAlert false', async () => {
       const api = new K8sDashboardV2API();
 
@@ -523,38 +532,6 @@ describe('v2 dashboard API', () => {
       expect(result.items).toHaveLength(5);
       expect(mockGet).toHaveBeenCalledTimes(3);
       expect(result.metadata.continue).toBeUndefined();
-    });
-  });
-
-  describe('listDeletedDashboards', () => {
-    it('should return table of deleted dashboards', async () => {
-      const mockDeletedDashboards = {
-        ...EMPTY_TABLE_RESPONSE,
-        metadata: { resourceVersion: '1' },
-        columnDefinitions: [
-          { name: 'Name', type: 'string' },
-          { name: 'Title', type: 'string' },
-          { name: 'Created At', type: 'date' },
-        ],
-        rows: [
-          {
-            cells: ['deleted-dash-1'],
-            object: { metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-1' } },
-          },
-          {
-            cells: ['deleted-dash-2'],
-            object: { metadata: { ...mockDashboardDto.metadata, name: 'deleted-dash-2' } },
-          },
-        ],
-      };
-
-      mockGet.mockResolvedValueOnce(mockDeletedDashboards);
-
-      const api = new K8sDashboardV2API();
-      const result = await api.listDeletedDashboards({ limit: 10 });
-
-      expect(result).toEqual(mockDeletedDashboards);
-      expect(result.rows).toHaveLength(2);
     });
   });
 

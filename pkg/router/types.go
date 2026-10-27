@@ -14,7 +14,9 @@ type Backend interface {
 	// The backend fingerprint; a change means the route must be rebuilt.
 	Key() string
 
-	// The group this route serves (must not contain /)
+	// The group this route serves (must not contain /). It must change only
+	// when Key does: reconcile keeps a served Backend while its key is
+	// unchanged, and discovery is built from that Backend's group.
 	Group() metav1.APIGroup
 
 	// How the prefix is handled. Handler support /apis/{group}* and /openapi/v3/{group}*
@@ -61,8 +63,7 @@ type PluginStatus struct {
 // CallerScopedDiscovery is an optional Backend interface for a backend whose
 // discovery depends on the caller. What the router advertises for it is only
 // a default: when the unregistered-group handler answers root discovery for a
-// request, that answer replaces the default. next never serves these groups,
-// so its answer is merged with them instead. The router never caches its
+// request, that answer replaces the default. The router never caches its
 // discovery and OpenAPI documents across callers; the backend decides what
 // callers may share.
 type CallerScopedDiscovery interface {
@@ -94,6 +95,9 @@ type Router interface {
 	// Alive returns nil unless the router is in a non-recoverable state, such as a deadlock, and requires a full restart.
 	Alive(context.Context) error
 
-	// HandleFunc serves routes for /apis*; everything else falls through to next.
-	HandleFunc(w http.ResponseWriter, req *http.Request, next http.Handler)
+	// HandleAPIs serves routes for /apis*
+	HandleAPIs() http.HandlerFunc
+
+	// HandleOpenAPIv3 serves routes for /openapi/v3*
+	HandleOpenAPIv3() http.HandlerFunc
 }

@@ -424,6 +424,25 @@ describe('Silence create/edit', () => {
     expect(ui.editor.comment.get()).toHaveValue('Happy path silence');
   });
 
+  it(
+    'includes the silence id when saving an existing silence',
+    async () => {
+      const { user } = renderSilences(`/alerting/silence/${MOCK_SILENCE_ID_EXISTING}/edit`);
+      await waitFor(() => expect(ui.editor.matcherName.get()).toHaveValue('foo'));
+
+      const postRequest = waitForServerRequest(silenceCreateHandler());
+      await user.click(ui.editor.submit.get());
+
+      const createSilenceRequest = await postRequest;
+      const requestBody = await createSilenceRequest.clone().json();
+      expect(requestBody).toMatchObject({
+        id: MOCK_SILENCE_ID_EXISTING,
+        matchers: [{ isEqual: true, isRegex: false, name: 'foo', value: 'bar' }],
+      });
+    },
+    TEST_TIMEOUT
+  );
+
   it('populates form with existing silence information that has __alert_rule_uid__', async () => {
     server.use(
       getAlertRuleHandler([

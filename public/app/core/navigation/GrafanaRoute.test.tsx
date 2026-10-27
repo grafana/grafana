@@ -46,6 +46,7 @@ describe('GrafanaRoute', () => {
   beforeEach(() => {
     setEchoSrv(new Echo());
     invalidateStPodReadiness();
+    server.use(http.get('/api/health', () => HttpResponse.json({ database: 'ok' })));
   });
 
   afterEach(async () => {

@@ -35,12 +35,6 @@ func ProvideResourceDB(cfg *setting.Cfg, grafanaDB infraDB.DB) (db.DBProvider, e
 	}
 }
 
-// ProvideExperimentalKV provides the optional experimental KV routed to
-// flagged use-cases by the KV storage backend (see resource.ExperimentalKVOptions).
-func ProvideExperimentalKV(cfg *setting.Cfg) (*resource.ExperimentalKVOptions, error) {
-	return nil, nil
-}
-
 func ProvideModuleServerKV(cfg *setting.Cfg) (kv.KV, error) {
 	return nil, nil
 }

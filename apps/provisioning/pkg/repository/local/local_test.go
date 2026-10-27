@@ -1458,6 +1458,59 @@ func TestLocalRepository_ReadTree_NativePathSeparators(t *testing.T) {
 	}
 }
 
+func TestLocalRepository_ReadTree_UnreadableDirectories(t *testing.T) {
+	for _, tt := range []struct {
+		path    string
+		ignored bool
+	}{
+		{path: ".git", ignored: true},
+		{path: ".ci", ignored: true},
+		{path: "team/.ci", ignored: true},
+		{path: ".keep", ignored: true},
+		{path: "visible"},
+		{path: ""},
+	} {
+		t.Run(tt.path, func(t *testing.T) {
+			root := filepath.Join(t.TempDir(), ".configured")
+			require.NoError(t, os.MkdirAll(root, 0700))
+			require.NoError(t, os.WriteFile(filepath.Join(root, "dashboard.json"), []byte("content"), 0600))
+			unreadable := filepath.Join(root, tt.path)
+			require.NoError(t, os.MkdirAll(unreadable, 0700))
+			t.Cleanup(func() {
+				require.NoError(t, os.Chmod(unreadable, 0700)) //nolint:gosec // Cleanup needs directory traversal permission.
+			})
+			require.NoError(t, os.Chmod(unreadable, 0))
+			if _, err := os.ReadDir(unreadable); err == nil {
+				t.Skip("directory permissions do not prevent reads in this environment")
+			} else {
+				require.ErrorIs(t, err, os.ErrPermission)
+			}
+
+			repo := &localRepository{path: root}
+			entries, err := repo.ReadTree(t.Context(), "")
+			if !tt.ignored {
+				require.ErrorIs(t, err, os.ErrPermission)
+				return
+			}
+			require.NoError(t, err)
+			paths := make([]string, 0, len(entries))
+			for _, entry := range entries {
+				paths = append(paths, entry.Path)
+				if entry.Blob {
+					require.Equal(t, "dashboard.json", entry.Path)
+					require.EqualValues(t, len("content"), entry.Size)
+					require.NotEmpty(t, entry.Hash)
+				}
+			}
+			want := []string{"dashboard.json"}
+			if tt.path == "team/.ci" {
+				want = append(want, "team/")
+			}
+			require.ElementsMatch(t, want, paths)
+		})
+	}
+}
+
 func TestLocalRepository_Config(t *testing.T) {
 	testCases := []struct {
 		name   string

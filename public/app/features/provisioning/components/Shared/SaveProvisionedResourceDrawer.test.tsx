@@ -140,7 +140,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           capturedRequest = { url: new URL(request.url), body: await request.json() };
-          return HttpResponse.json({ ref: 'main', path: 'playlists/test-playlist.json', resource: { upsert: {} } });
+          return HttpResponse.json({ path: 'playlists/test-playlist.json', resource: { upsert: {} } });
         })
       );
 
@@ -168,7 +168,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       const onWriteSuccess = jest.fn();
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, () =>
-          HttpResponse.json({ ref: 'main', path: 'playlists/test-playlist.json', resource: { upsert: {} } })
+          HttpResponse.json({ path: 'playlists/test-playlist.json', resource: { upsert: {} } })
         )
       );
 

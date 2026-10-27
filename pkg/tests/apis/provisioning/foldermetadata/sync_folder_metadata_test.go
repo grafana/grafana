@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -756,7 +757,7 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 
 		// New folder should exist with directory-name title and empty checksum.
 		newUID := findFolderUIDBySourcePath(t, helper, repo, "my-folder")
-		require.NotEqual(t, "stable-uid", newUID, "folder should have a new hash-based UID")
+		require.Equal(t, resources.ParseFolder("my-folder/", repo).ID, newUID, "folder should have the path-derived hash-based UID")
 		requireRepoFolderTitle(t, helper, repo, "my-folder", "my-folder") // title = directory name
 		requireRepoFolderChecksum(t, helper, repo, "my-folder", "")       // checksum cleared
 
@@ -881,4 +882,147 @@ func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedReverts(t *testin
 			"parent/child/dashboard.json": "child-new-uid",
 		})
 	})
+}
+
+// TestIntegrationProvisioning_FullSync_FolderMetadataDeletedFallbackUID verifies that
+// deleting a _folder.json whose UID already equals the path-derived fallback UID keeps
+// the folder in place: the title reverts to the directory name, the checksum is cleared
+// and children are left untouched.
+func TestIntegrationProvisioning_FullSync_FolderMetadataDeletedFallbackUID(t *testing.T) {
+	t.Run("empty folder kept by .keep keeps its UID when metadata UID equals fallback", func(t *testing.T) {
+		helper := sharedHelper(t)
+		const repo = "fs-meta-del-fb-empty"
+
+		uid := resources.ParseFolder("team/", repo).ID
+		meta := folderMetadataJSON(uid, "Team Display")
+		writeToProvisioningPath(t, helper, "team/.keep", []byte{})
+		writeToProvisioningPath(t, helper, "team/_folder.json", meta)
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
+		})
+		helper.SyncAndWait(t, repo, nil)
+		common.RequireFolderState(t, helper.Folders, uid, "Team Display", "team", repo)
+		requireRepoFolderChecksum(t, helper, repo, "team", sha1Hex(meta))
+		// Without this, compare may not list the folder yet and would create it
+		// instead of reconciling the deleted metadata.
+		waitForRepoResourceHash(t, helper, repo, "team", sha1Hex(meta))
+		teamBefore := helper.RequireFolders(t, uid)[0]
+		before := common.SnapshotObject(t, &teamBefore)
+
+		require.NoError(t, os.Remove(filepath.Join(helper.ProvisioningPath, "team/_folder.json")))
+
+		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		})
+		common.RequireJobWarning(t, job)
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+		common.RequireJobWarningContains(t, jobObj, `folder "team/" is missing folder metadata`)
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonMissingFolderMetadata)
+
+		common.RequireFolderState(t, helper.Folders, uid, "team", "team", repo)
+		requireRepoFolderChecksum(t, helper, repo, "team", "")
+		teamAfter := helper.RequireFolders(t, uid)[0]
+		common.RequireUpdatedInPlace(t, "team folder", before, common.SnapshotObject(t, &teamAfter))
+		// Root folder plus team.
+		helper.RequireRepoFolderCount(t, repo, 2)
+	})
+
+	t.Run("folder with dashboard and child folder keeps UID and parents when metadata UID equals fallback", func(t *testing.T) {
+		helper := sharedHelper(t)
+		const repo = "fs-meta-del-fb-children"
+
+		uid := resources.ParseFolder("team/", repo).ID
+		teamMeta := folderMetadataJSON(uid, "Team Display")
+		childMeta := folderMetadataJSON("fb-child-uid", "Child")
+		writeToProvisioningPath(t, helper, "team/_folder.json", teamMeta)
+		writeToProvisioningPath(t, helper, "team/dashboard.json", common.DashboardJSON("fb-team-dash", "Team Dashboard", 1))
+		writeToProvisioningPath(t, helper, "team/child/_folder.json", childMeta)
+		writeToProvisioningPath(t, helper, "team/child/dashboard.json", common.DashboardJSON("fb-child-dash", "Child Dashboard", 1))
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       repo,
+			SyncTarget: "folder",
+			SkipSync:   true,
+		})
+		helper.SyncAndWait(t, repo, nil)
+
+		common.RequireFolderState(t, helper.Folders, uid, "Team Display", "team", repo)
+		common.RequireFolderState(t, helper.Folders, "fb-child-uid", "Child", "team/child", uid)
+		requireRepoFolderChecksum(t, helper, repo, "team", sha1Hex(teamMeta))
+		dashboardParents := map[string]string{
+			"team/dashboard.json":       uid,
+			"team/child/dashboard.json": "fb-child-uid",
+		}
+		requireDashboardParents(t, helper, repo, dashboardParents)
+		// Without this, compare may not list the folders yet and would create
+		// them instead of reconciling the deleted metadata.
+		waitForRepoResourceHash(t, helper, repo, "team", sha1Hex(teamMeta))
+		waitForRepoResourceHash(t, helper, repo, "team/child", sha1Hex(childMeta))
+
+		foldersBefore := helper.RequireFolders(t, uid, "fb-child-uid")
+		teamBefore := common.SnapshotObject(t, &foldersBefore[0])
+		childBefore := common.SnapshotObject(t, &foldersBefore[1])
+		dashboardPaths := []string{"team/dashboard.json", "team/child/dashboard.json"}
+		dashboardsBefore := common.SnapshotDashboardsBySourcePath(t, helper, repo, dashboardPaths)
+
+		require.NoError(t, os.Remove(filepath.Join(helper.ProvisioningPath, "team/_folder.json")))
+
+		job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionPull,
+			Pull:   &provisioning.SyncJobOptions{},
+		})
+		common.RequireJobWarning(t, job)
+		jobObj := &provisioning.Job{}
+		require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+		common.RequireJobWarningContains(t, jobObj, `folder "team/" is missing folder metadata`)
+		for _, w := range jobObj.Status.Warnings {
+			require.NotContains(t, w, "team/child/", "did not expect a warning for team/child/; warnings: %v", jobObj.Status.Warnings)
+		}
+		helper.WaitForConditionReason(t, repo, provisioning.ConditionTypePullStatus, provisioning.ReasonMissingFolderMetadata)
+
+		common.RequireFolderState(t, helper.Folders, uid, "team", "team", repo)
+		requireRepoFolderChecksum(t, helper, repo, "team", "")
+		common.RequireFolderState(t, helper.Folders, "fb-child-uid", "Child", "team/child", uid)
+		requireRepoFolderChecksum(t, helper, repo, "team/child", sha1Hex(childMeta))
+		requireDashboardParents(t, helper, repo, dashboardParents)
+
+		foldersAfter := helper.RequireFolders(t, uid, "fb-child-uid")
+		common.RequireUpdatedInPlace(t, "team folder", teamBefore, common.SnapshotObject(t, &foldersAfter[0]))
+		common.RequireUpdatedInPlace(t, "child folder", childBefore, common.SnapshotObject(t, &foldersAfter[1]))
+		dashboardsAfter := common.SnapshotDashboardsBySourcePath(t, helper, repo, dashboardPaths)
+		common.RequireDashboardsUpdatedInPlace(t, dashboardsBefore, dashboardsAfter, dashboardPaths)
+		// Root folder plus team and team/child.
+		helper.RequireRepoFolderCount(t, repo, 3)
+	})
+}
+
+// waitForRepoResourceHash polls the repository resources list, which full sync
+// compares against, until the folder at folderPath reports expectedHash. That
+// list is served from the search index and can lag behind the folders API.
+func waitForRepoResourceHash(t *testing.T, helper *common.ProvisioningTestHelper, repoName, folderPath, expectedHash string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		list := &provisioning.ResourceList{}
+		err := helper.AdminREST.Get().
+			Namespace(helper.Namespace).
+			Resource("repositories").
+			Name(repoName).
+			SubResource("resources").
+			Do(t.Context()).
+			Into(list)
+		if !assert.NoError(c, err, "failed to list repository resources") {
+			return
+		}
+		for _, item := range list.Items {
+			if strings.TrimSuffix(item.Path, "/") == folderPath {
+				assert.Equal(c, expectedHash, item.Hash, "hash mismatch for folder at path %q", folderPath)
+				return
+			}
+		}
+		c.Errorf("no resource listed for repo %q at path %q", repoName, folderPath)
+	}, 30*time.Second, 100*time.Millisecond,
+		"expected repository resources for %q to list folder %q with hash %q", repoName, folderPath, expectedHash)
 }

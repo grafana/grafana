@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
@@ -97,7 +97,7 @@ func TestPerKindValidateQuery_envelope(t *testing.T) {
 
 	t.Run("rejects the alerting group's own apiVersion", func(t *testing.T) {
 		q := query()
-		q.APIVersion = model.GroupVersion.String()
+		q.APIVersion = v1beta1.GroupVersion.String()
 		assert.Equal(t, []string{"apiVersion"}, validate(t, q))
 	})
 
@@ -615,11 +615,11 @@ func TestPerKindValidateQuery_labelSelector(t *testing.T) {
 
 	t.Run("accepts the group label", func(t *testing.T) {
 		assert.Empty(t, validate(t, selectorQuery(&metav1.LabelSelector{
-			MatchLabels: map[string]string{model.GroupLabelKey: "g1"},
+			MatchLabels: map[string]string{v1beta1.GroupLabelKey: "g1"},
 		})))
 		assert.Empty(t, validate(t, selectorQuery(&metav1.LabelSelector{
 			MatchExpressions: []metav1.LabelSelectorRequirement{{
-				Key: model.GroupLabelKey, Operator: metav1.LabelSelectorOpNotIn, Values: []string{"g1", "g2"},
+				Key: v1beta1.GroupLabelKey, Operator: metav1.LabelSelectorOpNotIn, Values: []string{"g1", "g2"},
 			}},
 		})))
 	})
@@ -642,7 +642,7 @@ func TestPerKindValidateQuery_labelSelector(t *testing.T) {
 	t.Run("rejects existence operators", func(t *testing.T) {
 		for _, op := range []metav1.LabelSelectorOperator{metav1.LabelSelectorOpExists, metav1.LabelSelectorOpDoesNotExist} {
 			paths := validate(t, selectorQuery(&metav1.LabelSelector{
-				MatchExpressions: []metav1.LabelSelectorRequirement{{Key: model.GroupLabelKey, Operator: op}},
+				MatchExpressions: []metav1.LabelSelectorRequirement{{Key: v1beta1.GroupLabelKey, Operator: op}},
 			}))
 			assert.Contains(t, paths, "labelSelector.matchExpressions[0].operator", "operator %q", op)
 		}
@@ -658,7 +658,7 @@ func TestPerKindValidateQuery_labelSelector(t *testing.T) {
 	t.Run("rejects In with no values", func(t *testing.T) {
 		assert.NotEmpty(t, validate(t, selectorQuery(&metav1.LabelSelector{
 			MatchExpressions: []metav1.LabelSelectorRequirement{{
-				Key: model.GroupLabelKey, Operator: metav1.LabelSelectorOpIn,
+				Key: v1beta1.GroupLabelKey, Operator: metav1.LabelSelectorOpIn,
 			}},
 		})))
 	})

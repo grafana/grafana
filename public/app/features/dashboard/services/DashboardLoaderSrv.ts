@@ -28,12 +28,18 @@ function isDashboardData(value: unknown): value is DashboardDataDTO {
   return typeof value === 'object' && value !== null;
 }
 
+interface LoadDashboardOptions {
+  /** Alert when the dashboard isn't found. Default true; off when the caller reports it itself. */
+  alertNotFound?: boolean;
+}
+
 interface DashboardLoaderSrvLike<T> {
   loadDashboard(
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap
+    params?: UrlQueryMap,
+    options?: LoadDashboardOptions
   ): Promise<T>;
 }
 
@@ -42,7 +48,8 @@ abstract class DashboardLoaderSrvBase<T> implements DashboardLoaderSrvLike<T> {
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap
+    params?: UrlQueryMap,
+    options?: LoadDashboardOptions
   ): Promise<T>;
 
   abstract loadSnapshot(slug: string): Promise<T>;
@@ -152,7 +159,8 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap
+    params?: UrlQueryMap,
+    { alertNotFound = true }: LoadDashboardOptions = {}
   ): Promise<DashboardDTO> {
     const stateManager = getDashboardScenePageStateManager('v1');
     let promise;
@@ -180,7 +188,7 @@ export class DashboardLoaderSrv extends DashboardLoaderSrvBase<DashboardDTO> {
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             console.error('Failed to load dashboard', e);
             e.isHandled = true;
-            if (e.status === 404) {
+            if (e.status === 404 && alertNotFound) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
             }
           }
@@ -219,7 +227,8 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
     type: UrlQueryValue,
     slug: string | undefined,
     uid: string | undefined,
-    params?: UrlQueryMap
+    params?: UrlQueryMap,
+    { alertNotFound = true }: LoadDashboardOptions = {}
   ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
     const stateManager = getDashboardScenePageStateManager('v2');
     let promise;
@@ -245,7 +254,7 @@ export class DashboardLoaderSrvV2 extends DashboardLoaderSrvBase<DashboardWithAc
           if (isFetchError(e) && !(e instanceof DashboardVersionError)) {
             console.error('Failed to load dashboard', e);
             e.isHandled = true;
-            if (e.status === 404) {
+            if (e.status === 404 && alertNotFound) {
               appEvents.emit(AppEvents.alertError, ['Dashboard not found']);
             }
           }

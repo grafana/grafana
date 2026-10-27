@@ -842,6 +842,9 @@ func (r *gitRepository) CompareFiles(ctx context.Context, base, ref string) (cha
 			if ignoreCurrentPath {
 				continue
 			}
+			if f.Type == protocol.ObjectTypeTree {
+				currentPath = safepath.EnsureTrailingSlash(currentPath)
+			}
 
 			changes = append(changes, repository.VersionedFileChange{
 				Ref:          ref,

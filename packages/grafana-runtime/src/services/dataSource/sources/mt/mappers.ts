@@ -65,7 +65,6 @@ export function toListSnapshot(connections: DataSourceConnection[], metas: DataS
       uid: connection.name,
       name: connection.title,
       type: meta.id,
-      apiVersion: connection.version,
       meta,
     });
   }
@@ -131,11 +130,13 @@ export function toInstanceSettings(
   const access = spec.access === 'direct' ? 'direct' : 'proxy';
   const jsonData: DataSourceJsonData & Record<string, unknown> = structuredClone(spec.jsonData ?? {});
 
+  const API_VERSION = 'v0alpha1';
+
   const settings: DataSourceInstanceSettings = {
     uid,
     name: spec.title,
     type: item.type,
-    apiVersion: item.apiVersion,
+    apiVersion: API_VERSION,
     meta: item.meta,
     isDefault: isDefaultConnection(connection),
     access,

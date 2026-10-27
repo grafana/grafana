@@ -12,13 +12,30 @@ let status: StPodStatus = StPodStatus.Unknown;
 
 let pending: { promise: Promise<void>; resolve: () => void } | null = null;
 
+const listeners = new Set<() => void>();
+
+const setStatus = (next: StPodStatus): void => {
+  if (status === next) {
+    return;
+  }
+  status = next;
+  listeners.forEach((listener) => listener());
+};
+
 export const getStPodStatus = (): StPodStatus => {
   return status;
 };
 
+export const subscribeToStPodStatus = (listener: () => void): (() => void) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+
 export const invalidateStPodReadiness = (): void => {
-  status = StPodStatus.Unknown;
   pending = null;
+  setStatus(StPodStatus.Unknown);
 };
 
 export const getStPodReadyPromise = (): Promise<void> => {
@@ -39,16 +56,16 @@ export const markStPodWaiting = (): void => {
   if (status === StPodStatus.Ready || status === StPodStatus.Timeout) {
     pending = null;
   }
-  status = StPodStatus.Waiting;
+  setStatus(StPodStatus.Waiting);
 };
 
 export const markStPodReady = (): void => {
-  status = StPodStatus.Ready;
+  setStatus(StPodStatus.Ready);
   pending?.resolve();
 };
 
 export const markStPodTimeout = (): void => {
-  status = StPodStatus.Timeout;
+  setStatus(StPodStatus.Timeout);
   pending?.resolve();
 };
 

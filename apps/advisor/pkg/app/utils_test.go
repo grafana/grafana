@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
@@ -126,6 +128,47 @@ func TestProcessMultipleCheckItems(t *testing.T) {
 	r := client.values[0].(advisorv0alpha1.CheckStatus)
 	assert.Equal(t, r.Report.Count, int64(100))
 	assert.Len(t, r.Report.Failures, 50)
+}
+
+func TestProcessCheck_RecordsReportMetrics(t *testing.T) {
+	obj := &advisorv0alpha1.Check{}
+	obj.SetAnnotations(map[string]string{})
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta.SetCreatedBy("user:1")
+	check := &mockCheck{
+		items:         []any{"item-1", "item-2", "item-3", "item-4"},
+		retryFailures: []advisorv0alpha1.CheckReportFailure{{StepID: "mock"}},
+	}
+
+	itemsBefore := testutil.ToFloat64(metrics.CheckItemsTotal.WithLabelValues("mock"))
+	failuresBefore := testutil.ToFloat64(metrics.CheckFailuresTotal.WithLabelValues("mock", "mock"))
+
+	err = processCheck(context.TODO(), logging.DefaultLogger, &mockClient{}, &mockTypesClient{}, obj, check)
+	require.NoError(t, err)
+
+	assert.Equal(t, float64(4), testutil.ToFloat64(metrics.CheckItemsTotal.WithLabelValues("mock"))-itemsBefore)
+	assert.Equal(t, float64(4), testutil.ToFloat64(metrics.CheckFailuresTotal.WithLabelValues("mock", "mock"))-failuresBefore)
+}
+
+func TestProcessCheck_RecordsZeroFailures(t *testing.T) {
+	obj := &advisorv0alpha1.Check{}
+	obj.SetAnnotations(map[string]string{})
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta.SetCreatedBy("user:1")
+	check := &mockCheck{items: []any{"item-1"}}
+
+	metrics.CheckFailuresTotal.Reset()
+	err = processCheck(context.TODO(), logging.DefaultLogger, &mockClient{}, &mockTypesClient{}, obj, check)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, testutil.CollectAndCount(metrics.CheckFailuresTotal))
+	assert.Equal(t, float64(0), testutil.ToFloat64(metrics.CheckFailuresTotal.WithLabelValues("mock", "mock")))
 }
 
 func TestProcessCheck_AlreadyProcessed(t *testing.T) {

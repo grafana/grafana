@@ -14,6 +14,8 @@ export interface ScopesDashboardsTreeProps {
   folderPath: string[];
   subScopePath?: string[];
   onFolderUpdate: OnFolderUpdate;
+  /** Called after a navigation link is clicked, e.g. so an overlay nav menu can close itself. */
+  onNavigate?: () => void;
 }
 
 export function ScopesDashboardsTree({
@@ -22,6 +24,7 @@ export function ScopesDashboardsTree({
   folders,
   folderPath,
   onFolderUpdate,
+  onNavigate,
 }: ScopesDashboardsTreeProps) {
   const [queryParams] = useQueryParams();
   const styles = useStyles2(getStyles);
@@ -59,6 +62,7 @@ export function ScopesDashboardsTree({
           folders={folder.folders}
           folderPath={[...folderPath, subFolderId]}
           onFolderUpdate={onFolderUpdate}
+          onNavigate={onNavigate}
         />
       ))}
       {regularNavigations.map((navigation) => (
@@ -69,6 +73,7 @@ export function ScopesDashboardsTree({
           to={urlUtil.renderUrl(navigation.url, queryParams)}
           title={navigation.title}
           id={navigation.id}
+          onNavigate={onNavigate}
         />
       ))}
 
@@ -84,6 +89,7 @@ export function ScopesDashboardsTree({
           folders={folder.folders}
           folderPath={[...folderPath, subFolderId]}
           onFolderUpdate={onFolderUpdate}
+          onNavigate={onNavigate}
         />
       ))}
     </div>

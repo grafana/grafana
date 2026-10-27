@@ -1,4 +1,5 @@
 import type * as H from 'history';
+import { isEqual } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
 import {
@@ -70,6 +71,8 @@ import {
 } from '../../apiserver/types';
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
+import { getLifecycleBreadcrumbLabel } from '../lifecycle/lifecycle';
+import { getPendingChangePreview, previewedDashboardUid } from '../lifecycle/pendingChangePreview';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
@@ -83,7 +86,7 @@ import { gridItemToGridLayoutItemKind } from '../serialization/layoutSerializers
 import { getElement } from '../serialization/layoutSerializers/utils';
 import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
 import {
-  createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2,
+  createSceneVariablesFromVariableKinds,
   transformSaveModelSchemaV2ToScene,
 } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -100,7 +103,12 @@ import {
   resolvePredefinedVariablesForDashboard,
   type UseCrossDashboardVariables,
 } from '../utils/crossDashboardVariablesSelection';
-import { type DashboardEditSessionTracking, type DashboardModeTrigger } from '../utils/dashboardModeTracking';
+import {
+  type DashboardEditPeriodOutcome,
+  type DashboardEditSessionTracking,
+  type DashboardModeTrigger,
+  getEditActors,
+} from '../utils/dashboardModeTracking';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
@@ -241,7 +249,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   private startEditPeriod(source: 'user' | 'assistant') {
-    if (!dashboardModesEnabled() || this._editSession) {
+    if (this._editSession) {
       return;
     }
     this._editSession = {
@@ -266,18 +274,35 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (!this._editSession) {
       return {};
     }
+    const hadManualChanges = this._editSession.manualChanges || Boolean(this.state.editPanel?.state.isDirty);
+    const hadAssistantChanges = this._editSession.assistantChanges;
+    // Assistant writes are always recorded by the mutation client, so an actual change that neither
+    // actor recorded came from a manual edit path that doesn't report itself (e.g. legacy grid drags).
+    const hadUnattributedChanges =
+      !hadManualChanges && !hadAssistantChanges && Boolean(this.state.isDirty) && this.hasActualSaveChangesSafe();
     return {
       edit_session_id: this._editSession.id,
       edit_source: this._editSession.source,
       mode: getDashboardMode(this.state),
-      had_manual_changes: this._editSession.manualChanges || Boolean(this.state.editPanel?.state.isDirty),
-      had_assistant_changes: this._editSession.assistantChanges,
+      had_manual_changes: hadManualChanges,
+      had_assistant_changes: hadAssistantChanges,
+      had_unattributed_changes: hadUnattributedChanges,
+      edit_actors: getEditActors(hadManualChanges || hadUnattributedChanges, hadAssistantChanges),
       elapsed_ms: Math.round(performance.now() - this._editSession.startedAt),
     };
   }
 
+  // Tracking runs on exit and unload paths, which must not fail when the diff can't be computed.
+  private hasActualSaveChangesSafe() {
+    try {
+      return hasActualSaveChanges(this);
+    } catch {
+      return false;
+    }
+  }
+
   public recordEditMutation(source: 'user' | 'assistant' = this._assistantWrites > 0 ? 'assistant' : 'user') {
-    if (!dashboardModesEnabled() || !this.state.isEditing) {
+    if (!this.state.isEditing) {
       return;
     }
     this.startEditPeriod(source);
@@ -296,17 +321,28 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public trackEditMutation(perform: () => void) {
-    if (!dashboardModesEnabled()) {
+    const alreadyRecorded =
+      this._assistantWrites > 0 ? this._editSession?.assistantChanges : this._editSession?.manualChanges;
+    // Only compare until the first actual change by each actor in this editing period. Outside edit
+    // mode the comparison would be discarded, so skip the serialization.
+    if (alreadyRecorded || !this.state.isEditing) {
       perform();
       return;
     }
-    const alreadyRecorded =
-      this._assistantWrites > 0 ? this._editSession?.assistantChanges : this._editSession?.manualChanges;
-    // Only compare until the first actual change by each actor in this editing period.
-    const before = alreadyRecorded ? undefined : JSON.stringify(this.getSaveModel());
+    const before = this.serializeForChangeTracking();
     perform();
-    if (before !== undefined && before !== JSON.stringify(this.getSaveModel())) {
+    // Serialization fails while a batched action has elements detached; count the action as a change.
+    const after = before === null ? null : this.serializeForChangeTracking();
+    if (before === null || after === null || before !== after) {
       this.recordEditMutation();
+    }
+  }
+
+  private serializeForChangeTracking(): string | null {
+    try {
+      return JSON.stringify(this.getSaveModel());
+    } catch {
+      return null;
     }
   }
 
@@ -324,13 +360,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  private trackDiscardedPeriod() {
+  private endEditPeriod(outcome: Exclude<DashboardEditPeriodOutcome, 'saved' | 'saved_as_copy'>) {
     const tracking = this.getEditSessionTracking();
     if (tracking.edit_session_id) {
       DashboardInteractions.editPeriodEnded({
         ...tracking,
         edit_session_id: tracking.edit_session_id,
-        outcome: 'discarded',
+        outcome,
         has_unsaved_changes: Boolean(this.state.isDirty),
       });
     }
@@ -478,8 +514,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         this.applyDashboardMode();
       }
     });
+    // Closing the tab or reloading never deactivates the scene, so an open edit period would go unreported.
+    const onPageHide = () => this.endEditPeriod('abandoned');
+    window.addEventListener('pagehide', onPageHide);
 
     return () => {
+      window.removeEventListener('pagehide', onPageHide);
+      this.endEditPeriod('abandoned');
       this.cancelPendingViews();
       // A plan preview that's still showing when the scene deactivates (navigated away, tab
       // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather
@@ -523,16 +564,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // predefined global/folder variables) are injected elsewhere and must survive.
     const keptVars = variableSet.state.variables.filter((v) => v.state.origin?.type !== 'datasource');
     const keptNames = new Set(keptVars.map((v) => v.state.name));
-    const defaultVarObjects = defaultVariables
-      .map((v) => {
-        try {
-          return createSceneVariableFromVariableModelV2(v);
-        } catch (err) {
-          console.error(err);
-          return null;
-        }
-      })
-      .filter((v): v is SceneVariable => Boolean(v))
+    const defaultVarObjects = createSceneVariablesFromVariableKinds(defaultVariables, { migrateUrlState: false })
       // Nearest scope wins: existing variables shadow incoming defaults of the same name.
       .filter((v) => !keptNames.has(v.state.name));
 
@@ -551,16 +583,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     );
     const keptVars = variableSet.state.variables.filter((v) => !isPredefinedOrigin(v.state.origin));
     const keptNames = new Set(keptVars.map((v) => v.state.name));
-    const predefinedVarObjects = predefinedVariables
-      .map((v) => {
-        try {
-          return createSceneVariableFromVariableModelV2(v);
-        } catch (err) {
-          console.error(err);
-          return null;
-        }
-      })
-      .filter((v): v is SceneVariable => Boolean(v))
+    const predefinedVarObjects = createSceneVariablesFromVariableKinds(predefinedVariables, { migrateUrlState: false })
       // Nearest scope wins: dashboard-local / datasource defaults shadow predefined names.
       .filter((v) => !keptNames.has(v.state.name))
       .map((v) => {
@@ -655,7 +678,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this._editSessionSource = source;
       this._sidebarBeforeViewing = undefined;
 
-      this.state.sidebar.setState({ undoStack: [], redoStack: [] });
+      this.state.sidebar.clearHistory();
 
       // Capture the discard baseline only once per edit session. A plan's building screen is
       // transient: the build's first write enters edit mode while it is still up, and discarding
@@ -694,7 +717,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     ) {
       return false;
     }
-    if ((mode === 'view' && isNewDashboard(this.state)) || (mode !== 'view' && !this.state.editable)) {
+    if (mode === 'view' && isNewDashboard(this.state)) {
+      if (trigger === 'picker') {
+        this.openSaveDrawer({ onSaveSuccess: () => this.setDashboardMode('view', trigger) });
+      }
+      return false;
+    }
+    if (mode !== 'view' && !this.state.editable) {
       return false;
     }
     const previous = getDashboardMode(this.state);
@@ -703,7 +732,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
     if (
       trigger === 'picker' &&
-      previous === 'edit' &&
+      previous !== 'view' &&
       mode === 'view' &&
       this.state.isDirty &&
       hasActualSaveChanges(this)
@@ -811,15 +840,46 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._sidebarActivation = undefined;
   }
 
+  private getSaveAsFields(
+    saveModel: Dashboard | DashboardV2Spec,
+    source: Pick<DashboardSceneState, 'title' | 'description' | 'tags'>
+  ) {
+    const current = this.state;
+    const savedFields = {
+      title: saveModel.title ?? current.title,
+      description: saveModel.description,
+      tags: saveModel.tags ?? [],
+    };
+
+    const fieldsAfterSave: typeof source = { ...savedFields };
+
+    // Preserve fields edited after the save request started.
+    if (current.title !== source.title) {
+      fieldsAfterSave.title = current.title;
+    }
+
+    if (current.description !== source.description) {
+      fieldsAfterSave.description = current.description;
+    }
+
+    if (!isEqual(current.tags, source.tags)) {
+      fieldsAfterSave.tags = current.tags;
+    }
+
+    return { savedFields, fieldsAfterSave };
+  }
+
   public async saveCompleted(
     saveModel: Dashboard | DashboardV2Spec,
     result: SaveDashboardResponseDTO,
-    folderUid?: string
+    folderUid?: string,
+    saveAsSource?: Pick<DashboardSceneState, 'title' | 'description' | 'tags'>
   ) {
     this._editSession = undefined;
-    this.serializer.onSaveComplete(saveModel, result);
+    this.serializer.onSaveComplete(sortedDeepCloneWithoutNulls(saveModel), result);
 
-    this._changeTracker.stopTrackingChanges();
+    const wasTrackingChanges = this._changeTracker.isTrackingChanges;
+    this._changeTracker.stopTrackingChanges({ discardPendingChecks: true });
 
     // Save As / first save mint a new uid; skip the refresh await below so redirect isn't delayed.
     const isNewResource = result.uid !== this.state.uid;
@@ -828,7 +888,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       copyDashboardConsent('', result.uid);
     }
 
+    const saveAsFields = saveAsSource ? this.getSaveAsFields(saveModel, saveAsSource) : undefined;
     this.setState({
+      ...saveAsFields?.fieldsAfterSave,
       version: result.version,
       isDirty: false,
       uid: result.uid,
@@ -840,7 +902,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         folderUid: folderUid,
         version: result.version,
       },
-      overlay: undefined,
     });
 
     this.state.editPanel?.dashboardSaved();
@@ -851,10 +912,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       await this.refreshPredefinedVariables();
     }
 
-    this._initialState = sceneUtils.cloneSceneObjectState(this.state);
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state, {
+      ...saveAsFields?.savedFields,
+      isDirty: false,
+      overlay: undefined,
+    });
     this._initialUrlState = locationService.getLocation();
+    // Detect edits made during the save before its redirect can leave the dashboard.
+    this.setState({ isDirty: hasActualSaveChanges(this), overlay: undefined });
 
-    this._changeTracker.startTrackingChanges();
+    if (wasTrackingChanges) {
+      this._changeTracker.startTrackingChanges();
+    }
     this.publishEvent(new DashboardStateChangedEvent({ source: this }), true);
   }
 
@@ -921,14 +990,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   private exitEditModeConfirmed(restoreInitialState = true) {
-    if (restoreInitialState) {
-      this.trackDiscardedPeriod();
-    } else {
-      this._editSession = undefined;
-    }
+    this.endEditPeriod(restoreInitialState ? 'discarded' : 'exited');
     this._sidebarBeforeViewing = undefined;
     // No need to listen to changes anymore
-    this._changeTracker.stopTrackingChanges();
+    this._changeTracker.stopTrackingChanges({ discardPendingChecks: true });
 
     // CUJ-only signal: ends dashboard_edit journey when the user actually leaves
     // edit mode, regardless of whether changes were discarded or there were
@@ -989,10 +1054,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    this.trackDiscardedPeriod();
+    this.endEditPeriod('discarded');
 
     // Stop tracking while we reset state.
-    this._changeTracker.stopTrackingChanges();
+    this._changeTracker.stopTrackingChanges({ discardPendingChecks: true });
 
     // The restored state swaps in a cloned sidebar, so release the one we activated programmatically.
     const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
@@ -1056,11 +1121,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public pauseTrackingChanges() {
-    this._changeTracker.stopTrackingChanges();
+    this._changeTracker.stopTrackingChanges({ discardPendingChecks: true });
   }
 
   public resumeTrackingChanges() {
-    this._changeTracker.startTrackingChanges();
+    this._changeTracker.startTrackingChanges({ checkForChanges: true });
   }
 
   public onRestore = async (version: DecoratedRevisionModel): Promise<boolean> => {
@@ -1158,6 +1223,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public getPageNav(location: H.Location, navIndex: NavIndex) {
     const { meta, viewPanel, editPanel, title, uid } = this.state;
     const isNew = !Boolean(uid);
+    // A new dashboard's preview has no uid yet: its page is the uid it is proposed under.
+    const previewedUid = previewedDashboardUid(this.state);
     // Trailing slash enforces a path-segment match so unrelated prefixes (e.g. `/dashboard/provisioning-foo/...`) don't match.
     const isProvisioningPreview = location.pathname.startsWith(PROVISIONING_PREVIEW_URL + '/');
     const clearPanelView = {
@@ -1171,11 +1238,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     let pageNav: NavModelItem = {
       text: title,
+      highlightText: getLifecycleBreadcrumbLabel(getPendingChangePreview('page', previewedUid)),
       url: isProvisioningPreview
         ? locationUtil.getUrlForPartial(location, clearPanelView)
         : locationUtil.assureBaseUrl(
             getDashboardUrl({
-              uid,
+              uid: uid || previewedUid,
               slug: meta.slug,
               currentQueryParams: location.search,
               updateQuery: clearPanelView,

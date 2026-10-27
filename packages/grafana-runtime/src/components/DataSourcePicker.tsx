@@ -1,22 +1,7 @@
-// Libraries
-import { type ComponentType, memo, useEffect, useState } from 'react';
+import { type ComponentType } from 'react';
 
-// Components
-import {
-  type DataSourceInstanceSettings,
-  getDataSourceUID,
-  isUnsignedPluginSignature,
-  type SelectableValue,
-} from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { type DataSourceRef } from '@grafana/schema';
-import { type ActionMeta, PluginSignatureBadge, Select, Stack } from '@grafana/ui';
-
-import { useDefaultDataSourceInstanceListItem } from '../services/dataSource/hooks';
-import { toListItem } from '../services/dataSource/settings';
-import { getDataSourceSrv } from '../services/dataSourceSrv';
-
-import { ExpressionDatasourceRef } from './../utils/expressionRef';
 
 /**
  * Component props description for the {@link DataSourcePicker}
@@ -27,8 +12,11 @@ export interface DataSourcePickerProps {
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | string | undefined | null; // uid
   hideTextValue?: boolean;
+  /** @deprecated No longer supported. The picker manages its own focus and open state. */
   onBlur?: () => void;
+  /** @deprecated No longer supported. The picker manages its own focus and open state. */
   autoFocus?: boolean;
+  /** @deprecated No longer supported. The picker manages its own focus and open state. */
   openMenuOnFocus?: boolean;
   placeholder?: string;
   tracing?: boolean;
@@ -70,162 +58,11 @@ export function setDataSourcePicker(component: DataSourcePickerComponentType | u
 /**
  * Component to be able to select a datasource from the list of installed and enabled
  * datasources in the current Grafana instance.
- *
- * @internal
  */
 export function DataSourcePicker(props: DataSourcePickerProps) {
   if (DataSourcePickerComponent) {
     return <DataSourcePickerComponent {...props} />;
   }
 
-  return <LegacyDataSourcePicker {...props} />;
+  return <div>DataSourcePicker can only be used after Grafana instance has been started.</div>;
 }
-
-/**
- * The original Select-based data source picker implementation. Rendered by
- * {@link DataSourcePicker} when no implementation has been set via
- * {@link setDataSourcePicker}, and by core Grafana when the
- * `grafana.unifiedDataSourcePicker` feature toggle is disabled.
- *
- * @internal
- */
-export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
-  onChange,
-  current = null,
-  hideTextValue,
-  onBlur,
-  autoFocus = false,
-  openMenuOnFocus = false,
-  placeholder = 'Select data source',
-  tracing,
-  mixed,
-  dashboard,
-  metrics,
-  type,
-  annotations,
-  variables,
-  alerting,
-  pluginId,
-  logs,
-  noDefault,
-  width,
-  inputId,
-  filter,
-  onClear,
-  invalid,
-  disabled = false,
-  isLoading = false,
-}: DataSourcePickerProps) {
-  const dataSourceSrv = getDataSourceSrv();
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    const dsSettings = dataSourceSrv.getInstanceSettings(current);
-    if (!dsSettings) {
-      setError('Could not find data source ' + current);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function handleChange(item: SelectableValue<string>, actionMeta: ActionMeta) {
-    if (actionMeta.action === 'clear' && onClear) {
-      onClear();
-      return;
-    }
-    const dsSettings = dataSourceSrv.getInstanceSettings(item.value);
-    if (dsSettings) {
-      onChange(dsSettings);
-      setError(undefined);
-    }
-  }
-
-  function getCurrentValue(): SelectableValue<string> | undefined {
-    if (!current && noDefault) {
-      return;
-    }
-    const ds = dataSourceSrv.getInstanceSettings(current);
-    if (ds) {
-      return {
-        label: ds.name,
-        value: ds.uid,
-        imgUrl: ds.meta.info.logos.small,
-        hideText: hideTextValue,
-        meta: ds.meta,
-      };
-    }
-    const uid = getDataSourceUID(current);
-    if (uid === ExpressionDatasourceRef.uid || uid === ExpressionDatasourceRef.name) {
-      return { label: uid, value: uid, hideText: hideTextValue };
-    }
-    return {
-      label: (uid ?? 'no name') + ' - not found',
-      value: uid ?? undefined,
-      imgUrl: '',
-      hideText: hideTextValue,
-    };
-  }
-
-  const dataSources = dataSourceSrv.getList({
-    alerting,
-    tracing,
-    metrics,
-    logs,
-    dashboard,
-    mixed,
-    variables,
-    annotations,
-    pluginId,
-    filter,
-    type,
-  });
-  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(dataSources.map(toListItem));
-
-  function getDataSourceOptions() {
-    return dataSources.map((ds) => ({
-      value: ds.uid,
-      label: `${ds.name}${ds.uid === defaultDataSource?.uid ? ' (default)' : ''}`,
-      imgUrl: ds.meta.info.logos.small,
-      meta: ds.meta,
-    }));
-  }
-
-  const options = getDataSourceOptions();
-  const value = getCurrentValue();
-  const isClearable = typeof onClear === 'function';
-
-  return (
-    <div aria-label="Data source picker select container" data-testid={selectors.components.DataSourcePicker.container}>
-      <Select
-        isLoading={isLoading}
-        disabled={disabled}
-        aria-label={'Select a data source'}
-        data-testid={selectors.components.DataSourcePicker.inputV2}
-        inputId={inputId || 'data-source-picker'}
-        className="ds-picker select-container"
-        isMulti={false}
-        isClearable={isClearable}
-        backspaceRemovesValue={false}
-        onChange={handleChange}
-        options={options}
-        autoFocus={autoFocus}
-        onBlur={onBlur}
-        width={width}
-        openMenuOnFocus={openMenuOnFocus}
-        maxMenuHeight={500}
-        placeholder={placeholder}
-        noOptionsMessage="No datasources found"
-        value={value ?? null}
-        invalid={Boolean(error) || Boolean(invalid)}
-        getOptionLabel={(o) => {
-          if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
-            return (
-              <Stack alignItems="center" justifyContent="space-between">
-                <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
-              </Stack>
-            );
-          }
-          return o.label || '';
-        }}
-      />
-    </div>
-  );
-});

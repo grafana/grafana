@@ -371,3 +371,148 @@ func TestConvertTimeSeriesMultiToFullLongWithDisplayName(t *testing.T) {
 		}
 	})
 }
+
+func TestConvertToFullLongLabelNamedLikeGeneratedColumn(t *testing.T) {
+	times := []time.Time{time.Unix(0, 0)}
+
+	tests := []struct {
+		name     string
+		input    data.Frames
+		expected *data.Frame
+	}{
+		{
+			name: "TimeSeriesMulti label named time",
+			input: data.Frames{
+				data.NewFrame("",
+					data.NewField("time", nil, times),
+					data.NewField("cpu", data.Labels{"time": "nightly", "host": "a"}, []float64{1}),
+				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+			},
+			expected: data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField(SQLValueFieldName, nil, []*float64{new(1.0)}),
+				data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
+				data.NewField("host", nil, []*string{new("a")}),
+				data.NewField("label_time", nil, []*string{new("nightly")}),
+			).SetMeta(&data.FrameMeta{Type: timeseriesFullLongType}),
+		},
+		{
+			name: "TimeSeriesMulti label named like generated column in another case",
+			input: data.Frames{
+				data.NewFrame("",
+					data.NewField("time", nil, times),
+					data.NewField("cpu", data.Labels{"Time": "nightly", "__VALUE__": "v"}, []float64{1}),
+				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+			},
+			expected: data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField(SQLValueFieldName, nil, []*float64{new(1.0)}),
+				data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
+				data.NewField("label_Time", nil, []*string{new("nightly")}),
+				data.NewField("label___VALUE__", nil, []*string{new("v")}),
+			).SetMeta(&data.FrameMeta{Type: timeseriesFullLongType}),
+		},
+		{
+			name: "TimeSeriesMulti renamed label skips a name another label already uses",
+			input: data.Frames{
+				data.NewFrame("",
+					data.NewField("time", nil, times),
+					data.NewField("cpu", data.Labels{"time": "nightly", "label_time": "x"}, []float64{1}),
+				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+			},
+			expected: data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField(SQLValueFieldName, nil, []*float64{new(1.0)}),
+				data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
+				data.NewField("label_time", nil, []*string{new("x")}),
+				data.NewField("label_label_time", nil, []*string{new("nightly")}),
+			).SetMeta(&data.FrameMeta{Type: timeseriesFullLongType}),
+		},
+		{
+			name: "TimeSeriesWide labels named __value__ and __metric_name__",
+			input: data.Frames{
+				data.NewFrame("",
+					data.NewField("time", nil, times),
+					data.NewField("cpu", data.Labels{SQLValueFieldName: "v", SQLMetricFieldName: "m"}, []float64{1}),
+				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}),
+			},
+			expected: data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField(SQLValueFieldName, nil, []*float64{new(1.0)}),
+				data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
+				data.NewField("label___metric_name__", nil, []*string{new("m")}),
+				data.NewField("label___value__", nil, []*string{new("v")}),
+			).SetMeta(&data.FrameMeta{Type: timeseriesFullLongType}),
+		},
+		{
+			name: "TimeSeriesWide label named __display_name__ next to a display name column",
+			input: data.Frames{
+				data.NewFrame("",
+					data.NewField("time", nil, times),
+					data.NewField("cpu", data.Labels{SQLDisplayFieldName: "d"}, []float64{1}).
+						SetConfig(&data.FieldConfig{DisplayNameFromDS: "CPU"}),
+				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}),
+			},
+			expected: data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField(SQLValueFieldName, nil, []*float64{new(1.0)}),
+				data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
+				data.NewField(SQLDisplayFieldName, nil, []*string{new("CPU")}),
+				data.NewField("label___display_name__", nil, []*string{new("d")}),
+			).SetMeta(&data.FrameMeta{Type: timeseriesFullLongType}),
+		},
+		{
+			name: "TimeSeriesWide label named __display_name__ without a display name column keeps its name",
+			input: data.Frames{
+				data.NewFrame("",
+					data.NewField("time", nil, times),
+					data.NewField("cpu", data.Labels{SQLDisplayFieldName: "d"}, []float64{1}),
+				).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}),
+			},
+			expected: data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField(SQLValueFieldName, nil, []*float64{new(1.0)}),
+				data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
+				data.NewField(SQLDisplayFieldName, nil, []*string{new("d")}),
+			).SetMeta(&data.FrameMeta{Type: timeseriesFullLongType}),
+		},
+		{
+			name: "NumericWide label named __value__, and time keeps its name",
+			input: data.Frames{
+				data.NewFrame("",
+					data.NewField("cpu", data.Labels{SQLValueFieldName: "v", "time": "nightly"}, []float64{1}),
+				).SetMeta(&data.FrameMeta{Type: data.FrameTypeNumericWide}),
+			},
+			expected: data.NewFrame("",
+				data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
+				data.NewField(SQLValueFieldName, nil, []*float64{new(1.0)}),
+				data.NewField("label___value__", nil, []*string{new("v")}),
+				data.NewField("time", nil, []*string{new("nightly")}),
+			).SetMeta(&data.FrameMeta{Type: numericFullLongType}),
+		},
+		{
+			name: "NumericMulti label named __metric_name__",
+			input: data.Frames{
+				data.NewFrame("",
+					data.NewField("cpu", data.Labels{SQLMetricFieldName: "m"}, []float64{1}),
+				).SetMeta(&data.FrameMeta{Type: data.FrameTypeNumericMulti}),
+			},
+			expected: data.NewFrame("",
+				data.NewField(SQLMetricFieldName, nil, []string{"cpu"}),
+				data.NewField(SQLValueFieldName, nil, []*float64{new(1.0)}),
+				data.NewField("label___metric_name__", nil, []*string{new("m")}),
+			).SetMeta(&data.FrameMeta{Type: numericFullLongType}),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			output, err := ConvertToFullLong(tc.input)
+			require.NoError(t, err)
+			require.Len(t, output, 1)
+			if diff := cmp.Diff(tc.expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+				require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+			}
+		})
+	}
+}

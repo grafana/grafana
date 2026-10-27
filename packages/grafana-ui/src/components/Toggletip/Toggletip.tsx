@@ -177,7 +177,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const info = buildTooltipTheme(
     theme,
-    theme.colors.background.primary,
+    theme.colors.background.elevated,
     theme.colors.border.weak,
     theme.components.tooltip.text,
     { topBottom: 2, rightLeft: 2 }

@@ -20,7 +20,6 @@ const getTitleInRepeatRow = (rowIndex: number, panelIndex: number) =>
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
-    groupByVariable: true,
   },
 });
 

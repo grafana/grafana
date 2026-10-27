@@ -92,7 +92,7 @@ jobs:
     name: Coverage - ${{ matrix.codeowner }}
     needs: [setup, detect-changes]
     if: "!contains(github.event.pull_request.labels.*.name, 'no-check-frontend-test-coverage')"
-    runs-on: ubuntu-x64-large
+    runs-on: ubuntu-x64
     permissions:
       contents: read
     strategy:

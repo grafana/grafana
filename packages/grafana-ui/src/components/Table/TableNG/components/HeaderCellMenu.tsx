@@ -47,7 +47,10 @@ export function HeaderCellMenu({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
 
-  const menuLabel = t('grafana-ui.table.column-menu-label', 'Column options for {{name}}', { name: displayName });
+  const menuLabel = t('grafana-ui.table.column-menu-label', 'Column options for {{name}}', {
+    name: displayName,
+    interpolation: { escapeValue: false },
+  });
 
   const overlay = useCallback(
     () => (

@@ -307,6 +307,11 @@ var standardNumberOrBoolFields = numberOrBoolFieldsForMapping(nil, "", "")
 // and so are not modellable as SearchFieldDefinitions yet (see
 // managerSubDocumentMapping and sourceSubDocumentMapping). The labels and
 // reference sub-documents are absent because their keys are dynamic.
+//
+// The search API declares manager.kind and manager.id itself, so they can be
+// returned (managerFields in pkg/registry/apis/search). They should move to the
+// standard field definitions together with the next change that rebuilds every
+// index anyway.
 var keywordSubDocumentFields = []string{
 	resource.SEARCH_FIELD_MANAGER_KIND,
 	resource.SEARCH_FIELD_MANAGER_ID,

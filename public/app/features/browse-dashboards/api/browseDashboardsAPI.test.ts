@@ -851,6 +851,7 @@ describe('browseDashboardsAPI', () => {
             kind: 'dashboard',
             page: 1,
             lastPageOfKind: true,
+            generation: 0,
           },
           'test-request-id',
           { parentUID: oldFolderUid, pageSize: PAGE_SIZE }

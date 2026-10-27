@@ -1,3 +1,5 @@
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+
 import { type CommitTemplateVars } from './commitMessage';
 
 // Branch templates use a subset of the commit variables plus {{random}}.
@@ -71,4 +73,14 @@ export function renderBranchName(
     return '';
   }
   return sanitizeBranchName(substituteBranchVars(trimmed, vars));
+}
+
+/**
+ * An enforced name template can only name a new branch, so it is in force only when the repository
+ * allows the branch workflow and the template is non-blank. Otherwise nothing is enforced and the
+ * ref field stays editable.
+ */
+export function isBranchTemplateEnforced(repository: RepositoryView | undefined): boolean {
+  const { enforceTemplate, nameTemplate } = repository?.branchOptions ?? {};
+  return Boolean(enforceTemplate && nameTemplate?.trim() && repository?.workflows?.includes('branch'));
 }

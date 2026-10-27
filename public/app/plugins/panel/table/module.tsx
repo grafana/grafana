@@ -43,7 +43,13 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
     },
     useCustomConfig: (builder) => {
       addTableCustomConfig(builder, {
-        filters: true,
+        filters: () => {
+          const client = getFeatureFlagClient();
+          return (
+            !client.getBooleanValue(FlagKeys.TableRefresh, false) ||
+            !client.getBooleanValue(FlagKeys.TableRefreshNewFeatures, false)
+          );
+        },
         wrapHeaderText: true,
         hideFields: true,
       });
@@ -61,6 +67,8 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         defaultValue: [],
         process: identityOverrideProcessor,
         shouldApply: () => true,
+        // A footer override sets the calculations for that field instead of adding to the panel's
+        arrayOverrideStrategy: 'replace',
         settings: {
           allowMultiple: true,
         },

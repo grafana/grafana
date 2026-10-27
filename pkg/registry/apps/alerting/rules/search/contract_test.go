@@ -11,15 +11,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 )
 
 // CUE-generated schemas must match the generic Go contract despite separate types.
 func TestRequestBodyMatchesGenericSearchQuery(t *testing.T) {
 	for name, generated := range map[string]any{
-		"alert rules":     model.ListAlertRuleSearchRulesV0alpha1RequestBody{},
-		"recording rules": model.ListRecordingRuleSearchRulesV0alpha1RequestBody{},
+		"alert rules":     v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestBody{},
+		"recording rules": v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestBody{},
 	} {
 		t.Run(name, func(t *testing.T) {
 			assertSameJSONShape(t, searchv0.SearchQuery{}, generated)
@@ -29,8 +29,8 @@ func TestRequestBodyMatchesGenericSearchQuery(t *testing.T) {
 
 func TestResponseBodyMatchesGenericSearchResults(t *testing.T) {
 	for name, generated := range map[string]any{
-		"alert rules":     model.ListAlertRuleSearchRulesV0alpha1Response{},
-		"recording rules": model.ListRecordingRuleSearchRulesV0alpha1Response{},
+		"alert rules":     v0alpha1.ListAlertRuleSearchRulesV0alpha1Response{},
+		"recording rules": v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response{},
 	} {
 		t.Run(name, func(t *testing.T) {
 			assertSameJSONShape(t, searchv0.SearchResults{}, generated)
@@ -39,8 +39,8 @@ func TestResponseBodyMatchesGenericSearchResults(t *testing.T) {
 }
 
 func TestFilterOperatorsIncludeGenericAllOperator(t *testing.T) {
-	assert.Equal(t, "All", string(model.ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorAll))
-	assert.Equal(t, "All", string(model.ListRecordingRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorAll))
+	assert.Equal(t, "All", string(v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorAll))
+	assert.Equal(t, "All", string(v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorAll))
 }
 
 func assertSameJSONShape(t *testing.T, want, got any) {

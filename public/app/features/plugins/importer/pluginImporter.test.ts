@@ -10,6 +10,7 @@ import {
   PluginType,
 } from '@grafana/data';
 
+import * as restrictedGrafanaApis from '../components/restrictedGrafanaApis/restrictedGrafanaApis';
 import { AddedComponentsRegistry } from '../extensions/registry/AddedComponentsRegistry';
 import { AddedFunctionsRegistry } from '../extensions/registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from '../extensions/registry/AddedLinksRegistry';
@@ -397,6 +398,43 @@ describe('pluginImporter', () => {
       });
 
       expect(result).toEqual({ ...new AppPlugin(), meta: { ...appPlugin } });
+    });
+  });
+
+  // AppPlugin.onRestrictedApis: the module's own way to the restricted APIs, before any of its roots mounts.
+  describe('restricted APIs at load', () => {
+    it('hands the module the APIs resolved for the id it was loaded for, once', async () => {
+      const apis = { alertingAlertRuleFormSchema: { parse: jest.fn(), safeParse: jest.fn() } };
+      const resolve = jest.spyOn(restrictedGrafanaApis, 'getRestrictedGrafanaApisAtLoad').mockReturnValue(apis);
+      const listener = jest.fn();
+      const plugin = new AppPlugin().onRestrictedApis(listener);
+      jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ plugin });
+
+      await pluginImporter.importApp({ ...appPlugin });
+      await pluginImporter.importApp({ ...appPlugin });
+
+      expect(resolve).toHaveBeenCalledWith('test-plugin');
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith(apis);
+    });
+
+    it('resolves nothing for a plugin that does not ask', async () => {
+      const resolve = jest.spyOn(restrictedGrafanaApis, 'getRestrictedGrafanaApisAtLoad');
+      jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ plugin: new AppPlugin() });
+
+      await expect(pluginImporter.importApp({ ...appPlugin })).resolves.toBeInstanceOf(AppPlugin);
+
+      expect(resolve).not.toHaveBeenCalled();
+    });
+
+    it('still loads a plugin whose listener throws', async () => {
+      jest.spyOn(restrictedGrafanaApis, 'getRestrictedGrafanaApisAtLoad').mockReturnValue({});
+      const plugin = new AppPlugin().onRestrictedApis(() => {
+        throw new Error('boom');
+      });
+      jest.spyOn(importPluginModule, 'importPluginModule').mockResolvedValue({ plugin });
+
+      await expect(pluginImporter.importApp({ ...appPlugin })).resolves.toBe(plugin);
     });
   });
 

@@ -121,9 +121,10 @@ describe('settings', () => {
               path: '/secure/password/remove',
               value: true,
             },
+            { op: 'remove', path: '/secure/apiKey/name' },
             {
-              op: 'replace',
-              path: '/secure/apiKey/name',
+              op: 'add',
+              path: '/secure/apiKey/create',
               value: 'the api key',
             },
             {

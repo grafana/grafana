@@ -1,9 +1,15 @@
 import { css, keyframes } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { getFocusStyles } from '@grafana/ui/internal';
 
 const surfaceEnter = keyframes({
   from: { opacity: 0, transform: 'translateY(-2px) scale(0.98)' },
+  to: { opacity: 1, transform: 'translateY(0) scale(1)' },
+});
+
+const groupEnter = keyframes({
+  from: { opacity: 0, transform: 'translateY(-4px) scale(0.98)' },
   to: { opacity: 1, transform: 'translateY(0) scale(1)' },
 });
 
@@ -12,9 +18,9 @@ const statusPulse = keyframes({
   '50%': { opacity: 1 },
 });
 
-const fillIn = keyframes({
-  from: { opacity: 0.4, transform: 'translateX(-3px)' },
-  to: { opacity: 1, transform: 'translateX(0)' },
+const contextSweep = keyframes({
+  from: { backgroundPosition: '100% 0' },
+  to: { backgroundPosition: '-100% 0' },
 });
 
 export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
@@ -42,11 +48,81 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       transformOrigin: 'top center',
       [theme.transitions.handleMotion('no-preference')]: {
         animation: `${surfaceEnter} 140ms ${theme.transitions.easing.easeOut}`,
-        transition: theme.transitions.create('max-height', {
+        transition: theme.transitions.create(['max-height', 'width'], {
           duration: theme.transitions.duration.short,
           easing: theme.transitions.easing.easeOut,
         }),
       },
+    }),
+    hidden: css({ display: 'none' }),
+    proposalGroup: css({
+      position: 'relative',
+      zIndex: theme.zIndex.dropdown,
+      background: 'transparent',
+      borderColor: 'transparent',
+      boxShadow: 'none',
+      padding: theme.spacing(3, 1, 1),
+      overflow: 'visible',
+      '&:hover': { background: theme.components.overlay.background },
+      '&:hover [data-proposal-drag-handle]': { opacity: 1 },
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${groupEnter} 140ms ${theme.transitions.easing.easeOut}`,
+      },
+    }),
+    dragHandle: css({
+      position: 'absolute',
+      top: 0,
+      left: theme.spacing(1),
+      right: theme.spacing(1),
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: theme.spacing(3),
+      cursor: 'grab',
+      opacity: 0,
+      svg: { transform: 'rotate(90deg)' },
+    }),
+    resizeHandle: css({
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      width: 8,
+      cursor: 'ew-resize',
+      zIndex: 1,
+      '&:hover': { background: theme.colors.action.hover },
+    }),
+    resizeLeft: css({ left: 0 }),
+    resizeRight: css({ right: 0 }),
+    resizeActive: css({ background: theme.colors.action.hover }),
+    explanationCard: css({
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: 0,
+      background: theme.colors.background.elevated,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z2,
+      overflow: 'hidden',
+      padding: theme.spacing(1.5),
+    }),
+    narrowExplanationCard: css({ padding: theme.spacing(1.5) }),
+    tinyExplanationCard: css({ padding: theme.spacing(0.5) }),
+    actionsCard: css({ border: `1px solid ${theme.colors.border.weak}`, boxShadow: theme.shadows.z2 }),
+    tinyActionsCard: css({
+      minHeight: 0,
+      padding: theme.spacing(0.5, 1.5),
+    }),
+    proposalActions: css({ marginLeft: 'auto' }),
+    tinyActionsRow: css({ gap: theme.spacing(1.5) }),
+    tinyIconAction: css({
+      width: theme.spacing(3.5),
+      height: theme.spacing(3.5),
+      gap: 0,
+      padding: theme.spacing(0.75),
+    }),
+    dimmed: css({ opacity: 0.04, [theme.transitions.handleMotion('no-preference')]: { animation: 'none' } }),
+    frozenGroup: css({
+      [theme.transitions.handleMotion('no-preference')]: { animation: 'none', transition: 'none' },
     }),
     header: css({
       display: 'flex',
@@ -71,6 +147,11 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       minWidth: 0,
     }),
     close: css({ flex: '0 0 auto' }),
+    explanationHeader: css({
+      flex: '0 1 auto',
+      overflowY: 'auto',
+      scrollbarGutter: 'stable',
+    }),
     pulsingStatus: css({
       [theme.transitions.handleMotion('no-preference')]: {
         animation: `${statusPulse} 900ms ease-in-out infinite`,
@@ -103,11 +184,67 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       margin: 0,
       padding: theme.spacing(0.75),
     }),
+    mentionMenu: css({
+      display: 'flex',
+      flexDirection: 'column',
+      minWidth: theme.spacing(28),
+      maxWidth: 'calc(100vw - 16px)',
+      padding: theme.spacing(0.5),
+      color: theme.colors.text.primary,
+      background: theme.colors.background.elevated,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z2,
+      zIndex: theme.zIndex.typeahead,
+    }),
+    mentionOption: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: theme.spacing(0.75, 1),
+      color: theme.colors.text.primary,
+      background: 'transparent',
+      border: 0,
+      borderRadius: theme.shape.radius.default,
+      textAlign: 'left',
+      overflowWrap: 'anywhere',
+      '&:hover': { background: theme.colors.action.hover },
+    }),
+    mentionSelected: css({ background: theme.colors.action.selected }),
     clarificationAction: css({
       display: 'flex',
       flex: '0 0 auto',
       justifyContent: 'flex-end',
       paddingInline: theme.spacing(1),
+    }),
+    followUpChips: css({
+      display: 'flex',
+      flex: '0 0 auto',
+      flexWrap: 'wrap',
+      gap: theme.spacing(0.5),
+      minWidth: 0,
+      paddingInline: theme.spacing(1),
+    }),
+    followUpChip: css({ maxWidth: '100%' }),
+    menuActions: css({
+      display: 'flex',
+      flex: '0 0 auto',
+      flexDirection: 'column',
+    }),
+    menuAction: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: theme.spacing(0.75, 1),
+      color: theme.colors.text.primary,
+      background: 'transparent',
+      border: 0,
+      borderRadius: theme.shape.radius.default,
+      textAlign: 'left',
+      cursor: 'pointer',
+      '&:hover:not(:disabled)': { background: theme.colors.action.hover },
+      '&:focus-visible': getFocusStyles(theme),
+      '&:disabled': { color: theme.colors.text.disabled, cursor: 'not-allowed' },
     }),
     status: css({
       display: 'flex',
@@ -134,45 +271,100 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       overflowY: 'auto',
       scrollbarGutter: 'stable',
     }),
-    building: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
+    contextError: css({
+      background: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
     }),
-    workingFlow: css({
-      display: 'grid',
-      gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)',
+    workingStatus: css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(1), minWidth: 0 }),
+    workingChips: css({ display: 'flex', alignItems: 'center', gap: theme.spacing(0.5), minWidth: 0 }),
+    workingChip: css({
+      display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
-      minWidth: 0,
-      padding: theme.spacing(0, 1.5, 1),
-    }),
-    workingStep: css({
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
       gap: theme.spacing(0.5),
       minWidth: 0,
-      padding: theme.spacing(0.75, 1),
-      border: `1px dashed ${theme.colors.border.medium}`,
-      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(0.5, 0.75),
       background: theme.colors.background.secondary,
-      [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${fillIn} 320ms ${theme.transitions.easing.easeOut} both`,
-      },
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
       code: {
         minWidth: 0,
         overflow: 'hidden',
         color: theme.colors.text.secondary,
         fontFamily: theme.typography.fontFamilyMonospace,
+        fontSize: theme.typography.bodySmall.fontSize,
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
       },
     }),
-    workingStepDelayed: css({
-      [theme.transitions.handleMotion('no-preference')]: { animationDelay: '180ms' },
+    workingSweep: css({
+      flex: '0 0 auto',
+      width: theme.spacing(2),
+      height: 2,
+      background: `linear-gradient(90deg, transparent, ${theme.colors.text.secondary}, transparent)`,
+      backgroundSize: '200% 100%',
+      [theme.transitions.handleMotion('no-preference')]: { animation: `${contextSweep} 1400ms ease-in-out infinite` },
     }),
-    flowArrow: css({ color: theme.colors.text.disabled }),
+    optionTabs: css({
+      display: 'flex',
+      flex: '0 0 auto',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      padding: 0,
+      overflowX: 'auto',
+    }),
+    narrowOptionTabs: css({ padding: 0 }),
+    tinyOptionTabs: css({ justifyContent: 'center', gap: theme.spacing(1), padding: theme.spacing(1) }),
+    compactOptionPill: css({
+      height: theme.spacing(3),
+      minHeight: theme.spacing(3),
+      borderRadius: theme.spacing(2),
+      padding: theme.spacing(0.125, 0.75),
+      fontSize: theme.typography.bodySmall.fontSize,
+      background: theme.colors.action.disabledBackground,
+      borderColor: theme.colors.secondary.border,
+      color: theme.colors.text.secondary,
+      '&[aria-selected="true"]': {
+        background: theme.colors.info.transparent,
+        borderColor: theme.colors.info.border,
+        color: theme.colors.info.text,
+      },
+    }),
+    optionTooltip: css({
+      display: 'flex',
+      flexDirection: 'column',
+      maxWidth: theme.spacing(30),
+      padding: theme.spacing(0.5, 1),
+      color: theme.components.tooltip.text,
+      background: theme.components.tooltip.background,
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z2,
+      zIndex: theme.zIndex.tooltip,
+    }),
+    compactPreviewResult: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(0.5, 1),
+      whiteSpace: 'nowrap',
+      '&[data-kind="error"]': { color: theme.colors.error.text },
+      '&[data-kind="no-data"]': { color: theme.colors.warning.text },
+      svg: { flexShrink: 0 },
+      span: { overflow: 'hidden', textOverflow: 'ellipsis' },
+    }),
+    unconfirmedValue: css({ display: 'flex', alignItems: 'baseline', gap: theme.spacing(0.5) }),
+    inlineDiff: css({
+      flex: '0 0 auto',
+      margin: 0,
+      padding: theme.spacing(1),
+      borderRadius: theme.shape.radius.default,
+      background: theme.colors.background.primary,
+      whiteSpace: 'pre-wrap',
+      overflowWrap: 'anywhere',
+      fontFamily: theme.typography.fontFamilyMonospace,
+    }),
+    diffRemoved: css({ background: theme.colors.error.transparent, color: theme.colors.error.text }),
+    diffAdded: css({ background: theme.colors.success.transparent, color: theme.colors.success.text }),
+    outsideFocus: css({ borderBottom: '2px dashed ' + theme.colors.warning.border }),
     proposal: css({
       display: 'flex',
       flexDirection: 'column',
@@ -186,41 +378,25 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       flexDirection: 'column',
       gap: theme.spacing(0.5),
       minHeight: 0,
-      padding: theme.spacing(0, 1.5, 1),
+      paddingTop: theme.spacing(1.5),
     }),
-    changes: css({
-      display: 'flex',
-      flex: '0 0 auto',
-      flexDirection: 'column',
-      gap: theme.spacing(0.5),
-      padding: theme.spacing(0, 1.5),
-    }),
-    changePair: css({
+    // Animating grid rows between 1fr and 0fr collapses content without measuring its height.
+    collapsible: css({
       display: 'grid',
-      gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)',
-      alignItems: 'center',
-      gap: theme.spacing(1),
-      minWidth: 0,
-    }),
-    change: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(0.5),
-      minWidth: 0,
-      padding: theme.spacing(0.75, 1),
-      border: `1px dashed ${theme.colors.border.medium}`,
-      borderRadius: theme.shape.radius.default,
-      code: {
-        overflow: 'hidden',
-        fontFamily: theme.typography.fontFamilyMonospace,
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
+      gridTemplateRows: '1fr',
+      opacity: 1,
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: theme.transitions.create(['grid-template-rows', 'opacity', 'visibility'], {
+          duration: theme.transitions.duration.shorter,
+          easing: theme.transitions.easing.easeInOut,
+        }),
       },
     }),
-    proposedChange: css({
-      background: theme.colors.info.transparent,
-      borderColor: theme.colors.info.border,
-    }),
+    collapsed: css({ gridTemplateRows: '0fr', opacity: 0, visibility: 'hidden' }),
+    collapsibleBody: css({ flex: '1 1 auto', minHeight: 0 }),
+    collapsibleContent: css({ minHeight: 0, overflow: 'hidden' }),
+    whyList: css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(0.5) }),
+    compactProposalBody: css({ padding: 0, paddingTop: theme.spacing(1.5) }),
     footer: css({
       display: 'flex',
       flex: '0 0 auto',
@@ -247,11 +423,13 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       paddingTop: theme.spacing(1),
     }),
     iterationCopy: css({ padding: theme.spacing(1, 1.5) }),
-    handoff: css({
+    handoffActions: css({
       display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(2),
-      padding: theme.spacing(1, 1.5, 0),
+      flex: '0 0 auto',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: theme.spacing(1),
+      paddingInline: theme.spacing(1),
     }),
   };
 }

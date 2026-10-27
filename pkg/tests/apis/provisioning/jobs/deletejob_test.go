@@ -44,6 +44,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		},
 	}
 
+	common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "folder")
 	helper.CreateLocalRepo(t, testRepo)
 
 	helper.RequireRepoDashboardCount(t, repo, 3)
@@ -126,6 +127,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		helper.CopyToProvisioningPath(t, tmpFile1, "resource-test-1.json")        // UID: resourceref1
 		helper.CopyToProvisioningPath(t, tmpFile2, "resource-test-2.json")        // UID: resourceref2
 		helper.CopyToProvisioningPath(t, tmpFile3, "nested/resource-test-3.json") // UID: resourceref3
+		common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "nested")
 
 		// Trigger sync to populate the new resources
 		helper.SyncAndWait(t, repo, nil)
@@ -248,6 +250,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			// Copy it to the folder structure using the helper
 			helper.CopyToProvisioningPath(t, tmpFolderDash, "test-folder/dashboard-in-folder.json")
+			common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "test-folder")
 
 			// Sync to create the folder and its contents
 			helper.SyncAndWait(t, repo, nil)

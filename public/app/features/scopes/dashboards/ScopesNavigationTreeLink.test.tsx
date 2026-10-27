@@ -288,6 +288,42 @@ describe('ScopesNavigationTreeLink', () => {
       expect(mockLocationServicePush).not.toHaveBeenCalled();
     });
 
+    it('calls onNavigate after a click, with subScope', async () => {
+      const onNavigate = jest.fn();
+
+      renderWithRouter(
+        <ScopesNavigationTreeLink
+          to="/test-path"
+          title="Test Link"
+          id="test-id"
+          subScope="subScope1"
+          onNavigate={onNavigate}
+        />
+      );
+
+      await userEvent.click(screen.getByTestId('scopes-dashboards-test-id'));
+
+      expect(onNavigate).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls onNavigate after a click, without subScope', async () => {
+      const onNavigate = jest.fn();
+
+      renderWithRouter(
+        <ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" onNavigate={onNavigate} />
+      );
+
+      await userEvent.click(screen.getByTestId('scopes-dashboards-test-id'));
+
+      expect(onNavigate).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not throw when onNavigate is not provided', async () => {
+      renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" />);
+
+      await expect(userEvent.click(screen.getByTestId('scopes-dashboards-test-id'))).resolves.not.toThrow();
+    });
+
     it('should handle URL with existing query params correctly', async () => {
       const user = userEvent.setup();
       mockScopesDashboardsService.state.navigationScope = undefined;

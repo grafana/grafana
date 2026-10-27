@@ -6,6 +6,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -77,7 +78,7 @@ func (k *kvStorageBackend) loadWatchSeed(ctx context.Context, handoffRV int64) (
 		if obj.Value == nil {
 			return watchSeed{}, fmt.Errorf("watch seed revision %q has no reader", obj.Key.String())
 		}
-		data, err := readAndClose(obj.Value)
+		data, err := kv.ReadAllAndClose(obj.Value)
 		if err != nil {
 			return watchSeed{}, fmt.Errorf("read watch seed payload: %w", err)
 		}

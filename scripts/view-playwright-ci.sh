@@ -20,4 +20,4 @@ echo "Downloading artifact playwright-html from run $RUN_NUMBER"
 gh run download "$RUN_NUMBER"  --name playwright-html --dir "$DEST"
 
 echo "Opening report..."
-yarn playwright show-report "$DEST"
+npm exec --no -- playwright show-report "$DEST"

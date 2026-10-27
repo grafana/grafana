@@ -892,6 +892,8 @@ func TestRenameResourceFile(t *testing.T) {
 		dashClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		dashClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(newObj, nil)
 
+		expectMissingFolderMetadata(&repo.Mock)
+
 		mgr := NewResourcesManager(repo, folderMgr, mockParser, authTestClients(t))
 		name, folderName, gvk, _, err := mgr.RenameResourceFile(context.Background(), "team/old-dash.json", "old-ref", "team/new-dash.json", "new-ref", nil)
 
@@ -954,6 +956,8 @@ func TestRenameResourceFile(t *testing.T) {
 		})
 		dashClient.On("Get", mock.Anything, "dash-uid", metav1.GetOptions{}, mock.Anything).Return(grafanaObj, nil)
 		dashClient.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(newObj, nil)
+
+		expectMissingFolderMetadata(&repo.Mock)
 
 		mgr := NewResourcesManager(repo, folderMgr, mockParser, authTestClients(t))
 		name, folderName, gvk, _, err := mgr.RenameResourceFile(context.Background(), "a-team/dash.json", "old-ref", "b-team/dash.json", "new-ref", nil)

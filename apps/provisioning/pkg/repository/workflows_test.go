@@ -455,7 +455,6 @@ func TestCanUseIncrementalSync(t *testing.T) {
 	tests := []struct {
 		name                  string
 		deletedPaths          []string
-		folderMetadataEnabled bool
 		totalChanges          int
 		maxIncrementalChanges int
 		want                  bool
@@ -573,53 +572,40 @@ func TestCanUseIncrementalSync(t *testing.T) {
 			want:         true,
 		},
 		{
-			name:                  "folder metadata file deleted alone - flag on",
-			deletedPaths:          []string{"folder1/_folder.json"},
-			folderMetadataEnabled: true,
-			totalChanges:          1,
-			want:                  false,
+			name:         "folder metadata file deleted alone",
+			deletedPaths: []string{"folder1/_folder.json"},
+			totalChanges: 1,
+			want:         false,
 		},
 		{
-			name:                  "folder metadata file deleted alone - flag off",
-			deletedPaths:          []string{"folder1/_folder.json"},
-			folderMetadataEnabled: false,
-			totalChanges:          1,
-			want:                  true,
+			name:         "folder metadata file deleted with other files in same folder",
+			deletedPaths: []string{"folder1/_folder.json", "folder1/dashboard.json"},
+			totalChanges: 2,
+			want:         true,
 		},
 		{
-			name:                  "folder metadata file deleted with other files in same folder - flag on",
-			deletedPaths:          []string{"folder1/_folder.json", "folder1/dashboard.json"},
-			folderMetadataEnabled: true,
-			totalChanges:          2,
-			want:                  true,
+			name:         "folder metadata and keep file deleted together without other files",
+			deletedPaths: []string{"folder1/.keep", "folder1/_folder.json"},
+			totalChanges: 2,
+			want:         false,
 		},
 		{
-			name:                  "folder metadata and keep file deleted together without other files - flag on",
-			deletedPaths:          []string{"folder1/.keep", "folder1/_folder.json"},
-			folderMetadataEnabled: true,
-			totalChanges:          2,
-			want:                  false,
+			name:         "folder metadata at root deleted alone",
+			deletedPaths: []string{"_folder.json"},
+			totalChanges: 1,
+			want:         false,
 		},
 		{
-			name:                  "folder metadata at root deleted alone - flag on",
-			deletedPaths:          []string{"_folder.json"},
-			folderMetadataEnabled: true,
-			totalChanges:          1,
-			want:                  false,
+			name:         "nested folder metadata deleted alone",
+			deletedPaths: []string{"parent/child/_folder.json"},
+			totalChanges: 1,
+			want:         false,
 		},
 		{
-			name:                  "nested folder metadata deleted alone - flag on",
-			deletedPaths:          []string{"parent/child/_folder.json"},
-			folderMetadataEnabled: true,
-			totalChanges:          1,
-			want:                  false,
-		},
-		{
-			name:                  "mixed: folder metadata alone in one dir, other files in another - flag on",
-			deletedPaths:          []string{"folder1/_folder.json", "folder2/dashboard.json"},
-			folderMetadataEnabled: true,
-			totalChanges:          2,
-			want:                  false,
+			name:         "mixed: folder metadata alone in one dir, other files in another",
+			deletedPaths: []string{"folder1/_folder.json", "folder2/dashboard.json"},
+			totalChanges: 2,
+			want:         false,
 		},
 		// ─── size check is evaluated before the folder-metadata guard ──────────
 		{
@@ -639,7 +625,7 @@ func TestCanUseIncrementalSync(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			policy := NewIncrementalSyncPolicy(tt.folderMetadataEnabled, tt.maxIncrementalChanges)
+			policy := NewIncrementalSyncPolicy(false, tt.maxIncrementalChanges)
 			got := policy.CanUseIncrementalSync(tt.deletedPaths, tt.totalChanges)
 			require.Equal(t, tt.want, got)
 		})

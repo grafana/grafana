@@ -250,6 +250,11 @@ func (in *HybridSearchResultItem) DeepCopyInto(out *HybridSearchResultItem) {
 		*out = new(HybridSearchManagedBy)
 		**out = **in
 	}
+	if in.Tags != nil {
+		in, out := &in.Tags, &out.Tags
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.Chunks != nil {
 		in, out := &in.Chunks, &out.Chunks
 		*out = make([]HybridSearchChunk, len(*in))

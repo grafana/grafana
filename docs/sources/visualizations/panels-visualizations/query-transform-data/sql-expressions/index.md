@@ -203,6 +203,7 @@ The SQL conversion path:
 
 - The query result appears as a single data frame, without labels, and maps directly to a tabular format.
 - If the frame type is present and is either numeric, wide time series, or multi-frame time series (for example: labeled formats), Grafana automatically converts the data into a table structure.
+- If a column name repeats, later columns get a number, for example `host_2` and `host_3`. The match ignores case.
 
 ## Data source response formats
 
@@ -236,6 +237,7 @@ The following non-tabular formats are automatically converted to a tabular forma
 During conversion:
 
 - Label keys become column names.
+- If a label key matches a generated column name, such as `time` or `__value__`, its column is named `label_<LABEL_KEY>`, for example `label_time`. The match ignores case.
 - Label values populate the corresponding rows (null if a label is missing).
 - The `__value__` column contains the numeric metric.
 - If available, the `__display_name__` column contains a human-readable name.

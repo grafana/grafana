@@ -1,7 +1,7 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { METRICS_DRILLDOWN_APP_ID } from 'app/core/appPluginIds';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { metricsSolution } from './metricsSolution';
 import { drilldownActiveCta } from './pluginPages';
 import { detectSignal } from './solutionState';

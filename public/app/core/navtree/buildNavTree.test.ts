@@ -452,6 +452,19 @@ describe('pruneEmptyNavSections', () => {
     expect(findById(tree, NavID.explore)).toBeDefined();
   });
 
+  // More apps is created on demand, so it is only empty when an override has
+  // moved its last app elsewhere — maintenance windows, nested under SLO
+  it('removes an emptied More apps section but keeps a populated one', () => {
+    setup();
+    const empty: NavModelItem[] = [{ id: NavID.apps, text: 'More apps', url: '/apps', children: [] }];
+    const populated: NavModelItem[] = [
+      { id: NavID.apps, text: 'More apps', url: '/apps', children: [{ id: 'plugin-page-some-app', text: 'Some app' }] },
+    ];
+
+    expect(findById(pruneEmptyNavSections(empty), NavID.apps)).toBeUndefined();
+    expect(findById(pruneEmptyNavSections(populated), NavID.apps)).toBeDefined();
+  });
+
   it('keeps sections that gained children', () => {
     setup({
       orgRole: 'Admin',
@@ -694,6 +707,18 @@ describe('getInitialNavTree', () => {
 
       expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
       expect(logger.logError).not.toHaveBeenCalled();
+    });
+
+    // Drilldown is prunable and is filled only by drilldown apps, so an app
+    // attaching to it is what keeps the section alive
+    it('keeps the drilldown shell once a drilldown app attaches to it', () => {
+      setup({
+        permissions: [AccessControlAction.PluginsAppAccess, AccessControlAction.DataSourcesExplore],
+        openFeatureFlags: bothFlags,
+      });
+      setupApps([appWithPage('grafana-metricsdrilldown-app', 'Metrics')]);
+
+      expect(findById(getInitialNavTree(), NavID.drilldown)?.children?.length).toBe(1);
     });
 
     // sortNavTree recurses into the section, and only leaves its order alone

@@ -25,6 +25,7 @@ import { changeVariableLabel } from '../../actions/variable/changeVariableLabel'
 import { changeVariableName } from '../../actions/variable/changeVariableName';
 import { duplicateVariable } from '../../actions/variable/duplicateVariable';
 import { removeVariable } from '../../actions/variable/removeVariable';
+import { undoableVariableEdit } from '../../actions/variable/undoableVariableEdit';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { type BulkActionElement } from '../../scene/types/BulkActionElement';
@@ -369,7 +370,7 @@ function VariableLabelInput({ variable, id }: VariableInputProps) {
     <Input
       id={id}
       disabled={readOnly}
-      value={label}
+      value={label ?? ''}
       onFocus={() => {
         oldLabel.current = label ?? '';
       }}
@@ -539,7 +540,13 @@ function RefreshSelect({ variable }: { variable: QueryVariable }) {
       options={options}
       value={refresh}
       onChange={(o) => {
-        variable.setState({ refresh: o.value });
+        undoableVariableEdit(true, {
+          meta: { actionId: 'variable.changeRefresh' },
+          source: variable,
+          description: t('dashboard.edit-actions.variable-refresh', 'Change variable refresh'),
+          perform: () => variable.setState({ refresh: o.value }),
+          undo: () => variable.setState({ refresh }),
+        });
       }}
     />
   );

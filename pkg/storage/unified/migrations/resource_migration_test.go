@@ -754,6 +754,7 @@ func openTestSearchIndex(t *testing.T, client resource.ResourceClient, gr schema
 				Resource:  gr.Resource,
 			},
 		},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	require.NoError(t, err)
 	require.Nil(t, searchResp.Error)

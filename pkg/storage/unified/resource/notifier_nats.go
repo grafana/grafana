@@ -287,6 +287,7 @@ func (n *natsNotifier) decode(subject string, data []byte) (Event, bool) {
 		PreviousRV:      notification.PreviousResourceVersion,
 		PreviousAction:  previousAction,
 		PreviousFolder:  notification.PreviousFolder,
+		Metadata:        notification.GetMetadata(),
 	}, true
 }
 

@@ -21,9 +21,12 @@ export function classifyPage(pathname: string, search: string): PageIdentity | n
     return session ? { kind: 'explore', session, pathname: normalized } : null;
   }
 
-  // A Page before the generic app rule; the list at ASSISTANT_PAGES_PATH itself stays an app page.
-  if (normalized.startsWith(`${ASSISTANT_PAGES_PATH}/`)) {
-    return { kind: 'page', pathname: normalized };
+  // Individual Pages are their own kind. The list at ASSISTANT_PAGES_PATH is a browse page (an "App" row for it
+  // would sit oddly above the "Page" rows for what it lists), and `new/…` is the create flow: the Page gets its
+  // row once it exists at its own id.
+  if (normalized === ASSISTANT_PAGES_PATH || normalized.startsWith(`${ASSISTANT_PAGES_PATH}/`)) {
+    const [pageId] = normalized.slice(ASSISTANT_PAGES_PATH.length + 1).split('/');
+    return pageId && pageId !== 'new' ? { kind: 'page', pathname: normalized } : null;
   }
 
   if (first === 'a' && second) {

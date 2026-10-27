@@ -536,6 +536,7 @@ func (s *Service) deleteVariablesInFolders(ctx context.Context, orgID int64, fol
 				},
 			},
 		},
+		Fields:       []string{resource.SEARCH_FIELD_NAME},
 		Limit:        folderSearchLimit,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
@@ -629,6 +630,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 					},
 				},
 			},
+			Fields:       []string{resource.SEARCH_FIELD_NAME},
 			Limit:        folderSearchLimit,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}

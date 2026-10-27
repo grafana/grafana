@@ -67,6 +67,16 @@ func (p *PublisherService) Health(_ context.Context) error {
 	return p.healthy()
 }
 
+// MaxPayload returns the largest message the connected server accepts, or 0
+// while there is no established connection.
+func (p *PublisherService) MaxPayload() int64 {
+	nc, err := p.publishConn()
+	if err != nil {
+		return 0
+	}
+	return nc.MaxPayload()
+}
+
 func (p *PublisherService) Publish(ctx context.Context, subject string, data []byte) error {
 	if err := ctx.Err(); err != nil {
 		return err

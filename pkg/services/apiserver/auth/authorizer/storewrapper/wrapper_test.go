@@ -6,6 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -905,34 +906,38 @@ func TestWrapper_Watch(t *testing.T) {
 	})
 
 	t.Run("blocked consumer automatically shuts down the watch", func(t *testing.T) {
-		setup := newTestSetup(t)
-		setup.wrapper.watchSendTimeout = 10 * time.Millisecond
+		synctest.Test(t, func(t *testing.T) {
+			setup := newTestSetup(t)
+			setup.wrapper.watchSendTimeout = 10 * time.Millisecond
 
-		// Inner watcher has enough room to buffer the events without blocking.
-		inner := newPumpedWatcher(int(watch.DefaultChanSize) * 3)
-		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: inner}
-		setup.wrapper.inner = watcherStore
+			// Inner watcher has enough room to buffer the events without blocking.
+			inner := newPumpedWatcher(int(watch.DefaultChanSize) * 3)
+			watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: inner}
+			setup.wrapper.inner = watcherStore
 
-		setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
+			setup.mockAuth.On("WatchFilter", mock.Anything).Return(allowAllWatchFilter, nil)
 
-		w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
-		require.NoError(t, err)
+			w, err := setup.wrapper.Watch(setup.ctx, &internalversion.ListOptions{})
+			require.NoError(t, err)
 
-		// Fill the inner channel buffer without ever reading from w.ResultChan().
-		// Wrapper watcher result channel will be blocked at DefaultChanSize.
-		for i := int32(0); i < watch.DefaultChanSize*2; i++ {
-			inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}})
-		}
+			// Fill the inner channel buffer without ever reading from w.ResultChan().
+			// Wrapper watcher result channel will be blocked at DefaultChanSize.
+			for i := int32(0); i < watch.DefaultChanSize*2; i++ {
+				inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}})
+			}
 
-		// Wait for the send timeout to trigger. Use a generous overall timeout
-		// because the run goroutine must first process ~100 events through the
-		// filter before the result channel fills and the send timeout fires.
-		assert.Eventually(t, inner.IsStopped, 5*time.Second, 10*time.Millisecond,
-			"inner watcher should be stopped after send timeout")
-		for range w.ResultChan() {
-		}
-		_, open := <-w.ResultChan()
-		assert.False(t, open, "wrapper watcher should be stopped after send timeout")
+			// Fill the wrapper result buffer and block its next send before expiring the timeout.
+			synctest.Wait()
+
+			// Expire the blocked send and finish shutting down the inner watcher.
+			synctest.Sleep(setup.wrapper.watchSendTimeout)
+
+			assert.True(t, inner.IsStopped())
+			for range w.ResultChan() {
+			}
+			_, open := <-w.ResultChan()
+			assert.False(t, open, "wrapper watcher should be stopped after send timeout")
+		})
 	})
 
 	t.Run("ticker-driven flush does not terminate the watcher", func(t *testing.T) {

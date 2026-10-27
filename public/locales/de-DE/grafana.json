@@ -1440,6 +1440,41 @@
       "saving": "Wird gespeichert …",
       "title-error-saving-receiver": "Fehler beim Speichern des Empfängers"
     },
+    "gma-rule-list": {
+      "alert-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
+        "rules-error": ""
+      },
+      "result-count": {
+        "alert-rules_one": "",
+        "alert-rules_other": "",
+        "recording-rules_one": "",
+        "recording-rules_other": ""
+      },
+      "shared": {
+        "load-more": "",
+        "load-more-error": "",
+        "loading-rules": "",
+        "refresh-error": "",
+        "retry": ""
+      },
+      "status": {
+        "error": "",
+        "firing": "",
+        "no-data": "",
+        "normal": "",
+        "paused": "",
+        "pending": "",
+        "recording": "",
+        "recovering": "",
+        "unavailable": ""
+      }
+    },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Gehen Sie zur Seite Alerting Admin, um Ihre Alertmanager-Einrichtung zu ändern. Kontaktieren Sie Ihren Administrator, wenn Sie keinen Zugriff haben.",
       "admin-hint-external": "Gehen Sie zur Seite Alerting Admin, um Ihre Alertmanager-Einrichtung zu ändern. Kontaktieren Sie Ihren Administrator, wenn Sie keinen Zugriff haben.",
@@ -1765,7 +1800,9 @@
         "autosync-tooltip-unsupported": "Die automatische Synchronisierung ist für diesen Alertmanager-Typ nicht verfügbar. Wählen Sie eine Datenquelle von Mimir oder Cortex aus, um sie zu aktivieren.",
         "datasource": "Alertmanager-Datenquelle",
         "datasource-autosync-badge": "Automatische Synchronisierung",
+        "embedded-yaml-parse-error": "",
         "heading": "Benachrichtigungsressourcen importieren",
+        "invalid-alertmanager-config": "",
         "next-disabled-tooltip": "",
         "no-datasources": "Keine Alertmanager-Datenquellen gefunden",
         "no-permission-desc": "Sie haben keine Berechtigung zum Importieren von Benachrichtigungsressourcen. Sie benötigen die Berechtigung <strong>alerting.notifications:write</strong>. Sie können diesen Schritt überspringen.",
@@ -2136,14 +2173,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Max. Datenpunkte",
-      "tooltip-max-data-points": "Die maximalen Datenpunkte pro Reihe. Wird direkt von einigen Datenquellen genutzt und für die Berechnung des automatischen Intervalls verwendet. Beim Datenstreaming wird dieser Wert für den rollierenden Puffer verwendet."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "neu"
     },
     "min-interval-option": {
       "label-interval": "Intervall",
-      "tooltip-interval": "Intervall an die Datenquelle gesendet. Es wird empfohlen, die Schreibfrequenz einzustellen, zum Beispiel <1>1m</1>, wenn Ihre Daten jede Minute geschrieben werden."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4111,6 +4148,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Weiter zum Hauptinhalt",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Anmelden"
     }
@@ -4580,8 +4622,7 @@
       "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht.",
       "folder-empty": "Der ausgewählte Ordner ist leer",
       "folder-not-empty": "Der ausgewählte Ordner enthält Ressourcen, die gelöscht werden",
-      "missing-info": "Fehlende Pflichtfelder",
-      "success-message": "Ordner erfolgreich gelöscht"
+      "missing-info": "Fehlende Pflichtfelder"
     },
     "empty-state": {
       "button-title": "Dashboard erstellen",
@@ -7219,8 +7260,7 @@
       "delete-error": "Das Dashboard konnte nicht gelöscht werden",
       "deleting": "Löschen...",
       "drawer-title": "Bereitgestelltes Dashboard löschen",
-      "no-repository-selected": "Fehlendes erforderliches Repository zum Löschen",
-      "success-message": "Dashboard erfolgreich gelöscht"
+      "no-repository-selected": "Fehlendes erforderliches Repository zum Löschen"
     },
     "description-label": {
       "description": "Beschreibung"
@@ -7257,6 +7297,7 @@
       "copy": "In die Zwischenablage kopieren",
       "learn-more": "Mehr erfahren",
       "no-issues": "Keine Fehler oder Hinweise für diese Abfrage.",
+      "no-panel-issues": "",
       "severity-error": "Fehler",
       "severity-info": "Info",
       "severity-warning": "Warnung"
@@ -7420,6 +7461,57 @@
       "usage-count_one": "Verwendet bei {{count}} Dashboards",
       "usage-count_other": "Verwendet bei {{count}} Dashboards"
     },
+    "lifecycle": {
+      "applied": "",
+      "apply": "",
+      "apply-body": "",
+      "apply-failed": "",
+      "apply-needs-edit": "",
+      "breadcrumb-draft": "",
+      "breadcrumb-pending-changes": "",
+      "change-added": "",
+      "change-badge-parts": "",
+      "change-edited": "",
+      "change-layout": "",
+      "change-layout-detail": "",
+      "change-panel": "",
+      "change-removed": "",
+      "change-setting": "",
+      "change-variable": "",
+      "compare": "",
+      "compare-base": "",
+      "compare-base-unknown": "",
+      "compare-changes": "",
+      "compare-empty": "",
+      "compare-json": "",
+      "compare-latest": "",
+      "compare-loading": "",
+      "compare-title": "",
+      "discard": "",
+      "discard-draft-body": "",
+      "discard-draft-failed": "",
+      "discard-draft-title": "",
+      "discard-pending-body": "",
+      "discard-pending-failed": "",
+      "discard-pending-title": "",
+      "draft-body": "",
+      "draft-body-source": "",
+      "draft-title": "",
+      "highlight-changes": "",
+      "open-to-save": "",
+      "pending-body": "",
+      "pending-body-source": "",
+      "pending-hint": "",
+      "pending-stale": "",
+      "pending-title": "",
+      "preview-changes": "",
+      "rebase": "",
+      "save": "",
+      "show-original-dashboard": "",
+      "stop-highlighting-changes": "",
+      "apply-title_one": "",
+      "apply-title_other": ""
+    },
     "link-edit-actions": {
       "add-link": "Link hinzufügen",
       "remove-link": "Link entfernen",
@@ -7448,14 +7540,10 @@
       "already-in-folder": "Das Dashboard ist bereits im ausgewählten Ordner.",
       "api-error": "Dashboard konnte nicht verschoben werden",
       "cancel-action": "Abbrechen",
-      "current-file-not-found": "Die aktuelle Dashboard-Datei konnte nicht gefunden werden",
       "drawer-title": "Bereitgestelltes Dashboard verschieben",
-      "file-load-error": "Fehler beim Laden des Dashboards",
-      "loading-dashboard-data": "Daten des Dashboards werden geladen",
       "move-action": "Dashboard verschieben",
       "move-read-only-message": "Dieses Dashboard kann nicht direkt von Grafana aus verschoben werden, da das Repository schreibgeschützt ist. Um dieses Dashboard zu verschieben, verschieben Sie die Datei bitte in Ihrem Git-Repository.",
       "moving": "Wird verschoben ...",
-      "success-message": "Dashboard erfolgreich verschoben",
       "target-path-label": "Zielpfad",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
     },
@@ -7745,6 +7833,7 @@
       "show-variables-warning-alert-title": ""
     },
     "save-errors": {
+      "forbidden": "",
       "unexpected": "Beim Speichern ist ein unerwarteter Fehler aufgetreten."
     },
     "save-library-viz-panel-modal": {
@@ -13075,7 +13164,8 @@
         "close": "Schließen von {{title}}",
         "open": "Öffnen von {{title}}",
         "open-all": "Open-AI-Assistenten und Seitenleisten-Apps"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Workspace aufrufen",
@@ -13632,6 +13722,13 @@
       "placeholder": "Name",
       "required": "Bitte geben Sie einen Titel ein",
       "save-tooltip": "Speichern"
+    }
+  },
+  "page-fallback-loader": {
+    "aria-label": "",
+    "step": {
+      "preparing": "",
+      "preparing-named": ""
     }
   },
   "page-loader": {
@@ -14229,6 +14326,7 @@
       "description-folder": "Ordner innerhalb des Repositorys. Für das Repository-Stammverzeichnis leer lassen.",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "Push zum konfigurierten Branch ist deaktiviert",
       "label-branch": "Branch",
       "label-comment": "Kommentar",
@@ -15460,11 +15558,6 @@
       "original-query": "Ursprüngliche Abfrage",
       "trace-id": "(Trace-ID: {{traceId}})"
     },
-    "query-group": {
-      "add-query": "Abfrage hinzufügen",
-      "expression": "Ausdruck",
-      "title-data-source-help": "Datenquellen-Hilfe"
-    },
     "query-group-options-editor": {
       "collapsed-interval": "Intervall = {{intervalDesc}}",
       "collapsed-max-data-points": "MD = {{mdDesc}}",
@@ -15504,28 +15597,31 @@
     "accept": "Annehmen",
     "assistant-context-title": "Co-Authoring-Kontext abfragen",
     "assistant-instructions-title": "Co-Authoring-Anweisungen abfragen",
-    "assistant-unavailable": "Assistant ist nicht verfügbar",
-    "assistant-unavailable-body": "Co-Authoring-Abfragen erfordern Grafana Assistant.",
-    "building": "Abfrage wird erstellt …",
+    "assistant-unavailable": "",
+    "building": "",
+    "cancel": "",
+    "change-inside-focus": "",
+    "change-outside-focus": "",
     "checking-assistant": "Die Verfügbarkeit von Assistant wird überprüft …",
     "clarification-label": "Zusätzliche Details hinzufügen",
     "clarification-message": "Klärungsnachricht",
-    "clarification-placeholder": "Zusätzliche Details hinzufügen ...",
+    "clarification-placeholder": "",
     "clarification-title": "Detail angefordert",
     "close": "Co-Authoring schließen",
-    "context": "KONTEXT",
-    "context-error": "Der ausgewählte Abfragekontext konnte nicht gelesen werden",
+    "context-error": "",
     "continue": "Fortfahren",
     "continue-here": "Hier geht es weiter",
     "continue-in-assistant": "In Assistant fortfahren",
-    "continue-in-assistant-chat": "Im Assistant-Chat fortfahren",
     "dialog": "Abfrage-Co-Autor",
     "dismiss": "Verwerfen",
     "error": "Co-Authoring-Abfragefehler",
     "error-accept-failed": "Der Abfragevorschlag konnte nicht akzeptiert werden. Versuchen Sie es erneut.",
     "error-multiple-responses": "Assistant hat widersprüchliche Abfragevorschläge zurückgegeben. Versuchen Sie es erneut.",
     "error-preview-failed": "Der Abfragevorschlag konnte nicht in der Vorschau angezeigt werden. Versuchen Sie es erneut.",
+    "explain-failed": "",
     "explain-or-modify": "Erklären oder ändern",
+    "explain-query": "",
+    "explaining": "",
     "feedback-cancel": "Abbrechen",
     "feedback-description": "Ihr Feedback hilft, die Abfrageerfahrung in Grafana zu verbessern.",
     "feedback-error": "Feedback konnte nicht gesendet werden. Versuchen Sie es erneut.",
@@ -15536,36 +15632,61 @@
     "feedback-not-helpful": "Nicht hilfreich",
     "feedback-positive-placeholder": "Was hat Ihnen gefallen? Wie hätte es noch besser sein können?",
     "feedback-positive-title": "Was hat gut funktioniert?",
-    "feedback-privacy": "Ihre Bewertung, Ihr Kommentar und die Angabe, ob es sich um einen Vorschlag oder eine Übergabe handelte, werden gesendet. Ihre Abfrage, Ihre Eingabeaufforderung und die Assistant-Antwort sind nicht enthalten.",
+    "feedback-privacy": "",
     "feedback-recipient": "Ihr Feedback wird an die Teams gesendet, die an der Abfrage arbeiten.",
     "feedback-send": "Senden",
     "feedback-sending": "Senden …",
-    "focus": "FOKUS",
-    "handoff-guidance": "Ihre Änderungen müssen möglicherweise eine andere Datenquelle oder zusätzliche Abfragen außerhalb derjenigen umfassen, auf die wir uns konzentrieren. Fahren Sie im Assistant-Chat fort, um größere Änderungen vorzunehmen.",
+    "focus": "",
+    "follow-up-label": "",
+    "follow-up-placeholder": "",
+    "handoff-guidance": "",
     "highlighted-query": "Hervorgehobene Abfrage",
-    "highlighted-query-summary": "Zusammenfassung der hervorgehobenen Abfrage",
+    "hold-to-peek": "",
     "invalid-query-response": "Assistant konnte nach dem Versuch, den Vorschlag zu reparieren, keine gültige {{language}} erstellen. Versuchen Sie es erneut oder fügen Sie weitere Details hinzu.",
     "iteration-nudge": "Arbeiten Sie an etwas Großem? Iterieren Sie größere Änderungen mit mehr Platz.",
-    "open-in-chat": "Im Chat öffnen",
-    "original-change": "Ursprüngliche {{kind}}",
+    "mention-label": "",
+    "mention-metric": "",
+    "mention-option": "",
+    "mention-suggestions": "",
+    "modify-query": "",
+    "next-option": "",
+    "open-in-chat": "",
+    "option": "",
+    "options": "",
+    "original": "",
+    "original-query": "",
+    "preview-error": "",
+    "preview-error-title": "",
+    "preview-no-data": "",
+    "preview-no-data-suggestion": "",
+    "preview-no-signal": "",
+    "preview-no-signal-title": "",
+    "preview-option": "",
+    "preview-original": "",
+    "preview-result": "",
     "previewing-query": "Vorschau der Abfrage",
+    "previous-option": "",
     "prompt-label": "Beschreiben Sie eine Abfrageänderung",
-    "prompt-placeholder": "Beschreiben Sie eine schnelle Änderung …",
+    "prompt-placeholder": "",
     "proposal-details": "Details zum Abfragevorschlag",
-    "proposed-change": "Vorgeschlagene {{kind}}",
-    "reading-highlighted-query": "Hervorgehobene Abfrage wird gelesen …",
+    "query-diff": "",
     "relevant-context": "Relevanter Abfragekontext",
     "request-failed": "Assistant konnte keinen Abfragevorschlag erstellen. Versuchen Sie es erneut.",
+    "resize-left": "",
+    "resize-right": "",
     "retry": "Erneut versuchen",
+    "retry-context": "",
     "running-updated-query": "Aktualisierte Abfrage wird ausgeführt …",
+    "select-to-accept": "",
     "selection-ready": "Die Auswahl ist Teil dieser {{language}}-Abfrage.",
     "selection-whole-query": "Die vollständige {{language}}-Abfrage ist für Co-Authoring ausgewählt.",
     "selection-with-type": "{{name}} ist ein {{type}} {{kind}}.",
     "stale-query-response": "Die hervorgehobene Abfrage wurde geändert, bevor der Vorschlag bereit war. Verwerfen Sie sie und markieren Sie sie erneut.",
     "stop": "Abbrechen",
     "submit": "Co-Autor",
-    "suggestion-updated": "Vorschlag aktualisiert",
+    "submit-follow-up": "",
     "unchanged-query-response": "Assistant hat die aktuelle Abfrage ohne Änderungen zurückgegeben. Versuchen Sie es erneut oder fügen Sie weitere Details hinzu.",
+    "unconfirmed-prefix": "",
     "unsaved-safe": "Nicht gespeicherte Panel-Bearbeitungen gehen nicht verloren.",
     "working-focus": "Abfragefokus"
   },
@@ -15751,6 +15872,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "Wählen Sie zum Fortfahren eine Datenquelle für diese Abfrage aus.",
     "datasource-load-error-title": "Die Datenquelle für diese Abfrage konnte nicht geladen werden",
     "loading-datasource": "Datenquelle wird geladen",
@@ -15947,6 +16069,7 @@
       "expand": "Ausklappen",
       "filter": "",
       "loading": "Dashboards werden geladen",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Keine Ergebnisse für deine Abfrage gefunden",
       "noResultsForFilterClear": "Suche löschen",
       "noResultsForScopes": "Es wurden keine Dashboards oder Links für die ausgewählten Bereiche gefunden",
@@ -16181,14 +16304,7 @@
       "time-range": "Zeitbereich sperren"
     },
     "export": {
-      "back-button": "Zurück zum Export der Konfiguration",
-      "cancel-button": "Abbrechen",
-      "info-text": "Dieses Dashboard exportieren.",
-      "loading": "Wird geladen ...",
-      "save-button": "In Datei speichern …",
-      "share-externally-label": "Export für externe Freigabe",
-      "view-button": "JSON anzeigen",
-      "view-button-yaml": "YAML anzeigen"
+      "share-externally-label": "Export für externe Freigabe"
     },
     "image": {
       "actions": "Bildexportaktionen",
@@ -16246,9 +16362,6 @@
       "dark": "Dunkel",
       "field-name": "Design",
       "light": "Hell"
-    },
-    "view-json": {
-      "copy-button": "In Zwischenablage kopieren"
     }
   },
   "share-panel": {
@@ -16668,8 +16781,61 @@
   },
   "swagger": {
     "login": "Anmelden",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Überprüfen Sie den Namensraum, bevor Sie Abfragen senden, oder laden Sie die Seite neu, um es erneut zu versuchen.",
-    "namespace-unavailable-title": "Namensraum kann nicht geladen werden"
+    "namespace-unavailable-title": "Namensraum kann nicht geladen werden",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16723,6 +16889,9 @@
     "description-styling-from-field": "Ein Feld, das JSON-Objekte mit CSS-Eigenschaften enthält",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Hintergrundfarbe jeder zweiten Zeile abwechseln",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Abfrage"
     },
@@ -17427,6 +17596,7 @@
       "description": {
         "remove-part-query-results-regex-pattern": "Entfernen Sie mit einem Regex-Muster Teile der Abfrageergebnisse."
       },
+      "deselect-all": "",
       "label-from-variable": "Von Variable",
       "label-identifier": "Kennung",
       "label-use-variable": "Variable verwenden",
@@ -17434,7 +17604,8 @@
       "name": {
         "filter-fields-by-name": "Felder nach Name filtern"
       },
-      "placeholder-regular-expression-pattern": "Reguläres Ausdrucksmuster"
+      "placeholder-regular-expression-pattern": "Reguläres Ausdrucksmuster",
+      "select-all": ""
     },
     "filter-by-ref-id-transformer-editor": {
       "description": {
@@ -18269,6 +18440,7 @@
       "body_other": "Sind Sie sicher, dass Sie {{count}} Variablen löschen möchten?"
     },
     "editor": {
+      "back": "",
       "cancel": "Abbrechen",
       "delete": "Löschen",
       "delete-modal-body": "Sind Sie sicher, dass Sie „{{name}}“ löschen möchten?",
@@ -18277,6 +18449,7 @@
       "folder-description": "Ordnen Sie die Variable einem Ordner zu oder wählen Sie den Stammordner der Dashboards aus, um sie global zugänglich zu machen (für alle Dashboards verfügbar)",
       "folder-description-folder-only": "Ordnen Sie die Variable einem Ordner zu, den Sie bearbeiten können",
       "folder-label": "Ordner",
+      "load-error-title": "",
       "moved": "Variable verschoben",
       "name-exists": "Eine Variable mit diesem Namen ist im ausgewählten Ordner bereits vorhanden",
       "save": "Speichern",

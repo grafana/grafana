@@ -101,7 +101,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     quickRanges,
     hideQuickRanges,
     widthOverride,
-    isOnCanvas,
+    isOnCanvas = true,
     onToolbarTimePickerClick,
     weekStart,
     initialIsSynced,

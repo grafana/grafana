@@ -274,8 +274,8 @@ func WriteFolderMetadataUpdate(ctx context.Context, repo repository.ReaderWriter
 }
 
 // GetFolderID returns the folder ID for the given path.
-// When folderMetadataEnabled is true, it attempts to read the stable UID from _folder.json.
-// If metadata file doesn't exist or metadata is disabled, it falls back to the hash-based ID.
+// It attempts to read the stable UID from _folder.json.
+// If the metadata file doesn't exist, it falls back to the hash-based ID.
 // Returns an error if reading the metadata file fails for reasons other than not existing.
 func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (string, error) {
 	folder, err := ParseFolderWithMetadata(ctx, reader, path, ref, folderMetadataEnabled)
@@ -286,13 +286,8 @@ func GetFolderID(ctx context.Context, reader repository.Reader, path, ref string
 }
 
 // ParseFolderWithMetadata parses a Folder at the given path and applies stable UID, title, and checksum from folder metadata if it exists.
-// In case folderMetadataEnabled is false, it returns the parsed folder without applying metadata.
 func ParseFolderWithMetadata(ctx context.Context, reader repository.Reader, path, ref string, folderMetadataEnabled bool) (Folder, error) {
 	f := ParseFolder(path, reader.Config().Name)
-	if !folderMetadataEnabled {
-		return f, nil
-	}
-
 	meta, hash, err := ReadFolderMetadata(ctx, reader, path, ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err) {
@@ -326,21 +321,19 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 		folderExists bool
 	)
 
-	if folderMetadataEnabled {
-		folderObj, _, err = ReadFolderMetadata(ctx, reader, path, ref)
-		if err != nil && !errors.Is(err, repository.ErrFileNotFound) {
-			return nil, fmt.Errorf("read folder metadata: %w", err)
-		}
-
-		// If metadata was found, use its stable UID and title and mark folder as existing
-		if folderObj != nil && folderObj.Name != "" {
-			folderID = folderObj.Name
-			folderTitle = folderObj.Spec.Title
-			folderExists = true
-		}
+	folderObj, _, err = ReadFolderMetadata(ctx, reader, path, ref)
+	if err != nil && !errors.Is(err, repository.ErrFileNotFound) {
+		return nil, fmt.Errorf("read folder metadata: %w", err)
 	}
 
-	// If metadata wasn't found or is disabled, check if folder path exists
+	// If metadata was found, use its stable UID and title and mark folder as existing
+	if folderObj != nil && folderObj.Name != "" {
+		folderID = folderObj.Name
+		folderTitle = folderObj.Spec.Title
+		folderExists = true
+	}
+
+	// If metadata wasn't found, check if folder path exists
 	// The repository interface will handle checking for folder markers (.keep, etc.)
 	if !folderExists {
 		_, err = reader.Read(ctx, path, ref)
@@ -354,11 +347,11 @@ func ParseFolderResource(ctx context.Context, reader repository.Reader, path, re
 		// If err is ErrFileNotFound, folder doesn't exist (folderExists remains false)
 	}
 
-	// If no metadata exists or metadata is disabled, use hash-based ID
+	// If no metadata exists, use hash-based ID
 	if folderID == "" {
 		folderID = ParseFolder(path, config.Name).ID
 	}
-	// If no metadata exists or metadata is disabled, use the path-based title
+	// If no metadata exists, use the path-based title
 	if folderTitle == "" {
 		folderTitle = safepath.Base(path)
 	}

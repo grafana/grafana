@@ -14,7 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
@@ -121,13 +122,13 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		// fall through to the normal list pipeline below.
 	}
 
-	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.GroupLabelKey)
+	groupFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, v1beta1.GroupLabelKey)
 	if err != nil {
-		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", model.GroupLabelKey, err))
+		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", v1beta1.GroupLabelKey, err))
 	}
-	folderFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, model.FolderLabelKey)
+	folderFilter, err := common.ParseLabelSelectorFilter(opts.LabelSelector, v1beta1.FolderLabelKey)
 	if err != nil {
-		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", model.FolderLabelKey, err))
+		return nil, k8serrors.NewBadRequest(fmt.Sprintf("invalid label selector for %s: %s", v1beta1.FolderLabelKey, err))
 	}
 
 	var (
@@ -230,8 +231,9 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		}
 	}
 
-	p, ok := obj.(*model.RecordingRule)
-	if !ok {
+	// The dual writer can pass the object in the version of the request.
+	p, err := convert.Hub[*v1beta1.RecordingRule](obj)
+	if err != nil {
 		return nil, k8serrors.NewBadRequest("expected valid recording rule object")
 	}
 
@@ -239,7 +241,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, k8serrors.NewBadRequest("generate-name is not supported in legacy storage mode")
 	}
 	// TODO: move this to the validation function
-	if p.Labels[model.GroupLabelKey] != "" || p.Labels[model.GroupIndexLabelKey] != "" {
+	if p.Labels[v1beta1.GroupLabelKey] != "" || p.Labels[v1beta1.GroupIndexLabelKey] != "" {
 		return nil, k8serrors.NewBadRequest("cannot set group label when creating recording rule")
 	}
 
@@ -282,8 +284,8 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		}
 	}
 
-	new, ok := obj.(*model.RecordingRule)
-	if !ok {
+	new, err := convert.Hub[*v1beta1.RecordingRule](obj)
+	if err != nil {
 		return nil, false, k8serrors.NewBadRequest("expected valid recording rule object")
 	}
 	// FIXME(@rwwiv): this shouldn't be necessary
@@ -334,8 +336,8 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 			return nil, false, err
 		}
 	}
-	p, ok := old.(*model.RecordingRule)
-	if !ok {
+	p, err := convert.Hub[*v1beta1.RecordingRule](old)
+	if err != nil {
 		return nil, false, k8serrors.NewBadRequest("expected valid recording rule object")
 	}
 

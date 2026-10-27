@@ -173,6 +173,8 @@ func TestIntegrationProvisioning_PullJobFolderDepthExceeded_RecoversAfterFix(t *
 		SkipSync: true,
 	})
 
+	common.WriteFolderMetadata(t, repo, repoPath, "ok", deepDir)
+
 	job := helper.TriggerJobAndWaitForComplete(t, repo, provisioning.JobSpec{
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{},
@@ -187,7 +189,10 @@ func TestIntegrationProvisioning_PullJobFolderDepthExceeded_RecoversAfterFix(t *
 	require.NoError(t, os.Remove(filepath.Join(repoPath, deepDashboardRel)))
 	require.NoError(t, os.RemoveAll(filepath.Join(repoPath, "a")))
 
-	helper.SyncAndWait(t, repo, nil)
+	helper.TriggerJobAndWaitForSuccess(t, repo, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{},
+	})
 	helper.WaitForConditionReason(t, repo,
 		provisioning.ConditionTypePullStatus,
 		provisioning.ReasonSuccess)

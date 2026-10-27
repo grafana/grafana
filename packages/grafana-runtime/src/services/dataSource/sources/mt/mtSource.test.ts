@@ -47,7 +47,6 @@ const promConnection: DataSourceConnection = {
   title: 'Prom',
   name: 'uid-prom',
   group: 'prometheus.datasource.grafana.app',
-  version: 'v0alpha1',
   plugin: 'prometheus',
   labels: { default: 'true' },
 };
@@ -148,7 +147,6 @@ describe('list', () => {
         uid: 'uid-prom',
         name: 'Prom',
         type: 'prometheus',
-        apiVersion: 'v0alpha1',
         meta: metas.prometheus,
       },
       { uid: 'grafana', name: '-- Grafana --', type: 'datasource', meta: metas.grafana },

@@ -3,6 +3,7 @@ package dualwrite
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -56,25 +57,25 @@ func TestDualWriter_List_UnifiedDonePaging(t *testing.T) {
 	require.Empty(t, us.listCalls)
 }
 
-// TestDualWriter_List_UnifiedTimeoutDoesNotBlock verifies that when the unified
-// list call takes longer than the 300 ms budget the writer returns the legacy
-// result immediately without blocking.
 func TestDualWriter_List_UnifiedTimeoutDoesNotBlock(t *testing.T) {
-	ls := &fakeStorage{}
-	us := &fakeStorage{}
+	// Use fake time so CI scheduling delays cannot fail the timeout assertion.
+	synctest.Test(t, func(t *testing.T) {
+		ls := &fakeStorage{}
+		us := &fakeStorage{blockList: true}
+		ls.onList(exampleList, nil)
 
-	ls.onList(exampleList, nil)
-	// unified deliberately blocks until ctx is canceled (simulates slow response)
-	us.blockList = true
+		dw, err := newStorage(kind, rest.Mode1, ls, us)
+		require.NoError(t, err)
 
-	dw, err := newStorage(kind, rest.Mode1, ls, us)
-	require.NoError(t, err)
+		// Let the background request reach its deadline before leaving the bubble.
+		defer time.Sleep(backgroundReqTimeout)
 
-	start := time.Now()
-	obj, err := dw.List(context.Background(), &metainternalversion.ListOptions{})
-	elapsed := time.Since(start)
+		start := time.Now()
+		obj, err := dw.List(t.Context(), &metainternalversion.ListOptions{})
+		elapsed := time.Since(start)
 
-	require.NoError(t, err)
-	require.Equal(t, exampleList, obj) // legacy result, not unified
-	require.Less(t, elapsed, 500*time.Millisecond, "List should not block waiting for unified")
+		require.NoError(t, err)
+		require.Equal(t, exampleList, obj)
+		require.Equal(t, 300*time.Millisecond, elapsed, "List should return before the unified request finishes")
+	})
 }

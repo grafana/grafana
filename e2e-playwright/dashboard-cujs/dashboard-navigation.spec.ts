@@ -20,7 +20,6 @@ import { checkDashboardReloadBehavior, getConfigDashboards, trackDashboardReload
 test.use({
   featureToggles: {
     scopeFilters: true,
-    groupByVariable: true,
   },
   openFeature: {
     flags: {

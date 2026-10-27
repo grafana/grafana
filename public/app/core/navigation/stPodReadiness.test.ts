@@ -6,6 +6,7 @@ import {
   markStPodTimeout,
   markStPodWaiting,
   StPodStatus,
+  subscribeToStPodStatus,
 } from './stPodReadiness';
 
 describe('stPodReadiness', () => {
@@ -106,5 +107,63 @@ describe('stPodReadiness', () => {
 
     const stillPending = Symbol('still-pending');
     await expect(Promise.race([after, Promise.resolve(stillPending)])).resolves.toBe(stillPending);
+  });
+
+  describe('subscribeToStPodStatus', () => {
+    let unsubscribe: (() => void) | undefined;
+
+    afterEach(() => {
+      unsubscribe?.();
+      unsubscribe = undefined;
+    });
+
+    it.each([
+      ['waiting', markStPodWaiting, StPodStatus.Waiting],
+      ['ready', markStPodReady, StPodStatus.Ready],
+      ['timeout', markStPodTimeout, StPodStatus.Timeout],
+    ])('notifies once, with the new status already set, when the pod is marked %s', (_, mark, expected) => {
+      const seen: StPodStatus[] = [];
+      unsubscribe = subscribeToStPodStatus(() => seen.push(getStPodStatus()));
+
+      mark();
+
+      expect(seen).toEqual([expected]);
+    });
+
+    it('notifies when a timed-out pod is invalidated so mounted consumers can show pending again', () => {
+      markStPodTimeout();
+      const listener = jest.fn();
+      unsubscribe = subscribeToStPodStatus(listener);
+
+      invalidateStPodReadiness();
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(getStPodStatus()).toBe(StPodStatus.Unknown);
+    });
+
+    it('does not notify when the status does not change', () => {
+      markStPodWaiting();
+      const listener = jest.fn();
+      unsubscribe = subscribeToStPodStatus(listener);
+
+      markStPodWaiting();
+
+      expect(getStPodStatus()).toBe(StPodStatus.Waiting);
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('notifies every subscriber until it unsubscribes', () => {
+      const stays = jest.fn();
+      const leaves = jest.fn();
+      unsubscribe = subscribeToStPodStatus(stays);
+      const stop = subscribeToStPodStatus(leaves);
+
+      markStPodReady();
+      stop();
+      markStPodTimeout();
+
+      expect(stays).toHaveBeenCalledTimes(2);
+      expect(leaves).toHaveBeenCalledTimes(1);
+    });
   });
 });

@@ -1,7 +1,9 @@
 import { useCallback, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { Combobox, type ComboboxOption } from '@grafana/ui';
+import { type ComboboxOption } from '@grafana/ui';
+
+import { FooterFilterCombobox } from '../FooterActions';
 
 import { ALL_SCOPE, type FilterSelection, resolveFilterScope } from './filterSelection';
 
@@ -101,8 +103,8 @@ export function LabelFilterCombobox({
   );
 
   return (
-    <Combobox
-      prefixIcon="filter"
+    <FooterFilterCombobox
+      label={valueOption.label ?? valueOption.value}
       options={searchOptions}
       value={valueOption}
       onChange={(option) => {

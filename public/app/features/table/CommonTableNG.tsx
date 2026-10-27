@@ -9,8 +9,8 @@ import { TableNG } from '@grafana/ui/unstable';
 
 export type CommonTableNGProps = Omit<
   ComponentProps<typeof TableNG>,
-  'tableRefreshEnabled' | 'contentAwareWidthsEnabled' | 'jsonSyntaxHighlightingEnabled'
->;
+  'tableRefreshEnabled' | 'contentAwareWidthsEnabled' | 'jsonSyntaxHighlightingEnabled' | 'timeZone'
+> & { timeZone: string };
 
 /**
  * Wraps `TableNG` with the feature-toggle-driven props common to every caller. `useCommonTableProps`

@@ -1,4 +1,4 @@
-import { useCallback, useSyncExternalStore } from 'react';
+import { useCallback, useState, useSyncExternalStore } from 'react';
 
 import { type DataTransformerConfig } from '@grafana/data';
 
@@ -10,14 +10,21 @@ export type UpdateTransformations = (
   change: (current: readonly DataTransformerConfig[]) => readonly DataTransformerConfig[]
 ) => void;
 
-export function useTableTransformations(api: PanelRuntimeTransformations | undefined, owner: string) {
+export function useTableTransformations(
+  api: PanelRuntimeTransformations | undefined,
+  owner: string,
+  localFallback = false
+) {
   const transformations = useSyncExternalStore(
     useCallback((listener) => api?.subscribe(owner, listener) ?? (() => {}), [api, owner]),
     useCallback(() => api?.get(owner) ?? EMPTY_TRANSFORMATIONS, [api, owner])
   );
+  const [local, setLocal] = useState<readonly DataTransformerConfig[]>(EMPTY_TRANSFORMATIONS);
   const update: UpdateTransformations = useCallback(
     (change) => {
-      if (api) {
+      if (!api && localFallback) {
+        setLocal(change);
+      } else if (api) {
         // Read at write time so successive actions cannot overwrite one another.
         const current = api.get(owner);
         const next = change(current);
@@ -26,8 +33,8 @@ export function useTableTransformations(api: PanelRuntimeTransformations | undef
         }
       }
     },
-    [api, owner]
+    [api, owner, localFallback]
   );
 
-  return { transformations, sourceSeries: api?.getSourceSeries(owner), update };
+  return { transformations: api ? transformations : local, sourceSeries: api?.getSourceSeries(owner), update };
 }

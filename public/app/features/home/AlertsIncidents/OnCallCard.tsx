@@ -7,7 +7,7 @@ import { type OnCallShortUser, SHIFTS_LOOKAHEAD_DAYS } from 'app/features/alerti
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
-import { FooterAction, FooterActions } from '../FooterActions';
+import { FooterAction } from '../FooterActions';
 import { ctaClicked } from '../analytics/main';
 
 import { SummaryCard } from './SummaryCard';
@@ -59,16 +59,15 @@ export function OnCallCard({ now }: { now: number }) {
   );
 }
 
-export function ViewSchedulesButton({ href }: { href: string }) {
+/** The tab's footer action; the tabs component lays it out. */
+export function ViewSchedulesAction({ href }: { href: string }) {
   return (
-    <FooterActions>
-      <FooterAction
-        href={href}
-        onClick={() => ctaClicked({ surface: 'oncall_card', action: 'view_schedules', placement: 'footer' })}
-      >
-        <Trans i18nKey="home.on-call-card.view-schedules">View schedules</Trans>
-      </FooterAction>
-    </FooterActions>
+    <FooterAction
+      href={href}
+      onClick={() => ctaClicked({ surface: 'oncall_card', action: 'view_schedules', placement: 'footer' })}
+    >
+      <Trans i18nKey="home.on-call-card.view-schedules">View schedules</Trans>
+    </FooterAction>
   );
 }
 

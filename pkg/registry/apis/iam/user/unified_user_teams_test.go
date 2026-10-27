@@ -17,9 +17,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	apirequest "k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/utils/ptr"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
@@ -68,10 +70,14 @@ func TestUnifiedUserTeamsResponseFormats(t *testing.T) {
 					return nil, errors.New("requester not preserved")
 				}
 				permission := iamv0.TeamTeamPermission("member")
+				var teamLabels map[string]string
 				if name == "team-a" {
 					permission = "admin"
+					teamLabels = map[string]string{
+						apiutils.LabelKeyDeprecatedInternalID: "42", //nolint:staticcheck // verifies legacy team ID propagation
+					}
 				}
-				return &iamv0.Team{Spec: iamv0.TeamSpec{Members: []iamv0.TeamTeamMember{
+				return &iamv0.Team{ObjectMeta: metav1.ObjectMeta{Labels: teamLabels}, Spec: iamv0.TeamSpec{Members: []iamv0.TeamTeamMember{
 					{Name: "bob", Permission: "member"},
 					{Name: "alice", Permission: permission, External: name == "team-b"},
 				}}}, nil
@@ -81,7 +87,7 @@ func TestUnifiedUserTeamsResponseFormats(t *testing.T) {
 				page, err := backend.ListUserTeams(ctx, UserTeamsQuery{Namespace: "stacks-1", UserUID: "alice", Limit: limit})
 				require.NoError(t, err)
 				require.Equal(t, []iamv0.GetUserTeamsUserTeam{
-					{User: "alice", Team: "team-a", Permission: "admin"},
+					{User: "alice", Team: "team-a", TeamInternalId: ptr.To(int64(42)), Permission: "admin"},
 					{User: "alice", Team: "team-b", Permission: "member", External: true},
 				}, page.Items)
 				if limit == 2 {

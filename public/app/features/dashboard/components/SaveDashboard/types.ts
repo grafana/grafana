@@ -27,4 +27,7 @@ export interface SaveDashboardCommand<T> {
 
   // When loading dashboards from k8s, we need to have access to the metadata wrapper
   k8s?: Partial<ObjectMeta>;
+
+  // Create the dashboard, under k8s.name when it is set, instead of updating the dashboard it names.
+  create?: boolean;
 }

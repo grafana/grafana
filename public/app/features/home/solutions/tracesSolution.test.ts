@@ -1,6 +1,6 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { HOSTED_TRACES_APP_ID } from 'app/core/appPluginIds';
 
-import { HOSTED_TRACES_APP_ID } from './appPluginIds';
 import { drilldownActiveCta } from './pluginPages';
 import { detectSignal } from './solutionState';
 import { fetchTracesActivity, fetchTracesServices } from './telemetryData';

@@ -39,7 +39,6 @@ type BleveIndexMetrics struct {
 	IndexDiskCleanupRuns        *prometheus.CounterVec
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 
-	SearchCapabilityViolations      *prometheus.CounterVec
 	SearchResultFormats             *prometheus.CounterVec
 	SearchServicePermissionFailures *prometheus.CounterVec
 
@@ -234,10 +233,6 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_build_indexed_bytes_total",
 			Help: "Bytes the index reports for the documents it was given. Compare with source bytes to see how much bigger or smaller search documents are.",
 		}, []string{"path", "group", "resource"}),
-		SearchCapabilityViolations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_index_server_search_capability_violations_total",
-			Help: "Number of search requests that used a field in a way its declaration does not allow. Counted whether or not the request was rejected.",
-		}, []string{"resource", "capability"}),
 		SearchServicePermissionFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_search_service_permission_failures_total",
 			Help: "Search preflight checks where the service token lacks a required direct or delegated permission, regardless of RBAC exemption. With exempt=\"false\", a search of one type was rejected, and a global search left the type out.",

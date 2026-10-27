@@ -1,4 +1,5 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 export const SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES = [
   'prometheus',
@@ -16,6 +17,10 @@ export function isSupportedExternalPrometheusFlavoredRulesSourceType(
   type: string
 ): type is SupportedExternalPrometheusFlavoredRulesSourceType {
   return SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES.find((t) => t === type) !== undefined;
+}
+
+export function isDataSourceManagingAlerts(ds: Pick<DataSourceInstanceSettings, 'jsonData'>): boolean {
+  return ds.jsonData.manageAlerts ?? config.defaultDatasourceManageAlertsUiToggle;
 }
 
 export function isDataSourceAllowedAsRecordingRulesTarget(ds: DataSourceInstanceSettings): boolean {

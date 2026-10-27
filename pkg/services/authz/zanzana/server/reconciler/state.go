@@ -20,7 +20,7 @@ const (
 	// a change makes tuples written by earlier versions wrong, so that every
 	// namespace reconciles on its next authorization request instead of waiting
 	// out the reconciler interval.
-	stateVersion = 1
+	stateVersion = 2
 )
 
 // StateStore persists which namespaces have been reconciled, keyed by

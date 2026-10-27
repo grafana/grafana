@@ -31,7 +31,7 @@ func TestLoopbackRestConfigProvider(t *testing.T) {
 	router.served["folder.grafana.app"].handler = proxy
 	router.publish(t.Context())
 	provider := NewLoopbackRestConfigProvider(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		router.HandleFunc(w, r, http.NotFoundHandler())
+		router.HandleFunc(w, r)
 	}))
 	cfg, err := provider.GetRestConfig(t.Context())
 	require.NoError(t, err)
@@ -42,7 +42,7 @@ func TestLoopbackRestConfigProvider(t *testing.T) {
 	require.NoError(t, err)
 	folders := client.Resource(schema.GroupVersionResource{Group: "folder.grafana.app", Version: "v1", Resource: "folders"}).Namespace("stacks-5457")
 	for _, token := range []string{"first-caller", "second-caller"} {
-		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser, AccessToken: token, IDToken: "id-" + token})
+		ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser, Namespace: "stacks-5457", AccessToken: token, IDToken: "id-" + token})
 		folder, err := folders.Get(ctx, "fw9lwk", metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "fw9lwk", folder.GetName())
@@ -58,6 +58,6 @@ func TestLoopbackRestConfigProvider(t *testing.T) {
 	_, err = folders.Get(ctx, "fw9lwk", metav1.GetOptions{})
 	require.ErrorIs(t, err, context.Canceled)
 	_, err = client.Resource(schema.GroupVersionResource{Group: "missing.grafana.app", Version: "v1", Resource: "folders"}).Namespace("stacks-5457").Get(
-		identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser}), "fw9lwk", metav1.GetOptions{})
+		identity.WithRequester(t.Context(), &identity.StaticRequester{Type: types.TypeUser, Namespace: "stacks-5457"}), "fw9lwk", metav1.GetOptions{})
 	require.True(t, apierrors.IsNotFound(err), "%v", err)
 }

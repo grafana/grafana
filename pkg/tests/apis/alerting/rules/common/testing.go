@@ -24,7 +24,7 @@ func ToK8sNoDataState(state ngmodels.NoDataState) v0alpha1.AlertRuleNoDataState 
 	if err != nil {
 		panic(err)
 	}
-	return s
+	return v0alpha1.AlertRuleNoDataState(s)
 }
 
 // ToK8sExecErrState converts a legacy ExecutionErrorState into its k8s enum
@@ -34,7 +34,7 @@ func ToK8sExecErrState(state ngmodels.ExecutionErrorState) v0alpha1.AlertRuleExe
 	if err != nil {
 		panic(err)
 	}
-	return s
+	return v0alpha1.AlertRuleExecErrState(s)
 }
 
 func NewAlertRuleClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.AlertRule, v0alpha1.AlertRuleList] {

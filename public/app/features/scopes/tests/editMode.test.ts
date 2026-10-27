@@ -31,7 +31,6 @@ describe('Scope selector in edit mode', () => {
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
   });
 
   beforeEach(async () => {
@@ -87,7 +86,6 @@ describe('setReadOnly', () => {
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
   });
 
   beforeEach(async () => {
@@ -130,7 +128,6 @@ describe('setRedirectEnabled', () => {
 
   beforeAll(() => {
     config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
   });
 
   beforeEach(async () => {

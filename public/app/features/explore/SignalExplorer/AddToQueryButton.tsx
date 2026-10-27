@@ -4,24 +4,24 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { IconButton, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { type ExprTextKind } from '../utils/prometheus';
+import { type AddToQueryItemType } from './types';
 
 interface Props {
   text: string;
-  kind: ExprTextKind;
+  itemType: AddToQueryItemType;
   /** Names the item, since every row shares the same tooltip. */
   ariaLabel: string;
-  onAdd: (text: string, kind: ExprTextKind) => void;
+  onAdd: (text: string, itemType: AddToQueryItemType) => void;
 }
 
 /** Hidden until its row reveals it: spread `getAddToQueryReveal` into the row's styles. */
-export function AddToQueryButton({ text, kind, ariaLabel, onAdd }: Props) {
+export function AddToQueryButton({ text, itemType, ariaLabel, onAdd }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
     <span className={styles.wrapper}>
       <Tooltip content={t('explore.signal-explorer.add-to-query', 'Add to query')}>
-        <IconButton name="plus" size="sm" aria-label={ariaLabel} onClick={() => onAdd(text, kind)} />
+        <IconButton name="plus" size="sm" aria-label={ariaLabel} onClick={() => onAdd(text, itemType)} />
       </Tooltip>
     </span>
   );

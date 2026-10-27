@@ -300,6 +300,7 @@ function navItemsAreTheSame(a: NavModelItem | undefined, b: NavModelItem | undef
   return (
     a?.text === b?.text &&
     a?.url === b?.url &&
+    a?.highlightText === b?.highlightText &&
     aActiveChild?.url === bActiveChild?.url &&
     navItemsAreTheSame(a?.parentItem, b?.parentItem)
   );

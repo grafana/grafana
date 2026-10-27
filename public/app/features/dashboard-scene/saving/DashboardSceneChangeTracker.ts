@@ -1,4 +1,4 @@
-import { debounce, isEqual } from 'lodash';
+import { debounce, type DebouncedFunc, isEqual } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
 import {
@@ -35,13 +35,17 @@ import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { isSceneVariableInstance } from '../settings/variables/utils';
 import { hasPredefinedVariablesAnnotationChanges } from '../utils/predefinedVariablesMetadata';
 
-import { type DashboardChangeInfo } from './shared';
+import { type DashboardChangesRequest, type DashboardChangesResponse } from './shared';
 
 export class DashboardSceneChangeTracker {
   private _changeTrackerSub: Unsubscribable | undefined;
   private _changesWorker?: Worker;
   private _settingsChangesSub?: Unsubscribable;
   private _dashboard: DashboardScene;
+  private _generation = 0;
+  private _performSaveModelDiff = getChangeTrackerDebouncer(() => {
+    this.detectSaveModelChanges();
+  });
 
   constructor(dashboard: DashboardScene) {
     this._dashboard = dashboard;
@@ -179,7 +183,11 @@ export class DashboardSceneChangeTracker {
     const initial =
       typeof initialDashboard === 'object' ? JSON.parse(JSON.stringify(initialDashboard)) : initialDashboard;
 
-    this._changesWorker?.postMessage({ initial, changed });
+    this._changesWorker?.postMessage({
+      initial,
+      changed,
+      generation: this._generation,
+    } satisfies DashboardChangesRequest);
   }
 
   private hasMetadataChanges() {
@@ -205,14 +213,18 @@ export class DashboardSceneChangeTracker {
     this._changesWorker = createWorker();
   }
 
-  public startTrackingChanges() {
+  public get isTrackingChanges() {
+    return this._changeTrackerSub !== undefined;
+  }
+
+  public startTrackingChanges({ checkForChanges = false } = {}) {
     this.stopTrackingChanges();
     if (!this._changesWorker) {
       this.init();
     }
 
-    this._changesWorker!.onmessage = (e: MessageEvent<DashboardChangeInfo>) => {
-      if (!this._dashboard.state.isEditing) {
+    this._changesWorker!.onmessage = (e: MessageEvent<DashboardChangesResponse>) => {
+      if (!this._dashboard.state.isEditing || e.data.generation !== this._generation) {
         return;
       }
 
@@ -231,27 +243,35 @@ export class DashboardSceneChangeTracker {
       }
     });
 
-    const performSaveModelDiff = getChangeTrackerDebouncer(this.detectSaveModelChanges.bind(this));
-
     this._changeTrackerSub = this._dashboard.subscribeToEvent(
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
         if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
-          performSaveModelDiff();
+          this._performSaveModelDiff();
         }
       }
     );
+
+    if (checkForChanges) {
+      this._performSaveModelDiff();
+    }
   }
 
-  public stopTrackingChanges() {
+  public stopTrackingChanges({ discardPendingChecks = false } = {}) {
     this._settingsChangesSub?.unsubscribe();
     this._settingsChangesSub = undefined;
     this._changeTrackerSub?.unsubscribe();
     this._changeTrackerSub = undefined;
+
+    if (discardPendingChecks) {
+      // Old replies must stay invalid even after tracking resumes.
+      this._generation++;
+      this._performSaveModelDiff.cancel();
+    }
   }
 
   public terminate() {
-    this.stopTrackingChanges();
+    this.stopTrackingChanges({ discardPendingChecks: true });
     this._changesWorker?.terminate();
     this._changesWorker = undefined;
   }
@@ -260,9 +280,9 @@ export class DashboardSceneChangeTracker {
 /**
  * The debouncer makes unit tests slower and more complex so turning it off for unit tests
  */
-function getChangeTrackerDebouncer(fn: () => void) {
+function getChangeTrackerDebouncer(fn: () => void): DebouncedFunc<() => void> {
   if (process.env.NODE_ENV === 'test') {
-    return fn;
+    return Object.assign(fn, { cancel: () => {}, flush: () => undefined });
   }
 
   return debounce(fn, 250);

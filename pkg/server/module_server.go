@@ -72,13 +72,12 @@ func NewModule(opts Options,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
 	kvStore resourcekv.KV,
-	experimentalKV *resource.ExperimentalKVOptions, // Optional alternative KV for flagged use-cases; nil in OSS
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
 	reconcilerState reconciler.StateStore,
 ) (*ModuleServer, error) {
-	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, kvStore, experimentalKV, hooksService, storeProvider, reconcileCRDs, reconcilerState)
+	s, err := newModuleServer(opts, apiOpts, features, cfg, storageMetrics, indexMetrics, vectorMetrics, reg, promGatherer, tracer, license, moduleRegisterer, kvStore, hooksService, storeProvider, reconcileCRDs, reconcilerState)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +102,6 @@ func newModuleServer(opts Options,
 	license licensing.Licensing,
 	moduleRegisterer ModuleRegisterer,
 	kvStore resourcekv.KV,
-	experimentalKV *resource.ExperimentalKVOptions,
 	hooksService *hooks.HooksService,
 	storeProvider zStore.StoreProvider,
 	reconcileCRDs []schema.GroupVersionResource,
@@ -139,7 +137,6 @@ func newModuleServer(opts Options,
 		license:          license,
 		moduleRegisterer: moduleRegisterer,
 		kvStore:          kvStore,
-		experimentalKV:   experimentalKV,
 		hooksService:     hooksService,
 		searchClient:     searchClient,
 		healthNotifier:   NewHealthNotifier(),
@@ -169,7 +166,6 @@ type ModuleServer struct {
 	mtx              sync.Mutex
 	storageBackend   resource.StorageBackend
 	kvStore          resourcekv.KV
-	experimentalKV   *resource.ExperimentalKVOptions
 	watchExpiry      resource.WatchExpiry
 	blobBackend      resource.BlobSupport
 	natsPublisher    nats.Publisher
@@ -450,9 +446,6 @@ func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) fun
 			}
 			opts := append([]sql.StorageBackendOption{sql.WithVectorBackend(s.vectorBackend)},
 				unified.NatsStorageBackendOptions(s.cfg, s.natsPublisher, s.natsSubscriber, s.watchExpiry)...)
-			if s.experimentalKV != nil {
-				opts = append(opts, sql.WithExperimentalKV(s.experimentalKV))
-			}
 			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, opts...)
 			if err != nil {
 				return nil, err

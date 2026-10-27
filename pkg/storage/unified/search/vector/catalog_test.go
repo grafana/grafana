@@ -56,8 +56,8 @@ func TestResolveCollection_CatalogRows(t *testing.T) {
 	// A resource name with chars a table name can't hold maps to its
 	// catalog-assigned partition key.
 	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
-		sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external"}).
-			AddRow("ext.example.com", "my-things", "my_things", true))
+		sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external", "scope"}).
+			AddRow("ext.example.com", "my-things", "my_things", true, "tenant"))
 
 	c, found, err := b.ResolveCollection(ctx, "ext.example.com", "my-things")
 	require.NoError(t, err)
@@ -83,8 +83,8 @@ func TestEnsureCollection_IsExternalMismatchIsRejected(t *testing.T) {
 	ctx := testutil.NewDefaultTestContext(t)
 
 	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
-		sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external"}).
-			AddRow("dashboard.grafana.app", "dashboards", "dashboards", false))
+		sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external", "scope"}).
+			AddRow("dashboard.grafana.app", "dashboards", "dashboards", false, "tenant"))
 
 	_, err := b.EnsureCollection(ctx, "dashboard.grafana.app", "dashboards", true)
 	require.Error(t, err)
@@ -102,5 +102,39 @@ func TestResolveCollection_DBErrorSurfaces(t *testing.T) {
 	rdb.SQLMock.ExpectQuery("SELECT").WillReturnError(errors.New("db down"))
 	_, _, err := b.ResolveCollection(ctx, "ext.example.com", "my-things")
 	require.Error(t, err)
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestEnsureCollectionRejectsScopeChange(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	b := NewPgvectorBackend(t.Context(), rdb.DB, 1000, 0, false, nil)
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
+		sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external", "scope"}).
+			AddRow("docs.example.com", "articles", "articles_external", true, "tenant"))
+	_, err := b.EnsureCollectionWithScope(t.Context(), "docs.example.com", "articles", true, ScopeShared)
+	require.ErrorIs(t, err, ErrCollectionScopeMismatch)
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
+func TestResolveCollectionRejectsInvalidCatalogScope(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	b := NewPgvectorBackend(t.Context(), rdb.DB, 1000, 0, false, nil)
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
+		sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external", "scope"}).
+			AddRow("docs.example.com", "articles", "articles_external", true, "mystery"))
+	_, _, err := b.ResolveCollection(t.Context(), "docs.example.com", "articles")
+	require.ErrorContains(t, err, "invalid collection scope")
+}
+
+func TestEnsureCollectionRejectsConcurrentDifferentScope(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	b := NewPgvectorBackend(t.Context(), rdb.DB, 1000, 0, false, nil)
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(emptyCatalogRows())
+	rdb.SQLMock.ExpectExec("INSERT INTO embedding_collections").WillReturnResult(sqlmock.NewResult(0, 0))
+	rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
+		sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external", "scope"}).
+			AddRow("docs.example.com", "articles", "articles_external", true, "tenant"))
+	_, err := b.EnsureCollectionWithScope(t.Context(), "docs.example.com", "articles", true, ScopeShared)
+	require.ErrorIs(t, err, ErrCollectionScopeMismatch)
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }

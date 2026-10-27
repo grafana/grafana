@@ -750,6 +750,16 @@ func TestIntegration_DeleteInFolder(t *testing.T) {
 		require.ErrorIs(t, err, folder.ErrAccessDenied)
 	})
 
+	t.Run("a typed-nil requester denied by AccessControl must not panic logging the denial", func(t *testing.T) {
+		store.AccessControl = actest.FakeAccessControl{ExpectedEvaluate: false}
+		var nilUser *user.SignedInUser
+		var requester identity.Requester = nilUser
+		require.NotPanics(t, func() {
+			err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, requester)
+			require.ErrorIs(t, err, folder.ErrAccessDenied)
+		})
+	})
+
 	t.Run("should not delete any folder's rules if a later folder in the batch lacks permission", func(t *testing.T) {
 		ruleA := createRule(t, store, nil)
 		ruleB := createRule(t, store, models.RuleGen.With(
@@ -794,7 +804,12 @@ func TestIntegration_DeleteInFoldersUnchecked(t *testing.T) {
 
 	// No permissions configured at all; DeleteInFoldersUnchecked must not consult AccessControl.
 	store.AccessControl = acmock.New()
-	err := store.DeleteInFoldersUnchecked(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+
+	// Refuses to run without the unchecked-delete marker.
+	require.ErrorIs(t, store.DeleteInFoldersUnchecked(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{}), folder.ErrUncheckedDeleteNotAuthorized)
+
+	ctx := folder.WithUncheckedDeleteAuthorized(context.Background(), rule.OrgID, &user.SignedInUser{}, []string{rule.NamespaceUID}, true)
+	err := store.DeleteInFoldersUnchecked(ctx, rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 	require.NoError(t, err)
 
 	c, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})

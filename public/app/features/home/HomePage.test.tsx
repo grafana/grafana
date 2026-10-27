@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { type ComponentType, lazy, useEffect } from 'react';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { type ComponentTypeWithExtensionMeta, OrgRole, PluginExtensionPoints } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, OrgRole, PluginExtensionPoints, store } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config, setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -344,24 +344,143 @@ describe('HomePage', () => {
     expect(screen.queryByRole('tab', { name: 'Plugin tab' })).not.toBeInTheDocument();
   });
 
-  it('starts card placement while extensions are still loading and hands it to the overview', async () => {
+  it('renders every section while extensions are still loading, with the Assistant slot held for its input', async () => {
     setTestFlags({ 'grafana.growthHomepage': true });
     setPluginComponentsHook(() => ({ components: [], isLoading: true }));
-    const { datasource, needsAttention } = stubMetricsSolution();
+    const { needsAttention } = stubMetricsSolution();
+
+    render(<HomePage />);
+
+    // No whole-page skeleton: the tabs, the overview and placement all start at mount, and the Assistant slot
+    // is held while the registry loads the plugin, so the input lands in place.
+    expect(screen.queryByTestId('home-page-skeleton')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('home-page-assistant-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('dashboard-tabs-skeleton')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /your observability stack overview/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+    // Placement runs once, from the overview; nothing prefetches it a second time.
+    expect(needsAttention).toHaveBeenCalledTimes(1);
+    expect(jest.mocked(homepageViewed)).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops the Assistant slot once the registry settles without an Assistant component', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+    setPluginComponentsHook(() => ({ components: [], isLoading: true }));
 
     const { rerender } = render(<HomePage />);
+    expect(await screen.findByTestId('home-page-assistant-skeleton')).toBeInTheDocument();
 
-    // The whole-page skeleton is up, yet detection is already running. Only placement reads
-    // needsAttention, so a call at this point proves detection started at mount.
-    await waitFor(() => expect(needsAttention).toHaveBeenCalledTimes(1));
-    expect(datasource).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('home-page-skeleton')).toBeInTheDocument();
-
+    // Nothing declared this slot: an instance without the Assistant.
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
     rerender(<HomePage />);
 
-    // The card renders once the extensions settle.
-    expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(screen.queryByTestId('home-page-assistant-skeleton')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('home-page-assistant-slot')).not.toBeInTheDocument();
+  });
+
+  it('hides the Assistant slot while the plugin component renders nothing, as it does once the Assistant cannot be used', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components:
+        extensionPointId === PluginExtensionPoints.HomepageAssistant
+          ? [
+              createComponentWithMeta(
+                { pluginId: 'grafana-assistant-app', title: 'Assistant', component: () => null },
+                PluginExtensionPoints.HomepageAssistant
+              ),
+            ]
+          : [],
+    }));
+
+    render(<HomePage />);
+
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    const slot = screen.getByTestId('home-page-assistant-slot');
+    expect(slot).toBeEmptyDOMElement();
+    expect(slot).toHaveStyle({ display: 'none' });
+  });
+
+  it('holds the Assistant slot while its lazy component loads instead of hiding the page', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+    let resolveComponent!: (module: { default: ComponentType<{}> }) => void;
+    const LazyExtension = lazy(
+      () =>
+        new Promise<{ default: ComponentType<{}> }>((resolve) => {
+          resolveComponent = resolve;
+        })
+    );
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components:
+        extensionPointId === PluginExtensionPoints.HomepageAssistant
+          ? [
+              createComponentWithMeta(
+                { pluginId: 'grafana-assistant-app', title: 'Lazy assistant', component: LazyExtension },
+                PluginExtensionPoints.HomepageAssistant
+              ),
+            ]
+          : [],
+    }));
+
+    render(<HomePage />);
+
+    expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+    expect(screen.getByTestId('home-page-assistant-skeleton')).toBeInTheDocument();
+
+    await act(async () => {
+      resolveComponent({ default: () => <div>Lazy assistant content</div> });
+    });
+
+    expect(await screen.findByText('Lazy assistant content')).toBeInTheDocument();
+    expect(screen.queryByTestId('home-page-assistant-skeleton')).not.toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
+  });
+
+  it('keeps the Assistant input mounted across homepage re-renders', async () => {
+    setTestFlags({ 'grafana.growthHomepage': true });
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action) => action === AccessControlAction.AlertingInstanceRead);
+    const filters: string[][] = [];
+    server.use(
+      http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
+        filters.push(new URL(request.url).searchParams.getAll('filter'));
+        return HttpResponse.json([]);
+      })
+    );
+    const mounted = jest.fn();
+    const CountingAssistant = () => {
+      useEffect(() => {
+        mounted();
+      }, []);
+      return <div>Assistant input</div>;
+    };
+    setPluginComponentsHook(({ extensionPointId }) => ({
+      isLoading: false,
+      components:
+        extensionPointId === PluginExtensionPoints.HomepageAssistant
+          ? [
+              createComponentWithMeta(
+                { pluginId: 'grafana-assistant-app', title: 'Assistant', component: CountingAssistant },
+                PluginExtensionPoints.HomepageAssistant
+              ),
+            ]
+          : [],
+    }));
+
+    render(<HomePage />);
+    expect(await screen.findByText('Assistant input')).toBeInTheDocument();
+
+    // A stored filter change re-renders the page (the alerts re-query proves it landed)...
+    await act(async () => {
+      store.set(ALERTS_FILTER_STORAGE_KEY, 'team:platform');
+    });
+    await waitFor(() => expect(filters).toContainEqual(['team="platform"']));
+
+    // ...and the input survives it. A frame created inline per render would remount it, losing the typed prompt.
+    expect(mounted).toHaveBeenCalledTimes(1);
   });
 
   it('renders the jump-back-in grid above the stack overview on the redesigned homepage', async () => {

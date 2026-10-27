@@ -84,12 +84,12 @@ func TestPgvectorBackend_Upsert_InvalidVector_Rejected(t *testing.T) {
 
 // emptyCatalogRows is a zero-row embedding_collections result for sqlmock.
 func emptyCatalogRows() *sqlmock.Rows {
-	return sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external"})
+	return sqlmock.NewRows([]string{"group_name", "resource", "partition_key", "is_external", "scope"})
 }
 
 // seededCatalogRows mirrors the migration's dashboards seed row.
 func seededCatalogRows() *sqlmock.Rows {
-	return emptyCatalogRows().AddRow("dashboard.grafana.app", "dashboards", "dashboards", false)
+	return emptyCatalogRows().AddRow("dashboard.grafana.app", "dashboards", "dashboards", false, "tenant")
 }
 
 func TestPgvectorBackend_Upsert_UnknownResource_Rejected(t *testing.T) {
@@ -341,7 +341,7 @@ func TestPgvectorBackend_UpdateFolder(t *testing.T) {
 			rdb := test.NewDBProviderNopSQL(t)
 			backend := NewPgvectorBackend(t.Context(), rdb.DB, 1000, 0, false, nil)
 			rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
-				emptyCatalogRows().AddRow("folder.grafana.app", "folders", partitionKey, false))
+				emptyCatalogRows().AddRow("folder.grafana.app", "folders", partitionKey, false, "tenant"))
 			exec := rdb.SQLMock.ExpectExec(`UPDATE embeddings SET "folder"`).WithArgs(tc.folder, partitionKey, "ns", "m", "folder-1")
 			if tc.err != nil {
 				exec.WillReturnError(tc.err)

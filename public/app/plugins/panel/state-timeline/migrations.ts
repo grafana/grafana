@@ -3,7 +3,7 @@ import { isArray } from 'lodash';
 import {
   type FieldConfigSource,
   MappingType,
-  type PanelModel,
+  type PanelTypeChangedHandler,
   type ValueMap,
   type RangeMap,
   type ValueMapping,
@@ -12,11 +12,7 @@ import {
 import { type FieldConfig, type Options } from './panelcfg.gen';
 
 // This is called when the panel changes from another panel
-export const timelinePanelChangedHandler = (
-  panel: PanelModel<Partial<Options>> | any,
-  prevPluginId: string,
-  prevOptions: any
-) => {
+export const timelinePanelChangedHandler: PanelTypeChangedHandler<Options> = (panel, prevPluginId, prevOptions) => {
   let options: Options = panel.options ?? {};
 
   // Changing from angular singlestat

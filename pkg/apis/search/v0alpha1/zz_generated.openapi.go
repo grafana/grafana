@@ -378,7 +378,7 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchQuery(ref common.ReferenceCallb
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs.",
+							Description: "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -527,6 +527,25 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchResultItem(ref common.Reference
 						SchemaProps: spec.SchemaProps{
 							Description: "ManagedBy is absent for unmanaged resources or when lookup fails.",
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchManagedBy"),
+						},
+					},
+					"tags": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Tags from the lexical index. Omitted when unavailable.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
 						},
 					},
 					"chunks": {

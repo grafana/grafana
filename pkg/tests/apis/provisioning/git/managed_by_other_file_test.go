@@ -36,9 +36,9 @@ func TestIntegrationProvisioning_IncrementalGitSync_ManagedByOtherFileWarning(t 
 	const repoName = "git-incremental-managed-by-other"
 
 	// c1: only dir-a exists, owning "shared-uid".
-	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"dir-a/dashboard.json": common.DashboardJSON("shared-uid", "Dashboard A", 1),
-	}, "write", "branch")
+	files := common.FolderMetadataFiles(t, repoName, "dir-a")
+	files["dir-a/dashboard.json"] = common.DashboardJSON("shared-uid", "Dashboard A", 1)
+	_, local := helper.CreateGitRepo(t, repoName, files, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	require.Equal(t, "dir-a/dashboard.json",
@@ -51,6 +51,9 @@ func TestIntegrationProvisioning_IncrementalGitSync_ManagedByOtherFileWarning(t 
 	// dir-b. The cross-file duplicate guard is per-sync/in-memory, so it does not
 	// fire here — dir-a is not part of this diff.
 	require.NoError(t, local.CreateFile("dir-b/dashboard.json", string(common.DashboardJSON("shared-uid", "Dashboard B", 1))))
+	for name, body := range common.FolderMetadataFiles(t, repoName, "dir-b") {
+		require.NoError(t, local.CreateFile(name, string(body)))
+	}
 	gitCommitPush(t, local, "add dir-b with duplicate uid")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
@@ -67,7 +70,13 @@ func TestIntegrationProvisioning_IncrementalGitSync_ManagedByOtherFileWarning(t 
 	common.SyncAndWait(t, helper, common.Repo(repoName),
 		common.Incremental,
 		common.Warning(),
-		common.Expect(hasWarningContaining("skipping delete of old resource")),
+		common.Expect(func(t *testing.T, job *unstructured.Unstructured) {
+			t.Helper()
+			warnings := common.MustNestedStringSlice(job.Object, "status", "warnings")
+			require.Len(t, warnings, 1)
+			require.Contains(t, warnings[0], "skipping delete of old resource")
+			require.Contains(t, warnings[0], "dir-a/dashboard.json")
+		}),
 	)
 
 	// dir-a's new resource must exist.

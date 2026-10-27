@@ -1,17 +1,17 @@
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { type LocalPlugin } from 'app/features/plugins/admin/types';
-
 import {
   APP_OBSERVABILITY_APP_ID,
   HOSTED_TRACES_APP_ID,
   SYNTHETIC_MONITORING_APP_ID,
   SYNTHETIC_MONITORING_CHECKS_WRITE,
-} from '../solutions/appPluginIds';
+} from 'app/core/appPluginIds';
+import { accessControlQueryParam } from 'app/core/utils/accessControl';
+import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
+import { type LocalPlugin } from 'app/features/plugins/admin/types';
+
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withDeadline } from '../solutions/probeUtils';
 import { TELEMETRY_SETUP_DOCS, type TelemetryType } from '../solutions/telemetrySetup';

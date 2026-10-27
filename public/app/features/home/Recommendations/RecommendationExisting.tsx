@@ -60,9 +60,11 @@ export function RecommendationExisting({ onSelectionChange, solutions }: Recomme
   return <ExistingSolutionCard key={selected.id} existing={existing} selected={selected} onSelect={setSelectedId} />;
 }
 
-// Mirrors the card body (dropdown pill, icon + title, stats, CTA) while the solution
-// lookups load, so the first paint never shows a solution that a resolving fetch would replace.
-function RecommendationExistingSkeleton() {
+/**
+ * Mirrors the card body while the solution lookups load, so the first paint never shows a solution a resolving
+ * fetch would replace; the region skeleton reuses it to hold the same height.
+ */
+export function RecommendationExistingSkeleton() {
   return (
     <Stack
       direction="column"

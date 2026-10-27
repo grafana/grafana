@@ -11,6 +11,7 @@ import {
   type Scope,
   type VariableModel,
 } from '@grafana/data';
+import { getPanelDataStatusItems, type PanelStatusStore } from '@grafana/data/internal';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
@@ -891,6 +892,16 @@ describe('setDashboardPanelContext', () => {
       expect(forceRenderSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('does not investigate panel-owned notices', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { context } = buildTestScene({});
+      context.notices!.createSource().set([{ id: 'field', severity: 'error', text: 'Choose a numeric field' }]);
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).not.toHaveBeenCalled();
+    });
+
     it('does nothing when the panel currently has no errors or notices', async () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
@@ -930,6 +941,96 @@ describe('setDashboardPanelContext', () => {
       expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
         data: { name: 'Panel: CPU usage', panelId: '4', panelKey: 'panel-4' },
       });
+    });
+
+    it('keeps the query-error prompt and live panel reference after host status initializes', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'Query failed' }],
+          },
+        }),
+      });
+      const panelData = sceneGraph.getData(vizPanel).state.data;
+      (vizPanel.getPanelContext().notices as PanelStatusStore).setExternal(getPanelDataStatusItems(panelData));
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt:
+            'Investigate and fix the query errors listed below. Ignore other query errors or notices on this panel.\n\n- error: Query failed',
+        })
+      );
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
+        data: { name: 'Panel: Untitled', panelId: '4', panelKey: 'panel-4' },
+      });
+    });
+
+    it('investigates current query errors after an equivalent status refresh', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { vizPanel, context } = buildTestScene({});
+      const store = vizPanel.getPanelContext().notices as PanelStatusStore;
+      const setError = () => {
+        vizPanel.setState({
+          $data: new SceneDataNode({
+            data: {
+              state: LoadingState.Error,
+              series: [],
+              timeRange: getDefaultTimeRange(),
+              errors: [{ message: 'Query failed' }],
+            },
+          }),
+        });
+        store.setExternal(getPanelDataStatusItems(sceneGraph.getData(vizPanel).state.data));
+      };
+
+      setError();
+      const snapshot = store.getSnapshot();
+      setError();
+      expect(store.getSnapshot()).toBe(snapshot);
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({ prompt: expect.stringContaining('- error: Query failed') })
+      );
+    });
+
+    it('investigates current query notices after an equivalent status refresh', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { vizPanel, context } = buildTestScene({});
+      const store = vizPanel.getPanelContext().notices as PanelStatusStore;
+      const setNotice = () => {
+        vizPanel.setState({
+          $data: new SceneDataNode({
+            data: {
+              state: LoadingState.Done,
+              series: [
+                { name: 'A', fields: [], length: 0, meta: { notices: [{ severity: 'warning', text: 'Slow query' }] } },
+              ],
+              timeRange: getDefaultTimeRange(),
+            },
+          }),
+        });
+        store.setExternal(getPanelDataStatusItems(sceneGraph.getData(vizPanel).state.data));
+      };
+
+      setNotice();
+      const snapshot = store.getSnapshot();
+      setNotice();
+      expect(store.getSnapshot()).toBe(snapshot);
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({ prompt: expect.stringContaining('- warning: Slow query') })
+      );
     });
 
     it('falls back to a placeholder name for an untitled panel', () => {

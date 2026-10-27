@@ -60,7 +60,6 @@ import type {
   TypographyCtx,
   MeasureCellHeight,
   MeasureCellHeightEntry,
-  FilterType,
   GetActionsFunctionLocal,
   TableColumn,
   TextWrapFallback,
@@ -921,70 +920,10 @@ export function applySort(
 
 export interface ApplyFilterResult {
   crossFilterOrder: string[];
-  crossFilterRows: Record<string, TableRow[]>;
+  /** Compute a column's cross-filter rows only when its popup opens. */
+  crossFilterRows: Record<string, () => TableRow[]>;
   crossFilterTailRows: TableRow[];
   filteredRows: TableRow[];
-}
-
-/**
- * @internal
- * Applies active filters to `rows` and computes cross-filter metadata for filter popup UIs.
- *
- * Filters are chained sequentially so that for each filter key, `crossFilterRows[key]`
- * holds the rows available *before* that filter was applied (i.e. the rows that passed all
- * preceding filters in the same scope). `crossFilterTailRows` holds the rows that survive
- * *all* filters — used for new filters that have not yet been applied.
- *
- * `filteredRows` is the display-ready result: equal to `crossFilterTailRows` for flat tables,
- * or wrapped with `processNestedTableRows` to preserve parent-child structure when
- * `hasNestedFrames` is true.
- *
- * When called for a nested table instance, pass `parentIndex` to scope filters to that level.
- */
-export function applyFilter(
-  rows: TableRow[],
-  filter: FilterType,
-  fields: Field[],
-  hasNestedFrames?: boolean,
-  parentIndex?: number
-): ApplyFilterResult {
-  // Scope rows to the relevant nesting level
-  const isNested = parentIndex !== undefined;
-  const scopedRows = !isNested ? rows.filter((r) => r.__depth === 0) : rows;
-
-  // Collect filter keys that belong to this scope (preserving JS insertion order)
-  const crossFilterOrder = Object.keys(filter).filter((key) => {
-    const entry = filter[key];
-    return !isNested ? entry.parentIndex == null : entry.parentIndex === parentIndex;
-  });
-
-  const crossFilterRows: Record<string, TableRow[]> = {};
-  let crossFilterTailRows = scopedRows;
-
-  for (const filterKey of crossFilterOrder) {
-    const filterEntry = filter[filterKey];
-    // Store rows available *before* this filter is applied
-    crossFilterRows[filterKey] = crossFilterTailRows;
-    // Advance the chain by applying this filter
-    crossFilterTailRows = crossFilterTailRows.filter((row) => {
-      const field = fields.find((f) => getDisplayName(f) === filterEntry.displayName);
-      if (!field || !field.display) {
-        return true;
-      }
-      const displayedValue = formattedValueToString(field.display(row[filterEntry.displayName]));
-      return filterEntry.filteredSet.has(displayedValue);
-    });
-  }
-
-  // For nested frames, wrap with processNestedTableRows so parent rows that have matching
-  // children are preserved for the expander UI. Use a Set for O(1) membership checks.
-  let filteredRows = crossFilterTailRows;
-  if (hasNestedFrames) {
-    const tailSet = new Set(crossFilterTailRows);
-    filteredRows = processNestedTableRows(rows, (parents) => parents.filter((row) => tailSet.has(row)));
-  }
-
-  return { crossFilterOrder, crossFilterRows, crossFilterTailRows, filteredRows };
 }
 
 /* ----------------------------- Data grid mapping ---------------------------- */
@@ -1362,7 +1301,9 @@ export interface ContentAwareColWidthsOptions {
    * Active filters. Under `table.refresh` a filtered column also reserves space for the persistent
    * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
    */
-  filter?: FilterType;
+  isFiltered?: (field: Field) => boolean;
+  headerFilterState?: (field: Field, parentCount?: number) => { controlVisible: boolean; filterEnabled: boolean };
+  filterParentCount?: number;
   hasColumnSidebar?: boolean;
   reorderable?: boolean;
   /** The first column carries extra inline-start padding to line up with the panel title. */
@@ -1495,6 +1436,7 @@ export interface HeaderAffordanceOptions {
   tableRefreshEnabled: boolean;
   /** Whether a filter is currently active on this column — only the refreshed header marks that. */
   isFiltered: boolean;
+  filterable?: boolean;
   reorderable?: boolean;
 }
 
@@ -1511,11 +1453,12 @@ export function getHeaderAffordanceWidth(
     showTypeIcons,
     tableRefreshEnabled,
     isFiltered,
+    filterable,
     hasColumnOptions = false,
     reorderable = false,
   }: HeaderAffordanceOptions
 ): number {
-  const isFilterable = isFieldFilterable(field);
+  const isFilterable = filterable ?? isFieldFilterable(field);
   let width = 0;
   width += showTypeIcons ? HEADER_ICON_SPACE : 0;
   // reserved on every sortable column, not just the currently-sorted one, so a wrapped header doesn't
@@ -1830,7 +1773,9 @@ export function computeContentAwareColWidths(
     getActions,
     tableRefreshEnabled = false,
     theme,
-    filter,
+    isFiltered,
+    headerFilterState,
+    filterParentCount,
     sampleSize,
     hasColumnSidebar = false,
     reorderable = false,
@@ -1866,26 +1811,21 @@ export function computeContentAwareColWidths(
   const shrinkFloors = new Map<number, number>();
 
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions, theme };
-  // Filter entries are keyed per parent on nested tables, so match on the display name they carry
-  // rather than the key: nested columns share one width, so any active filter widens the column.
-  const filteredKeys = new Set(
-    Object.values(filter ?? {})
-      .filter((entry) => entry.filtered != null)
-      .map((entry) => entry.displayName)
-  );
-
   for (const i of autoIdxs) {
     const field = fields[i];
+    const filterState = headerFilterState?.(field, filterParentCount);
+    const filterable = isFieldFilterable(field) && (filterState?.controlVisible ?? true);
     // A hidden header row has no label to fit, so it doesn't bound the column at all.
     const headerWidth = hasHeader
       ? measureHeaderWidth(field, headerTypographyCtx, {
           showTypeIcons,
           tableRefreshEnabled,
-          isFiltered: filteredKeys.has(getDisplayName(field)),
+          isFiltered: filterable && (filterState?.filterEnabled ?? isFiltered?.(field) ?? false),
+          filterable,
           reorderable,
           hasColumnOptions:
             getColumnMenuOptions({
-              filterable: isFieldFilterable(field),
+              filterable,
               hideable: isFieldHideable(field),
               hasColumnSidebar,
               hasAssistantAction,

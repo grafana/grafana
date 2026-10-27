@@ -47,6 +47,9 @@ func TestHybridSearchConfigRegistry_Versions(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			registry := NewHybridSearchConfigRegistry([]*app.ManifestData{nil, hybridConfigManifest(tt.versions...)})
 			assert.Equal(t, tt.want, registry.Enabled("example.ext.grafana.app", "widgets"))
+			config := registry.lookup("example.ext.grafana.app", "widgets")
+			assert.Equal(t, tt.want, config.enabled)
+			assert.Equal(t, "Widget", config.kind)
 			assert.False(t, registry.Enabled("other.ext.grafana.app", "widgets"))
 		})
 	}
@@ -56,6 +59,12 @@ func TestHybridSearchConfigRegistry_Reload(t *testing.T) {
 	enabled := hybridConfigManifest(hybridConfigVersion("v1", ptr.To(true)))
 	disabled := hybridConfigManifest(hybridConfigVersion("v2", ptr.To(false)))
 	absent := hybridConfigManifest(hybridConfigVersion("v2", nil))
+	enabled.Versions[0].Kinds[0].Kind = "BuiltinWidget"
+	disabled.Versions[0].Kinds[0].Kind = "LiveWidget"
+	absent.Versions[0].Kinds[0].Kind = "NoSearchWidget"
+	for _, manifest := range []*app.ManifestData{enabled, disabled, absent} {
+		manifest.Versions[0].Kinds[0].Plural = "widgets"
+	}
 	absent.Versions[0].Kinds[0].Search = nil
 	registry := NewHybridSearchConfigRegistry([]*app.ManifestData{enabled})
 	require.True(t, registry.Enabled(enabled.Group, "widgets"))
@@ -64,20 +73,34 @@ func TestHybridSearchConfigRegistry_Reload(t *testing.T) {
 		name    string
 		sources [][]*app.ManifestData
 		want    bool
+		kind    string
 	}{
-		{"live opt-out overrides all builtin versions", [][]*app.ManifestData{{enabled}, {disabled}}, false},
-		{"live missing declaration overrides builtin", [][]*app.ManifestData{{enabled}, {absent}}, false},
-		{"first manifest wins ties", [][]*app.ManifestData{{disabled, enabled}}, false},
-		{"live declaration enables", [][]*app.ManifestData{{disabled}, {enabled}}, true},
-		{"removal clears live-only resource", nil, false},
-		{"builtin is used after live override removed", [][]*app.ManifestData{{enabled}, nil}, true},
+		{"live opt-out overrides all builtin versions", [][]*app.ManifestData{{enabled}, {disabled}}, false, "LiveWidget"},
+		{"live missing declaration overrides builtin", [][]*app.ManifestData{{enabled}, {absent}}, false, "NoSearchWidget"},
+		{"first manifest wins ties", [][]*app.ManifestData{{disabled, enabled}}, false, "LiveWidget"},
+		{"live declaration enables", [][]*app.ManifestData{{disabled}, {enabled}}, true, "BuiltinWidget"},
+		{"removal clears live-only resource", nil, false, ""},
+		{"builtin is used after live override removed", [][]*app.ManifestData{{enabled}, nil}, true, "BuiltinWidget"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			registry.Reload(tt.sources...)
 			assert.Equal(t, tt.want, registry.Enabled(enabled.Group, "widgets"))
+			assert.Equal(t, tt.kind, registry.lookup(enabled.Group, "widgets").kind)
 		})
 	}
 	assert.False(t, (*HybridSearchConfigRegistry)(nil).Enabled(enabled.Group, "widgets"))
+}
+
+func TestHybridSearchConfigRegistry_CustomPluralUsesEligibleVersionKind(t *testing.T) {
+	old := hybridConfigVersion("v1", ptr.To(false))
+	old.Kinds[0].Kind = "OldWidget"
+	old.Kinds[0].Plural = "widgets"
+	newer := hybridConfigVersion("v2", ptr.To(true))
+	newer.Kinds[0].Kind = "NewWidget"
+	newer.Kinds[0].Plural = "widgets"
+	registry := NewHybridSearchConfigRegistry([]*app.ManifestData{hybridConfigManifest(old, newer)})
+
+	assert.Equal(t, hybridSearchConfig{enabled: true, kind: "NewWidget"}, registry.lookup("example.ext.grafana.app", "widgets"))
 }
 
 func TestReloadManifests_HybridOptOutSurvivesInvalidSearchFields(t *testing.T) {

@@ -1,4 +1,12 @@
-import { type BranchTemplateVars, generateBranchToken, renderBranchName, sanitizeBranchName } from './branchName';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
+
+import {
+  type BranchTemplateVars,
+  generateBranchToken,
+  isBranchTemplateEnforced,
+  renderBranchName,
+  sanitizeBranchName,
+} from './branchName';
 import { validateBranchName } from './git';
 
 const vars: BranchTemplateVars & { random: string } = {
@@ -85,5 +93,28 @@ describe('generateBranchToken', () => {
     } finally {
       spy.mockRestore();
     }
+  });
+});
+
+describe('isBranchTemplateEnforced', () => {
+  const repo: RepositoryView = {
+    name: 'repo',
+    title: 'Repo',
+    target: 'folder',
+    type: 'github',
+    workflows: ['branch', 'write'],
+    branchOptions: { nameTemplate: 'grafana/{{title}}', enforceTemplate: true },
+  };
+
+  it('is enforced only with the branch workflow and a non-blank template', () => {
+    expect(isBranchTemplateEnforced(repo)).toBe(true);
+    expect(isBranchTemplateEnforced({ ...repo, workflows: ['write'] })).toBe(false);
+    expect(isBranchTemplateEnforced({ ...repo, branchOptions: { nameTemplate: '  ', enforceTemplate: true } })).toBe(
+      false
+    );
+    expect(isBranchTemplateEnforced({ ...repo, branchOptions: { nameTemplate: 'x', enforceTemplate: false } })).toBe(
+      false
+    );
+    expect(isBranchTemplateEnforced(undefined)).toBe(false);
   });
 });

@@ -34,4 +34,5 @@ export const DASHBOARD_COMMAND_SCHEMAS = [
   { name: 'APPLY_SPEC', payloadSchema: payloads.applySpec },
   { name: 'RENDER_PLAN', payloadSchema: payloads.renderPlan },
   { name: 'END_PLANNING', payloadSchema: payloads.endPlanning },
+  { name: 'RELOAD_FROM_SERVER', payloadSchema: payloads.reloadFromServer },
 ] as const;

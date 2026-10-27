@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Badge, Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { type Breadcrumb } from './types';
 import { useBreadcrumbTruncation } from './useBreadcrumbTruncation';
@@ -15,7 +15,7 @@ type Props = Breadcrumb & {
   flexGrow: number;
 };
 
-export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props) {
+export function BreadcrumbItem({ href, isCurrent, text, highlightText, index, flexGrow }: Props) {
   const styles = useStyles2(getStyles);
   const { breadcrumbRef, isTruncated } = useBreadcrumbTruncation(text, isCurrent);
 
@@ -58,6 +58,7 @@ export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props
       ) : (
         breadcrumb
       )}
+      {highlightText && <Badge className={styles.badge} text={highlightText} color="blue" />}
       {!isCurrent && (
         <div className={styles.separator} aria-hidden={true}>
           <Icon name="angle-right" />
@@ -75,6 +76,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       color: theme.colors.text.secondary,
+    }),
+    badge: css({
+      flexShrink: 0,
     }),
     breadcrumbLink: css({
       color: theme.colors.text.primary,

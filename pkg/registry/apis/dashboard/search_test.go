@@ -250,6 +250,7 @@ func TestHybridSearch(t *testing.T) {
 					{
 						Key:    &resourcepb.ResourceKey{Namespace: "test", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "d2"},
 						Title:  "Memory usage",
+						Tags:   []string{"prod", "team-a"},
 						Folder: "f2",
 						Score:  0.016,
 						Chunks: []*resourcepb.HybridSearchChunk{
@@ -301,6 +302,7 @@ func TestHybridSearch(t *testing.T) {
 
 		// lexical-only hit still carries its synthesized title chunk
 		assert.Equal(t, "Memory usage", p.Hits[1].Field.Object["snippet"])
+		assert.Equal(t, []string{"prod", "team-a"}, p.Hits[1].Tags)
 	})
 
 	t.Run("returns 501 and does not fall back when hybrid search is unimplemented", func(t *testing.T) {

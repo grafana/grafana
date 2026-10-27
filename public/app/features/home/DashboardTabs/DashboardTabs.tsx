@@ -11,7 +11,7 @@ import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
-import { FooterAction, FooterActions } from '../FooterActions';
+import { CardFooter, FooterAction } from '../FooterActions';
 import { HomeSection } from '../HomeSection';
 import { tabChanged } from '../analytics/main';
 
@@ -178,16 +178,21 @@ export function DashboardTabs({ extensionComponents }: Props) {
   const contentTabs = [...builtInTabs, ...extensionTabs.filter((tab) => !tab.href)];
   const linkTabs = extensionTabs.filter((tab) => tab.href);
   const listDensity = redesignEnabled ? 'compact' : 'default';
-  // The Recent footer belongs to its list: only once the list is loaded with rows. The dashboard tabs link out.
+  // The Recent footer belongs to its list: only once the list is loaded with rows, an empty row of the same height
+  // until then. The dashboard tabs link out.
   const footer =
     activeTab === RECENT_TAB_ID ? (
-      !recent.loading && !recent.error && recent.total > 0 && <RecentActivityFooter recent={recent} />
+      !recent.loading && !recent.error && recent.total > 0 ? (
+        <RecentActivityFooter recent={recent} />
+      ) : (
+        <CardFooter />
+      )
     ) : (
-      <FooterActions>
+      <CardFooter>
         <FooterAction href="/dashboards">
           <Trans i18nKey="home.dashboard-tabs.view-all-dashboards">View all dashboards</Trans>
         </FooterAction>
-      </FooterActions>
+      </CardFooter>
     );
 
   const renderContent = () => (
@@ -247,12 +252,11 @@ export function DashboardTabs({ extensionComponents }: Props) {
               />
             )}
           </ScrollContainer>
-          {/* Pinned below the scroll area so it stays visible however long the list is. */}
-          {footer && (
-            <Box padding={1} paddingTop={1.5}>
-              {footer}
-            </Box>
-          )}
+          {/* Pinned below the scroll area so it stays visible however long the list is; always there, at one
+              height, so the card never moves between tabs or while Recent loads. */}
+          <Box padding={1} paddingTop={1.5}>
+            {footer}
+          </Box>
         </TabContent>
       )}
 

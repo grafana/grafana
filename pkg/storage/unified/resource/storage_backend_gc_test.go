@@ -159,7 +159,7 @@ func writeEvent(t *testing.T, ctx context.Context, storageBackend *kvStorageBack
 	return storageBackend.WriteEvent(ctx, event)
 }
 
-func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
+func TestGarbageCollectionGroupResource(t *testing.T) {
 	gcConfig := GarbageCollectionConfig{
 		Enabled:          true,
 		DryRun:           false,
@@ -169,8 +169,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 	}
 
 	t.Run("can garbage collect a deleted resource", func(t *testing.T) {
-		testutil.SkipIntegrationTestInShortMode(t)
-
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
@@ -229,8 +227,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 	})
 
 	t.Run("will only garbage collect eligible resources before cutoff", func(t *testing.T) {
-		testutil.SkipIntegrationTestInShortMode(t)
-
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
@@ -300,8 +296,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 	})
 
 	t.Run("will not delete rows for other eligible resources", func(t *testing.T) {
-		testutil.SkipIntegrationTestInShortMode(t)
-
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
@@ -375,8 +369,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 	})
 
 	t.Run("will delete resources in multiple batches", func(t *testing.T) {
-		testutil.SkipIntegrationTestInShortMode(t)
-
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
@@ -445,8 +437,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 	})
 
 	t.Run("will delete rows from before the resource gets deleted, but it will keep rows from after the resource gets recreated with same name", func(t *testing.T) {
-		testutil.SkipIntegrationTestInShortMode(t)
-
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
@@ -497,8 +487,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 	})
 
 	t.Run("pagination does not delete resources that were recreated", func(t *testing.T) {
-		testutil.SkipIntegrationTestInShortMode(t)
-
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 		cfg := gcConfig
@@ -555,8 +543,6 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 	})
 
 	t.Run("garbage collects the trash of a resource recreated with the same name", func(t *testing.T) {
-		testutil.SkipIntegrationTestInShortMode(t)
-
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
@@ -611,7 +597,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 	})
 }
 
-func TestIntegrationGarbageCollectionLoop(t *testing.T) {
+func TestGarbageCollectionLoop(t *testing.T) {
 	gcConfig := GarbageCollectionConfig{
 		Enabled:          true,
 		Interval:         time.Minute,
@@ -620,8 +606,6 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 	}
 
 	t.Run("can delete eligble resources", func(t *testing.T) {
-		testutil.SkipIntegrationTestInShortMode(t)
-
 		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 
 		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
@@ -678,8 +662,6 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 	})
 
 	t.Run("nothing is eligible to delete", func(t *testing.T) {
-		testutil.SkipIntegrationTestInShortMode(t)
-
 		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 
 		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
@@ -736,8 +718,6 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 	})
 
 	t.Run("will respect dashboard retention settings", func(t *testing.T) {
-		testutil.SkipIntegrationTestInShortMode(t)
-
 		ctx := testutil.NewTestContext(t, time.Now().Add(2*time.Minute))
 
 		storageBackend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
@@ -823,9 +803,7 @@ func TestIntegrationGarbageCollectionLoop(t *testing.T) {
 	})
 }
 
-func TestIntegrationGarbageCollectionPartialDeleteConverges(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestGarbageCollectionPartialDeleteConverges(t *testing.T) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 	wrapped := &partialDeleteKV{KV: setupBadgerKV(t)}
@@ -880,7 +858,7 @@ func TestIntegrationGarbageCollectionPartialDeleteConverges(t *testing.T) {
 	require.Equal(t, 0, countHistory(), "GC did not converge after a partial delete")
 }
 
-func TestIntegrationGarbageCollectionLoopGroupFailure(t *testing.T) {
+func TestGarbageCollectionLoopGroupFailure(t *testing.T) {
 	gcConfig := GarbageCollectionConfig{
 		Enabled:          true,
 		Interval:         time.Minute,
@@ -921,8 +899,6 @@ func TestIntegrationGarbageCollectionLoopGroupFailure(t *testing.T) {
 	}
 
 	t.Run("a failing group does not stop the groups after it", func(t *testing.T) {
-		testutil.SkipIntegrationTestInShortMode(t)
-
 		ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 		wrapped := &scanFailureKV{
@@ -947,8 +923,6 @@ func TestIntegrationGarbageCollectionLoopGroupFailure(t *testing.T) {
 	})
 
 	t.Run("a cancelled context stops the cycle", func(t *testing.T) {
-		testutil.SkipIntegrationTestInShortMode(t)
-
 		ctx, cancel := context.WithCancel(testutil.NewTestContext(t, time.Now().Add(30*time.Second)))
 		defer cancel()
 

@@ -6,7 +6,6 @@ import {
   FieldType,
   getDefaultTimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
@@ -14,7 +13,6 @@ import {
   ConstantVariable,
   CustomVariable,
   DataSourceVariable,
-  GroupByVariable,
   IntervalVariable,
   QueryVariable,
   SceneGridLayout,
@@ -180,16 +178,6 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('transformSceneToSaveModelSchemaV2', () => {
   let dashboardScene: DashboardScene;
-  let prevFeatureToggleValue: boolean;
-
-  beforeAll(() => {
-    prevFeatureToggleValue = !!config.featureToggles.groupByVariable;
-    config.featureToggles.groupByVariable = true;
-  });
-
-  afterAll(() => {
-    config.featureToggles.groupByVariable = prevFeatureToggleValue;
-  });
 
   beforeEach(() => {
     // The intention is to have a complete dashboard scene
@@ -401,22 +389,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
             skipUrlSync: false,
             hide: VariableHideV1.dontHide,
             value: 'value6',
-          }),
-          new GroupByVariable({
-            name: 'groupByVar',
-            label: 'Group By Variable',
-            description: 'A group by variable',
-            skipUrlSync: false,
-            hide: VariableHideV1.dontHide,
-            value: 'value7',
-            text: 'text7',
-            datasource: { uid: 'datasource2', type: 'prometheus' },
-            defaultOptions: [
-              { text: 'option1', value: 'option1' },
-              { text: 'option2', value: 'option2' },
-            ],
-            isMulti: false,
-            includeAll: false,
           }),
           new AdHocFiltersVariable({
             name: 'adhocVar',

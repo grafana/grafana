@@ -57,7 +57,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/retryer"
 )
@@ -499,40 +498,14 @@ func (dr *DashboardServiceImpl) Count(ctx context.Context, scopeParams *quota.Sc
 }
 
 func (dr *DashboardServiceImpl) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*dashboards.DashboardRef, error) {
-	request := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{
-			Fields: []*resourcepb.Requirement{
-				{
-					Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
-					Operator: string(selection.Equals),
-					Values:   []string{libraryPanelUID},
-				},
-			},
-		},
-		Limit: listAllDashboardsLimit,
-		Fields: []string{
-			resource.SEARCH_FIELD_FOLDER,
-			resource.SEARCH_FIELD_LEGACY_ID,
-			// Per-label fields are requestable; this one is needed to derive the numeric legacy ID.
-			resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
-		},
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	}
+	request := dashboardsearch.LibraryPanelDashboardsRequest(libraryPanelUID, listAllDashboardsLimit)
 
 	results, err := dashboardsearch.SearchAll(ctx, orgID, request, dr.k8sclient.Search)
 	if err != nil {
 		return nil, err
 	}
 
-	dashes := make([]*dashboards.DashboardRef, 0, len(results.Hits))
-	for _, row := range results.Hits {
-		dashes = append(dashes, &dashboards.DashboardRef{
-			UID:       row.Name,
-			FolderUID: folder.ToLegacyFolderUID(row.Folder),
-			ID:        row.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID), // nolint:staticcheck
-		})
-	}
-	return dashes, nil
+	return dashboardsearch.DashboardRefsFromResults(results), nil
 }
 
 func (dr *DashboardServiceImpl) CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error) {
@@ -1666,7 +1639,7 @@ func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *das
 				Limit: 100000,
 			},
 		},
-		Limit:        100000,
+		Limit:        0, // Only tag counts are needed; dashboard rows would be discarded.
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {

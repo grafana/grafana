@@ -179,6 +179,7 @@ func globalSearchCoverageOf(sources ...[]*app.ManifestData) globalSearchTypes {
 			if m == nil {
 				continue
 			}
+			names := ManifestKinds(m, nil)
 			kinds := map[schema.GroupResource]string{}
 			excluded := map[schema.GroupResource]bool{}
 			for _, version := range m.Versions {
@@ -188,7 +189,7 @@ func globalSearchCoverageOf(sources ...[]*app.ManifestData) globalSearchTypes {
 						continue
 					}
 					if kind.InGlobalSearchIndex() {
-						kinds[gr] = kind.Kind
+						kinds[gr] = names[gr].Kind
 					}
 					if !kind.HasSearchEndpoint() || !kind.HasListKeysEndpoint() || kind.Scope != namespacedScope {
 						excluded[gr] = true

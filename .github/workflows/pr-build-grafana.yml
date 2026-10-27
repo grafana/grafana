@@ -150,7 +150,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Check whether Meticulous should run
-        if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend-src == 'true'
+        if: github.repository == 'grafana/grafana' && github.event.pull_request.base.ref == 'main' && needs.detect-changes.outputs.frontend-src == 'true'
         id: meticulous-eligibility
         continue-on-error: true
         uses: actions/github-script@v8

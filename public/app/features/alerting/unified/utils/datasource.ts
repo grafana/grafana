@@ -1,6 +1,7 @@
 import {
   SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
   type SupportedExternalPrometheusFlavoredRulesSourceType,
+  isDataSourceManagingAlerts,
 } from '@grafana/alerting/internal';
 import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceSettings } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
@@ -338,10 +339,6 @@ export function getDefaultOrFirstCompatibleDataSource(): DataSourceInstanceSetti
   const defaultIsCompatible = defaultDataSource?.meta.alerting ?? false;
 
   return defaultIsCompatible ? defaultDataSource : getFirstCompatibleDataSource();
-}
-
-export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
-  return ds.jsonData.manageAlerts ?? config.defaultDatasourceManageAlertsUiToggle;
 }
 
 export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentifier): RulesSourceIdentifier {

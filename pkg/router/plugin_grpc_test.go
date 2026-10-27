@@ -33,6 +33,8 @@ func TestParsePluginGRPCConfig(t *testing.T) {
 		cfg, err := parsePluginGRPCConfig(setting.NewCfg())
 		require.NoError(t, err)
 		require.Equal(t, defaultPluginGRPCConfig(), cfg)
+		// gRPC servers' default enforcement policy closes connections that ping more often.
+		require.Equal(t, 5*time.Minute, cfg.Keepalive.Time)
 	})
 
 	t.Run("configured", func(t *testing.T) {
@@ -72,7 +74,7 @@ func TestParsePluginGRPCConfig(t *testing.T) {
 		t.Run("invalid "+key, func(t *testing.T) {
 			cfg := cfgWithBackendGRPCSection(t, map[string]string{key: value})
 			cfg.Raw.Section(cloudRouterSection).Key("plugins_url").SetValue("http://plugins.invalid/plugins")
-			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 			require.ErrorContains(t, err, backendGRPCSection+": "+key+" must be")
 		})
 	}

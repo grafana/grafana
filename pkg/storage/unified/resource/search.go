@@ -931,12 +931,23 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 	return s.searchWithIndex(ctx, req, nil)
 }
 
+func validateSearchResultFormat(req *resourcepb.ResourceSearchRequest) error {
+	format := req.GetResultFormat()
+	if format != resourcepb.ResourceSearchRequest_FIELD_VALUES {
+		return status.Errorf(codes.InvalidArgument, "search result format must be FIELD_VALUES, got %s", format.String())
+	}
+	return nil
+}
+
 // searchWithIndex prepares the request against the same index that executes it,
 // so a concurrent rebuild cannot change the field definitions between the two.
 func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.ResourceSearchRequest, prepare func(ResourceIndex)) (*resourcepb.ResourceSearchResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.Search")
 	defer span.End()
 
+	if err := validateSearchResultFormat(req); err != nil {
+		return nil, err
+	}
 	if err := s.maybeInjectFailure(); err != nil {
 		return nil, err
 	}

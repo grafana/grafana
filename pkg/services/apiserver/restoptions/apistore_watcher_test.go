@@ -51,8 +51,6 @@ const (
 	StorageTypeKV   StorageType = "kv"
 )
 
-var storageTypes = []StorageType{StorageTypeFile, StorageTypeSQL, StorageTypeKV}
-
 var scheme = runtime.NewScheme()
 var codecs = serializer.NewCodecFactory(scheme)
 
@@ -242,46 +240,48 @@ func waitForWatchReady(t testing.TB, ctx context.Context, client resourcepb.Reso
 	require.Equal(t, resourcepb.WatchEvent_BOOKMARK, event.Type)
 }
 
+func TestWatch(t *testing.T) {
+	runWatchTests(t, StorageTypeFile)
+}
+
 func TestIntegrationWatch(t *testing.T) {
-	for _, s := range storageTypes {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			require.NoError(t, err)
-			defer destroyFunc()
-			storagetesting.RunTestWatch(ctx, t, store)
-		})
-	}
+	testutil.SkipIntegrationTestInShortMode(t)
+	runWatchTests(t, StorageTypeSQL, StorageTypeKV)
 }
 
-func TestIntegrationClusterScopedWatch(t *testing.T) {
-	for _, s := range storageTypes {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			require.NoError(t, err)
-			defer destroyFunc()
-			storagetesting.RunTestClusterScopedWatch(ctx, t, store)
-		})
-	}
-}
-
-func TestIntegrationNamespaceScopedWatch(t *testing.T) {
-	for _, s := range storageTypes {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			require.NoError(t, err)
-			defer destroyFunc()
-			storagetesting.RunTestNamespaceScopedWatch(ctx, t, store)
-		})
-	}
-}
-
-func TestIntegrationDeleteTriggerWatch(t *testing.T) {
-	for _, s := range storageTypes {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			require.NoError(t, err)
-			defer destroyFunc()
-			storagetesting.RunTestDeleteTriggerWatch(ctx, t, store)
+func runWatchTests(t *testing.T, storageTypes ...StorageType) {
+	t.Helper()
+	for _, tt := range []struct {
+		name string
+		run  func(context.Context, *testing.T, storage.Interface)
+	}{
+		{name: "Watch", run: storagetesting.RunTestWatch},
+		{name: "ClusterScopedWatch", run: storagetesting.RunTestClusterScopedWatch},
+		{name: "NamespaceScopedWatch", run: storagetesting.RunTestNamespaceScopedWatch},
+		{name: "DeleteTriggerWatch", run: storagetesting.RunTestDeleteTriggerWatch},
+		{name: "WatchFromNonZero", run: storagetesting.RunTestWatchFromNonZero},
+		{name: "WatchContextCancel", run: storagetesting.RunTestWatchContextCancel},
+		{name: "WatcherTimeout", run: storagetesting.RunTestWatcherTimeout},
+		{name: "WatchDeleteEventObjectHaveLatestRV", run: storagetesting.RunTestWatchDeleteEventObjectHaveLatestRV},
+		{
+			name: "WatchDispatchBookmarkEvents",
+			run: func(ctx context.Context, t *testing.T, store storage.Interface) {
+				storagetesting.RunTestWatchDispatchBookmarkEvents(ctx, t, store, false)
+			},
+		},
+		{name: "SendInitialEventsBackwardCompatibility", run: storagetesting.RunSendInitialEventsBackwardCompatibility},
+		{name: "EtcdWatchSemantics", run: storagetesting.RunWatchSemantics},
+		{name: "EtcdWatchSemanticInitialEventsExtended", run: storagetesting.RunWatchSemanticInitialEventsExtended},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			for _, s := range storageTypes {
+				t.Run(string(s), func(t *testing.T) {
+					ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
+					require.NoError(t, err)
+					defer destroyFunc()
+					tt.run(ctx, t, store)
+				})
+			}
 		})
 	}
 }
@@ -296,19 +296,6 @@ func TestIntegrationDeleteTriggerWatch(t *testing.T) {
 // assert.NoError(t, err)
 // storagetesting.RunTestWatchFromZero(ctx, t, store, nil)
 // }
-
-// TestIntegrationWatchFromNonZero tests that
-// - watch from non-0 should just watch changes after given version
-func TestIntegrationWatchFromNonZero(t *testing.T) {
-	for _, s := range storageTypes {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			require.NoError(t, err)
-			defer destroyFunc()
-			storagetesting.RunTestWatchFromNonZero(ctx, t, store)
-		})
-	}
-}
 
 /*
 Only valid when using a cached storage
@@ -327,39 +314,6 @@ func TestWatchError(t *testing.T) {
 }
 */
 
-func TestIntegrationWatchContextCancel(t *testing.T) {
-	for _, s := range storageTypes {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			require.NoError(t, err)
-			defer destroyFunc()
-			storagetesting.RunTestWatchContextCancel(ctx, t, store)
-		})
-	}
-}
-
-func TestIntegrationWatcherTimeout(t *testing.T) {
-	for _, s := range storageTypes {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			require.NoError(t, err)
-			defer destroyFunc()
-			storagetesting.RunTestWatcherTimeout(ctx, t, store)
-		})
-	}
-}
-
-func TestIntegrationWatchDeleteEventObjectHaveLatestRV(t *testing.T) {
-	for _, s := range storageTypes {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			require.NoError(t, err)
-			defer destroyFunc()
-			storagetesting.RunTestWatchDeleteEventObjectHaveLatestRV(ctx, t, store)
-		})
-	}
-}
-
 // TODO: enable when we support flow control and priority fairness
 /* func TestWatchInitializationSignal(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
@@ -375,44 +329,18 @@ func TestIntegrationWatchDeleteEventObjectHaveLatestRV(t *testing.T) {
 	storagetesting.RunOptionalTestProgressNotify(ctx, t, store)
 } */
 
-// TestIntegrationWatchDispatchBookmarkEvents makes sure that
-// setting allowWatchBookmarks query param against
-// etcd implementation doesn't have any effect.
-func TestIntegrationWatchDispatchBookmarkEvents(t *testing.T) {
-	for _, s := range storageTypes {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			require.NoError(t, err)
-			defer destroyFunc()
-			storagetesting.RunTestWatchDispatchBookmarkEvents(ctx, t, store, false)
-		})
-	}
-}
-
-func TestIntegrationSendInitialEventsBackwardCompatibility(t *testing.T) {
-	for _, s := range storageTypes {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			require.NoError(t, err)
-			defer destroyFunc()
-			storagetesting.RunSendInitialEventsBackwardCompatibility(ctx, t, store)
-		})
-	}
-}
-
-func TestIntegrationEtcdWatchSemantics(t *testing.T) {
-	for _, s := range storageTypes {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			require.NoError(t, err)
-			defer destroyFunc()
-			storagetesting.RunWatchSemantics(ctx, t, store)
-		})
-	}
+func TestKVWatchExpiredResourceVersion(t *testing.T) {
+	runKVWatchExpiredResourceVersion(t, StorageTypeFile)
 }
 
 func TestIntegrationKVWatchExpiredResourceVersion(t *testing.T) {
-	for _, s := range []StorageType{StorageTypeFile, StorageTypeKV} {
+	testutil.SkipIntegrationTestInShortMode(t)
+	runKVWatchExpiredResourceVersion(t, StorageTypeKV)
+}
+
+func runKVWatchExpiredResourceVersion(t *testing.T, storageTypes ...StorageType) {
+	t.Helper()
+	for _, s := range storageTypes {
 		t.Run(string(s), func(t *testing.T) {
 			for _, allowBookmarks := range []bool{false, true} {
 				t.Run(fmt.Sprintf("allowWatchBookmarks=%t", allowBookmarks), func(t *testing.T) {
@@ -453,17 +381,6 @@ func TestIntegrationKVWatchExpiredResourceVersion(t *testing.T) {
 					}
 				})
 			}
-		})
-	}
-}
-
-func TestIntegrationEtcdWatchSemanticInitialEventsExtended(t *testing.T) {
-	for _, s := range storageTypes {
-		t.Run(string(s), func(t *testing.T) {
-			ctx, store, destroyFunc, err := testSetup(t, withStorageType(s))
-			require.NoError(t, err)
-			defer destroyFunc()
-			storagetesting.RunWatchSemanticInitialEventsExtended(ctx, t, store)
 		})
 	}
 }

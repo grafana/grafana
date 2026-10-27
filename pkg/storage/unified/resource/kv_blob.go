@@ -5,7 +5,6 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
-	"io"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -90,8 +89,7 @@ func (s *kvBlobSupport) GetResourceBlob(ctx context.Context, key *resourcepb.Res
 	if err != nil {
 		return &resourcepb.GetBlobResponse{Error: AsErrorResult(err)}, nil
 	}
-	defer func() { _ = r.Close() }()
-	value, err := io.ReadAll(r)
+	value, err := kv.ReadAllAndClose(r)
 	if err != nil {
 		return &resourcepb.GetBlobResponse{Error: AsErrorResult(err)}, nil
 	}

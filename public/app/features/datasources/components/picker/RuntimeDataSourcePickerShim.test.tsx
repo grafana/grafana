@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -9,7 +9,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
-import { useFlagGrafanaUnifiedDataSourcePicker } from '@grafana/runtime/internal';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 
 // Imported eagerly so the shim's lazy import resolves from the module cache, keeping the
@@ -52,11 +51,6 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useFlagGrafanaUnifiedDataSourcePicker: jest.fn(),
-}));
-
 jest.mock('../../hooks', () => {
   const actual = jest.requireActual('../../hooks');
   return {
@@ -65,8 +59,6 @@ jest.mock('../../hooks', () => {
     useDatasources: () => [mockDS],
   };
 });
-
-const useFlagMock = jest.mocked(useFlagGrafanaUnifiedDataSourcePicker);
 
 // Only the legacy picker renders this labelled container
 const legacyPicker = () => screen.queryByLabelText('Data source picker select container');
@@ -87,17 +79,7 @@ beforeEach(() => {
 });
 
 describe('RuntimeDataSourcePickerShim', () => {
-  it('should render the legacy picker when the toggle is disabled', async () => {
-    useFlagMock.mockReturnValue(false);
-    render(<RuntimeDataSourcePickerShim onChange={jest.fn()} current={mockDS.uid} />);
-    // Flush the legacy picker's pending default-data-source resolution.
-    await act(async () => {});
-
-    expect(legacyPicker()).toBeInTheDocument();
-  });
-
-  it('should render the core picker when the toggle is enabled', async () => {
-    useFlagMock.mockReturnValue(true);
+  it('should render the core picker', async () => {
     render(<RuntimeDataSourcePickerShim onChange={jest.fn()} current={mockDS.uid} />);
 
     // A skeleton renders as the Suspense fallback until the core picker chunk loads
@@ -109,7 +91,6 @@ describe('RuntimeDataSourcePickerShim', () => {
   });
 
   it('should accept the full runtime prop contract without errors', async () => {
-    useFlagMock.mockReturnValue(true);
     const onClear = jest.fn();
     render(
       <RuntimeDataSourcePickerShim

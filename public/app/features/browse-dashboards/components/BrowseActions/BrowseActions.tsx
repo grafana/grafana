@@ -19,7 +19,7 @@ import {
   useMoveMultipleFoldersMutationFacade,
 } from '../../../../api/clients/folder/v1beta1/hooks';
 import { useDeleteDashboardsMutation, useMoveDashboardsMutation } from '../../api/browseDashboardsAPI';
-import { useActionSelectionState } from '../../state/hooks';
+import { useActionSelectionState, useHasSelection } from '../../state/hooks';
 import { setAllSelection } from '../../state/slice';
 import { type DashboardTreeSelection } from '../../types';
 import { getSelectedUIDs } from '../../utils/dashboards';
@@ -32,11 +32,24 @@ export interface Props {
   folderDTO?: FolderDTO;
 }
 
+type BulkSelection = Omit<DashboardTreeSelection, 'panel' | '$all'>;
+
+/**
+ * The open provisioned drawer and the context it was opened in. A snapshot, not the live values: a
+ * repository pull or the job itself clears the selection, and the page can navigate to another
+ * folder (browser back), while the drawer is still open.
+ */
+interface BulkAction {
+  kind: 'delete' | 'move';
+  selectedItems: BulkSelection;
+  folderUid: string | undefined;
+}
+
 export function BrowseActions({ folderDTO }: Props) {
-  const [showBulkDeleteProvisionedResource, setShowBulkDeleteProvisionedResource] = useState(false);
-  const [showBulkMoveProvisionedResource, setShowBulkMoveProvisionedResource] = useState(false);
+  const [bulkAction, setBulkAction] = useState<BulkAction>();
 
   const dispatch = useDispatch();
+  const hasSelection = useHasSelection();
   const selectedItems = useActionSelectionState();
   const [deleteDashboards] = useDeleteDashboardsMutation();
   const deleteFolders = useDeleteMultipleFoldersMutationFacade();
@@ -52,8 +65,14 @@ export function BrowseActions({ folderDTO }: Props) {
 
   const isSearching = stateManager.hasSearchFilters();
 
-  const onActionComplete = () => {
+  const clearSelection = () => {
     dispatch(setAllSelection({ isSelected: false, folderUID: undefined }));
+  };
+
+  const closeBulkAction = () => setBulkAction(undefined);
+
+  const onActionComplete = () => {
+    clearSelection();
 
     if (isSearching) {
       // Redo search query
@@ -94,7 +113,7 @@ export function BrowseActions({ folderDTO }: Props) {
 
     if (provisioningEnabled && hasProvisioned) {
       // Only provisioned items
-      setShowBulkMoveProvisionedResource(true);
+      setBulkAction({ kind: 'move', selectedItems, folderUid: folderDTO?.uid });
       return;
     }
 
@@ -121,7 +140,7 @@ export function BrowseActions({ folderDTO }: Props) {
       );
     } else if (hasProvisioned && provisioningEnabled) {
       // Only provisioned items
-      setShowBulkDeleteProvisionedResource(true);
+      setBulkAction({ kind: 'delete', selectedItems, folderUid: folderDTO?.uid });
     } else {
       // Only non-provisioned items
       appEvents.publish(
@@ -148,19 +167,22 @@ export function BrowseActions({ folderDTO }: Props) {
 
   return (
     <>
-      <Stack gap={1} data-testid="manage-actions">
-        {moveButton}
+      {hasSelection && (
+        <Stack gap={1} data-testid="manage-actions">
+          {moveButton}
 
-        <Button
-          onClick={showDeleteModal}
-          variant="destructive"
-          data-testid={selectors.pages.BrowseDashboards.actions.deleteButton}
-        >
-          <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
-        </Button>
-      </Stack>
-      {/* bulk delete */}
-      {showBulkDeleteProvisionedResource && (
+          <Button
+            onClick={showDeleteModal}
+            variant="destructive"
+            data-testid={selectors.pages.BrowseDashboards.actions.deleteButton}
+          >
+            <Trans i18nKey="browse-dashboards.action.delete-button">Delete</Trans>
+          </Button>
+        </Stack>
+      )}
+      {/* The drawer outlives the selection: the job spends it, and the drawer stays open to show
+          the job's status. The sync watch refreshes the list once the pull lands. */}
+      {bulkAction?.kind === 'delete' && (
         <Drawer
           title={
             // Heading levels should only increase by one (a11y)
@@ -168,21 +190,19 @@ export function BrowseActions({ folderDTO }: Props) {
               {t('browse-dashboards.action.bulk-delete-provisioned-resources', 'Bulk Delete Provisioned Resources')}
             </Text>
           }
-          onClose={() => setShowBulkDeleteProvisionedResource(false)}
+          onClose={closeBulkAction}
           size="md"
         >
           <BulkDeleteProvisionedResource
-            selectedItems={selectedItems}
-            folderUid={folderDTO?.uid || ''}
-            onDismiss={() => {
-              setShowBulkDeleteProvisionedResource(false);
-            }}
+            selectedItems={bulkAction.selectedItems}
+            folderUid={bulkAction.folderUid || ''}
+            onDismiss={closeBulkAction}
+            onJobCreated={clearSelection}
           />
         </Drawer>
       )}
 
-      {/* bulk move */}
-      {showBulkMoveProvisionedResource && (
+      {bulkAction?.kind === 'move' && (
         <Drawer
           title={
             // Heading levels should only increase by one (a11y)
@@ -190,15 +210,14 @@ export function BrowseActions({ folderDTO }: Props) {
               {t('browse-dashboards.action.bulk-move-provisioned-resources', 'Bulk Move Provisioned Resources')}
             </Text>
           }
-          onClose={() => setShowBulkMoveProvisionedResource(false)}
+          onClose={closeBulkAction}
           size="md"
         >
           <BulkMoveProvisionedResource
-            selectedItems={selectedItems}
-            folderUid={folderDTO?.uid}
-            onDismiss={() => {
-              setShowBulkMoveProvisionedResource(false);
-            }}
+            selectedItems={bulkAction.selectedItems}
+            folderUid={bulkAction.folderUid}
+            onDismiss={closeBulkAction}
+            onJobCreated={clearSelection}
           />
         </Drawer>
       )}
@@ -211,7 +230,7 @@ const actionMap = {
   delete: 'grafana_manage_dashboards_item_deleted',
 } as const;
 
-function trackAction(action: keyof typeof actionMap, selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>) {
+function trackAction(action: keyof typeof actionMap, selectedItems: BulkSelection) {
   const selectedDashboards = getSelectedUIDs(selectedItems, 'dashboard');
   const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
 

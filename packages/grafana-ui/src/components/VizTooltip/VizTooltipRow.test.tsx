@@ -229,13 +229,8 @@ describe('VizTooltipRow', () => {
       expect(screen.queryByText(/^\(/)).not.toBeInTheDocument();
     });
 
-    /**
-     * `label` is left empty on purpose: the pinned label branch passes a Fragment to `Tooltip`,
-     * which logs a React ref warning (pre-existing, unrelated to copying) that would fail the
-     * suite via jest-fail-on-console.
-     */
     async function copyPinnedValue(props: { value: string; delta?: VizTooltipDelta }) {
-      render(<VizTooltipRow {...defaultProps} label="" isPinned={true} {...props} />);
+      render(<VizTooltipRow {...defaultProps} isPinned={true} {...props} />);
       await userEvent.click(screen.getByText(props.value));
     }
 

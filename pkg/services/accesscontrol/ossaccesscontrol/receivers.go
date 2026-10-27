@@ -2,13 +2,17 @@ package ossaccesscontrol
 
 import (
 	"context"
+	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -17,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -50,7 +55,7 @@ func ReceiverPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideReceiverPermissionsService(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
 	iamFeatures iamapi.Features,
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
@@ -83,7 +88,9 @@ func ProvideReceiverPermissionsService(
 	if err != nil {
 		return nil, err
 	}
-	return &ReceiverPermissionsService{Service: srv, ac: service, log: log.New("resourcepermissions.receivers")}, nil
+	receivers := &ReceiverPermissionsService{Service: srv, sql: sql, ac: service, log: log.New("resourcepermissions.receivers")}
+	sql.Bus().AddEventListener(receivers.onPermissionsCopied)
+	return receivers, nil
 }
 
 var _ accesscontrol.ReceiverPermissionsService = (*ReceiverPermissionsService)(nil)
@@ -91,7 +98,13 @@ var _ accesscontrol.ReceiverPermissionsService = (*ReceiverPermissionsService)(n
 type ReceiverPermissionsService struct {
 	*resourcepermissions.Service
 	ac  accesscontrol.Service
+	sql db.DB
 	log log.Logger
+}
+
+// receiverPermissionsCopied is an in-process notification, not a durable delivery record.
+type receiverPermissionsCopied struct {
+	user identity.Requester
 }
 
 // SetDefaultPermissions sets the default permissions for a newly created receiver.
@@ -144,30 +157,57 @@ func (r ReceiverPermissionsService) CopyPermissions(ctx context.Context, orgID i
 	r.log.Debug("Copying permissions from receiver", "old_uid", oldUID, "new_uid", newUID)
 	oldResourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(oldUID)
 	newResourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(newUID)
-	currentPermissions, err := r.GetPermissions(ctx, copyPermissionUser(orgID), oldResourceId)
+	var copied int
+	err := r.sql.InTransaction(ctx, func(ctx context.Context) error {
+		currentPermissions, err := r.GetPermissions(ctx, copyPermissionUser(orgID), oldResourceId)
+		if err != nil {
+			return err
+		}
+
+		setPermissionCommands := r.toSetResourcePermissionCommands(currentPermissions)
+		if _, err := r.SetPermissions(ctx, orgID, newResourceId, setPermissionCommands...); err != nil {
+			return err
+		}
+
+		if user != nil && user.IsIdentityType(claims.TypeUser) {
+			// Queue on the shared session so nested calls wait for the outermost commit.
+			sqlstore.SessionFromContext(ctx).PublishAfterCommit(&receiverPermissionsCopied{user: user})
+		}
+		copied = countCustomPermissions(setPermissionCommands)
+		return nil
+	})
 	if err != nil {
 		return 0, err
 	}
+	return copied, nil
+}
 
-	setPermissionCommands := r.toSetResourcePermissionCommands(currentPermissions)
-	if _, err := r.SetPermissions(ctx, orgID, newResourceId, setPermissionCommands...); err != nil {
-		return 0, err
+func (r ReceiverPermissionsService) onPermissionsCopied(ctx context.Context, event *receiverPermissionsCopied) error {
+	if err := r.refreshPermissions(ctx, event.user); err != nil {
+		_ = tracing.Error(trace.SpanFromContext(ctx), err)
+	}
+	// The mutation already committed. Refresh failures must not fail event delivery.
+	return nil
+}
+
+func (r ReceiverPermissionsService) refreshPermissions(ctx context.Context, user identity.Requester) error {
+	if user == nil || !user.IsIdentityType(claims.TypeUser) {
+		return nil
+	}
+	inTransaction := sqlstore.IsInTransaction(ctx)
+	ctx, span := tracing.Start(ctx, "accesscontrol.ossaccesscontrol.RefreshPermissions", attribute.Bool("is_in_tx", inTransaction))
+	defer span.End()
+
+	// Remote AuthZ cannot see uncommitted changes, so a reload inside a transaction can cache old permissions.
+	if inTransaction {
+		return nil
 	}
 
-	// Clear permission cache for the user who updated the receiver, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly updated object
-	if user != nil && user.IsIdentityType(claims.TypeUser) {
-		// A more comprehensive means of clearing the user's permissions cache than ClearUserPermissionCache.
-		// It also clears the cache for basic roles and teams, which is required for the user to not have temporarily
-		// broken UI permissions when their source of elevated permissions comes from a cached team or basic role
-		// permission.
-		_, err = r.ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true})
-		if err != nil {
-			r.log.Debug("Failed to clear user permissions cache", "error", err)
-		}
-	}
-
-	return countCustomPermissions(setPermissionCommands), nil
+	// Reload also refreshes basic-role and team caches, which ClearUserPermissionCache does not clear.
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	_, err := r.ac.GetUserPermissions(ctx, user, accesscontrol.Options{ReloadCache: true})
+	return err
 }
 
 func (r ReceiverPermissionsService) DeleteResourcePermissions(ctx context.Context, orgID int64, uid string) error {

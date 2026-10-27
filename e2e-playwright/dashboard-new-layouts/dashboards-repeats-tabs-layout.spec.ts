@@ -12,7 +12,6 @@ const REPEAT_OPTIONS = [1, 2, 3, 4];
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
-    groupByVariable: true,
   },
 });
 

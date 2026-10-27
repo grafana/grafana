@@ -15,6 +15,7 @@ import {
 import { DashboardSavedEvent } from 'app/types/events';
 
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
+import { finishSavingNewDashboard, withoutPendingChangesPreview } from '../lifecycle/pendingChangePreview';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { DashboardInteractions } from '../utils/interactions';
@@ -37,6 +38,7 @@ export function useSaveDashboard(isCopy = false) {
     ) => {
       {
         let saveModel = options.rawDashboardJSON ?? scene.getSaveModel();
+        const saveAsSource = options.saveAsCopy ? scene.state : undefined;
 
         if (options.saveAsCopy) {
           saveModel = scene.getSaveAsModel({
@@ -47,15 +49,19 @@ export function useSaveDashboard(isCopy = false) {
           });
         }
 
+        // A new dashboard proposed as pending changes is created under the uid it was proposed for.
+        const newDashboardUid = options.isNew ? scene.state.meta.newDashboardUid : undefined;
         // Attribute the submitted draft, even if the user switches modes while the save is in flight.
         const editSessionTracking = scene.getEditSessionTracking();
+
         const result = await saveDashboardRtkQuery({
           dashboard: saveModel,
           folderUid: options.folderUid,
           message: options.message,
           overwrite: options.overwrite,
           showErrorAlert: false,
-          k8s: options.k8s,
+          k8s: newDashboardUid ? { ...options.k8s, name: newDashboardUid } : options.k8s,
+          ...(newDashboardUid ? { create: true } : {}),
         });
 
         if ('error' in result) {
@@ -77,7 +83,11 @@ export function useSaveDashboard(isCopy = false) {
         // Capture before saveCompleted re-snapshots the baseline (which would make this report ~0).
         const diffCount = scene.getDashboardChanges().diffCount;
 
-        await scene.saveCompleted(saveModel, resultData, options.folderUid);
+        await scene.saveCompleted(saveModel, resultData, options.folderUid, saveAsSource);
+
+        if (newDashboardUid) {
+          await finishSavingNewDashboard(newDashboardUid);
+        }
 
         if (editSessionTracking.edit_session_id) {
           DashboardInteractions.editPeriodEnded({
@@ -113,13 +123,15 @@ export function useSaveDashboard(isCopy = false) {
 
         const currentLocation = locationService.getLocation();
         const newUrl = locationUtil.stripBaseFromUrl(resultData.url);
+        // A saved proposal is a regular dashboard now, so the page stops previewing it.
+        const search = newDashboardUid ? withoutPendingChangesPreview(currentLocation.search) : currentLocation.search;
 
-        if (newUrl !== currentLocation.pathname) {
+        if (newUrl !== currentLocation.pathname || search !== currentLocation.search) {
           setTimeout(() => {
             if (dashboardModesEnabled()) {
               setDashboardModeAfterSave(resultData.uid, getDashboardMode(scene.state));
             }
-            locationService.push({ pathname: newUrl, search: currentLocation.search });
+            locationService.push({ pathname: newUrl, search });
           });
         }
 

@@ -17,6 +17,8 @@ export interface ScopesDashboardsTreeFolderItemProps {
   /** Inherited from a parent ChildScope folder; used by group folders that have no subScopeName of their own. */
   subScope?: string;
   subScopePath?: string[];
+  /** Called after a navigation link is clicked, e.g. so an overlay nav menu can close itself. */
+  onNavigate?: () => void;
 }
 
 export function ScopesDashboardsTreeFolderItem({
@@ -26,6 +28,7 @@ export function ScopesDashboardsTreeFolderItem({
   folderPath,
   folders,
   onFolderUpdate,
+  onNavigate,
 }: ScopesDashboardsTreeFolderItemProps) {
   const styles = useStyles2(getStyles);
 
@@ -93,6 +96,7 @@ export function ScopesDashboardsTreeFolderItem({
             folders={folders}
             folderPath={folderPath}
             onFolderUpdate={onFolderUpdate}
+            onNavigate={onNavigate}
           />
         </div>
       )}

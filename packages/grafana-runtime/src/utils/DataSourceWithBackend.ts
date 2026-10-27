@@ -35,7 +35,7 @@ import { getDataSourceInstanceSettings } from '../services/dataSource/settings';
 
 import { ExpressionDatasourceRef, isExpressionReference } from './expressionRef';
 import { publicDashboardQueryHandler } from './publicDashboardQueryHandler';
-import { isQueryServiceCompatible } from './qscheck';
+import { isDatasourceAuthCompatible, isQueryServiceCompatible } from './qscheck';
 import { type BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
 import { UserStorage } from './userStorage';
 
@@ -441,7 +441,11 @@ class DataSourceWithBackend<
       return false;
     }
     const pluginIds = allowedTypes[endpoint];
-    return Array.isArray(pluginIds) && (pluginIds.includes('*') || pluginIds.includes(this.meta?.id ?? this.type));
+    return (
+      Array.isArray(pluginIds) &&
+      (pluginIds.includes('*') || pluginIds.includes(this.meta?.id ?? this.type)) &&
+      isDatasourceAuthCompatible(this.datasourceInstanceSettings)
+    );
   }
 
   /**

@@ -110,6 +110,7 @@ func (k *Elector) Run(ctx context.Context, fn func(ctx context.Context), opts ..
 	}, opts)
 
 	mgr := lease.NewManager(k.kvStore, k.identity, k.component, k.reg, k.managerOpts...)
+	defer mgr.Stop()
 
 	for {
 		if err := ctx.Err(); err != nil {

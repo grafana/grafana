@@ -41,8 +41,7 @@ func getUint64(ctx context.Context, store kv.KV, section, key string) (uint64, e
 
 // readUint64 consumes and closes r, decoding the stored counter value.
 func readUint64(r io.ReadCloser) (uint64, error) {
-	defer func() { _ = r.Close() }()
-	b, err := io.ReadAll(r)
+	b, err := kv.ReadAllAndClose(r)
 	if err != nil {
 		return 0, err
 	}

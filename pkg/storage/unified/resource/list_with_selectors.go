@@ -375,7 +375,7 @@ func (s *server) authorizeSearchRows(ctx context.Context, rows []listSearchRow) 
 	for i, err := range authz.FilterAuthorized(ctx, s.access, batched, func(i int) authz.BatchCheckItem {
 		row := rows[i]
 		return listAuthorizationItem(row.key, row.key.Name, row.folder, row.resourceVersion)
-	}, authz.WithTracer(tracer)) {
+	}, authz.WithTracer(tracer), authz.WithSizeHint(len(rows))) {
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}

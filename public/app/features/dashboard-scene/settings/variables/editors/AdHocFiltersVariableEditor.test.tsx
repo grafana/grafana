@@ -14,13 +14,14 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
-import { AdHocFiltersVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable, type AdHocFilterWithLabels } from '@grafana/scenes';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
 import { type AdHocOriginFiltersController } from '../components/AdHocOriginFiltersController';
+import { addToEditedDashboard } from '../variableEditTestUtils';
 
 import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './AdHocFiltersVariableEditor';
 
@@ -323,10 +324,207 @@ describe('AdHocFiltersVariableEditor', () => {
   });
 });
 
+describe('AdHocFiltersVariableEditor undo/redo', () => {
+  beforeAll(() => {
+    mockBoundingClientRect();
+  });
+
+  beforeEach(() => {
+    getTagKeysMock = () => [];
+    getGroupByKeysMock = undefined;
+    capturedOriginController = undefined;
+    capturedDefaultGroupByProps = undefined;
+  });
+
+  it('records a data source change made inline as one undoable action', async () => {
+    const { renderer, variable, user, sidebar } = await setup(undefined, { inline: true });
+
+    await user.click(renderer.getByTestId(selectors.components.DataSourcePicker.inputV2));
+    await user.click(renderer.getByText(/prom/i));
+    await waitFor(() => expect(variable.state.datasource).toEqual({ uid: 'prometheus', type: 'prometheus' }));
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    await act(async () => sidebar.undoAction());
+    expect(variable.state.datasource).toEqual({ uid: defaultDatasource.uid, type: defaultDatasource.type });
+
+    await act(async () => sidebar.redoAction());
+    expect(variable.state.datasource).toEqual({ uid: 'prometheus', type: 'prometheus' });
+  });
+
+  it('records a static keys toggle made inline as one undoable action', async () => {
+    const { renderer, variable, user, sidebar } = await setup(undefined, { inline: true });
+
+    await user.click(
+      renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle)
+    );
+    expect(variable.state.defaultKeys).toEqual([]);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    await act(async () => sidebar.undoAction());
+    expect(variable.state.defaultKeys).toBeUndefined();
+
+    await act(async () => sidebar.redoAction());
+    expect(variable.state.defaultKeys).toEqual([]);
+  });
+
+  it('records an allow custom values change made inline as one undoable action', async () => {
+    const { renderer, variable, user, sidebar } = await setup(undefined, { inline: true });
+
+    await user.click(
+      renderer.getByTestId(
+        selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch
+      )
+    );
+    expect(variable.state.allowCustomValue).toBe(false);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    await act(async () => sidebar.undoAction());
+    expect(variable.state.allowCustomValue).toBe(true);
+
+    await act(async () => sidebar.redoAction());
+    expect(variable.state.allowCustomValue).toBe(false);
+  });
+
+  it('records an enable group by change made inline as one undoable action', async () => {
+    getGroupByKeysMock = () => Promise.resolve([]);
+    const { renderer, variable, user, sidebar } = await setup(undefined, { enableGroupBy: true, inline: true });
+
+    await user.click(
+      await renderer.findByTestId(
+        selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle
+      )
+    );
+    expect(variable.state.enableGroupBy).toBe(false);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    await act(async () => sidebar.undoAction());
+    expect(variable.state.enableGroupBy).toBe(true);
+
+    await act(async () => sidebar.redoAction());
+    expect(variable.state.enableGroupBy).toBe(false);
+  });
+
+  it('records a default group by change made inline as one undoable action', async () => {
+    getGroupByKeysMock = () => Promise.resolve([]);
+    const { variable, sidebar } = await setup(undefined, { enableGroupBy: true, inline: true });
+    await waitFor(() => expect(capturedDefaultGroupByProps).toBeDefined());
+
+    act(() => capturedDefaultGroupByProps!.onChange([{ value: 'region', label: 'region' }]));
+    const regionGroupBy = expect.objectContaining({ key: 'region', operator: 'groupBy', origin: 'dashboard' });
+    expect(variable.state.originFilters).toEqual([regionGroupBy]);
+    expect(capturedDefaultGroupByProps!.values).toEqual([{ value: 'region', label: 'region' }]);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    await act(async () => sidebar.undoAction());
+    expect(variable.state.originFilters ?? []).toEqual([]);
+    expect(variable.getOriginalFilters()).toEqual([]);
+    expect(capturedDefaultGroupByProps!.values).toEqual([]);
+
+    await act(async () => sidebar.redoAction());
+    expect(variable.state.originFilters).toEqual([regionGroupBy]);
+    expect(capturedDefaultGroupByProps!.values).toEqual([{ value: 'region', label: 'region' }]);
+  });
+
+  it('records a default filter change made inline as one undoable action', async () => {
+    const { variable, sidebar } = await setup(undefined, { inline: true });
+    await waitFor(() => expect(capturedOriginController).toBeDefined());
+
+    act(() => capturedOriginController!.addWip());
+    act(() => capturedOriginController!.updateFilter(capturedOriginController!.useState().wip!, { key: 'region' }));
+    act(() => capturedOriginController!.updateFilter(capturedOriginController!.useState().wip!, { value: 'eu' }));
+    const euFilter = expect.objectContaining({ key: 'region', value: 'eu', origin: 'dashboard' });
+    expect(variable.state.originFilters).toEqual([euFilter]);
+    expect(capturedOriginController!.useState().filters).toEqual([euFilter]);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    await act(async () => sidebar.undoAction());
+    expect(variable.state.originFilters ?? []).toEqual([]);
+    expect(capturedOriginController!.useState().filters).toEqual([]);
+
+    await act(async () => sidebar.redoAction());
+    expect(variable.state.originFilters).toEqual([euFilter]);
+    expect(capturedOriginController!.useState().filters).toEqual([euFilter]);
+  });
+
+  it('keeps a default filter open when only its runtime value changes', async () => {
+    const { variable } = await setup(undefined, { inline: true });
+    await waitFor(() => expect(capturedOriginController).toBeDefined());
+    act(() => capturedOriginController!.addWip());
+    act(() => capturedOriginController!.updateFilter(capturedOriginController!.useState().wip!, { key: 'region' }));
+    act(() => capturedOriginController!.updateFilter(capturedOriginController!.useState().wip!, { value: 'eu' }));
+    const filter = capturedOriginController!.useState().filters[0];
+    act(() => capturedOriginController!.updateFilter(filter, { forceEdit: true }));
+    expect(capturedOriginController!.useState().filters[0].forceEdit).toBe(true);
+
+    act(() =>
+      variable.setState({
+        originFilters: variable.state.originFilters!.map((filter) => ({ ...filter, value: 'us' })),
+      })
+    );
+    expect(capturedOriginController!.useState().filters[0]).toMatchObject({ value: 'eu', forceEdit: true });
+  });
+
+  it('does not record moving editing to the previous default filter', async () => {
+    const { sidebar } = await setup(undefined, { inline: true });
+    await waitFor(() => expect(capturedOriginController).toBeDefined());
+    for (const key of ['region', 'zone']) {
+      act(() => capturedOriginController!.addWip());
+      act(() => capturedOriginController!.updateFilter(capturedOriginController!.useState().wip!, { key }));
+      act(() => capturedOriginController!.updateFilter(capturedOriginController!.useState().wip!, { value: 'a' }));
+    }
+    const undoStackLength = sidebar.state.undoStack.length;
+
+    const [regionFilter, zoneFilter] = capturedOriginController!.useState().filters;
+    act(() => capturedOriginController!.handleComboboxBackspace(zoneFilter));
+    act(() => capturedOriginController!.updateFilter(regionFilter, { forceEdit: undefined }));
+
+    expect(sidebar.state.undoStack).toHaveLength(undoStackLength);
+  });
+
+  it('does not record moving editing between default filters loaded with the dashboard', async () => {
+    const { sidebar } = await setup(undefined, {
+      inline: true,
+      originFilters: [
+        { key: 'region', operator: '=', value: 'eu', origin: 'dashboard' },
+        { key: 'zone', operator: '=', value: 'a', origin: 'dashboard' },
+      ],
+    });
+    await waitFor(() => expect(capturedOriginController).toBeDefined());
+
+    const [regionFilter, zoneFilter] = capturedOriginController!.useState().filters;
+    expect(regionFilter).toMatchObject({ key: 'region', value: 'eu' });
+    act(() => capturedOriginController!.handleComboboxBackspace(zoneFilter));
+    expect(capturedOriginController!.useState().filters[0].forceEdit).toBe(true);
+    act(() =>
+      capturedOriginController!.updateFilter(capturedOriginController!.useState().filters[0], { forceEdit: undefined })
+    );
+
+    expect(sidebar.state.undoStack).toHaveLength(0);
+  });
+
+  it('does not record opening a default filter when the pill adds keys set to undefined', async () => {
+    const { sidebar } = await setup(undefined, {
+      inline: true,
+      originFilters: [
+        { key: 'region', operator: '=', value: 'eu', origin: 'dashboard' },
+        { key: 'zone', operator: '=', value: 'a', origin: 'dashboard' },
+      ],
+    });
+    await waitFor(() => expect(capturedOriginController).toBeDefined());
+
+    const [regionFilter] = capturedOriginController!.useState().filters;
+    act(() => capturedOriginController!.updateFilter(regionFilter, { forceEdit: true, meta: undefined }));
+
+    expect(sidebar.state.undoStack).toHaveLength(0);
+  });
+});
+
 interface SetupOptions {
   withDefaultKeys?: boolean;
   enableGroupBy?: boolean;
   datasource?: { uid: string; type: string } | null;
+  inline?: boolean;
+  originFilters?: AdHocFilterWithLabels[];
 }
 
 async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEditor>, options: SetupOptions = {}) {
@@ -334,6 +532,8 @@ async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEdi
     withDefaultKeys = false,
     enableGroupBy,
     datasource = { uid: defaultDatasource.uid, type: defaultDatasource.type },
+    inline,
+    originFilters,
   } = options;
   const onRunQuery = jest.fn();
   const variable = new AdHocFiltersVariable({
@@ -359,15 +559,21 @@ async function setup(props?: React.ComponentProps<typeof AdHocFiltersVariableEdi
     allowCustomValue: true,
     defaultKeys: withDefaultKeys ? [{ text: 'A', value: 'A' }] : undefined,
     enableGroupBy,
+    originFilters,
   });
+  // Only inline editors record changes, which needs the variable to be part of an edited dashboard
+  const sidebar = inline ? addToEditedDashboard(variable) : undefined;
   const renderer = await act(async () => {
-    const result = render(<AdHocFiltersVariableEditor variable={variable} onRunQuery={onRunQuery} {...props} />);
+    const result = render(
+      <AdHocFiltersVariableEditor variable={variable} onRunQuery={onRunQuery} inline={inline} {...props} />
+    );
     await new Promise((resolve) => setTimeout(resolve, 0));
     return result;
   });
   return {
     renderer,
     variable,
+    sidebar: sidebar!,
     user: userEvent.setup(),
     mocks: { onRunQuery },
   };

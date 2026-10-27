@@ -12,18 +12,19 @@ import { type FolderDTO } from 'app/types/folders';
 import { useDispatch } from 'app/types/store';
 
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
-import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useCommitTarget } from '../../hooks/useCommitTarget';
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
-import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
+import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getProvisionedRequestError } from '../utils/errors';
+
 interface FormProps extends RenameProvisionedFolderFormProps {
   initialValues: BaseProvisionedFormData;
   repository?: RepositoryView;
@@ -45,7 +46,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     mode: 'onBlur',
   });
   const { handleSubmit, watch, register, formState } = methods;
-  const [workflow, ref] = watch(['workflow', 'ref']);
+  const ref = watch('ref') ?? '';
 
   const title = watch('title');
   const templateVars: CommitTemplateVars = {
@@ -63,15 +64,13 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     setComment: (value) => methods.setValue('comment', value, { shouldDirty: false }),
   });
 
-  const { locked: lockBranch } = useBranchTemplate({
+  const { workflow, isNewBranch, isResolving, lockBranch, prTitle } = useCommitTarget({
     repository,
     vars: templateVars,
-    workflow,
-    value: ref ?? '',
-    setBranch: (value) => methods.setValue('ref', value, { shouldDirty: false }),
+    ref,
+    isRefDirty: Boolean(formState.dirtyFields.ref),
+    setRef: (value) => methods.setValue('ref', value, { shouldDirty: false }),
   });
-
-  const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
 
   const showError = (error: unknown) => {
     setError(
@@ -116,7 +115,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
   };
 
   const { handleSuccess } = useProvisionedRequestHandler({
-    workflow,
+    isNewBranch,
     resourceType: 'folder',
     folderUID: folder.uid,
     repository,
@@ -131,7 +130,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
     },
   });
 
-  const doSave = async ({ ref, title, workflow }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, title }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     const folderPath = initialValues.path;
@@ -140,9 +139,6 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       showError(t('browse-dashboards.rename-provisioned-folder-form.missing-info', 'Missing required fields'));
       return;
     }
-
-    // For write workflow, write to the configured branch; otherwise use the selected branch
-    const branchRef = workflow === 'write' ? undefined : ref;
 
     reportInteraction('grafana_provisioning_folder_rename_submitted', {
       workflow,
@@ -154,13 +150,13 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
       const data = await replaceFile({
         name: repoName,
         path: folderPath,
-        ref: branchRef,
+        ref: getRequestRef(repository, ref),
         message,
         body: {
           spec: { title },
         },
       }).unwrap();
-      handleSuccess(data, { workflow, selectedBranch: ref });
+      handleSuccess(data);
     } catch (err) {
       showError(err);
     }
@@ -204,7 +200,7 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
             <Button variant="secondary" fill="outline" onClick={onDismiss}>
               {t('browse-dashboards.rename-provisioned-folder-form.button-cancel', 'Cancel')}
             </Button>
-            <Button type="submit" disabled={request.isLoading || !!formState?.errors.title}>
+            <Button type="submit" disabled={request.isLoading || isResolving || !!formState?.errors.title}>
               {request.isLoading
                 ? t('browse-dashboards.rename-provisioned-folder-form.button-renaming', 'Renaming...')
                 : t('browse-dashboards.rename-provisioned-folder-form.button-rename', 'Rename')}

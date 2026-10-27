@@ -20,6 +20,9 @@ import { CanvasGridAddActions } from './CanvasGridAddActions';
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
+    editPeriodStarted: jest.fn(),
+    editPeriodEnded: jest.fn(),
+    editActorFirstChange: jest.fn(),
     trackAddPanelClick: jest.fn(),
     trackGroupRowClick: jest.fn(),
     trackGroupTabClick: jest.fn(),
