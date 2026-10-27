@@ -11,5 +11,9 @@ export const useIsStPodLoading = (url: string): boolean => {
   const isUrlAllowed = useIsUrlAllowed({ pathname: toComparablePath(url, config.appSubUrl) });
   const status = stPodReady.useStatus();
 
-  return isMtFallbackConfigured && !isUrlAllowed && (status === StPodStatus.Unknown || status === StPodStatus.Waiting);
+  return (
+    isMtFallbackConfigured &&
+    !isUrlAllowed &&
+    (status === StPodStatus.Unknown || status === StPodStatus.Waiting || status === StPodStatus.Timeout)
+  );
 };

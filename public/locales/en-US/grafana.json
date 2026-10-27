@@ -16744,8 +16744,7 @@
       "title-fallback": "Couldn't load page"
     },
     "timeout": {
-      "body": "We are still waiting for your Grafana instance to become ready. Please refresh the page to try again.",
-      "title": "Taking longer than expected"
+      "banner": "Hang tight. This is taking a bit longer than expected, but we're on it."
     }
   },
   "stars": {

@@ -125,20 +125,27 @@ describe('PageFallbackLoader', () => {
     expect(state.pageNav?.text).toBe('Explore');
   });
 
-  it('does not render the timeout banner while the pod is still being probed', () => {
+  it('does not render the timeout banner or error card while the pod is still being probed', () => {
     render(<PageFallbackLoader />);
 
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('st-pod-timeout-banner')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('st-pod-error-card')).not.toBeInTheDocument();
+    expect(screen.getByTestId('page-fallback-loader')).toBeInTheDocument();
   });
 
-  it('renders a timeout banner over the loader when the pod ready service reports timeout', () => {
+  it('renders the hang-tight banner alongside the loader when the pod ready service reports timeout', () => {
     const stPodReady = new StPodReadyService();
     stPodReady.state.next(StPodStatus.Timeout);
     const wrapper = getWrapper({ grafanaContext: { stPodReady }, renderWithRouter: true });
 
     render(<PageFallbackLoader />, { wrapper });
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Taking longer than expected');
+    expect(screen.getByTestId('st-pod-timeout-banner')).toHaveTextContent(
+      "Hang tight. This is taking a bit longer than expected, but we're on it."
+    );
+    expect(screen.getByTestId('page-fallback-loader')).toBeInTheDocument();
+    expect(screen.getByTestId('page-fallback-dotfield')).toBeInTheDocument();
+    expect(screen.queryByTestId('st-pod-error-card')).not.toBeInTheDocument();
   });
 
   it('renders the error card with the matched page title when the pod ready service reports error', () => {

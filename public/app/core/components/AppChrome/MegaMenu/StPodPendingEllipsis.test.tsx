@@ -48,7 +48,7 @@ describe('StPodPendingEllipsis', () => {
 
   it.each([
     ['the pod is ready', StPodStatus.Ready],
-    ['waiting for the pod times out', StPodStatus.Timeout],
+    ['waiting for the pod hits a terminal error', StPodStatus.Error],
   ])('removes the pending dots once %s', (_, settled) => {
     renderEllipsis('/explore');
     expect(queryDots()).toBeInTheDocument();
@@ -58,9 +58,18 @@ describe('StPodPendingEllipsis', () => {
     expect(queryDots()).not.toBeInTheDocument();
   });
 
-  it('brings the pending dots back when a timed-out pod transitions to waiting again', () => {
+  it('keeps the pending dots when the pod enters the soft timeout state', () => {
     renderEllipsis('/explore');
+    expect(queryDots()).toBeInTheDocument();
+
     act(() => service.state.next(StPodStatus.Timeout));
+
+    expect(queryDots()).toBeInTheDocument();
+  });
+
+  it('brings the pending dots back when an errored pod transitions to waiting again', () => {
+    renderEllipsis('/explore');
+    act(() => service.state.next(StPodStatus.Error));
     expect(queryDots()).not.toBeInTheDocument();
 
     act(() => service.state.next(StPodStatus.Waiting));

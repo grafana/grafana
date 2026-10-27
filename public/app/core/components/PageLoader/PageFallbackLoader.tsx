@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Alert, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { StPodStatus } from 'app/core/services/StPodReadyService';
@@ -14,6 +14,7 @@ import { useSelector } from 'app/types/store';
 import { Page } from '../Page/Page';
 
 import { StPodErrorCard } from './StPodErrorCard';
+import { StPodTimeoutBanner } from './StPodTimeoutBanner';
 import { findNavItemForPath } from './navItemForPath';
 
 // TODO: replace with a realistic P80 ST pod startup time once we have the data.
@@ -95,16 +96,6 @@ export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
   return (
     <Page layout={PageLayoutType.Custom}>
       <div data-testid="page-fallback-loader" className={styles.wrapper}>
-        {hasTimedOut && (
-          <div className={styles.timeoutBanner}>
-            <Alert severity="warning" title={t('st-pod-ready.timeout.title', 'Taking longer than expected')}>
-              {t(
-                'st-pod-ready.timeout.body',
-                'We are still waiting for your Grafana instance to become ready. Please refresh the page to try again.'
-              )}
-            </Alert>
-          </div>
-        )}
         <DotFieldBackdrop />
         <div
           className={styles.progressPill}
@@ -134,6 +125,11 @@ export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
             })}
           </ul>
         </div>
+        {hasTimedOut && (
+          <div className={styles.timeoutBannerSlot}>
+            <StPodTimeoutBanner />
+          </div>
+        )}
       </div>
     </Page>
   );
@@ -269,14 +265,12 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: `1.5px solid ${theme.colors.text.primary}`,
       boxSizing: 'border-box',
     }),
-    timeoutBanner: css({
+    timeoutBannerSlot: css({
       position: 'absolute',
       top: theme.spacing(10),
       left: '50%',
       transform: 'translateX(-50%)',
       zIndex: 2,
-      maxWidth: 'min(560px, calc(100% - 32px))',
-      width: '100%',
     }),
   };
 };
