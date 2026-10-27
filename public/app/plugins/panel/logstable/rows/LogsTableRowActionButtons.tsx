@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { ClipboardButton, type CustomCellRendererProps, Icon, IconButton, Tooltip, useTheme2 } from '@grafana/ui';
 import { classifyErrorAttributes } from 'app/features/logs/components/otel/details';
 import { getIconButtonStyles } from 'app/features/logs/components/panel/activeIconButtonStyles';
-import { type LogsFrame } from 'app/features/logs/logsFrame';
+import { type LogFrameLabels, type LogsFrame } from 'app/features/logs/logsFrame';
 import { LogLevelColor } from 'app/features/logs/logsModel';
 
 import { useLogDetailsContext } from '../LogDetailsContext';
@@ -28,9 +28,10 @@ export function logsFrameHasErrorAttributes(logsFrame: LogsFrame): boolean {
   }
 
   const rowCount = logsFrame.bodyField.values.length;
+  const labelsPerRow = getLogsFrameLabels(logsFrame);
   let hasErrorAttributes = false;
   for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
-    if (getRowErrorAttributeKind(logsFrame, rowIndex)) {
+    if (getRowErrorAttributeKind(logsFrame, rowIndex, labelsPerRow)) {
       hasErrorAttributes = true;
       break;
     }
@@ -41,8 +42,25 @@ export function logsFrameHasErrorAttributes(logsFrame: LogsFrame): boolean {
 
 const logsFrameHasErrorAttributesCache = new WeakMap<LogsFrame, boolean>();
 
-function getRowErrorAttributeKind(logsFrame: LogsFrame, rowIndex: number): ErrorAttributeKind | undefined {
-  const labels = logsFrame.getLogFrameLabelsAsLabels()?.[rowIndex];
+// getLogFrameLabelsAsLabels remaps every row. Callers only need keys, so read labels once per frame.
+const logsFrameLabelsCache = new WeakMap<LogsFrame, LogFrameLabels[] | null>();
+
+function getLogsFrameLabels(logsFrame: LogsFrame): LogFrameLabels[] | null {
+  if (logsFrameLabelsCache.has(logsFrame)) {
+    return logsFrameLabelsCache.get(logsFrame) ?? null;
+  }
+
+  const labels = logsFrame.getLogFrameLabels();
+  logsFrameLabelsCache.set(logsFrame, labels);
+  return labels;
+}
+
+function getRowErrorAttributeKind(
+  logsFrame: LogsFrame,
+  rowIndex: number,
+  labelsPerRow: LogFrameLabels[] | null = getLogsFrameLabels(logsFrame)
+): ErrorAttributeKind | undefined {
+  const labels = labelsPerRow?.[rowIndex];
   const labelKeys = labels ? Object.keys(labels) : [];
   const fieldKeys = logsFrame.extraFields
     .filter((field) => {
@@ -56,7 +74,12 @@ function getRowErrorAttributeKind(logsFrame: LogsFrame, rowIndex: number): Error
   if (classifiedLabels.stacktraces.length > 0 || classifiedFields.stacktraces.length > 0) {
     return 'stacktrace';
   }
-  if (classifiedLabels.messages.length > 0 || classifiedFields.messages.length > 0) {
+  if (
+    classifiedLabels.messages.length > 0 ||
+    classifiedFields.messages.length > 0 ||
+    classifiedLabels.other.length > 0 ||
+    classifiedFields.other.length > 0
+  ) {
     return 'error';
   }
   return undefined;
