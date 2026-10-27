@@ -428,3 +428,32 @@ func TestIntegrationSharedLoaderSearchMigratedVisibilityLicense(t *testing.T) {
 func (r *searchLoaderMigratedResolver) SearchUsersPermissions(context.Context, identity.Requester, int64, ac.SearchOptions) (map[int64][]ac.Permission, error) {
 	return nil, nil
 }
+
+func TestIntegrationSharedLoaderSearchLegacyCallerRoles(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, enforced := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enforcement=%t", enforced), func(t *testing.T) {
+			sql := db.NewTestStore(t)
+			seedSearchLoaderUser(t, sql, searchLoaderTargetID, "target", org.RoleNone)
+			seedGrant(t, sql, "managed:target", 1, searchLoaderTargetID, ac.Permission{Action: "test:read", Scope: "tests:id:one"})
+			seedGrant(t, sql, "managed:target-visibility", 1, searchLoaderTargetID, ac.Permission{Action: ac.ActionUsersPermissionsRead, Scope: "users:*"})
+			seedSearchLoaderVisibilityRole(t, sql, string(org.RoleAdmin), 0)
+			cfg := loaderConfig(false)
+			client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{enabled: enforced}, nil), cfg)
+			for _, kind := range []types.IdentityType{types.TypeAnonymous, types.TypeRenderService, types.TypeAPIKey} {
+				t.Run(string(kind), func(t *testing.T) {
+					id := searchLoaderTargetID
+					req := searchLoaderRequest()
+					req.Caller = legacyclient.LegacyPermissionIdentity{Type: kind, UID: fmt.Sprint(id), InternalID: &id, OrgRole: string(org.RoleAdmin)}
+					got, err := client.LegacySearchUsersPermissions(t.Context(), legacypermissions.LegacySearchPermissionCaller("default"), req)
+					require.NoError(t, err)
+					require.Equal(t, map[int64][]types.Permission{searchLoaderTargetID: {{Action: "test:read", Scope: "tests:id:one"}}}, got.Permissions)
+					// A non-user ID must not inherit a user's direct grants even when the numeric IDs collide.
+					req.Caller.OrgRole = string(org.RoleNone)
+					_, err = client.LegacySearchUsersPermissions(t.Context(), legacypermissions.LegacySearchPermissionCaller("default"), req)
+					require.Equal(t, codes.PermissionDenied, status.Code(err))
+				})
+			}
+		})
+	}
+}
