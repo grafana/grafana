@@ -12,8 +12,14 @@ import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { type TableNG } from '@grafana/ui/unstable';
 
 import { InspectDataTab } from './InspectDataTab';
+import { downloadDataFrameAsCsv } from './utils/download';
 
 type TableNGProps = ComponentProps<typeof TableNG>;
+
+jest.mock('./utils/download', () => ({
+  ...jest.requireActual('./utils/download'),
+  downloadDataFrameAsCsv: jest.fn(),
+}));
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: Props) =>
@@ -250,6 +256,25 @@ describe('InspectDataTab', () => {
       await screen.findByRole('table');
       expect(screen.getByText(/Download service graph/i)).toBeInTheDocument();
     });
+    it('should download the displayed data frame when the selected one no longer exists', async () => {
+      const { rerender } = render(<InspectDataTab {...createProps()} />);
+      await screen.findByRole('table');
+      await userEvent.click(screen.getByText(/Data options/i));
+      await userEvent.click(screen.getByRole('combobox', { name: /Select dataframe/i }));
+      await userEvent.click(screen.getByText('Second data frame (1)'));
+
+      const [first] = createProps().data!;
+      rerender(<InspectDataTab {...createProps({ data: [first] })} />);
+      await userEvent.click(screen.getByText(/Download CSV/i));
+
+      expect(downloadDataFrameAsCsv).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'First data frame' }),
+        undefined,
+        {},
+        'noop',
+        false
+      );
+    });
   });
 
   describe('when useTableNG is true', () => {
@@ -298,6 +323,16 @@ describe('InspectDataTab', () => {
       );
 
       expect(dataArrivedWithCachedDisplayNames).toBe(true);
+    });
+
+    it('should not prefix display names with the frame name when there are multiple frames', () => {
+      render(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab {...createProps({ useTableNG: true })} />
+        </OpenFeatureProvider>
+      );
+
+      expect(tableNGFrames.at(-1)!.fields.map((f) => f.state?.displayName)).toEqual(['time', 'name', 'value']);
     });
 
     it('should not show a join computed from older data after the data refreshes', async () => {

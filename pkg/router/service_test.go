@@ -244,7 +244,7 @@ func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
 	cfg.Target = []string{"router"}
 	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	cloud := loader.(*cloudLoader)
 	cloud.singleTenantFallback.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
