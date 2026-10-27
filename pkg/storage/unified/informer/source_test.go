@@ -3,11 +3,12 @@ package informer
 import (
 	"context"
 	"errors"
-	"strconv"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/operator"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
@@ -241,7 +242,7 @@ func TestBusDeltaSourceRequiresNats(t *testing.T) {
 // Announcements are the freshness instrumentation's view of the live stream, so a re-list delivery must not reach
 // them: its version came from the lister, not from a notification.
 func TestBusDeltaSourceAnnouncesOnlyLiveDeliveries(t *testing.T) {
-	announced := &fakeAnnouncements{}
+	announced := operator.NewAnnouncementTracker(operator.AnnouncementTrackerOptions{})
 	subscriber := newFakeSubscriber()
 	src, err := NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{}, testInfo{}, time.Hour,
 		func(context.Context) ([]runtime.Object, error) { return []runtime.Object{entry("ns", "listed")}, nil },
@@ -260,31 +261,14 @@ func TestBusDeltaSourceAnnouncesOnlyLiveDeliveries(t *testing.T) {
 	require.Eventually(t, func() bool { return subscriber.subscribed(subject) }, 5*time.Second, 5*time.Millisecond)
 	// The initial list delivers "listed" as an add; it must leave no announcement.
 	require.Eventually(t, func() bool { return rec.last() != nil }, 5*time.Second, 5*time.Millisecond)
-	assert.Empty(t, announced.names(), "a re-list add is not an announcement")
+	assert.Zero(t, announced.Len(), "a re-list add is not an announcement")
 
 	subscriber.publish(t, subject, &resourcepb.WatchNotification{
 		Type: resourcepb.WatchNotification_MODIFIED, Namespace: "ns", Name: "live", ResourceVersion: 9,
 	})
 
-	require.Eventually(t, func() bool { return len(announced.names()) == 1 }, 5*time.Second, 5*time.Millisecond)
-	assert.Equal(t, []string{"ns/live@9"}, announced.names())
-}
-
-type fakeAnnouncements struct {
-	mu        sync.Mutex
-	announced []string
-}
-
-func (a *fakeAnnouncements) Announce(namespace, name string, rv int64) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.announced = append(a.announced, namespace+"/"+name+"@"+strconv.FormatInt(rv, 10))
-}
-
-func (a *fakeAnnouncements) Forget(string, string, int64) {}
-
-func (a *fakeAnnouncements) names() []string {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return append([]string(nil), a.announced...)
+	live := resource.Identifier{Namespace: "ns", Name: "live"}
+	require.Eventually(t, func() bool { return announced.Announced(live) != 0 }, 5*time.Second, 5*time.Millisecond)
+	assert.Equal(t, int64(9), announced.Announced(live))
+	assert.Equal(t, 1, announced.Len())
 }

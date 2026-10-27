@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 
@@ -61,6 +60,12 @@ func sdkKind(info ResourceInfo, zero resource.Object) resource.Kind {
 	gvk := info.GroupVersionKind()
 	return resource.Kind{Schema: resource.NewSimpleSchema(gvk.Group, gvk.Version, zero, &resource.UntypedList{},
 		resource.WithKind(gvk.Kind), resource.WithPlural(info.GroupVersionResource().Resource))}
+}
+
+// SDKKind builds the app-sdk kind for a resource, for the SDK APIs which are parameterised on one but read only
+// its identity — the read-freshness recorder, for instance.
+func SDKKind(info ResourceInfo) resource.Kind {
+	return sdkKind(info, &resource.UntypedObject{})
 }
 
 // PeriodicListFunc returns every object of one resource kind, read straight from the API.
@@ -221,8 +226,8 @@ type BusSourceOptions struct {
 	// server which does not serve the projection, leaves the full-object list.
 	Keys operator.ResourceKeyLister
 	// Announcements records what each live notification announced, for the read-freshness instrumentation. A nil
-	// value disables it. See freshness.go.
-	Announcements Announcements
+	// tracker disables it.
+	Announcements *operator.AnnouncementTracker
 	// Metrics are the app-sdk's delivery metrics, shared across every source a process builds. Nil disables them.
 	Metrics *operator.BusInformerMetrics
 }
@@ -277,7 +282,7 @@ func NewBusDeltaSource(subscriber nats.Subscriber, zero resource.WrappedObjectTy
 	if opts.Announcements != nil {
 		// Registered first, and the informer dispatches to its watchers in order, so the announcement is in place
 		// before a controller's handler has enqueued the key.
-		if err := informer.AddEventHandler(announcingWatcher{announcements: opts.Announcements}); err != nil {
+		if err := informer.AddEventHandler(opts.Announcements.Watcher()); err != nil {
 			return nil, err
 		}
 	}
@@ -297,60 +302,4 @@ func busLister(kind resource.Kind, opts BusSourceOptions, list PeriodicListFunc)
 		return nil, err
 	}
 	return operator.NewFallbackLister(identities, objects)
-}
-
-// Announcements observes which object each live notification was about and at what resource version, so a consumer
-// can tell whether the read its reconcile then performs actually observed that write. It is instrumentation, not a
-// gate: nothing in the delivery or reconcile path reads it back. See freshness.go.
-type Announcements interface {
-	Announce(namespace, name string, rv int64)
-	Forget(namespace, name string, rv int64)
-}
-
-// announcingWatcher records what each live notification announced before the controllers' handlers see it, so that a
-// read taken by the worker which picks up the key is judged against an announcement already in place.
-//
-// Re-list deliveries are skipped: their resource version came from the lister rather than from a notification, so
-// announcing them would leave the freshness metric reporting on reads that nothing announced.
-type announcingWatcher struct {
-	announcements Announcements
-}
-
-var _ operator.ResourceWatcher = announcingWatcher{}
-
-func (w announcingWatcher) Add(ctx context.Context, obj resource.Object) error {
-	w.announce(ctx, obj)
-	return nil
-}
-
-func (w announcingWatcher) Update(ctx context.Context, _, tgt resource.Object) error {
-	w.announce(ctx, tgt)
-	return nil
-}
-
-// Delete forgets the key instead of announcing it: the object is gone from storage by the time a delete is
-// delivered, so the NotFound a re-fetch returns is the truth rather than a lagging read.
-func (w announcingWatcher) Delete(ctx context.Context, obj resource.Object) error {
-	if operator.DeliveryFromContext(ctx) != operator.DeliveryLive {
-		return nil
-	}
-	w.announcements.Forget(obj.GetNamespace(), obj.GetName(), announcedVersion(obj))
-	return nil
-}
-
-func (w announcingWatcher) announce(ctx context.Context, obj resource.Object) {
-	if operator.DeliveryFromContext(ctx) != operator.DeliveryLive {
-		return
-	}
-	w.announcements.Announce(obj.GetNamespace(), obj.GetName(), announcedVersion(obj))
-}
-
-// announcedVersion reads the numeric version off a delivered object; 0 for one that does not parse, which the
-// announcements treat as nothing announced.
-func announcedVersion(obj resource.Object) int64 {
-	rv, err := strconv.ParseInt(obj.GetResourceVersion(), 10, 64)
-	if err != nil {
-		return 0
-	}
-	return rv
 }

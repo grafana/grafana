@@ -8,7 +8,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/go-github/v82 v82.0.0
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
-	github.com/grafana/grafana-app-sdk v0.61.1-0.20261027095240-c08edebb3fa8
+	github.com/grafana/grafana-app-sdk v0.61.1-0.20261027105522-8c4c90aa5574
 	github.com/grafana/grafana-app-sdk/logging v0.61.0
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44
 	github.com/grafana/grafana/apps/secret v0.0.0-20260118065639-60cb766a97d6

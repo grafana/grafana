@@ -72,7 +72,7 @@ type ControllerConfig struct {
 	decryptService        decrypt.DecryptService
 	registry              prometheus.Registerer
 	busInformerMetrics    *operator.BusInformerMetrics
-	freshness             *informer.FreshnessMetrics
+	freshness             *operator.FreshnessMetrics
 	repositoryFactory     repository.Factory
 	repositoryExtras      []repository.Extra
 	RepositoryExtrasFunc  func() ([]repository.Extra, error)
@@ -463,7 +463,7 @@ func (c *ControllerConfig) BusInformerMetrics() *operator.BusInformerMetrics {
 
 // FreshnessMetrics returns the process's reconcile read-freshness metrics.
 // Memoized for the same reason as BusInformerMetrics.
-func (c *ControllerConfig) FreshnessMetrics() *informer.FreshnessMetrics {
+func (c *ControllerConfig) FreshnessMetrics() *operator.FreshnessMetrics {
 	if c.freshness == nil {
 		c.freshness = informer.NewFreshnessMetrics(c.Registry())
 	}

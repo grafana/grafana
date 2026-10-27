@@ -38,10 +38,9 @@ type ConnectionGetter interface {
 // freshness instruments how the getter's reads compare to the notifications
 // that triggered them (see freshness.go); nil disables the observation, and it
 // applies to the NATS path only.
-func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *operator.BusInformerMetrics, freshness *FreshnessMetrics) (DeltaSource, ConnectionGetter, error) {
+func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *operator.BusInformerMetrics, freshness *operator.FreshnessMetrics) (DeltaSource, ConnectionGetter, error) {
 	if nats.Enabled(subscriber) {
-		gvr := provisioningapis.ConnectionResourceInfo.GroupVersionResource()
-		announced := newAnnouncements()
+		announced := operator.NewAnnouncementTracker(operator.AnnouncementTrackerOptions{})
 		source, err := NewConnectionInformer(subscriber, client, "", resync, keys, usinformer.BusSourceOptions{
 			Announcements: announced,
 			Metrics:       metrics,
@@ -50,7 +49,7 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 			return nil, nil, err
 		}
 		getter := NewClientConnectionGetter(client.ProvisioningV0alpha1())
-		return source, observeConnectionFreshness(getter, announced, freshness.Recorder(gvr.Resource)), nil
+		return source, observeConnectionFreshness(getter, announced, freshness.Recorder(usinformer.SDKKind(&provisioningapis.ConnectionResourceInfo))), nil
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Connections()
 	return inf.Informer(), NewCachedConnectionGetter(inf.Lister()), nil

@@ -52,10 +52,9 @@ type RepositoryGetter interface {
 // that triggered them (see freshness.go); nil disables the observation. It
 // applies to the NATS path only — the apiserver path reads a cache the watch
 // keeps current, so there is no cross-replica read visibility to measure.
-func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *operator.BusInformerMetrics, freshness *FreshnessMetrics) (DeltaSource, RepositoryGetter, error) {
+func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *operator.BusInformerMetrics, freshness *operator.FreshnessMetrics) (DeltaSource, RepositoryGetter, error) {
 	if nats.Enabled(subscriber) {
-		gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
-		announced := newAnnouncements()
+		announced := operator.NewAnnouncementTracker(operator.AnnouncementTrackerOptions{})
 		source, err := NewRepositoryInformer(subscriber, client, "", resync, keys, usinformer.BusSourceOptions{
 			Announcements: announced,
 			Metrics:       metrics,
@@ -69,7 +68,7 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		if _, err := source.AddEventHandler(forgetDeleted{getter: getter}); err != nil {
 			return nil, nil, err
 		}
-		return source, observeRepositoryFreshness(getter, announced, freshness.Recorder(gvr.Resource)), nil
+		return source, observeRepositoryFreshness(getter, announced, freshness.Recorder(usinformer.SDKKind(&provisioningapis.RepositoryResourceInfo))), nil
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
 	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister()), nil
