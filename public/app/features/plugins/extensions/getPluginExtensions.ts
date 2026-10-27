@@ -22,9 +22,8 @@ import {
  * either the added components registry or the added links registry changes.
  *
  * Unlike the registries, the dependent app plugins for an extension point are not loaded automatically.
- * This function loads them explicitly - the same way the `usePluginLinks`/`usePluginComponents` hooks do via
- * `useLoadAppPlugins` - ensuring they're loaded before the registries are read. The returned observable is
- * lazy (wrapped in `defer()`), so this loading, like the registry fetch, only starts once something subscribes.
+ * This function loads them explicitly, the same way the `usePluginLinks`/`usePluginComponents` hooks do via
+ * `useLoadAppPlugins`, ensuring they're loaded before the registries are read.
  *
  * @param options - The options for getting plugin extensions
  * @returns An Observable that emits the plugin extensions for the given extension point any time the registries change

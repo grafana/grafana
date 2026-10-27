@@ -592,13 +592,8 @@ export async function getAppPluginConfigs(pluginIds: string[] = []): Promise<App
 export type PluginDependencyPredicate = (id: string) => Promise<string[]>;
 
 /**
- * Preloads the dependent app plugins for an extension point or exposed component, resolved via `predicate`
- * (e.g. `getExtensionPointPluginDependencies` or `getExposedComponentPluginDependencies`). No-ops if the
- * predicate resolves no dependent plugin ids, or if none of them resolve to a loadable app config.
- *
- * This is the loading logic shared by the React hooks (through `useLoadAppPlugins`) and the observable-based
- * plugin extension APIs (e.g. `getObservablePluginLinks`), so that non-React consumers get the same on-demand
- * plugin loading the hooks provide.
+ * Shared by `useLoadAppPlugins` and the observable extension APIs (e.g. `getObservablePluginLinks`) so both
+ * get identical on-demand plugin loading for a given predicate (e.g. `getExtensionPointPluginDependencies`).
  */
 export async function loadDependentAppPlugins(id: string, predicate: PluginDependencyPredicate): Promise<void> {
   const filteredConfigs = await predicate(id);
