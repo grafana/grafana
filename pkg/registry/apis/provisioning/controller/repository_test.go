@@ -2326,6 +2326,53 @@ func TestRepositoryController_process_DeleteWaitsForRunningJobs(t *testing.T) {
 		2*runningJobsRetryDelay, 50*time.Millisecond, "repository must be requeued while jobs run")
 }
 
+func TestRepositoryController_process_DeleteWaitClearsStaleDeleteError(t *testing.T) {
+	now := metav1.Now()
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              "test-repo",
+			Namespace:         "default",
+			DeletionTimestamp: &now,
+			Finalizers:        []string{repository.RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		Status: provisioning.RepositoryStatus{
+			DeleteError: "remove finalizers: count running jobs: boom",
+			Deletion:    &provisioning.DeletionStatus{State: provisioning.DeletionStateBlocked, Message: "boom"},
+		},
+	}
+
+	mockNamespaceLister := &MockRepositoryNamespaceLister{}
+	mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
+
+	f := NewMockFinalizerProcessor(t)
+	f.On("process", mock.Anything, mock.Anything).Once().Return(errJobsRunning)
+
+	patcher := &capturePatcher{}
+	rc := &RepositoryController{
+		repos:     informer.NewCachedRepositoryGetter(mockLister),
+		finalizer: f,
+		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+			workqueue.DefaultTypedControllerRateLimiter[string](),
+			workqueue.TypedRateLimitingQueueConfig[string]{Name: "test-running-jobs-stale"},
+		),
+		statusPatcher: patcher,
+		logger:        logging.DefaultLogger,
+		tracer:        tracing.InitializeTracerForTest(),
+	}
+	t.Cleanup(rc.queue.ShutDown)
+
+	_, err := rc.process("default/test-repo")
+	require.NoError(t, err)
+
+	for _, path := range []string{"/status/deleteError", "/status/deletion"} {
+		op, ok := patcher.findPatchOp(path)
+		require.True(t, ok, "%s must be cleared while waiting for running jobs", path)
+		assert.Equal(t, "remove", op["op"])
+	}
+}
+
 // TestRepositoryController_process_DeleteStatusPatchFailure verifies how a
 // failed status write during delete-error handling is surfaced to the
 // workqueue: the patch error is returned so the delete reason is re-attempted

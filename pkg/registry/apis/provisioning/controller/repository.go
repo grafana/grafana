@@ -999,6 +999,18 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			return repoType, nil
 		}
 		if errors.Is(err, errJobsRunning) {
+			var clearOps []map[string]interface{}
+			if obj.Status.DeleteError != "" {
+				clearOps = append(clearOps, map[string]interface{}{"op": "remove", "path": "/status/deleteError"})
+			}
+			if obj.Status.Deletion != nil {
+				clearOps = append(clearOps, map[string]interface{}{"op": "remove", "path": "/status/deletion"})
+			}
+			if len(clearOps) > 0 {
+				if err := rc.statusPatcher.Patch(ctx, obj, clearOps...); err != nil {
+					return repoType, err
+				}
+			}
 			rc.queueLag.add(key)
 			rc.queue.AddAfter(key, runningJobsRetryDelay)
 			return repoType, nil
