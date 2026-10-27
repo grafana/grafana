@@ -64,13 +64,11 @@ func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interfac
 	}
 	opts.Namespace = namespace
 	opts.Group = queueGroup
-	list := func(ctx context.Context) ([]runtime.Object, string, error) {
-		return usinformer.ListAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+	page := func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			return c.Connections(namespace).List(ctx, opts)
-		})
-	}
+		}
 	return usinformer.NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{},
-		&provisioningapis.ConnectionResourceInfo, resync, list, opts)
+		&provisioningapis.ConnectionResourceInfo, resync, page, opts)
 }
 
 // NewCachedConnectionGetter backs a ConnectionGetter with the informer's

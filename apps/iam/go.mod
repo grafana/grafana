@@ -49,7 +49,7 @@ replace (
 
 require (
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.61.1-0.20261027105522-8c4c90aa5574
+	github.com/grafana/grafana-app-sdk v0.61.1-0.20261027120517-3134ed396623
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/stretchr/testify v1.12.1
 	k8s.io/apimachinery v0.37.1

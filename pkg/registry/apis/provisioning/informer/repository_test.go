@@ -39,16 +39,30 @@ func terminating(r *provisioningapis.Repository) *provisioningapis.Repository {
 	return r
 }
 
-// fakeSnapshot stands in for the informer's snapshot, which holds identities only.
-type fakeSnapshot []resource.Identifier
+// fakeSnapshot stands in for the informer's snapshot: identities only, with the read-through the real one has.
+type fakeSnapshot map[resource.Identifier]struct{}
 
-func (s fakeSnapshot) Snapshot() []resource.Identifier { return s }
+func (s fakeSnapshot) Count(namespace string) int {
+	count := 0
+	for id := range s {
+		if id.Namespace == namespace {
+			count++
+		}
+	}
+	return count
+}
+
+func (s fakeSnapshot) Observe(obj resource.Object) {
+	s[resource.Identifier{Namespace: obj.GetNamespace(), Name: obj.GetName()}] = struct{}{}
+}
+
+func (s fakeSnapshot) Forget(id resource.Identifier) { delete(s, id) }
 
 // seededSnapshot is the snapshot a re-list of objs would leave behind.
 func seededSnapshot(objs ...*provisioningapis.Repository) fakeSnapshot {
-	out := make(fakeSnapshot, 0, len(objs))
+	out := make(fakeSnapshot, len(objs))
 	for _, obj := range objs {
-		out = append(out, resource.Identifier{Namespace: obj.Namespace, Name: obj.Name})
+		out[resource.Identifier{Namespace: obj.Namespace, Name: obj.Name}] = struct{}{}
 	}
 	return out
 }
@@ -116,7 +130,7 @@ func TestNewCachedRepositoryGetter(t *testing.T) {
 func TestClientRepositoryGetter_GetReadsTheAPI(t *testing.T) {
 	full := repoAt("ns", "fresh", "7")
 	full.Spec.Title = "a title"
-	g := NewClientRepositoryGetter(fake.NewClientset(full).ProvisioningV0alpha1(), fakeSnapshot{})
+	g := NewClientRepositoryGetter(fake.NewClientset(full).ProvisioningV0alpha1(), seededSnapshot())
 
 	got, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
@@ -130,7 +144,7 @@ func TestClientRepositoryGetter_GetReadsTheAPI(t *testing.T) {
 // reflects the repository under reconciliation even when the snapshot has not
 // caught up; a Get that 404s drops it again.
 func TestClientRepositoryGetter_GetIsCountedBeforeTheSnapshotCatchesUp(t *testing.T) {
-	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), fakeSnapshot{})
+	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), seededSnapshot())
 
 	count, err := g.CountRepositories(context.Background(), "ns")
 	require.NoError(t, err)
@@ -149,25 +163,10 @@ func TestClientRepositoryGetter_GetIsCountedBeforeTheSnapshotCatchesUp(t *testin
 	assert.Equal(t, 1, count, "a repository that 404s does not")
 }
 
-// What the snapshot already holds is dropped from the remembered set, so it
-// drains on the next re-list rather than growing.
-func TestClientRepositoryGetter_TheSnapshotDrainsWhatItCatchesUpWith(t *testing.T) {
-	snapshot := seededSnapshot(repo("ns", "fresh"))
-	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), snapshot)
-
-	_, err := g.Get(context.Background(), "ns", "fresh")
-	require.NoError(t, err)
-
-	count, err := g.CountRepositories(context.Background(), "ns")
-	require.NoError(t, err)
-	assert.Equal(t, 1, count, "counted once, not twice")
-	assert.Empty(t, g.(*clientRepositoryGetter).recent)
-}
-
 // The confirmed count reads the API, not the store.
 func TestClientRepositoryGetter_ConfirmCountListsTheAPI(t *testing.T) {
 	client := fake.NewClientset(repo("ns-a", "one"), repo("ns-a", "two"), repo("ns-b", "other"))
-	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), fakeSnapshot{})
+	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), seededSnapshot())
 
 	cached, err := g.CountRepositories(context.Background(), "ns-a")
 	require.NoError(t, err)
@@ -213,10 +212,10 @@ func TestNewRepositoryDeltaSource(t *testing.T) {
 	})
 }
 
-// A repository that is gone is absent from the snapshot too, so nothing there could prune it: the delete has to
-// reach the getter from the event stream, or the namespace stays at its quota forever.
+// A repository the informer saw deleted stops counting, so the namespace does not stay at its quota.
 func TestClientRepositoryGetter_ADeleteStopsItCounting(t *testing.T) {
-	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), fakeSnapshot{})
+	snapshot := seededSnapshot()
+	g := NewClientRepositoryGetter(fake.NewClientset(repoAt("ns", "fresh", "7")).ProvisioningV0alpha1(), snapshot)
 
 	_, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
@@ -224,9 +223,7 @@ func TestClientRepositoryGetter_ADeleteStopsItCounting(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
 
-	forgetDeleted{getter: g}.OnDelete(&metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{
-		Namespace: "ns", Name: "fresh", ResourceVersion: "8",
-	}})
+	snapshot.Forget(resource.Identifier{Namespace: "ns", Name: "fresh"})
 
 	count, err = g.CountRepositories(context.Background(), "ns")
 	require.NoError(t, err)

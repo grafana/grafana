@@ -4681,7 +4681,7 @@ func TestRepositoryController_process_ConfirmsOnlyToReleaseABlock(t *testing.T) 
 	other := blockedOverQuotaRepo(namespace, "other-repo", time.Now(), false)
 	rc, patcher, _, _ := newQuotaController(t, 1, repo)
 
-	snapshot := fakeSnapshot{{Namespace: other.Namespace, Name: other.Name}}
+	snapshot := fakeSnapshot{{Namespace: other.Namespace, Name: other.Name}: {}}
 	clientset := fake.NewClientset(repo, other)
 	getter := informer.NewClientRepositoryGetter(clientset.ProvisioningV0alpha1(), snapshot)
 	rc.repos = getter

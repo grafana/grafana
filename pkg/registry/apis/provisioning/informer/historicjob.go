@@ -37,10 +37,8 @@ func NewHistoricJobDeltaSource(natsEnabled bool, client versioned.Interface, res
 // namespace).
 func NewHistoricJobPeriodicInformer(client versioned.Interface, namespace string, resync time.Duration) (DeltaSource, error) {
 	c := client.ProvisioningV0alpha1()
-	list := func(ctx context.Context) ([]runtime.Object, string, error) {
-		return usinformer.ListAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
-			return c.HistoricJobs(namespace).List(ctx, opts)
-		})
+	page := func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		return c.HistoricJobs(namespace).List(ctx, opts)
 	}
-	return usinformer.NewPeriodicDeltaSource(&provisioningapis.HistoricJobResourceInfo, resync, list)
+	return usinformer.NewPeriodicDeltaSource(&provisioningapis.HistoricJobResourceInfo, &provisioningapis.HistoricJob{}, resync, page)
 }

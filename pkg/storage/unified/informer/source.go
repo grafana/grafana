@@ -3,14 +3,12 @@ package informer
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/resourcebus"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 
@@ -33,12 +31,17 @@ type DeltaSource interface {
 //
 // The controllers keep their own generated types: the objects list carries them through unchanged, and the handlers
 // receive them back. Nothing here requires the resource's kind to implement resource.Object.
-func NewPeriodicDeltaSource(info ResourceInfo, resync time.Duration, list PeriodicListFunc) (DeltaSource, error) {
-	// Only the schema's identity is read on this path: the lister produces the objects, so the kind's zero value is
-	// never constructed.
-	kind := sdkKind(info, &resource.UntypedObject{})
+func NewPeriodicDeltaSource(info ResourceInfo, zero resource.WrappedObjectType, resync time.Duration, page operator.PageFunc) (DeltaSource, error) {
+	kind := sdkKind(info, resource.NewWrappedObject(zero))
 
-	informer, err := operator.NewPeriodicInformer(kind, periodicLister{list: list}, operator.PeriodicInformerOptions{
+	// Identity rather than the listed body: it carries the metadata a cadence-driven handler reads — the creation
+	// timestamp an age-based cleanup ages off, the finalizers, the deletion timestamp — and unlike a conversion it
+	// works whatever the list returns.
+	lister, err := operator.NewPagedLister(kind, page, operator.PagedListerOptions{Payload: operator.PayloadIdentity})
+	if err != nil {
+		return nil, err
+	}
+	informer, err := operator.NewPeriodicInformer(kind, lister, operator.PeriodicInformerOptions{
 		ResyncInterval: resync,
 	})
 	if err != nil {
@@ -68,46 +71,6 @@ func SDKKind(info ResourceInfo) resource.Kind {
 	return sdkKind(info, &resource.UntypedObject{})
 }
 
-// PeriodicListFunc returns every object of one resource kind, read straight from the API, with the resource version
-// the snapshot was read at. An empty version leaves the bus informer unable to tell a queued event its re-list
-// already accounts for from one it does not, so it stops superseding them; a re-list-only informer has no live
-// stream to arbitrate against and may return it empty.
-type PeriodicListFunc func(ctx context.Context) ([]runtime.Object, string, error)
-
-// periodicLister adapts a list of the controllers' own types to the app-sdk's lister contract.
-type periodicLister struct {
-	list     PeriodicListFunc
-	recorder operator.RelistRecorder
-}
-
-func (l periodicLister) List(ctx context.Context) ([]resource.Object, string, error) {
-	l.recorder.Request()
-	objs, listRV, err := l.list(ctx)
-	if err != nil {
-		return nil, "", err
-	}
-	out := make([]resource.Object, 0, len(objs))
-	for _, obj := range objs {
-		wrapped, err := wrapObject(obj)
-		if err != nil {
-			return nil, "", err
-		}
-		out = append(out, wrapped)
-	}
-	l.recorder.Projection(operator.ProjectionObjects)
-	return out, listRV, nil
-}
-
-// wrapObject presents a kubernetes object as the app-sdk's Object without the kind implementing it: WrappedObject
-// supplies the spec and metadata accessors by delegation, and unwrapObject takes the original back out.
-func wrapObject(obj runtime.Object) (resource.Object, error) {
-	underlying, ok := obj.(resource.WrappedObjectType)
-	if !ok {
-		return nil, fmt.Errorf("cannot deliver %T: not a kubernetes object", obj)
-	}
-	return resource.NewWrappedObject(underlying), nil
-}
-
 // unwrapObject returns the object the lister wrapped, so a handler type-asserts the type it registered for.
 func unwrapObject(obj resource.Object) any {
 	if wrapped, ok := obj.(*resource.WrappedObject[resource.WrappedObjectType]); ok {
@@ -134,8 +97,8 @@ func newDeltaSource(informer sdkInformer, name string) *sdkSource {
 type sdkSource struct {
 	informer sdkInformer
 	name     string
-	// snapshot is set for an informer which exposes one; nil for the re-list-only source, which keeps none.
-	snapshot func() []resource.Identifier
+	// bus is set for a bus-backed source; nil for the re-list-only one, which keeps no snapshot to read.
+	bus *operator.BusInformer
 
 	syncedOnce sync.Once
 	syncedCh   chan struct{}
@@ -143,11 +106,23 @@ type sdkSource struct {
 
 var _ DeltaSource = (*sdkSource)(nil)
 
-func (s *sdkSource) Snapshot() []resource.Identifier {
-	if s.snapshot == nil {
-		return nil
+func (s *sdkSource) Count(namespace string) int {
+	if s.bus == nil {
+		return 0
 	}
-	return s.snapshot()
+	return s.bus.Count(namespace)
+}
+
+func (s *sdkSource) Observe(obj resource.Object) {
+	if s.bus != nil {
+		s.bus.Observe(obj)
+	}
+}
+
+func (s *sdkSource) Forget(id resource.Identifier) {
+	if s.bus != nil {
+		s.bus.Forget(id)
+	}
 }
 
 func (s *sdkSource) AddEventHandler(handler cache.ResourceEventHandler) (cache.ResourceEventHandlerRegistration, error) {
@@ -237,10 +212,16 @@ type BusSourceOptions struct {
 // BusSource is a bus-backed DeltaSource which also exposes what the informer last reconciled with storage.
 type BusSource interface {
 	DeltaSource
-	// Snapshot returns the identities the informer last reconciled with storage. It lags by up to one re-list and
-	// holds only what this replica was delivered, so it suits a staleness-tolerant count and nothing a reconcile's
-	// correctness depends on.
-	Snapshot() []resource.Identifier
+	// Count reports how many objects of the namespace the informer last reconciled with storage. It lags by up to
+	// one re-list and holds only what this replica was delivered, so it suits a staleness-tolerant count and
+	// nothing a reconcile's correctness depends on.
+	Count(namespace string) int
+	// Observe records an object the consumer read for itself, so a Count taken straight after includes it. Under a
+	// shared delivery group the live add may have gone to another replica, which would otherwise leave this one not
+	// counting the object until its next re-list.
+	Observe(obj resource.Object)
+	// Forget drops an object the consumer found absent, so a Count taken straight after stops including it.
+	Forget(id resource.Identifier)
 }
 
 // NewBusDeltaSource returns a DeltaSource backed by the app-sdk's bus informer: it takes live deltas from the
@@ -251,7 +232,7 @@ type BusSource interface {
 // signal and re-fetch the object in their reconcile. zero is the type they expect back — it is wrapped on the way
 // in and unwrapped on the way out, so the resource's kind does not implement resource.Object.
 func NewBusDeltaSource(subscriber nats.Subscriber, zero resource.WrappedObjectType, info ResourceInfo,
-	resync time.Duration, list PeriodicListFunc, opts BusSourceOptions) (BusSource, error) {
+	resync time.Duration, page operator.PageFunc, opts BusSourceOptions) (BusSource, error) {
 	bus := natsbus.New(subscriber, log.New("provisioning.informer.bus"))
 	if bus == nil {
 		return nil, errors.New("nats is not enabled")
@@ -259,7 +240,7 @@ func NewBusDeltaSource(subscriber nats.Subscriber, zero resource.WrappedObjectTy
 
 	kind := sdkKind(info, resource.NewWrappedObject(zero))
 
-	lister, err := busLister(kind, opts, list)
+	lister, err := busLister(kind, opts, page)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +261,7 @@ func NewBusDeltaSource(subscriber nats.Subscriber, zero resource.WrappedObjectTy
 	}
 
 	source := newDeltaSource(informer, info.GroupVersionKind().String())
-	source.snapshot = informer.Snapshot
+	source.bus = informer
 	if opts.Announcements != nil {
 		// Registered first, and the informer dispatches to its watchers in order, so the announcement is in place
 		// before a controller's handler has enqueued the key.
@@ -293,9 +274,17 @@ func NewBusDeltaSource(subscriber nats.Subscriber, zero resource.WrappedObjectTy
 
 // busLister builds the re-list: identities where the server serves them, full objects otherwise. Which one served a
 // re-list is reported on the app-sdk's projection counter, alongside its other delivery metrics.
-func busLister(kind resource.Kind, opts BusSourceOptions, list PeriodicListFunc) (operator.ResourceLister, error) {
+func busLister(kind resource.Kind, opts BusSourceOptions, page operator.PageFunc) (operator.ResourceLister, error) {
 	recorder := opts.Metrics.RelistRecorder(kind)
-	objects := periodicLister{list: list, recorder: recorder}
+	objects, err := operator.NewPagedLister(kind, page, operator.PagedListerOptions{
+		// The controllers key off identity and re-fetch in their reconcile, and a dynamic client's unstructured
+		// items cannot be converted into the kind anyway.
+		Payload:  operator.PayloadIdentity,
+		Recorder: recorder,
+	})
+	if err != nil {
+		return nil, err
+	}
 	if opts.Keys == nil {
 		return objects, nil
 	}

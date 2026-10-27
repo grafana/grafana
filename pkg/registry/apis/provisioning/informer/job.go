@@ -43,13 +43,11 @@ func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, r
 // to cover every namespace.
 func NewJobBusDeltaSource(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, busMetrics *operator.BusInformerMetrics) (DeltaSource, error) {
 	c := client.ProvisioningV0alpha1()
-	list := func(ctx context.Context) ([]runtime.Object, string, error) {
-		return usinformer.ListAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+	page := func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			return c.Jobs(namespace).List(ctx, opts)
-		})
-	}
+		}
 	return usinformer.NewBusDeltaSource(subscriber, &provisioningapis.Job{}, &provisioningapis.JobResourceInfo,
-		resync, list, usinformer.BusSourceOptions{Namespace: namespace, Group: queueGroup, Metrics: busMetrics})
+		resync, page, usinformer.BusSourceOptions{Namespace: namespace, Group: queueGroup, Metrics: busMetrics})
 }
 
 // NewBusInformerMetrics builds the app-sdk's delivery metrics and registers them under this repository's prefix, so

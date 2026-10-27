@@ -319,7 +319,7 @@ func TestRepositoryQuotaConditions_CountsTheRepositoryUnderReconciliation(t *tes
 	added := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "added-elsewhere", ResourceVersion: "2"}}
 
 	// This replica's snapshot has seen only the older repository.
-	snapshot := fakeSnapshot{{Namespace: existing.Namespace, Name: existing.Name}}
+	snapshot := fakeSnapshot{{Namespace: existing.Namespace, Name: existing.Name}: {}}
 	getter := informer.NewClientRepositoryGetter(fake.NewClientset(existing, added).ProvisioningV0alpha1(), snapshot)
 
 	_, err := getter.Get(ctx, "ns", added.Name)
@@ -331,7 +331,21 @@ func TestRepositoryQuotaConditions_CountsTheRepositoryUnderReconciliation(t *tes
 	assert.Equal(t, "namespace quota exceeded: 2/1 repositories", condition.Message)
 }
 
-// fakeSnapshot stands in for the informer's snapshot, which holds identities only.
-type fakeSnapshot []resource.Identifier
+// fakeSnapshot stands in for the informer's snapshot: identities only, with the read-through the real one has.
+type fakeSnapshot map[resource.Identifier]struct{}
 
-func (s fakeSnapshot) Snapshot() []resource.Identifier { return s }
+func (s fakeSnapshot) Count(namespace string) int {
+	count := 0
+	for id := range s {
+		if id.Namespace == namespace {
+			count++
+		}
+	}
+	return count
+}
+
+func (s fakeSnapshot) Observe(obj resource.Object) {
+	s[resource.Identifier{Namespace: obj.GetNamespace(), Name: obj.GetName()}] = struct{}{}
+}
+
+func (s fakeSnapshot) Forget(id resource.Identifier) { delete(s, id) }

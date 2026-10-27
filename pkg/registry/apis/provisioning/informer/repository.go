@@ -2,15 +2,13 @@ package informer
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/tools/cache"
+	"k8s.io/client-go/tools/pager"
 
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -63,11 +61,6 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 			return nil, nil, err
 		}
 		getter := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), source)
-		// The getter remembers what it read until the snapshot catches up, and a vanished repository never appears
-		// there, so the delete has to reach it from the same event stream the snapshot is pruned by.
-		if _, err := source.AddEventHandler(forgetDeleted{getter: getter}); err != nil {
-			return nil, nil, err
-		}
 		return source, observeRepositoryFreshness(getter, announced, freshness.Recorder(usinformer.SDKKind(&provisioningapis.RepositoryResourceInfo))), nil
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
@@ -83,13 +76,11 @@ func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interfac
 	}
 	opts.Namespace = namespace
 	opts.Group = queueGroup
-	list := func(ctx context.Context) ([]runtime.Object, string, error) {
-		return usinformer.ListAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
-			return c.Repositories(namespace).List(ctx, opts)
-		})
+	page := func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+		return c.Repositories(namespace).List(ctx, opts)
 	}
 	return usinformer.NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{},
-		&provisioningapis.RepositoryResourceInfo, resync, list, opts)
+		&provisioningapis.RepositoryResourceInfo, resync, page, opts)
 }
 
 // NewCachedRepositoryGetter backs a RepositoryGetter with the informer's
@@ -119,108 +110,64 @@ func (g cachedRepositoryGetter) ConfirmRepositoryCount(ctx context.Context, name
 	return g.CountRepositories(ctx, namespace)
 }
 
-// RepositorySnapshot is the identity set an informer last reconciled with storage.
-type RepositorySnapshot interface {
-	Snapshot() []resource.Identifier
+// RepositoryCounter is the informer's view of how many repositories a namespace holds, with the read-through a
+// shared delivery group makes necessary.
+type RepositoryCounter interface {
+	Count(namespace string) int
+	Observe(obj resource.Object)
+	Forget(id resource.Identifier)
 }
 
 // NewClientRepositoryGetter backs Get with the API client, fresh for the
 // reconcile, and the count with the informer's snapshot, which avoids an API
 // LIST on every quota check.
 //
-// The snapshot is read-only and lags: under round-robin delivery a live ADDED
-// may have reached another replica, so a repository this reconcile just read
-// can be absent from it. Each successful Get is therefore remembered until a
-// re-list picks it up, and dropped on NotFound, so the count that follows
-// includes the repository the reconcile just read.
-func NewClientRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, snapshot RepositorySnapshot) RepositoryGetter {
-	return &clientRepositoryGetter{client: c, snapshot: snapshot, recent: map[resource.Identifier]struct{}{}}
-}
-
-// forgetDeleted drops a deleted repository from the getter's remembered set. Without it a repository that is gone
-// is in neither the snapshot nor the set's pruning path, so the namespace would stay at its quota forever.
-type forgetDeleted struct {
-	getter RepositoryGetter
-}
-
-var _ cache.ResourceEventHandler = forgetDeleted{}
-
-func (forgetDeleted) OnAdd(any, bool)   {}
-func (forgetDeleted) OnUpdate(any, any) {}
-
-func (h forgetDeleted) OnDelete(obj any) {
-	getter, ok := h.getter.(*clientRepositoryGetter)
-	if !ok {
-		return
-	}
-	acc, err := meta.Accessor(obj)
-	if err != nil {
-		return
-	}
-	getter.forget(resource.Identifier{Namespace: acc.GetNamespace(), Name: acc.GetName()})
-}
-
-// forget drops one repository from the remembered set.
-func (g *clientRepositoryGetter) forget(id resource.Identifier) {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	delete(g.recent, id)
+// Each read is written back through the counter: under round-robin delivery the
+// live ADDED may have reached another replica, so the repository this reconcile
+// just read can be absent from the snapshot, and the quota check that follows
+// has to count it. A re-list absorbs the entry either way.
+func NewClientRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, counter RepositoryCounter) RepositoryGetter {
+	return &clientRepositoryGetter{client: c, counter: counter}
 }
 
 type clientRepositoryGetter struct {
-	client   typedclient.ProvisioningV0alpha1Interface
-	snapshot RepositorySnapshot
-
-	mu     sync.Mutex
-	recent map[resource.Identifier]struct{}
+	client  typedclient.ProvisioningV0alpha1Interface
+	counter RepositoryCounter
 }
 
 func (g *clientRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
 	repo, err := g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
-	id := resource.Identifier{Namespace: namespace, Name: name}
 	if apierrors.IsNotFound(err) {
-		g.forget(id)
+		g.counter.Forget(resource.Identifier{Namespace: namespace, Name: name})
 		return nil, err
 	}
 	if err != nil {
 		return nil, err
 	}
-	g.mu.Lock()
-	g.recent[id] = struct{}{}
-	g.mu.Unlock()
+	g.counter.Observe(resource.NewWrappedObject[resource.WrappedObjectType](repo))
 	return repo, nil
 }
 
-// CountRepositories counts the namespace out of the informer's snapshot plus
-// anything this getter read that the snapshot has not caught up with. Entries
-// the snapshot now holds are dropped as it walks, so that set drains on the next
-// re-list rather than growing.
+// CountRepositories reads the informer's snapshot, which includes the repository
+// this reconcile just read.
 func (g *clientRepositoryGetter) CountRepositories(_ context.Context, namespace string) (int, error) {
-	names := map[string]struct{}{}
-
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	for _, id := range g.snapshot.Snapshot() {
-		delete(g.recent, id)
-		if id.Namespace == namespace {
-			names[id.Name] = struct{}{}
-		}
-	}
-	for id := range g.recent {
-		if id.Namespace == namespace {
-			names[id.Name] = struct{}{}
-		}
-	}
-	return len(names), nil
+	return g.counter.Count(namespace), nil
 }
 
-// ConfirmRepositoryCount lists the namespace from the API, which the store can lag.
+// ConfirmRepositoryCount lists the namespace from the API, which the snapshot can lag.
 func (g *clientRepositoryGetter) ConfirmRepositoryCount(ctx context.Context, namespace string) (int, error) {
-	objs, _, err := usinformer.ListAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+	p := pager.New(func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 		return g.client.Repositories(namespace).List(ctx, opts)
 	})
-	if err != nil {
+	// An expired continue token must not fall back to one unpaginated list: the server would cap it again and the
+	// confirmation would under-count exactly when it is relied on to release a block.
+	p.FullListIfExpired = false
+	count := 0
+	if err := p.EachListItem(ctx, metav1.ListOptions{Limit: 500}, func(runtime.Object) error {
+		count++
+		return nil
+	}); err != nil {
 		return 0, err
 	}
-	return len(objs), nil
+	return count, nil
 }

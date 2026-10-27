@@ -34,7 +34,7 @@ func (testInfo) GroupVersionResource() schema.GroupVersionResource {
 	return schema.GroupVersionResource{Group: "example.grafana.app", Version: "v1", Resource: "entries"}
 }
 
-func entry(namespace, name string) runtime.Object {
+func entry(namespace, name string) *metav1.PartialObjectMetadata {
 	return &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: name}}
 }
 
@@ -106,9 +106,9 @@ type fakeSubscription struct{}
 func (fakeSubscription) WaitReady(ctx context.Context) error { return ctx.Err() }
 func (fakeSubscription) Unsubscribe() error                  { return nil }
 
-func runPeriodicSource(t *testing.T, list PeriodicListFunc) (*recorder, cache.ResourceEventHandlerRegistration) {
+func runPeriodicSource(t *testing.T, page operator.PageFunc) (*recorder, cache.ResourceEventHandlerRegistration) {
 	t.Helper()
-	src, err := NewPeriodicDeltaSource(testInfo{}, time.Hour, list)
+	src, err := NewPeriodicDeltaSource(testInfo{}, &metav1.PartialObjectMetadata{}, time.Hour, page)
 	require.NoError(t, err)
 
 	rec := &recorder{}
@@ -126,46 +126,36 @@ func runPeriodicSource(t *testing.T, list PeriodicListFunc) (*recorder, cache.Re
 // to come back off before delivery.
 func TestPeriodicDeltaSourceDeliversTheListedObject(t *testing.T) {
 	listed := entry("ns", "one")
-	rec, _ := runPeriodicSource(t, func(context.Context) ([]runtime.Object, string, error) {
-		return []runtime.Object{listed}, "", nil
+	rec, _ := runPeriodicSource(t, func(context.Context, metav1.ListOptions) (runtime.Object, error) {
+		return &metav1.PartialObjectMetadataList{Items: []metav1.PartialObjectMetadata{*listed}}, nil
 	})
 
 	require.Eventually(t, func() bool { return rec.last() != nil }, 5*time.Second, 5*time.Millisecond)
 
 	delivered, ok := rec.last().(*metav1.PartialObjectMetadata)
 	require.True(t, ok, "expected the listed type, got %T", rec.last())
-	assert.Equal(t, listed, delivered)
+	assert.Equal(t, listed.Namespace, delivered.Namespace)
+	assert.Equal(t, listed.Name, delivered.Name)
+	assert.Equal(t, "Entry", delivered.Kind, "the identity carries the kind it was listed for")
 }
 
 // A failed list must not report the source as synced, or the handler is released against nothing.
 func TestPeriodicDeltaSourceRetriesTheInitialList(t *testing.T) {
-	_, registration := runPeriodicSource(t, func(context.Context) ([]runtime.Object, string, error) {
-		return nil, "", errors.New("api unavailable")
+	_, registration := runPeriodicSource(t, func(context.Context, metav1.ListOptions) (runtime.Object, error) {
+		return nil, errors.New("api unavailable")
 	})
 
 	assert.Never(t, registration.HasSynced, 200*time.Millisecond, 20*time.Millisecond)
 }
-
-func TestPeriodicListerRejectsANonKubernetesObject(t *testing.T) {
-	_, _, err := periodicLister{list: func(context.Context) ([]runtime.Object, string, error) {
-		return []runtime.Object{&notAnObject{}}, "", nil
-	}}.List(context.Background())
-
-	assert.ErrorContains(t, err, "not a kubernetes object")
-}
-
-// notAnObject is a runtime.Object with no metadata accessors, which the app-sdk's wrapper cannot adapt.
-type notAnObject struct{}
-
-func (o *notAnObject) GetObjectKind() schema.ObjectKind { return schema.EmptyObjectKind }
-func (o *notAnObject) DeepCopyObject() runtime.Object   { return &notAnObject{} }
 
 // The subject a live event arrives on is composed from the resource, not from the kind: the app-sdk's simple schema
 // would pluralise "Entry" as "entrys" and subscribe to a subject nothing publishes on.
 func TestBusDeltaSourceSubscribesOnTheResource(t *testing.T) {
 	subscriber := newFakeSubscriber()
 	src, err := NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{}, testInfo{}, time.Hour,
-		func(context.Context) ([]runtime.Object, string, error) { return nil, "", nil }, BusSourceOptions{Namespace: "ns"})
+		func(context.Context, metav1.ListOptions) (runtime.Object, error) {
+			return &metav1.PartialObjectMetadataList{}, nil
+		}, BusSourceOptions{Namespace: "ns"})
 	require.NoError(t, err)
 
 	rec := &recorder{}
@@ -197,7 +187,9 @@ func TestBusDeltaSourceSubscribesOnTheResource(t *testing.T) {
 func TestBusDeltaSourceCarriesAnnouncedMetadata(t *testing.T) {
 	subscriber := newFakeSubscriber()
 	src, err := NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{}, testInfo{}, time.Hour,
-		func(context.Context) ([]runtime.Object, string, error) { return nil, "", nil }, BusSourceOptions{Namespace: "ns"})
+		func(context.Context, metav1.ListOptions) (runtime.Object, error) {
+			return &metav1.PartialObjectMetadataList{}, nil
+		}, BusSourceOptions{Namespace: "ns"})
 	require.NoError(t, err)
 
 	rec := &recorder{}
@@ -234,13 +226,17 @@ func TestBusDeltaSourceCarriesAnnouncedMetadata(t *testing.T) {
 }
 
 // The bus informer drops a queued event a completed re-list already accounts for, and it decides that by comparing
-// the event against the version the list was read at. A lister which reports no version silently disables it, so the
-// list contract carries the version through rather than discarding it.
+// the event against the version the list was read at. The page function's list metadata is what carries it, so a
+// source built from one reports the version rather than discarding it.
 func TestBusDeltaSourceReportsTheListVersion(t *testing.T) {
-	var got string
-	lister := periodicLister{list: func(context.Context) ([]runtime.Object, string, error) {
-		return []runtime.Object{entry("ns", "one")}, "42", nil
-	}}
+	lister, err := busLister(SDKKind(testInfo{}), BusSourceOptions{}, func(context.Context, metav1.ListOptions) (runtime.Object, error) {
+		return &metav1.PartialObjectMetadataList{
+			ListMeta: metav1.ListMeta{ResourceVersion: "42"},
+			Items:    []metav1.PartialObjectMetadata{*entry("ns", "one")},
+		}, nil
+	})
+	require.NoError(t, err)
+
 	_, got, err := lister.List(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, "42", got)
@@ -248,7 +244,9 @@ func TestBusDeltaSourceReportsTheListVersion(t *testing.T) {
 
 func TestBusDeltaSourceRequiresNats(t *testing.T) {
 	_, err := NewBusDeltaSource(nil, &metav1.PartialObjectMetadata{}, testInfo{}, time.Hour,
-		func(context.Context) ([]runtime.Object, string, error) { return nil, "", nil }, BusSourceOptions{})
+		func(context.Context, metav1.ListOptions) (runtime.Object, error) {
+			return &metav1.PartialObjectMetadataList{}, nil
+		}, BusSourceOptions{})
 	assert.ErrorContains(t, err, "nats is not enabled")
 }
 
@@ -258,8 +256,11 @@ func TestBusDeltaSourceAnnouncesOnlyLiveDeliveries(t *testing.T) {
 	announced := operator.NewAnnouncementTracker(operator.AnnouncementTrackerOptions{})
 	subscriber := newFakeSubscriber()
 	src, err := NewBusDeltaSource(subscriber, &metav1.PartialObjectMetadata{}, testInfo{}, time.Hour,
-		func(context.Context) ([]runtime.Object, string, error) {
-			return []runtime.Object{entry("ns", "listed")}, "5", nil
+		func(context.Context, metav1.ListOptions) (runtime.Object, error) {
+			return &metav1.PartialObjectMetadataList{
+				ListMeta: metav1.ListMeta{ResourceVersion: "5"},
+				Items:    []metav1.PartialObjectMetadata{*entry("ns", "listed")},
+			}, nil
 		},
 		BusSourceOptions{Namespace: "ns", Announcements: announced})
 	require.NoError(t, err)

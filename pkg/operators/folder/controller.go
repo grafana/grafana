@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/server"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
+	"github.com/grafana/grafana/pkg/services/apiserver/keys/keyslister"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
@@ -95,12 +97,16 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		// Keys only: the controller treats an event as a signal and reads the folder itself, so a re-list needs
 		// identities and no bodies.
 		keys := keysapi.NewHTTPLister(restClient, folderGVR)
-		list := func(ctx context.Context) ([]runtime.Object, string, error) {
-			return listFolderKeys(ctx, keys)
+		page := func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+			return dynamic.New(restClient).Resource(folderGVR).Namespace("").List(ctx, opts)
 		}
 
 		inf, err := usinformer.NewBusDeltaSource(subscriber, &folderv1.Folder{}, folderResourceInfo{},
-			10*time.Minute, list, usinformer.BusSourceOptions{Group: queueGroup})
+			10*time.Minute, page, usinformer.BusSourceOptions{
+				Group: queueGroup,
+				// Identities and no bodies where the server serves them; the paged list above is the fallback.
+				Keys: keyslister.New(keys),
+			})
 		if err != nil {
 			return fmt.Errorf("failed to build folder delta source: %w", err)
 		}
