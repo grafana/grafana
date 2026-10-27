@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -64,8 +66,11 @@ func TestPermissionSetDifference(t *testing.T) {
 func TestPermissionShadowDoesNotBlockAndSnapshotsInput(t *testing.T) {
 	registry := prometheus.NewRegistry()
 	s := NewLegacyUserPermissionsShadow(registry, 32)
-	ctx, cancel := context.WithCancel(context.Background())
+	type requestKey struct{}
+	ctx, cancel := context.WithCancel(context.WithValue(context.Background(), requestKey{}, "request state"))
 	defer cancel()
+	spanContext := trace.NewSpanContext(trace.SpanContextConfig{TraceID: trace.TraceID{1}, SpanID: trace.SpanID{1}})
+	ctx = trace.ContextWithSpanContext(ctx, spanContext)
 	usr := shadowRequester()
 	permissions := []ac.Permission{{Action: "read", Scope: "one"}}
 	release := make(chan struct{})
@@ -77,6 +82,12 @@ func TestPermissionShadowDoesNotBlockAndSnapshotsInput(t *testing.T) {
 		}
 		if deadline, ok := ctx.Deadline(); !ok || time.Until(deadline) > 10*time.Second {
 			return legacyclient.LegacyGetUserPermissionsResponse{}, errors.New("shadow timeout is missing")
+		}
+		if !trace.SpanContextFromContext(ctx).Equal(spanContext) {
+			return legacyclient.LegacyGetUserPermissionsResponse{}, errors.New("shadow lost trace metadata")
+		}
+		if ctx.Value(requestKey{}) != nil {
+			return legacyclient.LegacyGetUserPermissionsResponse{}, errors.New("shadow inherited request state")
 		}
 		observed <- req
 		return legacyclient.LegacyGetUserPermissionsResponse{Permissions: []types.Permission{{Action: "read", Scope: "one"}}}, nil
@@ -185,6 +196,18 @@ func TestPermissionShadowRouting(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestPermissionShadowSkipsTransaction(t *testing.T) {
+	s := NewLegacyUserPermissionsShadow(nil, 1)
+	ctx := context.WithValue(t.Context(), sqlstore.ContextSessionKey{}, &sqlstore.DBSession{})
+	want := []ac.Permission{{Action: "read"}}
+	got, err := s.GetUserPermissions(ctx, nil, shadowRequester(), ac.Options{ReloadCache: true}, setting.NewCfg(), func() ([]ac.Permission, error) { return want, nil })
+	require.NoError(t, err)
+	require.Equal(t, want, got)
+	require.Equal(t, float64(1), testutil.ToFloat64(s.skipped))
+	require.Empty(t, s.inFlight)
+	require.Zero(t, testutil.CollectAndCount(s.duration))
 }
 
 func TestPermissionShadowConcurrencyLimit(t *testing.T) {

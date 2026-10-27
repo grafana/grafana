@@ -88,6 +88,9 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
 		ctx := stream.Context()
 		if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 			ctx = trace.ContextWithSpanContext(ctx, trace.SpanContextFromContext(clientCtx))
+			if isPermissionShadow(clientCtx) {
+				ctx = WithPermissionShadow(ctx)
+			}
 			// Legacy callers can refresh before committing permission mutations.
 			// Preserve their SQL session without forwarding unrelated context values.
 			// TODO: Before routing these callers to remote AuthZ, move permission

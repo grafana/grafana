@@ -8,12 +8,15 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -49,13 +52,18 @@ func NewLegacyUserPermissionsShadow(reg prometheus.Registerer, maxConcurrent int
 		}, []string{"result"}),
 		skipped: factory.NewCounter(prometheus.CounterOpts{
 			Name: "grafana_accesscontrol_user_permissions_shadow_skipped_total",
-			Help: "Permission shadow calls skipped because the concurrency limit was reached.",
+			Help: "Permission shadow calls skipped because of an active SQL session or the concurrency limit.",
 		}),
 	}
 }
 
 func (s *LegacyUserPermissionsShadow) GetUserPermissions(ctx context.Context, client legacyclient.Service, usr identity.Requester, options ac.Options, cfg *setting.Cfg, primary func() ([]ac.Permission, error)) ([]ac.Permission, error) {
 	if s == nil {
+		return primary()
+	}
+	// A detached read cannot compare the caller's uncommitted transaction state safely.
+	if session, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && session != nil {
+		s.skipped.Inc()
 		return primary()
 	}
 	select {
@@ -72,6 +80,9 @@ func (s *LegacyUserPermissionsShadow) GetUserPermissions(ctx context.Context, cl
 	s.duration.WithLabelValues("current").Observe(float64(time.Since(start)) / float64(time.Millisecond))
 	// The caller and permission caches can retain the returned slice.
 	expected := slices.Clone(permissions)
+	// Copy only trace metadata. Request context values can hold caller-owned SQL sessions.
+	background := trace.ContextWithSpanContext(context.Background(), trace.SpanContextFromContext(ctx))
+	background = legacypermissions.WithPermissionShadow(background)
 	go func() {
 		defer func() {
 			<-s.inFlight
@@ -80,7 +91,7 @@ func (s *LegacyUserPermissionsShadow) GetUserPermissions(ctx context.Context, cl
 				s.logger.Warn("Permission shadow call panicked", "panic", recovered)
 			}
 		}()
-		shadowCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+		shadowCtx, cancel := context.WithTimeout(background, 10*time.Second)
 		defer cancel()
 		start := time.Now()
 		var actual []ac.Permission
