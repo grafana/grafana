@@ -16737,6 +16737,12 @@
     "improve-query": "Improve query"
   },
   "st-pod-ready": {
+    "error": {
+      "body-with-support": "Something went wrong while this was starting up. Contact support and we'll help you get this up and running.",
+      "support-ack": "If you've already reached out, we have your request and we're on it.",
+      "title": "Couldn't load {{pageTitle}}",
+      "title-fallback": "Couldn't load page"
+    },
     "timeout": {
       "body": "We are still waiting for your Grafana instance to become ready. Please refresh the page to try again.",
       "title": "Taking longer than expected"

@@ -141,6 +141,46 @@ describe('PageFallbackLoader', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Taking longer than expected');
   });
 
+  it('renders the error card with the matched page title when the pod ready service reports error', () => {
+    const stPodReady = new StPodReadyService();
+    stPodReady.state.next(StPodStatus.Error);
+    const store = configureStore({ navBarTree: [{ id: 'explore', text: 'Explore', url: '/explore' }] });
+    const wrapper = getWrapper({
+      store,
+      grafanaContext: { stPodReady },
+      renderWithRouter: true,
+      historyOptions: { initialEntries: ['/explore'] },
+    });
+
+    render(<PageFallbackLoader />, { wrapper });
+
+    const card = screen.getByTestId('st-pod-error-card');
+    expect(card).toHaveTextContent("Couldn't load Explore");
+    expect(card).toHaveTextContent('Something went wrong while this was starting up.');
+    expect(card).toHaveTextContent("If you've already reached out, we have your request and we're on it.");
+    expect(screen.getByRole('link', { name: /support@grafana\.com/ })).toHaveAttribute(
+      'href',
+      'mailto:support@grafana.com'
+    );
+    expect(screen.queryByTestId('page-fallback-loader')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('page-fallback-dotfield')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('st-pod-timeout-banner')).not.toBeInTheDocument();
+  });
+
+  it('falls back to the generic error title when no nav item matches the pathname', () => {
+    const stPodReady = new StPodReadyService();
+    stPodReady.state.next(StPodStatus.Error);
+    const wrapper = getWrapper({
+      grafanaContext: { stPodReady },
+      renderWithRouter: true,
+      historyOptions: { initialEntries: ['/some-unknown-page'] },
+    });
+
+    render(<PageFallbackLoader />, { wrapper });
+
+    expect(screen.getByTestId('st-pod-error-card')).toHaveTextContent("Couldn't load page");
+  });
+
   it('skips chrome breadcrumbs when the matched item has no entry in navIndex', () => {
     // Items from navBarTree may be absent from navIndex (bookmarks, starred, runtime-added
     // entries). getNavModel's fallback would otherwise write "Page not found" into chrome state.

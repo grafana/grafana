@@ -13,6 +13,7 @@ import { useSelector } from 'app/types/store';
 
 import { Page } from '../Page/Page';
 
+import { StPodErrorCard } from './StPodErrorCard';
 import { findNavItemForPath } from './navItemForPath';
 
 // TODO: replace with a realistic P80 ST pod startup time once we have the data.
@@ -52,6 +53,7 @@ export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
   const navTree = useSelector((state) => state.navBarTree);
   const navIndex = useSelector((state) => state.navIndex);
   const stPodStatus = stPodReady.useStatus();
+  const hasErrored = stPodStatus === StPodStatus.Error;
   const hasTimedOut = stPodStatus === StPodStatus.Timeout;
 
   const matchedNavItem = useMemo(
@@ -69,6 +71,14 @@ export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
       chrome.update({});
     }
   }, [chrome, matchedNavItem, navIndex]);
+
+  if (hasErrored) {
+    return (
+      <Page layout={PageLayoutType.Custom}>
+        <StPodErrorCard pageTitle={pageTitle} />
+      </Page>
+    );
+  }
 
   const resolvedSteps: PageFallbackLoaderStep[] = steps ?? [
     {
