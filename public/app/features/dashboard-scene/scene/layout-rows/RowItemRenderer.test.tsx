@@ -172,4 +172,82 @@ describe('RowItemRenderer', () => {
     const copiedUrl = new URL(await navigator.clipboard.readText());
     expect(copiedUrl.searchParams.get('drow')).toBe('Foo%2FBar');
   });
+
+  describe('Alt+click behavior', () => {
+    it('collapses all rows when Alt+clicking on an expanded row toggle', async () => {
+      const row1 = new RowItem({ key: 'row-1', title: 'Row 1', collapse: false, layout: AutoGridLayoutManager.createEmpty() });
+      const row2 = new RowItem({ key: 'row-2', title: 'Row 2', collapse: false, layout: AutoGridLayoutManager.createEmpty() });
+      const layout = new RowsLayoutManager({ rows: [row1, row2] });
+      const scene = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        body: layout,
+      });
+      
+      // Activate the sidebar to enable edit actions
+      const deactivateSidebar = scene.activateSidebar();
+      
+      render(<scene.Component model={scene} />);
+
+      const toggle1 = screen.getByTestId(selectors.components.DashboardRow.toggle(row1.state.title!));
+
+      // Alt+click the first row toggle using keyboard modifier
+      await userEvent.keyboard('[AltLeft>]');
+      await userEvent.click(toggle1);
+      await userEvent.keyboard('[/AltLeft]');
+
+      // Both rows should be collapsed
+      expect(row1.getCollapsedState()).toBe(true);
+      expect(row2.getCollapsedState()).toBe(true);
+      
+      deactivateSidebar();
+    });
+
+    it('expands all rows when Alt+clicking on a collapsed row toggle', async () => {
+      const row1 = new RowItem({ key: 'row-1', title: 'Row 1', collapse: true, layout: AutoGridLayoutManager.createEmpty() });
+      const row2 = new RowItem({ key: 'row-2', title: 'Row 2', collapse: true, layout: AutoGridLayoutManager.createEmpty() });
+      const layout = new RowsLayoutManager({ rows: [row1, row2] });
+      const scene = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        body: layout,
+      });
+      
+      // Activate the sidebar to enable edit actions
+      const deactivateSidebar = scene.activateSidebar();
+      
+      render(<scene.Component model={scene} />);
+
+      const toggle1 = screen.getByTestId(selectors.components.DashboardRow.toggle(row1.state.title!));
+
+      // Alt+click the first row toggle using keyboard modifier
+      await userEvent.keyboard('[AltLeft>]');
+      await userEvent.click(toggle1);
+      await userEvent.keyboard('[/AltLeft]');
+
+      // Both rows should be expanded
+      expect(row1.getCollapsedState()).toBe(false);
+      expect(row2.getCollapsedState()).toBe(false);
+      
+      deactivateSidebar();
+    });
+
+    it('only toggles one row when clicking without Alt key', async () => {
+      const row1 = new RowItem({ key: 'row-1', title: 'Row 1', collapse: false, layout: AutoGridLayoutManager.createEmpty() });
+      const row2 = new RowItem({ key: 'row-2', title: 'Row 2', collapse: false, layout: AutoGridLayoutManager.createEmpty() });
+      const layout = new RowsLayoutManager({ rows: [row1, row2] });
+      const scene = new DashboardScene({
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        body: layout,
+      });
+      render(<scene.Component model={scene} />);
+
+      const toggle1 = screen.getByTestId(selectors.components.DashboardRow.toggle(row1.state.title!));
+
+      // Normal click (without Alt)
+      await userEvent.click(toggle1);
+
+      // Only the first row should be collapsed
+      expect(row1.getCollapsedState()).toBe(true);
+      expect(row2.getCollapsedState()).toBe(false);
+    });
+  });
 });

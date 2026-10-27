@@ -435,3 +435,115 @@ function setupSceneWithAutoGrid(panels = [getDefaultVizPanel()], sceneOptions?: 
   });
   return dashboard.state.body;
 }
+
+describe('SceneGridRow Alt+click behavior', () => {
+  it('collapses all rows when Alt+clicking on an expanded row toggle', async () => {
+    const { render, userEvent } = await import('test/test-utils');
+    const { selectors } = await import('@grafana/e2e-selectors');
+    
+    const row1 = new SceneGridRow({ key: 'row-1', title: 'Row 1', isCollapsed: false, children: [] });
+    const row2 = new SceneGridRow({ key: 'row-2', title: 'Row 2', isCollapsed: false, children: [] });
+    const grid = new SceneGridLayout({ children: [row1, row2] });
+    const manager = new DefaultGridLayoutManager({ grid });
+    const scene = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      body: manager,
+    });
+    
+    render(<scene.Component model={scene} />);
+    
+    // Find the toggle button for the first row
+    // Note: We look for a button that contains an icon with angle-right or angle-down
+    const buttons = document.querySelectorAll('button');
+    let toggleButton: HTMLButtonElement | null = null;
+    
+    for (const button of Array.from(buttons)) {
+      const icon = button.querySelector('[data-icon="angle-down"]');
+      if (icon) {
+        toggleButton = button as HTMLButtonElement;
+        break;
+      }
+    }
+    
+    expect(toggleButton).toBeInTheDocument();
+    
+    // Alt+click the toggle button
+    await userEvent.click(toggleButton!, { altKey: true });
+    
+    // Both rows should be collapsed
+    expect(row1.state.isCollapsed).toBe(true);
+    expect(row2.state.isCollapsed).toBe(true);
+  });
+  
+  it('expands all rows when Alt+clicking on a collapsed row toggle', async () => {
+    const { render, userEvent } = await import('test/test-utils');
+    
+    const row1 = new SceneGridRow({ key: 'row-1', title: 'Row 1', isCollapsed: true, children: [] });
+    const row2 = new SceneGridRow({ key: 'row-2', title: 'Row 2', isCollapsed: true, children: [] });
+    const grid = new SceneGridLayout({ children: [row1, row2] });
+    const manager = new DefaultGridLayoutManager({ grid });
+    const scene = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      body: manager,
+    });
+    
+    render(<scene.Component model={scene} />);
+    
+    // Find the toggle button for the first row (should have angle-right icon when collapsed)
+    const buttons = document.querySelectorAll('button');
+    let toggleButton: HTMLButtonElement | null = null;
+    
+    for (const button of Array.from(buttons)) {
+      const icon = button.querySelector('[data-icon="angle-right"]');
+      if (icon) {
+        toggleButton = button as HTMLButtonElement;
+        break;
+      }
+    }
+    
+    expect(toggleButton).toBeInTheDocument();
+    
+    // Alt+click the toggle button
+    await userEvent.click(toggleButton!, { altKey: true });
+    
+    // Both rows should be expanded
+    expect(row1.state.isCollapsed).toBe(false);
+    expect(row2.state.isCollapsed).toBe(false);
+  });
+  
+  it('only toggles one row when clicking without Alt key', async () => {
+    const { render, userEvent } = await import('test/test-utils');
+    
+    const row1 = new SceneGridRow({ key: 'row-1', title: 'Row 1', isCollapsed: false, children: [] });
+    const row2 = new SceneGridRow({ key: 'row-2', title: 'Row 2', isCollapsed: false, children: [] });
+    const grid = new SceneGridLayout({ children: [row1, row2] });
+    const manager = new DefaultGridLayoutManager({ grid });
+    const scene = new DashboardScene({
+      $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      body: manager,
+    });
+    
+    render(<scene.Component model={scene} />);
+    
+    // Find the toggle button
+    const buttons = document.querySelectorAll('button');
+    let toggleButton: HTMLButtonElement | null = null;
+    
+    for (const button of Array.from(buttons)) {
+      const icon = button.querySelector('[data-icon="angle-down"]');
+      if (icon) {
+        toggleButton = button as HTMLButtonElement;
+        break;
+      }
+    }
+    
+    expect(toggleButton).toBeInTheDocument();
+    
+    // Normal click (without Alt)
+    await userEvent.click(toggleButton!);
+    
+    // Only the first row should be toggled
+    expect(row1.state.isCollapsed).toBe(true);
+    expect(row2.state.isCollapsed).toBe(false);
+  });
+});

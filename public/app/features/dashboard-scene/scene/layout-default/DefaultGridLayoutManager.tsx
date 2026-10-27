@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import React from 'react';
 
 import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -50,6 +51,7 @@ import {
   getDashboardSceneFor,
 } from '../../utils/utils';
 import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
+import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
@@ -58,6 +60,9 @@ import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
+import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
+import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
+
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
@@ -648,12 +653,66 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   );
 }
 
+function getRowCollapseTarget(dashboard: DashboardScene): DefaultGridLayoutManager | RowsLayoutManager | undefined {
+  const body = dashboard.state.body;
+
+  if (body instanceof DefaultGridLayoutManager || body instanceof RowsLayoutManager) {
+    return body;
+  }
+
+  if (body instanceof TabsLayoutManager) {
+    const tabLayout = body.getCurrentTab()?.getLayout();
+    if (tabLayout instanceof DefaultGridLayoutManager || tabLayout instanceof RowsLayoutManager) {
+      return tabLayout;
+    }
+  }
+
+  return undefined;
+}
+
 const OriginalSceneGridRowRenderer = SceneGridRow.Component;
 // @ts-expect-error
 SceneGridRow.Component = SceneGridRowRenderer;
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const soloPanelContext = useSoloPanelContext();
+  const { isCollapsed } = model.useState();
+
+  const handleClick = React.useCallback(
+    (evt: React.MouseEvent) => {
+      // Check if Alt key is pressed
+      if (!evt.altKey) {
+        return;
+      }
+
+      // Check if the click is on a button (the collapse/expand toggle)
+      const target = evt.target as HTMLElement;
+      const button = target.closest('button');
+
+      // The collapse button is typically the first button in the row header
+      // and should contain an icon with angle-right or angle-down
+      if (button) {
+        const icon = button.querySelector('[data-icon="angle-right"], [data-icon="angle-down"]');
+        if (icon) {
+          evt.preventDefault();
+          evt.stopPropagation();
+
+          // Alt+click: collapse/expand all rows (GitHub-style)
+          const dashboard = getDashboardSceneFor(model);
+          const layout = getRowCollapseTarget(dashboard);
+
+          if (layout) {
+            if (isCollapsed) {
+              layout.expandAllRows();
+            } else {
+              layout.collapseAllRows();
+            }
+          }
+        }
+      }
+    },
+    [model, isCollapsed]
+  );
 
   if (soloPanelContext?.renderRow) {
     return soloPanelContext.renderRow(model, <OriginalSceneGridRowRenderer model={model} />);
@@ -663,7 +722,11 @@ function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
     return model.state.children.map((child) => <child.Component model={child} key={child.state.key!} />);
   }
 
-  return <OriginalSceneGridRowRenderer model={model} />;
+  return (
+    <div onClick={handleClick} style={{ display: 'contents' }}>
+      <OriginalSceneGridRowRenderer model={model} />
+    </div>
+  );
 }
 
 function getStyles(theme: GrafanaTheme2) {
