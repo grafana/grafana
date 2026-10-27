@@ -95,7 +95,6 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
     );
     // Some commands update child scenes directly rather than publishing undoable actions.
     if (
-      dashboardModesEnabled() &&
       result.success &&
       !this.isReadOnly(type) &&
       !PLANNING_ALLOWED_COMMANDS.has(type) &&

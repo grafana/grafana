@@ -109,7 +109,6 @@ func NewSearchOptions(
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
 			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
-			EnforceSortCapability:          cfg.SearchEnforceSortCapability,
 			PostRankAuthz: PostRankAuthzConfig{
 				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
 				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,

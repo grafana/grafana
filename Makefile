@@ -834,7 +834,7 @@ help: ## Display this help.
 check-licenses:
 	license_finder --decisions-file .github/license_finder.yaml
 
-GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1f3fd9fd9d68eb06f1e7b0393d # v0.2.0
+GENERATE_POLICY_BOT_CONFIG_SHA := sha256:ebd798a15f5d05af418da11366eb7cc01d1c4741f18d0c982fccda032ff405f5 # v0.2.1
 .PHONY: .policy.yml
 .policy.yml:
 	docker run -u "$(shell id -u):$(shell id -g)" \

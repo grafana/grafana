@@ -438,6 +438,10 @@ message HybridSearchResponse {
   // Request failures are gRPC status errors (e.g. INVALID_ARGUMENT for
   // bad filters), never payload-embedded errors.
   repeated HybridSearchResult results = 1;
+
+  // Manifest Kind names for requested internal group/resource pairs.
+  // Entries are present even when the search returns no results.
+  map<string, string> kinds = 2;
 }
 
 message HybridSearchResult {

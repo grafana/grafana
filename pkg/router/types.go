@@ -14,7 +14,9 @@ type Backend interface {
 	// The backend fingerprint; a change means the route must be rebuilt.
 	Key() string
 
-	// The group this route serves (must not contain /)
+	// The group this route serves (must not contain /). It must change only
+	// when Key does: reconcile keeps a served Backend while its key is
+	// unchanged, and discovery is built from that Backend's group.
 	Group() metav1.APIGroup
 
 	// How the prefix is handled. Handler support /apis/{group}* and /openapi/v3/{group}*
