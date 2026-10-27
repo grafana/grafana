@@ -62,7 +62,7 @@ describe('AutoGridLayoutManagerEditor', () => {
     deactivate();
   });
 
-  it('shows the restored custom row height after undo', async () => {
+  it('shows the restored custom row height after undo and redo', async () => {
     const manager = new AutoGridLayoutManager({ rowHeight: 300 });
     const { sidebar, deactivate } = setup(manager);
     const input = screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customRowHeight);
@@ -77,23 +77,79 @@ describe('AutoGridLayoutManagerEditor', () => {
     expect(
       await screen.findByTestId(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customRowHeight)
     ).toHaveValue(300);
+    expect(manager.state.rowHeight).toBe(300);
+
+    act(() => sidebar.redoAction());
+
+    expect(manager.state.rowHeight).toBe(400);
+    expect(screen.getByTestId(autoGridSelectors.customRowHeight)).toHaveValue(400);
     deactivate();
   });
 
-  it('clears a just typed custom row height with one click', async () => {
-    const manager = new AutoGridLayoutManager({ rowHeight: 300 });
-    const { deactivate } = setup(manager);
-    const input = screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.customRowHeight);
+  it.each([
+    {
+      name: 'row height',
+      property: 'rowHeight',
+      state: { rowHeight: 300 },
+      inputTestId: autoGridSelectors.customRowHeight,
+      clearTestId: autoGridSelectors.clearCustomRowHeight,
+      presetTestId: autoGridSelectors.rowHeight,
+    },
+    {
+      name: 'min column width',
+      property: 'columnWidth',
+      state: { columnWidth: 300 },
+      inputTestId: autoGridSelectors.customMinColumnWidth,
+      clearTestId: autoGridSelectors.clearCustomMinColumnWidth,
+      presetTestId: autoGridSelectors.minColumnWidth,
+    },
+  ])(
+    'when clearing a just typed custom $name, typing and clearing are separate undoable changes',
+    async ({ property, state, inputTestId, clearTestId, presetTestId }) => {
+      const manager = new AutoGridLayoutManager(state);
+      const { sidebar, deactivate } = setup(manager);
 
-    await userEvent.clear(input);
-    await userEvent.type(input, '400');
-    await userEvent.click(
-      screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.AutoGridLayout.clearCustomRowHeight)
-    );
+      try {
+        await userEvent.clear(screen.getByTestId(inputTestId));
+        await userEvent.type(screen.getByTestId(inputTestId), '400');
+        await userEvent.click(screen.getByTestId(clearTestId));
 
-    expect(manager.state.rowHeight).toBe('standard');
-    deactivate();
-  });
+        expect(manager.state).toMatchObject({ [property]: 'standard' });
+        expect(screen.getByTestId(presetTestId)).toHaveValue('Standard');
+        expect(sidebar.state.undoStack).toHaveLength(2);
+
+        act(() => sidebar.undoAction());
+
+        expect(manager.state).toMatchObject({ [property]: 400 });
+        expect(screen.getByTestId(inputTestId)).toHaveValue(400);
+        expect(sidebar.state.undoStack).toHaveLength(1);
+        expect(sidebar.state.redoStack).toHaveLength(1);
+
+        act(() => sidebar.undoAction());
+
+        expect(manager.state).toMatchObject({ [property]: 300 });
+        expect(screen.getByTestId(inputTestId)).toHaveValue(300);
+        expect(sidebar.state.undoStack).toHaveLength(0);
+        expect(sidebar.state.redoStack).toHaveLength(2);
+
+        act(() => sidebar.redoAction());
+
+        expect(manager.state).toMatchObject({ [property]: 400 });
+        expect(screen.getByTestId(inputTestId)).toHaveValue(400);
+        expect(sidebar.state.undoStack).toHaveLength(1);
+        expect(sidebar.state.redoStack).toHaveLength(1);
+
+        act(() => sidebar.redoAction());
+
+        expect(manager.state).toMatchObject({ [property]: 'standard' });
+        expect(screen.getByTestId(presetTestId)).toHaveValue('Standard');
+        expect(sidebar.state.undoStack).toHaveLength(2);
+        expect(sidebar.state.redoStack).toHaveLength(0);
+      } finally {
+        deactivate();
+      }
+    }
+  );
 
   it.each([
     { name: 'row height', state: { rowHeight: 300 }, inputTestId: autoGridSelectors.customRowHeight },
