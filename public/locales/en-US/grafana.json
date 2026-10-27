@@ -5896,6 +5896,7 @@
     "edit-actions": {
       "add": "Add {{typeName}}",
       "add-conditional-rule": "Add {{ruleDescription}} rule",
+      "change-settings": "Change dashboard settings",
       "collapse-all-rows": "Collapse all rows",
       "dashboard-description": "Change dashboard description",
       "dashboard-title": "Change dashboard title",
@@ -5920,6 +5921,7 @@
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
       "remove-multiple": "Remove {{typeName}} ({{num}})",
+      "rename": "Rename {{typeName}}",
       "replace-panel": "Replace panel",
       "row-fill-screen-disable": "Disable row fill screen",
       "row-fill-screen-enable": "Enable row fill screen",
@@ -7072,7 +7074,8 @@
         "change-annotation-controls-display": "Change annotation controls display",
         "change-annotation-enabled-state": "Change annotation enabled state",
         "change-annotation-name": "Change annotation name",
-        "change-annotation-panel-filter": "Change annotation panel filter"
+        "change-annotation-panel-filter": "Change annotation panel filter",
+        "change-annotation-query": "Change annotation query"
       },
       "edit-query": "Edit query"
     },

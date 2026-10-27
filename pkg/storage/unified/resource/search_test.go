@@ -2788,6 +2788,22 @@ func TestMaybeInjectFailure(t *testing.T) {
 	})
 }
 
+func TestSearchRejectsNonFieldValueResultFormats(t *testing.T) {
+	s := &searchServer{}
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_UNSPECIFIED,
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		resourcepb.ResourceSearchRequest_ResultFormat(99),
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			response, err := s.Search(t.Context(), &resourcepb.ResourceSearchRequest{ResultFormat: format})
+			require.Nil(t, response)
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
+			require.ErrorContains(t, err, "search result format must be FIELD_VALUES")
+		})
+	}
+}
+
 func TestSearchUsesRequestScopedFolderIndex(t *testing.T) {
 	folderKey := NamespacedResource{Namespace: "default", Group: "folder.grafana.app", Resource: "folders"}
 	dashKey := NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}

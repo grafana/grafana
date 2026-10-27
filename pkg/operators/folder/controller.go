@@ -10,9 +10,9 @@ import (
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
 
@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
 	"github.com/grafana/grafana/pkg/server"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
@@ -56,7 +57,7 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 	})).With("logger", "folder-controller")
 	logger.Info("starting folder controller")
 
-	dynClient, err := buildDynamicClient(deps.Config)
+	restClient, err := buildRESTClient(deps.Config)
 	if err != nil {
 		return err
 	}
@@ -91,10 +92,11 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 			return fmt.Errorf("failed to start NATS subscriber: %w", err)
 		}
 
+		// Keys only: the controller treats an event as a signal and reads the folder itself, so a re-list needs
+		// identities and no bodies.
+		keys := keysapi.NewHTTPLister(restClient, folderGVR)
 		list := func(ctx context.Context) ([]runtime.Object, string, error) {
-			return usinformer.ListAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
-				return dynClient.Resource(folderGVR).Namespace("").List(ctx, opts)
-			})
+			return listFolderKeys(ctx, keys)
 		}
 
 		inf, err := usinformer.NewBusDeltaSource(subscriber, &folderv1.Folder{}, folderResourceInfo{},
@@ -109,7 +111,7 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		}
 		go inf.Run(ctx.Done())
 	} else {
-		factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynClient, 10*time.Minute, "", nil)
+		factory := dynamicinformer.NewFilteredDynamicSharedInformerFactory(dynamic.New(restClient), 10*time.Minute, "", nil)
 		informer := factory.ForResource(folderGVR).Informer()
 
 		reg, err = informer.AddEventHandler(handler)
