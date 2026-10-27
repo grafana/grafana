@@ -2,8 +2,6 @@ package search_test
 
 import (
 	"context"
-	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -59,7 +57,7 @@ func checkSearchQuery(t *testing.T, index resource.ResourceIndex, query *resourc
 	require.Equal(t, int64(len(orderedExpectedNames)), res.TotalHits)
 	require.True(t, res.TotalHitsExact, "in-searcher authz path reports an exact total")
 	for ix, name := range orderedExpectedNames {
-		require.Equal(t, name, res.Results.Rows[ix].Key.Name)
+		require.Equal(t, name, res.Rows[ix].Key.Name)
 	}
 }
 
@@ -323,8 +321,8 @@ func TestCanSearchByTitle(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
 
-		cols := make([]string, 0, len(res.Results.Columns))
-		for _, c := range res.Results.Columns {
+		cols := make([]string, 0, len(res.Fields))
+		for _, c := range res.Fields {
 			cols = append(cols, c.Name)
 		}
 		require.Greater(t, len(cols), 1, "expected all-fields column set, got %v", cols)
@@ -694,16 +692,16 @@ func TestFieldValueSearchResults(t *testing.T) {
 		require.NotNil(t, res.Rows[0].Score)
 	})
 
-	t.Run("legacy remains default", func(t *testing.T) {
+	t.Run("backend returns field values", func(t *testing.T) {
 		req := newTestQuery("")
 		req.Fields = []string{resource.SEARCH_FIELD_TITLE}
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
 		require.NoError(t, err)
-		require.Equal(t, resourcepb.ResourceSearchRequest_RESOURCE_TABLE, res.ResultFormat)
-		require.NotNil(t, res.Results)
-		require.Empty(t, res.Fields)
-		require.Empty(t, res.Rows)
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
+		require.Nil(t, res.Results)
+		require.NotEmpty(t, res.Fields)
+		require.NotEmpty(t, res.Rows)
 	})
 
 	t.Run("unknown field", func(t *testing.T) {
@@ -717,16 +715,6 @@ func TestFieldValueSearchResults(t *testing.T) {
 		require.Equal(t, int32(400), res.Error.Code)
 		require.Contains(t, res.Error.Message, `unknown response field "does_not_exist"`)
 	})
-
-	t.Run("unknown format", func(t *testing.T) {
-		req := newTestQuery("")
-		req.ResultFormat = resourcepb.ResourceSearchRequest_ResultFormat(99)
-
-		res, err := index.Search(t.Context(), nil, req, nil, nil)
-		require.NoError(t, err)
-		require.NotNil(t, res.Error)
-		require.Equal(t, int32(400), res.Error.Code)
-	})
 }
 
 func TestSearchResultFormatMetric(t *testing.T) {
@@ -734,28 +722,19 @@ func TestSearchResultFormatMetric(t *testing.T) {
 	metrics := resource.ProvideIndexMetrics(reg)
 	index := newTestDashboardsIndexWithMetrics(t, threshold, 0, noop, metrics)
 
-	for _, tc := range []struct {
-		requestFormat resourcepb.ResourceSearchRequest_ResultFormat
-		resultFormat  resourcepb.ResourceSearchRequest_ResultFormat
-		label         string
-	}{
-		{requestFormat: resourcepb.ResourceSearchRequest_UNSPECIFIED, resultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE, label: "resource_table"},
-		{requestFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, resultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, label: "field_values"},
-	} {
-		req := newTestQuery("")
-		req.ResultFormat = tc.requestFormat
+	req := newTestQuery("")
+	req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
 
-		res, err := index.Search(t.Context(), nil, req, nil, nil)
-		require.NoError(t, err)
-		require.Nil(t, res.Error)
-		require.Equal(t, tc.resultFormat, res.ResultFormat)
-		require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues(tc.label)))
-	}
+	res, err := index.Search(t.Context(), nil, req, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, res.Error)
+	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues("field_values")))
 
 	invalid := newTestQuery("")
 	invalid.Fields = []string{"does_not_exist"}
 	invalid.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-	res, err := index.Search(t.Context(), nil, invalid, nil, nil)
+	res, err = index.Search(t.Context(), nil, invalid, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, res.Error)
 	require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues("field_values")), "a response without a result format is not counted")
@@ -1007,8 +986,10 @@ func TestLabelFilterExactMatch(t *testing.T) {
 		q.Fields = []string{"labels.team"}
 		res, err := seed(t).Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
-		require.Len(t, res.Results.Rows, 1)
-		require.Equal(t, "Team Alpha", string(res.Results.Rows[0].Cells[0]))
+		require.Len(t, res.Rows, 1)
+		values, err := resource.DecodeSearchValues(res.Fields, res.Rows[0])
+		require.NoError(t, err)
+		require.Equal(t, "Team Alpha", values["labels.team"])
 	})
 }
 
@@ -1687,8 +1668,8 @@ func checkSearchQueryWithAccess(t *testing.T, index resource.ResourceIndex, ac a
 	ctx := authlib.WithAuthInfo(context.Background(), user)
 	res, err := index.Search(ctx, ac, query, nil, nil)
 	require.NoError(t, err)
-	names := make([]string, 0, len(res.Results.GetRows()))
-	for _, row := range res.Results.GetRows() {
+	names := make([]string, 0, len(res.Rows))
+	for _, row := range res.Rows {
 		names = append(names, row.Key.Name)
 	}
 	require.ElementsMatch(t, expectedNames, names)
@@ -1933,8 +1914,8 @@ func searchNames(t *testing.T, index resource.ResourceIndex, ac authlib.AccessCl
 	res, err := index.Search(ctx, ac, q, nil, nil)
 	require.NoError(t, err)
 	require.Nil(t, res.Error)
-	names := make([]string, 0, len(res.Results.GetRows()))
-	for _, row := range res.Results.GetRows() {
+	names := make([]string, 0, len(res.Rows))
+	for _, row := range res.Rows {
 		names = append(names, row.Key.Name)
 	}
 	return names, res
@@ -1943,7 +1924,7 @@ func searchNames(t *testing.T, index resource.ResourceIndex, ac authlib.AccessCl
 // columnNames returns the response table's column names, used to assert that
 // fields loaded only for authorization (e.g. folder) don't leak into results.
 func columnNames(res *resourcepb.ResourceSearchResponse) []string {
-	cols := res.Results.GetColumns()
+	cols := res.Fields
 	names := make([]string, 0, len(cols))
 	for _, c := range cols {
 		names = append(names, c.Name)
@@ -1975,7 +1956,7 @@ func pageAll(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient
 		names, res := searchNames(t, index, ac, q)
 		require.LessOrEqual(t, len(names), int(limit))
 		all = append(all, names...)
-		rows := res.Results.GetRows()
+		rows := res.Rows
 		if len(rows) == 0 {
 			break
 		}
@@ -2327,7 +2308,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 		// Page 2: still fills early -> unfiltered total.
 		q2 := listQuery(10)
-		q2.SearchAfter = r1.Results.GetRows()[9].SortFields
+		q2.SearchAfter = r1.Rows[9].SortFields
 		p2, r2 := searchNames(t, index, ac, q2)
 		require.Len(t, p2, 10)
 		require.Equal(t, int64(n), r2.TotalHits)
@@ -2335,7 +2316,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// Page 3: the tail (5 docs) exhausts. Pre-fix this reported
 		// TotalHits=5 (the tail authorized count); it must stay n (25).
 		q3 := listQuery(10)
-		q3.SearchAfter = r2.Results.GetRows()[9].SortFields
+		q3.SearchAfter = r2.Rows[9].SortFields
 		p3, r3 := searchNames(t, index, ac, q3)
 		require.Len(t, p3, 5)
 		require.Equal(t, int64(n), r3.TotalHits, "cursor page must report the unfiltered match count, not the tail authorized count")
@@ -2570,7 +2551,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 		// Use the native post-rank cursor shape after doc-19.
 		_, cursorRes := searchNames(t, index, &countingAccessClient{allowAll: true}, listQuery(20))
-		rows := cursorRes.Results.GetRows()
+		rows := cursorRes.Rows
 		require.Len(t, rows, 20)
 
 		q := listQuery(3)
@@ -2777,7 +2758,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 		afterQuery := listQuery(3)
 		afterQuery.Facet = facets
-		afterQuery.SearchAfter = baseline.Results.GetRows()[3].SortFields
+		afterQuery.SearchAfter = baseline.Rows[3].SortFields
 		afterNames, after := searchNames(t, index, ac, afterQuery)
 		require.Equal(t, []string{"doc-04", "doc-05", "doc-06"}, afterNames)
 		require.Equal(t, baseline.Facet, after.Facet)
@@ -2785,7 +2766,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		_, cursorPage := searchNames(t, index, ac, listQuery(7))
 		beforeQuery := listQuery(3)
 		beforeQuery.Facet = facets
-		beforeQuery.SearchBefore = cursorPage.Results.GetRows()[6].SortFields
+		beforeQuery.SearchBefore = cursorPage.Rows[6].SortFields
 		beforeNames, before := searchNames(t, index, ac, beforeQuery)
 		require.Equal(t, []string{"doc-03", "doc-04", "doc-05"}, beforeNames)
 		require.Equal(t, baseline.Facet, before.Facet)
@@ -2978,7 +2959,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		ac := &countingAccessClient{allowAll: true}
 		// Establish a forward cursor at doc-14 (the 15th hit).
 		_, fwd := searchNames(t, index, ac, listQuery(15))
-		rows := fwd.Results.GetRows()
+		rows := fwd.Rows
 		require.Len(t, rows, 15)
 		cursor := rows[len(rows)-1].SortFields // doc-14
 		require.Equal(t, "doc-14", rows[len(rows)-1].Key.Name)
@@ -3000,7 +2981,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		ac := &countingAccessClient{allowAll: true}
 		// Start from doc-14.
 		_, fwd := searchNames(t, index, ac, listQuery(15))
-		cursor := fwd.Results.GetRows()[len(fwd.Results.GetRows())-1].SortFields
+		cursor := fwd.Rows[len(fwd.Rows)-1].SortFields
 
 		// Walk backwards in pages of 5; each page's first row is the next cursor.
 		var got []string
@@ -3014,7 +2995,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			names, res := backwardNames(t, index, ac, cursor, 5)
 			require.Equal(t, want, names, "page %d backwards", p)
 			got = append(got, names...)
-			rows := res.Results.GetRows()
+			rows := res.Rows
 			if len(rows) == 0 {
 				break
 			}
@@ -3050,7 +3031,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// Forward cursor at doc-18 (authorized). Forward search over authorized
 		// hits returns the even docs; the last returned is doc-18.
 		_, fwd := searchNames(t, index, ac, listQuery(20))
-		rows := fwd.Results.GetRows()
+		rows := fwd.Rows
 		require.Equal(t, "doc-18", rows[len(rows)-1].Key.Name)
 		cursor := rows[len(rows)-1].SortFields
 
@@ -3170,15 +3151,11 @@ func TestSearchAuthzDoesNotReturnAnObjectChangedDuringAuthorization(t *testing.T
 				}
 				// The in-searcher path authorizes and loads from one snapshot, so
 				// it may return the object as it was; never as it became.
-				for _, row := range res.Results.GetRows() {
-					for i, col := range res.Results.GetColumns() {
-						switch col.Name {
-						case resource.SEARCH_FIELD_FOLDER:
-							require.Equal(t, "allowed", string(row.Cells[i]))
-						case resource.SEARCH_FIELD_TITLE:
-							require.NotEqual(t, "private title", string(row.Cells[i]))
-						}
-					}
+				for _, row := range res.Rows {
+					values, err := resource.DecodeSearchValues(res.Fields, row)
+					require.NoError(t, err)
+					require.Equal(t, "allowed", values[resource.SEARCH_FIELD_FOLDER])
+					require.NotEqual(t, "private title", values[resource.SEARCH_FIELD_TITLE])
 				}
 			})
 		}
@@ -3242,14 +3219,14 @@ func TestSearchPostRankAuthzReturnsTheSameRowsAsInSearcherAuthz(t *testing.T) {
 			t.Run(name+"/"+access, func(t *testing.T) {
 				_, want := searchNames(t, inSearcher, ac(), q)
 				_, got := searchNames(t, postRank, ac(), q)
-				require.NotEmpty(t, want.Results.GetRows())
-				require.Equal(t, want.Results.GetColumns(), got.Results.GetColumns())
+				require.NotEmpty(t, want.Rows)
+				require.Equal(t, want.Fields, got.Fields)
 				// Post-rank sorts on the document ID last as a tie-breaker, so its
 				// cursors carry one more value; everything else must match.
-				for _, row := range append(want.Results.GetRows(), got.Results.GetRows()...) {
+				for _, row := range append(want.Rows, got.Rows...) {
 					row.SortFields = nil
 				}
-				require.Equal(t, want.Results.GetRows(), got.Results.GetRows())
+				require.Equal(t, want.Rows, got.Rows)
 			})
 		}
 	}
@@ -3332,8 +3309,8 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		res, err := dash.Search(ctx, ac, q, &resource.SearchIndexes{Federated: []resource.ResourceIndex{folderIdx}}, nil)
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
-		out := make([][2]string, 0, len(res.Results.GetRows()))
-		for _, row := range res.Results.GetRows() {
+		out := make([][2]string, 0, len(res.Rows))
+		for _, row := range res.Rows {
 			out = append(out, [2]string{row.Key.Resource, row.Key.Name})
 		}
 		return out, res
@@ -3350,7 +3327,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 			rows, res := searchFederated(t, dash, folderIdx, ac, q)
 			require.LessOrEqual(t, len(rows), int(limit))
 			all = append(all, rows...)
-			r := res.Results.GetRows()
+			r := res.Rows
 			if len(r) == 0 {
 				break
 			}
@@ -3363,7 +3340,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		return all
 	}
 
-	federatedRowLabels := func(rows []*resourcepb.ResourceTableRow) [][2]string {
+	federatedRowLabels := func(rows []*resourcepb.ResourceSearchRow) [][2]string {
 		out := make([][2]string, 0, len(rows))
 		for _, row := range rows {
 			out = append(out, [2]string{row.Key.Resource, row.Key.Name})
@@ -3564,7 +3541,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
 		// Forward page of 8 -> merged[0..7]; cursor = merged[7] (t-07, f-03).
 		_, fwd := searchFederated(t, dash, folder, ac, federatedQuery(8))
-		fwdRows := fwd.Results.GetRows()
+		fwdRows := fwd.Rows
 		require.Len(t, fwdRows, 8)
 		require.Equal(t, merged[:8], federatedRowLabels(fwdRows))
 		cursor := fwdRows[len(fwdRows)-1].SortFields
@@ -3854,8 +3831,8 @@ func checkSearchQueryUnordered(t *testing.T, index resource.ResourceIndex, query
 	require.Nil(t, res.Error)
 	require.Equal(t, int64(len(expectedNames)), res.TotalHits)
 
-	names := make([]string, 0, len(res.Results.Rows))
-	for _, row := range res.Results.Rows {
+	names := make([]string, 0, len(res.Rows))
+	for _, row := range res.Rows {
 		names = append(names, row.Key.Name)
 	}
 	require.ElementsMatch(t, expectedNames, names)
@@ -3962,8 +3939,8 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 			res, err := index.Search(context.Background(), nil, q, nil, nil)
 			require.NoError(t, err)
 			require.Nil(t, res.Error)
-			require.Len(t, res.Results.Rows, 1)
-			row := res.Results.Rows[0]
+			require.Len(t, res.Rows, 1)
+			row := res.Rows[0]
 			require.Equal(t, name, row.Key.Name)
 			require.Len(t, row.SortFields, 2, "resource version plus the name tie-breaker")
 			q.SearchAfter = row.SortFields
@@ -3982,18 +3959,17 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
-		require.Len(t, res.Results.Columns, 3, "a field without a column definition is dropped silently")
-		require.Equal(t, resource.SEARCH_FIELD_DELETED_BY, res.Results.Columns[0].Name)
+		require.Len(t, res.Fields, 3, "a field without a column definition is dropped silently")
+		require.Equal(t, resource.SEARCH_FIELD_DELETED_BY, res.Fields[0].Name)
 
-		rows := res.Results.Rows
+		rows := res.Rows
 		require.Len(t, rows, 3)
-		require.Equal(t, alice, string(rows[0].Cells[0]))
+		values, err := resource.DecodeSearchValues(res.Fields, rows[0])
+		require.NoError(t, err)
+		require.Equal(t, alice, values[resource.SEARCH_FIELD_DELETED_BY])
 		require.Equal(t, "oldest", rows[0].Key.Name)
-
-		// int64 columns are encoded big-endian, not as JSON (see NewTableBuilder).
-		require.Len(t, rows[0].Cells[1], 8)
-		require.Equal(t, int64(1000), int64(binary.BigEndian.Uint64(rows[0].Cells[1])))
-		require.Equal(t, "3", string(rows[0].Cells[2]), "the resource version of the delete")
+		require.Equal(t, int64(1000), values[resource.SEARCH_FIELD_DELETION_TIME])
+		require.Equal(t, "3", values[resource.SEARCH_FIELD_DELETED_RV], "the resource version of the delete")
 	})
 
 	// Resource versions are snowflake ids well past the range a float64 represents
@@ -4017,8 +3993,10 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		q.Fields = []string{resource.SEARCH_FIELD_DELETED_RV}
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
-		require.Len(t, res.Results.Rows, 1)
-		require.Equal(t, rv, string(res.Results.Rows[0].Cells[0]))
+		require.Len(t, res.Rows, 1)
+		values, err := resource.DecodeSearchValues(res.Fields, res.Rows[0])
+		require.NoError(t, err)
+		require.Equal(t, rv, values[resource.SEARCH_FIELD_DELETED_RV])
 	})
 
 	// Live documents leave these unset, so naming one in a live search is a caller
@@ -4142,16 +4120,15 @@ func TestTrashSearchFiltersAndReturnsTags(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
-		require.Len(t, res.Results.Columns, 1, "a field without a column definition is dropped silently")
-		require.Equal(t, resource.SEARCH_FIELD_TAGS, res.Results.Columns[0].Name)
+		require.Len(t, res.Fields, 1, "a field without a column definition is dropped silently")
+		require.Equal(t, resource.SEARCH_FIELD_TAGS, res.Fields[0].Name)
 
-		rows := res.Results.Rows
+		rows := res.Rows
 		require.Len(t, rows, 2)
 		require.Equal(t, "prod-and-team", rows[0].Key.Name)
-		// An array column is JSON, unlike the scalar trash columns.
-		var tags []string
-		require.NoError(t, json.Unmarshal(rows[0].Cells[0], &tags))
-		require.ElementsMatch(t, []string{"prod", "team-a"}, tags)
+		values, err := resource.DecodeSearchValues(res.Fields, rows[0])
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"prod", "team-a"}, values[resource.SEARCH_FIELD_TAGS])
 	})
 
 	// tags is a standard field, so unlike deleted_by it stays usable on live search.
@@ -4290,39 +4267,7 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 	}}
 	want := map[string]int64{"lower": rvLower, "upper": rvUpper, "no-rv": 0}
 
-	t.Run("table format serves the rv column and the row resource version", func(t *testing.T) {
-		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
-			Options: opts,
-			Fields:  []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
-			Limit:   10,
-		}, nil, nil)
-		require.NoError(t, err)
-		require.Nil(t, res.Error)
-		require.Len(t, res.Results.Rows, len(want))
-
-		column := -1
-		for i, col := range res.Results.Columns {
-			if col.Name == resource.SEARCH_FIELD_RV {
-				column = i
-			}
-		}
-		require.GreaterOrEqual(t, column, 0, "rv column is missing from the response")
-
-		for _, row := range res.Results.Rows {
-			expected := want[row.Key.Name]
-			require.Equal(t, expected, row.ResourceVersion, "row resource version for %s", row.Key.Name)
-
-			cell := row.Cells[column]
-			if expected == 0 {
-				require.Empty(t, cell, "rv cell for a document without a resource version")
-				continue
-			}
-			require.Len(t, cell, 8, "rv cell for %s", row.Key.Name)
-			require.Equal(t, expected, int64(binary.BigEndian.Uint64(cell)), "rv cell for %s", row.Key.Name)
-		}
-	})
-
-	t.Run("field values format serves the row resource version", func(t *testing.T) {
+	t.Run("serves the row resource version", func(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
 			Options:      opts,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
@@ -4338,18 +4283,35 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 		}
 	})
 
+	t.Run("an explicit field list omits unrequested resource versions", func(t *testing.T) {
+		res, err := index.Search(t.Context(), nil, &resourcepb.ResourceSearchRequest{
+			Options:      opts,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []string{resource.SEARCH_FIELD_TITLE},
+			Limit:        10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Rows, len(want))
+
+		for _, row := range res.Rows {
+			require.Zero(t, row.ResourceVersion, "unrequested resource version for %s", row.Key.Name)
+		}
+	})
+
 	// A caller naming no fields gets the curated column set, which takes a
 	// different path through the Bleve load list.
 	t.Run("a request naming no fields still carries the resource version", func(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
-			Options: opts,
-			Limit:   10,
+			Options:      opts,
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
-		require.Len(t, res.Results.Rows, len(want))
+		require.Len(t, res.Rows, len(want))
 
-		for _, row := range res.Results.Rows {
+		for _, row := range res.Rows {
 			require.Equal(t, want[row.Key.Name], row.ResourceVersion, "row resource version for %s", row.Key.Name)
 		}
 	})
@@ -4380,15 +4342,16 @@ func TestPostRankAuthzSearchReturnsExactResourceVersion(t *testing.T) {
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 			Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
 		}},
-		Fields: []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
-		Limit:  10,
+		Fields:       []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
+		Limit:        10,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}, nil, nil)
 	require.NoError(t, err)
 	require.Nil(t, res.Error)
 
 	want := map[string]int64{"lower": rvLower, "upper": rvUpper, "no-rv": 0}
-	require.Len(t, res.Results.Rows, len(want))
-	for _, row := range res.Results.Rows {
+	require.Len(t, res.Rows, len(want))
+	for _, row := range res.Rows {
 		require.Equal(t, want[row.Key.Name], row.ResourceVersion, "row resource version for %s", row.Key.Name)
 	}
 }
@@ -4403,15 +4366,16 @@ func TestTrashSearchReturnsExactResourceVersion(t *testing.T) {
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 			Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
 		}},
-		IsDeleted: true,
-		Fields:    []string{resource.SEARCH_FIELD_DELETED_RV},
-		Limit:     10,
+		IsDeleted:    true,
+		Fields:       []string{resource.SEARCH_FIELD_DELETED_RV, resource.SEARCH_FIELD_RV},
+		Limit:        10,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}, nil, nil)
 	require.NoError(t, err)
 	require.Nil(t, res.Error)
-	require.Len(t, res.Results.Rows, 1)
-	require.Equal(t, "deleted", res.Results.Rows[0].Key.Name)
-	require.Equal(t, rvUpper, res.Results.Rows[0].ResourceVersion)
+	require.Len(t, res.Rows, 1)
+	require.Equal(t, "deleted", res.Rows[0].Key.Name)
+	require.Equal(t, rvUpper, res.Rows[0].ResourceVersion)
 }
 
 // newResourceVersionIndex holds three live documents — two with resource versions

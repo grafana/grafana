@@ -29,6 +29,8 @@ message LegacyCheckRequest {
   // Evaluate without resolving scope attributes or inherited resource scopes,
   // corresponding to AccessControl.WithoutResolvers.
   bool skip_scope_resolution = 8;
+  // Present only for embedded instance-global evaluation. Namespace still selects the tenant.
+  LegacyGlobalEvaluation global_evaluation = 9;
 }
 
 message LegacyCheckResponse {
@@ -116,4 +118,15 @@ message LegacyUserPermission {
 message LegacyGetUserPermissionsResponse {
   // Preserve duplicates. Clients publish results only after successful EOF.
   repeated LegacyUserPermission permissions = 1;
+}
+
+message LegacyGlobalEvaluation {
+  // Preserve the requester's org for resolver callbacks: 0 (global) or -1 (NoOrgID).
+  // Both evaluate permissions from org 0, never from the transport namespace's org.
+  int64 requester_org_id = 1;
+
+  // Actions in the trusted caller's effective global permission map, after
+  // authentication restrictions. Empty permits no actions. Resolver dependency
+  // lookups use the same restriction; scopes are still checked by the server.
+  repeated string permitted_actions = 2;
 }

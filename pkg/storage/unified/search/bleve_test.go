@@ -27,6 +27,7 @@ import (
 	"github.com/stretchr/testify/require"
 	bolterrors "go.etcd.io/bbolt/errors"
 	"go.uber.org/goleak"
+	"google.golang.org/protobuf/encoding/protojson"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
@@ -54,6 +55,25 @@ func TestMain(m *testing.M) {
 		goleak.IgnoreTopFunction("github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...].func1"), // Search-server expirable LRU cleanup goroutine.
 		goleak.IgnoreAnyFunction("net/http.(*http2clientConnReadLoop).run"),                        // HTTP/2 keep-alive from cloud provider SDKs in integration tests.
 	)
+}
+
+func assertSearchResultsSnapshot(t *testing.T, path string, response *resourcepb.ResourceSearchResponse) {
+	t.Helper()
+
+	actual, err := (protojson.MarshalOptions{Indent: "  ", UseProtoNames: true}).Marshal(&resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields:       response.Fields,
+		Rows:         response.Rows,
+	})
+	require.NoError(t, err)
+
+	expected, err := os.ReadFile(path) //nolint:gosec // Test snapshots use repository paths.
+	if err == nil && assert.JSONEq(t, string(expected), string(actual)) {
+		return
+	}
+
+	require.NoError(t, os.WriteFile(path, actual, 0o600)) //nolint:gosec // Test snapshots are not executable.
+	t.Fatalf("updated search result snapshot: %s", path)
 }
 
 func TestBleveBackend(t *testing.T) {
@@ -145,8 +165,8 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
-		names := make([]string, 0, len(rsp.Results.Rows))
-		for _, row := range rsp.Results.Rows {
+		names := make([]string, 0, len(rsp.Rows))
+		for _, row := range rsp.Rows {
 			names = append(names, row.Key.Name)
 		}
 		return names
@@ -311,7 +331,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			Options: &resourcepb.ListOptions{
 				Key: key,
 			},
-			Limit: 100000,
+			Limit:        100000,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: resource.SEARCH_FIELD_TITLE, Desc: true}, // ccc,bbb,aaa
 			},
@@ -324,10 +345,9 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
-		require.NotNil(t, rsp.Results)
 		require.NotNil(t, rsp.Facet)
 
-		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp.Results)
+		assertSearchResultsSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp)
 
 		// Get the tags facets
 		facet, ok := rsp.Facet["tags"]
@@ -370,8 +390,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		require.NoError(t, err)
 		require.Equal(t, int64(2), rsp.TotalHits)
 		require.Equal(t, []string{"aaa", "bbb"}, []string{
-			rsp.Results.Rows[0].Key.Name,
-			rsp.Results.Rows[1].Key.Name,
+			rsp.Rows[0].Key.Name,
+			rsp.Rows[1].Key.Name,
 		})
 
 		// search by owner reference
@@ -388,7 +408,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), rsp.TotalHits)
-		require.Equal(t, "aaa", rsp.Results.Rows[0].Key.Name)
+		require.Equal(t, "aaa", rsp.Rows[0].Key.Name)
 
 		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
@@ -403,7 +423,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), rsp.TotalHits)
-		require.Equal(t, "bbb", rsp.Results.Rows[0].Key.Name)
+		require.Equal(t, "bbb", rsp.Rows[0].Key.Name)
 
 		// search by owner reference - multiple values with Equals (AND)
 		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
@@ -419,7 +439,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), rsp.TotalHits)
-		require.Equal(t, "bbb", rsp.Results.Rows[0].Key.Name)
+		require.Equal(t, "bbb", rsp.Rows[0].Key.Name)
 
 		// search by owner reference - multiple values (OR)
 		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
@@ -435,7 +455,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(2), rsp.TotalHits)
-		names := []string{rsp.Results.Rows[0].Key.Name, rsp.Results.Rows[1].Key.Name}
+		names := []string{rsp.Rows[0].Key.Name, rsp.Rows[1].Key.Name}
 		assert.Contains(t, names, "aaa")
 		assert.Contains(t, names, "bbb")
 
@@ -444,34 +464,36 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			Options: &resourcepb.ListOptions{
 				Key: key,
 			},
-			Limit:  100000,
-			Fields: []string{builders.DASHBOARD_ERRORS_TODAY, builders.DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
+			Limit:        100000,
+			Fields:       []string{builders.DASHBOARD_ERRORS_TODAY, builders.DASHBOARD_VIEWS_LAST_1_DAYS},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "fields." + builders.DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
 			},
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Equal(t, 2, len(rsp.Results.Columns))
-		require.Equal(t, builders.DASHBOARD_ERRORS_TODAY, rsp.Results.Columns[0].Name)
-		require.Equal(t, builders.DASHBOARD_VIEWS_LAST_1_DAYS, rsp.Results.Columns[1].Name)
+		require.Equal(t, 2, len(rsp.Fields))
+		require.Equal(t, builders.DASHBOARD_ERRORS_TODAY, rsp.Fields[0].Name)
+		require.Equal(t, builders.DASHBOARD_VIEWS_LAST_1_DAYS, rsp.Fields[1].Name)
 		// sorted descending so should start with highest dashboard_views_last_1_days (100)
-		val, err := resource.DecodeCell(rsp.Results.Columns[1], 0, rsp.Results.Rows[0].Cells[1])
+		values, err := resource.DecodeSearchValues(rsp.Fields, rsp.Rows[0])
 		require.NoError(t, err)
-		require.Equal(t, int64(100), val)
+		require.Equal(t, int64(100), values[builders.DASHBOARD_VIEWS_LAST_1_DAYS])
 
 		// check auth will exclude results we don't have access to
 		rsp, err = index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false}), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: key,
 			},
-			Limit:  100000,
-			Fields: []string{builders.DASHBOARD_ERRORS_TODAY, builders.DASHBOARD_VIEWS_LAST_1_DAYS, "fieldThatDoesntExist"},
+			Limit:        100000,
+			Fields:       []string{builders.DASHBOARD_ERRORS_TODAY, builders.DASHBOARD_VIEWS_LAST_1_DAYS},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "fields." + builders.DASHBOARD_VIEWS_LAST_1_DAYS, Desc: true},
 			},
 		}, nil, nil)
 		require.NoError(t, err)
-		require.Equal(t, 0, len(rsp.Results.Rows))
+		require.Equal(t, 0, len(rsp.Rows))
 
 		// Now look for repositories
 		found, err := index.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{
@@ -606,14 +628,14 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			Options: &resourcepb.ListOptions{
 				Key: key,
 			},
-			Limit: 100000,
+			Limit:        100000,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
-		require.NotNil(t, rsp.Results)
 		require.Nil(t, rsp.Facet)
 
-		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-folder.json"), rsp.Results)
+		assertSearchResultsSnapshot(t, filepath.Join("testdata", "manual-folder.json"), rsp)
 	})
 
 	t.Run("folder NotIn field filter excludes matching names", func(t *testing.T) {
@@ -634,7 +656,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), rsp.TotalHits)
-		require.Equal(t, "yyy", rsp.Results.Rows[0].Key.Name)
+		require.Equal(t, "yyy", rsp.Rows[0].Key.Name)
 	})
 
 	t.Run("folder In and NotIn on same field compose correctly", func(t *testing.T) {
@@ -664,7 +686,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		}, nil, nil)
 		require.NoError(t, err)
 		require.Equal(t, int64(1), rsp.TotalHits)
-		require.Equal(t, "yyy", rsp.Results.Rows[0].Key.Name)
+		require.Equal(t, "yyy", rsp.Rows[0].Key.Name)
 	})
 
 	t.Run("simple federation", func(t *testing.T) {
@@ -683,7 +705,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			Federated: []*resourcepb.ResourceKey{
 				folderKey, // This will join in the
 			},
-			Limit: 100000,
+			Limit:        100000,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "title", Desc: false},
 			},
@@ -696,13 +719,14 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		}, &resource.SearchIndexes{Federated: []resource.ResourceIndex{foldersIndex}}, nil) // << note the folder index matches the federation request
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
-		require.NotNil(t, rsp.Results)
 		require.NotNil(t, rsp.Facet)
 
 		// Sorted across two indexes
-		sorted := make([]string, 0, len(rsp.Results.Rows))
-		for _, row := range rsp.Results.Rows {
-			sorted = append(sorted, string(row.Cells[0]))
+		sorted := make([]string, 0, len(rsp.Rows))
+		for _, row := range rsp.Rows {
+			values, err := resource.DecodeSearchValues(rsp.Fields, row)
+			require.NoError(t, err)
+			sorted = append(sorted, values[resource.SEARCH_FIELD_TITLE].(string))
 		}
 		require.Equal(t, []string{
 			"aaa (dash)",
@@ -712,7 +736,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			"zzz (folder)",
 		}, sorted)
 
-		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-federated.json"), rsp.Results)
+		assertSearchResultsSnapshot(t, filepath.Join("testdata", "manual-federated.json"), rsp)
 
 		facet, ok := rsp.Facet["tags"]
 		require.True(t, ok)
@@ -745,7 +769,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			Federated: []*resourcepb.ResourceKey{
 				folderKey, // This will join in the
 			},
-			Limit: 100000,
+			Limit:        100000,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "title", Desc: false},
 			},
@@ -758,10 +783,10 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		}, &resource.SearchIndexes{Federated: []resource.ResourceIndex{foldersIndex}}, nil) // << note the folder index matches the federation request
 
 		require.NoError(t, err)
-		require.Equal(t, 3, len(rsp.Results.Rows))
-		require.Equal(t, "dashboards", rsp.Results.Rows[0].Key.Resource)
-		require.Equal(t, "dashboards", rsp.Results.Rows[1].Key.Resource)
-		require.Equal(t, "dashboards", rsp.Results.Rows[2].Key.Resource)
+		require.Equal(t, 3, len(rsp.Rows))
+		require.Equal(t, "dashboards", rsp.Rows[0].Key.Resource)
+		require.Equal(t, "dashboards", rsp.Rows[1].Key.Resource)
+		require.Equal(t, "dashboards", rsp.Rows[2].Key.Resource)
 
 		// now only when we have permissions to see folders
 		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false, "folders": true}), &resourcepb.ResourceSearchRequest{
@@ -774,7 +799,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			Federated: []*resourcepb.ResourceKey{
 				folderKey, // This will join in the
 			},
-			Limit: 100000,
+			Limit:        100000,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "title", Desc: false},
 			},
@@ -787,9 +813,9 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		}, &resource.SearchIndexes{Federated: []resource.ResourceIndex{foldersIndex}}, nil) // << note the folder index matches the federation request
 
 		require.NoError(t, err)
-		require.Equal(t, 2, len(rsp.Results.Rows))
-		require.Equal(t, "folders", rsp.Results.Rows[0].Key.Resource)
-		require.Equal(t, "folders", rsp.Results.Rows[1].Key.Resource)
+		require.Equal(t, 2, len(rsp.Rows))
+		require.Equal(t, "folders", rsp.Rows[0].Key.Resource)
+		require.Equal(t, "folders", rsp.Rows[1].Key.Resource)
 
 		// now when we have permissions to see nothing
 		rsp, err = dashboardsIndex.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": false, "folders": false}), &resourcepb.ResourceSearchRequest{
@@ -802,7 +828,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			Federated: []*resourcepb.ResourceKey{
 				folderKey, // This will join in the
 			},
-			Limit: 100000,
+			Limit:        100000,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
 				{Field: "title", Desc: false},
 			},
@@ -815,7 +842,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		}, &resource.SearchIndexes{Federated: []resource.ResourceIndex{foldersIndex}}, nil) // << note the folder index matches the federation request
 
 		require.NoError(t, err)
-		require.Equal(t, 0, len(rsp.Results.Rows))
+		require.Equal(t, 0, len(rsp.Rows))
 	})
 }
 
@@ -3144,8 +3171,8 @@ func TestBleveTextFieldFilterAndSort(t *testing.T) {
 		rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{kindResource: true}), req, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
-		out := make([]string, 0, len(rsp.Results.Rows))
-		for _, row := range rsp.Results.Rows {
+		out := make([]string, 0, len(rsp.Rows))
+		for _, row := range rsp.Rows {
 			out = append(out, row.Key.Name)
 		}
 		return out

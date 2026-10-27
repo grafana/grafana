@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -104,49 +105,63 @@ func (h *evaluationLoop) stop() {
 
 func waitStarted(t *testing.T, sched *testSchedule) {
 	t.Helper()
-	require.Eventually(t, func() bool {
-		return sched.started.Load()
-	}, time.Second, 10*time.Millisecond, "scheduler should start")
+
+	// Process coordinator updates before checking whether evaluation started.
+	synctest.Wait()
+
+	require.True(t, sched.started.Load())
 }
 
 func waitStopped(t *testing.T, sched *testSchedule) {
 	t.Helper()
-	require.Eventually(t, func() bool {
-		return sched.stopped.Load()
-	}, time.Second, 10*time.Millisecond, "scheduler should stop")
+
+	// Finish demotion and scheduler cancellation before checking its stopped state.
+	synctest.Wait()
+
+	require.True(t, sched.stopped.Load())
 }
 
 func neverStarted(t *testing.T, sched *testSchedule) {
 	t.Helper()
-	require.Never(t, func() bool {
-		return sched.started.Load()
-	}, 100*time.Millisecond, 10*time.Millisecond, "scheduler should not start")
+
+	// Drain coordinator updates so the absence of evaluation is checked after they are handled.
+	synctest.Wait()
+
+	require.False(t, sched.started.Load())
 }
 
 func TestEvaluationLifecycleRun(t *testing.T) {
 	t.Run("does not start when shouldEvaluate is false", func(t *testing.T) {
-		h := setupEvaluationLoop(t, newTestCoordinator(false))
-		neverStarted(t, h.sched)
-		h.stop()
+		synctest.Test(t, func(t *testing.T) {
+			h := setupEvaluationLoop(t, newTestCoordinator(false))
+			neverStarted(t, h.sched)
+			h.stop()
+		})
 	})
 
 	t.Run("starts when shouldEvaluate is true", func(t *testing.T) {
-		h := setupEvaluationLoop(t, newTestCoordinator(true))
-		waitStarted(t, h.sched)
-		h.stop()
+		synctest.Test(t, func(t *testing.T) {
+			h := setupEvaluationLoop(t, newTestCoordinator(true))
+			waitStarted(t, h.sched)
+			h.stop()
+		})
 	})
 
 	t.Run("stops when becomes secondary", func(t *testing.T) {
-		h := setupEvaluationLoop(t, newTestCoordinator(true, false))
-		waitStarted(t, h.sched)
-		waitStopped(t, h.sched)
-		h.stop()
+		synctest.Test(t, func(t *testing.T) {
+			h := setupEvaluationLoop(t, newTestCoordinator(true, false))
+			waitStarted(t, h.sched)
+			waitStopped(t, h.sched)
+			h.stop()
+		})
 	})
 
 	t.Run("starts when becomes primary", func(t *testing.T) {
-		h := setupEvaluationLoop(t, newTestCoordinator(false, true))
-		waitStarted(t, h.sched)
-		h.stop()
+		synctest.Test(t, func(t *testing.T) {
+			h := setupEvaluationLoop(t, newTestCoordinator(false, true))
+			waitStarted(t, h.sched)
+			h.stop()
+		})
 	})
 }
 
@@ -169,18 +184,27 @@ func TestEvaluationLifecycle_SchedulerExitsUnexpectedly(t *testing.T) {
 
 func TestEvaluationRunner_StartStopIdempotency(t *testing.T) {
 	t.Run("Start is idempotent when already running", func(t *testing.T) {
-		h := setupEvaluationLoop(t, newTestCoordinator(true, true))
-		waitStarted(t, h.sched)
-		initialCount := h.sched.startCount.Load()
-		time.Sleep(50 * time.Millisecond)
-		require.Equal(t, initialCount, h.sched.startCount.Load(), "scheduler should not restart")
-		h.stop()
+		synctest.Test(t, func(t *testing.T) {
+			coordinator := newTestCoordinator(true)
+			h := setupEvaluationLoop(t, coordinator)
+			waitStarted(t, h.sched)
+
+			// Send the duplicate after startup so the assertion covers a new update.
+			coordinator.updates <- true
+			synctest.Wait()
+
+			require.Equal(t, int32(1), h.sched.startCount.Load(), "scheduler should start only once")
+			require.Same(t, h.sched, h.ng.schedule, "scheduler should not be replaced")
+			h.stop()
+		})
 	})
 
 	t.Run("Stop is idempotent when not running", func(t *testing.T) {
-		h := setupEvaluationLoop(t, newTestCoordinator(false, false, false))
-		neverStarted(t, h.sched)
-		h.stop()
+		synctest.Test(t, func(t *testing.T) {
+			h := setupEvaluationLoop(t, newTestCoordinator(false, false, false))
+			neverStarted(t, h.sched)
+			h.stop()
+		})
 	})
 }
 
@@ -202,26 +226,28 @@ func TestEvaluationRunner_PersisterIsActive(t *testing.T) {
 	}
 	stateManager := state.NewManager(stateManagerCfg, state.NewSyncStatePersisiter(log.NewNopLogger(), stateManagerCfg))
 
-	h := setupEvaluationLoop(t, newTestCoordinator(true),
-		withStateManager(stateManager),
-	)
-	waitStarted(t, h.sched)
+	synctest.Test(t, func(t *testing.T) {
+		h := setupEvaluationLoop(t, newTestCoordinator(true),
+			withStateManager(stateManager),
+		)
+		waitStarted(t, h.sched)
 
-	// Process an evaluation result to trigger state persistence
-	rule := models.RuleGen.GenerateRef()
-	now := clk.Now()
-	results := eval.GenerateResults(1, eval.ResultGen(eval.WithEvaluatedAt(now)))
-	_, _ = h.ng.stateManager.ProcessEvalResults(h.ctx, now, rule, results, make(data.Labels), nil)
+		// Process an evaluation result to trigger state persistence
+		rule := models.RuleGen.GenerateRef()
+		now := clk.Now()
+		results := eval.GenerateResults(1, eval.ResultGen(eval.WithEvaluatedAt(now)))
+		_, _ = h.ng.stateManager.ProcessEvalResults(h.ctx, now, rule, results, make(data.Labels), nil)
 
-	var saveCount int
-	for _, op := range fakeStore.RecordedOps() {
-		if _, ok := op.(models.AlertInstance); ok {
-			saveCount++
+		var saveCount int
+		for _, op := range fakeStore.RecordedOps() {
+			if _, ok := op.(models.AlertInstance); ok {
+				saveCount++
+			}
 		}
-	}
-	require.Greater(t, saveCount, 0, "persister should save alert instance")
+		require.Greater(t, saveCount, 0, "persister should save alert instance")
 
-	h.stop()
+		h.stop()
+	})
 }
 
 type alertNGOption func(*AlertNG)
