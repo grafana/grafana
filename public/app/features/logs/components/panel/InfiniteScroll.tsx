@@ -158,7 +158,16 @@ export const InfiniteScroll = ({
         }
       }
     }
-  }, [infiniteLoaderState, infiniteScrollMode, isFreshQuery, loadingState, requestInFlight, prevInFlight, logs, prevLogs]);
+  }, [
+    infiniteLoaderState,
+    infiniteScrollMode,
+    isFreshQuery,
+    loadingState,
+    requestInFlight,
+    prevInFlight,
+    logs,
+    prevLogs,
+  ]);
 
   useEffect(() => {
     if (prevSortOrder && prevSortOrder !== sortOrder) {
