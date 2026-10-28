@@ -7,9 +7,30 @@ It provides generic storage for k8s objects, and can store data either within de
 
 By default it runs in-process within Grafana, but it can also be run as a standalone GRPC service (`storage-server`).
 
+## Remote blob streaming
+
+The additive `BlobStoreStreaming` service in `proto/blob.proto` supports remote
+uploads and downloads against the existing `resource_blob` SQL table, including
+SQL-backed KV. The unary `BlobStore` service remains unchanged. Streaming uses
+64 KiB chunks, a 64 MiB total-blob limit, two active transfers per tenant per
+server, and a two-minute deadline. Interrupted uploads roll back. CDK and
+file-backed KV do not support streaming yet; snapshot clients still use unary
+calls until a separately deployed client change switches them over.
+
+Uploaded chunks are committed to `resource_blob_upload_chunk` as they arrive. On
+completion the database concatenates them into the `resource_blob` row in one
+statement, so the full value is written once and never has to fit in a client
+packet (such as MySQL's `max_allowed_packet`).
+
 ## Storage Overview
 
 There are 2 main tables, the `resource` table stores a "current" view of the objects, and the `resource_history` table stores a record of each revision of a given object.
+
+## Quota checks
+
+In `[unified_storage]`, `enforce_quotas_resources` selects resource kinds whose quotas block creates, while `log_quotas_resources` selects additional kinds whose exceeded quotas are logged without blocking. Both settings accept comma-separated `group/resource` names.
+
+Kinds in neither list skip the quota lookup and usage count. The log-only list is empty by default; add any unenforced kinds whose advisory quota logging you want to retain. A kind in both lists is counted once and its quota is enforced. Explicit quota-usage requests are unaffected by these lists.
 
 ## Running Unified Storage
 
@@ -307,6 +328,47 @@ enable_search = true
 
 The dashboard search page has been set up to search unified storage. Additionally, all legacy search calls (e.g. `/api/search`) will go to
 unified storage when the dual writer mode is set to 3 or greater. When <= 2, the legacy search api calls will go to legacy storage.
+
+### Restrict collection searches to service identities
+
+Externally supplied records may have no corresponding unified-storage resources or user-level authorization rules. When the owning service must apply its own authorization checks before returning results to a user, restrict reads to that service so callers cannot bypass those checks.
+
+In `custom.ini`, set `vector_allowed_read_services` to a JSON map of `group/resource` collections and allowed service identities:
+
+```ini
+[unified_storage]
+vector_allowed_read_services = {"example.ext.grafana.app/records":["example-service"]}
+```
+
+For a configured collection, `HybridSearch` and `VectorSearch` accept only authenticated access-policy tokens with exactly one matching service identity.
+User and on-behalf-of tokens are denied.
+The check covers every target before vector or lexical search; one denied target rejects the whole request.
+Existing tenant and resource `get` checks still apply.
+
+An unset value or `{}` leaves both search methods unchanged; invalid values prevent server startup.
+Deploy support to every serving storage and search server before setting the restriction because older versions ignore it.
+Before rolling back server support, disable the collection on every serving route.
+
+### Publish a shared external collection
+
+In `custom.ini` on every serving storage server, map each shared `group/resource` collection to its allowed publisher service identities.
+Use a collection identity that is absent from registered API resources and both existing collection enrollment lists.
+Each collection must list at least one publisher.
+
+```ini
+[unified_storage]
+vector_shared_external_collections = {"docs.example.com/articles":["docs-publisher"]}
+```
+
+Each cluster's publishing client sends documents through the existing `VectorStore` methods using its authenticated namespace.
+Publish the collection in each cluster where you need it; shared content does not replicate between clusters.
+Shared documents cannot have a folder.
+
+Shared content is stored in `__SHARED__`; tenant deletion preserves it.
+
+A publisher can change only the collections that list its service identity, so verify publisher identities and collection names before enabling enrollment.
+
+Removing enrollment disables access but retains stored content.
 
 ## Running load tests
 Load tests and instructions can be found [here](https://github.com/grafana/grafana-api-tests/tree/main/simulation/src/unified_storage).

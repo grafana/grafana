@@ -12,8 +12,10 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
+	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // MockRepositoryNamespaceLister is a mock implementation of listers.RepositoryNamespaceLister
@@ -175,7 +177,13 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 	}
 }
 
-func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
+// A repository awaiting its finalizers still counts: the NATS informer's store
+// holds identities only, so it cannot tell a deleting repository apart, and both
+// getters have to agree. Most of these cases are false positives, a namespace
+// reported at or over quota only because of deletions in flight. They pin that
+// cost; once the store can carry the deletion state again, excluding deleting
+// repositories flips them back.
+func TestRepositoryQuotaConditions_CountsDeletingRepos(t *testing.T) {
 	ctx := context.Background()
 	namespace := "test-ns"
 
@@ -189,46 +197,55 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 		expectedMessageFmt string
 	}{
 		{
-			name:               "deleting repos excluded from count - under quota",
+			name:               "deleting repos push the namespace from under to over quota",
 			maxRepos:           5,
 			activeRepos:        3,
 			deletingRepos:      5,
-			expectedStatus:     metav1.ConditionTrue,
-			expectedReason:     provisioning.ReasonWithinQuota,
-			expectedMessageFmt: "within quota: 3/5 repositories",
+			expectedStatus:     metav1.ConditionFalse,
+			expectedReason:     provisioning.ReasonQuotaExceeded,
+			expectedMessageFmt: "namespace quota exceeded: 8/5 repositories",
 		},
 		{
-			name:               "deleting repos excluded from count - at quota",
+			name:               "deleting repos push the namespace from at to over quota",
 			maxRepos:           5,
 			activeRepos:        5,
 			deletingRepos:      2,
-			expectedStatus:     metav1.ConditionTrue,
-			expectedReason:     provisioning.ReasonQuotaReached,
-			expectedMessageFmt: "namespace quota reached: 5/5 repositories",
-		},
-		{
-			name:               "deleting repos excluded from count - over quota",
-			maxRepos:           5,
-			activeRepos:        7,
-			deletingRepos:      3,
 			expectedStatus:     metav1.ConditionFalse,
 			expectedReason:     provisioning.ReasonQuotaExceeded,
 			expectedMessageFmt: "namespace quota exceeded: 7/5 repositories",
 		},
 		{
-			name:               "all repos being deleted - not over quota",
+			name:               "deleting repos inflate an over-quota count",
+			maxRepos:           5,
+			activeRepos:        7,
+			deletingRepos:      3,
+			expectedStatus:     metav1.ConditionFalse,
+			expectedReason:     provisioning.ReasonQuotaExceeded,
+			expectedMessageFmt: "namespace quota exceeded: 10/5 repositories",
+		},
+		{
+			name:               "a namespace with every repo being deleted is still over quota",
 			maxRepos:           5,
 			activeRepos:        0,
 			deletingRepos:      10,
-			expectedStatus:     metav1.ConditionTrue,
-			expectedReason:     provisioning.ReasonWithinQuota,
-			expectedMessageFmt: "within quota: 0/5 repositories",
+			expectedStatus:     metav1.ConditionFalse,
+			expectedReason:     provisioning.ReasonQuotaExceeded,
+			expectedMessageFmt: "namespace quota exceeded: 10/5 repositories",
 		},
 		{
-			name:               "deletion brings namespace under quota",
+			name:               "a deletion does not bring the namespace under quota until it finishes",
 			maxRepos:           3,
 			activeRepos:        3,
 			deletingRepos:      2,
+			expectedStatus:     metav1.ConditionFalse,
+			expectedReason:     provisioning.ReasonQuotaExceeded,
+			expectedMessageFmt: "namespace quota exceeded: 5/3 repositories",
+		},
+		{
+			name:               "a deleting repo holds its place until it is gone",
+			maxRepos:           3,
+			activeRepos:        2,
+			deletingRepos:      1,
 			expectedStatus:     metav1.ConditionTrue,
 			expectedReason:     provisioning.ReasonQuotaReached,
 			expectedMessageFmt: "namespace quota reached: 3/3 repositories",
@@ -289,4 +306,27 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 				tt.expectedMessageFmt, condition.Message, tt.activeRepos, tt.deletingRepos, tt.maxRepos)
 		})
 	}
+}
+
+// Under round-robin NATS delivery, a replica can reconcile a repository whose
+// live ADDED went to another replica, so its store does not hold it yet. Reading
+// the repository must make the quota check count it; otherwise a repository
+// blocked over quota elsewhere reads as within quota here and gets unblocked.
+func TestRepositoryQuotaConditions_CountsTheRepositoryUnderReconciliation(t *testing.T) {
+	ctx := context.Background()
+	existing := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "existing", ResourceVersion: "1"}}
+	added := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "added-elsewhere", ResourceVersion: "2"}}
+
+	// This replica's store has seen only the older repository.
+	store := usinformer.NewStore()
+	store.Update(ctx, &metav1.PartialObjectMetadata{ObjectMeta: existing.ObjectMeta})
+	getter := informer.NewClientRepositoryGetter(fake.NewClientset(existing, added).ProvisioningV0alpha1(), store)
+
+	_, err := getter.Get(ctx, "ns", added.Name)
+	require.NoError(t, err)
+
+	condition, err := NewRepositoryQuotaChecker(getter).RepositoryQuotaConditions(ctx, "ns", provisioning.QuotaStatus{MaxRepositories: 1})
+	require.NoError(t, err)
+	assert.Equal(t, provisioning.ReasonQuotaExceeded, condition.Reason)
+	assert.Equal(t, "namespace quota exceeded: 2/1 repositories", condition.Message)
 }

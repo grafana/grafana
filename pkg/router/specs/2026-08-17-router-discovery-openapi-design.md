@@ -1,15 +1,37 @@
 # GrafanaRouter: OpenAPI v3 + Discovery
 
-Status: approved for planning
-Scope: `pkg/router/` (standalone cloud-apps router, `pkg/extensions/router/cli.go`)
+Status: superseded. Implemented, then reworked. Decisions 1, 3, 6 and 7 still hold; the rest of
+this document is history. Current behavior is described in `pkg/router/AGENTS.md` ("Serving and
+discovery").
+Scope: `pkg/router/`
+
+> **What changed since this was written (as of 2026-10-26):**
+>
+> - The cloud loader polls the ST fallback, aggregate targets, `core_url` and `plugins_url`.
+> - The router serves the whole `/apis` and `/openapi/v3` trees and never falls through (#135946).
+>   In middleware mode it hosts the embedded API server's groups in process (`embedded.go`) and
+>   builds root discovery from its snapshot, with no merge.
+> - Through the ST fallback, discovery is caller-scoped: root, group and OpenAPI documents come from
+>   the requester's own stack, shared per stack through `stackDiscoveryCache` (#134782).
+> - The router serves its own `discovery` group (`/apis/discovery/v1alpha2`: app manifests, the
+>   status page and an AGENTS index), in every mode (#134759).
+> - `Backend` has no `Manifest()`. Groups come from `Backend.Group()`, and the cache key is
+>   `Backend.Key()`, not a resource version (`handlerEntry.lastKey`, `?hash=<key>`).
+> - The router imports the k8s discovery types (`metav1`, `apidiscovery/v2`, `kube-openapi`)
+>   directly. The stdlib-only rule and the hand-rolled structs are gone.
+> - Standalone, unknown groups go to the ST fallback, not a 404, and root discovery is merged with
+>   the fallback's (`discovery_handler.go`).
+> - Aggregated discovery (`APIGroupDiscoveryList`) is served too. It is built locally through
+>   `DiscoveryProvider`, or fetched through `discoveryCache`.
+> - ETags hash the served keys (root documents) or key plus body (per-group documents). The OpenAPI
+>   cache varies by `Accept` and `Accept-Encoding`, bypasses private responses, and is pruned in
+>   `publish`.
 
 ## Context
 
 `GrafanaRouter` (`pkg/router/router.go`) is the whole HTTP surface of the
 standalone cloud-apps router process. It reverse-proxies `/apis/<group>*` to
-one `Backend` per group, reconciled from `RouteBackend`/`AppManifest` control-plane
-resources read via a remote apiserver (never proxied through `HandleFunc` — the
-router's data plane never touches those control-plane kinds). `next` in this
+one `Backend` per group, reconciled from the polled discovery sources. `next` in this
 process is always `http.NotFoundHandler()` (`cli.go:199`) — nothing else sits
 behind it. There is no "core apiserver" to merge discovery with; every group
 this router knows about comes from `Backend.Manifest()`.

@@ -1,7 +1,7 @@
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isResource } from 'app/features/apiserver/guards';
-import { type Resource, type TableResponse } from 'app/features/apiserver/types';
+import { type Resource } from 'app/features/apiserver/types';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
@@ -12,7 +12,6 @@ import {
   DashboardVersionError,
   type DashboardWithAccessInfo,
   type ListDashboardHistoryOptions,
-  type ListDeletedDashboardsOptions,
 } from './types';
 import {
   failedFromVersion,
@@ -141,12 +140,6 @@ export class UnifiedDashboardAPI
 
   async restoreDashboardVersion(uid: string, version: number) {
     return await this.v1Client.restoreDashboardVersion(uid, version);
-  }
-
-  async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
-    // Table format carries only metadata — no spec/status available for conversion
-    // filtering. Both v1 and v2 hit the same backend deleted-items store, so delegate to v1.
-    return this.v1Client.listDeletedDashboards(options);
   }
 
   async getDeletedDashboard(name: string): Promise<Resource<DashboardDataDTO | DashboardV2Spec> | undefined> {

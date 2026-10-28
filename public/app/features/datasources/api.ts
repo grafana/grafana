@@ -2,9 +2,8 @@ import { isString } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
 import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceInstanceList } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 

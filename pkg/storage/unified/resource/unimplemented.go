@@ -47,7 +47,7 @@ func (UnimplementedStorageBackend) ReadResource(_ context.Context, req *resource
 	}
 }
 
-func (UnimplementedStorageBackend) BatchReadResource(context.Context, []*resourcepb.ReadRequest, bool) (iter.Seq[*BackendReadResponse], error) {
+func (UnimplementedStorageBackend) BatchReadResource(context.Context, []BatchReadRequest, bool) (iter.Seq[*BackendReadResponse], error) {
 	return nil, ErrBatchReadUnsupported
 }
 
@@ -72,7 +72,7 @@ func (UnimplementedStorageBackend) WatchWriteEvents(context.Context) (<-chan *Wr
 	return make(chan *WrittenEvent), nil
 }
 
-func (UnimplementedStorageBackend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *resourcepb.ResourceKey, error) {
+func (UnimplementedStorageBackend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *WrittenEvent, error) {
 	return nil, ErrWrittenKeysUnsupported
 }
 

@@ -5858,6 +5858,11 @@
             "description": "The ID for the job that ran this sync",
             "type": "string"
           },
+          "lastChecked": {
+            "description": "When the controller last attempted a sync or an interval check (Unix milliseconds).",
+            "type": "integer",
+            "format": "int64"
+          },
           "lastRef": {
             "description": "The repository ref when the last successful sync ran",
             "type": "string"
@@ -6229,7 +6234,7 @@
         }
       },
       "SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -6277,7 +6282,7 @@
             }
           },
           "where": {
-            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/WhereNode"
           }
         }

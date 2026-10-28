@@ -24,19 +24,6 @@ import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager'
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
 
-jest.mock('@grafana/runtime', () => {
-  const runtime = jest.requireActual('@grafana/runtime');
-  return {
-    ...runtime,
-    config: {
-      ...runtime.config,
-      featureToggles: {
-        dashboardNewLayouts: true,
-      },
-    },
-  };
-});
-
 describe('VariableControls', () => {
   it('should not show scopes variable label but should mount its component', () => {
     const scopesVariable = new ScopesVariable({ hide: VariableHide.hideVariable, name: '__scopes' });

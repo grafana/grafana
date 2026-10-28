@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"errors"
+	"net/http"
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
@@ -125,7 +126,7 @@ func TestKVWatchResumeExpiryAndReplay(t *testing.T) {
 			if tc.expired {
 				select {
 				case err := <-done:
-					require.Equal(t, codes.OutOfRange, status.Code(err))
+					require.Equal(t, codes.Code(http.StatusGone), status.Code(err))
 					result := AsErrorResult(err)
 					require.EqualValues(t, 410, result.Code)
 					require.Equal(t, "Expired", result.Reason)

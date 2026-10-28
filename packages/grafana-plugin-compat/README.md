@@ -18,8 +18,9 @@ Ships both ESM and CommonJS builds, so it works with `import` and `require`.
 - `@grafana/plugin-compat/datasources` — `getDataSourceInstance`,
   `getDataSourceInstanceList`, `getDataSourceInstanceSettings`,
   `getDefaultDataSourceInstanceListItem` and its
-  `useDefaultDataSourceInstanceListItem` hook. Replacements for
-  `getDataSourceSrv()` methods.
+  `useDefaultDataSourceInstanceListItem` hook, and
+  `registerRuntimeDataSourceInstance`. Replacements for `getDataSourceSrv()`
+  methods.
 - `@grafana/plugin-compat/apps` — `getPluginSettings`,
   `updateAppPluginSettings`. Replacements for the `getBackendSrv()`
   plugin-settings endpoints.
@@ -31,6 +32,7 @@ import {
   getDataSourceInstance,
   getDataSourceInstanceList,
   getDefaultDataSourceInstanceListItem,
+  registerRuntimeDataSourceInstance,
   useDefaultDataSourceInstanceListItem,
 } from '@grafana/plugin-compat/datasources';
 import { getPluginSettings } from '@grafana/plugin-compat/apps';
@@ -43,4 +45,10 @@ const items = await getDataSourceInstanceList({ type: 'prometheus' });
 const defaultProm = await getDefaultDataSourceInstanceListItem(items);
 
 const { isLoading, error, item } = useDefaultDataSourceInstanceListItem(items);
+
+// Throws if a data source with the same uid is already registered.
+registerRuntimeDataSourceInstance({ dataSource: new MyRuntimeDataSource('my-plugin-id', 'my-uid') });
 ```
+
+On hosts with the async APIs, a data source registered this way is not visible
+to `getDataSourceSrv()`. Look it up with `getDataSourceInstance` instead.

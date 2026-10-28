@@ -340,6 +340,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
       .click();
     const firstNestedTable = page.locator('.rdg:not([aria-hidden="true"])').nth(1);
 
+    await expect(firstNestedTable.getByRole('columnheader', { name: 'Long Text' })).toBeVisible();
     const longTextColIdx = await getColumnIdx(firstNestedTable, 'Long Text');
 
     // text wrapping is enabled by default on this panel.

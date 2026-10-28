@@ -30,7 +30,7 @@ const meta: Meta<typeof RangeSlider> = {
 export const Basic: StoryFn<typeof RangeSlider> = (args) => {
   return (
     <div style={{ width: '200px', height: '200px' }}>
-      <RangeSlider {...args} value={[10, 62]} />
+      <RangeSlider {...args} defaultValue={[10, 62]} />
     </div>
   );
 };
@@ -38,7 +38,7 @@ export const Basic: StoryFn<typeof RangeSlider> = (args) => {
 export const Vertical: StoryFn<typeof RangeSlider> = (args) => {
   return (
     <div style={{ width: '200px', height: '200px' }}>
-      <RangeSlider {...args} value={[10, 62]} orientation="vertical" />
+      <RangeSlider {...args} defaultValue={[10, 62]} orientation="vertical" />
     </div>
   );
 };

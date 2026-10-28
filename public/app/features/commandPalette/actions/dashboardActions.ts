@@ -2,12 +2,8 @@ import debounce from 'debounce-promise';
 import { useEffect, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import {
-  useFlagDashboardNotebooks,
-  useFlagGrafanaCmdkHybridSearch,
-  useFlagDashboardVectorSearch,
-} from '@grafana/runtime/internal';
+import { config, isFetchError } from '@grafana/runtime';
+import { useFlagDashboardNotebooks, useFlagGrafanaCmdkHybridSearch } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { searchNotebookTitles } from 'app/features/notebook/list/notebookSearchApi';
@@ -38,15 +34,6 @@ const MAX_RECENT_DASHBOARDS = 5;
 const MAX_NOTEBOOK_SEARCH_RESULTS = 10;
 
 const debouncedSearch = debounce(getSearchResultActions, 200);
-
-/**
- * Same as deep search, hybrid search needs vectorSearch flag for the backend.
- */
-export function useHybridSearchEnabled(): boolean {
-  const hybridSearchFlag = useFlagGrafanaCmdkHybridSearch();
-  const vectorSearchFlag = useFlagDashboardVectorSearch();
-  return hybridSearchFlag && vectorSearchFlag;
-}
 
 export async function getRecentDashboardActions(): Promise<CommandPaletteAction[]> {
   if (!contextSrv.user.isSignedIn) {
@@ -159,23 +146,35 @@ async function getClassicSearchResultActions(
   return goToSearchResultActions;
 }
 
+// Remember a missing endpoint until reload, including across palette opens. The hybrid endpoint may not be
+// rolled out everywhere yet, in which case we have a fallback we don't want to spam the nonexistent endpoint.
+let hybridSearchUnavailable = false;
+
 /**
  * Dashboard search backed by the hybrid (lexical + semantic) endpoint. Falls
  * back to the classic searcher when the request fails, e.g. when the vector
  * backend isn't configured (501) or the endpoint's toggle is off (404).
  */
 async function getHybridDashboardActions(searchQuery: string): Promise<CommandPaletteAction[]> {
+  if (hybridSearchUnavailable) {
+    return getClassicSearchResultActions(searchQuery, ['dashboard']);
+  }
+
   let hits;
   try {
     hits = await searchDashboardsHybrid(searchQuery, { limit: MAX_HYBRID_SEARCH_RESULTS });
   } catch (error) {
-    console.error('Hybrid dashboard search failed, falling back to the classic search.', error);
+    if (isFetchError(error) && error.status === 404) {
+      hybridSearchUnavailable = true;
+      console.warn('Hybrid dashboard search not available, falling back to the classic search.', error);
+    } else {
+      console.error('Hybrid dashboard search failed, falling back to the classic search.', error);
+    }
     return getClassicSearchResultActions(searchQuery, ['dashboard']);
   }
 
-  // The hybrid endpoint returns the folder UID only; resolve display names
-  // through the searcher's cached folder lookup. The folder subtitle is just
-  // nice to have, so if the lookup fails show the results without it.
+  // Folder titles are best-effort; use the cached folder lookup when absent.
+  // If the lookup fails, the dashboard results should still be shown.
   let locationInfo: Record<string, LocationInfo> = {};
   try {
     locationInfo = await getGrafanaSearcher().getLocationInfo();
@@ -184,7 +183,7 @@ async function getHybridDashboardActions(searchQuery: string): Promise<CommandPa
   }
 
   return hits.map((hit) => {
-    const url = toURL(hit.resource, hit.name, hit.title);
+    const url = toURL(hit.resource.resource, hit.resource.name, hit.title);
     // Root-parented dashboards come back with an empty folder; collapse to the
     // synthetic "general" UID the location lookup uses for root items
     const location = isRootFolderUID(hit.folder) ? 'general' : hit.folder;
@@ -195,7 +194,7 @@ async function getHybridDashboardActions(searchQuery: string): Promise<CommandPa
       sectionId: SECTION_DASHBOARDS,
       priority: SEARCH_RESULTS_PRIORITY,
       url,
-      subtitle: locationInfo[location]?.name,
+      subtitle: hit.folderTitle || locationInfo[location]?.name,
       managedBy: extractManagerKind(hit.managedBy),
       // No tags: the hybrid endpoint doesn't return them for its hits
     };
@@ -209,7 +208,7 @@ export function useSearchResults({ searchQuery, show }: { searchQuery: string; s
   const [searchResults, setSearchResults] = useState<CommandPaletteAction[]>([]);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
   const lastSearchTimestamp = useRef<number>(0);
-  const hybridSearchEnabled = useHybridSearchEnabled();
+  const hybridSearchEnabled = useFlagGrafanaCmdkHybridSearch();
   const notebooksEnabled = useFlagDashboardNotebooks();
 
   // Hit dashboards API

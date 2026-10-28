@@ -11,6 +11,7 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search"
+	"github.com/blevesearch/bleve/v2/search/query"
 
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
@@ -121,13 +122,11 @@ func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
 }
 
 // ensureSearchFields makes bleve load every stored field when the caller did not
-// request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel tells
-// hitsToTable to use the curated allFields column list.
+// request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel selects the
+// curated response field list.
 //
-// It also adds the resource version, which every result carries regardless of the
-// requested fields. Both happen here rather than in toBleveSearchRequest because
-// Search snapshots the response field list before calling this, so what is added
-// is loaded without becoming a response column.
+// Load the stored resource version after Search snapshots the response fields,
+// so its internal field name does not become a response field.
 func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) error {
 	if len(req.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
@@ -143,11 +142,11 @@ func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req 
 	return nil
 }
 
-// ensureAuthzFields makes bleve load the folder stored field so the post-rank
-// runner can authorize each hit (parseHitDocInfo reads it from doc.Fields). This
-// extends the bleve load list only; it is NOT part of the response column list
-// (selectFields) — Search snapshots selectFields before calling this so the
-// caller's requested columns are returned unchanged.
+// ensureAuthzFields makes the page load the stored fields authorization reads,
+// so each page hit can be checked against what it was authorized on (see
+// postRankPage.validate). This extends the bleve load list only; it is NOT part
+// of the response column list (selectFields) - Search snapshots selectFields
+// before calling this so the caller's requested columns are returned unchanged.
 func (b *bleveIndex) ensureAuthzFields(searchrequest *bleve.SearchRequest, trash bool) {
 	for _, f := range authzLoadFields(trash) {
 		if !slices.Contains(searchrequest.Fields, f) &&
@@ -167,13 +166,199 @@ func authzLoadFields(trash bool) []string {
 	return []string{resource.SEARCH_FIELD_FOLDER}
 }
 
-// authzResources builds the resource-type -> verb map used to authorize hits.
-// The primary resource uses the verb implied by req.Permission; federated
+type authzMetadata struct {
+	folder, deletedBy string
+}
+
+// windowDocInfo is parseHitDocInfo with the hit's authorization metadata. A hit
+// without metadata was removed from the index since its window was searched, and
+// is skipped.
+func windowDocInfo(hit *search.DocumentMatch, resources map[string]string, metadata map[string]authzMetadata) (docInfo, bool) {
+	authzMeta, ok := metadata[hit.ID]
+	if !ok {
+		return docInfo{}, false
+	}
+	info, ok := parseHitDocInfo(hit, resources)
+	info.folder, info.deletedBy = authzMeta.folder, authzMeta.deletedBy
+	return info, ok
+}
+
+// readAuthzMetadata reads what authorization needs for a window's hits from doc
+// values, so window searches need no stored fields: a search for the hits sorted
+// on the folder and deleter returns them as sort keys, which bleve reads from doc
+// values in index order. Found by ID alone: what has changed since, even out of
+// the query or its scope, is dropped when the page is validated.
+func (p *postRankPage) readAuthzMetadata(ctx context.Context, hits search.DocumentMatchCollection) (map[string]authzMetadata, error) {
+	if len(hits) == 0 {
+		return nil, nil
+	}
+	ids := make([]string, len(hits))
+	for i, hit := range hits {
+		ids[i] = hit.ID
+	}
+	// Ascending with missing values first gives a missing field LowTerm, which no
+	// folder or user ID can be. Live documents have no deleter.
+	sortBy := func(field string) *search.SortField {
+		return &search.SortField{Field: field, Type: search.SortFieldAsString, Missing: search.SortFieldMissingFirst}
+	}
+	res, err := p.search(ctx, &bleve.SearchRequest{
+		Query: bleve.NewDocIDQuery(ids),
+		Size:  len(ids),
+		Sort:  search.SortOrder{sortBy(resource.SEARCH_FIELD_FOLDER), sortBy(resource.SEARCH_FIELD_DELETED_BY)},
+		Score: bleve.ScoreNone,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	value := func(sortKey string) string {
+		if sortKey == search.LowTerm {
+			return ""
+		}
+		return sortKey
+	}
+	metadata := make(map[string]authzMetadata, len(res.Hits))
+	for _, hit := range res.Hits {
+		metadata[hit.ID] = authzMetadata{folder: value(hit.Sort[0]), deletedBy: value(hit.Sort[1])}
+	}
+	return metadata, nil
+}
+
+// postRankPage holds the page's authorized hits. Their stored fields are loaded
+// after authorization, from a newer snapshot than the one they were ranked and
+// authorized on, so each is checked against both before it is kept.
+type postRankPage struct {
+	index bleve.Index
+	// The ranked request's query and sort.
+	query  query.Query
+	sort   search.SortOrder
+	fields []string
+	limit  int
+	stats  *resource.SearchStats
+
+	// cost is what the lookups read, part of the search's reported cost as the
+	// stored fields were when window searches loaded them.
+	cost uint64
+
+	hits      []docInfo
+	validated int
+}
+
+func (p *postRankPage) search(ctx context.Context, req *bleve.SearchRequest) (*bleve.SearchResult, error) {
+	res, err := searchInContext(ctx, p.index, req)
+	if err != nil {
+		return nil, err
+	}
+	p.stats.AddSearchTime(res.Took)
+	p.cost += res.Cost
+	return res, nil
+}
+
+// lookup finds the hits that still match the ranked query, which also keeps
+// them in its live or trash scope: a live document deleted meanwhile is still
+// in the index, as trash. A match-all searcher advances by walking every
+// document, so in a scoped match-all query the IDs take its place rather than
+// being intersected with it.
+func (p *postRankPage) lookup(ids []string) query.Query {
+	byID := bleve.NewDocIDQuery(ids)
+	if scoped, ok := p.query.(*query.BooleanQuery); ok {
+		if must, ok := scoped.Must.(*query.ConjunctionQuery); ok && len(must.Conjuncts) == 1 {
+			if _, all := must.Conjuncts[0].(*query.MatchAllQuery); all {
+				byIDs := *scoped
+				byIDs.Must = bleve.NewConjunctionQuery(byID)
+				return &byIDs
+			}
+		}
+	}
+	return bleve.NewConjunctionQuery(p.query, byID)
+}
+
+func (p *postRankPage) full() bool {
+	return len(p.hits) >= p.limit
+}
+
+// add takes an authorized hit while the page has room. Once the page is full,
+// or when asked to, it validates what was added and returns how many hits it
+// dropped, which the hits still to come can replace.
+func (p *postRankPage) add(ctx context.Context, info docInfo, validate bool) (int, error) {
+	if !p.full() {
+		p.hits = append(p.hits, info)
+	}
+	if !p.full() && !validate {
+		return 0, nil
+	}
+	return p.validate(ctx)
+}
+
+// validate loads the stored fields of the hits added since the last call, and
+// drops those no longer as they were ranked and authorized: not matching the
+// query, sorting elsewhere, or with another folder or deleter. Their fields
+// could otherwise belong to an object the caller cannot see, or disagree with
+// the hit's place and cursor. It returns how many it dropped.
+//
+// A score is not compared, as it depends on the rest of the index.
+func (p *postRankPage) validate(ctx context.Context) (int, error) {
+	pending := p.hits[p.validated:]
+	if len(pending) == 0 {
+		return 0, nil
+	}
+	ids := make([]string, len(pending))
+	for i, info := range pending {
+		ids[i] = info.doc.ID
+	}
+	res, err := p.search(ctx, &bleve.SearchRequest{
+		Query:  p.lookup(ids),
+		Size:   len(ids),
+		Fields: p.fields,
+		// Sorting by score with none computed gives every hit the same placeholder
+		// key, so comparing the keys skips the score.
+		Sort:  p.sort,
+		Score: bleve.ScoreNone,
+	})
+	if err != nil {
+		return 0, err
+	}
+	loaded := make(map[string]*search.DocumentMatch, len(res.Hits))
+	for _, hit := range res.Hits {
+		loaded[hit.ID] = hit
+	}
+
+	kept := p.hits[:p.validated]
+	for _, info := range pending {
+		hit, ok := loaded[info.doc.ID]
+		if !ok || !slices.Equal(hit.Sort, info.doc.Sort) {
+			continue
+		}
+		folder, _ := hit.Fields[resource.SEARCH_FIELD_FOLDER].(string)
+		deletedBy, _ := hit.Fields[resource.SEARCH_FIELD_DELETED_BY].(string)
+		if folder != info.folder || deletedBy != info.deletedBy {
+			continue
+		}
+		info.doc.Fields = hit.Fields
+		kept = append(kept, info)
+	}
+	dropped := len(p.hits) - len(kept)
+	p.hits, p.validated = kept, len(kept)
+	return dropped, nil
+}
+
+func (p *postRankPage) documents() search.DocumentMatchCollection {
+	docs := make(search.DocumentMatchCollection, len(p.hits))
+	for i, info := range p.hits {
+		docs[i] = info.doc
+	}
+	return docs
+}
+
+// authzResources builds the {group}/{resource} -> verb map used to authorize
+// hits. The primary resource uses the verb implied by req.Permission; federated
 // resources are read-only.
 //
-// A hit whose resource type is absent from the map is dropped, so a
-// namespace-wide index has to list every type it covers. Each hit is still
-// authorized against its own type and group, read from its document id.
+// A hit whose type is absent from the map is dropped. A namespace-wide index
+// answers every type under anyResourceType instead: its covered types change
+// with the manifests, and the search server limits each search to the ones it
+// may search with a filter. Each hit is still authorized against its own type and
+// group, read from its document id.
 func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[string]string {
 	verb := utils.VerbGet
 	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
@@ -181,16 +366,57 @@ func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[s
 	}
 	resources := map[string]string{}
 	if b.key.IsGlobal() {
-		for _, gr := range resource.GlobalSearchResourceTypes() {
-			resources[gr.Resource] = verb
-		}
+		resources[anyResourceType] = verb
 	} else {
-		resources[b.key.Resource] = verb
+		resources[b.key.Group+"/"+b.key.Resource] = verb
+	}
+	if req.Permission == int64(dashboardaccess.PERMISSION_CREATE) && (b.key.IsGlobal() || (b.key.Group == folderGroup && b.key.Resource == folderResource)) {
+		resources[folderGroup+"/"+folderResource] = utils.VerbCreate
 	}
 	for _, federated := range req.Federated {
-		resources[federated.Resource] = utils.VerbGet
+		resources[federated.Group+"/"+federated.Resource] = utils.VerbGet
 	}
 	return resources
+}
+
+// anyResourceType keys the verb for every type in authzResources.
+const anyResourceType = "*"
+
+// authzVerb returns the verb a hit of the type is authorized with, and false
+// when hits of the type are not returned.
+func authzVerb(resources map[string]string, group, resourceType string) (string, bool) {
+	if verb, ok := resources[group+"/"+resourceType]; ok {
+		return verb, true
+	}
+	verb, ok := resources[anyResourceType]
+	return verb, ok
+}
+
+const (
+	folderGroup    = "folder.grafana.app"
+	folderResource = "folders"
+)
+
+// batchCheckItem authorizes a folder hit under permission=create by the right to
+// create dashboards inside it; every other hit is checked as itself.
+func batchCheckItem(info docInfo) authz.BatchCheckItem {
+	if info.verb == utils.VerbCreate && info.group == folderGroup && info.resourceType == folderResource {
+		return authz.BatchCheckItem{
+			Folder:    info.name,
+			Verb:      utils.VerbCreate,
+			Group:     dashboardGroup,
+			Resource:  "dashboards",
+			Namespace: info.namespace,
+		}
+	}
+	return authz.BatchCheckItem{
+		Name:      info.name,
+		Folder:    info.folder,
+		Verb:      info.verb,
+		Group:     info.group,
+		Resource:  info.resourceType,
+		Namespace: info.namespace,
+	}
 }
 
 // parseHitDocInfo extracts the authorization fields from an already-ranked hit.
@@ -204,7 +430,7 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 		return docInfo{}, false
 	}
 	resourceType := parts[2]
-	verb, ok := resources[resourceType]
+	verb, ok := authzVerb(resources, parts[1], resourceType)
 	if !ok {
 		return docInfo{}, false
 	}
@@ -287,32 +513,17 @@ func (b *bleveIndex) runPostFilterAuthz(
 	}
 
 	baseWindow := cfg.windowSize(limit)
-	switch {
-	case countOnly:
+	if countOnly {
 		baseWindow = cfg.countWindowSize()
-		// No rows are returned, so load only what authorization reads.
-		firstReq.Fields = authzLoadFields(trashAuthz != nil)
-		firstReq.Size = baseWindow
-	case wantFacets:
-		// Facets always use a separate scan starting at the top of the query.
-		// The page scan must retain its normal fetch window, otherwise the
-		// facet sample size can unnecessarily shorten pages for sparse-access
-		// users.
-		firstReq.Size = baseWindow
 	}
+	// Facets use a separate scan, with its own sample size; the page scan keeps
+	// its normal fetch window, or the facet sample could shorten pages for
+	// sparse-access users.
+	firstReq.Size = baseWindow
 
-	extractFn := func(info docInfo) authz.BatchCheckItem {
-		return authz.BatchCheckItem{
-			Name:      info.name,
-			Folder:    info.folder,
-			Verb:      info.verb,
-			Group:     info.group,
-			Resource:  info.resourceType,
-			Namespace: info.namespace,
-		}
-	}
+	extractFn := batchCheckItem
 
-	page := make(search.DocumentMatchCollection, 0, limit)
+	page := postRankPage{index: index, query: firstReq.Query, sort: firstReq.Sort, fields: firstReq.Fields, limit: limit, stats: stats}
 
 	var candidates int64
 	var authorized int64
@@ -326,9 +537,19 @@ func (b *bleveIndex) runPostFilterAuthz(
 	// then reverse the page back to forward order in finalizePostFilter.
 	reverseSort := applySearchBefore(req, firstReq)
 
-	windowReq := firstReq
+	// Windows read what authorization needs from doc values, and only the hits
+	// that make the page get their stored fields loaded, as on the in-searcher
+	// path. Most window hits never reach a page.
+	windowReq := *firstReq
+	windowReq.Fields = nil
+	// Page-fill scans keep going past MaxCandidates until the page has a row, so
+	// sparse users don't get an empty first page just because the first
+	// authorized hit sorted beyond the budget. Count-only scans have no page, so
+	// the budget applies on its own.
+	budgetSpent := func() bool { return candidates >= maxCandidates && (countOnly || page.validated > 0) }
+windows:
 	for window := 0; ; window++ {
-		res, err := searchInContext(ctx, index, windowReq)
+		res, err := searchInContext(ctx, index, &windowReq)
 		if err != nil {
 			return nil, err
 		}
@@ -338,17 +559,18 @@ func (b *bleveIndex) runPostFilterAuthz(
 			stats.AddTotalHits(int(res.Total))
 		}
 
-		// Authorize this window's hits in rank order. Page-fill scans keep going
-		// past MaxCandidates until at least one row is found, so sparse users
-		// don't get an empty first page. Count-only scans have no page, so the
-		// budget applies on its own.
-		windowHits := res.Hits
+		metadata, err := page.readAuthzMetadata(ctx, res.Hits)
+		if err != nil {
+			return nil, err
+		}
+
+		// Authorize this window's hits in rank order.
 		candidateSeq := func(yield func(docInfo) bool) {
-			for _, hit := range windowHits {
-				if candidates >= maxCandidates && (countOnly || len(page) > 0) {
+			for _, hit := range res.Hits {
+				if budgetSpent() {
 					return
 				}
-				info, ok := parseHitDocInfo(hit, resources)
+				info, ok := windowDocInfo(hit, resources, metadata)
 				if !ok {
 					continue
 				}
@@ -359,34 +581,44 @@ func (b *bleveIndex) runPostFilterAuthz(
 			}
 		}
 
-		stop := false
-		for info, err := range authorizeHits(ctx, access, candidateSeq, extractFn, trashAuthz) {
+		for info, err := range authorizeHits(ctx, access, candidateSeq, len(res.Hits), extractFn, trashAuthz) {
 			if err != nil {
 				return nil, err
 			}
 			authorized++
 			// Skip the first `offset` authorized hits, then fill the page.
-			if authorized > int64(offset) && len(page) < limit {
-				page = append(page, info.doc)
+			if authorized <= int64(offset) {
+				continue
 			}
+			// The rest of the scan refills whatever validation drops. Past the
+			// budget each hit is validated as it comes, as the first to survive
+			// ends the scan.
+			dropped, err := page.add(ctx, info, candidates >= maxCandidates)
+			if err != nil {
+				return nil, err
+			}
+			authorized -= int64(dropped)
 			// Stop as soon as the page is full (early-exit).
-			if !countEveryHit && len(page) >= limit {
-				stop = true
-				break
+			if !countEveryHit && page.full() {
+				break windows
 			}
 		}
-		if stop {
-			break
+		// Candidate budget exhausted. Only rows that survive validation count.
+		if candidates >= maxCandidates {
+			dropped, err := page.validate(ctx)
+			if err != nil {
+				return nil, err
+			}
+			authorized -= int64(dropped)
 		}
-		// Candidate budget exhausted. On page-fill scans only enforce the budget
-		// after the first authorized row; otherwise keep scanning so a sparse
-		// user does not get an empty first page just because the first
-		// authorized hit sorted beyond MaxCandidates.
-		if candidates >= maxCandidates && (countOnly || len(page) > 0) {
+		if budgetSpent() {
 			// A budget that covered every match leaves nothing unseen, so the
 			// authorized count is still exact. candidates never exceeds the
 			// number of hits walked, so this can only under-claim.
 			exhausted = candidates >= int64(firstRes.Total)
+			if !exhausted {
+				b.indexMetrics.SearchAuthEvents.WithLabelValues("candidate_budget").Inc()
+			}
 			break
 		}
 		// Window returned fewer hits than requested -> no more matches: every
@@ -401,45 +633,50 @@ func (b *bleveIndex) runPostFilterAuthz(
 			exhausted = true
 			break // no sort values -> cannot build a SearchAfter cursor
 		}
-		// Page on a shallow copy of the current request: only the cursor and
-		// the window Size change between windows; query, sort (already reversed
-		// once for SearchBefore), and fields are identical. Page-fill windows
-		// grow geometrically (capped at MaxWindow).
-		next := *windowReq
-		next.SearchAfter = cursor
-		next.SearchBefore = nil
-		next.Size = cfg.growWindow(baseWindow, window+1)
-		windowReq = &next
+		// Only the cursor and the window Size change between windows; query, sort
+		// (already reversed once for SearchBefore), and fields are identical.
+		// Page-fill windows grow geometrically (capped at MaxWindow).
+		windowReq.SearchAfter = cursor
+		windowReq.SearchBefore = nil
+		windowReq.Size = cfg.growWindow(baseWindow, window+1)
 	}
 
 	span.SetAttributes(
 		attribute.Int64("search.candidates", candidates),
 		attribute.Int64("search.authorized", authorized),
 	)
+	dropped, err := page.validate(ctx)
+	if err != nil {
+		return nil, err
+	}
+	authorized -= int64(dropped)
+	firstRes.Cost += page.cost
 	if wantFacets {
 		// The independent facet scan defines exactness, but a returned page may
 		// observe more authorized hits than a capped top sample.
 		authorized = max(authorized, facetAuthorized)
 		exhausted = facetExhausted
 	}
-	return response, b.finalizePostFilter(ctx, response, page, selectFields, fieldValueSchema, firstReq.Sort, req, firstRes,
+	return response, b.finalizePostFilter(ctx, response, page.documents(), selectFields, fieldValueSchema, firstReq.Sort, req, firstRes,
 		authorized, exhausted, reverseSort, wantFacets, trashAuthz != nil, agg, stats)
 }
 
 // authorizeHits filters ranked hits by the trash rule when trashAuthz is set,
 // otherwise by the read check. Same shape either way, so the scan loops do not
-// need to know which is running.
+// need to know which is running. sizeHint is how many hits candidates yields
+// at most.
 func authorizeHits(
 	ctx context.Context,
 	access authlib.AccessClient,
 	candidates iter.Seq[docInfo],
+	sizeHint int,
 	extractFn func(docInfo) authz.BatchCheckItem,
 	trashAuthz *resource.TrashAuthorizer,
 ) iter.Seq2[docInfo, error] {
 	if trashAuthz != nil {
 		return trashAuthorized(ctx, candidates, trashAuthz)
 	}
-	return authz.FilterAuthorized(ctx, access, candidates, extractFn, authz.WithTracer(tracer))
+	return authz.FilterAuthorized(ctx, access, candidates, extractFn, authz.WithTracer(tracer), authz.WithSizeHint(sizeHint))
 }
 
 func (b *bleveIndex) prepareFacetAggregation(
@@ -456,16 +693,7 @@ func (b *bleveIndex) prepareFacetAggregation(
 		return nil, 0, false, nil
 	}
 
-	extractFn := func(info docInfo) authz.BatchCheckItem {
-		return authz.BatchCheckItem{
-			Name:      info.name,
-			Folder:    info.folder,
-			Verb:      info.verb,
-			Group:     info.group,
-			Resource:  info.resourceType,
-			Namespace: info.namespace,
-		}
-	}
+	extractFn := batchCheckItem
 	agg, authorized, exhausted, err := b.aggregateFacetsFromTop(
 		ctx, access, index, firstReq, resources, extractFn, req.Facet, stats, trashAuthz,
 	)
@@ -539,7 +767,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 				}
 			}
 		}
-		for info, err := range authorizeHits(ctx, access, candidateSeq, extractFn, trashAuthz) {
+		for info, err := range authorizeHits(ctx, access, candidateSeq, len(windowHits), extractFn, trashAuthz) {
 			if err != nil {
 				return nil, 0, false, err
 			}
@@ -550,6 +778,9 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 		if candidates >= maxCandidates {
 			// Like the page scan: a budget that covered every match leaves
 			// nothing unsampled, so the facets are the complete authorized set.
+			if candidates < int64(firstRes.Total) {
+				b.indexMetrics.SearchAuthEvents.WithLabelValues("facet_budget").Inc()
+			}
 			return agg, authorized, candidates >= int64(firstRes.Total), nil
 		}
 		if len(res.Hits) < windowReq.Size || len(res.Hits) == 0 {
@@ -638,7 +869,7 @@ func (b *bleveIndex) finalizePostFilter(
 	}
 
 	resultsConversionStart := time.Now()
-	if err := b.setSearchResults(ctx, response, selectFields, fieldValueSchema, page, sort, req.Explain); err != nil {
+	if err := b.setSearchResults(response, fieldValueSchema, page, sort); err != nil {
 		return err
 	}
 	if wantFacets {

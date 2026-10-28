@@ -18,6 +18,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
@@ -50,13 +51,13 @@ const UnconfiguredPanel = new PanelPlugin(UnconfiguredPanelComp);
 function useUnconfiguredPanelDashboard(): { dashboard: DashboardScene | null; isEditing: boolean } {
   const ctx = window.__grafanaSceneContext;
   const dashboard = ctx instanceof DashboardScene ? ctx : null;
-  const [isEditing, setIsEditing] = useState(() => dashboard?.state.isEditing ?? false);
+  const [isEditing, setIsEditing] = useState(() => (dashboard ? isFullDashboardEditing(dashboard.state) : false));
 
   useEffect(() => {
     if (!dashboard) {
       return;
     }
-    const sub = dashboard.subscribeToState((state) => setIsEditing(state.isEditing ?? false));
+    const sub = dashboard.subscribeToState((state) => setIsEditing(isFullDashboardEditing(state)));
     return () => sub.unsubscribe();
   }, [dashboard]);
 

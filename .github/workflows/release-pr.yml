@@ -226,30 +226,62 @@ jobs:
       - name: "Prettify CHANGELOG.md"
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         run: node ./.grafana-main/.github/actions/changelog/sort.js && npx prettier --write CHANGELOG.md
-      # Remove the main checkout before lerna runs so nx doesn't see duplicate plugin
+      # Remove the main checkout before the version bump so nx doesn't see duplicate plugin
       # package.json files across .grafana-main and the release-branch tree.
       - name: Remove main checkout before bump
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
         run: rm -rf .grafana-main
+      - name: Detect package manager
+        id: pm
+        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
+        run: echo "name=$(node -p "require('./package.json').packageManager.split('@')[0]")" >> "$GITHUB_OUTPUT"
+      # The release branch may still use Yarn.
+      - name: Install dependencies (Yarn)
+        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') && steps.pm.outputs.name == 'yarn' }}
+        run: |
+          corepack enable
+          yarn install
+      - name: Install dependencies (pnpm)
+        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') && steps.pm.outputs.name == 'pnpm' }}
+        uses: pnpm/setup@fbda4c85fc2e1e08721cd8763afea8f48d60f024 # v3.0.0
+        with:
+          node-version-file: false
+          cache: false
+          require-lockfile: true
       - name: Bump versions
         if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
         run: |
-          yarn install
           # Target VERSION explicitly and skip if already there; a relative bump isn't safe to re-run.
           current_version=$(node -p "require('./package.json').version")
           if [ "$current_version" != "$VERSION" ]; then
             npm version "$VERSION" --no-git-tag-version
-            yarn run lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
+            # Release branches cut before lerna was replaced with nx release still have lerna.json
+            if [ -f lerna.json ]; then
+              npm exec --no -- lerna version "$VERSION" --no-push --no-git-tag-version --force-publish --exact --yes
+            else
+              npm exec --no -- nx release version "$VERSION"
+            fi
           fi
-          yarn install
-          yarn prettier:write
+      - name: Refresh lockfile
+        if: ${{ (inputs.bump == true || inputs.bump == 'true') && !contains(inputs.version, '+security') }}
+        env:
+          PACKAGE_MANAGER: ${{ steps.pm.outputs.name }}
+          # pnpm defaults to a frozen lockfile when CI is set; the version bump changes it. Yarn ignores this.
+          pnpm_config_frozen_lockfile: 'false'
+        run: |
+          if [ "$PACKAGE_MANAGER" = 'yarn' ]; then
+            yarn install
+          else
+            pnpm install
+          fi
+          npm run prettier:write
       - name: make gen-cue
         if: ${{ !contains(inputs.version, '+security') }}
         shell: bash
         run: make gen-cue
 
       # Single commit for all release-PR file changes (changelog + version bumps +
-      # yarn.lock refresh + regenerated CUE schemas). ghcommit-action uses the Git Data
+      # lockfile refresh + regenerated CUE schemas). ghcommit-action uses the Git Data
       # API, which gives us two things in one shot:
       #   1. Commits made via the API with a GitHub App installation token are auto-signed
       #      by GitHub under grafana-writer[bot]'s identity (Verified signature),

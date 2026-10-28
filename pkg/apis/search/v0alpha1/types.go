@@ -16,6 +16,7 @@ const (
 	// rejects the others.
 	KindSearchQuery         = "SearchQuery"
 	KindSearchResults       = "SearchResults"
+	KindGlobalSearchResults = "GlobalSearchResults"
 	KindTrashQuery          = "TrashQuery"
 	KindTrashResults        = "TrashResults"
 	KindHybridSearchQuery   = "HybridSearchQuery"
@@ -138,15 +139,18 @@ type SortField struct {
 	Direction string `json:"direction,omitempty"`
 }
 
-// SearchQuery is the request body for POST .../{resource}/search.
+// SearchQuery is the request body for POST .../{resource}/search, which searches
+// one kind, and for POST .../namespaces/{namespace}/global/search, which
+// searches several resource types at once.
 //
 // +k8s:deepcopy-gen=true
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type SearchQuery struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// Where is the search predicate tree. Omitting it matches all resources of
-	// the kind (subject to labelSelector and per-item authz).
+	// Where is the search predicate tree. Omitting it matches everything the
+	// endpoint searches: all resources of the kind, or of every type the global
+	// search covers (subject to labelSelector and per-item authz).
 	Where *WhereNode `json:"where,omitempty"`
 
 	// LabelSelector filters on metadata.labels, ANDed with Where.
@@ -201,6 +205,37 @@ type SearchResults struct {
 	// Facets holds term counts per requested facet field. Counts are computed
 	// over a bounded sample window, so they are best-effort/approximate.
 	Facets map[string][]FacetTerm `json:"facets,omitempty"`
+}
+
+// GlobalSearchResults is the response body for POST
+// .../namespaces/{namespace}/global/search. Each item names its own resource
+// type.
+//
+// +k8s:deepcopy-gen=true
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type GlobalSearchResults struct {
+	metav1.TypeMeta `json:",inline"`
+
+	Metadata GlobalResultsMetadata `json:"metadata"`
+	Items    []ResultItem          `json:"items"`
+
+	// Facets holds term counts per requested facet field. Counts are computed
+	// over a bounded sample window, so they are best-effort/approximate.
+	Facets map[string][]FacetTerm `json:"facets,omitempty"`
+}
+
+// GlobalResultsMetadata carries the pagination token, the total hit count, and
+// the types the search left out.
+//
+// +k8s:deepcopy-gen=true
+type GlobalResultsMetadata struct {
+	ResultsMetadata `json:",inline"`
+
+	// SkippedTypes lists the types, as {group}/{resource}, that the search left
+	// out, so the results are incomplete. A type is left out when the calling
+	// service may not search it on the user's behalf, or when this deployment
+	// does not check its results against the user. Both are deployment problems.
+	SkippedTypes []string `json:"skippedTypes,omitempty"`
 }
 
 // TrashResults is the response body for POST .../{resource}/trash. It has the

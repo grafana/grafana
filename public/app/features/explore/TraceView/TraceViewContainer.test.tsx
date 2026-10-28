@@ -19,6 +19,7 @@ jest.mock('@grafana/runtime', () => {
     reportInteraction: jest.fn(),
     usePluginLinks: jest.fn().mockReturnValue({ isLoading: false, links: [] }),
     useAppPluginInstalled: jest.fn().mockReturnValue({ loading: false, error: undefined, value: false }),
+    useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
   };
 });
 

@@ -1,5 +1,5 @@
 import { act, screen, waitFor } from '@testing-library/react';
-import { render, userEvent, testWithFeatureToggles } from 'test/test-utils';
+import { render, userEvent } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -12,6 +12,7 @@ import {
   TextBoxVariable,
   VizPanel,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from './DashboardScene';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
@@ -24,7 +25,11 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-testWithFeatureToggles({ disable: ['dashboardNewLayouts'] });
+setTestFlags({ dashboardNewLayouts: false });
+
+afterAll(() => {
+  setTestFlags({});
+});
 
 let nextPanelId = 1;
 

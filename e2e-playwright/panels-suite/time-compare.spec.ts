@@ -306,13 +306,15 @@ test.describe('Panels test: Time Comparison', { tag: ['@panels', '@timeseries'] 
         // primary has data and the comparison does not.
         await expect(legend.getByRole('button', { name: 'F-series', exact: true })).toBeVisible();
 
-        // The notice text is only rendered once its tooltip opens, so hover the icon to read it.
-        const notice = panel.getByTestId(selectors.components.Panels.Panel.headerNotice('info'));
+        // The notice text is only rendered once the status popover opens, so click the icon to read it.
+        const notice = panel.getByTestId(selectors.components.Panels.Panel.status('info'));
         await expect(notice).toBeVisible();
-        await notice.hover();
-        await expect(page.getByTestId(selectors.components.Tooltip.container)).toHaveText(
-          'No data returned for time comparison'
-        );
+        await notice.click();
+        const popover = page.getByTestId('toggletip-content');
+        await expect(popover).toContainText('No data returned for time comparison');
+        // The popover is modal and hides the rest of the page from role queries while open.
+        await page.keyboard.press('Escape');
+        await expect(popover).toBeHidden();
 
         const comparisonLegendItem = legend.getByRole('button', {
           name: 'F-compare-series (comparison)',

@@ -6,6 +6,7 @@ import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
 import {
   COLUMN,
+  COLUMN_SETTLE_MS,
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
@@ -53,11 +54,13 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].hoverOverflow === key[1].hoverOverflow &&
   cacheKey[1].maxHeight === key[1].maxHeight &&
   cacheKey[1].textAlign === key[1].textAlign &&
+  cacheKey[1].tableRefreshEnabled === key[1].tableRefreshEnabled &&
   cacheKey[1].textWrap === key[1].textWrap;
 
 // Geometry shared by the two header corner masks (see their use in `getGridStyles`). react-data-grid
-// gives every cell `position: relative`, so the pseudo-element anchors to the header cell itself, and
-// `::after` is free — rdg only takes `::before`, on the grid root, for its Firefox scrollbar fix.
+// gives every cell `position: relative`, so the pseudo-element anchors to the header cell itself.
+// Separate pseudo-elements preserve both corners when one cell is both first and last.
+// rdg only takes `::before` on the grid root for its Firefox scrollbar fix.
 const headerCornerMask = (radius: string) =>
   ({
     content: '""',
@@ -68,6 +71,27 @@ const headerCornerMask = (radius: string) =>
     pointerEvents: 'none',
   }) as const;
 
+// Drag states derive from the header surface.
+const HEADER_DRAGGING_EMPHASIS = 0.1;
+const HEADER_DRAG_TARGET_EMPHASIS = 0.05;
+
+export const getGridBackgroundColor = (theme: GrafanaTheme2, transparent?: boolean): string => {
+  return transparent
+    ? theme.flags.visualDesignRefresh
+      ? theme.colors.background.page
+      : theme.colors.background.canvas
+    : theme.components.panel.background;
+};
+
+const getHeaderBackgroundColor = (
+  theme: GrafanaTheme2,
+  transparent?: boolean,
+  tableRefreshEnabled?: boolean
+): string => {
+  const bgColor = getGridBackgroundColor(theme, transparent);
+  return tableRefreshEnabled ? theme.components.table.headerBackground : bgColor;
+};
+
 export const getGridStyles = memoize(
   (
     theme: GrafanaTheme2,
@@ -75,20 +99,23 @@ export const getGridStyles = memoize(
     transparent?: boolean,
     tableRefreshEnabled?: boolean,
     noPanelPadding?: boolean,
-    zebraStriping?: boolean
+    zebraStriping?: boolean,
+    showColumnSidebarBorder?: boolean
   ) => {
     const table = theme.components.table;
-    const bgColor = transparent
-      ? theme.flags.visualDesignRefresh
-        ? theme.colors.background.page
-        : theme.colors.background.canvas
-      : theme.components.panel.background;
+    const bgColor = getGridBackgroundColor(theme, transparent);
     const headerBackgroundColor = tableRefreshEnabled ? table.headerBackground : bgColor;
     const nestedBorderColor = theme.isDark && !transparent ? theme.colors.border.medium : table.border;
     const cornerRadius = theme.shape.radius.default;
     const headerBorderColor = colorManipulator
       .onBackground(theme.colors.secondary.shade, headerBackgroundColor)
       .toHexString();
+
+    const headerCellDraggingBackgroundColor = theme.colors.emphasize(headerBackgroundColor, HEADER_DRAGGING_EMPHASIS);
+    const headerCellDragTargetBackgroundColor = theme.colors.emphasize(
+      headerBackgroundColor,
+      HEADER_DRAG_TARGET_EMPHASIS
+    );
 
     return {
       gridFrame: css({
@@ -101,7 +128,7 @@ export const getGridStyles = memoize(
         blockSize: enablePagination ? `calc(100% - ${getPaginationChromeHeight(noPanelPadding)}px)` : '100%',
         boxSizing: 'border-box',
         ...(tableRefreshEnabled &&
-          !noPanelPadding && {
+          (!noPanelPadding || transparent) && {
             // Reserve the same space as the visible frame without putting that frame underneath the
             // grid. Native scrollbars paint over an ancestor's ordinary border at their bottom corner.
             border: `${TABLE.FRAME_BORDER_WIDTH}px solid transparent`,
@@ -146,9 +173,16 @@ export const getGridStyles = memoize(
 
         blockSize: '100%',
         scrollbarWidth: 'thin',
+        // Keep elastic overscroll from pulling the header away from the fixed frame and sidebar divider.
+        ...(tableRefreshEnabled && { overscrollBehaviorY: 'none' }),
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
         border: 'none',
+        ...(showColumnSidebarBorder && {
+          borderInlineStart: `1px solid ${table.border}`,
+          // Match the header corner so the divider does not protrude above its curve.
+          ...(tableRefreshEnabled && { borderStartStartRadius: cornerRadius }),
+        }),
 
         // The grid defaults to tabular digits; override them while dataviz.tabularNums is disabled.
         ...(theme.flags.tabularNums ? {} : { fontVariantNumeric: 'normal' }),
@@ -165,7 +199,7 @@ export const getGridStyles = memoize(
         },
 
         ...(tableRefreshEnabled &&
-          !noPanelPadding && {
+          (!noPanelPadding || transparent) && {
             // The frame is painted above the grid so native scrollbars cannot erase its
             // corners. Repaint the selected edge just inside that frame so it cannot cover the cell's
             // outermost selection outline.
@@ -309,6 +343,12 @@ export const getGridStyles = memoize(
             // rounded corners) doesn't clip this: it governs the cell's own content, not a
             // box-shadow painted at its border edge.
             boxShadow: '0 -1px 0 0 var(--rdg-header-background-color)',
+            [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+              transition: theme.transitions.create('background-color', {
+                duration: COLUMN_SETTLE_MS,
+                easing: 'ease-out',
+              }),
+            },
           },
           // The `.rdg-cell.rdg-cell-frozen-start` rule above (for solid, occluding frozen body cells)
           // also matches frozen *header* cells, at higher specificity than the plain `.rdg-cell`
@@ -325,7 +365,7 @@ export const getGridStyles = memoize(
           // Filling everything outside the arc with the table's own background — the same colour as
           // the gap beside the table, and as whatever the table sits on — makes the corner opaque, so
           // there is nothing left to show through wherever it lands.
-          [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}::after`]: {
+          [`.rdg-header-row > .rdg-cell.${FIRST_COLUMN_CLASS}::before`]: {
             ...headerCornerMask(cornerRadius),
             insetInlineStart: 0,
             background: `radial-gradient(circle at 100% 100%, transparent calc(${cornerRadius} - 0.5px), var(--rdg-background-color) ${cornerRadius})`,
@@ -420,8 +460,15 @@ export const getGridStyles = memoize(
         '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
         ...(tableRefreshEnabled && {
           '--rdg-border-color': headerBorderColor,
-          '& .rdg-cell-dragging': { backgroundColor: theme.colors.emphasize(headerBackgroundColor, 0.1) },
-          '& .rdg-cell-drag-over': { backgroundColor: theme.colors.emphasize(headerBackgroundColor, 0.05) },
+          '& .rdg-cell-dragging': {
+            cursor: 'grabbing',
+            backgroundColor: headerCellDraggingBackgroundColor,
+            boxShadow: `inset 0 0 0 1px ${theme.colors.border.medium}`,
+          },
+          '& .rdg-cell-drag-over': {
+            backgroundColor: headerCellDragTargetBackgroundColor,
+            boxShadow: `inset 3px 0 0 0 ${theme.colors.primary.main}`,
+          },
         }),
       }),
       displayNone: css({ display: 'none' }),
@@ -457,6 +504,16 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
     paddingBlockEnd: TABLE.CELL_PADDING,
     justifyContent,
     '&:last-child': { borderInlineEnd: 'none' },
+  })
+);
+
+// Match the drop target so the highlight reads as the drag settling.
+export const getColumnSettleStyles = memoize((theme: GrafanaTheme2, tableRefreshEnabled?: boolean) =>
+  css({
+    backgroundColor: theme.colors.emphasize(
+      getHeaderBackgroundColor(theme, false, tableRefreshEnabled),
+      HEADER_DRAG_TARGET_EMPHASIS
+    ),
   })
 );
 
@@ -584,6 +641,13 @@ export const getTooltipStyles = memoize((theme: GrafanaTheme2, textAlign: TextAl
     width: theme.spacing(1.75),
     height: theme.spacing(1.75),
     background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.border.strong),
+    '&[data-warning=true]': {
+      background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.warning.main),
+    },
+    '&:focus-visible': {
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: 1,
+    },
   }),
 }));
 
@@ -624,21 +688,22 @@ const getHoverOnlyCellSelector = memoize((isNested?: boolean) => {
   return isNested ? '.rdg-cell:hover &' : '&:hover';
 });
 
-export const getScrollShadowOffsetStyles = (_theme: GrafanaTheme2, top: number, bottom: number) =>
+export const getScrollShadowOffsetStyles = (_theme: GrafanaTheme2, top: number, bottom: number, width: number) =>
   css({
+    '&::before, &::after': { inlineSize: width },
     '&::before': { top },
     '&::after': { bottom },
   });
 
 export const getScrollShadowStyles = (theme: GrafanaTheme2) => {
-  const scrollShadowColor = theme.isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+  const scrollShadowColor = `rgba(0, 0, 0, ${theme.isDark ? 0.25 : 0.08})`;
   return {
     scrollShadows: css({
       // The grid creates a stacking context; both pseudo-elements must paint above it.
       '&::before, &::after': {
         content: '""',
         blockSize: `max(5%, ${theme.spacing(3)})`,
-        insetInline: 0,
+        insetInlineStart: 0,
         opacity: 0,
         pointerEvents: 'none',
         position: 'absolute',

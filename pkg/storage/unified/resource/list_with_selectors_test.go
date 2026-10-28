@@ -26,7 +26,6 @@ import (
 func TestShouldUseSearchForList(t *testing.T) {
 	tests := map[string]struct {
 		disableSearch   bool
-		allowlist       []string
 		noRegistry      bool
 		req             *resourcepb.ListRequest
 		expectedAllowed bool
@@ -61,53 +60,43 @@ func TestShouldUseSearchForList(t *testing.T) {
 			},
 			expectedAllowed: false,
 		},
-		"true when no selectors and resource is allowlisted": {
-			allowlist: []string{"advisor.grafana.app/advisors"},
+		"false when no selectors for a known resource": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 				},
 			},
-			expectedAllowed: true,
+			expectedAllowed: false,
 		},
 		"false when resource version is set": {
-			allowlist: []string{"advisor.grafana.app/advisors"},
 			req: &resourcepb.ListRequest{
 				Source:          resourcepb.ListRequest_STORE,
 				ResourceVersion: 42,
 				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Labels: []*resourcepb.Requirement{{Key: "test", Operator: "=", Values: []string{"true"}}},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 				},
 			},
 			expectedAllowed: false,
 		},
 		"false when list has a name": {
-			allowlist: []string{"advisor.grafana.app/advisors"},
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "named"},
-				},
-			},
-			expectedAllowed: false,
-		},
-		"false when no selectors and resource is not allowlisted": {
-			req: &resourcepb.ListRequest{
-				Source: resourcepb.ListRequest_STORE,
-				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Labels: []*resourcepb.Requirement{{Key: "test", Operator: "=", Values: []string{"true"}}},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "named"},
 				},
 			},
 			expectedAllowed: false,
 		},
 		"false when keys only": {
-			allowlist: []string{"advisor.grafana.app/advisors"},
 			req: &resourcepb.ListRequest{
 				Source:   resourcepb.ListRequest_STORE,
 				KeysOnly: true,
 				Options: &resourcepb.ListOptions{
-					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Labels: []*resourcepb.Requirement{{Key: "test", Operator: "=", Values: []string{"true"}}},
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
 				},
 			},
 			expectedAllowed: false,
@@ -195,15 +184,14 @@ func TestShouldUseSearchForList(t *testing.T) {
 			},
 			expectedAllowed: true,
 		},
-		"true when no selectors and an allowlisted resource has no manifest": {
-			allowlist: []string{"mobile.ext.grafana.app/mobileusersettings"},
+		"false when no selectors and a resource has no manifest": {
 			req: &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
 					Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "mobile.ext.grafana.app", Resource: "mobileusersettings"},
 				},
 			},
-			expectedAllowed: true,
+			expectedAllowed: false,
 		},
 		"false when continuing a list that started on the store scan": {
 			req: &resourcepb.ListRequest{
@@ -292,11 +280,6 @@ func TestShouldUseSearchForList(t *testing.T) {
 			if !tc.disableSearch {
 				s.searchClient = &stubSearchClient{}
 			}
-			allowed := make(map[string]bool, len(tc.allowlist))
-			for _, resource := range tc.allowlist {
-				allowed[resource] = true
-			}
-			s.searchBackedListResources = SearchBackedListConfig{AllowedResources: allowed}
 			if !tc.noRegistry {
 				// Stands in for what a manifest watcher would load, including a kind this
 				// binary was not compiled with.
@@ -309,21 +292,6 @@ func TestShouldUseSearchForList(t *testing.T) {
 			require.Equal(t, tc.expectedAllowed, s.shouldUseSearchForList(tc.req))
 		})
 	}
-}
-
-func TestSearchBackedListConfigAllowed(t *testing.T) {
-	config := SearchBackedListConfig{AllowedResources: map[string]bool{
-		"dashboard.grafana.app/dashboards": true,
-		"*.ext.grafana.app":                true,
-		"disabled.ext.grafana.app":         false,
-		"[invalid":                         true,
-	}}
-
-	require.True(t, config.Allowed("dashboard.grafana.app", "dashboards"))
-	require.False(t, config.Allowed("dashboard.grafana.app", "folders"))
-	require.True(t, config.Allowed("exampletodoapp.ext.grafana.app", "todos"))
-	require.False(t, config.Allowed("disabled.ext.grafana.app", "todos"))
-	require.False(t, config.Allowed("exampletodoapp.grafana.app", "todos"))
 }
 
 func TestFilterSelectors(t *testing.T) {
@@ -407,7 +375,7 @@ func TestTokenFromOtherListPath(t *testing.T) {
 	require.False(t, tokenFromOtherListPath(sqlScanToken, false))
 }
 
-func TestDecodeListSearchRows(t *testing.T) {
+func TestDecodeSearchListPage(t *testing.T) {
 	const resourceVersion = int64(1958241239561142273)
 	key := &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}
 	want := []listSearchRow{{key: key, resourceVersion: resourceVersion, sortFields: []string{"title", "a"}}}
@@ -444,14 +412,14 @@ func TestDecodeListSearchRows(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			rows, err := decodeListSearchRows(test.response)
+			page, err := decodeSearchListPage(test.response, 0)
 			require.NoError(t, err)
-			require.Equal(t, want, rows)
+			require.Equal(t, want, page.rows)
 		})
 	}
 }
 
-func TestDecodeListSearchRowsRejectsMalformedResponses(t *testing.T) {
+func TestDecodeSearchListPageRejectsMalformedResponses(t *testing.T) {
 	for _, test := range []struct {
 		name     string
 		response *resourcepb.ResourceSearchResponse
@@ -476,7 +444,7 @@ func TestDecodeListSearchRowsRejectsMalformedResponses(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := decodeListSearchRows(test.response)
+			_, err := decodeSearchListPage(test.response, 0)
 			require.Error(t, err)
 		})
 	}
@@ -504,7 +472,7 @@ func TestListWithSelectors(t *testing.T) {
 		// The search backend prefixes label keys itself, so they are passed through.
 		require.Equal(t, "alerting.grafana.app/has-rules", searchClient.last.Options.Labels[0].Key)
 		require.Equal(t, SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.foo", searchClient.last.Options.Fields[0].Key)
-		require.Equal(t, []string{SEARCH_FIELD_RV}, searchClient.last.Fields)
+		require.Equal(t, []string{SEARCH_FIELD_RV, SEARCH_FIELD_FOLDER}, searchClient.last.Fields)
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchClient.last.ResultFormat)
 	})
 
@@ -1092,30 +1060,6 @@ func TestListWithSelectorsUsesBatchReadsAndAuthorization(t *testing.T) {
 	require.Zero(t, backend.readCalls)
 }
 
-func TestListUsesSearchForAnAllowlistedResourceWithoutSelectors(t *testing.T) {
-	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-	searchClient := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{ResourceVersion: 100}}
-	s := createTestServer(searchClient, 1024)
-	s.searchBackedListResources = SearchBackedListConfig{AllowedResources: map[string]bool{
-		"advisor.grafana.app/advisors": true,
-	}}
-
-	resp, err := s.List(ctx, &resourcepb.ListRequest{
-		Source: resourcepb.ListRequest_STORE,
-		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-			Namespace: "nsx",
-			Group:     "advisor.grafana.app",
-			Resource:  "advisors",
-		}},
-	})
-
-	require.NoError(t, err)
-	require.Empty(t, resp.Items)
-	require.NotNil(t, searchClient.last)
-	require.Empty(t, searchClient.last.Options.Fields)
-	require.Empty(t, searchClient.last.Options.Labels)
-}
-
 func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 
@@ -1273,16 +1217,21 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		require.Empty(t, resp.Items)
 	})
 
-	t.Run("not-found row surfaces without authorizing (not dropped on empty folder)", func(t *testing.T) {
+	t.Run("not-found row is left out without authorizing", func(t *testing.T) {
+		logger := &logtest.Fake{}
 		s := createTestServer(newSearch(), 1024)
 		s.backend = &batchFakeBackend{fakeBackend: &fakeBackend{}, notFound: map[string]struct{}{"b": {}}}
-		// Deny "b" too: a NotFound must still surface, not be hidden by the authz check.
+		// Allow only "a": "b" is skipped because storage does not have it, before
+		// any check could decide it.
 		s.access = denyByNameAccess{deny: map[string]struct{}{"b": {}}}
+		s.log = logger
 
 		resp, err := s.listWithSelectors(ctx, req())
 		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+		require.Nil(t, resp.Error)
+		require.Len(t, resp.Items, 1)
+		require.Equal(t, int64(1), resp.Items[0].ResourceVersion)
+		require.Equal(t, 1, logger.WarnLogs.Calls)
 	})
 }
 
@@ -1350,32 +1299,26 @@ func TestListWithSelectorsSurfacesKVRuntimeFailuresBeforeAuthorization(t *testin
 }
 
 func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
-	var kvWrapper *failSecondBatchGetKV
+	var kvWrapper *failDataBatchGetsKV
 	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
-		kvWrapper = &failSecondBatchGetKV{KV: opts.KvStore, err: errors.New("transient storage failure")}
+		kvWrapper = &failDataBatchGetsKV{KV: opts.KvStore, err: errors.New("transient storage failure"), failFrom: 2}
 		opts.KvStore = kvWrapper
 	})
 
-	rows := make([]*resourcepb.ResourceTableRow, 0, readChunkSize+1)
+	rows := make([]*resourcepb.ResourceSearchRow, 0, readChunkSize+1)
 	denied := make(map[string]struct{}, readChunkSize)
 	var listRV int64
 	for i := range readChunkSize + 1 {
 		name := fmt.Sprintf("cross-batch-%02d", i)
-		listRV = seedResource(t, backend, t.Context(), name, fmt.Sprintf("folder-%02d", i))
-		rows = append(rows, &resourcepb.ResourceTableRow{
-			Key:             appsKey(name),
-			ResourceVersion: listRV,
-			SortFields:      []string{name},
-		})
+		folder := fmt.Sprintf("folder-%02d", i)
+		listRV = seedResource(t, backend, t.Context(), name, folder)
+		rows = append(rows, folderSearchRow(appsKey(name), listRV, folder, name))
 		if i < readChunkSize {
 			denied[name] = struct{}{}
 		}
 	}
 
-	s := createTestServer(&stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
-		ResourceVersion: listRV,
-		Results:         &resourcepb.ResourceTable{Rows: rows},
-	}}, 1024)
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(listRV, rows)}, 1024)
 	s.backend = backend
 	s.access = denyByNameAccess{deny: denied}
 	resp, err := s.listWithSelectors(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListRequest{
@@ -1390,7 +1333,58 @@ func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
 	require.Empty(t, resp.Items)
 	require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
 	require.Equal(t, "transient storage failure", resp.Error.Message)
+	// The first chunk is read by exact key; the second chunk's exact read fails and
+	// ends the list without another read.
 	require.Equal(t, 2, kvWrapper.dataCalls)
+}
+
+// A body that cannot be read fails its own row only. When an earlier row already
+// fills the page, the list stops before it and pages forward instead of failing.
+func TestListWithSelectorsStopsBeforeAnUnreadableBodyPastAFullPage(t *testing.T) {
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.KvStore = &unreadableValueKV{KV: opts.KvStore, nameMatch: "second-unreadable", err: errors.New("value is corrupt")}
+	})
+	names := []string{"first", "second-unreadable"}
+	rows := make([]*resourcepb.ResourceSearchRow, 0, len(names))
+	var listRV int64
+	for _, name := range names {
+		listRV = seedResource(t, backend, t.Context(), name, "folder-1")
+		rows = append(rows, folderSearchRow(appsKey(name), listRV, "folder-1", name))
+	}
+
+	// One byte is enough for the first body to fill the page.
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(listRV, rows)}, 1)
+	s.backend = backend
+	resp, err := s.listWithSelectors(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key:    appsKey(""),
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, 1)
+	require.NotEmpty(t, resp.NextPageToken)
+}
+
+// folderSearchResponse is a field-values search response whose rows carry a folder.
+func folderSearchResponse(rv int64, rows []*resourcepb.ResourceSearchRow) *resourcepb.ResourceSearchResponse {
+	return &resourcepb.ResourceSearchResponse{
+		ResourceVersion: rv,
+		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields:          []*resourcepb.ResourceSearchField{{Name: SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING}},
+		Rows:            rows,
+	}
+}
+
+func folderSearchRow(key *resourcepb.ResourceKey, rv int64, folder string, sortFields ...string) *resourcepb.ResourceSearchRow {
+	return &resourcepb.ResourceSearchRow{
+		Key:             key,
+		ResourceVersion: rv,
+		SortFields:      sortFields,
+		Values:          []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{folder}}},
+	}
 }
 
 func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBytes int) *server {
@@ -1492,7 +1486,7 @@ func (b *batchFakeBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	return b.fakeBackend.ReadResource(ctx, req)
 }
 
-func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest, _ bool) (iter.Seq[*BackendReadResponse], error) {
+func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []BatchReadRequest, _ bool) (iter.Seq[*BackendReadResponse], error) {
 	b.batchCalls++
 	b.batchReqs += len(requests)
 	return func(yield func(*BackendReadResponse) bool) {
@@ -1525,4 +1519,281 @@ func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*reso
 			}
 		}
 	}, nil
+}
+
+func TestDecodeSearchListPageReadsTheFolderHint(t *testing.T) {
+	key := func(name string) *resourcepb.ResourceKey {
+		return &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: name}
+	}
+	page, err := decodeSearchListPage(&resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{Key: key("in-folder"), ResourceVersion: 1, Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{"title"}},
+				{FieldIndex: 1, StringValues: []string{"folder-1"}},
+			}},
+			// A root-level object has no folder value at all.
+			{Key: key("at-root"), ResourceVersion: 2, Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{"title"}},
+			}},
+		},
+	}, 0)
+
+	require.NoError(t, err)
+	require.True(t, page.folderIndexed)
+	require.Len(t, page.rows, 2)
+	require.Equal(t, "folder-1", page.rows[0].folder)
+	require.Equal(t, "", page.rows[1].folder)
+}
+
+// The index can still hold a row for an object storage no longer has: deleted,
+// or that version pruned, before the index caught up. The store scan would not
+// list such an object, so the search-backed list leaves the row out instead of
+// failing the whole list with its NotFound.
+func TestListSkipsSearchRowsStorageNoLongerHas(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := setupTestStorageBackend(t)
+	first := seedResource(t, backend, ctx, "first", "folder-1")
+	created := seedResource(t, backend, ctx, "gone", "folder-1")
+	deleteResource(t, backend, ctx, "gone", "folder-1", created)
+	// The row points at the deletion, so storage has no live version at or below it.
+	gone, err := backend.latestResourceVersion(ctx)
+	require.NoError(t, err)
+	last := seedResource(t, backend, ctx, "last", "folder-1")
+
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(last, []*resourcepb.ResourceSearchRow{
+		folderSearchRow(appsKey("first"), first, "folder-1", "first"),
+		folderSearchRow(appsKey("gone"), gone, "folder-1", "gone"),
+		folderSearchRow(appsKey("last"), last, "folder-1", "last"),
+	})}, 1024)
+	s.backend = backend
+
+	resp, err := s.List(ctx, &resourcepb.ListRequest{
+		Source: resourcepb.ListRequest_STORE,
+		Options: &resourcepb.ListOptions{
+			Key:    appsKey(""),
+			Labels: []*resourcepb.Requirement{{Key: "team", Operator: "=", Values: []string{"a"}}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	versions := make([]int64, 0, len(resp.Items))
+	for _, item := range resp.Items {
+		versions = append(versions, item.ResourceVersion)
+	}
+	require.Equal(t, []int64{first, last}, versions)
+}
+
+// folderAccess denies by folder and counts both kinds of call.
+type folderAccess struct {
+	deny            map[string]bool
+	checks, batches int
+	checkedFolders  []string
+}
+
+func (a *folderAccess) Check(_ context.Context, _ claims.AuthInfo, _ claims.CheckRequest, folder string) (claims.CheckResponse, error) {
+	a.checks++
+	a.checkedFolders = append(a.checkedFolders, folder)
+	return claims.CheckResponse{Allowed: !a.deny[folder]}, nil
+}
+
+func (a *folderAccess) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	a.batches++
+	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
+	for _, c := range req.Checks {
+		results[c.CorrelationID] = claims.BatchCheckResult{Allowed: !a.deny[c.Folder]}
+	}
+	return claims.BatchCheckResponse{Results: results}, nil
+}
+
+func (a *folderAccess) Compile(context.Context, claims.AuthInfo, claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
+	return func(string, string) bool { return true }, nil, nil
+}
+
+// Rows are authorized in one batch on the folder the index recorded, before any
+// is read, the way the store list authorizes keys before fetching values.
+func TestListWithSelectorsAuthorizesRowsBeforeReadingThem(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	const total = readChunkSize*2 + 5
+	rows := make([]*resourcepb.ResourceSearchRow, 0, total)
+	for i := range total {
+		folder := "open"
+		if i%5 == 0 {
+			folder = "closed"
+		}
+		rows = append(rows, folderSearchRow(appsKey(fmt.Sprintf("item-%02d", i)), int64(i+1), folder, fmt.Sprintf("s%02d", i)))
+	}
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(100, rows)}, 1<<20)
+	s.authorizeBeforeFetchEnabled = true
+	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
+	s.backend = backend
+	access := &folderAccess{deny: map[string]bool{"closed": true}}
+	s.access = access
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, total-5)
+	require.Equal(t, 1, access.batches)
+	require.Len(t, backend.pulledNames, total-5, "denied rows are never read")
+	require.NotContains(t, backend.pulledNames, "item-00")
+}
+
+// A row whose stored folder differs from the one the index recorded is checked
+// again in its stored folder, so a stale index cannot grant access.
+func TestListWithSelectorsRechecksRowsStoredInAnotherFolder(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := setupTestStorageBackend(t)
+	moved := seedResource(t, backend, ctx, "moved", "private")
+	kept := seedResource(t, backend, ctx, "kept", "open")
+
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(kept, []*resourcepb.ResourceSearchRow{
+		// The index still has "moved" in the folder it used to be in.
+		folderSearchRow(appsKey("moved"), moved, "open", "moved"),
+		folderSearchRow(appsKey("kept"), kept, "open", "kept"),
+	})}, 1<<20)
+	s.authorizeBeforeFetchEnabled = true
+	s.backend = backend
+	access := &folderAccess{deny: map[string]bool{"private": true}}
+	s.access = access
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, 1)
+	require.Equal(t, kept, resp.Items[0].ResourceVersion)
+	require.Equal(t, []string{"private"}, access.checkedFolders, "only the moved row is checked again, in its stored folder")
+}
+
+// Without authorize_before_fetch_enabled every row is read, then authorized on
+// its own in its stored folder, as before.
+func TestListWithSelectorsAuthorizesRowsAfterReadingThemByDefault(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := setupTestStorageBackend(t)
+	open := seedResource(t, backend, ctx, "open", "open")
+	closed := seedResource(t, backend, ctx, "closed", "closed")
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(closed, []*resourcepb.ResourceSearchRow{
+		folderSearchRow(appsKey("open"), open, "open", "s1"),
+		folderSearchRow(appsKey("closed"), closed, "closed", "s2"),
+	})}, 1<<20)
+	s.backend = backend
+	access := &folderAccess{deny: map[string]bool{"closed": true}}
+	s.access = access
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, 1)
+	require.Equal(t, open, resp.Items[0].ResourceVersion)
+	require.Zero(t, access.batches)
+	require.Equal(t, []string{"open", "closed"}, access.checkedFolders, "one check per row, in its stored folder")
+}
+
+func TestListWithSelectorsWithoutIndexedFoldersAuthorizesAfterReading(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := setupTestStorageBackend(t)
+	rv := seedResource(t, backend, ctx, "item", "open")
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			searchResp := &resourcepb.ResourceSearchResponse{
+				ResourceVersion: rv,
+				ResultFormat:    format,
+				Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{
+					{Key: appsKey("item"), ResourceVersion: rv},
+				}},
+				Rows: []*resourcepb.ResourceSearchRow{{Key: appsKey("item"), ResourceVersion: rv}},
+			}
+			s := createTestServer(&stubSearchClient{resp: searchResp}, 1<<20)
+			s.authorizeBeforeFetchEnabled = true
+			s.backend = backend
+			access := &folderAccess{deny: map[string]bool{"": true}}
+			s.access = access
+
+			resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+			})
+
+			require.NoError(t, err)
+			require.Nil(t, resp.Error)
+			require.Len(t, resp.Items, 1)
+			require.Zero(t, access.batches, "an unknown folder must not be authorized as root")
+			require.Equal(t, []string{"open"}, access.checkedFolders)
+		})
+	}
+}
+
+// k6Access behaves like authlib for a user: the single Check hides the k6 folder,
+// BatchCheck has no such rule and allows it.
+type k6Access struct {
+	checked []string
+	batches int
+}
+
+func (a *k6Access) Check(_ context.Context, _ claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
+	a.checked = append(a.checked, req.Name)
+	return claims.CheckResponse{Allowed: req.Name != k6FolderUID && folder != k6FolderUID}, nil
+}
+
+func (a *k6Access) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	a.batches++
+	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
+	for _, c := range req.Checks {
+		results[c.CorrelationID] = claims.BatchCheckResult{Allowed: true}
+	}
+	return claims.BatchCheckResponse{Results: results}, nil
+}
+
+func (a *k6Access) Compile(context.Context, claims.AuthInfo, claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
+	return func(string, string) bool { return true }, nil, nil
+}
+
+// Until authlib's BatchCheck hides the k6 folder, rows in it or naming it keep
+// the single check that does.
+func TestListWithSelectorsKeepsTheSingleCheckForTheK6Folder(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := setupTestStorageBackend(t)
+	inK6 := seedResource(t, backend, ctx, "perf-dash", k6FolderUID)
+	named := seedResource(t, backend, ctx, k6FolderUID, "open")
+	open := seedResource(t, backend, ctx, "team-dash", "open")
+	moved := seedResource(t, backend, ctx, "moved-dash", k6FolderUID)
+
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(moved, []*resourcepb.ResourceSearchRow{
+		folderSearchRow(appsKey("perf-dash"), inK6, k6FolderUID, "s1"),
+		folderSearchRow(appsKey(k6FolderUID), named, "open", "s2"),
+		folderSearchRow(appsKey("team-dash"), open, "open", "s3"),
+		// The index still has it where it was before it moved into the k6 folder.
+		folderSearchRow(appsKey("moved-dash"), moved, "open", "s4"),
+	})}, 1<<20)
+	s.authorizeBeforeFetchEnabled = true
+	s.backend = backend
+	access := &k6Access{}
+	s.access = access
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, 1)
+	require.Equal(t, open, resp.Items[0].ResourceVersion)
+	require.Equal(t, 1, access.batches)
+	require.Equal(t, []string{"perf-dash", k6FolderUID, "moved-dash"}, access.checked, "only the k6 rows take the single check")
 }

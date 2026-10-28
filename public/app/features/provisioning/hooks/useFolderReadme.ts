@@ -28,9 +28,6 @@ export interface UseFolderReadmeResult {
  * Reports `status: 'loading'` until a repository name is known — callers resolve
  * the repository once (see `useFolderDocs`) and pass its name in.
  *
- * Callers must gate on the `provisioning.readmes` OpenFeature toggle before
- * mounting any component that invokes this hook.
- *
  * Returns a tagged `status` instead of raw boolean flags so callers can
  * exhaustively switch on the four states without reconstructing the machine.
  */

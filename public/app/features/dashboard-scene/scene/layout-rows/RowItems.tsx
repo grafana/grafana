@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import { type OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
+import { changeRowsHeaderVisibility } from '../../actions/layout/changeRowsHeaderVisibility';
 import { endBatch, startBatch } from '../../actions/utils/batch';
 import { type DashboardScene } from '../DashboardScene';
 import { type EditableDashboardElementInfo, type EditableDashboardElement } from '../types/EditableDashboardElement';
@@ -38,12 +39,18 @@ export class RowItems implements EditableDashboardElement {
       { actionId: 'row.remove', scope: 'multiple' }
     );
 
-    this._rows.forEach((row) => row.onDelete());
-
-    endBatch(this._dashboard);
+    try {
+      this._rows.forEach((row) => row.onDelete());
+    } finally {
+      endBatch(this._dashboard);
+    }
   }
 
   public onHeaderHiddenToggle(value: boolean, indeterminate: boolean) {
-    this._rows.forEach((row) => row.onHeaderHiddenToggle(indeterminate ? true : !value));
+    changeRowsHeaderVisibility({
+      source: this._dashboard,
+      rows: this._rows,
+      hideHeader: indeterminate ? true : !value,
+    });
   }
 }

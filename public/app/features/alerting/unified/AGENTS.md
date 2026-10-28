@@ -253,7 +253,7 @@ For Kubernetes APIs and new schemas – use the `@grafana/alerting` package.
 Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/v1beta1/mocks/fakes`
 MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/v1beta1/mocks/handlers`
 
-And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.test.scenario.ts` and is used for integration tests.
+And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.scenario.ts` and is used for integration tests.
 
 Additionally alerting uses **`alertingFactory`** from `mocks/server/db` for building test data:
 

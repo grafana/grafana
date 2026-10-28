@@ -6,7 +6,8 @@ import { useStyles2, Text, Stack, Link } from '@grafana/ui';
 
 interface ListRowProps {
   title: string;
-  subtitle?: string;
+  // Rendered inside a secondary bodySmall paragraph; a nested Text can restyle part or all of it.
+  subtitle?: ReactNode;
   prefix?: ReactNode;
   trailing?: ReactNode;
   // isCompact is used to make the row leaner (less spacing)
@@ -70,7 +71,7 @@ export function ListRow({
         )}
       </Stack>
 
-      {trailing && <div>{trailing}</div>}
+      {trailing && <div className={styles.trailingCell}>{trailing}</div>}
     </div>
   );
 }
@@ -82,14 +83,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     minWidth: 0,
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(1),
+    // A truncated title or subtitle otherwise runs its ellipsis into the trailing cell.
+    gap: theme.spacing(2),
     justifyContent: 'space-between',
     alignItems: 'center',
   }),
   listCompact: css({
     margin: 0,
   }),
-  // Prevents a long title from squeezing the prefix; width policy stays with callers.
+  // Prevents a long title from squeezing the prefix or trailing cells; width policy stays with callers.
   prefixCell: css({
+    flexShrink: 0,
+  }),
+  trailingCell: css({
     flexShrink: 0,
   }),
   flush: css({

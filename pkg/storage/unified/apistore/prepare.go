@@ -26,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -202,13 +202,13 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetResourceVersion("")
 	obj.SetSelfLink("")
 
-	obj.SetUpdatedBy("")
 	obj.SetUpdatedTimestamp(nil)
 	createdBy := info.GetUID()
 	if metaUID, ok := identity.MetadataIdentityUIDFrom(ctx); ok {
 		createdBy = metaUID
 	}
 	obj.SetCreatedBy(createdBy)
+	obj.SetUpdatedBy(createdBy)
 	obj.SetGeneration(1) // the first time we write
 
 	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, s.ownerReference(obj), &v)
@@ -234,7 +234,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 	rsp, err := s.opts.Index.Search(ctx, &resourcepb.ResourceSearchRequest{
 		Limit: 1, // we only need to know if any match exists
 		// An empty projection returns every field; name keeps this key-only.
-		Fields:       []string{resource.SEARCH_FIELD_NAME},
+		Fields:       []string{resourceutil.SEARCH_FIELD_NAME},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
@@ -250,7 +250,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 		},
 	})
 	// A failed search returns no rows, which would otherwise pass as "the ID is free".
-	if err := resource.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err := resourceutil.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
 		return err
 	}
 	hasResults, err := searchResponseHasRows(rsp)
@@ -268,14 +268,10 @@ func searchResponseHasRows(rsp *resourcepb.ResourceSearchResponse) (bool, error)
 	if rsp == nil {
 		return false, errors.New("nil search response")
 	}
-	switch rsp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return len(rsp.GetResults().GetRows()) > 0, nil
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return len(rsp.GetRows()) > 0, nil
-	default:
+	if rsp.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return false, fmt.Errorf("unsupported search result format %d", rsp.GetResultFormat())
 	}
+	return len(rsp.GetRows()) > 0, nil
 }
 
 // Called on update

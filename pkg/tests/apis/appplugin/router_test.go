@@ -36,12 +36,12 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/retry"
 
-	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/httpadapter"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/clock"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -93,7 +93,11 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	pluginServer := grpc.NewServer()
 	var routeCalls atomic.Int32
 	var receivedSecureValues atomic.Value
+	var receivedRoute atomic.Value // httpadapter.RouteInfo
 	pluginv3.RegisterRouteServiceServer(pluginServer, httpadapter.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if info, ok := httpadapter.RouteInfoFromContext(r.Context()); ok {
+			receivedRoute.Store(info)
+		}
 		parent := httpadapter.ParentFromContext(r.Context())
 		secureValues := parent.GetDecryptedSecureValues()
 		if secureValues == nil {
@@ -122,12 +126,20 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
    "jsonData":{"id":"router-test-app","type":"app"},
    "manifest":{
     "appName":"router-test-app","group":"router-test.ext.grafana.app","preferredVersion":"v1",
-    "versions":[{"name":"v1","served":true,"kinds":[
+    "versions":[{"name":"v1","served":true,
+     "openapi":{"paths":{
+      "/namespaces/{namespace}/things/{name}/reload":{"get":{"responses":{"200":{"description":"OK"}}}},
+      "/files/{path:*}":{"get":{"responses":{"200":{"description":"OK"}}}},
+      "/namespaces/{namespace}/files/{path...}":{"get":{"responses":{"200":{"description":"OK"}}},"put":{"responses":{"200":{"description":"OK"}}}},
+      "/namespaces/{namespace}/things/{name}/files/{path:*}":{"get":{"responses":{"200":{"description":"OK"}}}}
+     }},
+     "kinds":[
      {"kind":"Thing","plural":"things","scope":"Namespaced","folderScoped":false,
-      "routes":{"reload":{"get":{"responses":{"200":{"description":"OK"}}}}},
       "schemas":{"Thing":{"type":"object","properties":{"secure":{"type":"object","additionalProperties":{"type":"object","properties":{"name":{"type":"string"}}}},"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}},
      {"kind":"Widget","plural":"widgets","scope":"Namespaced","folderScoped":true,
-      "schemas":{"Widget":{"type":"object","properties":{"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}}
+      "schemas":{"Widget":{"type":"object","properties":{"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}},
+     {"kind":"Gadget","plural":"gadgets","scope":"Cluster",
+      "schemas":{"Gadget":{"type":"object","properties":{"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}}
     ]}]
    }
   }}]}`, "PLUGIN_HOST", listener.Addr().String())))
@@ -155,7 +167,7 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		Spec: secretv1beta1.SecureValueSpec{Description: "Router integration test"},
 	}, "router-test-user")
 	require.NoError(t, err)
-	require.NoError(t, secretStore.SetVersionToActive(t.Context(), xkube.Namespace(namespace), secureValue.Name, secureValue.Status.Version))
+	require.NoError(t, secretStore.SetVersionToActive(t.Context(), xkube.Namespace(namespace), secureValue.Name, secureValue.Status.Version, 0))
 
 	const folderUID = "router-widgets"
 	createFolder(t, t.Context(), helper, folderUID, "Router widgets")
@@ -179,20 +191,18 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		folderProxy.ServeHTTP(w, r)
 	}))
 	t.Cleanup(folderServer.Close)
-	folderBackend, err := router.NewForwardBackend(metav1.APIGroup{Name: "folder.grafana.app"}, v1alpha2.RouteBackendSpec{
-		Mode:    v1alpha2.RouteBackendSpecModeForward,
-		Forward: &v1alpha2.RouteBackendCommonBackendConfig{Url: folderServer.URL},
-	}, "folder", folderServer.Client().Transport.(*http.Transport))
+	folderServerURL, err := url.Parse(folderServer.URL)
 	require.NoError(t, err)
+	folderBackend := folderProxyBackend{proxy: httputil.NewSingleHostReverseProxy(folderServerURL)}
 	routerHandler := http.NewServeMux()
 	cfg := setting.NewCfg()
 	cfg.ExtJWTAuth.JWKSUrl = manifests.URL + "/jwks"
 	cfg.ExtJWTAuth.Audiences = []string{audience}
 	cfg.SectionWithEnvOverrides("cloud_router").Key("plugins_url").SetValue(manifests.URL + "/plugins")
-	loader, err := router.ProvideRoutesLoader(cfg, router.PluginLoaderDependencies{
-		PluginDependencies: router.PluginDependencies{Cfg: cfg, Unified: helper.GetEnv().ResourceClient,
-			RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler),
-			SecureValues:       secret.NewMockInlineSecureValueSupport(t), Decrypter: decrypter},
+	loader, err := router.NewCloudRoutesLoader(cfg, router.PluginDependencies{
+		Cfg: cfg, Unified: helper.GetEnv().ResourceClient,
+		RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler),
+		SecureValues:       secret.NewMockInlineSecureValueSupport(t), Decrypter: decrypter,
 	})
 	require.NoError(t, err)
 	lifecycle, ok := loader.(services.Service)
@@ -205,9 +215,10 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	require.NoError(t, err)
 	apiRouter := router.NewGrafanaRouter(folderRoutesLoader{RoutesLoader: loader, folder: folderBackend}, tokens)
 	require.NoError(t, apiRouter.Run(ctx))
-	routerHandler.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		apiRouter.HandleFunc(w, r, http.NotFoundHandler())
-	}))
+	routerHandler.Handle("/apis", apiRouter.HandleAPIs())
+	routerHandler.Handle("/apis/", apiRouter.HandleAPIs())
+	routerHandler.Handle("/openapi/v3", apiRouter.HandleOpenAPIv3())
+	routerHandler.Handle("/openapi/v3/", apiRouter.HandleOpenAPIv3())
 	server := httptest.NewServer(routerHandler)
 	t.Cleanup(server.Close)
 	newClient := func(token string) dynamic.Interface {
@@ -341,6 +352,58 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		}
 	})
 
+	// A final {name:*} segment, or its {name...} alias, matches the rest of the
+	// path. The plugin is sent the route it declared, as for any other route.
+	t.Run("catch-all routes match the rest of the path", func(t *testing.T) {
+		things := client.Resource(schema.GroupVersionResource{Group: group, Version: "v1", Resource: "things"}).Namespace(namespace)
+		_, err := things.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": group + "/v1", "kind": "Thing",
+			"metadata": map[string]any{"name": "with-files"},
+			"spec":     map[string]any{"value": "files"},
+		}}, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = things.Delete(context.Background(), "with-files", metav1.DeleteOptions{}) })
+
+		httpClient := &http.Client{Transport: pluginRouterTokenTransport{next: http.DefaultTransport, token: token}}
+		call := func(method, path string) (int, http.Header) {
+			t.Helper()
+			req, err := http.NewRequestWithContext(t.Context(), method, server.URL+"/apis/"+group+"/v1/"+path, nil)
+			require.NoError(t, err)
+			res, err := httpClient.Do(req)
+			require.NoError(t, err)
+			require.NoError(t, res.Body.Close())
+			return res.StatusCode, res.Header
+		}
+
+		for _, tc := range []struct {
+			name, method, path string
+			route, namespace   string
+		}{
+			{"cluster", http.MethodGet, "files/reports/2026/q3.csv", "files/{path:*}", ""},
+			{"namespaced alias", http.MethodGet, "namespaces/" + namespace + "/files/a/b/c.json", "files/{path...}", namespace},
+			{"namespaced write", http.MethodPut, "namespaces/" + namespace + "/files/a/b/c.json", "files/{path...}", namespace},
+			{"below an object", http.MethodGet, "namespaces/" + namespace + "/things/with-files/files/logs/today.txt", "files/{path:*}", namespace},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				before := routeCalls.Load()
+				code, _ := call(tc.method, tc.path)
+				require.Equal(t, http.StatusOK, code)
+				require.Equal(t, before+1, routeCalls.Load(), "the route reached the plugin")
+				info := receivedRoute.Load().(httpadapter.RouteInfo)
+				require.Equal(t, tc.route, info.Path)
+				require.Equal(t, tc.namespace, info.Namespace)
+			})
+		}
+
+		t.Run("an undeclared method is refused", func(t *testing.T) {
+			before := routeCalls.Load()
+			code, header := call(http.MethodPost, "namespaces/"+namespace+"/files/a/b/c.json")
+			require.Equal(t, http.StatusMethodNotAllowed, code)
+			require.Equal(t, "GET, HEAD, PUT", header.Get("Allow"))
+			require.Equal(t, before, routeCalls.Load())
+		})
+	})
+
 	t.Run("an informer syncs and follows changes", func(t *testing.T) {
 		ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
 		defer cancel()
@@ -429,6 +492,87 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		_, err := client.Resource(schema.GroupVersionResource{Group: group, Version: "v1", Resource: "things"}).Namespace("stacks-5678").List(t.Context(), metav1.ListOptions{})
 		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
 	})
+
+	// Storage is called with a token the router substitutes or exchanges, which
+	// can carry more than the caller's own permissions.
+	t.Run("limits access policies to their token's permissions", func(t *testing.T) {
+		things := schema.GroupVersionResource{Group: group, Version: "v1", Resource: "things"}
+		gadgets := schema.GroupVersionResource{Group: group, Version: "v1", Resource: "gadgets"}
+		accessToken := func(subject string, permissions ...string) string {
+			t.Helper()
+			policy := claims
+			policy.Subject = "access-policy:" + subject
+			policy.Rest.Actor = nil
+			policy.Rest.Permissions = permissions
+			return sign(policy)
+		}
+		readUpdateToken := accessToken("read-update",
+			group+"/things:get", group+"/things:update", group+"/gadgets:get", group+"/gadgets:update")
+		unprivilegedToken := accessToken("unprivileged")
+		owner := newClient(accessToken("owner", group+"/things:*", group+"/gadgets:*"))
+		readUpdate, unprivileged := newClient(readUpdateToken), newClient(unprivilegedToken)
+
+		for _, kind := range []struct {
+			name     string
+			resource func(dynamic.Interface) dynamic.ResourceInterface
+		}{
+			{"Thing", func(c dynamic.Interface) dynamic.ResourceInterface { return c.Resource(things).Namespace(namespace) }},
+			{"Gadget", func(c dynamic.Interface) dynamic.ResourceInterface { return c.Resource(gadgets) }},
+		} {
+			t.Run(kind.name, func(t *testing.T) {
+				ctx := t.Context()
+				owned, limited, denied := kind.resource(owner), kind.resource(readUpdate), kind.resource(unprivileged)
+				object := func(name string) *unstructured.Unstructured {
+					return &unstructured.Unstructured{Object: map[string]any{
+						"apiVersion": group + "/v1", "kind": kind.name,
+						"metadata": map[string]any{"name": name},
+						"spec":     map[string]any{"value": "initial"},
+					}}
+				}
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					_, err := owned.List(ctx, metav1.ListOptions{})
+					assert.NoError(c, err, "%#v", err)
+				}, 30*time.Second, 100*time.Millisecond, "router should load the polled manifest")
+
+				target, err := owned.Create(ctx, object("access-policy-target"), metav1.CreateOptions{})
+				require.NoError(t, err)
+				t.Cleanup(func() { _ = owned.Delete(context.Background(), target.GetName(), metav1.DeleteOptions{}) })
+
+				_, err = limited.List(ctx, metav1.ListOptions{})
+				require.NoError(t, err)
+				got, err := limited.Get(ctx, target.GetName(), metav1.GetOptions{})
+				require.NoError(t, err)
+				require.NoError(t, unstructured.SetNestedField(got.Object, "updated", "spec", "value"))
+				_, err = limited.Update(ctx, got, metav1.UpdateOptions{})
+				require.NoError(t, err)
+
+				_, err = limited.Create(ctx, object("access-policy-created"), metav1.CreateOptions{})
+				require.True(t, apierrors.IsForbidden(err), "create without a create grant, got %v", err)
+				err = limited.Delete(ctx, target.GetName(), metav1.DeleteOptions{})
+				require.True(t, apierrors.IsForbidden(err), "delete without a delete grant, got %v", err)
+				_, err = denied.List(ctx, metav1.ListOptions{})
+				require.True(t, apierrors.IsForbidden(err), "list without permissions, got %v", err)
+			})
+		}
+
+		// Search is posted, so Kubernetes parses it as a create, but it reads.
+		t.Run("search", func(t *testing.T) {
+			search := func(token string) int {
+				t.Helper()
+				query := `{"apiVersion":"` + searchv0.APIVERSION + `","kind":"` + searchv0.KindSearchQuery + `"}`
+				req, err := http.NewRequestWithContext(t.Context(), http.MethodPost,
+					server.URL+"/apis/"+group+"/v1/namespaces/"+namespace+"/things/search", strings.NewReader(query))
+				require.NoError(t, err)
+				req.Header.Set("Content-Type", "application/json")
+				res, err := (&http.Client{Transport: pluginRouterTokenTransport{next: http.DefaultTransport, token: token}}).Do(req)
+				require.NoError(t, err)
+				require.NoError(t, res.Body.Close())
+				return res.StatusCode
+			}
+			require.Equal(t, http.StatusOK, search(readUpdateToken))
+			require.Equal(t, http.StatusForbidden, search(unprivilegedToken))
+		})
+	})
 }
 
 // nextWatchEvent waits for the next event about name, skipping bookmarks and
@@ -482,6 +626,20 @@ func (l folderRoutesLoader) Load(ctx context.Context) ([]router.Backend, error) 
 		return nil, err
 	}
 	return append(backends, l.folder), nil
+}
+
+// folderProxyBackend serves the folder API by proxying to a test server.
+type folderProxyBackend struct {
+	proxy http.Handler
+}
+
+func (b folderProxyBackend) Key() string { return "folder" }
+func (b folderProxyBackend) Group() metav1.APIGroup {
+	return metav1.APIGroup{Name: "folder.grafana.app"}
+}
+func (b folderProxyBackend) Source() string { return "test" }
+func (b folderProxyBackend) Load(context.Context) (http.Handler, error) {
+	return b.proxy, nil
 }
 
 type routerTestDecrypter func(context.Context, string, string, ...string) (map[string]decrypt.DecryptResult, error)

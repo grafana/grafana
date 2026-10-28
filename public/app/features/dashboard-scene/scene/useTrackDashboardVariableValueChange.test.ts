@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 
 import { reportInteraction } from '@grafana/runtime';
 import { CustomVariable, SceneVariableSet } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { useTrackDashboardVariableValueChange } from './useTrackDashboardVariableValueChange';
 
@@ -9,13 +10,6 @@ jest.mock('@grafana/runtime', () => {
   const runtime = jest.requireActual('@grafana/runtime');
   return {
     ...runtime,
-    config: {
-      ...runtime.config,
-      featureToggles: {
-        ...runtime.config.featureToggles,
-        dashboardNewLayouts: true,
-      },
-    },
     reportInteraction: jest.fn(),
   };
 });
@@ -30,6 +24,11 @@ describe('useTrackDashboardVariableValueChange', () => {
   beforeEach(() => {
     jest.mocked(reportInteraction).mockClear();
     mockUseMediaQueryMinWidth.mockReturnValue(false);
+    setTestFlags({ dashboardNewLayouts: true });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
   });
 
   it('should report interaction on mobile when user changes a variable', () => {

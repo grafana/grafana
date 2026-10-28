@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "Ripristina"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "Registri ausiliari",
+      "description-auxiliary-logs": "L'abilitazione di questa funzione comporta i costi per query di Azure Monitor sui pannelli della dashboard che eseguono query su tabelle configurate per <2>Registri ausiliari</2>. I registri ausiliari non prevedono SLA relativi ai tempi di risposta, sono pensati esclusivamente per query ad hoc e per l'esplorazione dei dati e non dovrebbero essere utilizzati per dashboard che richiedono dati in tempo reale o per gli avvisi.",
+      "label-enable-auxiliary-logs": "Abilita registri ausiliari"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "query {{queryDisplayName}} non elaborata",
@@ -187,47 +187,47 @@
       "tooltip-limit": "Limita il numero di righe restituite (il valore predefinito è 1000)."
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "Vuoi davvero passare ai registri ausiliari?",
       "body-basic-logs-queries": "Vuoi davvero passare ai registri di base?",
       "confirmText-confirm": "Conferma",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "Le query dei registri ausiliari comportano un costo in base alla quantità di dati analizzati. I registri ausiliari non prevedono SLA relativi ai tempi di risposta e non dovrebbero essere utilizzati per dashboard che richiedono dati in tempo reale o per gli avvisi.",
       "description-basic-logs-queries": "Le query dei registri di base comportano un costo in base alla quantità di dati analizzati.",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "Analitici",
+      "label-auxiliary": "Ausiliari",
+      "label-basic": "Base",
       "label-logs": "Registri",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "Query sui registri ausiliari",
       "title-basic-logs-queries": "Query sui registri di base",
       "tooltip-logs": "Specifica se eseguire una query di base o di analisi sui registri.",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "Specifica se eseguire una query sui registri analitici, di base o ausiliari.",
+      "tooltip-logs-aux": "Specifica se eseguire una query sui registri analitici o ausiliari."
     },
     "logs-query-builder": {
       "title-no-tables": "Risorsa caricata correttamente ma senza tabelle"
     },
     "logs-query-editor": {
       "learn-more": "Scopri di più",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "Quando si utilizzano i registri ausiliari, è possibile selezionare una sola risorsa alla volta.",
+      "notice-basic-single-resource": "Quando si utilizzano i registri di base, è possibile selezionare una sola risorsa alla volta.",
+      "notice-same-resource-type": "È possibile scegliere solo elementi dello stesso tipo di risorsa.",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> è una tabella analitica.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> è una tabella dei registri ausiliari: comporta un costo per GiB analizzato, non prevede uno SLA per il tempo di risposta e non è adatta per scenari in tempo reale o di generazione di avvisi.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> è una tabella dei registri di base: comporta un costo per GiB analizzato.",
+      "tier-switch-revert": "Ripristina a {{fromTier}}",
+      "tier-switch-title": "Livello di query impostato su {{toTier}}",
       "view-query": "Visualizza query in Azure Portal",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "Questa query sui registri ausiliari elabora {{dataIngested}} GiB quando viene eseguita. I registri ausiliari non prevedono uno SLA per il tempo di risposta e non sono adatti per scenari in tempo reale o di generazione di avvisi. ",
+      "warning-auxiliary-raw": "Questa è una query dei registri ausiliari: utilizza l'endpoint di ricerca, comporta un costo per GiB analizzato, non prevede uno SLA per il tempo di risposta e non è adatta per scenari in tempo reale o di generazione di avvisi. In questa modalità non è possibile eseguire query sulle tabelle del piano analitico (per quelle, utilizza il livello analitico). ",
+      "warning-basic-raw": "Questa è una query dei registri di base: utilizza l'endpoint di ricerca e comporta un costo per GiB analizzato. In questa modalità non è possibile eseguire query sulle tabelle del piano analitico (per quelle, utilizza il livello analitico). ",
+      "warning-data-ingested": "Questa query elabora {{dataIngested}} GiB quando viene eseguita. "
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "Questa tabella rientra nel piano Registri ausiliari. Abilita \"Registri ausiliari\" nelle impostazioni dell'origine dati per eseguire query su di essa.",
+      "description-auxiliary-enabled": "Selezionando questa tabella, la modalità di query passerà ai Registri ausiliari",
+      "description-basic-disabled": "Questa tabella rientra nel piano Registri di base. Abilita \"Registri di base\" nelle impostazioni dell'origine dati per eseguire query su di essa.",
+      "description-basic-enabled": "Selezionando questa tabella, la modalità di query passerà ai Registri di base",
+      "description-plan-unavailable": "Impossibile selezionare questa tabella perché non è stato possibile determinare il suo piano Registri.",
+      "label-all-columns": "Tutte le colonne"
     },
     "metric-name-field": {
       "label-metric": "Metrica"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Seleziona uno spazio dei nomi personalizzato",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "Seleziona nome dimensione",
+      "aria-label-select-metric-name": "Seleziona nome della metrica",
       "aria-label-select-namespace": "Seleziona spazio di nomi",
       "aria-label-select-query-type": "Seleziona il tipo di query",
       "aria-label-select-region": "Seleziona la regione",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "Seleziona un gruppo di risorse",
       "aria-label-select-subscription": "Seleziona l'abbonamento",
       "label-custom-namespace": "Spazio dei nomi personalizzato",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "Nome dimensione",
+      "label-metric-name": "Nome della metrica",
       "label-namespace": "Namespace",
       "label-query-type": "Tipo di query",
       "label-region": "Regione",

@@ -5,9 +5,14 @@
  * rule: a plan preview is read-only.
  */
 
+import { isEqual } from 'lodash';
+
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
+import { PENDING_CHANGES_COMMANDS, isPendingChangesEnabled } from '../lifecycle/pendingChangesFlag';
 import type { DashboardScene } from '../scene/DashboardScene';
+import { dashboardModesEnabled, isComposerMode, isViewingDashboard } from '../scene/dashboardModes';
+import type { DashboardSceneState } from '../scene/types/dashboard';
 
 import { SceneMutationClient } from './SceneMutationClient';
 import { LAZY_DASHBOARD_COMMANDS } from './commands/lazyRegistry';
@@ -41,7 +46,15 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
         ]
       : [];
 
-    super(scene, [...LAZY_DASHBOARD_COMMANDS, ...notebookCommands]);
+    // Pending changes commands exist only with the pending changes flag on, like their schemas.
+    const dashboardCommands = isPendingChangesEnabled()
+      ? LAZY_DASHBOARD_COMMANDS
+      : LAZY_DASHBOARD_COMMANDS.filter((command) => !PENDING_CHANGES_COMMANDS.has(command.name));
+    super(scene, [...dashboardCommands, ...notebookCommands]);
+  }
+
+  public getScene(): DashboardScene {
+    return this.scene;
   }
 
   /**
@@ -49,20 +62,58 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
    * and END_PLANNING. The single point every dashboard command passes through, so a future
    * command is refused without its own guard.
    *
+   * A building screen is the exception: the build's first write replaces it. The write runs with
+   * the loading screen still up and planning ends once it lands, so the screen gives way
+   * straight to the result instead of to an empty dashboard while the write is applied.
+   *
    * Does not add conversation scoping to the mutation API -- a caller still acts on whatever
    * scene is mounted, regardless of conversation. Only closes that gap for a plan preview.
    */
-  async execute(mutation: MutationRequest): Promise<MutationResult> {
+  async execute(mutation: MutationRequest, callerPluginId?: string): Promise<MutationResult> {
     const type = mutation.type.toUpperCase();
 
+    let building: DashboardSceneState['planning'];
     if (this.scene.isPlanning() && !PLANNING_ALLOWED_COMMANDS.has(type) && !this.isReadOnly(type)) {
-      return {
-        success: false,
-        error: 'This dashboard is a plan preview and is read-only until it is built or dismissed.',
-        changes: [],
-      };
+      const { planning } = this.scene.state;
+      if (planning?.phase !== 'building') {
+        return {
+          success: false,
+          error: 'This dashboard is a plan preview and is read-only until it is built or dismissed.',
+          changes: [],
+        };
+      }
+      building = planning;
     }
 
-    return super.execute(mutation);
+    const checkWrite = () =>
+      dashboardModesEnabled() &&
+      (isViewingDashboard(this.scene.state) || isComposerMode(this.scene.state)) &&
+      callerPluginId !== 'grafana-assistant-app' &&
+      !PLANNING_ALLOWED_COMMANDS.has(type)
+        ? 'Only Grafana Assistant can edit a dashboard in View mode. Select Editing to edit manually.'
+        : undefined;
+    const result = await super.executeChecked(
+      mutation,
+      checkWrite,
+      callerPluginId === 'grafana-assistant-app' ? (write) => this.scene.withAssistantWrite(write) : undefined
+    );
+    // Some commands update child scenes directly rather than publishing undoable actions.
+    if (
+      result.success &&
+      !this.isReadOnly(type) &&
+      !PLANNING_ALLOWED_COMMANDS.has(type) &&
+      type !== 'ENTER_EDIT_MODE' &&
+      type !== 'CREATE_NOTEBOOK_SPEC' &&
+      result.changes.some(({ previousValue, newValue }) => !isEqual(previousValue, newValue))
+    ) {
+      this.scene.recordEditMutation(callerPluginId === 'grafana-assistant-app' ? 'assistant' : 'user');
+    }
+    // Only a write that landed replaces the building screen: a rejected one leaves an empty dashboard
+    // behind it while the build retries. A concurrent write that landed first has already ended it,
+    // and END_PLANNING ends it if the build never lands one.
+    if (building && result.success && this.scene.state.planning === building) {
+      this.scene.setState({ planning: undefined });
+    }
+    return result;
   }
 }

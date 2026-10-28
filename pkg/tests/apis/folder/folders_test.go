@@ -1123,6 +1123,41 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 	}
 }
 
+func TestIntegrationLegacyFolderMoveSanitizesSearchFailure(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:           true,
+		DisableAnonymous:            true,
+		APIServerStorageType:        "unified",
+		SearchInjectFailuresPercent: 100,
+	})
+	for _, uid := range []string{"move-source", "move-target"} {
+		created := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(fmt.Sprintf(`{"uid":%q,"title":%q}`, uid, uid)),
+		}, &folder.Folder{})
+		require.Equal(t, http.StatusOK, created.Response.StatusCode)
+	}
+	var public map[string]any
+	moved := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   "/api/folders/move-source/move",
+		Body:   []byte(`{"parentUid":"move-target"}`),
+	}, &public)
+	require.Equal(t, http.StatusInternalServerError, moved.Response.StatusCode)
+	require.NotEmpty(t, public["message"])
+	body, err := json.Marshal(public)
+	require.NoError(t, err)
+	require.NotContains(t, string(body), "injected search failure")
+	require.NotContains(t, string(body), "failed to decode")
+}
+
 // TestFoldersCreateAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFoldersCreateAPIEndpoint
 func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -1197,9 +1232,9 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 		{
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
-			expectedCode:           http.StatusPreconditionFailed,
-			expectedMessage:        folder.ErrVersionMismatch.Error(),
-			expectedFolderSvcError: folder.ErrVersionMismatch,
+			expectedCode:           http.StatusConflict,
+			expectedMessage:        "a folder with the same UID already exists",
+			expectedFolderSvcError: folder.ErrSameUIDExists,
 			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
 		},
@@ -2185,6 +2220,7 @@ func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T
 
 	expectedAnnotations := map[string]string{
 		"grafana.app/createdBy": "access-policy:service",
+		"grafana.app/updatedBy": "access-policy:service",
 		"grafana.app/managedBy": "classic-file-provisioning",
 		"grafana.app/managerId": "provisioned dashboards",
 	}
@@ -2632,4 +2668,124 @@ func TestIntegrationK6SubfolderCreateByServiceAccount(t *testing.T) {
 	_, err = saClient.Resource.Create(context.Background(),
 		makeFolder("k6-sa-grandchild", "k6 grandchild", child.GetName()), metav1.CreateOptions{})
 	require.NoError(t, err, "a service account must be able to create folders deeper in the k6 tree")
+}
+
+// Deletes real folders with parallel dashboard deletion enabled, so concurrent deletes run against
+// unified storage and the legacy SQLite permission cleanup instead of fakes.
+func TestDeleteFolderWithParallelDashboardDeletes(t *testing.T) {
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	t.Setenv("GF_FOLDER_PARALLEL_DASHBOARD_DELETE_ENABLED", "true")
+	t.Setenv("GF_FOLDER_PARALLEL_DASHBOARD_DELETE_CONCURRENCY", "8")
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+	})
+	user := helper.Org1.Admin
+
+	const dashboardsPerFolder = 50
+
+	createFolder := func(t *testing.T, uid string) {
+		t.Helper()
+		create := apis.DoRequest(helper, apis.RequestParams{
+			User:   user,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   fmt.Appendf(nil, `{"title":%q,"uid":%q}`, uid, uid),
+		}, &folder.Folder{})
+		require.Equal(t, http.StatusOK, create.Response.StatusCode, string(create.Body))
+	}
+
+	createDashboard := func(t *testing.T, folderUID, uid string) {
+		t.Helper()
+		create := apis.DoRequest(helper, apis.RequestParams{
+			User:   user,
+			Method: http.MethodPost,
+			Path:   "/api/dashboards/db",
+			Body:   fmt.Appendf(nil, `{"dashboard":{"uid":%q,"title":%q},"folderUid":%q,"overwrite":false}`, uid, uid, folderUID),
+		}, &map[string]any{})
+		require.Equal(t, http.StatusOK, create.Response.StatusCode, string(create.Body))
+	}
+
+	// Dashboards inside a folder get no default permissions, so give each one its own to make the
+	// deletes run the per-dashboard permission cleanup.
+	setDashboardPermission := func(t *testing.T, uid string) {
+		t.Helper()
+		set := apis.DoRequest(helper, apis.RequestParams{
+			User:   user,
+			Method: http.MethodPost,
+			Path:   "/api/dashboards/uid/" + uid + "/permissions",
+			Body:   []byte(`{"items":[{"role":"Viewer","permission":1}]}`),
+		}, &map[string]any{})
+		require.Equal(t, http.StatusOK, set.Response.StatusCode, string(set.Body))
+	}
+
+	dashboardStatus := func(t *testing.T, uid string) int {
+		t.Helper()
+		get := apis.DoRequest(helper, apis.RequestParams{
+			User:   user,
+			Method: http.MethodGet,
+			Path:   "/api/dashboards/uid/" + uid,
+		}, &map[string]any{})
+		return get.Response.StatusCode
+	}
+
+	permissionCount := func(t *testing.T, uid string) int64 {
+		t.Helper()
+		var count int64
+		err := helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			var err error
+			count, err = sess.Table("permission").Where("scope = ?", dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid)).Count()
+			return err
+		})
+		require.NoError(t, err)
+		return count
+	}
+
+	for _, tc := range []struct {
+		name             string
+		folderUID        string
+		forceDeleteRules bool
+	}{
+		// Without forceDeleteRules the folder service deletes the dashboards itself.
+		{name: "folder service path", folderUID: "parallel-delete", forceDeleteRules: false},
+		// With forceDeleteRules the dashboard service deletes them through DeleteInFolders.
+		{name: "dashboard service path", folderUID: "parallel-delete-force", forceDeleteRules: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			createFolder(t, tc.folderUID)
+			uids := make([]string, dashboardsPerFolder)
+			for i := range uids {
+				uids[i] = fmt.Sprintf("%s-%02d", tc.folderUID, i)
+				createDashboard(t, tc.folderUID, uids[i])
+				setDashboardPermission(t, uids[i])
+			}
+			for _, uid := range uids {
+				require.Positive(t, permissionCount(t, uid), "dashboard %s should have its own permissions before deletion", uid)
+			}
+
+			deleteFolder := apis.DoRequest(helper, apis.RequestParams{
+				User:   user,
+				Method: http.MethodDelete,
+				Path:   fmt.Sprintf("/api/folders/%s?forceDeleteRules=%t", tc.folderUID, tc.forceDeleteRules),
+			}, &map[string]any{})
+			require.Equal(t, http.StatusOK, deleteFolder.Response.StatusCode, string(deleteFolder.Body))
+
+			getFolder := apis.DoRequest(helper, apis.RequestParams{
+				User:   user,
+				Method: http.MethodGet,
+				Path:   "/api/folders/" + tc.folderUID,
+			}, &map[string]any{})
+			require.Equal(t, http.StatusNotFound, getFolder.Response.StatusCode, "folder should be deleted")
+
+			for _, uid := range uids {
+				require.Equal(t, http.StatusNotFound, dashboardStatus(t, uid), "dashboard %s should be deleted", uid)
+				require.Zero(t, permissionCount(t, uid), "permissions of dashboard %s should be deleted", uid)
+			}
+		})
+	}
 }

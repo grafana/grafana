@@ -1,8 +1,8 @@
 import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
-import { setBackendSrv } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as dashboardApi from 'app/features/dashboard/api/dashboard_api';
 
@@ -28,13 +28,26 @@ describe('DashboardPicker', () => {
   describe('using app platform', () => {
     const onChange = jest.fn();
 
+    beforeEach(() => {
+      // No-arg getDashboardAPI() follows the flag. The v2 dto mock has a folder uid annotation and no folder title, so the picker labels the value "Dashboards/<title>".
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
     testWithFeatureToggles({ enable: [] });
 
-    it('should fetch and display dashboards', async () => {
-      render(<DashboardPicker value={folderA_dashbdD.item.uid} />);
+    it.each([true, false])(
+      'labels a selected dashboard with the folder title when dashboardNewLayouts is %s',
+      async (dashboardNewLayouts) => {
+        config.featureToggles.dashboardNewLayouts = dashboardNewLayouts;
+        render(<DashboardPicker value={folderA_dashbdD.item.uid} />);
 
-      expect(await screen.findByText(`${folderA.item.title}/${folderA_dashbdD.item.title}`)).toBeInTheDocument();
-    });
+        expect(await screen.findByText(`${folderA.item.title}/${folderA_dashbdD.item.title}`)).toBeInTheDocument();
+      }
+    );
 
     it('should search for dashboards and allow selection', async () => {
       const { user } = render(<DashboardPicker onChange={onChange} />);
@@ -133,7 +146,14 @@ describe('DashboardPicker', () => {
   });
 
   xdescribe('dashboard v2 (v2beta1 API)', () => {
-    testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
+    beforeEach(() => {
+      setTestFlags({ dashboardNewLayouts: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
     it('renders dashboard correctly', async () => {
       render(<DashboardPicker value="v2-special-case-override" />);
       expect(await screen.findByText('TODO')).toBeInTheDocument();

@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,6 +33,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	kubecommon "k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashinternal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -51,10 +53,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	apiserverrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -772,7 +776,10 @@ func TestLegacyOnlySnapshotCreateAfterModeChanges(t *testing.T) {
 	}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: 1}, nil)
 	routes := snapshot.GetRoutes(
 		dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
-		acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+		acmock.New().WithPermissions([]accesscontrol.Permission{
+			{Action: dashboards.ActionSnapshotsCreate},
+			{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:dash-1"},
+		}),
 		map[string]kubecommon.OpenAPIDefinition{},
 		func() rest.Storage { return b.snapshotStorage }, dashboardService, blobs, b.snapshotReadFromUnified,
 	)
@@ -825,6 +832,12 @@ func TestLibraryPanelStorageDeclaresGVK(t *testing.T) {
 	require.Equal(t, "LibraryPanel", so.GVK.Kind)
 	require.True(t, so.EnableFolderSupport, "panels are synced into managed folders")
 	require.False(t, so.RequireFolder, "panels may live at the root")
+	require.Equal(t, apistore.DeprecatedID_Optional, so.DeprecatedInternalID,
+		"Mode 1 must preserve the SQL ID when copying a panel to unified storage")
+
+	standalone := (&DashboardsAPIBuilder{isStandalone: true}).libraryPanelStorageOpts()
+	require.Equal(t, apistore.DeprecatedID_None, standalone.DeprecatedInternalID,
+		"standalone writes must not accept client-supplied SQL IDs")
 }
 
 // The remaining resources in the group -- variables, notebooks and snapshots --
@@ -832,6 +845,131 @@ func TestLibraryPanelStorageDeclaresGVK(t *testing.T) {
 // six dashboard versions. Nothing about a stored object's group says which kind
 // it is, so each of these has to declare its own GVK or the codec would be free
 // to persist it under some other kind in the group.
+// TestSnapshotRegistrationFiltersEveryServedVersion is a registration-level guard:
+// it discovers every served Snapshot version from the manifest, exercises the GET
+// and LIST endpoints actually registered for that version, and verifies the
+// ownership filtering and sensitive-field stripping are applied. A newly served
+// Snapshot version is picked up automatically and fails here if its registration
+// or access wrapper is missing.
+func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
+	snapshotKind := dashv0.SnapshotResourceInfo.GroupVersionKind().Kind
+
+	servedSnapshotVersions := map[string]bool{}
+	for _, v := range apis.LocalManifest().ManifestData.Versions {
+		if !v.Served {
+			continue
+		}
+		for _, k := range v.Kinds {
+			if k.Kind == snapshotKind {
+				servedSnapshotVersions[v.Name] = true
+			}
+		}
+	}
+	require.NotEmpty(t, servedSnapshotVersions, "expected at least one served Snapshot version in the manifest")
+
+	// Each served Snapshot version must be wired here. A new served version with no
+	// entry fails this guard, forcing its registration and access wrapper to be added.
+	type versionWiring struct {
+		dashboards utils.ResourceInfo
+		snapshots  *utils.ResourceInfo
+	}
+	wiring := map[string]versionWiring{
+		dashv0.VERSION: {dashv0.DashboardResourceInfo, &dashv0.SnapshotResourceInfo},
+	}
+
+	names := func(list *dashv0.SnapshotList) []string {
+		out := make([]string, 0, len(list.Items))
+		for i := range list.Items {
+			out = append(out, list.Items[i].Name)
+		}
+		return out
+	}
+
+	for version := range servedSnapshotVersions {
+		wire, ok := wiring[version]
+		require.Truef(t, ok, "served Snapshot version %q is not wired into the registration guard; add its registration and access wrapper", version)
+
+		t.Run(version, func(t *testing.T) {
+			deleteKey := "secret"
+			dashboard := map[string]any{"title": "dashboard"}
+			mine := dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "mine"}, Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}}
+			mine.SetCreatedBy("user:alice")
+			theirs := dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "theirs"}, Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}}
+			theirs.SetCreatedBy("user:bob")
+
+			mockStore := grafanarest.NewMockStorage(t)
+			mockStore.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*mine.DeepCopy(), *theirs.DeepCopy()}}, nil)
+
+			scheme := runtime.NewScheme()
+			require.NoError(t, dashv0.AddToScheme(scheme))
+			codecs := serializer.NewCodecFactory(scheme)
+			optsGetter, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{
+				Codec: codecs.LegacyCodec(wire.snapshots.GroupVersion()),
+			}, nil)
+			require.NoError(t, err)
+
+			builder := &DashboardsAPIBuilder{
+				iamFeatures:     iamapi.Features{ResourcePermissionsAPI: true},
+				accessControl:   acmock.New(),
+				namespacer:      apiserverrequest.GetNamespaceMapper(nil),
+				snapshotService: dashboardsnapshots.NewMockService(t),
+			}
+			groupInfo := &genericapiserver.APIGroupInfo{VersionedResourcesStorageMap: map[string]map[string]rest.Storage{}}
+			err = builder.storageForVersion(groupInfo, apiserverbuilder.APIGroupOptions{
+				Scheme:     scheme,
+				OptsGetter: optsGetter,
+				DualWriteBuilder: func(_ schema.GroupResource, _, _ grafanarest.Storage) (grafanarest.Storage, error) {
+					return mockStore, nil
+				},
+			}, wire.dashboards, nil, wire.snapshots, func(runtime.Object, *dashinternal.DashboardAccess) (runtime.Object, error) {
+				return &dashv0.DashboardWithAccessInfo{}, nil
+			})
+			require.NoError(t, err)
+
+			versionStorage := groupInfo.VersionedResourcesStorageMap[version]
+			snapStorage, ok := versionStorage[wire.snapshots.StoragePath()]
+			require.Truef(t, ok, "version %q did not register snapshot storage", version)
+
+			getter, ok := snapStorage.(rest.Getter)
+			require.True(t, ok, "registered snapshot storage must support Get")
+			lister, ok := snapStorage.(rest.Lister)
+			require.True(t, ok, "registered snapshot storage must support List")
+
+			ctx := k8srequest.WithNamespace(context.Background(), authlib.OrgNamespaceFormatter(1))
+
+			// GET omits deleteKey and dashboard payload.
+			getObj, err := getter.Get(identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice"}), "mine", &metav1.GetOptions{})
+			require.NoError(t, err)
+			gotSnap, ok := getObj.(*dashv0.Snapshot)
+			require.True(t, ok)
+			require.Nil(t, gotSnap.Spec.DeleteKey)
+			require.Nil(t, gotSnap.Spec.Dashboard)
+
+			// Non-admin LIST excludes other creators' snapshots and omits sensitive fields.
+			nonAdminObj, err := lister.List(identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice", OrgRole: org.RoleEditor}), &internalversion.ListOptions{})
+			require.NoError(t, err)
+			nonAdminList, ok := nonAdminObj.(*dashv0.SnapshotList)
+			require.True(t, ok)
+			require.Equal(t, []string{"mine"}, names(nonAdminList))
+			for i := range nonAdminList.Items {
+				require.Nil(t, nonAdminList.Items[i].Spec.DeleteKey)
+				require.Nil(t, nonAdminList.Items[i].Spec.Dashboard)
+			}
+
+			// Admin LIST includes other creators' snapshots (still stripped).
+			adminObj, err := lister.List(identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserID: 2, OrgRole: org.RoleAdmin}), &internalversion.ListOptions{})
+			require.NoError(t, err)
+			adminList, ok := adminObj.(*dashv0.SnapshotList)
+			require.True(t, ok)
+			require.ElementsMatch(t, []string{"mine", "theirs"}, names(adminList))
+			for i := range adminList.Items {
+				require.Nil(t, adminList.Items[i].Spec.DeleteKey)
+				require.Nil(t, adminList.Items[i].Spec.Dashboard)
+			}
+		})
+	}
+}
+
 func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
 	group := dashv0.DashboardResourceInfo.GroupResource().Group
 

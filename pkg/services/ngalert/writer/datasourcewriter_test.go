@@ -268,6 +268,22 @@ func TestDatasourceWriter(t *testing.T) {
 		}
 	})
 
+	t.Run("when a small MaxBatchSize is configured, the write is split into multiple requests", func(t *testing.T) {
+		testDS.Reset()
+
+		cfg := DatasourceWriterConfig{
+			Timeout:              time.Second * 5,
+			DefaultDatasourceUID: "prom-2",
+			MaxBatchSize:         1, // forces one series per request
+		}
+		writer := NewDatasourceWriter(cfg, testDS, httpclient.NewProvider(), pluginContextProvider, clock.New(), log.New("test"), met)
+
+		err := writer.WriteDatasource(context.Background(), "prom-1", "metric", time.Now(), frames, 1, map[string]string{})
+		require.NoError(t, err)
+
+		assert.Equal(t, len(series), testDS.prom1.RequestsCount)
+	})
+
 	t.Run("when PDC is enabled proxy options are passed to HTTP client provider", func(t *testing.T) {
 		testDS.Reset()
 

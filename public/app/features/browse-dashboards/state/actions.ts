@@ -1,3 +1,5 @@
+import { createAction } from '@reduxjs/toolkit';
+
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID, isRootFolderUID } from 'app/features/search/constants';
 import { type DashboardViewItem, type DashboardViewItemKind } from 'app/features/search/types';
 import { createAsyncThunk } from 'app/types/store';
@@ -7,7 +9,15 @@ import { listDashboards, listFolders, listStarredFolders, listTeamFolders } from
 import { type DashboardViewItemWithUIItems, type UIDashboardViewItem } from '../types';
 import { reapplyVirtualFolderPrefix, stripVirtualFolderPrefix } from '../utils/dashboards';
 
-import { findItem } from './utils';
+import {
+  collectionGeneration,
+  collectionKeyOf,
+  findItem,
+  planRepositoryRefresh,
+  type PulledRepository,
+  type RepositoryRefreshPlan,
+  type ViewedFolder,
+} from './utils';
 
 async function listSafe(label: string, load: () => Promise<DashboardViewItem[]>): Promise<DashboardViewItem[]> {
   try {
@@ -31,6 +41,8 @@ interface FetchNextChildrenPageResult {
   kind: 'folder' | 'dashboard';
   page: number;
   lastPageOfKind: boolean;
+  // The collection generation the load started from; the reducer drops the result if it moved.
+  generation: number;
 }
 
 interface RefetchChildrenArgs {
@@ -43,11 +55,19 @@ interface RefetchChildrenResult {
   kind: 'folder' | 'dashboard';
   page: number;
   lastPageOfKind: boolean;
+  generation: number;
 }
 
 interface RefreshParentsArgs {
   kind: DashboardViewItemKind;
   uids: string[];
+}
+
+interface RefreshTreeArgs {
+  repository: PulledRepository;
+  viewed: ViewedFolder;
+  /** `finished` of the pull; stamped for the repository on success. */
+  syncedAt: number;
 }
 
 export const refreshParents = createAsyncThunk(
@@ -69,6 +89,29 @@ export const refreshParents = createAsyncThunk(
   }
 );
 
+/** Drops and unselects what a pull may have changed, from a plan computed on the state before it. */
+export const applyRefreshPlan = createAction<{ repository: PulledRepository; plan: RepositoryRefreshPlan }>(
+  'browseDashboards/applyRefreshPlan'
+);
+
+/**
+ * Brings the tree back in step with a completed pull of one repository: the collections it may have
+ * changed are dropped if off screen and refetched if on screen, loaded or not. One still loading its
+ * first page cannot be left to that page: it may predate the pull and is discarded, and an open
+ * nested folder shows no placeholders that would ask again. The fulfilled reducer stamps the
+ * repository, so a failed refetch leaves it stale and retried.
+ */
+export const refreshTree = createAsyncThunk(
+  'browseDashboards/refreshTree',
+  async ({ repository, viewed }: RefreshTreeArgs, { getState, dispatch }) => {
+    const plan = planRepositoryRefresh(getState().browseDashboards, repository, viewed);
+    dispatch(applyRefreshPlan({ repository, plan }));
+    await Promise.all(
+      plan.refetch.map((parentUID) => dispatch(refetchChildren({ parentUID, pageSize: PAGE_SIZE })).unwrap())
+    );
+  }
+);
+
 /**
  * Refetches children of a folder after changes that should be reflected in the redux state which is then rendered
  * in the dashboard browse page.
@@ -78,15 +121,17 @@ export const refreshParents = createAsyncThunk(
  */
 export const refetchChildren = createAsyncThunk(
   'browseDashboards/refetchChildren',
-  async ({ parentUID, pageSize }: RefetchChildrenArgs): Promise<RefetchChildrenResult> => {
+  async ({ parentUID, pageSize }: RefetchChildrenArgs, { getState }): Promise<RefetchChildrenResult> => {
+    const generation = collectionGeneration(getState().browseDashboards, collectionKeyOf(parentUID));
+
     if (parentUID === TEAM_FOLDERS_UID) {
       const children = await listSafe('team folders', listTeamFolders);
-      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
+      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true, generation };
     }
 
     if (parentUID === STARRED_FOLDERS_UID) {
       const children = await listSafe('starred folders', listStarredFolders);
-      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
+      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true, generation };
     }
 
     const strippedUID = parentUID ? stripVirtualFolderPrefix(parentUID) : parentUID;
@@ -126,6 +171,7 @@ export const refetchChildren = createAsyncThunk(
       lastPageOfKind: lastPageOfKind,
       page,
       kind: fetchKind,
+      generation,
     };
   }
 );
@@ -136,6 +182,8 @@ export const fetchNextChildrenPage = createAsyncThunk(
     { parentUID, excludeKinds = [], pageSize }: FetchNextChildrenPageArgs,
     thunkAPI
   ): Promise<undefined | FetchNextChildrenPageResult> => {
+    const generation = collectionGeneration(thunkAPI.getState().browseDashboards, collectionKeyOf(parentUID));
+
     if (parentUID === TEAM_FOLDERS_UID) {
       const state = thunkAPI.getState().browseDashboards;
       const collection = state.childrenByParentUID[parentUID];
@@ -143,7 +191,7 @@ export const fetchNextChildrenPage = createAsyncThunk(
         return undefined;
       }
       const children = await listSafe('team folders', listTeamFolders);
-      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
+      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true, generation };
     }
 
     if (parentUID === STARRED_FOLDERS_UID) {
@@ -153,7 +201,7 @@ export const fetchNextChildrenPage = createAsyncThunk(
         return undefined;
       }
       const children = await listSafe('starred folders', listStarredFolders);
-      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true };
+      return { children, kind: 'dashboard', page: 1, lastPageOfKind: true, generation };
     }
 
     // TODO: invert prop to `includeKinds`, but also support not loading folders
@@ -226,6 +274,7 @@ export const fetchNextChildrenPage = createAsyncThunk(
       lastPageOfKind,
       page,
       kind: fetchKind,
+      generation,
     };
   }
 );

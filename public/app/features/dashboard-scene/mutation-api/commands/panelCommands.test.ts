@@ -10,7 +10,7 @@ import {
   standardTransformersRegistry,
   toDataFrame,
 } from '@grafana/data';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, sceneGraph, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -126,6 +126,7 @@ function buildPanelScene(panels: VizPanel[] = [], elementMap: Record<string, num
     serializer: mockSerializer(elementMap),
     canEditDashboard: jest.fn(() => true),
     isPlanning: jest.fn(() => false),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -159,6 +160,7 @@ function buildAutoGridPanelScene(panels: VizPanel[] = [], elementMap: Record<str
     serializer: mockSerializer(elementMap),
     canEditDashboard: jest.fn(() => true),
     isPlanning: jest.fn(() => false),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),
@@ -1555,17 +1557,6 @@ describe('Panel mutation commands', () => {
   });
 
   describe('MOVE_PANEL', () => {
-    let originalToggle: boolean | undefined;
-
-    beforeEach(() => {
-      originalToggle = config.featureToggles.dashboardNewLayouts;
-      config.featureToggles.dashboardNewLayouts = true;
-    });
-
-    afterEach(() => {
-      config.featureToggles.dashboardNewLayouts = originalToggle;
-    });
-
     it('repositions panel within current group using layoutItem', async () => {
       const scene = buildPanelScene();
       const client = new DashboardMutationClient(scene);
