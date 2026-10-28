@@ -59,21 +59,18 @@ patchedDependencies:
 linkWorkspacePackages: true
 
 allowBuilds:
-  msw: true
   "@scarf/scarf": false
   "@swc/core": false
   "@tree-sitter-grammars/tree-sitter-yaml": false
   core-js: false
   core-js-pure: false
   esbuild: false
+  msw: false
   nx: false
   protobufjs: false
   tree-sitter: false
   tree-sitter-json: false
   unrs-resolver: false
-
-# msw's postinstall writes public/mockServiceWorker.js outside its package, which a cached build cannot restore.
-sideEffectsCache: false
 
 # Wait 3 days (in minutes) before resolving newly published versions.
 minimumReleaseAge: 4320
