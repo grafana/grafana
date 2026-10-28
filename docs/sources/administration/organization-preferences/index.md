@@ -160,7 +160,7 @@ Organization administrators can choose a default timezone for their organization
 1. Click **Administration** in the left-side menu.
 1. Click **General**.
 1. Click **Default preferences**.
-1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selecte
+1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level.
 2. d at a higher level.
 1. Click **Save**.
 
