@@ -16,8 +16,9 @@ func DefaultAPIGroupVersion(pluginID string, pluginType Type) (group, version st
 		return pluginID + ".datasource.grafana.app", "v0alpha1", true
 	case TypeApp:
 		return pluginID, "v0alpha1", true
+	default:
+		return "", "", false
 	}
-	return "", "", false
 }
 
 // Get the default API group name for from a plugin ID
