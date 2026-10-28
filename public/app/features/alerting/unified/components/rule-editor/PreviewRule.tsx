@@ -65,12 +65,12 @@ export function PreviewRule(): React.ReactElement | null {
   );
 }
 
-export function usePreview(): [PreviewRuleResponse | undefined, () => Promise<void>] {
+export function usePreview(): [PreviewRuleResponse | undefined, () => void] {
   const [preview, setPreview] = useState<PreviewRuleResponse | undefined>();
   const { getValues } = useFormContext<RuleFormValues>();
   const isMounted = useMountedState();
 
-  const onPreview = useCallback(async () => {
+  const onPreview = useCallback(() => {
     const values = getValues(fields);
     const request = createPreviewRequest(values);
 

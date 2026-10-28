@@ -55,8 +55,8 @@ describe('usePreview', () => {
       ],
     });
 
-    await act(async () => {
-      await result.current[1]();
+    act(() => {
+      result.current[1]();
     });
 
     expect(mockPreviewAlertRule).toHaveBeenCalledWith({
@@ -74,8 +74,8 @@ describe('usePreview', () => {
       queries: [],
     });
 
-    await act(async () => {
-      await result.current[1]();
+    act(() => {
+      result.current[1]();
     });
 
     expect(mockPreviewAlertRule).toHaveBeenCalledWith(
@@ -88,7 +88,7 @@ describe('usePreview', () => {
   it('rejects when the query has no data source uid', async () => {
     const { result } = renderUsePreview({ type: RuleFormType.cloudAlerting, dataSourceName: 'unknown', queries: [] });
 
-    await expect(result.current[1]()).rejects.toThrow('Cannot preview without a data source');
+    expect(() => result.current[1]()).toThrow('Cannot preview without a data source');
     expect(mockPreviewAlertRule).not.toHaveBeenCalled();
   });
 });
