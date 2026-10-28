@@ -2620,6 +2620,20 @@
     },
     {
       "metadata": {
+        "name": "folders.parallelDashboardDeleteConcurrency",
+        "resourceVersion": "1793190123178",
+        "creationTimestamp": "2026-10-28T12:22:03Z"
+      },
+      "spec": {
+        "description": "Maximum number of dashboard deletes in flight per folder deletion. 1 or less deletes the dashboards sequentially",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "1"
+      }
+    },
+    {
+      "metadata": {
         "name": "foldersAppPlatformAPI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-07-03T14:15:23Z"
