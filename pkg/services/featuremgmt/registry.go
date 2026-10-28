@@ -973,6 +973,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "auth.oauthTokenForDelegatedUsers",
+			Description:  "Forward the user's OAuth identity to data sources with OAuth pass-through when a service calls Grafana on the user's behalf with an extended JWT.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "newDashboardWithFiltersAndGroupBy",
 			Description:  "Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.",
 			Stage:        FeatureStageExperimental,

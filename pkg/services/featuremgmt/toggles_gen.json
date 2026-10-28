@@ -1108,6 +1108,20 @@
     },
     {
       "metadata": {
+        "name": "auth.oauthTokenForDelegatedUsers",
+        "resourceVersion": "1793204879968",
+        "creationTimestamp": "2026-10-28T16:27:59Z"
+      },
+      "spec": {
+        "description": "Forward the user's OAuth identity to data sources with OAuth pass-through when a service calls Grafana on the user's behalf with an extended JWT.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "auth.tokenRotationGracePeriod",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-06-30T11:48:29Z"
