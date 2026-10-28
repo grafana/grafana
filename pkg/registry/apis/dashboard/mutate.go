@@ -3,6 +3,7 @@ package dashboard
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -49,12 +50,12 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	case dashboardV2beta1.NotebookResourceInfo.GroupVersionResource().Resource:
 		return mutateNotebook(a)
 
-	// Reachability invariant: dashboard settings storage is always registered, but
-	// FlagGrafanaDashboardSettings is enforced per request in GetAuthorizer. With
+	// Reachability invariant: dashboard preferences storage is always registered, but
+	// FlagGrafanaDashboardPreferences is enforced per request in GetAuthorizer. With
 	// the flag off no identity may create or update, so this case only fires when
 	// the feature is enabled.
-	case dashboardV2beta1.DashboardSettingsResourceInfo.GroupVersionResource().Resource:
-		return mutateDashboardSettings(a)
+	case dashboardV2beta1.DashboardPreferencesResourceInfo.GroupVersionResource().Resource:
+		return mutateDashboardPreferences(a)
 
 	case dashboardV0.LIBRARY_PANEL_RESOURCE:
 		return nil // nothing needed
@@ -224,35 +225,46 @@ func mutateVariable(a admission.Attributes) error {
 
 // Create and update differ only in the name: a PATCH that creates a missing object runs against a
 // placeholder with a UID, so it is admitted as an update, and everything else has to hold on both.
-func mutateDashboardSettings(a admission.Attributes) error {
-	obj, ok := a.GetObject().(*dashboardV2beta1.DashboardSettings)
+func mutateDashboardPreferences(a admission.Attributes) error {
+	obj, ok := a.GetObject().(*dashboardV2beta1.DashboardPreferences)
 	if !ok {
-		return fmt.Errorf("mutation error: expected dashboard settings, got %T", a.GetObject())
+		return fmt.Errorf("mutation error: expected dashboard preferences, got %T", a.GetObject())
 	}
 
 	// Without a scope there is no tier label to set, and a nameless object that got past here would be
 	// rejected with a generic 422 before Validate could say why.
-	scope, err := dashboardSettingsScopeOf(obj)
+	scope, err := dashboardPreferencesScopeOf(obj)
 	if err != nil {
 		return apierrors.NewBadRequest(err.Error())
 	}
 
 	// Rebuilt from the scope on every write, never taken from the client: List finds folder-tier objects
-	// by the tier label, so a client-chosen value could hide a folder's settings from its readers.
+	// by the tier label, so a client-chosen value could hide a folder's preferences from its readers.
 	labels := obj.GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)
 	}
 	// No folder label: a label value must start and end with an alphanumeric character, and a folder UID
 	// need not. Lookups go by name, and List needs only the tier label.
-	delete(labels, dashboardSettingsFolderLabelKey)
-	labels[dashboardSettingsTierLabelKey] = string(scope.Tier)
+	delete(labels, dashboardPreferencesFolderLabelKey)
+	labels[dashboardPreferencesTierLabelKey] = string(scope.Tier)
 	obj.SetLabels(labels)
 
-	// A merge-patch that sets the last panel field to null leaves an empty object behind, and absent is
-	// the one spelling of "inherit everything".
-	if obj.Spec.Panels != nil && *obj.Spec.Panels == (dashboardV2beta1.DashboardSettingsPanelDefaults{}) {
-		obj.Spec.Panels = nil
+	// A merge-patch that sets the last member of an object to null leaves the object behind empty, and
+	// absent is the one spelling of "inherit". Children go first, so a parent left with only empty
+	// children goes too. timeRange stays: its members are required, so an empty one has to fail Validate.
+	if p := obj.Spec.Panels; p != nil {
+		p.Legend = nilIfUnset(p.Legend)
+		p.Tooltip = nilIfUnset(p.Tooltip)
+		p.Axis = nilIfUnset(p.Axis)
+		p.Graph = nilIfUnset(p.Graph)
+		p.Field = nilIfUnset(p.Field)
+		p.Frame = nilIfUnset(p.Frame)
+		obj.Spec.Panels = nilIfUnset(p)
+	}
+	if d := obj.Spec.Dashboard; d != nil {
+		d.AutoGrid = nilIfUnset(d.AutoGrid)
+		obj.Spec.Dashboard = nilIfUnset(d)
 	}
 
 	// No controller owns these objects, so a finalizer would keep a deleted tier, which is personal data
@@ -261,10 +273,19 @@ func mutateDashboardSettings(a admission.Attributes) error {
 	obj.SetOwnerReferences(nil)
 
 	if a.GetOperation() == admission.Create && obj.GetName() == "" {
-		obj.SetName(deriveDashboardSettingsMetadataName(scope))
+		obj.SetName(deriveDashboardPreferencesMetadataName(scope))
 	}
 
 	return nil
+}
+
+// nilIfUnset returns nil for an object with no member set. Every member of the objects it is used on
+// is optional, so each is a pointer or a list and is unset only when nil: false, 0, "" and [] are set.
+func nilIfUnset[T any](obj *T) *T {
+	if obj == nil || reflect.ValueOf(*obj).IsZero() {
+		return nil
+	}
+	return obj
 }
 
 // Matches the title the UI gives a new notebook, so a notebook created through the API is not named

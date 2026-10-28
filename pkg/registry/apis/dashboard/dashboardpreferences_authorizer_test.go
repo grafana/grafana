@@ -20,46 +20,46 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func TestDashboardSettingsAuthorizer(t *testing.T) {
+func TestDashboardPreferencesAuthorizer(t *testing.T) {
 	const (
-		featureOff     = "dashboard settings feature is not enabled"
-		notAvailable   = "dashboard settings are not available to anonymous or render identities"
+		featureOff     = "dashboard preferences feature is not enabled"
+		notAvailable   = "dashboard preferences are not available to anonymous or render identities"
 		lacksGrant     = "calling service lacks required permissions"
-		provisioned    = "dashboard settings can't be provisioned"
-		tokenWrite     = "access policy tokens can only get, list and delete dashboard settings"
-		unsupported    = "not supported for dashboard settings"
-		invalidName    = "invalid dashboard settings name"
-		mergedReadOnly = "merged dashboard settings are read-only"
-		notOrgMember   = "only org members can access org dashboard settings"
-		notOrgAdmin    = "only org admins can change org dashboard settings"
-		notOwner       = "only the owner can access user dashboard settings"
+		provisioned    = "dashboard preferences can't be provisioned"
+		tokenWrite     = "access policy tokens can only get, list and delete dashboard preferences"
+		unsupported    = "not supported for dashboard preferences"
+		invalidName    = "invalid dashboard preferences name"
+		mergedReadOnly = "merged dashboard preferences are read-only"
+		notOrgMember   = "only org members can access org dashboard preferences"
+		notOrgAdmin    = "only org admins can change org dashboard preferences"
+		notOwner       = "only the owner can access user dashboard preferences"
 		noFolderAccess = "folder access denied"
-		notFolderAdmin = "only folder admins can change folder dashboard settings"
+		notFolderAdmin = "only folder admins can change folder dashboard preferences"
 	)
 
-	accessClient := &dashboardSettingsAccessClient{grants: map[string][]string{
+	accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{
 		"f1": {utils.VerbGet},
 		"f2": {utils.VerbGet, utils.VerbSetPermissions},
 	}}
-	authz := newDashboardSettingsAuthorizer(accessClient, grafanaauthorizer.NewServiceAuthorizer())
+	authz := newDashboardPreferencesAuthorizer(accessClient, grafanaauthorizer.NewServiceAuthorizer())
 
-	viewer := dashboardSettingsRequester(authlib.TypeUser, "viewer", identity.RoleViewer)
-	editor := dashboardSettingsRequester(authlib.TypeUser, "editor", identity.RoleEditor)
-	admin := dashboardSettingsRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
-	serviceAccountAdmin := dashboardSettingsRequester(authlib.TypeServiceAccount, "sa", identity.RoleAdmin)
-	apiKeyAdmin := dashboardSettingsRequester(authlib.TypeAPIKey, "key", identity.RoleAdmin)
-	serviceAccountU1 := dashboardSettingsRequester(authlib.TypeServiceAccount, "u1", identity.RoleAdmin)
-	u1 := dashboardSettingsRequester(authlib.TypeUser, "u1", identity.RoleViewer)
-	u2 := dashboardSettingsRequester(authlib.TypeUser, "u2", identity.RoleViewer)
-	anonymous := dashboardSettingsRequester(authlib.TypeAnonymous, "", identity.RoleViewer)
-	render := dashboardSettingsRequester(authlib.TypeRenderService, "", identity.RoleViewer)
-	adminWithoutGrant := dashboardSettingsRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
+	viewer := dashboardPreferencesRequester(authlib.TypeUser, "viewer", identity.RoleViewer)
+	editor := dashboardPreferencesRequester(authlib.TypeUser, "editor", identity.RoleEditor)
+	admin := dashboardPreferencesRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
+	serviceAccountAdmin := dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", identity.RoleAdmin)
+	apiKeyAdmin := dashboardPreferencesRequester(authlib.TypeAPIKey, "key", identity.RoleAdmin)
+	serviceAccountU1 := dashboardPreferencesRequester(authlib.TypeServiceAccount, "u1", identity.RoleAdmin)
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	u2 := dashboardPreferencesRequester(authlib.TypeUser, "u2", identity.RoleViewer)
+	anonymous := dashboardPreferencesRequester(authlib.TypeAnonymous, "", identity.RoleViewer)
+	render := dashboardPreferencesRequester(authlib.TypeRenderService, "", identity.RoleViewer)
+	adminWithoutGrant := dashboardPreferencesRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
 	adminWithoutGrant.AccessTokenClaims.Rest.DelegatedPermissions = []string{"dashboard.grafana.app/dashboards:*"}
-	token := dashboardSettingsToken("dashboard.grafana.app/dashboardsettings:*")
-	deleteToken := dashboardSettingsToken("dashboard.grafana.app/dashboardsettings:delete")
-	getToken := dashboardSettingsToken("dashboard.grafana.app/dashboardsettings:get")
+	token := dashboardPreferencesToken("dashboard.grafana.app/dashboardpreferences:*")
+	deleteToken := dashboardPreferencesToken("dashboard.grafana.app/dashboardpreferences:delete")
+	getToken := dashboardPreferencesToken("dashboard.grafana.app/dashboardpreferences:get")
 	// Grafana admins pass the namespace authorizer for every namespace.
-	grafanaAdmin := dashboardSettingsRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
+	grafanaAdmin := dashboardPreferencesRequester(authlib.TypeUser, "admin", identity.RoleAdmin)
 	grafanaAdmin.IsGrafanaAdmin = true
 	_, service := identity.WithServiceIdentity(context.Background(), 1)
 	_, provisioning, err := identity.WithProvisioningIdentity(context.Background(), "stacks-1")
@@ -86,7 +86,7 @@ func TestDashboardSettingsAuthorizer(t *testing.T) {
 
 		{name: "anonymous gets nothing", requester: anonymous, verbs: []string{"get"}, resName: "namespace", wantReason: notAvailable},
 		{name: "the render service gets nothing, not even merged", requester: render, verbs: []string{"get"}, resName: "merged", wantReason: notAvailable},
-		{name: "a token without the dashboardsettings grant is denied", requester: adminWithoutGrant, verbs: []string{"get"}, resName: "namespace", wantReason: lacksGrant},
+		{name: "a token without the dashboardpreferences grant is denied", requester: adminWithoutGrant, verbs: []string{"get"}, resName: "namespace", wantReason: lacksGrant},
 
 		{name: "provisioning reads and deletes", requester: provisioning, verbs: []string{"get", "list", "delete"}, resName: "user-u1", wantAllow: true},
 		{name: "provisioning can't write", requester: provisioning, verbs: []string{"create", "update", "patch"}, resName: "user-u1", wantReason: provisioned},
@@ -133,11 +133,11 @@ func TestDashboardSettingsAuthorizer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setDashboardSettingsToggle(t, !tt.flagOff)
+			setDashboardPreferencesToggle(t, !tt.flagOff)
 			ctx := identity.WithRequester(context.Background(), tt.requester)
 			for _, verb := range tt.verbs {
 				t.Run(verb, func(t *testing.T) {
-					attr := dashboardSettingsAuthzAttributes(verb, tt.resName)
+					attr := dashboardPreferencesAuthzAttributes(verb, tt.resName)
 					if tt.namespace != "" {
 						attr.Namespace = tt.namespace
 					}
@@ -164,7 +164,7 @@ func TestDashboardSettingsAuthorizer(t *testing.T) {
 	})
 
 	t.Run("a request without a requester is denied", func(t *testing.T) {
-		decision, reason, err := authz.Authorize(context.Background(), dashboardSettingsAuthzAttributes("get", "namespace"))
+		decision, reason, err := authz.Authorize(context.Background(), dashboardPreferencesAuthzAttributes("get", "namespace"))
 
 		require.Error(t, err)
 		require.Equal(t, authorizer.DecisionDeny, decision)
@@ -173,9 +173,9 @@ func TestDashboardSettingsAuthorizer(t *testing.T) {
 }
 
 // NoOpinion would fall through to the role authorizer, which lets any Editor write.
-func TestDashboardSettingsAuthorizerNeverNoOpinion(t *testing.T) {
-	authz := newDashboardSettingsAuthorizer(
-		&dashboardSettingsAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}},
+func TestDashboardPreferencesAuthorizerNeverNoOpinion(t *testing.T) {
+	authz := newDashboardPreferencesAuthorizer(
+		&dashboardPreferencesAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}},
 		grafanaauthorizer.NewServiceAuthorizer(),
 	)
 	_, service := identity.WithServiceIdentity(context.Background(), 1)
@@ -185,11 +185,11 @@ func TestDashboardSettingsAuthorizerNeverNoOpinion(t *testing.T) {
 		name      string
 		requester identity.Requester
 	}{
-		{name: "user u1", requester: dashboardSettingsRequester(authlib.TypeUser, "u1", identity.RoleAdmin)},
-		{name: "anonymous", requester: dashboardSettingsRequester(authlib.TypeAnonymous, "", identity.RoleViewer)},
+		{name: "user u1", requester: dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleAdmin)},
+		{name: "anonymous", requester: dashboardPreferencesRequester(authlib.TypeAnonymous, "", identity.RoleViewer)},
 		{name: "service identity", requester: service},
 		{name: "provisioning identity", requester: provisioning},
-		{name: "access-policy token", requester: dashboardSettingsToken("dashboard.grafana.app/dashboardsettings:*")},
+		{name: "access-policy token", requester: dashboardPreferencesToken("dashboard.grafana.app/dashboardpreferences:*")},
 	}
 	verbs := []string{"get", "list", "watch", "create", "update", "patch", "delete", "deletecollection"}
 	names := []string{"", "merged", "namespace", "folder-f1", "user-u1", "user-u2", "bogus"}
@@ -202,12 +202,12 @@ func TestDashboardSettingsAuthorizerNeverNoOpinion(t *testing.T) {
 		{name: "flag off", enabled: false},
 	} {
 		t.Run(flag.name, func(t *testing.T) {
-			setDashboardSettingsToggle(t, flag.enabled)
+			setDashboardPreferencesToggle(t, flag.enabled)
 			for _, r := range requesters {
 				ctx := identity.WithRequester(context.Background(), r.requester)
 				for _, verb := range verbs {
 					for _, name := range names {
-						decision, _, err := authz.Authorize(ctx, dashboardSettingsAuthzAttributes(verb, name))
+						decision, _, err := authz.Authorize(ctx, dashboardPreferencesAuthzAttributes(verb, name))
 
 						require.NoError(t, err, "%s %s %q", r.name, verb, name)
 						require.NotEqual(t, authorizer.DecisionNoOpinion, decision, "%s %s %q", r.name, verb, name)
@@ -218,9 +218,9 @@ func TestDashboardSettingsAuthorizerNeverNoOpinion(t *testing.T) {
 	}
 }
 
-func TestDashboardSettingsFolderCheckRequest(t *testing.T) {
-	setDashboardSettingsToggle(t, true)
-	requester := dashboardSettingsRequester(authlib.TypeUser, "editor", identity.RoleEditor)
+func TestDashboardPreferencesFolderCheckRequest(t *testing.T) {
+	setDashboardPreferencesToggle(t, true)
+	requester := dashboardPreferencesRequester(authlib.TypeUser, "editor", identity.RoleEditor)
 	ctx := identity.WithRequester(context.Background(), requester)
 
 	tests := []struct{ verb, wantVerb string }{
@@ -233,10 +233,10 @@ func TestDashboardSettingsFolderCheckRequest(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.verb, func(t *testing.T) {
-			accessClient := &dashboardSettingsAccessClient{}
-			authz := newDashboardSettingsAuthorizer(accessClient, grafanaauthorizer.NewServiceAuthorizer())
+			accessClient := &dashboardPreferencesAccessClient{}
+			authz := newDashboardPreferencesAuthorizer(accessClient, grafanaauthorizer.NewServiceAuthorizer())
 
-			_, _, err := authz.Authorize(ctx, dashboardSettingsAuthzAttributes(tt.verb, "folder-f1"))
+			_, _, err := authz.Authorize(ctx, dashboardPreferencesAuthzAttributes(tt.verb, "folder-f1"))
 
 			require.NoError(t, err)
 			require.Equal(t, []authlib.CheckRequest{{
@@ -253,11 +253,11 @@ func TestDashboardSettingsFolderCheckRequest(t *testing.T) {
 	}
 
 	t.Run("a requester from another namespace is denied without a check", func(t *testing.T) {
-		accessClient := &dashboardSettingsAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}}
-		other := dashboardSettingsRequester(authlib.TypeUser, "editor", identity.RoleEditor)
+		accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}}
+		other := dashboardPreferencesRequester(authlib.TypeUser, "editor", identity.RoleEditor)
 		other.Namespace = "stacks-2"
 
-		allowed, err := checkDashboardSettingsFolderAccess(context.Background(), accessClient, other, "stacks-1", "f1", utils.VerbGet)
+		allowed, err := checkDashboardPreferencesFolderAccess(context.Background(), accessClient, other, "stacks-1", "f1", utils.VerbGet)
 
 		require.NoError(t, err)
 		require.False(t, allowed)
@@ -265,32 +265,32 @@ func TestDashboardSettingsFolderCheckRequest(t *testing.T) {
 	})
 
 	t.Run("no access client denies", func(t *testing.T) {
-		allowed, err := checkDashboardSettingsFolderAccess(context.Background(), nil, requester, "stacks-1", "f1", utils.VerbGet)
+		allowed, err := checkDashboardPreferencesFolderAccess(context.Background(), nil, requester, "stacks-1", "f1", utils.VerbGet)
 
 		require.NoError(t, err)
 		require.False(t, allowed)
 	})
 }
 
-func TestDashboardsAPIBuilderGetAuthorizerRoutesDashboardSettings(t *testing.T) {
-	accessClient := &dashboardSettingsAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}}
+func TestDashboardsAPIBuilderGetAuthorizerRoutesDashboardPreferences(t *testing.T) {
+	accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}}
 	authz := (&DashboardsAPIBuilder{accessClient: accessClient}).GetAuthorizer()
-	ctx := identity.WithRequester(context.Background(), dashboardSettingsRequester(authlib.TypeUser, "editor", identity.RoleEditor))
+	ctx := identity.WithRequester(context.Background(), dashboardPreferencesRequester(authlib.TypeUser, "editor", identity.RoleEditor))
 
 	t.Run("denies while the feature is off", func(t *testing.T) {
-		setDashboardSettingsToggle(t, false)
+		setDashboardPreferencesToggle(t, false)
 
-		decision, reason, err := authz.Authorize(ctx, authzAttributes(dashv2beta1.DashboardSettingsResourceInfo.GetName(), "get"))
+		decision, reason, err := authz.Authorize(ctx, authzAttributes(dashv2beta1.DashboardPreferencesResourceInfo.GetName(), "get"))
 
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionDeny, decision)
-		require.Equal(t, "dashboard settings feature is not enabled", reason)
+		require.Equal(t, "dashboard preferences feature is not enabled", reason)
 	})
 
 	t.Run("checks folder access with the builder's access client", func(t *testing.T) {
-		setDashboardSettingsToggle(t, true)
+		setDashboardPreferencesToggle(t, true)
 
-		decision, reason, err := authz.Authorize(ctx, dashboardSettingsAuthzAttributes("get", "folder-f1"))
+		decision, reason, err := authz.Authorize(ctx, dashboardPreferencesAuthzAttributes("get", "folder-f1"))
 
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionAllow, decision)
@@ -299,9 +299,9 @@ func TestDashboardsAPIBuilderGetAuthorizerRoutesDashboardSettings(t *testing.T) 
 	})
 }
 
-// dashboardSettingsAccessClient grants each folder UID the verbs listed for it and records every check
+// dashboardPreferencesAccessClient grants each folder UID the verbs listed for it and records every check
 // and the UID of its caller.
-type dashboardSettingsAccessClient struct {
+type dashboardPreferencesAccessClient struct {
 	authlib.AccessClient
 	grants        map[string][]string
 	callers       []string
@@ -315,7 +315,7 @@ type dashboardSettingsAccessClient struct {
 	batchItemErrs map[string]error
 }
 
-func (c *dashboardSettingsAccessClient) Check(_ context.Context, authInfo authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+func (c *dashboardPreferencesAccessClient) Check(_ context.Context, authInfo authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 	c.callers = append(c.callers, authInfo.GetUID())
 	c.requests = append(c.requests, req)
 	c.folders = append(c.folders, folder)
@@ -324,7 +324,7 @@ func (c *dashboardSettingsAccessClient) Check(_ context.Context, authInfo authli
 
 // BatchCheck answers each check by its name: FilterAuthorized numbers the checks by position, so the
 // correlation IDs say nothing about which folder a check is for.
-func (c *dashboardSettingsAccessClient) BatchCheck(_ context.Context, authInfo authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+func (c *dashboardPreferencesAccessClient) BatchCheck(_ context.Context, authInfo authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 	c.callers = append(c.callers, authInfo.GetUID())
 	c.batchRequests = append(c.batchRequests, req)
 	if c.batchErr != nil {
@@ -341,8 +341,8 @@ func (c *dashboardSettingsAccessClient) BatchCheck(_ context.Context, authInfo a
 	return authlib.BatchCheckResponse{Results: results}, nil
 }
 
-// The delegated grant is what a Cloud token needs to reach dashboard settings at all.
-func dashboardSettingsRequester(identityType authlib.IdentityType, uid string, role identity.RoleType) *identity.StaticRequester {
+// The delegated grant is what a Cloud token needs to reach dashboard preferences at all.
+func dashboardPreferencesRequester(identityType authlib.IdentityType, uid string, role identity.RoleType) *identity.StaticRequester {
 	return &identity.StaticRequester{
 		Type:      identityType,
 		UserUID:   uid,
@@ -351,14 +351,14 @@ func dashboardSettingsRequester(identityType authlib.IdentityType, uid string, r
 		Namespace: "stacks-1",
 		AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
 			Rest: authn.AccessTokenClaims{
-				DelegatedPermissions: []string{"dashboard.grafana.app/dashboardsettings:*"},
+				DelegatedPermissions: []string{"dashboard.grafana.app/dashboardpreferences:*"},
 			},
 		},
 	}
 }
 
-// dashboardSettingsToken is an access-policy token that is neither Grafana's service identity nor provisioning.
-func dashboardSettingsToken(permissions ...string) *identity.StaticRequester {
+// dashboardPreferencesToken is an access-policy token that is neither Grafana's service identity nor provisioning.
+func dashboardPreferencesToken(permissions ...string) *identity.StaticRequester {
 	return &identity.StaticRequester{
 		Type:      authlib.TypeAccessPolicy,
 		UserUID:   "other-service",
@@ -370,21 +370,21 @@ func dashboardSettingsToken(permissions ...string) *identity.StaticRequester {
 	}
 }
 
-func dashboardSettingsAuthzAttributes(verb, name string) authorizer.AttributesRecord {
-	attr := authzAttributes(dashv2beta1.DashboardSettingsResourceInfo.GetName(), verb).(authorizer.AttributesRecord)
+func dashboardPreferencesAuthzAttributes(verb, name string) authorizer.AttributesRecord {
+	attr := authzAttributes(dashv2beta1.DashboardPreferencesResourceInfo.GetName(), verb).(authorizer.AttributesRecord)
 	attr.Name = name
 	return attr
 }
 
-func setDashboardSettingsToggle(t *testing.T, enabled bool) {
+func setDashboardPreferencesToggle(t *testing.T, enabled bool) {
 	t.Helper()
 	variant := "disabled"
 	if enabled {
 		variant = "enabled"
 	}
 	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagGrafanaDashboardSettings: {
-			Key:            featuremgmt.FlagGrafanaDashboardSettings,
+		featuremgmt.FlagGrafanaDashboardPreferences: {
+			Key:            featuremgmt.FlagGrafanaDashboardPreferences,
 			DefaultVariant: variant,
 			Variants: map[string]any{
 				"enabled":  true,
