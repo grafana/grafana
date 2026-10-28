@@ -1,4 +1,14 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
+import {
+  type ComponentType,
+  memo,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from 'react';
 import { usePrevious } from 'react-use';
 import { type ListChildComponentProps, type ListOnItemsRenderedProps } from 'react-window';
 
@@ -22,11 +32,30 @@ import { LogLineMessage } from './LogLineMessage';
 import { type LogListModel } from './processing';
 import { type LogLineVirtualization } from './virtualization';
 
+// The data every LogLine needs
+interface LogData {
+  displayedFields: string[];
+  handleOverflow: (index: number, id: string, height?: number) => void;
+  infiniteLoaderState: InfiniteLoaderState;
+  lastLogOfPage: string[];
+  loadMoreBottom: () => void;
+  logs: LogListModel[];
+  onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
+  showTime: boolean;
+  sortOrder: LogsSortOrder;
+  styles: ReturnType<typeof getStyles>;
+  timeRange: TimeRange;
+  timeZone: string;
+  virtualization: LogLineVirtualization;
+  wrapLogMessage: boolean;
+}
+
 interface ChildrenProps {
   itemCount: number;
+  itemData: LogData;
   getItemKey: (index: number) => string;
   onItemsRendered: (props: ListOnItemsRenderedProps) => void;
-  Renderer: (props: ListChildComponentProps) => ReactNode;
+  Log: ComponentType<ListChildComponentProps<LogData>>;
 }
 
 export interface Props {
@@ -234,38 +263,23 @@ export const InfiniteScroll = ({
     onLoadMore(ScrollDirection.Bottom);
   }, [onLoadMore]);
 
-  const Renderer = useCallback(
-    ({ index, style }: ListChildComponentProps) => {
-      if (!logs[index] && infiniteLoaderState !== 'idle') {
-        return (
-          <LogLineMessage
-            style={style}
-            styles={styles}
-            onClick={infiniteLoaderState === 'pre-scroll-bottom' ? loadMoreBottom : undefined}
-          >
-            {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
-          </LogLineMessage>
-        );
-      }
-      return (
-        <LogLine
-          displayedFields={displayedFields}
-          index={index}
-          log={logs[index]}
-          logs={logs}
-          onClick={onClick}
-          showTime={showTime}
-          style={style}
-          styles={styles}
-          timeRange={timeRange}
-          timeZone={timeZone}
-          variant={getLogLineVariant(logs, index, lastLogOfPage.current)}
-          virtualization={virtualization}
-          wrapLogMessage={wrapLogMessage}
-          onOverflow={handleOverflow}
-        />
-      );
-    },
+  const itemData = useMemo<LogData>(
+    () => ({
+      displayedFields,
+      handleOverflow,
+      infiniteLoaderState,
+      lastLogOfPage: lastLogOfPage.current,
+      loadMoreBottom,
+      logs,
+      onClick,
+      showTime,
+      sortOrder,
+      styles,
+      timeRange,
+      timeZone,
+      virtualization,
+      wrapLogMessage,
+    }),
     [
       displayedFields,
       handleOverflow,
@@ -322,7 +336,7 @@ export const InfiniteScroll = ({
           </LogLineMessage>
         </div>
       )}
-      {children({ getItemKey, itemCount, onItemsRendered, Renderer })}
+      {children({ getItemKey, itemCount, itemData, onItemsRendered, Log })}
     </>
   );
 };
@@ -346,6 +360,56 @@ function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: Lo
       return null;
   }
 }
+
+const Log = memo(({ index, style, data }: ListChildComponentProps<LogData>) => {
+  const {
+    displayedFields,
+    handleOverflow,
+    infiniteLoaderState,
+    lastLogOfPage,
+    loadMoreBottom,
+    logs,
+    onClick,
+    showTime,
+    sortOrder,
+    styles,
+    timeRange,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  } = data;
+
+  if (!logs[index] && infiniteLoaderState !== 'idle') {
+    return (
+      <LogLineMessage
+        style={style}
+        styles={styles}
+        onClick={infiniteLoaderState === 'pre-scroll-bottom' ? loadMoreBottom : undefined}
+      >
+        {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
+      </LogLineMessage>
+    );
+  }
+  return (
+    <LogLine
+      displayedFields={displayedFields}
+      index={index}
+      log={logs[index]}
+      logs={logs}
+      onClick={onClick}
+      showTime={showTime}
+      style={style}
+      styles={styles}
+      timeRange={timeRange}
+      timeZone={timeZone}
+      variant={getLogLineVariant(logs, index, lastLogOfPage)}
+      virtualization={virtualization}
+      wrapLogMessage={wrapLogMessage}
+      onOverflow={handleOverflow}
+    />
+  );
+});
+Log.displayName = 'InfiniteScrollLog';
 
 function getLogLineVariant(logs: LogListModel[], index: number, lastLogOfPage: string[]) {
   if (!lastLogOfPage.length || !logs[index - 1]) {
