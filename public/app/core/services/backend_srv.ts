@@ -555,7 +555,7 @@ export class BackendSrv implements BackendService {
       err.status !== 403 ||
       !path.startsWith('apis/') ||
       path.startsWith('apis/provisioning.grafana.app/') ||
-      (method !== 'POST' && method !== 'PUT' && method !== 'DELETE')
+      (method !== 'POST' && method !== 'PUT' && method !== 'PATCH' && method !== 'DELETE')
     ) {
       return undefined;
     }
@@ -572,8 +572,9 @@ export class BackendSrv implements BackendService {
       props = { action: 'create', resource, repositoryName: folderCause.message, folderName: folderCause.field };
     } else if (writeDenied && (method === 'DELETE' || resource)) {
       props = {
-        action: method === 'POST' ? 'create' : method === 'PUT' ? 'update' : 'delete',
-        resource: method === 'DELETE' ? undefined : resource,
+        action: method === 'POST' ? 'create' : method === 'DELETE' ? 'delete' : 'update',
+        resource: method === 'POST' || method === 'PUT' ? resource : undefined,
+        patch: method === 'PATCH' ? resource : undefined,
         repositoryName: resource?.metadata?.annotations?.['grafana.app/managerId'],
       };
     } else {

@@ -11,12 +11,13 @@ import {
 import { getAPIBaseURL } from 'app/api/utils';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
-import { getKindInfoByGroupKind } from '../../utils/resourceKinds';
+import { addResourceKinds, getKindInfoByGroupKind } from '../../utils/resourceKinds';
 
 export interface InterceptedWriteDrawerProps {
   url: string;
   action: 'create' | 'update' | 'delete';
   resource?: SaveResourceDrawerResource;
+  patch?: object;
   repositoryName?: string;
   folderName?: string;
   onDismiss?: () => void;
@@ -28,10 +29,39 @@ export interface InterceptedWriteDrawerProps {
 
 const get = <T,>(url: string) => getBackendSrv().get<T>(url, undefined, undefined, { showErrorAlert: false });
 
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const isResource = (value: unknown): value is SaveResourceDrawerResource => isObject(value);
+
+function mergePatch(target: unknown, patch: unknown): unknown {
+  if (!isObject(patch)) {
+    return patch;
+  }
+  const result: Record<string, unknown> = isObject(target) ? { ...target } : {};
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === null) {
+      delete result[key];
+    } else {
+      result[key] = mergePatch(result[key], value);
+    }
+  }
+  return result;
+}
+
+function ensureKindRegistered(url: string, resource: SaveResourceDrawerResource) {
+  const group = resource.apiVersion?.split('/')[0];
+  const kind = resource.kind;
+  if (group && kind && !getKindInfoByGroupKind(group, kind)) {
+    addResourceKinds([{ group, kind, resource: url.replace(/^\//, '').split('/')[5] }]);
+  }
+}
+
 export function InterceptedWriteDrawer({
   url,
   action,
   resource: submitted,
+  patch,
   repositoryName,
   folderName,
   onDismiss,
@@ -63,14 +93,17 @@ export function InterceptedWriteDrawer({
   useEffect(() => {
     if (!submitted) {
       get<SaveResourceDrawerResource>(url)
-        .then(setResource)
+        .then((current) => {
+          const patched = patch ? mergePatch(current, patch) : current;
+          setResource(isResource(patched) ? patched : current);
+        })
         .catch(() => {
           settled.current = true;
           onUnsupported();
           onDismiss?.();
         });
     }
-  }, [url, submitted, onUnsupported, onDismiss]);
+  }, [url, submitted, patch, onUnsupported, onDismiss]);
 
   useEffect(() => {
     if (folderName) {
@@ -83,18 +116,10 @@ export function InterceptedWriteDrawer({
     }
   }, [folderName]);
 
-  const supported = !resource || Boolean(getKindInfoByGroupKind(resource.apiVersion?.split('/')[0], resource.kind));
-  useEffect(() => {
-    if (!supported) {
-      settled.current = true;
-      onUnsupported();
-      onDismiss?.();
-    }
-  }, [supported, onUnsupported, onDismiss]);
-
-  if (!resource || !supported || directory === undefined) {
+  if (!resource || directory === undefined) {
     return null;
   }
+  ensureKindRegistered(url, resource);
 
   const spec = resource.spec ?? {};
   const handlers = {
