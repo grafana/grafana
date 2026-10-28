@@ -76,7 +76,7 @@ function convertGlobToRegEx(text: string): string {
 
 /**
  * Replaces `#A` style references with the referenced query's target, recursively.
- * Unknown and circular references are left as they are.
+ * Unknown references are left as they are. Expansion stops when a reference cycle is found.
  */
 function expandSeriesReferences(
   target: string,
@@ -538,12 +538,16 @@ export class GraphiteDatasource
   interpolateVariablesInQueries(queries: GraphiteQuery[], scopedVars: ScopedVars): GraphiteQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
-      const targetsByRefId = new Map(queries.map((query) => [query.refId, query.target ?? '']));
+      const targetsByRefId = new Map(
+        queries.flatMap((query) => (query.target ? [[query.refId, query.target] as const] : []))
+      );
       expandedQueries = queries.map((query) => {
         const target = query.target ?? '';
         const targetWithReferences = expandSeriesReferences(target, targetsByRefId);
-        // Keep the saved `targetFull` when the referenced queries are not part of this call.
-        const targetFull = targetWithReferences !== target ? targetWithReferences : query.targetFull;
+        // Keep the saved `targetFull` unless every reference resolved, so a partial expansion
+        // never replaces a complete one.
+        const isFullyResolved = targetWithReferences !== target && !/#[A-Z]/.test(targetWithReferences);
+        const targetFull = isFullyResolved ? targetWithReferences : query.targetFull;
         const expandedQuery = {
           ...query,
           datasource: this.getRef(),

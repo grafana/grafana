@@ -1452,7 +1452,31 @@ describe('graphiteDatasource', () => {
       expect(query.targetFull).toBe('sumSeries(metric.10)');
     });
 
-    it('leaves circular references unresolved instead of looping', () => {
+    it('keeps the saved targetFull when only some references resolve', () => {
+      const queries = createDatasource().interpolateVariablesInQueries(
+        [
+          { refId: 'A', target: 'metric.$input' },
+          { refId: 'C', target: 'asPercent(#A,#B)', targetFull: 'asPercent(metric.$input,sumSeries(metric.$input))' },
+        ],
+        {}
+      );
+
+      expect(queries[1].targetFull).toBe('asPercent(metric.10,sumSeries(metric.10))');
+    });
+
+    it('leaves a reference to an empty query unresolved', () => {
+      const [, query] = createDatasource().interpolateVariablesInQueries(
+        [
+          { refId: 'A', target: '' },
+          { refId: 'B', target: 'sumSeries(#A)' },
+        ],
+        {}
+      );
+
+      expect(query.targetFull).toBeUndefined();
+    });
+
+    it('does not set targetFull for circular references and does not loop', () => {
       const queries = createDatasource().interpolateVariablesInQueries(
         [
           { refId: 'A', target: 'sumSeries(#B)' },
@@ -1461,10 +1485,7 @@ describe('graphiteDatasource', () => {
         {}
       );
 
-      expect(queries.map((q) => q.targetFull)).toEqual([
-        'sumSeries(sumSeries(sumSeries(#B)))',
-        'sumSeries(sumSeries(sumSeries(#A)))',
-      ]);
+      expect(queries.map((q) => q.targetFull)).toEqual([undefined, undefined]);
     });
   });
 
