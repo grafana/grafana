@@ -25,6 +25,22 @@ func TestIsFolderMetadataFile(t *testing.T) {
 	assert.False(t, IsFolderMetadataFile("myfolder/"))
 }
 
+// Guards TestMarshalFolderManifest_OmitsStatus: if the Folder type stopped serializing
+// status, that test would pass without marshalFolderManifest doing anything.
+func TestFolderManifest_StatusIsSerializedByDefault(t *testing.T) {
+	f := NewFolderManifest("abc", "My folder", folders.FolderResourceInfo.GroupVersionKind())
+	f.Status.CascadeDelete = &folders.FolderCascadeDeleteStatus{State: "InProgress"}
+
+	data, err := json.Marshal(f)
+	require.NoError(t, err)
+
+	var obj map[string]any
+	require.NoError(t, json.Unmarshal(data, &obj))
+	require.Equal(t, map[string]any{
+		"cascadeDelete": map[string]any{"state": "InProgress"},
+	}, obj["status"])
+}
+
 func TestMarshalFolderManifest_OmitsStatus(t *testing.T) {
 	f := NewFolderManifest("abc", "My folder", folders.FolderResourceInfo.GroupVersionKind())
 	f.Status.CascadeDelete = &folders.FolderCascadeDeleteStatus{State: "InProgress"}
