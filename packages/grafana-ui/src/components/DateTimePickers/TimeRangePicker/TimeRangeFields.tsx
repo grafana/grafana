@@ -28,14 +28,13 @@ interface Props {
   from: RangeField;
   to: RangeField;
   inputWidth?: number;
-  calendarDisabled?: boolean;
   onSubmit?: () => void;
   fieldSuffix?: ReactNode;
   calendar: Omit<TimePickerCalendarProps, 'isOpen' | 'onClose'>;
 }
 
 /** Shared absolute-range inputs and calendar; callers own parsing, validation, and applying the range. */
-export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, calendar, calendarDisabled }: Props) {
+export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, calendar }: Props) {
   const fromId = useId();
   const toId = useId();
   const [isOpen, setOpen] = useState(false);
@@ -47,7 +46,6 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
       icon="calendar-alt"
       variant="secondary"
       type="button"
-      disabled={calendarDisabled}
       onClick={() => setOpen(true)}
     />
   );

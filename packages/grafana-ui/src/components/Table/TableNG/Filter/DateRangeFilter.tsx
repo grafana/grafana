@@ -113,7 +113,6 @@ export function DateRangeFilter({
               setUpperDraft({ text: formatInput(to.endOf('day').valueOf()), timeZone });
             },
           }}
-          calendarDisabled={histogram.finite.length === 0}
         />
       </div>
     </RangeFilterFrame>

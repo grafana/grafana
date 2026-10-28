@@ -99,11 +99,11 @@ it('keeps drafted date bounds at the same instants when the timezone changes', a
   expect(onApply).toHaveBeenCalledWith({ min: Date.UTC(2026, 8, 17, 17), max: end, includeMissing: false });
 });
 
-it('disables calendar selection and uses unbounded placeholders with no finite dates', () => {
+it('allows preset date bounds when no finite dates are available', () => {
   setup(FieldType.time, [null, Infinity]);
   expect(screen.getByRole('textbox', { name: 'Start' })).toHaveAttribute('placeholder', 'No limit');
   expect(screen.getByRole('textbox', { name: 'End' })).toHaveAttribute('placeholder', 'No limit');
-  expect(screen.getAllByRole('button', { name: 'Open calendar' })[0]).toBeDisabled();
+  expect(screen.getAllByRole('button', { name: 'Open calendar' })[0]).toBeEnabled();
 });
 
 it('previews exact bounds without missing values, then commits only on Apply', async () => {
