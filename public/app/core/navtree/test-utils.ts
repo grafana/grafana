@@ -47,6 +47,8 @@ export function setupNavTestState({
     orgName: 'Main Org.',
   };
   contextSrv.isSignedIn = isSignedIn;
+  // isPluginNavAvailable reads the session from boot data, which contextSrv.user copies at startup.
+  config.bootData.user = { ...config.bootData.user, orgRole: orgRole as OrgRole, isSignedIn };
   contextSrv.isGrafanaAdmin = isGrafanaAdmin;
 
   setTestFlags(openFeatureFlags);

@@ -45,6 +45,7 @@ import {
   FlagKeys,
   initDataSourceInstanceSettings,
   initOpenFeature,
+  isSignedInOrAnonymous,
   setExpressionDataSourceInstance,
   setDataSourcePluginImporter,
   setGetObservablePluginComponents,
@@ -342,7 +343,7 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      if (contextSrv.user.orgRole !== '') {
+      if (isSignedInOrAnonymous()) {
         preloadPlugins(await getAppPluginsToPreload());
       }
 

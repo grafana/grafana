@@ -1,6 +1,6 @@
 import { type NavModelItem, userHasAnyPermission } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { FlagKeys, getFeatureFlagClient, isSignedInOrAnonymous } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { NavID, type NavId } from './constants';
@@ -21,7 +21,7 @@ function arePluginNavItemsEnabled(): boolean {
  * nobody filled. Both sites go through this, so they cannot drift apart.
  */
 export function isPluginNavAvailable(): boolean {
-  return arePluginNavItemsEnabled() && contextSrv.user.orgRole !== '';
+  return arePluginNavItemsEnabled() && isSignedInOrAnonymous();
 }
 
 export const hasAny = (...actions: string[]) => userHasAnyPermission(actions, contextSrv.user);
