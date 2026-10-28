@@ -190,13 +190,6 @@ const IndexFeatureSortableTrashResourceVersion IndexFeature = "sortable-trash-re
 // that path reports facet-capable but unstored fields as missing values.
 const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
 
-// IndexFeatureStoredResourceVersion means the index stores each document's resource
-// version; without it a search returns 0, which callers read as "unknown".
-//
-// Recorded but not required, because requiring it rebuilds every existing index at
-// once. Recording it now is what lets a later release require it.
-const IndexFeatureStoredResourceVersion IndexFeature = "resource-version-stored"
-
 // IndexFeatureHoldsDeletedDocuments means the index keeps deleted documents, so a
 // reader that does not exclude them returns deleted resources as live. It says what
 // the index holds, not what it maps, and every index built now holds them. Older
@@ -222,7 +215,6 @@ var currentIndexFeatures = []IndexFeature{
 	IndexFeatureHoldsDeletedDocuments,
 	IndexFeatureSortableTrashResourceVersion,
 	IndexFeatureStoredFacets,
-	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
 }
 
@@ -234,7 +226,6 @@ var knownIndexFeatures = []IndexFeature{
 	IndexFeatureHoldsDeletedDocuments,
 	IndexFeatureSortableTrashResourceVersion,
 	IndexFeatureStoredFacets,
-	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
 }
 
@@ -536,6 +527,7 @@ type searchServer struct {
 	rateLimitPerTenant     int
 	rateLimitWindow        time.Duration
 	collectionAllowlist    vector.CollectionAllowlist
+	allowedReadServices    map[string][]string
 	embeddingBuilders      embed.BuilderProvider
 
 	ownsIndexFn func(key NamespacedResource) (bool, error)
@@ -682,6 +674,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		rateLimitPerTenant:     opts.RateLimitPerTenant,
 		rateLimitWindow:        opts.RateLimitWindow,
 		collectionAllowlist:    vector.NewCollectionAllowlist(opts.AllowedInternalCollections, opts.AllowedExternalCollections),
+		allowedReadServices:    opts.AllowedReadServices,
 		embeddingBuilders:      opts.EmbeddingBuilders,
 	}
 
@@ -1145,6 +1138,10 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
 		return &resourcepb.VectorSearchResponse{Error: errRes}, nil
 	}
+	user, _ := types.AuthInfoFrom(ctx)
+	if err := s.checkAllowedReadService(user, req.Key.Group, req.Key.Resource); err != nil {
+		return nil, err
+	}
 
 	limit := int(req.Limit)
 	switch {
@@ -1195,11 +1192,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	// Using authz post-filtering for now
 	// Downside is that the results could be lower than expected
 	// For example: VectorSearch returns 10 results, user has access to 3 items, we would only return 3 items
-	user, ok := types.AuthInfoFrom(ctx)
-	if !ok || user == nil {
-		return nil, status.Error(codes.Unauthenticated, "no user in context")
-	}
-
 	allowed, err := s.batchCheckVectorSearchResults(ctx, user, req.Key, results)
 	if err != nil {
 		if ctx.Err() != nil {

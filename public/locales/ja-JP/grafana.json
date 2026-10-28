@@ -1436,7 +1436,8 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "interval": "",
       "recording-rules": {
@@ -1446,6 +1447,58 @@
       "result-count": {
         "alert-rules_other": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -5614,6 +5667,17 @@
       "ungroup-rows": "行のグループ化を解除",
       "ungroup-tabs": "タブのグループ化を解除"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5794,7 +5858,20 @@
     "edit-actions": {
       "add": "{{typeName}}を追加",
       "add-conditional-rule": "{{ruleDescription}}ルールを追加",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "すべての行を折りたたむ",
+      "collapse-row": "",
       "dashboard-description": "ダッシュボードの説明を変更",
       "dashboard-title": "ダッシュボードのタイトルを変更",
       "duplicate": "{{typeName}}を複製",
@@ -5803,6 +5880,7 @@
       "edit-template-variable-rule": "テンプレート変数ルールを変更",
       "edit-time-range-rule": "時間範囲ルールを変更",
       "expand-all-rows": "すべての行を展開",
+      "expand-row": "",
       "group-into-row": "行にグループ化",
       "group-into-tab": "タブにグループ化",
       "move": "{{typeName}}を移動",
@@ -5818,6 +5896,7 @@
       "paste-panel": "パネルを貼り付け",
       "remove": "{{typeName}}を削除",
       "remove-multiple": "{{typeName}}（{{num}}）を削除",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "行の画面全体表示を無効にする",
       "row-fill-screen-enable": "行の画面全体表示を有効にする",
@@ -5825,16 +5904,38 @@
       "row-repeat-variable": "行の繰り返し基準",
       "row-show-header": "行のヘッダを表示",
       "row-title": "行のタイトルを変更",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "レイアウトを切り替え",
       "switch-layout-row": "レイアウトを切り替える",
       "switch-layout-tab": "レイアウトを切り替える",
       "tab-repeat-variable": "タブの繰り返し基準",
       "tab-title": "タブのタイトルを変更",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "変数の説明を変更",
       "variable-hide": "変数の非表示設定を変更",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "変数ラベルを変更",
+      "variable-multi-value": "",
       "variable-name": "変数名を変更",
-      "variable-type": "変数の種類を変更"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "変数の種類を変更",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "他のダッシュボードと共有されている視覚化を追加します。",
@@ -6056,8 +6157,12 @@
       "tooltip-previous": "前へ"
     },
     "modes": {
-      "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -6967,7 +7072,8 @@
         "change-annotation-controls-display": "注釈コントロールの表示を変更",
         "change-annotation-enabled-state": "注釈の有効状態を変更",
         "change-annotation-name": "注釈の名前を変更",
-        "change-annotation-panel-filter": "注釈パネルのフィルターを変更"
+        "change-annotation-panel-filter": "注釈パネルのフィルターを変更",
+        "change-annotation-query": ""
       },
       "edit-query": "クエリを編集"
     },
@@ -12094,10 +12200,14 @@
     },
     "log-line": {
       "has-error": "エラーあり",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "サンプリング済み",
       "show-less": "表示を減らす",
       "show-more": "さらに表示する",
-      "tooltip-error": "エラー：{{errorMessage}}"
+      "tooltip-error": "エラー：{{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "一致した行を中央に表示",
@@ -13314,7 +13424,6 @@
     "add-panel": {
       "cancel": "キャンセル",
       "card-author": "{{author}}による",
-      "card-selected": "{{title}}（選択済み）",
       "card-updated": "{{when}}に更新",
       "create-name": "ノートブック名",
       "create-name-required": "ノートブック名は必須です",
@@ -13325,6 +13434,7 @@
       "error-open-conflict": "",
       "list-error": "ノートブックの読み込みに失敗しました",
       "list-error-body": "ノートブックの読み込み中に問題が発生しました。もう一度お試しいただくか、代わりに新しいノートブックを作成してください。",
+      "list-label": "",
       "list-no-matches": "これらのフィルターに一致するノートブックはありません。",
       "list-none": "まだノートブックがありません。代わりにノートブックを作成してください。",
       "list-none-read-only": "まだノートブックがなく、作成する権限もありません。",
@@ -16186,8 +16296,8 @@
       "copy-link-button": "コピー",
       "info-text": "以下のオプションでカスタマイズした、このダッシュボードまたはパネルへの直接リンクを作成します。",
       "link-url": "URLをリンク",
-      "render-alert": "画像レンダラープラグインがインストールされていません",
-      "render-instructions": "画像をレンダリングするには、<2>Grafana画像レンダラープラグイン</2>をインストールする必要があります。プラグインをインストールするには、Grafana管理者にお問い合わせください。",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "レンダリングされた画像への直接リンク",
       "save-alert": "ダッシュボードは保存されていません",
       "save-dashboard": "パネル画像をレンダリングするには、最初にダッシュボードを保存する必要があります。",
@@ -17001,6 +17111,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {

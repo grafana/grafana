@@ -1443,7 +1443,8 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "interval": "",
       "recording-rules": {
@@ -1455,6 +1456,58 @@
         "alert-rules_other": "",
         "recording-rules_one": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -5663,6 +5716,17 @@
       "ungroup-rows": "Groepering van rijen opheffen",
       "ungroup-tabs": "Groepering van tabbladen opheffen"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5843,7 +5907,20 @@
     "edit-actions": {
       "add": "{{typeName}} toevoegen",
       "add-conditional-rule": "Regel {{ruleDescription}} toevoegen",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "Alle rijen samenvouwen",
+      "collapse-row": "",
       "dashboard-description": "Dashboardbeschrijving wijzigen",
       "dashboard-title": "Dashboardtitel wijzigen",
       "duplicate": "Dupliceer {{typeName}}",
@@ -5852,6 +5929,7 @@
       "edit-template-variable-rule": "Regel voor sjabloonvariabele wijzigen",
       "edit-time-range-rule": "Regel voor tijdsbereik wijzigen",
       "expand-all-rows": "Alle rijen uitvouwen",
+      "expand-row": "",
       "group-into-row": "Groeperen in rij",
       "group-into-tab": "Groeperen in tabblad",
       "move": "{{typeName}} verplaatsen ",
@@ -5867,6 +5945,7 @@
       "paste-panel": "Paneel plakken",
       "remove": "{{typeName}} verwijderen",
       "remove-multiple": "{{typeName}} ({{num}}) verwijderen",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "Rijvulling van scherm uitschakelen",
       "row-fill-screen-enable": "Rijvulling van scherm inschakelen",
@@ -5874,16 +5953,38 @@
       "row-repeat-variable": "Rij herhalen op",
       "row-show-header": "Rijkop weergeven",
       "row-title": "Rijtitel wijzigen",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "Indeling wisselen",
       "switch-layout-row": "Indeling wisselen",
       "switch-layout-tab": "Indeling wisselen",
       "tab-repeat-variable": "Tabblad herhalen op",
       "tab-title": "Tabbladtitel wijzigen",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "Variabelebeschrijving wijzigen",
       "variable-hide": "Optie variabele verbergen wijzigen",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "Label variabele wijzigen",
+      "variable-multi-value": "",
       "variable-name": "Naam variabele wijzigen",
-      "variable-type": "Type variabele wijzigen"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "Type variabele wijzigen",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "Voeg visualisaties toe die worden gedeeld met andere dashboards.",
@@ -6105,8 +6206,12 @@
       "tooltip-previous": "Vorige"
     },
     "modes": {
-      "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -7019,7 +7124,8 @@
         "change-annotation-controls-display": "Weergave van annotatiebesturingselementen wijzigen",
         "change-annotation-enabled-state": "Inschakelstatus van annotatie wijzigen",
         "change-annotation-name": "Annotatienaam wijzigen",
-        "change-annotation-panel-filter": "Annotatiepaneelfilter wijzigen"
+        "change-annotation-panel-filter": "Annotatiepaneelfilter wijzigen",
+        "change-annotation-query": ""
       },
       "edit-query": "Query bewerken"
     },
@@ -12199,10 +12305,14 @@
     },
     "log-line": {
       "has-error": "Bevat fouten",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "Is bemonsterd",
       "show-less": "minder weergeven",
       "show-more": "meer weergeven",
-      "tooltip-error": "Fout: {{errorMessage}}"
+      "tooltip-error": "Fout: {{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "Overeenkomende lijn centreren",
@@ -13424,7 +13534,6 @@
     "add-panel": {
       "cancel": "Annuleren",
       "card-author": "Door {{author}}",
-      "card-selected": "{{title}} (geselecteerd)",
       "card-updated": "Bijgewerkte {{when}}",
       "create-name": "Notitieboeknaam",
       "create-name-required": "Een notitieboeknaam is vereist",
@@ -13435,6 +13544,7 @@
       "error-open-conflict": "",
       "list-error": "Kan notitieboeken niet laden",
       "list-error-body": "Er ging iets mis bij het laden van je notitieboeken. Probeer het opnieuw of maak in plaats daarvan een nieuw notitieboek.",
+      "list-label": "",
       "list-no-matches": "Er komen geen notitieboeken overeen met deze filters.",
       "list-none": "Je hebt nog geen notitieboeken. Maak er in plaats daarvan een aan.",
       "list-none-read-only": "Je hebt nog geen notitieboeken en geen toestemming om er een te maken.",
@@ -16326,8 +16436,8 @@
       "copy-link-button": "Kopiëren",
       "info-text": "Maak een directe link naar dit dashboard of paneel, aangepast met de onderstaande opties.",
       "link-url": "Link-URL",
-      "render-alert": "Afbeeldingweergave-plug-in niet geïnstalleerd",
-      "render-instructions": "Om een afbeelding weer te geven, moet je de <2>Grafana- afbeeldingsweergave-plug-in </2> installeren. Neem contact op met je Grafana-beheerder om de plug-in te installeren.",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "Directe link naar gerenderde afbeelding",
       "save-alert": "Dashboard is niet opgeslagen",
       "save-dashboard": "Om een paneelafbeelding weer te geven, moet je eerst het dashboard opslaan.",
@@ -17142,6 +17252,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {

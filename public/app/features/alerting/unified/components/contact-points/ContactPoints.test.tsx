@@ -5,6 +5,7 @@ import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within }
 
 import { selectors } from '@grafana/e2e-selectors';
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
+import { receiverUidFor } from 'app/features/alerting/unified/mocks/server/handlers/k8s/receivers.k8s';
 import { flushMicrotasks } from 'app/features/alerting/unified/test/test-utils';
 import { K8sAnnotations } from 'app/features/alerting/unified/utils/k8s/constants';
 import {
@@ -221,10 +222,13 @@ describe('contact points', () => {
 
       // Check view buttons by their href to verify which contact points they belong to
       // The url is the same but the form should be readonly
-      expect(viewButtons[0]).toHaveAttribute('href', '/alerting/notifications/receivers/grafana-default-email/edit');
+      expect(viewButtons[0]).toHaveAttribute(
+        'href',
+        `/alerting/notifications/receivers/${receiverUidFor('grafana-default-email')}/edit`
+      );
       expect(viewButtons[1]).toHaveAttribute(
         'href',
-        '/alerting/notifications/receivers/provisioned-contact-point/edit'
+        `/alerting/notifications/receivers/${receiverUidFor('provisioned-contact-point')}/edit`
       );
 
       viewButtons.forEach((button) => {
@@ -236,14 +240,17 @@ describe('contact points', () => {
       expect(editButtons).toHaveLength(3);
 
       // Check edit buttons by their href to verify which contact points they belong to
-      expect(editButtons[0]).toHaveAttribute('href', '/alerting/notifications/receivers/lotsa-emails/edit');
+      expect(editButtons[0]).toHaveAttribute(
+        'href',
+        `/alerting/notifications/receivers/${receiverUidFor('lotsa-emails')}/edit`
+      );
       expect(editButtons[1]).toHaveAttribute(
         'href',
-        '/alerting/notifications/receivers/OnCall%20Conctact%20point/edit'
+        `/alerting/notifications/receivers/${encodeURIComponent(receiverUidFor('OnCall Conctact point'))}/edit`
       );
       expect(editButtons[2]).toHaveAttribute(
         'href',
-        '/alerting/notifications/receivers/Slack%20with%20multiple%20channels/edit'
+        `/alerting/notifications/receivers/${encodeURIComponent(receiverUidFor('Slack with multiple channels'))}/edit`
       );
 
       editButtons.forEach((button) => {

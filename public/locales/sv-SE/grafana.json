@@ -1443,7 +1443,8 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "interval": "",
       "recording-rules": {
@@ -1455,6 +1456,58 @@
         "alert-rules_other": "",
         "recording-rules_one": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -5663,6 +5716,17 @@
       "ungroup-rows": "Ta bort gruppering av rader",
       "ungroup-tabs": "Ta bort gruppering av flikar"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5843,7 +5907,20 @@
     "edit-actions": {
       "add": "Lägg till {{typeName}}",
       "add-conditional-rule": "Lägg till regeln {{ruleDescription}}",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "Dölj alla rader",
+      "collapse-row": "",
       "dashboard-description": "Ändra instrumentpanelbeskrivning",
       "dashboard-title": "Ändra instrumentpaneltitel",
       "duplicate": "Dubblett av {{typeName}}",
@@ -5852,6 +5929,7 @@
       "edit-template-variable-rule": "Ändra regel för mallvariabel",
       "edit-time-range-rule": "Ändra regel för tidsintervall",
       "expand-all-rows": "Expandera alla rader",
+      "expand-row": "",
       "group-into-row": "Gruppera i rad",
       "group-into-tab": "Gruppera i flik",
       "move": "Flytta {{typeName}}",
@@ -5867,6 +5945,7 @@
       "paste-panel": "Klistra in panel",
       "remove": "Ta bort {{typeName}}",
       "remove-multiple": "Ta bort {{typeName}} ({{num}})",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "Inaktivera skärmfyllande rader",
       "row-fill-screen-enable": "Aktivera skärmfyllande rader",
@@ -5874,16 +5953,38 @@
       "row-repeat-variable": "Radupprepning efter",
       "row-show-header": "Visa radhuvud",
       "row-title": "Ändra radtitel",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "Byt layout",
       "switch-layout-row": "Byt layout",
       "switch-layout-tab": "Byt layout",
       "tab-repeat-variable": "Flikupprepning efter",
       "tab-title": "Ändra fliktitel",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "Ändra variabelbeskrivning",
       "variable-hide": "Ändra alternativ för att dölja variabel",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "Ändra variabeletikett",
+      "variable-multi-value": "",
       "variable-name": "Ändra variabelnamn",
-      "variable-type": "Ändra variabeltyp"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "Ändra variabeltyp",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "Lägg till visualiseringar som delas med andra paneler.",
@@ -6105,8 +6206,12 @@
       "tooltip-previous": "Föregående"
     },
     "modes": {
-      "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -7019,7 +7124,8 @@
         "change-annotation-controls-display": "Ändra visning av kommentar-kontroller",
         "change-annotation-enabled-state": "Ändra aktiveringsstatus för kommentar",
         "change-annotation-name": "Ändra namn på kommentar",
-        "change-annotation-panel-filter": "Ändra filter för kommentarspanel"
+        "change-annotation-panel-filter": "Ändra filter för kommentarspanel",
+        "change-annotation-query": ""
       },
       "edit-query": "Redigera fråga"
     },
@@ -12199,10 +12305,14 @@
     },
     "log-line": {
       "has-error": "Innehåller fel",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "Är samplad",
       "show-less": "visa mindre",
       "show-more": "visa mer",
-      "tooltip-error": "Fel: {{errorMessage}}"
+      "tooltip-error": "Fel: {{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "Centrera matchad rad",
@@ -13424,7 +13534,6 @@
     "add-panel": {
       "cancel": "Avbryt",
       "card-author": "Av {{author}}",
-      "card-selected": "{{title}} (valda)",
       "card-updated": "Uppdaterat {{when}}",
       "create-name": "Namn på anteckningsbok",
       "create-name-required": "Namn på anteckningsbok krävs",
@@ -13435,6 +13544,7 @@
       "error-open-conflict": "",
       "list-error": "Det gick inte att ladda anteckningsböcker",
       "list-error-body": "Något gick fel vid laddning av dina anteckningsböcker. Försök igen, eller skapa en ny istället.",
+      "list-label": "",
       "list-no-matches": "Inga anteckningsböcker matchar dessa filter.",
       "list-none": "Du har inga anteckningsböcker ännu. Skapa en istället.",
       "list-none-read-only": "Du har inga anteckningsböcker ännu och ingen behörighet att skapa en.",
@@ -16326,8 +16436,8 @@
       "copy-link-button": "Kopiera",
       "info-text": "Skapa en direktlänk till denna instrumentpanel eller panel, anpassad med alternativen nedan.",
       "link-url": "Länkens webbadress",
-      "render-alert": "Tilläggsprogram för bildrendering inte installerat",
-      "render-instructions": "För att rendera en bild måste du installera <2>Grafanas bildrenderingstillägg</2>. Kontakta din Grafana-administratör för installation av tillägget.",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "Direktlänk till renderad bild",
       "save-alert": "Instrumentpanelen sparades inte",
       "save-dashboard": "För att rendera en panelbild måste du spara instrumentpanelen först.",
@@ -17142,6 +17252,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {
