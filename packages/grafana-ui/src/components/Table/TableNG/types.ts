@@ -69,6 +69,7 @@ type TableCellValue =
   | DataFrame // For nested data
   | DataFrame[] // For nested frames
   | DataFrameWithValue // For sparklines
+  | null // For null values
   | undefined; // For undefined values
 
 export interface TableRow {
