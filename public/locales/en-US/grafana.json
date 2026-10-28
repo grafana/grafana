@@ -1456,7 +1456,8 @@
       },
       "recording-rules": {
         "no-rules": "No recording rules found",
-        "rules-error": "Failed to load recording rules"
+        "rules-error": "Failed to load recording rules",
+        "search-issues": "Change the search to see results"
       },
       "result-count": {
         "alert-rules_one": "{{formatted}} alert rule",
@@ -5950,6 +5951,7 @@
       "panel-repeat-variable": "Panel repeat by",
       "panel-title": "panel title change",
       "paste-panel": "Paste panel",
+      "paste-panel-styles": "Paste panel styles",
       "remove": "Remove {{typeName}}",
       "remove-multiple": "Remove {{typeName}} ({{num}})",
       "rename": "Rename {{typeName}}",
@@ -5967,6 +5969,7 @@
       "switch-layout-tab": "Switch layout",
       "tab-repeat-variable": "Tab repeat by",
       "tab-title": "Change tab title",
+      "unlink-library-panel": "Unlink library panel",
       "variable-adhoc-default-filters": "Change variable default filters",
       "variable-adhoc-default-group-by": "Change variable default group by",
       "variable-adhoc-default-keys": "Change variable static keys",
@@ -8080,7 +8083,7 @@
       }
     },
     "unlink-modal": {
-      "body-unlink-panel": "If you unlink this panel, you will be able to edit it without affecting any other dashboards. However, once you make a change you will not be able to revert to its original reusable panel.",
+      "body-unlink-panel": "If you unlink this panel, you will be able to edit it without affecting any other dashboards. Once you save the dashboard, you will not be able to link it to the reusable panel again.",
       "confirmText-yes-unlink": "Yes, unlink",
       "title-really-unlink-panel": "Do you really want to unlink this panel?"
     },
@@ -16186,6 +16189,7 @@
       "exchange": "Change root scope to {{scope}}",
       "expand": "Expand",
       "filter": "Filter...",
+      "filterAriaLabel": "Filter dashboards",
       "loading": "Loading dashboards",
       "megaMenuSectionHeading": "Suggested dashboards",
       "noResultsForFilter": "No results found for your query",
@@ -16897,6 +16901,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": "Preferred"
+    },
     "login": "Login",
     "manifests": {
       "api-docs": "API docs",
