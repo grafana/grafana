@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/api/webassets"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -68,6 +69,25 @@ func NewHandler(cfg *setting.Cfg, license licensing.Licensing) *Handler {
 		cfg:     cfg,
 		license: license,
 	}
+}
+
+// ProvideService mounts the swagger routes on the core HTTP server.
+// Routes are registered during construction (wire DI), which completes before
+// the HTTP server binds the accumulated routes to its mux.
+func ProvideService(cfg *setting.Cfg, license licensing.Licensing, rr routing.RouteRegister) *Handler {
+	h := NewHandler(cfg, license)
+	h.RegisterRoutes(rr)
+	return h
+}
+
+func (h *Handler) RegisterRoutes(rr routing.RouteRegister) {
+	// Deprecated
+	rr.Get("/swagger-ui", HandleRedirect)
+	// Deprecated
+	rr.Get("/openapi3", HandleRedirect)
+
+	// The swagger based api navigator
+	rr.Get("/swagger", h.HandleRequest)
 }
 
 // HandleRedirect points the deprecated /swagger-ui and /openapi3 paths at /swagger.

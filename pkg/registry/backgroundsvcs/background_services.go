@@ -55,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings/ssosettingsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
+	"github.com/grafana/grafana/pkg/services/swagger"
 	"github.com/grafana/grafana/pkg/services/team/teamapi"
 	"github.com/grafana/grafana/pkg/services/updatemanager"
 )
@@ -101,6 +102,7 @@ func ProvideBackgroundServiceRegistry(
 	_ *grpcserver.HealthService, _ *grpcserver.ReflectionService,
 	_ *ldapapi.Service, _ *apiregistry.Service, _ auth.IDService, _ *teamapi.TeamAPI, _ ssosettings.Service,
 	_ cloudmigration.Service, _ authnimpl.Registration, _ *ofrep.APIBuilder,
+	_ *swagger.Handler,
 	_ *tokenexchange.Service,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(

@@ -177,6 +177,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
+	"github.com/grafana/grafana/pkg/services/swagger"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -322,6 +323,7 @@ var Basic = wire.NewSet(
 	wire.Bind(new(encryption.Internal), new(*encryptionservice.Service)),
 	secretsManager.ProvideSecretsService,
 	ofrep.ProvideService,
+	swagger.ProvideService,
 	tokenexchange.ProvideService,
 	wire.Bind(new(secrets.Service), new(*secretsManager.SecretsService)), //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsDatabase.ProvideSecretsStore,

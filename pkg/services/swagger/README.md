@@ -4,12 +4,12 @@ This package serves `/swagger`, the Swagger-based navigator for Grafana's HTTP A
 
 It can run two ways, both backed by the same handler so the page is identical either way:
 
-- Mounted on the core HTTP server, which is what `target = all` (the default) does. See `registerSwaggerUI` in `pkg/api/swagger.go`.
+- Mounted on the core HTTP server, which is what `target = all` (the default) does. `ProvideService` in `handler.go` registers the routes on the core `RouteRegister` through Wire.
 - As a standalone dskit service under the `swagger-server` target, for deployments that run it separately from the API.
 
 ## Structure
 
-- `handler.go`: renders the page. `NewHandler` is the entry point shared by both modes; `swagger.html` is embedded, so rendering does not depend on the core server's template renderer.
+- `handler.go`: renders the page. `NewHandler` is the entry point shared by both modes, and `ProvideService` wires it into the core server; `swagger.html` is embedded, so rendering does not depend on the core server's template renderer.
 - `swagger_service.go`: the dskit service — an HTTP server, its middleware chain, and the routes the standalone target serves.
 - `context_middleware.go`: attaches a minimal `ReqContext` to each request, which is where the CSP middleware stores the per-request nonce.
 - `recovery_middleware.go`: turns a panic into a 500. `middleware.Recovery` is not usable here because it renders its error page through the template set `web.Renderer` installs, which this service does not have.
