@@ -34,6 +34,7 @@ export type SaveResourceDrawerProps = {
   successMessage?: string;
   readOnlyMessage?: string;
   branchPrefix?: string;
+  directory?: string;
   onDismiss?: () => void;
   onWriteSuccess?: () => void;
   onBranchSuccess?: (data: SaveResourceDrawerBranchCommit) => void;

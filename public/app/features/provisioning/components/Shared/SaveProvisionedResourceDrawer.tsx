@@ -80,6 +80,7 @@ interface BaseDrawerProps {
   readOnlyMessage?: string;
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
+  directory?: string;
   onDismiss?: () => void;
   /** Override the default post-commit (configured-branch) navigation to the kind's list page. */
   onWriteSuccess?: () => void;
@@ -314,6 +315,7 @@ function ResourceDrawerContent({
   successMessage,
   readOnlyMessage,
   branchPrefix,
+  directory = '',
   onDismiss,
   onWriteSuccess,
   onBranchSuccess,
@@ -336,7 +338,7 @@ function ResourceDrawerContent({
           annotations: {
             [AnnoKeyManagerKind]: ManagerKind.Repo,
             [AnnoKeyManagerIdentity]: repositoryName ?? '',
-            [AnnoKeySourcePath]: getNewResourcePath(title, kind.key),
+            [AnnoKeySourcePath]: directory + getNewResourcePath(title, kind.kind.toLowerCase()),
           },
         },
       }
