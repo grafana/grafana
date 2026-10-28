@@ -916,9 +916,6 @@ importers:
       '@typescript/native':
         specifier: npm:typescript@^7.0.2
         version: typescript@7.0.2
-      '@yarnpkg/types':
-        specifier: ^4.0.1
-        version: 4.0.1
       axe-core:
         specifier: ^4.11.1
         version: 4.11.1
@@ -8088,10 +8085,6 @@ packages:
 
   '@yarnpkg/lockfile@1.1.0':
     resolution: {integrity: sha512-GpSwvyXOcOOlV70vbnzjj4fW5xW/FdUF6nQEt1ENy7m4ZCczi1+/buVUPAqmGfqznsORNFzUMjctTIp8a9tuCQ==}
-
-  '@yarnpkg/types@4.0.1':
-    resolution: {integrity: sha512-Cm46HdAZlAaRRhx+/K2BxF+xGsT4gLOwO1P+6uwWt0nK50pSFiuY+ozpd/33tKJtQ2TylZpUqHD4nWiJsJH2xQ==}
-    engines: {node: '>=18.12.0'}
 
   '@zkochan/js-yaml@0.0.7':
     resolution: {integrity: sha512-nrUSn7hzt7J6JWgWGz78ZYI8wj+gdIJdk0Ynjpp8l+trkn58Uqsf6RYrYkEK+3X18EX+TNdtJI0WxAtc+L84SQ==}
@@ -21329,10 +21322,6 @@ snapshots:
   '@xtuc/long@4.2.2': {}
 
   '@yarnpkg/lockfile@1.1.0': {}
-
-  '@yarnpkg/types@4.0.1':
-    dependencies:
-      tslib: 2.8.1
 
   '@zkochan/js-yaml@0.0.7':
     dependencies:
