@@ -249,7 +249,7 @@ func validateOnUpdate(ctx context.Context,
 
 	parentObj, err := getter.Get(ctx, newParent, &metav1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("move target not found %w", err)
+		return sanitizedBackendError(ctx, "moveTargetLookup", err)
 	}
 	parent, ok := parentObj.(*folders.Folder)
 	if !ok {
@@ -407,7 +407,7 @@ func checkMoveAccess(
 		Checks:    checks,
 	})
 	if err != nil {
-		return err
+		return sanitizedBackendError(ctx, "moveAuthorization", err)
 	}
 
 	writeRes, ok := batchResp.Results[writeDestKey]
@@ -415,7 +415,7 @@ func checkMoveAccess(
 		return fmt.Errorf("access check returned no result for destination write")
 	}
 	if writeRes.Error != nil {
-		return writeRes.Error
+		return sanitizedBackendError(ctx, "moveDestinationAuthorization", writeRes.Error)
 	}
 	if !writeRes.Allowed {
 		destLabel := newParentUID
@@ -436,10 +436,10 @@ func checkMoveAccess(
 			return fmt.Errorf("access escalation check returned no result for verb %q", p.verb)
 		}
 		if nf.Error != nil {
-			return nf.Error
+			return sanitizedBackendError(ctx, "moveDestinationEscalationCheck", nf.Error)
 		}
 		if of.Error != nil {
-			return of.Error
+			return sanitizedBackendError(ctx, "moveSourceEscalationCheck", of.Error)
 		}
 		newFolder[p.suffix] = nf.Allowed
 		oldFolder[p.suffix] = of.Allowed
@@ -564,13 +564,14 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
-		logging.FromContext(ctx).Error("Failed to search folders", "namespace", namespace, "parents", parentUIDs, "error", err)
-		return nil, false, err
+		backendLogger.FromContext(ctx).Error("Failed to search folders", "operation", "subtreeSearch", "namespace", namespace, "parents", parentUIDs, "error", err)
+		public := backendStatusError(err)
+		return nil, false, &public
 	}
 
 	rows, err := decodeSearchRows(resp)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to decode folder search results: %w", err)
+		return nil, false, sanitizedBackendError(ctx, "subtreeSearchDecode", fmt.Errorf("failed to decode folder search results: %w", err))
 	}
 	if len(rows) == 0 {
 		return nil, false, nil
@@ -581,9 +582,7 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		children = append(children, row.key.Name)
 	}
 
-	// The bleve Search path populates TotalHits but not Results.NextPageToken, so
-	// pagination must be driven off TotalHits + offset rather than the token.
-	hasMore := resp.GetResults().GetNextPageToken() != "" || offset+int64(len(rows)) < resp.TotalHits
+	hasMore := offset+int64(len(rows)) < resp.TotalHits
 	return children, hasMore, nil
 }
 
@@ -617,7 +616,7 @@ func validateOnDelete(ctx context.Context,
 		return publicErr
 	}
 
-	allowedResourceTypes := []string{"alertrules", "recordingrules", "dashboards", "library_elements", "folders", "variables"}
+	allowedResourceTypes := []string{"alertrules", "recordingrules", "dashboards", "library_elements", "librarypanels", "folders", "variables"}
 
 	for _, v := range resp.Stats {
 		if slices.Contains(allowedResourceTypes, v.Resource) && v.Count > 0 {

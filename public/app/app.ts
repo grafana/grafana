@@ -1,5 +1,3 @@
-import 'jquery';
-
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -141,8 +139,8 @@ import { createTextBoxVariableAdapter } from './features/variables/textbox/adapt
 import { configureStore } from './store/configureStore';
 import { getState } from './store/store';
 
-// import symlinked extensions
-const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
+// Only the top-level overlay entrypoint is loaded; scanning the entire app follows pnpm workspace symlinks.
+const extensionsIndex = require.context('./extensions', false, /^\.\/index\.ts$/);
 const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });
@@ -202,7 +200,7 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      if (config.featureToggles.cujTracking) {
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.CujTracking, false)) {
         setJourneyTracker(new JourneyTrackerImpl());
 
         // Initialize the journey registry (metadata + split triggers)

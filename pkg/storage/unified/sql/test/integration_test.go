@@ -248,9 +248,8 @@ func TestIntegrationSearchBackedTrashList(t *testing.T) {
 
 	newBleve := func(t *testing.T) resource.SearchBackend {
 		sb, err := search.NewBleveBackend(search.BleveOptions{
-			FileThreshold:         0,
-			Root:                  t.TempDir(),
-			EnforceSortCapability: true,
+			FileThreshold: 0,
+			Root:          t.TempDir(),
 		}, nil)
 		require.NoError(t, err)
 		t.Cleanup(sb.Stop)
@@ -305,6 +304,7 @@ func TestClientServer(t *testing.T) {
 		}),
 	)
 	require.NoError(t, err)
+	grpcService.Health.Register(svc, resourcepb.ResourceStore_ServiceDesc.ServiceName)
 	var client resourcepb.ResourceStoreClient
 
 	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
@@ -417,6 +417,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	grpcService.Health.Register(svc, resourcepb.ResourceIndex_ServiceDesc.ServiceName)
 	var client resource.SearchClient
 	// Use identity.WithRequester to set up proper auth context for gRPC client interceptors
 	clientCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
@@ -458,6 +459,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 					Resource:  "playlists",
 				},
 			},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, resp)

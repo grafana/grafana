@@ -106,6 +106,54 @@ Currently only supported for Prometheus data sources. Use the `$__rate_interval`
 
 This variable is the `$__rate_interval` variable in milliseconds, not a time-interval-formatted string. For example, if the `$__rate_interval` is `20m` then the `$__rate_interval_ms` is `1200000`.
 
+## `$__theme`
+
+The `$__theme` variable returns a value from the current Grafana theme, like a color, font, or border radius.
+Use it to style content so it matches the rest of Grafana in both light and dark themes, without fixed color values.
+
+Add the path to a theme value after the variable name, using the `${__theme.<PATH>}` syntax.
+The following table lists common paths and their values in the dark theme:
+
+<!-- prettier-ignore-start -->
+
+| Syntax                                           | Example result                    |
+| ------------------------------------------------ | --------------------------------- |
+| `${__theme.colors.mode}`                         | `dark`                            |
+| `${__theme.colors.text.primary}`                 | `rgb(204, 204, 220)`              |
+| `${__theme.colors.text.secondary}`               | `rgba(204, 204, 220, 0.65)`       |
+| `${__theme.colors.background.secondary}`         | `#22252b`                         |
+| `${__theme.colors.border.weak}`                  | `rgba(204, 204, 220, 0.12)`       |
+| `${__theme.colors.success.text}`                 | `#6ccf8e`                         |
+| `${__theme.typography.fontFamilyMonospace}`      | `'Roboto Mono', monospace`        |
+| `${__theme.typography.size.sm}`                  | `12px`                            |
+| `${__theme.typography.fontWeightMedium}`         | `500`                             |
+| `${__theme.shape.radius.default}`                | `6px`                             |
+| `${__theme.shadows.z1}`                          | `0px 1px 2px rgba(1, 4, 9, 0.75)` |
+| `${__theme.visualization.hues.0.shades.2.color}` | `#F2495C`                         |
+
+<!-- prettier-ignore-end -->
+
+The semantic colors `primary`, `secondary`, `info`, `success`, `warning`, and `error` each have the shades `main`, `shade`, `text`, `border`, `transparent`, `borderTransparent`, and `contrastText`. For example, `${__theme.colors.warning.border}`.
+
+The following HTML in a [text visualization](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/visualizations/text/) shows a status badge in the theme's success colors:
+
+```html
+<span
+  style="padding: 2px 8px; color: ${__theme.colors.success.text}; border: 1px solid ${__theme.colors.success.border}; border-radius: ${__theme.shape.radius.pill}"
+>
+  Healthy
+</span>
+```
+
+Keep the following in mind when you use `$__theme`:
+
+- **Values follow the current theme:** The variable returns values from the theme that's active when Grafana interpolates it. For example, the text visualization updates as soon as a user switches between light and dark themes. Other places pick up the new values the next time they're interpolated, like when the dashboard refreshes.
+- **Only single values resolve:** A path must end at a single value, like a color or a size. A path to a group of values, like `${__theme.colors}`, a missing path, like `${__theme.colors.nope}`, or `${__theme}` without a path remains literal text, so you can spot a typo.
+- **Units are part of the value:** Most sizes include their unit, like `12px`. A few return only a number, like `${__theme.typography.fontSize}`, which returns `14`. You can add the unit yourself: `${__theme.typography.fontSize}px`.
+- **Use `typography.size` for pixel font sizes:** The theme's text styles, like headings and body text, set their font sizes in `rem`, a unit relative to the page's base font size. For a font size in pixels, use `${__theme.typography.size.sm}`, or `xs`, `md`, or `lg`.
+- **Use hues for visualization colors:** Use `${__theme.visualization.hues.<HUE>.shades.<SHADE>.color}`, where `<HUE>` is `0` to `5` (red, orange, yellow, green, blue, purple) and `<SHADE>` is `0` (lightest) to `4` (darkest). For example, `${__theme.visualization.hues.2.shades.3.color}` returns `#F2CC0C`.
+- **Spacing isn't available:** Use `${__theme.spacing.gridSize}`, which always returns `8`, and multiply it. For example, `calc(${__theme.spacing.gridSize}px * 2)` returns `16px`.
+
 ## `$timeFilter` or `$__timeFilter`
 
 The `$timeFilter` variable returns the active time range selection as an expression. For example, the time range interval `Last 7 days` expression is `time > now() - 7d`.

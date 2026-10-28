@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { type AriaRole, type ReactNode } from 'react';
 import * as React from 'react';
-import SVG from 'react-inlinesvg';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
@@ -11,8 +10,8 @@ import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
 
 import { GrotCTA } from './GrotCTA/GrotCTA';
+import { GrotCompleted } from './GrotCompleted/GrotCompleted';
 import { GrotNotFound } from './GrotNotFound/GrotNotFound';
-import GrotCompleted from './grot-completed.svg';
 
 interface Props {
   /**
@@ -84,7 +83,7 @@ function getDefaultImageForVariant(variant: Props['variant'], className?: string
       return <GrotNotFound width={300} className={className} />;
     }
     case 'completed': {
-      return <SVG src={GrotCompleted} width={300} className={className} />;
+      return <GrotCompleted width={300} className={className} />;
     }
     default: {
       throw new Error(`Unknown variant: ${variant}`);

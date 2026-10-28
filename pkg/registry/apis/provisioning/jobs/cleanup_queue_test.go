@@ -2,11 +2,13 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -335,4 +337,38 @@ func TestCleanupQueue_PreservesOrphanCleanupJobs(t *testing.T) {
 		names = append(names, job.GetName())
 	}
 	assert.ElementsMatch(t, []string{"repo-a-release", "repo-a-delete"}, names)
+}
+
+// TestCleanupQueue_ReportsPartialCountOnError verifies that a clean-up that fails part way
+// through still reports the jobs it did delete. The caller records that count as the
+// finalizer's metric and the span/log carry it, so a run that errors after removing some
+// jobs must not report zero.
+func TestCleanupQueue_ReportsPartialCountOnError(t *testing.T) {
+	fakeClient := newFilteringClientset()
+	store := newTestStore(fakeClient.ProvisioningV0alpha1())
+
+	ctx, _, err := identity.WithProvisioningIdentity(context.Background(), "stacks-123")
+	require.NoError(t, err)
+
+	createJob(ctx, t, fakeClient, "stacks-123", "repo-a-pending-1", "repo-a", false)
+	createJob(ctx, t, fakeClient, "stacks-123", "repo-a-pending-2", "repo-a", false)
+
+	// Fail the second delete with a non-conflict error, whichever job the List yields
+	// second, so the expected count does not depend on the listing order.
+	var deleteCalls int
+	fakeClient.PrependReactor("delete", "jobs", func(action clienttesting.Action) (bool, runtime.Object, error) {
+		deleteCalls++
+		if deleteCalls == 2 {
+			return true, nil, apierrors.NewInternalError(errors.New("storage unavailable"))
+		}
+		return false, nil, nil // let the tracker perform the delete
+	})
+
+	deleted, err := store.CleanupQueue(ctx, "stacks-123", "repo-a")
+	require.Error(t, err)
+	assert.Equal(t, 1, deleted, "the job deleted before the failure must still be reported")
+
+	remaining, err := fakeClient.ProvisioningV0alpha1().Jobs("stacks-123").List(ctx, metav1.ListOptions{})
+	require.NoError(t, err)
+	assert.Len(t, remaining.Items, 1)
 }

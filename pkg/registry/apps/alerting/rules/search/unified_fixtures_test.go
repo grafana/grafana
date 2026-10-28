@@ -1,17 +1,17 @@
 package search
 
 import (
-	"fmt"
+	"maps"
+	"testing"
 
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -24,71 +24,56 @@ func newUnifiedHandler(alerts, recordings resourcepb.ResourceIndexClient) *Handl
 		selectorForBackend(recordingrule.ResourceInfo.GroupResource(), NewUnifiedClient(recordings)))
 }
 
-// These encoders build old-server response fixtures, not legacy backend results.
-var searchColumns = buildSearchColumns()
-var results = buildResultTable()
+func ruleRows(t *testing.T, rule *ngmodels.AlertRule) *resourcepb.ResourceSearchResponse {
+	t.Helper()
+	return ruleResponse(t, ruleKey("default", rule), ruleColumnValues(rule))
+}
 
-func buildSearchColumns() map[string]*resourcepb.ResourceTableColumnDefinition {
-	std := resource.StandardSearchFields()
-	out := map[string]*resourcepb.ResourceTableColumnDefinition{fieldTitle: std.Field(fieldTitle), fieldFolder: std.Field(fieldFolder)}
-	provider := resource.NewManifestBackedProvider(rulesmanifest.LocalManifest().ManifestData)
-	for _, gr := range []schema.GroupResource{alertrule.ResourceInfo.GroupResource(), recordingrule.ResourceInfo.GroupResource()} {
-		for _, col := range resource.SearchFieldDefinitionsToTableColumns(provider.Fields(schema.GroupVersionResource{Group: gr.Group, Resource: gr.Resource})) {
-			if _, ok := out[col.Name]; !ok {
-				out[col.Name] = col
-			}
-		}
+func ruleResponse(t *testing.T, key *resourcepb.ResourceKey, values map[string]any) *resourcepb.ResourceSearchResponse {
+	t.Helper()
+	// Unset optional strings in legacy rule models should be absent in fixtures.
+	values = maps.Clone(values)
+	maps.DeleteFunc(values, func(_ string, value any) bool {
+		text, ok := value.(string)
+		return ok && text == ""
+	})
+	row := &resourcepb.ResourceSearchRow{Key: key}
+	response := &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows:         []*resourcepb.ResourceSearchRow{row},
+		TotalHits:    1, TotalHitsExact: true,
 	}
-	return out
-}
-
-type resultTable struct {
-	defs     []*resourcepb.ResourceTableColumnDefinition
-	index    map[string]int
-	encoders []resource.ResourceColumnEncoder
-	skipped  []string
-	err      error
-}
-
-func buildResultTable() resultTable {
-	t := resultTable{index: map[string]int{}}
 	for _, name := range resultColumns {
-		col := searchColumns[name]
-		if col == nil || col.Type == resourcepb.ResourceTableColumnDefinition_UNKNOWN_TYPE {
-			t.skipped = append(t.skipped, name)
-			continue
-		}
-		t.index[name] = len(t.defs)
-		t.defs = append(t.defs, col)
-	}
-	builder, err := resource.NewTableBuilder(t.defs)
-	if err != nil {
-		t.err = err
-		return t
-	}
-	t.encoders = builder.Encoders()
-	return t
-}
-
-func resultColumnDefinitions() []*resourcepb.ResourceTableColumnDefinition { return results.defs }
-
-func ruleCells(values map[string]any) ([][]byte, error) {
-	if results.err != nil {
-		return nil, results.err
-	}
-	cells := make([][]byte, len(results.defs))
-	for name, v := range values {
-		i, ok := results.index[name]
+		value, ok := values[name]
 		if !ok {
 			continue
 		}
-		cell, err := results.encoders[i](v)
-		if err != nil {
-			return nil, fmt.Errorf("encoding column %q: %w", name, err)
+		field := &resourcepb.ResourceSearchField{Name: name}
+		encoded := &resourcepb.ResourceSearchValue{FieldIndex: uint32(len(response.Fields))}
+		switch value := value.(type) {
+		case string:
+			field.Type = resourcepb.ResourceSearchField_STRING
+			encoded.StringValues = []string{value}
+		case []string:
+			field.Type, field.IsArray = resourcepb.ResourceSearchField_STRING, true
+			encoded.StringValues = value
+		case bool:
+			field.Type = resourcepb.ResourceSearchField_BOOLEAN
+			encoded.BooleanValues = []bool{value}
+		case int64:
+			field.Type = resourcepb.ResourceSearchField_INT64
+			encoded.Int64Values = []int64{value}
+		case float64:
+			field.Type = resourcepb.ResourceSearchField_DOUBLE
+			encoded.DoubleValues = []float64{value}
+		default:
+			t.Fatalf("unsupported fixture value %T for %s", value, name)
 		}
-		cells[i] = cell
+		response.Fields = append(response.Fields, field)
+		row.Values = append(row.Values, encoded)
 	}
-	return cells, nil
+	require.Len(t, row.Values, len(values))
+	return response
 }
 
 func ruleKey(namespace string, rule *ngmodels.AlertRule) *resourcepb.ResourceKey {

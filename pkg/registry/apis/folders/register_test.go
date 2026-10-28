@@ -145,7 +145,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 
 			b := &FolderAPIBuilder{
 				storage:              us,
-				parents:              newParentsGetter(us, 2),
+				parents:              newParentsGetter(us),
 				maxNestedFolderDepth: setting.NewCfg().MaxNestedFolderDepth,
 			}
 
@@ -205,7 +205,7 @@ func TestFolderAPIBuilder_Validate_CreateMissingParent(t *testing.T) {
 					Return(nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "missing")).Once()
 				b := &FolderAPIBuilder{
 					storage:              storage,
-					parents:              newParentsGetter(storage, 5),
+					parents:              newParentsGetter(storage),
 					maxNestedFolderDepth: 5,
 				}
 				obj := &folders.Folder{
@@ -562,7 +562,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			b := &FolderAPIBuilder{
 				storage:  us,
 				searcher: sm,
-				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				parents:  newParentsGetter(us),
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -654,7 +654,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			b := &FolderAPIBuilder{
 				storage:  us,
 				searcher: sm,
-				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				parents:  newParentsGetter(us),
 			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
@@ -758,7 +758,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	b := &FolderAPIBuilder{
 		storage:  us,
 		searcher: sm,
-		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+		parents:  newParentsGetter(us),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

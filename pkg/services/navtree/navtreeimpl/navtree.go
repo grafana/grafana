@@ -315,7 +315,8 @@ func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree
 		return nil
 	}
 
-	if !ac.HasAccess(s.accessControl, c)(ac.EvalPermission(notebooks.ActionNotebooksRead)) {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+	if !hasAccess(ac.EvalPermission(notebooks.ActionNotebooksRead)) {
 		return nil
 	}
 
@@ -328,7 +329,7 @@ func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree
 		return nil
 	}
 
-	return &navtree.NavLink{
+	link := &navtree.NavLink{
 		Text:       "Notebooks",
 		Id:         navtree.NavIDNotebooks,
 		SubTitle:   "Create and manage notebooks to tell a story with your data",
@@ -336,6 +337,14 @@ func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree
 		SortWeight: navtree.WeightNotebooks,
 		Url:        s.cfg.AppSubURL + "/notebooks",
 	}
+	if hasAccess(ac.EvalPermission(notebooks.ActionNotebooksCreate)) {
+		link.Children = append(link.Children, &navtree.NavLink{
+			Text: "New notebook", Id: "notebooks/new", Icon: "plus",
+			Url:          s.cfg.AppSubURL + "/notebooks/new?edit=true",
+			HideFromTabs: true, IsCreateAction: true,
+		})
+	}
+	return link
 }
 
 func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
@@ -422,10 +431,10 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
 
-	// The alert activity page reads alert states from the metrics that state history writes to Prometheus,
-	// so it only shows up when that is configured. The feature flag is kept so the page can still be turned off.
+	// The alert activity page reads the alert state metrics from Prometheus, so it only shows up when a data
+	// source is set for them. The feature flag is kept so the page can still be turned off.
 	//nolint:staticcheck // not yet migrated to OpenFeature
-	alertActivityEnabled := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) && s.cfg.UnifiedAlerting.StateHistory.WritesToPrometheus()
+	alertActivityEnabled := s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingTriage) && s.cfg.UnifiedAlerting.StateHistory.HasAlertStateMetrics()
 
 	if alertActivityEnabled {
 		alertRulesAccess := hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead)))
@@ -453,7 +462,29 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		}
 	}
 
-	if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
+	gmaOnlyListView := openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagAlertingGmaOnlyListView, false, openfeature.TransactionContext(c.Req.Context()))
+
+	if gmaOnlyListView {
+		// Gated on Grafana-managed read only, unlike the legacy entry which also accepts data source-managed read.
+		if hasAccess(ac.EvalPermission(ac.ActionAlertingRuleRead)) {
+			alertChildNavs = append(alertChildNavs,
+				&navtree.NavLink{
+					Text:     "Alert rules",
+					SubTitle: "Rules that determine whether an alert will fire",
+					Id:       "alert-rules",
+					Url:      s.cfg.AppSubURL + "/alerting/rules/alert",
+					Icon:     "list-ul",
+				},
+				&navtree.NavLink{
+					Text:     "Recording rules",
+					SubTitle: "Rules that pre-compute and record values as new time series",
+					Id:       "recording-rules",
+					Url:      s.cfg.AppSubURL + "/alerting/rules/recording",
+					Icon:     "list-ul",
+				},
+			)
+		}
+	} else if hasAccess(ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
 		navLink := &navtree.NavLink{
 			Text:     "Alert rules",
 			SubTitle: "Rules that determine whether an alert will fire",
@@ -555,9 +586,10 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	if c.GetOrgRole() == org.RoleAdmin {
-		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules)
+		// Only show as standalone item in legacy navigation (V2 shows it as a tab under Alert rules).
+		// The gmaOnlyListView pages have their own Recently deleted tabs.
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) {
+		if !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingNavigationV2) && !gmaOnlyListView {
 			alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 				Text:     "Recently deleted",
 				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",

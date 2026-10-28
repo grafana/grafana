@@ -9,6 +9,7 @@ import {
   type SelectableValue,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type ConnectionDirection } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { hasAlphaPanels } from 'app/core/config';
@@ -377,7 +378,7 @@ const getLineStyle = (lineStyle?: LineStyle) => {
 };
 
 export const getParentBoundingClientRect = (scene: Scene) => {
-  if (config.featureToggles.canvasPanelPanZoom) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.CanvasPanelPanZoom, false)) {
     return scene.viewportDiv?.getBoundingClientRect();
   }
 

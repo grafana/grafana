@@ -39,6 +39,10 @@ func TestLegacyCountedResourcesHaveNoMigration(t *testing.T) {
 
 	migrated := map[string]bool{}
 	for _, def := range registry.All() {
+		if def.ID == "librarypanels" {
+			require.Equal(t, "librarypanels migration", def.MigrationID,
+				"federated library-panel counts use this migration log ID")
+		}
 		for _, res := range def.Resources {
 			migrated[res.String()] = true
 		}
@@ -49,4 +53,6 @@ func TestLegacyCountedResourcesHaveNoMigration(t *testing.T) {
 			"%s now has a migration registered, so federated.legacyTableIsStale must read the migration status instead of the configured mode",
 			resource)
 	}
+	require.True(t, migrated["librarypanels.dashboard.grafana.app"],
+		"library panels must use the migration log when deciding whether legacy SQL counts are stale")
 }

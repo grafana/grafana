@@ -167,7 +167,7 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		embeddedContactPoint, err := PostableGrafanaReceiverToEmbeddedContactPoint(
 			new(definition.PostableGrafanaReceiver(*receiver)),
 			models.ProvenanceNone, // TODO should be correct provenance?
-			ecp.decryptValueOrRedacted(true, receiver.UID),
+			ecp.decryptValueOrRedacted(ctx, true, receiver.UID),
 		)
 		if err != nil {
 			return apimodels.EmbeddedContactPoint{}, err
@@ -199,7 +199,7 @@ func (ecp *ContactPointService) CreateContactPoint(
 	}
 
 	for k, v := range extractedSecrets {
-		encryptedValue, err := ecp.encryptValue(v)
+		encryptedValue, err := ecp.encryptValue(ctx, v)
 		if err != nil {
 			return apimodels.EmbeddedContactPoint{}, err
 		}
@@ -330,7 +330,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 	for k, v := range extractedSecrets {
-		encryptedValue, err := ecp.encryptValue(v)
+		encryptedValue, err := ecp.encryptValue(ctx, v)
 		if err != nil {
 			return err
 		}
@@ -370,7 +370,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		if renamed {
 			if newReceiverCreated {
 				// Copy receiver permissions
-				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, nil, string(oldReceiver.UID), string(newReceiver.UID))
+				permissionsUpdated, err := ecp.resourcePermissions.CopyPermissions(ctx, orgID, user, string(oldReceiver.UID), string(newReceiver.UID))
 				if err != nil {
 					return err
 				}
@@ -509,14 +509,14 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 // decryptValueOrRedacted returns a function that decodes a string from Base64 and then decrypts using secrets.Service.
 // If argument 'decrypt' is false, then returns definitions.RedactedValue regardless of the decrypted value.
 // Otherwise, it returns the decoded and decrypted value. The function returns empty string in the case of errors, which are logged
-func (ecp *ContactPointService) decryptValueOrRedacted(decrypt bool, integrationUID string) func(v string) string {
+func (ecp *ContactPointService) decryptValueOrRedacted(ctx context.Context, decrypt bool, integrationUID string) func(v string) string {
 	return func(value string) string {
 		decodeValue, err := base64.StdEncoding.DecodeString(value)
 		if err != nil {
 			ecp.log.Warn("Failed to decode secret value from Base64", "error", err.Error(), "integrationUid", integrationUID)
 			return ""
 		}
-		decryptedValue, err := ecp.encryptionService.Decrypt(context.Background(), decodeValue)
+		decryptedValue, err := ecp.encryptionService.Decrypt(ctx, decodeValue)
 		if err != nil {
 			ecp.log.Warn("Failed to decrypt secret value", "error", err.Error(), "integrationUid", integrationUID)
 			return ""
@@ -529,8 +529,8 @@ func (ecp *ContactPointService) decryptValueOrRedacted(decrypt bool, integration
 	}
 }
 
-func (ecp *ContactPointService) encryptValue(value string) (string, error) {
-	encryptedData, err := ecp.encryptionService.Encrypt(context.Background(), []byte(value), secrets.WithoutScope())
+func (ecp *ContactPointService) encryptValue(ctx context.Context, value string) (string, error) {
+	encryptedData, err := ecp.encryptionService.Encrypt(ctx, []byte(value), secrets.WithoutScope())
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt secure settings: %w", err)
 	}

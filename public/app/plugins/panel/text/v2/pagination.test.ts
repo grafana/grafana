@@ -111,6 +111,20 @@ describe('usePagination', () => {
     expect(result.current.rowWindow).toBeUndefined();
   });
 
+  it('pages a panel sized to its content at the configured page size, laying it out by content', () => {
+    const { result } = setup({ fitContent: true, height: 0, pageSize: 20 });
+
+    expect(result.current.rowWindow).toEqual({ start: 0, count: 20 });
+    expect(result.current.fitHeight).toBeUndefined();
+  });
+
+  it('fits pages to the cap of a capped panel sized to its content, and lays it out at the cap', () => {
+    const { result } = setup({ fitContent: true, height: 0, fitMaxHeight: 400 });
+
+    expect(result.current.rowWindow).toEqual({ start: 0, count: 15 });
+    expect(result.current.fitHeight).toBe(400);
+  });
+
   it('shows no control when the page holds every row, which is not paging', () => {
     const { result } = setup({ pageSize: 200 });
 

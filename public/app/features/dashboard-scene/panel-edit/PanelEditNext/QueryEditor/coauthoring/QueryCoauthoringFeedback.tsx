@@ -9,6 +9,8 @@ const ASSISTANT_FEEDBACK_URL = '/api/plugins/grafana-assistant-app/resources/api
 export interface QueryCoauthoringFeedbackState {
   outcome: 'proposal' | 'handoff';
   rating: -1 | 1;
+  selectedOptionRank?: number;
+  optionCount?: number;
 }
 
 interface Props {
@@ -34,7 +36,15 @@ export function QueryCoauthoringFeedback({ feedback, onClose }: Props) {
         targetId: 'grafana.query.coauthor.v1',
         rating: feedback.rating,
         comment: comment.trim(),
-        metadata: { outcome: feedback.outcome },
+        metadata: {
+          outcome: feedback.outcome,
+          ...(feedback.outcome === 'proposal'
+            ? {
+                selectedOptionRank: feedback.selectedOptionRank,
+                optionCount: feedback.optionCount,
+              }
+            : {}),
+        },
       });
       onClose();
     } catch {
@@ -65,8 +75,8 @@ export function QueryCoauthoringFeedback({ feedback, onClose }: Props) {
             Your feedback will be sent to the teams working on querying.
           </Trans>{' '}
           <Trans i18nKey="query-editor-coauthoring.feedback-privacy">
-            Your rating, comment, and whether this was a proposal or handoff are sent. Your query, prompt, and Assistant
-            response are not included.
+            Your rating, comment, whether this was a proposal or handoff, and the selected option rank and count are
+            sent. Your query, prompt, and Assistant response are not included.
           </Trans>
         </Text>
         <TextArea

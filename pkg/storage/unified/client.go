@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	_ "google.golang.org/grpc/health" // Register client-side health checking.
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -66,9 +67,6 @@ type Options struct {
 	DashboardStats builders.DashboardStats
 	KV             kv.KV
 	EDB            sqldb.DBProvider
-	// ExperimentalKV, when set, routes flagged use-cases in the in-process KV
-	// storage backend to an alternative KV. Nil disables the routing.
-	ExperimentalKV *resource.ExperimentalKVOptions
 	// Publisher announces committed writes on the NATS bus. It is wired into the
 	// in-process storage backend so a monolith run (storage_type=unified) emits
 	// the same resource-change notifications as the storage-server module. Nil-safe
@@ -102,6 +100,9 @@ func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subsc
 	var opts []sql.StorageBackendOption
 	if publisher != nil {
 		opts = append(opts, sql.WithEventPublisher(publisher))
+		if cfg.NATS.NotificationMetadata {
+			opts = append(opts, sql.WithWatchNotificationMetadata())
+		}
 	}
 	if subscriber == nil {
 		return opts
@@ -136,7 +137,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime),
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.ExperimentalKV, opts.WatchExpiry, opts.ManifestDiscovery)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.WatchExpiry, opts.ManifestDiscovery)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -172,7 +173,6 @@ func newClient(opts options.StorageOptions,
 	gcGate *resource.GCGate,
 	eventPublisher nats.Publisher,
 	eventSubscriber nats.Subscriber,
-	experimentalKV *resource.ExperimentalKVOptions,
 	watchExpiry resource.WatchExpiry,
 	manifestDiscovery resource.ManifestDiscovery,
 ) (resource.ResourceClient, error) {
@@ -231,9 +231,6 @@ func newClient(opts options.StorageOptions,
 	default:
 		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
 			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber, watchExpiry)...)
-		if experimentalKV != nil {
-			storageOpts = append(storageOpts, sql.WithExperimentalKV(experimentalKV))
-		}
 		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
 		if err != nil {
 			return nil, err
@@ -530,7 +527,7 @@ func grpcConn(address string, metrics *clientMetrics, clientKeepaliveTime time.D
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	// Use round_robin to balance requests more evenly over the available Storage server.
-	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`))
+	opts = append(opts, grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin","healthCheckConfig":{"serviceName":""}}`))
 
 	// Disable looking up service config from TXT DNS records.
 	// This reduces the number of requests made to the DNS servers.

@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	models2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -41,7 +42,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
-	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations()
+	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything)
 
 	mockedClock := clock.NewMock()
 
@@ -110,7 +111,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
-	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations()
+	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything)
 
 	mockedClock := clock.NewMock()
 
@@ -269,7 +270,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
-	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations()
+	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything)
 
 	mockedClock := clock.NewMock()
 	mockedClock.Set(time.Now())
@@ -361,7 +362,7 @@ func TestAlertmanagersChoiceWithDisableExternalFeatureToggle(t *testing.T) {
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
-	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations()
+	mockedGetAdminConfigurations := fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything)
 
 	mockedClock := clock.NewMock()
 	mockedClock.Set(time.Now())
@@ -454,7 +455,7 @@ func TestSyncSendsToExternalAlertmanagerWhenPluginStoreIsNotReady(t *testing.T) 
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
-	fakeAdminConfigStore.EXPECT().GetAdminConfigurations().Return([]*models.AdminConfiguration{
+	fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything).Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey.OrgID, SendAlertsTo: new(models.ExternalAlertmanagers)},
 	}, nil)
 
@@ -1020,7 +1021,7 @@ func TestSendBroadcastAlerts(t *testing.T) {
 			}
 
 			fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
-			fakeAdminConfigStore.EXPECT().GetAdminConfigurations().Return(nil, nil)
+			fakeAdminConfigStore.EXPECT().GetAdminConfigurations(mock.Anything).Return(nil, nil)
 
 			alertsRouter := NewAlertsRouter(moa, fakeAdminConfigStore, mockedClock, appUrl, map[int64]struct{}{},
 				10*time.Minute, &fake_ds.FakeDataSourceService{}, fake_secrets.NewFakeSecretsService(), featuremgmt.WithFeatures(), tc.broadcastAlerts, nil)

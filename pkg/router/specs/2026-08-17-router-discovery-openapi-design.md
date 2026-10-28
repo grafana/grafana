@@ -5,15 +5,22 @@ this document is history. Current behavior is described in `pkg/router/AGENTS.md
 discovery").
 Scope: `pkg/router/`
 
-> **What changed since this was written (as of 2026-10-10):**
+> **What changed since this was written (as of 2026-10-26):**
 >
 > - The cloud loader polls the ST fallback, aggregate targets, `core_url` and `plugins_url`.
+> - The router serves the whole `/apis` and `/openapi/v3` trees and never falls through (#135946).
+>   In middleware mode it hosts the embedded API server's groups in process (`embedded.go`) and
+>   builds root discovery from its snapshot, with no merge.
+> - Through the ST fallback, discovery is caller-scoped: root, group and OpenAPI documents come from
+>   the requester's own stack, shared per stack through `stackDiscoveryCache` (#134782).
+> - The router serves its own `discovery` group (`/apis/discovery/v1alpha2`: app manifests, the
+>   status page and an AGENTS index), in every mode (#134759).
 > - `Backend` has no `Manifest()`. Groups come from `Backend.Group()`, and the cache key is
 >   `Backend.Key()`, not a resource version (`handlerEntry.lastKey`, `?hash=<key>`).
 > - The router imports the k8s discovery types (`metav1`, `apidiscovery/v2`, `kube-openapi`)
 >   directly. The stdlib-only rule and the hand-rolled structs are gone.
-> - In middleware mode, `/apis` and `/openapi/v3` are merged with Grafana's embedded API server
->   (`discovery_handler.go`). Standalone, unknown groups go to the ST fallback, not a 404.
+> - Standalone, unknown groups go to the ST fallback, not a 404, and root discovery is merged with
+>   the fallback's (`discovery_handler.go`).
 > - Aggregated discovery (`APIGroupDiscoveryList`) is served too. It is built locally through
 >   `DiscoveryProvider`, or fetched through `discoveryCache`.
 > - ETags hash the served keys (root documents) or key plus body (per-group documents). The OpenAPI

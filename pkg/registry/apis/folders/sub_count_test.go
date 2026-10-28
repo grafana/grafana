@@ -131,8 +131,15 @@ func TestCountFailedError(t *testing.T) {
 			wantPublicMsg: "count failed: could not count alert rules",
 		},
 		{
-			name:          "fully qualified resource names",
-			err:           &federated.CountError{Resources: federated.LegacyCountedResources, Err: errors.New("legacy source unavailable")},
+			name: "fully qualified resource names",
+			err: &federated.CountError{
+				Resources: []string{
+					"alertrules.rules.alerting.grafana.app",
+					"recordingrules.rules.alerting.grafana.app",
+					"librarypanels.dashboard.grafana.app",
+				},
+				Err: errors.New("legacy source unavailable"),
+			},
 			wantPublicMsg: "count failed: could not count alert rules, recording rules, library panels",
 		},
 		{

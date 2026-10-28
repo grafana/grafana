@@ -102,11 +102,13 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) EmbeddedClient {
 		ctx := stream.Context()
 		if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 			ctx = trace.ContextWithSpanContext(ctx, trace.SpanContextFromContext(clientCtx))
+			if isPermissionShadow(clientCtx) {
+				ctx = WithPermissionShadow(ctx)
+			}
 			// Legacy callers can refresh before committing permission mutations.
 			// Preserve their SQL session without forwarding unrelated context values.
-			// TODO: Before routing these callers to remote AuthZ, move permission
-			// refreshes (including receiver permission copying) after the outermost
-			// transaction commits. SQL sessions cannot be shared over remote gRPC.
+			// Receiver renames refresh permissions after the outermost transaction commits.
+			// No other caller is known to read permissions inside a transaction.
 			if sess, ok := clientCtx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
 				call, ok := clientCtx.Value(embeddedTransactionCallKey{}).(*embeddedTransactionCall)
 				if !ok || !call.start() {
