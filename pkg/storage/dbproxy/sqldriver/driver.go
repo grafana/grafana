@@ -134,10 +134,12 @@ func (*conn) ExecContext(context.Context, string, []driver.NamedValue) (driver.R
 	return nil, ErrUnsupported
 }
 func (*conn) CheckNamedValue(v *driver.NamedValue) error {
-	if _, ok := v.Value.(uint64); ok {
-		return nil
+	converted, err := convertArgument(v.Value)
+	if err != nil {
+		return err
 	}
-	return driver.ErrSkip
+	v.Value = converted
+	return nil
 }
 
 type stmt struct {
@@ -157,11 +159,53 @@ func (s *stmt) Query(args []driver.Value) (driver.Rows, error) {
 func (s *stmt) QueryContext(ctx context.Context, args []driver.NamedValue) (driver.Rows, error) {
 	return s.conn.QueryContext(ctx, s.query, args)
 }
-func (*stmt) CheckNamedValue(v *driver.NamedValue) error {
-	if _, ok := v.Value.(uint64); ok {
-		return nil
+func (s *stmt) CheckNamedValue(v *driver.NamedValue) error {
+	return s.conn.CheckNamedValue(v)
+}
+
+func convertArgument(value any) (driver.Value, error) {
+	if driver.IsValue(value) {
+		return value, nil
 	}
-	return driver.ErrSkip
+	if u, ok := value.(uint64); ok {
+		return u, nil
+	}
+	if valuer, ok := value.(driver.Valuer); ok {
+		rv := reflect.ValueOf(valuer)
+		if rv.Kind() == reflect.Pointer && rv.IsNil() && rv.Type().Elem().Implements(reflect.TypeFor[driver.Valuer]()) {
+			// Calling the generated value-receiver method on a nil pointer would panic; treat it as SQL NULL.
+			return nil, nil
+		}
+		converted, err := valuer.Value()
+		if err != nil {
+			return nil, err
+		}
+		if driver.IsValue(converted) {
+			return converted, nil
+		}
+		if u, ok := converted.(uint64); ok {
+			return u, nil
+		}
+		return nil, fmt.Errorf("non-Value type %T returned from Value", converted)
+	}
+	rv := reflect.ValueOf(value)
+	if rv.IsValid() {
+		if rv.Kind() == reflect.Pointer {
+			if rv.IsNil() {
+				return nil, nil
+			}
+			return convertArgument(rv.Elem().Interface())
+		}
+		switch rv.Kind() {
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			if rv.Uint() > math.MaxInt64 {
+				return rv.Uint(), nil
+			}
+		default:
+			return driver.DefaultParameterConverter.ConvertValue(value)
+		}
+	}
+	return driver.DefaultParameterConverter.ConvertValue(value)
 }
 
 func parameterValue(value any) (*dbproxyv1.Value, error) {
