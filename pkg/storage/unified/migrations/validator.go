@@ -411,65 +411,34 @@ func decodeFolderRows(response *resourcepb.ResourceSearchResponse) ([]unifiedFol
 		return nil, nil
 	}
 
-	switch response.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		table := response.GetResults()
-		if table == nil {
-			return nil, nil
-		}
-		folderColumn := -1
-		for i, column := range table.GetColumns() {
-			if column.GetName() == resource.SEARCH_FIELD_FOLDER {
-				folderColumn = i
-				break
-			}
-		}
-		rows := make([]unifiedFolderRow, 0, len(table.GetRows()))
-		for i, row := range table.GetRows() {
-			if row == nil || row.GetKey() == nil {
-				return nil, fmt.Errorf("row %d has no key", i)
-			}
-			parentUID := ""
-			if folderColumn >= 0 && folderColumn < len(row.GetCells()) {
-				parentUID = string(row.GetCells()[folderColumn])
-			}
-			rows = append(rows, unifiedFolderRow{
-				name:   row.GetKey().GetName(),
-				parent: parentUID,
-				cursor: row.GetSortFields(),
-			})
-		}
-		return rows, nil
-
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		rows := make([]unifiedFolderRow, 0, len(response.GetRows()))
-		for i, row := range response.GetRows() {
-			if row == nil || row.GetKey() == nil {
-				return nil, fmt.Errorf("row %d has no key", i)
-			}
-			values, err := resource.DecodeSearchValues(response.GetFields(), row)
-			if err != nil {
-				return nil, fmt.Errorf("row %d: %w", i, err)
-			}
-			parentUID := ""
-			if value, ok := values[resource.SEARCH_FIELD_FOLDER]; ok {
-				var valid bool
-				parentUID, valid = value.(string)
-				if !valid {
-					return nil, fmt.Errorf("row %d field %q is not a string", i, resource.SEARCH_FIELD_FOLDER)
-				}
-			}
-			rows = append(rows, unifiedFolderRow{
-				name:   row.GetKey().GetName(),
-				parent: parentUID,
-				cursor: row.GetSortFields(),
-			})
-		}
-		return rows, nil
-
-	default:
+	if response.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
 	}
+
+	rows := make([]unifiedFolderRow, 0, len(response.GetRows()))
+	for i, row := range response.GetRows() {
+		if row == nil || row.GetKey() == nil {
+			return nil, fmt.Errorf("row %d has no key", i)
+		}
+		values, err := resource.DecodeSearchValues(response.GetFields(), row)
+		if err != nil {
+			return nil, fmt.Errorf("row %d: %w", i, err)
+		}
+		parentUID := ""
+		if value, ok := values[resource.SEARCH_FIELD_FOLDER]; ok {
+			var valid bool
+			parentUID, valid = value.(string)
+			if !valid {
+				return nil, fmt.Errorf("row %d field %q is not a string", i, resource.SEARCH_FIELD_FOLDER)
+			}
+		}
+		rows = append(rows, unifiedFolderRow{
+			name:   row.GetKey().GetName(),
+			parent: parentUID,
+			cursor: row.GetSortFields(),
+		})
+	}
+	return rows, nil
 }
 
 func (v *FolderTreeValidator) buildUnifiedFolderParentMapSQLite(sess *xorm.Session, namespace string, log log.Logger) (map[string]string, error) {
