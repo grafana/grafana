@@ -81,3 +81,15 @@ func TestSearchConnectedDashboardsFinder_GetDashboardsByLibraryPanelUID_MissingN
 	_, err := finder.GetDashboardsByLibraryPanelUID(context.Background(), "test-library-panel", 5)
 	assert.Error(t, err)
 }
+
+func TestSearchConnectedDashboardsFinder_GetDashboardsByLibraryPanelUID_EmptyNamespace(t *testing.T) {
+	// NamespaceFrom reports ok=true even for an explicitly-empty namespace; this must still error
+	// rather than search unscoped across every tenant.
+	searcher := &fakeResourceIndexClient{}
+	finder := &SearchConnectedDashboardsFinder{Searcher: searcher}
+	ctx := apirequest.WithNamespace(context.Background(), "")
+
+	_, err := finder.GetDashboardsByLibraryPanelUID(ctx, "test-library-panel", 5)
+	assert.Error(t, err)
+	assert.Nil(t, searcher.req, "must not search before rejecting the empty namespace")
+}

@@ -25,7 +25,9 @@ type SearchConnectedDashboardsFinder struct {
 // namespace rather than orgID -- every tenant's namespace can parse to the same OrgID here.
 func (f *SearchConnectedDashboardsFinder) GetDashboardsByLibraryPanelUID(ctx context.Context, libraryPanelUID string, orgID int64) ([]*dashboards.DashboardRef, error) {
 	ns, ok := apirequest.NamespaceFrom(ctx)
-	if !ok {
+	if !ok || ns == "" {
+		// NamespaceFrom reports ok=true even for an explicitly-empty namespace, which would
+		// otherwise search unscoped across every tenant.
 		return nil, fmt.Errorf("expecting namespace in context")
 	}
 
