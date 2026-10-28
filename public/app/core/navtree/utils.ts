@@ -1,4 +1,4 @@
-import { locationUtil, type NavModelItem, userHasAnyPermission } from '@grafana/data';
+import { type NavModelItem, userHasAnyPermission } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -267,7 +267,9 @@ export function hoistAppPages(
   const appPrefix = `/a/${appLink.pluginId}`;
 
   return (appLink.children ?? []).map((child) => {
-    const url = child.url && locationUtil.stripBaseFromUrl(child.url);
+    // This runs during store creation, before locationUtil is initialized.
+    const appSubUrl = config.appSubUrl.replace(/\/+$/, '');
+    const url = appSubUrl && child.url?.startsWith(`${appSubUrl}/`) ? child.url.slice(appSubUrl.length) : child.url;
     const slotWeight = url ? slotWeightByPath[url] : undefined;
     return {
       ...child,

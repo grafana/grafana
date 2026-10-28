@@ -1,4 +1,5 @@
 import { type NavModelItem } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import { findNavById, findNavByUrl, hoistNavItemPages, moveNavItemToSection } from './utils';
 
@@ -102,6 +103,29 @@ describe('hoistNavItemPages', () => {
       'standalone-plugin-page-a-grafana-ml-app-models',
     ]);
     expect(children.map((child) => child.sortWeight)).toEqual([-1700, -100, -98]);
+  });
+
+  it('keys server-built pages when Grafana is served from a sub-path', () => {
+    const originalAppSubUrl = config.appSubUrl;
+    config.appSubUrl = '/grafana';
+    const tree = withApp();
+    const pages = tree[0].children?.[1].children ?? [];
+    for (const page of pages) {
+      page.id = undefined;
+      page.url = `/grafana${page.url}`;
+    }
+
+    try {
+      const hoisted = hoistNavItemPages(tree, 'apps', 'plugin-page-grafana-ml-app');
+
+      expect((findNavById(hoisted, 'apps')?.children ?? []).map((child) => child.id)).toEqual([
+        'plugin-page-some-app',
+        'standalone-plugin-page-a-grafana-ml-app-home',
+        'standalone-plugin-page-a-grafana-ml-app-models',
+      ]);
+    } finally {
+      config.appSubUrl = originalAppSubUrl;
+    }
   });
 
   // A dashboard include must not take a standalone id: that would register its
