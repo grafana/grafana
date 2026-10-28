@@ -1096,11 +1096,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/RecordingRuleEditor.tsx": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/RuleInspector.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1

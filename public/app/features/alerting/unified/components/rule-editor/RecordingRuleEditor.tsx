@@ -1,10 +1,9 @@
 import { css } from '@emotion/css';
 import { type FC, useCallback, useEffect, useState } from 'react';
-import { useAsync } from 'react-use';
 
 import { CoreApp, type GrafanaTheme2, LoadingState, type PanelData } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { useDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -22,7 +21,7 @@ export interface RecordingRuleEditorProps {
   onChangeQuery: (updatedQueries: AlertQuery[]) => void;
   runQueries: () => void;
   panelData: Record<string, PanelData>;
-  dataSourceName: string;
+  dataSourceUid: string;
 }
 
 export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
@@ -30,7 +29,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
   onChangeQuery,
   runQueries,
   panelData,
-  dataSourceName,
+  dataSourceUid,
 }) => {
   const [data, setData] = useState<PanelData>({
     series: [],
@@ -44,13 +43,7 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     setData(panelData?.[queries[0]?.refId]);
   }, [panelData, queries]);
 
-  const {
-    error,
-    loading,
-    value: dataSource,
-  } = useAsync(() => {
-    return getDataSourceSrv().get(dataSourceName);
-  }, [dataSourceName]);
+  const { dataSource, isLoading, error } = useDataSourceInstance(dataSourceUid);
 
   const handleChangedQuery = useCallback(
     (changedQuery: DataQuery) => {
@@ -89,24 +82,23 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     [dataSource, queries, onChangeQuery]
   );
 
-  if (loading || dataSource?.name !== dataSourceName) {
+  if (isLoading) {
     return null;
   }
 
-  const dsi = getDataSourceSrv().getInstanceSettings(dataSourceName);
-
-  if (error || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
-    const errorMessage = error?.message || 'Data source plugin does not export any Query Editor component';
-    return (
-      <div>
-        <Trans i18nKey="alerting.recording-rule-editor.error-no-query-editor">
-          Could not load query editor due to: {{ errorMessage }}
-        </Trans>
-      </div>
-    );
+  if (error) {
+    return <LoadError message={error.message} />;
   }
 
-  const QueryEditor = dataSource.components.QueryEditor;
+  // The hook keeps the previous instance for one render after dataSourceUid changes
+  if (!dataSource || dataSource.uid !== dataSourceUid) {
+    return null;
+  }
+
+  const QueryEditor = dataSource.components?.QueryEditor;
+  if (!QueryEditor) {
+    return <LoadError message="Data source plugin does not export any Query Editor component" />;
+  }
 
   return (
     <>
@@ -134,6 +126,16 @@ export const RecordingRuleEditor: FC<RecordingRuleEditorProps> = ({
     </>
   );
 };
+
+function LoadError({ message: errorMessage }: { message: string }) {
+  return (
+    <div>
+      <Trans i18nKey="alerting.recording-rule-editor.error-no-query-editor">
+        Could not load query editor due to: {{ errorMessage }}
+      </Trans>
+    </div>
+  );
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   vizWrapper: css({

@@ -470,11 +470,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
           <CloudDataSourceSelector onChangeCloudDatasource={onChangeCloudDatasource} disabled={editingExistingRule} />
         )}
 
-        {/* This is the PromQL Editor for recording rules */}
-        {isRecordingRuleType && dataSourceName && (
+        {/* This is the PromQL Editor for recording rules.
+            A new rule starts on the Grafana rules source while its query already holds the default data source,
+            so wait until a data source is picked */}
+        {isRecordingRuleType && dataSourceName && dataSourceName !== GRAFANA_RULES_SOURCE_NAME && dataSourceUid && (
           <Field error={errors.expression?.message} invalid={!!errors.expression?.message} noMargin>
             <RecordingRuleEditor
-              dataSourceName={dataSourceName}
+              dataSourceUid={dataSourceUid}
               queries={queries}
               runQueries={() => runQueriesPreview()}
               onChangeQuery={onChangeRecordingRulesQueries}
