@@ -4,31 +4,39 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Checkbox, Icon, IconButton, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { type FolderRow, resourceKey } from './hooks/useMigrationData';
+import { resourceKey } from './hooks/useMigrationData';
+import { type FolderNode } from './tree';
 
 interface FolderEntryProps {
-  folder: FolderRow;
-  isExpanded: boolean;
-  isSelected: boolean;
+  node: FolderNode;
+  /** Nesting level; only root entries show the ancestor breadcrumb. */
+  depth: number;
+  /** UIDs of the expanded folders, shared by the whole tree. */
+  expanded: Set<string>;
+  selectedFolderUids: Set<string>;
   /** Composite keys (see `resourceKey`) of individually-ticked resources. */
   selectedResourceKeys: Set<string>;
   /** Composite keys of resources covered by a selected folder. */
   folderCoveredResourceKeys: Set<string>;
-  onToggleExpanded: () => void;
-  onToggleFolder: () => void;
+  onToggleExpanded: (uid: string) => void;
+  onToggleFolder: (uid: string) => void;
   onToggleResource: (key: string) => void;
 }
 
 /**
- * A single folder row in the Resources to migrate table: an expand toggle, a
- * select checkbox, and — when expanded — the resources that live directly
- * inside the folder. Resources covered by a selected folder are shown ticked
- * and locked.
+ * A folder in the Resources to migrate tree: an expand toggle, a select
+ * checkbox, and — when expanded — the resources that live directly inside the
+ * folder followed by its subfolders. Selection is not recursive: a folder's
+ * checkbox covers only the resources directly inside it, and each subfolder is
+ * selected on its own. A folder with no resources of its own is shown only to
+ * hold its subfolders and has no checkbox. Resources covered by a selected
+ * folder are shown ticked and locked.
  */
 export function FolderEntry({
-  folder,
-  isExpanded,
-  isSelected,
+  node,
+  depth,
+  expanded,
+  selectedFolderUids,
   selectedResourceKeys,
   folderCoveredResourceKeys,
   onToggleExpanded,
@@ -36,6 +44,11 @@ export function FolderEntry({
   onToggleResource,
 }: FolderEntryProps) {
   const styles = useStyles2(getStyles);
+  const { row: folder, children } = node;
+  const isExpanded = expanded.has(folder.uid);
+  const isSelectable = folder.resourceCount > 0;
+  const isSelected = isSelectable && selectedFolderUids.has(folder.uid);
+
   return (
     <div className={cx(styles.row, isSelected && styles.rowSelected)}>
       <div className={styles.rowHeader}>
@@ -46,30 +59,34 @@ export function FolderEntry({
               ? t('provisioning.migrate.resources-collapse', 'Collapse {{folder}}', { folder: folder.title })
               : t('provisioning.migrate.resources-expand', 'Expand {{folder}}', { folder: folder.title })
           }
-          onClick={onToggleExpanded}
+          onClick={() => onToggleExpanded(folder.uid)}
         />
-        <Checkbox
-          value={isSelected}
-          onChange={onToggleFolder}
-          aria-label={t('provisioning.migrate.resources-select-folder', 'Select folder {{folder}}', {
-            folder: folder.title,
-          })}
-        />
+        {isSelectable && (
+          <Checkbox
+            value={isSelected}
+            onChange={() => onToggleFolder(folder.uid)}
+            aria-label={t('provisioning.migrate.resources-select-folder', 'Select folder {{folder}}', {
+              folder: folder.title,
+            })}
+          />
+        )}
         <Icon name="folder" />
         <Stack direction="column" gap={0} flex={1}>
-          {folder.path.length > 0 && (
+          {depth === 0 && folder.path.length > 0 && (
             <Text variant="bodySmall" color="secondary" truncate>
               {folder.path.join(' / ')}
             </Text>
           )}
           <Text>{folder.title}</Text>
-          <Text variant="bodySmall" color="secondary">
-            {t('provisioning.migrate.resources-folder-summary', '', {
-              count: folder.resourceCount,
-              defaultValue_one: '{{count}} resource',
-              defaultValue_other: '{{count}} resources',
-            })}
-          </Text>
+          {isSelectable && (
+            <Text variant="bodySmall" color="secondary">
+              {t('provisioning.migrate.resources-folder-summary', '', {
+                count: folder.resourceCount,
+                defaultValue_one: '{{count}} resource',
+                defaultValue_other: '{{count}} resources',
+              })}
+            </Text>
+          )}
         </Stack>
       </div>
       {isExpanded && (
@@ -91,6 +108,20 @@ export function FolderEntry({
               </div>
             );
           })}
+          {children.map((child) => (
+            <FolderEntry
+              key={child.row.uid}
+              node={child}
+              depth={depth + 1}
+              expanded={expanded}
+              selectedFolderUids={selectedFolderUids}
+              selectedResourceKeys={selectedResourceKeys}
+              folderCoveredResourceKeys={folderCoveredResourceKeys}
+              onToggleExpanded={onToggleExpanded}
+              onToggleFolder={onToggleFolder}
+              onToggleResource={onToggleResource}
+            />
+          ))}
         </div>
       )}
     </div>

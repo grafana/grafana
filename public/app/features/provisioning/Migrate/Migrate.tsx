@@ -41,6 +41,7 @@ export function Migrate() {
 
   const {
     data: folders,
+    containers,
     isLoading: isFoldersLoading,
     isError: isFoldersError,
     failedKinds,
@@ -190,6 +191,7 @@ export function Migrate() {
           )}
           <ResourcesToMigrate
             folders={folders}
+            containers={containers}
             selectedFolderUids={selectedFolderUids}
             selectedResourceKeys={selectedResourceKeys}
             onToggleFolder={(uid) => setSelectedFolderUids((prev) => toggle(prev, uid))}

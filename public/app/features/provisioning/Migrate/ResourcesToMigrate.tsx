@@ -7,9 +7,10 @@ import { Button, Checkbox, Combobox, EmptyState, FilterInput, Pagination, Stack,
 
 import { FolderEntry } from './FolderEntry';
 import { type FolderRow, resourceKey } from './hooks/useMigrationData';
-import { type SortKey, compareFolders } from './sorting';
+import { type SortKey } from './sorting';
+import { buildFolderTree, filterFolderTree, selectableUids, sortFolderTree } from './tree';
 
-/** Folder rows shown per page before pagination kicks in. */
+/** Top-level folders shown per page before pagination kicks in. */
 const PAGE_SIZE = 10;
 
 interface Props {
@@ -19,6 +20,11 @@ interface Props {
    * stays kind-agnostic.
    */
   folders: FolderRow[];
+  /**
+   * Resource-less ancestors of `folders`, shown only so subfolders nest under
+   * their parents. They are never selectable on their own.
+   */
+  containers?: FolderRow[];
   selectedFolderUids: Set<string>;
   /** Composite keys (see `resourceKey`) of individually-ticked resources. */
   selectedResourceKeys: Set<string>;
@@ -44,14 +50,16 @@ interface Props {
 }
 
 /**
- * Foldable, searchable list of folders that hold resources to migrate. A whole
- * folder or individual resources can be selected; the migrate footer action
+ * Foldable, searchable tree of folders that hold resources to migrate. A whole
+ * folder or individual resources can be selected; selecting a folder covers only
+ * the resources directly inside it, not its subfolders. The migrate footer action
  * hands the selection to the migrate drawer. The hook only surfaces folders with
- * unmanaged resources directly inside them, so empty and already-managed folders
- * never appear here.
+ * unmanaged resources somewhere beneath them, so empty and already-managed
+ * folders never appear here.
  */
 export function ResourcesToMigrate({
   folders,
+  containers = [],
   selectedFolderUids,
   selectedResourceKeys,
   onToggleFolder,
@@ -70,19 +78,8 @@ export function ResourcesToMigrate({
   const [sortKey, setSortKey] = useState<SortKey>('count-desc');
   const [page, setPage] = useState(1);
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const matched = !q
-      ? folders.slice()
-      : folders.filter((folder) => {
-          if (folder.title.toLowerCase().includes(q)) {
-            return true;
-          }
-          return folder.directResources.some((r) => r.title.toLowerCase().includes(q));
-        });
-    matched.sort((a, b) => compareFolders(a, b, sortKey));
-    return matched;
-  }, [folders, search, sortKey]);
+  const tree = useMemo(() => buildFolderTree([...folders, ...containers]), [folders, containers]);
+  const filtered = useMemo(() => sortFolderTree(filterFolderTree(tree, search), sortKey), [tree, search, sortKey]);
 
   // Clamp the page so it stays valid when the filtered set shrinks (e.g. after
   // a search) without needing an effect to reset it.
@@ -117,7 +114,7 @@ export function ResourcesToMigrate({
   // pages, not just the page on screen — matching standard table behaviour
   // where search narrows the target but pagination doesn't. It never reaches
   // past the filter to tick the whole instance.
-  const filteredFolderUids = filtered.map((folder) => folder.uid);
+  const filteredFolderUids = selectableUids(filtered);
   const allFilteredSelected =
     filteredFolderUids.length > 0 && filteredFolderUids.every((uid) => selectedFolderUids.has(uid));
   const someFilteredSelected = filteredFolderUids.some((uid) => selectedFolderUids.has(uid));
@@ -226,16 +223,17 @@ export function ResourcesToMigrate({
         />
       ) : (
         <div className={styles.list}>
-          {paged.map((folder) => (
+          {paged.map((node) => (
             <FolderEntry
-              key={folder.uid}
-              folder={folder}
-              isExpanded={expanded.has(folder.uid)}
-              isSelected={selectedFolderUids.has(folder.uid)}
+              key={node.row.uid}
+              node={node}
+              depth={0}
+              expanded={expanded}
+              selectedFolderUids={selectedFolderUids}
               selectedResourceKeys={selectedResourceKeys}
               folderCoveredResourceKeys={folderCoveredResourceKeys}
-              onToggleExpanded={() => toggleExpanded(folder.uid)}
-              onToggleFolder={() => onToggleFolder(folder.uid)}
+              onToggleExpanded={toggleExpanded}
+              onToggleFolder={onToggleFolder}
               onToggleResource={onToggleResource}
             />
           ))}
