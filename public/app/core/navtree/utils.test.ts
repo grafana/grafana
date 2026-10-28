@@ -76,6 +76,9 @@ describe('hoistNavItemPages', () => {
           id: 'plugin-page-grafana-ml-app',
           text: 'Machine Learning',
           url: '/a/grafana-ml-app',
+          // The app node carries its plugin id, which is what tells the hoist
+          // which children are the app's own pages
+          pluginId: 'grafana-ml-app',
           sortWeight: -1700,
           children: [
             { id: 'ml-home', text: 'Home', url: '/a/grafana-ml-app/home' },
@@ -99,6 +102,19 @@ describe('hoistNavItemPages', () => {
       'standalone-plugin-page-a-grafana-ml-app-models',
     ]);
     expect(children.map((child) => child.sortWeight)).toEqual([-1700, -100, -98]);
+  });
+
+  // A dashboard include must not take a standalone id: that would register its
+  // /d/<uid> url as an app route and shadow the dashboard
+  it('leaves a dashboard child without a standalone id', () => {
+    const tree = withApp();
+    const app = tree[0].children?.[1];
+    app?.children?.push({ text: 'Overview dashboard', url: '/d/dash-uid' });
+
+    const hoisted = hoistNavItemPages(tree, 'apps', 'plugin-page-grafana-ml-app');
+
+    const dashboard = (findNavById(hoisted, 'apps')?.children ?? []).find((child) => child.url === '/d/dash-uid');
+    expect(dashboard?.id).toBeUndefined();
   });
 
   it('leaves the tree alone for a missing app, section, or an app with no pages', () => {

@@ -249,14 +249,39 @@ export function moveNavItemToSection(
 }
 
 /**
- * Replaces an app's node inside a section with its own pages, the way the plugin
- * pass hoists an app whose nav config asks for it. For callers working on a
- * finished tree, where that pass has already run.
+ * Expands an app's pages into its target section as standalone entries instead
+ * of nesting them under an app node (`hoistPages` in the app's nav config).
+ * Pages pinned by `slotWeightByPath` take that section slot; the rest sort above
+ * the section's app entries in their own order.
  *
- * The pages take the ids and weights they would have been built with, sub url
- * and all: the tree has been through applyAppSubUrl by now, and the server-built
- * one arrives that way, so the url is stripped back before deriving the id.
- * Returns the tree untouched if the app or the section is missing.
+ * Each page takes the standalone id its own url gives it. Only the app's own
+ * pages: a dashboard include left with a `/d/<uid>` standalone id would register
+ * that url as an app route and shadow the dashboard itself. The sub url comes off
+ * first, so the id is the same whether this runs during the build or afterwards,
+ * on a tree that has been through applyAppSubUrl.
+ */
+export function hoistAppPages(
+  appLink: NavModelItem,
+  { slotWeightByPath = {} }: { slotWeightByPath?: Record<string, number> } = {}
+): NavModelItem[] {
+  const appPrefix = `/a/${appLink.pluginId}`;
+
+  return (appLink.children ?? []).map((child) => {
+    const url = child.url && locationUtil.stripBaseFromUrl(child.url);
+    const slotWeight = url ? slotWeightByPath[url] : undefined;
+    return {
+      ...child,
+      sortWeight: slotWeight ?? HOISTED_PAGE_WEIGHT_OFFSET + (child.sortWeight ?? 0),
+      ...(url?.startsWith(appPrefix) && { id: hoistedPluginPageId(url) }),
+    };
+  });
+}
+
+/**
+ * Replaces an app's node inside a section with its hoisted pages, for callers
+ * working on a finished tree — where the plugin pass that would have hoisted them
+ * has already run. Returns the tree untouched if the app, the section, or the
+ * app's pages are missing.
  */
 export function hoistNavItemPages(tree: NavModelItem[], sectionId: string, id: string): NavModelItem[] {
   const section = findNavById(tree, sectionId);
@@ -265,11 +290,7 @@ export function hoistNavItemPages(tree: NavModelItem[], sectionId: string, id: s
     return tree;
   }
 
-  const hoisted = item.children.map((page) => ({
-    ...page,
-    sortWeight: HOISTED_PAGE_WEIGHT_OFFSET + (page.sortWeight ?? 0),
-    ...(page.url && { id: hoistedPluginPageId(locationUtil.stripBaseFromUrl(page.url)) }),
-  }));
+  const hoisted = hoistAppPages(item);
 
   return updateNavById(tree, sectionId, (node) => ({
     ...node,
