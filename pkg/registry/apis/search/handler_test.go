@@ -54,7 +54,7 @@ func doRequest(t *testing.T, h *Handler, body string) *httptest.ResponseRecorder
 
 func emptyResponse() *resourcepb.ResourceSearchResponse {
 	return &resourcepb.ResourceSearchResponse{
-		Results:        &resourcepb.ResourceTable{},
+		ResultFormat:   resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		TotalHits:      0,
 		TotalHitsExact: true,
 	}
@@ -450,23 +450,22 @@ func TestGlobalHandler_RejectsAKindsOwnField(t *testing.T) {
 
 func TestGlobalHandler_EachResultNamesItsOwnType(t *testing.T) {
 	client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"},
+				Values: []*resourcepb.ResourceSearchValue{{StringValues: []string{"A dashboard"}}},
 			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{
-					Key:   &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"},
-					Cells: [][]byte{[]byte("A dashboard")},
-				},
-				{
-					Key:   &resourcepb.ResourceKey{Namespace: "default", Group: "folder.grafana.app", Resource: "folders", Name: "folder-a"},
-					Cells: [][]byte{[]byte("A folder")},
-				},
-				{
-					Key:   &resourcepb.ResourceKey{Namespace: "default", Group: "other.grafana.app", Resource: "others", Name: "other-a"},
-					Cells: [][]byte{[]byte("Something else")},
-				},
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: "default", Group: "folder.grafana.app", Resource: "folders", Name: "folder-a"},
+				Values: []*resourcepb.ResourceSearchValue{{StringValues: []string{"A folder"}}},
+			},
+			{
+				Key:    &resourcepb.ResourceKey{Namespace: "default", Group: "other.grafana.app", Resource: "others", Name: "other-a"},
+				Values: []*resourcepb.ResourceSearchValue{{StringValues: []string{"Something else"}}},
 			},
 		},
 		TotalHits:      3,
@@ -491,21 +490,20 @@ func TestGlobalHandler_EachResultNamesItsOwnType(t *testing.T) {
 // The search server names the kinds it takes from manifests read at runtime,
 // which this process may not know, and its names win over this process's.
 func TestGlobalHandler_UsesTheKindsTheServerReports(t *testing.T) {
-	row := func(group, resourceName, name string) *resourcepb.ResourceTableRow {
-		return &resourcepb.ResourceTableRow{
-			Key:   &resourcepb.ResourceKey{Namespace: "default", Group: group, Resource: resourceName, Name: name},
-			Cells: [][]byte{[]byte(name)},
+	row := func(group, resourceName, name string) *resourcepb.ResourceSearchRow {
+		return &resourcepb.ResourceSearchRow{
+			Key:    &resourcepb.ResourceKey{Namespace: "default", Group: group, Resource: resourceName, Name: name},
+			Values: []*resourcepb.ResourceSearchValue{{StringValues: []string{name}}},
 		}
 	}
 	client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				row("dashboard.grafana.app", "dashboards", "dash-a"),
-				row("x.ext.grafana.app", "pages", "page-a"),
-			},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			row("dashboard.grafana.app", "dashboards", "dash-a"),
+			row("x.ext.grafana.app", "pages", "page-a"),
 		},
 		TotalHits:      3,
 		TotalHitsExact: true,
@@ -514,7 +512,7 @@ func TestGlobalHandler_UsesTheKindsTheServerReports(t *testing.T) {
 			"folder.grafana.app/folders": "Directory",
 		},
 	}}
-	client.resp.Results.Rows = append(client.resp.Results.Rows, row("folder.grafana.app", "folders", "folder-a"))
+	client.resp.Rows = append(client.resp.Rows, row("folder.grafana.app", "folders", "folder-a"))
 	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
 
 	kinds := func() []string {
@@ -540,17 +538,6 @@ func TestGlobalHandler_UsesTheKindsTheServerReports(t *testing.T) {
 
 // Clients mark provisioned items from these fields, which every index stores.
 func TestHandler_ReturnsManagerFields(t *testing.T) {
-	cols := []*resourcepb.ResourceTableColumnDefinition{
-		col(resource.SEARCH_FIELD_MANAGER_KIND, resourcepb.ResourceTableColumnDefinition_STRING),
-		col(resource.SEARCH_FIELD_MANAGER_ID, resourcepb.ResourceTableColumnDefinition_STRING),
-		col(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS, resourcepb.ResourceTableColumnDefinition_BOOLEAN),
-	}
-	rows := []map[string]any{{
-		"__name":                                  "a",
-		resource.SEARCH_FIELD_MANAGER_KIND:        "repo",
-		resource.SEARCH_FIELD_MANAGER_ID:          "my-repo",
-		resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS: false,
-	}}
 	body := `{"apiVersion": "` + searchv0.APIVERSION + `", "kind": "` + searchv0.KindSearchQuery + `", "fields": ["manager.kind", "manager.id", "manager.allowEdits"]}`
 
 	for name, do := range map[string]func(*testing.T, *Handler, string) *httptest.ResponseRecorder{
@@ -559,7 +546,21 @@ func TestHandler_ReturnsManagerFields(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
-				Results: buildTable(t, cols, rows, nil), TotalHits: 1, TotalHitsExact: true,
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields: []*resourcepb.ResourceSearchField{
+					{Name: resource.SEARCH_FIELD_MANAGER_KIND, Type: resourcepb.ResourceSearchField_STRING},
+					{Name: resource.SEARCH_FIELD_MANAGER_ID, Type: resourcepb.ResourceSearchField_STRING},
+					{Name: resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS, Type: resourcepb.ResourceSearchField_BOOLEAN},
+				},
+				Rows: []*resourcepb.ResourceSearchRow{{
+					Key: &resourcepb.ResourceKey{Name: "a"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{StringValues: []string{"repo"}},
+						{FieldIndex: 1, StringValues: []string{"my-repo"}},
+						{FieldIndex: 2, BooleanValues: []bool{false}},
+					},
+				}},
+				TotalHits: 1, TotalHitsExact: true,
 			}}
 			h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
 
