@@ -189,7 +189,6 @@ const NarrowScreenForm = (props: NarrowScreenFormProps) => {
         <div className={styles.body} id="expanded-timerange">
           <div className={styles.form}>
             <TimeRangeContent
-              calendarAnchor={{ current: null }}
               value={value}
               onApply={onChange}
               timeZone={timeZone}
@@ -243,7 +242,7 @@ const FullScreenForm = (props: FullScreenFormProps) => {
           fiscalYearStartMonth={fiscalYearStartMonth}
           onApply={onChange}
           isFullscreen={true}
-          calendarAnchor={{ current: calendarAnchor }}
+          calendarAnchor={calendarAnchor}
           isReversed={isReversed}
           onError={onError}
           weekStart={weekStart}

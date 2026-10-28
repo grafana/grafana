@@ -27,15 +27,7 @@ const customRawTimeRange = {
 
 function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc') {
   return {
-    ...render(
-      <TimeRangeContent
-        calendarAnchor={{ current: null }}
-        isFullscreen={true}
-        value={initial}
-        onApply={() => {}}
-        timeZone={timeZone}
-      />
-    ),
+    ...render(<TimeRangeContent isFullscreen={true} value={initial} onApply={() => {}} timeZone={timeZone} />),
     getCalendarDayByLabelText: (label: string) => {
       const item = screen.getByLabelText(label);
       return item?.parentElement as HTMLButtonElement;
@@ -266,15 +258,7 @@ describe('TimeRangeForm', () => {
   describe('dates error handling', () => {
     it.each(['From', 'To'])('applies edited equal bounds on Enter in %s', async (label) => {
       const onApply = jest.fn<void, [TimeRange]>();
-      render(
-        <TimeRangeContent
-          calendarAnchor={{ current: null }}
-          isFullscreen
-          value={defaultTimeRange}
-          onApply={onApply}
-          timeZone="utc"
-        />
-      );
+      render(<TimeRangeContent isFullscreen value={defaultTimeRange} onApply={onApply} timeZone="utc" />);
       const input = screen.getByLabelText(label);
       const value = label === 'From' ? '2021-06-19 23:59:00' : '2021-06-17 00:00:00';
       await user.clear(input);
@@ -287,15 +271,7 @@ describe('TimeRangeForm', () => {
 
     it('revalidates a corrected field after rejecting an invalid submission', async () => {
       const onApply = jest.fn();
-      render(
-        <TimeRangeContent
-          calendarAnchor={{ current: null }}
-          isFullscreen
-          value={defaultTimeRange}
-          onApply={onApply}
-          timeZone="utc"
-        />
-      );
+      render(<TimeRangeContent isFullscreen value={defaultTimeRange} onApply={onApply} timeZone="utc" />);
       const from = screen.getByLabelText('From');
       await user.clear(from);
       await user.type(from, 'invalid{Enter}');
@@ -309,7 +285,6 @@ describe('TimeRangeForm', () => {
 
     it('synchronizes both controlled fields after an external range update', () => {
       const props = {
-        calendarAnchor: { current: null },
         isFullscreen: true,
         onApply: jest.fn(),
         timeZone: 'utc',

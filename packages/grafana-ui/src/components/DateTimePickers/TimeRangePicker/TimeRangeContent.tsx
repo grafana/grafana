@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type RefObject, useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useController, useForm } from 'react-hook-form';
 
 import {
@@ -26,7 +26,7 @@ import { isValid } from '../utils';
 import { TimeRangeFields } from './TimeRangeFields';
 
 interface Props {
-  calendarAnchor: RefObject<HTMLElement | null>;
+  calendarAnchor?: HTMLElement | null;
   isFullscreen: boolean;
   value: TimeRange;
   onApply: (range: TimeRange) => void;
@@ -190,7 +190,6 @@ export const TimeRangeContent = (props: Props) => {
     <div>
       <TimeRangeFields
         fieldSuffix={fyTooltip}
-        calendarAnchor={calendarAnchor}
         onSubmit={onApply}
         from={{
           value: fromField.value,
@@ -217,6 +216,7 @@ export const TimeRangeContent = (props: Props) => {
           timeZone,
           isReversed,
           weekStart,
+          referenceElement: calendarAnchor,
         }}
       />
       <div className={style.buttonsContainer}>
