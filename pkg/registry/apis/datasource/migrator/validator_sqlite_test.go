@@ -19,7 +19,7 @@ func TestDataSourceCountValidatorSQLite(t *testing.T) {
 			eng, err := xorm.NewEngine("sqlite3", ":memory:")
 			require.NoError(t, err)
 			t.Cleanup(func() { require.NoError(t, eng.Close()) })
-			eng.DB().DB.SetMaxOpenConns(1)
+			eng.DB().SetMaxOpenConns(1)
 			_, err = eng.Exec("CREATE TABLE resource_history (key_path TEXT PRIMARY KEY)")
 			require.NoError(t, err)
 			_, err = eng.Exec("CREATE TABLE resource (namespace TEXT, `group` TEXT, resource TEXT)")

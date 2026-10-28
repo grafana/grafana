@@ -33,7 +33,7 @@ func newSQLiteValidationSession(t *testing.T, keys ...resource.DataKey) *xorm.Se
 	eng, err := xorm.NewEngine("sqlite3", filepath.Join(t.TempDir(), "validation.db"))
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, eng.Close()) })
-	eng.DB().DB.SetMaxOpenConns(1)
+	eng.DB().SetMaxOpenConns(1)
 	_, err = eng.Exec("CREATE TABLE resource_history (key_path TEXT PRIMARY KEY)")
 	require.NoError(t, err)
 	_, err = eng.Exec("CREATE TABLE resource (guid TEXT, namespace TEXT, `group` TEXT, resource TEXT, name TEXT, folder TEXT)")
