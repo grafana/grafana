@@ -1442,11 +1442,15 @@ type dashboardDeleteClient struct {
 }
 
 func (c *dashboardDeleteClient) Search(context.Context, int64, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	rows := make([]*resourcepb.ResourceTableRow, len(c.uids))
+	rows := make([]*resourcepb.ResourceSearchRow, len(c.uids))
 	for i, uid := range c.uids {
-		rows[i] = &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: uid}}
+		rows[i] = &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: uid}}
 	}
-	return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{Rows: rows}, TotalHits: int64(len(rows))}, nil
+	return &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows:         rows,
+		TotalHits:    int64(len(rows)),
+	}, nil
 }
 func (c *dashboardDeleteClient) Delete(ctx context.Context, uid string, orgID int64, opts metav1.DeleteOptions) error {
 	requester, _ := identity.GetRequester(ctx)
