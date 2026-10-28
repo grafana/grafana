@@ -1,4 +1,4 @@
-import { type ReactNode, type Ref, type RefObject, useId, useState } from 'react';
+import { type ReactNode, type Ref, useId, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -27,12 +27,11 @@ interface Props {
   inputWidth?: number;
   onSubmit?: () => void;
   fieldSuffix?: ReactNode;
-  calendar: Omit<TimePickerCalendarProps, 'isOpen' | 'onClose' | 'referenceElement'>;
-  calendarAnchor: RefObject<HTMLElement | null>;
+  calendar: Omit<TimePickerCalendarProps, 'isOpen' | 'onClose'>;
 }
 
 /** Shared absolute-range inputs and calendar; callers own parsing, validation, and applying the range. */
-export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, calendar, calendarAnchor }: Props) {
+export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, calendar }: Props) {
   const fromId = useId();
   const toId = useId();
   const [isOpen, setOpen] = useState(false);
@@ -78,12 +77,7 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
           {fieldSuffix}
         </Stack>
       ))}
-      <TimePickerCalendar
-        {...calendar}
-        referenceElement={calendarAnchor.current}
-        isOpen={isOpen}
-        onClose={() => setOpen(false)}
-      />
+      <TimePickerCalendar {...calendar} isOpen={isOpen} onClose={() => setOpen(false)} />
     </>
   );
 }

@@ -26,7 +26,6 @@ it('passes empty bounds and millisecond text to the caller without parsing', asy
           placeholder: 'No limit',
         }}
         to={{ value: '', onChange: jest.fn() }}
-        calendarAnchor={{ current: null }}
         calendar={{
           isFullscreen: true,
           from: dateTimeParse('2025-08-07'),
@@ -59,7 +58,6 @@ it.each([
       from={{ value: 'now-1h', onChange: jest.fn() }}
       to={{ value: 'now', onChange: jest.fn() }}
       inputWidth={width}
-      calendarAnchor={{ current: null }}
       fieldSuffix={<span data-testid="field-suffix" />}
       calendar={{
         isFullscreen: true,
@@ -92,7 +90,6 @@ it('opens an anchored calendar with caller labels and restores trigger focus on 
     <TimeRangeFields
       from={{ label: 'Start', value: '2025-08-07 11:00', onChange }}
       to={{ label: 'End', value: '2025-08-07 12:30', onChange }}
-      calendarAnchor={{ current: anchor }}
       calendar={{
         isFullscreen: true,
         from: dateTimeParse('2025-08-07 11:00', { timeZone: 'America/New_York' }),
@@ -100,6 +97,7 @@ it('opens an anchored calendar with caller labels and restores trigger focus on 
         timeZone: 'America/New_York',
         onApply: jest.fn(),
         onChange: jest.fn(),
+        referenceElement: anchor,
       }}
     />
   );
