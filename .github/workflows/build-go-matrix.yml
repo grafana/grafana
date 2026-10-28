@@ -63,7 +63,7 @@ jobs:
         with:
           cache-build: 'false'
       - name: Cache Go builds
-        uses: actions/cache@v4
+        uses: actions/cache@v4 # zizmor: ignore[cache-poisoning] compile checks only; binaries are not published
         with:
           path: ${{ env.GOCACHE }}
           key: go-build-matrix-${{ runner.os }}-${{ runner.arch }}-oss-${{ hashFiles('**/*.mod', '**/*.sum', 'go.work', 'go.work.sum') }}-${{ github.sha }}
@@ -128,7 +128,7 @@ jobs:
         with:
           cache-build: 'false'
       - name: Cache Go builds
-        uses: actions/cache@v4
+        uses: actions/cache@v4 # zizmor: ignore[cache-poisoning] compile checks only; binaries are not published
         with:
           path: ${{ env.GOCACHE }}
           key: go-build-matrix-${{ runner.os }}-${{ runner.arch }}-enterprise-${{ hashFiles('**/*.mod', '**/*.sum', 'go.work', 'go.work.sum') }}-${{ github.sha }}
