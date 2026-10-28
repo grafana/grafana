@@ -29,8 +29,8 @@ type DeclaredBlockParams = Array<string[] | undefined>;
 type Expression = (scope: Scope) => unknown;
 type Statement = (scope: Scope) => string;
 type ProgramFactory = (scope: Scope) => Program;
-/** Renders a program body. `parent` is the scope the program was entered from. */
-type Body = (scope: Scope, parent: Scope) => string;
+/** Renders a program body. `definition` is the scope its inline partials are defined in. */
+type Body = (scope: Scope, definition: Scope) => string;
 
 interface HelperOptions {
   name: string;
@@ -265,16 +265,16 @@ export function interpret(program: hbs.AST.Program, env: Environment): (context:
     const body = compileBody(program, [program.blockParams, ...declared]);
 
     return (scope) =>
-      (context, options = {}) =>
-        body(
-          {
-            context,
-            data: options.data || scope.data,
-            depths: uses.depths ? enter(scope.depths, context) : scope.depths,
-            blockParams: uses.blockParams ? [options.blockParams, ...scope.blockParams] : scope.blockParams,
-          },
-          scope
-        );
+      (context, options = {}) => {
+        const entered: Scope = {
+          context,
+          data: options.data || scope.data,
+          depths: uses.depths ? enter(scope.depths, context) : scope.depths,
+          blockParams: uses.blockParams ? [options.blockParams, ...scope.blockParams] : scope.blockParams,
+        };
+
+        return body(entered, entered);
+      };
   }
 
   // Only partials defined in the template, so it cannot reach anything outside itself.
@@ -366,13 +366,13 @@ export function interpret(program: hbs.AST.Program, env: Environment): (context:
       return render;
     }
 
-    // Like the `inline` decorator: a partial sees the definition's parent scope and the call's data.
-    return (scope, parent) => {
+    // Like the `inline` decorator: a partial sees the definition's scope and the call's data.
+    return (scope, definition) => {
       const original = partials;
       partials = Object.assign(Object.create(null), original);
 
       for (const { name, fn } of inlines) {
-        partials[String(name(parent))] = fn(parent);
+        partials[String(name(definition))] = fn(definition);
       }
 
       try {
@@ -388,10 +388,10 @@ export function interpret(program: hbs.AST.Program, env: Environment): (context:
 
   return (context) => {
     const data = { root: context };
-    // Handlebars runs the root's decorators with no parent context or depths.
-    const parent: Scope = { context: undefined, data, depths: [], blockParams: [] };
+    // Handlebars runs the root's decorators with no context or depths.
+    const definition: Scope = { context: undefined, data, depths: [], blockParams: [] };
 
-    return body({ context, data, depths: [context], blockParams: [undefined] }, parent);
+    return body({ context, data, depths: [context], blockParams: [undefined] }, definition);
   };
 }
 

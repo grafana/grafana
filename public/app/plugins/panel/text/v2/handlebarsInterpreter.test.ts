@@ -168,6 +168,26 @@ describe('interpret', () => {
     });
   });
 
+  // Stock Handlebars throws on these, so there is no reference to compare with.
+  describe('gives inline partials the block params of where they are defined', () => {
+    it.each([
+      {
+        name: 'a partial defined inside a loop, reading the loop block param',
+        template: '{{#each a as |row|}}{{#*inline "p"}}[{{row.h}}]{{/inline}}{{> p}}{{/each}}',
+        context: { a: [{ h: 'x' }, { h: 'y' }] },
+        expected: '[x][y]',
+      },
+      {
+        name: 'a partial named by a block param',
+        template: '{{#each a as |row|}}{{#*inline row.n}}{{row.h}}{{/inline}}{{> p}}{{/each}}',
+        context: { a: [{ n: 'p', h: 'x' }] },
+        expected: 'x',
+      },
+    ])('$name', ({ template, context, expected }) => {
+      expect(interpretTemplate(template, context)).toBe(expected);
+    });
+  });
+
   describe('renders inline partials the way the compiled template does', () => {
     it.each([
       {
