@@ -31,9 +31,8 @@ import {
 } from './coauthoring/internalCoauthoringContract';
 import { reportQueryCoauthoringDecision } from './coauthoring/queryCoauthoringDecision';
 import { type QueryPreview } from './coauthoring/queryPreview';
+import { supportsQueryCoauthoring } from './coauthoring/supportsQueryCoauthoring';
 import { useQueryProposalTransaction } from './coauthoring/useQueryProposalTransaction';
-
-const PROMETHEUS_DATASOURCE_TYPE = 'prometheus';
 
 interface QueryDatasourceData {
   datasource?: DataSourceApi;
@@ -68,11 +67,9 @@ export function QueryEditorPanel({
   const coauthoringFlag = useBooleanFlagDetails(FlagKeys.QueryeditorCoauthoringUi, false);
   const providerStatus = useOpenFeatureClientStatus();
   const coauthoringEnabled = coauthoringFlag.value;
+  const coauthoringSupported = supportsQueryCoauthoring(queryDsData?.dsSettings);
   const canOfferCoauthoring = Boolean(
-    query &&
-      !queryDsLoading &&
-      queryDsData?.datasource?.components?.QueryEditor &&
-      queryDsData.dsSettings?.type === PROMETHEUS_DATASOURCE_TYPE
+    query && !queryDsLoading && queryDsData?.datasource?.components?.QueryEditor && coauthoringSupported
   );
   const { value, variant, errorCode } = coauthoringFlag;
   useEffect(() => {
@@ -179,10 +176,7 @@ export function QueryEditorPanel({
 
   const { datasource, dsSettings } = queryDsData;
   const internalCoauthoringProps: InternalQueryEditorCoauthoringPropsV1 = {
-    unstable_queryEditorCoauthoringV1:
-      coauthoringEnabled && coauthoringDatasourceType === PROMETHEUS_DATASOURCE_TYPE
-        ? coauthoringRegistration
-        : undefined,
+    unstable_queryEditorCoauthoringV1: coauthoringEnabled && coauthoringSupported ? coauthoringRegistration : undefined,
   };
   return (
     <>
