@@ -3,18 +3,24 @@ package swagger
 import (
 	"fmt"
 	"html"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
 	"gopkg.in/ini.v1"
 
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -57,10 +63,7 @@ func createTestService(tb testing.TB, cfg *setting.Cfg) *swaggerService {
 	var promRegister prometheus.Registerer = prometheus.NewRegistry()
 	promGatherer := promRegister.(*prometheus.Registry)
 
-	service, err := ProvideSwaggerService(cfg, featuremgmt.WithFeatures(), promGatherer, promRegister, &licensing.OSSLicensingService{})
-	require.NoError(tb, err)
-
-	return service
+	return ProvideSwaggerService(cfg, featuremgmt.WithFeatures(), promGatherer, promRegister, &licensing.OSSLicensingService{})
 }
 
 func newTestMux(tb testing.TB, service *swaggerService) *web.Mux {
@@ -212,4 +215,113 @@ func TestSwaggerService_Recovery(t *testing.T) {
 	// which this service has none of, so a panic must be handled locally instead.
 	assert.NotPanics(t, func() { mux.ServeHTTP(recorder, req) })
 	assert.Equal(t, http.StatusInternalServerError, recorder.Code)
+}
+
+func TestSwaggerService_RecoveryAfterWrite(t *testing.T) {
+	service := createTestService(t, newTestCfg(t))
+
+	mux := web.New()
+	service.addMiddlewares(mux)
+	mux.Get("/partial", func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("partial"))
+		panic("boom")
+	})
+
+	recorder := httptest.NewRecorder()
+
+	assert.NotPanics(t, func() { mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/partial", nil)) })
+	// The response was already started, so it is left as is rather than
+	// having an error appended to it.
+	assert.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, "partial", recorder.Body.String())
+}
+
+// freePort returns a port that was free a moment ago. The service only takes an
+// address, not a listener, so the port has to be picked up front.
+func freePort(t *testing.T) string {
+	t.Helper()
+
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+	_, port, err := net.SplitHostPort(l.Addr().String())
+	require.NoError(t, err)
+	require.NoError(t, l.Close())
+
+	return port
+}
+
+func TestSwaggerService_Lifecycle(t *testing.T) {
+	t.Run("should serve requests while running and stop cleanly", func(t *testing.T) {
+		cfg := newTestCfg(t)
+		cfg.HTTPAddr = "127.0.0.1"
+		cfg.HTTPPort = freePort(t)
+		service := createTestService(t, cfg)
+
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), service))
+
+		url := "http://" + net.JoinHostPort(cfg.HTTPAddr, cfg.HTTPPort) + "/-/health"
+		require.EventuallyWithT(t, func(c *assert.CollectT) {
+			resp, err := http.Get(url) //nolint:gosec // test URL built from a local address
+			if !assert.NoError(c, err) {
+				return
+			}
+			defer func() { _ = resp.Body.Close() }()
+			assert.Equal(c, http.StatusOK, resp.StatusCode)
+		}, 5*time.Second, 10*time.Millisecond)
+
+		require.NoError(t, services.StopAndAwaitTerminated(t.Context(), service))
+		assert.Equal(t, services.Terminated, service.State())
+	})
+
+	t.Run("should fail when the port is already in use", func(t *testing.T) {
+		l, err := net.Listen("tcp", "127.0.0.1:0")
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = l.Close() })
+
+		cfg := newTestCfg(t)
+		cfg.HTTPAddr, cfg.HTTPPort, err = net.SplitHostPort(l.Addr().String())
+		require.NoError(t, err)
+		service := createTestService(t, cfg)
+
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), service))
+
+		err = service.AwaitTerminated(t.Context())
+		require.Error(t, err)
+		assert.Equal(t, services.Failed, service.State())
+		assert.ErrorContains(t, service.FailureCase(), "address already in use")
+	})
+}
+
+func TestSwaggerService_ContextMiddleware(t *testing.T) {
+	service := createTestService(t, newTestCfg(t))
+
+	var reqCtx *contextmodel.ReqContext
+	handler := service.contextMiddleware()(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+		reqCtx = contexthandler.FromContext(r.Context())
+	}))
+
+	t.Run("should attach an anonymous ReqContext", func(t *testing.T) {
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/swagger", nil))
+
+		require.NotNil(t, reqCtx)
+		assert.NotNil(t, reqCtx.SignedInUser)
+		assert.Empty(t, recorder.Header().Get("Trace-ID"))
+	})
+
+	t.Run("should expose the trace ID of the request span", func(t *testing.T) {
+		traceID := trace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
+		spanCtx := trace.NewSpanContext(trace.SpanContextConfig{
+			TraceID:    traceID,
+			SpanID:     trace.SpanID{1, 2, 3, 4, 5, 6, 7, 8},
+			TraceFlags: trace.FlagsSampled,
+		})
+		req := httptest.NewRequest(http.MethodGet, "/swagger", nil)
+		req = req.WithContext(trace.ContextWithSpanContext(req.Context(), spanCtx))
+
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, req)
+
+		assert.Equal(t, traceID.String(), recorder.Header().Get("Trace-ID"))
+	})
 }

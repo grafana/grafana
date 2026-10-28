@@ -1,28 +1,30 @@
 # Swagger
 
-This package serves `/swagger`, the Swagger-based navigator for Grafana's HTTP API.
+This package serves `/swagger`, the Swagger-based navigator for the Grafana HTTP API.
 
-It can run two ways, both backed by the same handler so the page is identical either way:
+It runs in one of two modes. Both use the same `Handler`, so the page is the same in either mode:
 
-- Mounted on the core HTTP server, which is what `target = all` (the default) does. `ProvideService` in `handler.go` registers the routes on the core `RouteRegister` through Wire.
-- As a standalone dskit service under the `swagger-server` target, for deployments that run it separately from the API.
+- **On the core HTTP server.** This is what `target = all` (the default) does. `ProvideService` registers the routes on the core `RouteRegister` through Wire.
+- **Standalone**, under the `swagger-server` target. This mode runs its own HTTP server and is meant for deployments that serve the page separately from the API.
 
-## Structure
+## Files
 
-- `handler.go`: renders the page. `NewHandler` is the entry point shared by both modes, and `ProvideService` wires it into the core server; `swagger.html` is embedded, so rendering does not depend on the core server's template renderer.
-- `swagger_service.go`: the dskit service — an HTTP server, its middleware chain, and the routes the standalone target serves.
-- `context_middleware.go`: attaches a minimal `ReqContext` to each request, which is where the CSP middleware stores the per-request nonce.
-- `recovery_middleware.go`: turns a panic into a 500. `middleware.Recovery` is not usable here because it renders its error page through the template set `web.Renderer` installs, which this service does not have.
+| File                     | Contents                                                                                                                                 |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `handler.go`             | Renders the page from the embedded `swagger.html`, and registers the routes on the core server.                                          |
+| `swagger_service.go`     | The standalone dskit service: its HTTP server, middleware chain and routes.                                                              |
+| `context_middleware.go`  | Adds a minimal `ReqContext` to each request, which holds the CSP nonce and the request logger.                                           |
+| `recovery_middleware.go` | Turns a panic into a 500. `middleware.Recovery` can't be used here because it needs the template set from `web.Renderer`, which this service doesn't install. |
 
 ## Running the standalone server
 
-The target is selected with `cfg:target=swagger-server` on the command line. This is applied after `conf/custom.ini` is read, so it overrides whatever `target` that file sets — no config file changes are needed.
+From the repository root:
 
 ```bash
 go run ./pkg/cmd/grafana server target --homepath=$PWD cfg:target=swagger-server
 ```
 
-Or against a compiled binary (`make build-backend`):
+Or, with a binary built by `make build-backend`:
 
 ```bash
 ./bin/grafana server target --homepath=$PWD cfg:target=swagger-server
@@ -30,35 +32,25 @@ Or against a compiled binary (`make build-backend`):
 
 The page is then at http://localhost:3000/swagger.
 
-Note the `target` subcommand: plain `grafana server` always starts the full monolith and ignores `target` entirely. For the same reason `make run` cannot start this service — `.air.toml` hardcodes the `server` command.
+You must use the `target` subcommand. Plain `grafana server` always starts the full server and ignores `target`, which is also why `make run` can't start this service. `cfg:` overrides are applied after `conf/custom.ini` is read, so you don't need to change any config files.
 
-### Choosing a port
-
-The service listens on the standard `[server] http_port`, the same key the core server uses, so pick a free one if a normal Grafana is already running:
-
-```bash
-go run ./pkg/cmd/grafana server target --homepath=$PWD \
-  cfg:target=swagger-server \
-  cfg:server.http_port=3009
-```
-
-Any setting can be overridden this way, using `cfg:<section>.<key>=<value>` (drop the section for keys outside one, as `target` is).
+The service listens on `[server] http_port`, the same setting the core server uses. If Grafana is already running, add a free port, for example `cfg:server.http_port=3009`.
 
 ### Frontend assets
 
-The page loads its bundle from `public/build-swagger`, which is not part of the normal frontend dev server output. Build it once with `yarn build:swagger`, or run `yarn start:swagger` to rebuild it on change. Without it `/swagger` returns a 500, because the assets manifest cannot be read.
+The page loads its bundle from `public/build-swagger`, which the normal frontend dev server doesn't build. Run `yarn build:swagger` once, or `yarn start:swagger` to rebuild on change. Without the bundle, `/swagger` returns a 500.
 
 ## Routes
 
-| Route         | Description                                            |
-| ------------- | ------------------------------------------------------ |
-| `/swagger`    | The API navigator                                      |
-| `/swagger-ui` | Deprecated, redirects to `/swagger`                    |
-| `/openapi3`   | Deprecated, redirects to `/swagger`                    |
-| `/public/*`   | The swagger bundle and the OpenAPI spec files it reads |
-| `/metrics`    | Prometheus metrics                                     |
-| `/-/health`   | Liveness check for orchestrators                       |
+| Route         | Description                                  |
+| ------------- | -------------------------------------------- |
+| `/swagger`    | The API navigator                            |
+| `/swagger-ui` | Deprecated, redirects to `/swagger`          |
+| `/openapi3`   | Deprecated, redirects to `/swagger`          |
+| `/public/*`   | The swagger bundle and the OpenAPI spec files |
+| `/metrics`    | Prometheus metrics (standalone only)         |
+| `/-/health`   | Liveness check (standalone only)             |
 
-## Deploying it separately
+## Deploying separately
 
-The page also fetches `/openapi/v3`, `/api/frontend/settings` and `/api/user` relative to the root (see `public/swagger/SwaggerPage.tsx`). Those are served by the Grafana API, not by this service, so a standalone deployment needs a proxy routing `/swagger` and `/public` here and the API paths to the core server. This is the same arrangement the frontend service (`pkg/services/frontend`) relies on. Running it standalone without such a proxy renders the page, but the API selector and user panes stay empty.
+The page also requests `/openapi/v3`, `/api/frontend/settings` and `/api/user` (see `public/swagger/SwaggerPage.tsx`). The Grafana API serves those, not this service. A standalone deployment therefore needs a proxy that sends `/swagger` and `/public` here and the API paths to the core server, the same setup the frontend service (`pkg/services/frontend`) uses. Without the proxy, the page still renders, but the API selector and user panes stay empty.

@@ -313,7 +313,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.SwaggerServer, func() (services.Service, error) {
-		return swagger.ProvideSwaggerService(s.cfg, s.features, s.promGatherer, s.registerer, s.license)
+		return swagger.ProvideSwaggerService(s.cfg, s.features, s.promGatherer, s.registerer, s.license), nil
 	})
 
 	m.RegisterModule(modules.Router, s.initRouterModule)

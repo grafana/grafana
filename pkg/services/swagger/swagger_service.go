@@ -11,7 +11,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace"
 
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/api/webassets"
@@ -36,28 +35,30 @@ type swaggerService struct {
 	errChan      chan error
 	promGatherer prometheus.Gatherer
 	promRegister prometheus.Registerer
-	tracer       trace.Tracer
 
 	handler *Handler
 }
 
-func ProvideSwaggerService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) (*swaggerService, error) {
+// ProvideSwaggerService builds the standalone swagger-server target, which runs
+// its own HTTP server instead of mounting on the core one.
+func ProvideSwaggerService(cfg *setting.Cfg, features featuremgmt.FeatureToggles, promGatherer prometheus.Gatherer, promRegister prometheus.Registerer, license licensing.Licensing) *swaggerService {
 	s := &swaggerService{
 		cfg:          cfg,
 		features:     features,
 		log:          log.New("swagger-service"),
 		promGatherer: promGatherer,
 		promRegister: promRegister,
-		tracer:       tracer,
-		handler:      NewHandler(cfg, license),
+		handler:      newHandler(cfg, license),
 	}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
-	return s, nil
+	return s
 }
 
 func (s *swaggerService) start(ctx context.Context) error {
 	s.httpServ = s.newSwaggerServer(ctx)
-	s.errChan = make(chan error)
+	// Buffered so the goroutine can still exit after running has returned and
+	// stop shuts the server down.
+	s.errChan = make(chan error, 1)
 	go func() {
 		s.errChan <- s.httpServ.ListenAndServe()
 	}()
@@ -87,13 +88,13 @@ func (s *swaggerService) newSwaggerServer(ctx context.Context) *http.Server {
 	addr := net.JoinHostPort(s.cfg.HTTPAddr, s.cfg.HTTPPort)
 	s.log.Info("starting swagger server", "addr", addr)
 
-	// Use the same web.Mux as the main grafana server for consistency + middleware reuse
+	// web.Mux, like the core server, so the same middleware can be reused.
 	handler := web.New()
 	s.addMiddlewares(handler)
 	s.registerRoutes(handler)
 
 	return &http.Server{
-		// 5s timeout for header reads to avoid Slowloris attacks (https://thetooth.io/blog/slowloris-attack/)
+		// Bounds header reads to protect against Slowloris attacks.
 		ReadHeaderTimeout: 5 * time.Second,
 		Addr:              addr,
 		Handler:           handler,
@@ -106,24 +107,25 @@ func (s *swaggerService) routeGet(m *web.Mux, pattern string, h ...web.Handler) 
 	m.Get(pattern, handlers...)
 }
 
-// Apply the same middleware patterns as the main HTTP server
+// addMiddlewares applies the parts of the core server's middleware chain that
+// the swagger page needs.
 func (s *swaggerService) addMiddlewares(m *web.Mux) {
 	loggermiddleware := loggermw.Provide(s.cfg, s.features)
 
 	m.Use(requestmeta.SetupRequestMetadata())
-	m.Use(middleware.RequestTracing(s.tracer, middleware.ShouldTraceAllPaths))
+	m.Use(middleware.RequestTracing(tracer, middleware.ShouldTraceAllPaths))
 	m.Use(middleware.RequestMetrics(s.features, s.cfg, s.promRegister))
 
 	m.UseMiddleware(s.contextMiddleware())
 	m.UseMiddleware(loggermiddleware.Middleware())
 
-	// Must run after the context middleware, which is where it stores the nonce
+	// Must run after the context middleware, because it stores the nonce on the ReqContext.
 	if s.cfg.CSPEnabled || s.cfg.CSPReportOnlyEnabled {
 		m.UseMiddleware(middleware.ContentSecurityPolicy(s.cfg, s.log))
 	}
 
-	// Registered before the static handlers so it wraps them too. It reads the
-	// request logger off the ReqContext, so it must stay after the context middleware.
+	// Registered before the static handlers so it covers them too, and after the
+	// context middleware because it logs through the ReqContext logger.
 	m.UseMiddleware(s.recoveryMiddleware())
 
 	// The swagger app loads its bundle from public/build-swagger and the API
@@ -156,7 +158,7 @@ func (s *swaggerService) mapStatic(m *web.Mux, dir string, prefix string) {
 func (s *swaggerService) registerRoutes(m *web.Mux) {
 	s.routeGet(m, "/metrics", promhttp.HandlerFor(s.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}))
 
-	// Empty health check endpoint to allow k8s and other orchestrators to check if the server is alive
+	// Liveness check for k8s and other orchestrators.
 	s.routeGet(m, "/-/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 
@@ -166,10 +168,9 @@ func (s *swaggerService) registerRoutes(m *web.Mux) {
 	})
 
 	// Deprecated
-	s.routeGet(m, "/swagger-ui", HandleRedirect)
+	s.routeGet(m, "/swagger-ui", handleRedirect)
 	// Deprecated
-	s.routeGet(m, "/openapi3", HandleRedirect)
+	s.routeGet(m, "/openapi3", handleRedirect)
 
-	// The swagger based api navigator
-	s.routeGet(m, "/swagger", s.handler.HandleRequest)
+	s.routeGet(m, "/swagger", s.handler.handleRequest)
 }
