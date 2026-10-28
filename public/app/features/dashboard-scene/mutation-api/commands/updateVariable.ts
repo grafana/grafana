@@ -8,7 +8,7 @@ import type * as z from 'zod';
 
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
-import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToVariables';
+import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToSchemaV2Variables';
 import { createSceneVariableFromVariableModel } from '../../serialization/transformSaveModelSchemaV2ToScene';
 
 import { payloads } from './schemas';
