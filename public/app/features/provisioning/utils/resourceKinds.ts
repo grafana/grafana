@@ -226,9 +226,10 @@ export interface ResourceKindInfo {
 // interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
 // each call site. The literal `key`/`itemType` values stay the source of truth for the unions above.
 const coreKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
+const manifestKindInfos: ResourceKindInfo[] = [];
 
 function knownKindInfos(): ResourceKindInfo[] {
-  return coreKindInfos;
+  return [...coreKindInfos, ...manifestKindInfos];
 }
 
 export function resolveKindInfo(group: string, kind: string): ResourceKindInfo {
@@ -240,6 +241,37 @@ export function resolveKindInfoByResource(group: string, resource: string): Reso
     knownKindInfos().find((info) => info.group === group && info.resource === resource) ??
     getDefaultKindInfo(group, resource, resource)
   );
+}
+
+interface AppManifest {
+  spec?: {
+    appName?: string;
+    group?: string;
+    versions?: Array<{ kinds?: Array<{ kind: string; plural?: string }> }>;
+  };
+}
+
+let manifestKinds: Promise<void> | undefined;
+
+export function loadManifestKinds(): Promise<void> {
+  manifestKinds ??= getBackendSrv()
+    .get<{ items?: AppManifest[] }>('/apis/discovery/v1alpha2/manifests', undefined, undefined, { showErrorAlert: false })
+    .then(({ items }) => items?.forEach(addManifestKinds))
+    .catch(() => {});
+  return manifestKinds;
+}
+
+function addManifestKinds({ spec }: AppManifest) {
+  const group = spec?.group;
+  if (!group) {
+    return;
+  }
+  const listRoute = spec.appName?.includes('-') ? `/a/${spec.appName}` : '';
+  for (const { kind, plural } of spec.versions?.flatMap((v) => v.kinds ?? []) ?? []) {
+    if (!knownKindInfos().some((info) => info.group === group && info.kind === kind)) {
+      manifestKindInfos.push({ ...getDefaultKindInfo(group, kind, plural), listRoute });
+    }
+  }
 }
 
 export function getDefaultKindInfo(group: string, kind: string, resource = `${kind.toLowerCase()}s`): ResourceKindInfo {
@@ -321,11 +353,12 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
  * fall back to a group-only match for stats that omit the resource.
  */
 export function getKindInfoByStat(stat: { group?: string; resource?: string }): ResourceKindInfo | undefined {
-  const byResource = knownKindInfos().find((info) => info.resource === stat.resource);
-  if (byResource) {
-    return byResource;
+  const byResource = knownKindInfos().filter((info) => info.resource === stat.resource);
+  if (byResource.length) {
+    return byResource.find((info) => info.group === stat.group) ?? byResource[0];
   }
-  return getKindInfoByStatGroup(stat.group);
+  const byGroup = getKindInfoByStatGroup(stat.group);
+  return byGroup && coreKindInfos.includes(byGroup) ? byGroup : undefined;
 }
 
 /**

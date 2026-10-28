@@ -1,7 +1,7 @@
 import { Navigate, useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { config } from '@grafana/runtime';
-import { SafeDynamicImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
+import { SafeDynamicImport as SafeImport } from 'app/core/components/DynamicImports/SafeDynamicImport';
 import { type RouteDescriptor } from 'app/core/navigation/types';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -15,6 +15,11 @@ import {
   PROVISIONING_PREVIEW_URL,
   PROVISIONING_URL,
 } from '../constants';
+
+import { loadManifestKinds } from './resourceKinds';
+
+const SafeDynamicImport = (loader: () => Promise<{ default: unknown }>) =>
+  SafeImport(() => Promise.all([loader(), loadManifestKinds()]).then(([module]) => module));
 
 // The provisioning admin pages are for repository managers. Gating on read would let everyone in:
 // `provisioning.repositories:read` is granted to the Viewer basic role (git-sync flows need it).
