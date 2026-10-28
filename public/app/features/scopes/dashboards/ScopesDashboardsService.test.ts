@@ -2,6 +2,7 @@ import { type Location } from 'history';
 import { Subject } from 'rxjs';
 
 import { config, locationService } from '@grafana/runtime';
+import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
 // Import mock data for subScope tests
@@ -31,11 +32,21 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(),
+}));
+
+function setMegaMenuFlag(value: boolean) {
+  (getFeatureFlagClient as jest.Mock).mockReturnValue({ getBooleanValue: () => value });
+}
+
 describe('ScopesDashboardsService', () => {
   let service: ScopesDashboardsService;
   let mockApiClient: jest.Mocked<ScopesApiClient>;
 
   beforeEach(() => {
+    setMegaMenuFlag(false);
     const fetchScopeNavigationsMock = jest.fn().mockResolvedValue([]);
     mockApiClient = {
       fetchDashboards: jest.fn(),
@@ -226,6 +237,77 @@ describe('ScopesDashboardsService', () => {
 
       // Verify that the folder is expanded because the current path starts with the dashboard ID
       expect(service.state.folders[''].folders['group1'].expanded).toBe(true);
+    });
+
+    it('expands nested dashboard paths via live location changes with the mega-menu flag on, even while drawerOpened is false', async () => {
+      setMegaMenuFlag(true);
+
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+      const locationSubject = new Subject<Location>();
+      (locationService.getLocationObservable as jest.Mock).mockReturnValue(locationSubject);
+
+      // Flag-on services track location unconditionally from construction, unlike the flag-off path
+      // above, which only subscribes once drawerOpened flips true.
+      const testService = new ScopesDashboardsService(mockApiClient);
+
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: { scope: 'scope1', url: '/d/dashboard1' },
+          status: { title: 'Test Dashboard', groups: ['group1'] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await testService.fetchDashboards(['scope1']);
+
+      // fetchDashboards sets drawerOpened based on whether results came back - force it closed to
+      // simulate dashboard edit mode, which DashboardSceneRenderer does by calling toggleDrawer().
+      if (testService.state.drawerOpened) {
+        testService.toggleDrawer();
+      }
+      expect(testService.state.drawerOpened).toBe(false);
+
+      // The nested path must still expand the folder even with drawerOpened false - the regression
+      // this is protecting against is that it previously stopped tracking location entirely as soon
+      // as drawerOpened went false, even though ScopesDashboardsMegaMenuSection keeps rendering this
+      // tree regardless of drawerOpened.
+      locationSubject.next({ pathname: '/d/dashboard1/very-important' } as Location);
+
+      expect(testService.state.folders[''].folders['group1'].expanded).toBe(true);
+    });
+
+    it('does not crash on a location change that arrives right after scopes are cleared, with the mega-menu flag on', async () => {
+      setMegaMenuFlag(true);
+
+      (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
+
+      const testService = new ScopesDashboardsService(mockApiClient);
+
+      const mockNavigations: ScopeNavigation[] = [
+        {
+          spec: { scope: 'scope1', url: '/d/dashboard1' },
+          status: { title: 'Test Dashboard', groups: ['group1'] },
+          metadata: { name: 'dashboard1' },
+        },
+      ];
+      mockApiClient.fetchScopeNavigations.mockResolvedValue(mockNavigations);
+      await testService.fetchDashboards(['scope1']);
+
+      // Clear scopes, e.g. the user removes the scope selection entirely. fetchDashboards' early
+      // return for an empty forScopeNames wipes dashboards/folders but must also wipe
+      // scopeNavigations - otherwise the stale entry for /d/dashboard1 below still matches and
+      // onLocationChange reaches into the now-empty folders map.
+      await testService.fetchDashboards([]);
+
+      // A location change (e.g. the URL update that drops the `scopes` param) can still arrive right
+      // after clearing, while still pointing at the dashboard that used to match. Calling the
+      // private handler directly (rather than through the location Subject) avoids RxJS's Subscriber
+      // swallowing a synchronous throw from inside a `next` callback, which would otherwise mask this.
+      expect(() =>
+        (testService as unknown as { onLocationChange: (p: string) => void }).onLocationChange('/d/dashboard1')
+      ).not.toThrow();
+
+      expect(testService.state.scopeNavigations).toEqual([]);
     });
 
     it('should not expand folders containing different dashboards', async () => {

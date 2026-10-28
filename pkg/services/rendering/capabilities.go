@@ -50,7 +50,7 @@ func (rs *RenderingService) HasCapability(ctx context.Context, capability Capabi
 	imageRendererVersion := rs.Version()
 	compiledImageRendererVersion, err := semver.NewVersion(imageRendererVersion)
 	if err != nil {
-		rs.log.Error("Failed to parse plugin version", "version", imageRendererVersion, "error", err.Error())
+		rs.log.Error("Failed to parse image renderer version", "version", imageRendererVersion, "error", err.Error())
 		return CapabilitySupportRequestResult{IsSupported: false, SemverConstraint: semverConstraint}, ErrInvalidPluginVersion
 	}
 

@@ -32,4 +32,13 @@ export class RowOptions extends PageObject {
       await input.blur();
     });
   }
+
+  /** Opens the variable type picker to add a variable scoped to the selected row */
+  async addVariable() {
+    await test.step('Add new row variable', async () => {
+      await this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.addVariableButton, {
+        root: this.getByGrafanaSelector(this.selectors.components.Sidebar.container),
+      }).click();
+    });
+  }
 }

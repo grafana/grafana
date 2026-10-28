@@ -438,6 +438,10 @@ message HybridSearchResponse {
   // Request failures are gRPC status errors (e.g. INVALID_ARGUMENT for
   // bad filters), never payload-embedded errors.
   repeated HybridSearchResult results = 1;
+
+  // Manifest Kind names for requested internal group/resource pairs.
+  // Entries are present even when the search returns no results.
+  map<string, string> kinds = 2;
 }
 
 message HybridSearchResult {
@@ -485,6 +489,9 @@ message HybridSearchResult {
   // or array elements omitted. Empty values are omitted.
   // Absent for semantic-only hits, external collections, and legacy table responses.
   map<string, google.protobuf.Value> lexical = 9;
+
+  // Tags from the lexical index. Omitted when unavailable.
+  repeated string tags = 10;
 }
 
 message HybridSearchChunk {

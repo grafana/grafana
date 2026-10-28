@@ -26,6 +26,9 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
+    editPeriodStarted: jest.fn(),
+    editPeriodEnded: jest.fn(),
+    editActorFirstChange: jest.fn(),
     editButtonClicked: jest.fn(),
   },
 }));

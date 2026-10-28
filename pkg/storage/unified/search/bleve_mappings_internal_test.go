@@ -368,9 +368,10 @@ func TestSortableFieldsForMapping(t *testing.T) {
 	// Declared, but not with sort.
 	assert.False(t, fields["fields.category"])
 	assert.False(t, fields["category"])
+	assert.True(t, fields[resource.SEARCH_FIELD_CREATED])
+	assert.True(t, fields[resource.SEARCH_FIELD_UPDATED])
 	// Retrieve-only standard fields, and a name nothing declares.
-	assert.False(t, fields[resource.SEARCH_FIELD_CREATED])
-	assert.False(t, fields[resource.SEARCH_FIELD_UPDATED])
+	assert.False(t, fields[resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS])
 	assert.False(t, fields[resource.SEARCH_FIELD_DESCRIPTION])
 	assert.False(t, fields["nonexistent"])
 	// The per-kind field shadowing "created" is only reachable under the prefix.
@@ -933,9 +934,8 @@ func TestRequirementQuery_TypedFieldWithoutFilterCapability(t *testing.T) {
 	// empty page would read as "no results" rather than "wrong field".
 	assertBadRequest(t, b, resource.SEARCH_FIELD_PREFIX+"weight", "=", "1")
 
-	// The standard timestamps are stored but not indexed, so the same applies.
-	assertBadRequest(t, b, resource.SEARCH_FIELD_CREATED, "gt", "0")
-	assertBadRequest(t, b, resource.SEARCH_FIELD_UPDATED, "=", "0")
+	// A standard field that is stored but not indexed: the same applies.
+	assertBadRequest(t, b, resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS, "=", "true")
 }
 
 // mustQuery builds the query for one requirement and fails when it is refused.

@@ -4,7 +4,7 @@ go 1.27.3
 
 require (
 	github.com/cespare/xxhash/v2 v2.3.0
-	github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3
+	github.com/grafana/authlib v0.0.0-20261023105149-ed7cea0f2b27
 	github.com/grafana/grafana-plugin-sdk-go v0.297.0
 	github.com/open-feature/go-sdk v1.17.2
 	github.com/open-feature/go-sdk-contrib/providers/ofrep v0.1.7

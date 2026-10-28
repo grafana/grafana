@@ -589,6 +589,7 @@ func TestHandleGetRawFile(t *testing.T) {
 				},
 			}
 			mockReadWriter.EXPECT().Config().Return(repo).Maybe()
+			mockReadWriter.EXPECT().Read(mock.Anything, mock.MatchedBy(resources.IsFolderMetadataFile), mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 			authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), nil, false)
 
 			if tt.readError != nil {
@@ -641,6 +642,8 @@ func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
 		mockAccess.EXPECT().
 			Check(mock.Anything, mock.Anything, mock.Anything).
 			Return(apierrors.NewForbidden(provisioningapi.RepositoryResourceInfo.GroupResource(), "team-a", errors.New("denied")))
+
+		mockReadWriter.EXPECT().Read(mock.Anything, mock.MatchedBy(resources.IsFolderMetadataFile), mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 
 		authorizer := resources.NewAuthorizer(repo, mockReadWriter, mockAccess, resources.NewMockResourceClients(t), nil, false)
 		connector := &filesConnector{access: mockAccess}

@@ -99,7 +99,7 @@ func (l *LibraryElementService) DeleteLibraryElementsInFolder(c context.Context,
 	return nil
 }
 
-func (l *LibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, signedInUser identity.Requester, folderUID string) error {
+func (l *LibraryElementService) DeleteLibraryElementsInFolderUnchecked(c context.Context, orgID int64, signedInUser identity.Requester, folderUID string) error {
 	return nil
 }
 
