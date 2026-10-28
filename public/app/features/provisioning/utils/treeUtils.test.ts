@@ -202,7 +202,7 @@ describe('getItemType', () => {
     expect(result).toBe('File');
   });
 
-  it('should return File when resource type is unknown', () => {
+  it('should return the resource name when the kind is not in the registry', () => {
     const unknownResource = {
       ...mockResource,
       resource: 'unknown-type',
@@ -210,7 +210,7 @@ describe('getItemType', () => {
 
     const result = getItemType('some/path', unknownResource);
 
-    expect(result).toBe('File');
+    expect(result).toBe('unknown-type');
   });
 });
 

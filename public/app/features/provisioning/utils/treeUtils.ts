@@ -62,6 +62,9 @@ export function getItemType(path: string, resource?: ResourceListItem): ItemType
   if (kindInfo) {
     return kindInfo.itemType;
   }
+  if (resource?.resource) {
+    return resource.resource;
+  }
   // Inferred folder (no extension means it's a folder from file paths)
   if (!resource && !path.includes('.')) {
     return 'Folder';

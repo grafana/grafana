@@ -25,7 +25,7 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
 import { type ResourceBranchAction } from '../../utils/redirect';
-import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
+import { getDefaultKindInfo, getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
@@ -287,7 +287,10 @@ function FormContent({
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
   // The resource carries its own identity: its API group (from apiVersion) + Kubernetes kind resolve
   // the registry descriptor, so callers don't pass the kind separately.
-  const kind = getKindInfoByGroupKind(props.resource.apiVersion?.split('/')[0], props.resource.kind);
+  const group = props.resource.apiVersion?.split('/')[0];
+  const kind =
+    getKindInfoByGroupKind(group, props.resource.kind) ??
+    (group && props.resource.kind ? getDefaultKindInfo(group, props.resource.kind) : undefined);
   if (!kind) {
     // Pages only open this for known managed resources, so an unresolved kind means a bad fixture or a
     // new kind wired into a page before its registry entry exists. Warn in dev so it's a visible signal

@@ -140,7 +140,7 @@ export const resourceKindInfos = {
  * edit-form fields, and each registry entry's own `key` all use this. Derived from the registry keys,
  * so a new kind only needs its registry entry.
  */
-export type ResourceKindKey = keyof typeof resourceKindInfos;
+export type ResourceKindKey = keyof typeof resourceKindInfos | (string & {});
 
 /**
  * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...), derived from
@@ -148,7 +148,7 @@ export type ResourceKindKey = keyof typeof resourceKindInfos;
  * {@link ItemType} (these labels plus the `File` fallback) is assembled from this in `../types`, so a
  * new kind needs no edit there either.
  */
-export type ResourceItemType = (typeof resourceKindInfos)[ResourceKindKey]['itemType'];
+export type ResourceItemType = (typeof resourceKindInfos)[keyof typeof resourceKindInfos]['itemType'] | (string & {});
 
 /**
  * Consumer-facing shape of a registry entry. `key`/`itemType` are typed as the derived unions, so a
@@ -226,6 +226,23 @@ export interface ResourceKindInfo {
 // interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
 // each call site. The literal `key`/`itemType` values stay the source of truth for the unions above.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
+
+export function getDefaultKindInfo(group: string, kind: string, resource = `${kind.toLowerCase()}s`): ResourceKindInfo {
+  return {
+    key: kind.toLowerCase(),
+    getLabel: () => kind,
+    pluralLabel: () => resource,
+    group,
+    kind,
+    resource,
+    itemType: kind,
+    icon: 'file-alt',
+    listRoute: '',
+    folderScoped: false,
+    list: async () => [],
+    alwaysAvailable: false,
+  };
+}
 
 /**
  * Builds the in-app route to view a repository's resources of the given kind.

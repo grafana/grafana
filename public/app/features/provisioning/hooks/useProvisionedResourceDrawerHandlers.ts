@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom-v5-compat';
+import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 
 import { useDispatch } from 'app/types/store';
 
@@ -43,6 +43,8 @@ export interface ProvisionedResourceDrawerHandlers {
 export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): ProvisionedResourceDrawerHandlers {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const listRoute = kind.listRoute || location.pathname;
 
   const invalidate = () => {
     const action = kind.invalidateListTags?.();
@@ -53,7 +55,7 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
 
   const goToList = () => {
     invalidate();
-    navigate(kind.listRoute);
+    navigate(listRoute);
   };
 
   const makeOnBranchSuccess =
@@ -62,7 +64,7 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
       invalidate();
       navigate(
         buildResourceBranchRedirectUrl({
-          baseUrl: kind.listRoute,
+          baseUrl: listRoute,
           paramName: 'new_pull_request_url',
           paramValue: urls?.newPullRequestURL,
           repoType,

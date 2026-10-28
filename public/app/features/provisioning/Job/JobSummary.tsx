@@ -19,7 +19,7 @@ const getSummaryColumns = () => [
       const kind = item.kind || t('provisioning.job-summary.unknown-kind', 'Unknown');
       return (
         <Stack direction="row" alignItems="center" gap={1}>
-          <Icon name={info?.icon ?? 'question-circle'} />
+          <Icon name={info?.icon ?? (item.kind ? 'file-alt' : 'question-circle')} />
           <span>{kind}</span>
         </Stack>
       );
