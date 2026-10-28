@@ -8,7 +8,7 @@ import { Button, Checkbox, Combobox, EmptyState, FilterInput, Pagination, Stack,
 import { FolderEntry } from './FolderEntry';
 import { type FolderRow, resourceKey } from './hooks/useMigrationData';
 import { type SortKey } from './sorting';
-import { buildFolderTree, filterFolderTree, selectableUids, sortFolderTree } from './tree';
+import { allUids, buildFolderTree, filterFolderTree, selectableUids, sortFolderTree } from './tree';
 
 /** Top-level folders shown per page before pagination kicks in. */
 const PAGE_SIZE = 10;
@@ -80,6 +80,14 @@ export function ResourcesToMigrate({
 
   const tree = useMemo(() => buildFolderTree([...folders, ...containers]), [folders, containers]);
   const filtered = useMemo(() => sortFolderTree(filterFolderTree(tree, search), sortKey), [tree, search, sortKey]);
+
+  // While searching, every folder on screen opens so a nested match is visible
+  // without clicking down through each level.
+  const isSearching = search.trim() !== '';
+  const visibleExpanded = useMemo(
+    () => (isSearching ? new Set(allUids(filtered)) : expanded),
+    [isSearching, filtered, expanded]
+  );
 
   // Clamp the page so it stays valid when the filtered set shrinks (e.g. after
   // a search) without needing an effect to reset it.
@@ -228,7 +236,7 @@ export function ResourcesToMigrate({
               key={node.row.uid}
               node={node}
               depth={0}
-              expanded={expanded}
+              expanded={visibleExpanded}
               selectedFolderUids={selectedFolderUids}
               selectedResourceKeys={selectedResourceKeys}
               folderCoveredResourceKeys={folderCoveredResourceKeys}

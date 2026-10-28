@@ -163,6 +163,21 @@ describe('ResourcesToMigrate', () => {
       expect(props.onSetFoldersSelected).toHaveBeenCalledWith(['someuser', 'someuser-sub'], true);
     });
 
+    it('expands the tree to show a nested match while searching', async () => {
+      const { user } = setup({ folders: hierarchy, containers });
+      const input = screen.getByPlaceholderText(/search folders and resources/i);
+
+      await user.type(input, 'sub board');
+
+      expect(screen.getByText('Users')).toBeInTheDocument();
+      expect(screen.getByText('SomeUser Sub')).toBeInTheDocument();
+      expect(screen.getByText('Sub Board')).toBeInTheDocument();
+
+      await user.clear(input);
+
+      expect(screen.queryByText('SomeUser')).not.toBeInTheDocument();
+    });
+
     it('keeps select-all to the folders that match the search, not the path to them', async () => {
       const { props, user } = setup({ folders: hierarchy, containers });
 

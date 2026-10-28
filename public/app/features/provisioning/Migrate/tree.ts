@@ -85,7 +85,9 @@ export function filterFolderTree(nodes: FolderNode[], query: string): FolderNode
     if (!matches && children.length === 0) {
       return undefined;
     }
-    return { ...node, children, matches };
+    // Pruned children no longer count, so sorting ranks what is still on screen.
+    const totalCount = children.reduce((sum, child) => sum + child.totalCount, node.row.resourceCount);
+    return { ...node, children, totalCount, matches };
   };
 
   return nodes.map(filterNode).filter((node): node is FolderNode => node !== undefined);
@@ -102,6 +104,11 @@ export function sortFolderTree(nodes: FolderNode[], key: SortKey): FolderNode[] 
         key
       )
     );
+}
+
+/** UIDs of every folder in the tree, at any depth. */
+export function allUids(nodes: FolderNode[]): string[] {
+  return nodes.flatMap((node) => [node.row.uid, ...allUids(node.children)]);
 }
 
 /**

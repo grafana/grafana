@@ -89,6 +89,14 @@ describe('filterFolderTree', () => {
 
     expect(selectableUids(filtered)).toEqual(['frank']);
   });
+
+  it('recounts subtree totals without the pruned folders', () => {
+    // frank-sub (1) is pruned, so frank and users drop from 3 to 2.
+    const filtered = filterFolderTree(tree, 'beta');
+
+    expect(filtered[0].totalCount).toBe(2);
+    expect(filtered[0].children[0].totalCount).toBe(2);
+  });
 });
 
 describe('selectableUids', () => {
