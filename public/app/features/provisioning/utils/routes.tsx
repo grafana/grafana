@@ -123,6 +123,12 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: PROVISIONING_URL + '/resources/:group/:resource/:name',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "ResourceJsonPage"*/ 'app/features/provisioning/Resource/ResourceJsonPage')
+      ),
+    },
+    {
       path: PROVISIONING_URL + '/:name/history/*',
       roles: adminRoles,
       component: SafeDynamicImport(

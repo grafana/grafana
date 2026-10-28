@@ -133,6 +133,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       level: 0,
       children: [],
       resourceName: item.resource?.name,
+      resourceGroup: item.resource?.group,
       hash: item.file?.hash ?? item.resource?.hash,
       status: showStatus ? getStatus(item.file?.hash, resourceHash) : undefined,
       hasFile: !!item.file,

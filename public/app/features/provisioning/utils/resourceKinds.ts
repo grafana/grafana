@@ -227,6 +227,10 @@ export interface ResourceKindInfo {
 // each call site. The literal `key`/`itemType` values stay the source of truth for the unions above.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
+export function getResourceJsonRoute(group: string, resource: string, name: string) {
+  return `/admin/provisioning/resources/${group}/${resource}/${name}`;
+}
+
 export function getDefaultKindInfo(group: string, kind: string, resource = `${kind.toLowerCase()}s`): ResourceKindInfo {
   return {
     key: kind.toLowerCase(),
@@ -237,6 +241,7 @@ export function getDefaultKindInfo(group: string, kind: string, resource = `${ki
     resource,
     itemType: kind,
     icon: 'file-alt',
+    getRoute: (name) => getResourceJsonRoute(group, resource, name),
     listRoute: '',
     folderScoped: false,
     list: async () => [],
