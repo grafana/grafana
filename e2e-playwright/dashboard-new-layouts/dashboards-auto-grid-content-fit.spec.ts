@@ -45,6 +45,21 @@ async function expectHeightGrewBeyond(panel: Locator, floor: number) {
   await expect.poll(() => panelHeight(panel)).toBeGreaterThan(floor + GROWTH_MARGIN);
 }
 
+// The scroll container differs per plugin (the panel body, or the plugin's own
+// scroller once it sizes to the cap), so look for any scrolling element in the body.
+async function expectScrollsInside(body: Locator) {
+  await expect(body).toBeVisible();
+  await expect
+    .poll(() =>
+      body.evaluate((root) =>
+        [root, ...root.querySelectorAll('*')].some(
+          (el) => el.scrollHeight > el.clientHeight + 1 && ['auto', 'scroll'].includes(getComputedStyle(el).overflowY)
+        )
+      )
+    )
+    .toBe(true);
+}
+
 async function expectSameHeight(panel: Locator, reference: Locator) {
   await expect(panel).toBeVisible();
   await expect
@@ -104,6 +119,7 @@ test.describe(
       // Oversized content clamps at the custom 400px cap and scrolls inside.
       await expectHeightAt(panels.getPanel('Very long — clamps at max 400px'), CUSTOM_MAX_HEIGHT);
       await expectHeightAt(panels.getPanel('Table 40 rows — clamps at max 400px'), CUSTOM_MAX_HEIGHT);
+      await expectScrollsInside(panels.getBody('Table 40 rows — clamps at max 400px'));
     });
 
     test('per-panel override opts into fit when the layout default is off', async ({
