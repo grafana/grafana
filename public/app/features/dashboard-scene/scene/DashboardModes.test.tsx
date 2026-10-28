@@ -8,6 +8,7 @@ import { ConstantVariable, SceneVariableSet, sceneGraph } from '@grafana/scenes'
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
   createDashboardMutationApi,
@@ -21,7 +22,6 @@ import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient
 import { LAZY_DASHBOARD_COMMANDS } from '../mutation-api/commands/lazyRegistry';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { SaveDashboardForm } from '../saving/SaveDashboardForm';
-import { setDashboardModeAfterSave, consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
@@ -483,12 +483,6 @@ describe('switching from Editing to Viewing with unsaved changes', () => {
   });
 });
 
-it.each(['view', 'edit'] as const)('hands off %s once after first save or copy', (mode) => {
-  setDashboardModeAfterSave('new-uid', mode);
-  expect(consumeDashboardModeAfterSave('new-uid')).toBe(mode);
-  expect(consumeDashboardModeAfterSave('new-uid')).toBeUndefined();
-});
-
 it('binds View mutation permission to the host-provided plugin identity', async () => {
   const scene = setup();
   setDashboardMutationClientForTests(new DashboardMutationClient(scene));
@@ -504,17 +498,41 @@ it('binds View mutation permission to the host-provided plugin identity', async 
   expect(getDashboardMode(scene.state)).toBe('edit');
 });
 
-it('blocks the legend shortcut from changing panel options in View', () => {
+it.each(['view', 'composer'] as const)('lets the legend shortcut toggle the legend in %s mode', (mode) => {
   const scene = setup(true);
+  scene.setState({ mode, isEditing: mode === 'composer' });
   const panel = dashboardSceneGraph.getVizPanels(scene)[0];
   panel.setState({ options: { legend: { showLegend: true } } });
   const changeOptions = jest.spyOn(panel, 'onOptionsChange').mockImplementation(() => {});
+
   toggleVizPanelLegend(panel);
-  expect(changeOptions).not.toHaveBeenCalled();
-  expect(panel.state.options).toEqual({ legend: { showLegend: true } });
-  scene.setDashboardMode('edit');
-  toggleVizPanelLegend(panel);
+
   expect(changeOptions).toHaveBeenCalledWith({ legend: { showLegend: false } });
+});
+
+it('lets a plugin-managed dashboard enter Editing and save as a copy', async () => {
+  const dashboard = setup();
+  dashboard.setState({
+    meta: { ...dashboard.state.meta, k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Plugin } } },
+  });
+  expect(dashboard.managedResourceCannotBeEdited()).toBe(true);
+  render(
+    <TestProvider>
+      <DashboardModePicker dashboard={dashboard} />
+    </TestProvider>
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Dashboard mode: Viewing' }));
+  expect(getDashboardMode(dashboard.state)).toBe('edit');
+
+  cleanup();
+  render(
+    <TestProvider>
+      <SaveDashboard dashboard={dashboard} />
+    </TestProvider>
+  );
+  await user.click(screen.getByRole('button', { name: 'More save options' }));
+  expect(screen.getByRole('menuitem', { name: 'Save as copy' })).toBeInTheDocument();
 });
 
 it('discards changes while preserving Viewing mode', () => {

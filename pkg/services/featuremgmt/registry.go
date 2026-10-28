@@ -1187,6 +1187,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "authz.legacyUserPermissionsShadow",
+			Description:  "Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "authz.legacyUserPermissions",
 			Description:  "Load legacy Access Control permissions through embedded AuthZ.",
 			Stage:        FeatureStageExperimental,

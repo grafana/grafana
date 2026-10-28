@@ -622,6 +622,11 @@ type Cfg struct {
 	// MaxNestedFolderDepth is the hard ceiling for folder nesting depth.
 	// The SQL query builders use this value to generate JOIN chains.
 	MaxNestedFolderDepth int
+	// FolderParallelDashboardDeleteEnabled deletes the dashboards of a deleted folder concurrently, with
+	// at most FolderParallelDashboardDeleteConcurrency deletes in flight per folder deletion, not per
+	// instance. Experimental and intentionally undocumented.
+	FolderParallelDashboardDeleteEnabled     bool
+	FolderParallelDashboardDeleteConcurrency int
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
@@ -1820,6 +1825,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
 	cfg.MaxNestedFolderDepth = maxDeptFolderSettings(iniFile)
+	if err := cfg.readFolderParallelDashboardDeleteSettings(iniFile.Section("folder")); err != nil {
+		return err
+	}
 
 	var err error
 	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)

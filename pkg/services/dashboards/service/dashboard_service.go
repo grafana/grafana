@@ -1677,6 +1677,13 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	ctx, span := tracer.Start(ctx, "dashboards.service.DeleteInFolders")
 	defer span.End()
 
+	parallel := dr.cfg != nil && dr.cfg.FolderParallelDashboardDeleteEnabled
+	// An already canceled request must not remove public dashboards for dashboards that will then
+	// never be deleted. Only the parallel path checks, so the sequential path stays unchanged.
+	if err := ctx.Err(); parallel && err != nil {
+		return err
+	}
+
 	// Attach the requester to ctx: a context-dependent LegacyDatabaseProvider (used by
 	// DeleteByDashboardUIDs below) can only resolve the target database from here.
 	ctx = identity.WithRequester(ctx, u)
@@ -1702,6 +1709,10 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	err = dr.publicDashboardService.DeleteByDashboardUIDs(ctx, orgID, dashboardUIDs)
 	if err != nil {
 		return err
+	}
+
+	if parallel {
+		return dr.deleteInFoldersParallel(ctx, orgID, folderUIDs, dashes)
 	}
 
 	for _, dash := range dashes {

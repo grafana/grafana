@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -37,7 +38,7 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 			}
 			dev.declareRoles(context.Background(), deps.ACService)
 		}
-		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg, deps.Features), dev: dev}, nil
+		return &PluginLoader{deps: deps, settings: settingsEnabled(cfg), dev: dev}, nil
 	}
 
 	return noRoutesLoader{}, nil
@@ -112,19 +113,26 @@ type RoutesLoaderClients struct {
 // never middleware, whatever the flags say: otherwise a flag that also reaches
 // its deployment would drop its cloud sources.
 func middlewareEnabled(cfg *setting.Cfg, features featuremgmt.FeatureToggles) bool {
-	if features == nil || standaloneRouter(cfg) {
+	if standaloneRouter(cfg) {
 		return false
 	}
-	return features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) || settingsEnabled(cfg, features) //nolint:staticcheck
+	return (features != nil && features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware)) || settingsEnabled(cfg) //nolint:staticcheck
 }
 
 // settingsEnabled reports whether the router serves app plugin settings. It is
 // read once, at startup, like middlewareEnabled, which it turns on: settings
 // served without middleware would never be reached, and middleware without
 // settings would take over plugin groups without their settings.
-func settingsEnabled(cfg *setting.Cfg, features featuremgmt.FeatureToggles) bool {
-	return features != nil && !standaloneRouter(cfg) &&
-		features.IsEnabledGlobally(featuremgmt.FlagApppluginsRegisterAPIServer) //nolint:staticcheck
+//
+// The flag is evaluated through OpenFeature rather than IsEnabledGlobally,
+// which only sees [feature_toggles]: a remote provider may be the only place
+// it's enabled.
+func settingsEnabled(cfg *setting.Cfg) bool {
+	if standaloneRouter(cfg) {
+		return false
+	}
+	ctx := context.Background()
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsRegisterAPIServer, false, openfeature.TransactionContext(ctx))
 }
 
 // standaloneRouter reports whether this process runs the router target, which

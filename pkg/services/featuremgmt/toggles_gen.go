@@ -387,6 +387,10 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
+	// FlagAuthzLegacyUserPermissionsShadow
+	// Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.
+	FlagAuthzLegacyUserPermissionsShadow = "authz.legacyUserPermissionsShadow"
+
 	// FlagAuthzLegacyUserPermissions
 	// Load legacy Access Control permissions through embedded AuthZ.
 	FlagAuthzLegacyUserPermissions = "authz.legacyUserPermissions"

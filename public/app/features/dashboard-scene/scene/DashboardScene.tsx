@@ -766,7 +766,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (
       !dashboardModesEnabled() ||
       !this.canEditDashboard() ||
-      this.managedResourceCannotBeEdited() ||
       this.state.planning ||
       this.state.editPanel ||
       this.state.editview ||
