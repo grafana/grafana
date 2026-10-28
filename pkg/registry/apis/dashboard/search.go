@@ -1218,7 +1218,9 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	if err != nil {
 		return sharedDashboards, err
 	}
-	if !searchResponseHasField(dashboardResult, resource.SEARCH_FIELD_FOLDER) {
+	if !slices.ContainsFunc(dashboardResult.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
+		return field.GetName() == resource.SEARCH_FIELD_FOLDER
+	}) {
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
@@ -1274,15 +1276,4 @@ func nameLookupRequest(key *resourcepb.ResourceKey, names []string, permission d
 			}},
 		},
 	}
-}
-
-func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name string) bool {
-	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
-		return slices.ContainsFunc(response.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
-			return field.GetName() == name
-		})
-	}
-	return slices.ContainsFunc(response.GetResults().GetColumns(), func(field *resourcepb.ResourceTableColumnDefinition) bool {
-		return field.GetName() == name
-	})
 }
