@@ -1,4 +1,9 @@
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
+import {
+  type CurrentUserDTO,
+  type DataSourceInstanceSettings,
+  type DataSourcePluginMeta,
+  OrgRole,
+} from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { config } from '../../../../config';
@@ -128,6 +133,8 @@ beforeEach(() => {
     logWarning: jest.fn(),
   });
   config.namespace = 'default';
+  // The MT fill needs a user session.
+  config.bootData.user = { isSignedIn: true, orgRole: OrgRole.Admin } as CurrentUserDTO;
   setDatasourcePluginMetas(metas);
   setDataSourceSrv(undefined as unknown as DataSourceSrv);
   routes = {

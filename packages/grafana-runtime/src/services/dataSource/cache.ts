@@ -1,6 +1,7 @@
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
 
 import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCachedPromise';
+import { NoUserSessionError } from '../user';
 
 import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import { MT_FILL_FAILED } from './constants';
@@ -80,6 +81,10 @@ export function awaitFill(): Promise<void> {
     } catch (error) {
       // When a newer snapshot filled the cache meanwhile, this failure no longer matters.
       if (version === snapshotVersion) {
+        // Expected without a session: nothing was requested, so there is no failure to log.
+        if (error instanceof NoUserSessionError) {
+          throw error;
+        }
         logDataSourceInstanceError(MT_FILL_FAILED, error, { reason: 'fill', source: from.kind });
         throw new DataSourceListFetchError(error);
       }
