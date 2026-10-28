@@ -1,9 +1,12 @@
+import { OrgRole } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { config } from '../../config';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { TracedError } from '../../utils/TracedError';
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { getLogger, setLogger } from '../logging/registry';
+import { NoUserSessionError } from '../user';
 
 import {
   getPluginMetaFromCache,
@@ -17,9 +20,12 @@ import {
 import { v0alpha1Meta } from './test-fixtures/v0alpha1Response';
 
 const originalFetch = global.fetch;
+const originalOrgRole = config.bootData.user.orgRole;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  config.bootData.user.orgRole = OrgRole.Admin;
+  config.publicDashboardAccessToken = undefined;
   invalidateCachedPromisesCache();
   // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
   setLogger('grafana/runtime.utils.getCachedPromise', {
@@ -40,6 +46,10 @@ beforeEach(() => {
 
 afterEach(() => {
   global.fetch = originalFetch;
+});
+
+afterAll(() => {
+  config.bootData.user.orgRole = originalOrgRole;
 });
 
 describe('when plugins.useMTPlugins flag is enabled', () => {
@@ -221,6 +231,51 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
     });
   });
 
+  describe('and there is no user session', () => {
+    beforeEach(() => {
+      config.bootData.user.orgRole = '';
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({ items: [v0alpha1Meta] }),
+      });
+    });
+
+    it('initPluginMetas should reject with NoUserSessionError without calling fetch', async () => {
+      await expect(initPluginMetas()).rejects.toBeInstanceOf(NoUserSessionError);
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('refetchPluginMetas should reject with NoUserSessionError without calling fetch', async () => {
+      await expect(refetchPluginMetas()).rejects.toBeInstanceOf(NoUserSessionError);
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('getPluginMetaFromCache should reject with NoUserSessionError', async () => {
+      await expect(getPluginMetaFromCache(v0alpha1Meta.spec.pluginJson.id)).rejects.toBeInstanceOf(NoUserSessionError);
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+
+    it('logs no error', async () => {
+      await initPluginMetas().catch(() => {});
+
+      expect(getLogger('grafana/runtime.utils.getCachedPromise').logError).not.toHaveBeenCalled();
+      expect(getLogger('grafana/runtime.plugins.meta').logError).not.toHaveBeenCalled();
+    });
+
+    it('initPluginMetas should still fetch in a public dashboard view', async () => {
+      config.publicDashboardAccessToken = 'token';
+
+      const response = await initPluginMetas();
+
+      expect(response).toStrictEqual({ items: [v0alpha1Meta] });
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('installPluginMeta', () => {
     it('should post correct body, headers and method to the correct url', async () => {
       global.fetch = jest.fn().mockResolvedValue({
@@ -396,6 +451,20 @@ describe('when plugins.useMTPlugins flag is disabled', () => {
     });
 
     it('initPluginMetas should call loadPluginMetas and return correct result if response is ok', async () => {
+      const response = await initPluginMetas();
+
+      expect(response).toStrictEqual({ items: [] });
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('and there is no user session', () => {
+    beforeEach(() => {
+      config.bootData.user.orgRole = '';
+      global.fetch = jest.fn();
+    });
+
+    it('initPluginMetas should resolve to empty items', async () => {
       const response = await initPluginMetas();
 
       expect(response).toStrictEqual({ items: [] });

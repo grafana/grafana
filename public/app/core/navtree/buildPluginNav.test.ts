@@ -1,4 +1,4 @@
-import { type AppPluginConfig, type NavModelItem, PluginIncludeType } from '@grafana/data';
+import { type AppPluginConfig, type NavModelItem, OrgRole, PluginIncludeType } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { clearAppPluginMetas, getAppPluginMetas, invalidateCachedPromisesCache } from '@grafana/runtime/internal';
@@ -559,6 +559,18 @@ describe('applyPluginNav', () => {
   // than building AppPluginConfig by hand: everything between the API response
   // and the nav tree.
   describe('from the metas endpoint', () => {
+    let orgRole: typeof config.bootData.user.orgRole;
+
+    // The metas endpoint needs a user session.
+    beforeEach(() => {
+      orgRole = config.bootData.user.orgRole;
+      config.bootData.user.orgRole = OrgRole.Viewer;
+    });
+
+    afterEach(() => {
+      config.bootData.user.orgRole = orgRole;
+    });
+
     async function fetchApps(metas: MockPluginMeta[]) {
       invalidateCachedPromisesCache();
       // getAppPluginMetas keeps the mapped apps in module state and only fetches

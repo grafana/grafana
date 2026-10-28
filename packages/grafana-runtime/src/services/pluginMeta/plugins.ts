@@ -2,6 +2,7 @@ import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromise } from '../../utils/getCachedPromise';
+import { isSignedInAnonymousOrPublicAccess, NoUserSessionError } from '../user';
 
 import { logPluginMetaError } from './logging';
 import type { PluginMetasResponse } from './types';
@@ -94,11 +95,25 @@ export async function uninstallPluginMeta(pluginId: string): Promise<void> {
   }
 }
 
+// The metas API rejects requests without a session. Checked outside getCachedPromise, whose
+// default value would turn the rejection into the boot data fallback.
+function isMissingSession(): boolean {
+  return (
+    getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false) && !isSignedInAnonymousOrPublicAccess()
+  );
+}
+
 export function initPluginMetas(): Promise<PluginMetasResponse | null> {
+  if (isMissingSession()) {
+    return Promise.reject(new NoUserSessionError());
+  }
   return getCachedPromise<PluginMetasResponse | null>(loadPluginMetas, { defaultValue: null });
 }
 
 export function refetchPluginMetas(): Promise<PluginMetasResponse | null> {
+  if (isMissingSession()) {
+    return Promise.reject(new NoUserSessionError());
+  }
   return getCachedPromise<PluginMetasResponse | null>(loadPluginMetas, {
     defaultValue: null,
     invalidate: true,
