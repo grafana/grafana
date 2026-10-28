@@ -135,7 +135,7 @@ function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
         <AddNewSection title={t('dashboard.sidebar.add.dashboard-controls', 'Dashboard controls')}>
           <AddFilters dashboardScene={dashboardScene} />
           <AddVariable dashboardScene={dashboardScene} selectedElement={selectedObj} />
-          <AddAnnotationQuery dashboardScene={dashboardScene} />
+          <AddAnnotationQuery dashboardScene={dashboardScene} selectedElement={selectedObj} />
           <AddLink dashboardScene={dashboardScene} />
         </AddNewSection>
       </ScrollContainer>

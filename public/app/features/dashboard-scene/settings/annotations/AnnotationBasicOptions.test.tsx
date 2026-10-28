@@ -1,3 +1,4 @@
+import userEvent from '@testing-library/user-event';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { useSceneObjectState } from '@grafana/scenes';
@@ -6,17 +7,96 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
+import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
+import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { ElementEditPane } from '../../sidebar/ElementEditPane';
 import { ElementEditPaneRenderer } from '../../sidebar/ElementEditPaneRenderer';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
+import { AnnotationControlsDisplayPicker } from './AnnotationBasicOptions';
 import { annotationEditActions } from './actions';
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: jest.fn(() => ({
+    get: jest.fn().mockResolvedValue({}),
+    getList: jest.fn(),
+    getInstanceSettings: jest.fn(),
+    reload: jest.fn(),
+  })),
+}));
 
 jest.mock('../../sidebar/ElementEditPaneHeader', () => ({ ElementEditPaneHeader: () => null }));
 jest.mock('app/features/explore/QueryLibrary/QueryLibraryContext', () => ({
   useQueryLibraryContext: () => ({ queryLibraryEnabled: false }),
 }));
+
+beforeAll(() => {
+  mockComboboxRect();
+});
+
+function layerOnTab() {
+  const layer = new DashboardAnnotationsDataLayer({
+    name: 'Deploys',
+    isHidden: false,
+    query: { name: 'Deploys', enable: true, iconColor: 'red' },
+  });
+  const data = new DashboardDataLayerSet({ annotationLayers: [layer] });
+  new TabItem({ title: 'New tab', $data: data, layout: AutoGridLayoutManager.createEmpty() });
+  return layer;
+}
+
+function layerOnDashboard() {
+  const layer = new DashboardAnnotationsDataLayer({
+    name: 'Deploys',
+    isHidden: false,
+    query: { name: 'Deploys', enable: true, iconColor: 'red' },
+  });
+  new DashboardScene({ $data: new DashboardDataLayerSet({ annotationLayers: [layer] }) });
+  return layer;
+}
+
+describe('AnnotationControlsDisplayPicker', () => {
+  it('offers the section placement and hidden for a tab annotation', async () => {
+    const user = userEvent.setup();
+    render(<AnnotationControlsDisplayPicker layer={layerOnTab()} />);
+
+    await user.click(screen.getByRole('combobox'));
+
+    expect(await screen.findByText('Top of tab')).toBeInTheDocument();
+    expect(screen.getByText('Hidden')).toBeInTheDocument();
+    expect(screen.queryByText('Controls menu')).not.toBeInTheDocument();
+  });
+
+  it('keeps controls menu for a dashboard annotation', async () => {
+    const user = userEvent.setup();
+    render(<AnnotationControlsDisplayPicker layer={layerOnDashboard()} />);
+
+    await user.click(screen.getByRole('combobox'));
+
+    expect(await screen.findByText('Above dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Controls menu')).toBeInTheDocument();
+    expect(screen.getByText('Hidden')).toBeInTheDocument();
+  });
+
+  it('hides the control when Hidden is selected', async () => {
+    const user = userEvent.setup();
+    const layer = layerOnTab();
+    const spy = jest.spyOn(annotationEditActions, 'changeAnnotationControlsDisplay').mockImplementation(() => {});
+    render(<AnnotationControlsDisplayPicker layer={layer} />);
+
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByText('Hidden'));
+
+    expect(spy).toHaveBeenCalledWith({
+      source: layer,
+      oldValue: { isHidden: false, placement: undefined },
+      newValue: { isHidden: true, placement: undefined },
+    });
+    spy.mockRestore();
+  });
+});
 
 function Sidebar({ sidebar }: { sidebar: DashboardSidebarLike }) {
   const { openPane } = useSceneObjectState(sidebar);
@@ -28,8 +108,6 @@ function Sidebar({ sidebar }: { sidebar: DashboardSidebarLike }) {
     </>
   );
 }
-
-beforeAll(() => mockComboboxRect());
 
 it('keeps newly added annotation controls editable after undoing a display change', async () => {
   const layer = new DashboardAnnotationsDataLayer({

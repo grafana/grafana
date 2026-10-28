@@ -1,5 +1,3 @@
-import { uniqueId } from 'lodash';
-
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
@@ -69,7 +67,7 @@ import { dashboardAnalyticsInitializer } from '../behaviors/DashboardAnalyticsIn
 import { DefaultControlsBehavior } from '../behaviors/DefaultControlsBehavior';
 import { type LoadDashboardOptions } from '../pages/DashboardScenePageStateManager';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
-import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
+import { type DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
@@ -80,10 +78,10 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { applySupportsMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
-import { transformV2ToV1AnnotationQuery } from './annotations';
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
+import { annotationQueryKindToLayer } from './layoutSerializers/sectionAnnotations';
 import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { buildSceneTimeRange } from './shared/timeSettings';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
@@ -128,20 +126,7 @@ export function transformSaveModelSchemaV2ToScene(
       annotations.unshift(getGrafanaBuiltInAnnotation());
     }
 
-    annotationLayers = annotations.map((annotation) => {
-      const annotationQuerySpec = transformV2ToV1AnnotationQuery(annotation);
-
-      const layerState = {
-        key: uniqueId('annotations-'),
-        query: annotationQuerySpec,
-        name: annotation.spec.name,
-        isEnabled: Boolean(annotation.spec.enable),
-        isHidden: Boolean(annotation.spec.hide),
-        placement: annotation.spec.placement,
-      };
-
-      return new DashboardAnnotationsDataLayer(layerState);
-    });
+    annotationLayers = annotations.map((annotation) => annotationQueryKindToLayer(annotation));
   }
 
   // Create alert states data layer if unified alerting is enabled
@@ -194,7 +179,7 @@ export function transformSaveModelSchemaV2ToScene(
 
   const layoutManager: DashboardLayoutManager = layoutDeserializerRegistry
     .get(dashboard.layout.kind)
-    .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
+    .deserialize(dashboard.layout, dashboard.elements, dashboard.preload, undefined, isSnapshot);
 
   let templateLayoutManager: DashboardLayoutManager | undefined = undefined;
   if (dashboard.preferences?.layout) {
