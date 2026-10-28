@@ -4,14 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
+var _ LegacyAccessControl = (*LegacyClient)(nil)
+
 // LegacyCheck executes the deprecated legacy-RBAC compatibility check through
 // the local AuthZ compatibility API.
-func (c *LegacyClient) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (allowed bool, err error) {
+func (c *LegacyClient) LegacyCheck(ctx context.Context, req LegacyCheckRequest) (allowed bool, err error) {
 	ctx, span := c.tracer.Start(ctx, "LegacyClient.LegacyCheck")
 	defer func() {
 		if err != nil {
@@ -22,8 +25,30 @@ func (c *LegacyClient) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCh
 	if c.clientV1 == nil {
 		return false, errors.New("legacy check client is not configured")
 	}
+
+	expression, err := accesscontrol.ToLegacyExpression(req.Evaluator)
+	if err != nil {
+		return false, fmt.Errorf("converting evaluator to legacy expression: %w", err)
+	}
+
+	var global *authzextv1.LegacyGlobalEvaluation
+	if req.GlobalEvaluation != nil {
+		global = &authzextv1.LegacyGlobalEvaluation{
+			RequesterOrgId:   req.GlobalEvaluation.RequesterOrgID,
+			PermittedActions: slices.Clone(req.GlobalEvaluation.PermittedActions),
+		}
+	}
+
 	//nolint:staticcheck // We intentionally call the deprecated compatibility API.
-	resp, err := c.clientV1.LegacyCheck(ctx, req)
+	resp, err := c.clientV1.LegacyCheck(ctx, &authzextv1.LegacyCheckRequest{
+		Namespace:           req.Namespace,
+		Subject:             req.Subject,
+		Expression:          expression,
+		Teams:               slices.Clone(req.Teams),
+		SkipCache:           req.SkipCache,
+		SkipScopeResolution: req.SkipScopeResolution,
+		GlobalEvaluation:    global,
+	})
 	if err != nil {
 		return false, err
 	}
