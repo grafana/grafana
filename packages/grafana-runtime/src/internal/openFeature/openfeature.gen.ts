@@ -202,8 +202,6 @@ export const FlagKeys = {
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
-  /** Deprecated: Toggle displayed fields from Log Details */
-  GrafanaLogDetailsDisplayedFieldControls: "grafana.logDetailsDisplayedFieldControls",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
   /** Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports */
@@ -1432,17 +1430,6 @@ export const useFlagGrafanaGrowthHomepage = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.kubernetesAnnotationsClient", false, options).value;
-};
-
-/**
- * Deprecated: Toggle displayed fields from Log Details
- *
- * **Details:**
- * - flag key: `grafana.logDetailsDisplayedFieldControls`
- * - default value: `false`
- */
-export const useFlagGrafanaLogDetailsDisplayedFieldControls = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.logDetailsDisplayedFieldControls", false, options).value;
 };
 
 /**

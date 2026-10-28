@@ -193,7 +193,6 @@ declare module "@openfeature/core" {
     | "grafana.multiTenantUserPermissions"
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
-    | "grafana.logDetailsDisplayedFieldControls"
     | "grafana.extensionSidebarFloating"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
