@@ -1,4 +1,6 @@
+import { setBackendSrv } from '@grafana/runtime';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { getIconForKind } from 'app/features/search/service/utils';
 
 import {
@@ -12,6 +14,7 @@ import {
   getMigratableKinds,
   getRepositoryRoute,
   isResourceKindAvailable,
+  loadManifestKinds,
   readImmediateParent,
 } from './resourceKinds';
 
@@ -312,5 +315,39 @@ describe('getMigratableKinds', () => {
     expect(getMigratableKinds([{ group: 'playlist.grafana.app', kind: 'Playlist' }]).map((k) => k.kind)).toEqual([
       'Playlist',
     ]);
+  });
+});
+
+describe('loadManifestKinds', () => {
+  it('adds the kinds of the app manifests with a link to the app', async () => {
+    setBackendSrv(backendSrv);
+    jest.spyOn(backendSrv, 'get').mockResolvedValue({
+      items: [
+        {
+          spec: {
+            appName: 'example-gitsync-app',
+            group: 'examplegitsyncapp.ext.grafana.app',
+            versions: [
+              {
+                kinds: [
+                  { kind: 'FolderKind', plural: 'folderkinds' },
+                  { kind: 'FolderlessKind', plural: 'folderlesskinds' },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    await loadManifestKinds();
+
+    const group = 'examplegitsyncapp.ext.grafana.app';
+    expect(getKindInfoByStat({ group, resource: 'folderlesskinds' })).toMatchObject({
+      kind: 'FolderlessKind',
+      listRoute: '/a/example-gitsync-app',
+    });
+    expect(getKindInfoByStat({ group, resource: 'otherkinds' })).toBeUndefined();
+    expect(getMigratableKinds().map((k) => k.kind)).not.toContain('FolderKind');
   });
 });
