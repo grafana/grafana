@@ -343,6 +343,10 @@ export class GrafanaApp {
         preloadPlugins(await getAppPluginsToPreload());
       }
 
+      if (config.provisioningEnabled) {
+        import('./features/provisioning/utils/resourceKinds').then((m) => m.loadManifestKinds());
+      }
+
       setHelpNavItemHook(useHelpNode);
       setPluginLinksHook(usePluginLinks);
       setPluginComponentHook(usePluginComponent);
