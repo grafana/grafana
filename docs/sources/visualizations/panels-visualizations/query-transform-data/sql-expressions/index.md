@@ -36,7 +36,7 @@ In Grafana, a server-side expression is a way to transform or calculate data aft
 
 For general information on Grafana expressions, refer to [Write expression queries](ref:expressions).
 
-![Example of a SQL expression](/media/docs/sql-expressions/sql-expressions-example-1.png)
+![Query editor in stacked view with a hidden Prometheus query A and a SQL expression that smooths each namespace's series with a window function](/media/docs/grafana/panels-visualizations/sql-expressions-example-v13.3.png)
 
 To see examples of filtering, aggregation, and JOIN operations with SQL expressions, explore this demo dashboard on Grafana Play:
 
@@ -110,7 +110,7 @@ After you have added a SQL expression, you can select from other data source que
 The **RefID** is a unique identifier assigned to each query within a Grafana panel that serves as a reference name for that query's data.
 {{< /admonition >}}
 
-![Using the RefID](/media/docs/sql-expressions/using-the-RefID.png)
+![Query editor showing query A with the Edit query name option for its RefID](/media/docs/grafana/panels-visualizations/using-the-refid-v13.3.png)
 
 ## Workflow to build SQL expressions
 
@@ -178,17 +178,17 @@ The Schema inspector has a tab for each source query and lists the following det
 
    ```promql
    sum(
-     rate(go_cpu_classes_gc_total_cpu_seconds_total{namespace=~".*(namespace).*5."}[$__rate_interval])
+     rate(go_cpu_classes_gc_total_cpu_seconds_total{namespace=~"mimir-prod-5."}[$__rate_interval])
    ) by (namespace)
    ```
 
    The panel displays the CPU usage by Go garbage collection (GC) over time, broken down by namespace.
 
-   ![Example using a Prometheus query](/media/docs/sql-expressions/sql-expressions-prom-query-example.png)
+   ![Time series panel showing Go garbage collection CPU usage by namespace from a Prometheus query](/media/docs/grafana/panels-visualizations/sql-expressions-prom-query-example-v13.3.png)
 
 2. Add the SQL expression `SELECT * from A`. After you add a SQL expression that selects from RefID A, Grafana converts it to a table response:
 
-   ![Add the SQL expression](/media/docs/sql-expressions/add-the-sql-expression.png)
+   ![Table panel showing the result of a SQL expression that selects all rows from hidden query A](/media/docs/grafana/panels-visualizations/add-the-sql-expression-v13.3.png)
 
 ## SQL conversion rules
 

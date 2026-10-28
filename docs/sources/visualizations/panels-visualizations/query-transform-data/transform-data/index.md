@@ -136,11 +136,15 @@ The following steps guide you in adding a transformation to data. This documenta
    Each transformation acts on the result set returned by the previous transformation.
    You can drag and drop the cards to change the order.
 
+{{< figure src="/media/docs/grafana/panels-visualizations/add-transformation-v13.3.png" max-width="750px" alt="Query editor with a new transformation card in the sidebar and the transformation picker in the editor pane" >}}
+
 ## Debug a transformation
 
 To see the input and the output result sets of a transformation, select its card in the sidebar and click the bug icon in the editor pane header.
 
 The input and output results sets can help you debug a transformation.
+
+{{< figure src="/media/docs/grafana/panels-visualizations/debug-transformation-v13.3.png" max-width="750px" alt="Debug transformation view showing the input and output data of an Organize fields by name transformation" >}}
 
 ## Disable a transformation
 
