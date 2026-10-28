@@ -53,4 +53,4 @@ The page loads its bundle from `public/build-swagger`, which the normal frontend
 
 ## Deploying separately
 
-The page also requests `/openapi/v3`, `/api/frontend/settings` and `/api/user` (see `public/swagger/SwaggerPage.tsx`). The Grafana API serves those, not this service. A standalone deployment therefore needs a proxy that sends `/swagger` and `/public` here and the API paths to the core server, the same setup the frontend service (`pkg/services/frontend`) uses. Without the proxy, the page still renders, but the API selector and user panes stay empty.
+The page also requests `/openapi/v3`, `/apis` and `/apis/iam.grafana.app/v0alpha1/whoami` (see `public/swagger/SwaggerPage.tsx` and `public/swagger/whoami.ts`). The Grafana API serves those, not this service. A standalone deployment therefore needs a proxy that sends `/swagger` and `/public` here and the API paths to the core server, the same setup the frontend service (`pkg/services/frontend`) uses. Without the proxy, the page still renders, but the API selector and user panes stay empty.

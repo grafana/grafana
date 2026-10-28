@@ -1,86 +1,63 @@
 import { Global } from '@emotion/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 import SwaggerUI from 'swagger-ui-react';
 
-import { createTheme, ThemeContext, type SelectableValue } from '@grafana/data';
+import { createTheme, ThemeContext } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { Alert, Button, Icon, Select, Stack, UserIcon, type UserView } from '@grafana/ui';
+import { Alert, Button, Combobox, Icon, Stack, UserIcon } from '@grafana/ui';
 
+import { SpecOption } from './SpecOption';
+import { type APIGroupList, buildSpecs } from './apiSpecs';
 import { NamespaceContext } from './contexts';
 import { WrappedPlugins } from './plugins';
+import { loadWhoAmI } from './whoami';
+
+async function loadGroupList(): Promise<APIGroupList | undefined> {
+  // Only used to mark preferred versions, so the picker still works without it.
+  try {
+    const rsp = await fetch('apis');
+    return rsp.ok ? await rsp.json() : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export const Page = () => {
   const theme = createTheme({ colors: { mode: 'light' } });
-  const [url, setURL] = useState<SelectableValue<string>>();
-  const urls = useAsync(async () => {
-    const v2 = { label: 'Grafana API (OpenAPI v2)', key: 'openapi2', value: 'public/api-merged.json' };
-    const v3 = { label: 'Grafana API (OpenAPI v3)', key: 'openapi3', value: 'public/openapi3.json' };
-    const urls: Array<SelectableValue<string>> = [v2, v3];
+  const [api, setAPI] = useState<string>();
+  const specs = useAsync(async () => {
+    const [openapi, groupList] = await Promise.all([fetch('openapi/v3').then((rsp) => rsp.json()), loadGroupList()]);
+    const specs = buildSpecs(openapi.paths, groupList);
 
-    const rsp = await fetch('openapi/v3');
-    const apis = await rsp.json();
-    for (const [key, val] of Object.entries<{ serverRelativeURL: string }>(apis.paths)) {
-      const parts = key.split('/');
-      if (parts.length === 3) {
-        urls.push({
-          key: `${parts[1]}-${parts[2]}`,
-          label: `${parts[1]}/${parts[2]}`,
-          value: val.serverRelativeURL.substring(1), // remove initial slash
-        });
-      }
-    }
-
-    let idx = 0;
-    const urlParams = new URLSearchParams(window.location.search);
-    const api = urlParams.get('api');
-    if (api) {
-      urls.forEach((url, i) => {
-        if (url.key === api) {
-          idx = i;
-        }
-      });
-    }
-
-    setURL(urls[idx]); // Remove to start at the generic landing page
-    return urls;
+    const requested = new URLSearchParams(window.location.search).get('api');
+    setAPI((specs.find((s) => s.key === requested) ?? specs[0]).key); // Remove to start at the generic landing page
+    return specs;
   });
+  const specsByKey = useMemo(() => new Map(specs.value?.map((s) => [s.key, s])), [specs.value]);
+  const options = useMemo(
+    () => specs.value?.map((s) => ({ label: s.label, value: s.key, ...(s.group && { group: s.group }) })) ?? [],
+    [specs.value]
+  );
+  const spec = api ? specsByKey.get(api) : undefined;
 
-  const [userView, setUserView] = useState<UserView>();
-
-  const namespace = useAsync(async () => {
-    const response = await fetch('api/frontend/settings');
-    if (!response.ok) {
-      console.warn('No settings found');
-      return;
-    }
-    const val = await response.json();
-    return val.namespace;
-  });
-
-  useAsync(async () => {
-    const response = await fetch('api/user');
-    if (!response.ok) {
-      console.warn('No user found, show login button');
-      return;
-    }
-    const val = await response.json();
-    setUserView({
-      user: {
-        name: val.email || val.login,
-        avatarUrl: val.avatarUrl,
-      },
-      lastActiveAt: new Date(),
-    });
-  });
+  const whoami = useAsync(loadWhoAmI);
+  const namespace = whoami.value?.namespace;
+  const userView = whoami.value?.userView;
 
   return (
     <div>
       <ThemeContext.Provider value={theme}>
         <Global
           styles={{
+            // Sizes include padding and borders, as in Grafana: otherwise an input
+            // with a width overflows into what follows it.
             html: {
               fontSize: `${theme.typography.htmlFontSize}px`,
+              boxSizing: 'border-box',
+            },
+            '*, *::before, *::after': {
+              boxSizing: 'inherit',
             },
             body: {
               margin: 0,
@@ -88,27 +65,30 @@ export const Page = () => {
             },
           }}
         />
-        <NamespaceContext.Provider value={namespace.value}>
+        <NamespaceContext.Provider value={namespace}>
           <div style={{ backgroundColor: '#000', padding: '10px' }}>
             <Stack alignItems="center" justifyContent="space-between">
-              <Icon name="grafana" size="xxl" />
-              <Select
-                options={urls.value}
-                isClearable={false /* TODO -- when we allow a landing page, this can be true */}
-                onChange={(v) => {
-                  const url = new URL(window.location.href);
-                  url.hash = '';
-                  if (v?.key) {
-                    url.searchParams.set('api', v.key);
-                  } else {
-                    url.searchParams.delete('api');
-                  }
-                  window.history.pushState(null, '', url);
-                  setURL(v);
-                }}
-                value={url}
-                isLoading={urls.loading}
-              />
+              <Stack alignItems="center" gap={3}>
+                <Icon name="grafana" size="xxl" />
+                <Combobox
+                  width={60}
+                  options={options}
+                  isClearable={false /* TODO -- when we allow a landing page, this can be true */}
+                  onChange={(option) => {
+                    const url = new URL(window.location.href);
+                    url.hash = '';
+                    url.searchParams.set('api', option.value);
+                    window.history.pushState(null, '', url);
+                    setAPI(option.value);
+                  }}
+                  value={api ?? null}
+                  loading={specs.loading}
+                  renderOption={(option) => {
+                    const spec = specsByKey.get(option.value);
+                    return spec ? <SpecOption spec={spec} /> : option.label;
+                  }}
+                />
+              </Stack>
               <div>
                 {userView ? (
                   <UserIcon userView={userView} />
@@ -123,16 +103,16 @@ export const Page = () => {
             </Stack>
           </div>
 
-          {!namespace.loading && !namespace.value && (
+          {!whoami.loading && !namespace && (
             <Alert title={t('swagger.namespace-unavailable-title', 'Unable to load namespace')} severity="warning">
               <Trans i18nKey="swagger.namespace-unavailable">
                 Check the namespace before sending requests, or reload the page to try again.
               </Trans>
             </Alert>
           )}
-          {url?.value && !namespace.loading && (
+          {spec && !whoami.loading && (
             <SwaggerUI
-              url={url.value}
+              url={spec.url}
               presets={[WrappedPlugins]}
               deepLinking={true}
               tryItOutEnabled={true}
@@ -141,7 +121,7 @@ export const Page = () => {
               displayOperationId
             />
           )}
-          {(!url?.value || namespace.loading) && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
+          {(!spec || whoami.loading) && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
         </NamespaceContext.Provider>
       </ThemeContext.Provider>
     </div>
