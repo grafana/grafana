@@ -48,6 +48,31 @@ export class VariableOptions extends PageObject {
     });
   }
 
+  /** Returns the variable description textarea */
+  getDescriptionInput(): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole('textbox', {
+      name: 'Description',
+      exact: true,
+    });
+  }
+
+  /** Sets the variable description */
+  async setDescription(description: string) {
+    await test.step(`Set variable description to "${description}"`, async () => {
+      const input = this.getDescriptionInput();
+      await input.fill(description);
+      await input.blur();
+    });
+  }
+
+  /** Switches the selected variable to another type (e.g. "query") through the "Change type" pane */
+  async changeType(variableType: string) {
+    await test.step(`Change variable type to "${variableType}"`, async () => {
+      await this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.changeVariableType).click();
+      await this.selectVariableType(variableType);
+    });
+  }
+
   /** Selects the variable's display option from the dropdown */
   async selectDisplay(displayLabel: string) {
     await test.step(`Select variable display "${displayLabel}"`, async () => {
