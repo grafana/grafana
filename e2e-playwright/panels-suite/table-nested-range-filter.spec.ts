@@ -85,7 +85,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     // select only "down"
     await filterContainer.getByTitle('down', { exact: true }).locator('label').click();
-    await filterContainer.getByRole('button', { name: 'Ok' }).click();
+    await filterContainer.getByRole('button', { name: 'Apply' }).click();
     await expect(filterContainer, 'filter container is closed after applying filter').not.toBeVisible();
 
     // Verify the nested table rows are filtered

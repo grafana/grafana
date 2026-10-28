@@ -64,7 +64,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     );
     await expect(infoFilterContainer, 'filter popup for info is visible after click').toBeVisible();
     await infoFilterContainer.getByTitle('up', { exact: true }).locator('label').click();
-    await infoFilterContainer.getByRole('button', { name: 'Ok' }).click();
+    await infoFilterContainer.getByRole('button', { name: 'Apply' }).click();
     await expect(infoFilterContainer).not.toBeVisible();
 
     // Table should now show only "up" rows
