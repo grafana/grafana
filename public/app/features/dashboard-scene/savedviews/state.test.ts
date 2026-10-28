@@ -9,7 +9,7 @@ import {
 
 import { DashboardScene } from '../scene/DashboardScene';
 
-import { applySavedViewState, captureSavedViewState, getSavedViewDiff } from './state';
+import { applySavedViewState, applySavedViewStateAsDefault, captureSavedViewState, getSavedViewDiff } from './state';
 import { type SavedDashboardViewSpec } from './types';
 
 function buildScene(overrides?: { from?: string; to?: string; adhocFilters?: AdHocVariableFilter[]; env?: string }) {
@@ -137,6 +137,175 @@ describe('applySavedViewState', () => {
       expect(env.state.value).toBe('dev');
     }
   });
+
+  it('resets a variable the spec does not mention back to the baseline, not whatever it currently is', () => {
+    // Variables the view omits reset to the baseline rather than keeping a previous value.
+    const scene = buildScene({ env: 'dev' }); // 'dev' is left over from something else entirely
+    const baseline: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: '',
+      timeRange: { from: 'now-6h', to: 'now' },
+      variables: [
+        { name: 'adhocFilter', type: 'adhoc', filters: [] },
+        { name: 'env', type: 'query', value: 'prod' }, // the dashboard's own authored default
+      ],
+    };
+    const spec: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: 'My view',
+      timeRange: { from: 'now-24h', to: 'now-1h' },
+      // Doesn't mention env at all.
+      variables: [{ name: 'adhocFilter', type: 'adhoc', filters: [{ key: 'host', operator: '=', value: 'b' }] }],
+    };
+
+    applySavedViewState(scene, spec, baseline);
+
+    const env = scene.state.$variables?.getByName('env');
+    expect(env).toBeInstanceOf(QueryVariable);
+    if (env instanceof QueryVariable) {
+      expect(env.state.value).toBe('prod');
+    }
+  });
+
+  it('prefers the spec over the baseline when both mention the same variable', () => {
+    const scene = buildScene({ env: 'dev' });
+    const baseline: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: '',
+      timeRange: { from: 'now-6h', to: 'now' },
+      variables: [{ name: 'env', type: 'query', value: 'staging' }],
+    };
+    const spec: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: 'My view',
+      timeRange: { from: 'now-6h', to: 'now' },
+      variables: [{ name: 'env', type: 'query', value: 'prod' }],
+    };
+
+    applySavedViewState(scene, spec, baseline);
+
+    const env = scene.state.$variables?.getByName('env');
+    expect(env).toBeInstanceOf(QueryVariable);
+    if (env instanceof QueryVariable) {
+      expect(env.state.value).toBe('prod');
+    }
+  });
+});
+
+describe('applySavedViewStateAsDefault', () => {
+  const spec: SavedDashboardViewSpec = {
+    dashboardUID: 'dash-1',
+    name: 'My view',
+    timeRange: { from: 'now-24h', to: 'now-1h' },
+    variables: [
+      { name: 'adhocFilter', type: 'adhoc', filters: [{ key: 'host', operator: '=', value: 'saved' }] },
+      { name: 'env', type: 'query', value: 'staging' },
+    ],
+  };
+
+  it('keeps an explicit time-range override that changed during this pass, but still defaults the untouched sub-field', () => {
+    // from and to merge independently: overriding from must not skip the saved to.
+    const scene = buildScene({ from: 'now-6h', to: 'now-1h' });
+    const before = captureSavedViewState(scene);
+    // Simulates $timeRange.updateFromUrl applying only from in the same pass.
+    scene.state.$timeRange?.setState({ from: 'now-15m' });
+
+    applySavedViewStateAsDefault(scene, spec, before);
+
+    expect(scene.state.$timeRange?.state.from).toBe('now-15m'); // explicit override survives
+    expect(scene.state.$timeRange?.state.to).toBe('now-1h'); // untouched -- picks up the default
+  });
+
+  it('merges variables independently: an explicitly-changed one keeps its value, an untouched one gets the default', () => {
+    const scene = buildScene({ adhocFilters: [{ key: 'host', operator: '=', value: 'live' }], env: 'dev' });
+    const before = captureSavedViewState(scene);
+    // Simulate an explicit var-adhocFilter override landing during the same pass; env is untouched.
+    const adhoc = scene.state.$variables?.getByName('adhocFilter');
+    if (adhoc instanceof AdHocFiltersVariable) {
+      adhoc.updateFilters([{ key: 'host', operator: '=', value: 'overridden' }]);
+    }
+
+    applySavedViewStateAsDefault(scene, spec, before);
+
+    const afterAdhoc = scene.state.$variables?.getByName('adhocFilter');
+    if (afterAdhoc instanceof AdHocFiltersVariable) {
+      expect(afterAdhoc.state.filters).toEqual([{ key: 'host', operator: '=', value: 'overridden' }]);
+    }
+    const afterEnv = scene.state.$variables?.getByName('env');
+    if (afterEnv instanceof QueryVariable) {
+      expect(afterEnv.state.value).toBe('staging'); // untouched -- picks up the saved default
+    }
+  });
+
+  it('leaves a variable alone if it is absent from both before and after (e.g. created after the view was saved)', () => {
+    const scene = buildScene();
+    const before = captureSavedViewState(scene);
+    const specWithExtraVariable: SavedDashboardViewSpec = {
+      ...spec,
+      variables: [...spec.variables, { name: 'not-on-this-dashboard', type: 'query', value: 'x' }],
+    };
+
+    expect(() => applySavedViewStateAsDefault(scene, specWithExtraVariable, before)).not.toThrow();
+    expect(scene.state.$variables?.getByName('not-on-this-dashboard')).toBeUndefined();
+  });
+
+  it('applies the saved spec in full when nothing changed during the pass (the default-view cold-load case)', () => {
+    const scene = buildScene();
+    const before = captureSavedViewState(scene);
+
+    applySavedViewStateAsDefault(scene, spec, before);
+
+    expect(scene.state.$timeRange?.state.from).toBe('now-24h');
+    expect(scene.state.$timeRange?.state.to).toBe('now-1h');
+    const env = scene.state.$variables?.getByName('env');
+    if (env instanceof QueryVariable) {
+      expect(env.state.value).toBe('staging');
+    }
+  });
+
+  describe('with a baseline', () => {
+    const baseline: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: '',
+      timeRange: { from: 'now-6h', to: 'now' },
+      variables: [
+        { name: 'adhocFilter', type: 'adhoc', filters: [] },
+        { name: 'env', type: 'query', value: 'prod' },
+      ],
+    };
+    const specWithoutEnv: SavedDashboardViewSpec = {
+      ...spec,
+      variables: [{ name: 'adhocFilter', type: 'adhoc', filters: [{ key: 'host', operator: '=', value: 'saved' }] }],
+    };
+
+    it('resets a variable the view does not mention back to the baseline, like a pane click does', () => {
+      const scene = buildScene({ env: 'dev' }); // left over from a prior view or manual edit
+      const before = captureSavedViewState(scene);
+
+      applySavedViewStateAsDefault(scene, specWithoutEnv, before, baseline);
+
+      const env = scene.state.$variables?.getByName('env');
+      expect(env).toBeInstanceOf(QueryVariable);
+      if (env instanceof QueryVariable) {
+        expect(env.state.value).toBe('prod');
+      }
+    });
+
+    it('still lets an explicit var- param in the same url change override the baseline', () => {
+      const scene = buildScene({ env: 'dev' });
+      const before = captureSavedViewState(scene);
+      const env = scene.state.$variables?.getByName('env');
+      if (env instanceof QueryVariable) {
+        env.setState({ value: 'qa', text: 'qa' });
+      }
+
+      applySavedViewStateAsDefault(scene, specWithoutEnv, before, baseline);
+
+      if (env instanceof QueryVariable) {
+        expect(env.state.value).toBe('qa');
+      }
+    });
+  });
 });
 
 describe('getSavedViewDiff', () => {
@@ -151,6 +320,16 @@ describe('getSavedViewDiff', () => {
     expect(getSavedViewDiff(base, { ...base, variables: [...base.variables] })).toBe(false);
   });
 
+  it('is true when only the values of a multi-value ad hoc filter differ', () => {
+    const withValues = (values: string[]): SavedDashboardViewSpec => ({
+      ...base,
+      variables: [{ name: 'adhoc', type: 'adhoc', filters: [{ key: 'host', operator: '=|', value: 'a', values }] }],
+    });
+
+    expect(getSavedViewDiff(withValues(['a', 'b']), withValues(['a']))).toBe(true);
+    expect(getSavedViewDiff(withValues(['a', 'b']), withValues(['a', 'b']))).toBe(false);
+  });
+
   it('is true when the time range differs', () => {
     expect(getSavedViewDiff({ ...base, timeRange: { from: 'now-1h', to: 'now' } }, base)).toBe(true);
   });
@@ -160,8 +339,53 @@ describe('getSavedViewDiff', () => {
     expect(getSavedViewDiff(changed, base)).toBe(true);
   });
 
-  it('is true when the set of variables differs', () => {
-    const changed = { ...base, variables: [] };
-    expect(getSavedViewDiff(changed, base)).toBe(true);
+  describe('for a view that only captures part of the dashboard', () => {
+    const current: SavedDashboardViewSpec = {
+      ...base,
+      timeRange: { from: 'now-6h', to: 'now', timezone: 'browser' },
+      variables: [
+        { name: 'env', type: 'query', value: 'prod' },
+        { name: 'region', type: 'query', value: ['$__all'] },
+      ],
+    };
+    const baseline: SavedDashboardViewSpec = {
+      ...base,
+      variables: [
+        { name: 'env', type: 'query', value: 'prod' },
+        { name: 'region', type: 'query', value: ['$__all'] },
+      ],
+    };
+
+    it('is false when the variables the view omits are still at the baseline', () => {
+      expect(getSavedViewDiff(current, base, baseline)).toBe(false);
+    });
+
+    it('is true when a variable the view omits has drifted from the baseline', () => {
+      const drifted = {
+        ...current,
+        variables: [current.variables[0], { name: 'region', type: 'query' as const, value: ['eu'] }],
+      };
+      expect(getSavedViewDiff(drifted, base, baseline)).toBe(true);
+    });
+
+    it('ignores the timezone when the view does not set one', () => {
+      expect(getSavedViewDiff(current, base, baseline)).toBe(false);
+      expect(getSavedViewDiff(current, { ...base, timeRange: { ...base.timeRange, timezone: 'utc' } }, baseline)).toBe(
+        true
+      );
+    });
+
+    it('skips variables the view names that no longer exist on the dashboard', () => {
+      const withRemoved = {
+        ...base,
+        variables: [...base.variables, { name: 'gone', type: 'query' as const, value: 'x' }],
+      };
+      expect(getSavedViewDiff(current, withRemoved, baseline)).toBe(false);
+    });
+  });
+
+  it('treats a single value and a one-item array as the same selection', () => {
+    const stored = { ...base, variables: [{ name: 'env', type: 'query' as const, value: ['prod'] }] };
+    expect(getSavedViewDiff(base, stored)).toBe(false);
   });
 });
