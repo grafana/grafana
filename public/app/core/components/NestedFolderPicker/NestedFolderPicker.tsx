@@ -171,7 +171,7 @@ export function NestedFolderPicker({
     teamFolderTreeItems,
     teamFolderOwnersByUid,
     error: teamFoldersError,
-  } = useTeamFolders(foldersOpenState, value, onChange, showRootFolder);
+  } = useTeamFolders(foldersOpenState, value, onChange, showRootFolder, showReadOnly);
 
   const { starredFolderTreeItems, error: starredFoldersError } = useStarredFolders(foldersOpenState, permission);
 
@@ -475,11 +475,12 @@ function useTeamFolders(
   foldersOpenState: Record<string, boolean>,
   value?: string,
   onChange?: (folderUID: string | undefined, folderName: string | undefined) => void,
-  showRootFolder = true
+  showRootFolder = true,
+  showReadOnly = false
 ) {
-  const { foldersByTeam, error } = useGetTeamFolders();
+  const { foldersByTeam, error } = useGetTeamFolders({ markReadOnly: showReadOnly });
   const teamFolders = useMemo(() => foldersByTeam.flatMap(({ folders }) => folders), [foldersByTeam]);
-  const firstTeamFolder = teamFolders[0];
+  const firstTeamFolder = teamFolders.find((folder) => !folder.readOnly);
 
   const teamFolderOwnersByUid = useMemo(() => {
     return foldersByTeam.reduce<Record<string, { name: string; avatarUrl?: string }>>((acc, { team, folders }) => {
@@ -512,19 +513,22 @@ function useTeamFolders(
     };
 
     const children = foldersByTeam.flatMap(({ folders }) => {
-      return folders.map((folder) => ({
-        isOpen: false,
-        level: childLevel,
-        parentUID: TEAM_FOLDERS_UID,
-        item: {
-          kind: 'folder' as const,
-          title: folder.title,
-          uid: folder.name,
+      return folders.map((folder) => {
+        const treeItem: DashboardsTreeItem = {
+          isOpen: false,
+          level: childLevel,
           parentUID: TEAM_FOLDERS_UID,
-          managedBy: extractManagerKind(folder.managedBy),
-          managerId: extractManagerId(folder.managedBy),
-        },
-      }));
+          item: {
+            kind: 'folder' as const,
+            title: folder.title,
+            uid: folder.name,
+            parentUID: TEAM_FOLDERS_UID,
+            managedBy: extractManagerKind(folder.managedBy),
+            managerId: extractManagerId(folder.managedBy),
+          },
+        };
+        return folder.readOnly ? toReadOnlyTreeItem(treeItem) : treeItem;
+      });
     });
 
     return teamFoldersIsOpen ? [parentItem, ...children] : [parentItem];

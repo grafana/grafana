@@ -1,14 +1,15 @@
 import { useMemo } from 'react';
 
 import { type TeamDto, useGetSignedInUserTeamListQuery } from '@grafana/api-clients/internal/rtkq/legacy';
-import type { DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { isFetchError } from '@grafana/runtime';
-import { useSearchDashboardsAndFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
+import { type FolderChildrenPage, useSearchTeamFoldersQuery } from 'app/api/clients/dashboard/v0alpha1';
 import { teamOwnerRef } from 'app/features/browse-dashboards/utils/dashboards';
+
+type TeamFolder = FolderChildrenPage['hits'][number];
 
 type FoldersByTeam = {
   team: TeamDto;
-  folders: DashboardHit[];
+  folders: TeamFolder[];
 };
 
 type UseGetTeamFoldersResult = {
@@ -20,7 +21,7 @@ type UseGetTeamFoldersResult = {
 /**
  * Returns folders owned by teams the current user belongs to.
  */
-export function useGetTeamFolders(): UseGetTeamFoldersResult {
+export function useGetTeamFolders({ markReadOnly }: { markReadOnly?: boolean } = {}): UseGetTeamFoldersResult {
   const { data: teams, error: teamError, isLoading: teamsLoading } = useTeams();
 
   const ownerReferences = teams?.map(teamOwnerRef);
@@ -30,30 +31,24 @@ export function useGetTeamFolders(): UseGetTeamFoldersResult {
     data: foldersResult,
     error: foldersError,
     isLoading: foldersLoading,
-  } = useSearchDashboardsAndFoldersQuery(
-    {
-      ownerReference: ownerReferences,
-      type: 'folder',
-    },
-    { skip: shouldSkipSearch }
-  );
+  } = useSearchTeamFoldersQuery({ ownerReference: ownerReferences ?? [], markReadOnly }, { skip: shouldSkipSearch });
 
   const foldersByTeam = useMemo(() => mapTeamsToFolders(teams, foldersResult?.hits), [foldersResult?.hits, teams]);
 
   return {
     foldersByTeam,
     isLoading: teamsLoading || foldersLoading,
-    error: teamError ?? coercedError(foldersError, 'Failed to load team folders'),
+    error: teamError ?? coercedError(foldersError ?? foldersResult?.selectabilityError, 'Failed to load team folders'),
   };
 }
 
-function mapTeamsToFolders(teams: TeamDto[] | undefined, folders: DashboardHit[] | undefined): FoldersByTeam[] {
+function mapTeamsToFolders(teams: TeamDto[] | undefined, folders: TeamFolder[] | undefined): FoldersByTeam[] {
   if (!teams || !folders?.length) {
     return [];
   }
 
   // Map folders to their owner ownerRef strings
-  const foldersMap = folders.reduce<Record<string, DashboardHit[]>>((acc, folder) => {
+  const foldersMap = folders.reduce<Record<string, TeamFolder[]>>((acc, folder) => {
     // Folder can be owned by multiple teams technically
     for (const ref of folder.ownerReferences ?? []) {
       if (!acc[ref]) {

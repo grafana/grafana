@@ -799,6 +799,35 @@ describe('NestedFolderPicker', () => {
       expect(selectabilityChecks).not.toHaveBeenCalled();
     });
 
+    it('shows team folders the user cannot pick as read only', async () => {
+      setTestFlags(readOnlyFlags);
+      useGetTeamFoldersMock.mockReturnValue({
+        foldersByTeam: [
+          {
+            team: { name: 'Team A', avatarUrl: 'https://example.com/avatar.png' },
+            folders: [
+              { name: 'team-folder-1', title: 'Team Folder One', readOnly: true },
+              { name: 'team-folder-2', title: 'Team Folder Two', readOnly: false },
+            ],
+          },
+        ],
+        isLoading: false,
+        error: undefined,
+      });
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      expect(useGetTeamFoldersMock).toHaveBeenCalledWith({ markReadOnly: true });
+      const readOnlyRow = await screen.findByRole('treeitem', { name: /Team Folder One/ });
+      expect(readOnlyRow).toHaveAttribute('aria-disabled', 'true');
+      expect(within(readOnlyRow).getByRole('img', { name: 'Read only' })).toBeInTheDocument();
+
+      await user.click(within(readOnlyRow).getByText('Team Folder One'));
+      expect(mockOnChange).not.toHaveBeenCalled();
+      await user.click(screen.getByText('Team Folder Two'));
+      expect(mockOnChange).toHaveBeenCalledWith('team-folder-2', 'Team Folder Two');
+    });
+
     it.each<{ name: string; flags: Parameters<typeof setTestFlags>[0]; permission?: 'view' | 'edit' }>([
       { name: 'the feature flag is off', flags: { foldersAppPlatformAPI: true } },
       {

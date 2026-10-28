@@ -60,6 +60,33 @@ describe('useGetTeamFolders', () => {
     expect(searchParams.get('type')).toBe('folder');
   });
 
+  it('asks for the path to creatable folders and flags the team folders the user cannot create in', async () => {
+    const teams = [{ uid: 'team-a', name: 'Team A' }];
+    const ownerReferences = ['iam.grafana.app/Team/team-a'];
+    server.use(
+      getSignedInUserTeamListHandler(teams),
+      getCustomSearchHandler([
+        { name: 'writable', title: 'Writable', resource: 'folders', ownerReferences, field: { canCreate: true } },
+        { name: 'path', title: 'Path', resource: 'folders', ownerReferences, field: { canCreate: false } },
+      ])
+    );
+    const capture = captureRequests((r) => r.url.includes('/search'));
+
+    const { result } = renderHook(() => useGetTeamFolders({ markReadOnly: true }), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.foldersByTeam).toHaveLength(1);
+    });
+    expect(result.current.foldersByTeam[0].folders.map(({ name, readOnly }) => ({ name, readOnly }))).toEqual([
+      { name: 'writable', readOnly: false },
+      { name: 'path', readOnly: true },
+    ]);
+
+    const searchRequests = await capture;
+    expect(searchRequests).toHaveLength(1);
+    expect(new URL(searchRequests[0].url).searchParams.get('include')).toBe('pathToCreatable');
+  });
+
   it('returns a team error and skips folder search when team loading fails', async () => {
     server.use(http.get('/api/user/teams', () => HttpResponse.json({ message: 'No teams' }, { status: 500 })));
     const capture = captureRequests((r) => r.url.includes('/search'));

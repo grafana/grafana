@@ -1,3 +1,5 @@
+import { type BaseQueryApi } from '@reduxjs/toolkit/query';
+
 import {
   type DashboardHit,
   type SearchDashboardsAndFoldersApiArg,
@@ -14,6 +16,12 @@ export type SearchFolderChildrenPageArg = {
   markReadOnly?: boolean;
 };
 
+export type SearchTeamFoldersArg = {
+  ownerReference: string[];
+  /** Only list team folders on the way to one the user can create dashboards in, and flag the ones they cannot */
+  markReadOnly?: boolean;
+};
+
 export type FolderChildrenPage = {
   hits: Array<DashboardHit & { readOnly?: boolean }>;
   /** Set when the folders loaded but the check for which can be picked failed, so they are all read only */
@@ -25,6 +33,34 @@ export type FolderChildrenPage = {
  */
 export function getSelectableFoldersArgs(names: string[]): SearchDashboardsAndFoldersApiArg {
   return { type: 'folder', permission: 'create', name: names, limit: names.length };
+}
+
+// Lets the server drop folders that lead to nothing the user can pick, and say which can be picked
+const pathToCreatable = (markReadOnly?: boolean) => (markReadOnly ? 'pathToCreatable' : undefined);
+
+async function markReadOnlyHits(hits: DashboardHit[], dispatch: BaseQueryApi['dispatch']): Promise<FolderChildrenPage> {
+  if (hits.length === 0) {
+    return { hits };
+  }
+
+  // Servers that don't know `include` leave `canCreate` out, so those folders need the separate check below
+  if (hits.every((hit) => typeof hit.field?.canCreate === 'boolean')) {
+    return { hits: hits.map((hit) => ({ ...hit, readOnly: !hit.field.canCreate })) };
+  }
+
+  try {
+    const names = hits.map((hit) => hit.name);
+    const selectable = await dispatch(
+      generatedAPI.endpoints.searchDashboardsAndFolders.initiate(getSelectableFoldersArgs(names), {
+        subscribe: false,
+      })
+    ).unwrap();
+    const selectableNames = new Set(selectable.hits.map((hit) => hit.name));
+    return { hits: hits.map((hit) => ({ ...hit, readOnly: !selectableNames.has(hit.name) })) };
+  } catch (error) {
+    // Keep the folders so their children can still be reached, but don't let any be picked
+    return { hits: hits.map((hit) => ({ ...hit, readOnly: true })), selectabilityError: error };
+  }
 }
 
 export const dashboardAPIv0alpha1 = generatedAPI.enhanceEndpoints({}).injectEndpoints({
@@ -41,8 +77,7 @@ export const dashboardAPIv0alpha1 = generatedAPI.enhanceEndpoints({}).injectEndp
             limit,
             offset,
             permission: markReadOnly ? undefined : permission,
-            // Lets the server drop folders that lead to nothing the user can pick, and say which can be picked
-            include: markReadOnly ? 'pathToCreatable' : undefined,
+            include: pathToCreatable(markReadOnly),
           },
         });
         if (page.error) {
@@ -51,31 +86,27 @@ export const dashboardAPIv0alpha1 = generatedAPI.enhanceEndpoints({}).injectEndp
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const { hits } = page.data as SearchDashboardsAndFoldersApiResponse;
 
-        if (!markReadOnly || hits.length === 0) {
-          return { data: { hits } };
+        return { data: markReadOnly ? await markReadOnlyHits(hits, dispatch) : { hits } };
+      },
+    }),
+    searchTeamFolders: build.query<FolderChildrenPage, SearchTeamFoldersArg>({
+      queryFn: async ({ ownerReference, markReadOnly }, { dispatch }, _extraOptions, baseQuery) => {
+        // The generated client doesn't expose `include` yet
+        const result = await baseQuery({
+          url: '/search',
+          params: { type: 'folder', ownerReference, include: pathToCreatable(markReadOnly) },
+        });
+        if (result.error) {
+          return { error: result.error };
         }
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        const { hits } = result.data as SearchDashboardsAndFoldersApiResponse;
 
-        // Servers that don't know `include` leave `canCreate` out, so those folders need the separate check below
-        if (hits.every((hit) => typeof hit.field?.canCreate === 'boolean')) {
-          return { data: { hits: hits.map((hit) => ({ ...hit, readOnly: !hit.field.canCreate })) } };
-        }
-
-        try {
-          const names = hits.map((hit) => hit.name);
-          const selectable = await dispatch(
-            generatedAPI.endpoints.searchDashboardsAndFolders.initiate(getSelectableFoldersArgs(names), {
-              subscribe: false,
-            })
-          ).unwrap();
-          const selectableNames = new Set(selectable.hits.map((hit) => hit.name));
-          return { data: { hits: hits.map((hit) => ({ ...hit, readOnly: !selectableNames.has(hit.name) })) } };
-        } catch (error) {
-          // Keep the folders so their children can still be reached, but don't let any be picked
-          return { data: { hits: hits.map((hit) => ({ ...hit, readOnly: true })), selectabilityError: error } };
-        }
+        return { data: markReadOnly ? await markReadOnlyHits(hits, dispatch) : { hits } };
       },
     }),
   }),
 });
 
-export const { useSearchDashboardsAndFoldersQuery, useLazySearchDashboardsAndFoldersQuery } = dashboardAPIv0alpha1;
+export const { useSearchDashboardsAndFoldersQuery, useLazySearchDashboardsAndFoldersQuery, useSearchTeamFoldersQuery } =
+  dashboardAPIv0alpha1;
