@@ -1446,7 +1446,14 @@
         "rules-error": "Failed to load rules",
         "search-issues": "Change the search to see results"
       },
+      "datasources": "{{numSources}} data sources",
       "interval": "Evaluated every {{interval}}",
+      "labels_one": "{{formatted}} label",
+      "labels_other": "{{formatted}} labels",
+      "recorded-metric": {
+        "records": "Records",
+        "to": "to"
+      },
       "recording-rules": {
         "no-rules": "No recording rules found",
         "rules-error": "Failed to load recording rules"
