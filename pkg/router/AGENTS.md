@@ -191,7 +191,7 @@ earlier ones:
 2. **Aggregate targets**, discovered by polling each target's `/apis`. The first target in INI section
    order wins when multiple targets discover the same group.
 3. **Core APIs**, from `core_url` (for example playlists). Same format and backends as managed
-   plugins, without `plugins_group_regex` filtering.
+   plugins, without `plugins_group_patterns` filtering.
 4. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
    authenticate `X-Access-Token`.
 
@@ -387,7 +387,9 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   `HandleFunc` leaves middleware requests to `next`: in-process clients start before the router.
   `appplugins.registerAPIServer` turns middleware mode on too: app plugin settings are only served
   by the router. Both flags are read once, at startup (`middlewareEnabled`, `settingsEnabled`), so
-  settings are served exactly when middleware mode can reach them. The standalone router is never
+  settings are served exactly when middleware mode can reach them. `appplugins.registerAPIServer` is
+  evaluated through OpenFeature, not `IsEnabledGlobally`, so a remote flag provider can turn it on
+  without a `[feature_toggles]` entry. The standalone router is never
   in middleware mode, whatever the flags, so a flag that also reaches its deployment can't drop its
   cloud sources.
 - **Inside Grafana:** the `Service` always runs, flag or not, so the `/apis/discovery` tree stays
@@ -409,8 +411,8 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | --- | --- |
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
-| `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
-| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
+| `plugins_group_patterns` | Globs that narrow the plugin groups, with the same semantics as `group_patterns`. The deprecated name `plugins_group_regex` is still read, with a warning; setting both is an error. |
+| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_patterns`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
 | `plugins_ca_file`, `plugins_insecure`, `core_ca_file`, `core_insecure` | TLS settings for polling an `https` `plugins_url` or `core_url`, with the same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. They don't apply to the gRPC connections to the plugin backends; see `[router.backend_grpc]`. |
 | `plugins_poll_interval`, `core_poll_interval` | Positive polling duration for `plugins_url` and `core_url`, default `30s`, with the same backoff after a failure as an aggregate target's `poll_interval`. |
 | `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
@@ -432,9 +434,9 @@ longer read. A deployment that still sets them gets no aggregate target, so conf
 | --- | --- |
 | `url` | Target base URL. Unset skips the target. |
 | `audience` | Required when `url` is set, unless `discovery_auth = none`, where setting it is an error. |
-| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. |
+| `discovery_auth` | How the router authenticates its own `/apis` discovery polls. `cap_token` (default) sends an exchanged CAP token in `X-Access-Token`, and `bearer` sends it in `Authorization`. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. |
 | `poll_interval` | Positive discovery polling duration, default `30s`. |
-| `group_regex` | Comma-separated globs that narrow discovered groups. Unset matches all. |
+| `group_patterns` | Comma-separated globs that narrow discovered groups. Unset matches all. The deprecated name `group_regex` is still read, with a warning; setting both is an error. |
 | `ca_file`, `insecure` | Per-target TLS settings. |
 
 ```ini
@@ -442,16 +444,18 @@ longer read. A deployment that still sets them gets no aggregate target, so conf
 url = https://baas.example.com
 audience = apiextensions.k8s.io
 poll_interval = 10m
-group_regex = *.ext.grafana.app
+group_patterns = *.ext.grafana.app
 
 [router.aggregate.cloud_app_platform_apiserver]
 url = https://cap.example.com
 audience = cloudAppPlatformDiscovery
-group_regex = *.ext.grafana.com
+discovery_auth = bearer
+group_patterns = *.ext.grafana.com
 ```
 
-Shared authentication settings remain in `[cloud_router]`. Discovery uses `Authorization` for
-`cloud_app_platform_apiserver` and `X-Access-Token` for other target names.
+Shared authentication settings remain in `[cloud_router]`. A target named
+`cloud_app_platform_apiserver` without `discovery_auth` still gets `bearer`, as it did before that
+value existed. That name check goes once its deployment sets `discovery_auth = bearer`.
 
 Every URL must be absolute; a trailing slash is tolerated.
 

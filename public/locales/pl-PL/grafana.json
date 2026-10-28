@@ -1457,7 +1457,8 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "interval": "",
       "recording-rules": {
@@ -1473,6 +1474,58 @@
         "recording-rules_few": "",
         "recording-rules_many": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -5761,6 +5814,17 @@
       "ungroup-rows": "Rozłącz grupę wierszy",
       "ungroup-tabs": "Rozłącz grupę kart"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5941,7 +6005,20 @@
     "edit-actions": {
       "add": "Dodaj: {{typeName}}",
       "add-conditional-rule": "Dodaj regułę {{ruleDescription}}",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "Zwiń wszystkie wiersze",
+      "collapse-row": "",
       "dashboard-description": "Zmień opis pulpitu",
       "dashboard-title": "Zmień tytuł pulpitu",
       "duplicate": "Duplikuj: {{typeName}}",
@@ -5950,6 +6027,7 @@
       "edit-template-variable-rule": "Zmień regułę zmiennej szablonu",
       "edit-time-range-rule": "Zmień regułę zakresu czasu",
       "expand-all-rows": "Rozwiń wszystkie wiersze",
+      "expand-row": "",
       "group-into-row": "Grupuj w wierszu",
       "group-into-tab": "Grupuj na karcie",
       "move": "Przenieś {{typeName}}",
@@ -5965,6 +6043,7 @@
       "paste-panel": "Wklej panel",
       "remove": "Usuń: {{typeName}}",
       "remove-multiple": "Usuń {{typeName}} ({{num}})",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "Wyłącz wypełnianie ekranu przez wiersz",
       "row-fill-screen-enable": "Włącz wypełnianie ekranu przez wiersz",
@@ -5972,16 +6051,38 @@
       "row-repeat-variable": "Powtórz wiersz według",
       "row-show-header": "Pokaż nagłówek wiersza",
       "row-title": "Zmień tytuł wiersza",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "Przełącz układ",
       "switch-layout-row": "Przełącz układ",
       "switch-layout-tab": "Przełącz układ",
       "tab-repeat-variable": "Powtórz kartę według",
       "tab-title": "Zmień tytuł karty",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "Zmień opis zmiennej",
       "variable-hide": "Zmień opcję ukrywania zmiennej",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "Zmień etykietę zmiennej",
+      "variable-multi-value": "",
       "variable-name": "Zmień nazwę zmiennej",
-      "variable-type": "Zmień typ zmiennej"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "Zmień typ zmiennej",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "Dodaj wizualizacje udostępniane innym pulpitom.",
@@ -6203,8 +6304,12 @@
       "tooltip-previous": "Wstecz"
     },
     "modes": {
-      "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -7123,7 +7228,8 @@
         "change-annotation-controls-display": "Zmień wyświetlanie opcji adnotacji",
         "change-annotation-enabled-state": "Zmień stan włączenia adnotacji",
         "change-annotation-name": "Zmień nazwę adnotacji",
-        "change-annotation-panel-filter": "Zmień filtr panelu adnotacji"
+        "change-annotation-panel-filter": "Zmień filtr panelu adnotacji",
+        "change-annotation-query": ""
       },
       "edit-query": "Edytuj zapytanie"
     },
@@ -12409,10 +12515,14 @@
     },
     "log-line": {
       "has-error": "Zawiera błędy",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "Jest próbką",
       "show-less": "pokaż mniej",
       "show-more": "pokaż więcej",
-      "tooltip-error": "Błąd: {{errorMessage}}"
+      "tooltip-error": "Błąd: {{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "Wyśrodkuj linię dopasowania",
@@ -13644,7 +13754,6 @@
     "add-panel": {
       "cancel": "Anuluj",
       "card-author": "Autor: {{author}}",
-      "card-selected": "{{title}} (wybrano)",
       "card-updated": "Zaktualizowano {{when}}",
       "create-name": "Nazwa notatnika",
       "create-name-required": "Nazwa notatnika jest wymagana",
@@ -13655,6 +13764,7 @@
       "error-open-conflict": "",
       "list-error": "Nie udało się wczytać notatników",
       "list-error-body": "Podczas ładowania notatników wystąpił problem. Spróbuj ponownie lub utwórz nowy notatnik.",
+      "list-label": "",
       "list-no-matches": "Brak notatników pasujących do tych filtrów.",
       "list-none": "Nie masz jeszcze żadnych notatników. Utwórz nowy notatnik.",
       "list-none-read-only": "Nie masz jeszcze żadnych notatników i nie masz uprawnień do ich tworzenia.",
@@ -16606,8 +16716,8 @@
       "copy-link-button": "Kopiuj",
       "info-text": "Utwórz bezpośredni link do tego pulpitu lub panelu, dostosowany za pomocą poniższych opcji.",
       "link-url": "Link URL",
-      "render-alert": "Nie zainstalowano wtyczki renderowania obrazów",
-      "render-instructions": "Aby wyrenderować obraz, musisz zainstalować <2>wtyczkę do renderowania obrazów w Grafanie</2>. Skontaktuj się z administratorem usługi Grafana, aby zainstalować wtyczkę.",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "Obraz renderowany z bezpośredniego linku",
       "save-alert": "Nie zapisano pulpitu",
       "save-dashboard": "Aby wyrenderować obraz panelu, musisz najpierw zapisać pulpit.",
@@ -17424,6 +17534,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {

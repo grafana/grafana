@@ -65,7 +65,7 @@ it. Each skip is logged with its error, which says why. Backends are skipped by:
 - `plugins_url`, `core_url` and `aggregate:<target>`: a backend whose key could not be computed,
   which is not expected to happen.
 
-Groups filtered out by `plugins_group_regex` or a target's `group_regex` are not counted as
+Groups filtered out by `plugins_group_patterns` or a target's `group_patterns` are not counted as
 skipped.
 
 A backend whose `Load` fails in `reconcile` is not counted here. Its group keeps its last-known-good

@@ -44,7 +44,7 @@
 /docs/sources/alerting/                                                           @JohnnyK-Grafana
 /docs/sources/as-code/                                                            @urbiz-grafana
 /docs/sources/developer-resources/                                                @urbiz-grafana
-/docs/sources/datasources/                                                        @lwandz13
+/docs/sources/datasources/                                                        @jtvdez
 /docs/sources/upgrade-guide/                                                      @jtvdez
 /docs/sources/whatsnew/                                                           @jtvdez
 
@@ -57,7 +57,7 @@
 /docs/sources/visualizations/dashboards/share-dashboards-panels/_index.md                         @imatwawana @jtvdez
 /docs/sources/visualizations/dashboards/share-dashboards-panels/shared-dashboards.md              @jtvdez
 /docs/sources/visualizations/panels-visualizations/query-transform-data/transform-data/index.md   @imatwawana @baldm0mma
-/docs/sources/visualizations/panels-visualizations/query-transform-data/sql-expressions/index.md  @lwandz13 @irenerl24
+/docs/sources/visualizations/panels-visualizations/query-transform-data/sql-expressions/index.md  @irenerl24
 # END Technical documentation
 
 # Policy bot
@@ -210,6 +210,7 @@
 /pkg/services/ssosettings/ @grafana/identity-squad
 /pkg/services/star/ @grafana/grafana-search-and-storage
 /pkg/services/stats/ @grafana/grafana-backend-services-squad
+/pkg/services/swagger/ @grafana/grafana-app-platform-squad
 /pkg/services/tag/ @grafana/grafana-search-and-storage
 /pkg/services/team/ @grafana/identity-squad
 /pkg/services/temp_user/ @grafana/identity-squad
@@ -225,6 +226,7 @@
 /pkg/tests/apis/iam @grafana/identity-access-team
 /pkg/tests/apis/shorturl @grafana/sharing-squad
 /pkg/tests/api/correlations/ @grafana/datapro
+/pkg/tests/api/swagger/ @grafana/grafana-app-platform-squad
 /pkg/tests/api/admin/encryption/ @grafana/grafana-operator-experience-squad
 /pkg/tsdb/grafanads/ @grafana/grafana-backend-services-squad
 /pkg/util/ @grafana/grafana-backend-services-squad
@@ -835,10 +837,9 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /.nvmrc @grafana/grafana-frontend-platform
 /mise.toml @grafana/grafana-frontend-platform
 /.prettierignore @grafana/grafana-frontend-platform
-/.yarn @grafana/grafana-frontend-platform
-/.yarnrc.yml @grafana/grafana-frontend-platform
-/yarn.config.cjs @grafana/grafana-frontend-platform
-/yarn.lock @grafana/grafana-frontend-platform
+/pnpm-lock.yaml @grafana/grafana-frontend-platform
+/pnpm-workspace.yaml @grafana/grafana-frontend-platform
+/patches/ @grafana/grafana-frontend-platform
 /.prettierrc.js @grafana/grafana-frontend-platform
 /.vim @zoltanbedi
 /.zed/ @alexanderzobnin
@@ -1138,7 +1139,6 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
 /public/test/helpers/alertingRuleEditor.tsx @grafana/alerting-squad
 /public/views/ @grafana/grafana-frontend-platform
-/public/views/swagger.html @grafana/grafana-app-platform-squad
 /public/swagger/ @grafana/grafana-app-platform-squad
 
 /public/app/features/explore/Logs/ @grafana/observability-logs
@@ -1168,6 +1168,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 scripts/build-msi.sh @grafana/grafana-operator-experience-squad
 scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /scripts/ci-* @grafana/grafana-backend-services-squad
+/scripts/pack-npm-packages.mjs @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/publish-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/validate-npm-packages.sh @grafana/grafana-backend-services-squad @grafana/grafana-frontend-platform
 /scripts/ci-frontend-metrics.sh @grafana/grafana-frontend-platform @grafana/grafana-frontend-platform

@@ -7,6 +7,7 @@ export type DashboardModeTrigger =
   | 'manual_change'
   | 'assistant'
   | 'navigation'
+  | 'composer'
   | 'restore';
 
 /** `exited`: left edit mode without discarding. `abandoned`: navigated away or closed the tab while editing. */

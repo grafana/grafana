@@ -130,24 +130,16 @@ describe('AnnotationsPlugin with a real uPlot instance', () => {
     await waitFor(() => expect(getMarkers()).toHaveLength(5));
   });
 
-  // Known bug: the `ready` hook only re-renders when the `annotations.length` it captured at registration
-  // was non-zero. If annotations arrive in a render after `new uPlot()` but before `ready`, the plugin
-  // renders while the plot ref is still null, and the hook it re-registers with the new length is never
-  // seen by the plot. This is the interleaving that made the annotations e2e tests flake when UPlotChart
-  // constructed the plot in a passive effect. Change to `it` once fixed.
-  it.failing(
-    'renders markers for annotations that arrive after the plot is constructed but before it is ready',
-    async () => {
-      const series = createSeries(T06, T11);
-      const timeRange = createTimeRange(T06, T11);
-      const { rerender } = render(panel({ series, annotations: [], timeRange }));
+  it('renders markers for annotations that arrive after the plot is constructed but before it is ready', async () => {
+    const series = createSeries(T06, T11);
+    const timeRange = createTimeRange(T06, T11);
+    const { rerender } = render(panel({ series, annotations: [], timeRange }));
 
-      // Synchronous: uPlot fires `ready` in a microtask, so this render lands before it.
-      rerender(panel({ series, annotations: createAnnotations(ANNOTATION_TIMES), timeRange }));
+    // Synchronous: uPlot fires `ready` in a microtask, so this render lands before it.
+    rerender(panel({ series, annotations: createAnnotations(ANNOTATION_TIMES), timeRange }));
 
-      await waitFor(() => expect(getMarkers()).toHaveLength(5));
-    }
-  );
+    await waitFor(() => expect(getMarkers()).toHaveLength(5));
+  });
 
   // Known bug: markers are positioned during render, before UPlotChart pushes the new data (and x range) into
   // uPlot. The `drawAxes` hook is meant to re-render when the range changes, but it is gated on the

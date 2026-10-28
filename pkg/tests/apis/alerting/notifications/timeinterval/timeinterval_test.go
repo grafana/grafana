@@ -67,11 +67,52 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		},
 	}
 
-	t.Run("create should fail if object name is specified", func(t *testing.T) {
+	t.Run("create should fail if object name is not a valid UID", func(t *testing.T) {
 		interval := newInterval.Copy().(*v1beta1.TimeInterval)
-		interval.Name = "time-newInterval"
+		interval.Name = "time-newInterval" // contains an uppercase letter, not a valid DNS subdomain
 		_, err := client.Create(ctx, interval, resource.CreateOptions{})
 		require.Truef(t, errors.IsBadRequest(err), "Expected BadRequest but got %s", err)
+	})
+
+	t.Run("create should honor a client-supplied object name as the UID", func(t *testing.T) {
+		interval := newInterval.Copy().(*v1beta1.TimeInterval)
+		interval.Name = "my-custom-uid"
+		actual, err := client.Create(ctx, interval, resource.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, "my-custom-uid", actual.Name)
+
+		t.Run("create should fail if the UID is already taken", func(t *testing.T) {
+			other := interval.Copy().(*v1beta1.TimeInterval)
+			other.Spec.Name = "a-different-title"
+			_, err := client.Create(ctx, other, resource.CreateOptions{})
+			require.Truef(t, errors.IsConflict(err), "Expected Conflict but got %s", err)
+		})
+
+		require.NoError(t, client.Delete(ctx, actual.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+	})
+
+	t.Run("delete should address the interval by UID even if it equals another interval's name", func(t *testing.T) {
+		// B has UID "x-uid" and name "foo-title"; A has UID "foo-title" and name "bar-title".
+		b := newInterval.Copy().(*v1beta1.TimeInterval)
+		b.Name = "x-uid"
+		b.Spec.Name = "foo-title"
+		b, err := client.Create(ctx, b, resource.CreateOptions{})
+		require.NoError(t, err)
+
+		a := newInterval.Copy().(*v1beta1.TimeInterval)
+		a.Name = "foo-title"
+		a.Spec.Name = "bar-title"
+		a, err = client.Create(ctx, a, resource.CreateOptions{})
+		require.NoError(t, err)
+
+		require.NoError(t, client.Delete(ctx, a.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+
+		_, err = client.Get(ctx, a.GetStaticMetadata().Identifier())
+		require.Truef(t, errors.IsNotFound(err), "Expected NotFound for the deleted interval but got %v", err)
+		_, err = client.Get(ctx, b.GetStaticMetadata().Identifier())
+		require.NoError(t, err, "the interval whose name matches the deleted UID must remain")
+
+		require.NoError(t, client.Delete(ctx, b.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
 	})
 
 	var resourceID resource.Identifier
@@ -92,7 +133,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		existingInterval = actual
 	})
 
-	t.Run("update should rename interval if name in the specification changes", func(t *testing.T) {
+	t.Run("update should preserve UID when name in the specification changes", func(t *testing.T) {
 		if existingInterval == nil {
 			t.Skip()
 		}
@@ -101,7 +142,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		actual, err := client.Update(ctx, updated, resource.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, updated.Spec, actual.Spec)
-		require.NotEqualf(t, updated.Name, actual.Name, "Update should change the resource name but it didn't")
+		require.Equalf(t, updated.Name, actual.Name, "Renaming a time interval should preserve its UID (resource name), but it changed")
 		require.NotEqualf(t, updated.ResourceVersion, actual.ResourceVersion, "Update should change the resource version but it didn't")
 
 		resource, err := client.Get(ctx, actual.GetStaticMetadata().Identifier())
@@ -817,6 +858,7 @@ func TestIntegrationTimeIntervalReferentialIntegrity(t *testing.T) {
 
 			actual, err := adminClient.Update(ctx, renamed, resource.UpdateOptions{})
 			require.NoError(t, err)
+			require.Equalf(t, interval.Name, actual.Name, "renaming a time interval should preserve its UID (resource name)")
 
 			updatedRuleGroup, status := legacyCli.GetRulesGroup(t, folderUID, ruleGroup.Name)
 			require.Equal(t, http.StatusAccepted, status)

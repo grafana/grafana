@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
@@ -291,6 +292,9 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
+	// Status writes go straight to the unified store: the ST and cascade wrappers only override
+	// Create/Delete, and the status strategy keeps spec and metadata intact.
+	storage[folders.StoragePath("status")] = grafanaregistry.NewStatusREST(unified, newFolderStatusStrategy(opts.Scheme, folders.GroupVersion()))
 
 	b.parents = newParentsGetter(b.storage) // used for validation
 	storage[folders.StoragePath("parents")] = &subParentsREST{
@@ -528,6 +532,15 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana folders"
+
+	// status is server-written; clients creating or replacing a folder never send it.
+	if oas.Components != nil {
+		if s, ok := oas.Components.Schemas[foldersv1.OpenAPIPrefix+"Folder"]; ok && s != nil {
+			// Copy first: v1 and v1beta1 share the generated definitions, so editing in place
+			// would corrupt the other version's required list.
+			s.Required = slices.DeleteFunc(slices.Clone(s.Required), func(f string) bool { return f == "status" })
+		}
+	}
 	return oas, nil
 }
 

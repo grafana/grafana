@@ -509,6 +509,20 @@ type hashablePayload struct {
 	Versions []hashableVersion `json:"v"`
 }
 
+// StandardSearchFieldsHash fingerprints the standard fields alone, for a kind
+// that declares no fields of its own.
+func StandardSearchFieldsHash() string {
+	blob, err := json.Marshal(hashablePayload{Standard: canonicalHashableFields(StandardSearchFieldDefinitions())})
+	if err != nil {
+		// Returning nothing disables the rebuild-on-change check, so the log line is
+		// the only sign. See IndexAffectingHash for why this cannot happen today.
+		searchFieldLogger.Error("failed to marshal the standard search fields for hashing", "err", err)
+		return ""
+	}
+	sum := sha256.Sum256(blob)
+	return hex.EncodeToString(sum[:])
+}
+
 // canonicalHashableFields normalises a SearchFieldDefinition slice into
 // hashableField form: capabilities sorted, fields sorted by name, only the
 // index-affecting subset retained.
@@ -611,11 +625,18 @@ func (r *SearchFieldsRegistry) For(key LowerGroupResource) (selectableFields []s
 // ForKey is For for a whole index key. A namespace-wide index declares its own
 // fields and covers a fixed set of resource types, so none of its inputs come
 // from a manifest.
+//
+// A kind declaring no fields of its own still gets a hash, of the standard
+// fields, so its indexes are rebuilt when those change too.
 func (r *SearchFieldsRegistry) ForKey(key NamespacedResource) (selectableFields []string, hash string, provider SearchFieldsProvider) {
 	if key.IsGlobal() {
 		return nil, GlobalSearchFieldsHash(), nil
 	}
-	return r.For(NewLowerGroupResource(key.Group, key.Resource))
+	selectableFields, hash, provider = r.For(NewLowerGroupResource(key.Group, key.Resource))
+	if hash == "" {
+		hash = StandardSearchFieldsHash()
+	}
+	return selectableFields, hash, provider
 }
 
 // Replace atomically swaps all three maps. Callers must not mutate the maps

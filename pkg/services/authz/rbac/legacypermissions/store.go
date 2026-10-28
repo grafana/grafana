@@ -13,6 +13,14 @@ import (
 type permissionStore struct{ sql db.DB }
 
 func (s permissionStore) permissions(ctx context.Context, query ac.GetUserPermissionsQuery) ([]ac.Permission, error) {
+	return s.permissionsForActions(ctx, query, nil)
+}
+
+func (s permissionStore) permissionsForActions(
+	ctx context.Context,
+	query ac.GetUserPermissionsQuery,
+	actions []string,
+) ([]ac.Permission, error) {
 	if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {
 		return []ac.Permission{}, nil
 	}
@@ -26,6 +34,12 @@ func (s permissionStore) permissions(ctx context.Context, query ac.GetUserPermis
 	}
 	if query.ExcludeRedundantManagedPermissions {
 		q += ac.ManagedPermissionsActionSetsFilter()
+	}
+	if len(actions) > 0 {
+		q += " AND permission.action IN (?" + strings.Repeat(", ?", len(actions)-1) + ")"
+		for _, action := range actions {
+			params = append(params, action)
+		}
 	}
 	var out []ac.Permission
 	// Keep transaction-bound sessions and SQLite retry behavior from the legacy path.

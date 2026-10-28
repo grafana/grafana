@@ -7,10 +7,11 @@ import {
 } from '@grafana/alerting/testing';
 
 export const RECEIVER_NAME = 'my-receiver';
-const RECEIVER_UID = 'my-receiver';
+// deliberately unrelated to the receiver's title, since the UID is a persisted identifier
+export const RECEIVER_UID = 'rcv-abc123';
 
 // single response scenario
-const listContactPointsResponse = ListReceiverApiResponseFactory.build({
+export const listContactPointsResponse = ListReceiverApiResponseFactory.build({
   items: [
     ContactPointFactory.build({
       metadata: {
