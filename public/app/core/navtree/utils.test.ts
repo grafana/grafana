@@ -1,6 +1,6 @@
 import { type NavModelItem } from '@grafana/data';
 
-import { findNavById, findNavByUrl, moveNavItemToSection } from './utils';
+import { findNavById, findNavByUrl, hoistNavItemPages, moveNavItemToSection } from './utils';
 
 describe('findNavByUrl', () => {
   const tree: NavModelItem[] = [
@@ -61,5 +61,49 @@ describe('moveNavItemToSection', () => {
   it('leaves the tree alone when either end is missing', () => {
     expect(moveNavItemToSection(sectioned(), 'plugin-page-absent-app', 'apps')).toEqual(sectioned());
     expect(moveNavItemToSection(sectioned(), 'plugin-page-moving-app', 'nonexistent')).toEqual(sectioned());
+  });
+});
+
+describe('hoistNavItemPages', () => {
+  const withApp = (): NavModelItem[] => [
+    {
+      id: 'apps',
+      text: 'More apps',
+      url: '/apps',
+      children: [
+        { id: 'plugin-page-some-app', text: 'Some app', url: '/a/some-app', sortWeight: -1700 },
+        {
+          id: 'plugin-page-grafana-ml-app',
+          text: 'Machine Learning',
+          url: '/a/grafana-ml-app',
+          sortWeight: -1700,
+          children: [
+            { id: 'ml-home', text: 'Home', url: '/a/grafana-ml-app/home' },
+            { id: 'ml-models', text: 'Models', url: '/a/grafana-ml-app/models', sortWeight: 2 },
+          ],
+        },
+      ],
+    },
+  ];
+
+  it('replaces the app with its pages, keyed and weighted as the plugin pass would', () => {
+    const hoisted = hoistNavItemPages(withApp(), 'apps', 'plugin-page-grafana-ml-app');
+
+    const children = findNavById(hoisted, 'apps')?.children ?? [];
+    // The offset was chosen to clear the small positive weights apps carry in a
+    // configured section, so here — where More apps holds apps at NavWeight.plugin
+    // — the pages land after them, keeping their own order
+    expect(children.map((child) => child.id)).toEqual([
+      'plugin-page-some-app',
+      'standalone-plugin-page-a-grafana-ml-app-home',
+      'standalone-plugin-page-a-grafana-ml-app-models',
+    ]);
+    expect(children.map((child) => child.sortWeight)).toEqual([-1700, -100, -98]);
+  });
+
+  it('leaves the tree alone for a missing app, section, or an app with no pages', () => {
+    expect(hoistNavItemPages(withApp(), 'apps', 'plugin-page-absent-app')).toEqual(withApp());
+    expect(hoistNavItemPages(withApp(), 'nonexistent', 'plugin-page-grafana-ml-app')).toEqual(withApp());
+    expect(hoistNavItemPages(withApp(), 'apps', 'plugin-page-some-app')).toEqual(withApp());
   });
 });

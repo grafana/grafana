@@ -1,9 +1,9 @@
-import { type NavModelItem, userHasAnyPermission } from '@grafana/data';
+import { locationUtil, type NavModelItem, userHasAnyPermission } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { NavID, type NavId } from './constants';
+import { HOISTED_PAGE_WEIGHT_OFFSET, NavID, type NavId } from './constants';
 
 /** Whether to build the nav tree client-side, covering the static sections only. */
 export function isClientNavTreeEnabled(): boolean {
@@ -245,6 +245,35 @@ export function moveNavItemToSection(
   return updateNavById(placed, sectionId, (section) => ({
     ...section,
     children: sortNavTree(section.children ?? []),
+  }));
+}
+
+/**
+ * Replaces an app's node inside a section with its own pages, the way the plugin
+ * pass hoists an app whose nav config asks for it. For callers working on a
+ * finished tree, where that pass has already run.
+ *
+ * The pages take the ids and weights they would have been built with, sub url
+ * and all: the tree has been through applyAppSubUrl by now, and the server-built
+ * one arrives that way, so the url is stripped back before deriving the id.
+ * Returns the tree untouched if the app or the section is missing.
+ */
+export function hoistNavItemPages(tree: NavModelItem[], sectionId: string, id: string): NavModelItem[] {
+  const section = findNavById(tree, sectionId);
+  const item = section?.children?.find((child) => child.id === id);
+  if (!section || !item?.children?.length) {
+    return tree;
+  }
+
+  const hoisted = item.children.map((page) => ({
+    ...page,
+    sortWeight: HOISTED_PAGE_WEIGHT_OFFSET + (page.sortWeight ?? 0),
+    ...(page.url && { id: hoistedPluginPageId(locationUtil.stripBaseFromUrl(page.url)) }),
+  }));
+
+  return updateNavById(tree, sectionId, (node) => ({
+    ...node,
+    children: sortNavTree([...(node.children ?? []).filter((child) => child !== item), ...hoisted]),
   }));
 }
 

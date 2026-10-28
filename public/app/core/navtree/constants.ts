@@ -60,6 +60,10 @@ function computeNavWeights(): Record<(typeof NAV_ORDER)[number], number> {
 
 export const NavWeight = computeNavWeights();
 
+// Hoisted pages without a pinned slot sort above the section's app entries
+// (which sit at small positive weights) while keeping their own relative order
+export const HOISTED_PAGE_WEIGHT_OFFSET = -100;
+
 // The values (slashes included, e.g. 'dashboards/browse') are load-bearing:
 // the rest of the app looks nav items up by these strings (navIndex consumers,
 // breadcrumbs, registered nav entries, preferences), so they form an app-wide

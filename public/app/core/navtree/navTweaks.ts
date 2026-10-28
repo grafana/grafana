@@ -3,7 +3,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { NavID, NavWeight } from './constants';
 import { type PluginNavOverride } from './pluginNavOverrides';
-import { moveNavItemToSection, pluginPageId } from './utils';
+import { hoistNavItemPages, moveNavItemToSection, pluginPageId } from './utils';
 
 /**
  * Transitional nav adjustments, every one of them meant to be deleted. Each
@@ -23,11 +23,16 @@ type NavTweak = Pick<PluginNavOverride, 'when' | 'apply'>;
 const NAV_TWEAKS: NavTweak[] = [
   {
     // Machine Learning goes back under More apps until its place in the new IA
-    // is settled. NavWeight.plugin is what an app with no placement of its own
-    // carries, so it ties with the other apps and keeps their order; without it
-    // the app brings its top-level weight along and sorts above the section.
+    // is settled, with its pages listed there rather than nested under an app
+    // node. NavWeight.plugin is what an app with no placement of its own carries,
+    // so the move ties with the other apps instead of bringing its top-level
+    // weight along; the hoist then leaves the pages where the plugin pass would
+    // have put them had the app's nav config asked for it.
     when: isInfoArchRefresh,
-    apply: (tree) => moveNavItemToSection(tree, pluginPageId('grafana-ml-app'), NavID.apps, NavWeight.plugin),
+    apply: (tree) => {
+      const id = pluginPageId('grafana-ml-app');
+      return hoistNavItemPages(moveNavItemToSection(tree, id, NavID.apps, NavWeight.plugin), NavID.apps, id);
+    },
   },
 ];
 

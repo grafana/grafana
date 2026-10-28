@@ -10,7 +10,7 @@ import { getNavTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { type AppNavConfig, appNavConfigFor, appNavPathConfigFor } from './appNavConfig';
-import { NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
+import { HOISTED_PAGE_WEIGHT_OFFSET, NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { PLUGIN_NAV_OVERRIDES } from './pluginNavOverrides';
 import { appendIntoSection, hoistedPluginPageId, pluginPageId, standalonePluginPageId, withAppSubUrl } from './utils';
 
@@ -264,10 +264,6 @@ function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: 
     },
   ];
 }
-
-// Hoisted pages without a pinned slot sort above the section's app entries
-// (which sit at small positive weights) while keeping their own relative order
-const HOISTED_PAGE_WEIGHT_OFFSET = -100;
 
 /**
  * Expands an app's pages into its target section as standalone entries instead
