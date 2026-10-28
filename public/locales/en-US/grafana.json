@@ -16904,6 +16904,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": "Preferred"
+    },
     "login": "Login",
     "manifests": {
       "api-docs": "API docs",
