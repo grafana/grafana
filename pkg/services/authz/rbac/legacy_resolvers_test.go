@@ -355,12 +355,6 @@ func TestLegacyCheckSharedWithMeEnablesResolversWithoutStoredGrants(t *testing.T
 			Action:     "dashboards:read",
 			ActionSets: []string{"dashboards:view", "dashboards:edit"},
 		},
-		{
-			UserID:  1,
-			Role:    "Viewer",
-			TeamIDs: []int64{10},
-			Action:  "folders:read",
-		},
 	}, permissions.queries)
 	require.Empty(t, permissions.presenceQueries)
 }
@@ -385,7 +379,6 @@ func TestLegacyCheckResolversOverGRPC(t *testing.T) {
 				Permissions: map[int64]map[string][]string{
 					12: {
 						"dashboards:read": {"folders:uid:parent"},
-						"folders:read":    {acimpl.SharedWithMeFolderPermission.Scope},
 					},
 				},
 			}, requester)
