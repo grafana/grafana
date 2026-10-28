@@ -14,6 +14,13 @@ test.use({
   },
 });
 
+// These flows exercise the single-card view, which users now only get after leaving stacked view.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('grafana.dashboard.query-editor-next.stacked-view', 'false');
+  });
+});
+
 const DASHBOARD_UID = '5SdHCadmz';
 const PANEL_ID = '3';
 
