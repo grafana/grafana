@@ -9,10 +9,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -51,6 +52,10 @@ func NewEnvVarsProvider(cfg *PluginInstanceCfg, license plugins.Licensing, ssoSe
 func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plugin) []string {
 	hostEnv := []string{
 		p.envVar("GF_VERSION", p.cfg.GrafanaVersion),
+	}
+
+	if len(p.cfg.NATSURLs) > 0 {
+		hostEnv = append(hostEnv, p.envVar("GF_NATS_URLS", strings.Join(p.cfg.NATSURLs, ",")))
 	}
 
 	if p.license != nil {
