@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event';
 import { act, render, screen, waitFor, within } from 'test/test-utils';
 
-import { PluginIncludeType, setTimeZoneResolver } from '@grafana/data';
+import { getTimeZoneInfo, PluginIncludeType, setTimeZoneResolver } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type OnCallScheduleDTO } from 'app/features/alerting/unified/api/onCallApi';
 
@@ -102,8 +102,39 @@ function rowTitles() {
   return panelRows().map((row) => within(row).getAllByText(/\S/, { selector: 'p' })[0].textContent);
 }
 
+/**
+ * "You're on call until …" for `end` in the runner's browser zone. Uses Intl, not the formatter
+ * under test, and includes the date when `end` falls on another local day so a non-UTC CI TZ still matches.
+ */
+function browserUntil(end: number, now: number): string {
+  const zone = getTimeZoneInfo('browser', now)?.ianaName;
+  if (!zone) {
+    throw new Error('browser time zone did not resolve');
+  }
+  const read = (value: number) => {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: zone,
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(new Date(value));
+    return Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+  };
+  const endParts = read(end);
+  const nowParts = read(now);
+  const clock = `${endParts.hour}:${endParts.minute}`;
+  const sameDay = endParts.year === nowParts.year && endParts.month === nowParts.month && endParts.day === nowParts.day;
+  return sameDay ? `You're on call until ${clock}` : `You're on call until ${endParts.month} ${endParts.day}, ${clock}`;
+}
+
+// Fixed UTC+5. No daylight-saving transition, so the clocks below do not depend on the CI runner's TZ.
+const ZONE = 'Etc/GMT-5';
+
 describe('AlertIncidentTabs On call tab', () => {
-  beforeAll(() => setTimeZoneResolver(() => 'Europe/Helsinki'));
+  beforeAll(() => setTimeZoneResolver(() => ZONE));
   afterAll(() => setTimeZoneResolver(() => 'browser'));
 
   beforeEach(() => {
@@ -133,7 +164,7 @@ describe('AlertIncidentTabs On call tab', () => {
     expect(Object.fromEntries(eventCalls[0])).toEqual({
       date: '2024-01-02',
       days: '30',
-      user_tz: 'Europe/Helsinki',
+      user_tz: ZONE,
     });
     expect(listCalls).toEqual([]);
 
@@ -205,14 +236,14 @@ describe('AlertIncidentTabs On call tab', () => {
     expect(screen.queryByText('Quiet')).not.toBeInTheDocument();
 
     const [primary, secondary, backend, old] = panelRows();
-    // 17:00Z is 19:00 in Helsinki.
-    expect(within(primary).getByText("You're on call until 19:00")).toBeInTheDocument();
+    // 17:00Z is 22:00 at UTC+5.
+    expect(within(primary).getByText("You're on call until 22:00")).toBeInTheDocument();
     // The signed-in user leads the roster even though the API listed bob first.
     expect(within(primary).getByText('admin')).toBeInTheDocument();
     expect(within(primary).getByLabelText('admin icon')).toBeInTheDocument();
     expect(within(primary).getByLabelText('bob icon')).toBeInTheDocument();
 
-    expect(within(secondary).getByText('Your next shift Jan 4, 12:00–20:00')).toBeInTheDocument();
+    expect(within(secondary).getByText('Your next shift Jan 4, 15:00–23:00')).toBeInTheDocument();
     expect(within(secondary).getByText('carol')).toBeInTheDocument();
 
     // Team rows carry only the roster: the first login as text, everyone as an avatar.
@@ -334,7 +365,7 @@ describe('AlertIncidentTabs On call tab', () => {
       expect(await screen.findByText('Primary')).toBeInTheDocument();
       expect(rowTitles()).toEqual(['Primary', 'Secondary', 'Old']);
       const [primary, secondary] = panelRows();
-      expect(within(primary).getByText("You're on call until 19:00")).toBeInTheDocument();
+      expect(within(primary).getByText("You're on call until 22:00")).toBeInTheDocument();
       expect(within(primary).queryByText('Nobody on call')).not.toBeInTheDocument();
       expect(within(primary).queryByLabelText(/icon$/)).not.toBeInTheDocument();
       expect(screen.queryByRole('link', { name: /^Primary/ })).not.toBeInTheDocument();
@@ -444,37 +475,35 @@ describe('AlertIncidentTabs On call tab', () => {
   });
 
   it("requests the window from today in the user's time zone", async () => {
-    setTimeZoneResolver(() => 'Europe/Berlin');
-    // 00:30 on Wednesday in Berlin, still Tuesday in UTC.
+    // 23:30Z is 04:30 on Jan 3 at UTC+5, and still Jan 2 in UTC.
     jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2024-01-02T23:30:00Z'));
-    try {
-      const { eventCalls } = mockOnCall();
-      render(<AlertIncidentTabsWithData />);
+    const { eventCalls } = mockOnCall();
+    render(<AlertIncidentTabsWithData />);
 
-      await screen.findByRole('tab', { name: /on-call/i });
-      await waitFor(() => expect(eventCalls).toHaveLength(1));
-      expect(Object.fromEntries(eventCalls[0])).toEqual({ date: '2024-01-03', days: '30', user_tz: 'Europe/Berlin' });
-    } finally {
-      setTimeZoneResolver(() => 'Europe/Helsinki');
-    }
+    await screen.findByRole('tab', { name: /on-call/i });
+    await waitFor(() => expect(eventCalls).toHaveLength(1));
+    expect(Object.fromEntries(eventCalls[0])).toEqual({ date: '2024-01-03', days: '30', user_tz: ZONE });
   });
 
   it('asks for the browser zone when the preference is UTC', async () => {
     setTimeZoneResolver(() => 'UTC');
     try {
+      const browserZone = getTimeZoneInfo('browser', NOW)?.ianaName;
+      if (!browserZone) {
+        throw new Error('browser time zone did not resolve');
+      }
       const { eventCalls } = mockOnCall();
       const { user } = render(<AlertIncidentTabsWithData />);
 
       await screen.findByRole('tab', { name: /on-call/i });
       await waitFor(() => expect(eventCalls).toHaveLength(1));
-      // Jest's TZ is Pacific/Easter. UTC must not be forwarded as the viewer's zone.
-      expect(eventCalls[0].get('user_tz')).toBe('Pacific/Easter');
+      expect(eventCalls[0].get('user_tz')).toBe(browserZone);
+      expect(eventCalls[0].get('user_tz')).not.toBe('utc');
 
       await user.click(screen.getByRole('tab', { name: /on-call/i }));
-      // 17:00Z is 12:00 in Pacific/Easter.
-      expect(await screen.findByText("You're on call until 12:00")).toBeInTheDocument();
+      expect(await screen.findByText(browserUntil(Date.parse('2024-01-02T17:00:00Z'), NOW))).toBeInTheDocument();
     } finally {
-      setTimeZoneResolver(() => 'Europe/Helsinki');
+      setTimeZoneResolver(() => ZONE);
     }
   });
 
