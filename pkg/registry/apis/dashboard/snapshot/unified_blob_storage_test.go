@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"testing"
-	"time"
+	"testing/synctest"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,40 +23,39 @@ import (
 )
 
 func TestMode1SnapshotBackgroundBlobCreate(t *testing.T) {
-	service := dashboardsnapshots.NewMockService(t)
-	service.On("CreateDashboardSnapshot", mock.Anything, mock.MatchedBy(func(cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) bool {
-		return cmd.Dashboard.Object["title"] == "CPU"
-	})).Return(&dashboardsnapshots.DashboardSnapshot{
-		Key: "snap-1", OrgID: 1, Dashboard: simplejson.New(),
-	}, nil)
-	legacy := &SnapshotLegacyStore{ResourceInfo: dashv0.SnapshotResourceInfo, Service: service, Namespacer: authlib.OrgNamespaceFormatter}
-	unified := grafanarest.NewMockStorage(t)
-	written := make(chan *dashv0.Snapshot, 1)
-	unified.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Run(func(args mock.Arguments) { written <- args.Get(1).(*dashv0.Snapshot).DeepCopy() }).
-		Return(&dashv0.Snapshot{}, nil).Once()
-	blobs := &fakeBlobStore{putRsp: &resourcepb.PutBlobResponse{Uid: "blob-1", MimeType: "application/json"}}
-	gr := dashv0.SnapshotResourceInfo.GroupResource()
-	cfg := dualwrite.NewFakeConfig()
-	cfg.UnifiedStorage[gr.String()] = setting.UnifiedStorageConfig{DualWriterMode: grafanarest.Mode1}
-	storage, err := dualwrite.ProvideServiceForTests(cfg).NewStorage(gr, legacy, NewUnifiedBlobStorage(unified, blobs))
-	require.NoError(t, err)
+	synctest.Test(t, func(t *testing.T) {
+		service := dashboardsnapshots.NewMockService(t)
+		service.On("CreateDashboardSnapshot", mock.Anything, mock.MatchedBy(func(cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) bool {
+			return cmd.Dashboard.Object["title"] == "CPU"
+		})).Return(&dashboardsnapshots.DashboardSnapshot{
+			Key: "snap-1", OrgID: 1, Dashboard: simplejson.New(),
+		}, nil)
+		legacy := &SnapshotLegacyStore{ResourceInfo: dashv0.SnapshotResourceInfo, Service: service, Namespacer: authlib.OrgNamespaceFormatter}
+		unified := grafanarest.NewMockStorage(t)
+		written := make(chan *dashv0.Snapshot, 1)
+		unified.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Run(func(args mock.Arguments) { written <- args.Get(1).(*dashv0.Snapshot).DeepCopy() }).
+			Return(&dashv0.Snapshot{}, nil).Once()
+		blobs := &fakeBlobStore{putRsp: &resourcepb.PutBlobResponse{Uid: "blob-1", MimeType: "application/json"}}
+		gr := dashv0.SnapshotResourceInfo.GroupResource()
+		cfg := dualwrite.NewFakeConfig()
+		cfg.UnifiedStorage[gr.String()] = setting.UnifiedStorageConfig{DualWriterMode: grafanarest.Mode1}
+		storage, err := dualwrite.ProvideServiceForTests(cfg).NewStorage(gr, legacy, NewUnifiedBlobStorage(unified, blobs))
+		require.NoError(t, err)
 
-	ctx := identity.WithRequester(context.Background(), snapshotCreatorForTest(1))
-	input := newBlobTestSnapshot()
-	created, err := storage.Create(ctx, input, nil, &metav1.CreateOptions{})
-	require.NoError(t, err)
-	require.Equal(t, input.Spec.Dashboard, created.(*dashv0.Snapshot).Spec.Dashboard)
-	select {
-	case saved := <-written:
+		ctx := identity.WithRequester(context.Background(), snapshotCreatorForTest(1))
+		input := newBlobTestSnapshot()
+		created, err := storage.Create(ctx, input, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, input.Spec.Dashboard, created.(*dashv0.Snapshot).Spec.Dashboard)
+		saved := <-written
+		synctest.Wait()
 		require.Nil(t, saved.Spec.Dashboard)
 		require.Equal(t, "blob-1", saved.Blobs.Dashboard.Uid)
 		require.Equal(t, "snap-1", blobs.put.Resource.Name)
 		require.JSONEq(t, `{"title":"CPU","panels":[]}`, string(blobs.put.Value))
-	case <-time.After(5 * time.Second):
-		t.Fatal("background unified create did not complete")
-	}
-	require.Equal(t, input.Spec.Dashboard, created.(*dashv0.Snapshot).Spec.Dashboard)
+		require.Equal(t, input.Spec.Dashboard, created.(*dashv0.Snapshot).Spec.Dashboard)
+	})
 }
 
 func TestUnifiedBlobStorageUploadFailureDoesNotCreate(t *testing.T) {
