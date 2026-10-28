@@ -1,25 +1,34 @@
 package dashboard
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
+	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	jsonpatch "gopkg.in/evanphx/json-patch.v4"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -367,6 +376,413 @@ func TestIsDashboardSettingsNotFound(t *testing.T) {
 	}
 }
 
+func TestDashboardSettingsStorageList(t *testing.T) {
+	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	gvk := dashv2beta1.DashboardSettingsResourceInfo.GroupVersionKind()
+	stored := map[string]*dashv2beta1.DashboardSettings{}
+	for _, obj := range []*dashv2beta1.DashboardSettings{
+		newDashboardSettings("namespace", "", nil),
+		newDashboardSettings("user-u1", "", new("u1")),
+		newDashboardSettings("user-u2", "", new("u2")),
+		newDashboardSettings("folder-f1", "f1", nil),
+		newDashboardSettings("folder-f2", "f2", nil),
+	} {
+		stored[obj.Name] = obj
+	}
+	// What the store answers for the folder tier label.
+	folderTier := [][]dashv2beta1.DashboardSettings{{*stored["folder-f1"], *stored["folder-f2"]}}
+	newAccessClient := func() *dashboardSettingsAccessClient {
+		return &dashboardSettingsAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}}
+	}
+	nameIs := func(name string) *metainternalversion.ListOptions {
+		return &metainternalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.name", name)}
+	}
+
+	u1 := dashboardSettingsRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	u3 := dashboardSettingsRequester(authlib.TypeUser, "u3", identity.RoleViewer)
+	serviceAccount := dashboardSettingsRequester(authlib.TypeServiceAccount, "sa", identity.RoleAdmin)
+	serviceAccountU1 := dashboardSettingsRequester(authlib.TypeServiceAccount, "u1", identity.RoleAdmin)
+	render := dashboardSettingsRequester(authlib.TypeRenderService, "", identity.RoleViewer)
+	grafanaAdmin := dashboardSettingsRequester(authlib.TypeUser, "u1", identity.RoleAdmin)
+	grafanaAdmin.IsGrafanaAdmin = true
+	// Grafana admins pass the namespace authorizer for every namespace.
+	otherNamespace := dashboardSettingsRequester(authlib.TypeUser, "u1", identity.RoleAdmin)
+	otherNamespace.IsGrafanaAdmin = true
+	otherNamespace.Namespace = "stacks-2"
+
+	t.Run("returns only what the caller can read", func(t *testing.T) {
+		tests := []struct {
+			name      string
+			requester identity.Requester
+			options   *metainternalversion.ListOptions
+			want      []string
+			wantGets  []string
+			wantLists int
+		}{
+			{name: "a user gets the org tier, their user tier and the folders they can read", requester: u1, want: []string{"namespace", "user-u1", "folder-f1"}, wantGets: []string{"namespace", "user-u1"}, wantLists: 1},
+			// Clients such as kubectl send a limit, and everything the caller can read fits in one page.
+			{name: "the limit is ignored", requester: u1, options: &metainternalversion.ListOptions{Limit: 1}, want: []string{"namespace", "user-u1", "folder-f1"}, wantGets: []string{"namespace", "user-u1"}, wantLists: 1},
+			{name: "empty selectors select everything", requester: u1, options: &metainternalversion.ListOptions{LabelSelector: labels.Everything(), FieldSelector: fields.Everything()}, want: []string{"namespace", "user-u1", "folder-f1"}, wantGets: []string{"namespace", "user-u1"}, wantLists: 1},
+			{name: "a tier that isn't stored is skipped", requester: u3, want: []string{"namespace", "folder-f1"}, wantGets: []string{"namespace", "user-u3"}, wantLists: 1},
+			{name: "a service account gets no user tier", requester: serviceAccount, want: []string{"namespace", "folder-f1"}, wantGets: []string{"namespace"}, wantLists: 1},
+			// The authorizer turns render identities away, but one that reached storage gets the org tier only.
+			{name: "another identity gets only the org tier", requester: render, want: []string{"namespace"}, wantGets: []string{"namespace"}},
+			{name: "a requester from another namespace gets nothing", requester: otherNamespace, want: []string{}},
+
+			// The authorizer sees the selected name only when it is a valid path segment, so the tier rules
+			// apply here too.
+			{name: "selecting the caller's user tier", requester: u1, options: nameIs("user-u1"), want: []string{"user-u1"}, wantGets: []string{"user-u1"}},
+			{name: "selecting with ==", requester: u1, options: &metainternalversion.ListOptions{FieldSelector: fields.ParseSelectorOrDie("metadata.name==user-u1")}, want: []string{"user-u1"}, wantGets: []string{"user-u1"}},
+			{name: "selecting another user's tier", requester: u1, options: nameIs("user-u2"), want: []string{}},
+			{name: "a service account with the owner's UID is not the owner", requester: serviceAccountU1, options: nameIs("user-u1"), want: []string{}},
+			{name: "selecting the org tier", requester: u1, options: nameIs("namespace"), want: []string{"namespace"}, wantGets: []string{"namespace"}},
+			{name: "selecting the org tier from another namespace", requester: otherNamespace, options: nameIs("namespace"), want: []string{}},
+			{name: "selecting a readable folder tier", requester: u1, options: nameIs("folder-f1"), want: []string{"folder-f1"}, wantGets: []string{"folder-f1"}},
+			{name: "selecting an unreadable folder tier", requester: u1, options: nameIs("folder-f2"), want: []string{}, wantGets: []string{"folder-f2"}},
+			{name: "selecting a folder tier from another namespace", requester: otherNamespace, options: nameIs("folder-f1"), want: []string{}},
+			{name: "selecting a tier that isn't stored", requester: u3, options: nameIs("user-u3"), want: []string{}, wantGets: []string{"user-u3"}},
+			{name: "selecting a name outside every tier", requester: u1, options: nameIs("bogus"), want: []string{}},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				store := newDashboardSettingsListStore(t, stored, folderTier)
+
+				obj, err := newDashboardSettingsStorage(store, gvk, newAccessClient()).List(identity.WithRequester(ctx, tt.requester), tt.options)
+				require.NoError(t, err)
+
+				require.Equal(t, tt.want, dashboardSettingsNames(requireFilteredDashboardSettingsList(t, obj).Items))
+				require.Equal(t, tt.wantGets, store.gets)
+				// Listing only by the tier label keeps other users' objects out of reach.
+				require.Len(t, store.lists, tt.wantLists)
+				for _, options := range store.lists {
+					require.NotNil(t, options)
+					require.NotNil(t, options.LabelSelector)
+					require.Equal(t, "dashboard.grafana.app/settings-tier=folder", options.LabelSelector.String())
+					require.Equal(t, int64(dashboardSettingsListPageSize), options.Limit)
+				}
+			})
+		}
+	})
+
+	// The apiserver also serves this list across all namespaces, and the namespace authorizer has no
+	// opinion on it. The tier rules' namespace checks keep it from reaching the store, which would scan
+	// every org.
+	t.Run("a list across all namespaces reads nothing", func(t *testing.T) {
+		allNamespaces := k8srequest.WithNamespace(context.Background(), "")
+		tests := []struct {
+			name      string
+			requester identity.Requester
+			options   *metainternalversion.ListOptions
+		}{
+			{name: "a viewer", requester: u1},
+			{name: "a viewer selecting a folder tier", requester: u1, options: nameIs("folder-f1")},
+			{name: "a Grafana admin", requester: grafanaAdmin},
+			{name: "a Grafana admin selecting a folder tier", requester: grafanaAdmin, options: nameIs("folder-f1")},
+			{name: "a service account", requester: serviceAccount},
+			{name: "a service account selecting a folder tier", requester: serviceAccount, options: nameIs("folder-f1")},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				accessClient := newAccessClient()
+				store := newDashboardSettingsListStore(t, stored, folderTier)
+
+				obj, err := newDashboardSettingsStorage(store, gvk, accessClient).List(identity.WithRequester(allNamespaces, tt.requester), tt.options)
+				require.NoError(t, err)
+
+				require.Empty(t, dashboardSettingsNames(requireFilteredDashboardSettingsList(t, obj).Items))
+				require.Empty(t, store.gets)
+				require.Empty(t, store.lists)
+				require.Empty(t, accessClient.batchRequests)
+			})
+		}
+	})
+
+	t.Run("checks read access to every folder in one batch, as the caller", func(t *testing.T) {
+		accessClient := newAccessClient()
+		store := newDashboardSettingsListStore(t, stored, folderTier)
+
+		_, err := newDashboardSettingsStorage(store, gvk, accessClient).List(identity.WithRequester(ctx, u1), nil)
+		require.NoError(t, err)
+
+		require.Len(t, accessClient.batchRequests, 1)
+		request := accessClient.batchRequests[0]
+		require.Equal(t, "stacks-1", request.Namespace)
+		// FilterAuthorized numbers the checks by position.
+		for i := range request.Checks {
+			request.Checks[i].CorrelationID = ""
+		}
+		require.Equal(t, []authlib.BatchCheckItem{
+			{Verb: "get", Group: "folder.grafana.app", Resource: "folders", Name: "f1", Folder: "f1"},
+			{Verb: "get", Group: "folder.grafana.app", Resource: "folders", Name: "f2", Folder: "f2"},
+		}, request.Checks)
+		// A check made as the service identity would pass on the service's own permissions.
+		require.Equal(t, []string{u1.GetUID()}, accessClient.callers)
+	})
+
+	// The tier label only indexes the folder tier: an object belongs to it only when its folder
+	// annotation is the folder its name gives.
+	t.Run("the folder tier holds only objects whose annotation matches their name", func(t *testing.T) {
+		accessClient := &dashboardSettingsAccessClient{grants: map[string][]string{
+			"f1":      {utils.VerbGet},
+			"f3":      {utils.VerbGet},
+			"f4":      {utils.VerbGet},
+			"general": {utils.VerbGet},
+		}}
+		store := newDashboardSettingsListStore(t, nil, [][]dashv2beta1.DashboardSettings{{
+			*newDashboardSettings("folder-f1", "f1", nil),
+			*newDashboardSettings("folder-f3", "f1", nil),
+			*newDashboardSettings("folder-f4", "", nil),
+			*newDashboardSettings("folder-general", "general", nil),
+			*newDashboardSettings("namespace", "", nil),
+			*newDashboardSettings("user-u1", "", new("u1")),
+		}})
+
+		items, err := newDashboardSettingsStorage(store, gvk, accessClient).visibleFolderTier(identity.WithRequester(ctx, u1), u1, "stacks-1")
+		require.NoError(t, err)
+
+		require.Equal(t, []string{"folder-f1"}, dashboardSettingsNames(items))
+		require.Len(t, accessClient.batchRequests, 1)
+		require.Len(t, accessClient.batchRequests[0].Checks, 1)
+	})
+
+	t.Run("reads at most 20 pages of the folder tier", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			pages    int
+			wantWarn bool
+		}{
+			{name: "more pages than the cap", pages: 25, wantWarn: true},
+			// Nothing is left out when the last page fits under the cap.
+			{name: "exactly the cap", pages: 20},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				accessClient := &dashboardSettingsAccessClient{grants: map[string][]string{}}
+				pages := make([][]dashv2beta1.DashboardSettings, tt.pages)
+				for i := range pages {
+					folderUID := fmt.Sprintf("f%d", i)
+					pages[i] = []dashv2beta1.DashboardSettings{*newDashboardSettings("folder-"+folderUID, folderUID, nil)}
+					accessClient.grants[folderUID] = []string{utils.VerbGet}
+				}
+				store := newDashboardSettingsListStore(t, nil, pages)
+				var logs bytes.Buffer
+				logCtx := logging.Context(identity.WithRequester(ctx, u1), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
+
+				obj, err := newDashboardSettingsStorage(store, gvk, accessClient).List(logCtx, nil)
+				require.NoError(t, err)
+
+				want := make([]string, 0, 20)
+				wantContinues := make([]string, 0, 20)
+				for i := range 20 {
+					want = append(want, fmt.Sprintf("folder-f%d", i))
+					wantContinues = append(wantContinues, store.continueToken(i))
+				}
+				require.Equal(t, want, dashboardSettingsNames(requireFilteredDashboardSettingsList(t, obj).Items))
+				continues := make([]string, 0, len(store.lists))
+				for _, options := range store.lists {
+					continues = append(continues, options.Continue)
+				}
+				require.Equal(t, wantContinues, continues)
+
+				if !tt.wantWarn {
+					require.Empty(t, logs.String())
+					return
+				}
+				var record map[string]any
+				require.NoError(t, json.Unmarshal(logs.Bytes(), &record), "expected one log record, got %s", logs.String())
+				require.Equal(t, "WARN", record["level"])
+				require.Equal(t, "dashboard settings list reached the folder tier page cap and may have left out folders", record["msg"])
+				require.Equal(t, "stacks-1", record["namespace"])
+				require.EqualValues(t, 20, record["pages"])
+			})
+		}
+	})
+
+	// The authorizer already limited what they may do, and folder and user cleanup must find every object.
+	t.Run("an access-policy caller gets the store's list unchanged", func(t *testing.T) {
+		_, service := identity.WithServiceIdentity(context.Background(), 1)
+		_, provisioning, err := identity.WithProvisioningIdentity(context.Background(), "stacks-1")
+		require.NoError(t, err)
+
+		for _, caller := range []struct {
+			name      string
+			requester identity.Requester
+		}{
+			{name: "the service identity", requester: service},
+			{name: "the provisioning identity", requester: provisioning},
+			{name: "another service's token", requester: dashboardSettingsToken("dashboard.grafana.app/dashboardsettings:*")},
+		} {
+			t.Run(caller.name, func(t *testing.T) {
+				options := &metainternalversion.ListOptions{Limit: 2, Continue: "c1"}
+				want := &dashv2beta1.DashboardSettingsList{
+					ListMeta: metav1.ListMeta{Continue: "c2"},
+					Items:    []dashv2beta1.DashboardSettings{*stored["user-u1"], *stored["user-u2"]},
+				}
+				store := grafanarest.NewMockStorage(t)
+				store.EXPECT().List(mock.Anything, mock.MatchedBy(func(got *metainternalversion.ListOptions) bool {
+					return got == options
+				})).Return(want, nil).Once()
+
+				obj, err := newDashboardSettingsStorage(store, gvk, newAccessClient()).List(identity.WithRequester(ctx, caller.requester), options)
+				require.NoError(t, err)
+				require.Same(t, want, obj)
+			})
+		}
+	})
+
+	t.Run("unsupported list options are a bad request", func(t *testing.T) {
+		const unsupportedFieldSelector = "only a single metadata.name=<name> fieldSelector is supported for dashboard settings"
+		tests := []struct {
+			name    string
+			options *metainternalversion.ListOptions
+			wantErr string
+		}{
+			// A store's token encodes the next object's name or an offset into the unfiltered list.
+			{name: "a continue token", options: &metainternalversion.ListOptions{Continue: "abc"}, wantErr: "continue is not supported for dashboard settings"},
+			{name: "a label selector", options: &metainternalversion.ListOptions{LabelSelector: labels.SelectorFromSet(labels.Set{"grafana.app/folder": "f1"})}, wantErr: "labelSelector is not supported for dashboard settings"},
+			{name: "a name inequality", options: &metainternalversion.ListOptions{FieldSelector: fields.OneTermNotEqualSelector("metadata.name", "user-u2")}, wantErr: unsupportedFieldSelector},
+			{name: "more than one requirement", options: &metainternalversion.ListOptions{FieldSelector: fields.ParseSelectorOrDie("metadata.name=user-u1,metadata.namespace=stacks-1")}, wantErr: unsupportedFieldSelector},
+			{name: "a field other than the name", options: &metainternalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.namespace", "stacks-1")}, wantErr: unsupportedFieldSelector},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				store := newDashboardSettingsListStore(t, stored, folderTier)
+
+				obj, err := newDashboardSettingsStorage(store, gvk, newAccessClient()).List(identity.WithRequester(ctx, u1), tt.options)
+				require.True(t, apierrors.IsBadRequest(err), "expected a BadRequest, got %v", err)
+				require.ErrorContains(t, err, tt.wantErr)
+				require.Nil(t, obj)
+
+				require.Empty(t, store.gets)
+				require.Empty(t, store.lists)
+			})
+		}
+	})
+
+	t.Run("an error other than NotFound is returned", func(t *testing.T) {
+		boom := errors.New("boom")
+		tests := []struct {
+			name     string
+			getErr   error
+			listErr  error
+			batchErr error
+		}{
+			{name: "from a get", getErr: boom},
+			{name: "from a list of the folder tier", listErr: boom},
+			{name: "from a folder check", batchErr: boom},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				store := newDashboardSettingsListStore(t, stored, folderTier)
+				store.getErr = tt.getErr
+				store.listErr = tt.listErr
+				accessClient := newAccessClient()
+				accessClient.batchErr = tt.batchErr
+
+				obj, err := newDashboardSettingsStorage(store, gvk, accessClient).List(identity.WithRequester(ctx, u1), nil)
+				require.ErrorIs(t, err, boom)
+				require.Nil(t, obj)
+			})
+		}
+	})
+
+	// A batch check reports a failure on one item and still answers the others, and a list that left that
+	// folder out would look like a denial, while a named get of it fails.
+	t.Run("a folder whose check failed is an error", func(t *testing.T) {
+		errF1, errF2 := errors.New("f1 check failed"), errors.New("f2 check failed")
+		tests := []struct {
+			name       string
+			options    *metainternalversion.ListOptions
+			itemErrs   map[string]error
+			wantErr    error
+			wantFolder string
+			want       []string
+		}{
+			{name: "a folder the caller can read", itemErrs: map[string]error{"f1": errF1}, wantErr: errF1, wantFolder: "f1"},
+			{name: "a folder the caller can't read", itemErrs: map[string]error{"f2": errF2}, wantErr: errF2, wantFolder: "f2"},
+			{name: "the first of several", itemErrs: map[string]error{"f1": errF1, "f2": errF2}, wantErr: errF1, wantFolder: "f1"},
+			{name: "the selected folder", options: nameIs("folder-f1"), itemErrs: map[string]error{"f1": errF1}, wantErr: errF1, wantFolder: "f1"},
+
+			// A denial is not a failure.
+			{name: "a folder that was denied is left out", want: []string{"namespace", "user-u1", "folder-f1"}},
+			{name: "a selected folder that was denied is left out", options: nameIs("folder-f2"), want: []string{}},
+		}
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				store := newDashboardSettingsListStore(t, stored, folderTier)
+				accessClient := newAccessClient()
+				accessClient.batchItemErrs = tt.itemErrs
+				var logs bytes.Buffer
+				logCtx := logging.Context(identity.WithRequester(ctx, u1), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
+
+				obj, err := newDashboardSettingsStorage(store, gvk, accessClient).List(logCtx, tt.options)
+
+				if tt.wantErr != nil {
+					require.ErrorIs(t, err, tt.wantErr)
+					require.ErrorContains(t, err, "folder access could not be checked")
+					// The apiserver sends a List error's text to the client, and the cause can be the access
+					// backend's raw message, which can carry datastore details.
+					require.NotContains(t, err.Error(), tt.wantErr.Error())
+					require.Nil(t, obj)
+
+					var record map[string]any
+					require.NoError(t, json.Unmarshal(logs.Bytes(), &record), "expected one log record, got %s", logs.String())
+					require.Equal(t, "ERROR", record["level"])
+					require.Equal(t, "stacks-1", record["namespace"])
+					require.Equal(t, tt.wantFolder, record["folder"])
+					require.Equal(t, tt.wantErr.Error(), record["err"])
+					return
+				}
+				require.NoError(t, err)
+				require.Equal(t, tt.want, dashboardSettingsNames(requireFilteredDashboardSettingsList(t, obj).Items))
+			})
+		}
+	})
+
+	// Like checkDashboardSettingsFolderAccess, which denies every folder without one.
+	t.Run("without an access client no folder tier is read", func(t *testing.T) {
+		store := newDashboardSettingsListStore(t, stored, folderTier)
+
+		obj, err := newDashboardSettingsStorage(store, gvk, nil).List(identity.WithRequester(ctx, u1), nil)
+		require.NoError(t, err)
+
+		require.Equal(t, []string{"namespace", "user-u1"}, dashboardSettingsNames(requireFilteredDashboardSettingsList(t, obj).Items))
+		require.Empty(t, store.lists)
+	})
+
+	t.Run("a request without a requester fails", func(t *testing.T) {
+		store := newDashboardSettingsListStore(t, stored, folderTier)
+
+		obj, err := newDashboardSettingsStorage(store, gvk, newAccessClient()).List(ctx, nil)
+		require.Error(t, err)
+		require.Nil(t, obj)
+
+		require.Empty(t, store.gets)
+		require.Empty(t, store.lists)
+	})
+}
+
+// A store's continue token encodes the next object's name or an offset into the unfiltered list, so a
+// filtered list must never pass one on.
+func requireFilteredDashboardSettingsList(t *testing.T, obj runtime.Object) *dashv2beta1.DashboardSettingsList {
+	t.Helper()
+	list, ok := obj.(*dashv2beta1.DashboardSettingsList)
+	require.True(t, ok, "expected a dashboard settings list, got %T", obj)
+	require.Empty(t, list.Continue)
+	require.Nil(t, list.RemainingItemCount)
+	// The store's lists encode no items as [], and clients expect the same here.
+	require.NotNil(t, list.Items)
+	return list
+}
+
+func dashboardSettingsNames(items []dashv2beta1.DashboardSettings) []string {
+	names := make([]string, 0, len(items))
+	for _, item := range items {
+		names = append(names, item.Name)
+	}
+	return names
+}
+
 func requireDashboardSettings(t *testing.T, obj runtime.Object) *dashv2beta1.DashboardSettings {
 	t.Helper()
 	settings, ok := obj.(*dashv2beta1.DashboardSettings)
@@ -455,6 +871,70 @@ func (f *fakeDashboardSettingsStore) Create(ctx context.Context, obj runtime.Obj
 	stored := settings.DeepCopy()
 	f.items[stored.Name] = stored
 	return stored, nil
+}
+
+// dashboardSettingsListStore is a mock store that answers Get from stored objects and List from pages
+// of the folder tier, and records the names it gets and the options of every list. Any other call
+// fails the test.
+type dashboardSettingsListStore struct {
+	*grafanarest.MockStorage
+	gets  []string
+	lists []*metainternalversion.ListOptions
+
+	// Returned by every Get or List in place of an answer.
+	getErr  error
+	listErr error
+}
+
+func newDashboardSettingsListStore(t *testing.T, stored map[string]*dashv2beta1.DashboardSettings, folderTier [][]dashv2beta1.DashboardSettings) *dashboardSettingsListStore {
+	s := &dashboardSettingsListStore{MockStorage: grafanarest.NewMockStorage(t)}
+	s.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
+		s.gets = append(s.gets, name)
+		if s.getErr != nil {
+			return nil, s.getErr
+		}
+		obj, ok := stored[name]
+		if !ok {
+			return nil, apierrors.NewNotFound(dashv2beta1.DashboardSettingsResourceInfo.GroupResource(), name)
+		}
+		return obj.DeepCopy(), nil
+	}).Maybe()
+	s.EXPECT().List(mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+		s.lists = append(s.lists, options)
+		if s.listErr != nil {
+			return nil, s.listErr
+		}
+		page := 0
+		if options != nil && options.Continue != "" {
+			var err error
+			if page, err = strconv.Atoi(options.Continue); err != nil {
+				return nil, apierrors.NewBadRequest("invalid continue token")
+			}
+		}
+		list := &dashv2beta1.DashboardSettingsList{}
+		if page < len(folderTier) {
+			list.Items = folderTier[page]
+		}
+		// Like the store, every page but the last carries a continue token and a remaining count.
+		if page+1 < len(folderTier) {
+			remaining := 0
+			for _, later := range folderTier[page+1:] {
+				remaining += len(later)
+			}
+			list.Continue = s.continueToken(page + 1)
+			list.RemainingItemCount = new(int64(remaining))
+		}
+		return list, nil
+	}).Maybe()
+	return s
+}
+
+// continueToken is the token that asks for the given page; the first page needs none.
+func (*dashboardSettingsListStore) continueToken(page int) string {
+	if page == 0 {
+		return ""
+	}
+	return strconv.Itoa(page)
 }
 
 // watchableDashboardSettingsStore is a store that serves watch and deletecollection, as the registry

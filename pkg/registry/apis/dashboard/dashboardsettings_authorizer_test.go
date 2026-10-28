@@ -303,10 +303,16 @@ func TestDashboardsAPIBuilderGetAuthorizerRoutesDashboardSettings(t *testing.T) 
 // and the UID of its caller.
 type dashboardSettingsAccessClient struct {
 	authlib.AccessClient
-	grants   map[string][]string
-	callers  []string
-	requests []authlib.CheckRequest
-	folders  []string
+	grants        map[string][]string
+	callers       []string
+	requests      []authlib.CheckRequest
+	folders       []string
+	batchRequests []authlib.BatchCheckRequest
+	// Returned by every batch check in place of an answer.
+	batchErr error
+	// Fails the item of a batch check that names it, like the RBAC service: the item is not allowed and
+	// carries the error, while the other items get their answers.
+	batchItemErrs map[string]error
 }
 
 func (c *dashboardSettingsAccessClient) Check(_ context.Context, authInfo authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
@@ -314,6 +320,25 @@ func (c *dashboardSettingsAccessClient) Check(_ context.Context, authInfo authli
 	c.requests = append(c.requests, req)
 	c.folders = append(c.folders, folder)
 	return authlib.CheckResponse{Allowed: slices.Contains(c.grants[req.Name], req.Verb), Zookie: authlib.NoopZookie{}}, nil
+}
+
+// BatchCheck answers each check by its name: FilterAuthorized numbers the checks by position, so the
+// correlation IDs say nothing about which folder a check is for.
+func (c *dashboardSettingsAccessClient) BatchCheck(_ context.Context, authInfo authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	c.callers = append(c.callers, authInfo.GetUID())
+	c.batchRequests = append(c.batchRequests, req)
+	if c.batchErr != nil {
+		return authlib.BatchCheckResponse{}, c.batchErr
+	}
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, check := range req.Checks {
+		if err := c.batchItemErrs[check.Name]; err != nil {
+			results[check.CorrelationID] = authlib.BatchCheckResult{Error: err}
+			continue
+		}
+		results[check.CorrelationID] = authlib.BatchCheckResult{Allowed: slices.Contains(c.grants[check.Name], check.Verb)}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
 }
 
 // The delegated grant is what a Cloud token needs to reach dashboard settings at all.
