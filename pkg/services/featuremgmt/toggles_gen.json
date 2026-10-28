@@ -2661,6 +2661,23 @@
     },
     {
       "metadata": {
+        "name": "grafana.configFromQueryDynamicName",
+        "resourceVersion": "1792594531964",
+        "creationTimestamp": "2026-09-17T22:29:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-21 14:55:31.964131578 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables using the Config From Query Results transformation's Dynamic Field Name option",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.correlationsSkipLegacy",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-27T17:03:23Z"
@@ -2715,13 +2732,30 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardComposer",
+        "resourceVersion": "1792396328410",
+        "creationTimestamp": "2026-10-19T07:52:08Z"
+      },
+      "spec": {
+        "description": "Enables Composer mode for editing dashboards with Grafana Assistant",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardGlobalVariables",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-05T08:40:28Z"
+        "resourceVersion": "1793113326569",
+        "creationTimestamp": "2026-08-05T08:40:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-27 15:02:06.569934 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
@@ -3008,6 +3042,20 @@
         "codeowner": "@grafana/dataviz-squad",
         "hideFromDocs": true,
         "expression": "off"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.mobileEditDeprecation",
+        "resourceVersion": "1792599255577",
+        "creationTimestamp": "2026-10-21T16:14:15Z"
+      },
+      "spec": {
+        "description": "Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports",
+        "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
