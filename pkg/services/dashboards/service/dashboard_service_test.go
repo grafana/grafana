@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"reflect"
 	"slices"
+	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
@@ -2612,4 +2614,191 @@ func TestGetDashboardsByLibraryPanelUIDWithFieldValueResponse(t *testing.T) {
 		{UID: "dashboard2", ID: 2},
 	}, results)
 	k8sCliMock.AssertExpectations(t)
+}
+
+type folderDeleteCall struct {
+	uid       string
+	orgID     int64
+	requester identity.Requester
+	options   metav1.DeleteOptions
+}
+
+type folderDeleteClient struct {
+	dashboardclient.K8sHandlerWithFallback
+	uids            []string
+	deleteFn        func(context.Context, string) error
+	mu              sync.Mutex
+	active, maximum int
+	calls           []folderDeleteCall
+}
+
+func (c *folderDeleteClient) GetNamespace(int64) string { return "default" }
+func (c *folderDeleteClient) Search(context.Context, int64, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	rows := make([]*resourcepb.ResourceTableRow, len(c.uids))
+	for i, uid := range c.uids {
+		rows[i] = &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: uid, Group: "dashboard.grafana.app", Resource: "dashboards"}}
+	}
+	return &resourcepb.ResourceSearchResponse{TotalHits: int64(len(rows)), Results: &resourcepb.ResourceTable{Rows: rows}}, nil
+}
+func (c *folderDeleteClient) Delete(ctx context.Context, uid string, orgID int64, options metav1.DeleteOptions) error {
+	requester, _ := identity.GetRequester(ctx)
+	c.mu.Lock()
+	c.calls = append(c.calls, folderDeleteCall{uid, orgID, requester, options})
+	c.active++
+	c.maximum = max(c.maximum, c.active)
+	c.mu.Unlock()
+	defer func() { c.mu.Lock(); c.active--; c.mu.Unlock() }()
+	if c.deleteFn != nil {
+		return c.deleteFn(ctx, uid)
+	}
+	return nil
+}
+
+func newFolderDeleteService(t *testing.T, enabled bool, workers, count int, cleanupErr error) (*DashboardServiceImpl, *folderDeleteClient, *user.SignedInUser) {
+	public := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
+	public.On("DeleteByDashboardUIDs", mock.Anything, int64(1), mock.Anything).Return(cleanupErr).Maybe()
+	client := &folderDeleteClient{}
+	for i := range count {
+		client.uids = append(client.uids, fmt.Sprintf("dashboard-%d", i))
+	}
+	cfg := setting.NewCfg()
+	cfg.FolderParallelDashboardDeleteEnabled = enabled
+	cfg.FolderParallelDashboardDeleteConcurrency = workers
+	return &DashboardServiceImpl{cfg: cfg, log: log.New("test.folder-delete"), k8sclient: client, publicDashboardService: public}, client, &user.SignedInUser{UserID: 42, OrgID: 1}
+}
+
+// deleteGate holds every delete until open is called, so a test can see how many run at once.
+type deleteGate struct {
+	entered chan struct{}
+	release chan struct{}
+	once    sync.Once
+}
+
+func newDeleteGate(t *testing.T) *deleteGate {
+	g := &deleteGate{entered: make(chan struct{}, 100), release: make(chan struct{})}
+	t.Cleanup(g.open)
+	return g
+}
+
+func (g *deleteGate) hold(context.Context, string) error {
+	g.entered <- struct{}{}
+	<-g.release
+	return nil
+}
+
+func (g *deleteGate) open() { g.once.Do(func() { close(g.release) }) }
+
+func (g *deleteGate) waitForDeletes(t *testing.T, n int) {
+	t.Helper()
+	synctest.Wait()
+	require.Len(t, g.entered, n, "unexpected number of in-flight deletes")
+}
+
+func runInBackground(f func() error) <-chan error {
+	done := make(chan error, 1)
+	go func() { done <- f() }()
+	return done
+}
+
+func waitForResult(t *testing.T, done <-chan error) error {
+	t.Helper()
+	synctest.Wait()
+	select {
+	case err := <-done:
+		return err
+	default:
+		t.Fatal("delete did not finish")
+		return nil
+	}
+}
+
+func TestDeleteInFoldersConcurrency(t *testing.T) {
+	for _, tc := range []struct {
+		name                 string
+		enabled              bool
+		workers, count, want int
+	}{
+		{"disabled deletes one at a time", false, 8, 12, 1},
+		{"enabled is bounded by the worker count", true, 4, 12, 4},
+		{"enabled with more workers than dashboards", true, 8, 2, 2},
+		{"non-positive worker count uses one worker", true, 0, 12, 1},
+		{"empty folder", true, 4, 0, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				svc, client, requester := newFolderDeleteService(t, tc.enabled, tc.workers, tc.count, nil)
+				gate := newDeleteGate(t)
+				client.deleteFn = gate.hold
+				done := runInBackground(func() error { return svc.DeleteInFolders(t.Context(), 1, []string{"folder"}, requester) })
+
+				gate.waitForDeletes(t, tc.want)
+				gate.open()
+				require.NoError(t, waitForResult(t, done))
+
+				require.Equal(t, tc.want, client.maximum)
+				deleted := make([]string, 0, len(client.calls))
+				for _, call := range client.calls {
+					deleted = append(deleted, call.uid)
+					require.Equal(t, int64(1), call.orgID)
+					require.Same(t, requester, call.requester)
+					require.NotNil(t, call.options.GracePeriodSeconds)
+					require.Zero(t, *call.options.GracePeriodSeconds)
+				}
+				if tc.enabled {
+					require.ElementsMatch(t, client.uids, deleted)
+				} else {
+					require.Equal(t, client.uids, deleted)
+				}
+			})
+		})
+	}
+}
+
+func TestDeleteInFoldersCancellationWaitsForInFlightDeletes(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		svc, client, requester := newFolderDeleteService(t, true, 4, 20, nil)
+		ctx, cancel := context.WithCancel(t.Context())
+		gate := newDeleteGate(t)
+		client.deleteFn = gate.hold
+		done := runInBackground(func() error { return svc.DeleteInFolders(ctx, 1, []string{"folder"}, requester) })
+
+		gate.waitForDeletes(t, 4)
+		cancel()
+		synctest.Wait()
+		select {
+		case <-done:
+			t.Fatal("returned before in-flight deletes finished")
+		default:
+		}
+		gate.open()
+
+		require.ErrorIs(t, waitForResult(t, done), context.Canceled)
+		require.Len(t, client.calls, 4)
+	})
+}
+
+func TestDeleteInFoldersErrors(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enabled=%v", enabled), func(t *testing.T) {
+			t.Run("a failed delete does not skip the others", func(t *testing.T) {
+				svc, client, requester := newFolderDeleteService(t, enabled, 4, 10, nil)
+				client.deleteFn = func(context.Context, string) error { return errors.New("delete failure") }
+				require.NoError(t, svc.DeleteInFolders(t.Context(), 1, []string{"folder"}, requester))
+				require.Len(t, client.calls, 10)
+			})
+			t.Run("a failed public dashboard cleanup prevents deletes", func(t *testing.T) {
+				cleanupErr := errors.New("public cleanup failed")
+				svc, client, requester := newFolderDeleteService(t, enabled, 4, 10, cleanupErr)
+				require.ErrorIs(t, svc.DeleteInFolders(t.Context(), 1, []string{"folder"}, requester), cleanupErr)
+				require.Empty(t, client.calls)
+			})
+		})
+	}
+	t.Run("an already canceled request deletes nothing", func(t *testing.T) {
+		svc, client, requester := newFolderDeleteService(t, true, 4, 10, nil)
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		require.ErrorIs(t, svc.DeleteInFolders(ctx, 1, []string{"folder"}, requester), context.Canceled)
+		require.Empty(t, client.calls)
+	})
 }
