@@ -181,28 +181,28 @@ You can change the timezone for your user account. This setting overrides timezo
 1. Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected at a higher level.
 1. Click **Save**.
 
-## Change the default home dashboard
+## Change the default home page
 
-The home dashboard is the page you see when you sign in to Grafana. Click the Grafana icon or **Home** in the breadcrumb to return to it. You can set it for the server, an organization, a team, or your personal user account. This topic explains how Grafana picks the home dashboard and provides instructions for each task.
+When you sign in to Grafana, you see the Grafana home page. Click the Grafana icon or **Home** in the breadcrumb to return to it. You can replace it with a dashboard for the server, an organization, a team, or your personal user account. This topic explains how Grafana picks the home page and provides instructions for each task.
 
 Some tasks require certain permissions. For more information about roles, refer to [Roles and permissions](../roles-and-permissions/).
 
-### How Grafana picks the home dashboard
+### How Grafana picks the home page
 
 Grafana checks these sources in order and uses the first one that's set:
 
 1. The **Home Dashboard** preference. Grafana checks the user level first, then the team level, then the organization level, and uses the first level that has a dashboard set.
 1. The [`home_page`](../../setup-grafana/configure-grafana/#home_page) configuration option. Grafana redirects to this path.
 1. The [`default_home_dashboard_path`](../../setup-grafana/configure-grafana/#default_home_dashboard_path) configuration option. Grafana shows the dashboard from this JSON file.
-1. The unified homepage.
+1. The Grafana home page.
 
-The **Home Dashboard** field at every level also offers **Grafana home**. Select it to ignore the dashboards set at higher levels and show the instance default: `home_page`, `default_home_dashboard_path`, or the unified homepage. For example, if your organization sets a dashboard and you select **Grafana home** in your profile, you see the instance default instead of the organization's dashboard. At the organization level, **Grafana home** and an empty field have the same effect, because the next level up is the server configuration.
+The **Home Dashboard** field at every level also offers **Grafana home**. Select it to ignore the dashboards set at higher levels and show the instance default: `home_page`, `default_home_dashboard_path`, or the Grafana home page. For example, if your organization sets a dashboard and you select **Grafana home** in your profile, you see the instance default instead of the organization's dashboard. At the organization level, **Grafana home** and an empty field have the same effect, because the next level up is the server configuration.
 
-Clear the field to inherit the home dashboard from the next level. For example, a user with an empty field gets their team's dashboard, or the organization's dashboard if the team hasn't set one.
+Clear the field to inherit the home page from the next level. For example, a user with an empty field gets their team's dashboard, or the organization's dashboard if the team hasn't set one.
 
-### Set the home dashboard for the server
+### Set the home page for the server
 
-Users with the Grafana Server Admin flag on their account or access to the configuration file can set the home dashboard for all users on the server in two ways:
+Users with the Grafana Server Admin flag on their account or access to the configuration file can set the home page for all users on the server in two ways:
 
 - [`home_page`](../../setup-grafana/configure-grafana/#home_page) in the `[users]` section redirects users to a path in Grafana, such as an app plugin page.
 - [`default_home_dashboard_path`](../../setup-grafana/configure-grafana/#default_home_dashboard_path) in the `[dashboards]` section shows a dashboard from a JSON file.
@@ -231,7 +231,7 @@ home_page = /a/my-app/home
 
 ```ini
 [dashboards]
-# Path to a custom default home dashboard. If empty, Grafana uses the unified homepage.
+# Path to a custom default home dashboard. If empty, Grafana shows the Grafana home page.
 default_home_dashboard_path = data/main-dashboard.json
 ```
 
