@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo, useState } from 'react';
 
 import { type Field, type MatcherConfig } from '@grafana/data';
 import { type FilterByValueConfig } from '@grafana/data/internal';
@@ -27,6 +27,8 @@ interface FilterContext {
   applyFilter: (field: Field, predicate: MatcherConfig, parentIndex?: number) => void;
   clearFilter: (field: Field, parentIndex?: number) => void;
   clearFilters: () => void;
+  openFilterKey?: string;
+  setOpenFilterKey: React.Dispatch<React.SetStateAction<string | undefined>>;
 }
 const TableFilterContext = createContext<FilterContext | undefined>(undefined);
 export const useTableFilters = () => useContext(TableFilterContext);
@@ -68,6 +70,11 @@ export function useHeaderFilterState() {
 
 export function TableFilterProvider({ props, children }: { props: TableNGProps; children: React.ReactNode }) {
   const { configs, value } = useRowTransformations(props);
+  const [openFilterKey, setOpenFilterKey] = useState<string>();
+  const contextValue = useMemo(
+    () => ({ ...value, openFilterKey, setOpenFilterKey }),
+    [value, openFilterKey, setOpenFilterKey]
+  );
   return (
     <ErrorBoundary
       // A new frame, revision, or saved view gets one fresh attempt at filtering.
@@ -90,7 +97,7 @@ export function TableFilterProvider({ props, children }: { props: TableNGProps; 
         const filteringDisabled = Boolean(error);
         const context = filteringDisabled
           ? {
-              ...value,
+              ...contextValue,
               filters: [],
               filteringDisabled,
               getFilters: () => [],
@@ -98,7 +105,7 @@ export function TableFilterProvider({ props, children }: { props: TableNGProps; 
               clearFilter: () => {},
               clearFilters: () => {},
             }
-          : value;
+          : contextValue;
         return <TableFilterContext.Provider value={context}>{children}</TableFilterContext.Provider>;
       }}
     </ErrorBoundary>

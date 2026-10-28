@@ -344,9 +344,11 @@ describe('HeaderCell', () => {
     const firstButton = screen.getByLabelText('Filter Field1');
     const secondButton = screen.getByLabelText('Filter Field2');
 
-    await userEvent.click(firstButton);
+    firstButton.focus();
+    await userEvent.keyboard('{Enter}');
     expect(firstButton).toHaveAttribute('aria-expanded', 'true');
-    await userEvent.click(secondButton);
+    secondButton.focus();
+    await userEvent.keyboard('{Enter}');
 
     expect(firstButton).toHaveAttribute('aria-expanded', 'false');
     expect(secondButton).toHaveAttribute('aria-expanded', 'true');
