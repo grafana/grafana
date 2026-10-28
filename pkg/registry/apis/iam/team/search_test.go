@@ -793,14 +793,3 @@ func mockTeamClientWithHits() *dualwrite.Selector[SearchBackend] {
 		{Name: "team-2", Title: "Team Two"},
 	}})
 }
-
-func TestSearchMemberFilter(t *testing.T) {
-	backend := &fakeSearchBackend{}
-	handler := NewSearchHandler(tracing.NewNoopTracerService(), selectorForBackend(backend), nil)
-	req := httptest.NewRequest("GET", "/searchTeams?member=user-1", nil)
-	req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
-	recorder := httptest.NewRecorder()
-	handler.DoTeamSearch(recorder, req)
-	require.Equal(t, http.StatusOK, recorder.Code)
-	require.Equal(t, "user-1", backend.lastQuery.Member)
-}

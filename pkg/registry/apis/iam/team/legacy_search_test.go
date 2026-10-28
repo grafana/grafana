@@ -42,6 +42,7 @@ func TestLegacyTeamSearch(t *testing.T) {
 		{name: "defaults", wantLimit: common.DefaultListLimit},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
+			tt.query.Namespace = "default"
 			called := false
 			service := &searchTeamService{search: func(_ context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
 				called = true
@@ -81,8 +82,12 @@ func TestLegacyTeamSearchErrors(t *testing.T) {
 		{name: "large page", query: SearchQuery{Page: math.MaxInt32 + 1}, err: "invalid page number: 2147483648"},
 		{name: "large limit", query: SearchQuery{Limit: common.MaxListLimit + 1}, err: fmt.Sprintf("limit cannot be greater than %d", common.MaxListLimit)},
 		{name: "invalid ID", query: SearchQuery{TeamIDs: []string{"invalid"}}, err: "invalid legacy team ID"},
+		{name: "invalid namespace", query: SearchQuery{Namespace: "org-invalid"}, err: "invalid org id"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.query.Namespace == "" {
+				tt.query.Namespace = "default"
+			}
 			service := &searchTeamService{search: func(context.Context, *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
 				t.Fatal("invalid query must not reach the service")
 				return team.SearchTeamQueryResult{}, nil
@@ -102,7 +107,7 @@ func TestLegacyTeamSearchErrors(t *testing.T) {
 		}}
 		backend := NewLegacyTeamSearchClient(service, tracing.NewNoopTracerService())
 		ctx := identity.WithRequester(t.Context(), &user.SignedInUser{OrgID: 1})
-		_, err := backend.Search(ctx, SearchQuery{})
+		_, err := backend.Search(ctx, SearchQuery{Namespace: "default"})
 		require.ErrorIs(t, err, wantErr)
 	})
 
@@ -111,6 +116,17 @@ func TestLegacyTeamSearchErrors(t *testing.T) {
 		_, err := backend.Search(t.Context(), SearchQuery{})
 		require.Error(t, err)
 	})
+}
+
+func TestLegacyTeamSearchUsesNamespaceOrg(t *testing.T) {
+	service := &searchTeamService{search: func(_ context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+		require.Equal(t, int64(2), query.OrgID)
+		return team.SearchTeamQueryResult{}, nil
+	}}
+	backend := NewLegacyTeamSearchClient(service, tracing.NewNoopTracerService())
+	ctx, _ := identity.WithServiceIdentityForSingleNamespace(t.Context(), "org-2")
+	_, err := backend.Search(ctx, SearchQuery{Namespace: "org-2", Member: "user-1"})
+	require.NoError(t, err)
 }
 
 func TestLegacyTeamSortOptions(t *testing.T) {

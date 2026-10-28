@@ -70,5 +70,28 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 	if err != nil {
 		return nil, err
 	}
+	// An inexact total is the pre-authorization match count, which would reveal how many
+	// teams the member belongs to, including teams the caller cannot read.
+	if query.Member != "" && resp != nil && !resp.TotalHitsExact {
+		total, err := c.authorizedTotal(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		result.TotalHits = max(total, result.Offset+int64(len(result.Hits)))
+	}
 	return &result, nil
+}
+
+// authorizedTotal counts only matches the caller can read. If the count is still inexact,
+// it returns zero so the caller falls back to the hits it has seen.
+func (c *unifiedSearchClient) authorizedTotal(ctx context.Context, req *resourcepb.ResourceSearchRequest) (int64, error) {
+	countReq := &resourcepb.ResourceSearchRequest{Options: req.Options, Query: req.Query}
+	resp, err := c.client.Search(ctx, countReq)
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		return 0, err
+	}
+	if !resp.GetTotalHitsExact() {
+		return 0, nil
+	}
+	return resp.GetTotalHits(), nil
 }

@@ -947,16 +947,44 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 			},
 		},
 		{
-			name: "forwards uid and member filters",
+			name: "forwards uid params when UIDs are set",
+			query: &team.SearchTeamsQuery{
+				OrgID: 1,
+				UIDs:  []string{"uid-1", "uid-2"},
+				Limit: 10,
+				Page:  1,
+			},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Equal(t, []string{"uid-1", "uid-2"}, r.URL.Query()["uid"])
+				assert.False(t, r.URL.Query().Has("member"))
+
+				resp := iamv0alpha1.GetSearchTeamsResponse{
+					GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{
+						TotalHits: 1,
+						Hits:      []iamv0alpha1.GetSearchTeamsTeamHit{{Name: "uid-1", Title: "Team One"}},
+					},
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resp)
+			},
+			expectResult: team.SearchTeamQueryResult{
+				TotalCount: 1,
+				Page:       1,
+				PerPage:    10,
+				Teams: []*team.TeamDTO{
+					{UID: "uid-1", OrgID: 1, Name: "Team One"},
+				},
+			},
+		},
+		{
+			name: "forwards member param when MemberUID is set",
 			query: &team.SearchTeamsQuery{
 				OrgID:     1,
-				UIDs:      []string{"uid-1", "uid-2"},
 				MemberUID: "member-1",
 				Limit:     10,
 				Page:      1,
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, []string{"uid-1", "uid-2"}, r.URL.Query()["uid"])
 				assert.Equal(t, "member-1", r.URL.Query().Get("member"))
 
 				resp := iamv0alpha1.GetSearchTeamsResponse{
