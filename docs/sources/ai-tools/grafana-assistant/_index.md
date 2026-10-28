@@ -75,4 +75,3 @@ Grafana Assistant on-premise connects your self-hosted Grafana deployment to the
 
 - To set up Assistant on-prem refer to [Connect to your deployment](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/on-premise/#connect-your-deployment) in the main Assistant documentation.
 - For management options and pricing, refer to [Manage access and usage information](https://grafana.com/docs/grafana-cloud/machine-learning/assistant/on-premise/#manage-access-and-usage).
-
