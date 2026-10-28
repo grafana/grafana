@@ -555,6 +555,10 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/urv',
+      component: SafeDynamicImport(() => import(/* webpackChunkName: "UrvPage" */ 'app/features/urv/UrvPage')),
+    },
+    {
       path: '/playlists',
       roles: getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
         ? () => contextSrv.evaluatePermission([AccessControlAction.PlaylistsRead])

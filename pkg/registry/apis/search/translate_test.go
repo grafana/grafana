@@ -1047,8 +1047,23 @@ func TestTranslateGlobalSearchQuery_FolderTree(t *testing.T) {
 	})
 }
 
+func TestTranslateGlobalSearchQuery_Manager(t *testing.T) {
+	q := searchQuery(&searchv0.WhereNode{Filter: &searchv0.FilterPredicate{
+		Field: resource.SEARCH_FIELD_MANAGER_KIND, Operator: "In", Values: []string{"repo"},
+	}})
+	q.Fields = []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ID}
+
+	req, errs := TranslateGlobalSearchQuery(q, "default")
+	require.Empty(t, errs)
+	require.Len(t, req.Options.Fields, 1)
+	assert.Equal(t, resource.SEARCH_FIELD_MANAGER_KIND, req.Options.Fields[0].Key)
+	assert.Equal(t, []string{"repo"}, req.Options.Fields[0].Values)
+	assert.Equal(t, q.Fields, req.Fields)
+}
+
 // Storage does not model the manager fields as search fields, so only returning
-// them is known to work.
+// them is known to work. Global search filters on them too; see
+// TestTranslateGlobalSearchQuery_Manager.
 func TestTranslateSearchQuery_ManagerFieldsCanOnlyBeReturned(t *testing.T) {
 	for _, f := range []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ID} {
 		for name, q := range map[string]*searchv0.SearchQuery{
@@ -1059,6 +1074,9 @@ func TestTranslateSearchQuery_ManagerFieldsCanOnlyBeReturned(t *testing.T) {
 			t.Run(f+" "+name, func(t *testing.T) {
 				_, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
 				assert.Len(t, errs, 1, errs)
+				if name == "filter" {
+					return
+				}
 				_, errs = TranslateGlobalSearchQuery(q, "default")
 				assert.Len(t, errs, 1, errs)
 			})

@@ -24,6 +24,9 @@ alertRulev1beta1: alertRuleKind & {
 alertRuleKind: {
 	kind:       "AlertRule"
 	pluralName: "AlertRules"
+	search: {
+		global: true
+	}
 	validation: {
 		operations: [
 			"CREATE",

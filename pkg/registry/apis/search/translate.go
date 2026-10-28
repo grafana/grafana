@@ -173,17 +173,22 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 	return &fieldSet{byName: m}
 }
 
-// globalFieldSet is the field set of the global index, plus folderTree.
+// globalFieldSet is the field set of the global index, plus folderTree and the
+// manager fields.
 //
 // folderTree is not stored in the index: the index works it out from its folder
 // tree when searching, so it is declared here rather than with the index's
 // stored fields.
+//
+// Global search can also filter on the manager fields, which every index
+// keyword-indexes, so a caller can list only what Git Sync manages.
 func globalFieldSet() *fieldSet {
 	m := map[string]resource.SearchFieldDefinition{}
 	for _, d := range resource.GlobalSearchFieldDefinitions() {
 		m[d.Name] = d
 	}
 	for _, d := range managerFields() {
+		d.Capabilities = append(slices.Clone(d.Capabilities), resource.SearchCapabilityFilter)
 		m[d.Name] = d
 	}
 	m[resource.SEARCH_FIELD_FOLDER_TREE] = folderTreeField()

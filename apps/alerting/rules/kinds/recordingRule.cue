@@ -23,6 +23,9 @@ recordingRulev1beta1: recordingRuleKind & {
 recordingRuleKind: {
 	kind:       "RecordingRule"
 	pluralName: "RecordingRules"
+	search: {
+		global: true
+	}
 	validation: {
 		operations: [
 			"CREATE",

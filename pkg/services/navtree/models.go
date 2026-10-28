@@ -43,6 +43,7 @@ const (
 const (
 	NavIDRoot                 = "root"
 	NavIDDashboards           = "dashboards/browse"
+	NavIDUrv                  = "urv"
 	NavIDExplore              = "explore"
 	NavIDDrilldown            = "drilldown"
 	NavIDNotebooks            = "notebooks"

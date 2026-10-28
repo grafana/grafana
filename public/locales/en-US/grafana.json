@@ -13257,6 +13257,10 @@
     "upgrading": {
       "title": "Stats and license"
     },
+    "urv": {
+      "subtitle": "Browse everything in one place",
+      "title": "Resources"
+    },
     "users": {
       "subtitle": "Invite and assign roles to users",
       "title": "Users"
@@ -18368,6 +18372,219 @@
     "description-x-field": "An increasing numeric value",
     "name-x-field": "X field",
     "placeholder-x-field": "First numeric value"
+  },
+  "urv": {
+    "actions": {
+      "cancel": "Cancel",
+      "copy-link": "Copy link",
+      "delete": "Delete",
+      "delete-body": "This deletes the {{type}} for everyone.",
+      "delete-confirm": "Delete",
+      "delete-title": "Delete {{title}}",
+      "failed": "Action failed",
+      "link-copied": "Link copied",
+      "menu": "Actions for {{title}}",
+      "move": "Move",
+      "move-confirm": "Move",
+      "move-title": "Move {{title}}",
+      "open": "Open",
+      "view-json": "View JSON"
+    },
+    "alerts": {
+      "error": "Search failed",
+      "no-manager": "Git-synced items aren't marked or locked, so Move and Delete stay on for them.",
+      "no-manager-title": "This search server doesn't return provisioning info yet",
+      "skipped": "Some types were left out of the search",
+      "starred-wip": "We're looking into letting you star everything.",
+      "starred-wip-title": "Starred is a work in progress",
+      "tree-wip": "We're still working on it.",
+      "tree-wip-title": "You're viewing all folders in tree view"
+    },
+    "debug": {
+      "title": "Debug"
+    },
+    "empty": "No resources match these filters",
+    "filters": {
+      "chip-owner": "Owner: {{value}}",
+      "chip-provisioned": "Provisioned only",
+      "chip-tag": "Tag: {{value}}",
+      "chip-type": "Type: {{value}}",
+      "chip-updated": "Updated: {{value}}",
+      "open": "Add a filter",
+      "option-count": "{{name}} ({{total}})",
+      "owner": "Owner",
+      "placeholder": "Filter by type, tag, owner, updated or provisioned",
+      "placeholder-no-provisioned": "Filter by type, tag, owner or updated",
+      "provisioned": "Provisioned only",
+      "provisioned-description": "Synced from a Git repository",
+      "remove": "Remove {{filter}}",
+      "tag": "Tag",
+      "type": "Type",
+      "updated": "Updated",
+      "updated-24h": "Last 24 hours",
+      "updated-30d": "Last 30 days",
+      "updated-7d": "Last 7 days"
+    },
+    "folders": {
+      "grid": "Grid",
+      "in-folder": "in {{folder}}",
+      "list": "List"
+    },
+    "group": {
+      "label": "Group",
+      "loading": "Loading...",
+      "none": "None",
+      "select-all": "Select all shown {{type}}",
+      "show-more": "Show {{size}} more",
+      "showing": "Showing {{shown}} of {{relation}}{{total}}",
+      "type": "Type",
+      "view-all": "View all {{total}} {{type}}"
+    },
+    "heading": {
+      "all-folders": "All folders",
+      "count_one": "{{total}} resource",
+      "count_other": "{{total}} resources",
+      "folder-count_one": "{{total}} folder",
+      "folder-count_other": "{{total}} folders",
+      "no-folder": "No folder",
+      "root": "Root level"
+    },
+    "kinds": {
+      "alert-rule": "Alert rule",
+      "alert-rules": "Alert rules",
+      "assistant-page": "Assistant page",
+      "assistant-pages": "Assistant pages",
+      "assistant-quickstart": "Quickstart prompt",
+      "assistant-quickstarts": "Quickstart prompts",
+      "assistant-rule": "Assistant rule",
+      "assistant-rules": "Assistant rules",
+      "assistant-skill": "Assistant skill",
+      "assistant-skills": "Assistant skills",
+      "dashboard": "Dashboard",
+      "dashboards": "Dashboards",
+      "folder": "Folder",
+      "folders": "Folders",
+      "investigation": "Investigation",
+      "investigations": "Investigations",
+      "notebook": "Notebook",
+      "notebooks": "Notebooks",
+      "playlist": "Playlist",
+      "playlists": "Playlists",
+      "recording-rule": "Recording rule",
+      "recording-rules": "Recording rules",
+      "variable": "Variable",
+      "variables": "Variables",
+      "workflow": "Workflow",
+      "workflows": "Workflows"
+    },
+    "loading": "Loading...",
+    "new": {
+      "button": "New",
+      "folder": "Folder",
+      "folder-created": "Folder created",
+      "folder-failed": "Failed to create folder",
+      "folder-title": "New folder",
+      "import": "Import dashboard"
+    },
+    "owner": {
+      "you": "You"
+    },
+    "page": {
+      "title": "Resources"
+    },
+    "places": {
+      "all": "All",
+      "recent": "Recently viewed dashboards",
+      "shared": "Shared with me: not available from global search yet",
+      "starred": "Starred",
+      "trash": "Trash: not available from global search yet"
+    },
+    "provisioned": {
+      "branch-only": "This repository only takes changes through a branch. Delete it from the Dashboards page instead.",
+      "checking": "Checking the repository...",
+      "move-git": "Its folder comes from where the file sits in the repository. Move it from the Dashboards page instead.",
+      "orphaned": "The repository it was synced from is gone, so it can't be changed here",
+      "root-folder": "This is the repository's root folder. It's removed when the repository is.",
+      "unknown": "Couldn't load the repository, so this can't be changed here"
+    },
+    "search": {
+      "folders-placeholder": "Search folders",
+      "placeholder": "Search all resources"
+    },
+    "selection": {
+      "cancel": "Cancel",
+      "clear": "Clear selection",
+      "count_one": "{{count}} selected",
+      "count_other": "{{count}} selected",
+      "delete": "Delete",
+      "delete-body": "This deletes them for everyone.",
+      "delete-confirm": "Delete",
+      "delete-none": "None of the selected items can be deleted here",
+      "delete-skipped_one": "{{count}} selected item can't be deleted here and will be skipped",
+      "delete-skipped_other": "{{count}} selected items can't be deleted here and will be skipped",
+      "delete-title_one": "Delete {{count}} item",
+      "delete-title_other": "Delete {{count}} items",
+      "failed_one": "{{count}} of {{total}} failed",
+      "failed_other": "{{count}} of {{total}} failed",
+      "move": "Move",
+      "move-confirm": "Move",
+      "move-none": "None of the selected items can be moved here",
+      "move-skipped_one": "{{count}} selected item can't be moved and will be skipped",
+      "move-skipped_other": "{{count}} selected items can't be moved and will be skipped",
+      "move-title_one": "Move {{count}} item",
+      "move-title_other": "Move {{count}} items"
+    },
+    "sidebar": {
+      "all": "All resources",
+      "browse": "Browse all folders",
+      "collapse-folder": "Collapse {{title}}",
+      "expand-folder": "Expand {{title}}",
+      "filter": "Filter folders",
+      "hide": "Hide folders",
+      "label": "Folders",
+      "new-folder": "New folder",
+      "no-folder": "No folder",
+      "no-matches": "No folders match",
+      "root": "Root level",
+      "show": "Show folders",
+      "team-folders": "Team folders",
+      "team-folders-error": "Couldn't load team folders",
+      "title": "Folders",
+      "your-folders": "Your folders"
+    },
+    "sort": {
+      "created": "Created",
+      "label": "Sort",
+      "relevance": "Relevance",
+      "title": "Name",
+      "updated": "Updated"
+    },
+    "table": {
+      "location": "Location",
+      "name": "Name",
+      "no-folder": "No folder",
+      "owner": "Owner",
+      "select": "Select {{title}}",
+      "star": "Star",
+      "unstar": "Unstar",
+      "updated": "Updated"
+    },
+    "tabs": {
+      "all": "All",
+      "empty": "No {{type}} to show, so this tab is disabled",
+      "more": "More ({{total}})",
+      "more-item": "{{type}} ({{total}})"
+    },
+    "tree": {
+      "collapse-all": "Collapse all",
+      "empty": "No folders yet",
+      "error": "Couldn't load folders",
+      "expand-all": "Expand all",
+      "label": "All folders",
+      "no-matches": "No folders match",
+      "truncated_one": "Showing the first {{total}} folder",
+      "truncated_other": "Showing the first {{total}} folders"
+    }
   },
   "user-orgs": {
     "current-org-button": "Current",

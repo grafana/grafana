@@ -318,6 +318,8 @@ spec:
               $ref: '#/components/schemas/AlertRuleInstanceTotals'
           type: object
       scope: Namespaced
+      search:
+        global: true
       searchFields:
       - capabilities:
         - retrieve
@@ -664,6 +666,8 @@ spec:
               type: object
           type: object
       scope: Namespaced
+      search:
+        global: true
       searchFields:
       - capabilities:
         - filter
@@ -2612,6 +2616,8 @@ spec:
               $ref: '#/components/schemas/AlertRuleInstanceTotals'
           type: object
       scope: Namespaced
+      search:
+        global: true
       searchFields:
       - capabilities:
         - retrieve
@@ -2958,6 +2964,8 @@ spec:
               type: object
           type: object
       scope: Namespaced
+      search:
+        global: true
       searchFields:
       - capabilities:
         - filter
