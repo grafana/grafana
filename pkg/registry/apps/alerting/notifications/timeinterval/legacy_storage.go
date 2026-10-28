@@ -25,7 +25,7 @@ type TimeIntervalService interface {
 	GetMuteTimings(ctx context.Context, orgID int64) ([]v1.TimeInterval, error)
 	CreateMuteTiming(ctx context.Context, mt v1.TimeInterval, orgID int64) (v1.TimeInterval, error)
 	UpdateMuteTiming(ctx context.Context, mt v1.TimeInterval, orgID int64) (v1.TimeInterval, error)
-	DeleteMuteTiming(ctx context.Context, nameOrUid string, orgID int64, provenance ngmodels.Provenance, version string) error
+	DeleteMuteTimingByUID(ctx context.Context, uid string, orgID int64, provenance ngmodels.Provenance, version string) error
 }
 
 type legacyStorage struct {
@@ -190,8 +190,8 @@ func (s *legacyStorage) Delete(ctx context.Context, uid string, deleteValidation
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}
-	err = s.service.DeleteMuteTiming(ctx, p.Name, info.OrgID, prov, version) // TODO add support for dry-run option
-	return old, false, err                                                   // false - will be deleted async
+	err = s.service.DeleteMuteTimingByUID(ctx, p.Name, info.OrgID, prov, version) // TODO add support for dry-run option
+	return old, false, err                                                        // false - will be deleted async
 }
 
 func (s *legacyStorage) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *internalversion.ListOptions) (runtime.Object, error) {

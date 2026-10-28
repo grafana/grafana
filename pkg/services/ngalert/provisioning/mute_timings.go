@@ -268,8 +268,27 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 	return updated, nil
 }
 
-// DeleteMuteTiming deletes the mute timing with the given name in the given org. If the mute timing does not exist, no error is returned.
+// DeleteMuteTiming deletes the mute timing with the given name or UID in the given org. If the mute timing does not
+// exist, no error is returned. The name is tried first and then the UID, which the legacy provisioning API relies on.
+// Callers that know they hold a UID must use DeleteMuteTimingByUID, because a UID may equal another interval's name.
 func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID string, orgID int64, provenance models.Provenance, version string) error {
+	return svc.deleteMuteTiming(ctx, orgID, provenance, version, func(revision *legacy_storage.ConfigRevision) (v1.TimeInterval, bool) {
+		if existing, found := revision.GetTimeIntervalWithTitle(nameOrUID); found {
+			return existing, true
+		}
+		return svc.getMuteTimingByUID(revision, v1.ResourceUID(nameOrUID))
+	})
+}
+
+// DeleteMuteTimingByUID deletes the mute timing with the given UID in the given org. If the mute timing does not
+// exist, no error is returned.
+func (svc *MuteTimingService) DeleteMuteTimingByUID(ctx context.Context, uid string, orgID int64, provenance models.Provenance, version string) error {
+	return svc.deleteMuteTiming(ctx, orgID, provenance, version, func(revision *legacy_storage.ConfigRevision) (v1.TimeInterval, bool) {
+		return svc.getMuteTimingByUID(revision, v1.ResourceUID(uid))
+	})
+}
+
+func (svc *MuteTimingService) deleteMuteTiming(ctx context.Context, orgID int64, provenance models.Provenance, version string, find func(*legacy_storage.ConfigRevision) (v1.TimeInterval, bool)) error {
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err
@@ -279,13 +298,9 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 		return err
 	}
 
-	// First attempt to find by Name and then by UID.
-	existing, found := revision.GetTimeIntervalWithTitle(nameOrUID)
+	existing, found := find(revision)
 	if !found {
-		existing, found = svc.getMuteTimingByUID(revision, v1.ResourceUID(nameOrUID))
-		if !found {
-			return nil
-		}
+		return nil
 	}
 
 	// Block deletes of imported intervals

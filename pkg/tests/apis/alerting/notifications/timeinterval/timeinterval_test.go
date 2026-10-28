@@ -91,6 +91,30 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		require.NoError(t, client.Delete(ctx, actual.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
 	})
 
+	t.Run("delete should address the interval by UID even if it equals another interval's name", func(t *testing.T) {
+		// B has UID "x-uid" and name "foo-title"; A has UID "foo-title" and name "bar-title".
+		b := newInterval.Copy().(*v1beta1.TimeInterval)
+		b.Name = "x-uid"
+		b.Spec.Name = "foo-title"
+		b, err := client.Create(ctx, b, resource.CreateOptions{})
+		require.NoError(t, err)
+
+		a := newInterval.Copy().(*v1beta1.TimeInterval)
+		a.Name = "foo-title"
+		a.Spec.Name = "bar-title"
+		a, err = client.Create(ctx, a, resource.CreateOptions{})
+		require.NoError(t, err)
+
+		require.NoError(t, client.Delete(ctx, a.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+
+		_, err = client.Get(ctx, a.GetStaticMetadata().Identifier())
+		require.Truef(t, errors.IsNotFound(err), "Expected NotFound for the deleted interval but got %v", err)
+		_, err = client.Get(ctx, b.GetStaticMetadata().Identifier())
+		require.NoError(t, err, "the interval whose name matches the deleted UID must remain")
+
+		require.NoError(t, client.Delete(ctx, b.GetStaticMetadata().Identifier(), resource.DeleteOptions{}))
+	})
+
 	var resourceID resource.Identifier
 	t.Run("create should succeed and provide resource name", func(t *testing.T) {
 		actual, err := client.Create(ctx, newInterval, resource.CreateOptions{})

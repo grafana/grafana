@@ -1388,6 +1388,62 @@ func TestDeleteMuteTimings(t *testing.T) {
 		prov.AssertCalled(t, "DeleteProvenance", mock.Anything, mock.MatchedBy(func(mt models.Provisionable) bool { return mt.ResourceID() == timingToDelete.ResourceID() }), orgID)
 	})
 
+	t.Run("a UID that equals another interval's name", func(t *testing.T) {
+		// B has UID "x" and name "foo"; A has UID "foo" and name "bar".
+		collidingConfig := func() *v1.AMConfigV1 {
+			return &v1.AMConfigV1{
+				TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
+					"x":   v1.NewTimeInterval("x", "foo", nil, models.ProvenanceNone),
+					"foo": v1.NewTimeInterval("foo", "bar", nil, models.ProvenanceNone),
+				},
+				AlertmanagerConfig: v1.PostableApiAlertingConfig{Config: v1.Config{Route: &v1.Route{}}},
+			}
+		}
+		deletedUIDs := func(t *testing.T, del func(*MuteTimingService) error) []v1.ResourceUID {
+			sut, store, prov := createMuteTimingSvcSut()
+			store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+				return &legacy_storage.ConfigRevision{Config: collidingConfig()}, nil
+			}
+			store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error { return nil }
+			prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{}, nil)
+			prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
+			require.NoError(t, del(sut))
+
+			if len(store.Calls) < 2 { // nothing was saved
+				return nil
+			}
+			remaining := store.Calls[1].Args[1].(*legacy_storage.ConfigRevision).Config.TimeIntervals
+			var deleted []v1.ResourceUID
+			for uid := range collidingConfig().TimeIntervals {
+				if _, ok := remaining[uid]; !ok {
+					deleted = append(deleted, uid)
+				}
+			}
+			return deleted
+		}
+
+		t.Run("DeleteMuteTimingByUID deletes the interval with that UID", func(t *testing.T) {
+			deleted := deletedUIDs(t, func(sut *MuteTimingService) error {
+				return sut.DeleteMuteTimingByUID(context.Background(), "foo", orgID, "", "")
+			})
+			require.Equal(t, []v1.ResourceUID{"foo"}, deleted)
+		})
+
+		t.Run("DeleteMuteTimingByUID does not match on name", func(t *testing.T) {
+			deleted := deletedUIDs(t, func(sut *MuteTimingService) error {
+				return sut.DeleteMuteTimingByUID(context.Background(), "bar", orgID, "", "")
+			})
+			require.Empty(t, deleted)
+		})
+
+		t.Run("DeleteMuteTiming keeps resolving the name first for the legacy API", func(t *testing.T) {
+			deleted := deletedUIDs(t, func(sut *MuteTimingService) error {
+				return sut.DeleteMuteTiming(context.Background(), "foo", orgID, "", "")
+			})
+			require.Equal(t, []v1.ResourceUID{"x"}, deleted)
+		})
+	})
+
 	t.Run("propagates errors", func(t *testing.T) {
 		t.Run("when unable to read config", func(t *testing.T) {
 			sut, store, prov := createMuteTimingSvcSut()
