@@ -15,6 +15,7 @@ const (
 	routeFallback  = "fallback"  // sent to the single-tenant fallback
 	routeDiscovery = "discovery" // root discovery (/apis, /openapi/v3) and /apis/discovery, built by the router
 	routeNotFound  = "not_found" // nothing in the router serves the path
+	routeHidden    = "hidden"    // a group the caller may not see (visibility.go), with not_found's 404
 	routeInvalid   = "invalid"   // rejected before routing, such as a non-canonical path
 
 	routeUnauthenticated = "unauthenticated" // rejected because the caller did not authenticate

@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -317,6 +319,53 @@ func TestVisibilityHidesGroupRequests(t *testing.T) {
 			})
 		}
 	}
+}
+
+func TestVisibilityHidesGroupsBeforeTheWatchRestriction(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
+	f := newVisibilityFixture(t, true)
+	// The restriction refuses a user's watch with a 403, which would say the
+	// group exists; a hidden group must get the same 404 as any other request.
+	for _, tc := range []struct {
+		group string
+		want  int
+	}{
+		{publicGroup, http.StatusForbidden},
+		{internalGroup, http.StatusNotFound},
+		{installedGroup, http.StatusNotFound},
+		{stackOnlyGroup, http.StatusNotFound},
+	} {
+		rec := f.serve(newRequestAs(http.MethodGet, "/apis/"+tc.group+"/v1/namespaces/stacks-1/things?watch=true", userIn1))
+		require.Equal(t, tc.want, rec.Code, tc.group)
+	}
+	require.Zero(t, f.fallback.Load())
+}
+
+func TestVisibilityCountsHiddenRequests(t *testing.T) {
+	f := newVisibilityFixture(t, true)
+	svc := newService(f.router, prometheus.NewRegistry())
+	svc.middleware = true
+	serveAs := func(path string, requester identity.Requester) int {
+		rec := httptest.NewRecorder()
+		svc.HandleFunc(rec, newRequestAs(http.MethodGet, path, requester), http.NotFoundHandler())
+		return rec.Code
+	}
+	serve := func(path string) int { return serveAs(path, userIn1) }
+
+	// Hidden groups get not_found's 404, but their own route label.
+	require.Equal(t, http.StatusNotFound, serve("/apis/"+internalGroup+"/v1/namespaces/stacks-1/things"))
+	require.Equal(t, uint64(1), requestCount(t, svc, internalGroup, "list", routeHidden, "404"))
+	require.Equal(t, http.StatusNotFound, serve("/apis/"+stackOnlyGroup+"/v1/namespaces/stacks-1/things"))
+	require.Equal(t, uint64(1), requestCount(t, svc, unknownGroupLabel, "list", routeHidden, "404"))
+	require.Equal(t, http.StatusNotFound, serve("/openapi/v3/apis/"+installedGroup+"/v1"))
+	require.Equal(t, uint64(1), requestCount(t, svc, installedGroup, "get", routeHidden, "404"))
+	require.Equal(t, http.StatusNotFound, serve(manifestDiscoveryGroups+internalGroup))
+	require.Equal(t, uint64(1), requestCount(t, svc, "", "get", routeHidden, "404"))
+
+	// For a caller who may see it, a group without a manifest is still a
+	// discovery request. The discovery tree counts under no group.
+	require.Equal(t, http.StatusNotFound, serveAs(manifestDiscoveryGroups+"missing.ext.grafana.app", userWithoutNS))
+	require.Equal(t, uint64(1), requestCount(t, svc, "", "get", routeDiscovery, "404"))
 }
 
 func TestVisibilityFiltersByThePathNamespace(t *testing.T) {

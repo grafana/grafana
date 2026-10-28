@@ -110,7 +110,8 @@ including watches the router rejects (for example with a 401, or a 400 for a Web
 
 `route` says how the router dispatched the request:
 `backend` (the group's backend), `fallback` (the single-tenant fallback), `discovery` (root
-discovery and `/apis/discovery`, which the router builds), `not_found` (no handler for the path), `invalid` (rejected before
+discovery and `/apis/discovery`, which the router builds), `not_found` (no handler for the path), `hidden` (a group the caller
+may not see, which gets the same 404 as `not_found`), `invalid` (rejected before
 routing, such as a non-canonical path or the deprecated `/watch/` or `/proxy/` path), `unauthenticated` (rejected
 because the caller did not authenticate, in the standalone router) or `forbidden` (rejected because
 the path names a namespace the caller may not use).

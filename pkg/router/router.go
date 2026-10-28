@@ -236,6 +236,14 @@ func serveNotFound(w http.ResponseWriter, req *http.Request) {
 	http.NotFound(w, req)
 }
 
+// serveHidden answers a request for a group the caller may not see with the
+// same 404 as serveNotFound, so the caller can't tell the group exists. Only
+// the route label tells them apart.
+func serveHidden(w http.ResponseWriter, req *http.Request) {
+	setRoute(req, routeHidden)
+	http.NotFound(w, req)
+}
+
 // handleAPIs serves the /apis tree: discovery, and each group's requests
 // proxied to its backend.
 func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
@@ -261,6 +269,16 @@ func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 	if !authorizeNamespace(w, req, info.Namespace) {
 		return
 	}
+
+	// A hidden group does not exist for the caller, so it gets a 404 before
+	// any other check could answer differently, such as the watch
+	// restriction's 403, and not even the unregistered-group handler may
+	// serve it. Root discovery names no group.
+	group := info.APIGroup
+	if group != "" && !r.visible(req.Context(), r.viewFor(req.Context(), info), group) {
+		serveHidden(w, req)
+		return
+	}
 	if info.IsResourceRequest && info.Verb == "watch" {
 		decision, reason, err := r.watchAuthorizer.Authorize(req.Context(), authorizer.AttributesRecord{Verb: info.Verb, ResourceRequest: true})
 		if err != nil || decision == authorizer.DecisionDeny {
@@ -282,14 +300,6 @@ func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 	if path == apisPrefix || path == apisPrefix+"/" {
 		setRoute(req, routeDiscovery)
 		r.serveAPIGroupList(w, req, info)
-		return
-	}
-
-	// A hidden group does not exist for the caller: not even the
-	// unregistered-group handler may serve it.
-	group := info.APIGroup
-	if !r.visible(req.Context(), r.viewFor(req.Context(), info), group) {
-		serveNotFound(w, req)
 		return
 	}
 

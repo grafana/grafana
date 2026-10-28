@@ -108,8 +108,9 @@ regression on this path.
 
 ### Dispatch
 
-In `handleAPIs`, after `authorizeNamespace` and before the group lookup, a group that isn't visible
-goes to `serveNotFound`. It does **not** go to `serveUnregisteredGroup`: the ST fallback must not
+In `handleAPIs`, right after `authorizeNamespace`, a group that isn't visible goes to
+`serveNotFound`. That is before the watch restriction too, whose 403 would confirm the group
+exists. It does **not** go to `serveUnregisteredGroup`: the ST fallback must not
 serve a group the router hides. The same check runs in `serveOpenAPIGroupVersion` and in the
 per-group manifest routes. A group no backend serves, which the ST fallback may serve, is filtered
 by the same rule, so an internal group that exists only on a stack is hidden too.
@@ -167,8 +168,9 @@ it.
 
 ### Metrics
 
-There are no new label values. Requests for a hidden group record the existing `not_found` route.
-They keep their group label, since `KnownGroup` is true for any served group. That is bounded by the
+Requests for a hidden group record a new `hidden` route (`routeHidden`, through `serveHidden`), so
+operators can tell them from paths nothing serves. The caller still gets the same 404 as for
+`not_found`. They keep their group label, since `KnownGroup` is true for any served group. That is bounded by the
 served groups, and metrics are only for operators. No new metrics are needed, since the router
 keeps no new cache.
 

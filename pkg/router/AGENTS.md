@@ -106,7 +106,10 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   a caller with a namespace sees only the groups installed there. That namespace is the one the path
   names, or else the requester's own; `*` or none means no filter. A hidden group is left out of
   `/apis` (both formats, after any ST merge), the `/openapi/v3` index, the manifests list and the
-  index, and every request for it gets a 404 before dispatch, so no backend or fallback sees it.
+  index, and every request for it gets a 404 right after the namespace check, before the watch
+  restriction or dispatch, so no other answer (such as a 403) confirms it exists, and no backend
+  or fallback sees it. That 404 is the same as `serveNotFound`'s; only the metrics' route label
+  (`hidden`, from `serveHidden`) tells them apart.
   The `discovery` group is never hidden, and naming it internal fails startup. The router keeps no
   per-namespace state: it asks `NamespaceGroups` on every request, which caches and keeps its own
   last-known-good, and a group whose filter errors is hidden. With nothing configured

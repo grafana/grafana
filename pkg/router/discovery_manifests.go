@@ -152,6 +152,16 @@ var manifestsResource = schema.GroupResource{Group: discoveryGroup, Resource: "m
 // serveManifestDiscovery serves the /apis/discovery tree from the published
 // docs. Errors are Kubernetes Status objects, as from any other group.
 func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.Request, info *request.RequestInfo) {
+	v := r.viewFor(req.Context(), info)
+	path := strings.TrimSuffix(req.URL.Path, "/")
+	// A hidden group's manifest gets the same 404 as a group without one; only
+	// the route label tells them apart. The first route set is the one kept.
+	group, isManifest := strings.CutPrefix(path, manifestDiscoveryGroups)
+	isManifest = isManifest && group != "" && !strings.Contains(group, "/")
+	hidden := isManifest && !r.visible(req.Context(), v, group)
+	if hidden {
+		setRoute(req, routeHidden)
+	}
 	setRoute(req, routeDiscovery)
 	if req.Method != http.MethodGet && req.Method != http.MethodHead {
 		w.Header().Set("Allow", "GET, HEAD")
@@ -165,11 +175,10 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 		return
 	}
 	docs := r.manifestDocs.Load()
-	v := r.viewFor(req.Context(), info)
 	if r.visibilityScoped {
 		w.Header().Set("Cache-Control", "private")
 	}
-	switch path := strings.TrimSuffix(req.URL.Path, "/"); path {
+	switch path {
 	case discoveryPrefix:
 		serveCachedDoc(w, req, &discoveryGroupDoc)
 	case manifestDiscoveryPrefix:
@@ -188,13 +197,12 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 		_, page := r.indexDocsFor(req.Context(), v)
 		serveCachedDoc(w, req, page)
 	default:
-		group, ok := strings.CutPrefix(path, manifestDiscoveryGroups)
-		if !ok || strings.Contains(group, "/") {
+		if !isManifest {
 			_ = errhttp.Write(req.Context(), apierrors.NewGenericServerResponse(http.StatusNotFound, req.Method, schema.GroupResource{}, "", "", 0, false), w)
 			return
 		}
 		doc, found := docs.manifests[group]
-		if !found || !r.visible(req.Context(), v, group) {
+		if !found || hidden {
 			_ = errhttp.Write(req.Context(), apierrors.NewNotFound(manifestsResource, group), w)
 			return
 		}
