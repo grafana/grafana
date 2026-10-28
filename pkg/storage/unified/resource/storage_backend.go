@@ -25,8 +25,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -38,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -811,7 +810,7 @@ func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
 	}
 	dryRun := b.garbageCollection.DryRun || b.garbageCollection.BlobDryRun
 	count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, dryRun, b.blobReferenced)
-	if err != nil && ctx.Err() != nil && onlyCancellationErrors(err) {
+	if err != nil && ctx.Err() != nil && resourceutil.OnlyCancellationErrors(err) {
 		b.blobGCMetrics.RecordInterrupted(count, dryRun)
 		b.log.Debug("blob garbage collection interrupted", "error", err)
 		return
@@ -828,33 +827,6 @@ func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
 		logArgs = append(logArgs, "skippedWithoutAge", skipped)
 	}
 	b.log.Info("blob garbage collection finished", logArgs...)
-}
-
-// onlyCancellationErrors checks every branch of a joined error so a storage
-// failure collected before cancellation is still reported.
-func onlyCancellationErrors(err error) bool {
-	if err == nil {
-		return false
-	}
-	if joined, ok := err.(interface{ Unwrap() []error }); ok {
-		children := joined.Unwrap()
-		if len(children) == 0 {
-			return false
-		}
-		for _, child := range children {
-			if !onlyCancellationErrors(child) {
-				return false
-			}
-		}
-		return true
-	}
-	if wrapped, ok := err.(interface{ Unwrap() error }); ok && wrapped.Unwrap() != nil {
-		return onlyCancellationErrors(wrapped.Unwrap())
-	}
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return true
-	}
-	return status.Code(err) == codes.Canceled || status.Code(err) == codes.DeadlineExceeded
 }
 
 // runGarbageCollection identifies deleted resources that are safe

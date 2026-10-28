@@ -918,10 +918,13 @@ func (k *unreadableValueKV) BatchGet(ctx context.Context, section string, keys [
 	}
 }
 
-type failingReadCloser struct{ err error }
+type failingReadCloser struct {
+	err      error
+	closeErr error
+}
 
 func (f failingReadCloser) Read([]byte) (int, error) { return 0, f.err }
-func (f failingReadCloser) Close() error             { return nil }
+func (f failingReadCloser) Close() error             { return f.closeErr }
 
 // TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing
 // guards the error paths of resolving a batch. A failed batch read returns no
@@ -1271,11 +1274,48 @@ func TestKvStorageBackend_ReadResource_ErrorStatus(t *testing.T) {
 	}
 }
 
+func TestKvStorageBackend_ReadResource_JoinedReadCloseErrors(t *testing.T) {
+	backendErr := errors.New("storage failed")
+	for _, tc := range []struct {
+		name     string
+		readErr  error
+		closeErr error
+		want     codes.Code
+	}{
+		{"canceled read and failed close", context.Canceled, backendErr, codes.Internal},
+		{"failed read and canceled close", backendErr, context.Canceled, codes.Internal},
+		{"expired read and failed close", context.DeadlineExceeded, backendErr, codes.Internal},
+		{"failed read and expired close", backendErr, context.DeadlineExceeded, codes.Internal},
+		{"grpc canceled read and failed close", status.Error(codes.Canceled, "canceled read"), backendErr, codes.Internal},
+		{"failed read and grpc canceled close", backendErr, status.Error(codes.Canceled, "canceled close"), codes.Internal},
+		{"both canceled", context.Canceled, context.Canceled, codes.Canceled},
+		{"both expired", context.DeadlineExceeded, context.DeadlineExceeded, codes.DeadlineExceeded},
+		{"only close canceled", io.EOF, context.Canceled, codes.Canceled},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &readErrorKV{stage: "read body", err: tc.readErr, closeErr: tc.closeErr}
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				store.KV = opts.KvStore
+				opts.KvStore = store
+			})
+			createAndWriteTestObject(t, backend)
+			store.fail.Store(true)
+
+			response := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{Key: storageTestKey("test-resource")})
+			require.NotNil(t, response.Error)
+			require.Contains(t, response.Error.Message, tc.closeErr.Error())
+			require.Equal(t, tc.want, grpcCodeFromErrorResult(response.Error))
+			require.Equal(t, tc.want, status.Code(errorResultStatus(response.Error)))
+		})
+	}
+}
+
 type readErrorKV struct {
 	KV
-	stage string
-	err   error
-	fail  atomic.Bool
+	stage    string
+	err      error
+	closeErr error
+	fail     atomic.Bool
 }
 
 func (k *readErrorKV) Keys(ctx context.Context, section string, opts ListOptions) iter.Seq2[string, error] {
@@ -1291,7 +1331,7 @@ func (k *readErrorKV) Get(ctx context.Context, section, key string) (io.ReadClos
 		case "get body":
 			return nil, k.err
 		case "read body":
-			return failingReadCloser{err: k.err}, nil
+			return failingReadCloser{err: k.err, closeErr: k.closeErr}, nil
 		}
 	}
 	return k.KV.Get(ctx, section, key)
