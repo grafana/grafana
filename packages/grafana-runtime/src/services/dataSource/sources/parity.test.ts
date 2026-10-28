@@ -1,7 +1,9 @@
 import {
+  type CurrentUserDTO,
   type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
   type DataSourcePluginMeta,
+  OrgRole,
 } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
@@ -243,6 +245,8 @@ beforeEach(() => {
   setDatasourcePluginMetas(metas);
   setDataSourceSrv(undefined as unknown as DataSourceSrv);
   config.namespace = 'default';
+  // The MT fill needs a user session.
+  config.bootData.user = { isSignedIn: true, orgRole: OrgRole.Admin } as CurrentUserDTO;
 });
 
 async function answersFromBootData(): Promise<Answers> {
