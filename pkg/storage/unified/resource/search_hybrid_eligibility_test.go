@@ -64,7 +64,7 @@ func TestHybridSearch_AllowedReadServices(t *testing.T) {
 			}
 			t.Run(name, func(t *testing.T) {
 				backend := &fakeVectorBackend{results: []vector.VectorSearchResult{{UID: "memory", Title: "Memory", Score: 0.1}}}
-				s, index, embedder := newHybridTestServer(lexTableResponse(), backend)
+				s, index, embedder := newHybridTestServer(lexFieldValueResponse(), backend)
 				if shared {
 					backend.collection = &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true, Scope: vector.ScopeShared}
 					s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"g/r"})
@@ -171,7 +171,7 @@ func TestHybridSearch_ExternalServiceStillNeedsGetPermission(t *testing.T) {
 			lexical := &fakeLexicalSearcher{hits: []vector.LexicalHit{{UID: "memory", Title: "Memory"}}}
 			// Direct service grants resolve locally. A user-mapper RPC through this nil connection fails.
 			access := NewAuthzLimitedClient(authzlib.NewClient(nil), AuthzOptions{Registry: prometheus.NewRegistry()})
-			s, index, _ := newHybridTestServer(lexTableResponse(), backend, access)
+			s, index, _ := newHybridTestServer(lexFieldValueResponse(), backend, access)
 			s.externalLexical = lexical
 			s.collectionAllowlist = vector.NewCollectionAllowlist(nil, []string{collection})
 			s.allowedReadServices = map[string][]string{collection: {"assistant"}}
@@ -217,7 +217,7 @@ func TestHybridSearch_RestrictedLaterTargetRejectsWholeRequest(t *testing.T) {
 			}
 			t.Run(name, func(t *testing.T) {
 				backend := &fakeVectorBackend{}
-				s, index, embedder := newHybridTestServer(lexTableResponse(), backend)
+				s, index, embedder := newHybridTestServer(lexFieldValueResponse(), backend)
 				if shared {
 					backend.collection = &vector.Collection{Group: "g", Resource: "r", PartitionKey: "r_external", IsExternal: true, Scope: vector.ScopeShared}
 					s.sharedCollectionAllowlist = vector.NewCollectionAllowlist(nil, []string{"g/r"})
@@ -243,7 +243,7 @@ func TestHybridSearch_RestrictedLaterTargetRejectsWholeRequest(t *testing.T) {
 }
 
 func TestNewSearchServerEnforcesAllowedReadServices(t *testing.T) {
-	index := &hybridFakeIndex{resp: lexTableResponse()}
+	index := &hybridFakeIndex{resp: lexFieldValueResponse()}
 	s, err := newSearchServer(SearchOptions{
 		Backend:             &fakeSearchBackend{idx: index},
 		Resources:           &countingBuilderSupplier{},
@@ -320,7 +320,7 @@ func TestHybridSearch_RequiresManifestOptIn(t *testing.T) {
 			backend := &fakeVectorBackend{collection: &vector.Collection{
 				Group: key.Group, Resource: key.Resource, PartitionKey: "r", IsExternal: tc.external,
 			}}
-			s, index, embedder := newHybridTestServer(lexTableResponse(), backend)
+			s, index, embedder := newHybridTestServer(lexFieldValueResponse(), backend)
 			lexical := &fakeLexicalSearcher{}
 			s.externalLexical = lexical
 			if tc.lexicalOnly {

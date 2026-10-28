@@ -387,7 +387,9 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   `HandleFunc` leaves middleware requests to `next`: in-process clients start before the router.
   `appplugins.registerAPIServer` turns middleware mode on too: app plugin settings are only served
   by the router. Both flags are read once, at startup (`middlewareEnabled`, `settingsEnabled`), so
-  settings are served exactly when middleware mode can reach them. The standalone router is never
+  settings are served exactly when middleware mode can reach them. `appplugins.registerAPIServer` is
+  evaluated through OpenFeature, not `IsEnabledGlobally`, so a remote flag provider can turn it on
+  without a `[feature_toggles]` entry. The standalone router is never
   in middleware mode, whatever the flags, so a flag that also reaches its deployment can't drop its
   cloud sources.
 - **Inside Grafana:** the `Service` always runs, flag or not, so the `/apis/discovery` tree stays
