@@ -7,7 +7,11 @@ import { byRole, byTestId } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
-import { type GrafanaPromRuleGroupDTO, type GrafanaPromRulesResponse } from 'app/types/unified-alerting-dto';
+import {
+  type GrafanaPromRuleGroupDTO,
+  type GrafanaPromRulesResponse,
+  PromRuleType,
+} from 'app/types/unified-alerting-dto';
 
 import { RULER_CONFIG_API_PROBE_GROUP, RULER_CONFIG_API_PROBE_NAMESPACE } from '../api/ruler';
 import { setupMswServer } from '../mockApi';
@@ -21,6 +25,7 @@ import {
   setRulerRuleGroupResolver,
 } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
+import { KnownProvenance } from '../types/knownProvenance';
 
 import GroupDetailsPage from './GroupDetailsPage';
 
@@ -276,6 +281,39 @@ describe('GroupDetailsPage', () => {
       expect(alertRuleItems[0]).toHaveTextContent('Provisioned Rule');
       expect(ui.editLink.query()).not.toBeInTheDocument();
       expect(ui.exportButton.query()).toBeInTheDocument();
+    });
+
+    describe.each([PromRuleType.Alerting, PromRuleType.Recording])('%s rule badges', (type) => {
+      it.each([
+        { provenance: KnownProvenance.ConvertedPrometheus, badge: 'Imported' },
+        { provenance: KnownProvenance.API, badge: 'Provisioned' },
+        { provenance: KnownProvenance.File, badge: 'Provisioned' },
+        { provenance: undefined, badge: undefined },
+      ])('shows the expected badge for provenance "$provenance"', async ({ provenance, badge }) => {
+        const rule = { ...mockGrafanaPromAlertingRule({ provenance }), type };
+        server.use(
+          http.get('/api/prometheus/grafana/api/v1/rules', () =>
+            HttpResponse.json<GrafanaPromRulesResponse>({
+              status: 'success',
+              data: { groups: [{ ...promGroup, rules: [rule] }] },
+            })
+          )
+        );
+
+        renderGroupDetailsPage('grafana', folder.uid, group.name);
+
+        expect(await screen.findByRole('link', { name: rule.name })).toHaveAttribute(
+          'href',
+          `/alerting/grafana/${rule.uid}/view`
+        );
+        const ruleItem = screen.getByRole('treeitem');
+        if (badge) {
+          expect(within(ruleItem).getByText(badge)).toBeInTheDocument();
+        } else {
+          expect(within(ruleItem).queryByText('Imported')).not.toBeInTheDocument();
+          expect(within(ruleItem).queryByText('Provisioned')).not.toBeInTheDocument();
+        }
+      });
     });
 
     it('should allow exporting groups', async () => {
