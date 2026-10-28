@@ -39,27 +39,25 @@ type indexViewData struct {
 	CSPContent string
 }
 
-// Handler renders the swagger page. The core HTTP server and the standalone
+// handler renders the swagger page. The core HTTP server and the standalone
 // swagger-server target both use it, so the page is the same in either mode.
-type Handler struct {
+type handler struct {
 	cfg     *setting.Cfg
 	license licensing.Licensing
 }
 
-// ProvideService mounts the swagger routes on the core HTTP server. The routes
-// are registered during wire construction because the HTTP server binds the
-// accumulated routes to its mux when it starts.
-func ProvideService(cfg *setting.Cfg, license licensing.Licensing, rr routing.RouteRegister) *Handler {
-	h := newHandler(cfg, license)
-	h.registerRoutes(rr)
-	return h
+// RegisterRoutes mounts the swagger routes on the core HTTP server. It is called
+// by the HTTP server rather than wired as a service, so adding or changing it
+// does not touch the OSS or Enterprise wire graphs.
+func RegisterRoutes(rr routing.RouteRegister, cfg *setting.Cfg, license licensing.Licensing) {
+	newHandler(cfg, license).registerRoutes(rr)
 }
 
-func newHandler(cfg *setting.Cfg, license licensing.Licensing) *Handler {
-	return &Handler{cfg: cfg, license: license}
+func newHandler(cfg *setting.Cfg, license licensing.Licensing) *handler {
+	return &handler{cfg: cfg, license: license}
 }
 
-func (h *Handler) registerRoutes(rr routing.RouteRegister) {
+func (h *handler) registerRoutes(rr routing.RouteRegister) {
 	// Deprecated
 	rr.Get("/swagger-ui", handleRedirect)
 
@@ -70,7 +68,7 @@ func handleRedirect(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "swagger", http.StatusMovedPermanently)
 }
 
-func (h *Handler) handleRequest(w http.ResponseWriter, r *http.Request) {
+func (h *handler) handleRequest(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	assets, err := webassets.GetWebAssets(ctx, buildDir, h.cfg, h.license)

@@ -2,9 +2,9 @@
 
 This package serves `/swagger`, the Swagger-based navigator for the Grafana HTTP API.
 
-It runs in one of two modes. Both use the same `Handler`, so the page is the same in either mode:
+It runs in one of two modes. Both use the same handler, so the page is the same in either mode:
 
-- **On the core HTTP server.** This is what `target = all` (the default) does. `ProvideService` registers the routes on the core `RouteRegister` through Wire.
+- **On the core HTTP server.** This is what `target = all` (the default) does. `server.New` (`pkg/server/server.go`) calls `RegisterRoutes`, which adds the routes to the core `RouteRegister` before the HTTP server binds them. The package isn't imported by `pkg/api` and isn't a Wire provider, so changing it never touches the HTTP API or the OSS and Enterprise Wire graphs. `pkg/tests/api/swagger` checks that a started server serves the routes.
 - **Standalone**, under the `swagger-server` target. This mode runs its own HTTP server and is meant for deployments that serve the page separately from the API.
 
 ## Files

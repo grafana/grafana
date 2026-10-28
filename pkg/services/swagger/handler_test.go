@@ -82,9 +82,9 @@ func TestHandler_ContentDeliveryURL(t *testing.T) {
 		`src="https://cdn.example.com/grafana-oss/10.3.0/public/build-swagger/swagger.js"`)
 }
 
-func TestProvideService(t *testing.T) {
+func TestRegisterRoutes(t *testing.T) {
 	rr := routing.NewRouteRegister()
-	ProvideService(newTestCfg(t), &licensing.OSSLicensingService{}, rr)
+	RegisterRoutes(rr, newTestCfg(t), &licensing.OSSLicensingService{})
 
 	mux := web.New()
 	rr.Register(mux)

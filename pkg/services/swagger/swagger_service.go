@@ -36,7 +36,7 @@ type swaggerService struct {
 	promGatherer prometheus.Gatherer
 	promRegister prometheus.Registerer
 
-	handler *Handler
+	handler *handler
 }
 
 // ProvideSwaggerService builds the standalone swagger-server target, which runs
