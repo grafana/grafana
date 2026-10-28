@@ -64,6 +64,7 @@ jobs:
         uses: ./.github/actions/setup-go
         with:
           cache-build: 'false'
+          cache-modules-save: ${{ matrix.group == 'linux-amd64-arm64' }}
       - name: Cache Go builds
         uses: actions/cache@v4 # zizmor: ignore[cache-poisoning] compile checks only; binaries are not published
         with:
@@ -142,6 +143,7 @@ jobs:
         uses: ./.github/actions/setup-go
         with:
           cache-build: 'false'
+          cache-modules-save: ${{ matrix.group == 'linux-amd64-arm64' }}
       - name: Cache Go builds
         uses: actions/cache@v4 # zizmor: ignore[cache-poisoning] compile checks only; binaries are not published
         with:
