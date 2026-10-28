@@ -173,11 +173,13 @@ var RelationsUser = append(append([]string{}, RelationsSubresourceTyped...),
 )
 
 // RelationsServiceAccount are the relations valid on type "service-account":
-// no per-object `create`, and no get_permissions / set_permissions.
+// no per-object `create`.
 var RelationsServiceAccount = append(append([]string{}, RelationsSubresourceTyped...),
 	RelationGet,
 	RelationUpdate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 )
 
 // VerbMapping is mapping a k8s verb to a zanzana relation.

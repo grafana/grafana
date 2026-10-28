@@ -1382,7 +1382,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 			return err
 		}
 		snapshotGr := snapshots.GroupResource()
-		snapshotDualWrite, err := opts.DualWriteBuilder(snapshotGr, snapshotLegacyStore, unifiedSnapshotStore)
+		snapshotDualWrite, err := opts.DualWriteBuilder(snapshotGr, snapshotLegacyStore, snapshot.NewUnifiedBlobStorage(unifiedSnapshotStore, b.unified))
 		if err != nil {
 			return err
 		}
@@ -1749,8 +1749,9 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	serviceAuthorizer := grafanaauthorizer.NewServiceAuthorizer()
 	snapshotAuthorizer := snapshot.NewSnapshotAuthorizer(b.accessControl)
-	// Notebooks defer to the service authorizer when the feature is enabled.
-	notebookAuthorizer := newNotebookAuthorizer(serviceAuthorizer)
+	// Notebooks use classic notebooks:* when accessControl is wired; otherwise
+	// they fall through to the service authorizer (standalone / Cloud).
+	notebookAuthorizer := newNotebookAuthorizer(b.accessControl, serviceAuthorizer)
 	// Variables use classic variables:* when accessControl is wired; otherwise
 	// they fall through to the service authorizer (standalone / Cloud).
 	variableAuthorizer := newVariableAuthorizer(b.accessControl, serviceAuthorizer)

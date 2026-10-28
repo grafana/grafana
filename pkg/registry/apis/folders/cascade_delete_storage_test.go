@@ -164,9 +164,9 @@ func (s *fakeCascadeSearcher) Search(ctx context.Context, req *resourcepb.Resour
 			names = append(names, s.variablesByFolder[uid]...)
 		}
 	}
-	rows := make([]*resourcepb.ResourceTableRow, 0, len(names))
+	rows := make([]*resourcepb.ResourceSearchRow, 0, len(names))
 	for _, n := range names {
-		rows = append(rows, &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: n}})
+		rows = append(rows, &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: n}})
 	}
 
 	// Honor offset/limit so multi-page enumeration is exercised.
@@ -176,7 +176,7 @@ func (s *fakeCascadeSearcher) Search(ctx context.Context, req *resourcepb.Resour
 	if req.Limit > 0 && start+req.Limit < end {
 		end = start + req.Limit
 	}
-	return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{Rows: rows[start:end]}, TotalHits: total}, nil
+	return &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Rows: rows[start:end], TotalHits: total}, nil
 }
 
 func folderFilterValues(req *resourcepb.ResourceSearchRequest) []string {
@@ -354,16 +354,18 @@ func TestCascadeDelete_DeletesAllVariablesInFolder(t *testing.T) {
 	}
 }
 
-// recordingContentsDeleter records the folders whose contents were requested for deletion, and the
-// requester each deletion was attributed to.
+// recordingContentsDeleter records the folders whose contents were requested for deletion, the
+// requester each deletion was attributed to, and the ctx each call received.
 type recordingContentsDeleter struct {
 	folders   []string
 	deletedBy []identity.Requester
+	gotCtx    []context.Context
 }
 
-func (r *recordingContentsDeleter) DeleteInFolder(_ context.Context, _, folderUID string, user identity.Requester) error {
+func (r *recordingContentsDeleter) DeleteInFolder(ctx context.Context, _, folderUID string, user identity.Requester) error {
 	r.folders = append(r.folders, folderUID)
 	r.deletedBy = append(r.deletedBy, user)
+	r.gotCtx = append(r.gotCtx, ctx)
 	return nil
 }
 
@@ -386,6 +388,46 @@ func TestCascadeDelete_DeletesContentsPerFolder(t *testing.T) {
 	for _, got := range deleter.deletedBy {
 		require.Equal(t, requester, got, "contents must be attributed to the real requester, not the service identity used to enumerate the cascade")
 	}
+}
+
+func TestCascadeDelete_MarksUncheckedDeleteAuthorizedOnlyWhenAccessClientChecked(t *testing.T) {
+	t.Run("accessClient wired and checks pass: ctx is marked for this folder", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+		deleter := &recordingContentsDeleter{}
+		s := &cascadeDeleteStorage{
+			Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient,
+			variableClient: nilVariableClient, contentsDeleter: deleter, accessClient: &recordingAccessClient{},
+		}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		require.Len(t, deleter.gotCtx, 1)
+
+		requester, err := identity.GetRequester(ctxWithNamespace())
+		require.NoError(t, err)
+		require.True(t, folder.IsUncheckedDeleteAuthorized(deleter.gotCtx[0], 1, requester, []string{"root"}),
+			"an Unchecked contentsDeleter must be able to trust ctx once checkFolderContentsAccess has passed")
+	})
+
+	t.Run("no accessClient wired: ctx is not marked, since nothing was actually checked", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+		deleter := &recordingContentsDeleter{}
+		s := &cascadeDeleteStorage{
+			Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient,
+			variableClient: nilVariableClient, contentsDeleter: deleter,
+		}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		require.Len(t, deleter.gotCtx, 1)
+
+		requester, err := identity.GetRequester(ctxWithNamespace())
+		require.NoError(t, err)
+		require.False(t, folder.IsUncheckedDeleteAuthorized(deleter.gotCtx[0], 1, requester, []string{"root"}),
+			"checkFolderContentsAccess is a no-op without an accessClient, so ctx must not claim authorization")
+	})
 }
 
 func TestCascadeDelete_RejectsEnumerationIdentityAsRequester(t *testing.T) {

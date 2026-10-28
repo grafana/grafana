@@ -5,12 +5,17 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
+
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestBuildLegacyCheckRequest(t *testing.T) {
@@ -60,7 +65,12 @@ func TestBuildLegacyCheckRequest(t *testing.T) {
 		},
 	}
 
-	request, err := ac.buildLegacyCheckRequest(requester, evaluator, false)
+	request, err := ac.buildLegacyCheckRequest(
+		requester,
+		evaluator,
+		false,
+		types.OrgNamespaceFormatter,
+	)
 
 	require.NoError(t, err)
 	require.Empty(t, cmp.Diff(expected, request, protocmp.Transform()))
@@ -125,7 +135,12 @@ func TestBuildLegacyCheckRequestIdentity(t *testing.T) {
 				SkipScopeResolution: false,
 			}
 
-			request, err := ac.buildLegacyCheckRequest(&tc.requester, accesscontrol.EvalPermission("dashboards:read"), false)
+			request, err := ac.buildLegacyCheckRequest(
+				&tc.requester,
+				accesscontrol.EvalPermission("dashboards:read"),
+				false,
+				types.OrgNamespaceFormatter,
+			)
 
 			require.NoError(t, err)
 			require.Empty(t, cmp.Diff(expected, request, protocmp.Transform()))
@@ -174,7 +189,12 @@ func TestBuildLegacyCheckRequestGroups(t *testing.T) {
 				ExternalGroups: tc.externalGroups,
 			}
 
-			request, err := ac.buildLegacyCheckRequest(requester, accesscontrol.EvalPermission("dashboards:read"), tc.useExternalGroups)
+			request, err := ac.buildLegacyCheckRequest(
+				requester,
+				accesscontrol.EvalPermission("dashboards:read"),
+				tc.useExternalGroups,
+				types.OrgNamespaceFormatter,
+			)
 
 			require.NoError(t, err)
 			require.Equal(t, tc.expected, request.Teams)
@@ -211,7 +231,12 @@ func TestBuildLegacyCheckRequestWithoutResolvers(t *testing.T) {
 		{name: "original instance still resolves scopes", ac: ac},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			request, err := tc.ac.buildLegacyCheckRequest(requester, evaluator, true)
+			request, err := tc.ac.buildLegacyCheckRequest(
+				requester,
+				evaluator,
+				true,
+				types.OrgNamespaceFormatter,
+			)
 
 			require.NoError(t, err)
 			expected := &authzextv1.LegacyCheckRequest{
@@ -246,17 +271,6 @@ func TestBuildLegacyCheckRequestRejectsInvalidInput(t *testing.T) {
 			error:     "legacy check requester is required",
 		},
 		{
-			name: "global evaluation cannot be expressed as a namespace",
-			requester: &user.SignedInUser{
-				UserID:    1,
-				UserUID:   "user-uid",
-				OrgID:     accesscontrol.NoOrgID,
-				Namespace: "stacks-123",
-			},
-			evaluator: accesscontrol.EvalPermission("users:read"),
-			error:     "legacy check does not yet support global evaluation",
-		},
-		{
 			name: "unsupported evaluator",
 			requester: &user.SignedInUser{
 				UserID:  1,
@@ -272,12 +286,185 @@ func TestBuildLegacyCheckRequestRejectsInvalidInput(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := ProvideAccessControlTest()
 
-			request, err := ac.buildLegacyCheckRequest(tc.requester, tc.evaluator, false)
+			request, err := ac.buildLegacyCheckRequest(
+				tc.requester,
+				tc.evaluator,
+				false,
+				types.OrgNamespaceFormatter,
+			)
 
 			require.ErrorContains(t, err, tc.error)
 			require.Nil(t, request)
 		})
 	}
+}
+
+func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
+	for _, tc := range []struct {
+		name             string
+		orgID            int64
+		namespace        string
+		stackID          string
+		permissions      map[int64]map[string][]string
+		wantNamespace    string
+		permittedActions []string
+	}{
+		{
+			name:             "NoOrgID with a global map",
+			orgID:            accesscontrol.NoOrgID,
+			namespace:        "stacks-123",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "stacks-123",
+			permittedActions: []string{"users:read"},
+		},
+		{
+			name:          "organization map does not count as global",
+			orgID:         accesscontrol.NoOrgID,
+			namespace:     "org--1",
+			permissions:   map[int64]map[string][]string{12: {"users:read": {"users:*"}}},
+			wantNamespace: "default",
+		},
+		{
+			name:          "minus one map does not count as global",
+			orgID:         accesscontrol.NoOrgID,
+			permissions:   map[int64]map[string][]string{-1: {"users:read": {"users:*"}}},
+			wantNamespace: "default",
+		},
+		{
+			name:             "explicit global identity",
+			orgID:            accesscontrol.GlobalOrgID,
+			namespace:        "org-0",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "default",
+			permittedActions: []string{"users:read"},
+		},
+		{
+			name:          "global identity with empty global map",
+			orgID:         accesscontrol.GlobalOrgID,
+			namespace:     "stacks-123",
+			permissions:   map[int64]map[string][]string{0: {}},
+			wantNamespace: "stacks-123",
+		},
+		{
+			name:             "cloud NoOrgID with empty namespace",
+			orgID:            accesscontrol.NoOrgID,
+			stackID:          "123",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "stacks-123",
+			permittedActions: []string{"users:read"},
+		},
+		{
+			name:             "cloud global identity with empty namespace",
+			orgID:            accesscontrol.GlobalOrgID,
+			stackID:          "123",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "stacks-123",
+			permittedActions: []string{"users:read"},
+		},
+		{
+			name:             "cloud NoOrgID with sentinel namespace",
+			orgID:            accesscontrol.NoOrgID,
+			namespace:        "org--1",
+			stackID:          "123",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "stacks-123",
+			permittedActions: []string{"users:read"},
+		},
+		{
+			name:             "cloud global identity with sentinel namespace",
+			orgID:            accesscontrol.GlobalOrgID,
+			namespace:        "org-0",
+			stackID:          "123",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "stacks-123",
+			permittedActions: []string{"users:read"},
+		},
+		{
+			name:             "explicit namespace is preserved for server validation",
+			orgID:            accesscontrol.GlobalOrgID,
+			namespace:        "stacks-456",
+			stackID:          "123",
+			permissions:      map[int64]map[string][]string{0: {"users:read": {"users:*"}}},
+			wantNamespace:    "stacks-456",
+			permittedActions: []string{"users:read"},
+		},
+		{
+			name:      "effective action list includes resolver dependencies in sorted order",
+			orgID:     accesscontrol.NoOrgID,
+			namespace: "stacks-123",
+			permissions: map[int64]map[string][]string{
+				0:  {"users:read": {"users:*"}, "folders:read": {"folders:*"}},
+				12: {"users:delete": {"users:*"}},
+			},
+			wantNamespace:    "stacks-123",
+			permittedActions: []string{"folders:read", "users:read"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.StackID = tc.stackID
+
+			requester := &user.SignedInUser{
+				UserID:      1,
+				UserUID:     "user-uid",
+				OrgID:       tc.orgID,
+				Namespace:   tc.namespace,
+				Permissions: tc.permissions,
+			}
+			want := &authzextv1.LegacyCheckRequest{
+				Namespace:  tc.wantNamespace,
+				Subject:    "user:user-uid",
+				Expression: legacyRequestPermissionExpression("users:read"),
+				GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{
+					RequesterOrgId:   tc.orgID,
+					PermittedActions: tc.permittedActions,
+				},
+			}
+
+			useExternalGroups := false
+			got, err := ProvideAccessControlTest().
+				buildLegacyCheckRequest(
+					requester,
+					accesscontrol.EvalPermission("users:read"),
+					useExternalGroups,
+					apirequest.GetNamespaceMapper(cfg),
+				)
+			require.NoError(t, err)
+			require.Empty(t, cmp.Diff(want, got, protocmp.Transform()))
+
+			encoded, err := proto.Marshal(got)
+			require.NoError(t, err)
+
+			decoded := &authzextv1.LegacyCheckRequest{}
+			require.NoError(t, proto.Unmarshal(encoded, decoded))
+			require.Empty(t, cmp.Diff(want, decoded, protocmp.Transform()))
+		})
+	}
+}
+
+func TestBuildLegacyCheckRequestCloudOrganization(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.StackID = "123"
+	requester := &user.SignedInUser{
+		UserID:  1,
+		UserUID: "user-uid",
+		OrgID:   1,
+	}
+	want := &authzextv1.LegacyCheckRequest{
+		Namespace:  "stacks-123",
+		Subject:    "user:user-uid",
+		Expression: legacyRequestPermissionExpression("users:read"),
+	}
+
+	got, err := ProvideAccessControlTest().buildLegacyCheckRequest(
+		requester,
+		accesscontrol.EvalPermission("users:read"),
+		false,
+		apirequest.GetNamespaceMapper(cfg),
+	)
+
+	require.NoError(t, err)
+	require.Empty(t, cmp.Diff(want, got, protocmp.Transform()))
 }
 
 func legacyRequestPermissionExpression(

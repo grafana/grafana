@@ -25,11 +25,10 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -37,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
@@ -95,6 +95,8 @@ type kvStorageBackend struct {
 	eventStore             *eventStore
 	notifier               notifier
 	eventPublisher         EventPublisher
+	// watchNotificationMetadata adds object metadata to published notifications.
+	watchNotificationMetadata bool
 	// keysSubscriber lets search watch written keys straight from the bus. Set only
 	// when the NATS notifier is on: shadow mode is for observation, and must not
 	// change how anything receives updates.
@@ -149,6 +151,7 @@ type kvBackendMetrics struct {
 	NatsNotifierDropped               *prometheus.CounterVec
 	WatchNotificationsPublished       *prometheus.CounterVec
 	WatchNotificationPublishFailures  *prometheus.CounterVec
+	WatchNotificationMetadataDropped  *prometheus.CounterVec
 	GCGroupResourceDuration           *prometheus.HistogramVec
 	GCCycleDuration                   *prometheus.HistogramVec
 	GCCycleBatches                    *prometheus.HistogramVec
@@ -212,6 +215,10 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 		WatchNotificationPublishFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_storage_server_watch_notifications_publish_failures_total",
 			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
+		}, []string{"group", "resource", "action"}),
+		WatchNotificationMetadataDropped: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_storage_server_watch_notification_metadata_dropped_total",
+			Help: "Watch notifications published without their metadata because it pushed the message over the size limit, by group, resource, and action.",
 		}, []string{"group", "resource", "action"}),
 		GCCycleDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_storage_server_gc_cycle_duration_seconds",
@@ -277,6 +284,10 @@ func (m *kvBackendMetrics) recordWatchNotificationPublished(event Event) {
 	m.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
 
+func (m *kvBackendMetrics) recordWatchNotificationMetadataDropped(event Event) {
+	m.WatchNotificationMetadataDropped.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
+}
+
 func (m *kvBackendMetrics) recordWatchNotificationPublishFailure(event Event) {
 	m.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
@@ -323,6 +334,10 @@ type KVBackendOptions struct {
 	// EventPublisher, when set, is used to announce committed writes on an
 	// external message bus (NATS). Optional; nil disables external publishing.
 	EventPublisher EventPublisher
+
+	// WatchNotificationMetadata adds allowlisted object metadata (labels,
+	// annotations, finalizers, generation, timestamps) to published notifications.
+	WatchNotificationMetadata bool
 
 	// EventSubscriber feeds the shadow NATS notifier; nil disables it.
 	EventSubscriber EventSubscriber
@@ -488,28 +503,29 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			natsDropped:        metrics.NatsNotifierDropped,
 			invalidator:        opts.WatchInvalidator,
 		}),
-		eventPublisher:          opts.EventPublisher,
-		keysSubscriber:          keysSubscriber(opts),
-		watchOpts:               opts.WatchOptions.normalize(),
-		resourceVersions:        processResourceVersions,
-		resourceVersionMaxWait:  resourceVersionMaxWait,
-		log:                     logger,
-		eventRetentionPeriod:    eventRetentionPeriod,
-		eventPruningInterval:    eventPruningInterval,
-		rvManager:               opts.RvManager,
-		leaseManager:            leaseManager,
-		leaseTTL:                opts.LeaseTTL,
-		dbKeepAlive:             opts.DBKeepAlive,
-		lastImportStore:         newLastImportStore(kv),
-		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
-		garbageCollection:       garbageCollection,
-		blobGCMetrics:           NewBlobGCMetricsIfEnabled(opts.Reg, "kv", garbageCollection.Enabled && garbageCollection.BlobEnabled),
-		gcGate:                  opts.GCGate,
-		searchLookback:          opts.SearchLookback,
-		disableStorageServices:  opts.DisableStorageServices,
-		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
-		cancel:                  cancel,
-		metrics:                 metrics,
+		eventPublisher:            opts.EventPublisher,
+		watchNotificationMetadata: opts.WatchNotificationMetadata,
+		keysSubscriber:            keysSubscriber(opts),
+		watchOpts:                 opts.WatchOptions.normalize(),
+		resourceVersions:          processResourceVersions,
+		resourceVersionMaxWait:    resourceVersionMaxWait,
+		log:                       logger,
+		eventRetentionPeriod:      eventRetentionPeriod,
+		eventPruningInterval:      eventPruningInterval,
+		rvManager:                 opts.RvManager,
+		leaseManager:              leaseManager,
+		leaseTTL:                  opts.LeaseTTL,
+		dbKeepAlive:               opts.DBKeepAlive,
+		lastImportStore:           newLastImportStore(kv),
+		lastImportTimeMaxAge:      opts.LastImportTimeMaxAge,
+		garbageCollection:         garbageCollection,
+		blobGCMetrics:             NewBlobGCMetricsIfEnabled(opts.Reg, "kv", garbageCollection.Enabled && garbageCollection.BlobEnabled),
+		gcGate:                    opts.GCGate,
+		searchLookback:            opts.SearchLookback,
+		disableStorageServices:    opts.DisableStorageServices,
+		dashboardVersionsToKeep:   opts.DashboardVersionsToKeep,
+		cancel:                    cancel,
+		metrics:                   metrics,
 	}
 	err := backend.initPruner(ctx, opts.Reg)
 	if err != nil {
@@ -794,7 +810,7 @@ func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
 	}
 	dryRun := b.garbageCollection.DryRun || b.garbageCollection.BlobDryRun
 	count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, dryRun, b.blobReferenced)
-	if err != nil && ctx.Err() != nil && onlyCancellationErrors(err) {
+	if err != nil && ctx.Err() != nil && resourceutil.OnlyCancellationErrors(err) {
 		b.blobGCMetrics.RecordInterrupted(count, dryRun)
 		b.log.Debug("blob garbage collection interrupted", "error", err)
 		return
@@ -811,33 +827,6 @@ func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
 		logArgs = append(logArgs, "skippedWithoutAge", skipped)
 	}
 	b.log.Info("blob garbage collection finished", logArgs...)
-}
-
-// onlyCancellationErrors checks every branch of a joined error so a storage
-// failure collected before cancellation is still reported.
-func onlyCancellationErrors(err error) bool {
-	if err == nil {
-		return false
-	}
-	if joined, ok := err.(interface{ Unwrap() []error }); ok {
-		children := joined.Unwrap()
-		if len(children) == 0 {
-			return false
-		}
-		for _, child := range children {
-			if !onlyCancellationErrors(child) {
-				return false
-			}
-		}
-		return true
-	}
-	if wrapped, ok := err.(interface{ Unwrap() error }); ok && wrapped.Unwrap() != nil {
-		return onlyCancellationErrors(wrapped.Unwrap())
-	}
-	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
-		return true
-	}
-	return status.Code(err) == codes.Canceled || status.Code(err) == codes.DeadlineExceeded
 }
 
 // runGarbageCollection identifies deleted resources that are safe
@@ -1403,6 +1392,9 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		PreviousAction:  previousKey.Action,
 		PreviousFolder:  previousKey.Folder,
 	}
+	if k.watchNotificationMetadata {
+		eventData.Metadata = newWatchMetadata(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, obj)
+	}
 	if err := k.eventStore.Save(ctx, eventData); err != nil {
 		k.metrics.recordEventEmitFailure(event)
 		k.log.Error("data committed but failed to emit event; data and event store diverged",
@@ -1456,10 +1448,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		latestRV, latestErr := k.latestResourceVersion(ctx)
 		err = latestErr
 		if err != nil {
-			return &BackendReadResponse{Error: &resourcepb.ErrorResult{
-				Code:    http.StatusInternalServerError,
-				Message: fmt.Sprintf("failed to fetch latest resource version: %v", err),
-			}}
+			return &BackendReadResponse{Error: AsErrorResult(fmt.Errorf("failed to fetch latest resource version: %w", err))}
 		}
 
 		// Check if the requested RV is higher than the latest available RV
@@ -1492,7 +1481,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if errors.Is(err, ErrNotFound) {
 		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 	} else if err != nil {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
+		return &BackendReadResponse{Error: AsErrorResult(err)}
 	}
 	data, err := k.dataStore.Get(ctx, DataKey{
 		Group:           req.Key.Group,
@@ -1509,11 +1498,11 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 	}
 	if err != nil {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
+		return &BackendReadResponse{Error: AsErrorResult(err)}
 	}
 	value, err := kv.ReadAllAndClose(data)
 	if err != nil {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
+		return &BackendReadResponse{Error: AsErrorResult(err)}
 	}
 	return &BackendReadResponse{
 		Key:             req.Key,
