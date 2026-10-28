@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // FolderClient is the app-sdk typed client for folder.grafana.app/v1beta1. It is
@@ -73,24 +72,6 @@ func (c *FolderClient) Create(ctx context.Context, obj *Folder, opts resource.Cr
 
 func (c *FolderClient) Update(ctx context.Context, obj *Folder, opts resource.UpdateOptions) (*Folder, error) {
 	return c.client.Update(ctx, obj, opts)
-}
-
-func (c *FolderClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus FolderStatus, opts resource.UpdateOptions) (*Folder, error) {
-	return c.client.Update(ctx, &Folder{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       FolderKind().Kind(),
-			APIVersion: GroupVersion.Identifier(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			ResourceVersion: opts.ResourceVersion,
-			Namespace:       identifier.Namespace,
-			Name:            identifier.Name,
-		},
-		Status: newStatus,
-	}, resource.UpdateOptions{
-		Subresource:     "status",
-		ResourceVersion: opts.ResourceVersion,
-	})
 }
 
 func (c *FolderClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*Folder, error) {

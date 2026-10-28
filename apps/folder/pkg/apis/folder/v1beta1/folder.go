@@ -31,10 +31,8 @@ const (
 )
 
 var (
-	NewFolder                    = v1.NewFolder
-	NewFolderSpec                = v1.NewFolderSpec
-	NewFolderStatus              = v1.NewFolderStatus
-	NewFolderCascadeDeleteStatus = v1.NewFolderCascadeDeleteStatus
+	NewFolder     = v1.NewFolder
+	NewFolderSpec = v1.NewFolderSpec
 )
 
 var (
