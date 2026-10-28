@@ -18,6 +18,7 @@ import {
   Dropdown,
   EmptyState,
   FilterInput,
+  Icon,
   IconButton,
   Input,
   LoadingPlaceholder,
@@ -32,6 +33,7 @@ import {
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { savedDashboardViewsApi, type SavedDashboardView } from './api';
+import { getDefaultSavedView, setDefaultSavedView } from './defaultView';
 import { loadSavedViews } from './loadSavedViews';
 import { applySavedViewState, captureSavedViewState, getSavedViewDiff } from './state';
 
@@ -76,6 +78,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
   const [editName, setEditName] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [defaultViewName, setDefaultViewName] = useState<string | undefined>();
   const [loadFailed, setLoadFailed] = useState(false);
   // Re-render on time range and variable changes so the selected view's save button tracks the dashboard.
   sceneGraph.getTimeRange(dashboard).useState();
@@ -91,6 +94,22 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       loadSavedViews(dashboard).then((ok) => setLoadFailed(!ok));
     }
   }, [dashboard, savedViews]);
+
+  useEffect(() => {
+    if (!uid) {
+      return;
+    }
+    let cancelled = false;
+    getDefaultSavedView(uid).then((name) => {
+      if (!cancelled) {
+        setDefaultViewName(name);
+      }
+    });
+    // Closing the sidebar can unmount the pane mid-fetch.
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
 
   function retryLoad() {
     setLoadFailed(false);
@@ -243,7 +262,24 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       if (viewFilter === view.metadata.name) {
         handleClearSelection();
       }
+      if (uid && view.metadata.name === defaultViewName) {
+        // Clear it now so the next load doesn't fetch a deleted view.
+        setDefaultViewName(undefined);
+        await setDefaultSavedView(uid, undefined);
+      }
       setPendingDelete(undefined);
+    });
+  }
+
+  function handleToggleDefault(view: SavedDashboardView) {
+    return withBusy(async () => {
+      if (!uid) {
+        return;
+      }
+      const isCurrentDefault = view.metadata.name === defaultViewName;
+      // Storage holds one name per dashboard, so setting a default replaces the old one.
+      await setDefaultSavedView(uid, isCurrentDefault ? undefined : view.metadata.name);
+      setDefaultViewName(isCurrentDefault ? undefined : view.metadata.name);
     });
   }
 
@@ -279,10 +315,21 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                 {filteredViews.map((view) => {
                   const isSelected = view.metadata.name === viewFilter;
                   const isEditingTitle = editingView?.metadata.name === view.metadata.name;
+                  const isDefault = view.metadata.name === defaultViewName;
 
                   return (
                     <div key={view.metadata.name} className={cx(styles.row, isSelected && styles.rowSelected)}>
                       <Stack alignItems="center" justifyContent="space-between" gap={1}>
+                        {isDefault && (
+                          <Icon
+                            name="favorite"
+                            size="sm"
+                            title={t(
+                              'dashboard.sidebar.saved-views.default-indicator',
+                              'Your default view for this dashboard'
+                            )}
+                          />
+                        )}
                         {isEditingTitle ? (
                           <>
                             <Box flex={1} minWidth={0}>
@@ -342,6 +389,15 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                                   label={t('dashboard.sidebar.saved-views.edit-title', 'Edit title')}
                                   icon="pen"
                                   onClick={() => startEditingTitle(view)}
+                                />
+                                <Menu.Item
+                                  label={
+                                    isDefault
+                                      ? t('dashboard.sidebar.saved-views.unset-default', 'Remove as default')
+                                      : t('dashboard.sidebar.saved-views.set-default', 'Set as default')
+                                  }
+                                  icon="favorite"
+                                  onClick={() => handleToggleDefault(view)}
                                 />
                                 <Menu.Item
                                   label={t('dashboard.sidebar.saved-views.delete', 'Delete')}
