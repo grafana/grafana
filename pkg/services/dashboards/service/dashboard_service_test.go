@@ -9,6 +9,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
@@ -2932,21 +2933,10 @@ func (g *deleteGate) hold(context.Context, string) error {
 
 func (g *deleteGate) open() { g.once.Do(func() { close(g.release) }) }
 
-// waitForDeletes waits until n deletes are held, then checks that no further delete starts.
 func (g *deleteGate) waitForDeletes(t *testing.T, n int) {
 	t.Helper()
-	for i := range n {
-		select {
-		case <-g.entered:
-		case <-time.After(3 * time.Second):
-			t.Fatalf("only %d of %d deletes started", i, n)
-		}
-	}
-	select {
-	case <-g.entered:
-		t.Fatalf("more than %d deletes ran at once", n)
-	case <-time.After(30 * time.Millisecond):
-	}
+	synctest.Wait()
+	require.Len(t, g.entered, n, "unexpected number of in-flight deletes")
 }
 
 func runInBackground(f func() error) <-chan error {
@@ -2957,10 +2947,11 @@ func runInBackground(f func() error) <-chan error {
 
 func waitForResult(t *testing.T, done <-chan error) error {
 	t.Helper()
+	synctest.Wait()
 	select {
 	case err := <-done:
 		return err
-	case <-time.After(3 * time.Second):
+	default:
 		t.Fatal("delete did not finish")
 		return nil
 	}
@@ -2979,51 +2970,56 @@ func TestDeleteInFoldersConcurrency(t *testing.T) {
 		{"empty folder", true, 4, 0, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			svc, client, requester := newFolderDeleteService(t, tc.enabled, tc.workers, tc.count, nil)
-			gate := newDeleteGate(t)
-			client.deleteFn = gate.hold
-			done := runInBackground(func() error { return svc.DeleteInFolders(t.Context(), 1, []string{"folder"}, requester) })
+			synctest.Test(t, func(t *testing.T) {
+				svc, client, requester := newFolderDeleteService(t, tc.enabled, tc.workers, tc.count, nil)
+				gate := newDeleteGate(t)
+				client.deleteFn = gate.hold
+				done := runInBackground(func() error { return svc.DeleteInFolders(t.Context(), 1, []string{"folder"}, requester) })
 
-			gate.waitForDeletes(t, tc.want)
-			gate.open()
-			require.NoError(t, waitForResult(t, done))
+				gate.waitForDeletes(t, tc.want)
+				gate.open()
+				require.NoError(t, waitForResult(t, done))
 
-			require.Equal(t, tc.want, client.maximum)
-			deleted := make([]string, 0, len(client.calls))
-			for _, call := range client.calls {
-				deleted = append(deleted, call.uid)
-				require.Equal(t, int64(1), call.orgID)
-				require.Same(t, requester, call.requester)
-				require.NotNil(t, call.options.GracePeriodSeconds)
-				require.Zero(t, *call.options.GracePeriodSeconds)
-			}
-			if tc.enabled {
-				require.ElementsMatch(t, client.uids, deleted)
-			} else {
-				require.Equal(t, client.uids, deleted)
-			}
+				require.Equal(t, tc.want, client.maximum)
+				deleted := make([]string, 0, len(client.calls))
+				for _, call := range client.calls {
+					deleted = append(deleted, call.uid)
+					require.Equal(t, int64(1), call.orgID)
+					require.Same(t, requester, call.requester)
+					require.NotNil(t, call.options.GracePeriodSeconds)
+					require.Zero(t, *call.options.GracePeriodSeconds)
+				}
+				if tc.enabled {
+					require.ElementsMatch(t, client.uids, deleted)
+				} else {
+					require.Equal(t, client.uids, deleted)
+				}
+			})
 		})
 	}
 }
 
 func TestDeleteInFoldersCancellationWaitsForInFlightDeletes(t *testing.T) {
-	svc, client, requester := newFolderDeleteService(t, true, 4, 20, nil)
-	ctx, cancel := context.WithCancel(t.Context())
-	gate := newDeleteGate(t)
-	client.deleteFn = gate.hold
-	done := runInBackground(func() error { return svc.DeleteInFolders(ctx, 1, []string{"folder"}, requester) })
+	synctest.Test(t, func(t *testing.T) {
+		svc, client, requester := newFolderDeleteService(t, true, 4, 20, nil)
+		ctx, cancel := context.WithCancel(t.Context())
+		gate := newDeleteGate(t)
+		client.deleteFn = gate.hold
+		done := runInBackground(func() error { return svc.DeleteInFolders(ctx, 1, []string{"folder"}, requester) })
 
-	gate.waitForDeletes(t, 4)
-	cancel()
-	select {
-	case <-done:
-		t.Fatal("returned before in-flight deletes finished")
-	case <-time.After(30 * time.Millisecond):
-	}
-	gate.open()
+		gate.waitForDeletes(t, 4)
+		cancel()
+		synctest.Wait()
+		select {
+		case <-done:
+			t.Fatal("returned before in-flight deletes finished")
+		default:
+		}
+		gate.open()
 
-	require.ErrorIs(t, waitForResult(t, done), context.Canceled)
-	require.Len(t, client.calls, 4)
+		require.ErrorIs(t, waitForResult(t, done), context.Canceled)
+		require.Len(t, client.calls, 4)
+	})
 }
 
 func TestDeleteInFoldersErrors(t *testing.T) {

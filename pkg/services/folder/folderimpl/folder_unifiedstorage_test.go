@@ -12,6 +12,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	claims "github.com/grafana/authlib/types"
@@ -1676,21 +1677,10 @@ func (g *deleteGate) hold(context.Context, string) error {
 
 func (g *deleteGate) open() { g.once.Do(func() { close(g.release) }) }
 
-// waitForDeletes waits until n deletes are held, then checks that no further delete starts.
 func (g *deleteGate) waitForDeletes(t *testing.T, n int) {
 	t.Helper()
-	for i := range n {
-		select {
-		case <-g.entered:
-		case <-time.After(3 * time.Second):
-			t.Fatalf("only %d of %d deletes started", i, n)
-		}
-	}
-	select {
-	case <-g.entered:
-		t.Fatalf("more than %d deletes ran at once", n)
-	case <-time.After(30 * time.Millisecond):
-	}
+	synctest.Wait()
+	require.Len(t, g.entered, n, "unexpected number of in-flight deletes")
 }
 
 func runInBackground(f func() error) <-chan error {
@@ -1701,10 +1691,11 @@ func runInBackground(f func() error) <-chan error {
 
 func waitForResult(t *testing.T, done <-chan error) error {
 	t.Helper()
+	synctest.Wait()
 	select {
 	case err := <-done:
 		return err
-	case <-time.After(3 * time.Second):
+	default:
 		t.Fatal("delete did not finish")
 		return nil
 	}
@@ -1723,92 +1714,100 @@ func TestDeleteFolderDashboardConcurrency(t *testing.T) {
 		{"empty folder", true, 4, 0, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			svc, cli, cmd, ctx := newDashboardDeleteService(t, tc.enabled, tc.workers, tc.count)
-			gate := newDeleteGate(t)
-			cli.deleteFn = gate.hold
-			done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
+			synctest.Test(t, func(t *testing.T) {
+				svc, cli, cmd, ctx := newDashboardDeleteService(t, tc.enabled, tc.workers, tc.count)
+				gate := newDeleteGate(t)
+				cli.deleteFn = gate.hold
+				done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
 
-			gate.waitForDeletes(t, tc.want)
-			gate.open()
-			require.NoError(t, waitForResult(t, done))
+				gate.waitForDeletes(t, tc.want)
+				gate.open()
+				require.NoError(t, waitForResult(t, done))
 
-			require.Equal(t, tc.want, cli.maximum)
-			if tc.enabled {
-				require.ElementsMatch(t, cli.uids, cli.calls)
-			} else {
-				require.Equal(t, cli.uids, cli.calls)
-			}
-			require.False(t, cli.badOptions)
-			require.False(t, cli.badRequester)
-			public := svc.publicDashboardService.(*dashboardDeletePublicService)
-			require.Equal(t, tc.count, public.completedAtCleanup)
-			require.ElementsMatch(t, cli.uids, public.uids)
-			require.True(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
+				require.Equal(t, tc.want, cli.maximum)
+				if tc.enabled {
+					require.ElementsMatch(t, cli.uids, cli.calls)
+				} else {
+					require.Equal(t, cli.uids, cli.calls)
+				}
+				require.False(t, cli.badOptions)
+				require.False(t, cli.badRequester)
+				public := svc.publicDashboardService.(*dashboardDeletePublicService)
+				require.Equal(t, tc.count, public.completedAtCleanup)
+				require.ElementsMatch(t, cli.uids, public.uids)
+				require.True(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
+			})
 		})
 	}
 }
 
 func TestDeleteFolderDashboardRequestCancellation(t *testing.T) {
-	svc, cli, cmd, ctx := newDashboardDeleteService(t, true, 4, 20)
-	ctx, cancel := context.WithCancel(ctx)
-	gate := newDeleteGate(t)
-	cli.deleteFn = func(ctx context.Context, uid string) error {
-		_ = gate.hold(ctx, uid)
-		<-ctx.Done()
-		return ctx.Err()
-	}
-	done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
+	synctest.Test(t, func(t *testing.T) {
+		svc, cli, cmd, ctx := newDashboardDeleteService(t, true, 4, 20)
+		ctx, cancel := context.WithCancel(ctx)
+		gate := newDeleteGate(t)
+		cli.deleteFn = func(ctx context.Context, uid string) error {
+			_ = gate.hold(ctx, uid)
+			<-ctx.Done()
+			return ctx.Err()
+		}
+		done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
 
-	gate.waitForDeletes(t, 4)
-	cancel()
-	select {
-	case <-done:
-		t.Fatal("returned before in-flight deletes finished")
-	case <-time.After(30 * time.Millisecond):
-	}
-	gate.open()
+		gate.waitForDeletes(t, 4)
+		cancel()
+		synctest.Wait()
+		select {
+		case <-done:
+			t.Fatal("returned before in-flight deletes finished")
+		default:
+		}
+		gate.open()
 
-	require.ErrorIs(t, waitForResult(t, done), context.Canceled)
-	require.Len(t, cli.calls, 4)
-	require.Nil(t, svc.publicDashboardService.(*dashboardDeletePublicService).uids)
-	require.False(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
+		require.ErrorIs(t, waitForResult(t, done), context.Canceled)
+		require.Len(t, cli.calls, 4)
+		require.Nil(t, svc.publicDashboardService.(*dashboardDeletePublicService).uids)
+		require.False(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
+	})
 }
 
 func TestDeleteFolderDashboardFailureLetsInFlightDeletesFinish(t *testing.T) {
-	svc, cli, cmd, ctx := newDashboardDeleteService(t, true, 4, 20)
-	gate := newDeleteGate(t)
-	releaseFailure := make(chan struct{})
-	canceled := make(chan string, 20)
-	failure := errors.New("dashboard delete failed")
-	cli.deleteFn = func(ctx context.Context, uid string) error {
-		gate.entered <- struct{}{}
-		if uid == "dashboard-0" {
-			<-releaseFailure
-			return failure
+	synctest.Test(t, func(t *testing.T) {
+		svc, cli, cmd, ctx := newDashboardDeleteService(t, true, 4, 20)
+		gate := newDeleteGate(t)
+		releaseFailure := make(chan struct{})
+		canceled := make(chan string, 20)
+		failure := errors.New("dashboard delete failed")
+		cli.deleteFn = func(ctx context.Context, uid string) error {
+			gate.entered <- struct{}{}
+			if uid == "dashboard-0" {
+				<-releaseFailure
+				return failure
+			}
+			select {
+			case <-ctx.Done():
+				canceled <- uid
+				return ctx.Err()
+			case <-gate.release:
+				return nil
+			}
 		}
+		done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
+
+		gate.waitForDeletes(t, 4)
+		close(releaseFailure)
+		synctest.Wait()
 		select {
-		case <-ctx.Done():
-			canceled <- uid
-			return ctx.Err()
-		case <-gate.release:
-			return nil
+		case uid := <-canceled:
+			t.Fatalf("a failed sibling canceled the in-flight delete of %s", uid)
+		case <-done:
+			t.Fatal("returned before in-flight deletes finished")
+		default:
 		}
-	}
-	done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
+		gate.open()
 
-	gate.waitForDeletes(t, 4)
-	close(releaseFailure)
-	select {
-	case uid := <-canceled:
-		t.Fatalf("a failed sibling canceled the in-flight delete of %s", uid)
-	case <-done:
-		t.Fatal("returned before in-flight deletes finished")
-	case <-time.After(100 * time.Millisecond):
-	}
-	gate.open()
-
-	require.ErrorIs(t, waitForResult(t, done), failure)
-	require.Len(t, cli.calls, 4, "no new deletes may start after the first failure")
-	require.Nil(t, svc.publicDashboardService.(*dashboardDeletePublicService).uids)
-	require.False(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
+		require.ErrorIs(t, waitForResult(t, done), failure)
+		require.Len(t, cli.calls, 4, "no new deletes may start after the first failure")
+		require.Nil(t, svc.publicDashboardService.(*dashboardDeletePublicService).uids)
+		require.False(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
+	})
 }
