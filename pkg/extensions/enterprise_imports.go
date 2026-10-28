@@ -538,7 +538,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	_ "github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	_ "github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
-	_ "github.com/grafana/grafana/pkg/services/swagger"
 	_ "github.com/grafana/grafana/pkg/services/tag"
 	_ "github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	_ "github.com/grafana/grafana/pkg/services/team"
