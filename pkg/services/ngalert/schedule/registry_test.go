@@ -359,20 +359,6 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			"DashboardUID": func(r *models.AlertRule) { r.DashboardUID = new(uuid.NewV4().String()) },
 			"PanelID":      func(r *models.AlertRule) { r.PanelID = new(int64(123)) },
 			"For":          func(r *models.AlertRule) { r.For += time.Minute },
-			"NoDataState": func(r *models.AlertRule) {
-				if r.NoDataState == models.NoData {
-					r.NoDataState = models.OK
-				} else {
-					r.NoDataState = models.NoData
-				}
-			},
-			"ExecErrState": func(r *models.AlertRule) {
-				if r.ExecErrState == models.ErrorErrState {
-					r.ExecErrState = models.OkErrState
-				} else {
-					r.ExecErrState = models.ErrorErrState
-				}
-			},
 		}
 		for name, mutate := range mutations {
 			t.Run(name, func(t *testing.T) {
@@ -398,6 +384,21 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 				ruleWithFolder{rule: b, folderTitle: title}.Fingerprint(),
 			)
 		})
+	})
+
+	t.Run("NoDataState and ExecErrState should be used in fingerprint", func(t *testing.T) {
+		base := models.CopyRule(rule)
+		base.NoDataState = models.NoData
+		base.ExecErrState = models.ErrorErrState
+		fBase := ruleWithFolder{rule: base, folderTitle: title}.Fingerprint()
+
+		noData := models.CopyRule(base)
+		noData.NoDataState = models.OK
+		require.NotEqual(t, fBase, ruleWithFolder{rule: noData, folderTitle: title}.Fingerprint())
+
+		execErr := models.CopyRule(base)
+		execErr.ExecErrState = models.OkErrState
+		require.NotEqual(t, fBase, ruleWithFolder{rule: execErr, folderTitle: title}.Fingerprint())
 	})
 
 	t.Run("all other fields should be considered", func(t *testing.T) {
@@ -509,8 +510,6 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			"DashboardUID": {},
 			"PanelID":      {},
 			"For":          {},
-			"NoDataState":  {},
-			"ExecErrState": {},
 			"Record":       {},
 		}
 

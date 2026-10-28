@@ -322,6 +322,9 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	writeString(r.folderTitle)
 	writeLabels(rule.Labels)
 	writeString(rule.Condition)
+	// they decide which cache IDs states get: the Error result adds labels and NoData/Error mapping changes how states are created
+	writeString(string(rule.NoDataState))
+	writeString(string(rule.ExecErrState))
 	writeQuery()
 
 	if rule.IsPaused {
