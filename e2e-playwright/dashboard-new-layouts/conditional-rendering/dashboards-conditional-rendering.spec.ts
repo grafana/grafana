@@ -345,6 +345,20 @@ test.describe(
         }
       );
 
+      // outside of edit mode, hidden elements are left out of the content outline
+      await sidebar.toolbar.clickButton('Outline');
+
+      await expect(sidebar.contentOutline.getItem('Row A')).not.toBeVisible();
+
+      await sidebar.contentOutline.toggleNode('Row B');
+      await expect(sidebar.contentOutline.getItem('Row B')).toBeVisible();
+      await expect(sidebar.contentOutline.getItem('Tab one')).not.toBeVisible();
+
+      await sidebar.contentOutline.toggleNode('Row C');
+      await expect(sidebar.contentOutline.getItem('Row C')).toBeVisible();
+      await expect(sidebar.contentOutline.getItem('Panel 3')).not.toBeVisible();
+
+      // edit mode is checked last: hidden panels first load there and can leave changes behind that "Exit edit" prompts about
       await controls.enterEditMode();
 
       // the row is on the canvas and greyed
@@ -386,34 +400,20 @@ test.describe(
       await panels.selectByTitle('Panel 3');
       await expect(sidebar.panelOptions.getTitleInput()).toHaveValue('Panel 3');
 
-      // the content outline lists them with the eye-slash marker
+      // the content outline lists them with the eye-slash marker; "Row B" and "Row C" are still expanded from view mode
       await sidebar.toolbar.clickButton('Outline');
 
       await sidebar.contentOutline.toggleNode('Row A');
       await expect(sidebar.contentOutline.getItem('Row A').getByTestId(HIDDEN_ICON_TEST_ID)).toBeVisible();
       await expect(sidebar.contentOutline.getItem('Panel 1').getByTestId(HIDDEN_ICON_TEST_ID)).not.toBeVisible();
 
-      await sidebar.contentOutline.toggleNode('Row B');
       await expect(sidebar.contentOutline.getItem('Row B').getByTestId(HIDDEN_ICON_TEST_ID)).not.toBeVisible();
       await sidebar.contentOutline.toggleNode('Tab one');
       await expect(sidebar.contentOutline.getItem('Tab one').getByTestId(HIDDEN_ICON_TEST_ID)).toBeVisible();
       await expect(sidebar.contentOutline.getItem('Panel 2').getByTestId(HIDDEN_ICON_TEST_ID)).not.toBeVisible();
 
-      await sidebar.contentOutline.toggleNode('Row C');
       await expect(sidebar.contentOutline.getItem('Row C').getByTestId(HIDDEN_ICON_TEST_ID)).not.toBeVisible();
       await expect(sidebar.contentOutline.getItem('Panel 3').getByTestId(HIDDEN_ICON_TEST_ID)).toBeVisible();
-
-      // after exiting edit mode, hidden elements are invisible in the content outline
-      await controls.exitEditMode();
-      await sidebar.toolbar.clickButton('Outline');
-
-      await expect(sidebar.contentOutline.getItem('Row A')).not.toBeVisible();
-      await expect(sidebar.contentOutline.getItem('Panel 1')).not.toBeVisible();
-      await expect(sidebar.contentOutline.getItem('Row B')).toBeVisible();
-      await expect(sidebar.contentOutline.getItem('Tab one')).not.toBeVisible();
-      await expect(sidebar.contentOutline.getItem('Panel 2')).not.toBeVisible();
-      await expect(sidebar.contentOutline.getItem('Row C')).toBeVisible();
-      await expect(sidebar.contentOutline.getItem('Panel 3')).not.toBeVisible();
     });
 
     test('Hide individual panels inside a repeat', async ({ page, selectors, controls, panels, sidebar }) => {
