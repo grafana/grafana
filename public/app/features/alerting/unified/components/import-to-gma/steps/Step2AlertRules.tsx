@@ -282,7 +282,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                         alerting
                         disabled={recordingTargets.isLoading}
                         filter={(ds) =>
-                          isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) &&
+                          isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) ||
                           supportedImportTypes.includes(ds.type)
                         }
                         current={field.value}

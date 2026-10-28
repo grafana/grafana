@@ -10,6 +10,7 @@ import { setupMswServer } from '../../mockApi';
 import { grantUserPermissions } from '../../mocks';
 import { alertingFactory } from '../../mocks/server/db';
 import { failRecordingTargetDiscovery, holdRecordingTargetDiscovery } from '../../testSetup/recordingTargets';
+import { DataSourceType } from '../../utils/datasource';
 
 import ImportToGMARules from './ImportToGMARules';
 
@@ -34,6 +35,7 @@ const ui = {
   dsImport: {
     dsPicker: byLabelText(/data source/i, { selector: '#datasource-picker' }),
     mimirDsOption: byRole('option', { name: /Mimir$/ }),
+    lokiDsOption: byRole('option', { name: /Loki$/ }),
   },
   yamlImport: {
     fileUpload: byLabelText('Upload file'),
@@ -56,6 +58,7 @@ const ui = {
 };
 
 alertingFactory.dataSource.mimir().build({ meta: { alerting: true } });
+alertingFactory.dataSource.build({ uid: 'loki', name: 'Loki', type: DataSourceType.Loki, meta: { alerting: true } });
 
 describe('ImportToGMARules', () => {
   beforeAll(() => {
@@ -168,6 +171,36 @@ describe('ImportToGMARules', () => {
 
       // Test that datasource-specific field is not visible
       expect(ui.dsImport.dsPicker.query()).not.toBeInTheDocument();
+    });
+
+    it('offers Loki next to Prometheus data sources as the target data source', async () => {
+      const { user } = render(<ImportToGMARules />);
+      await user.click(ui.importSource.yaml.get());
+
+      const targetPicker = await ui.yamlImport.targetDataSource.find();
+      await waitFor(() => expect(targetPicker).toBeEnabled());
+      await user.click(targetPicker);
+
+      expect(await ui.dsImport.lokiDsOption.find()).toBeInTheDocument();
+      expect(ui.dsImport.mimirDsOption.get()).toBeInTheDocument();
+    });
+
+    it('leaves the recording rules target empty when a Loki target is selected', async () => {
+      const { user } = render(<ImportToGMARules />);
+      await user.click(ui.importSource.yaml.get());
+
+      const targetPicker = await ui.yamlImport.targetDataSource.find();
+      await waitFor(() => expect(targetPicker).toBeEnabled());
+      await user.click(targetPicker);
+      await user.click(await ui.dsImport.lokiDsOption.find());
+
+      // Loki cannot store recording rules, so the recording target must not be pre-filled with it
+      const recordingTargetPicker = ui.additionalSettings.targetDataSourceForRecording.get();
+      expect(recordingTargetPicker).not.toHaveProperty('placeholder', 'Loki');
+
+      await user.click(recordingTargetPicker);
+      expect(await ui.dsImport.mimirDsOption.find()).toBeInTheDocument();
+      expect(ui.dsImport.lokiDsOption.query()).not.toBeInTheDocument();
     });
 
     it('should show confirmation dialog when importing YAML file', async () => {

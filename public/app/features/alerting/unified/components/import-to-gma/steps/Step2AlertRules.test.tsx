@@ -187,6 +187,17 @@ describe('Step2AlertRules', () => {
       await waitFor(() => expect(targetPicker).toHaveAttribute('placeholder', 'Prometheus'));
     });
 
+    it('offers Loki as a rules source without filling it in as the recording rules target', async () => {
+      const { user, sourcePicker, targetPicker } = renderStep2();
+      await waitFor(() => expect(sourcePicker).toBeEnabled());
+
+      await user.click(sourcePicker);
+      await user.click(await screen.findByRole('option', { name: /Loki/ }));
+
+      await waitFor(() => expect(sourcePicker).toHaveAttribute('placeholder', 'Loki'));
+      expect(targetPicker).not.toHaveAttribute('placeholder', 'Loki');
+    });
+
     it('offers only data sources that accept recording rules as targets', async () => {
       const { user, targetPicker } = renderStep2();
       await waitFor(() => expect(targetPicker).toBeEnabled());
