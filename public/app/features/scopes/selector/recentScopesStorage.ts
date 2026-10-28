@@ -11,10 +11,15 @@ export interface StoredRecentScopeSet {
   version: string;
 }
 
+// Storage survives logout and org switches, so each user and org gets its own key.
+export function getRecentScopesKey(): string {
+  return `${RECENT_SCOPES_KEY}.${config.bootData.user.orgId}.${config.bootData.user.id}`;
+}
+
 export function readStoredRecentScopes(store: Store): StoredRecentScopeSet[] {
   let parsed: unknown;
   try {
-    const content = store.get(RECENT_SCOPES_KEY);
+    const content = store.get(getRecentScopesKey());
     parsed = JSON.parse(content || '[]');
   } catch {
     return [];
@@ -71,12 +76,12 @@ export function writeRecentScope(store: Store, scopes: Scope[], scopeNodeId?: st
   const updated = [entry, ...current].slice(0, RECENT_SCOPES_MAX);
 
   try {
-    store.set(RECENT_SCOPES_KEY, JSON.stringify(updated));
+    store.set(getRecentScopesKey(), JSON.stringify(updated));
   } catch (e) {
     if (e instanceof DOMException && e.name === 'QuotaExceededError' && updated.length > 1) {
       // Retry once with the oldest entry dropped to reclaim space
       try {
-        store.set(RECENT_SCOPES_KEY, JSON.stringify(updated.slice(0, -1)));
+        store.set(getRecentScopesKey(), JSON.stringify(updated.slice(0, -1)));
       } catch {
         return;
       }

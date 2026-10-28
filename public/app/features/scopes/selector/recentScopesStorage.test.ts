@@ -1,4 +1,5 @@
 import { type Scope, type Store } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import {
   RECENT_SCOPES_CHANGED_EVENT,
@@ -9,7 +10,7 @@ import {
 } from './recentScopesStorage';
 
 jest.mock('@grafana/runtime', () => ({
-  config: { buildInfo: { version: '10.0.0' } },
+  config: { buildInfo: { version: '10.0.0' }, bootData: { user: { id: 1, orgId: 1 } } },
 }));
 
 const mockStore = {
@@ -168,6 +169,23 @@ describe('writeRecentScope', () => {
     writeRecentScope(mockStore, [makeScope('scope-a')], 'leaf-node');
     const stored = JSON.parse((mockStore.set as jest.Mock).mock.calls[0][1]);
     expect(stored[0].scopeNodeId).toBe('leaf-node');
+  });
+
+  it('does not return recent scopes stored by another user', () => {
+    const values: Record<string, string> = {};
+    const store = {
+      get: (key: string) => values[key],
+      set: (key: string, value: string) => {
+        values[key] = value;
+      },
+    } as unknown as Store;
+
+    writeRecentScope(store, [makeScope('scope-a')]);
+    config.bootData.user.id = 2;
+    expect(readStoredRecentScopes(store)).toEqual([]);
+
+    config.bootData.user.id = 1;
+    expect(readStoredRecentScopes(store)).toHaveLength(1);
   });
 
   it('silently does nothing when store.set throws (e.g. sandboxed iframe)', () => {
