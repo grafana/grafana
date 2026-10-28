@@ -355,6 +355,26 @@ describe('HeaderCell', () => {
     expect(screen.getAllByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Container)).toHaveLength(1);
   });
 
+  it('can reopen a filter popup after its header remounts', async () => {
+    const field = makeField({ config: { custom: { filterable: true } } });
+    const props = { data: { fields: [field], length: 3 }, width: 300, height: 200 };
+    const Header = ({ show }: { show: boolean }) => (
+      <TableFilterProvider props={props}>{show && <HeaderCell {...baseProps} field={field} />}</TableFilterProvider>
+    );
+    const view = render(<Header show />);
+    await userEvent.click(screen.getByLabelText('Filter Field1'));
+    expect(screen.getByLabelText('Filter Field1')).toHaveAttribute('aria-expanded', 'true');
+
+    view.rerender(<Header show={false} />);
+    view.rerender(<Header show />);
+    const remountedButton = screen.getByLabelText('Filter Field1');
+    expect(remountedButton).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(remountedButton);
+    expect(remountedButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Container)).toBeInTheDocument();
+  });
+
   it('closes the filter popup when an outside click stops propagation', async () => {
     const field = makeField({ config: { custom: { filterable: true } } });
     render(

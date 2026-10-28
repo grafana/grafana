@@ -92,6 +92,13 @@ export function useFilterPopupState({
     },
     [setOpenFilterKey, filterKey]
   );
+
+  useEffect(
+    () => () => {
+      setOpenFilterKey?.((current) => (current === filterKey ? undefined : current));
+    },
+    [setOpenFilterKey, filterKey]
+  );
   const [searchFilter, setSearchFilter] = useState('');
   const [operator, setOperator] = useState<SelectableValue<FilterOperator>>(
     operatorSelectableValues()[FilterOperator.CONTAINS]
