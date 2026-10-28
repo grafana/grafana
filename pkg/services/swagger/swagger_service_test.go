@@ -77,15 +77,29 @@ func newTestMux(tb testing.TB, service *swaggerService) *web.Mux {
 }
 
 func TestSwaggerService_ServerCreation(t *testing.T) {
-	cfg := newTestCfg(t)
-	cfg.HTTPPort = "1234"
-	cfg.HTTPAddr = "127.0.0.1"
+	for _, tc := range []struct {
+		name string
+		host string
+		addr string
+	}{
+		{name: "all interfaces", host: "", addr: ":1234"},
+		{name: "hostname", host: "localhost", addr: "localhost:1234"},
+		{name: "IPv4", host: "127.0.0.1", addr: "127.0.0.1:1234"},
+		{name: "IPv6", host: "::1", addr: "[::1]:1234"},
+		{name: "bracketed IPv6", host: "[::1]", addr: "[::1]:1234"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := newTestCfg(t)
+			cfg.HTTPPort = "1234"
+			cfg.HTTPAddr = tc.host
 
-	service := createTestService(t, cfg)
-	server := service.newSwaggerServer(t.Context())
+			service := createTestService(t, cfg)
+			server := service.newSwaggerServer(t.Context())
 
-	assert.Equal(t, "127.0.0.1:1234", server.Addr)
-	assert.NotNil(t, server.Handler)
+			assert.Equal(t, tc.addr, server.Addr)
+			assert.NotNil(t, server.Handler)
+		})
+	}
 }
 
 func TestSwaggerService_Routes(t *testing.T) {

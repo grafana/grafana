@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -85,7 +86,8 @@ func (s *swaggerService) stop(failureReason error) error {
 }
 
 func (s *swaggerService) newSwaggerServer(ctx context.Context) *http.Server {
-	addr := net.JoinHostPort(s.cfg.HTTPAddr, s.cfg.HTTPPort)
+	host := strings.TrimSuffix(strings.TrimPrefix(s.cfg.HTTPAddr, "["), "]")
+	addr := net.JoinHostPort(host, s.cfg.HTTPPort)
 	s.log.Info("starting swagger server", "addr", addr)
 
 	// web.Mux, like the core server, so the same middleware can be reused.
