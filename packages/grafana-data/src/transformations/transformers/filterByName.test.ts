@@ -1,4 +1,5 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { getFrameDisplayName } from '../../field/fieldState';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { transformDataFrame } from '../transformDataFrame';
@@ -31,6 +32,28 @@ describe('filterByName transformer', () => {
       const data = received[0];
       const filtered = data[0];
       expect(filtered.fields.length).toBe(4);
+    });
+  });
+
+  it.each([
+    { name: 'including selected fields', options: { include: { names: ['Time', 'Value B'] } } },
+    { name: 'excluding a value field', options: { exclude: { names: ['Value A'] } } },
+  ])('preserves frame display names when $name leaves only a time field', async ({ options }) => {
+    const frames = ['A', 'B'].map((refId) =>
+      toDataFrame({
+        refId,
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1000, 2000] },
+          { name: `Value ${refId}`, type: FieldType.number, values: [1, 2] },
+        ],
+      })
+    );
+    const cfg = { id: DataTransformerID.filterFieldsByName, options };
+
+    await expect(transformDataFrame([cfg], frames)).toEmitValuesWith((received) => {
+      const data = received[0];
+      expect(data.map((frame) => frame.fields.map((field) => field.name))).toEqual([['Time'], ['Time', 'Value B']]);
+      expect(data.map((frame) => getFrameDisplayName(frame))).toEqual(['Series (A)', 'Value B']);
     });
   });
 
