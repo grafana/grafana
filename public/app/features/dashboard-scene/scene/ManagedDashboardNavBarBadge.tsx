@@ -1,4 +1,4 @@
-import { provisioning } from '@grafana/runtime';
+import { ManagedBadge } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 
 import { type DashboardScene } from './DashboardScene';
@@ -17,7 +17,7 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
   // which the badge resolves to the right branch/commit.
   return (
     <Stack direction="row" alignItems="stretch">
-      <provisioning.ManagedBadge managerKind={kind} name={id} repositoryName={id} sourcePath={dashboard.getPath()} />
+      <ManagedBadge managerKind={kind} name={id} repositoryName={id} sourcePath={dashboard.getPath()} />
     </Stack>
   );
 };

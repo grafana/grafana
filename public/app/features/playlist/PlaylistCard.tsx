@@ -3,7 +3,7 @@ import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { provisioning } from '@grafana/runtime';
+import { ManagedBadge } from '@grafana/runtime';
 import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import {
@@ -32,7 +32,7 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         <Stack direction="row" gap={1} alignItems="center" wrap>
           {playlist.spec?.title}
           {isManaged(playlist) && (
-            <provisioning.ManagedBadge
+            <ManagedBadge
               managerKind={getManagerKind(playlist)}
               name={getManagerIdentity(playlist)}
               repositoryName={getManagerIdentity(playlist)}

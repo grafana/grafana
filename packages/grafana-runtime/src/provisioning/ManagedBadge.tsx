@@ -31,7 +31,7 @@ export function ManagedBadge(props: ManagedBadgeProps) {
   }
 
   if (process.env.NODE_ENV !== 'production') {
-    return <div>@grafana/runtime provisioning.ManagedBadge is not set</div>;
+    return <div>@grafana/runtime ManagedBadge is not set</div>;
   }
 
   return null;
