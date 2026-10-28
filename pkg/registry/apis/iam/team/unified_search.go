@@ -36,6 +36,11 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Fields:       []string{resource.SEARCH_FIELD_TITLE, builders.TEAM_SEARCH_EMAIL, builders.TEAM_SEARCH_PROVISIONED, builders.TEAM_SEARCH_EXTERNAL_UID, teamsearch.LegacyIDField},
 	}
+	if query.Member != "" {
+		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
+			Key: builders.TEAM_SEARCH_MEMBERS, Operator: string(selection.Equals), Values: []string{query.Member},
+		})
+	}
 	if query.Title != "" {
 		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{
 			Key: resource.SEARCH_FIELD_TITLE, Operator: string(selection.DoubleEquals), Values: []string{query.Title},

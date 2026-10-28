@@ -274,6 +274,7 @@ type searchTeamsQuery struct {
 	UserTable       string
 	FilteredUsers   []string
 	OrgID           int64
+	MemberUID       string
 	NamePattern     string
 	Name            string
 	TeamIDs         []int64
@@ -328,6 +329,7 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 			UserTable:       dbHelper.Table("user"),
 			FilteredUsers:   filteredUsers,
 			OrgID:           query.OrgID,
+			MemberUID:       query.MemberUID,
 			NamePattern:     namePattern,
 			Name:            query.Name,
 			TeamIDs:         query.TeamIds,
@@ -366,6 +368,10 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 
 		if len(query.UIDs) > 0 {
 			countSess.In("team.uid", query.UIDs)
+		}
+
+		if query.MemberUID != "" {
+			countSess.Where("EXISTS (SELECT 1 FROM "+dbHelper.DB.Quote(dbHelper.Table("team_member"))+" AS membership INNER JOIN "+dbHelper.DB.Quote(dbHelper.Table("user"))+" AS member_user ON member_user.id = membership.user_id WHERE membership.team_id = team.id AND membership.org_id = team.org_id AND member_user.uid = ?)", query.MemberUID)
 		}
 
 		// Only count teams user can see

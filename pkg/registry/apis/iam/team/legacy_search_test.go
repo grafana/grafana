@@ -35,6 +35,7 @@ func TestLegacyTeamSearch(t *testing.T) {
 		wantLimit int
 	}{
 		{name: "query", query: SearchQuery{Query: "test", Limit: 10, Page: 2, Offset: 15}, wantLimit: 10},
+		{name: "member", query: SearchQuery{Member: "user-1"}, wantLimit: common.DefaultListLimit},
 		{name: "title", query: SearchQuery{Title: "Engineering", Limit: 2, Page: 1}, wantLimit: 2},
 		{name: "UIDs", query: SearchQuery{UIDs: []string{"team-1", "team-2"}, Limit: 10, Page: 1}, wantLimit: 10},
 		{name: "legacy IDs", query: SearchQuery{TeamIDs: []string{"001", "2"}, Limit: 10, Page: 1}, wantIDs: []int64{1, 2}, wantLimit: 10},
@@ -48,6 +49,7 @@ func TestLegacyTeamSearch(t *testing.T) {
 				require.Equal(t, int64(1), query.OrgID)
 				require.Equal(t, tt.query.Query, query.Query)
 				require.Equal(t, tt.query.Title, query.Name)
+				require.Equal(t, tt.query.Member, query.MemberUID)
 				require.Equal(t, tt.query.UIDs, query.UIDs)
 				require.Equal(t, tt.wantIDs, query.TeamIds)
 				require.Equal(t, tt.wantLimit, query.Limit)

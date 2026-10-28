@@ -947,15 +947,17 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 			},
 		},
 		{
-			name: "forwards uid params when UIDs are set",
+			name: "forwards uid and member filters",
 			query: &team.SearchTeamsQuery{
-				OrgID: 1,
-				UIDs:  []string{"uid-1", "uid-2"},
-				Limit: 10,
-				Page:  1,
+				OrgID:     1,
+				UIDs:      []string{"uid-1", "uid-2"},
+				MemberUID: "member-1",
+				Limit:     10,
+				Page:      1,
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, []string{"uid-1", "uid-2"}, r.URL.Query()["uid"])
+				assert.Equal(t, "member-1", r.URL.Query().Get("member"))
 
 				resp := iamv0alpha1.GetSearchTeamsResponse{
 					GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{

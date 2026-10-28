@@ -78,6 +78,7 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 		Page:         int(req.Page),
 		Query:        req.Query,
 		Name:         req.Title,
+		MemberUID:    req.Member,
 		UIDs:         req.UIDs,
 		TeamIds:      teamIDs,
 		OrgID:        signedInUser.GetOrgID(),

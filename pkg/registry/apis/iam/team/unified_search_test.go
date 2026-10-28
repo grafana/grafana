@@ -26,6 +26,7 @@ func TestUnifiedTeamSearchRequest(t *testing.T) {
 		fields []*resourcepb.Requirement
 		labels []*resourcepb.Requirement
 	}{
+		{name: "member", query: SearchQuery{Member: "user-1"}, fields: []*resourcepb.Requirement{{Key: builders.TEAM_SEARCH_MEMBERS, Operator: string(selection.Equals), Values: []string{"user-1"}}}},
 		{name: "query", query: SearchQuery{Query: "a*b"}},
 		{name: "title and UIDs", query: SearchQuery{Title: "Engineering", UIDs: []string{"one", "two"}}, fields: []*resourcepb.Requirement{
 			{Key: resource.SEARCH_FIELD_TITLE, Operator: string(selection.DoubleEquals), Values: []string{"Engineering"}},

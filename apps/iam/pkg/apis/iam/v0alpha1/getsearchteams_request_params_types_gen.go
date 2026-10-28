@@ -4,6 +4,7 @@ package v0alpha1
 
 type GetSearchTeamsRequestParams struct {
 	Query  *string `json:"query,omitempty"`
+	Member *string `json:"member,omitempty"`
 	Limit  int64   `json:"limit,omitempty"`
 	Offset int64   `json:"offset,omitempty"`
 	Page   int64   `json:"page,omitempty"`
