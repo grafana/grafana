@@ -659,6 +659,13 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type MetaApi = {
+  group: string;
+  preferredVersion: string;
+  /** Served versions, preferred first.
+    +listType=atomic */
+  versions: string[];
+};
 export type MetaDependencies = {
   extensions?: {
     /** +listType=set */
@@ -887,6 +894,10 @@ export type MetaJsonData = {
 export type MetaSpec = {
   /** +listType=atomic */
   aliasIds?: string[];
+  /** API groups and versions the frontend should target for this plugin.
+    +listType=map
+    +listMapKey=group */
+  apis?: MetaApi[];
   baseURL: string;
   /** +listType=atomic */
   children?: string[];

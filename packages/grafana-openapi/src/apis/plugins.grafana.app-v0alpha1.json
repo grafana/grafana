@@ -1453,6 +1453,26 @@
           }
         ]
       },
+      "MetaAPI": {
+        "type": "object",
+        "required": ["group", "preferredVersion", "versions"],
+        "properties": {
+          "group": {
+            "type": "string"
+          },
+          "preferredVersion": {
+            "type": "string"
+          },
+          "versions": {
+            "description": "Served versions, preferred first.\n+listType=atomic",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
       "MetaDependencies": {
         "type": "object",
         "required": ["grafanaDependency"],
@@ -2196,6 +2216,13 @@
             "type": "array",
             "items": {
               "type": "string"
+            }
+          },
+          "apis": {
+            "description": "API groups and versions the frontend should target for this plugin.\n+listType=map\n+listMapKey=group",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MetaAPI"
             }
           },
           "baseURL": {
