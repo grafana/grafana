@@ -343,6 +343,10 @@ describe('setupKeyboardShortcuts', () => {
     { mode: 'view' as const, editable: true, fullscreen: true },
     { mode: 'view' as const, editable: false, fullscreen: false },
     { mode: 'view' as const, editable: false, fullscreen: true },
+    { mode: 'agent' as const, editable: true, fullscreen: false },
+    { mode: 'agent' as const, editable: true, fullscreen: true },
+    { mode: 'agent' as const, editable: false, fullscreen: false },
+    { mode: 'agent' as const, editable: false, fullscreen: true },
   ])(
     'panel edit shortcut enters Editing from $mode only when editable=$editable (fullscreen=$fullscreen)',
     async ({ mode, editable, fullscreen }) => {
@@ -375,6 +379,8 @@ describe('setupKeyboardShortcuts', () => {
   it.each([
     { mode: 'view' as const, editable: true },
     { mode: 'view' as const, editable: false },
+    { mode: 'agent' as const, editable: true },
+    { mode: 'agent' as const, editable: false },
   ])('dashboard settings shortcut enters Editing from $mode only when editable=$editable', ({ mode, editable }) => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     try {
