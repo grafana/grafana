@@ -618,7 +618,7 @@ func TestIntegrationApi_setUserPermissionForTeams(t *testing.T) {
 
 // Verifies the ResourcePermission redirect falls back to legacy only in Mode0-3. When the K8s
 // write fails, Mode0-3 falls back (200) and Mode4/5 returns the error (500). Resources without a
-// rest config provider are not served by the K8s API, so they always use legacy.
+// rest config provider skip the K8s call in Mode0-3 and still fail in Mode4/5.
 func TestIntegrationApi_setUserPermission_dualWriterModeFallback(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -630,7 +630,8 @@ func TestIntegrationApi_setUserPermission_dualWriterModeFallback(t *testing.T) {
 	}{
 		{name: "Mode3 falls back to legacy", mode: grafanarest.Mode3, expectedStatus: http.StatusOK},
 		{name: "Mode5 does not fall back", mode: grafanarest.Mode5, expectedStatus: http.StatusInternalServerError},
-		{name: "Mode5 without provider uses legacy", mode: grafanarest.Mode5, noProvider: true, expectedStatus: http.StatusOK},
+		{name: "Mode3 without provider uses legacy", mode: grafanarest.Mode3, noProvider: true, expectedStatus: http.StatusOK},
+		{name: "Mode5 without provider does not fall back", mode: grafanarest.Mode5, noProvider: true, expectedStatus: http.StatusInternalServerError},
 	}
 
 	perms := []accesscontrol.Permission{
@@ -677,8 +678,8 @@ func TestIntegrationApi_setUserPermission_dualWriterModeFallback(t *testing.T) {
 
 // Verifies the ResourcePermission redirect read falls back to legacy only in Mode0-3. When the K8s
 // read fails, Mode0-3 falls back to seeded legacy permissions (200) and Mode4/5 returns the error
-// (500). Resources without a rest config provider are not served by the K8s API, so they always
-// use legacy.
+// (500). Resources without a rest config provider skip the K8s call in Mode0-3 and still fail in
+// Mode4/5.
 func TestIntegrationApi_getPermissions_dualWriterModeFallback(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -690,7 +691,8 @@ func TestIntegrationApi_getPermissions_dualWriterModeFallback(t *testing.T) {
 	}{
 		{name: "Mode3 falls back to legacy", mode: grafanarest.Mode3, expectedStatus: http.StatusOK},
 		{name: "Mode5 does not fall back", mode: grafanarest.Mode5, expectedStatus: http.StatusInternalServerError},
-		{name: "Mode5 without provider uses legacy", mode: grafanarest.Mode5, noProvider: true, expectedStatus: http.StatusOK},
+		{name: "Mode3 without provider uses legacy", mode: grafanarest.Mode3, noProvider: true, expectedStatus: http.StatusOK},
+		{name: "Mode5 without provider does not fall back", mode: grafanarest.Mode5, noProvider: true, expectedStatus: http.StatusInternalServerError},
 	}
 
 	perms := []accesscontrol.Permission{
