@@ -1136,6 +1136,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/lib/monaco-languages/kusto.ts @grafana/data-sources-plugins
 /public/maps/ @ryantxu
 /public/robots.txt @grafana/grafana-frontend-platform
+/public/mockServiceWorker.js @grafana/grafana-frontend-platform
 /public/fonts/ @grafana/grafana-frontend-platform
 /public/sass/ @grafana/grafana-frontend-platform
 /public/test/ @grafana/grafana-frontend-platform
