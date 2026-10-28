@@ -351,6 +351,28 @@ describe('HeaderCell', () => {
     expect(screen.getAllByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Container)).toHaveLength(1);
   });
 
+  it('closes the filter popup when an outside click stops propagation', async () => {
+    const field = makeField({ config: { custom: { filterable: true } } });
+    render(
+      <div onClick={(event) => event.stopPropagation()}>
+        <TableFilterProvider props={{ data: { fields: [field], length: 3 }, width: 300, height: 200 }}>
+          <HeaderCell {...baseProps} field={field} />
+          <button>Outside</button>
+        </TableFilterProvider>
+      </div>
+    );
+    const filterButton = screen.getByLabelText('Filter Field1');
+
+    await userEvent.click(filterButton);
+    expect(filterButton).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.click(screen.getByRole('button', { name: 'Outside' }));
+
+    expect(filterButton).toHaveAttribute('aria-expanded', 'false');
+    expect(
+      screen.queryByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Container)
+    ).not.toBeInTheDocument();
+  });
+
   describe('table.refresh', () => {
     const filterableField = () => makeField({ config: { custom: { filterable: true } } });
     const menuLabel = 'Column options for Field1';

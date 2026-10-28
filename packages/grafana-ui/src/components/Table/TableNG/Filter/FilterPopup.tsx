@@ -63,10 +63,10 @@ const FilterPopupEditor = memo((props: FilterPopupProps) => {
       }
     };
     window.addEventListener('pointerdown', onPointerDown, true);
-    window.addEventListener('click', onOutsideClick);
+    window.addEventListener('click', onOutsideClick, true);
     return () => {
       window.removeEventListener('pointerdown', onPointerDown, true);
-      window.removeEventListener('click', onOutsideClick);
+      window.removeEventListener('click', onOutsideClick, true);
     };
   }, [onClose]);
 
