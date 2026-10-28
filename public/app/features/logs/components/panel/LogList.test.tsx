@@ -14,7 +14,6 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
 
 import { disablePopoverMenu, enablePopoverMenu, isPopoverMenuDisabled } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
@@ -628,7 +627,7 @@ describe('LogList', () => {
 
   describe('Log details', () => {
     test('Supports showing log details', async () => {
-      setBooleanFlags({ otelLogsFormatting: true, [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
+      setBooleanFlags({ otelLogsFormatting: true });
       jest.spyOn(store, 'get').mockImplementation((option: string) => {
         if (option === 'storage-key.detailsMode') {
           return 'sidebar';
@@ -672,7 +671,7 @@ describe('LogList', () => {
     });
 
     test('Supports showing inline log details', async () => {
-      setBooleanFlags({ otelLogsFormatting: true, [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
+      setBooleanFlags({ otelLogsFormatting: true });
       jest.spyOn(store, 'get').mockImplementation((option: string) => {
         if (option === 'storage-key.detailsMode') {
           return 'inline';
