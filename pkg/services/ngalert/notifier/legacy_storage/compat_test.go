@@ -17,7 +17,7 @@ func TestManagedRouteToRoute(t *testing.T) {
 
 	mr := &v1.ManagedRoute{
 		ResourceMetadata: v1.ResourceMetadata{
-			Provenance: models.Provenance("test"),
+			Manager: models.ProvenanceToManagerProperties(models.ProvenanceAPI),
 		},
 		Receiver:       "receiver",
 		GroupBy:        []string{"alertname"},
@@ -35,5 +35,5 @@ func TestManagedRouteToRoute(t *testing.T) {
 	assert.Equal(t, &gi, route.GroupInterval)
 	assert.Equal(t, &ri, route.RepeatInterval)
 	assert.Len(t, route.Routes, 1)
-	assert.EqualValues(t, v1.Provenance("test"), route.Provenance)
+	assert.EqualValues(t, v1.Provenance(models.ProvenanceAPI), route.Provenance)
 }

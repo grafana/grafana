@@ -94,3 +94,17 @@ func ProvenanceMatchesManager(p Provenance, stored utils.ManagerProperties) bool
 	}
 	return ManagerPropertiesToProvenance(stored) == p
 }
+
+// PreserveStoredManager returns the manager to persist when a write carries the incoming manager.
+//
+// Callers that only know a provenance (the legacy provisioning API, file provisioning) set the
+// classic manager derived from it. If that is just the coarse view of the stored manager, the stored
+// one is kept, so such writes do not replace e.g. {terraform, identity} with classic-api. This is the
+// same rule SetProvenance applies in the store. Any other incoming manager is returned unchanged.
+func PreserveStoredManager(stored, incoming utils.ManagerProperties) utils.ManagerProperties {
+	p := ManagerPropertiesToProvenance(incoming)
+	if incoming == ProvenanceToManagerProperties(p) && ProvenanceMatchesManager(p, stored) {
+		return stored
+	}
+	return incoming
+}
