@@ -26,6 +26,5 @@
     "@grafana/data": "workspace:*",
     "react": "19.2.8",
     "react-dom": "19.2.8"
-  },
-  "packageManager": "yarn@4.18.1"
+  }
 }

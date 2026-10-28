@@ -273,3 +273,14 @@ func TestMiddlewareKeepsRoutedGroupsAfterLosingReadiness(t *testing.T) {
 		})
 	}
 }
+
+// The embedded server's groups have no breaker, which the status page shows as
+// none: unlike the single-tenant fallback, nothing breaks per destination.
+func TestEmbeddedGroupsReportNoBreaker(t *testing.T) {
+	server := &fakeEmbeddedAPIServer{groups: []string{"dashboard.grafana.app"}, status: http.StatusNoContent}
+	router := NewGrafanaRouter(newEmbeddedLoader(&mutableLoader{}, embeddedUpstreamFor(server)), nil)
+	require.NoError(t, router.reconcile(t.Context()))
+	health, breaker := breakerStatus((*router.snapshot.Load())["dashboard.grafana.app"])
+	require.Equal(t, "unknown", health)
+	require.Equal(t, breakerStatusDoc{Scope: "none"}, breaker)
+}

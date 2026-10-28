@@ -2,48 +2,38 @@
 
 This guide helps you get started developing Grafana.
 
+## Download Grafana
+
+Clone the repository and open its directory:
+
+```sh
+git clone https://github.com/grafana/grafana.git
+cd grafana
+```
+
+Run the remaining commands from this directory.
+
 ## Dependencies
 
-Make sure you have the following dependencies installed before setting up your developer environment:
+We recommend [mise](https://mise.jdx.dev/getting-started.html) to manage Go, Node.js, and other development tool versions in one place. Once set up, install Go, Node.js, and Yarn with:
 
-- [Git](https://git-scm.com/) (The Grafana organization requires signed commits. See the [Github docs](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits) on how to set this up, if it is not already.)
+```sh
+mise install
+```
+
+Alternatively, make sure you have the following dependencies installed before setting up your developer environment:
+
 - [Go](https://golang.org/dl/) (see [go.mod](../go.mod#L3) for minimum required version)
-- [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature). See [.nvmrc](../.nvmrc) for supported version. We recommend that you use a version manager such as [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or similar.
+- [Node.js (Long Term Support)](https://nodejs.org). See [.nvmrc](../.nvmrc) for supported version.
 - [GCC](https://gcc.gnu.org/) (optional, not recommended; enables CGO for smaller, dynamically linked binaries)
 
-### macOS
-
-We recommend using [Homebrew](https://brew.sh/) for installing any missing dependencies:
-
-```
-brew install git
-brew install go
-brew install node@26
-```
+When it comes time to commit, the Grafana organization requires signed commits. See the [Github docs](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits) on how to set this up, if it is not already.
 
 ### Windows
 
-If you are running Grafana on Windows 10, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to our [Grafana setup guide for Windows environment](https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/).
+If you are running Grafana on Windows 10+, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to our [Grafana setup guide for Windows environment](https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/).
 
-## Download Grafana
-
-We recommend using the Git command-line interface to download the source code for the Grafana project:
-
-1. Open a terminal and run `git clone https://github.com/grafana/grafana.git`. This command downloads Grafana to a new `grafana` directory in your current directory.
-1. Open the `grafana` directory in your favorite code editor.
-
-For alternative ways of cloning the Grafana repository, refer to [GitHub's documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository).
-
-> **Caution:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
-
-### Set up yarn
-
-In the repository enable and install yarn via corepack
-
-```
-corepack enable
-corepack install
-```
+## Development setup
 
 ### Configure precommit hooks
 
@@ -91,8 +81,6 @@ Before you can build the frontend assets, you need to install the related depend
 ```
 yarn install --immutable
 ```
-
-> If you get the error `The remote archive doesn't match the expected checksum` for a dependency pulled from a link (for example, `"tether-drop": "https://github.com/torkelo/drop"`): this is a temporary mismatch. To work around the error (while someone corrects the issue), you can prefix your `yarn install --immutable` command with [`YARN_CHECKSUM_BEHAVIOR=update`](https://yarnpkg.com/advanced/error-codes#yn0018---cache_checksum_mismatch).
 
 After the command has finished, you can start building the source code:
 

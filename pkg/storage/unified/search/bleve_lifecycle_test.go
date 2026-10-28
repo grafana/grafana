@@ -175,8 +175,9 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 				Resource:  key.Resource,
 			},
 		},
-		Limit: operationCount,
-		Query: "lifecycle dashboard",
+		Limit:        operationCount,
+		Query:        "lifecycle dashboard",
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Fields: []string{
 			resource.SEARCH_FIELD_TITLE,
 			resource.SEARCH_FIELD_FOLDER,
@@ -188,34 +189,22 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 	require.NoError(t, err)
 	require.Nil(t, res.Error)
 	require.Equal(t, int64(len(expectedDocs)), res.TotalHits)
-	require.Len(t, res.Results.Rows, len(expectedDocs))
+	require.Len(t, res.Rows, len(expectedDocs))
 
-	columnIndexes := map[string]int{}
-	for i, column := range res.Results.Columns {
-		columnIndexes[column.Name] = i
-	}
-	titleColumn := requireColumn(t, columnIndexes, resource.SEARCH_FIELD_TITLE)
-	folderColumn := requireColumn(t, columnIndexes, resource.SEARCH_FIELD_FOLDER)
-	descriptionColumn := requireColumn(t, columnIndexes, resource.SEARCH_FIELD_DESCRIPTION)
-	createdByColumn := requireColumn(t, columnIndexes, resource.SEARCH_FIELD_CREATED_BY)
-	tagsColumn := requireColumn(t, columnIndexes, resource.SEARCH_FIELD_TAGS)
-
-	seen := make(map[string]struct{}, len(res.Results.Rows))
-	for _, row := range res.Results.Rows {
+	seen := make(map[string]struct{}, len(res.Rows))
+	for _, row := range res.Rows {
 		name := row.Key.Name
 		expected, ok := expectedDocs[name]
 		require.True(t, ok, "unexpected search result %q", name)
 
-		title := string(row.Cells[titleColumn])
-		require.NotEmpty(t, title, "stored title missing for %q", name)
-		require.Equal(t, expected.title, title, "stored title should match latest indexed title for %q", name)
-		require.Equal(t, expected.folder, string(row.Cells[folderColumn]), "stored folder should match latest indexed folder for %q", name)
-		require.Equal(t, expected.description, string(row.Cells[descriptionColumn]), "stored description should match latest indexed description for %q", name)
-		require.Equal(t, expected.createdBy, string(row.Cells[createdByColumn]), "stored createdBy should match latest indexed createdBy for %q", name)
-
-		storedTags, err := resource.DecodeCell(res.Results.Columns[tagsColumn], tagsColumn, row.Cells[tagsColumn])
+		values, err := resource.DecodeSearchValues(res.Fields, row)
 		require.NoError(t, err)
-		require.Equal(t, expected.tags, stringsFromAnySlice(t, storedTags), "stored tags should match latest indexed tags for %q", name)
+		require.NotEmpty(t, values[resource.SEARCH_FIELD_TITLE], "stored title missing for %q", name)
+		require.Equal(t, expected.title, values[resource.SEARCH_FIELD_TITLE], "stored title should match latest indexed title for %q", name)
+		require.Equal(t, expected.folder, values[resource.SEARCH_FIELD_FOLDER], "stored folder should match latest indexed folder for %q", name)
+		require.Equal(t, expected.description, values[resource.SEARCH_FIELD_DESCRIPTION], "stored description should match latest indexed description for %q", name)
+		require.Equal(t, expected.createdBy, values[resource.SEARCH_FIELD_CREATED_BY], "stored createdBy should match latest indexed createdBy for %q", name)
+		require.Equal(t, expected.tags, values[resource.SEARCH_FIELD_TAGS], "stored tags should match latest indexed tags for %q", name)
 		seen[name] = struct{}{}
 	}
 
@@ -223,29 +212,6 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 		_, ok := seen[name]
 		require.False(t, ok, "deleted dashboard %q should not be returned", name)
 	}
-}
-
-func requireColumn(t *testing.T, columnIndexes map[string]int, name string) int {
-	t.Helper()
-
-	idx, ok := columnIndexes[name]
-	require.True(t, ok, "search response should include the stored %s field", name)
-	return idx
-}
-
-func stringsFromAnySlice(t *testing.T, v any) []string {
-	t.Helper()
-
-	items, ok := v.([]any)
-	require.True(t, ok)
-
-	result := make([]string, 0, len(items))
-	for _, item := range items {
-		str, ok := item.(string)
-		require.True(t, ok)
-		result = append(result, str)
-	}
-	return result
 }
 
 func dashboardSearchLifecycleSeed(t *testing.T) int64 {
