@@ -51,7 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export interface TimePickerCalendarProps {
-  referenceElement: HTMLElement | null;
+  referenceElement?: HTMLElement | null;
   isOpen: boolean;
   from: DateTime;
   to: DateTime;

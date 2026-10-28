@@ -29,6 +29,7 @@ import TimePickerCalendar from './TimePickerCalendar';
 
 interface Props {
   isFullscreen: boolean;
+  calendarAnchor?: HTMLElement | null;
   value: TimeRange;
   onApply: (range: TimeRange) => void;
   timeZone?: TimeZone;
@@ -62,6 +63,7 @@ export const TimeRangeContent = (props: Props) => {
   const {
     value,
     isFullscreen = false,
+    calendarAnchor,
     timeZone,
     onApply: onApplyFromProps,
     isReversed,
@@ -71,7 +73,6 @@ export const TimeRangeContent = (props: Props) => {
   } = props;
   const style = useStyles2(getStyles);
   const [isOpen, setOpen] = useState(false);
-  const [calendarAnchor, setCalendarAnchor] = useState<HTMLDivElement | null>(null);
 
   const {
     handleSubmit,
@@ -171,7 +172,7 @@ export const TimeRangeContent = (props: Props) => {
   );
 
   return (
-    <div ref={setCalendarAnchor}>
+    <div>
       <div className={style.fieldContainer}>
         <Field
           label={t('time-picker.range-content.from-input', 'From')}

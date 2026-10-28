@@ -91,10 +91,7 @@ export const TimeRangeInput = ({
     strategy: 'fixed',
     // Transforms would create a containing block for the fixed-position calendar.
     transform: false,
-    middleware: [
-      offset(({ rects }) => ({ mainAxis: rects.reference.height * 0.16 })),
-      ...getPositioningMiddleware('bottom-start'),
-    ],
+    middleware: [offset(4), ...getPositioningMiddleware('bottom-start')],
     whileElementsMounted: autoUpdate,
   });
 
