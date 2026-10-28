@@ -918,7 +918,7 @@ This also limits the refresh interval options in Explore.
 
 #### `default_home_dashboard_path`
 
-Path to a custom default home dashboard. If this value is empty, Grafana uses the unified homepage.
+Path to a custom default home dashboard. Grafana shows this dashboard to users who have no home dashboard preference at the user, team, or organization level, and to users who selected **Grafana home** in that preference. If [`home_page`](#home_page) is also set, `home_page` wins. If this value is empty, Grafana uses the unified homepage.
 
 Grafana no longer ships a bundled `home.json`. Replacing `public/dashboards/home.json` on disk is not supported. If you previously customized home that way, set this option to the path of your JSON file.
 
@@ -1050,7 +1050,7 @@ The default is `en-US`.
 
 #### `home_page`
 
-Path to a custom home page. Users are only redirected to this when no home dashboard UID is configured. It should match a frontend route and contain a leading slash.
+Path to a custom home page, for example `/a/my-app/home`. It must match a frontend route and start with a slash. Grafana redirects users here when they have no home dashboard preference at the user, team, or organization level, and when they selected **Grafana home** in that preference. This option wins over [`default_home_dashboard_path`](#default_home_dashboard_path). For the full order, refer to [How Grafana picks the home dashboard](../../administration/organization-preferences/#how-grafana-picks-the-home-dashboard).
 
 #### `External user management`
 
