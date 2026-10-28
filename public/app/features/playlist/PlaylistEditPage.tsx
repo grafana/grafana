@@ -3,10 +3,9 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { locationService, provisioning } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 import {
@@ -61,7 +60,7 @@ export const PlaylistEditPage = () => {
     <Stack direction="row" gap={1} alignItems="center" wrap>
       <h1>{title}</h1>
       {data && isManaged(data) && (
-        <ManagedBadge
+        <provisioning.ManagedBadge
           managerKind={getManagerKind(data)}
           name={getManagerIdentity(data)}
           repositoryName={getManagerIdentity(data)}

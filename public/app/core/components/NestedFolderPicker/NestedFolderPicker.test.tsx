@@ -1,11 +1,13 @@
 import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
+import { setManagedBadge } from '@grafana/runtime/internal';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { useStarredItems } from 'app/features/stars/hooks';
 
@@ -13,6 +15,8 @@ import { NestedFolderPicker } from './NestedFolderPicker';
 import { useFoldersQuery } from './useFoldersQuery';
 import { useGetTeamFolders } from './useTeamOwnedFolder';
 import { getCustomRootFolderItem } from './utils';
+
+setManagedBadge(ManagedBadge);
 
 const [_, { folderA, folderB, folderC, folderA_folderA, folderA_folderB, folderA_folderC }] = getFolderFixtures();
 
