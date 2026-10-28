@@ -2575,6 +2575,20 @@
     },
     {
       "metadata": {
+        "name": "folder.asyncCascadeDeleteThroughController",
+        "resourceVersion": "1793182117642",
+        "creationTimestamp": "2026-10-28T10:08:37Z"
+      },
+      "spec": {
+        "description": "Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "folderPickerCreatePermission",
         "resourceVersion": "1792016123062",
         "creationTimestamp": "2026-10-14T22:15:23Z"

@@ -44,6 +44,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-24,libraryelements.kubernetesLibraryPanels,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2026-10-14,folderPickerCreatePermission,experimental,@grafana/search-and-storage,false,false,false
 2026-05-21,kubernetesFolderCascadeDelete,experimental,@grafana/search-and-storage,false,false,false
+2026-10-28,folder.asyncCascadeDeleteThroughController,experimental,@grafana/search-and-storage,false,false,false
 2026-09-11,kubernetesFolderCountsLegacyStorage,experimental,@grafana/search-and-storage,false,true,false
 2026-05-26,grafana.kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-19,grafana.newPanelQueryErrorsUI,GA,@grafana/dashboards-squad,false,false,true

@@ -25,6 +25,24 @@ func TestIsFolderMetadataFile(t *testing.T) {
 	assert.False(t, IsFolderMetadataFile("myfolder/"))
 }
 
+func TestMarshalFolderManifest_OmitsStatus(t *testing.T) {
+	f := NewFolderManifest("abc", "My folder", folders.FolderResourceInfo.GroupVersionKind())
+	f.Status.CascadeDelete = &folders.FolderCascadeDeleteStatus{State: "InProgress"}
+
+	data, err := marshalFolderManifest(f)
+	require.NoError(t, err)
+	require.Equal(t, `{
+  "kind": "Folder",
+  "apiVersion": "folder.grafana.app/v1beta1",
+  "metadata": {
+    "name": "abc"
+  },
+  "spec": {
+    "title": "My folder"
+  }
+}`, string(data))
+}
+
 func TestReadFolderMetadata(t *testing.T) {
 	const stableUID = "stable-uid-from-folder-json"
 

@@ -23,6 +23,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 	k8srest "k8s.io/client-go/rest"
 
@@ -130,6 +131,17 @@ func TestIntegrationFoldersApp(t *testing.T) {
 					"verbs": [
 						"get"
 					]
+				},
+				{
+					"name": "folders/status",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "Folder",
+					"verbs": [
+						"get",
+						"patch",
+						"update"
+					]
 				}
 			]
 		}`, string(v1Disco))
@@ -181,6 +193,127 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			UnifiedStorageMaxPageSizeBytes: 1,
 		}))
 	})
+}
+
+func TestIntegrationFolderStatusSubresource(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+	})
+
+	for _, version := range []string{"v1", "v1beta1"} {
+		t.Run(version, func(t *testing.T) {
+			ctx := context.Background()
+			gvr := schema.GroupVersionResource{Group: folders.GROUP, Version: version, Resource: folders.RESOURCE}
+			admin := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvr})
+			viewer := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Viewer, GVR: gvr})
+			name := "status-test-" + version
+
+			created, err := admin.Resource.Create(ctx, &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": gvr.GroupVersion().String(),
+				"kind":       "Folder",
+				"metadata":   map[string]any{"name": name},
+				"spec":       map[string]any{"title": "Status test " + version},
+			}}, metav1.CreateOptions{})
+			require.NoError(t, err)
+
+			got, err := admin.Resource.Get(ctx, name, metav1.GetOptions{}, "status")
+			require.NoError(t, err)
+			_, found, _ := unstructured.NestedMap(got.Object, "status", "cascadeDelete")
+			require.False(t, found, "new folder should have no cascadeDelete status")
+
+			// Finalizer and label set through the main resource.
+			created.SetFinalizers([]string{folders.CascadeDeleteFinalizer})
+			created.SetLabels(map[string]string{"a": "b"})
+			updated, err := admin.Resource.Update(ctx, created, metav1.UpdateOptions{})
+			require.NoError(t, err)
+
+			// A status write must not drop metadata the controller relies on.
+			statusObj := updated.DeepCopy()
+			statusObj.SetFinalizers(nil)
+			statusObj.SetLabels(nil)
+			require.NoError(t, unstructured.SetNestedField(statusObj.Object, "Changed via status", "spec", "title"))
+			require.NoError(t, unstructured.SetNestedField(statusObj.Object, map[string]any{
+				"state":     "InProgress",
+				"total":     int64(3),
+				"remaining": int64(2),
+				"errors":    []any{"dashboards/d1: boom"},
+			}, "status", "cascadeDelete"))
+			_, err = admin.Resource.UpdateStatus(ctx, statusObj, metav1.UpdateOptions{})
+			require.NoError(t, err)
+
+			got, err = admin.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Equal(t, []string{folders.CascadeDeleteFinalizer}, got.GetFinalizers())
+			require.Equal(t, "b", got.GetLabels()["a"])
+			title, _, _ := unstructured.NestedString(got.Object, "spec", "title")
+			require.Equal(t, "Status test "+version, title)
+			state, _, _ := unstructured.NestedString(got.Object, "status", "cascadeDelete", "state")
+			require.Equal(t, "InProgress", state)
+			remaining, _, _ := unstructured.NestedInt64(got.Object, "status", "cascadeDelete", "remaining")
+			require.Equal(t, int64(2), remaining)
+			errs, _, _ := unstructured.NestedStringSlice(got.Object, "status", "cascadeDelete", "errors")
+			require.Equal(t, []string{"dashboards/d1: boom"}, errs)
+
+			// The generated FolderClient.UpdateStatus sends only name, resourceVersion and status.
+			statusOnly := &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": gvr.GroupVersion().String(),
+				"kind":       "Folder",
+				"metadata":   map[string]any{"name": name, "resourceVersion": got.GetResourceVersion()},
+				"spec":       map[string]any{},
+				"status":     map[string]any{"cascadeDelete": map[string]any{"state": "InProgress"}},
+			}}
+			_, err = admin.Resource.UpdateStatus(ctx, statusOnly, metav1.UpdateOptions{})
+			require.NoError(t, err, "status-only write must succeed")
+			got, err = admin.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err)
+			title, _, _ = unstructured.NestedString(got.Object, "spec", "title")
+			require.Equal(t, "Status test "+version, title, "status write must not clobber spec")
+			require.Equal(t, []string{folders.CascadeDeleteFinalizer}, got.GetFinalizers())
+
+			// A plain update cannot change status.
+			require.NoError(t, unstructured.SetNestedField(got.Object, "Failed", "status", "cascadeDelete", "state"))
+			_, err = admin.Resource.Update(ctx, got, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			got, err = admin.Resource.Get(ctx, name, metav1.GetOptions{}, "status")
+			require.NoError(t, err)
+			state, _, _ = unstructured.NestedString(got.Object, "status", "cascadeDelete", "state")
+			require.Equal(t, "InProgress", state)
+
+			// Merge patch on /status updates status only.
+			_, err = admin.Resource.Patch(ctx, name, types.MergePatchType,
+				[]byte(`{"spec":{"title":"Patched via status"},"status":{"cascadeDelete":{"remaining":1}}}`),
+				metav1.PatchOptions{}, "status")
+			require.NoError(t, err)
+			got, err = admin.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err)
+			remaining, _, _ = unstructured.NestedInt64(got.Object, "status", "cascadeDelete", "remaining")
+			require.Equal(t, int64(1), remaining)
+			title, _, _ = unstructured.NestedString(got.Object, "spec", "title")
+			require.Equal(t, "Status test "+version, title)
+
+			// Progress is visible to anyone who can read the folder.
+			got, err = viewer.Resource.Get(ctx, name, metav1.GetOptions{}, "status")
+			require.NoError(t, err)
+			state, _, _ = unstructured.NestedString(got.Object, "status", "cascadeDelete", "state")
+			require.Equal(t, "InProgress", state)
+
+			// Cleanup: finalizer-driven delete is not wired yet, so drop the finalizer first.
+			got, err = admin.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err)
+			got.SetFinalizers(nil)
+			_, err = admin.Resource.Update(ctx, got, metav1.UpdateOptions{})
+			require.NoError(t, err)
+			require.NoError(t, admin.Resource.Delete(ctx, name, metav1.DeleteOptions{}))
+		})
+	}
 }
 
 // Validates that folder delete checks alert_rule stats and blocks deletion
@@ -302,7 +435,8 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 			"spec": {
 			  "title": "Test",
 			  "description": ""
-			}}`
+			},
+			"status": {}}`
 
 		// Get should return the same result
 		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})

@@ -291,6 +291,9 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
+	// Status writes go straight to the unified store: the ST and cascade wrappers only override
+	// Create/Delete, and the status strategy keeps spec and metadata intact.
+	storage[folders.StoragePath("status")] = grafanaregistry.NewStatusREST(unified, newFolderStatusStrategy(opts.Scheme, folders.GroupVersion()))
 
 	b.parents = newParentsGetter(b.storage) // used for validation
 	storage[folders.StoragePath("parents")] = &subParentsREST{

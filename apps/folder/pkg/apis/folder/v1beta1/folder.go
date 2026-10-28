@@ -14,11 +14,27 @@ type (
 	FolderList      = v1.FolderList
 	FolderSpec      = v1.FolderSpec
 	FolderJSONCodec = v1.FolderJSONCodec
+
+	FolderStatus                   = v1.FolderStatus
+	FolderCascadeDeleteStatus      = v1.FolderCascadeDeleteStatus
+	FolderCascadeDeleteStatusState = v1.FolderCascadeDeleteStatusState
+)
+
+const (
+	CascadeDeleteFinalizer = v1.CascadeDeleteFinalizer
+
+	FolderCascadeDeleteStatusStateNone       = v1.FolderCascadeDeleteStatusStateNone
+	FolderCascadeDeleteStatusStatePending    = v1.FolderCascadeDeleteStatusStatePending
+	FolderCascadeDeleteStatusStateInProgress = v1.FolderCascadeDeleteStatusStateInProgress
+	FolderCascadeDeleteStatusStateCompleted  = v1.FolderCascadeDeleteStatusStateCompleted
+	FolderCascadeDeleteStatusStateFailed     = v1.FolderCascadeDeleteStatusStateFailed
 )
 
 var (
-	NewFolder     = v1.NewFolder
-	NewFolderSpec = v1.NewFolderSpec
+	NewFolder                    = v1.NewFolder
+	NewFolderSpec                = v1.NewFolderSpec
+	NewFolderStatus              = v1.NewFolderStatus
+	NewFolderCascadeDeleteStatus = v1.NewFolderCascadeDeleteStatus
 )
 
 var (
