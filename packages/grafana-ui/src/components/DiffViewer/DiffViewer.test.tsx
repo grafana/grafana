@@ -3,7 +3,18 @@ import userEvent from '@testing-library/user-event';
 
 import { store } from '@grafana/data';
 
-import { DiffViewer } from './DiffViewer';
+import { DiffViewer, InlineDiffToggle, useInlineDiffPreference } from '../../unstable';
+
+function HeaderControlledDiffViewer() {
+  const [inline, setInline] = useInlineDiffPreference();
+
+  return (
+    <>
+      <InlineDiffToggle value={inline} onChange={setInline} />
+      <DiffViewer original="before" modified="after" inline={inline} />
+    </>
+  );
+}
 
 describe('DiffViewer preference', () => {
   beforeEach(() => {
@@ -49,5 +60,19 @@ describe('DiffViewer preference', () => {
 
     expect(screen.getAllByRole('textbox')).toHaveLength(1);
     expect(screen.getByRole('textbox', { name: 'Modified' })).toHaveTextContent('after');
+  });
+
+  it('supports a separate header toggle with the shared saved preference', async () => {
+    const user = userEvent.setup();
+    render(<HeaderControlledDiffViewer />);
+
+    expect(await screen.findByRole('textbox', { name: 'Original' })).toHaveTextContent('before');
+    expect(screen.getAllByRole('radio')).toHaveLength(2);
+
+    await user.click(screen.getByRole('radio', { name: 'Inline' }));
+
+    expect(screen.getByRole('textbox', { name: 'Modified' })).toHaveTextContent('after');
+    expect(screen.queryByRole('textbox', { name: 'Original' })).not.toBeInTheDocument();
+    expect(store.getBool('grafana.monaco-diff-editor.inline', false)).toBe(true);
   });
 });

@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
-import { CodeMirrorDiffEditor as DiffEditor, type CodeMirrorDiffEditorProps } from '@grafana/ui/unstable';
 
-import { InlineDiffToggle, useInlineDiffPreference } from '../MonacoDiffEditor/inlineDiffPreference';
+import { useStyles2 } from '../../themes/ThemeContext';
+import { CodeMirrorDiffEditor } from '../CodeMirror/DiffEditorLazy';
+
+import { InlineDiffToggle, useInlineDiffPreference } from './inlineDiffPreference';
+import { type DiffViewerProps } from './types';
 
 /** Read-only CodeMirror diff with the shared, persisted view preference. */
-export function DiffViewer({ height, inline, ...props }: CodeMirrorDiffEditorProps) {
+export function DiffViewer({ height, inline, ...props }: DiffViewerProps) {
   const styles = useStyles2(getStyles);
   const [inlinePreference, setInlinePreference] = useInlineDiffPreference();
   const inlineDiff = inline ?? inlinePreference;
@@ -20,7 +22,7 @@ export function DiffViewer({ height, inline, ...props }: CodeMirrorDiffEditorPro
         </div>
       )}
       <div className={styles.editor}>
-        <DiffEditor {...props} height="100%" inline={inlineDiff} />
+        <CodeMirrorDiffEditor {...props} height="100%" inline={inlineDiff} />
       </div>
     </div>
   );

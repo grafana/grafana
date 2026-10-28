@@ -2,10 +2,9 @@ import { lazy, Suspense } from 'react';
 
 import { t } from '@grafana/i18n';
 
+import { type DiffViewerProps } from '../DiffViewer/types';
 import { ErrorBoundaryAlert } from '../ErrorBoundary/ErrorBoundary';
 import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
-
-import { type CodeMirrorDiffEditorProps } from './types';
 
 const DiffEditor = lazy(() =>
   import(/* webpackChunkName: "react-codemirror-diff-editor" */ './DiffEditor').then((module) => ({
@@ -14,7 +13,7 @@ const DiffEditor = lazy(() =>
 );
 
 /** @internal */
-export function CodeMirrorDiffEditor(props: CodeMirrorDiffEditorProps) {
+export function CodeMirrorDiffEditor(props: DiffViewerProps) {
   return (
     <ErrorBoundaryAlert
       boundaryName="CodeMirrorDiffEditorLazy"

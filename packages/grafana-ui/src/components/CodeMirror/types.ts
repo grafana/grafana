@@ -23,18 +23,6 @@ export type CodeMirrorBasicSetup = boolean | BasicSetupOptions;
 
 export type CodeMirrorEditorLanguage = keyof typeof CODE_MIRROR_LANGUAGES;
 
-export interface CodeMirrorDiffEditorProps {
-  original: string;
-  modified: string;
-  language?: CodeMirrorEditorLanguage;
-  /** Editor height, such as `'200px'` or `'100%'`. */
-  height?: string;
-  /** Show deleted and inserted lines in a single pane. Defaults to false. */
-  inline?: boolean;
-  /** Show line numbers. Defaults to true. */
-  lineNumbers?: boolean;
-}
-
 /**
  * SQL dialect used for syntax highlighting and keyword completion when
  * `language` is `'sql'`. Maps to the corresponding dialect from

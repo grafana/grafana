@@ -11,9 +11,9 @@ import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
+import { type DiffViewerProps } from '../DiffViewer/types';
 
 import { createCodeEditorTheme } from './theme';
-import { type CodeMirrorDiffEditorProps } from './types';
 import { useLanguageExtension } from './useLanguageExtension';
 
 const readOnlyOptions = { readOnly: true, editable: false, basicSetup: false, indentWithTab: false };
@@ -25,7 +25,7 @@ export function DiffEditor({
   height,
   inline = false,
   lineNumbers = true,
-}: CodeMirrorDiffEditorProps) {
+}: DiffViewerProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { extension: languageExtension, error: languageError } = useLanguageExtension(language);
