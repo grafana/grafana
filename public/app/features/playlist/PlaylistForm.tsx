@@ -1,14 +1,13 @@
 import { useId, useMemo, useState } from 'react';
 
+import { API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, RepositorySelect } from '@grafana/runtime';
 import { Box, Button, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
-import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { Form } from 'app/core/components/Form/Form';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { RepositorySelect } from 'app/features/provisioning/components/Shared/RepositorySelect';
 import { getManagerIdentity, isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 
 import { type Playlist, type PlaylistSpec } from '../../api/clients/playlist/v1';
@@ -22,8 +21,6 @@ interface Props {
   playlist: Playlist;
   /** Renders a repository selector at the top of the form. */
   showRepositorySelect?: boolean;
-  /** Repositories to choose from (may be empty). */
-  repositories?: RepositoryView[];
   /** Selected repository name. Empty string = "no repository" (save to Grafana). */
   selectedRepository?: string;
   onRepositoryChange?: (repositoryName: string) => void;
@@ -38,7 +35,6 @@ export const PlaylistForm = ({
   onSubmit,
   playlist,
   showRepositorySelect,
-  repositories = [],
   selectedRepository,
   onRepositoryChange,
   disableRepositorySelect,
@@ -124,7 +120,8 @@ export const PlaylistForm = ({
               // surrounding fields and keep it from butting against the "Add dashboards" section.
               <Box marginBottom={2}>
                 <RepositorySelect
-                  repositories={repositories}
+                  group={API_GROUP}
+                  kind="Playlist"
                   value={repositoryFieldValue}
                   // readOnly already disables the Combobox, so onChange can't fire when locked.
                   onChange={onRepositoryChange ?? (() => {})}

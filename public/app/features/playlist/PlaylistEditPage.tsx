@@ -28,7 +28,7 @@ export const PlaylistEditPage = () => {
   const { uid = '' } = useParams();
   const { data, isLoading, isError, error } = useGetPlaylistQuery({ name: uid });
   const [replacePlaylist] = useReplacePlaylistMutation();
-  const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.playlist);
+  const { isAvailable } = useResourceRepositorySelection(resourceKindInfos.playlist);
   // Holds the edited playlist while the provisioning save drawer is open.
   const [provisionedPlaylist, setProvisionedPlaylist] = useState<Playlist | undefined>();
 
@@ -86,7 +86,6 @@ export const PlaylistEditPage = () => {
             onSubmit={onSubmit}
             playlist={data}
             showRepositorySelect={isAvailable && isManagedByRepository(data)}
-            repositories={repositories}
             disableRepositorySelect
           />
         )}

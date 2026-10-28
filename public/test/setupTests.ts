@@ -14,6 +14,7 @@ import { matchers } from '@grafana/test-utils';
 import { setManagedBadge } from '../../packages/grafana-runtime/src/provisioning/ManagedBadge';
 import { setPullRequestBanner } from '../../packages/grafana-runtime/src/provisioning/PullRequestBanner';
 import { setReadOnlyBadge } from '../../packages/grafana-runtime/src/provisioning/ReadOnlyBadge';
+import { setRepositorySelect } from '../../packages/grafana-runtime/src/provisioning/RepositorySelect';
 import {
   type SaveResourceDrawerProps,
   setSaveResourceDrawer,
@@ -85,6 +86,12 @@ setReadOnlyBadge((props) =>
 );
 setPullRequestBanner((props) =>
   createElement(require('app/features/provisioning/components/Shared/PreviewBannerViewPR').PreviewBannerViewPR, props)
+);
+setRepositorySelect((props) =>
+  createElement(
+    require('app/features/provisioning/components/Shared/RepositorySelectForKind').RepositorySelectForKind,
+    props
+  )
 );
 setSaveResourceDrawer((props) =>
   createElement<SaveResourceDrawerProps>(

@@ -82,6 +82,7 @@ export {
   type SaveResourceDrawerResource,
   type SaveResourceDrawerBranchCommit,
 } from './provisioning/SaveResourceDrawer';
+export { RepositorySelect, type RepositorySelectProps } from './provisioning/RepositorySelect';
 export {
   type CorrelationsService,
   type CorrelationData,
