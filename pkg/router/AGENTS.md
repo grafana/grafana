@@ -101,6 +101,17 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   unless its requester may use that namespace (`authorizeNamespace`), so no backend, stack or
   fallback ever sees it. Allowed: the requester's own namespace, any namespace for `*`, and any for
   Grafana admins. Anonymous users get only their own. Backends still authorize everything else.
+- **A group a caller may not see does not exist for them** (`visibility.go`). Internal groups
+  (`[router] internal_groups`) are seen only by access policies, and with a `NamespaceGroups` filter,
+  a caller with a namespace sees only the groups installed there. That namespace is the one the path
+  names, or else the requester's own; `*` or none means no filter. A hidden group is left out of
+  `/apis` (both formats, after any ST merge), the `/openapi/v3` index, the manifests list and the
+  index, and every request for it gets a 404 before dispatch, so no backend or fallback sees it.
+  The `discovery` group is never hidden, and naming it internal fails startup. The router keeps no
+  per-namespace state: it asks `NamespaceGroups` on every request, which caches and keeps its own
+  last-known-good, and a group whose filter errors is hidden. With nothing configured
+  (`visibilityScoped` false), every path keeps the precomputed documents and headers. Otherwise
+  view-dependent responses get `Cache-Control: private`.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
   `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
@@ -137,6 +148,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Engine: dispatch, `Ready`/`Alive` | `router.go`, `types.go` |
 | Engine: reconcile loop (`Run`, `reconcile`, `publish`) | `reconcile.go` |
 | Authentication and the namespace check | `auth.go` |
+| Per-caller group visibility | `visibility.go` |
 | Root discovery (`/apis`, `/openapi/v3`) and the per-backend discovery cache | `discovery.go`, `discovery_handler.go`, `discovery_cache.go` |
 | OpenAPI serving and the per-group-version OpenAPI cache | `openapi_cache.go` |
 | App manifest discovery (`/apis/discovery`), its markdown and HTML index | `discovery_manifests.go`, `discovery_index.go`, `discovery_openapi.go`, `discovery_status.go` |
@@ -215,7 +227,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
 | `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served group with a manifest: the backend's own (`ManifestProvider`), or, as a fallback when it advertises none, the one compiled in for the group. |
 | `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
-| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, the loader's own counters (`loaderCounter`, such as the ST fallback's stack lookup counts by result, `stackLookups`), and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
+| `/apis/discovery/v1alpha2/status` | Never filtered by visibility: it lists every group to any authenticated caller. Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, visibility (`internal` or `public`), breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, the loader's own counters (`loaderCounter`, such as the ST fallback's stack lookup counts by result, `stackLookups`), and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
 | `/apis/discovery/v1alpha2/AGENTS.md` | Synthesized markdown index of every served group, for agents. |
 | `/openapi/v3/apis/discovery/v1alpha2` | Synthesized OpenAPI v3 document for the discovery group. |
 | `/apis/discovery/v1alpha2/AGENTS` | The same index rendered as a static HTML page for browsers, with a CSP that allows no scripts. Not in the OpenAPI document. |
@@ -302,8 +314,9 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - The list applies `labelSelector` (manifests have no labels) and `fieldSelector` (only
     `metadata.name`), and rejects others with a 400. It ignores `limit` and returns the whole list
     without a `continue` token, which clients accept.
-  - The status page (`discovery_status.go`) is readable by any authenticated caller, so it holds
-    only names, states and counts: never credentials, addresses, URLs or error text, which carry
+  - The status page (`discovery_status.go`) is readable by any authenticated caller, and lists every
+    group, hidden ones too, so it holds only names, states and counts: never credentials, addresses,
+    URLs or error text, which carry
     internal hosts. A backend that serves a plugin's APIs reports the plugin through the optional
     `PluginStatusProvider` interface, under the same rule. Breaker thresholds are the constants
     `breakerOpenAfter` and `breakerOpenFor`, which the page reports, so change them there.
@@ -399,6 +412,16 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   port.
 - **Wire:** keep `wire.go` and each edition's `wireExts*.go` in sync with the generated files, so
   that `make gen-go` reproduces them.
+
+## Settings (`[router]`)
+
+Read by `ProvideGrafanaRouter` with `cfg.SectionWithEnvOverrides("router")`, whatever loader
+supplies the routes, in both standalone and middleware mode. Like `[cloud_router]`, there is no
+`pkg/setting` field, and the keys aren't documented in `conf/defaults.ini`.
+
+| Key | Meaning |
+| --- | --- |
+| `internal_groups` | Exact group names, separated by commas or spaces, that only access policies see. Unset hides nothing. `discovery` fails startup. Likely to come from app manifests later. |
 
 ## Settings (`[cloud_router]`)
 

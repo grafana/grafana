@@ -15,9 +15,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const readinessPollInterval = time.Second
+
+// routerSection holds the settings of the router itself, whatever loader
+// supplies its routes.
+const routerSection = "router"
 
 // ReadyNotifier reports the router's readiness through the module server's
 // shared health endpoint.
@@ -64,6 +69,13 @@ func ProvideGrafanaRouter(cfg *setting.Cfg) (*GrafanaRouter, error) {
 	}
 	r := NewGrafanaRouter(nil, auth)
 	r.builtinManifests = manifestsByGroup(resource.AppManifests())
+	internalGroups, err := util.SplitStringWithError(cfg.SectionWithEnvOverrides(routerSection).Key("internal_groups").MustString(""))
+	if err != nil {
+		return nil, fmt.Errorf("%s: internal_groups: %w", routerSection, err)
+	}
+	if err := r.SetGroupVisibility(internalGroups, nil); err != nil {
+		return nil, err
+	}
 	return r, nil
 }
 

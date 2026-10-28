@@ -115,8 +115,24 @@ type GrafanaRouter struct {
 	// apiGroupList and openapiIndex are the synthesized /apis and /openapi/v3
 	// root documents, rebuilt from served (not the raw Load result) on every
 	// reconcile so discovery only advertises what is actually served.
-	apiGroupList atomic.Pointer[cachedDoc]
-	openapiIndex atomic.Pointer[cachedDoc]
+	// They are the view of callers that are not access policies; the
+	// internal ones are the access policies' view, the same documents when no
+	// group is internal. Callers with a namespace filter get documents built
+	// per request (rootDocsFor).
+	apiGroupList         atomic.Pointer[cachedDoc]
+	openapiIndex         atomic.Pointer[cachedDoc]
+	internalAPIGroupList atomic.Pointer[cachedDoc]
+	internalOpenAPIIndex atomic.Pointer[cachedDoc]
+
+	// internalGroups and namespaceGroups decide which groups each caller
+	// sees (SetGroupVisibility). visibilityScoped is set when any caller may
+	// see fewer groups than another, and filterNamespaces when the namespace
+	// filter is not the default that allows every group. Set before the
+	// router serves, and never changed.
+	internalGroups   map[string]struct{}
+	namespaceGroups  NamespaceGroups
+	visibilityScoped bool
+	filterNamespaces bool
 
 	// manifestDocs is the /discovery tree, published from served with the
 	// root documents. manifestFingerprint is the group/key set it was built
@@ -178,14 +194,12 @@ func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *Gra
 		authn:           tokens,
 		served:          map[string]*handlerEntry{},
 		watchAuthorizer: grafanaauthz.NewWatchRestrictionAuthorizer(),
+		namespaceGroups: allNamespaceGroups{},
 	}
 	r.watches, r.endWatches = context.WithCancel(context.Background())
 	empty := map[string]servingEntry{}
 	r.snapshot.Store(&empty)
-	emptyGroups := buildAPIGroupList(context.Background(), nil)
-	r.apiGroupList.Store(&emptyGroups)
-	emptyIndex := buildOpenAPIV3Index(context.Background(), nil)
-	r.openapiIndex.Store(&emptyIndex)
+	r.publishRootDocs(context.Background(), nil)
 	r.publishManifestDocs(context.Background(), nil)
 	return r
 }
@@ -259,7 +273,7 @@ func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 	// Built by the router, and checked before group dispatch so the tree is
 	// never mistaken for a group.
 	if isDiscoveryPath(path) {
-		r.serveManifestDiscovery(w, req)
+		r.serveManifestDiscovery(w, req, info)
 		return
 	}
 
@@ -267,13 +281,20 @@ func (r *GrafanaRouter) handleAPIs(w http.ResponseWriter, req *http.Request) {
 	// across every group; synthesize it router-side.
 	if path == apisPrefix || path == apisPrefix+"/" {
 		setRoute(req, routeDiscovery)
-		r.serveAPIGroupList(w, req)
+		r.serveAPIGroupList(w, req, info)
+		return
+	}
+
+	// A hidden group does not exist for the caller: not even the
+	// unregistered-group handler may serve it.
+	group := info.APIGroup
+	if !r.visible(req.Context(), r.viewFor(req.Context(), info), group) {
+		serveNotFound(w, req)
 		return
 	}
 
 	// Parsing rejects an invalid group name, so a group no backend serves is
 	// one that could exist: the unregistered-group handler may serve it.
-	group := info.APIGroup
 	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {

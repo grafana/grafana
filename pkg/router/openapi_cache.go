@@ -171,6 +171,10 @@ func (r *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request)
 // serveOpenAPIGroupVersion proxies one group-version's OpenAPI v3 document
 // from its owning backend, cached and validated against the backend key.
 func (r *GrafanaRouter) serveOpenAPIGroupVersion(w http.ResponseWriter, req *http.Request, group, version string) {
+	if !r.visible(req.Context(), r.viewFor(req.Context(), nil), group) {
+		serveNotFound(w, req)
+		return
+	}
 	handlers := *r.snapshot.Load()
 	entry, ok := handlers[group]
 	if !ok {

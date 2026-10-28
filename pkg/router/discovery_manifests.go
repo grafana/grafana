@@ -62,12 +62,20 @@ type manifestDocs struct {
 
 	// The index is rendered on its first request, since most route changes
 	// are never followed by one. sources holds each group's published
-	// manifest, by group.
-	backends  []Backend
-	sources   map[string]*app.ManifestData
-	indexOnce sync.Once
-	index     cachedDoc // markdown, for agents
-	indexHTML cachedDoc // the same index, for browsers
+	// manifest, by group. internal holds the groups only access policies
+	// see, so each view has an index of its own.
+	backends      []Backend
+	sources       map[string]*app.ManifestData
+	internal      map[string]struct{}
+	publicIndex   indexDocSet
+	internalIndex indexDocSet
+}
+
+// indexDocSet is one view's index, rendered on its first request.
+type indexDocSet struct {
+	once  sync.Once
+	index cachedDoc // markdown, for agents
+	page  cachedDoc // the same index, for browsers
 }
 
 var (
@@ -143,7 +151,7 @@ var manifestsResource = schema.GroupResource{Group: discoveryGroup, Resource: "m
 
 // serveManifestDiscovery serves the /apis/discovery tree from the published
 // docs. Errors are Kubernetes Status objects, as from any other group.
-func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.Request) {
+func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.Request, info *request.RequestInfo) {
 	setRoute(req, routeDiscovery)
 	if req.Method != http.MethodGet && req.Method != http.MethodHead {
 		w.Header().Set("Allow", "GET, HEAD")
@@ -152,28 +160,32 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 	}
 	// The documents are static, so there is nothing to watch; a list body
 	// would be misread as a stream of events.
-	if info, ok := request.RequestInfoFrom(req.Context()); ok && info.Verb == "watch" {
+	if info.Verb == "watch" {
 		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, "watch"), w)
 		return
 	}
 	docs := r.manifestDocs.Load()
+	v := r.viewFor(req.Context(), info)
+	if r.visibilityScoped {
+		w.Header().Set("Cache-Control", "private")
+	}
 	switch path := strings.TrimSuffix(req.URL.Path, "/"); path {
 	case discoveryPrefix:
 		serveCachedDoc(w, req, &discoveryGroupDoc)
 	case manifestDiscoveryPrefix:
 		serveCachedDoc(w, req, &discoveryResourcesDoc)
 	case manifestDiscoveryList:
-		serveManifestList(w, req, docs)
+		r.serveManifestList(w, req, docs, v)
 	case manifestDiscoveryStatus:
 		r.serveRouterStatus(w, req)
 	case discoveryAgentsMD:
-		index, _ := docs.indexDocs()
+		index, _ := r.indexDocsFor(req.Context(), v)
 		serveCachedDoc(w, req, index)
 	case discoveryAgentsHTML:
 		// The page is static: nothing in it may run or load from elsewhere.
 		w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		_, page := docs.indexDocs()
+		_, page := r.indexDocsFor(req.Context(), v)
 		serveCachedDoc(w, req, page)
 	default:
 		group, ok := strings.CutPrefix(path, manifestDiscoveryGroups)
@@ -182,7 +194,7 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 			return
 		}
 		doc, found := docs.manifests[group]
-		if !found {
+		if !found || !r.visible(req.Context(), v, group) {
 			_ = errhttp.Write(req.Context(), apierrors.NewNotFound(manifestsResource, group), w)
 			return
 		}
@@ -190,28 +202,32 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 	}
 }
 
-// serveManifestList writes the AppManifestList from the group documents,
-// filtered by labelSelector and fieldSelector as Kubernetes clients expect.
-// Without either, it serves the precomputed list.
-func serveManifestList(w http.ResponseWriter, req *http.Request, docs *manifestDocs) {
+// serveManifestList writes the AppManifestList from the group documents the
+// caller may see, filtered by labelSelector and fieldSelector as Kubernetes
+// clients expect. When every group is visible and neither selector is set, it
+// serves the precomputed list.
+func (r *GrafanaRouter) serveManifestList(w http.ResponseWriter, req *http.Request, docs *manifestDocs, v view) {
 	items, etag, length := docs.items, docs.listETag, docs.listLen
 	selector, err := parseManifestSelector(req.URL.Query())
 	if err != nil {
 		_ = errhttp.Write(req.Context(), apierrors.NewBadRequest(err.Error()), w)
 		return
 	}
-	if selector != nil {
+	if selector != nil || r.visibilityScoped {
 		items, length = nil, len(manifestListPrefix)+len(manifestListSuffix)
+		listHash := sha256.New()
+		_, _ = io.WriteString(listHash, docs.listETag)
 		for i, item := range docs.items {
-			if selector.matches(docs.names[i]) {
+			if (selector == nil || selector.matches(docs.names[i])) && r.visible(req.Context(), v, docs.names[i]) {
 				if len(items) > 0 {
 					length++ // the separating comma
 				}
 				items = append(items, item)
 				length += len(item.body)
+				_, _ = io.WriteString(listHash, "\x00"+docs.names[i])
 			}
 		}
-		etag = quoteETag(hashHex(docs.listETag + "\x00" + selector.String()))
+		etag = quoteETag(hex.EncodeToString(listHash.Sum(nil))[:16])
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -300,6 +316,7 @@ func (r *GrafanaRouter) publishManifestDocs(ctx context.Context, backends []Back
 		return
 	}
 	docs, cache := buildManifestDocsFrom(ctx, sorted, r.builtinManifests, r.manifestCache)
+	docs.internal = r.internalGroups
 	r.manifestDocs.Store(docs)
 	r.manifestCache = cache
 	r.manifestFingerprint = fingerprint.String()

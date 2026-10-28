@@ -61,6 +61,8 @@ export interface GroupStatus {
   plugin?: { id: string; version?: string; hasBackend: boolean };
   loadedAt: string;
   manifest: boolean;
+  // internal for a group only access policies see, public otherwise
+  visibility: string;
   discovery: string;
   openapiCached?: string[];
   watches: number;
@@ -292,7 +294,7 @@ const RouterStatusView = ({ status }: { status: RouterStatus }) => {
             'Watches',
           ]}
           rows={groups.map((g) => [
-            g.group,
+            <GroupCell key="group" group={g} />,
             g.health === 'unknown' ? null : (
               <Badge key="health" color={healthColors[g.health] ?? 'darkgrey'} text={g.health} />
             ),
@@ -382,6 +384,27 @@ const TimeAgo = ({ value }: { value?: string }) => {
 
 const Count = ({ value, color }: { value: number; color: 'error' | 'warning' }) =>
   value > 0 ? <Text color={color}>{value}</Text> : <Text color="secondary">0</Text>;
+
+const GroupCell = ({ group }: { group: GroupStatus }) => {
+  if (group.visibility !== 'internal') {
+    return <>{group.group}</>;
+  }
+  return (
+    <Stack gap={1} alignItems="center">
+      <span>{group.group}</span>
+      <Tooltip
+        content={t(
+          'swagger.router-status.internal-description',
+          'Only access policies see this group. Every other caller gets a 404 for it, and it is not listed in their discovery.'
+        )}
+      >
+        <span>
+          <Badge color="purple" text={t('swagger.router-status.internal', 'internal')} />
+        </span>
+      </Tooltip>
+    </Stack>
+  );
+};
 
 const PluginCell = ({ plugin }: { plugin?: GroupStatus['plugin'] }) => {
   if (!plugin) {
