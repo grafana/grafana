@@ -90,6 +90,11 @@ type BleveOptions struct {
 	// Also used for file-based indexes, if they are not owned by this instance, and they are not fetched from the cache recently.
 	IndexCacheTTL time.Duration
 
+	// GlobalIndexIdleTimeout closes a global index this instance owns once it has
+	// not been searched for this long, so a namespace nobody searches stops paying
+	// for reconciles, watch writes and snapshots. 0 keeps it open.
+	GlobalIndexIdleTimeout time.Duration
+
 	BuildVersion string
 
 	Logger log.Logger
@@ -402,11 +407,27 @@ func NewBleveBackend(opts BleveOptions, indexMetrics *resource.BleveIndexMetrics
 
 // GetIndex will return nil if the key does not exist
 func (b *bleveBackend) GetIndex(key resource.NamespacedResource) resource.ResourceIndex {
-	idx := b.getCachedIndex(key, time.Now())
+	idx := b.getIndexForSearch(key, time.Now())
 	// Avoid returning typed nils.
 	if idx == nil {
 		return nil
 	}
+	return idx
+}
+
+// getIndexForSearch records the search while holding the cache lock, so idle
+// eviction or a rebuild replacing the index cannot slip in between the lookup
+// and the record and act on the previous search time.
+func (b *bleveBackend) getIndexForSearch(key resource.NamespacedResource, now time.Time) *bleveIndex {
+	b.cacheMx.RLock()
+	defer b.cacheMx.RUnlock()
+
+	idx := b.cache[key]
+	if idx == nil {
+		return nil
+	}
+	idx.lastFetchedFromCache.Store(now.UnixMilli())
+	idx.lastSearchedAt.Store(now.UnixMilli())
 	return idx
 }
 
@@ -480,9 +501,12 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	cacheTTLMillis := b.opts.IndexCacheTTL.Milliseconds()
 	unownedIdleTimeoutMillis := min(b.opts.IndexCacheTTL, unownedIndexIdleTimeout).Milliseconds()
 
+	globalIdleTimeoutMillis := b.opts.GlobalIndexIdleTimeout.Milliseconds()
+
 	// Collect all expired or unowned into this map, and perform the actual closing without holding the lock.
 	expired := map[resource.NamespacedResource]*bleveIndex{}
 	unowned := map[resource.NamespacedResource]*bleveIndex{}
+	idle := map[resource.NamespacedResource]*bleveIndex{}
 	ownCheckErrors := map[resource.NamespacedResource]error{}
 
 	b.cacheMx.Lock()
@@ -494,15 +518,24 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 			continue
 		}
 
+		checkIdleGlobal := key.IsGlobal() && globalIdleTimeoutMillis > 0
+		if cacheTTLMillis <= 0 && !checkIdleGlobal {
+			continue
+		}
+
 		// Check if index is owned by this instance.
-		if cacheTTLMillis > 0 {
-			owned, err := b.ownsIndexFn(key)
-			if err != nil {
-				ownCheckErrors[key] = err
-			} else if !owned && now.UnixMilli()-idx.lastFetchedFromCache.Load() > unownedIdleTimeoutMillis {
-				delete(b.cache, key)
-				unowned[key] = idx
-			}
+		owned, err := b.ownsIndexFn(key)
+		if err != nil {
+			ownCheckErrors[key] = err
+			continue
+		}
+		switch {
+		case !owned && cacheTTLMillis > 0 && now.UnixMilli()-idx.lastFetchedFromCache.Load() > unownedIdleTimeoutMillis:
+			delete(b.cache, key)
+			unowned[key] = idx
+		case owned && checkIdleGlobal && now.UnixMilli()-idx.lastSearchedAt.Load() > globalIdleTimeoutMillis:
+			delete(b.cache, key)
+			idle[key] = idx
 		}
 	}
 	b.cacheMx.Unlock()
@@ -520,6 +553,12 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	for key, idx := range expired {
 		b.clearUploadTracking(key)
 		b.log.Info("index evicted from cache", "reason", "expired", "key", key, "storage", idx.indexStorage)
+		b.closeIndex(idx, key)
+	}
+
+	for key, idx := range idle {
+		b.clearUploadTracking(key)
+		b.log.Info("index evicted from cache", "reason", "idle", "key", key, "storage", idx.indexStorage)
 		b.closeIndex(idx, key)
 	}
 }
@@ -961,9 +1000,13 @@ func (b *bleveBackend) BuildIndex(
 	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", indexBuildReason)
 	resourceDir := b.getResourceDir(key)
 	snapshotEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
+	// A global index is built when it is first searched, without a size, so it
+	// may be large. Downloading its snapshot is much cheaper than building it, but
+	// it must not wait for another replica's build, as a small index would.
+	downloadOnly := b.opts.Snapshot.Store != nil && docCount < 0 && key.IsGlobal()
 	skipIfBuilding := options.SkipIfBuilding
 
-	prepared, err := b.prepareIndex(ctx, key, snapshotEnabled, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
+	prepared, err := b.prepareIndex(ctx, key, snapshotEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
 	if err != nil {
 		return nil, err
 	}
@@ -1072,8 +1115,15 @@ func (b *bleveBackend) BuildIndex(
 
 	b.cacheMx.Lock()
 	// A request can use a newly built index without fetching it from the cache.
-	idx.lastFetchedFromCache.Store(time.Now().UnixMilli())
+	now := time.Now().UnixMilli()
+	idx.lastFetchedFromCache.Store(now)
 	prev := b.cache[key]
+	// A rebuild is not a search, so it keeps the replaced index's last search.
+	if prev != nil {
+		idx.lastSearchedAt.Store(prev.lastSearchedAt.Load())
+	} else {
+		idx.lastSearchedAt.Store(now)
+	}
 	b.cache[key] = idx
 	b.cacheMx.Unlock()
 
@@ -1104,6 +1154,7 @@ func (b *bleveBackend) prepareIndex(
 	ctx context.Context,
 	key resource.NamespacedResource,
 	snapshotEnabled bool,
+	downloadOnly bool,
 	mapper mapping.IndexMapping,
 	selectableFields []string,
 	searchFieldsHash string,
@@ -1121,7 +1172,7 @@ func (b *bleveBackend) prepareIndex(
 	// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 	// If we do have an unexpired cached index already, or if rebuild is true, we always build a new index from scratch.
 	if cachedIndex == nil && !rebuild {
-		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotEnabled, logger, skipIfBuilding)
+		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotEnabled, downloadOnly, logger, skipIfBuilding)
 	}
 
 	if rebuild && snapshotEnabled && maxFreshSnapshotAge > 0 {
@@ -1168,6 +1219,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 	searchFieldsHash string,
 	lastImportTime time.Time,
 	snapshotEnabled bool,
+	downloadOnly bool,
 	logger log.Logger,
 	skipIfBuilding bool,
 ) (preparedBuildIndex, error) {
@@ -1185,7 +1237,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 		}, nil
 	}
 
-	if !snapshotEnabled {
+	if !snapshotEnabled && !downloadOnly {
 		return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 	}
 
@@ -1203,6 +1255,9 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 			indexStorage:  indexStorageFile,
 			source:        buildIndexSourceDownloadedSnapshot,
 		}, nil
+	}
+	if !snapshotEnabled {
+		return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 	}
 
 	idx, name, rv, lock, err := b.coordinateColdStartBuild(ctx, key, resourceDir, lastImportTime, logger, skipIfBuilding)
@@ -1861,6 +1916,10 @@ type bleveIndex struct {
 
 	// Used to detect if the index can be safely closed, if it no longer belongs to this instance. UnixMilli.
 	lastFetchedFromCache atomic.Int64
+	// When the index was last handed to a search, UnixMilli. Unlike
+	// lastFetchedFromCache, building or rebuilding the index does not count, so
+	// an index nobody searches goes idle even when it is rebuilt periodically.
+	lastSearchedAt atomic.Int64
 
 	// Guards read-modify-write updates of the persisted snapshot mutation count
 	// stored in Bleve internal data, so concurrent BulkIndex calls don't lose increments.

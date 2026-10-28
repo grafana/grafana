@@ -1350,6 +1350,12 @@ func withIndexCacheTTL(ttl time.Duration) setupOption {
 	}
 }
 
+func withGlobalIndexIdleTimeout(timeout time.Duration) setupOption {
+	return func(options *BleveOptions) {
+		options.GlobalIndexIdleTimeout = timeout
+	}
+}
+
 func withFileThreshold(threshold int) setupOption {
 	return func(options *BleveOptions) {
 		options.FileThreshold = int64(threshold)
@@ -1955,6 +1961,46 @@ func TestUnownedIndexIdleTimeout(t *testing.T) {
 			checkOpenIndexes(t, reg, 0, 0)
 		})
 	}
+}
+
+// A global index nobody searches is closed, so its namespace stops paying for
+// reconciles, watch writes and snapshots. Background reads and rebuilds do not
+// count as searches, and per-resource indexes stay open.
+func TestOwnedGlobalIndexIdleTimeout(t *testing.T) {
+	const timeout = 6 * time.Hour
+	backend, reg := setupBleveBackend(t, withIndexCacheTTL(4*time.Hour), withGlobalIndexIdleTimeout(timeout))
+	global := resource.GlobalSearchKey("test")
+	perResource := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	docs := defaultFileThreshold
+	build := func(key resource.NamespacedResource, rebuild bool) resource.ResourceIndex {
+		idx, err := backend.BuildIndex(t.Context(), key, int64(docs), "test", indexTestDocs(perResource, docs, 100), nil, rebuild, time.Time{}, 0, resource.BuildIndexOptions{})
+		require.NoError(t, err)
+		return idx
+	}
+	build(global, false)
+	build(perResource, false)
+
+	// In the past, so the rebuild below happens after the last search.
+	searched := time.Now().Add(-2 * timeout)
+	require.NotNil(t, backend.getIndexForSearch(global, searched))
+	require.NotNil(t, backend.PeekIndex(global))
+	backend.runEvictExpiredOrUnownedIndexes(searched.Add(timeout))
+	require.NotNil(t, backend.peekCachedIndex(global), "not idle for longer than the timeout yet")
+
+	// A search moves the deadline.
+	searchedAgain := searched.Add(timeout / 2)
+	require.NotNil(t, backend.getIndexForSearch(global, searchedAgain))
+	backend.runEvictExpiredOrUnownedIndexes(searched.Add(timeout + time.Millisecond))
+	require.NotNil(t, backend.peekCachedIndex(global), "a search must delay closing")
+
+	// A rebuild after the last search does not.
+	rebuilt := build(global, true)
+	backend.runEvictExpiredOrUnownedIndexes(searchedAgain.Add(timeout + time.Millisecond))
+	require.Nil(t, backend.peekCachedIndex(global))
+	_, err := rebuilt.DocCount(t.Context(), "", nil)
+	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+	require.NotNil(t, backend.peekCachedIndex(perResource), "per-resource indexes are not closed for being idle")
+	checkOpenIndexes(t, reg, 0, 1)
 }
 
 func TestNewUnownedIndexIdleTimeout(t *testing.T) {

@@ -297,6 +297,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// dashboards and folders already covered by their own indexes.
 	cfg.GlobalSearchIndexEnabled = section.Key("global_search_index_enabled").MustBool(false)
 	cfg.GlobalSearchIndexStartupBuild = section.Key("global_search_index_startup_build").MustBool(false)
+	// Well under the 24h a closed index's files stay on disk
+	// (disk_index_cleanup_unopened_grace_period), so the next search can still reopen them.
+	cfg.GlobalSearchIndexIdleTimeout = section.Key("global_search_index_idle_timeout").MustDuration(6 * time.Hour)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
