@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { type JSX, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
@@ -97,7 +97,15 @@ function PanelActionsPopoverWrapper({
     <PanelActionsOverlayProvider value={setOverlayOpen}>
       <PanelChromeHeaderControlsContext.Provider value={headerControls}>
         <EditActionsPopover
-          content={<PanelActions panel={panel} dashboard={dashboard} menu={menu} onHoverSlotChange={setHoverSlot} />}
+          content={
+            <PanelActions
+              panel={panel}
+              dashboard={dashboard}
+              menu={menu}
+              hoverSlot={hoverSlot}
+              onHoverSlotChange={setHoverSlot}
+            />
+          }
           showOutsideEditMode
           keyboardAccessible
           openOnTap
@@ -121,10 +129,11 @@ interface PanelActionsProps {
   panel: VizPanel;
   dashboard: DashboardScene;
   menu: VizPanelMenu;
+  hoverSlot: HTMLElement | null;
   onHoverSlotChange: (element: HTMLElement | null) => void;
 }
 
-function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelActionsProps) {
+function PanelActions({ panel, dashboard, menu, hoverSlot, onHoverSlotChange }: PanelActionsProps) {
   const onMenuOpenChange = usePanelActionsOverlayOpenChange();
   const [moreActionsAnchor, setMoreActionsAnchor] = useState<HTMLElement | null>(null);
   const isGroupByPickerOpen = useIsGroupByPickerOpen(panel);
@@ -139,6 +148,7 @@ function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelAction
   const isEditing = isFullDashboardEditing(dashboardState);
   const { hoverHeader, title } = panel.useState();
   const isSelectionEnabled = Boolean(useContext(ElementSelectionContext)?.enabled);
+  const hasHoverSlotItems = useHasVisibleItems(hoverSlot);
 
   const isExpanded = Boolean(viewPanel);
   const isRepeat = isRepeatCloneOrChildOf(panel);
@@ -151,6 +161,9 @@ function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelAction
     async () => (isEditing ? undefined : tryGetExploreUrlForPanel(panel)),
     [panel, isEditing]
   ).value;
+
+  const canExplore = !isEditing && Boolean(exploreUrl);
+  const canOpenSettings = Boolean(isEditing) && isSelectionEnabled;
 
   const report = useCallback(
     (item: PanelActionItem) => DashboardInteractions.panelActionClicked(item, panelId, 'actions_popover'),
@@ -205,6 +218,7 @@ function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelAction
   return (
     <>
       {hoverHeader && <div ref={onHoverSlotChange} className={styles.hoverSlot} />}
+      {hoverHeader && hasHoverSlotItems && <ActionsSeparator />}
 
       <IconButton
         name={isExpanded ? 'compress-alt' : 'expand-alt'}
@@ -219,6 +233,8 @@ function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelAction
         onClick={onToggleExpand}
       />
 
+      {(canEdit || canExplore || canOpenSettings) && <ActionsSeparator />}
+
       {canEdit && (
         <IconButton
           name="edit"
@@ -230,7 +246,7 @@ function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelAction
         />
       )}
 
-      {!isEditing && exploreUrl && (
+      {canExplore && (
         <IconButton
           name="compass"
           size="md"
@@ -241,7 +257,7 @@ function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelAction
         />
       )}
 
-      {isEditing && isSelectionEnabled && (
+      {canOpenSettings && (
         <IconButton
           name="cog"
           size="md"
@@ -254,6 +270,7 @@ function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelAction
 
       {canChangeLayout && (
         <>
+          <ActionsSeparator />
           <CopyActionButton
             onClick={() => {
               report('copy');
@@ -275,6 +292,8 @@ function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelAction
           />
         </>
       )}
+
+      <ActionsSeparator />
 
       <span ref={setMoreActionsAnchor} className={styles.moreActions}>
         <Dropdown
@@ -304,6 +323,37 @@ function PanelActions({ panel, dashboard, menu, onHoverSlotChange }: PanelAction
       )}
     </>
   );
+}
+
+function ActionsSeparator() {
+  const styles = useStyles2(getStyles);
+  const actionStyles = useStyles2(getActionStyles);
+  return (
+    <div role="separator" aria-orientation="vertical" className={cx(actionStyles.actionsDivider, styles.separator)} />
+  );
+}
+
+/**
+ * Whether an element shows any text or icon. Header items such as panel links keep their wrappers in the hover slot
+ * while rendering nothing, so a slot with children can still look empty.
+ */
+function useHasVisibleItems(element: HTMLElement | null): boolean {
+  const [hasItems, setHasItems] = useState(false);
+
+  useEffect(() => {
+    if (!element) {
+      setHasItems(false);
+      return;
+    }
+    const update = () =>
+      setHasItems(Boolean(element.textContent?.trim()) || element.querySelector('svg, img') !== null);
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(element, { childList: true, subtree: true, characterData: true });
+    return () => observer.disconnect();
+  }, [element]);
+
+  return hasItems;
 }
 
 function getHeaderActions(panel: VizPanel): VizPanelHeaderActions | undefined {
@@ -336,6 +386,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   moreActions: css({
     display: 'inline-flex',
+  }),
+  separator: css({
+    backgroundColor: theme.colors.border.strong,
   }),
   hoverSlot: css({
     // Header items join the toolbar's flex layout and 8px gap; items that render nothing leave no gap.
