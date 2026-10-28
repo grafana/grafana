@@ -19,12 +19,7 @@ import { SelectionShortcutsPlugin } from '../../slate-plugins/selection_shortcut
 import { SuggestionsPlugin } from '../../slate-plugins/suggestions';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import {
-  type CompletionItemGroup,
-  type SuggestionsState,
-  type TypeaheadInput,
-  type TypeaheadOutput,
-} from '../../types/completion';
+import { type SuggestionsState, type TypeaheadInput, type TypeaheadOutput } from '../../types/completion';
 import { makeValue, SCHEMA } from '../../utils/slate';
 import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
 
@@ -50,14 +45,6 @@ export interface QueryFieldProps {
   portalOrigin: string;
   syntax?: string;
   syntaxLoaded?: boolean;
-}
-
-export interface QueryFieldState {
-  suggestions: CompletionItemGroup[];
-  typeaheadContext: string | null;
-  typeaheadPrefix: string;
-  typeaheadText: string;
-  value: Value;
 }
 
 /**
