@@ -2,11 +2,10 @@ import { useState } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { locationService, SaveResourceDrawer } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 
 import { type Playlist, useCreatePlaylistMutation } from '../../api/clients/playlist/v1';
-import { SaveProvisionedResourceDrawer } from '../provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { useResourceRepositorySelection } from '../provisioning/hooks/useResourceRepositorySelection';
 import { resourceKindInfos } from '../provisioning/utils/resourceKinds';
 
@@ -51,7 +50,7 @@ export const PlaylistNewPage = () => {
         />
       </Page.Contents>
       {provisionedPlaylist && selectedRepository && (
-        <SaveProvisionedResourceDrawer
+        <SaveResourceDrawer
           resource={provisionedPlaylist}
           title={provisionedPlaylist.spec?.title ?? ''}
           action="create"

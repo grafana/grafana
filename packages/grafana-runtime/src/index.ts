@@ -77,6 +77,13 @@ export { ManagedBadge, type ManagedBadgeProps } from './provisioning/ManagedBadg
 export { ReadOnlyBadge, type ReadOnlyBadgeProps } from './provisioning/ReadOnlyBadge';
 export { PullRequestBanner, type PullRequestBannerProps } from './provisioning/PullRequestBanner';
 export {
+  SaveResourceDrawer,
+  type SaveResourceDrawerProps,
+  type SaveResourceDrawerResource,
+  type SaveResourceDrawerBranchCommit,
+} from './provisioning/SaveResourceDrawer';
+export { registerResourceKinds, type ResourceKindDisplay } from './provisioning/registerResourceKinds';
+export {
   type CorrelationsService,
   type CorrelationData,
   type CorrelationsData,

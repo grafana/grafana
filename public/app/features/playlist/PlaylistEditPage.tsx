@@ -3,10 +3,9 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { locationService, ManagedBadge } from '@grafana/runtime';
+import { locationService, ManagedBadge, SaveResourceDrawer } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 import {
   getManagerIdentity,
@@ -93,7 +92,7 @@ export const PlaylistEditPage = () => {
         )}
       </Page.Contents>
       {provisionedPlaylist && (
-        <SaveProvisionedResourceDrawer
+        <SaveResourceDrawer
           resource={provisionedPlaylist}
           title={provisionedPlaylist.spec?.title ?? ''}
           action="update"

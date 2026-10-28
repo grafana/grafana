@@ -14,6 +14,10 @@ import { matchers } from '@grafana/test-utils';
 import { setManagedBadge } from '../../packages/grafana-runtime/src/provisioning/ManagedBadge';
 import { setPullRequestBanner } from '../../packages/grafana-runtime/src/provisioning/PullRequestBanner';
 import { setReadOnlyBadge } from '../../packages/grafana-runtime/src/provisioning/ReadOnlyBadge';
+import {
+  type SaveResourceDrawerProps,
+  setSaveResourceDrawer,
+} from '../../packages/grafana-runtime/src/provisioning/SaveResourceDrawer';
 import { setPluginComponentsHook } from '../../packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents';
 import { getEnvConfig } from '../../scripts/cli/env-util';
 
@@ -81,6 +85,12 @@ setReadOnlyBadge((props) =>
 );
 setPullRequestBanner((props) =>
   createElement(require('app/features/provisioning/components/Shared/PreviewBannerViewPR').PreviewBannerViewPR, props)
+);
+setSaveResourceDrawer((props) =>
+  createElement<SaveResourceDrawerProps>(
+    require('app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer').SaveProvisionedResourceDrawer,
+    props
+  )
 );
 
 // our tests are heavy in CI due to parallelisation and monaco and kusto
