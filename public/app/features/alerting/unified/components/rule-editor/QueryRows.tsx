@@ -95,7 +95,7 @@ export const QueryRows = ({
   };
 
   const onChangeDataSource = (
-    settings: DataSourceInstanceSettings,
+    nextSettings: DataSourceInstanceSettings,
     previousSettings: DataSourceInstanceSettings | undefined,
     index: number
   ) => {
@@ -105,10 +105,10 @@ export const QueryRows = ({
       }
 
       // Copy model if changing to a datasource of same type.
-      if (settings.type === previousSettings?.type) {
-        return copyModel(item, settings);
+      if (nextSettings.type === previousSettings?.type) {
+        return copyModel(item, nextSettings);
       }
-      return newModel(item, settings);
+      return newModel(item, nextSettings);
     });
 
     onQueriesChange(updatedQueries);
@@ -200,7 +200,7 @@ interface QueryRowItemProps {
   onChangeQuery: (query: DataQuery, index: number) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onChangeDataSource: (
-    settings: DataSourceInstanceSettings,
+    nextSettings: DataSourceInstanceSettings,
     previousSettings: DataSourceInstanceSettings | undefined,
     index: number
   ) => void;
@@ -227,23 +227,23 @@ const QueryRowItem = ({
   onRunQueries,
   onSetCondition,
 }: QueryRowItemProps) => {
-  const { settings: dsSettings, isLoading } = useDataSourceInstanceSettings(query.datasourceUid);
+  const { settings, isLoading } = useDataSourceInstanceSettings(query.datasourceUid);
 
   if (isLoading) {
     return null;
   }
 
-  // The hook keeps the previous settings for one render after datasourceUid changes
-  if (dsSettings && dsSettings.uid !== query.datasourceUid) {
+  // The hook keeps the settings of the old datasourceUid for one render after it changes
+  if (settings && settings.uid !== query.datasourceUid) {
     return null;
   }
 
-  if (!dsSettings) {
+  if (!settings) {
     return (
       <DatasourceNotFound
         index={index}
         model={query.model}
-        onUpdateDatasource={(settings) => onChangeDataSource(settings, undefined, index)}
+        onUpdateDatasource={(nextSettings) => onChangeDataSource(nextSettings, undefined, index)}
         onRemoveQuery={() => onRemoveQuery(query)}
       />
     );
@@ -255,14 +255,14 @@ const QueryRowItem = ({
   return (
     <QueryWrapper
       index={index}
-      dsSettings={dsSettings}
+      dsSettings={settings}
       data={data}
       error={error}
       query={query}
       onChangeQuery={onChangeQuery}
       onRemoveQuery={onRemoveQuery}
       queries={queries}
-      onChangeDataSource={(settings, index) => onChangeDataSource(settings, dsSettings, index)}
+      onChangeDataSource={(nextSettings, index) => onChangeDataSource(nextSettings, settings, index)}
       onDuplicateQuery={onDuplicateQuery}
       onChangeTimeRange={onChangeTimeRange}
       onChangeQueryOptions={onChangeQueryOptions}
