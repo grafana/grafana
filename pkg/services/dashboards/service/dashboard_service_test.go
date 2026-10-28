@@ -2634,11 +2634,11 @@ type folderDeleteClient struct {
 
 func (c *folderDeleteClient) GetNamespace(int64) string { return "default" }
 func (c *folderDeleteClient) Search(context.Context, int64, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	rows := make([]*resourcepb.ResourceTableRow, len(c.uids))
+	rows := make([]*resourcepb.ResourceSearchRow, len(c.uids))
 	for i, uid := range c.uids {
-		rows[i] = &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: uid, Group: "dashboard.grafana.app", Resource: "dashboards"}}
+		rows[i] = &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: uid, Group: "dashboard.grafana.app", Resource: "dashboards"}}
 	}
-	return &resourcepb.ResourceSearchResponse{TotalHits: int64(len(rows)), Results: &resourcepb.ResourceTable{Rows: rows}}, nil
+	return &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, TotalHits: int64(len(rows)), Rows: rows}, nil
 }
 func (c *folderDeleteClient) Delete(ctx context.Context, uid string, orgID int64, options metav1.DeleteOptions) error {
 	requester, _ := identity.GetRequester(ctx)
