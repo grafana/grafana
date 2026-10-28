@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -581,5 +582,203 @@ func TestConvertTimeSeriesMultiToFullLongSkipsOtherFrameTypes(t *testing.T) {
 	require.Len(t, output, 1)
 	if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
 		require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+	}
+}
+
+func TestConvertTimeSeriesToFullLongNonNumericFields(t *testing.T) {
+	times := []time.Time{time.Unix(10, 0), time.Unix(20, 0)}
+	updatedA := []*time.Time{new(time.Unix(11, 0)), new(time.Unix(21, 0))}
+	updatedB := []*time.Time{new(time.Unix(12, 0)), nil}
+
+	t.Run("multi: second time field and string field become columns", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("value", data.Labels{"host": "a"}, []float64{1, 2}),
+				data.NewField("updated", nil, updatedA),
+				data.NewField("note", nil, []string{"x", "y"}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("value", data.Labels{"host": "b"}, []float64{3, 4}),
+				data.NewField("updated", nil, updatedB),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+		}
+
+		expected := data.NewFrame("",
+			data.NewField("time", nil, []time.Time{times[0], times[0], times[1], times[1]}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(3.0), new(2.0), new(4.0)}),
+			data.NewField(SQLMetricFieldName, nil, []string{"value", "value", "value", "value"}),
+			data.NewField("updated", nil, []*time.Time{updatedA[0], updatedB[0], updatedA[1], nil}),
+			data.NewField("note", nil, []*string{new("x"), nil, new("y"), nil}),
+			data.NewField("host", nil, []*string{new("a"), new("b"), new("a"), new("b")}),
+		)
+		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+		}
+	})
+
+	// data.LongToWide output for a long frame with columns time, host, value, updated.
+	t.Run("wide: each series keeps its own non-numeric values", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times),
+				data.NewField("value", data.Labels{"host": "a"}, []float64{1, 2}),
+				data.NewField("updated", data.Labels{"host": "a"}, updatedA),
+				data.NewField("value", data.Labels{"host": "b"}, []float64{3, 4}),
+				data.NewField("updated", data.Labels{"host": "b"}, updatedB),
+				data.NewField("note", data.Labels{"host": "b"}, []string{"x", "y"}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}),
+		}
+
+		expected := data.NewFrame("",
+			data.NewField("time", nil, []time.Time{times[0], times[0], times[1], times[1]}),
+			data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(3.0), new(2.0), new(4.0)}),
+			data.NewField(SQLMetricFieldName, nil, []string{"value", "value", "value", "value"}),
+			data.NewField("updated", nil, []*time.Time{updatedA[0], updatedB[0], updatedA[1], nil}),
+			data.NewField("note", nil, []*string{nil, new("x"), nil, new("y")}),
+			data.NewField("host", nil, []*string{new("a"), new("b"), new("a"), new("b")}),
+		)
+		expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		require.Len(t, output, 1)
+		if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+			require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+		}
+	})
+
+	t.Run("wide: unlabeled series do not take fields of labeled series", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times[:1]),
+				data.NewField("total", nil, []float64{1}),
+				data.NewField("value", data.Labels{"host": "a"}, []float64{2}),
+				data.NewField("updated", data.Labels{"host": "a"}, updatedA[:1]),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}),
+		}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		updated, idx := output[0].FieldByName("updated")
+		require.NotEqual(t, -1, idx)
+		metrics, idx := output[0].FieldByName(SQLMetricFieldName)
+		require.NotEqual(t, -1, idx)
+		require.Equal(t, "total", metrics.At(0))
+		require.Nil(t, updated.At(0))
+		require.Equal(t, "value", metrics.At(1))
+		require.Equal(t, updatedA[0], updated.At(1))
+	})
+
+	t.Run("names that clash with generated columns or labels get a field_ prefix", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times[:1]),
+				data.NewField("value", data.Labels{"host": "a"}, []float64{1}),
+				data.NewField("Time", nil, []string{"t"}),
+				data.NewField("host", nil, []string{"h"}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}),
+		}
+		input[0].Fields[2].Labels = data.Labels{"host": "a"}
+		input[0].Fields[3].Labels = data.Labels{"host": "a"}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		names := make([]string, 0, len(output[0].Fields))
+		for _, f := range output[0].Fields {
+			names = append(names, f.Name)
+		}
+		require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName, "field_Time", "field_host", "host"}, names)
+	})
+
+	t.Run("a label renamed for a generated column skips the name of a field", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times[:1]),
+				data.NewField("value", data.Labels{"time": "nightly"}, []float64{1}),
+				data.NewField("label_time", data.Labels{"time": "nightly"}, []string{"x"}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide}),
+		}
+
+		output, err := ConvertToFullLong(input)
+		require.NoError(t, err)
+		names := make([]string, 0, len(output[0].Fields))
+		for _, f := range output[0].Fields {
+			names = append(names, f.Name)
+		}
+		require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName, "label_time", "label_label_time"}, names)
+	})
+
+	for name, extra := range map[string][]*data.Field{
+		"enum fields are dropped": {
+			data.NewField("state", nil, []data.EnumItemIndex{0}),
+			data.NewField("state2", nil, []*data.EnumItemIndex{nil}),
+		},
+		"unnamed fields are dropped": {
+			data.NewField("", nil, []string{"a"}),
+			data.NewField("", nil, []string{"b"}),
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fields := append([]*data.Field{
+				data.NewField("time", nil, times[:1]),
+				data.NewField("value", nil, []float64{1}),
+			}, extra...)
+			input := data.Frames{data.NewFrame("", fields...).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})}
+
+			output, err := ConvertToFullLong(input)
+			require.NoError(t, err)
+			names := make([]string, 0, len(output[0].Fields))
+			for _, f := range output[0].Fields {
+				names = append(names, f.Name)
+			}
+			require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName}, names)
+		})
+	}
+
+	t.Run("one field name with two types errors", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, times[:1]),
+				data.NewField("value", data.Labels{"host": "a"}, []float64{1}),
+				data.NewField("updated", nil, []string{"x"}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+			data.NewFrame("",
+				data.NewField("time", nil, times[:1]),
+				data.NewField("value", data.Labels{"host": "b"}, []float64{2}),
+				data.NewField("updated", nil, updatedA[:1]),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+		}
+
+		_, err := ConvertToFullLong(input)
+		require.ErrorContains(t, err, `field "updated" has type`)
+	})
+}
+
+func BenchmarkConvertTimeSeriesWideToFullLongNumericOnly(b *testing.B) {
+	for _, size := range []struct{ series, rows int }{{100, 1000}, {2000, 100}, {5000, 20}} {
+		times := make([]time.Time, size.rows)
+		for i := range times {
+			times[i] = time.Unix(int64(i), 0)
+		}
+		fields := []*data.Field{data.NewField("time", nil, times)}
+		for s := 0; s < size.series; s++ {
+			fields = append(fields, data.NewField("value", data.Labels{"host": fmt.Sprintf("h%d", s)}, make([]float64, size.rows)))
+		}
+		frames := data.Frames{data.NewFrame("", fields...).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide})}
+
+		b.Run(fmt.Sprintf("%dx%d", size.series, size.rows), func(b *testing.B) {
+			for b.Loop() {
+				if _, err := ConvertToFullLong(frames); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
 	}
 }
