@@ -21,8 +21,8 @@ import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 import { LogLineDetailsCollapsible } from './LogLineDetailsCollapsible';
 import { LogLineDetailsError } from './LogLineDetailsError';
 import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
-import { LogLineDetailsLinks } from './LogLineDetailsLinks';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
+import { LogLineDetailsSummary } from './LogLineDetailsSummary';
 import { LogLineDetailsTrace } from './LogLineDetailsTrace';
 import { LogLineDetailsOTelComponent } from './LogLineOTelDetailsComponent';
 import { useLogListContext } from './LogListContext';
@@ -157,17 +157,11 @@ const LogLineDetailsLegacyComponent = memo(
       !labelGroups.length &&
       !fieldsWithoutLinks.length;
 
-    const allLinks = useMemo(
-      () => [...fieldsWithLinks.links, ...fieldsWithLinks.linksFromVariableMap],
-      [fieldsWithLinks.links, fieldsWithLinks.linksFromVariableMap]
-    );
-
     useEffect(() => {
       if (noInteractions) {
         return;
       }
       reportInteractionOnce('logs_log_line_details_fields_displayed', {
-        links: allLinks.length,
         trace: trace !== undefined,
         fields: fieldsWithoutLinks.length,
         labels: labelsWithLinks.length,
@@ -190,74 +184,72 @@ const LogLineDetailsLegacyComponent = memo(
 
     return (
       <div className={styles.componentWrapper}>
-        <LogLineDetailsCollapsible
-          actions={
-            log.body && log.isJSON ? (
-              <InlineField label={t('logs.log-line-details.prettify', 'Prettify')}>
-                <InlineSwitch
-                  value={prettifyDetailsJSON}
-                  onChange={(event) => setPrettifyDetailsJSON(event.currentTarget.checked)}
-                />
-              </InlineField>
-            ) : undefined
-          }
-          defaultExpanded={false}
-          id="log-line"
-          label={t('logs.log-line-details.log-line-section', 'Log line')}
-        >
-          <LogLineDetailsLog
-            log={log}
-            prettifyJSON={prettifyDetailsJSON}
-            syntaxHighlighting={syntaxHighlighting ?? true}
-          />
-        </LogLineDetailsCollapsible>
-
-        <LogLineDetailsError className={styles.errorContainer} fields={fieldsWithoutLinks} labels={labelsWithLinks} />
-
-        {allLinks.length > 0 && (
-          <LogLineDetailsCollapsible id="links" label={t('logs.log-line-details.links-section', 'Links')}>
-            <LogLineDetailsLinks log={log} logs={logs} fields={allLinks} search={search} />
-          </LogLineDetailsCollapsible>
-        )}
-        {trace && (
+        <LogLineDetailsSummary log={log} />
+        <div className={styles.details}>
           <LogLineDetailsCollapsible
+            actions={
+              log.body && log.isJSON ? (
+                <InlineField label={t('logs.log-line-details.prettify', 'Prettify')}>
+                  <InlineSwitch
+                    value={prettifyDetailsJSON}
+                    onChange={(event) => setPrettifyDetailsJSON(event.currentTarget.checked)}
+                  />
+                </InlineField>
+              ) : undefined
+            }
             defaultExpanded={false}
-            id="trace"
-            label={t('logs.log-line-details.trace-section', 'Trace')}
+            id="log-line"
+            label={t('logs.log-line-details.log-line-section', 'Log line')}
           >
-            <LogLineDetailsTrace timeRange={timeRange} timeZone={timeZone} traceRef={trace} />
+            <LogLineDetailsLog
+              log={log}
+              prettifyJSON={prettifyDetailsJSON}
+              syntaxHighlighting={syntaxHighlighting ?? true}
+            />
           </LogLineDetailsCollapsible>
-        )}
-        {labelGroups.map((group) =>
-          group === '' ? (
+
+          <LogLineDetailsError className={styles.errorContainer} fields={fieldsWithoutLinks} labels={labelsWithLinks} />
+
+          {trace && (
+            <LogLineDetailsCollapsible
+              defaultExpanded={false}
+              id="trace"
+              label={t('logs.log-line-details.trace-section', 'Trace')}
+            >
+              <LogLineDetailsTrace timeRange={timeRange} timeZone={timeZone} traceRef={trace} />
+            </LogLineDetailsCollapsible>
+          )}
+          {labelGroups.map((group) =>
+            group === '' ? (
+              <LogLineDetailsCollapsible
+                id="fields"
+                key="fields"
+                label={t('logs.log-line-details.fields-section', 'Fields')}
+              >
+                <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
+                <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
+              </LogLineDetailsCollapsible>
+            ) : (
+              <LogLineDetailsCollapsible id={group} key={group} label={group}>
+                <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
+              </LogLineDetailsCollapsible>
+            )
+          )}
+          {!labelGroups.length && fieldsWithoutLinks.length > 0 && (
             <LogLineDetailsCollapsible
               id="fields"
               key="fields"
               label={t('logs.log-line-details.fields-section', 'Fields')}
             >
-              <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
               <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
             </LogLineDetailsCollapsible>
-          ) : (
-            <LogLineDetailsCollapsible id={group} key={group} label={group}>
-              <LogLineDetailsLabelFields log={log} logs={logs} fields={groupedLabels[group]} search={search} />
-            </LogLineDetailsCollapsible>
-          )
-        )}
-        {!labelGroups.length && fieldsWithoutLinks.length > 0 && (
-          <LogLineDetailsCollapsible
-            id="fields"
-            key="fields"
-            label={t('logs.log-line-details.fields-section', 'Fields')}
-          >
-            <LogLineDetailsFields log={log} logs={logs} fields={fieldsWithoutLinks} search={search} />
-          </LogLineDetailsCollapsible>
-        )}
-        {noDetails && (
-          <Box marginTop={1} paddingLeft={0.5}>
-            <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>
-          </Box>
-        )}
+          )}
+          {noDetails && (
+            <Box marginTop={1} paddingLeft={0.5}>
+              <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>
+            </Box>
+          )}
+        </div>
       </div>
     );
   }
@@ -269,7 +261,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: theme.spacing(0, 0.5, 1, 0.5),
   }),
   componentWrapper: css({
-    padding: theme.spacing(0, 1, 1, 1),
-    marginTop: theme.spacing(1),
+    paddingBottom: theme.spacing(1),
+  }),
+  details: css({
+    padding: theme.spacing(0, 1),
   }),
 });
