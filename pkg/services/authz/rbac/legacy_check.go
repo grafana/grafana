@@ -2,12 +2,14 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -71,9 +73,14 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		args.scopeRequest,
 	)
 	if err != nil {
+		code := authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_UNSPECIFIED
+		if errors.Is(err, accesscontrol.ErrScopeResourceNotFound) {
+			code = authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND
+		}
 		return &authzextv1.LegacyCheckResponse{
-			Allowed: false,
-			Error:   err.Error(),
+			Allowed:   false,
+			Error:     err.Error(),
+			ErrorCode: code,
 		}, nil
 	}
 
