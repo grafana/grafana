@@ -78,13 +78,14 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         header: '',
         cell: ({ row: { original } }: StatCell) => {
           const info = getKindInfoByStat(original);
-          // Unknown kinds have no destination, so no action.
-          if (!info) {
+          const href = info ? getRepositoryRoute(info, repo) : undefined;
+          // Kinds without a destination get no action.
+          if (!href) {
             return null;
           }
           return (
             <Stack justifyContent="flex-end">
-              <LinkButton href={getRepositoryRoute(info, repo)} size="sm" variant="secondary">
+              <LinkButton href={href} size="sm" variant="secondary">
                 <Trans i18nKey="provisioning.repository-overview.view-resource">View</Trans>
               </LinkButton>
             </Stack>
