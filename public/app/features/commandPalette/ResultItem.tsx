@@ -3,7 +3,7 @@ import { type ActionId, type ActionImpl } from 'kbar';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { config, provisioning } from '@grafana/runtime';
+import { config, ManagedBadge } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { type ManagerKind } from 'app/features/apiserver/types';
 
@@ -71,7 +71,7 @@ export const ResultItem = React.forwardRef(
             <span>{name}</span>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
-          {showProvisionedBadge && <provisioning.ManagedBadge managerKind={managedBy} />}
+          {showProvisionedBadge && <ManagedBadge managerKind={managedBy} />}
         </div>
       </div>
     );

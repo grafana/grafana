@@ -1,6 +1,6 @@
 import { memo } from 'react';
 
-import { provisioning } from '@grafana/runtime';
+import { ManagedBadge } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
@@ -42,14 +42,14 @@ export const FolderRepo = memo(function FolderRepo({
   }
 
   if (status === RepoViewStatus.Orphaned) {
-    return <provisioning.ManagedBadge managerKind={ManagerKind.Repo} isOrphaned />;
+    return <ManagedBadge managerKind={ManagerKind.Repo} isOrphaned />;
   }
 
   return (
     // badge with text and icon only has different height, we will need to adjust the layout using stretch
     <Stack direction="row" alignItems="stretch">
       {canEdit && isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
-      <provisioning.ManagedBadge
+      <ManagedBadge
         managerKind={ManagerKind.Repo}
         name={repository?.title || repository?.name}
         repositoryName={enableRepositoryLink ? repository?.name : undefined}
