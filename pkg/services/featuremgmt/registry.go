@@ -792,14 +792,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "timeComparison",
-			Description: "Enables time comparison option in supported panels",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Owner:       grafanaDatavizSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "tableSharedCrosshair",
 			Description: "Enables shared crosshair in table panel",
 			Generate:    Generate{LegacyFrontend: true, React: true},
@@ -2135,16 +2127,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaCatalogSquad,
 			Expression:  "false",
-		},
-		{
-			Name:            "panelTimeSettings",
-			Description:     "Enables a new panel time settings drawer",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaDashboardsSquad,
-			RequiresRestart: false,
-			HideFromDocs:    false,
-			Expression:      "true",
 		},
 		{
 			Name:        "awsDatasourcesHttpProxy",

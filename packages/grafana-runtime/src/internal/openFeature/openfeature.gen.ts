@@ -288,8 +288,6 @@ export const FlagKeys = {
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
-  /** Enables a new panel time settings drawer */
-  PanelTimeSettings: "panelTimeSettings",
   /** Search for dashboards using panel title */
   PanelTitleSearch: "panelTitleSearch",
   /** Shows text labels on the add and stacked view buttons in PanelEditNext */
@@ -386,8 +384,6 @@ export const FlagKeys = {
   TableSharedCrosshair: "tableSharedCrosshair",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
-  /** Enables time comparison option in supported panels */
-  TimeComparison: "timeComparison",
   /** Show transformation quick-start cards in empty transformations state */
   TransformationsEmptyPlaceholder: "transformationsEmptyPlaceholder",
   /** Enables unified navbars */
@@ -1908,17 +1904,6 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
- * Enables a new panel time settings drawer
- *
- * **Details:**
- * - flag key: `panelTimeSettings`
- * - default value: `true`
- */
-export const useFlagPanelTimeSettings = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("panelTimeSettings", true, options).value;
-};
-
-/**
  * Search for dashboards using panel title
  *
  * **Details:**
@@ -2444,17 +2429,6 @@ export const useFlagTableSharedCrosshair = (options?: ReactFlagEvaluationOptions
  */
 export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("text.newFeatures", false, options).value;
-};
-
-/**
- * Enables time comparison option in supported panels
- *
- * **Details:**
- * - flag key: `timeComparison`
- * - default value: `true`
- */
-export const useFlagTimeComparison = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("timeComparison", true, options).value;
 };
 
 /**
