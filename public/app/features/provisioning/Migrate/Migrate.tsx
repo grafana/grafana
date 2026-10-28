@@ -125,6 +125,13 @@ export function Migrate() {
     setSelectedFolderUids(new Set());
     setSelectedResourceKeys(new Set());
   };
+  const setResourcesSelected = (keys: string[], selected: boolean) => {
+    setSelectedResourceKeys((prev) => {
+      const next = new Set(prev);
+      keys.forEach((key) => (selected ? next.add(key) : next.delete(key)));
+      return next;
+    });
+  };
   const setFoldersSelected = (uids: string[], selected: boolean) => {
     setSelectedFolderUids((prev) => {
       const next = new Set(prev);
@@ -194,8 +201,8 @@ export function Migrate() {
             containers={containers}
             selectedFolderUids={selectedFolderUids}
             selectedResourceKeys={selectedResourceKeys}
-            onToggleFolder={(uid) => setSelectedFolderUids((prev) => toggle(prev, uid))}
             onToggleResource={(key) => setSelectedResourceKeys((prev) => toggle(prev, key))}
+            onSetResourcesSelected={setResourcesSelected}
             selectedCount={selection.items}
             allSelected={migrateAllUnmanaged}
             onSetFoldersSelected={setFoldersSelected}

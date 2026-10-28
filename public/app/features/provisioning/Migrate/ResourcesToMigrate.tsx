@@ -8,7 +8,15 @@ import { Button, Checkbox, Combobox, EmptyState, FilterInput, Pagination, Stack,
 import { FolderEntry } from './FolderEntry';
 import { type FolderRow, resourceKey } from './hooks/useMigrationData';
 import { type SortKey } from './sorting';
-import { allUids, buildFolderTree, filterFolderTree, selectableUids, sortFolderTree } from './tree';
+import {
+  type FolderNode,
+  buildFolderTree,
+  filterFolderTree,
+  searchExpandedUids,
+  selectableUids,
+  sortFolderTree,
+  subtreeSelectableUids,
+} from './tree';
 
 /** Top-level folders shown per page before pagination kicks in. */
 const PAGE_SIZE = 10;
@@ -28,13 +36,14 @@ interface Props {
   selectedFolderUids: Set<string>;
   /** Composite keys (see `resourceKey`) of individually-ticked resources. */
   selectedResourceKeys: Set<string>;
-  onToggleFolder: (uid: string) => void;
   onToggleResource: (key: string) => void;
+  /** Selects or deselects a batch of individually-ticked resources by composite key. */
+  onSetResourcesSelected: (keys: string[], selected: boolean) => void;
   /** Folders + independently-ticked resources, shown in the migrate button. */
   selectedCount: number;
   /** True when every migratable folder is selected — drives the "Migrate all" label. */
   allSelected: boolean;
-  /** Selects or deselects a batch of folders — used by the (filter-scoped) select-all. */
+  /** Selects or deselects a batch of folders — used by select-all and by a folder's subtree. */
   onSetFoldersSelected: (uids: string[], selected: boolean) => void;
   onMigrateSelected: () => void;
   /** Whether the current selection can be migrated. False when nothing is selected. */
@@ -51,8 +60,8 @@ interface Props {
 
 /**
  * Foldable, searchable tree of folders that hold resources to migrate. A whole
- * folder or individual resources can be selected; selecting a folder covers only
- * the resources directly inside it, not its subfolders. The migrate footer action
+ * folder or individual resources can be selected; selecting a folder also selects
+ * every folder beneath it. The migrate footer action
  * hands the selection to the migrate drawer. The hook only surfaces folders with
  * unmanaged resources somewhere beneath them, so empty and already-managed
  * folders never appear here.
@@ -62,8 +71,8 @@ export function ResourcesToMigrate({
   containers = [],
   selectedFolderUids,
   selectedResourceKeys,
-  onToggleFolder,
   onToggleResource,
+  onSetResourcesSelected,
   selectedCount,
   allSelected,
   onSetFoldersSelected,
@@ -75,19 +84,55 @@ export function ResourcesToMigrate({
   const styles = useStyles2(getStyles);
   const [search, setSearch] = useState('');
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // Folders the user flipped from their search default (opened or closed) during
+  // the current search; reset when the query changes.
+  const [searchFlipped, setSearchFlipped] = useState<Set<string>>(new Set());
   const [sortKey, setSortKey] = useState<SortKey>('count-desc');
   const [page, setPage] = useState(1);
 
   const tree = useMemo(() => buildFolderTree([...folders, ...containers]), [folders, containers]);
   const filtered = useMemo(() => sortFolderTree(filterFolderTree(tree, search), sortKey), [tree, search, sortKey]);
 
-  // While searching, every folder on screen opens so a nested match is visible
-  // without clicking down through each level.
+  // Built from the unfiltered tree so ticking a folder reaches subfolders a
+  // search is hiding.
+  const { subtreeUids, subtreeResourceKeys } = useMemo(() => {
+    const uidsByFolder = new Map<string, string[]>();
+    const keysByFolder = new Map<string, string[]>();
+    const walk = (node: FolderNode): string[] => {
+      const keys = [...node.row.directResources.map(resourceKey), ...node.children.flatMap(walk)];
+      uidsByFolder.set(node.row.uid, subtreeSelectableUids(node));
+      keysByFolder.set(node.row.uid, keys);
+      return keys;
+    };
+    tree.forEach(walk);
+    return { subtreeUids: uidsByFolder, subtreeResourceKeys: keysByFolder };
+  }, [tree]);
+
+  // Unticking a folder also clears resources ticked on their own beneath it.
+  const setFolderSelected = (uid: string, selected: boolean) => {
+    onSetFoldersSelected(subtreeUids.get(uid) ?? [], selected);
+    if (!selected) {
+      onSetResourcesSelected(subtreeResourceKeys.get(uid) ?? [], false);
+    }
+  };
+
+  // While searching, the folders leading to a match open so it is visible
+  // without clicking down through each level. The user can still flip any folder.
   const isSearching = search.trim() !== '';
-  const visibleExpanded = useMemo(
-    () => (isSearching ? new Set(allUids(filtered)) : expanded),
-    [isSearching, filtered, expanded]
-  );
+  const visibleExpanded = useMemo(() => {
+    if (!isSearching) {
+      return expanded;
+    }
+    const open = new Set(searchExpandedUids(filtered, search));
+    searchFlipped.forEach((uid) => {
+      if (open.has(uid)) {
+        open.delete(uid);
+      } else {
+        open.add(uid);
+      }
+    });
+    return open;
+  }, [isSearching, filtered, search, expanded, searchFlipped]);
 
   // Clamp the page so it stays valid when the filtered set shrinks (e.g. after
   // a search) without needing an effect to reset it.
@@ -125,10 +170,9 @@ export function ResourcesToMigrate({
   const filteredFolderUids = selectableUids(filtered);
   const allFilteredSelected =
     filteredFolderUids.length > 0 && filteredFolderUids.every((uid) => selectedFolderUids.has(uid));
-  const someFilteredSelected = filteredFolderUids.some((uid) => selectedFolderUids.has(uid));
 
   const toggleExpanded = (uid: string) => {
-    setExpanded((prev) => {
+    const flip = (prev: Set<string>) => {
       const next = new Set(prev);
       if (next.has(uid)) {
         next.delete(uid);
@@ -136,7 +180,12 @@ export function ResourcesToMigrate({
         next.add(uid);
       }
       return next;
-    });
+    };
+    if (isSearching) {
+      setSearchFlipped(flip);
+    } else {
+      setExpanded(flip);
+    }
   };
 
   return (
@@ -147,8 +196,8 @@ export function ResourcesToMigrate({
         </Text>
         <Text color="secondary" variant="bodySmall">
           <Trans i18nKey="provisioning.migrate.resources-to-migrate-subtitle">
-            Pick whole folders, or individual resources within them. Selecting a folder migrates only the resources
-            directly inside it — anything in subfolders migrates through its own folder.
+            Pick whole folders, or individual resources within them. Selecting a folder also selects everything in its
+            subfolders.
           </Trans>
         </Text>
       </Stack>
@@ -160,6 +209,7 @@ export function ResourcesToMigrate({
             value={search}
             onChange={(value) => {
               setSearch(value);
+              setSearchFlipped(new Set());
               setPage(1);
             }}
           />
@@ -193,27 +243,6 @@ export function ResourcesToMigrate({
         </div>
       </Stack>
 
-      {filtered.length > 0 && (
-        <div className={styles.selectAllRow}>
-          <Checkbox
-            // Checkbox only ever sets the native `indeterminate` property to
-            // true and never clears it, so once this box has been partially
-            // selected it would stay visually indeterminate even after every
-            // row is selected. Drive the property ourselves so it resets to a
-            // plain checked state when all visible rows are selected.
-            ref={(el) => {
-              if (el) {
-                el.indeterminate = someFilteredSelected && !allFilteredSelected;
-              }
-            }}
-            value={allFilteredSelected}
-            indeterminate={someFilteredSelected && !allFilteredSelected}
-            onChange={() => onSetFoldersSelected(filteredFolderUids, !allFilteredSelected)}
-            label={t('provisioning.migrate.resources-select-all', 'Select all')}
-          />
-        </div>
-      )}
-
       {filtered.length === 0 ? (
         <EmptyState
           variant="not-found"
@@ -231,6 +260,13 @@ export function ResourcesToMigrate({
         />
       ) : (
         <div className={styles.list}>
+          <div className={styles.selectAllRow}>
+            <Checkbox
+              value={allFilteredSelected}
+              onChange={() => onSetFoldersSelected(filteredFolderUids, !allFilteredSelected)}
+              label={t('provisioning.migrate.resources-select-all', 'Select all')}
+            />
+          </div>
           {paged.map((node) => (
             <FolderEntry
               key={node.row.uid}
@@ -241,7 +277,8 @@ export function ResourcesToMigrate({
               selectedResourceKeys={selectedResourceKeys}
               folderCoveredResourceKeys={folderCoveredResourceKeys}
               onToggleExpanded={toggleExpanded}
-              onToggleFolder={onToggleFolder}
+              subtreeUids={subtreeUids}
+              onSetFolderSelected={setFolderSelected}
               onToggleResource={onToggleResource}
             />
           ))}
@@ -310,14 +347,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: '0 0 auto',
     minWidth: 200,
   }),
+  // Header row of the list, matching the dashboard list's header.
   selectAllRow: css({
     display: 'flex',
     alignItems: 'center',
-    paddingLeft: theme.spacing(0.5),
+    height: 36,
+    padding: theme.spacing(0, 1),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    fontWeight: theme.typography.fontWeightMedium,
   }),
   list: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(0.5),
   }),
 });

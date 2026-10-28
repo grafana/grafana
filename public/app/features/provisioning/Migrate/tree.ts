@@ -106,9 +106,29 @@ export function sortFolderTree(nodes: FolderNode[], key: SortKey): FolderNode[] 
     );
 }
 
-/** UIDs of every folder in the tree, at any depth. */
-export function allUids(nodes: FolderNode[]): string[] {
-  return nodes.flatMap((node) => [node.row.uid, ...allUids(node.children)]);
+/** UIDs of the folders in this node's subtree, itself included, that hold resources. */
+export function subtreeSelectableUids(node: FolderNode): string[] {
+  return [...(node.row.resourceCount > 0 ? [node.row.uid] : []), ...node.children.flatMap(subtreeSelectableUids)];
+}
+
+/**
+ * UIDs of the folders to open so every match is visible: the ancestors of a
+ * matching folder, and a folder with a matching resource inside it. A folder
+ * that matches only by its title stays closed, so its children stay hidden.
+ */
+export function searchExpandedUids(nodes: FolderNode[], query: string): string[] {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    return [];
+  }
+
+  const hasMatch = (node: FolderNode): boolean => node.matches || node.children.some(hasMatch);
+  const walk = (node: FolderNode): string[] => {
+    const opensForResource = node.row.directResources.some((r) => r.title.toLowerCase().includes(q));
+    const opensForDescendant = node.children.some(hasMatch);
+    return [...(opensForResource || opensForDescendant ? [node.row.uid] : []), ...node.children.flatMap(walk)];
+  };
+  return nodes.flatMap(walk);
 }
 
 /**
