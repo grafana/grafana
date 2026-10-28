@@ -1,17 +1,33 @@
 import { dateMath, getTimeZone, type TimeRange, type TimeZone } from '@grafana/data';
-import { AdHocFiltersVariable, MultiValueVariable, type SceneVariable } from '@grafana/scenes';
+import { AdHocFiltersVariable, MultiValueVariable, type SceneVariable, type SceneVariables } from '@grafana/scenes';
 
+import { resolveLayoutPath } from '../mutation-api/commands/layoutPathResolver';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { type RowItem } from '../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
+import { type TabItem } from '../scene/layout-tabs/TabItem';
+import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
+import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 
-import { type SavedDashboardViewSpec, type SavedViewTimeRange, type SavedViewVariable } from './types';
+import {
+  type SavedDashboardViewSpec,
+  type SavedViewSectionFilter,
+  type SavedViewTimeRange,
+  type SavedViewVariable,
+} from './types';
 
-/** Captures the time range and dashboard-level variables. `name` is left for the caller to set. */
+/**
+ * Captures the time range and variables, including tab/row-scoped ad hoc filters when enabled.
+ * `name` is left for the caller to set.
+ */
 export function captureSavedViewState(dashboard: DashboardScene): SavedDashboardViewSpec {
+  const sectionFilters = captureSectionFilters(dashboard);
   return {
     dashboardUID: dashboard.state.uid ?? '',
     name: '',
     timeRange: captureTimeRange(dashboard),
-    variables: captureVariables(dashboard),
+    variables: captureVariables(dashboard.state.$variables?.state.variables ?? []),
+    ...(sectionFilters ? { sectionFilters } : {}),
   };
 }
 
@@ -26,8 +42,7 @@ function captureTimeRange(dashboard: DashboardScene): SavedViewTimeRange {
   };
 }
 
-function captureVariables(dashboard: DashboardScene): SavedViewVariable[] {
-  const variables = dashboard.state.$variables?.state.variables ?? [];
+function captureVariables(variables: SceneVariable[]): SavedViewVariable[] {
   return variables.map(captureVariable).filter((v): v is SavedViewVariable => v !== undefined);
 }
 
@@ -55,8 +70,63 @@ function captureVariable(variable: SceneVariable): SavedViewVariable | undefined
   return undefined;
 }
 
+interface SectionVariableScope {
+  sectionKind: 'tab' | 'row';
+  sectionKey: string;
+  sectionTitle: string | undefined;
+  variables: SceneVariable[];
+}
+
 /**
- * Applies a stored spec to the scene. Variables the view omits reset to `baseline` when given.
+ * Collects each tab/row's own ad hoc variable set, keyed by layout path (e.g. "/rows/0/tabs/2"),
+ * the same paths layoutPathResolver.ts resolves on apply.
+ */
+function collectSectionVariableScopes(layout: DashboardLayoutManager, pathSoFar: string): SectionVariableScope[] {
+  const scopes: SectionVariableScope[] = [];
+
+  if (layout instanceof RowsLayoutManager) {
+    layout.state.rows.forEach((row, i) => {
+      const path = pathSoFar === '/' ? `/rows/${i}` : `${pathSoFar}/rows/${i}`;
+      const variables = row.state.$variables?.state.variables;
+      if (variables && variables.length > 0) {
+        scopes.push({ sectionKind: 'row', sectionKey: path, sectionTitle: row.state.title, variables });
+      }
+      scopes.push(...collectSectionVariableScopes(row.state.layout, path));
+    });
+  } else if (layout instanceof TabsLayoutManager) {
+    layout.state.tabs.forEach((tab, i) => {
+      const path = pathSoFar === '/' ? `/tabs/${i}` : `${pathSoFar}/tabs/${i}`;
+      const variables = tab.state.$variables?.state.variables;
+      if (variables && variables.length > 0) {
+        scopes.push({ sectionKind: 'tab', sectionKey: path, sectionTitle: tab.state.title, variables });
+      }
+      scopes.push(...collectSectionVariableScopes(tab.state.layout, path));
+    });
+  }
+
+  return scopes;
+}
+
+/**
+ * Tab/row-scoped ad hoc filters. No toggle check needed: sections only get their own `$variables`
+ * through toggle-gated UI.
+ */
+function captureSectionFilters(dashboard: DashboardScene): SavedViewSectionFilter[] | undefined {
+  const sectionFilters = collectSectionVariableScopes(dashboard.state.body, '/')
+    .map(({ sectionKind, sectionKey, sectionTitle, variables }) => ({
+      sectionKind,
+      sectionKey,
+      ...(sectionTitle !== undefined ? { sectionTitle } : {}),
+      variables: captureVariables(variables),
+    }))
+    .filter((section) => section.variables.length > 0);
+
+  return sectionFilters.length > 0 ? sectionFilters : undefined;
+}
+
+/**
+ * Applies a stored spec to the scene. Variables and section filters it omits reset to `baseline`
+ * when given.
  */
 export function applySavedViewState(
   dashboard: DashboardScene,
@@ -64,7 +134,10 @@ export function applySavedViewState(
   baseline?: SavedDashboardViewSpec
 ): void {
   applyTimeRange(dashboard, spec.timeRange);
-  applyVariables(dashboard, mergeVariablesWithBaseline(spec.variables, baseline?.variables));
+  if (dashboard.state.$variables) {
+    applyVariablesToSet(dashboard.state.$variables, mergeVariablesWithBaseline(spec.variables, baseline?.variables));
+  }
+  applySectionFilters(dashboard, mergeSectionFiltersWithBaseline(spec.sectionFilters, baseline?.sectionFilters));
 }
 
 function mergeVariablesWithBaseline(
@@ -81,6 +154,25 @@ function mergeVariablesWithBaseline(
   return Array.from(byName.values());
 }
 
+function mergeSectionFiltersWithBaseline(
+  spec: SavedViewSectionFilter[] | undefined,
+  baseline: SavedViewSectionFilter[] | undefined
+): SavedViewSectionFilter[] | undefined {
+  if (!baseline) {
+    return spec;
+  }
+  const bySectionKey = new Map(baseline.map((s) => [s.sectionKey, s]));
+  for (const section of spec ?? []) {
+    const existing = bySectionKey.get(section.sectionKey);
+    bySectionKey.set(section.sectionKey, {
+      ...section,
+      variables: mergeVariablesWithBaseline(section.variables, existing?.variables),
+    });
+  }
+  const merged = Array.from(bySectionKey.values());
+  return merged.length > 0 ? merged : undefined;
+}
+
 /**
  * applySavedViewState for the URL path, where explicit var- or from/to params in the same URL
  * change win. Fields that changed between `before` and now were set by those params and are kept.
@@ -95,7 +187,20 @@ export function applySavedViewStateAsDefault(
   const variables = mergeVariablesWithBaseline(spec.variables, baseline?.variables);
 
   applyTimeRange(dashboard, mergeTimeRangeAsDefault(spec.timeRange, before.timeRange, after.timeRange));
-  applyVariables(dashboard, mergeVariablesAsDefault(variables, before.variables, after.variables));
+  if (dashboard.state.$variables) {
+    applyVariablesToSet(
+      dashboard.state.$variables,
+      mergeVariablesAsDefault(variables, before.variables, after.variables)
+    );
+  }
+  applySectionFilters(
+    dashboard,
+    mergeSectionFiltersAsDefault(
+      mergeSectionFiltersWithBaseline(spec.sectionFilters, baseline?.sectionFilters),
+      before.sectionFilters,
+      after.sectionFilters
+    )
+  );
 }
 
 function mergeTimeRangeAsDefault(
@@ -119,8 +224,34 @@ function mergeVariablesAsDefault(
 ): SavedViewVariable[] {
   const beforeByName = new Map(before.map((v) => [v.name, v]));
   const afterByName = new Map(after.map((v) => [v.name, v]));
-  // Variables missing from the live dashboard pass through; applyVariables skips them.
+  // Variables missing from the live dashboard pass through; applyVariablesToSet skips them.
   return spec.filter((saved) => variableEqual(beforeByName.get(saved.name), afterByName.get(saved.name)));
+}
+
+function mergeSectionFiltersAsDefault(
+  spec: SavedViewSectionFilter[] | undefined,
+  before: SavedViewSectionFilter[] | undefined,
+  after: SavedViewSectionFilter[] | undefined
+): SavedViewSectionFilter[] | undefined {
+  if (!spec) {
+    return undefined;
+  }
+  const beforeByKey = new Map((before ?? []).map((s) => [s.sectionKey, s]));
+  const afterByKey = new Map((after ?? []).map((s) => [s.sectionKey, s]));
+
+  // Sections absent from spec are left alone, matching applySectionFilters.
+  const merged = spec
+    .map((section) => {
+      const variables = mergeVariablesAsDefault(
+        section.variables,
+        beforeByKey.get(section.sectionKey)?.variables ?? [],
+        afterByKey.get(section.sectionKey)?.variables ?? []
+      );
+      return variables.length > 0 ? { ...section, variables } : undefined;
+    })
+    .filter((s): s is SavedViewSectionFilter => s !== undefined);
+
+  return merged.length > 0 ? merged : undefined;
 }
 
 function applyTimeRange(dashboard: DashboardScene, timeRange: SavedViewTimeRange): void {
@@ -148,12 +279,7 @@ function toTimeRange(from: string, to: string, timezone?: TimeZone): TimeRange |
   return { from: fromDt, to: toDt, raw: { from, to } };
 }
 
-function applyVariables(dashboard: DashboardScene, variables: SavedViewVariable[]): void {
-  const variableSet = dashboard.state.$variables;
-  if (!variableSet) {
-    return;
-  }
-
+function applyVariablesToSet(variableSet: SceneVariables, variables: SavedViewVariable[]): void {
   for (const saved of variables) {
     const target = variableSet.getByName(saved.name);
     if (target) {
@@ -174,8 +300,33 @@ function applyVariable(target: SceneVariable, saved: SavedViewVariable): void {
 }
 
 /**
+ * Applies saved section filters by layout path. Sections that no longer resolve, or whose title no
+ * longer matches after layout edits, are skipped. Views without a sectionTitle skip that check.
+ */
+function applySectionFilters(dashboard: DashboardScene, sectionFilters: SavedViewSectionFilter[] | undefined): void {
+  if (!sectionFilters) {
+    return;
+  }
+
+  for (const section of sectionFilters) {
+    let item: RowItem | TabItem | undefined;
+    try {
+      item = resolveLayoutPath(dashboard.state.body, section.sectionKey).item;
+    } catch {
+      continue;
+    }
+    if (section.sectionTitle !== undefined && item?.state.title !== section.sectionTitle) {
+      continue;
+    }
+    if (item?.state.$variables) {
+      applyVariablesToSet(item.state.$variables, section.variables);
+    }
+  }
+}
+
+/**
  * Whether applying `stored` would change the dashboard, using applySavedViewState's rules:
- * omitted variables reset to `baseline`, a missing timezone is left alone.
+ * omitted variables and section filters reset to `baseline`, a missing timezone is left alone.
  */
 export function getSavedViewDiff(
   current: SavedDashboardViewSpec,
@@ -185,7 +336,13 @@ export function getSavedViewDiff(
   if (timeRangeDiffers(current.timeRange, stored.timeRange)) {
     return true;
   }
-  return variablesDiffer(current.variables, mergeVariablesWithBaseline(stored.variables, baseline?.variables));
+  if (variablesDiffer(current.variables, mergeVariablesWithBaseline(stored.variables, baseline?.variables))) {
+    return true;
+  }
+  return sectionFiltersDiffer(
+    current.sectionFilters,
+    mergeSectionFiltersWithBaseline(stored.sectionFilters, baseline?.sectionFilters)
+  );
 }
 
 function timeRangeDiffers(current: SavedViewTimeRange, stored: SavedViewTimeRange): boolean {
@@ -200,6 +357,21 @@ function variablesDiffer(current: SavedViewVariable[], expected: SavedViewVariab
   return expected.some((variable) => {
     const live = currentByName.get(variable.name);
     return live !== undefined && !variableEqual(live, variable);
+  });
+}
+
+function sectionFiltersDiffer(
+  current: SavedViewSectionFilter[] | undefined,
+  expected: SavedViewSectionFilter[] | undefined
+): boolean {
+  const currentByKey = new Map((current ?? []).map((s) => [s.sectionKey, s]));
+  return (expected ?? []).some((section) => {
+    const live = currentByKey.get(section.sectionKey);
+    if (!live || (section.sectionTitle !== undefined && live.sectionTitle !== section.sectionTitle)) {
+      // Apply skips this section too, so it can't make the view dirty.
+      return false;
+    }
+    return variablesDiffer(live.variables, section.variables);
   });
 }
 
