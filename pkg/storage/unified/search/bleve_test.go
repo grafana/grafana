@@ -2003,6 +2003,33 @@ func TestOwnedGlobalIndexIdleTimeout(t *testing.T) {
 	checkOpenIndexes(t, reg, 0, 1)
 }
 
+// A global index closed for being idle while it was being rebuilt is not
+// reopened by the rebuild.
+func TestRebuildDoesNotReopenAnIdleClosedGlobalIndex(t *testing.T) {
+	backend, reg := setupBleveBackend(t)
+	global := resource.GlobalSearchKey("test")
+	docsKey := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	docs := defaultFileThreshold
+	_, err := backend.BuildIndex(t.Context(), global, int64(docs), "test", indexTestDocs(docsKey, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+
+	closed := make(chan struct{})
+	_, err = backend.BuildIndex(t.Context(), global, int64(docs), "rebuild", func(index resource.ResourceIndex) (int64, error) {
+		// The index goes idle and is closed while the rebuild lists documents.
+		backend.cacheMx.Lock()
+		idx := backend.cache[global]
+		delete(backend.cache, global)
+		backend.cacheMx.Unlock()
+		backend.closeIndex(idx, global)
+		close(closed)
+		return indexTestDocs(docsKey, docs, 100)(index)
+	}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
+	<-closed
+	require.ErrorIs(t, err, resource.ErrIndexClosedDuringRebuild)
+	require.Nil(t, backend.peekCachedIndex(global))
+	checkOpenIndexes(t, reg, 0, 0)
+}
+
 func TestNewUnownedIndexIdleTimeout(t *testing.T) {
 	backend, reg := setupBleveBackend(t, withIndexCacheTTL(4*time.Hour), withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) {
 		return false, nil

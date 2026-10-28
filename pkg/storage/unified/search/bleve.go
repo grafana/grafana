@@ -1110,14 +1110,20 @@ func (b *bleveBackend) BuildIndex(
 		logWithDetails.Info("Storing index in cache", "key", key, "expiration", idx.expiration)
 	}
 
+	b.cacheMx.Lock()
+	prev := b.cache[key]
+	if rebuild && prev == nil && key.IsGlobal() {
+		// Closed for being idle while it was being rebuilt. Publishing the rebuilt
+		// index would open it again and restart its idle clock, so it is closed
+		// instead.
+		b.cacheMx.Unlock()
+		return nil, resource.ErrIndexClosedDuringRebuild
+	}
 	// We're storing index in the cache, so we can't close it.
 	closeIndex = false
-
-	b.cacheMx.Lock()
 	// A request can use a newly built index without fetching it from the cache.
 	now := time.Now().UnixMilli()
 	idx.lastFetchedFromCache.Store(now)
-	prev := b.cache[key]
 	// A rebuild is not a search, so it keeps the replaced index's last search.
 	if prev != nil {
 		idx.lastSearchedAt.Store(prev.lastSearchedAt.Load())

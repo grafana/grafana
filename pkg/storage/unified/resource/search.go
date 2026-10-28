@@ -433,6 +433,11 @@ type BuildFn func(index ResourceIndex) (int64, error)
 
 var ErrIndexBuildInProgress = errors.New("another replica is building the index")
 
+// ErrIndexClosedDuringRebuild is returned when the index being rebuilt was
+// closed meanwhile, for example for being idle. The rebuilt index is discarded
+// rather than reopened.
+var ErrIndexClosedDuringRebuild = errors.New("index was closed while it was being rebuilt")
+
 type BuildIndexOptions struct {
 	// Startup workers can try other indexes instead of waiting for a replica.
 	SkipIfBuilding bool
@@ -2113,8 +2118,9 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 
 	idx := s.search.PeekIndex(req.NamespacedResource)
 	if idx == nil {
+		// Expected: an index can be closed while its rebuild waits in the queue.
 		span.AddEvent("index not found")
-		l.Error("index not found")
+		l.Info("index was closed before it could be rebuilt")
 		return
 	}
 
@@ -2198,7 +2204,9 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
 	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, time.Time{})
-	if err != nil {
+	if errors.Is(err, ErrIndexClosedDuringRebuild) {
+		l.Info("index was closed while it was being rebuilt, discarding the rebuilt index")
+	} else if err != nil {
 		span.RecordError(err)
 		l.Error("failed to rebuild index", "error", err)
 	}
