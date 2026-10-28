@@ -99,10 +99,6 @@ describe('FiringAlertsCard', () => {
 
     expect(screen.getByText('Memory High')).toBeInTheDocument();
     expect(screen.getByText('Disk Warning')).toBeInTheDocument();
-
-    // Severity counts in header
-    expect(screen.getByText(/1 critical/i)).toBeInTheDocument();
-    expect(screen.getByText(/1 high/i)).toBeInTheDocument();
   });
 
   it('labels each row with its severity', async () => {
@@ -133,7 +129,7 @@ describe('FiringAlertsCard', () => {
     );
   });
 
-  it('counts non-canonical severity aliases by canonical level', async () => {
+  it('labels non-canonical severity aliases by canonical level', async () => {
     mockTeams([]);
     mockAlerts([critAliasAlert, sev2Alert]);
 
@@ -141,9 +137,9 @@ describe('FiringAlertsCard', () => {
 
     expect(await screen.findByText('Crit Alias')).toBeInTheDocument();
 
-    // 'crit' canonicalizes to critical, 'SEV2' to major (shown as the "high" badge)
-    expect(screen.getByText(/1 critical/i)).toBeInTheDocument();
-    expect(screen.getByText(/1 high/i)).toBeInTheDocument();
+    // 'crit' canonicalizes to critical, 'SEV2' to major (labelled "High")
+    expect(screen.getByText('Critical')).toBeInTheDocument();
+    expect(screen.getByText('High')).toBeInTheDocument();
   });
 
   it('renders an alert with no severity label without crashing', async () => {
@@ -155,10 +151,6 @@ describe('FiringAlertsCard', () => {
 
     expect(await screen.findByText('No Severity')).toBeInTheDocument();
     expect(await screen.findByText('Unknown')).toBeInTheDocument();
-
-    // Missing severity must not crash canonicalSeverity and must not be counted in either badge
-    expect(screen.queryByText(/\d+ critical/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/\d+ high/i)).not.toBeInTheDocument();
   });
 
   it('builds team matchers when user has teams', async () => {
@@ -226,7 +218,7 @@ describe('FiringAlertsCard', () => {
     expect(await screen.findByText('All clear! No alerts are firing.')).toBeInTheDocument();
   });
 
-  it('caps the rendered list at HOME_CARD_MAX_ITEMS while badges count every alert', async () => {
+  it('caps the rendered list at HOME_CARD_MAX_ITEMS', async () => {
     mockTeams([]);
     // Pin descending ages so the cap deterministically drops the oldest alert, not whichever one
     // happened to straddle a Date.now() millisecond boundary during construction.
@@ -241,29 +233,8 @@ describe('FiringAlertsCard', () => {
     render(<FiringAlertsCardWithData />);
 
     expect(await screen.findByText('Alert 0')).toBeInTheDocument();
-    // Render is capped even though one more alert is firing...
+    // Render is capped even though one more alert is firing.
     expect(screen.getAllByRole('listitem')).toHaveLength(HOME_CARD_MAX_ITEMS);
-    // ...but the severity badge still counts every alert.
-    expect(screen.getByText(new RegExp(`${HOME_CARD_MAX_ITEMS + 1} critical`, 'i'))).toBeInTheDocument();
-  });
-
-  it('shows the create action next to view-all when permitted and alerts exist', async () => {
-    jest
-      .spyOn(contextSrv, 'hasPermission')
-      .mockImplementation(
-        (action: string) =>
-          action === AccessControlAction.AlertingInstanceRead || action === AccessControlAction.AlertingRuleCreate
-      );
-    mockTeams([]);
-    mockAlerts([criticalAlert]);
-
-    render(<FiringAlertsCardWithData />);
-
-    expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
-      'href',
-      '/alerting/new/alerting'
-    );
-    expect(screen.getByRole('link', { name: /view all firing alerts/i })).toBeInTheDocument();
   });
 
   it('shows the create CTA in the empty state when permitted', async () => {
@@ -283,43 +254,19 @@ describe('FiringAlertsCard', () => {
       '/alerting/new/alerting'
     );
     expect(screen.getByText('All clear! No alerts are firing.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /view all alert rules/i })).toBeInTheDocument();
   });
 
   it('hides the create action when the user lacks rule-create permission', async () => {
     mockTeams([]);
-    mockAlerts([criticalAlert]);
+    mockAlerts([]);
 
     render(<FiringAlertsCardWithData />);
 
-    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+    expect(await screen.findByText('All clear! No alerts are firing.')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /create an alert rule/i })).not.toBeInTheDocument();
   });
 
-  it('prefixes the create and view-all-groups links with config.appSubUrl when alerts exist', async () => {
-    config.appSubUrl = '/grafana';
-    jest
-      .spyOn(contextSrv, 'hasPermission')
-      .mockImplementation(
-        (action: string) =>
-          action === AccessControlAction.AlertingInstanceRead || action === AccessControlAction.AlertingRuleCreate
-      );
-    mockTeams([]);
-    mockAlerts([criticalAlert]);
-
-    render(<FiringAlertsCardWithData />);
-
-    expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
-      'href',
-      '/grafana/alerting/new/alerting'
-    );
-    expect(screen.getByRole('link', { name: /view all firing alerts/i })).toHaveAttribute(
-      'href',
-      '/grafana/alerting/groups?alertmanager=grafana'
-    );
-  });
-
-  it('prefixes the create and view-all-rules links with config.appSubUrl in the empty state', async () => {
+  it('prefixes the empty-state create link with config.appSubUrl', async () => {
     config.appSubUrl = '/grafana';
     jest
       .spyOn(contextSrv, 'hasPermission')
@@ -335,11 +282,6 @@ describe('FiringAlertsCard', () => {
     expect(await screen.findByRole('link', { name: /create an alert rule/i })).toHaveAttribute(
       'href',
       '/grafana/alerting/new/alerting'
-    );
-    // colon is percent-encoded by URLSearchParams; decodes back to source:grafana on read
-    expect(screen.getByRole('link', { name: /view all alert rules/i })).toHaveAttribute(
-      'href',
-      '/grafana/alerting/list?search=source%3Agrafana'
     );
   });
 
@@ -392,48 +334,6 @@ describe('FiringAlertsCard', () => {
         surface: 'alerts_card',
         action: 'create_rule',
         placement: 'empty_state',
-      });
-    });
-
-    it('tracks create_rule and view_all_alerts from the footer when alerts exist', async () => {
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation(
-          (action: string) =>
-            action === AccessControlAction.AlertingInstanceRead || action === AccessControlAction.AlertingRuleCreate
-        );
-      mockTeams([]);
-      mockAlerts([criticalAlert]);
-
-      const { user } = render(<FiringAlertsCardWithData />);
-
-      await user.click(await screen.findByRole('link', { name: /create an alert rule/i }));
-      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'alerts_card',
-        action: 'create_rule',
-        placement: 'footer',
-      });
-
-      await user.click(screen.getByRole('link', { name: /view all firing alerts/i }));
-      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'alerts_card',
-        action: 'view_all_alerts',
-        placement: 'footer',
-      });
-    });
-
-    it('tracks view_all_rules from the footer in the empty state', async () => {
-      mockTeams([]);
-      mockAlerts([]);
-
-      const { user } = render(<FiringAlertsCardWithData />);
-
-      await user.click(await screen.findByRole('link', { name: /view all alert rules/i }));
-
-      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'alerts_card',
-        action: 'view_all_rules',
-        placement: 'footer',
       });
     });
   });

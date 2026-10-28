@@ -13,8 +13,7 @@ import { type FilterSelection, resolveFilterScope } from './filterSelection';
 export type IncidentsData = ReturnType<typeof useIncidents>;
 
 /**
- * All data fetching and derived state for the homepage Active incidents view,
- * shared between the old-layout card and the redesigned tabs.
+ * All data fetching and derived state for the homepage Active incidents view.
  *
  * When `selectedFilter` names a label value, incidents are filtered to that
  * value; the default scope fetches every active incident.

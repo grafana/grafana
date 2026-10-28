@@ -7,7 +7,7 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
+import { type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
 import { usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { pluginMeta } from 'app/features/alerting/unified/testSetup/plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
@@ -71,7 +71,7 @@ function IncidentsCardWithData({ filter }: { filter?: FilterSelection } = {}) {
 }
 
 describe('IncidentsCard', () => {
-  it('lists active incidents with severity, count badge, and detail links', async () => {
+  it('lists active incidents with severity and detail links', async () => {
     mockIncidents(activeIncidents);
 
     render(<IncidentsCardWithData />);
@@ -79,22 +79,15 @@ describe('IncidentsCard', () => {
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.getByText('Elevated latency')).toBeInTheDocument();
 
-    // Severity labels surface verbatim as badges; live labels are capitalized and org-configurable
+    // Severity labels surface verbatim; live labels are capitalized and org-configurable
     expect(screen.getByText('Critical')).toBeInTheDocument();
     expect(screen.getByText('Pending')).toBeInTheDocument();
-
-    // Header count badge reflects the total number of active incidents
-    expect(screen.getByText('2')).toBeInTheDocument();
 
     // Detail link is keyed by incidentID, routed through the plugin bridge
     expect(screen.getByRole('link', { name: 'Database outage' })).toHaveAttribute(
       'href',
       '/a/grafana-irm-app/incidents/101'
     );
-
-    // Populated card footer shows both the declare action and the view-all link.
-    expect(screen.getByRole('link', { name: /view all incidents/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
   });
 
   it('shows the declare CTA in the empty state', async () => {
@@ -158,36 +151,6 @@ describe('IncidentsCard', () => {
 
     expect(await screen.findByText('Database outage')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /view all incidents/i })).not.toBeInTheDocument();
-  });
-
-  it("count badge reads '50+' when the server reports more incidents beyond the query limit", async () => {
-    const many: IncidentPreview[] = Array.from({ length: ACTIVE_INCIDENTS_QUERY_LIMIT }, (_, i) => ({
-      incidentID: String(i),
-      title: `Incident ${i}`,
-      severityLabel: 'Critical',
-      createdTime: '2024-01-02T10:00:00Z',
-    }));
-    mockIncidents(many, { hasMore: true });
-
-    render(<IncidentsCardWithData />);
-
-    expect(await screen.findByText(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`)).toBeInTheDocument();
-  });
-
-  it('count badge reads the exact count when a full page has nothing beyond it', async () => {
-    const many: IncidentPreview[] = Array.from({ length: ACTIVE_INCIDENTS_QUERY_LIMIT }, (_, i) => ({
-      incidentID: String(i),
-      title: `Incident ${i}`,
-      severityLabel: 'Critical',
-      createdTime: '2024-01-02T10:00:00Z',
-    }));
-    mockIncidents(many, { hasMore: false });
-
-    render(<IncidentsCardWithData />);
-
-    expect(await screen.findByText(String(ACTIVE_INCIDENTS_QUERY_LIMIT))).toBeInTheDocument();
-    expect(screen.queryByText(`${ACTIVE_INCIDENTS_QUERY_LIMIT}+`)).not.toBeInTheDocument();
   });
 
   it('renders more than five active incidents (display cap raised to 50)', async () => {
@@ -214,7 +177,6 @@ describe('IncidentsCard', () => {
       'href',
       '/a/grafana-irm-app/incidents?declare=new'
     );
-    expect(screen.getByRole('link', { name: /view all incidents/i })).toBeInTheDocument();
   });
 
   it('hides the Declare CTA when the user cannot declare incidents', async () => {
@@ -325,34 +287,6 @@ describe('IncidentsCard', () => {
         surface: 'incidents_card',
         action: 'declare_incident',
         placement: 'empty_state',
-      });
-    });
-
-    it('tracks declare_incident from the footer when incidents exist', async () => {
-      mockIncidents(activeIncidents);
-
-      const { user } = render(<IncidentsCardWithData />);
-
-      await user.click(await screen.findByRole('link', { name: /declare an incident/i }));
-
-      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'incidents_card',
-        action: 'declare_incident',
-        placement: 'footer',
-      });
-    });
-
-    it('tracks view_all_incidents from the footer', async () => {
-      mockIncidents(activeIncidents);
-
-      const { user } = render(<IncidentsCardWithData />);
-
-      await user.click(await screen.findByRole('link', { name: /view all incidents/i }));
-
-      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'incidents_card',
-        action: 'view_all_incidents',
-        placement: 'footer',
       });
     });
   });

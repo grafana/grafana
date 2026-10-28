@@ -354,7 +354,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-01,cujTracking,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-30,auth.tokenRotationGracePeriod,experimental,@grafana/identity-access-team,false,false,false
 2026-07-03,grafana.dashboardSettingsRedesign,GA,@grafana/dashboards-squad,false,false,true
-2026-07-02,grafana.growthHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-07-02,kubernetesReporting,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-09-17,reporting.legacyServiceUsesK8SClient,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-10-02,reporting.legacySettingServiceUsesK8SClient,experimental,@grafana/grafana-operator-experience-squad,false,true,false

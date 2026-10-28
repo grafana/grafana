@@ -1,8 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2 } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
-import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
+import { t } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
@@ -17,12 +15,10 @@ interface Props {
   error: Error | undefined;
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
-  density?: 'default' | 'compact';
 }
 
-export function MostUsedDashboardsTab({ dashboards, loading, error, retry, foldersByUid, density }: Props) {
-  const redesignEnabled = useFlagGrafanaGrowthHomepage();
-  const styles = useStyles2(getStyles, redesignEnabled);
+export function MostUsedDashboardsTab({ dashboards, loading, error, retry, foldersByUid }: Props) {
+  const styles = useStyles2(getStyles);
 
   if (loading) {
     return <PageLoader text={t('home.most-used-dashboards-tab.loading', 'Loading most used dashboards...')} />;
@@ -41,14 +37,7 @@ export function MostUsedDashboardsTab({ dashboards, loading, error, retry, folde
     return (
       <DashboardTabEmptyState
         message={t('home.most-used-dashboards-tab.empty', 'Most used dashboards will appear here.')}
-        variant="completed"
-        density={density}
-      >
-        <Trans i18nKey="home.most-used-dashboards-tab.empty-description">
-          Once your organization has dashboards and usage data has been collected, dashboards with the most views over
-          the last 30 days will be displayed here.
-        </Trans>
-      </DashboardTabEmptyState>
+      />
     );
   }
 
@@ -63,7 +52,7 @@ export function MostUsedDashboardsTab({ dashboards, loading, error, retry, folde
             locationInfo={foldersByUid[dash.location]}
             layoutMode="list"
             source="homepage_mostUsedTab"
-            density={density}
+            density="compact"
           />
         </li>
       ))}
@@ -71,10 +60,10 @@ export function MostUsedDashboardsTab({ dashboards, loading, error, retry, folde
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, redesign: boolean) => ({
+const getStyles = () => ({
   list: css({
     listStyle: 'none',
-    padding: theme.spacing(0, redesign ? 0 : 0.5),
+    padding: 0,
     margin: 0,
   }),
 });

@@ -2994,7 +2994,8 @@
       "metadata": {
         "name": "grafana.growthHomepage",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-02T15:20:33Z"
+        "creationTimestamp": "2026-07-02T15:20:33Z",
+        "deletionTimestamp": "2026-10-28T11:31:14Z"
       },
       "spec": {
         "description": "Enables PLG-focused growth redesign of the unified homepage",

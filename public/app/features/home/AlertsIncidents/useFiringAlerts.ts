@@ -75,8 +75,7 @@ export const canViewFiringAlerts = () => contextSrv.hasPermission(AccessControlA
 export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
 
 /**
- * All data fetching and derived state for the homepage Firing alerts view,
- * shared between the old-layout card and the redesigned tabs.
+ * All data fetching and derived state for the homepage Firing alerts view.
  *
  * When `selectedFilter` names a label (from the filter dropdown) it overrides the default
  * filter of the user's own teams.

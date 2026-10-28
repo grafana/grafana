@@ -4,21 +4,14 @@ import Skeleton from 'react-loading-skeleton';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Stack, useStyles2 } from '@grafana/ui';
 
-import { DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT, DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN } from './types';
-
-interface Props {
-  redesignEnabled?: boolean;
-}
+import { DASHBOARD_TABS_SCROLL_HEIGHT } from './types';
 
 /**
  * Stands in for the tab bar and list while the tabs' fetches load: the tabs can't render before it is known
  * which one to land on. Same row placeholders as the summary cards, so the homepage loads as one.
  */
-export function DashboardTabsSkeleton({ redesignEnabled }: Props) {
-  const styles = useStyles2(
-    getStyles,
-    redesignEnabled ? DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN : DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT
-  );
+export function DashboardTabsSkeleton() {
+  const styles = useStyles2(getStyles);
 
   return (
     <Stack direction="column" gap={2} data-testid="dashboard-tabs-skeleton">
@@ -36,11 +29,11 @@ export function DashboardTabsSkeleton({ redesignEnabled }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, listHeight: number) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   rows: css({
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),
-    minHeight: listHeight,
+    minHeight: DASHBOARD_TABS_SCROLL_HEIGHT,
   }),
 });

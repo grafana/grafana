@@ -8,7 +8,6 @@ import { MERGED_PREFS_URL } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 
 import HomeRoute from './HomeRoute';
 import { homepageViewed } from './analytics/main';
@@ -27,8 +26,6 @@ jest.mock('./analytics/main', () => ({
   homepageViewed: jest.fn(),
 }));
 
-jest.mock('app/plugins/panel/news/useNewsFeed');
-
 // Call through by default so MSW-backed tests keep working; override only for the
 // cached-data-after-error case that is hard to reproduce via the network layer.
 jest.mock('@grafana/api-clients/rtkq/preferences/v1', () => {
@@ -42,7 +39,6 @@ jest.mock('@grafana/api-clients/rtkq/preferences/v1', () => {
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const useNewsFeedMock = jest.mocked(useNewsFeed);
 const useMergedPreferencesQueryMock = jest.mocked(useMergedPreferencesQuery);
 const actualUseMergedPreferencesQuery = jest.requireActual('@grafana/api-clients/rtkq/preferences/v1')
   .useMergedPreferencesQuery as typeof useMergedPreferencesQuery;
@@ -64,10 +60,6 @@ describe('HomeRoute', () => {
     useMergedPreferencesQueryMock.mockImplementation(actualUseMergedPreferencesQuery);
     probeCallCount = 0;
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
-    useNewsFeedMock.mockReturnValue({
-      state: { loading: false, error: undefined, value: undefined },
-      getNews: jest.fn(),
-    });
 
     // Deny alerting permission so the FiringAlertsCard renders null
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);

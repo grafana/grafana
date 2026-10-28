@@ -1,13 +1,11 @@
 import { http, HttpResponse } from 'msw';
 import { useState, type Ref } from 'react';
-import { act } from 'test/test-utils';
 
 import { type PluginMeta, store } from '@grafana/data';
 import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
@@ -129,7 +127,7 @@ export function setupAlertIncidentTabsTests() {
   // the virtualizer measures 0 height in jsdom and renders no options.
   mockComboboxRect();
 
-  beforeEach(async () => {
+  beforeEach(() => {
     // Tab selection persists across reloads; a reset keeps one test's clicks out of the next test's default.
     store.delete(ALERTS_INCIDENTS_TAB_STORAGE_KEY);
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
@@ -153,18 +151,9 @@ export function setupAlertIncidentTabsTests() {
     // With IRM installed the On call tab loads the user's shifts and schedule lists; none by default.
     mockCurrentUserEvents({ schedules: [] });
     mockSchedules({});
-    // AlertIncidentTabs only ships in the growth-homepage redesign, which is flag-gated,
-    // so exercise it in the same flag state it renders in production.
-    await act(async () => {
-      setTestFlags({ 'grafana.growthHomepage': true });
-    });
   });
 
-  afterEach(async () => {
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
-    await act(async () => {
-      setTestFlags({});
-    });
+  afterEach(() => {
     jest.restoreAllMocks();
     // getPluginSettings memoizes per plugin ID at module scope; clear it so each
     // test's plugin-settings handler actually gets hit.

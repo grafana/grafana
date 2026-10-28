@@ -26,7 +26,6 @@ interface Props {
   foldersByUid: Record<string, LocationInfo>;
   /** Starring a dashboard here changes what the Starred tab shows. */
   onStarChange: () => void;
-  density?: 'default' | 'compact';
 }
 
 /** An empty history means a new user or a fresh clear: point them at dashboards, as the Recent tab always did. */
@@ -54,9 +53,9 @@ function EmptyStateCta() {
   );
 }
 
-export function RecentActivityTab({ recent, foldersByUid, onStarChange, density }: Props) {
+export function RecentActivityTab({ recent, foldersByUid, onStarChange }: Props) {
   const { items, counts, total, filter, loading, error, retry } = recent;
-  const styles = useStyles2(getStyles, density === 'compact');
+  const styles = useStyles2(getStyles);
   const navTree = useSelector((state) => state.navBarTree);
 
   // Once per display: the tab mounts when it becomes active and unmounts when the user leaves it.
@@ -94,9 +93,7 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
     return (
       <DashboardTabEmptyState
         message={t('home.recent-activity-tab.empty', 'No recent activity yet. Pages you visit will show up here.')}
-        variant="call-to-action"
         button={<EmptyStateCta />}
-        density={density}
       />
     );
   }
@@ -114,7 +111,7 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
         return (
           <li key={href}>
             <ListRow
-              isCompact={density === 'compact'}
+              isCompact
               title={title}
               subtitle={subtitle}
               href={href}
@@ -156,10 +153,10 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange, density 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, compact: boolean) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     listStyle: 'none',
-    padding: theme.spacing(0, compact ? 0 : 0.5),
+    padding: 0,
     margin: 0,
   }),
   // A badge, not a bare icon, so the kind reads as a label and not as another action next to the star. One

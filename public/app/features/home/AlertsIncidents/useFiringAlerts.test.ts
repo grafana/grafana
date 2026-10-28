@@ -8,6 +8,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { HOME_CARD_MAX_ITEMS } from './constants';
 import { canViewFiringAlerts, useFiringAlerts } from './useFiringAlerts';
 
 setBackendSrv(backendSrv);
@@ -117,6 +118,22 @@ describe('useFiringAlerts', () => {
     expect(result.current.hasAlerts).toBe(true);
     expect(result.current.criticalCount).toBe(1);
     expect(result.current.highCount).toBe(1);
+  });
+
+  it('caps the visible alerts while the counts cover every alert', async () => {
+    mockAlerts(
+      Array.from({ length: HOME_CARD_MAX_ITEMS + 1 }, (_, i) =>
+        makeAlert({ labels: { alertname: `Alert ${i}`, severity: 'critical' } })
+      )
+    );
+
+    const { result } = renderHook(() => useFiringAlerts(), { wrapper: getWrapper({}) });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.visibleAlerts).toHaveLength(HOME_CARD_MAX_ITEMS);
+    expect(result.current.count).toBe(HOME_CARD_MAX_ITEMS + 1);
+    expect(result.current.criticalCount).toBe(HOME_CARD_MAX_ITEMS + 1);
   });
 
   it('reports no alerts when the query resolves empty', async () => {

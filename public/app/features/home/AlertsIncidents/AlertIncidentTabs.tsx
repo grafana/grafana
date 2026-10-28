@@ -6,17 +6,17 @@ import { Badge, Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } fr
 import { useStoredString } from 'app/core/hooks/useStored';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 
-import { DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN } from '../DashboardTabs/types';
+import { DASHBOARD_TABS_SCROLL_HEIGHT } from '../DashboardTabs/types';
 import { CardFooter } from '../FooterActions';
 import { HomeSection } from '../HomeSection';
 import { tabChanged } from '../analytics/main';
 
-import { ViewAllAlertsAction } from './CreateAndViewAlertsButtons';
-import { ViewAllIncidentsAction } from './DeclareAndViewIncidentsButtons';
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
 import { LabelFilterCombobox } from './LabelFilterCombobox';
 import { OnCallCard, ViewSchedulesAction } from './OnCallCard';
+import { ViewAllAlertsAction } from './ViewAllAlertsAction';
+import { ViewAllIncidentsAction } from './ViewAllIncidentsAction';
 import { type FilterSelection } from './filterSelection';
 import { useAlertFilterOptions } from './useAlertFilterOptions';
 import { type FiringAlertsData } from './useFiringAlerts';
@@ -124,7 +124,7 @@ export function AlertIncidentTabs({
         allOptionLabel: t('home.alerts-incidents.alert-filter-all', 'All alerts'),
         ariaLabel: t('home.alerts-incidents.alert-filter-label', 'Filter alerts by label'),
       },
-      content: <FiringAlertsCard data={alertsData} hideFooterActions />,
+      content: <FiringAlertsCard data={alertsData} />,
       footer: !loading && !error && <ViewAllAlertsAction hasAlerts={hasAlerts} viewAllHref={viewAllHref} />,
     },
     isOffered(INCIDENTS_TAB_ID, incidentsData.enabled) && {
@@ -143,7 +143,7 @@ export function AlertIncidentTabs({
         allOptionLabel: t('home.alerts-incidents.incident-filter-all', 'All incidents'),
         ariaLabel: t('home.alerts-incidents.incident-filter-label', 'Filter incidents by label'),
       },
-      content: <IncidentsCard data={incidentsData} hideFooterActions />,
+      content: <IncidentsCard data={incidentsData} />,
       footer: !incidentsLoading && !incidentsError && (
         <ViewAllIncidentsAction pluginId={incidentsPluginId} canAccess={incidentsCanAccess} />
       ),
@@ -200,7 +200,7 @@ export function AlertIncidentTabs({
         </TabsBar>
         <TabContent id={PANEL_ID} role="tabpanel" aria-labelledby={tabElementId(activeTab.id)}>
           {/* Fixed list height and a footer of one height, so switching tabs or loading never moves the card. */}
-          <Box display="flex" direction="column" height={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}>
+          <Box display="flex" direction="column" height={`${DASHBOARD_TABS_SCROLL_HEIGHT}px`}>
             <ScrollContainer showScrollIndicators>{activeTab.content}</ScrollContainer>
           </Box>
 

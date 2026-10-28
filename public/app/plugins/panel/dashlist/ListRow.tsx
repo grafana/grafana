@@ -12,26 +12,11 @@ interface ListRowProps {
   trailing?: ReactNode;
   // isCompact is used to make the row leaner (less spacing)
   isCompact?: boolean;
-  // oneRow is used to make the row only one row (subtitle will be inline with title)
-  oneRow?: boolean;
   href?: string;
   onClick?: () => void;
-  // Row divider + padding chrome. Set false for a flush row that matches the
-  // pre-redesign homepage cards. Defaults to true.
-  showDivider?: boolean;
 }
 
-export function ListRow({
-  title,
-  subtitle,
-  trailing,
-  isCompact,
-  oneRow,
-  href,
-  onClick,
-  prefix,
-  showDivider = true,
-}: ListRowProps) {
+export function ListRow({ title, subtitle, trailing, isCompact, href, onClick, prefix }: ListRowProps) {
   const styles = useStyles2(getStyles);
 
   const subtitleDisplay = subtitle && (
@@ -41,13 +26,7 @@ export function ListRow({
   );
 
   const content = (
-    <Stack
-      direction={oneRow ? 'row' : 'column'}
-      gap={oneRow ? 1 : 0}
-      alignItems={oneRow ? 'center' : 'stretch'}
-      grow={1}
-      minWidth={0}
-    >
+    <Stack direction="column" gap={0} alignItems="stretch" grow={1} minWidth={0}>
       {/* Title */}
       <Text truncate element="p">
         {title}
@@ -58,7 +37,7 @@ export function ListRow({
   );
 
   return (
-    <div className={cx(styles.row, isCompact && styles.listCompact, !showDivider && styles.flush)}>
+    <div className={cx(styles.row, isCompact && styles.listCompact)}>
       <Stack direction="row" alignItems="center" gap={1.5} grow={1} minWidth={0}>
         {prefix && <div className={styles.prefixCell}>{prefix}</div>}
 
@@ -97,10 +76,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   trailingCell: css({
     flexShrink: 0,
-  }),
-  flush: css({
-    borderBottom: 'none',
-    padding: 0,
   }),
   titleLink: css({
     flex: 1,
