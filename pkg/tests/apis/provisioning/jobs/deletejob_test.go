@@ -44,6 +44,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		},
 	}
 
+	common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "folder")
 	helper.CreateLocalRepo(t, testRepo)
 
 	helper.RequireRepoDashboardCount(t, repo, 3)
@@ -65,7 +66,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 			},
 		}
 		// Create delete job for single file
-		common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
+		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 		// Debug state after successful delete
 		helper.DebugState(t, repo, "AFTER DELETE")
@@ -88,7 +89,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				Paths: []string{"dashboard2.json", "folder/dashboard3.json"},
 			},
 		}
-		common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
+		helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 		// Verify files are deleted from repository
 		helper.RequireRepoFileNotFound(t, repo, "dashboard2.json")
@@ -126,6 +127,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		helper.CopyToProvisioningPath(t, tmpFile1, "resource-test-1.json")        // UID: resourceref1
 		helper.CopyToProvisioningPath(t, tmpFile2, "resource-test-2.json")        // UID: resourceref2
 		helper.CopyToProvisioningPath(t, tmpFile3, "nested/resource-test-3.json") // UID: resourceref3
+		common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "nested")
 
 		// Trigger sync to populate the new resources
 		helper.SyncAndWait(t, repo, nil)
@@ -147,7 +149,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				},
 			}
 
-			common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
+			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 			// Verify corresponding file is deleted from repository
 			helper.RequireRepoFileNotFound(t, repo, "resource-test-1.json")
@@ -178,7 +180,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 					},
 				},
 			}
-			common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
+			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 			// Verify both dashboards are removed from Grafana
 			helper.RequireDashboardsNotFound(t, "resourceref2", "resourceref3")
@@ -222,7 +224,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 				},
 			}
 
-			common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
+			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 			// Verify both targeted resources are deleted from Grafana
 			helper.RequireDashboardsNotFound(t, "resourceref1", "resourceref2")
@@ -248,6 +250,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 
 			// Copy it to the folder structure using the helper
 			helper.CopyToProvisioningPath(t, tmpFolderDash, "test-folder/dashboard-in-folder.json")
+			common.WriteFolderMetadata(t, repo, helper.ProvisioningPath, "test-folder")
 
 			// Sync to create the folder and its contents
 			helper.SyncAndWait(t, repo, nil)
@@ -275,7 +278,7 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 					},
 				},
 			}
-			common.RequireJobWarning(t, helper.TriggerJobAndWaitForComplete(t, repo, spec))
+			helper.TriggerJobAndWaitForSuccess(t, repo, spec)
 
 			// Verify folder is deleted from Grafana
 			helper.RequireFoldersNotFound(t, testFolderName)

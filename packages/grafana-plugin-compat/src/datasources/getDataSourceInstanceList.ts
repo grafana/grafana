@@ -41,6 +41,5 @@ function toDataSourceInstanceListItem(item: DataSourceInstanceSettings): DataSou
     name: item.name,
     type: item.type,
     uid: item.uid,
-    apiVersion: item.apiVersion,
   };
 }

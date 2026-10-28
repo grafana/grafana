@@ -1,14 +1,12 @@
 package git
 
 import (
-	"strings"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestIntegrationProvisioning_IncrementalSync_FolderMetadataOnlyDeletion(t *testing.T) {
@@ -46,12 +44,7 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMetadataOnlyDeletion(t *t
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{Incremental: true},
 	})
-	jobObj := &provisioning.Job{}
-	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
-
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State)
-	require.Empty(t, jobObj.Status.Errors)
-	require.Contains(t, strings.Join(jobObj.Status.Warnings, "\n"), `folder "team/" is missing folder metadata`)
+	common.HasOnlyMissingFolderMetadataWarnings("team")(t, job)
 
 	newFolderUID := resources.ParseFolder("team/", repoName).ID
 	require.NotEqual(t, stableUID, newFolderUID)

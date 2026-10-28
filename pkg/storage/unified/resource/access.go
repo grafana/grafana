@@ -264,7 +264,7 @@ func batchSizeBucket(n int) string {
 
 // rbacAllowlist is a map of group to resources that are compatible with RBAC.
 var rbacAllowlist = groupResource{
-	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil, "variables": nil},
+	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil, "variables": nil, "notebooks": nil},
 	"folder.grafana.app":    map[string]interface{}{"folders": nil},
 	"iam.grafana.app":       map[string]interface{}{"users": nil, "teams": nil, "serviceaccounts": nil},
 }

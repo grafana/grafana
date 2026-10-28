@@ -14,9 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestIntegrationLeaseBadger(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestLeaseBadger(t *testing.T) {
 	opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
 	bdb, err := badger.Open(opts)
 	require.NoError(t, err)

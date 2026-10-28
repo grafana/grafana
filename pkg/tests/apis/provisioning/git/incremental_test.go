@@ -174,12 +174,17 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveIntoFolder(t *testing.T)
 	require.NoError(t, local.CreateDirPath("team-a"))
 	_, err = local.Git("mv", "dashboard1.json", "team-a/dashboard1.json")
 	require.NoError(t, err)
+	for name, body := range common.FolderMetadataFiles(t, repoName, "team-a") {
+		require.NoError(t, local.CreateFile(name, string(body)))
+	}
+	_, err = local.Git("add", ".")
+	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "move dashboard into team-a folder")
 	require.NoError(t, err)
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-in-001": {Title: "Dashboard One", SourcePath: "team-a/dashboard1.json"},
 	})
@@ -197,12 +202,14 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 
 	const repoName = "git-incremental-move-between"
 
+	// Keep the source implicit and the destination backed only by .keep to exercise folder cleanup.
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"folder-a/dashboard1.json": common.DashboardJSON("move-btwn-001", "Dashboard Between", 1),
 		"folder-b/.keep":           {},
 	}, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName),
+		common.Expect(common.HasOnlyMissingFolderMetadataWarnings("folder-a", "folder-b")))
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-btwn-001": {Title: "Dashboard Between", SourcePath: "folder-a/dashboard1.json"},
 	})
@@ -219,7 +226,8 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveBetweenFolders(t *testin
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental,
+		common.Expect(common.HasOnlyMissingFolderMetadataWarnings("folder-b")))
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-btwn-001": {Title: "Dashboard Between", SourcePath: "folder-b/dashboard1.json"},
 	})
@@ -237,11 +245,13 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveToRoot(t *testing.T) {
 
 	const repoName = "git-incremental-move-to-root"
 
+	// A manifest would retain the source folder after its last dashboard moves out.
 	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
 		"team-x/dashboard1.json": common.DashboardJSON("move-root-001", "Dashboard Root", 1),
 	}, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName),
+		common.Expect(common.HasOnlyMissingFolderMetadataWarnings("team-x")))
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"move-root-001": {Title: "Dashboard Root", SourcePath: "team-x/dashboard1.json"},
 	})
@@ -277,12 +287,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 
 	const repoName = "git-incremental-rename-folder"
 
-	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"old-team/dashboard1.json": common.DashboardJSON("ren-fold-001", "Folder Dash One", 1),
-		"old-team/dashboard2.json": common.DashboardJSON("ren-fold-002", "Folder Dash Two", 1),
-	}, "write", "branch")
+	files := common.FolderMetadataFiles(t, repoName, "old-team")
+	files["old-team/dashboard1.json"] = common.DashboardJSON("ren-fold-001", "Folder Dash One", 1)
+	files["old-team/dashboard2.json"] = common.DashboardJSON("ren-fold-002", "Folder Dash Two", 1)
+	_, local := helper.CreateGitRepo(t, repoName, files, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"ren-fold-001": {Title: "Folder Dash One", SourcePath: "old-team/dashboard1.json"},
 		"ren-fold-002": {Title: "Folder Dash Two", SourcePath: "old-team/dashboard2.json"},
@@ -304,7 +314,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFolder(t *testing.T) {
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"ren-fold-001": {Title: "Folder Dash One", SourcePath: "new-team/dashboard1.json"},
 		"ren-fold-002": {Title: "Folder Dash Two", SourcePath: "new-team/dashboard2.json"},
@@ -327,12 +337,14 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 
 	const repoName = "git-incremental-move-nested"
 
-	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"parent/child-a/dashboard1.json": common.DashboardJSON("nested-001", "Nested Dashboard", 1),
-		"parent/child-b/.keep":           {},
-	}, "write", "branch")
+	// The children stay metadata-free to cover implicit-folder cleanup and .keep retention.
+	files := common.FolderMetadataFiles(t, repoName, "parent")
+	files["parent/child-a/dashboard1.json"] = common.DashboardJSON("nested-001", "Nested Dashboard", 1)
+	files["parent/child-b/.keep"] = []byte{}
+	_, local := helper.CreateGitRepo(t, repoName, files, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName),
+		common.Expect(common.HasOnlyMissingFolderMetadataWarnings("parent/child-a", "parent/child-b")))
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child-a/dashboard1.json"},
 	})
@@ -349,7 +361,8 @@ func TestIntegrationProvisioning_IncrementalGitSync_MoveNestedDashboard(t *testi
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental,
+		common.Expect(common.HasOnlyMissingFolderMetadataWarnings("parent/child-b")))
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"nested-001": {Title: "Nested Dashboard", SourcePath: "parent/child-b/dashboard1.json"},
 	})
@@ -367,12 +380,12 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 
 	const repoName = "git-incremental-rename-nested"
 
-	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"parent/old-child/dashboard1.json": common.DashboardJSON("ren-nest-001", "Nested Rename Dash", 1),
-		"parent/sibling/dashboard2.json":   common.DashboardJSON("ren-nest-002", "Sibling Dash", 1),
-	}, "write", "branch")
+	files := common.FolderMetadataFiles(t, repoName, "parent/old-child", "parent/sibling")
+	files["parent/old-child/dashboard1.json"] = common.DashboardJSON("ren-nest-001", "Nested Rename Dash", 1)
+	files["parent/sibling/dashboard2.json"] = common.DashboardJSON("ren-nest-002", "Sibling Dash", 1)
+	_, local := helper.CreateGitRepo(t, repoName, files, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"ren-nest-001": {Title: "Nested Rename Dash", SourcePath: "parent/old-child/dashboard1.json"},
 		"ren-nest-002": {Title: "Sibling Dash", SourcePath: "parent/sibling/dashboard2.json"},
@@ -390,7 +403,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameNestedFolder(t *testin
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		"ren-nest-001": {Title: "Nested Rename Dash", SourcePath: "parent/new-child/dashboard1.json"},
 		"ren-nest-002": {Title: "Sibling Dash", SourcePath: "parent/sibling/dashboard2.json"},
@@ -416,11 +429,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_PureRename_PreservesContent(
 	const uid = "pure-rename-001"
 
 	dashJSON := common.DashboardJSON(uid, "Pure Rename Dash", 1)
-	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"old/dashboard.json": dashJSON,
-	}, "write", "branch")
+	files := common.FolderMetadataFiles(t, repoName, "old")
+	files["old/dashboard.json"] = dashJSON
+	_, local := helper.CreateGitRepo(t, repoName, files, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Pure Rename Dash", SourcePath: "old/dashboard.json"},
 	})
@@ -430,14 +443,19 @@ func TestIntegrationProvisioning_IncrementalGitSync_PureRename_PreservesContent(
 	dashSnap := common.SnapshotObject(t, dashBefore)
 
 	require.NoError(t, local.CreateDirPath("new"))
+	for name, body := range common.FolderMetadataFiles(t, repoName, "new") {
+		require.NoError(t, local.CreateFile(name, string(body)))
+	}
 	_, err = local.Git("mv", "old/dashboard.json", "new/dashboard.json")
+	require.NoError(t, err)
+	_, err = local.Git("add", ".")
 	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "pure path-only rename")
 	require.NoError(t, err)
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Pure Rename Dash", SourcePath: "new/dashboard.json"},
 	})
@@ -461,11 +479,11 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameWithEdit_AppliesNewCon
 	const repoName = "git-incremental-rename-with-edit"
 	const uid = "rename-edit-001"
 
-	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-		"old/dashboard.json": common.DashboardJSON(uid, "Original Title", 1),
-	}, "write", "branch")
+	files := common.FolderMetadataFiles(t, repoName, "old")
+	files["old/dashboard.json"] = common.DashboardJSON(uid, "Original Title", 1)
+	_, local := helper.CreateGitRepo(t, repoName, files, "write", "branch")
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Original Title", SourcePath: "old/dashboard.json"},
 	})
@@ -476,6 +494,9 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameWithEdit_AppliesNewCon
 	// FileActionRenamed, but with a new blob hash — the rename-with-edit
 	// branch.
 	require.NoError(t, local.CreateDirPath("new"))
+	for name, body := range common.FolderMetadataFiles(t, repoName, "new") {
+		require.NoError(t, local.CreateFile(name, string(body)))
+	}
 	_, err := local.Git("mv", "old/dashboard.json", "new/dashboard.json")
 	require.NoError(t, err)
 	require.NoError(t, local.UpdateFile("new/dashboard.json", string(common.DashboardJSON(uid, "Edited Title", 2))))
@@ -486,7 +507,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameWithEdit_AppliesNewCon
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Edited Title", SourcePath: "new/dashboard.json"},
 	})
@@ -516,12 +537,17 @@ func TestIntegrationProvisioning_IncrementalGitSync_RenameFromInvalidOldPath_Rec
 	require.NoError(t, local.CreateDirPath("good-path"))
 	_, err := local.Git("mv", "bad&path/dashboard.json", "good-path/dashboard.json")
 	require.NoError(t, err)
+	for name, body := range common.FolderMetadataFiles(t, repoName, "good-path") {
+		require.NoError(t, local.CreateFile(name, string(body)))
+	}
+	_, err = local.Git("add", ".")
+	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "rename away from the invalid path")
 	require.NoError(t, err)
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Recovered Dashboard", SourcePath: "good-path/dashboard.json"},
 	})
@@ -550,12 +576,17 @@ func TestIntegrationProvisioning_FullGitSync_RenameFromInvalidOldPath_Recovers(t
 	require.NoError(t, local.CreateDirPath("good-path"))
 	_, err := local.Git("mv", "bad&path/dashboard.json", "good-path/dashboard.json")
 	require.NoError(t, err)
+	for name, body := range common.FolderMetadataFiles(t, repoName, "good-path") {
+		require.NoError(t, local.CreateFile(name, string(body)))
+	}
+	_, err = local.Git("add", ".")
+	require.NoError(t, err)
 	_, err = local.Git("commit", "-m", "rename away from the invalid path")
 	require.NoError(t, err)
 	_, err = local.Git("push")
 	require.NoError(t, err)
 
-	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 		uid: {Title: "Recovered Dashboard", SourcePath: "good-path/dashboard.json"},
 	})

@@ -1,13 +1,11 @@
 package git
 
 import (
-	"strings"
 	"testing"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata(t *testing.T) {
@@ -36,14 +34,7 @@ func TestIntegrationProvisioning_IncrementalSync_MissingFolderMetadata(t *testin
 		Action: provisioning.JobActionPull,
 		Pull:   &provisioning.SyncJobOptions{Incremental: true},
 	})
-	jobObj := &provisioning.Job{}
-	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+	common.HasOnlyMissingFolderMetadataWarnings("myfolder")(t, job)
 
-	require.Empty(t, jobObj.Status.Errors,
-		"incremental sync should produce no errors")
-	require.Equal(t, provisioning.JobStateWarning, jobObj.Status.State,
-		"incremental sync should warn about missing folder metadata")
-
-	require.Contains(t, strings.Join(jobObj.Status.Warnings, "\n"), "missing folder metadata")
 	helper.RequireRepoDashboardCount(t, repoName, 2)
 }

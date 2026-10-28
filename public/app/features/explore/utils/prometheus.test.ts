@@ -1,7 +1,14 @@
 import { matchPluginId, store } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 
-import { appendToExpr, appendToQueryExpr, getPrometheusEditorMode, isPrometheusType } from './prometheus';
+import {
+  appendToExpr,
+  appendToQueryExpr,
+  type ExprTextKind,
+  getPrometheusEditorMode,
+  insertAtSelection,
+  isPrometheusType,
+} from './prometheus';
 
 describe('isPrometheusType', () => {
   it.each(['prometheus', 'grafana-amazonprometheus-datasource', 'grafana-azureprometheus-datasource'])(
@@ -111,6 +118,69 @@ describe('appendToExpr', () => {
     ['up >=', '1', 'up >=1'],
   ])('appends the value to %p: %s gives %s', (expr, text, expected) => {
     expect(appendToExpr(expr, text, 'value')).toBe(expected);
+  });
+});
+
+describe('insertAtSelection', () => {
+  // `|` marks the cursor and `«…»` the selection; neither is part of the expression.
+  function insert(marked: string, text: string, kind: ExprTextKind = 'name') {
+    const from = marked.search(/[|«]/);
+    const selected = marked.match(/«(.*?)»/)?.[1] ?? '';
+    const value = marked.replace('|', '').replace(/«(.*?)»/, '$1');
+    return insertAtSelection(value, from, from + selected.length, text, kind);
+  }
+
+  it.each([
+    { marked: 'rate(|[5m])', text: 'up', expected: 'rate(up[5m])' },
+    { marked: '|(up)', text: 'sum', expected: 'sum(up)' },
+    { marked: 'sum(rate(up[5m])) | (job)', text: 'by', expected: 'sum(rate(up[5m])) by (job)' },
+    { marked: 'up|or vector(0)', text: 'and', expected: 'up and or vector(0)' },
+    { marked: 'up{|}', text: 'job', expected: 'up{job}' },
+    { marked: 'up{|="api"}', text: 'job', expected: 'up{job="api"}' },
+    { marked: 'up{job="api",|}', text: 'le', expected: 'up{job="api",le}' },
+    { marked: 'up{job="api"|}', text: 'le', expected: 'up{job="api" le}' },
+    { marked: 'up{job="|"}', text: 'api', expected: 'up{job="api"}' },
+    { marked: 'up{job="ap|"}', text: 'i 2', expected: 'up{job="api 2"}' },
+    // A backslash does not escape in a backtick string, so the string closes and the cursor is outside it.
+    { marked: 'up{job=`a\\`}|', text: 'or', expected: 'up{job=`a\\`} or' },
+  ])('inserts the name $text at the cursor in $marked', ({ marked, text, expected }) => {
+    expect(insert(marked, text)?.value).toBe(expected);
+  });
+
+  it.each([
+    { marked: 'up{job=|}', text: 'api', expected: 'up{job="api"}' },
+    { marked: 'up{job=|,le="0.5"}', text: 'api', expected: 'up{job="api",le="0.5"}' },
+    { marked: 'up{job="|"}', text: 'a"b', expected: 'up{job="a\\"b"}' },
+    { marked: 'up{ip=~|}', text: '10.0.0.1', expected: 'up{ip=~"10\\\\.0\\\\.0\\\\.1"}' },
+    { marked: 'up{ip=~"|"}', text: '10.0.0.1', expected: 'up{ip=~"10\\\\.0\\\\.0\\\\.1"}' },
+    { marked: 'up{path=`|`}', text: 'C:\\Windows', expected: 'up{path=`C:\\Windows`}' },
+  ])('inserts the value $text at the cursor in $marked', ({ marked, text, expected }) => {
+    expect(insert(marked, text, 'value')?.value).toBe(expected);
+  });
+
+  it.each([
+    { marked: 'rate(«up»[5m])', text: 'http_requests_total', expected: 'rate(http_requests_total[5m])' },
+    { marked: 'sum(«rate(up[5m])»)', text: 'up', expected: 'sum(up)' },
+    { marked: '«up»', text: 'node_load1', expected: 'node_load1' },
+  ])('replaces the selection in $marked with the name $text', ({ marked, text, expected }) => {
+    expect(insert(marked, text)?.value).toBe(expected);
+  });
+
+  it.each([
+    { marked: 'up{job="«api»"}', text: 'web', expected: 'up{job="web"}' },
+    { marked: 'up{job=«"api"»}', text: 'web', expected: 'up{job="web"}' },
+  ])('replaces the selection in $marked with the value $text', ({ marked, text, expected }) => {
+    expect(insert(marked, text, 'value')?.value).toBe(expected);
+  });
+
+  it('returns the text that replaced the selection, spaces and quotes included', () => {
+    expect(insert('sum(up) |(job)', 'by')).toEqual({ value: 'sum(up) by(job)', text: 'by' });
+    expect(insert('up|or vector(0)', 'and')).toEqual({ value: 'up and or vector(0)', text: ' and ' });
+    expect(insert('up{job=|}', 'api', 'value')).toEqual({ value: 'up{job="api"}', text: '"api"' });
+  });
+
+  it('declines a backtick inside a raw string, which has no way to escape it', () => {
+    expect(insert('up{v=`|`}', 'a`b', 'value')).toBeUndefined();
   });
 });
 
