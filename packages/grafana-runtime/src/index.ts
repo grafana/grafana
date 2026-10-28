@@ -82,7 +82,6 @@ export {
   type SaveResourceDrawerResource,
   type SaveResourceDrawerBranchCommit,
 } from './provisioning/SaveResourceDrawer';
-export { registerResourceKinds, type ResourceKindDisplay } from './provisioning/registerResourceKinds';
 export {
   type CorrelationsService,
   type CorrelationData,
