@@ -3,8 +3,7 @@ import { type ReactNode } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { of } from 'rxjs';
 
-import { type DataSourceInstanceSettings, LoadingState } from '@grafana/data';
-import { getDataSourceInstanceSettings } from '@grafana/runtime';
+import { LoadingState } from '@grafana/data';
 
 import { previewAlertRule } from '../../api/preview';
 import { getDefaultFormValues } from '../../rule-editor/formDefaults';
@@ -13,16 +12,10 @@ import { RuleFormType, type RuleFormValues } from '../../types/rule-form';
 
 import { usePreview } from './PreviewRule';
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceInstanceSettings: jest.fn(),
-}));
-
 jest.mock('../../api/preview', () => ({
   previewAlertRule: jest.fn(),
 }));
 
-const mockGetDataSourceInstanceSettings = jest.mocked(getDataSourceInstanceSettings);
 const mockPreviewAlertRule = jest.mocked(previewAlertRule);
 
 function renderUsePreview(formValues: Partial<RuleFormValues>) {
@@ -45,31 +38,34 @@ describe('usePreview', () => {
     jest.clearAllMocks();
   });
 
-  it('resolves the data source before building a cloud preview request', async () => {
-    mockGetDataSourceInstanceSettings.mockResolvedValue({ uid: 'mimir-uid' } as DataSourceInstanceSettings);
+  it('builds a cloud preview request with the query data source uid', async () => {
     mockCompletedPreview();
 
     const { result } = renderUsePreview({
       type: RuleFormType.cloudAlerting,
-      dataSourceName: 'Mimir',
       condition: 'A',
       expression: 'up == 1',
+      queries: [
+        {
+          refId: 'A',
+          queryType: '',
+          datasourceUid: 'mimir-uid',
+          model: { refId: 'A' },
+        },
+      ],
     });
 
     await act(async () => {
       await result.current[1]();
     });
 
-    expect(mockGetDataSourceInstanceSettings).toHaveBeenCalledWith('Mimir');
     expect(mockPreviewAlertRule).toHaveBeenCalledWith({
       dataSourceUid: 'mimir-uid',
-      dataSourceName: 'Mimir',
       expr: 'up == 1',
     });
   });
 
   it('builds a Grafana preview request with the form condition', async () => {
-    mockGetDataSourceInstanceSettings.mockResolvedValue({ uid: 'grafana' } as DataSourceInstanceSettings);
     mockCompletedPreview();
 
     const { result } = renderUsePreview({
@@ -89,13 +85,10 @@ describe('usePreview', () => {
     );
   });
 
-  it('rejects when the data source cannot be resolved', async () => {
-    mockGetDataSourceInstanceSettings.mockResolvedValue(undefined);
+  it('rejects when the query has no data source uid', async () => {
+    const { result } = renderUsePreview({ type: RuleFormType.cloudAlerting, dataSourceName: 'unknown', queries: [] });
 
-    const { result } = renderUsePreview({ type: RuleFormType.cloudAlerting, dataSourceName: 'unknown' });
-
-    await expect(result.current[1]()).rejects.toThrow(/Cannot find data source settings/);
+    await expect(result.current[1]()).rejects.toThrow('Cannot preview without a data source');
     expect(mockPreviewAlertRule).not.toHaveBeenCalled();
   });
-
 });

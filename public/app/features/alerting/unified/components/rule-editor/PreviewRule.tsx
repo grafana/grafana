@@ -7,7 +7,7 @@ import { takeWhile } from 'rxjs/operators';
 
 import { type GrafanaTheme2, LoadingState, dateTimeFormatISO } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getDataSourceInstanceSettings } from '@grafana/runtime';
+import { isExpressionReference } from '@grafana/runtime';
 import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 
 import { previewAlertRule } from '../../api/preview';
@@ -18,9 +18,7 @@ import { isDataSourceManagedRuleByType } from '../../utils/rules';
 
 import { PreviewRuleResult } from './PreviewRuleResult';
 
-const fields = ['type', 'dataSourceName', 'condition', 'queries', 'expression'] as const satisfies ReadonlyArray<
-  keyof RuleFormValues
->;
+const fields = ['type', 'condition', 'queries', 'expression'] as const satisfies ReadonlyArray<keyof RuleFormValues>;
 type PreviewRuleValues = FieldPathValues<RuleFormValues, typeof fields>;
 
 export function PreviewRule(): React.ReactElement | null {
@@ -74,7 +72,7 @@ export function usePreview(): [PreviewRuleResponse | undefined, () => Promise<vo
 
   const onPreview = useCallback(async () => {
     const values = getValues(fields);
-    const request = await createPreviewRequest(values);
+    const request = createPreviewRequest(values);
 
     previewAlertRule(request)
       .pipe(takeWhile((response) => !isCompleted(response), true))
@@ -89,21 +87,21 @@ export function usePreview(): [PreviewRuleResponse | undefined, () => Promise<vo
   return [preview, onPreview];
 }
 
-async function createPreviewRequest(values: PreviewRuleValues): Promise<PreviewRuleRequest> {
-  const [type, dataSourceName, condition, queries, expression] = values;
-
-  const dsSettings = await getDataSourceInstanceSettings(dataSourceName);
-  if (!dsSettings) {
-    throw new Error(`Cannot find data source settings for ${dataSourceName}`);
-  }
+function createPreviewRequest(values: PreviewRuleValues): PreviewRuleRequest {
+  const [type, condition, queries, expression] = values;
 
   switch (type) {
-    case RuleFormType.cloudAlerting:
+    case RuleFormType.cloudAlerting: {
+      const dataSourceUid = queries.find((query) => !isExpressionReference(query.datasourceUid))?.datasourceUid;
+      if (!dataSourceUid) {
+        throw new Error('Cannot preview without a data source');
+      }
+
       return {
-        dataSourceUid: dsSettings.uid,
-        dataSourceName: dataSourceName!,
+        dataSourceUid,
         expr: expression,
       };
+    }
 
     case RuleFormType.grafana:
       return {
