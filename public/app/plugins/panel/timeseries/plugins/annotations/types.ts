@@ -14,6 +14,7 @@ export type AnnotationVals = {
   // meta
   id?: NullableId[];
   alertId?: NullableNumber[];
+  alertUID?: NullableString[];
 
   // tooltip
   text?: NullableString[];

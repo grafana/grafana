@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-var env = common.NewSharedGitEnv(common.WithoutProvisioningFolderMetadata)
+var env = common.NewSharedGitEnv(common.WithoutProvisioningFolderMetadata, common.WithConnectionTypes([]string{"github", "gitOAuth"}))
 
 func sharedGitHelper(t *testing.T) *common.GitTestHelper {
 	t.Helper()

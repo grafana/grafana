@@ -28,7 +28,20 @@ import {
   getMaxHeightCssValue,
 } from './AutoGridLayoutManager';
 
+afterEach(() => setTestFlags({}));
+
 describe('AutoGridLayoutManager', () => {
+  it('disables a freshly attached grid when it activates during review', () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    const manager = AutoGridLayoutManager.createEmpty();
+    new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
+    expect(manager.state.layout.state.isDraggable).toBe(true);
+
+    const deactivate = manager.activate();
+    expect(manager.state.layout.state.isDraggable).toBe(false);
+    deactivate();
+  });
+
   describe('removePanel', () => {
     it('can remove panel', () => {
       const { manager, panel1 } = setup();
@@ -82,6 +95,19 @@ describe('AutoGridLayoutManager', () => {
     });
   });
   describe('createFromLayout', () => {
+    it('keeps a replacement auto grid non-draggable during review', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const layout = setupSceneWithDefaultGrid([getDefaultVizPanel()], {
+        isEditing: true,
+        mode: 'view',
+      });
+
+      const autoLayout = AutoGridLayoutManager.createFromLayout(layout);
+
+      expect(autoLayout.state.layout.state.children[0].state.body.state.title).toBe(panelTitle);
+      expect(autoLayout.state.layout.state.isDraggable).toBe(false);
+    });
+
     it('preserves panel pluginId, title and options when creating from DefaultGridLayoutManager', () => {
       const defaultLayout = setupSceneWithDefaultGrid([getDefaultVizPanel()]);
 

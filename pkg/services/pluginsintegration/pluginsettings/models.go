@@ -3,10 +3,13 @@ package pluginsettings
 import (
 	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 )
 
 var (
-	ErrPluginSettingNotFound = errors.New("plugin setting not found")
+	ErrPluginSettingNotFound         = errors.New("plugin setting not found")
+	ErrPluginSettingJSONDataTooLarge = errutil.ValidationFailed("pluginsettings.jsonDataTooLarge", errutil.WithPublicMessage("Plugin jsonData is too large to store."))
 )
 
 type DTO struct {

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -56,27 +58,36 @@ func (r *subChildrenREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
+	ctx, span := tracer.Start(ctx, "folders.subChildrenREST.Connect")
 	if name == folder.GeneralFolderUID {
 		name = ""
-	} else if _, err := r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
-		return nil, err
+	} else {
+		_, err := r.getter.Get(ctx, name, &v1.GetOptions{})
+		if err != nil {
+			_ = tracing.Error(span, err)
+			span.End()
+			return nil, err
+		}
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer span.End()
+
 		ns, err := request.NamespaceInfoFrom(ctx, true)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(tracing.Error(span, err))
 			return
 		}
 
 		limit, offset, err := parseChildrenPaging(req)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(tracing.Error(span, err))
 			return
 		}
 
 		gvr := folders.FolderResourceInfo.GroupVersionResource()
-		resp, err := r.searcher.Search(ctx, &resourcepb.ResourceSearchRequest{
+		searchCtx, searchSpan := tracer.Start(ctx, "folders.subChildrenREST.Connect.Search")
+		resp, err := r.searcher.Search(searchCtx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: ns.Value,
@@ -97,15 +108,20 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		err = resource.StatusErrorFromResponse(resp.GetError(), err)
+		if err != nil {
+			_ = tracing.Error(searchSpan, err)
+		}
+		searchSpan.End()
+		if err != nil {
 			logging.FromContext(ctx).Error("Failed to search child folders", "namespace", ns.Value, "folder", name, "error", err)
-			responder.Error(err)
+			responder.Error(tracing.Error(span, err))
 			return
 		}
 
 		rows, err := decodeSearchRows(resp)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(tracing.Error(span, err))
 			return
 		}
 
@@ -147,7 +163,7 @@ func parseChildrenPaging(req *http.Request) (int64, int64, error) {
 	if v := q.Get("limit"); v != "" {
 		parsed, err := strconv.ParseInt(v, 10, 64)
 		if err != nil || parsed < 0 {
-			return 0, 0, fmt.Errorf("invalid limit: %q", v)
+			return 0, 0, apierrors.NewBadRequest(fmt.Sprintf("invalid limit: %q", v))
 		}
 		if parsed > 0 {
 			limit = parsed
@@ -161,7 +177,7 @@ func parseChildrenPaging(req *http.Request) (int64, int64, error) {
 	if v := q.Get("continue"); v != "" {
 		parsed, err := strconv.ParseInt(v, 10, 64)
 		if err != nil || parsed < 0 {
-			return 0, 0, fmt.Errorf("invalid continue token: %q", v)
+			return 0, 0, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %q", v))
 		}
 		offset = parsed
 	}
@@ -179,52 +195,24 @@ func decodeSearchRows(response *resourcepb.ResourceSearchResponse) ([]decodedSea
 		return nil, nil
 	}
 
-	switch response.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		table := response.GetResults()
-		if table == nil {
-			return nil, nil
-		}
-		titleIndex := -1
-		for i, column := range table.Columns {
-			if column.GetName() == resource.SEARCH_FIELD_TITLE {
-				titleIndex = i
-				break
-			}
-		}
-		rows := make([]decodedSearchRow, 0, len(table.Rows))
-		for _, row := range table.Rows {
-			if row == nil || row.Key == nil {
-				continue
-			}
-			decoded := decodedSearchRow{key: row.Key, resourceVersion: row.ResourceVersion}
-			if titleIndex >= 0 && titleIndex < len(row.Cells) {
-				decoded.title = string(row.Cells[titleIndex])
-			}
-			rows = append(rows, decoded)
-		}
-		return rows, nil
-
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		rows := make([]decodedSearchRow, 0, len(response.Rows))
-		for i, row := range response.Rows {
-			if row == nil || row.Key == nil {
-				continue
-			}
-			values, err := resource.DecodeSearchValues(response.Fields, row)
-			if err != nil {
-				return nil, fmt.Errorf("decoding search result row %d: %w", i, err)
-			}
-			title, _ := values[resource.SEARCH_FIELD_TITLE].(string)
-			rows = append(rows, decodedSearchRow{
-				key:             row.Key,
-				resourceVersion: row.ResourceVersion,
-				title:           title,
-			})
-		}
-		return rows, nil
-
-	default:
+	if response.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
 	}
+	rows := make([]decodedSearchRow, 0, len(response.Rows))
+	for i, row := range response.Rows {
+		if row == nil || row.Key == nil {
+			continue
+		}
+		values, err := resource.DecodeSearchValues(response.Fields, row)
+		if err != nil {
+			return nil, fmt.Errorf("decoding search result row %d: %w", i, err)
+		}
+		title, _ := values[resource.SEARCH_FIELD_TITLE].(string)
+		rows = append(rows, decodedSearchRow{
+			key:             row.Key,
+			resourceVersion: row.ResourceVersion,
+			title:           title,
+		})
+	}
+	return rows, nil
 }

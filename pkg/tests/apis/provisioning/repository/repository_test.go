@@ -2572,6 +2572,67 @@ func TestIntegrationRepositoryController_DefaultBranch(t *testing.T) {
 	})
 }
 
+func TestIntegrationRepositoryController_DefaultBranchUnavailable(t *testing.T) {
+	for _, statusCode := range []int{http.StatusServiceUnavailable, http.StatusGatewayTimeout} {
+		t.Run(http.StatusText(statusCode), func(t *testing.T) {
+			helper := sharedHelper(t)
+			helper.GetEnv().GithubRepoFactory.Client = ghmock.NewMockedHTTPClient(
+				ghmock.WithRequestMatchHandler(
+					ghmock.GetReposByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.Header().Set("Content-Type", "application/json")
+						w.WriteHeader(statusCode)
+						_ = json.NewEncoder(w).Encode(map[string]string{"message": http.StatusText(statusCode)})
+					}),
+				),
+			)
+
+			provisioningClient, err := clientset.NewForConfig(helper.Org1.Admin.NewRestConfig())
+			require.NoError(t, err)
+			repoClient := provisioningClient.ProvisioningV0alpha1().Repositories("default")
+			repoName := fmt.Sprintf("repo-default-branch-%d", statusCode)
+			input := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
+				"Name":            repoName,
+				"URL":             "https://github.com/a/path",
+				"Token":           "someToken",
+				"SyncEnabled":     false,
+				"WorkflowsJSON":   `[]`,
+				"WebhookDisabled": true,
+			})
+			require.NoError(t, unstructured.SetNestedField(input.Object, "", "spec", "github", "branch"))
+			_, err = helper.Repositories.Resource.Create(t.Context(), input, metav1.CreateOptions{})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				assert.NoError(t, repoClient.Delete(context.WithoutCancel(t.Context()), repoName, metav1.DeleteOptions{}))
+			})
+
+			require.EventuallyWithT(t, func(collect *assert.CollectT) {
+				repo, err := repoClient.Get(t.Context(), repoName, metav1.GetOptions{})
+				if !assert.NoError(collect, err) {
+					return
+				}
+				assert.Empty(collect, repo.Spec.GitHub.Branch)
+				assert.Less(collect, repo.Status.ObservedGeneration, repo.Generation)
+				assert.False(collect, repo.Status.Health.Healthy)
+				assert.Positive(collect, repo.Status.Health.Checked)
+				assert.Equal(collect, provisioning.HealthFailureHealth, repo.Status.Health.Error)
+				wantMessage := "failed to get repository metadata: " + repository.ErrServerUnavailable.Error()
+				assert.Equal(collect, []string{wantMessage}, repo.Status.Health.Message)
+
+				ready := common.FindCondition(repo.Status.Conditions, provisioning.ConditionTypeReady)
+				if !assert.NotNil(collect, ready) {
+					return
+				}
+				assert.Equal(collect, metav1.ConditionFalse, ready.Status)
+				assert.Equal(collect, provisioning.ReasonServiceUnavailable, ready.Reason)
+				assert.Equal(collect, repo.Generation, ready.ObservedGeneration)
+				assert.Equal(collect, wantMessage, ready.Message)
+			}, common.WaitTimeoutDefault, common.WaitIntervalDefault,
+				"a GitHub default-branch outage should be persisted as unhealthy")
+		})
+	}
+}
+
 // TestIntegrationProvisioning_ConcurrentRepositoryCreation tests creating multiple repositories
 // concurrently with secure tokens, which triggers secret storage operations.
 // This simulates what happens with 'grafanactl resources push' when pushing multiple

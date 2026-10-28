@@ -1,17 +1,20 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query/react';
 import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
+import { shallowEqual } from 'react-redux';
+import { useDebounce } from 'react-use';
 
+import { getRoutingTreeDisplayName } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   Alert,
   Badge,
   Box,
   Button,
-  CodeEditor,
   Icon,
   LoadingPlaceholder,
   Modal,
@@ -35,7 +38,7 @@ import {
   trackImportToGMAWizardStarted,
   trackImportToGMAWizardStepSkipped,
 } from '../../Analytics';
-import { fetchAlertManagerConfig } from '../../api/alertmanager';
+import { type ValidateAlertmanagerConfigImportArgs, convertToGMAApi } from '../../api/convertToGMAApi';
 import { useIsAutoSyncActive } from '../../hooks/useIsAutoSyncActive';
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { ALERTING_IMPORT_SETTINGS_URL } from '../../settings/navigation';
@@ -55,20 +58,25 @@ import { CancelButton } from './Wizard/CancelButton';
 import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { WizardLayout } from './Wizard/WizardLayout';
 import { WizardStep } from './Wizard/WizardStep';
-import { getPauseRulesLabel, isAutoSyncCommitted, isAutoSyncSelected } from './Wizard/steps';
+import { getPauseRulesLabel, isAutoSyncCommitted } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
+import { PreviewContentModal } from './preview/PreviewContentModal';
+import { useNotificationsPreview } from './preview/useNotificationsPreview';
+import { formatPreviewError, usePreviewContent } from './preview/usePreviewContent';
 import { Step1Content, useStep1Validation } from './steps/Step1AlertmanagerResources';
 import { Step2Content, useStep2Validation } from './steps/Step2AlertRules';
-import { type DryRunValidationResult } from './types';
+import { canRunDryRun } from './steps/utils';
+import { type DryRunState, type DryRunValidationResult } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
 import {
   buildRoutingParams,
+  deriveDryRunResult,
+  deriveDryRunState,
   filterRulerRulesConfig,
-  useDryRunNotifications,
+  parseDryRunResponse,
   useImportNotifications,
   useImportRules,
 } from './useImport';
-import { getRoutingTreeLabel } from './useRoutingTrees';
 
 export interface ImportFormValues {
   // Step 1: Alertmanager resources
@@ -103,6 +111,49 @@ export interface ImportFormValues {
   pauseAlertingRules: boolean;
   pauseRecordingRules: boolean;
   targetDatasourceUID?: string;
+}
+
+type Step1Values = Pick<
+  ImportFormValues,
+  | 'policyTreeName'
+  | 'notificationsSource'
+  | 'notificationsDatasourceUID'
+  | 'notificationsDatasourceName'
+  | 'notificationsYamlFile'
+  | 'notificationsTemplateFiles'
+  | 'autoSyncNotificationsEnabled'
+>;
+
+function pickStep1Values(values: ImportFormValues): Step1Values {
+  return {
+    policyTreeName: values.policyTreeName,
+    notificationsSource: values.notificationsSource,
+    notificationsDatasourceUID: values.notificationsDatasourceUID,
+    notificationsDatasourceName: values.notificationsDatasourceName,
+    notificationsYamlFile: values.notificationsYamlFile,
+    notificationsTemplateFiles: values.notificationsTemplateFiles,
+    autoSyncNotificationsEnabled: values.autoSyncNotificationsEnabled,
+  };
+}
+
+function buildDryRunArgs(values: Step1Values): ValidateAlertmanagerConfigImportArgs | typeof skipToken {
+  const canRun = canRunDryRun({
+    policyTreeName: values.policyTreeName,
+    notificationsSource: values.notificationsSource,
+    notificationsYamlFile: values.notificationsYamlFile,
+    notificationsDatasourceUID: values.notificationsDatasourceUID,
+    notificationsTemplateFiles: values.notificationsTemplateFiles,
+    autoSyncNotificationsEnabled: values.autoSyncNotificationsEnabled ?? false,
+  });
+  return canRun
+    ? {
+        source: values.notificationsSource,
+        yamlFile: values.notificationsYamlFile,
+        templateFiles: values.notificationsTemplateFiles,
+        datasourceName: values.notificationsDatasourceName ?? undefined,
+        configIdentifier: values.policyTreeName,
+      }
+    : skipToken;
 }
 
 const ImportToGMA = () => {
@@ -154,8 +205,6 @@ function AutoSyncActiveBlock() {
   // who can reach the wizard: the sync worker mirrors only the Alertmanager configuration, and the
   // convert endpoint rejects notification imports alone.
   const canManageAutoSync = contextSrv.hasRole(OrgRole.Admin);
-  const isRulesImportEnabled = Boolean(config.featureToggles.alertingMigrationUI);
-
   return (
     <Alert severity="warning" title={t('alerting.import-to-gma.autosync-active-block.title', 'Auto-sync is enabled')}>
       <Stack direction="column" gap={1} alignItems="flex-start">
@@ -173,11 +222,9 @@ function AutoSyncActiveBlock() {
           </Text>
         )}
         <Stack direction="row" gap={2} alignItems="center" wrap="wrap">
-          {isRulesImportEnabled && (
-            <TextLink href={createRelativeUrl(ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES)} icon="upload">
-              {t('alerting.import-to-gma.autosync-active-block.import-rules', 'Import alert rules')}
-            </TextLink>
-          )}
+          <TextLink href={createRelativeUrl(ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES)} icon="upload">
+            {t('alerting.import-to-gma.autosync-active-block.import-rules', 'Import alert rules')}
+          </TextLink>
           {canManageAutoSync && (
             <TextLink href={ALERTING_IMPORT_SETTINGS_URL} icon="cog">
               {t('alerting.import-to-gma.autosync-active-block.go-to-settings', 'Go to Alerting settings')}
@@ -193,38 +240,18 @@ function AutoSyncActiveBlock() {
  * Inner content component that uses the stepper state
  */
 function ImportWizardContent() {
-  const { activeStep, setStepErrors } = useStepperState();
+  const { activeStep, setStepErrors, setStepCompleted } = useStepperState();
 
   useEffect(() => {
     trackImportToGMAWizardStarted();
   }, []);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [step1Snapshot, setStep1Snapshot] = useState<Step1Values>();
+  const [isStep1Checking, setIsStep1Checking] = useState(false);
   const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error' | 'partial-error'>(
     'idle'
   );
-  const {
-    runDryRun,
-    reset: resetDryRun,
-    isLoading: isDryRunLoading,
-    result: dryRunResult,
-    error: dryRunError,
-  } = useDryRunNotifications();
-
-  // Derive dry-run UI state from RTK Query state
-  const dryRunState = useMemo((): 'idle' | 'loading' | 'success' | 'warning' | 'error' => {
-    if (isDryRunLoading) {
-      return 'loading';
-    }
-    if (dryRunError || (dryRunResult && !dryRunResult.valid)) {
-      return 'error';
-    }
-    if (dryRunResult?.valid) {
-      const hasRenames = dryRunResult.renamedReceivers.length > 0 || dryRunResult.renamedTimeIntervals.length > 0;
-      return hasRenames ? 'warning' : 'success';
-    }
-    return 'idle';
-  }, [isDryRunLoading, dryRunError, dryRunResult]);
 
   const importNotifications = useImportNotifications();
   const importRules = useImportRules();
@@ -266,71 +293,145 @@ function ImportWizardContent() {
   // Permission checks aligned with backend authorization.go
   const { canImportNotifications, canImportRules } = useCanImportToGMA();
 
-  // Trigger dry-run validation (called automatically by Step1 when source changes)
-  const handleTriggerDryRun = useCallback(() => {
-    const formValues = getValues();
+  // Dry-run validation wiring
+  const [
+    notificationsSource,
+    policyTreeName,
+    notificationsDatasourceUID,
+    notificationsDatasourceName,
+    notificationsYamlFile,
+    notificationsTemplateFiles,
+    autoSyncNotificationsEnabled,
+  ] = watch([
+    'notificationsSource',
+    'policyTreeName',
+    'notificationsDatasourceUID',
+    'notificationsDatasourceName',
+    'notificationsYamlFile',
+    'notificationsTemplateFiles',
+    'autoSyncNotificationsEnabled',
+  ]);
 
-    if (!formValues.policyTreeName) {
-      // policy tree name is required to trigger dry-run
-      return;
-    }
-    if (formValues.notificationsSource === 'yaml' && !formValues.notificationsYamlFile) {
-      // YAML file is required to trigger dry-run
-      return;
-    }
-    if (formValues.notificationsSource === 'datasource' && !formValues.notificationsDatasourceName) {
-      // Datasource is required to trigger dry-run
-      return;
-    }
+  const liveStep1Values: Step1Values = useMemo(
+    () => ({
+      notificationsSource,
+      policyTreeName,
+      notificationsDatasourceUID,
+      notificationsDatasourceName,
+      notificationsYamlFile,
+      notificationsTemplateFiles,
+      autoSyncNotificationsEnabled,
+    }),
+    [
+      notificationsSource,
+      policyTreeName,
+      notificationsDatasourceUID,
+      notificationsDatasourceName,
+      notificationsYamlFile,
+      notificationsTemplateFiles,
+      autoSyncNotificationsEnabled,
+    ]
+  );
+  const liveDryRunArgs = useMemo(() => buildDryRunArgs(liveStep1Values), [liveStep1Values]);
 
-    runDryRun({
-      source: formValues.notificationsSource,
-      datasourceName: formValues.notificationsDatasourceName ?? undefined,
-      yamlFile: formValues.notificationsYamlFile,
-      templateFiles: formValues.notificationsTemplateFiles,
-      configIdentifier: formValues.policyTreeName,
-      promote: false,
-    });
-  }, [getValues, runDryRun]);
+  // Debounces args into the query hook to avoid a call per keystroke. Early feedback only — it
+  // never gates Next (handleStep1Next runs its own fresh check), so lagging live inputs is fine.
+  const [dryRunArgs, setDryRunArgs] = useState<ValidateAlertmanagerConfigImportArgs | typeof skipToken>(skipToken);
+  useDebounce(() => setDryRunArgs(liveDryRunArgs), 500, [liveDryRunArgs]);
 
-  // Sync step errors with dry-run state and track dry-run outcomes
+  const {
+    currentData: dryRunRawData,
+    isFetching: isDryRunFetching,
+    error: dryRunRawError,
+  } = convertToGMAApi.useValidateAlertmanagerConfigImportQuery(dryRunArgs);
+
+  const dryRunParsedResult = useMemo(
+    () => (dryRunRawData ? parseDryRunResponse(dryRunRawData) : undefined),
+    [dryRunRawData]
+  );
+  const dryRunErrorMessage = dryRunRawError ? stringifyErrorLike(dryRunRawError) : undefined;
+  const dryRunResult = useMemo(
+    () => deriveDryRunResult(dryRunParsedResult, dryRunErrorMessage),
+    [dryRunParsedResult, dryRunErrorMessage]
+  );
+  const dryRunState = useMemo(
+    () => deriveDryRunState(isDryRunFetching, dryRunResult, dryRunErrorMessage),
+    [isDryRunFetching, dryRunResult, dryRunErrorMessage]
+  );
+
+  const [triggerDryRunCheck] = convertToGMAApi.useLazyValidateAlertmanagerConfigImportQuery();
+
+  // Sync step errors with dry-run state
   useEffect(() => {
     if (dryRunState === 'error') {
       setStepErrors(StepKey.Notifications, true);
-      trackImportToGMADryrunError();
-    } else if (dryRunState === 'success') {
+    } else if (dryRunState === 'success' || dryRunState === 'warning') {
       setStepErrors(StepKey.Notifications, false);
-      trackImportToGMADryrunSuccess();
-    } else if (dryRunState === 'warning') {
-      setStepErrors(StepKey.Notifications, false);
-      trackImportToGMADryrunWarning({
-        renamedReceiversCount: dryRunResult?.renamedReceivers.length ?? 0,
-        renamedTimeIntervalsCount: dryRunResult?.renamedTimeIntervals.length ?? 0,
-      });
     }
-  }, [dryRunState, dryRunResult, setStepErrors]);
+  }, [dryRunState, setStepErrors]);
 
   // Step 1 handlers
   // Note: WizardStep and NextButton handle stepper state (completed, skipped, visited, navigation)
-  // These handlers only need to update form values and control whether to proceed
-  const handleStep1Next = useCallback((): boolean => {
-    if (dryRunState === 'error') {
-      return false;
+  // These handlers only need to update form values and control whether to proceed.
+  // Runs its own fresh, awaited check rather than trusting the debounced preview above, which can
+  // lag the live inputs by design. The values it checks are snapshotted and are what the review and
+  // import steps use, so what we validate is what we import.
+  const handleStep1Next = useCallback(async (): Promise<boolean> => {
+    const snapshot = pickStep1Values(getValues());
+    const args = buildDryRunArgs(snapshot);
+    if (args !== skipToken) {
+      // Keep the preview in sync with what we're about to check, instead of waiting on the debounce.
+      setDryRunArgs(args);
+      setIsStep1Checking(true);
+      try {
+        const result = parseDryRunResponse(await triggerDryRunCheck(args).unwrap());
+        const state = deriveDryRunState(false, result, undefined);
+        if (state === 'warning') {
+          trackImportToGMADryrunWarning({
+            renamedReceiversCount: result.renamedReceivers.length,
+            renamedTimeIntervalsCount: result.renamedTimeIntervals.length,
+          });
+        } else if (state === 'success') {
+          trackImportToGMADryrunSuccess();
+        } else {
+          trackImportToGMADryrunError();
+          return false;
+        }
+      } catch {
+        trackImportToGMADryrunError();
+        return false;
+      } finally {
+        setIsStep1Checking(false);
+      }
     }
+    setStep1Snapshot(snapshot);
     setValue('step1Completed', true);
     setValue('step1Skipped', false);
-    const currentPolicyTreeName = getValues('policyTreeName');
-    const currentRoutingTree = getValues('selectedRoutingTree');
-    if (currentPolicyTreeName && !currentRoutingTree) {
-      setValue('selectedRoutingTree', currentPolicyTreeName);
+    if (snapshot.policyTreeName && !getValues('selectedRoutingTree')) {
+      setValue('selectedRoutingTree', snapshot.policyTreeName);
     }
     return true;
-  }, [dryRunState, setValue, getValues]);
+  }, [triggerDryRunCheck, setValue, getValues]);
+
+  // An edit after Next makes the snapshot stale. Un-complete the step so the stepper can't jump
+  // ahead to Review on values that were never validated.
+  useEffect(() => {
+    if (!step1Snapshot) {
+      return;
+    }
+    const edited = !shallowEqual(step1Snapshot, liveStep1Values);
+    if (edited) {
+      setStep1Snapshot(undefined);
+      setValue('step1Completed', false);
+      setStepCompleted(StepKey.Notifications, false);
+    }
+  }, [step1Snapshot, liveStep1Values, setValue, setStepCompleted]);
 
   const handleStep1Skip = useCallback(() => {
     setValue('step1Completed', false);
     setValue('step1Skipped', true);
     setValue('selectedRoutingTree', '');
+    setStep1Snapshot(undefined);
     trackImportToGMAWizardStepSkipped({ step: 'notifications' });
   }, [setValue]);
 
@@ -347,8 +448,11 @@ function ImportWizardContent() {
     trackImportToGMAWizardStepSkipped({ step: 'rules' });
   }, [setValue]);
 
+  // Step 1 values come from the snapshot validated on Next; the rest is read live.
+  const getImportValues = useCallback(() => ({ ...getValues(), ...step1Snapshot }), [getValues, step1Snapshot]);
+
   // Get ruler rules for rules import (needed when importing from datasource)
-  const formValues = getValues();
+  const formValues = getImportValues();
   const willEnableAutoSync = isAutoSyncCommitted(
     formValues.autoSyncNotificationsEnabled ?? false,
     formValues.notificationsSource,
@@ -367,7 +471,7 @@ function ImportWizardContent() {
   const handleConfirmImport = useCallback(async () => {
     setImportStatus('importing');
 
-    const values = getValues();
+    const values = getImportValues();
     const willEnableAutoSync = isAutoSyncCommitted(
       values.autoSyncNotificationsEnabled ?? false,
       values.notificationsSource,
@@ -494,7 +598,7 @@ function ImportWizardContent() {
         stringifyErrorLike(err)
       );
     }
-  }, [getValues, importNotifications, importRules, rulesFromDatasource, saveAutoSync, notifyApp]);
+  }, [getImportValues, importNotifications, importRules, rulesFromDatasource, saveAutoSync, notifyApp]);
 
   const handleCancelConfirm = useCallback(() => {
     // Only allow closing if not importing
@@ -538,8 +642,7 @@ function ImportWizardContent() {
               onCancel={handleWizardCancel}
               dryRunState={dryRunState}
               dryRunResult={dryRunResult}
-              onTriggerDryRun={handleTriggerDryRun}
-              onResetDryRun={resetDryRun}
+              isChecking={isStep1Checking}
             />
           )}
 
@@ -558,7 +661,7 @@ function ImportWizardContent() {
           {/* Step 3: Review */}
           {activeStep === StepKey.Review && (
             <ReviewStep
-              formData={getValues()}
+              formData={formValues}
               onStartImport={handleStartImport}
               onCancel={handleWizardCancel}
               dryRunResult={dryRunResult}
@@ -586,14 +689,16 @@ function ImportWizardContent() {
  */
 interface Step1WrapperProps {
   canImport: boolean;
-  onNext: () => boolean;
+  onNext: () => boolean | Promise<boolean>;
   onSkip: () => void;
   onCancel: () => void;
-  dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
+  dryRunState: DryRunState;
   dryRunResult?: DryRunValidationResult;
-  onTriggerDryRun: () => void;
-  onResetDryRun: () => void;
+  /** Locks the inputs so they can't change while Next's check is validating them. */
+  isChecking: boolean;
 }
+
+const step1FieldsetStyle = css({ border: 0, margin: 0, padding: 0, minWidth: 0 });
 
 function Step1Wrapper({
   canImport,
@@ -602,19 +707,9 @@ function Step1Wrapper({
   onCancel,
   dryRunState,
   dryRunResult,
-  onTriggerDryRun,
-  onResetDryRun,
+  isChecking,
 }: Step1WrapperProps) {
   const isStep1Valid = useStep1Validation(canImport);
-  const { watch } = useFormContext<ImportFormValues>();
-  const [autoSyncNotificationsEnabled, notificationsSource] = watch([
-    'autoSyncNotificationsEnabled',
-    'notificationsSource',
-  ]);
-  const autoSyncActive = isAutoSyncSelected(autoSyncNotificationsEnabled ?? false, notificationsSource);
-  // Advance only once dry-run passes; Auto-sync skips it entirely and relies on validity alone.
-  const dryRunPassed = dryRunState === 'success' || dryRunState === 'warning';
-  const canProceed = autoSyncActive ? isStep1Valid : isStep1Valid && dryRunPassed;
 
   return (
     <WizardStep
@@ -630,19 +725,15 @@ function Step1Wrapper({
       onCancel={onCancel}
       canSkip
       skipLabel={t('alerting.import-to-gma.step1.skip', 'Skip this step')}
-      disableNext={!canProceed}
+      disableNext={!isStep1Valid}
       disabledNextTooltip={t(
         'alerting.import-to-gma.step1.next-disabled-tooltip',
-        'Complete the required fields and wait for validation to pass before continuing.'
+        'Complete the required fields before continuing.'
       )}
     >
-      <Step1Content
-        canImport={canImport}
-        dryRunState={dryRunState}
-        dryRunResult={dryRunResult}
-        onTriggerDryRun={onTriggerDryRun}
-        onResetDryRun={onResetDryRun}
-      />
+      <fieldset disabled={isChecking} className={step1FieldsetStyle}>
+        <Step1Content canImport={canImport} dryRunState={dryRunState} dryRunResult={dryRunResult} />
+      </fieldset>
     </WizardStep>
   );
 }
@@ -841,7 +932,7 @@ function RulesCardContent({ formData, willImportRules, styles }: RulesCardConten
         <Text>
           {formData.selectedRoutingTree
             ? t('alerting.import-to-gma.review.routing-tree', 'Policy tree: {{name}}', {
-                name: getRoutingTreeLabel(formData.selectedRoutingTree),
+                name: getRoutingTreeDisplayName(formData.selectedRoutingTree),
               })
             : t('alerting.import-to-gma.review.routing-none', 'No policy tree selected')}
         </Text>
@@ -883,18 +974,20 @@ interface ReviewStepProps {
   rulesFromDatasource?: RulerRulesConfigDTO;
 }
 
+// True when a source is 'yaml' and its file has actually been uploaded (not just selected as the source type).
+// Typed as a guard so callers get `file` narrowed to `File` afterwards, instead of a bare boolean.
+function hasYamlUpload(source: string, file: File | null): file is File {
+  return source === 'yaml' && file !== null;
+}
+
 function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFromDatasource }: ReviewStepProps) {
   const styles = useStyles2(getStyles);
   const { setActiveStep } = useStepperState();
 
-  const [showNotificationsPreview, setShowNotificationsPreview] = useState(false);
-  const [showRulesPreview, setShowRulesPreview] = useState(false);
-  const [notificationsPreviewContent, setNotificationsPreviewContent] = useState<string>('');
-  const [rulesPreviewContent, setRulesPreviewContent] = useState<string>('');
-  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
-  const [isLoadingRules, setIsLoadingRules] = useState(false);
-
   const willImportNotifications = formData.step1Completed && !formData.step1Skipped;
+  const notificationsPreview = useNotificationsPreview(formData, { enabled: willImportNotifications });
+  const rulesPreview = usePreviewContent('');
+
   const willImportRules = formData.step2Completed && !formData.step2Skipped;
   const nothingToImport = !willImportNotifications && !willImportRules;
   const willEnableAutoSync = isAutoSyncCommitted(
@@ -907,56 +1000,27 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
     setActiveStep(StepKey.Rules);
   };
 
-  // Load notifications preview content
-  const handlePreviewNotifications = useCallback(async () => {
-    setIsLoadingNotifications(true);
-    setShowNotificationsPreview(true);
-
-    try {
-      let content = '';
-      if (formData.notificationsSource === 'yaml' && formData.notificationsYamlFile) {
-        content = await formData.notificationsYamlFile.text();
-      } else if (formData.notificationsSource === 'datasource' && formData.notificationsDatasourceName) {
-        const config = await fetchAlertManagerConfig(formData.notificationsDatasourceName);
-        content = JSON.stringify(config.alertmanager_config, null, 2);
-      }
-      setNotificationsPreviewContent(content);
-    } catch (err) {
-      setNotificationsPreviewContent(
-        t('alerting.import-to-gma.preview.error', 'Failed to load content: {{error}}', {
-          error: err instanceof Error ? err.message : String(err),
-        })
-      );
-    } finally {
-      setIsLoadingNotifications(false);
-    }
-  }, [formData.notificationsSource, formData.notificationsYamlFile, formData.notificationsDatasourceName]);
-
-  // Load rules preview content
-  const handlePreviewRules = useCallback(async () => {
-    setIsLoadingRules(true);
-    setShowRulesPreview(true);
-
-    try {
-      let content = '';
-      if (formData.rulesSource === 'yaml' && formData.rulesYamlFile) {
-        content = await formData.rulesYamlFile.text();
+  // Load rules preview content. Rule definitions (expr/labels/annotations) don't carry secrets,
+  // unlike notifier configs, so this is shown as-is rather than run through redactPreviewSecrets.
+  const handlePreviewRules = useCallback(() => {
+    rulesPreview.show(async () => {
+      if (hasYamlUpload(formData.rulesSource, formData.rulesYamlFile)) {
+        return formData.rulesYamlFile.text();
       } else if (formData.rulesSource === 'datasource' && rulesFromDatasource) {
         // Apply filters if set
         const { filteredConfig } = filterRulerRulesConfig(rulesFromDatasource, formData.namespace, formData.ruleGroup);
-        content = JSON.stringify(filteredConfig, null, 2);
+        return JSON.stringify(filteredConfig, null, 2);
       }
-      setRulesPreviewContent(content);
-    } catch (err) {
-      setRulesPreviewContent(
-        t('alerting.import-to-gma.preview.error', 'Failed to load content: {{error}}', {
-          error: err instanceof Error ? err.message : String(err),
-        })
-      );
-    } finally {
-      setIsLoadingRules(false);
-    }
-  }, [formData.rulesSource, formData.rulesYamlFile, formData.namespace, formData.ruleGroup, rulesFromDatasource]);
+      return '';
+    }, formatPreviewError);
+  }, [
+    rulesPreview,
+    formData.rulesSource,
+    formData.rulesYamlFile,
+    formData.namespace,
+    formData.ruleGroup,
+    rulesFromDatasource,
+  ]);
 
   // Calculate rules count
   const rulesCount = useMemo(() => {
@@ -1016,7 +1080,8 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
                     variant="secondary"
                     size="sm"
                     icon="eye"
-                    onClick={handlePreviewNotifications}
+                    onClick={notificationsPreview.open}
+                    disabled={notificationsPreview.schemasLoading}
                     aria-label={t('alerting.import-to-gma.review.preview-config-aria', 'Preview configuration')}
                   >
                     {t('alerting.import-to-gma.review.preview', 'Preview')}
@@ -1099,84 +1164,31 @@ function ReviewStep({ formData, onStartImport, onCancel, dryRunResult, rulesFrom
 
       {/* Notifications Preview Modal */}
       <PreviewContentModal
-        isOpen={showNotificationsPreview}
+        isOpen={notificationsPreview.isOpen}
         title={t('alerting.import-to-gma.preview.notifications-title', 'Notifications Config Preview')}
-        content={notificationsPreviewContent}
-        isLoading={isLoadingNotifications}
+        content={notificationsPreview.content}
+        isLoading={notificationsPreview.isLoading}
         language={formData.notificationsSource === 'yaml' ? 'yaml' : 'json'}
-        onDismiss={() => setShowNotificationsPreview(false)}
+        onDismiss={notificationsPreview.dismiss}
+        reveal={{
+          isRevealed: notificationsPreview.isRevealed,
+          canReveal: notificationsPreview.canReveal,
+          onToggle: notificationsPreview.toggleReveal,
+        }}
       />
 
       {/* Rules Preview Modal */}
       <PreviewContentModal
-        isOpen={showRulesPreview}
+        isOpen={rulesPreview.isOpen}
         title={t('alerting.import-to-gma.preview.rules-title', 'Alert Rules Preview')}
-        content={rulesPreviewContent}
-        isLoading={isLoadingRules}
+        content={rulesPreview.content}
+        isLoading={rulesPreview.isLoading}
         language={formData.rulesSource === 'yaml' ? 'yaml' : 'json'}
-        onDismiss={() => setShowRulesPreview(false)}
+        onDismiss={rulesPreview.hide}
       />
     </Stack>
   );
 }
-
-// Preview Content Modal Component
-interface PreviewContentModalProps {
-  isOpen: boolean;
-  title: string;
-  content: string;
-  isLoading: boolean;
-  language: 'yaml' | 'json';
-  onDismiss: () => void;
-}
-
-function PreviewContentModal({ isOpen, title, content, isLoading, language, onDismiss }: PreviewContentModalProps) {
-  const styles = useStyles2(getPreviewModalStyles);
-
-  return (
-    <Modal isOpen={isOpen} title={title} onDismiss={onDismiss} className={styles.modal}>
-      {isLoading ? (
-        <Stack direction="row" gap={2} alignItems="center" justifyContent="center">
-          <Spinner />
-          <Text>{t('alerting.import-to-gma.preview.loading', 'Loading content...')}</Text>
-        </Stack>
-      ) : (
-        <div className={styles.editorContainer}>
-          <CodeEditor
-            width="100%"
-            height={500}
-            language={language}
-            value={content}
-            monacoOptions={{
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              lineNumbers: 'on',
-              readOnly: true,
-              wordWrap: 'on',
-            }}
-          />
-        </div>
-      )}
-      <Modal.ButtonRow>
-        <Button variant="secondary" onClick={onDismiss}>
-          {t('alerting.common.close', 'Close')}
-        </Button>
-      </Modal.ButtonRow>
-    </Modal>
-  );
-}
-
-const getPreviewModalStyles = (theme: GrafanaTheme2) => ({
-  modal: css({
-    width: '900px',
-    maxWidth: '90vw',
-  }),
-  editorContainer: css({
-    border: `1px solid ${theme.colors.border.medium}`,
-    borderRadius: theme.shape.radius.default,
-    overflow: 'hidden',
-  }),
-});
 
 // Confirm Import Modal Component
 interface ConfirmImportModalProps {

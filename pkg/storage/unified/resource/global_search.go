@@ -8,13 +8,19 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"iter"
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -46,53 +52,249 @@ func groupResourceOf(key NamespacedResource) schema.GroupResource {
 	return schema.GroupResource{Group: key.Group, Resource: key.Resource}
 }
 
-// GlobalSearchResourceTypes lists the resource types a namespace-wide index
-// covers.
-//
-// Written out for now. The list is meant to come from the manifests, with each
-// kind opting in, which also gives the owner of a kind somewhere to say so.
-// Until then it stays short and explicit, because adding a type means checking
-// how its documents are authorized first.
+// GlobalSearchResourceTypes lists, sorted, the resource types a namespace-wide
+// index covers according to the manifests compiled into this binary. A search
+// server also reads manifests at runtime, and uses GlobalSearchCoverageRegistry
+// instead.
 func GlobalSearchResourceTypes() []schema.GroupResource {
-	return []schema.GroupResource{
-		{Group: "dashboard.grafana.app", Resource: "dashboards"},
-		{Group: "folder.grafana.app", Resource: "folders"},
-	}
+	return slices.Clone(globalSearchCoverage().types)
 }
 
-// keepStandardFieldsOnly drops what a document carries for its own resource type,
-// leaving the fields every resource has.
-//
-// A namespace-wide index declares no resource-specific fields, so these values
-// would be built, handed over, and dropped by the index, once per document and
-// with a warning each time.
-func keepStandardFieldsOnly(doc *IndexableDocument) *IndexableDocument {
-	if doc == nil {
+// GlobalSearchKinds names the Kubernetes kind of each covered resource type,
+// which a result reports and which its group and resource do not say.
+func GlobalSearchKinds() map[schema.GroupResource]string {
+	return maps.Clone(globalSearchCoverage().kinds)
+}
+
+// namespacedScope is the manifest's spelling for a kind that lives in a
+// namespace. A global index holds one namespace, so it covers only such kinds.
+const namespacedScope = "Namespaced"
+
+type globalSearchTypes struct {
+	types []schema.GroupResource
+	kinds map[schema.GroupResource]string
+}
+
+// globalSearchCoverage is worked out once, from every manifest compiled in, on
+// first use: after the init functions that register manifests have run.
+var globalSearchCoverage = sync.OnceValue(func() globalSearchTypes {
+	return globalSearchCoverageOf(AppManifests())
+})
+
+// GlobalSearchCoverageRegistry holds the resource types one search server's
+// global indexes cover, which change when it reloads its manifests. Its methods
+// accept a nil registry and then answer from the compiled-in manifests.
+type GlobalSearchCoverageRegistry struct {
+	mu       sync.RWMutex
+	coverage globalSearchTypes
+	// changed is closed, and replaced, when the coverage changes.
+	changed chan struct{}
+}
+
+func NewGlobalSearchCoverageRegistry(builtin []*app.ManifestData) *GlobalSearchCoverageRegistry {
+	return &GlobalSearchCoverageRegistry{coverage: globalSearchCoverageOf(builtin), changed: make(chan struct{})}
+}
+
+// Reload replaces the coverage from the given manifests, with later sources
+// winning, and returns the types added and dropped.
+func (r *GlobalSearchCoverageRegistry) Reload(sources ...[]*app.ManifestData) (added, dropped []schema.GroupResource) {
+	next := globalSearchCoverageOf(sources...)
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, gr := range next.types {
+		if _, ok := r.coverage.kinds[gr]; !ok {
+			added = append(added, gr)
+		}
+	}
+	for _, gr := range r.coverage.types {
+		if _, ok := next.kinds[gr]; !ok {
+			dropped = append(dropped, gr)
+		}
+	}
+	r.coverage = next
+	if len(added) > 0 || len(dropped) > 0 {
+		close(r.changed)
+		r.changed = make(chan struct{})
+	}
+	return added, dropped
+}
+
+// Types lists the covered resource types, sorted.
+func (r *GlobalSearchCoverageRegistry) Types() []schema.GroupResource {
+	if r == nil {
+		return GlobalSearchResourceTypes()
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return slices.Clone(r.coverage.types)
+}
+
+// Snapshot returns the covered resource types, sorted, and the Kubernetes kind
+// of each, read together.
+func (r *GlobalSearchCoverageRegistry) Snapshot() ([]schema.GroupResource, map[schema.GroupResource]string) {
+	if r == nil {
+		return GlobalSearchResourceTypes(), GlobalSearchKinds()
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return slices.Clone(r.coverage.types), maps.Clone(r.coverage.kinds)
+}
+
+// Covers reports whether global indexes hold documents of this resource type.
+func (r *GlobalSearchCoverageRegistry) Covers(gr schema.GroupResource) bool {
+	if r == nil {
+		return GlobalIndexCoversType(gr)
+	}
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	_, ok := r.coverage.kinds[gr]
+	return ok
+}
+
+// Changed returns a channel closed at the next change of the coverage. A nil
+// registry never changes.
+func (r *GlobalSearchCoverageRegistry) Changed() <-chan struct{} {
+	if r == nil {
 		return nil
 	}
-	doc.Fields = nil
-	doc.SelectableFields = nil
-	return doc
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.changed
+}
+
+// globalSearchCoverageOf returns the namespaced kinds that opt in to the global
+// search index in any version of their manifest, and serve the search and
+// list-keys routes in every version. A kind declared by several manifests is
+// decided by the first one in the last source that declares it, as for hybrid
+// search.
+//
+// A kind turns those routes off when its lists hide objects in a way generic
+// reads cannot repeat, such as showing users only their own. The global index is
+// another generic read, so it leaves such a kind out even if it opts in.
+func globalSearchCoverageOf(sources ...[]*app.ManifestData) globalSearchTypes {
+	out := globalSearchTypes{kinds: map[schema.GroupResource]string{}}
+	decided := map[schema.GroupResource]bool{}
+	for _, source := range slices.Backward(sources) {
+		for _, m := range source {
+			if m == nil {
+				continue
+			}
+			names := ManifestKinds(m, nil)
+			kinds := map[schema.GroupResource]string{}
+			excluded := map[schema.GroupResource]bool{}
+			for _, version := range m.Versions {
+				for _, kind := range version.Kinds {
+					gr := schema.GroupResource{Group: m.Group, Resource: ManifestResourceName(kind)}
+					if decided[gr] {
+						continue
+					}
+					if kind.InGlobalSearchIndex() {
+						kinds[gr] = names[gr].Kind
+					}
+					if !kind.HasSearchEndpoint() || !kind.HasListKeysEndpoint() || kind.Scope != namespacedScope {
+						excluded[gr] = true
+					} else if _, ok := excluded[gr]; !ok {
+						excluded[gr] = false
+					}
+				}
+			}
+			// Every kind this manifest declares is decided by it, even one that
+			// does not opt in, so it overrides an older manifest's opt-in.
+			for gr, ex := range excluded {
+				decided[gr] = true
+				if kind, ok := kinds[gr]; ok && !ex {
+					out.kinds[gr] = kind
+				}
+			}
+		}
+	}
+	out.types = slices.Collect(maps.Keys(out.kinds))
+	slices.SortFunc(out.types, func(a, b schema.GroupResource) int { return strings.Compare(a.String(), b.String()) })
+	return out
+}
+
+// Type-specific builders can fetch external data that this index never uses.
+type globalDocumentBuilder struct {
+	blob BlobSupport
+}
+
+// Unexpected field types must not exclude an otherwise searchable resource.
+type globalDocumentSpec struct {
+	Title       any `json:"title"`
+	Name        any `json:"name"`
+	Description any `json:"description"`
+	Tags        any `json:"tags"`
+}
+
+func (b *globalDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
+	// Large panel and query payloads are not needed for standard fields.
+	var partial struct {
+		Metadata map[string]any     `json:"metadata"`
+		Spec     globalDocumentSpec `json:"spec"`
+	}
+	if err := json.Unmarshal(value, &partial); err != nil {
+		return nil, err
+	}
+	obj := &unstructured.Unstructured{Object: map[string]any{"metadata": partial.Metadata}}
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return nil, err
+	}
+	spec := partial.Spec
+
+	if info := meta.GetBlob(); info != nil {
+		if b.blob == nil {
+			return nil, fmt.Errorf("blob support is not configured")
+		}
+		rsp, err := b.blob.GetResourceBlob(ctx, key, info, true)
+		if err := ErrorFromResponse(rsp.GetError(), err); err != nil {
+			return nil, fmt.Errorf("error reading blob: %w", err)
+		}
+		var content struct {
+			globalDocumentSpec
+			Spec *globalDocumentSpec `json:"spec"`
+		}
+		if err := json.Unmarshal(rsp.GetValue(), &content); err != nil {
+			return nil, err
+		}
+		// Blobs can hold a full resource or just its spec. Keep the stored
+		// metadata, which may have changed since the blob was written.
+		spec = content.globalDocumentSpec
+		if content.Spec != nil {
+			spec = *content.Spec
+		}
+	}
+
+	obj.Object["spec"] = map[string]any{
+		"title": spec.Title, "name": spec.Name,
+		"description": spec.Description, "tags": spec.Tags,
+	}
+	return NewIndexableDocument(key, rv, meta, ""), nil
 }
 
 // GlobalIndexCoversType reports whether a global index holds documents of this
-// resource type.
+// resource type, according to the manifests compiled into this binary.
 func GlobalIndexCoversType(gr schema.GroupResource) bool {
-	return slices.Contains(GlobalSearchResourceTypes(), gr)
+	_, ok := globalSearchCoverage().kinds[gr]
+	return ok
 }
 
 // indexSources returns the resource types whose documents belong in the index
 // for key. A namespace-wide index draws from every covered type; every other
 // index draws from its own type only.
-func indexSources(key NamespacedResource) []NamespacedResource {
+func (s *searchServer) indexSources(key NamespacedResource) []NamespacedResource {
 	if !key.IsGlobal() {
 		return []NamespacedResource{key}
 	}
-	types := GlobalSearchResourceTypes()
+	return globalSources(key.Namespace, s.globalCoverage.Types())
+}
+
+// globalSources returns the given resource types in a namespace.
+func globalSources(namespace string, types []schema.GroupResource) []NamespacedResource {
 	out := make([]NamespacedResource, 0, len(types))
 	for _, gr := range types {
 		out = append(out, NamespacedResource{
-			Namespace: key.Namespace,
+			Namespace: namespace,
 			Group:     gr.Group,
 			Resource:  gr.Resource,
 		})
@@ -101,15 +303,9 @@ func indexSources(key NamespacedResource) []NamespacedResource {
 }
 
 // GlobalSearchFieldDefinitions returns the searchable fields of a
-// namespace-wide index. It starts from the standard set, because such an index
-// holds nothing resource-specific, and differs in two ways:
-//
-//   - The resource type of each document is filterable, so a query can pick out
-//     one type from an index holding several.
-//   - created and updated are filterable and sortable, so results of different
-//     types can be ordered by time. The per-resource indexes cannot have this
-//     yet: indexing those fields changes the index-affecting hash and would
-//     rebuild every index in the deployment.
+// namespace-wide index: the standard set, because such an index holds nothing
+// resource-specific, plus the resource type of each document, so a query can
+// pick out one type from an index holding several.
 func GlobalSearchFieldDefinitions() []SearchFieldDefinition {
 	standard := StandardSearchFieldDefinitions()
 	out := make([]SearchFieldDefinition, 0, len(standard)+1)
@@ -121,13 +317,7 @@ func GlobalSearchFieldDefinitions() []SearchFieldDefinition {
 		Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityFacet},
 		Description:  "Resource type of the document, as {group}/{resource}.",
 	})
-	for _, def := range standard {
-		if def.Name == SEARCH_FIELD_CREATED || def.Name == SEARCH_FIELD_UPDATED {
-			def.Capabilities = append(slices.Clone(def.Capabilities), SearchCapabilityFilter, SearchCapabilitySort)
-		}
-		out = append(out, def)
-	}
-	return out
+	return append(out, standard...)
 }
 
 // IndexFieldDefinitions returns the field sets an index declares beyond its own
@@ -150,18 +340,18 @@ func IndexFieldDefinitions(group, resource string) (standard, deleted []SearchFi
 //
 // openIndexes is every open index, per-resource and global, as the rebuild scan
 // lists them; only the global ones have types to sync.
-func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []NamespacedResource) ([]chan struct{}, error) {
+func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []NamespacedResource, lastImportTimes map[NamespacedResource]time.Time) ([]chan struct{}, error) {
 	var completeChs []chan struct{}
 	var errs []error
 	for _, key := range openIndexes {
 		if !key.IsGlobal() {
 			continue
 		}
-		idx := s.search.GetIndex(key)
+		idx := s.search.PeekIndex(key)
 		if idx == nil {
 			continue
 		}
-		stale, err := s.outOfDateTypes(ctx, key, idx, nil)
+		stale, err := s.outOfDateTypes(ctx, key, idx, nil, lastImportTimes)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("checking which types of %s are out of date: %w", key.String(), err))
 			continue
@@ -201,7 +391,8 @@ type staleType struct {
 // and types it may hold documents of but no longer covers. Only a newer import counts, the same as for a
 // per-resource index, which is rebuilt when its build time is before the last
 // import.
-func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResource, idx ResourceIndex, only []schema.GroupResource) ([]staleType, error) {
+// A nil lastImportTimes reads storage directly so rebuild workers re-check queued imports.
+func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResource, idx ResourceIndex, only []schema.GroupResource, lastImportTimes map[NamespacedResource]time.Time) ([]staleType, error) {
 	recorded, err := idx.CompletedTypeBuilds()
 	if err != nil {
 		return nil, err
@@ -210,14 +401,17 @@ func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResourc
 		return len(only) == 0 || slices.Contains(only, gr)
 	}
 	var stale []staleType
-	for _, src := range indexSources(key) {
+	for _, src := range s.indexSources(key) {
 		gr := groupResourceOf(src)
 		if !wanted(gr) {
 			continue
 		}
-		importedAt, err := s.storage.GetResourceLastImportTime(ctx, src)
-		if err != nil {
-			return nil, err
+		importedAt := lastImportTimes[src]
+		if lastImportTimes == nil {
+			importedAt, err = s.storage.GetResourceLastImportTime(ctx, src)
+			if err != nil {
+				return nil, err
+			}
 		}
 		if build, held := recorded[gr]; held && !importedAt.After(build.StorageImportTime) {
 			continue
@@ -236,7 +430,7 @@ func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResourc
 	}
 	slices.SortFunc(held, func(a, b schema.GroupResource) int { return strings.Compare(a.String(), b.String()) })
 	for _, gr := range slices.Compact(held) {
-		if GlobalIndexCoversType(gr) || !wanted(gr) {
+		if s.globalCoverage.Covers(gr) || !wanted(gr) {
 			continue
 		}
 		src := NamespacedResource{Namespace: key.Namespace, Group: gr.Group, Resource: gr.Resource}
@@ -253,13 +447,13 @@ func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResourc
 // once done. Each type is checked again first, so a request that waited behind a
 // full rebuild does nothing.
 func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, only []schema.GroupResource) error {
-	idx := s.search.GetIndex(key)
+	idx := s.search.PeekIndex(key)
 	if idx == nil {
 		return nil
 	}
 	// The import time is read before the rebuild, so an import that lands during
 	// it is still seen as newer next time.
-	stale, err := s.outOfDateTypes(ctx, key, idx, only)
+	stale, err := s.outOfDateTypes(ctx, key, idx, only, nil)
 	if err != nil || len(stale) == 0 {
 		return err
 	}
@@ -295,20 +489,35 @@ func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, on
 
 // queueReconcile queues a reconcile of one global index, whatever its slot.
 func (s *searchServer) queueReconcile(key NamespacedResource) {
-	s.rebuildQueue.Add(rebuildRequest{NamespacedResource: key, reconcile: true})
-	s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
+	s.reconcileQueue.Add(rebuildRequest{NamespacedResource: key, reconcile: true})
+	s.indexMetrics.ReconcileQueueLength.Set(float64(s.reconcileQueue.Len()))
+}
+
+// runGlobalIndexReconciler runs queued reconciles. It goes through rebuildIndex,
+// so a reconcile never overlaps a rebuild of the same index: one that arrives
+// while the index is being rebuilt or reconciled is set aside without blocking
+// the worker, and queued again once that finishes.
+func (s *searchServer) runGlobalIndexReconciler(ctx context.Context) {
+	for {
+		req, err := s.reconcileQueue.Next(ctx)
+		if err != nil {
+			return
+		}
+		s.indexMetrics.ReconcileQueueLength.Set(float64(s.reconcileQueue.Len()))
+		s.rebuildIndex(ctx, req)
+	}
 }
 
 // queueDueReconciles queues a reconcile of each global index among keys that
 // this instance owns and that has not been compared with storage since its last
-// slot. The rebuild workers run them, so they are bounded and never overlap a
+// slot. The reconcile workers run them, so they are bounded and never overlap a
 // rebuild of the same index.
 func (s *searchServer) queueDueReconciles(keys []NamespacedResource, now time.Time) {
 	for _, key := range keys {
 		if !key.IsGlobal() || !s.ownsGlobalIndex(key) {
 			continue
 		}
-		idx := s.search.GetIndex(key)
+		idx := s.search.PeekIndex(key)
 		if idx == nil {
 			continue
 		}
@@ -352,7 +561,7 @@ func lastReconcileSlot(key NamespacedResource, now time.Time) time.Time {
 // is compared again at the next scan rather than an hour later.
 func (s *searchServer) reconcileGlobalIndex(ctx context.Context, key NamespacedResource) (repairResult, error) {
 	var total repairResult
-	idx := s.search.GetIndex(key)
+	idx := s.search.PeekIndex(key)
 	if idx == nil {
 		return total, nil
 	}
@@ -368,7 +577,7 @@ func (s *searchServer) reconcileGlobalIndex(ctx context.Context, key NamespacedR
 		s.log.Info("Reconciled global search index", "namespace", key.Namespace, "result", result, "duration", elapsed,
 			"reindexed", total.Reindexed, "removed", total.Removed, "failed", total.Failed)
 	}()
-	for _, src := range indexSources(key) {
+	for _, src := range s.indexSources(key) {
 		if ctx.Err() != nil {
 			errs = append(errs, ctx.Err())
 			return total, ctx.Err()
@@ -403,51 +612,133 @@ func (s *searchServer) reconcileResourceType(ctx context.Context, index Resource
 	if err := checkRepairTarget(key, src); err != nil {
 		return repairResult{}, err
 	}
-	// Read the index before listing storage: otherwise a document created and
-	// indexed after the listing looks deleted and is removed while live.
-	//
-	// Two narrower races remain, both repaired by the next reconcile: an older body
-	// overwriting a newer write, and a document recreated after the listing being
-	// removed. Closing them needs conditional writes, which the index lacks.
-	gr := schema.GroupResource{Group: src.Group, Resource: src.Resource}
-	indexed := map[string]int64{}
-	for ref, err := range index.ListDocumentRefs(ctx, gr) {
-		if err != nil {
-			return repairResult{}, err
-		}
-		indexed[ref.Name] = ref.RV
-	}
-
-	stored, err := s.storedRefs(ctx, src)
+	diff := newRefDiff()
+	_, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
+		KeysOnly: true,
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource},
+		},
+	}, func(it ListIterator) error {
+		return diff.walk(index.ListDocumentRefs(ctx, groupResourceOf(src)), it)
+	})
 	if err != nil {
 		return repairResult{}, err
 	}
 
-	// Newer in the index than in the listing is left alone: the listing is older,
-	// and a later change may already be indexed.
-	var outdated []string
-	for name, rv := range stored {
-		if indexedRV, ok := indexed[name]; !ok || indexedRV < rv {
-			outdated = append(outdated, name)
-		}
-	}
-	// A delete the index never heard about looks like this.
-	var removed []string
-	for name := range indexed {
-		if _, ok := stored[name]; !ok {
-			removed = append(removed, name)
-		}
-	}
+	missing := slices.Sorted(maps.Keys(diff.onlyStored))
+	// Read again rather than removed: the index is read while storage is listed,
+	// so a document can be written after the listing passed its name. A delete
+	// the index never heard about reads as not found.
+	inIndex := slices.AppendSeq(diff.outdated, maps.Keys(diff.onlyIndexed))
 	// Sorted so a repair is reproducible, not in map order.
-	slices.Sort(outdated)
-	slices.Sort(removed)
+	slices.Sort(inIndex)
 
-	if err := s.removeFromIndex(index, src, removed); err != nil {
-		return repairResult{}, err
+	result, err := s.reindex(ctx, index, src, missing, false)
+	if err != nil {
+		return result, err
 	}
-	result, err := s.reindex(ctx, index, src, outdated)
-	result.Removed = len(removed)
+	updated, err := s.reindex(ctx, index, src, inIndex, true)
+	result.Reindexed += updated.Reindexed
+	result.Removed += updated.Removed
+	result.Failed += updated.Failed
 	return result, err
+}
+
+// refDiff is what differs between the index and a listing of storage.
+type refDiff struct {
+	// Names seen on one side only so far, with their version.
+	onlyIndexed map[string]int64
+	onlyStored  map[string]int64
+	// Indexed at an older version than storage holds.
+	outdated []string
+}
+
+func newRefDiff() *refDiff {
+	return &refDiff{onlyIndexed: map[string]int64{}, onlyStored: map[string]int64{}}
+}
+
+// walk reads the index and the listing side by side in name order, so memory
+// grows with what differs, not with the size of the type.
+//
+// Storage lists a name after the names that extend it with "-" or ".", and the
+// index before them, so such a name is first seen on one side only. It is
+// compared as soon as the other side reaches it, which keeps that bounded too.
+func (d *refDiff) walk(indexedRefs iter.Seq2[DocumentRef, error], stored ListIterator) error {
+	next, stop := iter.Pull2(indexedRefs)
+	defer stop()
+	var indexed *DocumentRef
+	advance := func() error {
+		ref, err, ok := next()
+		if !ok {
+			indexed = nil
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		indexed = &ref
+		return nil
+	}
+	if err := advance(); err != nil {
+		return err
+	}
+
+	for stored.Next() {
+		if err := stored.Error(); err != nil {
+			return err
+		}
+		name, rv := stored.Name(), stored.ResourceVersion()
+		for indexed != nil && indexed.Name < name {
+			d.indexed(indexed.Name, indexed.RV)
+			if err := advance(); err != nil {
+				return err
+			}
+		}
+		if indexed == nil || indexed.Name != name {
+			d.stored(name, rv)
+			continue
+		}
+		d.compare(name, indexed.RV, rv)
+		if err := advance(); err != nil {
+			return err
+		}
+	}
+	if err := stored.Error(); err != nil {
+		return err
+	}
+	for indexed != nil {
+		d.indexed(indexed.Name, indexed.RV)
+		if err := advance(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (d *refDiff) indexed(name string, rv int64) {
+	if storedRV, ok := d.onlyStored[name]; ok {
+		delete(d.onlyStored, name)
+		d.compare(name, rv, storedRV)
+		return
+	}
+	d.onlyIndexed[name] = rv
+}
+
+func (d *refDiff) stored(name string, rv int64) {
+	if indexedRV, ok := d.onlyIndexed[name]; ok {
+		delete(d.onlyIndexed, name)
+		d.compare(name, indexedRV, rv)
+		return
+	}
+	d.onlyStored[name] = rv
+}
+
+// compare leaves a newer indexed version alone: a later change may already be
+// indexed.
+func (d *refDiff) compare(name string, indexedRV, storedRV int64) {
+	if indexedRV < storedRV {
+		d.outdated = append(d.outdated, name)
+	}
 }
 
 // rebuildResourceType rewrites one resource type in a global index from storage,
@@ -463,7 +754,8 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 		return repairResult{}, err
 	}
 
-	// Before the listing, for the same reason as in reconcileResourceType.
+	// Read before the listing: otherwise a document created and indexed after the
+	// listing looks dropped by the import and is removed while live.
 	gr := schema.GroupResource{Group: src.Group, Resource: src.Resource}
 	indexed := map[string]struct{}{}
 	for ref, err := range index.ListDocumentRefs(ctx, gr) {
@@ -473,15 +765,12 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 		indexed[ref.Name] = struct{}{}
 	}
 
-	builder, err := s.builders.get(ctx, src)
-	if err != nil {
-		return repairResult{}, err
-	}
+	builder := &globalDocumentBuilder{blob: s.builders.blob}
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
 
 	var result repairResult
 	written := map[string]struct{}{}
-	_, err = s.storage.ListIterator(ctx, &resourcepb.ListRequest{
+	_, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource},
 		},
@@ -514,7 +803,7 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 				result.Failed++
 				continue
 			}
-			items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: keepStandardFieldsOnly(doc)})
+			items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: doc})
 			names = append(names, iter.Name())
 			if len(items) >= maxBatchSize {
 				if err := flush(); err != nil {
@@ -588,34 +877,6 @@ type repairResult struct {
 	Failed int
 }
 
-// storedRefs lists names and versions without bodies, because it only decides
-// which objects are worth reading.
-func (s *searchServer) storedRefs(ctx context.Context, src NamespacedResource) (map[string]int64, error) {
-	refs := map[string]int64{}
-	_, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
-		KeysOnly: true,
-		Options: &resourcepb.ListOptions{
-			Key: &resourcepb.ResourceKey{
-				Namespace: src.Namespace,
-				Group:     src.Group,
-				Resource:  src.Resource,
-			},
-		},
-	}, func(iter ListIterator) error {
-		for iter.Next() {
-			if err := iter.Error(); err != nil {
-				return err
-			}
-			refs[iter.Name()] = iter.ResourceVersion()
-		}
-		return iter.Error()
-	})
-	if err != nil {
-		return nil, err
-	}
-	return refs, nil
-}
-
 // removeFromIndex deletes in batches, so removing a whole type is not one huge
 // write.
 func (s *searchServer) removeFromIndex(index ResourceIndex, src NamespacedResource, names []string) error {
@@ -640,21 +901,19 @@ func (s *searchServer) removeFromIndex(index ResourceIndex, src NamespacedResour
 }
 
 // reindex reads and writes the named objects. One that cannot be built is
-// skipped, not fatal, so a bad object does not block the rest; it stays missing,
-// so the next reconcile retries it.
+// skipped, not fatal, so a bad object does not block the rest; the next reconcile
+// retries it. With removeMissing, the names are in the index, and one storage no
+// longer holds is removed from it.
 //
 // Reads go in small chunks, writes in full batches: each write is a separate
 // index batch with its own fixed cost.
-func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src NamespacedResource, names []string) (repairResult, error) {
+func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src NamespacedResource, names []string, removeMissing bool) (repairResult, error) {
 	var result repairResult
 	if len(names) == 0 {
 		return result, nil
 	}
 
-	builder, err := s.builders.get(ctx, src)
-	if err != nil {
-		return result, err
-	}
+	builder := &globalDocumentBuilder{blob: s.builders.blob}
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
 
 	items := make([]*BulkIndexItem, 0, maxBatchSize)
@@ -665,34 +924,53 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 		if err := index.BulkIndex(&BulkIndexRequest{Items: items, Path: IndexPathUpdate}); err != nil {
 			return err
 		}
-		result.Reindexed += len(items)
+		for _, item := range items {
+			if item.Action == ActionDelete {
+				result.Removed++
+			} else {
+				result.Reindexed++
+			}
+		}
 		items = items[:0]
 		return nil
+	}
+	add := func(item *BulkIndexItem) error {
+		items = append(items, item)
+		if len(items) < maxBatchSize {
+			return nil
+		}
+		return flush()
 	}
 
 	// Requests are built a chunk at a time, so only the comparison scales with
 	// the size of the type.
 	for chunk := range slices.Chunk(names, readChunkSize) {
-		requests := make([]*resourcepb.ReadRequest, 0, len(chunk))
+		requests := make([]BatchReadRequest, 0, len(chunk))
 		for _, name := range chunk {
-			requests = append(requests, &resourcepb.ReadRequest{
+			requests = append(requests, BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{
 				Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
-			})
+			}})
 		}
 
+		// One response per request, in order, so a not found names its request.
+		read := 0
 		for response := range readResourcesInChunks(ctx, s.storage, requests, readChunkSize) {
 			if ctx.Err() != nil {
 				return result, ctx.Err()
 			}
+			read++
 			if response.Error != nil {
-				// Not found means deleted since the listing, or the revision was
-				// pruned by a newer update, which the update path delivers.
-				// Anything else is a storage failure, returned so the caller does
-				// not think the type is repaired.
-				if response.Error.Code != http.StatusNotFound {
+				// Anything but not found is a storage failure, returned so the
+				// caller does not think the type is repaired.
+				if response.Error.Code != http.StatusNotFound || read > len(requests) {
 					return result, StatusError(response.Error)
 				}
-				logger.Debug("object deleted since the listing, skipping it", "error", response.Error.Message)
+				if !removeMissing {
+					continue
+				}
+				if err := add(&BulkIndexItem{Action: ActionDelete, Key: requests[read-1].Key}); err != nil {
+					return result, err
+				}
 				continue
 			}
 			doc, err := builder.BuildDocument(ctx, response.Key, response.ResourceVersion, response.Value)
@@ -701,11 +979,8 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 				result.Failed++
 				continue
 			}
-			items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: keepStandardFieldsOnly(doc)})
-			if len(items) >= maxBatchSize {
-				if err := flush(); err != nil {
-					return result, err
-				}
+			if err := add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
+				return result, err
 			}
 		}
 	}
@@ -716,109 +991,157 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 // notification stream after one ends unexpectedly.
 const watchRetryDelay = 5 * time.Second
 
-// maxWatchBatch is how many notifications are taken at once. Notifications
-// arrive one at a time, so a busy instance would otherwise read and write once
-// per changed object.
-const maxWatchBatch = 100
+// maxWatchBatch is how many written keys are taken at once, and
+// globalWatchBatchWait how long to wait for more after the first, so a burst of
+// writes is read and written together rather than one object at a time.
+const (
+	maxWatchBatch        = 100
+	globalWatchBatchWait = 100 * time.Millisecond
+)
 
-// runGlobalIndexWatch applies write notifications to the global indexes as they
-// arrive. A global index replays no events, so this is how it learns of changes.
+// runGlobalIndexWatch applies writes to the global indexes as they happen. A
+// global index replays no events, so this is how it learns of changes.
 //
-// It is the fast path, not the reliable one: whatever a dropped notification or
-// a failed write misses is repaired by the next reconcile, so a failure here is
-// logged and the stream is reopened rather than escalated.
+// It takes keys straight from the bus rather than the watch pipeline, which holds
+// every notification for a few seconds to put them in order. Order does not
+// matter here, because each key is only a reason to read the object again.
+//
+// It is the fast path, not the reliable one: whatever it misses is repaired by
+// reconcile, so a failure is logged and the watch opened again.
 func (s *searchServer) runGlobalIndexWatch(ctx context.Context) {
 	for ctx.Err() == nil {
-		events, err := s.storage.WatchWriteEvents(ctx)
+		// The watch is opened for the covered types, so it is opened again when
+		// they change.
+		changed := s.globalCoverage.Changed()
+		watchCtx, cancel := context.WithCancel(ctx)
+		go func() {
+			select {
+			case <-changed:
+				cancel()
+			case <-watchCtx.Done():
+			}
+		}()
+		keys, err := s.watchWrittenKeys(watchCtx)
 		if err != nil {
-			s.log.Warn("failed to watch write events for global search indexes", "error", err)
+			s.log.Warn("failed to watch written keys for global search indexes", "error", err)
 		} else {
-			s.consumeWriteEvents(ctx, events)
+			// Writes made before the watch was ready, as while the bus was
+			// unreachable, were not delivered.
+			s.queueReconcileAfterLostKeys("")
+			for {
+				batch, ok := nextWrittenKeysBatch(watchCtx, keys)
+				if !ok {
+					break
+				}
+				s.applyWrittenKeys(watchCtx, batch)
+			}
 		}
-
-		// The stream ended. Wait before reopening so a backend that keeps failing
-		// is not asked in a tight loop.
+		cancel()
+		// The watch failed or its stream ended. Wait before opening it again, so
+		// a backend that keeps failing is not asked in a tight loop, unless it
+		// ended for a change of the covered types.
 		select {
 		case <-ctx.Done():
 			return
+		case <-changed:
 		case <-time.After(watchRetryDelay):
 		}
 	}
 }
 
-// consumeWriteEvents applies notifications until the stream ends.
-func (s *searchServer) consumeWriteEvents(ctx context.Context, events <-chan *WrittenEvent) {
-	for {
-		batch, ok := nextWriteEventBatch(ctx, events)
-		if !ok {
-			return
+// watchWrittenKeys watches written keys straight from the bus when the backend
+// can, and otherwise takes them from the watch stream, which is a few seconds
+// slower but needs no bus.
+func (s *searchServer) watchWrittenKeys(ctx context.Context) (<-chan *WrittenEvent, error) {
+	keys, err := s.storage.WatchWrittenKeys(ctx, s.globalCoverage.Types(), s.queueReconcileAfterLostKeys)
+	if !errors.Is(err, ErrWrittenKeysUnsupported) {
+		return keys, err
+	}
+	s.log.Info("global search indexes follow the watch stream, which is slower than watching written keys", "reason", err)
+	return s.storage.WatchWriteEvents(ctx)
+}
+
+// queueReconcileAfterLostKeys queues a reconcile of the open global index this
+// instance owns for a namespace that may have lost written keys, or of every one
+// for an empty namespace: once a watch is ready, after a reconnect, and when
+// keys were dropped. It only queues, so it does not block the bus's callback,
+// and repeated pending requests for an index are merged.
+func (s *searchServer) queueReconcileAfterLostKeys(namespace string) {
+	if namespace != "" {
+		key := GlobalSearchKey(namespace)
+		if s.ownsGlobalIndex(key) && s.search.PeekIndex(key) != nil {
+			s.queueReconcile(key)
 		}
-		if ctx.Err() != nil {
-			return
+		return
+	}
+	for _, key := range s.search.GetOpenIndexes() {
+		if key.IsGlobal() && s.ownsGlobalIndex(key) {
+			s.queueReconcile(key)
 		}
-		s.applyWriteEvents(ctx, batch)
 	}
 }
 
-// nextWriteEventBatch blocks for one notification, then takes whatever else has
-// already arrived. It reports false once the stream is closed.
-func nextWriteEventBatch(ctx context.Context, events <-chan *WrittenEvent) ([]*WrittenEvent, bool) {
-	// Also on the context: a stream that never sends, as some backends return,
-	// would otherwise hold up shutdown.
+// nextWrittenKeysBatch blocks for one key, then takes what else arrives within
+// globalWatchBatchWait. It reports false once ctx is cancelled or the stream
+// ends.
+func nextWrittenKeysBatch(ctx context.Context, keys <-chan *WrittenEvent) ([]*WrittenEvent, bool) {
 	var first *WrittenEvent
 	select {
 	case <-ctx.Done():
 		return nil, false
-	case event, ok := <-events:
+	case key, ok := <-keys:
 		if !ok {
 			return nil, false
 		}
-		first = event
+		first = key
 	}
 	batch := make([]*WrittenEvent, 0, maxWatchBatch)
 	batch = append(batch, first)
+	wait := time.NewTimer(globalWatchBatchWait)
+	defer wait.Stop()
 	for len(batch) < maxWatchBatch {
 		select {
-		case event, ok := <-events:
+		case <-ctx.Done():
+			return nil, false
+		case key, ok := <-keys:
 			if !ok {
 				return batch, true
 			}
-			batch = append(batch, event)
-		default:
+			batch = append(batch, key)
+		case <-wait.C:
 			return batch, true
 		}
 	}
 	return batch, true
 }
 
-// applyWriteEvents re-reads the objects a batch of notifications names and writes
-// their current state to the global indexes they belong to. Notifications for
-// types the index does not cover, and for indexes this instance does not own or
-// has not opened, are ignored: an index that is not open catches up when it is
-// opened.
+// applyWrittenKeys re-reads the objects a batch of written keys names and writes
+// their current state to the global indexes they belong to. Keys of types the
+// index does not cover, and of indexes this instance does not own or has not
+// opened, are ignored: an index that is not open catches up when it is opened.
 //
-// Only the key of a notification is used, not its body or version. A late or
-// repeated notification then just reads the current state again, so it cannot
-// put back an older version or a deleted object. That relies on a read after a
-// notification seeing the write it announces, which holds while storage reads
-// from the database the writes go to.
-func (s *searchServer) applyWriteEvents(ctx context.Context, batch []*WrittenEvent) {
+// Only the key is used. A late or repeated key then just reads the current
+// state again, so it cannot put back an older version or a deleted object. That
+// relies on a read after a write is announced seeing that write, which holds
+// while storage reads from the database the writes go to.
+func (s *searchServer) applyWrittenKeys(ctx context.Context, batch []*WrittenEvent) {
 	changed := map[NamespacedResource][]string{}
 	var sources []NamespacedResource
-	for _, event := range batch {
-		if event == nil || event.Key == nil {
+	for _, written := range batch {
+		if written == nil || written.Key == nil {
 			continue
 		}
-		src := NamespacedResource{Namespace: event.Key.Namespace, Group: event.Key.Group, Resource: event.Key.Resource}
-		if !GlobalIndexCoversType(groupResourceOf(src)) {
+		key := written.Key
+		src := NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
+		if !s.globalCoverage.Covers(groupResourceOf(src)) {
 			continue
 		}
 		names, seen := changed[src]
 		if !seen {
 			sources = append(sources, src)
 		}
-		if !slices.Contains(names, event.Key.Name) {
-			changed[src] = append(names, event.Key.Name)
+		if !slices.Contains(names, key.Name) {
+			changed[src] = append(names, key.Name)
 		}
 	}
 
@@ -831,13 +1154,13 @@ func (s *searchServer) applyWriteEvents(ctx context.Context, batch []*WrittenEve
 			continue
 		}
 		// Looked up for each batch, so a replaced index is not written to.
-		idx := s.search.GetIndex(key)
+		idx := s.search.PeekIndex(key)
 		if idx == nil {
 			continue
 		}
 		if err := s.writeCurrentState(ctx, idx, src, changed[src]); err != nil {
 			// The next reconcile repairs whatever this missed.
-			s.log.Warn("failed to apply write notifications to the global search index",
+			s.log.Warn("failed to apply written keys to the global search index",
 				"namespace", src.Namespace, "resource", src.GroupResource(), "error", err)
 		}
 	}
@@ -849,17 +1172,14 @@ func (s *searchServer) applyWriteEvents(ctx context.Context, batch []*WrittenEve
 // so a reconcile sees it missing and tries again. An object whose read fails for
 // another reason is left as it is, for a reconcile to repair.
 func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceIndex, src NamespacedResource, names []string) error {
-	builder, err := s.builders.get(ctx, src)
-	if err != nil {
-		return err
-	}
+	builder := &globalDocumentBuilder{blob: s.builders.blob}
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
 
-	requests := make([]*resourcepb.ReadRequest, 0, len(names))
+	requests := make([]BatchReadRequest, 0, len(names))
 	for _, name := range names {
-		requests = append(requests, &resourcepb.ReadRequest{
+		requests = append(requests, BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
-		})
+		}})
 	}
 
 	items := make([]*BulkIndexItem, 0, len(names))
@@ -890,7 +1210,7 @@ func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceInde
 			items = append(items, &BulkIndexItem{Action: ActionDelete, Key: key})
 			continue
 		}
-		items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: keepStandardFieldsOnly(doc)})
+		items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: doc})
 	}
 	if len(items) == 0 {
 		return nil

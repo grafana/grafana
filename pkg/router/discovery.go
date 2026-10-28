@@ -22,6 +22,8 @@ import (
 type cachedDoc struct {
 	body []byte
 	etag string
+	// contentType defaults to application/json.
+	contentType string
 }
 
 // quoteETag wraps an opaque value as an HTTP entity tag per RFC 7232 §2.3.
@@ -36,13 +38,17 @@ func quoteETag(s string) string {
 func buildAPIGroupList(ctx context.Context, backends []Backend) cachedDoc {
 	sorted := sortedManifestBackends(backends)
 
-	groups := make([]metav1.APIGroup, 0, len(sorted))
+	groups := make([]metav1.APIGroup, 0, len(sorted)+1)
 	var hashInput strings.Builder
 	for _, b := range sorted {
 		group := b.Group()
 		groups = append(groups, group)
 		fmt.Fprintf(&hashInput, "%s=%s;", group.Name, b.Key())
 	}
+	// The router serves the discovery group itself, so it has no backend.
+	groups = append(groups, discoveryAPIGroup)
+	sort.Slice(groups, func(i, j int) bool { return groups[i].Name < groups[j].Name })
+	fmt.Fprintf(&hashInput, "%s=%s;", discoveryGroup, discoveryGroupVersion.GroupVersion)
 
 	list := metav1.APIGroupList{
 		TypeMeta: metav1.TypeMeta{Kind: "APIGroupList", APIVersion: "v1"},
@@ -74,6 +80,16 @@ func hashHex(s string) string {
 	return hex.EncodeToString(sum[:])[:16]
 }
 
+// hashHexBytes is hashHex of the concatenated parts, without copying them
+// into one string: a document can be many megabytes.
+func hashHexBytes(parts ...[]byte) string {
+	h := sha256.New()
+	for _, part := range parts {
+		_, _ = h.Write(part)
+	}
+	return hex.EncodeToString(h.Sum(nil))[:16]
+}
+
 // buildOpenAPIV3Index synthesizes the /openapi/v3 root document: a small
 // path -> {serverRelativeURL} map (never a merged schema — see AGENTS.md
 // "Discovery endpoints" / the design spec's "no cross-group merge" decision).
@@ -93,6 +109,11 @@ func buildOpenAPIV3Index(ctx context.Context, backends []Backend) cachedDoc {
 			fmt.Fprintf(&hashInput, "%s=%s;", path, b.Key())
 		}
 	}
+
+	// The router serves the discovery group's document itself.
+	discoveryPath, discoveryURL := discoveryOpenAPIEntry()
+	paths[discoveryPath] = handler3.OpenAPIV3DiscoveryGroupVersion{ServerRelativeURL: discoveryURL}
+	fmt.Fprintf(&hashInput, "%s=%s;", discoveryPath, discoveryURL)
 
 	doc := handler3.OpenAPIV3Discovery{Paths: paths}
 	body, err := json.Marshal(doc)

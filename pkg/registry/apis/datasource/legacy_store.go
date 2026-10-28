@@ -24,15 +24,16 @@ import (
 )
 
 var (
-	_ rest.Scoper               = (*legacyStorage)(nil)
-	_ rest.SingularNameProvider = (*legacyStorage)(nil)
-	_ rest.Getter               = (*legacyStorage)(nil)
-	_ rest.Lister               = (*legacyStorage)(nil)
-	_ rest.Storage              = (*legacyStorage)(nil)
-	_ rest.Creater              = (*legacyStorage)(nil)
-	_ rest.Updater              = (*legacyStorage)(nil)
-	_ rest.GracefulDeleter      = (*legacyStorage)(nil)
-	_ rest.CollectionDeleter    = (*legacyStorage)(nil)
+	_ rest.Scoper                    = (*legacyStorage)(nil)
+	_ rest.SingularNameProvider      = (*legacyStorage)(nil)
+	_ rest.Getter                    = (*legacyStorage)(nil)
+	_ rest.Lister                    = (*legacyStorage)(nil)
+	_ rest.Storage                   = (*legacyStorage)(nil)
+	_ rest.Creater                   = (*legacyStorage)(nil)
+	_ rest.Updater                   = (*legacyStorage)(nil)
+	_ rest.GracefulDeleter           = (*legacyStorage)(nil)
+	_ rest.CollectionDeleter         = (*legacyStorage)(nil)
+	_ dualwrite.DryRunUpdatePreparer = (*legacyStorage)(nil)
 )
 
 type legacyStorage struct {
@@ -97,6 +98,9 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	if !ok {
 		return nil, fmt.Errorf("expected a datasource object")
 	}
+	if err := validateNoTeamHTTPHeadersOnCreate(ctx, ds, s.resourceInfo); err != nil {
+		return nil, err
+	}
 
 	// Verify the secure value commands. While we're using dual writer, we can only support raw secret values and not references to secrets that already exist. This is because we need the raw values to write to the legacy store.
 	for _, v := range ds.Secure {
@@ -131,25 +135,40 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 			metricutil.ObserveWithExemplar(ctx, s.dsConfigHandlerRequestsDuration.WithLabelValues("legacyStorage.Update"), time.Since(start).Seconds())
 		}()
 	}
-
-	old, err := s.Get(ctx, name, &metav1.GetOptions{})
+	ds, err := s.prepareUpdate(ctx, name, objInfo)
 	if err != nil {
 		return nil, false, err
+	}
+	ds, err = s.datasources.UpdateDataSource(ctx, ds)
+	return ds, false, err
+}
+
+// PrepareDryRunUpdate runs the request's UpdatedObjectInfo against the SQL-backed
+// object without persisting it. The dual writer uses the result for its unified
+// dry-run, so admission checks the authoritative datasource state.
+func (s *legacyStorage) PrepareDryRunUpdate(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo) (runtime.Object, error) {
+	return s.prepareUpdate(ctx, name, objInfo)
+}
+
+func (s *legacyStorage) prepareUpdate(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo) (*v0alpha1.DataSource, error) {
+	old, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
 	}
 
 	obj, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	ds, ok := obj.(*v0alpha1.DataSource)
 	if !ok {
-		return nil, false, fmt.Errorf("expected a datasource object")
+		return nil, fmt.Errorf("expected a datasource object")
 	}
 
 	oldDS, ok := old.(*v0alpha1.DataSource)
 	if !ok {
-		return nil, false, fmt.Errorf("expected a datasource object (old)")
+		return nil, fmt.Errorf("expected a datasource object (old)")
 	}
 
 	// Expose any secure value changes to the dual writer
@@ -172,7 +191,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		// we can not support external shared secrets when using the SQL backing for datasources
 		validName := converter.GetLegacySecureValueName(name, k)
 		if v.Name != validName {
-			return nil, false, fmt.Errorf("invalid secure value name %q, expected %q", v.Name, validName)
+			return nil, fmt.Errorf("invalid secure value name %q, expected %q", v.Name, validName)
 		}
 	}
 
@@ -189,8 +208,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		}
 	}
 
-	ds, err = s.datasources.UpdateDataSource(ctx, ds)
-	return ds, false, err
+	return ds, nil
 }
 
 // Delete implements rest.GracefulDeleter.

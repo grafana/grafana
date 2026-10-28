@@ -15,11 +15,13 @@ import { type Solution, type SolutionId, type SolutionOffer } from '../solutions
 import { KubernetesFilterActions } from './KubernetesFilterActions';
 import { MetricsFilterActions } from './MetricsFilterActions';
 import { type CardFilterActionsProps } from './SolutionFilterActions';
+import { SyntheticsFilterActions } from './SyntheticsFilterActions';
 
 // Cards whose scope the user can narrow; the control binds the filter to the card's datasource.
 const FILTER_ACTIONS: Partial<Record<SolutionId, ComponentType<CardFilterActionsProps>>> = {
   kubernetes: KubernetesFilterActions,
   metrics: MetricsFilterActions,
+  synthetics: SyntheticsFilterActions,
 };
 
 interface SolutionCardProps {

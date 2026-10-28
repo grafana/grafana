@@ -844,12 +844,24 @@ const renderPlanPanelSchema = z.object({
   vizType: z.string().describe('Visualization plugin id (e.g. "timeseries", "piechart", "table")'),
 });
 
+const renderPlanRowSchema = z.object({
+  title: z.string().describe('Row title'),
+  panels: z.array(renderPlanPanelSchema).describe('Panels in this row, rendered as query-less placeholders'),
+});
+
 const renderPlanSectionSchema = z.object({
   title: z.string().describe('Row or tab title'),
   panels: z.array(renderPlanPanelSchema).describe('Panels in this row/tab, rendered as query-less placeholders'),
+  sections: z
+    .array(renderPlanRowSchema)
+    .optional()
+    .describe(
+      'Rows nested inside a tab, one level deep. Only valid when layout is "tabs"; a tab with rows must have ' +
+        'empty panels, since its panels belong to the rows.'
+    ),
 });
 
-const renderPlanPayloadSchema = z.object({
+const renderPlanPreviewFields = z.object({
   planId: z.string().describe('Opaque identity for this plan, used to match a later END_PLANNING call to it'),
   title: z.string().describe('Dashboard title the plan proposes'),
   description: z.string().optional().describe('Dashboard description the plan proposes'),
@@ -863,6 +875,53 @@ const renderPlanPayloadSchema = z.object({
         'the plan names only the variable, not what its values should look like.'
     ),
 });
+
+function validateRenderPlanSections<T extends z.infer<typeof renderPlanPreviewFields>>(
+  data: T,
+  ctx: z.RefinementCtx<T>
+) {
+  data.sections.forEach((section, index) => {
+    if (!section.sections?.length) {
+      return;
+    }
+    if (data.layout !== 'tabs') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['sections', index, 'sections'],
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        message: 'Nested rows are only supported inside tabs (layout "tabs").',
+      });
+    }
+    if (section.panels.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['sections', index, 'panels'],
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        message: 'A tab with nested rows cannot also have its own panels.',
+      });
+    }
+  });
+}
+
+/** RENDER_PLAN without `phase`, as advertised while the plan building screen is off. */
+export const renderPlanPreviewPayloadSchema = renderPlanPreviewFields
+  .superRefine(validateRenderPlanSections)
+  .describe(
+    'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call. The dashboard never enters edit mode while previewing.'
+  );
+
+const renderPlanPayloadSchema = renderPlanPreviewFields
+  .extend({
+    phase: z
+      .enum(['preview', 'building'])
+      .default('preview')
+      .describe(
+        '"preview" renders the plan with sample data and Build/Dismiss actions. "building" shows a loading ' +
+          'screen instead, while the plan is built: the first write replaces it, and END_PLANNING ends it ' +
+          'when the build writes nothing.'
+      ),
+  })
+  .superRefine(validateRenderPlanSections);
 
 const endPlanningPayloadSchema = z.object({
   planId: z.string().describe('The plan being previewed. END_PLANNING is refused if this does not match.'),
@@ -905,6 +964,9 @@ export const payloads = {
     'Update an existing panel (partial update, deep-merge for options/fieldConfig)'
   ),
   removePanel: removePanelPayloadSchema.describe('Remove one or more panels from the dashboard'),
+  getPanelErrors: listPanelsPayloadSchema
+    .pick({ elements: true })
+    .describe('Read current panel errors without panel specifications'),
   listPanels: listPanelsPayloadSchema.describe('List all panels on the dashboard with their layout items'),
   movePanel: movePanelPayloadSchema.describe(
     'Move a panel to a different group or reposition within the current group'
@@ -927,7 +989,21 @@ export const payloads = {
     'Update allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is writable. Not a query annotation layer (use ADD_ANNOTATION / UPDATE_ANNOTATION). GET_SPEC / APPLY_SPEC do not include these annotations.'
   ),
   renderPlan: renderPlanPayloadSchema.describe(
-    'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call. The dashboard never enters edit mode while previewing.'
+    'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call, or show a loading screen while the plan is built. The dashboard never enters edit mode while previewing.'
   ),
   endPlanning: endPlanningPayloadSchema.describe('End the plan preview and clear the dashboard back to empty'),
+  reloadFromServer: z
+    .object({
+      pendingChanges: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          'Preview these pending changes instead (see the pendingChanges URL parameter); null shows the saved dashboard. Omit to keep what the page shows.'
+        ),
+    })
+    .strict()
+    .describe(
+      'Reload the open dashboard from the server, for example after a newer version was saved through the HTTP API. Does nothing and reports reloaded=false when the open dashboard has unsaved changes.'
+    ),
 };

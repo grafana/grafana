@@ -2,13 +2,8 @@ name: External PR Notify Trigger
 
 on:
   pull_request_target:  # zizmor: ignore[dangerous-triggers]
-    # Fire when an external PR is opened. Previously this keyed off the
-    # 'pr/external' labeled event, but that label is applied downstream (by the
-    # handler, once org membership is confirmed) rather than up front, so the
-    # labeled event no longer arrives. Firing on 'opened' is safe: this job runs
-    # base-ref code only, and the authoritative external check (org-membership)
-    # gates all downstream work in the handler.
-    types: [opened]
+    # Fire when an external PR is opened or a draft is marked ready for review.
+    types: [opened, ready_for_review]
 
 permissions:
   contents: read

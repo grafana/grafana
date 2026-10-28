@@ -7,6 +7,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -256,13 +257,13 @@ func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 
 func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 	tests := []struct {
-		name                  string
-		setupMocks            func(*repository.MockRepository, *resources.MockRepositoryResources, *resources.MockResourceClients, *jobs.MockJobProgressRecorder, *MockCompareFn)
-		verifyMocks           func(*testing.T, *resources.MockRepositoryResources)
-		changes               []ResourceFileChange
-		expectedError         string
-		description           string
-		folderMetadataEnabled bool
+		name            string
+		setupMocks      func(*repository.MockRepository, *resources.MockRepositoryResources, *resources.MockResourceClients, *jobs.MockJobProgressRecorder, *MockCompareFn)
+		verifyMocks     func(*testing.T, *resources.MockRepositoryResources)
+		changes         []ResourceFileChange
+		expectedError   string
+		description     string
+		resourceTimeout time.Duration
 	}{
 		{
 			name:        "too many errors",
@@ -736,9 +737,8 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 		},
 		{
-			name:                  "successful apply with folder deletion",
-			description:           "Should successfully apply changes when deleting an existing folder",
-			folderMetadataEnabled: true,
+			name:        "successful apply with folder deletion",
+			description: "Should successfully apply changes when deleting an existing folder",
 			changes: []ResourceFileChange{
 				{
 					Action: repository.FileActionDeleted,
@@ -798,71 +798,8 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 		},
 		{
-			name:        "successful apply with folder deletion and metadata disabled",
-			description: "Should not remove the deleted folder from the in-memory tree when folder metadata is disabled",
-			changes: []ResourceFileChange{
-				{
-					Action: repository.FileActionDeleted,
-					Path:   "to-be-deleted/",
-					Existing: &provisioning.ResourceListItem{
-						Name:     "test-folder",
-						Resource: "Folder",
-						Group:    "folders",
-					},
-				},
-			},
-			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
-				progress.On("TooManyErrors").Return(nil)
-				progress.On("HasDirPathFailedDeletion", "to-be-deleted/").Return(false)
-
-				scheme := runtime.NewScheme()
-				require.NoError(t, metav1.AddMetaToScheme(scheme))
-				listGVK := schema.GroupVersionKind{
-					Group:   resources.FolderResource.Group,
-					Version: resources.FolderResource.Version,
-					Kind:    "FolderList",
-				}
-
-				scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
-				scheme.AddKnownTypeWithName(schema.GroupVersionKind{
-					Group:   resources.FolderResource.Group,
-					Version: resources.FolderResource.Version,
-					Kind:    resources.FolderResource.Resource,
-				}, &metav1.PartialObjectMetadata{})
-
-				fakeDynamicClient := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(scheme, map[schema.GroupVersionResource]string{
-					resources.FolderResource: listGVK.Kind,
-				})
-
-				fakeDynamicClient.PrependReactor("delete", "folders", func(action k8testing.Action) (bool, runtime.Object, error) {
-					return true, nil, nil
-				})
-
-				clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
-					Group:    "folders",
-					Resource: "Folder",
-				}).Return(fakeDynamicClient.Resource(resources.FolderResource), schema.GroupVersionKind{
-					Kind:    "Folder",
-					Group:   "folders",
-					Version: "v1",
-				}, nil)
-
-				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
-					"test-folder",
-					"folders",
-					"Folder",
-				).WithPath("to-be-deleted/").
-					WithAction(repository.FileActionDeleted).
-					Build())).Return()
-			},
-			verifyMocks: func(t *testing.T, repoResources *resources.MockRepositoryResources) {
-				repoResources.AssertNotCalled(t, "RemoveFolderFromTree", "test-folder")
-			},
-		},
-		{
-			name:                  "failed to apply with folder deletion",
-			description:           "Should record an error when deleting a folder",
-			folderMetadataEnabled: true,
+			name:        "failed to apply with folder deletion",
+			description: "Should record an error when deleting a folder",
 			changes: []ResourceFileChange{
 				{
 					Action: repository.FileActionDeleted,
@@ -925,8 +862,9 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 		},
 		{
-			name:        "operation timeout after 15 seconds",
-			description: "Should record timeout error when operation takes longer than 15 seconds",
+			name:            "operation timeout after 15 seconds",
+			description:     "Should record timeout error when operation takes longer than 15 seconds",
+			resourceTimeout: 15 * time.Second,
 			changes: []ResourceFileChange{
 				{
 					Action: repository.FileActionCreated,
@@ -938,16 +876,10 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 				progress.On("HasDirPathFailedCreation", "dashboards/slow.json").Return(false)
 
 				repoResources.On("WriteResourceFromFile", mock.Anything, "dashboards/slow.json", "current-ref").
-					Run(func(args mock.Arguments) {
-						ctx := args.Get(0).(context.Context)
-						select {
-						case <-ctx.Done():
-							return
-						case <-time.After(20 * time.Second):
-							return
-						}
-					}).
-					Return("", schema.GroupVersionKind{}, 0, context.DeadlineExceeded)
+					Return(func(ctx context.Context, _, _ string, _ ...resources.WriteResourceOption) (string, schema.GroupVersionKind, int, error) {
+						<-ctx.Done()
+						return "", schema.GroupVersionKind{}, 0, ctx.Err()
+					})
 
 				// applyChange records the error from WriteResourceFromFile
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
@@ -962,33 +894,35 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := repository.NewMockRepository(t)
-			repoResources := resources.NewMockRepositoryResources(t)
-			clients := resources.NewMockResourceClients(t)
-			progress := jobs.NewMockJobProgressRecorder(t)
-			compareFn := NewMockCompareFn(t)
+			synctest.Test(t, func(t *testing.T) {
+				repo := repository.NewMockRepository(t)
+				repoResources := resources.NewMockRepositoryResources(t)
+				clients := resources.NewMockResourceClients(t)
+				progress := jobs.NewMockJobProgressRecorder(t)
+				compareFn := NewMockCompareFn(t)
 
-			tt.setupMocks(repo, repoResources, clients, progress, compareFn)
-			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil, nil)
-			repo.On("Config").Return(&provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
-				Spec: provisioning.RepositorySpec{
-					Title: "Test Repo",
-				},
+				tt.setupMocks(repo, repoResources, clients, progress, compareFn)
+				compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil, nil)
+				repo.On("Config").Return(&provisioning.Repository{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test-repo",
+					},
+					Spec: provisioning.RepositorySpec{
+						Title: "Test Repo",
+					},
+				})
+
+				progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
+				err := FullSync(t.Context(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, tt.resourceTimeout)
+				if tt.expectedError != "" {
+					require.EqualError(t, err, tt.expectedError, tt.description)
+				} else {
+					require.NoError(t, err, tt.description)
+				}
+				if tt.verifyMocks != nil {
+					tt.verifyMocks(t, repoResources)
+				}
 			})
-
-			progress.On("SetTotal", mock.Anything, len(tt.changes)).Return()
-			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "current-ref", repoResources, progress, tracing.NewNoopTracerService(), 10, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), tt.folderMetadataEnabled, 0)
-			if tt.expectedError != "" {
-				require.EqualError(t, err, tt.expectedError, tt.description)
-			} else {
-				require.NoError(t, err, tt.description)
-			}
-			if tt.verifyMocks != nil {
-				tt.verifyMocks(t, repoResources)
-			}
 		})
 	}
 }
@@ -1376,7 +1310,7 @@ func TestFullSync_QuotaTrackerAllowsUpdatesRegardlessOfQuota(t *testing.T) {
 	repoResources.AssertCalled(t, "WriteResourceFromFile", mock.Anything, "dashboards/existing.json", "ref")
 }
 
-func TestFullSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
+func TestFullSync_MissingFolderMetadata(t *testing.T) {
 	repo := repository.NewMockRepository(t)
 	repoResources := resources.NewMockRepositoryResources(t)
 	clients := resources.NewMockResourceClients(t)
@@ -1420,39 +1354,6 @@ func TestFullSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
 	})).Return()
 
 	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), true, 0)
-	require.NoError(t, err)
-}
-
-func TestFullSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
-	repo := repository.NewMockRepository(t)
-	repoResources := resources.NewMockRepositoryResources(t)
-	clients := resources.NewMockResourceClients(t)
-	progress := jobs.NewMockJobProgressRecorder(t)
-	compareFn := NewMockCompareFn(t)
-
-	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-	})
-
-	changes := []ResourceFileChange{
-		{Action: repository.FileActionCreated, Path: "myfolder/dashboard.json"},
-	}
-	// Compare always returns missing list, even when flag is disabled
-	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(changes, []string{"myfolder/"}, nil, nil)
-
-	progress.On("SetTotal", mock.Anything, 1).Return()
-	progress.On("TooManyErrors").Return(nil)
-	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
-
-	repoResources.On("WriteResourceFromFile", mock.Anything, "myfolder/dashboard.json", "ref").
-		Return("dash1", schema.GroupVersionKind{Kind: "Dashboard"}, 0, nil)
-	// Only expect Record for the dashboard write, NOT for folder metadata warning
-	progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
-		return r.Path() == "myfolder/dashboard.json"
-	})).Return()
-
-	err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), false, 0)
 	require.NoError(t, err)
 }
 
@@ -1527,6 +1428,96 @@ func TestFullSync_InvalidFolderMetadataWarning_ActionAware(t *testing.T) {
 
 			err := FullSync(context.Background(), repo, compareFn.Execute, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotas.NewInMemoryQuotaTracker(0, 0), true, 0)
 			require.NoError(t, err)
+		})
+	}
+}
+
+func TestFullSync_DeletedFolderMetadataWithUnchangedFallbackUID(t *testing.T) {
+	fallbackUID := resources.ParseFolder("team/", "test-repo").ID
+	teamFolder := provisioning.ResourceListItem{
+		Path: "team/", Hash: "old-meta-hash", Name: fallbackUID,
+		Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource,
+	}
+
+	tests := []struct {
+		name   string
+		source []repository.FileTreeEntry
+		target []provisioning.ResourceListItem
+	}{
+		{
+			name: "empty folder kept by .keep",
+			source: []repository.FileTreeEntry{
+				{Path: "team", Blob: false},
+				{Path: "team/.keep", Hash: "keep-hash", Blob: true},
+			},
+			target: []provisioning.ResourceListItem{teamFolder},
+		},
+		{
+			name: "folder with dashboard and child folder",
+			source: []repository.FileTreeEntry{
+				{Path: "team", Blob: false},
+				{Path: "team/dashboard.json", Hash: "dash-hash", Blob: true},
+				{Path: "team/child", Blob: false},
+				{Path: "team/child/_folder.json", Hash: "child-meta-hash", Blob: true},
+			},
+			target: []provisioning.ResourceListItem{
+				teamFolder,
+				{
+					Path: "team/dashboard.json", Hash: "dash-hash", Name: "dash-1", Folder: fallbackUID,
+					Group: "dashboard.grafana.app", Resource: "dashboards",
+				},
+				{
+					Path: "team/child/", Hash: "child-meta-hash", Name: "child-uid", Folder: fallbackUID,
+					Group: resources.FolderResource.Group, Resource: resources.FolderResource.Resource,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := repository.NewMockRepository(t)
+			repoResources := resources.NewMockRepositoryResources(t)
+			clients := resources.NewMockResourceClients(t)
+			progress := jobs.NewMockJobProgressRecorder(t)
+			// No expectations: the folder is not renamed, so no quota is lifted for it.
+			quotaTracker := quotas.NewMockQuotaTracker(t)
+
+			repo.On("Config").Return(&provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			})
+			// No Read expectation: the folder has no _folder.json left to read.
+			repo.On("ReadTree", mock.Anything, "ref").Return(tt.source, nil)
+			repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{Items: tt.target}, nil)
+			repoResources.On("SetTree", mock.Anything).Return().Once()
+
+			progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+				return r.Path() == "team/" &&
+					r.Action() == repository.FileActionUpdated &&
+					r.Warning() != nil
+			})).Return().Once()
+
+			progress.On("SetTotal", mock.Anything, 1).Return()
+			progress.On("TooManyErrors").Return(nil)
+			progress.On("HasDirPathFailedCreation", "team/").Return(false)
+
+			// The single variadic option must be WithForceWalk, the only option a
+			// same-path folder update receives. mock.Anything also matches a
+			// missing argument, so the argument count is checked explicitly.
+			repoResources.On("EnsureFolderPathExist", mock.Anything, "team/", "ref", mock.Anything).
+				Run(func(args mock.Arguments) { require.Len(t, args, 4) }).
+				Return(fallbackUID, nil).Once()
+			progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+				return r.Path() == "team/" &&
+					r.Action() == repository.FileActionUpdated &&
+					r.Name() == fallbackUID &&
+					r.Warning() == nil &&
+					r.Error() == nil
+			})).Return().Once()
+
+			err := FullSync(context.Background(), repo, Compare, clients, "ref", repoResources, progress, tracing.NewNoopTracerService(), 1, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), quotaTracker, true, 0)
+			require.NoError(t, err)
+			repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
 		})
 	}
 }

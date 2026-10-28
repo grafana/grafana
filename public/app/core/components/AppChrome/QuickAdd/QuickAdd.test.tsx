@@ -4,8 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem, type NavModelItem } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { config, reportInteraction, useDataSourceInstanceList } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
@@ -36,14 +35,9 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
+    useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
   };
 });
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
-}));
-
 const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
 
 jest.mock('@openfeature/react-sdk', () => ({
@@ -77,6 +71,13 @@ const alertingNavItem: NavModelItem = {
   id: 'alerting',
   url: '/alerting',
   children: [{ text: 'New alert rule', id: 'alert', url: '/alerting/new', isCreateAction: true }],
+};
+
+const notebooksNavItem: NavModelItem = {
+  text: 'Notebooks',
+  id: 'notebooks',
+  url: '/notebooks',
+  children: [{ text: 'New notebook', id: 'notebooks/new', url: '/notebooks/new?edit=true', isCreateAction: true }],
 };
 
 const setup = (navBarTree?: NavModelItem[]) => {
@@ -180,6 +181,34 @@ describe('QuickAdd', () => {
     );
     expect(ungroupedGroup).toBeDefined();
     expect(within(ungroupedGroup!).getByRole('menuitem', { name: 'New import' })).toBeInTheDocument();
+  });
+
+  it('shows the backend notebook create action with Quick Add attribution', async () => {
+    setup([notebooksNavItem]);
+
+    await userEvent.click(screen.getByRole('button', { name: 'New' }));
+    const notebookGroup = screen.getByRole('group', { name: 'Notebooks' });
+    expect(within(notebookGroup).getByRole('menuitem', { name: 'New notebook' })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/notebooks/new?edit=true&notebookSource=quick_add')
+    );
+    expect(screen.getAllByRole('menuitem', { name: 'New notebook' })).toHaveLength(1);
+  });
+
+  it('keeps the notebook create action in backend navigation order', async () => {
+    setup([dashboardsNavItem, notebooksNavItem, alertingNavItem]);
+
+    await userEvent.click(screen.getByRole('button', { name: 'New' }));
+    const groups = screen.getAllByRole('group');
+    const dashboardGroup = screen.getByRole('group', { name: 'Dashboards' });
+    expect(groups[groups.indexOf(dashboardGroup) + 1]).toBe(screen.getByRole('group', { name: 'Notebooks' }));
+  });
+
+  it('does not add a notebook action when the backend omits it', async () => {
+    setup([dashboardsNavItem, { ...notebooksNavItem, children: [] }]);
+    await userEvent.click(screen.getByRole('button', { name: 'New' }));
+    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Notebooks' })).not.toBeInTheDocument();
   });
 
   describe('Use template button', () => {

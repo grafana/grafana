@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"slices"
 	"strings"
 
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
@@ -24,31 +25,21 @@ type discoveredGroup struct {
 	discovery *apidiscoveryv2.APIGroupDiscovery
 }
 
-// discoverGroups fetches a target's /apis discovery document. It asks for the
-// aggregated format first: the standalone apiextensions apiserver lists
+// discoverGroupResources fetches a target's /apis discovery document. It asks
+// for the aggregated format first: the standalone apiextensions apiserver lists
 // CRD-backed groups only there, never in its plain /apis response. Servers
-// without it fall back to the classic APIGroupList.
-func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([]metav1.APIGroup, error) {
-	discovered, err := discoverGroupResources(ctx, client, baseURL)
-	if err != nil {
-		return nil, err
-	}
-	groups := make([]metav1.APIGroup, len(discovered))
-	for i, d := range discovered {
-		groups[i] = d.group
-	}
-	return groups, nil
-}
-
-// discoverGroupResources is discoverGroups, keeping each group's resources
-// when the target served the aggregated format.
+// without it fall back to the classic APIGroupList. Each group keeps its
+// resources when the target served the aggregated format. The reserved
+// discovery group is left out.
 func discoverGroupResources(ctx context.Context, client *http.Client, baseURL string) ([]discoveredGroup, error) {
 	// A trailing slash would produce "//apis", which servers route differently.
+	// #nosec G704 -- baseURL is operator-controlled configuration: an aggregate target's url or st_discovery_url.
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimSuffix(baseURL, "/")+apisPrefix, nil)
 	if err != nil {
 		return nil, fmt.Errorf("router: building discovery request: %w", err)
 	}
 	req.Header.Set("Accept", aggregatedDiscoveryJSON+", application/json")
+	// #nosec G704 -- req targets the operator-configured base URL above.
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("router: discovery request to %s failed: %w", baseURL, err)
@@ -58,7 +49,10 @@ func discoverGroupResources(ctx context.Context, client *http.Client, baseURL st
 		return nil, fmt.Errorf("router: discovery request to %s returned status %d", baseURL, resp.StatusCode)
 	}
 
-	return decodeDiscoveryResponse(resp, baseURL)
+	groups, err := decodeDiscoveryResponse(resp, baseURL)
+	// A target that is itself a router always lists the discovery group,
+	// which this router serves itself; drop it quietly, since it is expected.
+	return slices.DeleteFunc(groups, func(g discoveredGroup) bool { return g.group.Name == discoveryGroup }), err
 }
 
 // decodeLimitedJSON decodes a JSON body of at most limit bytes into v. A
@@ -106,7 +100,7 @@ func decodeDiscoveryResponse(resp *http.Response, baseURL string) ([]discoveredG
 
 // apiGroupDiscoveryListToGroups converts the aggregated discovery document into
 // the classic APIGroup shape the rest of this package already expects
-// (matchesAnyPattern, newAggregateBackend). Versions keep the priority order
+// (matchesAnyPattern, newDiscoveredAggregateBackend). Versions keep the priority order
 // the upstream server returned them in; the first entry becomes
 // PreferredVersion, matching that ordering convention.
 func apiGroupDiscoveryListToGroups(list apidiscoveryv2.APIGroupDiscoveryList) []metav1.APIGroup {
@@ -127,11 +121,9 @@ func apiGroupDiscoveryListToGroups(list apidiscoveryv2.APIGroupDiscoveryList) []
 	return groups
 }
 
-// aggregateBackend is a Backend for one group discovered on a fixed
-// aggregate target (baas_apiserver or cloud_app_platform_apiserver). Its
-// Load proxies to the target's own host, same shape as forwardBackend --
-// the difference is entirely in how Group/Key are learned (discovery poll
-// vs a RouteBackend CR), not in how requests are served.
+// aggregateBackend is a Backend for one group discovered on a configured
+// aggregate target ([router.aggregate.<name>]). Its Load proxies to the
+// target's own host.
 type aggregateBackend struct {
 	targetName string
 	group      metav1.APIGroup
@@ -145,12 +137,8 @@ var (
 	_ DiscoveryProvider = (*aggregateBackend)(nil)
 )
 
-func newAggregateBackend(targetName string, group metav1.APIGroup, base *url.URL, transport http.RoundTripper) (Backend, error) {
-	return newDiscoveredAggregateBackend(targetName, discoveredGroup{group: group}, base, transport)
-}
-
-// newDiscoveredAggregateBackend also keeps the group's resources from the
-// poll, so /apis can be built without asking the target again. They are part
+// newDiscoveredAggregateBackend keeps the group's resources from the poll, so
+// /apis can be built without asking the target again. They are part
 // of the key, so a resource change on the target republishes discovery.
 func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup, base *url.URL, transport http.RoundTripper) (Backend, error) {
 	group := discovered.group
@@ -176,6 +164,7 @@ func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup
 			ModifyResponse: rejectBackendRedirects,
 			ErrorHandler:   proxyErrorHandler,
 			FlushInterval:  streamingFlushInterval,
+			BufferPool:     proxyBuffers,
 		},
 	}, nil
 }
@@ -190,18 +179,13 @@ func (b *aggregateBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) 
 	return *b.discovery, true
 }
 
-// discoveredGroupKey fingerprints a discovered group. A group without
-// resources hashes exactly as before resources were kept, so its key is
-// unchanged.
+// discoveredGroupKey fingerprints a discovered group and its resources, so a
+// change to either is a new key.
 func discoveredGroupKey(d discoveredGroup) (string, error) {
-	var value any = d.group
-	if d.discovery != nil {
-		value = struct {
-			Group     metav1.APIGroup
-			Discovery *apidiscoveryv2.APIGroupDiscovery
-		}{d.group, d.discovery}
-	}
-	body, err := json.Marshal(value)
+	body, err := json.Marshal(struct {
+		Group     metav1.APIGroup
+		Discovery *apidiscoveryv2.APIGroupDiscovery
+	}{d.group, d.discovery})
 	if err != nil {
 		return "", err
 	}
@@ -209,7 +193,5 @@ func discoveredGroupKey(d discoveredGroup) (string, error) {
 	return hex.EncodeToString(sum[:])[:16], nil
 }
 func (b *aggregateBackend) Load(context.Context) (http.Handler, error) {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		b.proxy.ServeHTTP(w, req)
-	}), nil
+	return b.proxy, nil
 }

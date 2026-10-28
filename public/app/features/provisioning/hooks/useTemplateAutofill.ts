@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 
 interface UseTemplateAutofillArgs {
-  /** Pre-fill is active: feature flag on, domain conditions met, and a template is set.
-   *  Callers that bypass the form when locked pass `active && !locked`. */
+  /** Pre-fill is active: domain conditions met and a template is set. Callers that bypass the form
+   *  when locked pass `active && !locked`. */
   active: boolean;
   /** Resolved value to fill. Empty string means "leave the field untouched". */
   rendered: string;

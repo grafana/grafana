@@ -9,7 +9,11 @@ import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagDashboardVectorSearch, useFlagGrafanaVectorSearchCmdk } from '@grafana/runtime/internal';
+import {
+  useFlagDashboardVectorSearch,
+  useFlagGrafanaCmdkHybridSearch,
+  useFlagGrafanaVectorSearchCmdk,
+} from '@grafana/runtime/internal';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 
 import { AskAssistantPill } from './AskAssistantPill';
@@ -17,7 +21,7 @@ import { type DeepSearchNavHandle, DeepSearchResults } from './DeepSearchResults
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
-import { useHybridSearchEnabled, useSearchResults } from './actions/dashboardActions';
+import { useSearchResults } from './actions/dashboardActions';
 import { type DeepSearchDashboardResult, useDeepSearchResults } from './actions/deepSearchActions';
 import {
   useRegisterExtensionActions,
@@ -77,7 +81,7 @@ function CommandPaletteContents() {
   // results already cover the semantic matches, so showing both would duplicate them.
   const dashboardVectorSearchEnabled = useFlagDashboardVectorSearch();
   const vectorSearchCmdkEnabled = useFlagGrafanaVectorSearchCmdk();
-  const hybridSearchEnabled = useHybridSearchEnabled();
+  const hybridSearchEnabled = useFlagGrafanaCmdkHybridSearch();
   const deepSearchEnabled = dashboardVectorSearchEnabled && vectorSearchCmdkEnabled && !hybridSearchEnabled;
   const { deepSearchResults, isFetchingDeepSearchResults } = useDeepSearchResults({
     searchQuery,
@@ -92,7 +96,7 @@ function CommandPaletteContents() {
     ref
   );
 
-  const { dialogProps } = useDialog({}, ref);
+  const { dialogProps } = useDialog({ 'aria-label': t('command-palette.dialog-label', 'Command palette') }, ref);
 
   // Report interaction when opened/closed
   useEffect(() => {

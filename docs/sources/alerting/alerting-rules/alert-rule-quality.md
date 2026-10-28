@@ -15,7 +15,6 @@ labels:
     - cloud
 title: Improve alert rule quality with Alert Advisor
 weight: 600
-draft: true
 refs:
   configure-rbac:
     - pattern: /docs/grafana/
@@ -102,22 +101,25 @@ Writes from the Grafana rule editor aren't enforced, but the resulting rules can
 Start with detect-only requirements to identify missing information before enabling enforcement.
 The following example requires a runbook URL and a `team` label.
 
+The **Quality policy settings** button is visible only if you have the policy permissions listed in [Before you begin](#before-you-begin).
+
 To configure a quality policy, follow these steps:
 
-1. Go to **Alerting** > **Settings** and select **Alert rule quality**.
-2. Under **Required annotations**, turn on **Runbook URL**.
+1. Go to **Alerting** > **Alert rules** and select **Alert quality**.
+2. Click **Quality policy settings** (the cog icon) to open the **Quality policy** drawer.
+3. Under **Required annotations**, turn on **Runbook URL**.
 
    You can also require **Summary** and **Description**.
 
-3. Under **Required labels**, enter `team` in **Label keys** and select the matching option.
+4. Under **Required labels**, enter `team` in **Label keys** and select the matching option.
 
    You can select keys already used by your rules or add a new key.
 
-4. Keep **Enforce** off for the requirements you add.
+5. Keep **Enforce** off for the requirements you add.
 
    New requirements start in detect-only mode.
 
-5. Click **Save**.
+6. Click **Save**.
 
    Grafana displays **Policy saved** to confirm the change.
 
@@ -189,7 +191,7 @@ You can enforce selected requirements while keeping others detect-only.
 
 To enable enforcement, follow these steps:
 
-1. Go to **Alerting** > **Settings** and select **Alert rule quality**.
+1. On the **Alert quality** page, click **Quality policy settings** (the cog icon) to open the **Quality policy** drawer.
 2. Turn on **Enforce** beside each requirement you want to enforce.
 
    For example, enforce `team` while keeping **Runbook URL** detect-only.
@@ -210,15 +212,15 @@ To stop checking a field altogether, remove its requirement instead: turn off it
 
 Use the following guidance when you can't access the feature, resolve a finding, or apply a rule change.
 
-| Symptom                                                     | Action                                                                                                                                                                                    |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Alert quality** or **Alert rule quality** isn't visible.  | Ask your stack administrator to check your [permissions](#before-you-begin) and the feature's availability in your stack.                                                                 |
-| A rule has no **Edit** action.                              | If it has a **Provisioned** badge, update its source configuration. Otherwise, check your permission to update rules in that folder.                                                      |
-| Grafana reports that no quality policy is configured.       | Add at least one requirement in **Alert rule quality** and click **Save**. An empty policy doesn't assess any fields.                                                                     |
-| No findings match your search, but the score is below 10.0. | Clear **Search** to view all findings. Search filters don't change the score.                                                                                                             |
-| A finding remains after enforcement is disabled.            | Detect-only requirements still produce findings. Fill in the missing value or remove the requirement from the policy.                                                                     |
-| A provisioning write is rejected by the quality policy.     | Use the rule and field details in the error to update the source configuration, then reapply it.                                                                                          |
-| A write succeeds despite a quality finding.                 | Check that the requirement is enforced and the policy is saved. Confirm that the write uses a [supported enforcement path](#supported-enforcement-paths) and isn't one of its exceptions. |
+| Symptom                                                                    | Action                                                                                                                                                                                    |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Alert quality** or the **Quality policy settings** button isn't visible. | Ask your stack administrator to check your [permissions](#before-you-begin) and the feature's availability in your stack.                                                                 |
+| A rule has no **Edit** action.                                             | If it has a **Provisioned** badge, update its source configuration. Otherwise, check your permission to update rules in that folder.                                                      |
+| Grafana reports that no quality policy is configured.                      | Add at least one requirement in the **Quality policy** drawer and click **Save**. An empty policy doesn't assess any fields.                                                              |
+| No findings match your search, but the score is below 10.0.                | Clear **Search** to view all findings. Search filters don't change the score.                                                                                                             |
+| A finding remains after enforcement is disabled.                           | Detect-only requirements still produce findings. Fill in the missing value or remove the requirement from the policy.                                                                     |
+| A provisioning write is rejected by the quality policy.                    | Use the rule and field details in the error to update the source configuration, then reapply it.                                                                                          |
+| A write succeeds despite a quality finding.                                | Check that the requirement is enforced and the policy is saved. Confirm that the write uses a [supported enforcement path](#supported-enforcement-paths) and isn't one of its exceptions. |
 
 ## Next steps
 

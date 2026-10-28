@@ -13,18 +13,16 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	v1alpha1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
 )
 
 var (
-	rawSchemaPreferencesv1           = []byte(`{"NavbarPreference":{"additionalProperties":false,"properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"Preferences":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"QueryHistoryPreference":{"additionalProperties":false,"properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"homeDashboardUID":{"description":"UID for the home dashboard","type":"string"},"homeURL":{"description":"Explicit home URL (NOTE: this can only be modified in the system settings)","type":"string"},"language":{"description":"Selected language","type":"string"},"navbar":{"$ref":"#/components/schemas/NavbarPreference","description":"Navigation preferences"},"queryHistory":{"$ref":"#/components/schemas/QueryHistoryPreference","description":"Explore query history preferences"},"theme":{"description":"user interface theme","type":"string"},"timezone":{"description":"The timezone selection","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"}}`)
+	rawSchemaPreferencesv1           = []byte(`{"NavbarPreference":{"additionalProperties":false,"properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"Preferences":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"QueryHistoryPreference":{"additionalProperties":false,"properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"homeDashboardUID":{"description":"UID for the home dashboard. The reserved value \"global-home\" is not a\ndashboard UID: it selects the instance default home (home_page, the\nconfigured home dashboard file, or the built-in home page) instead of\nfalling through to lower-precedence preferences.","type":"string"},"homeURL":{"description":"Explicit home URL (NOTE: this can only be modified in the system settings)","type":"string"},"language":{"description":"Selected language","type":"string"},"navbar":{"$ref":"#/components/schemas/NavbarPreference","description":"Navigation preferences"},"queryHistory":{"$ref":"#/components/schemas/QueryHistoryPreference","description":"Explore query history preferences"},"theme":{"description":"user interface theme","type":"string"},"timezone":{"description":"The timezone selection","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"}}`)
 	versionSchemaPreferencesv1       app.VersionSchema
 	_                                = json.Unmarshal(rawSchemaPreferencesv1, &versionSchemaPreferencesv1)
-	rawSchemaPreferencesv1alpha1     = []byte(`{"NavbarPreference":{"additionalProperties":false,"properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"Preferences":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"QueryHistoryPreference":{"additionalProperties":false,"properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"homeDashboardUID":{"description":"UID for the home dashboard","type":"string"},"homeURL":{"description":"Explicit home URL (NOTE: this can only be modified in the system settings)","type":"string"},"language":{"description":"Selected language","type":"string"},"navbar":{"$ref":"#/components/schemas/NavbarPreference","description":"Navigation preferences"},"queryHistory":{"$ref":"#/components/schemas/QueryHistoryPreference","description":"Explore query history preferences"},"theme":{"description":"user interface theme","type":"string"},"timezone":{"description":"The timezone selection","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"}}`)
+	rawSchemaPreferencesv1alpha1     = []byte(`{"NavbarPreference":{"additionalProperties":false,"properties":{"bookmarkUrls":{"items":{"type":"string"},"type":"array"}},"required":["bookmarkUrls"],"type":"object"},"Preferences":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"QueryHistoryPreference":{"additionalProperties":false,"properties":{"homeTab":{"description":"one of: '' | 'query' | 'starred';","type":"string"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"homeDashboardUID":{"description":"UID for the home dashboard. The reserved value \"global-home\" is not a\ndashboard UID: it selects the instance default home (home_page, the\nconfigured home dashboard file, or the built-in home page) instead of\nfalling through to lower-precedence preferences.","type":"string"},"homeURL":{"description":"Explicit home URL (NOTE: this can only be modified in the system settings)","type":"string"},"language":{"description":"Selected language","type":"string"},"navbar":{"$ref":"#/components/schemas/NavbarPreference","description":"Navigation preferences"},"queryHistory":{"$ref":"#/components/schemas/QueryHistoryPreference","description":"Explore query history preferences"},"theme":{"description":"user interface theme","type":"string"},"timezone":{"description":"The timezone selection","type":"string"},"weekStart":{"description":"day of the week (sunday, monday, etc)","type":"string"}},"type":"object"}}`)
 	versionSchemaPreferencesv1alpha1 app.VersionSchema
 	_                                = json.Unmarshal(rawSchemaPreferencesv1alpha1, &versionSchemaPreferencesv1alpha1)
 )
@@ -61,11 +59,6 @@ var appManifestData = app.ManifestData{
 					Schema: &versionSchemaPreferencesv1,
 				},
 			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
-			},
 		},
 
 		{
@@ -93,11 +86,6 @@ var appManifestData = app.ManifestData{
 					},
 					Schema: &versionSchemaPreferencesv1alpha1,
 				},
-			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},

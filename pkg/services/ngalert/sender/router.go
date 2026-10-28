@@ -90,7 +90,7 @@ func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store stor
 // SyncAndApplyConfigFromDatabase looks for the admin configuration in the database
 // and adjusts the sender(s) and alert handling mechanism accordingly.
 func (d *AlertsRouter) SyncAndApplyConfigFromDatabase(ctx context.Context) error {
-	cfgs, err := d.adminConfigStore.GetAdminConfigurations()
+	cfgs, err := d.adminConfigStore.GetAdminConfigurations(ctx)
 	if err != nil {
 		return err
 	}
@@ -250,6 +250,12 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]ExternalAMcf
 	query := &datasources.GetDataSourcesByTypeQuery{
 		OrgID: orgID,
 		Type:  datasources.DS_ALERTMANAGER,
+		// The Alertmanager plugin has no alias IDs. Setting this to an empty list (not nil)
+		// skips the plugin store lookup in GetDataSourcesByType. The first sync runs while
+		// ngalert is being set up, before the plugin store service has started. The lookup
+		// would wait for the store until the timeout and then fail, and alerts would go to
+		// the built-in Alertmanager until the next sync.
+		AliasIDs: []string{},
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()

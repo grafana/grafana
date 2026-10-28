@@ -218,8 +218,8 @@
     }
   },
   "managed_inhibition_rules": {
-    "83e6a846175a154d": {
-      "name": "83e6a846175a154d",
+    "a1d38b33ebc9330": {
+      "name": "a1d38b33ebc9330",
       "source_matchers": [
         "alertname=\"test\"",
         "__grafana_managed_route__=\"mimir-12345\""

@@ -4,9 +4,11 @@ import { BigValueGraphMode, BigValueColorMode, BigValueTextMode } from '@grafana
 import { statPanelChangedHandler } from './StatMigrations';
 import { type Options } from './panelcfg.gen';
 
-function makePanel(): PanelModel<Partial<Options>> {
-  return { options: {}, fieldConfig: { defaults: {}, overrides: [] } } as unknown as PanelModel<Partial<Options>>;
+function makePanel(): PanelModel<Options> {
+  return { options: {}, fieldConfig: { defaults: {}, overrides: [] } } as unknown as PanelModel<Options>;
 }
+
+const prevFieldConfig = { defaults: {}, overrides: [] };
 
 describe('Stat Panel Migrations', () => {
   it.each([
@@ -14,7 +16,7 @@ describe('Stat Panel Migrations', () => {
     { desc: 'hidden', sparkline: { show: false }, expected: BigValueGraphMode.None },
     { desc: 'absent', sparkline: undefined, expected: BigValueGraphMode.None },
   ])('sets graphMode to $expected when the angular sparkline was $desc', ({ sparkline, expected }) => {
-    const options = statPanelChangedHandler(makePanel(), 'singlestat', { angular: { sparkline } });
+    const options = statPanelChangedHandler(makePanel(), 'singlestat', { angular: { sparkline } }, prevFieldConfig);
 
     expect(options.graphMode).toBe(expected);
   });
@@ -29,7 +31,7 @@ describe('Stat Panel Migrations', () => {
     },
     { desc: 'no color option is set', angular: {}, expected: BigValueColorMode.None },
   ])('sets colorMode to $expected when $desc', ({ angular, expected }) => {
-    const options = statPanelChangedHandler(makePanel(), 'singlestat', { angular });
+    const options = statPanelChangedHandler(makePanel(), 'singlestat', { angular }, prevFieldConfig);
 
     expect(options.colorMode).toBe(expected);
   });
@@ -38,7 +40,7 @@ describe('Stat Panel Migrations', () => {
     { valueName: 'name', expected: BigValueTextMode.Name },
     { valueName: 'avg', expected: undefined },
   ])('maps valueName "$valueName" to textMode $expected', ({ valueName, expected }) => {
-    const options = statPanelChangedHandler(makePanel(), 'singlestat', { angular: { valueName } });
+    const options = statPanelChangedHandler(makePanel(), 'singlestat', { angular: { valueName } }, prevFieldConfig);
 
     expect(options.textMode).toBe(expected);
   });
@@ -52,7 +54,7 @@ describe('Stat Panel Migrations', () => {
       },
     };
 
-    const options = statPanelChangedHandler(makePanel(), 'grafana-singlestat-panel', old);
+    const options = statPanelChangedHandler(makePanel(), 'grafana-singlestat-panel', old, prevFieldConfig);
 
     expect(options.graphMode).toBe(BigValueGraphMode.Area);
   });
@@ -68,7 +70,7 @@ describe('Stat Panel Migrations', () => {
     };
 
     const panel = makePanel();
-    const options = statPanelChangedHandler(panel, 'singlestat', old);
+    const options = statPanelChangedHandler(panel, 'singlestat', old, prevFieldConfig);
 
     expect(options.colorMode).toBe(BigValueColorMode.None);
     expect(options.graphMode).toBe(BigValueGraphMode.Area);
@@ -89,7 +91,7 @@ describe('Stat Panel Migrations', () => {
     };
 
     const panel = makePanel();
-    const options = statPanelChangedHandler(panel, 'singlestat', old);
+    const options = statPanelChangedHandler(panel, 'singlestat', old, prevFieldConfig);
 
     expect(options.graphMode).toBe(BigValueGraphMode.None);
     expect(panel.fieldConfig.defaults.color).toBeUndefined();
@@ -107,7 +109,7 @@ describe('Stat Panel Migrations', () => {
     };
 
     const panel = makePanel();
-    const options = statPanelChangedHandler(panel, 'singlestat', old);
+    const options = statPanelChangedHandler(panel, 'singlestat', old, prevFieldConfig);
 
     expect(options.colorMode).toBe(BigValueColorMode.Value);
     expect(panel.fieldConfig.defaults.color).toBeUndefined();
@@ -126,7 +128,7 @@ describe('Stat Panel Migrations', () => {
 
     const panel = makePanel();
 
-    statPanelChangedHandler(panel, 'timeseries', old);
+    statPanelChangedHandler(panel, 'timeseries', old, prevFieldConfig);
 
     expect(panel.fieldConfig.defaults).toEqual({});
     expect(panel.fieldConfig.overrides).toEqual([]);

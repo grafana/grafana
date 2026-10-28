@@ -2,7 +2,7 @@
 
 For Grafana engineers who own a kind and want it searchable. You need to know your kind; you do not need to know anything about Bleve or the index.
 
-The endpoint is `POST /apis/{group}/{version}/namespaces/{namespace}/{resource}/search`. It is on by default (`[grafana-apiserver] enable_search_api`, default `true`), so you can make a kind searchable without asking the search and storage team.
+The endpoint is `POST /apis/{group}/{version}/namespaces/{namespace}/{resource}/search`. Grafana always registers it for eligible kinds, so you can make a kind searchable without asking the search and storage team. The former `[grafana-apiserver] enable_search_api` and `enable_trash_api` settings no longer control route registration.
 
 This is `v0alpha1`. Shapes can change.
 
@@ -130,14 +130,18 @@ Every kind can query and retrieve these without declaring anything. They are the
 | `tags` | string array | filter, facet, retrieve | Unique tags | `spec.tags`. Non-string entries are skipped |
 | `folder` | string | filter, sort, retrieve | Kubernetes name of the containing folder | The `grafana.app/folder` annotation |
 | `createdBy` | string | filter, retrieve | Who created it, as `user:<uid>` | The `grafana.app/createdBy` annotation |
+| `updatedBy` | string | filter, retrieve | Who last updated it, as `user:<uid>` | The `grafana.app/updatedBy` annotation |
 | `ownerReferences` | string array | filter, retrieve | Owner references, as `{group}/{kind}/{name}` | `metadata.ownerReferences` |
 | `managedBy` | string | facet | Manager identity, as `{kind}:{id}` | Manager properties |
-| `created` | int64 | retrieve | Creation timestamp, unix millis | `metadata.creationTimestamp` |
-| `updated` | int64 | retrieve | Update timestamp, unix millis | The `grafana.app/updatedTimestamp` annotation |
+| `created` | int64 | filter, sort, retrieve | Creation timestamp, unix millis | `metadata.creationTimestamp` |
+| `updated` | int64 | filter, sort, retrieve | Update timestamp, unix millis | The `grafana.app/updatedTimestamp` annotation |
+| `manager.kind` | string | filter, retrieve | Kind of tool that manages it, such as `repo` for Git Sync | Manager properties |
+| `manager.id` | string | filter, retrieve | Which instance of that tool manages it, such as the repository name | Manager properties |
+| `manager.allowEdits` | boolean | retrieve | Whether the manager allows others to edit it | Manager properties |
 
 So `title`, `description` and `tags` come from your spec: name them that way and they are indexed with no work from you. A kind with its own document builder can overwrite any of these, as dashboards do from their parsed summary.
 
-Note that `created` and `updated` only declare `retrieve`. They can be returned, but they cannot be filtered, sorted or used in a range query, so "everything updated in the last week" is not a query you can write today. This is a limitation of the standard fields rather than something for your kind to work around, and it is likely to change: if you need it, say so and the standard fields can be given those capabilities.
+`created` and `updated` can be filtered with a `range` leaf, so "everything updated in the last week" is a query you can write, and sorted, so results can be ordered by time.
 
 ## 4. Request
 
@@ -183,6 +187,30 @@ In practice that means when your kind graduates from `v1beta1` to `v1`, the URL 
 To exclude empty values, prefer a `filter` leaf over a regex: `NotIn` with a single `""` value is a single-term negation, where the regex `.+` scans the whole field (so `.+` only works under 10,000 distinct values). Note `NotIn` also matches documents missing the field, so it means "value is not empty" rather than "present and non-empty"; use `.+` (and `negate` it for empty-or-missing) only when you need that stricter sense.
 
 Omitting `where` matches everything of that kind in the namespace, subject to authorization.
+
+#### Searching a folder and everything below it
+
+The global search (`.../namespaces/{namespace}/global/search`) also offers `folderTree`, which matches what is in the named folders or in any folder below them, at any depth:
+
+```json
+{ "filter": { "field": "folderTree", "operator": "In", "values": ["team-a"] } }
+```
+
+Several values are ORed. Only `In` is supported. The named folders themselves are not returned, only what they hold; to match only what is directly in a folder, filter on `folder` instead. The root folder is named `general`, and an empty value is rejected: `folderTree` with `general` matches everything, the same as no filter.
+
+`folderTree` is not stored with each item: the global search works it out from the folders it has indexed when it searches. Like the rest of that index it is eventually consistent, so just after a folder moves, a search can still find what is below it in its old place.
+
+The global search answers with `GlobalSearchResults`. When it cannot search a type, because the calling service may not search it on the user's behalf or because the deployment does not check its results against the user, it leaves that type out instead of failing, and names it in `metadata.skippedTypes`. The results are then incomplete. It fails only when no type is left.
+
+##### Experimental recursive searches of one kind
+
+The same `folderTree` filter is available on per-resource `/search` endpoints only when `search.perResourceFolderTree` is enabled. This experimental flag defaults to off and is evaluated for each request, so it can be enabled for selected stacks during load and latency testing. With the flag off, the API rejects the field with 422 before calling the search server. Existing global search is unaffected.
+
+The search stays scoped to the resource type in the URL. Its folder index supplies the hierarchy without adding folder documents to the results. The filter supports only `In` and cannot be returned, sorted, faceted, or searched as text or regex. It is not available on `/trash`, even with the flag enabled.
+
+Deploy search-server support for recursive per-resource queries before enabling the flag. An older server rejects the filter; the API returns that error rather than silently running a non-recursive search.
+
+The folder and resource indexes use the existing per-resource refresh policy. The hierarchy and results are not read in one snapshot, so concurrent folder moves can affect results. This query must not be the sole check that a folder is empty before deletion; preventing concurrent writes requires coordination with those writes.
 
 #### Requiring every value
 
@@ -289,8 +317,8 @@ Individual results are then filtered per item using the same access client that 
 
 - **Unified storage only**, and a kind whose data has not migrated returns an empty result rather than an error. This is the most common reason search appears not to work, see the prerequisite at the top.
 - **The first request for a kind may wait for an index build.** Indexes are created on demand.
-- **Trash is limited to dashboards today**, so a kind gets `/search` only. `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be accepted by `resource.TrashSearchAllowed`. That policy grows as the access rule trash uses is checked against more kinds. Once your kind is allowed, `trash: false` opts back out.
-- **Sorting** works on any indexed field that declares `sort`. One exception: non-string retrieve-only fields fall back to the `name` tie-breaker instead of failing, so `created` and `updated` cannot be sorted on.
+- **Trash is limited to dashboards today**, so other kinds get `/search` only. A kind has to be accepted by `resource.TrashSearchAllowed` to get `/trash`. That policy grows as the access rule trash uses is checked against more kinds. Once your kind is allowed, `trash: false` opts back out.
+- **Sorting** works on any indexed field that declares `sort`. A field that does not declare it is rejected with 422.
 - **A field without `retrieve` cannot be returned**, even if you can filter on it.
 
 ## Hybrid search
@@ -317,12 +345,7 @@ The route is absent when `search.hybrid` is omitted or false, or the kind is
 cluster-scoped. The same rules apply to core APIs, app plugins and manifest-backed
 custom resource definitions.
 
-`[grafana-apiserver] enable_hybrid_api` defaults to `true` and can disable these
-routes deployment-wide. Standalone API servers expose the equivalent flag
-`--grafana-apiserver-enable-hybrid-api=false`. This switch and the manifest's
-`search.hybrid` setting are independent of lexical search and trash: hybrid can
-remain available when `enable_search_api`, `enable_trash_api` or
-`search.endpoint` is false.
+`[grafana-apiserver] enable_hybrid_api` defaults to `true` and can disable these routes deployment-wide. Standalone API servers expose the equivalent flag `--grafana-apiserver-enable-hybrid-api=false`. This switch and the manifest's `search.hybrid` setting are independent of lexical search and trash: hybrid can remain available when `search.endpoint` or `search.trash` is false.
 
 Route availability does not enroll a resource for embeddings. The `embed.fields`
 declaration and `vector_allowed_internal_collections` setting below control that
@@ -553,6 +576,58 @@ errors instead of implementing a separate fallback.
 
 The storage service authorizes individual results in both modes. Its embedding
 query rate limit applies only when semantic search is enabled (429 when exceeded).
+
+### Search across resources
+
+Deploy hybrid eligibility checks to all search-api instances before setting
+`[grafana-apiserver] enable_global_hybrid_api = true`; older servers ignore the
+opt-in check. The existing `enable_hybrid_api` switch must also remain enabled.
+Send the same request envelope to
+`POST /apis/search.grafana.app/v0alpha1/namespaces/{namespace}/global/search/hybrid`,
+adding the resource types to search:
+
+```json
+{
+  "apiVersion": "search.grafana.app/v0alpha1",
+  "kind": "HybridSearchQuery",
+  "resources": [
+    { "group": "dashboard.grafana.app", "resource": "dashboards" },
+    { "group": "folder.grafana.app", "resource": "folders" },
+    { "group": "assistant.alertrules.ext.grafana.app", "resource": "alertrules" }
+  ],
+  "query": "production",
+  "limit": 10
+}
+```
+
+The search backend requires `search.hybrid: true` in its built-in or watched
+manifest for each internal resource. Externally pushed collections, identified
+by the collection catalog rather than the group name, use existing enrollment
+and authorization rules. API versions are not needed in the resource list.
+
+Storage authorizes individual results; Grafana also checks API authorization for
+locally known resources. Global search cannot run custom authorization from a
+remote app handler. Resources needing it must keep hybrid disabled on all served
+versions unless storage enforces the same policy. Let the opt-out reach all search
+servers before relying on it. Existing direct RPC callers and custom handlers
+are unchanged.
+
+Results are reranked together, and `limit` applies to the combined response.
+Without reranking, resource types are interleaved in request order. Filters apply
+to every requested type; multi-resource queries support only `uid` and `folder`.
+A failure searching any resource fails the request. Each result includes its own
+group and resource; `kind` is empty when no manifest supplies it.
+
+To let clients omit `resources`, configure defaults in the Grafana HTTP process:
+
+```ini
+[unified_storage]
+hybrid_search_default_resources = dashboard.grafana.app/dashboards,folder.grafana.app/folders
+```
+
+An omitted or empty list uses these defaults; an explicit list overrides them.
+Keep group/resource pairs unique; an empty setting still requires explicit resources.
+Configured targets pass existing validation and authorization checks.
 
 ## Where to look
 

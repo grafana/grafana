@@ -16,7 +16,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -66,7 +66,7 @@ decode:
 		evt, err := d.client.Recv()
 
 		switch {
-		case resource.IsResourceVersionExpired(err):
+		case resourceutil.IsResourceVersionExpired(err):
 			// Surface a 410/Expired status object (instead of an error) so clients
 			// such as reflectors re-list from scratch rather than retrying the
 			// watch from a resource version the server can no longer serve.
@@ -75,7 +75,7 @@ decode:
 			}
 			d.expiredSent = true
 			logger.Debug("client: watch resource version expired", "error", err)
-			status := resource.AsErrorResult(err)
+			status := resourceutil.AsErrorResult(err)
 			return watch.Error, &metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    status.Code,
@@ -132,6 +132,9 @@ decode:
 			decodeSource = evt.Previous
 		}
 		obj, err := d.toObject(decodeSource)
+		if errors.Is(err, errSharedMismatch) {
+			continue decode
+		}
 		if err != nil {
 			logger.Error("error decoding entity", "error", err)
 			return watch.Error, nil, err
@@ -166,6 +169,9 @@ decode:
 			var prevObj runtime.Object
 			if evt.Previous != nil {
 				prevObj, err = d.toObject(evt.Previous)
+				if errors.Is(err, errSharedMismatch) {
+					continue decode
+				}
 				if err != nil {
 					logger.Error("error decoding entity", "error", err)
 					return watch.Error, nil, err

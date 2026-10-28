@@ -51,7 +51,7 @@ describe('Import wizard auto-sync gate', () => {
   });
 
   describe('when the sync feature is enabled', () => {
-    testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager', 'alertingMigrationUI'] });
+    testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
     beforeEach(grantWizardPermissions);
 
@@ -99,25 +99,6 @@ describe('Import wizard auto-sync gate', () => {
 
       expect(await ui.notificationsStep.find()).toBeInTheDocument();
       await waitFor(() => expect(ui.blockTitle.query()).not.toBeInTheDocument());
-    });
-  });
-
-  describe('when the sync feature is enabled but rules import is not', () => {
-    testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
-
-    beforeEach(grantWizardPermissions);
-
-    // Without alertingMigrationUI the rules-only route redirects away, so the block must explain the
-    // situation without offering a link that goes nowhere.
-    it('blocks without offering the rules-only import link', async () => {
-      grantUserRole(OrgRole.Editor);
-      setupAutoSyncConfig(server, { specUid: MIMIR_DS_UID });
-
-      render(<ImportWizardGate />);
-
-      expect(await ui.blockTitle.find()).toBeInTheDocument();
-      expect(ui.importRules.query()).not.toBeInTheDocument();
-      expect(ui.goToSettings.query()).not.toBeInTheDocument();
     });
   });
 });

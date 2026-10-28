@@ -3,6 +3,7 @@ import { esriLayers } from './esri';
 import { genericLayers } from './generic';
 import { maplibreLayers } from './maplibre';
 import { osmLayers } from './osm';
+import { protomapsLayers } from './protomaps';
 
 /**
  * Registry for layer handlers
@@ -13,4 +14,5 @@ export const basemapLayers = [
   ...esriLayers, // keep formatting
   ...genericLayers,
   ...maplibreLayers,
+  ...protomapsLayers,
 ];

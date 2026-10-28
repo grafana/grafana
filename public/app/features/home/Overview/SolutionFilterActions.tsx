@@ -4,7 +4,7 @@ import { type DefaultValues, type FieldValues, useForm, type UseFormReturn } fro
 
 import { type DataSourceInstanceListItem, type GrafanaTheme2, store } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Badge, Button, IconButton, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Button, type ComboboxOption, IconButton, Modal, Stack, useStyles2 } from '@grafana/ui';
 import { useStoredString } from 'app/core/hooks/useStored';
 
 import { ctaClicked, solutionFilterChanged } from '../analytics/main';
@@ -187,6 +187,11 @@ function SolutionFilterModal<TScope extends FieldValues>({
       </form>
     </Modal>
   );
+}
+
+/** Combobox options for a label-values list; `undefined` (a rejected lookup) is an empty list. */
+export function toOptions(values: string[] | undefined): Array<ComboboxOption<string>> {
+  return (values ?? []).map((value) => ({ label: value, value }));
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({

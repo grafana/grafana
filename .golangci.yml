@@ -75,6 +75,19 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/dashboard is not allowed to import grafana core
+        apps-live:
+          list-mode: lax
+          files:
+            - '**/apps/live/*'
+            - '**/apps/live/**/*'
+            - '!**/pkg/registry/apps/live/*'
+            - '!**/pkg/registry/apps/live/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
+            - github.com/grafana/grafana/pkg/infra/log
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: apps/live is not allowed to import grafana core
         apps-secret:
           list-mode: lax
           files:
@@ -93,8 +106,6 @@ linters:
             - '**/pkg/tsdb/azuremonitor/**/*'
             - '**/pkg/tsdb/graphite/*'
             - '**/pkg/tsdb/graphite/**/*'
-            - '**/pkg/tsdb/cloudwatch/*'
-            - '**/pkg/tsdb/cloudwatch/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg/api
               desc: Core plugins are not allowed to depend on Grafana core packages
@@ -173,15 +184,29 @@ linters:
         storage-unified-apistore:
           list-mode: lax
           files:
-            - ./pkg/storage/unified/apistore/*
-            - ./pkg/storage/unified/apistore/**/*
+            - '**/pkg/storage/unified/apistore/*'
+            - '**/pkg/storage/unified/apistore/**/*'
           allow:
             - github.com/grafana/grafana/pkg/apimachinery
             - github.com/grafana/grafana/pkg/apiserver
-            - github.com/grafana/grafana/pkg/unified/resource
+            - github.com/grafana/grafana/pkg/storage/unified/apistore
+            - github.com/grafana/grafana/pkg/storage/unified/resourceclient
+            - github.com/grafana/grafana/pkg/storage/unified/resourcepb
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: pkg/storage/unified/apistore is not allowed to import grafana core
+        storage-unified-resourceclient:
+          list-mode: lax
+          files:
+            - '**/pkg/storage/unified/resourceclient/*'
+            - '**/pkg/storage/unified/resourceclient/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
+            - github.com/grafana/grafana/pkg/storage/unified/resourceclient
+            - github.com/grafana/grafana/pkg/storage/unified/resourcepb
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: pkg/storage/unified/resourceclient is not allowed to import grafana core
     exhaustive:
       default-signifies-exhaustive: true
     gocritic:
@@ -217,6 +242,11 @@ linters:
       - linters:
           - staticcheck
         text: 'SA1019: "?go\.opentelemetry\.io/otel/exporters/jaeger"? is deprecated:'
+      # Keep testing the legacy hybrid request format while older clients use it.
+      - linters:
+          - staticcheck
+        path: _test\.go$
+        text: 'SA1019: .*resourcepb\.HybridSearchRequest\)\.(Key|GetKey) is deprecated:'
       - linters:
           - staticcheck
         text: use fake service and real access control evaluator instead

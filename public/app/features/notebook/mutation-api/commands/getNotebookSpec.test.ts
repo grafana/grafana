@@ -1,3 +1,6 @@
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
+import { type VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -11,6 +14,11 @@ jest.mock('../../api/notebookResource', () => ({
   ...jest.requireActual('../../api/notebookResource'),
   updateNotebook: jest.fn(),
 }));
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
+  getPanelPluginFromCache: () => undefined,
+});
 
 // Driven through the client, which is where the permission rule and the payload schema actually run.
 describe('GET_NOTEBOOK_SPEC', () => {
@@ -124,5 +132,39 @@ describe('GET_NOTEBOOK_SPEC', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('Cannot read notebook: insufficient permissions.');
+  });
+
+  it('reports no pendingViewOnlyChanges when the reader has not touched a panel', async () => {
+    const client = new NotebookMutationClient(notebookScene());
+
+    const result = await client.execute({ type: 'GET_NOTEBOOK_SPEC', payload: {} });
+
+    expect((result.data as { pendingViewOnlyChanges?: string[] }).pendingViewOnlyChanges).toBeUndefined();
+  });
+
+  it('names a panel the reader recoloured without saving it', async () => {
+    const scene = notebookScene();
+    const client = new NotebookMutationClient(scene);
+    const cell = scene.state.body.state.cells.find((c) => c.state.elementName === 'latency-panel');
+    const panel = cell!.state.body as VizPanel;
+    const stopPanel = panel.activate();
+
+    panel.setState({
+      fieldConfig: {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'up' },
+            properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'red' } }],
+          },
+        ],
+      },
+    });
+
+    const result = await client.execute({ type: 'GET_NOTEBOOK_SPEC', payload: {} });
+
+    expect((result.data as { pendingViewOnlyChanges?: string[] }).pendingViewOnlyChanges).toEqual(['latency-panel']);
+
+    stopPanel();
   });
 });

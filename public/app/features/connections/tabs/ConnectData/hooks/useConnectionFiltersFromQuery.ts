@@ -8,8 +8,22 @@ export interface ConnectionFilters {
   sortBy: Sorters;
   filterBy: string;
   groupBy: 'type' | 'category';
-  categoryFilter: string;
-  typeFilter: string;
+  categoryFilter: string[];
+  typeFilter: string[];
+}
+
+// Multi-value filters are stored in the URL as a comma-separated list, with 'all' meaning no filter,
+// so links created when these filters were single-select keep working.
+function parseListFilter(value: unknown): string[] {
+  const raw = value?.toString() ?? '';
+  return raw
+    .split(',')
+    .map((v) => v.trim())
+    .filter((v) => v !== '' && v !== 'all');
+}
+
+export function serializeListFilter(values: string[]): string {
+  return values.length > 0 ? values.join(',') : 'all';
 }
 
 export function useConnectionFiltersFromQuery(): ConnectionFilters {
@@ -21,8 +35,8 @@ export function useConnectionFiltersFromQuery(): ConnectionFilters {
       sortBy: (locationSearch.sortBy as unknown as Sorters) || Sorters.nameAsc, // eslint-disable-line @typescript-eslint/consistent-type-assertions
       filterBy: locationSearch.filterBy?.toString() || 'all',
       groupBy: (locationSearch.groupBy as unknown as 'type' | 'category') || 'type', // eslint-disable-line @typescript-eslint/consistent-type-assertions
-      categoryFilter: locationSearch.categoryFilter?.toString() || 'all',
-      typeFilter: locationSearch.typeFilter?.toString() || 'all',
+      categoryFilter: parseListFilter(locationSearch.categoryFilter),
+      typeFilter: parseListFilter(locationSearch.typeFilter),
     }),
     [locationSearch]
   );

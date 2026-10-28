@@ -23,17 +23,22 @@ const defaultHooksOptions = {
   mutations: true,
 };
 
-// Namespaced kinds can serve /search, /trash and /search/hybrid, and no frontend calls them yet, so
-// generating a hook per kind would add clients nobody imports. The dashboard searches at
-// `/search` and `/search/hybrid` are different, older endpoints and stay.
+// Generic search routes are generated only when a frontend consumer opts in.
+// The older group-root dashboard search routes remain included.
 const perResourceSearch = /^\/[^/]+\/(search(?:\/hybrid)?|trash)$/;
+
+// The GMA-only rule list pages page through folders with a per-resource /search, which is the only
+// one with a frontend caller today, so it is allowlisted past the exclusion above rather than
+// lifting it entirely.
+const allowedPerResourceSearchPaths = ['/folders/search'];
 
 export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
   if (Array.isArray(filterEndpoints)) {
     return filterEndpoints;
   }
   return (name, operation) =>
-    !perResourceSearch.test(operation.path) && (filterEndpoints ? filterEndpoints(name, operation) : true);
+    (!perResourceSearch.test(operation.path) || allowedPerResourceSearchPaths.includes(operation.path)) &&
+    (filterEndpoints ? filterEndpoints(name, operation) : true);
 };
 
 /**
@@ -52,6 +57,24 @@ const createAPIConfig = (app: string, version: string, filterEndpoints?: Endpoin
     },
   };
 };
+
+/**
+ * Includes the hybrid search endpoint in the generated APIs, in contrast to createAPIConfig which filters them out.
+ */
+const createAPIConfigWithSearch = (app: string, version: string) =>
+  createAPIConfig(app, version, undefined, {
+    // Disable the default search-route filter.
+    filterEndpoints: undefined,
+    // Generic search and trash use POSTs to read resources, which by default would be considered a mutation by RTK,
+    // so we have to make this override.
+    endpointOverrides: [
+      {
+        pattern: (_name: string, operation: OperationDefinition) =>
+          operation.verb === 'post' && perResourceSearch.test(operation.path),
+        type: 'query',
+      },
+    ],
+  });
 
 const config: ConfigFile = {
   schemaFile: '', // leave this empty, and instead populate the outputFiles object below
@@ -119,11 +142,20 @@ const config: ConfigFile = {
     },
     ...createAPIConfig('advisor', 'v0alpha1'),
     ...createAPIConfig('correlations', 'v0alpha1'),
-    ...createAPIConfig('dashboard', 'v0alpha1'),
+    ...createAPIConfigWithSearch('dashboard', 'v0alpha1'),
     ...createAPIConfig('dashboard', 'v1beta1'),
     ...createAPIConfig('dashboard', 'v2beta1'),
     ...createAPIConfig('dashboard', 'v2'),
-    ...createAPIConfig('folder', 'v1beta1'),
+    ...createAPIConfig('folder', 'v1beta1', undefined, {
+      // The allowlisted search reads folders through a POST, which RTK would otherwise treat as a mutation.
+      endpointOverrides: [
+        {
+          pattern: (_name: string, operation: OperationDefinition) =>
+            operation.verb === 'post' && allowedPerResourceSearchPaths.includes(operation.path),
+          type: 'query',
+        },
+      ],
+    }),
     ...createAPIConfig('iam', 'v0alpha1'),
     ...createAPIConfig('playlist', 'v1'),
     ...createAPIConfig('collections', 'v1alpha1'),
@@ -139,6 +171,7 @@ const config: ConfigFile = {
     ...createAPIConfig('quotas', 'v0alpha1'),
     ...createAPIConfig('plugins', 'v0alpha1'),
     ...createAPIConfig('preferences', 'v1'),
+    ...createAPIConfig('rules.alerting', 'v1beta1'),
     // GENERATED:API_CLIENT — used by the API client generator
   },
 };
