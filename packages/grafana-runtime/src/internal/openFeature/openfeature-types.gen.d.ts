@@ -194,7 +194,6 @@ declare module "@openfeature/core" {
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.logDetailsDisplayedFieldControls"
-    | "grafana.globalHomePreference"
     | "grafana.extensionSidebarFloating"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"

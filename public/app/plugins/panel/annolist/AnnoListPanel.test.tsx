@@ -478,12 +478,11 @@ describe('AnnoListPanel', () => {
           metadata: { name },
           spec: { title: name, filters: [] },
         }));
-        const state = { drawerOpened: false, enabled: true, loading: false, readOnly: false, value: scopes };
+        const state = { drawerOpened: false, enabled: true, loading: false, value: scopes };
         const ctx: ScopesContextValue = {
           state,
           stateObservable: new BehaviorSubject(state),
           changeScopes: jest.fn(),
-          setReadOnly: jest.fn(),
           setEnabled: jest.fn(),
         };
         render(<ScopesContext.Provider value={ctx}>{panel}</ScopesContext.Provider>);

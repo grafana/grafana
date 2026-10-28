@@ -83,6 +83,39 @@ func TestVectorAllowedReadServicesConfig(t *testing.T) {
 	}
 }
 
+func TestSharedVectorPublisherConfigLoads(t *testing.T) {
+	for _, tc := range []struct {
+		name, value string
+		want        map[string][]string
+		invalid     bool
+	}{
+		{name: "unset"},
+		{name: "empty object", value: `{}`, want: map[string][]string{}},
+		{name: "two collections", value: `{"docs.example.com/articles":["docs-publisher"],"support.example.com/articles":["support-publisher"]}`, want: map[string][]string{"docs.example.com/articles": {"docs-publisher"}, "support.example.com/articles": {"support-publisher"}}},
+		{name: "null", value: `null`, invalid: true},
+		{name: "malformed JSON", value: `{"g/r":`, invalid: true},
+		{name: "wrong type", value: `[]`, invalid: true},
+		{name: "invalid key", value: `{"g/r/other":["publisher"]}`, invalid: true},
+		{name: "empty publisher list", value: `{"g/r":[]}`, invalid: true},
+		{name: "empty publisher", value: `{"g/r":[""]}`, invalid: true},
+		{name: "padded publisher", value: `{"g/r":[" publisher "]}`, invalid: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.value != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_VECTOR_SHARED_EXTERNAL_COLLECTIONS", tc.value)
+			}
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			if tc.invalid {
+				require.ErrorContains(t, err, "vector_shared_external_collections")
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, cfg.VectorSharedExternalCollections)
+		})
+	}
+}
+
 func TestBlobGarbageCollectionDefaultsAndOverrides(t *testing.T) {
 	cfg := NewCfg()
 	cfg.setUnifiedStorageConfig()
@@ -784,7 +817,6 @@ func TestVectorAllowedCollections(t *testing.T) {
 		assert.Equal(t, []string{"dashboard.grafana.app/dashboards"}, cfg.VectorAllowedInternalCollections)
 		assert.Empty(t, cfg.VectorAllowedExternalCollections)
 		assert.Empty(t, cfg.VectorSharedExternalCollections)
-		assert.Empty(t, cfg.VectorSharedWriteServices)
 	})
 
 	t.Run("explicit lists are parsed as CSV", func(t *testing.T) {
@@ -796,39 +828,39 @@ func TestVectorAllowedCollections(t *testing.T) {
 		assert.NoError(t, err)
 		_, err = section.NewKey("vector_allowed_external_collections", "ext.example.com/my-things")
 		assert.NoError(t, err)
-		_, err = section.NewKey("vector_shared_external_collections", "docs.example.com/articles")
-		assert.NoError(t, err)
-		_, err = section.NewKey("vector_shared_write_services", "publisher")
+		_, err = section.NewKey("vector_shared_external_collections", `{"docs.example.com/articles":["publisher"]}`)
 		assert.NoError(t, err)
 		cfg.setUnifiedStorageConfig()
+		assert.NoError(t, cfg.readVectorSharedExternalCollections())
 
 		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.VectorAllowedInternalCollections)
 		assert.Equal(t, []string{"ext.example.com/my-things"}, cfg.VectorAllowedExternalCollections)
-		assert.Equal(t, []string{"docs.example.com/articles"}, cfg.VectorSharedExternalCollections)
-		assert.Equal(t, []string{"publisher"}, cfg.VectorSharedWriteServices)
+		assert.Equal(t, map[string][]string{"docs.example.com/articles": {"publisher"}}, cfg.VectorSharedExternalCollections)
 	})
 }
 
 func TestSharedVectorCollectionConfiguration(t *testing.T) {
 	for _, tc := range []struct {
-		name                                   string
-		internal, external, shared, publishers []string
-		wantErr                                string
+		name               string
+		internal, external []string
+		shared             map[string][]string
+		wantErr            string
 	}{
 		{name: "disabled"},
-		{name: "shared publisher", shared: []string{"docs.example.com/articles"}, publishers: []string{"publisher"}},
-		{name: "missing publisher", shared: []string{"docs.example.com/articles"}, wantErr: "publisher"},
-		{name: "blank publisher", shared: []string{"docs.example.com/articles"}, publishers: []string{" "}, wantErr: "publisher"},
-		{name: "external overlap", external: []string{"docs.example.com/articles"}, shared: []string{"docs.example.com/articles"}, publishers: []string{"publisher"}, wantErr: "overlap"},
-		{name: "internal overlap", internal: []string{"docs.example.com/articles"}, shared: []string{"docs.example.com/articles"}, publishers: []string{"publisher"}, wantErr: "overlap"},
+		{name: "two publishers", shared: map[string][]string{"g/r": {"one", "two"}}},
+		{name: "missing publisher", shared: map[string][]string{"g/r": {}}, wantErr: "identity"},
+		{name: "blank publisher", shared: map[string][]string{"g/r": {" "}}, wantErr: "identity"},
+		{name: "invalid key", shared: map[string][]string{"g/r/other": {"one"}}, wantErr: "invalid"},
+		{name: "external overlap", external: []string{"g/r"}, shared: map[string][]string{"g/r": {"one"}}, wantErr: "overlap"},
+		{name: "internal overlap", internal: []string{"g/r"}, shared: map[string][]string{"g/r": {"one"}}, wantErr: "overlap"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := &Cfg{VectorAllowedInternalCollections: tc.internal, VectorAllowedExternalCollections: tc.external, VectorSharedExternalCollections: tc.shared, VectorSharedWriteServices: tc.publishers}
+			cfg := &Cfg{VectorAllowedInternalCollections: tc.internal, VectorAllowedExternalCollections: tc.external, VectorSharedExternalCollections: tc.shared}
 			err := cfg.ValidateSharedVectorConfig()
 			if tc.wantErr == "" {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			} else {
-				assert.ErrorContains(t, err, tc.wantErr)
+				require.ErrorContains(t, err, tc.wantErr)
 			}
 		})
 	}

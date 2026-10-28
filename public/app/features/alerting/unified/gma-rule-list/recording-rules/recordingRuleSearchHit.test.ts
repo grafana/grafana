@@ -80,4 +80,32 @@ describe('recordingRuleSearchHitSchema', () => {
     expect(toHit({}).interval).toBeUndefined();
     expect(toHit({ interval: 60 }).interval).toBeUndefined();
   });
+
+  it('parses labels using the same rules as alert rules — key=value only, private keys excluded', () => {
+    const hit = toHit({ labels: ['team=platform', '__grafana_origin=plugin', 'env'] });
+    expect(hit.labels).toEqual({ team: 'platform' });
+  });
+
+  it('leaves labels unset when absent or empty', () => {
+    expect(toHit({}).labels).toBeUndefined();
+    expect(toHit({ labels: [] }).labels).toBeUndefined();
+  });
+
+  it('stores datasourceUIDs as-is', () => {
+    const hit = toHit({ datasourceUIDs: ['ds-1'] });
+    expect(hit.datasourceUIDs).toEqual(['ds-1']);
+  });
+
+  it('reads metric from the search hit', () => {
+    expect(toHit({ metric: 'cpu:usage:rate5m' }).metric).toBe('cpu:usage:rate5m');
+  });
+
+  it('reads targetDatasourceUID from the search hit', () => {
+    expect(toHit({ targetDatasourceUID: 'ds-prom' }).targetDatasourceUID).toBe('ds-prom');
+  });
+
+  it('leaves metric and targetDatasourceUID unset when absent', () => {
+    expect(toHit({}).metric).toBeUndefined();
+    expect(toHit({}).targetDatasourceUID).toBeUndefined();
+  });
 });

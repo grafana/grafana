@@ -10,7 +10,6 @@ import {
   type GrafanaTheme2,
   type PanelProps,
   type InterpolateFunction,
-  VariableSuggestionsScope,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
@@ -24,7 +23,6 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import config from 'app/core/config';
-import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import {
   type CodeOptions,
@@ -48,6 +46,7 @@ import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
 import { useThemedReplaceVariables } from './useThemedReplaceVariables';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
+import { getTextVariableSuggestions } from './variableSuggestions';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
@@ -98,10 +97,9 @@ export function TextNGPanel(props: Props) {
     [newFeatures, frames, currentFrameIndex]
   );
 
-  // Values scope, so the ${__value} macros the renderer resolves are offered.
   const suggestions = useMemo(
-    () => (isEditing ? getDataLinksVariableSuggestions(series, VariableSuggestionsScope.Values) : []),
-    [isEditing, series]
+    () => (isEditing ? getTextVariableSuggestions(series, renderMode) : []),
+    [isEditing, series, renderMode]
   );
 
   const [view, setViewState] = useState<ViewMode>(() => viewModeByPanel.get(eventBus) ?? DEFAULT_VIEW_MODE);

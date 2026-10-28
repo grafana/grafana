@@ -60,4 +60,16 @@ function buildStatusLeaves(filter: RuleSearchFilter): SourcedLeaf[] {
 
 // `state`, `health`, and `lastError` are status fields populated by `alerting.ruleStatusSync`.
 // `annotations` returns as a JSON-encoded string; `interval` is the evaluation cadence.
-const ALERT_RULE_FIELDS = ['title', 'folder', 'paused', 'state', 'health', 'lastError', 'annotations', 'interval'];
+// `labels` returns as a flat string array ("key" and "key=value" entries); `datasourceUIDs` as a string array.
+const ALERT_RULE_FIELDS = [
+  'title',
+  'folder',
+  'paused',
+  'state',
+  'health',
+  'lastError',
+  'annotations',
+  'interval',
+  'labels',
+  'datasourceUIDs',
+];
