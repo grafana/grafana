@@ -78,6 +78,9 @@ const config: KnipConfig = {
         // react-router-dom-v5-compat wins the hoist). Remove both when core swaps to react-router 6.
         'react-router',
         '@types/react-router',
+
+        // not imported; pinned so pnpm resolves debug's optional peer once instead of duplicating emotion per workspace
+        'supports-color',
       ],
       project: [
         'public/app/**!',
