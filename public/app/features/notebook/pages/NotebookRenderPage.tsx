@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { t } from '@grafana/i18n';
@@ -11,6 +11,7 @@ import { NotebookPdfLayout } from '../scene/NotebookPdfLayout';
 import { type NotebookScene } from '../scene/NotebookScene';
 
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
+import { createRenderCompleteReporter, watchRenderReadiness } from './notebookRenderReadiness';
 
 /**
  * The page the headless browser behind "Export as PDF" loads (see export/openNotebookPdf).
@@ -25,6 +26,7 @@ export function NotebookRenderPage() {
   const { uid } = useParams();
   const stateManager = getNotebookPageStateManager();
   const { scene, loadError } = stateManager.useState();
+  const [reportRenderComplete] = useState(() => createRenderCompleteReporter());
 
   useEffect(() => {
     if (notebooksEnabled && uid) {
@@ -41,9 +43,9 @@ export function NotebookRenderPage() {
 
   useEffect(() => {
     if (loadError) {
-      reportRenderFailed();
+      reportRenderComplete(false);
     }
-  }, [loadError]);
+  }, [loadError, reportRenderComplete]);
 
   if (!notebooksEnabled) {
     return <PageNotFound />;
@@ -67,12 +69,17 @@ export function NotebookRenderPage() {
   return (
     <UrlSyncContextProvider scene={scene} updateUrlOnInit={true} createBrowserHistorySteps={false}>
       <NotebookPdfLayout />
-      <NotebookRenderDocument scene={scene} />
+      <NotebookRenderDocument scene={scene} reportRenderComplete={reportRenderComplete} />
     </UrlSyncContextProvider>
   );
 }
 
-function NotebookRenderDocument({ scene }: { scene: NotebookScene }) {
+interface NotebookRenderDocumentProps {
+  scene: NotebookScene;
+  reportRenderComplete: (success: boolean) => void;
+}
+
+function NotebookRenderDocument({ scene, reportRenderComplete }: NotebookRenderDocumentProps) {
   useEffect(() => {
     const deactivate = scene.activate();
     // This tab photographs the notebook, so it must not write to it or re-query underneath itself.
@@ -81,25 +88,15 @@ function NotebookRenderDocument({ scene }: { scene: NotebookScene }) {
     scene.state.refreshPicker.setState({ refresh: '' });
     // The sheet has no time picker, so the header has to say which range the panels show.
     scene.state.body.setState({ showTimeRange: true });
+    const stopWatching = watchRenderReadiness(scene, () => reportRenderComplete(true));
 
-    return deactivate;
-  }, [scene]);
+    return () => {
+      stopWatching();
+      deactivate();
+    };
+  }, [scene, reportRenderComplete]);
 
   return <scene.Component model={scene} />;
-}
-
-/**
- * Tells grafana-image-renderer a capture has ended, over the chromedp binding it injects — a no-op
- * unless the `reportRenderBinding` toggle made Grafana advertise support for it.
- *
- * The renderer only notices that a message arrived, never reads it, so this amounts to "stop
- * waiting": useful for a failure, and worse than nothing if sent early. Duplicated from
- * dashboard/services/ReportRenderReadinessObserver, whose own sender is module-private.
- */
-function reportRenderFailed(): void {
-  window.__grafanaImageRendererMessageChannel?.(
-    JSON.stringify({ type: 'REPORT_RENDER_COMPLETE', data: { success: false } })
-  );
 }
 
 export default NotebookRenderPage;

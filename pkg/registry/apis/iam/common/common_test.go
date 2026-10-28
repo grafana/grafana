@@ -2,9 +2,12 @@ package common
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -80,6 +83,74 @@ func TestList(t *testing.T) {
 		assert.Equal(t, "1", res.Items[0].GetName())
 		assert.Equal(t, "3", res.Items[1].GetName())
 	})
+
+	t.Run("should advance the continue token when a whole page is filtered out", func(t *testing.T) {
+		ctx := newContext("stacks-1", newIdent(accesscontrol.Permission{Action: "items:read", Scope: "items:uid:5"}))
+		a := accesscontrol.NewLegacyAccessClient(ac, accesscontrol.ResourceAuthorizerOptions{Resource: "items", Attr: "uid"})
+
+		fn, calls := pagedItems(6)
+		res, err := List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, Pagination{Limit: 2}, fn)
+		require.NoError(t, err)
+
+		require.Len(t, res.Items, 1)
+		assert.Equal(t, "5", res.Items[0].GetName())
+		assert.Zero(t, res.Continue)
+		assert.Equal(t, 3, *calls)
+	})
+
+	t.Run("should not repeat items and should return a continue token to resume from", func(t *testing.T) {
+		ctx := newContext("stacks-1", newIdent(
+			accesscontrol.Permission{Action: "items:read", Scope: "items:uid:1"},
+			accesscontrol.Permission{Action: "items:read", Scope: "items:uid:4"},
+		))
+		a := accesscontrol.NewLegacyAccessClient(ac, accesscontrol.ResourceAuthorizerOptions{Resource: "items", Attr: "uid"})
+
+		fn, _ := pagedItems(6)
+		res, err := List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, Pagination{Limit: 2}, fn)
+		require.NoError(t, err)
+
+		require.Len(t, res.Items, 2)
+		assert.Equal(t, "1", res.Items[0].GetName())
+		assert.Equal(t, "4", res.Items[1].GetName())
+		assert.Equal(t, int64(5), res.Continue)
+	})
+
+	t.Run("should stop and return no items when every item is filtered out", func(t *testing.T) {
+		ctx := newContext("stacks-1", newIdent())
+		a := accesscontrol.NewLegacyAccessClient(ac, accesscontrol.ResourceAuthorizerOptions{Resource: "items", Attr: "uid"})
+
+		fn, calls := pagedItems(6)
+		res, err := List(ctx, utils.NewResourceInfo("", "", "items", "", "", nil, nil, utils.TableColumns{}), a, Pagination{Limit: 2}, fn)
+		require.NoError(t, err)
+
+		assert.Empty(t, res.Items)
+		assert.Zero(t, res.Continue)
+		assert.Equal(t, 3, *calls)
+	})
+}
+
+func pagedItems(total int64) (ListFunc[item], *int) {
+	calls := 0
+	return func(ctx context.Context, ns authlib.NamespaceInfo, p Pagination) (*ListResponse[item], error) {
+		calls++
+		if calls > 20 {
+			return nil, fmt.Errorf("list was called %d times without finishing", calls)
+		}
+
+		start := p.Continue
+		if start < 1 {
+			start = 1
+		}
+
+		res := &ListResponse[item]{}
+		for id := start; id <= total && int64(len(res.Items)) < p.Limit; id++ {
+			res.Items = append(res.Items, item{strconv.FormatInt(id, 10)})
+		}
+		if next := start + int64(len(res.Items)); next <= total {
+			res.Continue = next
+		}
+		return res, nil
+	}, &calls
 }
 
 func newContext(namespace string, ident *identity.StaticRequester) context.Context {

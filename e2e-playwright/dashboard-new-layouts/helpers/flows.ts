@@ -114,10 +114,16 @@ export const flows = {
       }
 
       await sidebar.toolbar.clickButton('Add');
-      await sidebar.addOptions.addVariable();
-      await sidebar.variableOptions.selectVariableType(variable.type);
 
-      await expect(sidebar.variableOptions.getNameInput()).toBeFocused();
+      // Ad hoc filters are not in the variable type picker; they have their own "Filter and Group by" entry
+      if (variable.type === 'adhoc') {
+        await sidebar.addOptions.addFilter();
+      } else {
+        await sidebar.addOptions.addVariable();
+        await sidebar.variableOptions.selectVariableType(variable.type);
+        // Only the variable type picker autofocuses the name input; adding a Filter does not
+        await expect(sidebar.variableOptions.getNameInput()).toBeFocused();
+      }
 
       await sidebar.variableOptions.setName(variable.name);
       if (variable.label) {

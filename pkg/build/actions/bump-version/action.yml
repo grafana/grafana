@@ -13,16 +13,24 @@ runs:
     - uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
+    # The checked-out branch may still use Yarn; the install action picks the package manager.
+    - name: Install dependencies
+      id: install
+      uses: ./.github/actions/yarn-install
     - name: Bump versions
       shell: bash
       env:
         VERSION: ${{ inputs.version }}
+        PACKAGE_MANAGER: ${{ steps.install.outputs.package-manager }}
       run: |
-        yarn install
         npm version "$VERSION" --no-git-tag-version
-        yarn nx release version "$VERSION"
-        yarn install
-        yarn prettier:write
+        npm exec --no -- nx release version "$VERSION"
+        if [ "$PACKAGE_MANAGER" = 'yarn' ]; then
+          yarn install --no-immutable
+        else
+          pnpm install --lockfile-only --no-frozen-lockfile
+        fi
+        npm run prettier:write
     - name: make gen-cue
       shell: bash
       run: make gen-cue

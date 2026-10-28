@@ -18,6 +18,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.ExistsPredicate":        schema_pkg_apis_search_v0alpha1_ExistsPredicate(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm":              schema_pkg_apis_search_v0alpha1_FacetTerm(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FilterPredicate":        schema_pkg_apis_search_v0alpha1_FilterPredicate(ref),
+		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalResultsMetadata":  schema_pkg_apis_search_v0alpha1_GlobalResultsMetadata(ref),
+		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalSearchResults":    schema_pkg_apis_search_v0alpha1_GlobalSearchResults(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchChunk":      schema_pkg_apis_search_v0alpha1_HybridSearchChunk(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchFilter":     schema_pkg_apis_search_v0alpha1_HybridSearchFilter(ref),
 		"github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchManagedBy":  schema_pkg_apis_search_v0alpha1_HybridSearchManagedBy(ref),
@@ -128,6 +130,125 @@ func schema_pkg_apis_search_v0alpha1_FilterPredicate(ref common.ReferenceCallbac
 				Required: []string{"field", "operator", "values"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_search_v0alpha1_GlobalResultsMetadata(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GlobalResultsMetadata carries the pagination token, the total hit count, and the types the search left out.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"continue": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"totalHits": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"totalHitsRelation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"skippedTypes": {
+						SchemaProps: spec.SchemaProps{
+							Description: "SkippedTypes lists the types, as {group}/{resource}, that the search left out, so the results are incomplete. A type is left out when the calling service may not search it on the user's behalf, or when this deployment does not check its results against the user. Both are deployment problems.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"totalHits", "totalHitsRelation"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_search_v0alpha1_GlobalSearchResults(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "GlobalSearchResults is the response body for POST .../namespaces/{namespace}/global/search. Each item names its own resource type.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalResultsMetadata"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"),
+									},
+								},
+							},
+						},
+					},
+					"facets": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Facets holds term counts per requested facet field. Counts are computed over a bounded sample window, so they are best-effort/approximate.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type: []string{"array"},
+										Items: &spec.SchemaOrArray{
+											Schema: &spec.Schema{
+												SchemaProps: spec.SchemaProps{
+													Ref: ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm"),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/pkg/apis/search/v0alpha1.FacetTerm", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.GlobalResultsMetadata", "github.com/grafana/grafana/pkg/apis/search/v0alpha1.ResultItem"},
 	}
 }
 
@@ -257,7 +378,7 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchQuery(ref common.ReferenceCallb
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Resources is required for global hybrid search and rejected by per-resource routes. It must be nonempty and contain unique group/resource pairs.",
+							Description: "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -406,6 +527,25 @@ func schema_pkg_apis_search_v0alpha1_HybridSearchResultItem(ref common.Reference
 						SchemaProps: spec.SchemaProps{
 							Description: "ManagedBy is absent for unmanaged resources or when lookup fails.",
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/search/v0alpha1.HybridSearchManagedBy"),
+						},
+					},
+					"tags": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Tags from the lexical index. Omitted when unavailable.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
 						},
 					},
 					"chunks": {
@@ -779,7 +919,7 @@ func schema_pkg_apis_search_v0alpha1_SearchResults(ref common.ReferenceCallback)
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "SearchResults is the response body for POST .../{resource}/search and POST .../namespaces/{namespace}/global/search. On the global search, each item names its own resource type.",
+				Description: "SearchResults is the response body for POST .../{resource}/search.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {

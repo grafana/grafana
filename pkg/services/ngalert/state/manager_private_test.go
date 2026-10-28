@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -5737,6 +5738,15 @@ func TestDatasourceErrorInfo(t *testing.T) {
 		refID, dsUID := datasourceErrorInfo(err, rule)
 		require.Equal(t, "A", refID, "refID must be extractable through the queryLimitError wrapper")
 		require.Equal(t, "ds-uid-1", dsUID)
+	})
+
+	t.Run("returns empty when the query error has no refId in its payload", func(t *testing.T) {
+		err := expr.QueryError.Build(errutil.TemplateData{Error: errors.New("boom")})
+		require.NotPanics(t, func() {
+			refID, dsUID := datasourceErrorInfo(err, rule)
+			require.Empty(t, refID)
+			require.Empty(t, dsUID)
+		})
 	})
 
 	t.Run("returns empty for a non-query error", func(t *testing.T) {

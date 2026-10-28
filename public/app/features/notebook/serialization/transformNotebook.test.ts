@@ -1,5 +1,7 @@
 // defaultDataQueryKind is not re-exported by ../types (that seam covers the notebook-specific and
 // forked names); it is a shared leaf type, so it comes straight from the generated module.
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { defaultDataQueryKind } from '@grafana/schema/apis/notebook/v2beta1';
 import { type Resource } from 'app/features/apiserver/types';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
@@ -9,6 +11,11 @@ import { defaultSpec as defaultNotebookSpec, type NotebookElement, type Spec as 
 
 import { transformNotebookSceneToSaveModel } from './transformNotebookSceneToSaveModel';
 import { transformNotebookToScene } from './transformNotebookToScene';
+
+setPluginImportUtils({
+  importPanelPlugin: async (id) => getPanelPlugin({ id }).useFieldConfig(),
+  getPanelPluginFromCache: () => undefined,
+});
 
 // The spec fixture is written in the serializer's canonical form (explicit datasource per query,
 // description always present on panels, version '' etc.) so spec → scene → spec is an exact
@@ -141,12 +148,21 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(scene).toBeInstanceOf(NotebookScene);
     expect(scene.state.title).toBe('Checkout latency investigation');
     expect(scene.state.uid).toBe('nb-1');
-    expect(scene.state.hideTimeControls).toBe(false);
     expect(scene.state.$timeRange.state.from).toBe('now-6h');
     expect(scene.state.body.state.cells).toHaveLength(4);
     // Title and tags are surfaced on the layout manager for the document header.
     expect(scene.state.body.state.title).toBe('Checkout latency investigation');
     expect(scene.state.body.state.tags).toEqual(['incident', 'checkout']);
+  });
+
+  // A notebook has no way to show the picker again, so a stored `true` must neither hide it nor survive a save.
+  it('ignores a stored hideTimepicker and saves it back as false', () => {
+    const resource = notebookResource();
+    resource.spec.timeSettings.hideTimepicker = true;
+
+    const scene = transformNotebookToScene(resource);
+
+    expect(transformNotebookSceneToSaveModel(scene).timeSettings.hideTimepicker).toBe(false);
   });
 
   it("seeds autosave's savedResourceVersion from the resource this scene was loaded from", () => {
@@ -220,6 +236,27 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
 
     expect(() => getDashboardSceneFor(panel)).toThrow();
     expect(() => transformNotebookSceneToSaveModel(scene)).not.toThrow();
+  });
+
+  it('saves panel title and visualization changes', async () => {
+    const scene = transformNotebookToScene(notebookResource());
+    const cell = scene.state.body.state.cells.find((item) => item.state.elementName === 'latency-panel')!;
+
+    scene.state.body.setPanelTitle(cell, 'Updated latency');
+    await scene.state.body.changePanelVisualization(cell, {
+      name: 'Table',
+      pluginId: 'table',
+      hash: 'table',
+      options: { showHeader: true },
+    });
+
+    const saved = transformNotebookSceneToSaveModel(scene).elements['latency-panel'];
+    expect(saved.kind).toBe('Panel');
+    if (saved.kind === 'Panel') {
+      expect(saved.spec.title).toBe('Updated latency');
+      expect(saved.spec.vizConfig.group).toBe('table');
+      expect(saved.spec.vizConfig.spec.options).toMatchObject({ showHeader: true });
+    }
   });
 
   // The block the editor keeps at the bottom is dropped from the layout, so its element has to go too

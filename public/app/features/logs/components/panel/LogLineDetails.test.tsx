@@ -1258,7 +1258,8 @@ describe('LogLineDetails', () => {
 
     expect(screen.getByText('Service')).toBeInTheDocument();
     expect(screen.getByText('checkout')).toBeInTheDocument();
-    expect(screen.queryByText('Log line')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Log line' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
   });
 
   test('OTel details wrap a single attribute extension link around the value', async () => {

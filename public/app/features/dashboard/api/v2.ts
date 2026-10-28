@@ -15,7 +15,6 @@ import {
   type ResourceClient,
   type ResourceForCreate,
   type ResourceList,
-  type TableResponse,
 } from 'app/features/apiserver/types';
 import { convertSpecToWireFormat } from 'app/features/dashboard-scene/serialization/transformationCompat';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
@@ -34,7 +33,6 @@ import {
   DashboardVersionError,
   type DashboardWithAccessInfo,
   type ListDashboardHistoryOptions,
-  type ListDeletedDashboardsOptions,
 } from './types';
 import { buildRestorePayload, fetchDeletedDashboard, getRequestOptions, isV0V1StoredVersion } from './utils';
 
@@ -160,7 +158,7 @@ export class K8sDashboardV2API
 
     const requestOptions = getRequestOptions(options);
 
-    if (obj.metadata.name) {
+    if (obj.metadata.name && !options.create) {
       delete obj.metadata.labels?.[DeprecatedInternalId];
       return this.client.update(obj, undefined, requestOptions).then((v) => this.asSaveDashboardResponseDTO(v));
     }
@@ -254,10 +252,6 @@ export class K8sDashboardV2API
       message: `Restored from version ${version}`,
       folderUid: currentDashboard.metadata?.annotations?.[AnnoKeyFolder],
     });
-  }
-
-  async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
-    return this.client.listAsTable({ ...options, labelSelector: 'grafana.app/get-trash=true' });
   }
 
   async getDeletedDashboard(name: string): Promise<Resource<DashboardV2Spec> | undefined> {

@@ -158,7 +158,7 @@ const AlertRuleMenu = ({
       )}
       {/* TODO Migrate Declare Incident to plugin links extensions */}
       {shouldShowDeclareIncidentButton && <DeclareIncidentMenuItem title={promRule.name} url={''} />}
-      {shouldShowAnalyzeRuleButton && <AnalyzeRuleButton rule={promRule} />}
+      {shouldShowAnalyzeRuleButton && <AnalyzeRuleButton promRule={promRule} />}
       {canDuplicate && (
         <Menu.Item
           label={t('alerting.alert-menu.duplicate', 'Duplicate')}

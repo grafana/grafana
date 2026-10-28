@@ -10,7 +10,7 @@
  *
  */
 
-export { LegacyDataSourcePicker, setDataSourcePicker } from '../components/DataSourcePicker';
+export { setDataSourcePicker } from '../components/DataSourcePicker';
 export { setPanelDataErrorView } from '../components/PanelDataErrorView';
 export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
@@ -38,7 +38,13 @@ export {
 } from '../internal/openFeature';
 export * from '../internal/openFeature/openfeature.gen';
 
-export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
+export {
+  clearAppPluginMetas,
+  getAppPluginMeta,
+  getAppPluginMetas,
+  getAppPluginMetasSync,
+  setAppPluginMetas,
+} from '../services/pluginMeta/apps';
 export {
   getDatasourcePluginMeta,
   getDatasourcePluginMetas,

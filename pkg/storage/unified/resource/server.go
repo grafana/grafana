@@ -423,6 +423,10 @@ type SearchOptions struct {
 	// types, alongside the per-resource indexes.
 	GlobalIndexEnabled bool
 
+	// GlobalIndexStartupBuild waits for global indexes before initialization completes.
+	// Otherwise they build in the background after per-resource initialization.
+	GlobalIndexStartupBuild bool
+
 	// SearchFields holds the per-kind search-field wiring shared with the index
 	// backend. The search server reads the selectable fields and the definition
 	// hash from it and triggers a rebuild when either differs from the values
@@ -431,6 +435,10 @@ type SearchOptions struct {
 
 	// HybridSearchConfig shares the manifest watcher's current hybrid opt-ins.
 	HybridSearchConfig *HybridSearchConfigRegistry
+
+	// GlobalSearchCoverage holds the resource types global indexes cover. Nil
+	// means the types the compiled-in manifests opt in.
+	GlobalSearchCoverage *GlobalSearchCoverageRegistry
 
 	// EmbeddingConfig is shared with the manifest watcher; consumers must read
 	// it after the initial poll and retain the registry to observe later reloads.
@@ -473,6 +481,7 @@ type SearchOptions struct {
 	// Vector API collection allowlists: "group/resource" entries; empty allows nothing.
 	AllowedInternalCollections []string
 	AllowedExternalCollections []string
+	AllowedReadServices        map[string][]string
 }
 
 type ResourceServerOptions struct {
@@ -2556,6 +2565,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	var processedRV int64 // Includes events deliberately excluded by watch filters.
 	var lastObjectRV int64
+	var initialEventsSentAt time.Time
 	if req.SendInitialEvents {
 		// Backfill the stream by adding every existing entities.
 		initialEventsRV, err := s.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
@@ -2586,13 +2596,13 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		if err != nil {
 			return err
 		}
-
 		processedRV = initialEventsRV
 		if req.AllowWatchBookmarks {
 			if err := sendBookmark(processedRV); err != nil {
 				return err
 			}
 		}
+		initialEventsSentAt = time.Now()
 	}
 
 	switch {
@@ -2700,10 +2710,16 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 					// Resource versions can be either Unix microsecond timestamps (SQL backend)
 					// or snowflake IDs (KV backend). Split the total at Send so upstream
 					// delivery and gRPC transport flow-control wait can be diagnosed separately.
+					resourceVersionAt := ResourceVersionTime(event.ResourceVersion)
+					phase := watchEventPhaseLive
+					if resourceVersionAt.Before(initialEventsSentAt) {
+						phase = watchEventPhaseInitialList
+					}
 					s.storageMetrics.observeWatchEvent(
 						event.Key.Group,
 						event.Key.Resource,
-						ResourceVersionTime(event.ResourceVersion),
+						phase,
+						resourceVersionAt,
 						sendStartedAt,
 						sentAt,
 					)
@@ -3056,7 +3072,7 @@ func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.Resource
 
 func (s *server) runInQueue(ctx context.Context, tenantID, operation string, runnable func(ctx context.Context)) error {
 	// Enforce a timeout for the entire operation, including queueing and execution.
-	queueCtx, cancel := context.WithTimeout(ctx, s.queueConfig.Timeout)
+	queueCtx, cancel := context.WithTimeoutCause(ctx, s.queueConfig.Timeout, errQueueTimeout)
 	defer cancel()
 
 	// Allow cluster-scoped resources to be enqueued with an empty tenantID.
@@ -3105,6 +3121,11 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 		s.log.Warn("failed to enqueue runnable, retrying", "tenantID", tenantID, "error", err)
 		if !boff.Ongoing() {
 			// Backoff finished (retries exhausted or context canceled).
+			if errors.Is(context.Cause(queueCtx), errQueueTimeout) {
+				err = errQueueTimeout
+			} else if queueCtx.Err() != nil {
+				err = queueCtx.Err()
+			}
 			err = fmt.Errorf("failed to enqueue for tenant %s: %w", tenantID, err)
 			finishWait(err)
 			return err
@@ -3112,15 +3133,17 @@ func (s *server) runInQueue(ctx context.Context, tenantID, operation string, run
 		boff.Wait()
 	}
 
-	// Wait for the runnable to complete or for the context to be done.
+	// Inline work can finish after the timeout, so check the cause after either case.
 	select {
 	case <-done:
-		return nil // Completed successfully.
 	case <-queueCtx.Done():
-		err := queueCtx.Err()
-		finishWait(err)
-		return err
 	}
+	err := queueCtx.Err()
+	if errors.Is(context.Cause(queueCtx), errQueueTimeout) {
+		err = fmt.Errorf("tenant %s: %w", tenantID, errQueueTimeout)
+	}
+	finishWait(err)
+	return err
 }
 
 // RebuildIndexes implements ResourceIndexServer.
@@ -3138,7 +3161,7 @@ func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildInde
 }
 
 func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {
-	if nsr.Namespace == "" {
+	if nsr.Namespace == "" || !s.quotasConfig.ShouldCheck(nsr.Group, nsr.Resource) {
 		return nil
 	}
 

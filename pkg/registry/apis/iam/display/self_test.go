@@ -314,6 +314,25 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		})
 	}
 
+	t.Run("unresolved access policy returns identity details with 200", func(t *testing.T) {
+		caller := &identity.StaticRequester{
+			Type: authlib.TypeAccessPolicy, UserUID: "example-app", Name: "example-app", Namespace: "*",
+			AuthenticatedBy: "extendedjwt",
+		}
+		resolver := &fakeResolver{result: &iam.DisplayList{}}
+		rec := httptest.NewRecorder()
+		NewDisplayHandler(resolver).handleSelf(rec, selfRequest(t, caller))
+
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, []string{"access-policy:example-app"}, resolver.gotKeys)
+		var got iam.CurrentUserInfo
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+		require.Equal(t, iam.IdentityRef{Type: authlib.TypeAccessPolicy, Name: "example-app"}, got.Identity)
+		require.Equal(t, "example-app", got.DisplayName)
+		require.Equal(t, "*", got.Namespace)
+		require.Equal(t, "extendedjwt", got.AuthenticatedBy)
+	})
+
 	t.Run("resolver error returns 500", func(t *testing.T) {
 		resolver := &fakeResolver{err: errors.New("boom")}
 		h := NewDisplayHandler(resolver)

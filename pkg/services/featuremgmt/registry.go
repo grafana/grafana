@@ -194,6 +194,15 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:         "grafana.recordedQueriesDisableCreate",
+			Description:  "Disables creating new recorded queries while preserving access to existing queries",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "true",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
@@ -253,14 +262,6 @@ var (
 			Owner:           grafanaAppPlatformSquad,
 			Expression:      "false",
 			Generate:        Generate{LegacyGo: true, React: true},
-		},
-		{
-			Name:        "provisioning.userAttribution",
-			Description: "Author Git Sync commits as the acting Grafana user",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{Go: true, React: true},
 		},
 		{
 			Name:         "grafana.frontendLegacyFeatureToggleHandling",
@@ -646,6 +647,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "grafana.mobileEditDeprecation",
+			Description: "Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports",
+			Stage:       FeatureStagePublicPreview,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboards.libraryPanelRepeatFromServerResolution",
 			Description: "Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state",
 			Stage:       FeatureStageExperimental,
@@ -680,6 +689,22 @@ var (
 		{
 			Name:        "dashboard.notebooks",
 			Description: "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
+			Stage:       FeatureStagePublicPreview,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.dashboardComposer",
+			Description: "Enables Composer mode for editing dashboards with Grafana Assistant",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.savedDashboardViews",
+			Description: "Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaSharingSquad,
@@ -911,15 +936,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "groupByVariable",
-			Description:  "Enable groupBy variable support in scenes dashboards",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-		},
-		{
 			Name:            "scopeFilters",
 			Description:     "Enables the use of scope filters in Grafana",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
@@ -957,21 +973,12 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
-			Name:         "dashboardUnifiedDrilldownControls",
-			Description:  "Renders ad hoc filters and group by in a single unified control",
-			Stage:        FeatureStageGeneralAvailability,
-			Generate:     Generate{LegacyFrontend: true},
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "true",
-		},
-		{
 			Name:        "grafana.filterablePanels",
 			Description: "Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels",
 			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "cloudWatchNewLabelParsing",
@@ -998,14 +1005,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "queryLibrary",
-			Description: "Enables Saved queries (query library) feature",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "true",                                                      // enabled by default
 		},
 		{
 			Name:        "grafana.savedQueriesSearch",
@@ -1160,7 +1159,7 @@ var (
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:     Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
 			Name:        "pluginProxyPreserveTrailingSlash",
@@ -1186,6 +1185,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "authz.legacyUserPermissionsShadow",
+			Description:  "Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		{
 			Name:         "authz.legacyUserPermissions",
@@ -1244,7 +1252,7 @@ var (
 		{
 			Name:            "reloadDashboardsOnParamsChange",
 			Description:     "Enables reload of dashboards on scopes, time range and variables changes",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:        Generate{LegacyFrontend: true, React: true},
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
@@ -1395,33 +1403,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
-			Name:         "alertingAIGenAlertRules",
-			Description:  "Enable AI-generated alert rules.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "alertingAIFeedback",
-			Description:  "Enable AI-generated feedback from the Grafana UI.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "alertingAIImproveAlertRules",
-			Description:  "Enable AI-improve alert rules labels and annotations.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingAIGenTemplates",
 			Description:  "Enable AI-generated alerting templates.",
 			Stage:        FeatureStageExperimental,
@@ -1494,6 +1475,15 @@ var (
 			Generate:     Generate{Go: true, LegacyFrontend: true, React: true},
 		},
 		{
+			Name:         "alerting.ruleQualityFix",
+			Description:  "Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			// Remove this flag once Loki v4 is released and the min supported version is v3.0+,
 			// since users on v2.9 need it to disable the feature, as it doesn't work for them.
 			Name:        "lokiLabelNamesQueryApi",
@@ -1544,18 +1534,10 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "teamLBACApiReadFromAppPlatform",
-			Description: "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
+			Name:        "teamlbac.usageFromAppPlatform",
+			Description: "Collect Team LBAC usage through the IAM API instead of legacy datasource JSON",
 			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       identityAccessTeam,
-			Expression:  "false",
-		},
-		{
-			Name:        "teamLBACApiWriteFromAppPlatform",
-			Description: "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{Go: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
 		},
@@ -1802,10 +1784,10 @@ var (
 		{
 			Name:         "kubernetesAuthzTeamLBACRuleApi",
 			Description:  "Registers AuthZ TeamLBACRule /apis endpoint",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePublicPreview,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
@@ -1903,7 +1885,7 @@ var (
 			Stage:       FeatureStagePrivatePreview,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "newInfluxDSConfigPageDesign",
@@ -1912,15 +1894,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "false",
-		},
-		{
-			Name:         "enableAppChromeExtensions",
-			Description:  "Set this to true to enable all app chrome extensions registered by plugins.",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaCatalogSquad,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			Expression:   "false", // extensions will be disabled by default
 		},
 		{
 			Name:         "foldersAppPlatformAPI",
@@ -1965,15 +1938,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "restrictedPluginApis",
-			Description:  "Enables sharing a list of APIs with a list of plugins",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaCatalogSquad,
-			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true},
-			Expression:   "true",
-		},
-		{
 			Name:        "favoriteDatasources",
 			Description: "Enable favorite datasources",
 			Stage:       FeatureStageExperimental,
@@ -2006,13 +1970,12 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "text.newFeatures",
-			Description:  "Enables the new features in text panel",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDatavizSquad,
-			HideFromDocs: true,
-			Generate:     Generate{React: true},
-			Expression:   "false",
+			Name:        "text.newFeatures",
+			Description: "Enables the new features in text panel",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDatavizSquad,
+			Generate:    Generate{React: true},
+			Expression:  "false",
 		},
 		{
 			Name:        "interactiveLearning",
@@ -2024,12 +1987,12 @@ var (
 		},
 		{
 			Name:         "alertingTriage",
-			Description:  "Enables the alerting triage feature",
-			Stage:        FeatureStageExperimental,
+			Description:  "Deprecated. The alert activity page is shown when alert state history is written to Prometheus. Set to false to hide it.",
+			Stage:        FeatureStageDeprecated,
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // changes navtree in backend
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true", // enabled by default: the page still needs state history to write to Prometheus
 		},
 		{
 			Name:        "graphiteBackendMode",
@@ -2207,6 +2170,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "grafana.restrictWatchToServiceIdentities",
+			Description:  "Restrict API watches to service accounts, service identities, and privileged loopback clients",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{Go: true},
+			HideFromDocs: true,
+			Owner:        grafanaSearchAndStorageSquad,
+			Expression:   "false",
+		},
+		{
 			Name:            "grafana.publishLegacySQLEvents",
 			Description:     "Publish watch events when values are saved to legacy SQL tables",
 			Stage:           FeatureStageExperimental,
@@ -2240,6 +2212,14 @@ var (
 		{
 			Name:        "grafana.dashboardGlobalVariables",
 			Description: "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
+			Stage:       FeatureStagePublicPreview,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.dashboardVariablesMigration",
+			Description: "Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaDashboardsSquad,
@@ -2468,16 +2448,6 @@ var (
 			HideFromDocs:    true,
 		},
 		{
-			Name:            "appplugins.loadAppManifestAndKeepSettings",
-			Description:     "Continue to expose settings when a manifest exists",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
-			Generate:        Generate{Go: true},
-			RequiresRestart: true,
-			Expression:      "false",
-			HideFromDocs:    true,
-		},
-		{
 			Name:            "appplugins.registerAPIServer",
 			Description:     "Registers an API server for each backend app plugin exposing a settings endpoint",
 			Stage:           FeatureStageExperimental,
@@ -2503,15 +2473,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "dashboard.recentlyDeletedViaTrash",
-			Description:  "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "true", // enabled by default
-			Generate:     Generate{React: true},
 		},
 		{
 			Name:            "deletedFolderResourceCleanup",
@@ -2657,9 +2618,9 @@ var (
 		{
 			Name:        "profilesHeatmap",
 			Description: "Enables heatmap visualization support for Pyroscope profiles",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
@@ -2761,6 +2722,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "alerting.gmaOnlyListView",
+			Description:  "Enables the separate Grafana-managed Alert rules and Recording rules list pages, replacing the combined rule list",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
 		},
 		{
 			Name:        "alerting.notificationsAPIV1Beta1",
@@ -2910,6 +2880,15 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
+			Name:         "search.perResourceFolderTree",
+			Description:  "Allow recursive folder filters in per-resource search APIs",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:        "alerting.hybridSearch",
 			Description: "Enables hybrid (lexical and semantic) search for alert rules in unified storage",
 			Stage:       FeatureStageExperimental,
@@ -2938,6 +2917,14 @@ var (
 			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "assistant.dashboard.artifacts",
+			Description: "Previews the dashboard changes a plugin such as Grafana Assistant proposes, and lets plugins reload and embed dashboards with them",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
 		},
@@ -3023,11 +3010,19 @@ var (
 		{
 			Name:         "datetime.useLuxon",
 			Description:  "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:        "grafana.preserveLoginTabTitle",
+			Description: "Preserves the navigation section label in the browser tab title after session expiry",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "grafana.customizableMegaMenu",
@@ -3133,17 +3128,16 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:         "grafana.ofrepRootUrl",
-			Description:  "Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaBackendServicesSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{Go: true},
-		},
-		{
 			Name:        "assistant.dashboardPlanning",
 			Description: "Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "assistant.dashboardPlanBuildingScreen",
+			Description: "Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
@@ -3192,11 +3186,19 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.configFromQueryDynamicName",
+			Description: "Enables using the Config From Query Results transformation's Dynamic Field Name option",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "grafana.thresholdsInterpolation",
 			Description: "Enables using dashboard variables in panel threshold values",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{React: true},
 		},
 		{
@@ -3235,28 +3237,12 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
-			Name:        "grafana.rspackBuild",
-			Description: "Switches the backend to load frontend assets built with rspack instead of webpack",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Generate:    Generate{Go: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "pluginsForceTls13",
 			Description: "Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDataSourcesPlugins,
 			Generate:    Generate{LegacyGo: true},
 			Expression:  "false",
-		},
-		{
-			Name:        "grafana.unifiedDataSourcePicker",
-			Description: "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "rawPrometheus.tableNg",
@@ -3382,15 +3368,6 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:         "grafana.globalHomePreference",
-			Description:  "Offers the reserved Grafana home option in the home dashboard preference",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendNavigation,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{React: true},
-		},
-		{
 			Name:         "datasources.apiServerConnectToHostedGrafanaDatabases",
 			Description:  "Connect to hosted grafana databases from datasource API servers",
 			Stage:        FeatureStageExperimental,
@@ -3398,6 +3375,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:        "grafana.extensionSidebarFloating",
+			Description: "Lets Grafana Assistant float the extension sidebar over the page instead of docking it",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "grafana.otelLogDetails",
@@ -3425,6 +3410,33 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
 		},
+		{
+			Name:         "grafana.geomapProtomapsBasemap",
+			Description:  "Adds an experimental Protomaps vector basemap to the geomap panel",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatavizSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "reporting.removeLogoUrlField",
+			Description: "Removes the URL option for report and email logo fields in reporting settings, leaving image upload as the only option",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaOperatorExperienceSquad,
+			Expression:  "false",
+		},
+		{
+			Name:         "dashboards.disablePublicDashboards",
+			Description:  "Disables public dashboards for the stack",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
+		},
+
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

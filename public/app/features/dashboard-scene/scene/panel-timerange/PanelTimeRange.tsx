@@ -9,7 +9,7 @@ import {
   rangeUtil,
   type TimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { useFlagPanelTimeSettings } from '@grafana/runtime/internal';
 import {
   type ExtraQueryDescriptor,
   type SceneComponentProps,
@@ -242,12 +242,13 @@ export class PanelTimeRange extends SceneTimeRangeTransformerBase<PanelTimeRange
 function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) {
   const { timeInfo, hideTimeOverride } = model.useState();
   const styles = useStyles2(getStyles);
+  const isPanelTimeSettingsEnabled = useFlagPanelTimeSettings();
 
   if (!timeInfo || hideTimeOverride) {
     return null;
   }
 
-  const onClick = config.featureToggles.panelTimeSettings ? model.onOpenSettings : undefined;
+  const onClick = isPanelTimeSettingsEnabled ? model.onOpenSettings : undefined;
 
   return (
     <Tooltip content={<TimePickerTooltip timeRange={model.state.value} timeZone={model.getTimeZone()} />}>

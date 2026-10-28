@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -30,6 +29,9 @@ jest.mock('../../settings/variables/VariableTypeSelectionPane', () => ({
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
+    editPeriodStarted: jest.fn(),
+    editPeriodEnded: jest.fn(),
+    editActorFirstChange: jest.fn(),
     addVariableButtonClicked: jest.fn(),
     variableActionButtonClicked: jest.fn(),
   },
@@ -249,33 +251,23 @@ describe('<DashboardVariablesList />', () => {
     });
   });
 
-  describe('when dashboardUnifiedDrilldownControls is enabled', () => {
-    beforeEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-    });
+  test('excludes adhoc variables from the rendered list', () => {
+    const { visibleVar1 } = buildTestVariables();
+    const adhocFilter = new AdHocFiltersVariable({ name: 'adhocFilter', type: 'adhoc', hide: VariableHide.dontHide });
+    const { queryByText, elements } = renderVariablesList([visibleVar1, adhocFilter]);
 
-    afterEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-    });
+    const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
+    expect(aboveNames).toEqual(['visibleVar1']);
+    expect(queryByText('adhocFilter')).not.toBeInTheDocument();
+  });
 
-    test('excludes adhoc variables from the rendered list', () => {
-      const { visibleVar1 } = buildTestVariables();
-      const adhocFilter = new AdHocFiltersVariable({ name: 'adhocFilter', type: 'adhoc', hide: VariableHide.dontHide });
-      const { queryByText, elements } = renderVariablesList([visibleVar1, adhocFilter]);
+  test('includes adhoc variables when includeAdHoc is true', () => {
+    const { visibleVar1 } = buildTestVariables();
+    const adhocFilter = new AdHocFiltersVariable({ name: 'adhocFilter', type: 'adhoc', hide: VariableHide.dontHide });
+    const { elements } = renderVariablesList([visibleVar1, adhocFilter], { includeAdHoc: true });
 
-      const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
-      expect(aboveNames).toEqual(['visibleVar1']);
-      expect(queryByText('adhocFilter')).not.toBeInTheDocument();
-    });
-
-    test('includes adhoc variables when includeAdHoc is true', () => {
-      const { visibleVar1 } = buildTestVariables();
-      const adhocFilter = new AdHocFiltersVariable({ name: 'adhocFilter', type: 'adhoc', hide: VariableHide.dontHide });
-      const { elements } = renderVariablesList([visibleVar1, adhocFilter], { includeAdHoc: true });
-
-      const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
-      expect(aboveNames).toEqual(['visibleVar1', 'adhocFilter']);
-    });
+    const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
+    expect(aboveNames).toEqual(['visibleVar1', 'adhocFilter']);
   });
 });
 
@@ -372,10 +364,6 @@ describe('partitionVariablesByEditability()', () => {
 });
 
 describe('predefined variables in the sidebar list', () => {
-  afterEach(() => {
-    config.featureToggles.dashboardUnifiedDrilldownControls = false;
-  });
-
   test('does not render opted-in variables unless the dashboard options list asks for them', () => {
     const { visibleVar1, predefinedVar1 } = buildTestVariables();
     const { queryByText } = renderVariablesList([visibleVar1, predefinedVar1]);
@@ -405,8 +393,7 @@ describe('predefined variables in the sidebar list', () => {
     expect(await findByText('This variable is defined on the global level')).toBeInTheDocument();
   });
 
-  test('keeps filter and group-by variables out of the variables list when drilldown controls are on', () => {
-    config.featureToggles.dashboardUnifiedDrilldownControls = true;
+  test('keeps filter and group-by variables out of the variables list', () => {
     const { visibleVar1, predefinedVar1, globalFilter, folderGroupBy } = buildTestVariables();
     const { getByText, queryByText } = renderVariablesList([visibleVar1, predefinedVar1, globalFilter, folderGroupBy], {
       showPredefinedGroups: true,

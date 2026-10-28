@@ -28,20 +28,22 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	apiserverauthenticator "github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	apiserverauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -56,11 +58,11 @@ type StorageProvider func(*runtime.Scheme, serializer.CodecFactory, []schema.Gro
 type Options struct {
 	PluginInfo      plugins.Info
 	Storage         StorageProvider
-	PluginClient    appplugin.PluginClient
+	PluginClient    appsettings.PluginClient
 	ClientV3        appclientv3.Client
-	ContextProvider appplugin.PluginContextWrapper
+	ContextProvider appsettings.PluginContextWrapper
 	Decrypter       decrypt.DecryptService
-	AccessChecker   appplugin.PluginAccessChecker
+	AccessChecker   pluginaccesscontrol.AppAccessChecker
 	// AccessClient runs the access checks a manifest declares on its routes.
 	// A route that declares one is refused without it.
 	AccessClient     authlib.AccessChecker
@@ -68,7 +70,7 @@ type Options struct {
 	KeysAPIEnabled   bool
 	Search           resourcepb.ResourceIndexClient
 	Store            resourcepb.ResourceStoreClient
-	Runner           appplugin.AppPluginRunnerOptions
+	Settings         appsettings.Options
 	Tracer           tracing.Tracer
 	Features         featuremgmt.FeatureToggles
 	BuildVersion     string
@@ -143,11 +145,80 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 	if !hasKinds(manifest) {
 		return newRoutesOnlyHandler(b, reg)
 	}
-	if opts.Storage == nil {
-		return nil, fmt.Errorf("plugin %q: a storage provider is required", pluginID)
+	authz, err := b.unionAuthorizer()
+	if err != nil {
+		return nil, fmt.Errorf("%s: authorization: %w", manifest.Group, err)
 	}
-	gvs := b.GetGroupVersions()
+	if b.documents, err = b.versionDocuments(b.kindlessVersions()); err != nil {
+		return nil, err
+	}
+	return newServerHandler(b, opts, reg, authz, b.buildHandlerChain)
+}
+
+// NewAppSettingsHandler serves the settings API of an app plugin under its plugin
+// ID: the single "app" resource, always named "instance", with its health,
+// resources and proxy subresources. Like [NewHandler], it starts no listener and
+// the caller must authenticate requests.
+func NewAppSettingsHandler(plugin definition.PluginDefinition, opts Options) (*Handler, error) {
+	if opts.AccessChecker == nil {
+		opts.AccessChecker = denyPluginAccess
+	}
+	if opts.Tracer == nil {
+		opts.Tracer = tracing.NewNoopTracerService()
+	}
+	if opts.Features == nil {
+		opts.Features = featuremgmt.WithFeatures()
+	}
+	b, err := appsettings.NewBuilder(plugin, opts.PluginClient, opts.ContextProvider,
+		opts.Decrypter, opts.AccessChecker, opts.Settings, opts.Tracer, opts.Features)
+	if err != nil {
+		return nil, err
+	}
+	reg := opts.MetricsRegister
+	if reg == nil {
+		reg = prometheus.NewRegistry()
+	}
+	authz, err := union.New(
+		union.NamedAuthorizer{AuthorizerName: "impersonation", Authorizer: apiserverauthorizer.NewImpersonationAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "namespace", Authorizer: apiserverauthorizer.NewNamespaceAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "plugin", Authorizer: b.GetAuthorizer()},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("%s: authorization: %w", plugin.JSONData.ID, err)
+	}
+	// The subresources sit inside the chain so they are authenticated and
+	// authorized like the settings resource itself.
+	chain := func(builders []builder.APIGroupBuilder, reg prometheus.Registerer) builder.BuildHandlerChainFunc {
+		defaultChain := builder.GetDefaultBuildHandlerChainFunc(builders, reg)
+		return func(delegate http.Handler, c *genericapiserver.Config) http.Handler {
+			return defaultChain(b.SubresourceHandler(delegate), c)
+		}
+	}
+	handler, err := newServerHandler(b, opts, reg, authz, chain)
+	if err != nil {
+		return nil, err
+	}
+	destroy := handler.destroy
+	handler.destroy = func() {
+		destroy()
+		b.Destroy()
+	}
+	return handler, nil
+}
+
+func denyPluginAccess(context.Context, identity.Requester, string) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "no plugin access checker is configured", nil
+}
+
+// newServerHandler builds an API server for one group builder, backed by the
+// options' storage provider.
+func newServerHandler(b builder.APIGroupBuilder, opts Options, reg prometheus.Registerer, authz authorizer.Authorizer,
+	chain func([]builder.APIGroupBuilder, prometheus.Registerer) builder.BuildHandlerChainFunc) (*Handler, error) {
+	gvs := builder.GetGroupVersions(b)
 	group := gvs[0].Group
+	if opts.Storage == nil {
+		return nil, fmt.Errorf("%s: a storage provider is required", group)
+	}
 	scheme := builder.ProvideScheme()
 	if err := b.InstallSchema(scheme); err != nil {
 		return nil, fmt.Errorf("%s: install schema: %w", group, err)
@@ -170,16 +241,10 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 	config.EffectiveVersion = builder.GetEffectiveVersion(0, opts.BuildVersion, "", "")
 	config.RESTOptionsGetter = getter
 	config.AggregatedDiscoveryGroupManager = discoveryendpoint.NewResourceManager("apis")
-	config.Authorization.Authorizer, err = b.unionAuthorizer()
-	if err != nil {
-		return nil, fmt.Errorf("%s: authorization: %w", group, err)
-	}
+	config.Authorization.Authorizer = authz
 	config.Authentication.Authenticator = apiserverauthenticator.NewAuthenticator()
-	if b.documents, err = b.versionDocuments(b.kindlessVersions()); err != nil {
-		return nil, err
-	}
 	if err := builder.SetupConfig(scheme, config, builders, opts.BuildVersion,
-		b.buildHandlerChain, gvs,
+		chain, gvs,
 		[]common.GetOpenAPIDefinitions{appsdkapiserver.GetCommonOpenAPIDefinitions}, reg, resources); err != nil {
 		return nil, fmt.Errorf("%s: setup config: %w", group, err)
 	}
@@ -204,7 +269,7 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 		storageOpts.UnifiedStorageConfig = map[string]setting.UnifiedStorageConfig{}
 	}
 	var dualWriteBuilder grafanarest.DualWriteBuilder
-	if opts.DualWrite != nil && opts.Runner.LegacyStore != nil {
+	if opts.DualWrite != nil && opts.Settings.LegacyStore != nil {
 		dualWriteBuilder = builder.NewDualWriteBuilder(scheme, storageOpts, opts.DualWrite, opts.BuilderMetrics)
 	}
 	info := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
@@ -284,15 +349,10 @@ func newManifestBuilder(pluginID string, manifest *app.ManifestData, opts Option
 	}
 
 	if opts.AccessChecker == nil {
-		opts.AccessChecker = func(context.Context, identity.Requester, string) (authorizer.Decision, string, error) {
-			return authorizer.DecisionDeny, "no plugin access checker is configured", nil
-		}
+		opts.AccessChecker = denyPluginAccess
 	}
 	if opts.Tracer == nil {
 		opts.Tracer = tracing.NewNoopTracerService()
-	}
-	if opts.Features == nil {
-		opts.Features = featuremgmt.WithFeatures()
 	}
 	return &manifestBuilder{
 		group:         manifest.Group,

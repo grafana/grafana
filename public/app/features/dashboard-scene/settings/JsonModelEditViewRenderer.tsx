@@ -6,7 +6,8 @@ import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { useFlagDashboardNewLayouts, useFlagGrafanaDashboardSettingsRedesign } from '@grafana/runtime/internal';
 import { type SceneComponentProps, SceneObjectRef } from '@grafana/scenes';
-import { Alert, Box, Button, Stack, Tooltip, useStyles2, CodeMirrorEditor } from '@grafana/ui';
+import { Alert, Box, Button, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { Page } from 'app/core/components/Page/Page';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
@@ -155,8 +156,8 @@ export function JsonModelEditViewRenderer({ model }: SceneComponentProps<JsonMod
             </p>
             <Box paddingTop={2}>
               <Stack alignItems="center">
-                {cancelButton}
                 {saveButton(true, disabled)}
+                {cancelButton}
               </Stack>
             </Box>
           </Alert>

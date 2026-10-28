@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -22,13 +22,14 @@ export interface SidebarColumn {
 }
 
 interface TableSidebarProps {
+  focusRequest?: number;
   /** All columns in display order, including hidden columns. */
   columns: SidebarColumn[];
   reorderable?: boolean;
   hiddenColumns: ReadonlySet<string>;
   onToggleColumn: (displayName: string, visible: boolean) => void;
   onColumnsReorder: (sourceColumnKey: string, targetColumnKey: string) => void;
-  onClose: () => void;
+  onClose: (restoreFocus: boolean) => void;
   headerHeight?: number;
   transparent?: boolean;
   /** Whether releasing the splitter will close the panel. */
@@ -36,6 +37,7 @@ interface TableSidebarProps {
 }
 
 export function TableSidebar({
+  focusRequest = 0,
   columns,
   reorderable = false,
   hiddenColumns,
@@ -47,7 +49,25 @@ export function TableSidebar({
   willCloseOnRelease = false,
 }: TableSidebarProps) {
   const styles = useStyles2(getStyles, transparent, headerHeight);
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const visibleCount = columns.filter(({ name }) => !hiddenColumns.has(name)).length;
+
+  useEffect(() => {
+    if (!focusRequest) {
+      return;
+    }
+
+    let active = true;
+    // The column dropdown queues focus restoration to its trigger when it closes.
+    queueMicrotask(() => {
+      if (active) {
+        sidebarRef.current?.focus();
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, [focusRequest]);
 
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
@@ -55,6 +75,8 @@ export function TableSidebar({
   return (
     // A complementary landmark cannot be nested inside the page's main landmark.
     <div
+      ref={sidebarRef}
+      tabIndex={-1}
       role="group"
       className={css(styles.container, willCloseOnRelease && styles.containerWillClose)}
       aria-label={t('grafana-ui.table.column-visibility', 'Column visibility')}
@@ -71,7 +93,7 @@ export function TableSidebar({
             name="times"
             size="sm"
             aria-label={t('grafana-ui.table.close-column-visibility', 'Close column visibility panel')}
-            onClick={onClose}
+            onClick={() => onClose(sidebarRef.current?.contains(document.activeElement) ?? false)}
             data-testid={sidebarSelectors.closeButton}
           />
         </Stack>
@@ -110,6 +132,7 @@ export function TableSidebar({
                     draggable
                     aria-label={t('grafana-ui.table.reorder-column-label', 'Reorder {{columnName}}', {
                       columnName: displayName,
+                      interpolation: { escapeValue: false },
                     })}
                     onDragStart={(ev) => {
                       ev.dataTransfer.effectAllowed = 'move';
@@ -141,8 +164,14 @@ export function TableSidebar({
                     disabled={isLastVisible}
                     aria-label={
                       isVisible
-                        ? t('grafana-ui.table.hide-column-label', 'Hide {{columnName}}', { columnName: displayName })
-                        : t('grafana-ui.table.show-column-label', 'Show {{columnName}}', { columnName: displayName })
+                        ? t('grafana-ui.table.hide-column-label', 'Hide {{columnName}}', {
+                            columnName: displayName,
+                            interpolation: { escapeValue: false },
+                          })
+                        : t('grafana-ui.table.show-column-label', 'Show {{columnName}}', {
+                            columnName: displayName,
+                            interpolation: { escapeValue: false },
+                          })
                     }
                     onChange={(ev) => onToggleColumn(displayName, ev.currentTarget.checked)}
                   />

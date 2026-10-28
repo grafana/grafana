@@ -249,8 +249,12 @@ func datasourceErrorInfo(err error, rule *models.AlertRule) (string, string) {
 	var utilError errutil.Error
 	if errors.As(err, &utilError) &&
 		(errors.Is(err, expr.QueryError) || errors.Is(err, expr.ConversionError)) {
+		refID, ok := utilError.PublicPayload["refId"].(string)
+		if !ok {
+			return "", ""
+		}
 		for _, next := range rule.Data {
-			if next.RefID == utilError.PublicPayload["refId"].(string) {
+			if next.RefID == refID {
 				return next.RefID, next.DatasourceUID
 			}
 		}

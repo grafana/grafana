@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"testing"
+	"testing/synctest"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -33,19 +34,21 @@ func (s *retryTestResourceServer) Update(context.Context, *resourcepb.UpdateRequ
 func TestLocalResourceClientRetryCodes(t *testing.T) {
 	for _, code := range []codes.Code{codes.Aborted, codes.Unavailable, codes.ResourceExhausted, codes.InvalidArgument} {
 		t.Run(code.String(), func(t *testing.T) {
-			st, err := status.New(code, "failure").WithDetails(&resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
-			require.NoError(t, err)
-			srv := &retryTestResourceServer{failure: st.Err()}
-			client := NewLocalResourceClient(srv)
-			ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
-			_, err = client.Update(ctx, &resourcepb.UpdateRequest{})
-			if code == codes.Unavailable || code == codes.ResourceExhausted {
+			synctest.Test(t, func(t *testing.T) {
+				st, err := status.New(code, "failure").WithDetails(&resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
 				require.NoError(t, err)
-				require.Equal(t, 2, srv.attempts)
-			} else {
-				require.Equal(t, 1, srv.attempts)
-				require.Equal(t, st.Proto(), status.Convert(err).Proto())
-			}
+				srv := &retryTestResourceServer{failure: st.Err()}
+				client := NewLocalResourceClient(srv)
+				ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+				_, err = client.Update(ctx, &resourcepb.UpdateRequest{})
+				if code == codes.Unavailable || code == codes.ResourceExhausted {
+					require.NoError(t, err)
+					require.Equal(t, 2, srv.attempts)
+				} else {
+					require.Equal(t, 1, srv.attempts)
+					require.Equal(t, st.Proto(), status.Convert(err).Proto())
+				}
+			})
 		})
 	}
 }

@@ -46,7 +46,7 @@ func TestSingleTenantDiscoveryRefreshesWithoutOtherSources(t *testing.T) {
 					}
 					return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
 				})
-				var loader RoutesLoader = st
+				var loader RoutesLoader = fallbackLoader{st}
 				if useCloud {
 					cloud, err := newCloudLoader(nil, nil, nil, st)
 					require.NoError(t, err)
@@ -150,16 +150,12 @@ func TestSingleTenantDiscoveryNotificationsCoalesceAndStop(t *testing.T) {
 			}
 			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
-			dirty, err := st.Notify(ctx)
+			dirty, err := fallbackLoader{st}.Notify(ctx)
 			require.NoError(t, err)
 			synctest.Wait()
-			if configured {
-				// The first successful poll always wakes the router.
-				require.Len(t, dirty, 1)
-				<-dirty
-			} else {
-				require.Empty(t, dirty)
-			}
+			// The first poll always wakes the router, even when it finds nothing.
+			require.Len(t, dirty, 1)
+			<-dirty
 
 			// Unchanged discovery polls on schedule but never wakes the router.
 			time.Sleep(3 * singleTenantDiscoveryInterval)
@@ -244,7 +240,7 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 		return &http.Response{StatusCode: http.StatusOK, Header: header, Body: io.NopCloser(strings.NewReader(string(data)))}, nil
 	})
 
-	router := NewGrafanaRouter(st, nil)
+	router := NewGrafanaRouter(fallbackLoader{st}, nil)
 	router.unregisteredGroupHandler = st
 	pollDiscovery(t, st)
 	require.NoError(t, router.reconcile(t.Context()))
@@ -253,7 +249,6 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 	router.served[mt.group.Name] = &handlerEntry{backend: mt, handler: http.NotFoundHandler(), lastKey: mt.key, breaker: newGroupBreaker(mt.group.Name)}
 	router.publish(t.Context())
 
-	fromAggregator := false
 	serve := func(namespace, path, accept string) *httptest.ResponseRecorder {
 		mu.Lock()
 		calls = nil
@@ -262,11 +257,8 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 		if accept != "" {
 			req.Header.Set("Accept", accept)
 		}
-		if fromAggregator {
-			req.Header.Set(aggregatorOriginHeader, "true")
-		}
 		res := httptest.NewRecorder()
-		router.HandleFunc(res, req, http.NotFoundHandler())
+		router.HandleFunc(res, req)
 		require.Equal(t, http.StatusOK, res.Code, res.Body.String())
 		if isRootDiscoveryPath(path) {
 			require.Equal(t, "private", res.Header().Get("Cache-Control"))
@@ -320,14 +312,6 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 		require.Equal(t, []string{"discovery", "mt.grafana.app", "stack.grafana.app"}, aggregated("stacks-123"))
 		require.Equal(t, []string{"apis/discovery/v1alpha2", "apis/mt.grafana.app/v2", "apis/stack.grafana.app/v1"}, openAPIIndex("stacks-123"))
 	})
-	t.Run("stacks-123 aggregator gets the defaults", func(t *testing.T) {
-		fromAggregator = true
-		defer func() { fromAggregator = false }()
-		require.Equal(t, []string{"default.grafana.app", "discovery", "mt.grafana.app"}, groupList("stacks-123"))
-		require.Equal(t, []string{"default.grafana.app", "discovery", "mt.grafana.app"}, aggregated("stacks-123"))
-		require.Equal(t, []string{"apis/default.grafana.app/v1", "apis/discovery/v1alpha2", "apis/mt.grafana.app/v2"}, openAPIIndex("stacks-123"))
-		require.EqualValues(t, 3, st.fallbackRefused.Load())
-	})
 
 	t.Run("OpenAPI documents are not shared across callers", func(t *testing.T) {
 		const path = "/openapi/v3/apis/default.grafana.app/v1"
@@ -343,7 +327,7 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 	})
 }
 
-func TestCallerScopedGroupsStayAdvertisedWhenNextAnswers(t *testing.T) {
+func TestCallerScopedGroupsStayAdvertisedWithoutFallback(t *testing.T) {
 	st := &fallbackBackend{
 		group: metav1.APIGroup{Name: "st.grafana.app", Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: "st.grafana.app/v1", Version: "v1"}}},
 		discovery: &apidiscoveryv2.APIGroupDiscovery{
@@ -357,29 +341,15 @@ func TestCallerScopedGroupsStayAdvertisedWhenNextAnswers(t *testing.T) {
 	router.served[st.group.Name] = &handlerEntry{backend: st, handler: http.NotFoundHandler(), lastKey: st.key, breaker: newGroupBreaker(st.group.Name)}
 	router.publish(t.Context())
 
-	// In middleware mode next is the embedded server, which answers root
-	// discovery without the ST groups.
-	next := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		var body any
-		switch {
-		case req.URL.Path == apisPrefix && strings.Contains(req.Header.Get("Accept"), "apidiscovery.k8s.io"):
-			w.Header().Set("Content-Type", aggregatedDiscoveryJSON)
-			body = apidiscoveryv2.APIGroupDiscoveryList{TypeMeta: metav1.TypeMeta{Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2"}}
-		case req.URL.Path == apisPrefix:
-			body = metav1.APIGroupList{TypeMeta: metav1.TypeMeta{Kind: "APIGroupList", APIVersion: "v1"}}
-		default:
-			body = handler3.OpenAPIV3Discovery{Paths: map[string]handler3.OpenAPIV3DiscoveryGroupVersion{}}
-		}
-		require.NoError(t, json.NewEncoder(w).Encode(body))
-	})
+	// Without an unregistered-group handler, nothing answers for the caller,
+	// so the defaults stay advertised.
 	serve := func(path, accept string) string {
 		req := requestWithNamespace(http.MethodGet, path, "stacks-123")
 		if accept != "" {
 			req.Header.Set("Accept", accept)
 		}
 		res := httptest.NewRecorder()
-		router.HandleFunc(res, req, next)
+		router.HandleFunc(res, req)
 		require.Equal(t, http.StatusOK, res.Code, res.Body.String())
 		return res.Body.String()
 	}
@@ -407,7 +377,7 @@ func TestSingleTenantDiscoveryFromLegacyOnlyStack(t *testing.T) {
 		require.NoError(t, err)
 		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"application/json"}}, Body: io.NopCloser(strings.NewReader(string(body)))}, nil
 	})
-	router := NewGrafanaRouter(st, nil)
+	router := NewGrafanaRouter(fallbackLoader{st}, nil)
 	router.unregisteredGroupHandler = st
 	pollDiscovery(t, st)
 	require.NoError(t, router.reconcile(t.Context()))
@@ -416,7 +386,7 @@ func TestSingleTenantDiscoveryFromLegacyOnlyStack(t *testing.T) {
 		req := requestWithNamespace(http.MethodGet, apisPrefix, "stacks-123")
 		req.Header.Set("Accept", accept)
 		res := httptest.NewRecorder()
-		router.HandleFunc(res, req, http.NotFoundHandler())
+		router.HandleFunc(res, req)
 		return res
 	}
 

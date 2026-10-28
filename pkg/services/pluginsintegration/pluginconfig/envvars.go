@@ -7,10 +7,12 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -25,6 +27,8 @@ import (
 )
 
 var _ envvars.Provider = (*EnvVarsProvider)(nil)
+
+const marketplaceLicenseEnvTimeout = 10 * time.Second
 
 type EnvVarsProvider struct {
 	cfg                  *PluginInstanceCfg
@@ -108,8 +112,14 @@ func marketplaceLicensePluginID(plugin *plugins.Plugin) string {
 }
 
 func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginID string) []string {
-	// Marketplace plugins require the feature toggle and a valid Grafana Pro/Enterprise license.
-	if p.cfg.Features == nil || !p.cfg.Features.GetEnabled(ctx)[featuremgmt.FlagPluginsMarketplaceLicensing] {
+	// Plugin restarts reuse the context the plugin was initialized with, which can already be canceled
+	// (for example, the request that installed the plugin). Keep its values but not its cancellation, and
+	// bound both the feature flag evaluation and the license token lookup instead.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), marketplaceLicenseEnvTimeout)
+	defer cancel()
+
+	// Marketplace plugins require the feature flag and a valid Grafana Pro/Enterprise license.
+	if !p.marketplaceLicensingEnabled(ctx) {
 		return nil
 	}
 	if p.license == nil || !p.license.HasValidLicense() {
@@ -141,6 +151,16 @@ func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginI
 		variables = append(variables, p.envVar("GF_MARKETPLACE_LICENSE_PATH", licensePath))
 	}
 	return variables
+}
+
+// marketplaceLicensingEnabled evaluates the marketplace licensing kill switch. Evaluation errors disable it.
+func (p *EnvVarsProvider) marketplaceLicensingEnabled(ctx context.Context) bool {
+	enabled, err := openfeature.NewDefaultClient().BooleanValue(ctx, featuremgmt.FlagPluginsMarketplaceLicensing, false, openfeature.TransactionContext(ctx))
+	if err != nil {
+		p.logger.Warn("Could not evaluate feature flag, not providing marketplace licenses", "flag", featuremgmt.FlagPluginsMarketplaceLicensing, "error", err)
+		return false
+	}
+	return enabled
 }
 
 func (p *EnvVarsProvider) featureToggleEnableVars(ctx context.Context) []string {

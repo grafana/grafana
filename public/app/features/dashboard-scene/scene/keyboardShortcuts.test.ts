@@ -164,6 +164,16 @@ describe('setupKeyboardShortcuts', () => {
       expect(mockOnRefresh).toHaveBeenCalled();
     });
 
+    it.each(['view', 'composer'] as const)('should toggle cursor sync in %s mode', (mode) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      mockScene.setState({ mode, isEditing: mode === 'composer' });
+      mockCursorSync.setState({ sync: DashboardCursorSync.Off });
+
+      modOHandler();
+
+      expect(mockCursorSync.setState).toHaveBeenCalledWith({ sync: DashboardCursorSync.Crosshair });
+    });
+
     it('should handle missing CursorSync behavior gracefully', () => {
       // Create scene without CursorSync behavior by overriding state
       const sceneWithoutCursorSync = new DashboardScene({
@@ -299,7 +309,7 @@ describe('setupKeyboardShortcuts', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
       mockScene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
+        planning: { phase: 'preview', planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
       setupKeyboardShortcuts(mockScene);
 
@@ -333,10 +343,6 @@ describe('setupKeyboardShortcuts', () => {
     { mode: 'view' as const, editable: true, fullscreen: true },
     { mode: 'view' as const, editable: false, fullscreen: false },
     { mode: 'view' as const, editable: false, fullscreen: true },
-    { mode: 'agent' as const, editable: true, fullscreen: false },
-    { mode: 'agent' as const, editable: true, fullscreen: true },
-    { mode: 'agent' as const, editable: false, fullscreen: false },
-    { mode: 'agent' as const, editable: false, fullscreen: true },
   ])(
     'panel edit shortcut enters Editing from $mode only when editable=$editable (fullscreen=$fullscreen)',
     async ({ mode, editable, fullscreen }) => {
@@ -365,6 +371,24 @@ describe('setupKeyboardShortcuts', () => {
       }
     }
   );
+
+  it.each([
+    { mode: 'view' as const, editable: true },
+    { mode: 'view' as const, editable: false },
+  ])('dashboard settings shortcut enters Editing from $mode only when editable=$editable', ({ mode, editable }) => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    try {
+      mockScene.setState({ mode, isEditing: true, editable });
+      locationService.replace('/d/test-uid');
+      setupKeyboardShortcuts(mockScene);
+      const binding = mockKeybindingSet.addBinding.mock.calls.find(([binding]) => binding.key === 'd s')![0];
+      binding.onTrigger();
+      expect(mockScene.state.mode).toBe(editable ? 'edit' : mode);
+      expect(locationService.getSearchObject().editview).toBe(editable ? 'settings' : undefined);
+    } finally {
+      setTestFlags({});
+    }
+  });
 
   describe('navigation when Grafana is served from a sub-path', () => {
     const originalLocationService = locationService;
@@ -444,6 +468,20 @@ describe('setupKeyboardShortcuts', () => {
     it('should setup save shortcut (mod+s) when can edit', () => {
       const modSBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'mod+s');
       expect(modSBinding).toBeDefined();
+    });
+
+    it.each([
+      { mode: 'view', opens: false },
+      { mode: 'edit', opens: true },
+    ] as const)('save shortcut (mod+s) opens the save drawer in $mode mode: $opens', ({ mode, opens }) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      mockScene.setState({ mode, isEditing: true });
+      const openSaveDrawer = jest.spyOn(mockScene, 'openSaveDrawer').mockResolvedValue(undefined);
+      const modSBinding = mockKeybindingSet.addBinding.mock.calls.find((call) => call[0].key === 'mod+s');
+
+      modSBinding![0].onTrigger();
+
+      expect(openSaveDrawer).toHaveBeenCalledTimes(opens ? 1 : 0);
     });
 
     it('should setup dashboard settings shortcut (d s) when can edit', () => {

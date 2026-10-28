@@ -33,11 +33,21 @@ describe('DashboardMutationClient', () => {
   });
 
   it('exposes every dashboard command', () => {
+    setTestFlags({ 'assistant.dashboard.artifacts': true });
     const available = new Set(new DashboardMutationClient(dashboardScene()).getAvailableCommands());
 
     for (const cmd of DASHBOARD_COMMANDS) {
       expect(available.has(cmd.name)).toBe(true);
     }
+  });
+
+  // A plugin reads RELOAD_FROM_SERVER to tell whether this build previews its pending changes.
+  it('hides RELOAD_FROM_SERVER while plugin-provided pending changes are off', () => {
+    expect(new DashboardMutationClient(dashboardScene()).getAvailableCommands()).not.toContain('RELOAD_FROM_SERVER');
+
+    setTestFlags({ 'assistant.dashboard.artifacts': true });
+
+    expect(new DashboardMutationClient(dashboardScene()).getAvailableCommands()).toContain('RELOAD_FROM_SERVER');
   });
 
   it('also exposes CREATE_NOTEBOOK_SPEC when notebooks are enabled', () => {
@@ -155,6 +165,29 @@ describe('DashboardMutationClient', () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain('read-only');
       expect(scene.state.isEditing).toBeFalsy();
+    });
+
+    it('handles the first write of a build like any other Assistant write', async () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const scene = activeScene();
+      const recordEditMutation = jest.spyOn(scene, 'recordEditMutation');
+      const client = new DashboardMutationClient(scene);
+      await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+
+      try {
+        const result = await client.execute(
+          { type: 'UPDATE_DASHBOARD_SETTINGS', payload: { title: 'Built' } },
+          'grafana-assistant-app'
+        );
+
+        expect(result.success).toBe(true);
+        expect(scene.state.planning).toBeUndefined();
+        expect(recordEditMutation).toHaveBeenCalledWith('assistant');
+      } finally {
+        if (scene.state.isEditing) {
+          scene.exitEditMode({ skipConfirm: true });
+        }
+      }
     });
 
     it('still allows a read-only command', async () => {

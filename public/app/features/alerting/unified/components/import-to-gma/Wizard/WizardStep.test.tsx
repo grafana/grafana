@@ -1,5 +1,5 @@
 import { FormProvider, useForm } from 'react-hook-form';
-import { render, screen, userEvent } from 'test/test-utils';
+import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -110,6 +110,59 @@ describe('WizardStep', () => {
     expect(onNext).toHaveBeenCalledTimes(1);
     // Wait for async operation to complete
     await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+
+  it('should disable Next and show a loading indicator while an async onNext is pending', async () => {
+    let resolveOnNext: (value: boolean) => void = () => {};
+    const onNext = jest.fn().mockImplementation(
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolveOnNext = resolve;
+        })
+    );
+
+    renderWithProvider(
+      <WizardStep stepId={StepKey.Notifications} label="Test Step" onNext={onNext}>
+        <div>Step content</div>
+      </WizardStep>,
+      StepKey.Notifications
+    );
+
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
+    await user.click(nextButton);
+
+    expect(nextButton).toBeDisabled();
+
+    resolveOnNext(true);
+    await waitFor(() => expect(nextButton).toBeEnabled());
+  });
+
+  it('should disable Skip while an async onNext is pending, so it cannot fire mid-check', async () => {
+    let resolveOnNext: (value: boolean) => void = () => {};
+    const onNext = jest.fn().mockImplementation(
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolveOnNext = resolve;
+        })
+    );
+    const onSkip = jest.fn();
+
+    renderWithProvider(
+      <WizardStep stepId={StepKey.Notifications} label="Test Step" canSkip={true} onNext={onNext} onSkip={onSkip}>
+        <div>Step content</div>
+      </WizardStep>,
+      StepKey.Notifications
+    );
+
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    const skipButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.skipButton);
+    expect(skipButton).toBeDisabled();
+    await user.click(skipButton);
+    expect(onSkip).not.toHaveBeenCalled();
+
+    resolveOnNext(true);
+    await waitFor(() => expect(skipButton).toBeEnabled());
   });
 
   it('should render Skip button when canSkip is true', () => {
