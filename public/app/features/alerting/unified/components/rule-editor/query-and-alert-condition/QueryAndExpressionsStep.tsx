@@ -484,7 +484,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
         )}
 
         {/* This is the PromQL Editor for Cloud rules */}
-        {isCloudAlertRuleType && dataSourceName && dataSourceUid && (
+        {isCloudAlertRuleType && dataSourceUid && (
           <Stack direction="column">
             <Field error={errors.expression?.message} invalid={!!errors.expression?.message} noMargin>
               <Controller
