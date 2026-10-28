@@ -3,17 +3,13 @@ import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { setManagedBadge } from '@grafana/runtime/internal';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 
 import { sharedWithMeFolder, wellFormedDashboard } from '../fixtures/dashboardsTreeItem.fixture';
 import { SelectionState } from '../types';
 
 import { DashboardsTree } from './DashboardsTree';
-
-setManagedBadge(ManagedBadge);
 
 const [_, { folderA: folder, folderB_empty: emptyFolderIndicator, dashbdD: dashboard }] = getFolderFixtures();
 

@@ -1,15 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { setManagedBadge } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
-import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 
 import { type Playlist } from '../../api/clients/playlist/v1';
 
 import { PlaylistCard } from './PlaylistCard';
-
-setManagedBadge(ManagedBadge);
 
 function getPlaylist(annotations?: Record<string, string>): Playlist {
   return {

@@ -2,13 +2,9 @@ import { ActionImpl } from 'kbar';
 import { render, screen } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
-import { setManagedBadge } from '@grafana/runtime/internal';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 
 import { ResultItem } from './ResultItem';
-
-setManagedBadge(ManagedBadge);
 
 function createActionImpl(props: Record<string, unknown> = {}): ActionImpl {
   const action = {
