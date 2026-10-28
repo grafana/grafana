@@ -45,21 +45,29 @@ image_maps:
       - x_coord: 101
         y_coord: 38.5
         content: |
-          **Export**: Click to display [export](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
+          **Undo**: Revert the most recent change. Hover your cursor over the icon to see the change that is reverted. Edit mode only. For more information, refer to [Undo and redo changes](#undo-and-redo-changes).
       - x_coord: 101
         y_coord: 45
         content: |
+          **Redo**: Reinstate the change you most recently reverted. Hover your cursor over the icon to see the change that is reinstated. Edit mode only. For more information, refer to [Undo and redo changes](#undo-and-redo-changes).
+      - x_coord: 101
+        y_coord: 51.5
+        content: |
+          **Export**: Click to display [export](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/share-dashboards-panels/#export-dashboards) options.
+      - x_coord: 101
+        y_coord: 58
+        content: |
           **Content outline**: Navigate a dashboard using the [Content outline](#navigate-using-the-content-outline).
       - x_coord: 101
-        y_coord: 51
+        y_coord: 64
         content: |
           **Filters overview**: Open the filters overview drawer.
       - x_coord: 101
-        y_coord: 57
+        y_coord: 70
         content: |
           **Dashboard insights**: View [dashboard analytics](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/assess-dashboard-usage/) including information about users, activity, and query counts.
       - x_coord: 101
-        y_coord: 65
+        y_coord: 78
         content: |
           **Hide**: Click to hide the sidebar and toolbar.
       - x_coord: 89
@@ -158,6 +166,7 @@ Now that you've created a basic dashboard, you can augment it with more options,
 - [The sidebar and toolbar](#the-sidebar-and-toolbar): Learn about editing without leaving the dashboard.
 - [Navigate using the content outline](#navigate-using-the-content-outline): Learn how to quickly navigate to any dashboard element with the content outline.
 - [Edit a dashboard](#edit-a-dashboard): Learn how to edit a dashboard.
+- [Undo and redo changes](#undo-and-redo-changes): Learn how to revert and reinstate changes while you edit.
 
 ### The sidebar and toolbar
 
@@ -170,7 +179,7 @@ Hover your cursor over the numbers to display descriptions of the toolbar option
 
 {{< image-map key="sidebar-toolbar" >}}
 
-The toolbar is displayed in both edit and view mode, but the **Dashboard options** and **Feedback** icons aren't available in view mode.
+The toolbar is displayed in both edit and view mode, but the **Dashboard options**, **Feedback**, **Edit as code**, **Undo**, and **Redo** icons aren't available in view mode.
 
 The available configuration options in the sidebar differ depending on the selected dashboard element:
 
@@ -243,6 +252,7 @@ To edit a dashboard, follow these steps:
    | Edit dashboard controls | <p>Hover your cursor over any part of a dashboard control to display the actions tooltip, which has the following options: **Settings**, **Duplicate**, and **Delete**. Click **Settings** to access options in the sidebar. For some controls, the tooltip also includes an **Edit query** or **Edit values** option. |
    | Edit rows and tabs | Click a row or tab to access grouping settings in the sidebar. |
    | Change layouts         | Click a row, tab, or the **Dashboard options** icon to open the sidebar and access layout options. For more information, refer to [panel layout options](#panel-layouts).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+   | Undo or redo changes   | Click the **Undo** or **Redo** icon in the toolbar. For more information, refer to [Undo and redo changes](#undo-and-redo-changes). |
 
 1. When you've finished making changes, click **Save**.
 1. (Optional) Enter a description of the changes you've made.
@@ -251,6 +261,33 @@ To edit a dashboard, follow these steps:
 1. Click **Exit edit**
 
 <!-- prettier-ignore-end -->
+
+### Undo and redo changes
+
+While you're editing a dashboard, you can revert a change with the **Undo** icon and reinstate it with the **Redo** icon.
+Both icons are in the toolbar, below the **Edit as code** icon.
+
+To undo or redo a change, follow these steps:
+
+1. Navigate to the dashboard you want to update.
+1. Click **Edit**.
+1. Make a change to the dashboard.
+1. In the toolbar, do one of the following:
+   - Click the **Undo** icon to revert the most recent change.
+   - Click the **Redo** icon to reinstate the change you most recently reverted.
+
+   Hover your cursor over either icon to display the change that Grafana reverts or reinstates.
+
+Undo and redo behave as follows:
+
+- **Edit mode only**: The icons aren't available in view mode.
+- **Disabled when there's nothing to change**: **Undo** is disabled until you make a change, and **Redo** is disabled until you undo a change.
+- **New changes clear redo**: If you undo a change and then make a different change, you can't redo the change you reverted.
+- **History resets when you enter edit mode**: You can't undo changes from a previous edit session, even if you haven't saved them.
+- **Limited history**: Grafana keeps up to 100 changes in the history. When the limit is reached, the oldest changes are removed first.
+- **Not available in the panel editor**: The **Undo** and **Redo** icons aren't available while you're in the panel editor. After you click **Back** to return to the dashboard, you can undo or redo the panel changes.
+
+<!-- TODO: Confirm panel edit undo/redo behaviour -->
 
 ## Panel layouts
 
@@ -512,6 +549,10 @@ To manage dashboard elements, follow these steps:
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
 1. Click **Exit edit**
+
+{{< admonition type="tip" >}}
+If you delete an element by mistake, click the **Undo** icon in the toolbar before you save to restore it. For more information, refer to [Undo and redo changes](#undo-and-redo-changes).
+{{< /admonition >}}
 
 ## Copy a dashboard
 
