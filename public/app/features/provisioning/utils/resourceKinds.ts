@@ -47,7 +47,7 @@ interface ResourceListDeps {
  * ({@link ResourceItemType}) are derived from this object: adding a kind is ONE entry here (plus, if
  * needed, enabling it on the backend so it appears in the settings endpoint's `availableResources`) —
  * no parallel unions to keep in sync. Entries are validated against {@link ResourceKindInfo} where
- * `allKindInfos` is built below; `as const` is used instead of `satisfies ResourceKindInfo` because
+ * `coreKindInfos` is built below; `as const` is used instead of `satisfies ResourceKindInfo` because
  * the interface references the derived types, which `satisfies` would make a circular reference.
  */
 export const resourceKindInfos = {
@@ -225,7 +225,22 @@ export interface ResourceKindInfo {
 // Widening the `as const` registry to ResourceKindInfo[] here also validates every entry against the
 // interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
 // each call site. The literal `key`/`itemType` values stay the source of truth for the unions above.
-const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
+const coreKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
+
+function knownKindInfos(): ResourceKindInfo[] {
+  return coreKindInfos;
+}
+
+export function resolveKindInfo(group: string, kind: string): ResourceKindInfo {
+  return getKindInfoByGroupKind(group, kind) ?? getDefaultKindInfo(group, kind);
+}
+
+export function resolveKindInfoByResource(group: string, resource: string): ResourceKindInfo {
+  return (
+    knownKindInfos().find((info) => info.group === group && info.resource === resource) ??
+    getDefaultKindInfo(group, resource, resource)
+  );
+}
 
 export function getResourceJsonRoute(group: string, resource: string, name: string) {
   return `/admin/provisioning/resources/${group}/${resource}/${name}`;
@@ -268,7 +283,7 @@ export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): st
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
 export function getKindInfoByResource(resource?: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.resource === resource);
+  return knownKindInfos().find((info) => info.resource === resource);
 }
 
 /**
@@ -277,7 +292,7 @@ export function getKindInfoByResource(resource?: string): ResourceKindInfo | und
  * union and create an import cycle with `../types`.
  */
 export function getKindInfoByItemType(itemType: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.itemType === itemType);
+  return knownKindInfos().find((info) => info.itemType === itemType);
 }
 
 /**
@@ -289,7 +304,7 @@ export function getKindInfoByItemType(itemType: string): ResourceKindInfo | unde
  * share an API group, so the group alone does not always identify the kind.
  */
 export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.group === group || info.resource === group);
+  return knownKindInfos().find((info) => info.group === group || info.resource === group);
 }
 
 /**
@@ -301,7 +316,7 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
   if (!group && !kind) {
     return undefined;
   }
-  return allKindInfos.find((info) => (!group || info.group === group) && (!kind || info.kind === kind));
+  return knownKindInfos().find((info) => (!group || info.group === group) && (!kind || info.kind === kind));
 }
 
 /**
@@ -311,7 +326,7 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
  * fall back to a group-only match for stats that omit the resource.
  */
 export function getKindInfoByStat(stat: { group?: string; resource?: string }): ResourceKindInfo | undefined {
-  const byResource = allKindInfos.find((info) => info.resource === stat.resource);
+  const byResource = knownKindInfos().find((info) => info.resource === stat.resource);
   if (byResource) {
     return byResource;
   }
@@ -330,15 +345,18 @@ export function getKindInfoByStat(stat: { group?: string; resource?: string }): 
  */
 export function getAvailableResourceKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
   if (!availableResources) {
-    return allKindInfos;
+    return knownKindInfos();
   }
-  return allKindInfos.filter((info) =>
+  return knownKindInfos().filter((info) =>
     availableResources.some((r) => r.group === info.group && r.kind === info.kind && !r.disabled)
   );
 }
 
 /** Whether a given kind is currently enabled for provisioning per the settings endpoint. */
 export function isResourceKindAvailable(info: ResourceKindInfo, availableResources?: SupportedResource[]): boolean {
+  if (availableResources) {
+    return availableResources.some((r) => r.group === info.group && r.kind === info.kind && !r.disabled);
+  }
   // Compare on group/kind rather than object identity so callers can pass an
   // equivalent descriptor that isn't the exact registry instance.
   return getAvailableResourceKinds(availableResources).some(
@@ -359,7 +377,7 @@ export function isResourceKindAvailable(info: ResourceKindInfo, availableResourc
  * how to `list()` itself.
  */
 export function getMigratableKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
-  return allKindInfos.filter((info) => {
+  return coreKindInfos.filter((info) => {
     if (info.kind === resourceKindInfos.folder.kind) {
       return false;
     }

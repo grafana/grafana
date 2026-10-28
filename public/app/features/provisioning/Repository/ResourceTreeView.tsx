@@ -27,7 +27,7 @@ import {
 
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
-import { getDefaultKindInfo, getKindInfoByItemType } from '../utils/resourceKinds';
+import { getKindInfoByItemType, resolveKindInfoByResource } from '../utils/resourceKinds';
 import {
   buildTree,
   filterByStatusCategories,
@@ -49,7 +49,7 @@ function getGrafanaLink(item: TreeItem) {
   if (item.resourceName) {
     const info =
       getKindInfoByItemType(item.type) ??
-      (item.resourceGroup ? getDefaultKindInfo(item.resourceGroup, item.type, item.type) : undefined);
+      (item.resourceGroup ? resolveKindInfoByResource(item.resourceGroup, item.type) : undefined);
     return info?.getRoute?.(item.resourceName);
   }
   return undefined;
