@@ -1,8 +1,7 @@
 import { t, Trans } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config, locationService, PullRequestBanner } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { type CommonBannerProps } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
-import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared/PreviewBannerViewPR';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import { PROVISIONING_URL } from '../../constants';
@@ -16,15 +15,15 @@ export function ProvisionedFolderPreviewBanner({ queryParams }: CommonBannerProp
   }
 
   if (prURL) {
-    return <PreviewBannerViewPR prURL={prURL} />;
+    return <PullRequestBanner prURL={prURL} />;
   }
 
   if (newPrURL) {
-    return <PreviewBannerViewPR prURL={newPrURL} isNewPr />;
+    return <PullRequestBanner prURL={newPrURL} isNewPr />;
   }
 
   if (repoURL) {
-    return <PreviewBannerViewPR repoUrl={repoURL} behindBranch />;
+    return <PullRequestBanner repoUrl={repoURL} behindBranch />;
   }
 
   if (resourcePushedTo) {

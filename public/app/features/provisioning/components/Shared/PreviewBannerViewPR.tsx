@@ -4,7 +4,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Box, Icon, LinkButton, Stack, useStyles2 } from '@grafana/ui';
-import { type ResourceObjects } from 'app/api/clients/provisioning/v0alpha1';
 import { RepoTypeDisplay } from 'app/features/provisioning/Wizard/types';
 import { isValidRepoType } from 'app/features/provisioning/guards';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
@@ -27,7 +26,7 @@ interface Props {
    * the banner copy; otherwise we fall back to the `action` URL param. Preferred over `isNewPr`
    * for the title, since `isNewPr` only reflects whether a PR URL was in the query, not the action.
    */
-  action?: ResourceObjects['action'];
+  action?: string;
   /* URL of the version currently saved in Grafana, if the resource already exists. Offered as an action next to the pull request button. */
   originalUrl?: string;
 }

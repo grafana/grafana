@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, PullRequestBanner } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
@@ -13,7 +13,7 @@ import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequ
 import { type DashboardMeta, DashboardRoutes } from 'app/types/dashboard';
 
 import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
-import { type PreviewBranchInfo, PreviewBannerViewPR } from '../Shared/PreviewBannerViewPR';
+import { type PreviewBranchInfo } from '../Shared/PreviewBannerViewPR';
 import { isRefNotFoundError } from '../utils/errors';
 import { splitSourcePath } from '../utils/path';
 
@@ -114,7 +114,7 @@ function DashboardPreviewBannerContent({ queryParams, slug, path, dashboard }: D
     typeof existingUid === 'string' && existingUid ? locationUtil.assureBaseUrl(`/d/${existingUid}`) : undefined;
 
   return (
-    <PreviewBannerViewPR
+    <PullRequestBanner
       prURL={prURL}
       isNewPr={!hasExistingPr}
       action={resourceAction}

@@ -16,6 +16,7 @@ export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
 export { setManagedBadge } from '../provisioning/ManagedBadge';
 export { setReadOnlyBadge } from '../provisioning/ReadOnlyBadge';
+export { setPullRequestBanner } from '../provisioning/PullRequestBanner';
 
 export { type LegacyFeatureToggleMode } from '../utils/legacyFeatureToggles';
 export { ExpressionDatasourceRef } from '../utils/expressionRef';

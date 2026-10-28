@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
+import { PullRequestBanner } from '@grafana/runtime';
 import { ConfirmModal, EmptyState, LinkButton, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
 import { useUrlParams } from 'app/core/navigation/hooks';
-import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared/PreviewBannerViewPR';
 import { SaveProvisionedResourceDrawer } from 'app/features/provisioning/components/Shared/SaveProvisionedResourceDrawer';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
@@ -62,7 +62,7 @@ export const PlaylistPage = () => {
       navId="dashboards/playlists"
     >
       <Page.Contents>
-        {newPrURL && <PreviewBannerViewPR prURL={newPrURL} isNewPr repoUrl={repoURL} branchInfo={branchInfo} />}
+        {newPrURL && <PullRequestBanner prURL={newPrURL} isNewPr repoUrl={repoURL} branchInfo={branchInfo} />}
 
         {showSearch && <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />}
 
