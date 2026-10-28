@@ -130,12 +130,12 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[5].text).toBe('Time settings');
   });
 
-  it.each(['view', 'agent'] as const)('opens panel editing from the %s menu and enters Editing', async (mode) => {
+  it('opens panel editing from the view menu and enters Editing', async () => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     const { scene, panel, menu } = await buildTestScene({});
     let deactivateMenu = () => {};
     try {
-      scene.setState({ mode, isEditing: true, editable: true });
+      scene.setState({ mode: 'view', isEditing: true, editable: true });
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
       deactivateMenu = menu.activate();
       await waitFor(() =>
@@ -177,6 +177,22 @@ describe('panelMenuBehavior', () => {
 
       const moreSubMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
       expect(moreSubMenu?.find((i) => /legend/.test(i.text))?.text).toBe(expected);
+    });
+
+    it.each(['view', 'composer'] as const)('offers the legend toggle and Time settings in %s mode', async (mode) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true, panelTimeSettings: true });
+      const { scene, menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      panel.setState({ options: { legend: legend({}) } });
+      scene.setState({ mode, isEditing: true });
+
+      const deactivate = menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+      deactivate();
+
+      const moreSubMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu ?? [];
+      const itemTexts = [...(menu.state.items ?? []), ...moreSubMenu].map((i) => i.text);
+      expect(itemTexts).toEqual(expect.arrayContaining(['Hide legend', 'Time settings']));
     });
 
     it.each([

@@ -1,4 +1,4 @@
-import { buildResourceBranchRedirectUrl } from './redirect';
+import { buildResourceBranchRedirectUrl, getJobListRedirectUrl } from './redirect';
 
 describe('buildResourceBranchRedirectUrl', () => {
   it('returns the base URL with no params when nothing is provided', () => {
@@ -51,5 +51,41 @@ describe('buildResourceBranchRedirectUrl', () => {
     expect(params.has('repo_branch')).toBe(false);
     expect(params.has('repo_url')).toBe(false);
     expect(params.get('action')).toBe('delete');
+  });
+});
+
+describe('getJobListRedirectUrl', () => {
+  it('returns the plain list for a configured-branch job, whatever URLs the job recorded', () => {
+    const url = getJobListRedirectUrl({
+      workflow: 'write',
+      urls: { newPullRequestURL: 'https://x' },
+      repoType: 'github',
+      action: 'delete',
+      prTitle: 'Delete',
+    });
+    expect(url).toBe('/dashboards');
+  });
+
+  it('carries the PR banner params for a branch job', () => {
+    const url = getJobListRedirectUrl({
+      workflow: 'branch',
+      urls: { newPullRequestURL: 'https://github.com/org/repo/compare/main...feature' },
+      repoType: 'github',
+      action: 'delete',
+      prTitle: 'Delete x',
+    });
+
+    const params = new URLSearchParams(url.split('?')[1]);
+    expect(url.startsWith('/dashboards?')).toBe(true);
+    expect(params.get('new_pull_request_url')).toBe('https://github.com/org/repo/compare/main...feature');
+    expect(params.get('repo_type')).toBe('github');
+    expect(params.get('action')).toBe('delete');
+    expect(params.get('pr_title')).toBe('Delete x');
+  });
+
+  it('keeps the repo params for a branch job whose URL lookup recorded nothing', () => {
+    expect(getJobListRedirectUrl({ workflow: 'branch', urls: undefined, repoType: 'github', prTitle: '' })).toBe(
+      '/dashboards?repo_type=github'
+    );
   });
 });

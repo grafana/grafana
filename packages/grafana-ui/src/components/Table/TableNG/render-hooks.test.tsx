@@ -31,14 +31,13 @@ import {
 } from './render-hooks';
 import { getColumnSettleStyles, getHeaderCellStyles } from './styles';
 import {
-  type FilterType,
   type NestedRowEntry,
   type TableCellRendererProps,
   type TableColumn,
   type TableRow,
   type TableSummaryRow,
 } from './types';
-import { type ApplyFilterResult, applyFilter, createTypographyContext, getCellColorInlineStylesFactory } from './utils';
+import { type ApplyFilterResult, createTypographyContext, getCellColorInlineStylesFactory } from './utils';
 
 // -----------------------------------------------------------------------------
 // useDataGridRows
@@ -280,7 +279,7 @@ describe('useDataGridRows', () => {
  * gives each filter result an identifiable fingerprint to assert on.
  */
 function makeFilterResult(scopedRows: TableRow[] = []): ApplyFilterResult {
-  return applyFilter(scopedRows, {}, []);
+  return { filteredRows: scopedRows, crossFilterOrder: [], crossFilterRows: {}, crossFilterTailRows: scopedRows };
 }
 
 /**
@@ -340,8 +339,6 @@ function makeConfig(overrides: Partial<ColumnBuildConfig> = {}): ColumnBuildConf
     getTextColorForBackground: memoize(getTextColorForBackground, { maxSize: 100 }),
     rowHeight: 36,
     rowHeightFn: () => 36,
-    filter: {} as FilterType,
-    setFilter: jest.fn(),
     setInspectCell: jest.fn(),
     gridRef: createRef(),
     getCellActions: jest.fn().mockReturnValue([]),

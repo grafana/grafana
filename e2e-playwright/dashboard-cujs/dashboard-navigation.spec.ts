@@ -5,7 +5,6 @@ import { runDashboardNavigationCujs } from './dashboard-navigation-cuj';
 test.use({
   featureToggles: {
     scopeFilters: true,
-    groupByVariable: true,
   },
   openFeature: {
     flags: {

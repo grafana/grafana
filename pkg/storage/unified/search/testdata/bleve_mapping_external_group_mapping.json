@@ -60,7 +60,9 @@
         "fields": [
           {
             "type": "number",
-            "store": true
+            "store": true,
+            "index": true,
+            "docvalues": true
           }
         ]
       },
@@ -196,6 +198,16 @@
         "enabled": true,
         "dynamic": false,
         "properties": {
+          "allowEdits": {
+            "enabled": true,
+            "dynamic": true,
+            "fields": [
+              {
+                "type": "boolean",
+                "store": true
+              }
+            ]
+          },
           "id": {
             "enabled": true,
             "dynamic": true,
@@ -359,7 +371,22 @@
         "fields": [
           {
             "type": "number",
-            "store": true
+            "store": true,
+            "index": true,
+            "docvalues": true
+          }
+        ]
+      },
+      "updatedBy": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
+            "index": true,
+            "skip_freq_norm": true
           }
         ]
       }

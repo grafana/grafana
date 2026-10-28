@@ -506,6 +506,14 @@ describe('DashboardControls', () => {
       expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
     });
 
+    it('should not show Exit edit for a new dashboard in edit mode', () => {
+      const controls = buildTestSceneWithEditable({ hasUid: false, editable: true, canEdit: true, isEditing: true });
+
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).not.toBeInTheDocument();
+    });
+
     it('should show playlist nav buttons when hidePlaylistNav is undefined', async () => {
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
 
@@ -554,6 +562,18 @@ describe('DashboardControls', () => {
 
       expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
     });
+
+    // A draft has no uid until it's saved, but can be edited and saved like any new dashboard.
+    it('should show Edit for a draft out of edit mode, not for another dashboard without a uid', async () => {
+      const draft = buildTestSceneWithEditable({ hasUid: false, newDashboardUid: 'proposed-uid' });
+      const { unmount } = renderInGrafanaContext(<draft.Component model={draft} />, undefined);
+      expect(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton)).toBeInTheDocument();
+      unmount();
+
+      const unsaved = buildTestSceneWithEditable({ hasUid: false });
+      renderInGrafanaContext(<unsaved.Component model={unsaved} />, undefined);
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).not.toBeInTheDocument();
+    });
   });
 
   describe('DashboardControlActions save button visibility', () => {
@@ -591,6 +611,15 @@ describe('DashboardControls', () => {
 
       expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
       expect(screen.queryByText('Save as copy')).not.toBeInTheDocument();
+    });
+
+    it('should not show save button in Viewing mode, even with unsaved changes', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const controls = buildTestSceneWithEditable({ canSave: true, canEdit: true, isEditing: true });
+      getDashboard(controls).setState({ mode: 'view', isDirty: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
     });
   });
 
@@ -907,6 +936,7 @@ function buildTestSceneWithEditable(options: {
   canSave?: boolean;
   canMakeEditable?: boolean;
   isSnapshot?: boolean;
+  newDashboardUid?: string;
 }): DashboardControls {
   const {
     editable = true,
@@ -916,6 +946,7 @@ function buildTestSceneWithEditable(options: {
     canMakeEditable = false,
     isSnapshot = false,
     hasUid = true,
+    newDashboardUid,
   } = options;
 
   const dashboard = new DashboardScene({
@@ -927,6 +958,7 @@ function buildTestSceneWithEditable(options: {
       canSave,
       canMakeEditable,
       isSnapshot,
+      ...(newDashboardUid ? { newDashboardUid } : {}),
     },
     controls: new DashboardControls({}),
   });

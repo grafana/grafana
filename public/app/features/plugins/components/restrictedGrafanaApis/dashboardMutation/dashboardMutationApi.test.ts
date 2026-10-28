@@ -111,6 +111,15 @@ describe('dashboardMutationApi', () => {
       expect(dashboardMutationApi.getPayloadSchema('GET_NOTEBOOK_SPEC')).toBeDefined();
     });
 
+    // Grafana Assistant reads this schema to tell whether this build previews its pending changes.
+    it('answers for RELOAD_FROM_SERVER only with plugin-provided pending changes on', () => {
+      expect(dashboardMutationApi.getPayloadSchema('RELOAD_FROM_SERVER')).toBeNull();
+
+      setTestFlags({ 'assistant.dashboard.artifacts': true });
+
+      expect(dashboardMutationApi.getPayloadSchema('RELOAD_FROM_SERVER')).toBeDefined();
+    });
+
     it('advertises the building phase of RENDER_PLAN only while its flag is on', () => {
       const building = { planId: 'plan-1', title: 'Plan', sections: [], phase: 'building' };
 
