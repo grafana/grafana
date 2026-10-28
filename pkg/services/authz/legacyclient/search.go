@@ -114,8 +114,8 @@ func validateLegacySearchRequest(req LegacySearchUsersPermissionsRequest) error 
 	if err := validateLegacyPermissionNamespace(req.Namespace); err != nil {
 		return fmt.Errorf("%w: concrete tenant namespace required", ErrInvalidLegacySearchUsersPermissionsRequest)
 	}
-	if !types.IsIdentityType(req.Caller.Type, types.TypeUser, types.TypeServiceAccount) || req.Caller.UID == "" {
-		return fmt.Errorf("%w: user or service account caller required", ErrInvalidLegacySearchUsersPermissionsRequest)
+	if !types.IsIdentityType(req.Caller.Type, types.TypeUser, types.TypeServiceAccount, types.TypeAnonymous, types.TypeRenderService, types.TypeAPIKey) || req.Caller.UID == "" {
+		return fmt.Errorf("%w: supported legacy caller identity required", ErrInvalidLegacySearchUsersPermissionsRequest)
 	}
 	if original := req.Caller.RequesterNamespace; original != nil && *original != "" && *original != req.Namespace {
 		return fmt.Errorf("%w: requester namespace does not match tenant scope", ErrInvalidLegacySearchUsersPermissionsRequest)

@@ -247,8 +247,8 @@ func (s *SQLPermissionsStore) GetUsersBasicRoles(ctx context.Context, ns types.N
 		q := `
 		SELECT u.id, ou.role, u.is_admin
 		FROM ` + userTable + ` AS u
-		LEFT JOIN org_user AS ou ON u.id = ou.user_id
-		WHERE (u.is_admin OR ou.org_id = ?)
+		LEFT JOIN org_user AS ou ON u.id = ou.user_id AND ou.org_id = ?
+		WHERE (u.is_admin OR ou.user_id IS NOT NULL)
 		`
 		params := []any{orgID}
 		if len(userFilter) > 0 {

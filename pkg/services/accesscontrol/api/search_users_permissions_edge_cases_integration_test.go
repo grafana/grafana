@@ -38,6 +38,7 @@ func testIntegrationSearchUsersPermissions_TargetAuthorization(t *testing.T, use
 				f.assertSearch(t, f.caller(f.orgID, "users:*"), query, want)
 				scoped := f.caller(f.orgID, fmt.Sprintf("users:id:%d", usr.ID))
 				f.assertSearch(t, scoped, query, want)
+				f.assertSearch(t, f.caller(f.orgID, fmt.Sprintf("global.users:id:%d", usr.ID)), query, want)
 				for _, permissions := range []map[int64]map[string][]string{
 					{}, {f.orgID: {"test:read": {"*"}}},
 					{f.otherOrgID: {accesscontrol.ActionUsersPermissionsRead: {"users:*"}}},
@@ -288,5 +289,67 @@ func (tc *searchPermissionMutationCase) mutate(t *testing.T) {
 		}))
 	default:
 		t.Fatalf("unsupported change case: %s", tc.change)
+	}
+}
+
+func TestIntegrationSearchUsersPermissions_LegacyCallerIdentities(t *testing.T) {
+	for _, mode := range []struct {
+		name string
+		grpc bool
+	}{{"legacy", false}, {"grpc", true}} {
+		t.Run(mode.name, func(t *testing.T) {
+			f := newSearchPermissionsFixture(t, mode.grpc)
+			target := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
+			grant := f.createRole(t, f.orgID, "managed:target", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}})
+			f.assignUser(t, f.orgID, target.ID, grant)
+			visibility := f.createRole(t, f.orgID, "managed:caller", []accesscontrol.Permission{{Action: accesscontrol.ActionUsersPermissionsRead, Scope: "users:*"}})
+			f.assignBuiltin(t, f.orgID, string(org.RoleAdmin), visibility)
+			want := searchPermissionsResponse{target.ID: {"test:read": {"tests:id:one"}}}
+			for _, tc := range []struct {
+				name   string
+				caller user.SignedInUser
+			}{
+				{"anonymous", user.SignedInUser{IsAnonymous: true}},
+				{"renderer", user.SignedInUser{AuthenticatedBy: "render"}},
+				{"API key", user.SignedInUser{ApiKeyID: target.ID}},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					caller := tc.caller
+					caller.OrgID, caller.OrgRole = f.orgID, org.RoleAdmin
+					caller.Permissions = map[int64]map[string][]string{f.orgID: {accesscontrol.ActionUsersPermissionsRead: {"users:*"}}}
+					f.assertSearch(t, &caller, "action=test:read", want)
+					f.assertSearch(t, &caller, fmt.Sprintf("namespacedId=user:%d&action=test:read", target.ID), want)
+				})
+			}
+		})
+	}
+}
+
+func TestIntegrationSearchUsersPermissions_GRPCAdminRolesStayInOrganization(t *testing.T) {
+	f := newSearchPermissionsFixture(t, true)
+	member := f.createUser(t, user.CreateUserCommand{UID: "admin-member", IsAdmin: true, SkipOrgSetup: true})
+	outsider := f.createUser(t, user.CreateUserCommand{UID: "admin-outsider", IsAdmin: true, SkipOrgSetup: true})
+	f.insert(t, "org_user", &org.OrgUser{OrgID: f.orgID, UserID: member.ID, Role: org.RoleViewer, Created: time.Now(), Updated: time.Now()})
+	f.insert(t, "org_user", &org.OrgUser{OrgID: f.otherOrgID, UserID: member.ID, Role: org.RoleEditor, Created: time.Now(), Updated: time.Now()})
+	f.insert(t, "org_user", &org.OrgUser{OrgID: f.otherOrgID, UserID: outsider.ID, Role: org.RoleEditor, Created: time.Now(), Updated: time.Now()})
+	for _, grant := range []struct{ role, action string }{
+		{string(org.RoleViewer), "test:read"},
+		{string(org.RoleEditor), "test:write"},
+		{accesscontrol.RoleGrafanaAdmin, "test:server"},
+	} {
+		require.NoError(t, f.service.DeclareFixedRoles(accesscontrol.RoleRegistration{
+			Role:   accesscontrol.RoleDTO{Name: "fixed:" + grant.action, Permissions: []accesscontrol.Permission{{Action: grant.action, Scope: "tests:*"}}},
+			Grants: []string{grant.role},
+		}))
+	}
+	require.NoError(t, f.service.RegisterFixedRoles(t.Context()))
+	caller := f.caller(f.orgID, "users:*")
+	want := searchPermissionsResponse{
+		member.ID:   {"test:read": {"tests:*"}, "test:server": {"tests:*"}},
+		outsider.ID: {"test:server": {"tests:*"}},
+	}
+	f.assertSearch(t, caller, "actionPrefix=test:", want)
+	for id, permissions := range want {
+		f.assertSearch(t, caller, fmt.Sprintf("namespacedId=user:%d&actionPrefix=test:", id), searchPermissionsResponse{id: permissions})
 	}
 }
