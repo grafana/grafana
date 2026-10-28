@@ -387,7 +387,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 				}
 			],
 			"time_intervals": [
-				{"uid": "YnVzaW5lc3MtaG91cnM", "name": "business-hours", "time_intervals": [{"weekdays": ["monday:friday"]}]}
+				{"uid": "ef8zkhedc25v8sme7l2fbhtzd", "name": "business-hours", "time_intervals": [{"weekdays": ["monday:friday"]}]}
 			]
 		},
 		"managed_routes": {
@@ -560,5 +560,32 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		result, err := PostableMimirReceiverToPostableGrafanaReceiver(recv)
 		require.NoError(t, err)
 		require.Len(t, result.GrafanaManagedReceivers, len(notifytest.AllValidMimirConfigs))
+	})
+}
+
+func TestTimeIntervalsToModel_UID(t *testing.T) {
+	intervals := []store.TimeIntervalDB{
+		{UID: "persisted-uid", Name: "Persisted"},
+		{Name: "Legacy Title"},
+	}
+
+	t.Run("persisted UID wins, missing UID falls back to the legacy UID", func(t *testing.T) {
+		model := TimeIntervalsToModel(nil, intervals)
+		require.Len(t, model, 2)
+		require.Equal(t, "Persisted", model["persisted-uid"].Title)
+		require.NotContains(t, model, TimeIntervalUID("Persisted"))
+		require.Equal(t, "Legacy Title", model[TimeIntervalUID("Legacy Title")].Title)
+	})
+
+	t.Run("saving persists the effective UID", func(t *testing.T) {
+		db := TimeIntervalsToDB((&AMConfigV1{TimeIntervals: TimeIntervalsToModel(nil, intervals)}).SortedTimeIntervals())
+		uids := map[string]string{}
+		for _, ti := range db {
+			uids[ti.Name] = ti.UID
+		}
+		require.Equal(t, map[string]string{
+			"Persisted":    "persisted-uid",
+			"Legacy Title": string(TimeIntervalUID("Legacy Title")),
+		}, uids)
 	})
 }

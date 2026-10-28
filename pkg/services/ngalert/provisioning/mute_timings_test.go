@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -1500,6 +1501,40 @@ func TestDeleteMuteTimings(t *testing.T) {
 			require.Equal(t, "Save", store.Calls[1].Method)
 		})
 	})
+}
+
+func TestMuteTimingUIDLifecycle(t *testing.T) {
+	orgID := int64(1)
+	sut, store, prov := createMuteTimingSvcSut()
+	cfg := &v1.AMConfigV1{
+		TimeIntervals:      map[v1.ResourceUID]v1.TimeInterval{},
+		AlertmanagerConfig: v1.PostableApiAlertingConfig{Config: v1.Config{Route: &v1.Route{}}},
+	}
+	store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+		return &legacy_storage.ConfigRevision{Config: cfg}, nil
+	}
+	store.SaveFn = func(ctx context.Context, revision *legacy_storage.ConfigRevision) error { return nil }
+	prov.EXPECT().GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(map[string]models.Provenance{}, nil)
+	prov.EXPECT().SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	prov.EXPECT().DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	first, err := sut.CreateMuteTiming(context.Background(), v1.TimeInterval{Title: "Business Hours"}, orgID)
+	require.NoError(t, err)
+	require.NotEqual(t, v1.TimeIntervalUID("Business Hours"), first.UID, "new intervals must not use the legacy title-derived UID")
+	require.Empty(t, k8svalidation.IsDNS1123Subdomain(string(first.UID)))
+	require.NoError(t, v1.ValidateTimeIntervalUID(string(first.UID)))
+
+	renamed, err := sut.UpdateMuteTiming(context.Background(), v1.TimeInterval{
+		ResourceMetadata: v1.ResourceMetadata{UID: first.UID, Version: first.Version},
+		Title:            "Renamed",
+	}, orgID)
+	require.NoError(t, err)
+	require.Equal(t, first.UID, renamed.UID)
+
+	again, err := sut.CreateMuteTiming(context.Background(), v1.TimeInterval{Title: "Business Hours"}, orgID)
+	require.NoError(t, err, "the old title is free after a rename")
+	require.NotEqual(t, first.UID, again.UID)
+	require.Len(t, cfg.TimeIntervals, 2)
 }
 
 func createMuteTimingSvcSut() (*MuteTimingService, *legacy_storage.AlertmanagerConfigStoreFake, *MockProvisioningStore) {

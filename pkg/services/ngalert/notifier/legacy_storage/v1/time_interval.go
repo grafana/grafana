@@ -1,10 +1,12 @@
 package v1
 
 import (
+	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"math/big"
 	"slices"
 	"strings"
 	"unsafe"
@@ -97,8 +99,14 @@ func ValidateTimeIntervalUID(uid string) error {
 	return nil
 }
 
-func TimeIntervalUID(name string) ResourceUID {
-	return ResourceUID(models.NameToUid(name))
+// TimeIntervalUID derives a deterministic UID from a title. It exists only for resources whose
+// persisted UID is absent (rows written before UIDs were stored, imported configs); new resources
+// must get a random UID, otherwise a rename followed by re-creating the old title would collide.
+// The result is a fixed-length lowercase base36 string so it is always a valid Kubernetes name.
+func TimeIntervalUID(title string) ResourceUID {
+	h := sha256.Sum256([]byte("timeinterval\x00" + title))
+	n := new(big.Int).SetBytes(h[:16])
+	return ResourceUID(fmt.Sprintf("%025s", n.Text(36)))
 }
 
 func TimeIntervalFingerprint(interval TimeInterval) string {
