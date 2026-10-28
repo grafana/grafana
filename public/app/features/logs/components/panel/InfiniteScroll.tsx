@@ -118,11 +118,13 @@ export const InfiniteScroll = ({
   // The request backing a load-more is in flight while its state is Loading or Streaming.
   const requestInFlight = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   const prevInFlight = usePrevious(requestInFlight);
+  // Fresh logs from a new query (not infinite scrolling).
+  const isFreshQuery = Boolean(prevLogs) && prevLogs !== logs && infiniteLoaderState !== 'loading';
 
   useEffect(() => {
-    // Fresh logs from a new query (not infinite scrolling): reset paging, scroll, and clear a stale
-    // 'out-of-bounds' so re-running the query re-enables scrolling instead of latching end-of-range.
-    if (prevLogs && prevLogs !== logs && infiniteLoaderState !== 'loading') {
+    // Reset paging and scroll, and clear a stale 'out-of-bounds' so re-running the query re-enables scrolling
+    // instead of latching end-of-range.
+    if (isFreshQuery) {
       lastLogOfPage.current = [];
       setAutoScroll(true);
       if (infiniteLoaderState !== 'idle') {
@@ -156,7 +158,7 @@ export const InfiniteScroll = ({
         }
       }
     }
-  }, [infiniteLoaderState, infiniteScrollMode, loadingState, requestInFlight, prevInFlight, logs, prevLogs]);
+  }, [infiniteLoaderState, infiniteScrollMode, isFreshQuery, loadingState, requestInFlight, prevInFlight, logs, prevLogs]);
 
   useEffect(() => {
     if (prevSortOrder && prevSortOrder !== sortOrder) {
@@ -268,7 +270,7 @@ export const InfiniteScroll = ({
       displayedFields,
       handleOverflow,
       infiniteLoaderState,
-      lastLogOfPage: lastLogOfPage.current,
+      lastLogOfPage: isFreshQuery ? [] : lastLogOfPage.current,
       loadMoreBottom,
       logs,
       onClick,
@@ -284,6 +286,7 @@ export const InfiniteScroll = ({
       displayedFields,
       handleOverflow,
       infiniteLoaderState,
+      isFreshQuery,
       loadMoreBottom,
       logs,
       onClick,
