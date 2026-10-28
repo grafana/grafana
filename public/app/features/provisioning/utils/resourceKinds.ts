@@ -269,9 +269,16 @@ function addDiscoveredKinds({ metadata, versions }: APIGroupDiscovery) {
   for (const { resource, responseKind } of versions?.[0]?.resources ?? []) {
     const kind = responseKind?.kind;
     if (kind && !knownKindInfos().some((info) => info.group === group && info.kind === kind)) {
-      discoveredKindInfos.push(getDefaultKindInfo(group, kind, resource));
+      discoveredKindInfos.push({
+        ...getDefaultKindInfo(group, kind, resource),
+        getRoute: (name) => getResourceJsonRoute(group, resource, name),
+      });
     }
   }
+}
+
+export function getResourceJsonRoute(group: string, resource: string, name: string) {
+  return `/admin/provisioning/resources/${group}/${resource}/${name}`;
 }
 
 export function getDefaultKindInfo(group: string, kind: string, resource = `${kind.toLowerCase()}s`): ResourceKindInfo {
