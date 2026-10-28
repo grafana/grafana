@@ -31,7 +31,7 @@ async function dragVariable(
   const box = await target.boundingBox();
   expect(box, 'The drop target should have a bounding box').not.toBeNull();
 
-  const y = position === 'top' ? box!.y + box!.height / 4 : box!.y + box!.height / 2;
+  const y = position === 'top' ? box!.y : box!.y + box!.height / 2;
   // pangea needs several intermediate mousemove events to follow the drag
   await dragTo(page, `variable "${variableName}"`, variable, box!.x + box!.width / 2, y, { steps: 10 });
 }
