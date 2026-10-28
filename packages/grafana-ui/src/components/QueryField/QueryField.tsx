@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { debounce } from 'lodash';
-import { lazy, memo, Suspense, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useEffectEvent, useRef, useState } from 'react';
 import * as React from 'react';
 import { type Value } from 'slate';
 import Plain from 'slate-plain-serializer';
@@ -57,7 +57,7 @@ export interface QueryFieldProps {
  *
  * @deprecated
  */
-export const QueryField = memo(function QueryField({
+export function QueryField({
   additionalPlugins,
   ['aria-labelledby']: ariaLabelledby,
   cleanText: cleanTextProp,
@@ -144,7 +144,7 @@ export const QueryField = memo(function QueryField({
   /**
    * We need to handle blur events here mainly because of dashboard panels which expect to have query executed on blur.
    */
-  const handleBlur = (_: React.FocusEvent | undefined, editor: Editor, next: Function) => {
+  const handleBlur = useEffectEvent((_: React.FocusEvent | undefined, editor: Editor, next: Function) => {
     if (onBlur) {
       onBlur();
     } else {
@@ -157,7 +157,7 @@ export const QueryField = memo(function QueryField({
       }
     }
     return next();
-  };
+  });
 
   // Handle two way binging between local state and outside prop.
   // if query changed from the outside
@@ -201,7 +201,7 @@ export const QueryField = memo(function QueryField({
       </div>
     </div>
   );
-});
+}
 
 function cleanText(text: string) {
   // RegExp with invisible characters we want to remove - currently only carriage return (newlines are visible)
