@@ -20,7 +20,7 @@ interface Props {
   isExternalUser?: boolean;
 
   onOrgRemove: (orgId: number) => void;
-  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
+  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void | Promise<unknown>;
   onOrgAdd: (orgId: number, role: OrgRole) => void;
 }
 
@@ -41,9 +41,6 @@ export const UserOrgs = memo(({ user, orgs, isExternalUser, onOrgRoleChange, onO
 
   return (
     <div>
-      <h3 className="page-heading">
-        <Trans i18nKey="admin.user-orgs.title">Organizations</Trans>
-      </h3>
       <Stack gap={1.5} direction="column">
         <table className="filter-table form-inline">
           <tbody>
@@ -114,7 +111,7 @@ interface OrgRowProps {
   org: UserOrg;
   isExternalUser?: boolean;
   onOrgRemove: (orgId: number) => void;
-  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
+  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void | Promise<unknown>;
 }
 
 const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }: OrgRowProps) => {
@@ -146,8 +143,13 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
     setCurrentRole(newRole);
   };
 
-  const handleOrgRoleSave = () => {
-    onOrgRoleChange(org.orgId, currentRole);
+  const handleOrgRoleSave = async () => {
+    try {
+      await onOrgRoleChange(org.orgId, currentRole);
+      setIsChangingRole(false);
+    } catch {
+      setCurrentRole(org.role);
+    }
   };
 
   const handleCancelClick = () => {
@@ -155,7 +157,7 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
   };
 
   const handleBasicRoleChange = (newRole: OrgRole) => {
-    onOrgRoleChange(org.orgId, newRole);
+    return onOrgRoleChange(org.orgId, newRole);
   };
 
   const authSource = user?.authLabels?.length && user?.authLabels[0];
@@ -425,7 +427,7 @@ interface ExternalUserTooltipProps {
   lockMessage?: string;
 }
 
-export const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
+const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
   const styles = useStyles2(getTooltipStyles);
 
   return (

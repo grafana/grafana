@@ -456,9 +456,9 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/users/edit/:id',
-      roles: () => contextSrv.evaluatePermission([AccessControlAction.UsersRead]),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgUsersRead, AccessControlAction.UsersRead]),
       component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "UserAdminPage" */ 'app/features/admin/UserAdminPage')
+        () => import(/* webpackChunkName: "UserOverviewPage" */ 'app/features/admin/UserOverview/UserOverviewPage')
       ),
     },
     {

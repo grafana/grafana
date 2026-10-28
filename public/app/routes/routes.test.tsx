@@ -55,10 +55,10 @@ describe('admin route guards', () => {
     expect(getRouteRolesGuard(path)()).toEqual([]);
   });
 
-  it('allows /admin/users with org users read permission only', () => {
+  it.each(['/admin/users', '/admin/users/edit/:id'])('allows %s with org users read permission only', (path) => {
     contextSrv.user.permissions = { [AccessControlAction.OrgUsersRead]: true };
 
-    expect(getRouteRolesGuard('/admin/users')()).toEqual([]);
+    expect(getRouteRolesGuard(path)()).toEqual([]);
   });
 });
 
