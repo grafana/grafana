@@ -13,7 +13,7 @@ const EXPERIMENT_ID = 'signal_explorer';
 // The eligible population: an Explore pane with the outline shown and Prometheus selected.
 const EXPERIMENT_GROUP = 'explore_prometheus';
 
-export type SignalExplorerVariant = 'treatment' | 'control';
+type SignalExplorerVariant = 'treatment' | 'control';
 
 let currentVariant: SignalExplorerVariant | undefined;
 // Keyed by pane id, which Explore regenerates per pane, so outline toggles and remounts within a
@@ -24,7 +24,7 @@ const exposedPanes = new Set<string>();
  * Only a successful evaluation of a recognised variant counts. The flag's `excluded` variant is
  * also `false`, so reading the value alone would file non-randomised stacks into control.
  */
-export function resolveSignalExplorerVariant(
+function resolveSignalExplorerVariant(
   flag: Pick<EvaluationDetails<boolean>, 'value' | 'variant' | 'errorCode'>
 ): SignalExplorerVariant | undefined {
   if (flag.errorCode !== undefined) {
@@ -68,7 +68,7 @@ export function useSignalExplorerFlag(exploreId: string, eligible: boolean): boo
 }
 
 /** The arm to stamp on an outcome event from this pane, or `{}` when the pane was never exposed. */
-export function getSignalExplorerExperimentPayload(exploreId: string): {
+function getSignalExplorerExperimentPayload(exploreId: string): {
   experiment_signal_explorer?: SignalExplorerVariant;
 } {
   if (!currentVariant || !exposedPanes.has(exploreId)) {
