@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -62,4 +64,55 @@ func TestIntegrationBindingNativeAuthority(t *testing.T) {
 			requireCheckAndBatchDecision(t, srv, &authzv1.CheckRequest{Namespace: namespace, Subject: "user:1", Group: "iam.grafana.app", Resource: "rolebindings", Verb: tc.verb, Name: tc.name}, tc.want)
 		})
 	}
+}
+
+type bindingListReconciler struct {
+	ensure func(context.Context, string) error
+}
+
+func (r bindingListReconciler) Run(context.Context) error { return nil }
+func (r bindingListReconciler) EnsureNamespace(ctx context.Context, namespace string) error {
+	return r.ensure(ctx, namespace)
+}
+
+func TestIntegrationBindingListReconcilesBeforeChecking(t *testing.T) {
+	for _, family := range []string{"users", "teams"} {
+		for _, verb := range []string{"create", "update", "delete"} {
+			t.Run(family+"/"+verb, func(t *testing.T) {
+				srv := setupOpenFGAServer(t)
+				broad := &openfgav1.TupleKey{User: "user:1", Relation: verb, Object: "group_resource:iam.grafana.app/rolebindings"}
+				setupOpenFGADatabase(t, srv, []*openfgav1.TupleKey{broad})
+				calls := 0
+				srv.mtReconciler = bindingListReconciler{ensure: func(ctx context.Context, ns string) error {
+					calls++
+					require.Equal(t, namespace, ns)
+					store, err := srv.getStoreInfo(ctx, ns)
+					if err != nil {
+						return err
+					}
+					_, err = srv.openFGAClient.Write(ctx, &openfgav1.WriteRequest{StoreId: store.ID, AuthorizationModelId: store.ModelID,
+						Deletes: &openfgav1.WriteRequestDeletes{TupleKeys: []*openfgav1.TupleKeyWithoutCondition{{User: broad.User, Relation: broad.Relation, Object: broad.Object}}},
+						Writes:  &openfgav1.WriteRequestWrites{TupleKeys: []*openfgav1.TupleKey{{User: broad.User, Relation: broad.Relation, Object: broad.Object + "/" + family}}},
+					})
+					return err
+				}}
+				res, err := srv.List(newContextWithNamespace(), &authzv1.ListRequest{Namespace: namespace, Subject: "user:1", Group: "iam.grafana.app", Resource: "rolebindings", Verb: verb})
+				require.NoError(t, err)
+				require.Equal(t, 1, calls)
+				require.False(t, res.GetAll())
+			})
+		}
+	}
+}
+
+func TestIntegrationBindingListFailsClosedOnReconciliationError(t *testing.T) {
+	srv := setupOpenFGAServer(t)
+	setupOpenFGADatabase(t, srv, []*openfgav1.TupleKey{{User: "user:1", Relation: "update", Object: "group_resource:iam.grafana.app/rolebindings"}})
+	srv.mtReconciler = bindingListReconciler{ensure: func(context.Context, string) error { return errors.New("reconciliation unavailable") }}
+	res, err := srv.List(newContextWithNamespace(), &authzv1.ListRequest{Namespace: namespace, Subject: "user:1", Group: "iam.grafana.app", Resource: "rolebindings", Verb: "update"})
+	require.Error(t, err)
+	require.Nil(t, res)
+	// Read queries retain their existing path.
+	_, err = srv.List(newContextWithNamespace(), &authzv1.ListRequest{Namespace: namespace, Subject: "user:1", Group: "iam.grafana.app", Resource: "rolebindings", Verb: "list"})
+	require.NoError(t, err)
 }

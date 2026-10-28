@@ -66,6 +66,9 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	}
 
 	if roleauth.IsBindingMutation(r.GetGroup(), r.GetResource(), r.GetSubresource(), r.GetVerb()) {
+		if err := s.mtReconciler.EnsureNamespace(ctx, r.GetNamespace()); err != nil {
+			return nil, fmt.Errorf("failed to reconcile namespace: %w", err)
+		}
 		res, err := s.checkBinding(ctx, &authzv1.CheckRequest{Namespace: r.GetNamespace(), Subject: r.GetSubject(), Teams: r.GetTeams(), Group: r.GetGroup(), Resource: r.GetResource(), Verb: r.GetVerb(), Name: "*"})
 		return &authzv1.ListResponse{All: res.GetAllowed()}, err
 	}
