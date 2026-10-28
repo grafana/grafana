@@ -179,6 +179,7 @@ function aggregateCandidate(
 ): MigrationSuggestionCandidate | undefined {
   const usages: MigrationSuggestionCandidateUsage[] = [];
   let filterKey: string | undefined;
+  let filterOperator: string | undefined;
   let kind: MigrationSuggestionCandidateUsage['kind'] | undefined;
 
   for (const { query } of sameDatasourceQueries) {
@@ -209,7 +210,13 @@ function aggregateCandidate(
         // Disagreeing filter keys across usages - ambiguous, can't seed one filter.
         return undefined;
       }
+      if (filterOperator !== undefined && filterOperator !== usage.operator) {
+        // Disagreeing operators across usages - the migrated filter has a single operator, so it
+        // would flip the meaning of some queries (e.g. `job="$job"` in one, `job!="$job"` in another).
+        return undefined;
+      }
       filterKey = usage.key;
+      filterOperator = usage.operator;
       usages.push({ kind: 'filter', key: usage.key, operator: usage.operator });
     } else {
       usages.push({ kind: 'groupBy' });

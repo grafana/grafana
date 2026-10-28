@@ -1,7 +1,6 @@
 import { of } from 'rxjs';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
-import { config } from '@grafana/runtime';
 import { SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
@@ -75,29 +74,18 @@ beforeEach(() => {
   mockCreateAssistantContextItem.mockImplementation((type, params) => ({ node: { type, params } }));
   mockGetAssistantChatIdToContinue.mockReturnValue('chat-1');
   mockDetect.mockResolvedValue([CANDIDATE]);
-  config.featureToggles.dashboardUnifiedDrilldownControls = true;
 });
 
 afterEach(async () => {
   await act(async () => {
     setTestFlags({});
   });
-  config.featureToggles = {};
   jest.clearAllMocks();
 });
 
 describe('FiltersMigrationSuggestionBanner', () => {
   it('does not render when the flag is disabled', async () => {
     await enableOurFlag(false);
-    await renderGatedOffBanner();
-
-    expect(screen.queryByText(/may benefit from filters and group by/)).not.toBeInTheDocument();
-    expect(mockDetect).not.toHaveBeenCalled();
-  });
-
-  it('does not render when dashboardUnifiedDrilldownControls is off', async () => {
-    await enableOurFlag(true);
-    config.featureToggles.dashboardUnifiedDrilldownControls = false;
     await renderGatedOffBanner();
 
     expect(screen.queryByText(/may benefit from filters and group by/)).not.toBeInTheDocument();

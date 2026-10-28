@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { createAssistantContextItem, isAssistantAvailable, openAssistant } from '@grafana/assistant';
 import { store, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useFlagGrafanaFiltersMigrationAssistantSuggestion } from '@grafana/runtime/internal';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { getAssistantChatIdToContinue } from 'app/core/assistant/assistantSidebarState';
@@ -56,18 +55,10 @@ export function FiltersMigrationSuggestionBanner({ dashboard }: Props) {
   const dismissedGlobally = store.getBool(GLOBAL_DISMISS_KEY, false);
   const dismissedForDashboard = Boolean(uid) && store.getBool(getPerDashboardDismissKey(uid!), false);
 
-  // `dashboardUnifiedDrilldownControls` is `Generate{LegacyFrontend: true}` only - it has no
-  // OpenFeature-generated hook/FlagKeys entry to read it through, so this falls back to the
-  // legacy path (same escape hatch `packages/grafana-runtime/src/config.ts` uses for code that
-  // has no non-legacy way to reach an existing legacy-only flag).
-  // eslint-disable-next-line @grafana/no-config-feature-toggles -- dashboardUnifiedDrilldownControls is LegacyFrontend-only, no OpenFeature accessor exists for it
-  const drilldownControlsEnabled = config.featureToggles.dashboardUnifiedDrilldownControls;
-
   // Detection resolves datasource instances (possibly loading plugin code), so only run it once
   // every other gate passes - otherwise every dashboard load would pay for it.
   const shouldDetect =
     flagEnabled &&
-    Boolean(drilldownControlsEnabled) &&
     assistantAvailable &&
     canEdit &&
     Boolean(uid) &&

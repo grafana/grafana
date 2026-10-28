@@ -236,6 +236,32 @@ describe('detectFiltersMigrationCandidates', () => {
     expect(candidates).toEqual([]);
   });
 
+  it('disqualifies when filter operators disagree across usages', async () => {
+    const getUsage = jest.fn(({ query }: { query: SceneDataQuery }): FiltersMigrationUsage | undefined => {
+      if (query.refId === 'A') {
+        return { kind: 'filter', key: 'job', operator: '=' };
+      }
+      if (query.refId === 'B') {
+        return { kind: 'filter', key: 'job', operator: '!=' };
+      }
+      return undefined;
+    });
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getFiltersMigrationUsage: getUsage,
+    });
+
+    const variable = buildVariable('job', 'prom-a');
+    const panel1 = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{job="$job"}' }]);
+    const panel2 = buildPanel('panel-2', 'prom-a', [{ refId: 'B', expr: 'errors{job!="$job"}' }]);
+    const scene = buildScene([variable], [panel1, panel2]);
+
+    const candidates = await detectFiltersMigrationCandidates(scene);
+
+    expect(candidates).toEqual([]);
+  });
+
   it('disqualifies when the datasource reports a usage as unsafe', async () => {
     const getUsage = jest.fn((): FiltersMigrationUsage | undefined => ({
       kind: 'unsafe',
