@@ -105,7 +105,7 @@ image_maps:
         content: |
           **Query inspector button**
 
-          Click **Query inspector** in the footer of the editor pane to open the query inspector panel, where you can view and optimize your query.
+          Click **Inspect queries** in the footer of the editor pane to open the query inspector panel, where you can view and optimize your query.
 ---
 
 # Query and transform data

@@ -36,11 +36,6 @@ In Grafana, a server-side expression is a way to transform or calculate data aft
 
 For general information on Grafana expressions, refer to [Write expression queries](ref:expressions).
 
-{{< admonition type="note" >}}
-The screenshots and steps on this page reflect the classic panel query editor.
-For information about the new default query editor, refer to [Navigate the query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#navigate-the-query-editor).
-{{< /admonition >}}
-
 ![Example of a SQL expression](/media/docs/sql-expressions/sql-expressions-example-1.png)
 
 To see examples of filtering, aggregation, and JOIN operations with SQL expressions, explore this demo dashboard on Grafana Play:
@@ -105,9 +100,9 @@ To create a SQL expression, complete the following steps:
 
 1. Navigate to **Dashboards** in the left-side menu.
 1. Select a dashboard and open a dashboard panel.
-1. Click the ellipsis in the upper right and select **Edit** .
-1. Click **+ Expression**.
-1. Select **SQL** from the drop-down.
+1. Click the ellipsis in the upper right and select **Edit**.
+1. In the query editor sidebar, click the plus icon next to **Queries & Expressions** and select **Add expression**.
+1. In the editor pane, select **SQL**.
 
 After you have added a SQL expression, you can select from other data source queries by referencing the RefIDs of the queries in your SQL expression as if they were tables in a SQL database.
 
@@ -122,9 +117,9 @@ The **RefID** is a unique identifier assigned to each query within a Grafana pan
 Use the following workflow to create a SQL expression:
 
 1. **Build your base queries.** Create the individual query and give it a meaningful name. Create the queries (A, B, etc.) that provide the data you want to combine or transform using SQL Expressions.
-1. **Hide your base queries.** Click the **👁️ Eye icon** next to each base query to hide them from visualization. This keeps your panel clean while still making the data available to the SQL Expression.
+1. **Hide your base queries.** Hover over each base query card in the sidebar and click the eye icon to hide it from the visualization. This keeps your panel clean while still making the data available to the SQL expression.
 1. **Switch to table view**. Set the panel visualization to **Table** to inspect and review the structure and output of your SQL expression as you build and refine it.
-1. **Add a SQL Expression**. Add a new query and add select SQL Expression as its type.  
+1. **Add a SQL expression**. Add an expression and select **SQL** as its type.  
    **Inspect inputs**. Start with simple test queries to understand the shape of your input frames.
 
    ```sql
