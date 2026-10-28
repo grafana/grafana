@@ -581,3 +581,35 @@ func TestParseOpenAPIGroupVersionPathMatchesStringsSplit(t *testing.T) {
 		require.Equal(t, []any{wg, wv, wok}, []any{g, v, ok}, path)
 	}
 }
+
+// The single-tenant path parsers split with strings.Cut, or into a stack
+// array, instead of strings.Split. They must answer as the strings.Split
+// versions did.
+func TestSingleTenantPathParsersMatchStringsSplit(t *testing.T) {
+	splitDiscovery := func(path string) bool {
+		if isRootDiscoveryPath(path) {
+			return true
+		}
+		path = strings.TrimSuffix(path, "/")
+		if rest, ok := strings.CutPrefix(path, apisPrefix+"/"); ok {
+			parts := strings.Split(rest, "/")
+			return (len(parts) == 1 && parts[0] != "") || (len(parts) == 2 && parts[0] != "" && parts[1] != "")
+		}
+		_, _, ok := parseOpenAPIGroupVersionPath(path)
+		return ok
+	}
+	for _, path := range []string{
+		"", "/", "/apis", "/apis/", "/apis/g", "/apis/g/", "/apis/g/v1", "/apis/g/v1/", "/apis//v1",
+		"/apis/g/v1/things", "/apis/g/v1/namespaces", "/apis/g/v1/namespaces/", "/apis/g/v1/namespaces/ns",
+		"/apis/g/v1/namespaces/ns/things", "/apis/g/v1/namespaces/ns/things/a/status",
+		"/apis/g/v1/namespaces//things", "/openapi/v3", "/openapi/v3/apis/g", "/openapi/v3/apis/g/v1",
+		"/openapi/v3/apis/g/v1/", "/openapi/v3/apis//v1", "/openapi/v3/apis/g/v1/extra", "/openapi/v3/apis/g/",
+	} {
+		require.Equal(t, splitDiscovery(path), isSingleTenantDiscoveryPath(path), path)
+
+		var buf [6]string
+		parts := pathParts(path, buf[:0])
+		split := strings.Split(strings.TrimPrefix(path, "/"), "/")
+		require.Equal(t, split[:min(len(split), 6)], parts, path)
+	}
+}

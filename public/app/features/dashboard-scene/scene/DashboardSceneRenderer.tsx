@@ -12,6 +12,7 @@ import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
+import { ComposerOverlay } from '../composer/ComposerOverlay';
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 
@@ -35,8 +36,10 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     isEditing,
     layoutOrchestrator,
     planning,
+    mode,
     uid,
   } = model.useState();
+  const composerSession = mode === 'composer' ? model.getComposerSession() : undefined;
 
   const scopesServices = useScopesServices();
 
@@ -161,6 +164,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             isPlanning={planning?.phase === 'preview'}
             controls={renderControls()}
             body={renderBody()}
+            overlay={composerSession && <ComposerOverlay session={composerSession} />}
           />
         )}
         <DashboardOverlay dashboard={model} />

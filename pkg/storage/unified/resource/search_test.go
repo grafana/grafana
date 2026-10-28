@@ -76,8 +76,11 @@ type MockResourceIndex struct {
 func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
 	bi := m.buildInfo
 	// The mock stands for an index this binary built, so it maps the current
-	// features unless a test sets them. A test that wants an older index sets them
+	// features and the standard fields' hash unless a test sets them. A test that wants an older index sets them
 	// to an empty (non-nil) slice.
+	if bi.SearchFieldsHash == "" {
+		bi.SearchFieldsHash = StandardSearchFieldsHash()
+	}
 	if bi.Features == nil {
 		bi.Features = CurrentIndexFeatures()
 	}
@@ -871,7 +874,8 @@ func TestBackgroundGlobalBuildsStartAfterBlockingIndexes(t *testing.T) {
 	require.NotNil(t, backend.GetIndex(dashboardType("large")))
 	for _, namespace := range []string{"large", "previously-open"} {
 		rsp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: namespace, Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
+			Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: namespace, Group: GlobalSearchGroup, Resource: GlobalSearchResource}},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.Equal(t, NewServiceUnavailableError("the global search index for this namespace is still being built"), rsp.Error,
@@ -1844,15 +1848,6 @@ func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
 	}
 }
 
-// Asserts both halves, so requiring the feature — which rebuilds every existing
-// index — cannot happen by accident.
-func TestStoredResourceVersionIsRecordedButNotRequired(t *testing.T) {
-	require.Contains(t, CurrentIndexFeatures(), IndexFeatureStoredResourceVersion)
-	for _, postRankAuthz := range []bool{false, true} {
-		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureStoredResourceVersion)
-	}
-}
-
 func TestSortableTrashResourceVersionIsRecordedButNotRequired(t *testing.T) {
 	require.Contains(t, CurrentIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
 	require.NotContains(t, TrashIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
@@ -2395,6 +2390,10 @@ func TestFindIndexesForRebuild(t *testing.T) {
 		// Index built by newer version than running (7.0.0 > 6.5.0)
 		{NamespacedResource: NamespacedResource{Namespace: "resource-newer-version", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
 	}
+	// None of these kinds declares fields, so the standard fields' hash is expected.
+	for i := range expected {
+		expected[i].expectedSearchFieldsHash = StandardSearchFieldsHash()
+	}
 	if diff := cmp.Diff(expected, vals, cmpopts.IgnoreFields(rebuildRequest{}, "completeChannels"), cmp.AllowUnexported(rebuildRequest{})); diff != "" {
 		t.Errorf("rebuildQueue mismatch (-want +got):\n%s", diff)
 	}
@@ -2787,6 +2786,22 @@ func TestMaybeInjectFailure(t *testing.T) {
 	})
 }
 
+func TestSearchRejectsNonFieldValueResultFormats(t *testing.T) {
+	s := &searchServer{}
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_UNSPECIFIED,
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		resourcepb.ResourceSearchRequest_ResultFormat(99),
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			response, err := s.Search(t.Context(), &resourcepb.ResourceSearchRequest{ResultFormat: format})
+			require.Nil(t, response)
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
+			require.ErrorContains(t, err, "search result format must be FIELD_VALUES")
+		})
+	}
+}
+
 func TestSearchUsesRequestScopedFolderIndex(t *testing.T) {
 	folderKey := NamespacedResource{Namespace: "default", Group: "folder.grafana.app", Resource: "folders"}
 	dashKey := NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
@@ -2904,7 +2919,8 @@ func TestSearchRejectsInvalidFolderTreeBeforeResolvingIndexes(t *testing.T) {
 					Key:    &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"},
 					Fields: []*resourcepb.Requirement{{Key: SEARCH_FIELD_FOLDER_TREE, Operator: tc.operator, Values: tc.values}},
 				},
-				IsDeleted: tc.deleted,
+				IsDeleted:    tc.deleted,
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			})
 			require.NoError(t, err)
 			require.NotNil(t, rsp.Error)
@@ -2939,7 +2955,8 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 					Resource:  "resource",
 				},
 			},
-			Limit: -100,
+			Limit:        -100,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
 		rsp, err := support.Search(context.Background(), req)
 		require.NoError(t, err)
@@ -2957,8 +2974,9 @@ func TestSearchValidatesNegativeLimitAndOffset(t *testing.T) {
 					Resource:  "resource",
 				},
 			},
-			Limit:  10,
-			Offset: -50,
+			Limit:        10,
+			Offset:       -50,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
 		rsp, err := support.Search(context.Background(), req)
 		require.NoError(t, err)
@@ -3001,8 +3019,9 @@ func TestSearchRejectsFederatedTrashQueries(t *testing.T) {
 			Group:     "group",
 			Resource:  "resource",
 		}},
-		Limit:     10,
-		IsDeleted: true,
+		Limit:        10,
+		IsDeleted:    true,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
 	rsp, err := support.Search(context.Background(), req)

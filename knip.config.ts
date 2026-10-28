@@ -78,6 +78,9 @@ const config: KnipConfig = {
         // react-router-dom-v5-compat wins the hoist). Remove both when core swaps to react-router 6.
         'react-router',
         '@types/react-router',
+
+        // not imported; pinned so pnpm resolves debug's optional peer once instead of duplicating emotion per workspace
+        'supports-color',
       ],
       project: [
         'public/app/**!',
@@ -138,7 +141,7 @@ const config: KnipConfig = {
       entry: [...defaultEntries, 'module.{ts,tsx,js}!'],
       project: defaultProject,
       // these are provided by grafana-plugin-configs
-      ignoreDependencies: ['@swc/jest'],
+      ignoreDependencies: ['@swc/jest', 'imports-loader', 'style-loader'],
       ignoreUnresolved: ['identity-obj-proxy'],
     },
     'e2e-playwright/test-plugins/*': {
@@ -177,6 +180,8 @@ const config: KnipConfig = {
       webpack: false,
       // dev tooling only, so nothing is part of production
       project: ['**/*.{js,ts}'],
+      // knip's rspack plugin calls the config with (env, argv), and argv lands in `pluginDir`
+      rspack: false,
       ignoreDependencies: ['.*'],
     },
     'packages/grafana-plugin-compat': {

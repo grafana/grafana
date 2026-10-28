@@ -92,11 +92,13 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
 }
 
 export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
-  return Boolean(state.isEditing && (!dashboardModesEnabled() || getDashboardMode(state) === 'edit'));
+  const mode = getDashboardMode(state);
+  return Boolean(state.isEditing && mode !== 'composer' && (!dashboardModesEnabled() || mode === 'edit'));
 }
 
 export function isDashboardReviewing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
-  return dashboardModesEnabled() && getDashboardMode(state) !== 'edit';
+  const mode = getDashboardMode(state);
+  return mode === 'composer' || (dashboardModesEnabled() && mode !== 'edit');
 }
 
 interface DashboardPlanningBase {

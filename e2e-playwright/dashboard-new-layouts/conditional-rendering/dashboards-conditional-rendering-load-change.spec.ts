@@ -10,7 +10,6 @@ test.use({
   featureToggles: {
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
   },
   viewport: { width: 1920, height: 1080 },
 });

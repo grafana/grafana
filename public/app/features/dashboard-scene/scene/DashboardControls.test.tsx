@@ -5,7 +5,8 @@ import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService, useScopes } from '@grafana/runtime';
+import { useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -60,7 +61,21 @@ jest.mock('@grafana/runtime', () => ({
     reload: jest.fn(),
     registerRuntimeDataSource: jest.fn(),
   })),
+  useScopes: jest.fn(),
 }));
+
+jest.mock('app/features/scopes/ScopesContextProvider', () => ({
+  ...jest.requireActual('app/features/scopes/ScopesContextProvider'),
+  useScopesServices: jest.fn(() => ({ scopesDashboardsService: { toggleDrawer: jest.fn() } })),
+}));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagGrafanaScopesDashboardsMegaMenu: jest.fn(),
+}));
+
+const mockUseScopes = jest.mocked(useScopes);
+const mockUseFlagScopesDashboardsMegaMenu = jest.mocked(useFlagGrafanaScopesDashboardsMegaMenu);
 
 function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
   const context = getGrafanaContextMock();
@@ -491,6 +506,14 @@ describe('DashboardControls', () => {
       expect(screen.queryByRole('button', { name: /edit/i })).not.toBeInTheDocument();
     });
 
+    it('should not show Exit edit for a new dashboard in edit mode', () => {
+      const controls = buildTestSceneWithEditable({ hasUid: false, editable: true, canEdit: true, isEditing: true });
+
+      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.editButton)).not.toBeInTheDocument();
+    });
+
     it('should show playlist nav buttons when hidePlaylistNav is undefined', async () => {
       jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: true });
 
@@ -588,6 +611,15 @@ describe('DashboardControls', () => {
 
       expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
       expect(screen.queryByText('Save as copy')).not.toBeInTheDocument();
+    });
+
+    it('should not show save button in Viewing mode, even with unsaved changes', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const controls = buildTestSceneWithEditable({ canSave: true, canEdit: true, isEditing: true });
+      getDashboard(controls).setState({ mode: 'view', isDirty: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).not.toBeInTheDocument();
     });
   });
 
@@ -851,6 +883,47 @@ describe('DashboardControls', () => {
       renderInGrafanaContext(<controls.Component model={controls} />);
 
       expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).toBeInTheDocument();
+    });
+  });
+
+  describe('scopes dashboards navigation toggle', () => {
+    beforeEach(() => {
+      mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
+      mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
+    });
+
+    afterEach(() => {
+      mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
+    });
+
+    it('hides the toggle when the mega-menu flag is on, even with scopeFilters enabled', () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+      try {
+        config.featureToggles.scopeFilters = true;
+        mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(true);
+
+        const scene = buildTestScene();
+        const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
+
+        expect(renderer.queryByTestId('scopes-dashboards-expand')).not.toBeInTheDocument();
+      } finally {
+        config.featureToggles = originalFeatureToggles;
+      }
+    });
+
+    it('shows the toggle when the mega-menu flag is off and scopeFilters is enabled', () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+      try {
+        config.featureToggles.scopeFilters = true;
+        mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
+
+        const scene = buildTestScene();
+        const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
+
+        expect(renderer.queryByTestId('scopes-dashboards-expand')).toBeInTheDocument();
+      } finally {
+        config.featureToggles = originalFeatureToggles;
+      }
     });
   });
 });

@@ -20,8 +20,9 @@ describe('extensionSidebarApi', () => {
   describe('with grafana.extensionSidebarFloating on', () => {
     beforeEach(() => setTestFlags({ [FLOATING_FLAG]: true }));
 
-    it('can float', () => {
+    it('can float, also by dragging out of the docked sidebar', () => {
       expect(extensionSidebarApi.canFloat()).toBe(true);
+      expect(extensionSidebarApi.canDragToFloat()).toBe(true);
     });
 
     it('floats and docks the sidebar', () => {
@@ -66,8 +67,9 @@ describe('extensionSidebarApi', () => {
   });
 
   describe('with grafana.extensionSidebarFloating off', () => {
-    it('cannot float', () => {
+    it('cannot float, not even by dragging', () => {
       expect(extensionSidebarApi.canFloat()).toBe(false);
+      expect(extensionSidebarApi.canDragToFloat()).toBe(false);
     });
 
     it('ignores floating and keeps the sidebar docked', () => {

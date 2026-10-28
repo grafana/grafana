@@ -207,11 +207,17 @@ func (l *statusLoader) Notify(context.Context) (<-chan struct{}, error) {
 }
 func (l *statusLoader) shadowedGroups() []shadowedGroup { return l.shadowed }
 func (l *statusLoader) sourceStatuses() []sourceStatus  { return l.sources }
-func (l *statusLoader) stackLookups() map[string]uint64 {
-	return map[string]uint64{"cache_hit": 3, "resolved": 1}
-}
-func (l *statusLoader) stackDiscoveryCache() map[string]uint64 {
-	return map[string]uint64{"hit": 5, "miss": 2}
+func (l *statusLoader) counters() []loaderCounter {
+	return []loaderCounter{
+		{
+			Metric: "stack_lookups_total", Status: "stackLookups", ByResult: map[string]uint64{"cache_hit": 3, "resolved": 1},
+			Help: "Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.",
+		},
+		{
+			Metric: "stack_discovery_cache_total", ByResult: map[string]uint64{"hit": 5, "miss": 2},
+			Help: "Single-tenant discovery requests looked up in the cache shared by each stack's callers, by result: hit or miss.",
+		},
+	}
 }
 
 func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Registry) {
@@ -405,6 +411,10 @@ func TestServicesShareOneRegistry(t *testing.T) {
 	var second *Service
 	require.NotPanics(t, func() { second = newService(NewGrafanaRouter(&mutableLoader{}, nil), reg) })
 	require.Same(t, first.metrics.requests, second.metrics.requests)
+
+	// Routers whose loaders report different counters share the registry too.
+	require.NotPanics(t, func() { newService(NewGrafanaRouter(&statusLoader{}, nil), reg) })
+	require.NotPanics(t, func() { newService(NewGrafanaRouter(&mutableLoader{}, nil), reg) })
 
 	require.NotPanics(t, func() {
 		newPluginGRPCRequestDuration(reg, sourcePluginsURL)
