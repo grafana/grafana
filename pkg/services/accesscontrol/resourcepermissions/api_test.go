@@ -616,18 +616,21 @@ func TestIntegrationApi_setUserPermissionForTeams(t *testing.T) {
 	}
 }
 
-// Verifies the ResourcePermission redirect falls back to legacy only in Mode0-3. With no rest
-// config the K8s write fails, so Mode0-3 falls back (200) and Mode4/5 returns the error (500).
+// Verifies the ResourcePermission redirect falls back to legacy only in Mode0-3. When the K8s
+// write fails, Mode0-3 falls back (200) and Mode4/5 returns the error (500). Resources without a
+// rest config provider are not served by the K8s API, so they always use legacy.
 func TestIntegrationApi_setUserPermission_dualWriterModeFallback(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	tests := []struct {
 		name           string
 		mode           grafanarest.DualWriterMode
+		noProvider     bool
 		expectedStatus int
 	}{
 		{name: "Mode3 falls back to legacy", mode: grafanarest.Mode3, expectedStatus: http.StatusOK},
 		{name: "Mode5 does not fall back", mode: grafanarest.Mode5, expectedStatus: http.StatusInternalServerError},
+		{name: "Mode5 without provider uses legacy", mode: grafanarest.Mode5, noProvider: true, expectedStatus: http.StatusOK},
 	}
 
 	perms := []accesscontrol.Permission{
@@ -642,7 +645,11 @@ func TestIntegrationApi_setUserPermission_dualWriterModeFallback(t *testing.T) {
 				featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: true,
 			})
 
-			service, usrSvc, _, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures(), true)
+			opts := testOptions
+			if !tt.noProvider {
+				opts.RestConfigProvider = newFailingK8sProvider(t)
+			}
+			service, usrSvc, _, cfg := setupTestEnvironmentWithCfg(t, opts, featuremgmt.WithFeatures(), true)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -668,19 +675,22 @@ func TestIntegrationApi_setUserPermission_dualWriterModeFallback(t *testing.T) {
 	}
 }
 
-// Verifies the ResourcePermission redirect read falls back to legacy only in Mode0-3. With no rest
-// config the K8s read fails, so Mode0-3 falls back to seeded legacy permissions (200) and Mode4/5
-// returns the error (500).
+// Verifies the ResourcePermission redirect read falls back to legacy only in Mode0-3. When the K8s
+// read fails, Mode0-3 falls back to seeded legacy permissions (200) and Mode4/5 returns the error
+// (500). Resources without a rest config provider are not served by the K8s API, so they always
+// use legacy.
 func TestIntegrationApi_getPermissions_dualWriterModeFallback(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	tests := []struct {
 		name           string
 		mode           grafanarest.DualWriterMode
+		noProvider     bool
 		expectedStatus int
 	}{
 		{name: "Mode3 falls back to legacy", mode: grafanarest.Mode3, expectedStatus: http.StatusOK},
 		{name: "Mode5 does not fall back", mode: grafanarest.Mode5, expectedStatus: http.StatusInternalServerError},
+		{name: "Mode5 without provider uses legacy", mode: grafanarest.Mode5, noProvider: true, expectedStatus: http.StatusOK},
 	}
 
 	perms := []accesscontrol.Permission{
@@ -695,7 +705,11 @@ func TestIntegrationApi_getPermissions_dualWriterModeFallback(t *testing.T) {
 				featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: true,
 			})
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures(), true)
+			opts := testOptions
+			if !tt.noProvider {
+				opts.RestConfigProvider = newFailingK8sProvider(t)
+			}
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, opts, featuremgmt.WithFeatures(), true)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -1001,6 +1015,18 @@ func (m *mockDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqCo
 func (m *mockDirectRestConfigProvider) DirectlyServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
 
 func (m *mockDirectRestConfigProvider) IsReady() bool { return true }
+
+// newFailingK8sProvider returns a provider whose K8s API answers every request with a 500.
+func newFailingK8sProvider(t *testing.T) *mockDirectRestConfigProvider {
+	t.Helper()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = w.Write([]byte(`{"kind":"Status","apiVersion":"v1","status":"Failure","message":"internal error","reason":"InternalError","code":500}`))
+	}))
+	t.Cleanup(ts.Close)
+	return &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
+}
 
 var openFeatureTestMu sync.Mutex
 

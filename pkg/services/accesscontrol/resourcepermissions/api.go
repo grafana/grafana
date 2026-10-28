@@ -63,8 +63,11 @@ func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.Rou
 	}
 }
 
-// shouldUseK8sAPIs returns true if both gates for K8s API redirect are enabled.
+// shouldUseK8sAPIs returns true if both gates for K8s API redirect are enabled and the rest config provider is configured.
 func (a *api) shouldUseK8sAPIs(ctx context.Context) bool {
+	if a.restConfigProvider == nil {
+		return false
+	}
 	return k8sResourcePermissionRedirectEnabled(ctx, a.iamFeatures.ResourcePermissionsAPI)
 }
 
