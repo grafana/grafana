@@ -181,7 +181,7 @@ it('keeps an applied filter visible and clearable when a query gains a second fr
   await userEvent.click(screen.getByLabelText('Column options for host'));
   await userEvent.click(await screen.findByText('Filter values'));
   await userEvent.click(screen.getByRole('checkbox', { name: 'web-1' }));
-  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
   const active = set.mock.lastCall?.[1] as readonly DataTransformerConfig[];
   expect(active).toHaveLength(1);
 
@@ -300,7 +300,7 @@ it.each(['missing', 'ambiguous'])('keeps row filters local when the source match
   await user.click(screen.getByLabelText('Column options for label'));
   await user.click(await screen.findByText('Filter values'));
   await user.click(screen.getByRole('checkbox', { name: 'keep' }));
-  await user.click(screen.getByRole('button', { name: 'Ok' }));
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
 
   expect((await screen.findAllByRole('link', { name: 'Inspect' })).map((link) => link.getAttribute('href'))).toEqual([
     '/row/keep',
@@ -322,7 +322,7 @@ it('writes row filters with the matched source index and scope', async () => {
   await user.click(screen.getByLabelText('Column options for B label'));
   await user.click(await screen.findByText('Filter values'));
   await user.click(screen.getByRole('checkbox', { name: 'B-one' }));
-  await user.click(screen.getByRole('button', { name: 'Ok' }));
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
 
   expect(set).toHaveBeenCalledWith('grafana:table-view', [
     expect.objectContaining({
