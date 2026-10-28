@@ -9,7 +9,9 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 type typeInfo struct {
@@ -58,11 +60,15 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 		relations,
 	)
 
+	if resource.UsesRootFolderPermissions() && resource.folder == "" {
+		resource.folder = accesscontrol.GeneralFolderUID
+	}
+
 	// Special case for creating folders and resources in the root folder
 	if r.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
 			// Create checks use an empty Name. For a subfolder, Folder is the parent;
-			// permission must be evaluated on the parent folder (can_create), not on "general".
+			// permission must be evaluated on the parent folder, not on "general".
 			if resource.folder != "" {
 				resource.name = resource.folder
 				resource.folder = ""
@@ -105,6 +111,10 @@ func NewResourceInfoFromBatchCheckItem(item *authzv1.BatchCheckItem) ResourceInf
 		relations,
 	)
 
+	if resource.UsesRootFolderPermissions() && resource.folder == "" {
+		resource.folder = accesscontrol.GeneralFolderUID
+	}
+
 	// Special case for creating folders and resources in the root folder
 	if item.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
@@ -134,6 +144,11 @@ func getTypeAndRelations(group, resource string) (string, []string) {
 func newResource(
 	typ, group, resource, name, folder, subresource string, relations []string,
 ) ResourceInfo {
+	group, resource, subresource = datasourcek8s.AuthorizationResource(group, resource, subresource)
+	// Global variables and library panels intentionally use root-folder permissions.
+	if group != "dashboard.grafana.app" || (resource != "variables" && resource != "librarypanels") {
+		folder = foldermodel.ToLegacyFolderUID(folder)
+	}
 	return ResourceInfo{
 		typ:         typ,
 		group:       group,
@@ -153,6 +168,11 @@ type ResourceInfo struct {
 	folder      string
 	subresource string
 	relations   []string
+}
+
+// UsesRootFolderPermissions identifies resources whose root objects use General-folder grants.
+func (r ResourceInfo) UsesRootFolderPermissions() bool {
+	return r.group == "dashboard.grafana.app" && (r.resource == "variables" || r.resource == "librarypanels")
 }
 
 func (r ResourceInfo) GroupResource() string {
@@ -186,7 +206,8 @@ func (r ResourceInfo) ResourceIdent() string {
 }
 
 func (r ResourceInfo) FolderIdent() string {
-	if r.folder == "" {
+	// Wildcard access is checked at the group-resource level; OpenFGA rejects folder:*.
+	if r.folder == "" || r.folder == "*" {
 		return ""
 	}
 

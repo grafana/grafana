@@ -19,12 +19,13 @@ var errSearchCannotAnswerTrash = errors.New("search cannot answer this trash lis
 func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListTrashFromSearch")
 	defer span.End()
+	s.reportSearchListBodies(ctx)
 	minResourceVersion := ToSnowflakeRV(req.ResourceVersion)
 
 	srq := &resourcepb.ResourceSearchRequest{
 		Options:      req.Options,
 		Limit:        req.Limit,
-		Fields:       []string{SEARCH_FIELD_RV},
+		Fields:       []string{SEARCH_FIELD_RV, SEARCH_FIELD_FOLDER},
 		SortBy:       []*resourcepb.ResourceSearchRequest_Sort{{Field: SEARCH_FIELD_DELETED_RV, Desc: true}},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		IsDeleted:    true,
@@ -66,12 +67,8 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 		value *BackendReadResponse
 		obj   utils.GrafanaMetaAccessor
 	}
-	for chunk := range slices.Chunk(page.rows, searchReadChunkSize) {
-		requests := make([]*resourcepb.ReadRequest, len(chunk))
-		for i, row := range chunk {
-			requests[i] = &resourcepb.ReadRequest{Key: row.key, ResourceVersion: row.resourceVersion}
-		}
-		values, err := s.backend.BatchReadResource(ctx, requests, true)
+	for chunk := range slices.Chunk(page.rows, readChunkSize) {
+		values, err := s.backend.BatchReadResource(ctx, searchRowReads(chunk), true)
 		if errors.Is(err, ErrBatchReadUnsupported) {
 			if req.NextPageToken == "" {
 				return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerTrash, err)
@@ -111,17 +108,24 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 		if count != len(chunk) {
 			return nil, fmt.Errorf("batch trash reader returned %d responses for %d requests", count, len(chunk))
 		}
-		authorizer.Prepare(ctx, items)
+		if err := authorizer.Prepare(ctx, items); err != nil {
+			return nil, err
+		}
 
 		for _, item := range parsed {
-			if !authorizer.Allowed(ctx, item.obj.GetFolder(), item.obj.GetUpdatedBy()) {
+			allowed, err := authorizer.Allowed(ctx, item.obj.GetFolder(), item.obj.GetUpdatedBy())
+			if err != nil {
+				return nil, err
+			}
+			if !allowed {
 				continue
 			}
 			pageBytes += len(item.value.Value)
 			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
 				Value: item.value.Value, ResourceVersion: item.value.ResourceVersion,
 			})
-			if s.listPageFull(req, rsp, pageBytes) {
+			if reason := s.listLimitStopReason(req, rsp, pageBytes); reason != "" {
+				setListStopReason(ctx, reason)
 				token, err := newSearchContinueToken(item.row.sortFields, page.resourceVersion, sortAscending)
 				if err != nil {
 					return &resourcepb.ListResponse{Error: NewBadRequestError("invalid continue token")}, nil
@@ -145,12 +149,13 @@ var trashSearchAllowlist = map[string]bool{
 // TrashSearchAllowed reports whether a kind's authorization model has been
 // approved for search-backed trash.
 func TrashSearchAllowed(group, resource string) bool {
-	return resourceAllowed(trashSearchAllowlist, group, resource)
+	return trashSearchAllowlist[group+"/"+resource]
 }
 
+// shouldUseSearchForTrash selects Search for supported trash resources: a store trash
+// list scans the whole history, so search is the default for approved kinds.
 func (s *server) shouldUseSearchForTrash(req *resourcepb.ListRequest) bool {
 	if req.Source != resourcepb.ListRequest_TRASH ||
-		!s.searchBackedListResources.Allowed(req.Options.Key.Group, req.Options.Key.Resource) ||
 		!TrashSearchAllowed(req.Options.Key.Group, req.Options.Key.Resource) ||
 		!supportsDeletedBatchReads(s.backend) ||
 		(s.searchClient == nil && s.search == nil) ||

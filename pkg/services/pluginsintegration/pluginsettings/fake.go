@@ -9,6 +9,8 @@ type FakePluginSettings struct {
 	Service
 
 	Plugins map[string]*DTO
+	// UpdateErr, when set, is returned by UpdatePluginSetting.
+	UpdateErr error
 }
 
 // GetPluginSettings returns all Plugin Settings for the provided Org
@@ -36,6 +38,9 @@ func (ps *FakePluginSettings) GetPluginSettingByPluginID(ctx context.Context, ar
 
 // UpdatePluginSetting updates a Plugin Setting
 func (ps *FakePluginSettings) UpdatePluginSetting(ctx context.Context, args *UpdateArgs) error {
+	if ps.UpdateErr != nil {
+		return ps.UpdateErr
+	}
 	var secureData map[string][]byte
 	if args.SecureJSONData != nil {
 		secureData := map[string][]byte{}

@@ -1303,6 +1303,17 @@
             }
           },
           {
+            "name": "name",
+            "in": "query",
+            "description": "only include resources with these names (UIDs)",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
             "name": "facet",
             "in": "query",
             "description": "count distinct terms for selected fields",
@@ -1360,10 +1371,10 @@
           {
             "name": "permission",
             "in": "query",
-            "description": "permission needed for the resource (view, edit, admin)",
+            "description": "permission needed for the resource (view, edit, admin, create). create is only valid with type=folder",
             "schema": {
               "type": "string",
-              "enum": ["view", "edit", "admin"]
+              "enum": ["view", "edit", "admin", "create"]
             }
           },
           {
@@ -1675,43 +1686,6 @@
             }
           }
         ]
-      }
-    },
-    "/snapshots/search": {
-      "post": {
-        "tags": ["Search"],
-        "description": "Search Snapshot resources in a namespace.",
-        "operationId": "listSnapshotSearchV0alpha1",
-        "parameters": [],
-        "requestBody": {
-          "description": "A SearchQuery describing what to match, sort and return.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SearchQuery"
-              },
-              "example": {
-                "kind": "SearchQuery",
-                "apiVersion": "search.grafana.app/v0alpha1",
-                "facetLimit": 0,
-                "limit": 10
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "A SearchResults envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SearchResults"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/snapshots/settings": {
@@ -2426,11 +2400,19 @@
       "DashboardSnapshotWithDeleteKey": {
         "description": "This is returned from the POST command",
         "type": "object",
-        "required": ["metadata", "spec"],
+        "required": ["metadata", "spec", "blobs"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
+          },
+          "blobs": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SnapshotBlobs"
+              }
+            ]
           },
           "deleteKey": {
             "description": "The delete key is only returned when the item is created.  It is not returned from a get request",
@@ -2742,11 +2724,19 @@
       },
       "Snapshot": {
         "type": "object",
-        "required": ["metadata", "spec"],
+        "required": ["metadata", "spec", "blobs"],
         "properties": {
           "apiVersion": {
             "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
             "type": "string"
+          },
+          "blobs": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SnapshotBlobs"
+              }
+            ]
           },
           "kind": {
             "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
@@ -2777,6 +2767,34 @@
             "version": "v0alpha1"
           }
         ]
+      },
+      "SnapshotBlobReference": {
+        "type": "object",
+        "required": ["uid"],
+        "properties": {
+          "contentType": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "uid": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "SnapshotBlobs": {
+        "type": "object",
+        "properties": {
+          "dashboard": {
+            "$ref": "#/components/schemas/SnapshotBlobReference"
+          }
+        }
       },
       "SnapshotList": {
         "type": "object",
@@ -2835,6 +2853,10 @@
           "external": {
             "description": "When set to true, the snapshot exists in a remote server",
             "type": "boolean"
+          },
+          "externalDeleteUrl": {
+            "description": "The server-provided URL for deleting the external snapshot",
+            "type": "string"
           },
           "externalUrl": {
             "description": "The external URL where the snapshot can be seen",
@@ -2930,7 +2952,7 @@
         "required": ["field", "values"],
         "properties": {
           "field": {
-            "description": "Field is uid or folder for all resources. Dashboards additionally support datasource_uid and language (promql, logql, traceql or sql).",
+            "description": "Field is uid or folder for all resources. A single dashboard resource type additionally supports datasource_uid and language (promql, logql, traceql or sql). Searches across multiple types support only uid and folder.",
             "type": "string",
             "default": ""
           },
@@ -2960,7 +2982,7 @@
         }
       },
       "HybridSearchQuery": {
-        "description": "HybridSearchQuery is the request body for POST .../{resource}/search/hybrid. It returns the top matching resources, with no pagination, sorting or facets.",
+        "description": "HybridSearchQuery is the request body for POST .../{resource}/search/hybrid and POST .../global/search/hybrid. It returns the top matching resources, with no pagination, sorting or facets.",
         "type": "object",
         "required": ["query"],
         "properties": {
@@ -2981,7 +3003,7 @@
             "type": "string"
           },
           "limit": {
-            "description": "Limit is the maximum number of results. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected.",
+            "description": "Limit is the maximum number of results across all requested resource types. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected.",
             "type": "integer",
             "format": "int64"
           },
@@ -2994,13 +3016,36 @@
             "type": "string",
             "default": ""
           },
+          "resources": {
+            "description": "Resources selects unique group/resource pairs for global hybrid search. On Grafana's HTTP route, omitted or empty uses configured defaults, if any. Per-resource routes reject it.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchResource"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
           "semanticQuery": {
             "description": "SemanticQuery supplies optional richer phrasing for semantic search. When provided, it must not be whitespace and must fit within 1000 bytes.",
             "type": "string"
           },
           "skipRerank": {
-            "description": "SkipRerank returns the fused lexical and semantic ordering without reranking, even when a reranker is configured.",
+            "description": "SkipRerank skips reranking even when a reranker is configured. Multiple resource types are interleaved in request order, preserving each type's ranking.",
             "type": "boolean"
+          }
+        }
+      },
+      "HybridSearchResource": {
+        "description": "HybridSearchResource identifies a resource type for global hybrid search.",
+        "type": "object",
+        "required": ["group", "resource"],
+        "properties": {
+          "group": {
+            "type": "string",
+            "default": ""
+          },
+          "resource": {
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -3040,6 +3085,14 @@
             "format": "double",
             "default": 0
           },
+          "tags": {
+            "description": "Tags from the lexical index. Omitted when unavailable.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
           "title": {
             "type": "string",
             "default": ""
@@ -3047,7 +3100,7 @@
         }
       },
       "HybridSearchResults": {
-        "description": "HybridSearchResults is the response body for POST .../{resource}/search/hybrid. Items are ordered by relevance. They are a bounded top-k result set, not an exhaustive list, so the response carries no total count or pagination token.",
+        "description": "HybridSearchResults is the response body for per-resource and global hybrid search. Items are ordered by relevance. They are a bounded top-k result set, not an exhaustive list, so the response carries no total count or pagination token.",
         "type": "object",
         "required": ["items"],
         "properties": {
@@ -3179,7 +3232,7 @@
         }
       },
       "SearchQuery": {
-        "description": "SearchQuery is the request body for POST .../{resource}/search.",
+        "description": "SearchQuery is the request body for POST .../{resource}/search, which searches one kind, and for POST .../namespaces/{namespace}/global/search, which searches several resource types at once.",
         "type": "object",
         "properties": {
           "apiVersion": {
@@ -3227,7 +3280,7 @@
             }
           },
           "where": {
-            "description": "Where is the search predicate tree. Omitting it matches all resources of the kind (subject to labelSelector and per-item authz).",
+            "description": "Where is the search predicate tree. Omitting it matches everything the endpoint searches: all resources of the kind, or of every type the global search covers (subject to labelSelector and per-item authz).",
             "$ref": "#/components/schemas/WhereNode"
           }
         }

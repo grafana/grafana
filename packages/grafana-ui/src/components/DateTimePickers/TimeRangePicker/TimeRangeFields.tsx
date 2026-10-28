@@ -27,7 +27,7 @@ interface Props {
   inputWidth?: number;
   onSubmit?: () => void;
   fieldSuffix?: ReactNode;
-  calendar: Omit<TimePickerCalendarProps, 'isOpen' | 'onClose' | 'anchorElement'>;
+  calendar: Omit<TimePickerCalendarProps, 'isOpen' | 'onClose' | 'referenceElement'>;
   calendarAnchor: RefObject<HTMLElement | null>;
 }
 
@@ -80,7 +80,7 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
       ))}
       <TimePickerCalendar
         {...calendar}
-        anchorElement={calendarAnchor.current}
+        referenceElement={calendarAnchor.current}
         isOpen={isOpen}
         onClose={() => setOpen(false)}
       />

@@ -30,6 +30,13 @@ func setupSQLKVMock(t *testing.T, driverName string) (*SqlKV, *sql.DB, sqlmock.S
 	return sqlKV, db, mock
 }
 
+func TestSQLKVSaveRejectsUnknownSection(t *testing.T) {
+	store, _, _ := setupSQLKVMock(t, "sqlite")
+	w, err := store.Save(t.Context(), "unknown", "key")
+	require.EqualError(t, err, "invalid section: unknown")
+	require.Nil(t, w)
+}
+
 func buildDataImportRows(count int) []DataImportRow {
 	rows := make([]DataImportRow, count)
 	for i := range count {

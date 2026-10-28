@@ -17016,52 +17016,6 @@
         }
       }
     },
-    "InhibitionRule": {
-      "description": "It embeds the upstream Alertmanager InhibitRule and adds Grafana-specific fields.",
-      "type": "object",
-      "title": "InhibitionRule is the domain model for inhibition rules with metadata.",
-      "properties": {
-        "equal": {
-          "description": "A set of labels that must be equal between the source and target alert\nfor them to be a match.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "name": {
-          "type": "string"
-        },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
-        },
-        "source_match": {
-          "description": "SourceMatch defines a set of labels that have to equal the given\nvalue for source alerts. Deprecated. Remove before v1.0 release.",
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "source_match_re": {
-          "$ref": "#/definitions/MatchRegexps"
-        },
-        "source_matchers": {
-          "$ref": "#/definitions/Matchers"
-        },
-        "target_match": {
-          "description": "TargetMatch defines a set of labels that have to equal the given\nvalue for target alerts. Deprecated. Remove before v1.0 release.",
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "target_match_re": {
-          "$ref": "#/definitions/MatchRegexps"
-        },
-        "target_matchers": {
-          "$ref": "#/definitions/Matchers"
-        }
-      }
-    },
     "InspectType": {
       "type": "integer",
       "format": "int64",
@@ -17488,19 +17442,6 @@
         "webhook_url_file": {
           "type": "string"
         }
-      }
-    },
-    "ManagedInhibitionRules": {
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/InhibitionRule"
-      }
-    },
-    "ManagedRoutes": {
-      "description": "ManagedRoutes this type exists purely to ensure unmarshalling upstream Routes will call Validate and populate\nGroupBy and GroupByAll. Eventually, we will want this to be a separate type and make the conversion to\ndefinitions.Route explicit.",
-      "type": "object",
-      "additionalProperties": {
-        "$ref": "#/definitions/Route"
       }
     },
     "ManagerKind": {
@@ -18794,21 +18735,6 @@
         }
       }
     },
-    "PostableApiTemplate": {
-      "description": "nolint:revive",
-      "type": "object",
-      "properties": {
-        "content": {
-          "type": "string"
-        },
-        "kind": {
-          "$ref": "#/definitions/TemplateKind"
-        },
-        "name": {
-          "type": "string"
-        }
-      }
-    },
     "PostableExtendedRuleNode": {
       "type": "object",
       "properties": {
@@ -19026,38 +18952,6 @@
         }
       }
     },
-    "PostableUserConfig": {
-      "type": "object",
-      "properties": {
-        "alertmanager_config": {
-          "$ref": "#/definitions/PostableApiAlertingConfig"
-        },
-        "extra_config": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ExtraConfiguration"
-          }
-        },
-        "managed_inhibition_rules": {
-          "$ref": "#/definitions/ManagedInhibitionRules"
-        },
-        "managed_routes": {
-          "$ref": "#/definitions/ManagedRoutes"
-        },
-        "managed_templates": {
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/definitions/PostableApiTemplate"
-          }
-        },
-        "template_files": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string"
-          }
-        }
-      }
-    },
     "PreferencesNavbarPreference": {
       "type": "object",
       "properties": {
@@ -19082,7 +18976,7 @@
       "type": "object",
       "properties": {
         "homeDashboardUID": {
-          "description": "UID for the home dashboard",
+          "description": "UID for the home dashboard. The reserved value \"global-home\" is not a\ndashboard UID: it selects the instance default home (home_page, the\nconfigured home dashboard file, or the built-in home page) instead of\nfalling through to lower-precedence preferences.",
           "type": "string"
         },
         "homeURL": {
@@ -20209,9 +20103,13 @@
           "type": "string"
         },
         "id": {
-          "description": "Send the report to the emails specified in the report. Required if emails is not present.",
+          "description": "Numeric ID of the report. Can send either ID or UID. If both are present, UID takes precedence.",
           "type": "string",
           "format": "int64"
+        },
+        "uid": {
+          "description": "UID of the report. Can send either ID or UID. If both are present, UID takes precedence.",
+          "type": "string"
         },
         "useEmailsFromReport": {
           "description": "Send the report to the emails specified in the report. Required if emails is not present.",

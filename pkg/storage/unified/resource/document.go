@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/fieldpath"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -570,7 +571,7 @@ const (
 	SEARCH_FIELD_KIND               = "kind"          // resource ( for federated index filtering )
 	SEARCH_FIELD_GROUP_RESOURCE     = "groupResource" // {group}/{resource}
 	SEARCH_FIELD_NAMESPACE          = "namespace"
-	SEARCH_FIELD_NAME               = "name"
+	SEARCH_FIELD_NAME               = resourceutil.SEARCH_FIELD_NAME
 	SEARCH_FIELD_RV                 = "rv"
 	SEARCH_FIELD_TITLE              = "title"        // standard-analyzed title for full-token search; indexed terms are lowercased by the analyzer
 	SEARCH_FIELD_TITLE_PHRASE       = "title_phrase" // keyword-analyzed title for exact matching/sorting; value is lowercased in UpdateCopyFields
@@ -580,13 +581,12 @@ const (
 	SEARCH_FIELD_LABELS             = "labels" // All labels, not a specific one
 	SEARCH_FIELD_OWNER_REFERENCES   = "ownerReferences"
 	SEARCH_FIELD_FOLDER             = "folder"
+	SEARCH_FIELD_FOLDER_TREE        = "folderTree" // filter only: the named folders and everything below them
 	SEARCH_FIELD_CREATED            = "created"
 	SEARCH_FIELD_CREATED_BY         = "createdBy"
 	SEARCH_FIELD_UPDATED            = "updated"
 	SEARCH_FIELD_UPDATED_BY         = "updatedBy"
 	SEARCH_FIELD_MANAGED_BY         = "managedBy" // {kind}:{id}
-	SEARCH_FIELD_MANAGER_KIND       = "manager.kind"
-	SEARCH_FIELD_MANAGER_ID         = "manager.id"
 	SEARCH_FIELD_SOURCE_PATH        = "source.path"
 	SEARCH_FIELD_SOURCE_CHECKSUM    = "source.checksum"
 	SEARCH_FIELD_SOURCE_TIME        = "source.timestampMillis"
@@ -614,6 +614,11 @@ const (
 
 	// Internal fixed-width companion to SEARCH_FIELD_DELETED_RV.
 	SEARCH_FIELD_DELETED_RV_SORT = "_deleted_rv_sort"
+
+	// The manager sub-document's fields, named by their path into it.
+	SEARCH_FIELD_MANAGER_KIND        = "manager.kind"
+	SEARCH_FIELD_MANAGER_ID          = "manager.id"
+	SEARCH_FIELD_MANAGER_ALLOW_EDITS = "manager.allowEdits"
 )
 
 // sortableResourceVersion preserves numeric resource-version order when Bleve
@@ -729,6 +734,11 @@ func StandardSearchFields() SearchableDocumentFields {
 				Description: "Who created the resource (format: user:<uid>)",
 			},
 			{
+				Name:        SEARCH_FIELD_UPDATED_BY,
+				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
+				Description: "Who last updated the resource (format: user:<uid>)",
+			},
+			{
 				Name:        SEARCH_FIELD_EXPLAIN,
 				Type:        resourcepb.ResourceTableColumnDefinition_OBJECT,
 				Description: "Explain why this result matches (depends on the engine)",
@@ -752,6 +762,11 @@ func StandardSearchFields() SearchableDocumentFields {
 			{
 				Name: SEARCH_FIELD_MANAGER_ID,
 				Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			},
+			{
+				Name:        SEARCH_FIELD_MANAGER_ALLOW_EDITS,
+				Type:        resourcepb.ResourceTableColumnDefinition_BOOLEAN,
+				Description: "Whether the manager allows others to edit the resource",
 			},
 			{
 				Name: SEARCH_FIELD_SOURCE_TIME,

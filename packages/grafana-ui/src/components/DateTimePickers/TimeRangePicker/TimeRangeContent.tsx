@@ -61,13 +61,13 @@ export const TimeRangeContent = (props: Props) => {
   const {
     value,
     isFullscreen = false,
+    calendarAnchor,
     timeZone,
     onApply: onApplyFromProps,
     isReversed,
     fiscalYearStartMonth,
     onError,
     weekStart,
-    calendarAnchor,
   } = props;
   const style = useStyles2(getStyles);
 

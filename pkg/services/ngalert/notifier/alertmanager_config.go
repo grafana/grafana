@@ -106,7 +106,7 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	// Add managed routes and extra route as managed route to the configuration.
 	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
 	// route
-	routingTree := legacy_storage.WithManagedRoutes(prepared)
+	routingTree := WithManagedRoutes(prepared)
 
 	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, prepared, routingTree, onInvalid, moa.featureManager); err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
@@ -683,7 +683,7 @@ func newSaveAMConfigCmd(cfg string, orgID int64, isDefault bool) *models.SaveAle
 
 // saveAndApplyConfig saves a full legacy configuration blob to the database and applies the configuration to the Alertmanager.
 // This should not be generally used but exists to facilitate operations that rely on the legacy blob config:
-// - Create/Update ExtraConfig, whose storage currently piggybacks on PostableUserConfig.
+// - Create/Update ExtraConfig, whose storage currently piggybacks on the legacy AMConfigDB blob.
 // - Config version history revert, which will eventually need to be replaced with per-resource version history.
 func (moa *MultiOrgAlertmanager) saveAndApplyConfig(ctx context.Context, orgID int64, am Alertmanager, cfg *v1.AMConfigV1) error {
 	moa.alertmanagersMtx.RLock()

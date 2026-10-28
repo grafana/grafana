@@ -193,6 +193,38 @@ func TestWithAuthorizeBeforeFetch(t *testing.T) {
 	require.True(t, resourceOpts.AuthorizeBeforeFetchEnabled)
 }
 
+func TestWithQuotaConfig(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.EnforcedQuotaResources = []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}
+	cfg.LoggedQuotaResources = []string{"playlist.grafana.app/playlists", "dashboard.grafana.app/dashboards"}
+	cfg.QuotasErrorMessageSupportInfo = "Contact support."
+	opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg}, withQuotaConfig)
+	require.NoError(t, err)
+	require.Equal(t, map[string]bool{"dashboard.grafana.app/dashboards": true, "folder.grafana.app/folders": true}, opts.QuotasConfig.EnforcedResources)
+	require.Equal(t, map[string]bool{"playlist.grafana.app/playlists": true, "dashboard.grafana.app/dashboards": true}, opts.QuotasConfig.LoggedResources)
+	require.Equal(t, "Contact support.", opts.QuotasConfig.SupportMessage)
+	require.True(t, opts.QuotasConfig.ShouldCheck("playlist.grafana.app", "playlists"))
+	require.False(t, opts.QuotasConfig.ShouldEnforce("playlist.grafana.app", "playlists"))
+	require.False(t, opts.QuotasConfig.ShouldCheck("plugins.grafana.app", "plugins"))
+
+	cfg.EnforcedQuotaResources = nil
+	cfg.LoggedQuotaResources = nil
+	opts, err = buildResourceServerOptions(&ServerOptions{Cfg: cfg}, withQuotaConfig)
+	require.NoError(t, err)
+	require.Empty(t, opts.QuotasConfig.EnforcedResources)
+	require.Empty(t, opts.QuotasConfig.LoggedResources)
+}
+
+func TestWithSeededWatches(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		cfg := setting.NewCfg()
+		cfg.SeededWatchesEnabled = enabled
+		resourceOpts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg}, withSeededWatches)
+		require.NoError(t, err)
+		require.Equal(t, enabled, resourceOpts.SeededWatchesEnabled)
+	}
+}
+
 func TestWithNatsWatchMaxAge(t *testing.T) {
 	const maxAge = 5 * time.Minute
 

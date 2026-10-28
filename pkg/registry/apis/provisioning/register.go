@@ -48,7 +48,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -65,6 +64,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -286,6 +286,10 @@ func NewAPIBuilder(
 	}
 
 	return b, nil
+}
+
+func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption) {
+	b.repoValidatorOpts = opts
 }
 
 // createJobHistoryConfigFromSettings creates JobHistoryConfig from Grafana settings
@@ -861,8 +865,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.admissionHandler.RegisterMutator(provisioning.ConnectionResourceInfo.GetName(), connection.NewAdmissionMutator(b.connectionFactory))
 	b.admissionHandler.RegisterValidator(provisioning.ConnectionResourceInfo.GetName(), connCombinedValidator)
 	// Jobs mutator and validator. The mutator attributes each job to the acting
-	// user at creation time (gated by the provisioning.userAttribution flag) and
-	// the validator enforces that the recorded author is immutable.
+	// user at creation time and the validator enforces that the recorded author
+	// is immutable.
 	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(b.supportedResources))
 	for _, r := range b.supportedResources {
 		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
@@ -871,7 +875,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 			Disabled: !r.IsActive(),
 		})
 	}
-	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator(userAttributionEnabled))
+	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator())
 	b.admissionHandler.RegisterValidator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionValidator(jobSupportedResources, performanceEnabled))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
 
@@ -958,13 +962,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	apiGroupInfo.VersionedResourcesStorageMap[b.gv.Version] = storage
 	return nil
-}
-
-// userAttributionEnabled reports whether Git Sync commits should be attributed
-// to the acting user. It lives here (rather than in apps/provisioning) because
-// the feature flag machinery is only available in the main Grafana module.
-func userAttributionEnabled(ctx context.Context) bool {
-	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagProvisioningUserAttribution, false, openfeature.TransactionContext(ctx))
 }
 
 // performanceEnabled reports whether the synthetic "test" job type is enabled.
@@ -1197,8 +1194,18 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				webhookSecretRotationInterval = 30 * 24 * time.Hour
 			}
 
+			// One per process; see RelistProjectionMetrics.
+			relistProjectionMetrics := informer.NewRelistProjectionMetrics(b.registry)
+			// Likewise one per process; see FreshnessMetrics.
+			freshnessMetrics := informer.NewFreshnessMetrics(b.registry)
+
 			// The repository delta source and the getter it backs.
-			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			var repoKeys keysapi.Lister
+			if b.keysOnlyReList {
+				repoKeys = keysapi.NewGRPCLister(b.unified, provisioning.RepositoryResourceInfo.GroupVersionResource())
+				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.RepositoryResourceInfo.GroupVersionResource().Resource)
+			}
+			repoSource, reconcileRepoGetter := informer.NewRepositoryDeltaSource(b.natsSubscriber, c, repoKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
 			repoController := controller.NewRepositoryController(
 				b.GetClient(),
 				reconcileRepoGetter,
@@ -1245,9 +1252,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			var connKeys keysapi.Lister
 			if b.keysOnlyReList {
 				connKeys = keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource())
-				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage")
+				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage", "resource", provisioning.ConnectionResourceInfo.GroupVersionResource().Resource)
 			}
-			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, b.registry)
+			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, relistProjectionMetrics, freshnessMetrics)
 			connController := controller.NewConnectionController(
 				connGetter,
 				connStatusPatcher,
@@ -1629,7 +1636,7 @@ spec:
 	// Document connection repositories endpoint
 	sub = oas.Paths.Paths[connectionprefix+"/repositories"]
 	if sub != nil {
-		sub.Get.Description = "List repositories available from the external git provider through this connection"
+		sub.Get.Description = "List repositories available from the external git provider through this connection. Returns 501 Not Implemented for connection types that cannot list repositories"
 		sub.Get.Summary = "List external repositories"
 		sub.Get.Parameters = []*spec3.Parameter{}
 		sub.Post = nil

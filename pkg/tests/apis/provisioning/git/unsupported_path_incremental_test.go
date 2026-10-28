@@ -1,6 +1,7 @@
 package git
 
 import (
+	"sort"
 	"strings"
 	"testing"
 
@@ -152,11 +153,13 @@ func TestIntegrationProvisioning_IncrementalSync_FolderMovedOntoUnsupportedPath(
 
 	{
 		const repoName = "incr-unsupported-folder-move"
-		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
-			"parent/old-dir/dashboard.json": common.DashboardJSON("incr-folder-move-a", "Moved Dashboard", 1),
-			"parent/other.json":             common.DashboardJSON("incr-folder-move-b", "Other Dashboard", 1),
-		})
-		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		// Keep old-dir implicit so moving its last dashboard exercises orphan cleanup.
+		files := common.FolderMetadataFiles(t, repoName, "parent")
+		files["parent/old-dir/dashboard.json"] = common.DashboardJSON("incr-folder-move-a", "Moved Dashboard", 1)
+		files["parent/other.json"] = common.DashboardJSON("incr-folder-move-b", "Other Dashboard", 1)
+		_, local := helper.CreateGitRepo(t, repoName, files)
+		common.SyncAndWait(t, helper, common.Repo(repoName),
+			common.Expect(common.HasOnlyMissingFolderMetadataWarnings("parent/old-dir")))
 		helper.RequireRepoDashboardCount(t, repoName, 2)
 		require.Contains(t, repoFolderTitles(t, helper, repoName), "old-dir")
 
@@ -206,4 +209,77 @@ func TestIntegrationProvisioning_IncrementalSync_NewTreeUnderUnsupportedFolder(t
 		require.Contains(t, titles, "deeper", "every safe level of the path is created")
 		require.NotContains(t, titles, "bad & dir")
 	}
+}
+
+// A dashboard file renamed onto a path that is not a resource (README.md, another extension,
+// a hidden file or folder) is gone from the repository, so an incremental pull removes the
+// dashboard, as a full pull of the same commit does, and reports nothing about the new path.
+func TestIntegrationProvisioning_IncrementalSync_RenameOntoReadme(t *testing.T) {
+	requireRenameOntoNonResourceRemovesDashboard(t, "readme", "README.md")
+}
+
+func TestIntegrationProvisioning_IncrementalSync_RenameOntoOtherExtension(t *testing.T) {
+	requireRenameOntoNonResourceRemovesDashboard(t, "other-ext", "renamed.txt")
+}
+
+func TestIntegrationProvisioning_IncrementalSync_RenameOntoHiddenFile(t *testing.T) {
+	requireRenameOntoNonResourceRemovesDashboard(t, "hidden-file", ".renamed.json")
+}
+
+func TestIntegrationProvisioning_IncrementalSync_RenameIntoHiddenFolder(t *testing.T) {
+	requireRenameOntoNonResourceRemovesDashboard(t, "hidden-folder", ".hidden/renamed.json")
+}
+
+func requireRenameOntoNonResourceRemovesDashboard(t *testing.T, name, target string) {
+	t.Helper()
+	helper := sharedGitHelper(t)
+
+	repoName := "incr-rename-non-resource-" + name
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"renamed.json": common.DashboardJSON("incr-rename-nr-"+name+"-a", "Renamed Away", 1),
+		"other.json":   common.DashboardJSON("incr-rename-nr-"+name+"-b", "Stays", 1),
+	})
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	helper.RequireRepoDashboardCount(t, repoName, 2)
+
+	if strings.HasPrefix(target, ".hidden/") {
+		require.NoError(t, local.CreateFile(".hidden/.keep", ""))
+	}
+	_, err := local.Git("mv", "renamed.json", target)
+	require.NoError(t, err)
+	_, err = local.Git("add", "-A")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "rename a dashboard onto "+target)
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	job := helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+	})
+	jobObj := &provisioning.Job{}
+	require.NoError(t, runtime.DefaultUnstructuredConverter.FromUnstructured(job.Object, jobObj))
+	require.Empty(t, jobObj.Status.Errors)
+	require.Equal(t, provisioning.JobStateSuccess, jobObj.Status.State)
+	require.Empty(t, jobObj.Status.Warnings, "a path that is not a resource is not reported")
+
+	helper.RequireRepoDashboardCount(t, repoName, 1)
+	afterIncremental := dashboardNames(t, helper, repoName)
+	require.NotContains(t, afterIncremental, "incr-rename-nr-"+name+"-a")
+
+	// a full pull of the same commit must change nothing
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+	require.Equal(t, afterIncremental, dashboardNames(t, helper, repoName))
+}
+
+func dashboardNames(t *testing.T, helper *common.GitTestHelper, repoName string) []string {
+	t.Helper()
+	dashboards := helper.ListRepoDashboards(t, repoName)
+	names := make([]string, 0, len(dashboards))
+	for _, d := range dashboards {
+		names = append(names, d.GetName())
+	}
+	sort.Strings(names)
+	return names
 }

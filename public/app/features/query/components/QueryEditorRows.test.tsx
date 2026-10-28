@@ -3,12 +3,17 @@ import userEvent from '@testing-library/user-event';
 
 import type { DataSourceApi } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  type DataSourceSrv,
+  type GetDataSourceListFilters,
+  getDataSourceInstance,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { type DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
+import { type InternalQueryEditorInsertionPropsV1 } from 'app/features/explore/SignalExplorer/internalInsertionContract';
 import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -43,14 +48,9 @@ jest.mock('@grafana/runtime', () => ({
     containsTemplate: () => false,
     updateTimeRange: () => {},
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceSettings: jest.fn(),
 }));
-
 jest
   .mocked(getDataSourceInstance)
   .mockImplementation((...args: unknown[]) => dsSrvMock.get(...(args as Parameters<DataSourceSrv['get']>)));
@@ -755,6 +755,47 @@ describe('QueryEditorRows', () => {
       act(() => firstOnChangeForA!(editedA));
 
       expect(onQueriesChange).toHaveBeenLastCalledWith([editedA, editedB]);
+    });
+  });
+
+  describe('query editor insertion', () => {
+    const registrarsByRefId = new Map<string, unknown>();
+
+    const InsertionQueryEditor = ({
+      query,
+      ...editorProps
+    }: { query: DataQuery } & InternalQueryEditorInsertionPropsV1) => {
+      registrarsByRefId.set(query.refId, editorProps.unstable_queryEditorInsertionV1);
+      return <div data-testid={`query-editor-${query.refId}`} />;
+    };
+
+    beforeEach(() => {
+      registrarsByRefId.clear();
+      jest.mocked(getDataSourceInstance).mockResolvedValue({
+        type: 'prometheus',
+        getDefaultQuery: undefined,
+        components: { QueryEditor: InsertionQueryEditor },
+      } as unknown as DataSourceApi);
+    });
+
+    afterEach(() => {
+      jest
+        .mocked(getDataSourceInstance)
+        .mockImplementation((...args: unknown[]) => dsSrvMock.get(...(args as Parameters<DataSourceSrv['get']>)));
+    });
+
+    it('hands each query editor the registrar for its own refId', async () => {
+      const registrarA = { register: jest.fn() };
+      const registrarB = { register: jest.fn() };
+      const registrars: Record<string, typeof registrarA> = { A: registrarA, B: registrarB };
+      const getQueryEditorInsertion = jest.fn((refId: string) => registrars[refId]);
+
+      render(<QueryEditorRows {...props} getQueryEditorInsertion={getQueryEditorInsertion} />);
+
+      expect(await screen.findByTestId('query-editor-A')).toBeInTheDocument();
+      expect(await screen.findByTestId('query-editor-B')).toBeInTheDocument();
+      expect(registrarsByRefId.get('A')).toBe(registrarA);
+      expect(registrarsByRefId.get('B')).toBe(registrarB);
     });
   });
 });

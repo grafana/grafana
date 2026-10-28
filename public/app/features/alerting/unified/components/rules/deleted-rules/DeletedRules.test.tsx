@@ -1,5 +1,5 @@
 import { produce } from 'immer';
-import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { AppNotificationList } from 'app/core/components/AppNotifications/AppNotificationList';
 import { DashboardSearchItemType } from 'app/features/search/types';
@@ -14,9 +14,6 @@ import { grantPermissionsHelper } from '../../../test/test-utils';
 import { DeletedRules } from './DeletedRules';
 
 setupMswServer();
-testWithFeatureToggles({
-  enable: ['alertingRulePermanentlyDelete', 'alertingRuleRecoverDeleted', 'alertRuleRestore'],
-});
 beforeEach(() => {
   grantUserRole('Admin');
   grantPermissionsHelper([

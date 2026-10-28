@@ -6,6 +6,7 @@ import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { Button, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { duplicatePanel } from '../../actions/layout/duplicatePanel';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -75,6 +76,7 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
 
   const onClickEdit = useCallback(() => {
+    DashboardInteractions.panelActionClicked('settings', getPanelIdForVizPanel(panel), 'edit_popover');
     const { selectionContext } = getDashboardSceneLike(panel).state.sidebar.state;
     selectionContext.onSelect({ id: panel.state.key! }, { force: true });
   }, [panel]);
@@ -94,7 +96,7 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
   const onClickDuplicate = useCallback(() => {
     const panelId = getPanelIdForVizPanel(panel);
     DashboardInteractions.panelActionClicked('duplicate', panelId, 'edit_popover');
-    getLayoutManagerFor(panel).duplicatePanel?.(panel);
+    duplicatePanel(panel);
   }, [panel]);
 
   const onClickDelete = useCallback(() => {

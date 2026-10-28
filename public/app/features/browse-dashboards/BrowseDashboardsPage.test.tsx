@@ -53,8 +53,8 @@ const defaultTestDataSource = {
   type: 'grafana-testdata-datasource',
 } as DataSourceInstanceListItem;
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [defaultTestDataSource] })),
 }));
 
@@ -490,6 +490,8 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         historyOptions: { initialEntries: ['/dashboards?starred'] },
       });
       expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
+      // The heading appears before the search completes; wait for real rows before cleanup.
+      expect(await screen.findByRole('link', { name: dashbdD.item.title })).toBeInTheDocument();
     });
 
     it('displays "Starred" as the page title for the starred=true shape the filter checkbox writes', async () => {
@@ -498,6 +500,7 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
         historyOptions: { initialEntries: ['/dashboards?starred=true'] },
       });
       expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: dashbdD.item.title })).toBeInTheDocument();
     });
   });
 });

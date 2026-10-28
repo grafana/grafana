@@ -10,17 +10,18 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
-  editPanelTitleAction,
 } from '../panel-edit/getPanelFrameOptions';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import {
+  type EditActionSource,
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../scene/types/EditableDashboardElement';
@@ -116,7 +117,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
 
   public useSidebarOptions = useSidebarOptions.bind(this);
 
-  public onDelete(source: PanelActionSource = 'edit_pane') {
+  public onDelete(source: EditActionSource = 'edit_pane') {
     DashboardInteractions.panelActionClicked('delete', getPanelIdForVizPanel(this.panel), source);
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.removePanel?.(this.panel);
@@ -138,20 +139,19 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     );
   }
 
-  public onDuplicate(source: PanelActionSource = 'edit_pane') {
+  public onDuplicate(source: EditActionSource = 'edit_pane') {
     DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), source);
-    const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
-    layout.duplicatePanel?.(this.panel);
+    duplicatePanel(this.panel);
   }
 
-  public onCopy(source: PanelActionSource = 'edit_pane') {
+  public onCopy(source: EditActionSource = 'edit_pane') {
     DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(this.panel), source);
     const dashboard = getDashboardSceneFor(this.panel);
     dashboard.copyPanel(this.panel);
   }
 
   public onChangeName(name: string) {
-    editPanelTitleAction(this.panel, name);
+    getDashboardSceneFor(this.panel).updatePanelTitle(this.panel, name);
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
@@ -164,8 +164,6 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     }
   }
 }
-
-type PanelActionSource = 'edit_pane' | 'edit_popover';
 
 type OpenPanelEditVizProps = { panel: VizPanel };
 

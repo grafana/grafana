@@ -153,3 +153,38 @@ func TestStore_ZeroListRVDoesWholesaleSwap(t *testing.T) {
 func TestStore_ListEmpty(t *testing.T) {
 	assert.Empty(t, NewStore().List(context.Background()))
 }
+
+// Update reports whether the store took the write; a refused write leaves the
+// contents unchanged, so callers cannot tell from them.
+func TestStore_UpdateReportsWhetherItTookTheWrite(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("plain write", func(t *testing.T) {
+		s := NewStore()
+		assert.True(t, s.Update(ctx, objRV("a", 10)))
+		assert.Equal(t, []string{"a"}, storeNames(s.List(ctx)))
+	})
+
+	t.Run("superseded by a newer delete", func(t *testing.T) {
+		s := NewStore()
+		s.Update(ctx, objRV("a", 10))
+		s.DeleteAt(ctx, testNamespace, "a", 20)
+
+		assert.False(t, s.Update(ctx, objRV("a", 10)), "the delete is newer, so the write is dropped")
+		assert.Empty(t, s.List(ctx), "and the object stays evicted")
+	})
+
+	t.Run("at or past the delete is a re-creation", func(t *testing.T) {
+		s := NewStore()
+		s.DeleteAt(ctx, testNamespace, "a", 20)
+
+		assert.True(t, s.Update(ctx, objRV("a", 20)))
+		assert.Equal(t, []string{"a"}, storeNames(s.List(ctx)))
+	})
+
+	t.Run("no metadata to key it by", func(t *testing.T) {
+		s := NewStore()
+		assert.False(t, s.Update(ctx, &metav1.Status{}), "a non-meta object cannot be keyed")
+		assert.Empty(t, s.List(ctx))
+	})
+}

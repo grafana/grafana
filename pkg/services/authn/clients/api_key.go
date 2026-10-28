@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/components/satokengen"
 	"github.com/grafana/grafana/pkg/infra/log"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -148,7 +149,13 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 }
 
 func (s *APIKey) Test(ctx context.Context, r *authn.Request) bool {
-	return looksLikeApiKey(getTokenFromRequest(r))
+	token := getTokenFromRequest(r)
+	// Plugins send their local access policy token to the local token exchange,
+	// which authenticates it; it is never an API key.
+	if strings.HasPrefix(token, v3.LocalAccessPolicyTokenPrefix) {
+		return false
+	}
+	return looksLikeApiKey(token)
 }
 
 func (s *APIKey) Priority() uint {

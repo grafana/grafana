@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +31,7 @@ func newUploadTestIndex(t *testing.T, be *bleveBackend, key resource.NamespacedR
 	require.NoError(t, idx.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(idx, rv))
 
-	wrapped := be.newBleveIndex(key, idx, indexStorageFile, nil, nil, nil, nil, be.log)
+	wrapped := be.newBleveIndex(key, idx, indexStorageFile, nil, nil, nil, be.log)
 	wrapped.resourceVersion.Store(rv)
 	return wrapped
 }
@@ -46,7 +47,7 @@ func newCachedUploadTestIndex(t *testing.T, be *bleveBackend, key resource.Names
 	require.NoError(t, idx.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(idx, rv))
 
-	wrapped := be.newBleveIndex(key, idx, indexStorageFile, nil, nil, nil, nil, be.log)
+	wrapped := be.newBleveIndex(key, idx, indexStorageFile, nil, nil, nil, be.log)
 	wrapped.resourceVersion.Store(rv)
 
 	be.cacheMx.Lock()
@@ -82,12 +83,14 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	key := newTestNsResource()
 	beforeBuild := time.Now().Add(-time.Second).Truncate(time.Second)
 	idx := newUploadTestIndex(t, be, key, 42)
+	require.NoError(t, idx.RecordReconciledAt(beforeBuild))
 
 	require.NoError(t, be.uploadSnapshot(context.Background(), key, idx))
 	assert.Equal(t, int32(1), store.uploadCalls.Load())
 	uploadedMeta := store.getLastUploadedMeta()
 	assert.Equal(t, int64(42), uploadedMeta.LatestResourceVersion)
 	assert.Equal(t, be.opts.BuildVersion, uploadedMeta.BuildVersion)
+	assert.Zero(t, uploadedMeta.ReconciledAt, "per-resource snapshots do not use reconciliation time")
 	assert.NotZero(t, uploadedMeta.IndexFormat)
 	// Recorded so selection can skip a snapshot missing a feature this instance
 	// requires, without downloading it first.
@@ -109,6 +112,57 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	entries, err := os.ReadDir(snapshotParent)
 	require.NoError(t, err)
 	assert.Empty(t, entries)
+}
+
+type copyableIndex interface {
+	bleve.Index
+	bleve.IndexCopyable
+}
+
+type indexWithAfterCopy struct {
+	copyableIndex
+	afterCopy func() error
+}
+
+func (i *indexWithAfterCopy) CopyTo(dir index.Directory) error {
+	if err := i.copyableIndex.CopyTo(dir); err != nil {
+		return err
+	}
+	return i.afterCopy()
+}
+
+func TestUploadSnapshot_PreservesReconciliationTime(t *testing.T) {
+	store := newHookableStore(t)
+	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store})
+	key := resource.GlobalSearchKey("default")
+	idx := newUploadTestIndex(t, be, key, 42)
+	reconciledAt := time.Now().Add(-time.Hour).UTC()
+	advancedAt := reconciledAt.Add(30 * time.Minute)
+	require.NoError(t, idx.RecordReconciledAt(reconciledAt))
+	idx.index = &indexWithAfterCopy{
+		copyableIndex: idx.index.(copyableIndex),
+		afterCopy: func() error {
+			return idx.RecordReconciledAt(advancedAt)
+		},
+	}
+
+	require.NoError(t, be.uploadSnapshot(t.Context(), key, idx))
+	assert.Equal(t, reconciledAt, store.getLastUploadedMeta().ReconciledAt)
+	liveTime, err := idx.ReconciledAt()
+	require.NoError(t, err)
+	assert.Equal(t, advancedAt, liveTime)
+
+	restorer, _ := newTestBleveBackend(t, SnapshotOptions{Store: store})
+	resourceDir := restorer.getResourceDir(key)
+	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
+	restored, _, rv, err := restorer.tryDownloadRemoteSnapshot(t.Context(), key, resourceDir, restorer.log)
+	require.NoError(t, err)
+	require.NotNil(t, restored)
+	t.Cleanup(func() { _ = restored.Close() })
+	assert.Equal(t, int64(42), rv)
+	restoredTime, err := getReconciledAt(restored)
+	require.NoError(t, err)
+	assert.Equal(t, reconciledAt, restoredTime)
 }
 
 // TestUploadSnapshot_PreservesOriginalBuildStartTime verifies that periodic
@@ -136,7 +190,7 @@ func TestUploadSnapshot_PreservesOriginalBuildStartTime(t *testing.T) {
 	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(index, 42))
 
-	wrapped := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, nil, be.log)
+	wrapped := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, be.log)
 	wrapped.resourceVersion.Store(42)
 
 	require.NoError(t, be.uploadSnapshot(context.Background(), key, wrapped))

@@ -21,6 +21,7 @@ type Query struct {
 	Fields       []string
 	Text         string
 	Filters      []*searchv0.FilterPredicate
+	Regexes      []*searchv0.RegexPredicate
 	GroupFilters []metav1.LabelSelectorRequirement
 	Sort         []searchv0.SortField
 }

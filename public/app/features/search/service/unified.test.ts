@@ -21,6 +21,31 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 describe('Unified Storage Searcher', () => {
+  it('shares a folder lookup between concurrent readers until it is reloaded', async () => {
+    let folderTitle = 'Original folder';
+    const folderRequest = jest.fn();
+    server.use(
+      http.get(searchRoute, () => {
+        folderRequest();
+        return HttpResponse.json({
+          totalHits: 1,
+          hits: [{ name: 'folder1', title: folderTitle, resource: 'folders' }],
+        });
+      })
+    );
+
+    const searcher = new UnifiedSearcher();
+    const locations = await Promise.all([searcher.getLocationInfo(), searcher.getLocationInfo()]);
+    expect(locations.map((info) => info.folder1.name)).toEqual(['Original folder', 'Original folder']);
+    expect(folderRequest).toHaveBeenCalledTimes(1);
+
+    folderTitle = 'Renamed folder';
+    searcher.reloadLocationInfo();
+    const refreshed = await Promise.all([searcher.getLocationInfo(), searcher.getLocationInfo()]);
+    expect(refreshed.map((info) => info.folder1.name)).toEqual(['Renamed folder', 'Renamed folder']);
+    expect(folderRequest).toHaveBeenCalledTimes(2);
+  });
+
   it('should perform search with basic query', async () => {
     const query: SearchQuery = {
       query: '*',
@@ -95,10 +120,14 @@ describe('Unified Storage Searcher', () => {
     const response = await searcher.search(query);
 
     expect(response.view.length).toBe(1);
+    expect(response.isItemLoaded(0)).toBe(true);
+    expect(response.isItemLoaded(1)).toBe(false);
 
     await response.loadMoreItems(1);
 
     expect(response.view.length).toBe(2);
+    expect(response.isItemLoaded(1)).toBe(true);
+    expect(response.isItemLoaded(2)).toBe(false);
     // TODO: right now this does not work (see unified.ts#getNextPage() for details) once the frame appending is fixed
     //  properly these expects should work
     // expect(response.view.get(0).description).toBe(null);

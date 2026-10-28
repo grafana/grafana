@@ -27,11 +27,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/canvas/#button-api-options
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/latest/panels-visualizations/visualizations/canvas/#button-api-options
-  global-variables:
+  built-in-variables:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/global-variables/#__from-and-__to
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/built-in-variables/#__from-and-__to
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/dashboards/variables/global-variables/#__from-and-__to
+      destination: /docs/grafana-cloud/visualizations/dashboards/variables/built-in-variables/#__from-and-__to
   heatmap:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/heatmap/
@@ -201,7 +201,7 @@ Variables in data links and actions let you send people to a detailed dashboard 
 To see a list of available variables, enter `$` in the data link or action **URL** field.
 
 {{< admonition type="note" >}}
-These variables changed in 6.4 so if you have an older version of Grafana, then use the version picker to select docs for an older version of Grafana.
+These variables changed in 6.4 so if you have a previous version of Grafana, then use the version picker to select docs for a previous version of Grafana.
 {{< /admonition >}}
 
 Azure Monitor, [CloudWatch](ref:cloudwatch), and [Google Cloud Monitoring](ref:google-cloud-monitoring) have pre-configured data links called _deep links_.
@@ -220,7 +220,7 @@ These variables allow you to include the current time range in the data link or 
 
 When you create data links and actions using time range variables like `__url_time_range` in the URL, you have to form the query parameter syntax yourself; that is, you must format the URL by appending query parameters using the question mark (`?`) and ampersand (`&`) syntax. These characters aren't automatically generated.
 
-For more information about these variables, refer to the [Global variables documentation](ref:global-variables).
+For more information about these variables, refer to the [Built-in variables documentation](ref:built-in-variables).
 
 ### Series variables
 
@@ -335,7 +335,7 @@ To add a data link, follow these steps:
    {{< tab-content name="Add actions" >}}
 
    {{< admonition type="note">}}
-   Actions are not supported for all visualizations. For the list of supported visualizations, refer to [Supported visualizations](#supported-visualizations-1).
+   Actions aren't supported for all visualizations. For the list of supported visualizations, refer to [Supported visualizations](#supported-visualizations-1).
    {{< /admonition >}}
 
    To add an action, by follow these steps:
@@ -367,17 +367,17 @@ To add a data link, follow these steps:
    {{< /tab-content >}}
    {{< /tabs >}}
 
-If you add multiple data links or actions, you can control the order in which they appear in the visualization. To do this, click and drag the data link or action to the desired position.
+If you add multiple data links or actions, you can control the order in which they appear in the visualization. To reorder items, drag the data link or action to the desired position.
 
 ## Panel-to-panel filtering
 
-You can use data links to link back to the dashboard you are currently on. This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
+You can use data links to link back to the dashboard you're on. This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
 
 To preserve the context of the current dashboard:
 
 - **Time range:** You must explicitly include the current time range in the link.
-- **Variables:** You must enable **Include all variables** to preserve existing selections.
-- **Ordering:** Ensure that **Include all variables** is placed before the specific variable you are defining in the link.
+- **Variables:** You must enable **Include all variables** to preserve current selections.
+- **Ordering:** Place **Include all variables** before the specific variable you define in the link.
 
 Filters on the current dashboard are automatically preserved.
 Learn more in [Create dashboard URL variables > Filters](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard-url-variables/#filters).

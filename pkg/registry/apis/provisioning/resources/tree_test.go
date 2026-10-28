@@ -424,3 +424,15 @@ func TestFolderTree_Add_SetsParentID(t *testing.T) {
 	require.True(t, ok)
 	assert.Empty(t, gotRoot.ParentID, "root folder should have empty ParentID")
 }
+
+func TestFolderTreeCanonicalRoot(t *testing.T) {
+	tree := NewEmptyFolderTree()
+	tree.Add(Folder{ID: "parent", Title: "Parent"}, "general")
+	tree.Add(Folder{ID: "child", Title: "Child"}, "parent")
+	require.True(t, tree.In("general"))
+	legacy, legacyOK := tree.DirPath("child", "")
+	canonical, canonicalOK := tree.DirPath("child", "general")
+	require.True(t, legacyOK)
+	require.True(t, canonicalOK)
+	require.Equal(t, legacy, canonical)
+}

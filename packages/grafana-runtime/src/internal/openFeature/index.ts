@@ -1,6 +1,13 @@
 import { LocalStorageProvider } from '@openfeature/localstorage-provider';
 import { OFREPWebProvider } from '@openfeature/ofrep-web-provider';
-import { OpenFeature, ProviderEvents, NOOP_PROVIDER, type EventDetails, MultiProvider } from '@openfeature/react-sdk';
+import {
+  OpenFeature,
+  ProviderEvents,
+  NOOP_PROVIDER,
+  type EventDetails,
+  MultiProvider,
+  type Provider,
+} from '@openfeature/react-sdk';
 
 import { config } from '../../config';
 import { logError } from '../../utils/logging';
@@ -48,12 +55,8 @@ export function getLocalStorageProvider() {
 //  to allow the feature control developer UI to discover flags from the provider
 let ofrepWebProvider: OFREPWebProvider;
 export function getOFREPWebProvider() {
-  const baseUrl = window.__grafanaOFREPRootUrlEnabled
-    ? `${config.appSubUrl || ''}`
-    : `${config.appSubUrl || ''}/apis/features.grafana.app/v0alpha1/namespaces/${config.namespace}`;
-
   return (ofrepWebProvider ??= new OFREPWebProvider({
-    baseUrl,
+    baseUrl: `${config.appSubUrl || ''}`,
     disableVisibilityRefresh: true, // Do not refresh
     cacheMode: 'disabled', // Do not write to localStorage
     timeoutMs: 5_000,
@@ -66,10 +69,31 @@ export async function initOpenFeature() {
 
   const lsProvider = getLocalStorageProvider();
   const ofProvider = getOFREPWebProvider();
+  let meticulousProvider: Provider | undefined;
+
+  if (window.Meticulous != null) {
+    try {
+      const { MeticulousProvider, createMeticulousReportingHook, isMeticulousReportingHook } = await import(
+        /* webpackChunkName: "meticulous-openfeature" */ './meticulous'
+      );
+      meticulousProvider = new MeticulousProvider();
+      if (!OpenFeature.getHooks().some(isMeticulousReportingHook)) {
+        // Report the final value after all providers resolve, including caller defaults.
+        OpenFeature.addHooks(createMeticulousReportingHook(GRAFANA_CORE_OPEN_FEATURE_DOMAIN));
+      }
+    } catch (error) {
+      console.error('Failed to load Meticulous OpenFeature integration', error);
+    }
+  }
 
   await OpenFeature.setProviderAndWait(
     GRAFANA_CORE_OPEN_FEATURE_DOMAIN,
-    new MultiProvider([{ provider: lsProvider }, { provider: ofProvider }]),
+    new MultiProvider([
+      // Grafana core only: plugins must not copy the Meticulous provider because it is wired to the private core domain.
+      ...(meticulousProvider ? [{ provider: meticulousProvider }] : []),
+      { provider: lsProvider },
+      { provider: ofProvider },
+    ]),
     {
       targetingKey: config.namespace,
       ...config.openFeatureContext,

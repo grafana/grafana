@@ -1,0 +1,722 @@
+import { css, cx } from '@emotion/css';
+import { isEqual } from 'lodash';
+import { parse, stringify } from 'lossless-json';
+import { type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+
+import { CoreApp, type GrafanaTheme2, type IconName, type LogLabelStatsModel, textUtil } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
+import { Box, ClipboardButton, Dropdown, Icon, IconButton, Menu, Pagination, Stack, useStyles2 } from '@grafana/ui';
+
+import { logRowToSingleRowDataFrame } from '../../logsModel';
+import { calculateLogsLabelStats, calculateStats } from '../../utils';
+import { LogLabelStats } from '../LogLabelStats';
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
+import { type FieldDef } from '../logParser';
+
+import { AsyncIconButton } from './AsyncIconButton';
+import { type LinkModelWithIcon, type LabelWithLinks, usePagedItems } from './LogLineDetailsFields';
+import { type LogListFontSize } from './LogList';
+import { useLogListContext } from './LogListContext';
+import { getIconButtonStyles } from './activeIconButtonStyles';
+import { type LogListModel, getNormalizedFieldName } from './processing';
+
+interface LogLineDetailsFieldsProps {
+  fields: FieldDef[];
+  log: LogListModel;
+  logs: LogListModel[];
+}
+
+export const LogLineOTelDetailsFields = ({ fields, log, logs }: LogLineDetailsFieldsProps) => {
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize);
+  const getLogs = useCallback(() => logs, [logs]);
+  const { pagedItems, currentPage, numberOfPages, onNavigate, showTopPagination } = usePagedItems(fields);
+
+  if (!fields.length) {
+    return null;
+  }
+
+  return (
+    <>
+      {showTopPagination && (
+        <Stack justifyContent="center">
+          <Box marginBottom={1}>
+            <Pagination
+              currentPage={currentPage}
+              numberOfPages={numberOfPages}
+              onNavigate={onNavigate}
+              hideWhenSinglePage
+            />
+          </Box>
+        </Stack>
+      )}
+      <div className={styles.fieldsTable}>
+        {pagedItems.map((field, i) => (
+          <LogLineOTelDetailsField
+            key={`${field.keys[0]}=${field.values[0]}-${i}`}
+            getLogs={getLogs}
+            fieldIndex={field.fieldIndex}
+            keys={field.keys}
+            links={field.links}
+            log={log}
+            values={field.values}
+          />
+        ))}
+      </div>
+      <Stack justifyContent="center">
+        <Box marginTop={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
+    </>
+  );
+};
+
+interface LogLineDetailsLabelFieldsProps {
+  fields: LabelWithLinks[];
+  log: LogListModel;
+  logs: LogListModel[];
+}
+
+export const LogLineOTelDetailsLabelFields = ({ fields, log, logs }: LogLineDetailsLabelFieldsProps) => {
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize);
+  const getLogs = useCallback(() => logs, [logs]);
+  const { pagedItems, currentPage, numberOfPages, onNavigate, showTopPagination } = usePagedItems(fields);
+
+  if (!fields.length) {
+    return null;
+  }
+
+  return (
+    <>
+      {showTopPagination && (
+        <Stack justifyContent="center">
+          <Box marginBottom={1}>
+            <Pagination
+              currentPage={currentPage}
+              numberOfPages={numberOfPages}
+              onNavigate={onNavigate}
+              hideWhenSinglePage
+            />
+          </Box>
+        </Stack>
+      )}
+      <div className={styles.fieldsTable}>
+        {pagedItems.map((field, i) => (
+          <LogLineOTelDetailsField
+            key={`${field.key}=${field.value}-${i}`}
+            getLogs={getLogs}
+            isLabel
+            keys={[field.key]}
+            links={field.links}
+            log={log}
+            values={[field.value]}
+          />
+        ))}
+      </div>
+      <Stack justifyContent="center">
+        <Box marginTop={1}>
+          <Pagination
+            currentPage={currentPage}
+            numberOfPages={numberOfPages}
+            onNavigate={onNavigate}
+            hideWhenSinglePage
+          />
+        </Box>
+      </Stack>
+    </>
+  );
+};
+
+const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
+  fieldsTable: css({
+    display: 'grid',
+    gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
+    // Icon buttons are 24px (sm) or 26px (md). This row always has three controls.
+    gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(9) : theme.spacing(9.75)} fit-content(30%) 1fr`,
+  }),
+});
+
+interface LogLineDetailsFieldProps {
+  keys: string[];
+  values: string[];
+  disableActions?: boolean;
+  fieldIndex?: number;
+  getLogs(): LogListModel[];
+  isLabel?: boolean;
+  links?: LinkModelWithIcon[];
+  log: LogListModel;
+}
+
+const LogLineOTelDetailsField = ({
+  disableActions = false,
+  fieldIndex,
+  getLogs,
+  isLabel,
+  links,
+  log,
+  keys,
+  values,
+}: LogLineDetailsFieldProps) => {
+  const [showFieldsStats, setShowFieldStats] = useState(false);
+  const [fieldCount, setFieldCount] = useState(0);
+  const [fieldStats, setFieldStats] = useState<LogLabelStatsModel[] | null>(null);
+  const { fontSize } = useLogListContext();
+  const { app, isLabelFilterActive, noInteractions, onClickFilterLabel, onClickFilterOutLabel, prettifyJSON } =
+    useLogListContext();
+
+  const styles = useStyles2(getFieldStyles);
+
+  const getStats = useCallback(() => {
+    if (isLabel) {
+      return calculateLogsLabelStats(getLogs(), keys[0]);
+    }
+    if (fieldIndex !== undefined) {
+      return calculateStats(log.dataFrame.fields[fieldIndex].values);
+    }
+    return [];
+  }, [fieldIndex, getLogs, isLabel, keys, log.dataFrame.fields]);
+
+  const updateStats = useCallback(() => {
+    const newStats = getStats();
+    const newCount = newStats.reduce((sum, stat) => sum + stat.count, 0);
+    if (!isEqual(fieldStats, newStats) || fieldCount !== newCount) {
+      setFieldStats(newStats);
+      setFieldCount(newCount);
+    }
+  }, [fieldCount, fieldStats, getStats]);
+
+  useEffect(() => {
+    if (showFieldsStats) {
+      updateStats();
+    }
+  }, [showFieldsStats, updateStats]);
+
+  const reportInteractionWrapper = useCallback(
+    (interactionName: string, properties?: Record<string, unknown>) => {
+      if (noInteractions) {
+        return;
+      }
+      reportInteraction(interactionName, properties);
+    },
+    [noInteractions]
+  );
+
+  const filterLabel = useCallback(() => {
+    if (onClickFilterLabel) {
+      onClickFilterLabel(keys[0], values[0], logRowToSingleRowDataFrame(log) || undefined);
+    }
+
+    reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+      datasourceType: log.datasourceType,
+      filterType: 'include',
+      logRowUid: log.uid,
+    });
+  }, [onClickFilterLabel, reportInteractionWrapper, log, keys, values]);
+
+  const filterOutLabel = useCallback(() => {
+    if (onClickFilterOutLabel) {
+      onClickFilterOutLabel(keys[0], values[0], logRowToSingleRowDataFrame(log) || undefined);
+    }
+
+    reportInteractionWrapper('logs_log_line_details_filter_clicked', {
+      datasourceType: log.datasourceType,
+      filterType: 'exclude',
+      logRowUid: log.uid,
+    });
+  }, [onClickFilterOutLabel, reportInteractionWrapper, log, keys, values]);
+
+  const includeAdhocValue = useCallback(
+    (value: string) => {
+      onClickFilterLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
+
+      reportInteractionWrapper('logs_log_line_details_ad_hoc_filter_clicked', {
+        datasourceType: log.datasourceType,
+        filterType: 'include',
+        logRowUid: log.uid,
+      });
+    },
+    [onClickFilterLabel, reportInteractionWrapper, log, keys]
+  );
+
+  const excludeAdhocValue = useCallback(
+    (value: string) => {
+      onClickFilterOutLabel?.(keys[0], value, logRowToSingleRowDataFrame(log) || undefined);
+
+      reportInteractionWrapper('logs_log_line_details_ad_hoc_filter_clicked', {
+        datasourceType: log.datasourceType,
+        filterType: 'exclude',
+        logRowUid: log.uid,
+      });
+    },
+    [onClickFilterOutLabel, reportInteractionWrapper, log, keys]
+  );
+
+  const labelFilterActive = useCallback(
+    async (value?: string) => {
+      if (isLabelFilterActive) {
+        return await isLabelFilterActive(keys[0], value ?? values[0], log.dataFrame?.refId);
+      }
+      return false;
+    },
+    [isLabelFilterActive, keys, values, log.dataFrame?.refId]
+  );
+
+  const showStats = useCallback(() => {
+    setShowFieldStats((showFieldStats: boolean) => !showFieldStats);
+
+    reportInteractionWrapper('logs_log_line_details_stats_clicked', {
+      dataSourceType: log.datasourceType,
+      fieldType: isLabel ? 'label' : 'field',
+      type: showFieldsStats ? 'close' : 'open',
+      logRowUid: log.uid,
+      app,
+    });
+  }, [app, isLabel, log.datasourceType, log.uid, reportInteractionWrapper, showFieldsStats]);
+
+  const reportLinkClick = useCallback(
+    (link: LinkModelWithIcon) => {
+      reportInteractionWrapper('logs_log_line_details_extension_link_clicked', {
+        app,
+        linkApp: resolveAppFromLink(link.href),
+        fieldKey: keys[0],
+        fieldType: isLabel ? 'label' : 'field',
+        datasourceType: log.datasourceType,
+        logLevel: log.logLevel,
+      });
+    },
+    [app, isLabel, keys, log.datasourceType, log.logLevel, reportInteractionWrapper]
+  );
+
+  const refIdTooltip = useMemo(
+    () => (app === CoreApp.Explore && log.dataFrame?.refId ? ` in query ${log.dataFrame?.refId}` : ''),
+    [app, log.dataFrame?.refId]
+  );
+  const singleKey = keys.length === 1;
+  const singleValue = values.length === 1;
+
+  const fieldSupportsFilters = keys[0] !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME;
+
+  return (
+    <>
+      <div className={styles.row}>
+        {!disableActions && (
+          <div className={styles.actions}>
+            <div className={styles.actionIcons}>
+              {onClickFilterLabel && fieldSupportsFilters && (
+                <AsyncIconButton
+                  name="filter-plus"
+                  size={fontSize === 'small' ? 'sm' : undefined}
+                  onClick={filterLabel}
+                  // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
+                  isActive={labelFilterActive}
+                  tooltipSuffix={refIdTooltip}
+                />
+              )}
+              {onClickFilterOutLabel && fieldSupportsFilters && (
+                <IconButton
+                  className={styles.iconButton}
+                  name="filter-minus"
+                  size={fontSize === 'small' ? 'sm' : undefined}
+                  tooltip={
+                    app === CoreApp.Explore && log.dataFrame?.refId
+                      ? t('logs.log-line-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
+                          query: log.dataFrame?.refId,
+                        })
+                      : t('logs.log-line-details.fields.filter-out', 'Filter out value')
+                  }
+                  onClick={filterOutLabel}
+                />
+              )}
+              <IconButton
+                name="signal"
+                size={fontSize === 'small' ? 'sm' : undefined}
+                tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
+                className={cx(styles.iconButton, styles.statsIcon, showFieldsStats && styles.activeIconButton)}
+                disabled={!singleKey}
+                onClick={showStats}
+              />
+            </div>
+          </div>
+        )}
+        <div className={styles.label}>
+          {singleKey ? getNormalizedFieldName(keys[0]) : <MultipleValue values={keys} />}
+        </div>
+        <div className={styles.value}>
+          <div className={styles.valueContainer}>
+            {singleValue ? (
+              <SingleValue value={values[0]} links={links} prettifyJSON={prettifyJSON} onLinkClick={reportLinkClick} />
+            ) : (
+              <MultipleValue showCopy={true} values={values} links={links} onLinkClick={reportLinkClick} />
+            )}
+          </div>
+        </div>
+      </div>
+      {showFieldsStats && fieldStats && (
+        <div className={styles.row}>
+          <div className={disableActions ? undefined : styles.statsColumn}>
+            <LogLabelStats
+              include={includeAdhocValue}
+              exclude={excludeAdhocValue}
+              isValueActive={labelFilterActive}
+              iconSize={fontSize === 'small' ? 'sm' : undefined}
+              className={styles.stats}
+              stats={fieldStats}
+              label={keys[0]}
+              value={values[0]}
+              rowCount={fieldCount}
+              isLabel={isLabel}
+            />
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+function resolveAppFromLink(href: string): string | undefined {
+  return href.match(/\/a\/([^/?#]+)/)?.[1];
+}
+
+const getFieldStyles = (theme: GrafanaTheme2) => ({
+  row: css({
+    display: 'contents',
+  }),
+  actions: css({
+    whiteSpace: 'nowrap',
+  }),
+  actionIcons: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+  }),
+  statsIcon: css({
+    margin: 0,
+    paddingRight: 4,
+  }),
+  ...getIconButtonStyles(theme),
+  label: css({
+    color: theme.colors.text.secondary,
+    paddingRight: theme.spacing(1),
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
+  }),
+  value: css({
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
+    'button:not([aria-haspopup])': {
+      visibility: 'hidden',
+    },
+    '&:hover': {
+      'button:not([aria-haspopup])': {
+        visibility: 'visible',
+      },
+    },
+  }),
+  stats: css({
+    paddingRight: theme.spacing(1),
+    wordBreak: 'break-all',
+    width: '100%',
+    maxWidth: '50vh',
+  }),
+  statsColumn: css({
+    gridColumn: '2 / 4',
+  }),
+  valueContainer: css({
+    display: 'flex',
+    lineHeight: theme.typography.body.lineHeight,
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+    maxHeight: '50vh',
+    overflow: 'auto',
+  }),
+});
+
+const getValueLinkStyles = (theme: GrafanaTheme2) => ({
+  linkValue: css({
+    '& svg': {
+      color: theme.colors.text.primary,
+    },
+    color: theme.colors.text.link,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+  }),
+  linkIcon: css({
+    flexShrink: 0,
+  }),
+  multiLinkValue: css({
+    display: 'inline-flex',
+    alignItems: 'flex-start',
+    gap: theme.spacing(0.25),
+  }),
+  multiLinkContent: css({
+    color: theme.colors.text.link,
+    cursor: 'pointer',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  }),
+  multiLinkTrigger: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: 0,
+    margin: 0,
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: theme.colors.text.link,
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  }),
+  multiLinkChevron: css({
+    flexShrink: 0,
+  }),
+});
+
+const ClipboardButtonWrapper = ({ value }: { value: string }) => {
+  const styles = useStyles2(getClipboardButtonStyles);
+  return (
+    <div className={styles.button}>
+      <ClipboardButton
+        getText={() => value}
+        aria-label={t('logs.log-line-details.fields.copy-value-to-clipboard', 'Copy value to clipboard')}
+        fill="text"
+        variant="secondary"
+        icon="copy"
+        size="md"
+      />
+    </div>
+  );
+};
+
+const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
+  button: css({
+    '& > button': {
+      color: theme.colors.text.secondary,
+      gap: 0,
+      padding: 0,
+      justifyContent: 'center',
+      borderRadius: theme.shape.radius.circle,
+      height: theme.spacing(theme.components.height.sm),
+      width: theme.spacing(theme.components.height.sm),
+      svg: {
+        margin: 0,
+      },
+
+      'span > div': {
+        top: '-5px',
+        '& button': {
+          color: theme.colors.success.main,
+        },
+      },
+    },
+  }),
+});
+
+const MultipleValue = ({
+  links,
+  onLinkClick,
+  showCopy,
+  values = [],
+}: {
+  links?: LinkModelWithIcon[];
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+  showCopy?: boolean;
+  values: string[];
+}) => {
+  if (values.every((val) => val === '')) {
+    return null;
+  }
+  return (
+    <table>
+      <tbody>
+        {values.map((val, i) => {
+          return (
+            <tr key={`${val}-${i}`}>
+              <td>
+                <LinkedValue links={links} onLinkClick={onLinkClick}>
+                  {val}
+                </LinkedValue>
+              </td>
+              <td>{showCopy && val !== '' && <ClipboardButtonWrapper value={val} />}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+};
+
+export const SingleValue = ({
+  links,
+  value: originalValue,
+  prettifyJSON,
+  onLinkClick,
+}: {
+  links?: LinkModelWithIcon[];
+  value: string;
+  prettifyJSON?: boolean;
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+}) => {
+  const value = useMemo(() => {
+    if (!prettifyJSON) {
+      return originalValue;
+    }
+    try {
+      const parsed = stringify(parse(originalValue), undefined, 2);
+      if (parsed) {
+        return parsed;
+      }
+    } catch (error) {}
+    return originalValue;
+  }, [originalValue, prettifyJSON]);
+
+  return (
+    <>
+      <LinkedValue links={links} onLinkClick={onLinkClick}>
+        {value}
+      </LinkedValue>
+      <ClipboardButtonWrapper value={value} />
+    </>
+  );
+};
+
+function LinkedValue({
+  children,
+  links,
+  onLinkClick,
+}: {
+  children: ReactNode;
+  links?: LinkModelWithIcon[];
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+}) {
+  if (links && links.length > 1) {
+    return (
+      <LinkValuesMenu links={links} onLinkClick={onLinkClick}>
+        {children}
+      </LinkValuesMenu>
+    );
+  }
+
+  if (links?.length === 1) {
+    return (
+      <Link link={links[0]} onLinkClick={onLinkClick}>
+        {children}
+      </Link>
+    );
+  }
+
+  return children;
+}
+
+const Link = ({
+  children,
+  link,
+  onLinkClick,
+}: {
+  children: ReactNode;
+  link: LinkModelWithIcon;
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+}) => {
+  const styles = useStyles2(getValueLinkStyles);
+  const icon: IconName = link.icon ?? 'external-link-alt';
+  const href = link.href ? textUtil.sanitizeUrl(link.href) : link.href;
+
+  return (
+    <a
+      href={href}
+      title={link.title}
+      target={link.target}
+      rel="noopener noreferrer"
+      className={styles.linkValue}
+      onClick={(event) => {
+        onLinkClick?.(link);
+        if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+          event.preventDefault();
+          link.onClick(event);
+        }
+      }}
+    >
+      <Icon name={icon} className={styles.linkIcon} />
+      {children}
+    </a>
+  );
+};
+
+const LinkValuesMenu = ({
+  children,
+  links,
+  onLinkClick,
+}: {
+  children: ReactNode;
+  links: LinkModelWithIcon[];
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+}) => {
+  const styles = useStyles2(getValueLinkStyles);
+  const openValueInLabel = t('logs.log-line-details.open-value-in', 'Open value in');
+  const triggerId = useId();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [menuOffset, setMenuOffset] = useState<[number, number]>([8, 0]);
+
+  useLayoutEffect(() => {
+    const container = containerRef.current;
+    const button = container?.querySelector('button');
+    if (!container || !button) {
+      return;
+    }
+    setMenuOffset([8, container.getBoundingClientRect().left - button.getBoundingClientRect().left]);
+  }, [links, children]);
+
+  return (
+    <div className={styles.multiLinkValue} ref={containerRef}>
+      <label htmlFor={triggerId} className={styles.multiLinkContent}>
+        {children}
+      </label>
+      <Dropdown
+        placement="bottom-start"
+        offset={menuOffset}
+        overlay={
+          <Menu>
+            <Menu.Group label={openValueInLabel.toLocaleUpperCase()}>
+              {links.map((link, index) => (
+                <div key={index} title={link.title}>
+                  <Menu.Item
+                    label={link.title || t('logs.log-line-details.link-fallback-label', 'Link')}
+                    icon={link.icon}
+                    url={link.href ? textUtil.sanitizeUrl(link.href) : undefined}
+                    target={link.target}
+                    onClick={(event) => {
+                      onLinkClick?.(link);
+                      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                        event.preventDefault();
+                        link.onClick(event);
+                      }
+                    }}
+                  />
+                </div>
+              ))}
+            </Menu.Group>
+          </Menu>
+        }
+      >
+        <button
+          id={triggerId}
+          type="button"
+          className={styles.multiLinkTrigger}
+          title={openValueInLabel}
+          aria-haspopup="menu"
+        >
+          <Icon name="angle-down" size="sm" className={styles.multiLinkChevron} />
+        </button>
+      </Dropdown>
+    </div>
+  );
+};

@@ -10,6 +10,7 @@ import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutMa
 
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
 import { NotebookRenderPage } from './NotebookRenderPage';
+import { RENDER_READY_FALLBACK_MS } from './notebookRenderReadiness';
 
 setPluginComponentHook(() => ({ component: null, isLoading: false }));
 
@@ -128,6 +129,20 @@ describe('NotebookRenderPage', () => {
     expect(screen.queryByRole('button', { name: /refresh time interval/i })).not.toBeInTheDocument();
   });
 
+  // The notebook page leaves it to the time picker, which the capture has none of.
+  it('shows the time range under the title', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    stubStateManager(buildScene());
+
+    render(<NotebookRenderPage />);
+
+    await screen.findByText('Findings');
+    expect(screen.getByText('Time')).toBeInTheDocument();
+    expect(
+      screen.getByText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} → \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+    ).toBeInTheDocument();
+  });
+
   it('abandons autosave, so the render can never write to the notebook it is rendering', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     const scene = buildScene();
@@ -158,6 +173,7 @@ describe('NotebookRenderPage', () => {
 
 describe('NotebookRenderPage readiness', () => {
   afterEach(async () => {
+    jest.useRealTimers();
     await act(async () => {
       setTestFlags({});
     });
@@ -177,7 +193,7 @@ describe('NotebookRenderPage readiness', () => {
     });
   });
 
-  it('says nothing to the renderer on the way to a successful capture', async () => {
+  it('says nothing to the renderer before the notebook has rendered', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     const messages = captureRenderMessages();
     stubStateManager(buildScene());
@@ -186,6 +202,66 @@ describe('NotebookRenderPage readiness', () => {
 
     await screen.findByText('Findings');
     expect(messages()).toEqual([]);
+  });
+
+  it('reports success once a notebook without queries has rendered', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    const messages = captureRenderMessages();
+    stubStateManager(buildScene());
+
+    render(<NotebookRenderPage />);
+
+    await waitFor(
+      () => {
+        expect(messages()).toEqual([{ type: 'REPORT_RENDER_COMPLETE', data: { success: true } }]);
+      },
+      { timeout: 3000 }
+    );
+  });
+
+  it('stops watching for readiness when the page unmounts', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    jest.useFakeTimers();
+    const messages = captureRenderMessages();
+    stubStateManager(buildScene());
+
+    const { unmount } = render(<NotebookRenderPage />);
+    await screen.findByText('Findings');
+    unmount();
+    act(() => {
+      jest.advanceTimersByTime(RENDER_READY_FALLBACK_MS);
+    });
+
+    expect(messages()).toEqual([]);
+  });
+
+  it('reports the failure only once and never success, even after the fallback delay', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    jest.useFakeTimers();
+    const messages = captureRenderMessages();
+    stubStateManager(undefined, { message: 'Notebook not found', status: 404 });
+
+    render(<NotebookRenderPage />);
+    await screen.findByText('Notebook not found');
+    act(() => {
+      jest.advanceTimersByTime(RENDER_READY_FALLBACK_MS);
+    });
+
+    expect(messages()).toEqual([{ type: 'REPORT_RENDER_COMPLETE', data: { success: false } }]);
+  });
+
+  it('keeps rendering through readiness when the renderer binding is absent', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    jest.useFakeTimers();
+    stubStateManager(buildScene());
+
+    render(<NotebookRenderPage />);
+    await screen.findByText('Findings');
+    act(() => {
+      jest.advanceTimersByTime(RENDER_READY_FALLBACK_MS);
+    });
+
+    expect(screen.getByText('Findings')).toBeInTheDocument();
   });
 
   it('shows the failure on the page', async () => {

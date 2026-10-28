@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { memo, type RefObject, useMemo, useRef, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 
 import {
   type GrafanaTheme2,
@@ -51,13 +51,15 @@ export interface PropsWithScreenSize extends Props {
   isFullscreen: boolean;
 }
 
-interface FormProps extends Omit<Props, 'history'> {
-  calendarAnchor: RefObject<HTMLElement | null>;
+interface NarrowScreenFormProps extends Omit<Props, 'history'> {
   historyOptions?: TimeOption[];
 }
 
+interface FullScreenFormProps extends NarrowScreenFormProps {
+  calendarAnchor: HTMLElement | null;
+}
+
 export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
-  const calendarAnchor = useRef<HTMLDivElement>(null);
   const {
     quickOptions = [],
     isReversed,
@@ -81,6 +83,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   const historyOptions = mapToHistoryOptions(history, timeZone);
   const baseTimeOption = useTimeOption(value.raw, quickOptions);
   const [searchTerm, setSearchQuery] = useState('');
+  const [calendarAnchor, setCalendarAnchor] = useState<HTMLDivElement | null>(null);
 
   const { filteredQuickOptions, customTimeOption } = useMemo(() => {
     const filtered = quickOptions.filter((o) => o.display.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -104,7 +107,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
   };
 
   return (
-    <div ref={calendarAnchor} id="TimePickerContent" className={cx(styles.container, className)}>
+    <div id="TimePickerContent" ref={setCalendarAnchor} className={cx(styles.container, className)}>
       <div className={styles.body}>
         {(!isFullscreen || !hideQuickRanges) && (
           <div className={styles.rightSide}>
@@ -118,9 +121,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
               />
             </div>
             <div className={styles.scrollContent}>
-              {!isFullscreen && (
-                <NarrowScreenForm {...props} calendarAnchor={calendarAnchor} historyOptions={historyOptions} />
-              )}
+              {!isFullscreen && <NarrowScreenForm {...props} historyOptions={historyOptions} />}
               {!hideQuickRanges && (
                 <TimeRangeList options={filteredQuickOptions} onChange={onChangeTimeOption} value={timeOption} />
               )}
@@ -129,7 +130,7 @@ export const TimePickerContentWithScreenSize = (props: PropsWithScreenSize) => {
         )}
         {isFullscreen && (
           <div className={styles.leftSide}>
-            <FullScreenForm {...props} calendarAnchor={calendarAnchor} historyOptions={historyOptions} />
+            <FullScreenForm {...props} historyOptions={historyOptions} calendarAnchor={calendarAnchor} />
           </div>
         )}
       </div>
@@ -152,7 +153,7 @@ export const TimePickerContent = (props: Props) => {
   return <TimePickerContentWithScreenSize {...props} isFullscreen={isFullscreen} />;
 };
 
-const NarrowScreenForm = (props: FormProps) => {
+const NarrowScreenForm = (props: NarrowScreenFormProps) => {
   const { value, hideQuickRanges, onChange, timeZone, historyOptions = [], showHistory, onError, weekStart } = props;
   const styles = useStyles2(getNarrowScreenStyles);
   const isAbsolute = isDateTime(value.raw.from) || isDateTime(value.raw.to);
@@ -188,7 +189,7 @@ const NarrowScreenForm = (props: FormProps) => {
         <div className={styles.body} id="expanded-timerange">
           <div className={styles.form}>
             <TimeRangeContent
-              calendarAnchor={props.calendarAnchor}
+              calendarAnchor={{ current: null }}
               value={value}
               onApply={onChange}
               timeZone={timeZone}
@@ -211,8 +212,18 @@ const NarrowScreenForm = (props: FormProps) => {
   );
 };
 
-const FullScreenForm = (props: FormProps) => {
-  const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions, onError, weekStart } = props;
+const FullScreenForm = (props: FullScreenFormProps) => {
+  const {
+    onChange,
+    value,
+    timeZone,
+    fiscalYearStartMonth,
+    isReversed,
+    historyOptions,
+    onError,
+    weekStart,
+    calendarAnchor,
+  } = props;
   const styles = useStyles2(getFullScreenStyles, props.hideQuickRanges);
   const onChangeTimeOption = (timeOption: TimeOption) => {
     return onChange(mapOptionToTimeRange(timeOption, timeZone));
@@ -227,12 +238,12 @@ const FullScreenForm = (props: FormProps) => {
           </TimePickerTitle>
         </div>
         <TimeRangeContent
-          calendarAnchor={props.calendarAnchor}
           value={value}
           timeZone={timeZone}
           fiscalYearStartMonth={fiscalYearStartMonth}
           onApply={onChange}
           isFullscreen={true}
+          calendarAnchor={{ current: calendarAnchor }}
           isReversed={isReversed}
           onError={onError}
           weekStart={weekStart}

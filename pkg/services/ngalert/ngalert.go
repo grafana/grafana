@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/alertmanager/matchers/compat"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/alerting/logging"
 	notificationHistorian "github.com/grafana/alerting/notify/historian"
 	"github.com/grafana/alerting/notify/historian/lokiclient"
 	"github.com/grafana/alerting/notify/nfstatus"
@@ -25,7 +26,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -107,6 +110,7 @@ func ProvideService(
 	userService user.Service,
 	orgService org.Service,
 	clientGenerator resource.ClientGenerator,
+	cfgProvider configprovider.ConfigProvider,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                       cfg,
@@ -144,6 +148,7 @@ func ProvideService(
 		FolderResourcePermissions: folderResourcePermissions,
 		userService:               userService,
 		orgService:                orgService,
+		cfgProvider:               cfgProvider,
 	}
 
 	if ng.IsDisabled() {
@@ -203,6 +208,7 @@ type AlertNG struct {
 	provenanceStore           *provenance.ProvenanceStore
 	userService               user.Service
 	orgService                org.Service
+	cfgProvider               configprovider.ConfigProvider
 
 	bus             bus.Bus
 	pluginsStore    pluginstore.Store
@@ -248,7 +254,7 @@ func (ng *AlertNG) init() error {
 	// using the UTF-8 parser and then fallsback to the classic parser on error.
 	// UTF-8 is permitted in label names. This should be removed when the compat package
 	// is removed from Alertmanager.
-	compat.InitFromFlags(ng.Log, featurecontrol.NoopFlags{})
+	compat.InitFromFlags(logging.NewSlogLogger(ng.Log), featurecontrol.NoopFlags{})
 
 	// Configure the remote Alertmanager.
 	// If toggles for both modes are enabled, remote primary takes precedence.
@@ -264,17 +270,6 @@ func (ng *AlertNG) init() error {
 	remoteSecondaryWithRemoteState := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondaryWithRemoteState)
 	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
-		smtpCfg := remoteClient.SmtpConfig{
-			FromAddress:    ng.Cfg.Smtp.FromAddress,
-			FromName:       ng.Cfg.Smtp.FromName,
-			Host:           ng.Cfg.Smtp.Host,
-			User:           ng.Cfg.Smtp.User,
-			Password:       ng.Cfg.Smtp.Password,
-			EhloIdentity:   ng.Cfg.Smtp.EhloIdentity,
-			StartTLSPolicy: ng.Cfg.Smtp.StartTLSPolicy,
-			SkipVerify:     ng.Cfg.Smtp.SkipVerify,
-			StaticHeaders:  ng.Cfg.Smtp.StaticHeaders,
-		}
 		runtimeConfig := remoteClient.RuntimeConfig{
 			DispatchTimer: notifier.GetDispatchTimer(ng.FeatureToggles).String(),
 		}
@@ -285,7 +280,7 @@ func (ng *AlertNG) init() error {
 			TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 			URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 			ExternalURL:       ng.Cfg.AppURL,
-			SmtpConfig:        smtpCfg,
+			SmtpConfig:        remote.LiveSmtpConfig(ng.cfgProvider, ng.Cfg),
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
 			RuntimeConfig:     runtimeConfig,
 		}
@@ -739,15 +734,9 @@ func (ng *AlertNG) BackfillFolderFullpaths(ctx context.Context) error {
 		default:
 		}
 
-		// Get all unique folder UIDs for this org from alert_rule table where folder_fullpath is NULL
-		var folderUIDs []string
-		err := ng.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(`
-				SELECT DISTINCT namespace_uid
-				FROM alert_rule
-				WHERE org_id = ? AND folder_fullpath IS NULL
-			`, orgID).Find(&folderUIDs)
-		})
+		// A routed legacy database provider needs the org identity during startup too.
+		orgCtx, _ := identity.WithServiceIdentity(ctx, orgID)
+		folderUIDs, err := ng.ruleStore.GetFolderUIDsWithMissingFullpath(orgCtx, orgID)
 		if err != nil {
 			ng.Log.Error("Failed to fetch folder UIDs for backfill", "org_id", orgID, "error", err)
 			continue
@@ -976,6 +965,8 @@ func createRecordingWriter(settings setting.RecordingRuleSettings, httpClientPro
 			Timeout:              settings.Timeout,
 			CustomHeaders:        settings.CustomHeaders,
 			DefaultDatasourceUID: settings.DefaultDatasourceUID,
+			MaxBatchSize:         settings.MaxWriteBatchSize,
+			MaxWriteConcurrency:  settings.MaxWriteConcurrency,
 		}
 
 		logger.Info("Setting up remote write using data sources",

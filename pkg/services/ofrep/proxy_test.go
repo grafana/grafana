@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/features"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -148,7 +147,6 @@ func TestProxyAllFlagReq_Filtering(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		filteringOn    bool
 		isAuthedUser   bool
 		upstreamFlags  []goffmodel.OFREPFlagBulkEvaluateSuccessResponse
 		upstreamStatus int
@@ -156,8 +154,7 @@ func TestProxyAllFlagReq_Filtering(t *testing.T) {
 		wantKeys       []string
 	}{
 		{
-			name:           "flag on, authenticated: bulk response is filtered down to public-metadata flags only",
-			filteringOn:    true,
+			name:           "authenticated: bulk response is filtered down to public-metadata flags only",
 			isAuthedUser:   true,
 			upstreamFlags:  flagsByMetadata,
 			upstreamStatus: http.StatusOK,
@@ -165,8 +162,7 @@ func TestProxyAllFlagReq_Filtering(t *testing.T) {
 			wantKeys:       []string{"publicBool", "publicString"},
 		},
 		{
-			name:           "flag on, unauthenticated: bulk response is filtered down to public-metadata flags only",
-			filteringOn:    true,
+			name:           "unauthenticated: bulk response is filtered down to public-metadata flags only",
 			isAuthedUser:   false,
 			upstreamFlags:  flagsByMetadata,
 			upstreamStatus: http.StatusOK,
@@ -174,34 +170,14 @@ func TestProxyAllFlagReq_Filtering(t *testing.T) {
 			wantKeys:       []string{"publicBool", "publicString"},
 		},
 		{
-			name:           "flag off, authenticated: bulk response is not filtered at all",
-			filteringOn:    false,
-			isAuthedUser:   true,
-			upstreamFlags:  flagsByMetadata,
-			upstreamStatus: http.StatusOK,
-			wantStatus:     http.StatusOK,
-			wantKeys:       []string{"publicBool", "publicString", "privateBool", "noMetadata"},
-		},
-		{
-			name:           "flag off, unauthenticated: bulk response is still filtered down to public-metadata flags (unauth is always gated)",
-			filteringOn:    false,
-			isAuthedUser:   false,
-			upstreamFlags:  flagsByMetadata,
-			upstreamStatus: http.StatusOK,
-			wantStatus:     http.StatusOK,
-			wantKeys:       []string{"publicBool", "publicString"},
-		},
-		{
-			name:           "flag on: a non-200 response from the provider is passed through unfiltered, not decoded",
-			filteringOn:    true,
+			name:           "a non-200 response from the provider is passed through unfiltered, not decoded",
 			isAuthedUser:   true,
 			upstreamFlags:  nil,
 			upstreamStatus: http.StatusInternalServerError,
 			wantStatus:     http.StatusInternalServerError,
 		},
 		{
-			name:           "flag on: if every flag gets filtered out, the response still has a valid (non-null) empty flags list",
-			filteringOn:    true,
+			name:           "if every flag gets filtered out, the response still has a valid (non-null) empty flags list",
 			isAuthedUser:   true,
 			upstreamFlags:  onlyPrivateFlag,
 			upstreamStatus: http.StatusOK,
@@ -212,7 +188,6 @@ func TestProxyAllFlagReq_Filtering(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			setupOpenFeatureFlag(t, featuremgmt.FlagFeaturesBulkFlagEvalFiltering, tt.filteringOn)
 			b := newBulkEvalBuilder(t, tt.upstreamFlags, tt.upstreamStatus)
 			w := httptest.NewRecorder()
 			r := httptest.NewRequest(http.MethodPost, "/ofrep/v1/evaluate/flags", strings.NewReader(`{}`))

@@ -28,6 +28,33 @@ func TestRequesterFromContext(t *testing.T) {
 	})
 }
 
+func TestServiceIdentityPluginGroups(t *testing.T) {
+	_, requester := identity.WithServiceIdentity(context.Background(), 1)
+	for group, want := range map[string]bool{
+		"example.ext.grafana.app": true,
+		"grafana-example-app":     true,
+		"-app":                    false,
+		"example.grafana-app":     false,
+	} {
+		res := authz.CheckServicePermissions(requester, group, "things", "get")
+		require.True(t, res.ServiceCall, group)
+		require.Equal(t, want, res.Allowed, group)
+	}
+}
+
+func TestServiceIdentityRuleCleanupPermissions(t *testing.T) {
+	_, requester := identity.WithServiceIdentity(context.Background(), 42)
+	require.Equal(t, int64(42), requester.GetOrgID())
+	for _, action := range []string{"alert.rules:read", "alert.rules:delete", "rules.alerting.grafana.app/configs:delete"} {
+		require.Equal(t, []string{"*"}, requester.GetPermissions()[action])
+	}
+	for _, resource := range []string{"rulesequences", "alertrules", "recordingrules", "configs"} {
+		result := authz.CheckServicePermissions(requester, "rules.alerting.grafana.app", resource, "deletecollection")
+		require.True(t, result.ServiceCall)
+		require.True(t, result.Allowed, resource)
+	}
+}
+
 func TestWithProvisioningIdentity(t *testing.T) {
 	ctx, requester, err := identity.WithProvisioningIdentity(context.Background(), "default")
 	require.NoError(t, err)

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { autoUpdate, flip, shift, useFloating } from '@floating-ui/react';
+import { autoUpdate, useFloating, useMergeRefs } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { OverlayContainer, useOverlay } from '@react-aria/overlays';
@@ -8,7 +8,8 @@ import { type FormEvent, memo, useRef } from 'react';
 import { type DateTime, type GrafanaTheme2, type TimeZone } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { useStyles2 } from '../../../themes/ThemeContext';
+import { getPositioningMiddleware } from '../../../utils/floating';
 import { getModalStyles } from '../../Modal/getModalStyles';
 import { type WeekStart } from '../WeekStartPicker';
 
@@ -25,6 +26,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
 
     calendar: css({
+      zIndex: theme.zIndex.modal,
       display: 'flex',
       flexDirection: 'column',
       gap: theme.spacing(1),
@@ -49,6 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 export interface TimePickerCalendarProps {
+  referenceElement?: HTMLElement | null;
   isOpen: boolean;
   from: DateTime;
   to: DateTime;
@@ -64,22 +67,23 @@ export interface TimePickerCalendarProps {
   isFullscreen: boolean;
   timeZone?: TimeZone;
   isReversed?: boolean;
-  anchorElement: HTMLElement | null;
 }
 
 function TimePickerCalendar(props: TimePickerCalendarProps) {
-  const theme = useTheme2();
   const { modalBackdrop } = useStyles2(getModalStyles);
-  const styles = getStyles(theme);
-  const { isOpen, isFullscreen: isFullscreenProp, onClose } = props;
+  const styles = useStyles2(getStyles);
+  const { isOpen, isFullscreen: isFullscreenProp, onClose, referenceElement, isReversed } = props;
   const ref = useRef<HTMLElement>(null);
+  const placement = isReversed ? 'right-start' : 'left-start';
   const { refs, floatingStyles } = useFloating({
-    elements: { reference: props.anchorElement },
-    placement: props.isReversed ? 'right-start' : 'left-start',
+    open: isOpen && isFullscreenProp,
+    elements: { reference: referenceElement },
+    placement,
     strategy: 'fixed',
-    middleware: [flip(), shift({ padding: 8 })],
+    middleware: getPositioningMiddleware(placement),
     whileElementsMounted: autoUpdate,
   });
+  const floatingRef = useMergeRefs([ref, refs.setFloating]);
   const { dialogProps } = useDialog(
     {
       'aria-label': selectors.components.TimePicker.calendar.label,
@@ -105,7 +109,8 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   const calendar = (
     <section
       className={styles.calendar}
-      ref={ref}
+      ref={showInModal ? ref : floatingRef}
+      style={showInModal ? undefined : floatingStyles}
       {...overlayProps}
       {...dialogProps}
       data-testid={selectors.components.TimePicker.calendar.label}
@@ -119,9 +124,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   if (!showInModal) {
     return (
       <FocusScope contain restoreFocus autoFocus>
-        <div ref={refs.setFloating} style={floatingStyles}>
-          {calendar}
-        </div>
+        {calendar}
       </FocusScope>
     );
   }

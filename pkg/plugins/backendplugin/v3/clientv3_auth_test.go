@@ -37,12 +37,12 @@ func TestNewTokenExchanger(t *testing.T) {
 		require.Nil(t, exchanger, "without both values, requests are not authenticated")
 
 		client := &recordingClientV3{}
-		wrapped, err := WithAuthentication(client, "example-app", exchanger)
+		wrapped, err := WithAuthentication(client, "example-app", nil, exchanger)
 		require.NoError(t, err)
 		require.Same(t, client, wrapped)
 	})
 
-	wrapped, err := WithAuthentication(nil, "example-app", authnlib.NewStaticTokenExchanger("token"))
+	wrapped, err := WithAuthentication(nil, "example-app", nil, authnlib.NewStaticTokenExchanger("token"))
 	require.NoError(t, err)
 	require.Nil(t, wrapped, "a missing client stays missing")
 }
@@ -85,7 +85,7 @@ func TestWithAuthenticationExchangesForCaller(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			exchanged = nil
 			inner := &recordingClientV3{}
-			client, err := WithAuthentication(inner, "example-app", exchanger)
+			client, err := WithAuthentication(inner, "example-app", []string{"example.grafana.app"}, exchanger)
 			require.NoError(t, err)
 
 			_, err = client.CallRoute(tt.ctx, pluginv3.CallRouteRequest_builder{Group: new("example.grafana.app"), Namespace: new("stacks-1")}.Build())
@@ -101,10 +101,36 @@ func TestWithAuthenticationExchangesForCaller(t *testing.T) {
 		})
 	}
 
+	t.Run("without a plugin ID, the API group is the audience", func(t *testing.T) {
+		exchanged = nil
+		inner := &recordingClientV3{}
+		client, err := WithAuthentication(inner, "", []string{"example.grafana.app"}, exchanger)
+		require.NoError(t, err)
+
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "stacks-1", IDToken: "user-id-token"})
+		_, err = client.CallRoute(ctx, pluginv3.CallRouteRequest_builder{Group: new("example.grafana.app"), Namespace: new("stacks-1")}.Build())
+		require.NoError(t, err)
+		require.Len(t, exchanged, 1)
+		require.Equal(t, []any{"example.grafana.app"}, exchanged[0]["audiences"])
+	})
+
+	t.Run("requests for another API group are rejected", func(t *testing.T) {
+		exchanged = nil
+		inner := &recordingClientV3{}
+		client, err := WithAuthentication(inner, "example-app", []string{"example.grafana.app"}, exchanger)
+		require.NoError(t, err)
+
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "stacks-1", IDToken: "user-id-token"})
+		_, err = client.CallRoute(ctx, pluginv3.CallRouteRequest_builder{Group: new("other.grafana.app"), Namespace: new("stacks-1")}.Build())
+		require.ErrorContains(t, err, "is not served by this plugin")
+		require.Empty(t, exchanged)
+		require.Nil(t, inner.ctx, "the request must not reach the plugin")
+	})
+
 	t.Run("caller without a signed token is rejected", func(t *testing.T) {
 		exchanged = nil
 		inner := &recordingClientV3{}
-		client, err := WithAuthentication(inner, "example-app", exchanger)
+		client, err := WithAuthentication(inner, "example-app", []string{"example.grafana.app"}, exchanger)
 		require.NoError(t, err)
 
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"})

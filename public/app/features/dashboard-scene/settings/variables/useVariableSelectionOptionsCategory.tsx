@@ -1,10 +1,12 @@
 import { useCallback, useId, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { type MultiValueVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
+import { MultiValueVariable, type SceneVariable, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Input, Switch } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+
+import { undoableVariableEdit } from '../../actions/variable/undoableVariableEdit';
 
 function useVariableHasMultiProps(variable: MultiValueVariable) {
   const state = variable.useState();
@@ -12,13 +14,17 @@ function useVariableHasMultiProps(variable: MultiValueVariable) {
   return hasMultiProps;
 }
 
-export function useVariableSelectionOptionsCategory(variable: MultiValueVariable): OptionsPaneCategoryDescriptor {
+export function useVariableSelectionOptionsCategory(variable: SceneVariable): OptionsPaneCategoryDescriptor | null {
   const multiValueId = useId();
   const includeAllId = useId();
   const customAllValueId = useId();
   const allowCustomId = useId();
 
   return useMemo(() => {
+    if (!(variable instanceof MultiValueVariable)) {
+      return null;
+    }
+
     return new OptionsPaneCategoryDescriptor({
       title: t('dashboard.sidebar.variable.selection-options.category', 'Selection options'),
       id: 'selection-options-category',
@@ -84,37 +90,49 @@ interface InputProps {
 function MultiValueSwitch({ variable, id }: InputProps) {
   const { isMulti } = variable.useState();
 
-  return (
-    <Switch
-      id={id}
-      value={Boolean(isMulti)}
-      onChange={(evt) => variable.setState({ isMulti: evt.currentTarget.checked })}
-    />
-  );
+  const onChange = (newIsMulti: boolean) => {
+    undoableVariableEdit(true, {
+      meta: { actionId: 'variable.changeMultiValue' },
+      source: variable,
+      description: t('dashboard.edit-actions.variable-multi-value', 'Change variable multi-value'),
+      perform: () => variable.setState({ isMulti: newIsMulti }),
+      undo: () => variable.setState({ isMulti }),
+    });
+  };
+
+  return <Switch id={id} value={Boolean(isMulti)} onChange={(evt) => onChange(evt.currentTarget.checked)} />;
 }
 
 function IncludeAllSwitch({ variable, id }: InputProps) {
   const { includeAll } = variable.useState();
 
-  return (
-    <Switch
-      id={id}
-      value={Boolean(includeAll)}
-      onChange={(evt) => variable.setState({ includeAll: evt.currentTarget.checked })}
-    />
-  );
+  const onChange = (newIncludeAll: boolean) => {
+    undoableVariableEdit(true, {
+      meta: { actionId: 'variable.changeIncludeAll' },
+      source: variable,
+      description: t('dashboard.edit-actions.variable-include-all', 'Change variable include All value'),
+      perform: () => variable.setState({ includeAll: newIncludeAll }),
+      undo: () => variable.setState({ includeAll }),
+    });
+  };
+
+  return <Switch id={id} value={Boolean(includeAll)} onChange={(evt) => onChange(evt.currentTarget.checked)} />;
 }
 
 function AllowCustomSwitch({ variable, id }: InputProps) {
   const { allowCustomValue } = variable.useState();
 
-  return (
-    <Switch
-      id={id}
-      value={allowCustomValue ?? true}
-      onChange={(evt) => variable.setState({ allowCustomValue: evt.currentTarget.checked })}
-    />
-  );
+  const onChange = (newAllowCustomValue: boolean) => {
+    undoableVariableEdit(true, {
+      meta: { actionId: 'variable.changeAllowCustomValue' },
+      source: variable,
+      description: t('dashboard.edit-actions.variable-allow-custom-value', 'Change variable allow custom values'),
+      perform: () => variable.setState({ allowCustomValue: newAllowCustomValue }),
+      undo: () => variable.setState({ allowCustomValue }),
+    });
+  };
+
+  return <Switch id={id} value={allowCustomValue ?? true} onChange={(evt) => onChange(evt.currentTarget.checked)} />;
 }
 
 function CustomAllValueInput({ variable, id }: InputProps) {
@@ -124,17 +142,29 @@ function CustomAllValueInput({ variable, id }: InputProps) {
   const onInputBlur = useCallback(
     (evt: React.FocusEvent<HTMLInputElement>) => {
       const newValue = evt.currentTarget.value;
-      if (newValue === variable.state.allValue) {
+      const oldValue = variable.state.allValue;
+      if (newValue === (oldValue ?? '')) {
         return;
       }
 
-      variable.setState({ allValue: newValue });
-      if (variable.hasAllValue()) {
-        variable.publishEvent(new SceneVariableValueChangedEvent(variable), true);
-      }
+      const applyAllValue = (value: string | undefined) => {
+        variable.setState({ allValue: value });
+        if (variable.hasAllValue()) {
+          variable.publishEvent(new SceneVariableValueChangedEvent(variable), true);
+        }
+      };
+
+      undoableVariableEdit(true, {
+        meta: { actionId: 'variable.changeAllValue' },
+        source: variable,
+        description: t('dashboard.edit-actions.variable-custom-all-value', 'Change variable custom all value'),
+        perform: () => applyAllValue(newValue),
+        undo: () => applyAllValue(oldValue),
+      });
     },
     [variable]
   );
 
-  return <Input id={id} ref={ref} defaultValue={allValue ?? ''} onBlur={onInputBlur} />;
+  // The input is uncontrolled, remount it when the value changes outside of it (e.g. undo/redo)
+  return <Input key={allValue ?? ''} id={id} ref={ref} defaultValue={allValue ?? ''} onBlur={onInputBlur} />;
 }
