@@ -139,16 +139,14 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 		return res
 	}
 
-	code := 500
-
 	st, ok := grpcstatus.FromError(err)
-	if ok {
-		code = runtime.HTTPStatusFromCode(st.Code())
+	if !ok {
+		st = grpcstatus.FromContextError(err)
 	}
 
 	return &resourcepb.ErrorResult{
 		Message: err.Error(),
-		Code:    int32(code),
+		Code:    int32(runtime.HTTPStatusFromCode(st.Code())),
 	}
 }
 

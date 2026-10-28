@@ -1476,10 +1476,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		latestRV, latestErr := k.latestResourceVersion(ctx)
 		err = latestErr
 		if err != nil {
-			return &BackendReadResponse{Error: &resourcepb.ErrorResult{
-				Code:    http.StatusInternalServerError,
-				Message: fmt.Sprintf("failed to fetch latest resource version: %v", err),
-			}}
+			return &BackendReadResponse{Error: AsErrorResult(fmt.Errorf("failed to fetch latest resource version: %w", err))}
 		}
 
 		// Check if the requested RV is higher than the latest available RV
@@ -1512,7 +1509,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if errors.Is(err, ErrNotFound) {
 		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 	} else if err != nil {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
+		return &BackendReadResponse{Error: AsErrorResult(err)}
 	}
 	data, err := k.dataStore.Get(ctx, DataKey{
 		Group:           req.Key.Group,
@@ -1529,11 +1526,11 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
 	}
 	if err != nil {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
+		return &BackendReadResponse{Error: AsErrorResult(err)}
 	}
 	value, err := kv.ReadAllAndClose(data)
 	if err != nil {
-		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
+		return &BackendReadResponse{Error: AsErrorResult(err)}
 	}
 	return &BackendReadResponse{
 		Key:             req.Key,

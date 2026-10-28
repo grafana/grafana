@@ -20,6 +20,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -1226,6 +1228,73 @@ func TestKvStorageBackend_ReadResource_Success(t *testing.T) {
 	require.Equal(t, "resources", response.Key.Resource)
 	require.Equal(t, rv, response.ResourceVersion)
 	require.Equal(t, objectToJSONBytes(t, testObj), response.Value)
+}
+
+func TestKvStorageBackend_ReadResource_ErrorStatus(t *testing.T) {
+	for _, stage := range []string{"latest resource version", "resolve key", "get body", "read body"} {
+		t.Run(stage, func(t *testing.T) {
+			for _, tc := range []struct {
+				name string
+				err  error
+				want codes.Code
+			}{
+				{"canceled", context.Canceled, codes.Canceled},
+				{"deadline exceeded", context.DeadlineExceeded, codes.DeadlineExceeded},
+				{"grpc canceled", status.Error(codes.Canceled, "canceled read"), codes.Canceled},
+				{"grpc deadline exceeded", status.Error(codes.DeadlineExceeded, "expired read"), codes.DeadlineExceeded},
+				{"backend failure", errors.New("storage failed"), codes.Internal},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					store := &readErrorKV{stage: stage, err: tc.err}
+					backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+						store.KV = opts.KvStore
+						opts.KvStore = store
+					})
+					_, rv := createAndWriteTestObject(t, backend)
+					store.fail.Store(true)
+
+					req := &resourcepb.ReadRequest{Key: storageTestKey("test-resource")}
+					if stage == "latest resource version" {
+						req.ResourceVersion = rv
+					}
+					response := backend.ReadResource(t.Context(), req)
+					require.NotNil(t, response.Error)
+					require.Contains(t, response.Error.Message, tc.err.Error())
+					require.Equal(t, tc.want, grpcCodeFromErrorResult(response.Error))
+					_, err := UnaryErrorResultInterceptor()(t.Context(), req, nil, func(context.Context, any) (any, error) {
+						return &resourcepb.ReadResponse{Error: response.Error}, nil
+					})
+					require.Equal(t, tc.want, status.Code(err))
+				})
+			}
+		})
+	}
+}
+
+type readErrorKV struct {
+	KV
+	stage string
+	err   error
+	fail  atomic.Bool
+}
+
+func (k *readErrorKV) Keys(ctx context.Context, section string, opts ListOptions) iter.Seq2[string, error] {
+	if k.fail.Load() && (k.stage == "resolve key" && section == kv.DataSection || k.stage == "latest resource version" && section == kv.EventsSection) {
+		return func(yield func(string, error) bool) { yield("", k.err) }
+	}
+	return k.KV.Keys(ctx, section, opts)
+}
+
+func (k *readErrorKV) Get(ctx context.Context, section, key string) (io.ReadCloser, error) {
+	if k.fail.Load() && section == kv.DataSection {
+		switch k.stage {
+		case "get body":
+			return nil, k.err
+		case "read body":
+			return failingReadCloser{err: k.err}, nil
+		}
+	}
+	return k.KV.Get(ctx, section, key)
 }
 
 func TestKvStorageBackend_ReadResource_SpecificVersion(t *testing.T) {
