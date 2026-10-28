@@ -8,7 +8,9 @@ title: Grafana Open Source
 
 ## Grafana Open Source
 
-Grafana open source is open source visualization and analytics software. It allows you to query, visualize, alert on, and explore your metrics, logs, and traces no matter where they are stored. It provides you with tools to turn your time-series database (TSDB) data into insightful graphs and visualizations.
+Grafana is an open and composable observability platform. It brings together metrics, logs, traces, profiles, and other data from across your organization and gives people and AI agents the context they need to monitor, understand, and act on that data.
+
+Grafana open source (Grafana OSS) is the free, open source version of the platform that you install and run yourself. It queries your data wherever it's stored and lets you visualize, alert on, and explore it. Grafana Labs also maintains an open source database for each observability signal. You can run them alongside Grafana OSS, and they're the same databases that back Grafana Cloud.
 
 ### Grafana Loki
 

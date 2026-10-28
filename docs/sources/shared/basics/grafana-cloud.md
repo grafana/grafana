@@ -8,4 +8,4 @@ title: Grafana Cloud
 
 ## Grafana Cloud
 
-Grafana Cloud is a highly available, fast, fully managed OpenSaaS logging and metrics platform. It is everything you love about Grafana, but Grafana Labs hosts it for you and handles all the headaches.
+Grafana Cloud is the fully managed Grafana observability platform, hosted by Grafana Labs. It runs the Grafana visibility layer together with managed backends for metrics, logs, traces, and profiles, so you don't deploy or operate the stack yourself, and it includes a free tier. Grafana Cloud also adds capabilities that aren't in the self managed versions, such as Agent Observability, machine learning, and the hosted Cloud MCP Server. For more information, refer to the [Grafana Cloud documentation](https://grafana.com/docs/grafana-cloud/).
