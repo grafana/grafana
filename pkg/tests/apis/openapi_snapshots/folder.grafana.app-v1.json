@@ -1208,8 +1208,7 @@
         "type": "object",
         "required": [
           "metadata",
-          "spec",
-          "status"
+          "spec"
         ],
         "properties": {
           "apiVersion": {

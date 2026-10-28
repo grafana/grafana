@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
@@ -531,6 +532,15 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana folders"
+
+	// status is server-written; clients creating or replacing a folder never send it.
+	if oas.Components != nil {
+		if s, ok := oas.Components.Schemas[foldersv1.OpenAPIPrefix+"Folder"]; ok && s != nil {
+			// Copy first: v1 and v1beta1 share the generated definitions, so editing in place
+			// would corrupt the other version's required list.
+			s.Required = slices.DeleteFunc(slices.Clone(s.Required), func(f string) bool { return f == "status" })
+		}
+	}
 	return oas, nil
 }
 
