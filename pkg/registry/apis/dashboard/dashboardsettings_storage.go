@@ -3,19 +3,35 @@ package dashboard
 import (
 	"context"
 	"errors"
+	"fmt"
+	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/selection"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
+)
+
+const (
+	dashboardSettingsListPageSize = 500
+	// Bounds the folder-tier scan; one page holds every folder that has defaults in all but huge orgs.
+	dashboardSettingsListMaxPages = 20
 )
 
 // Embeds grafanarest.Storage, which has no rest.Watcher or rest.CollectionDeleter, so watch and
@@ -117,4 +133,231 @@ func isDashboardSettingsNotFound(err error, name string) bool {
 	details := status.Status().Details
 	gr := dashv2beta1.DashboardSettingsResourceInfo.GroupResource()
 	return details != nil && details.Group == gr.Group && details.Kind == gr.Resource && details.Name == name
+}
+
+// List returns only what the caller can read, because the authorizer lets a list through and unified
+// storage does no per-user filtering for this resource. Like preferences, it reads the org and user
+// tiers by name, and it finds the folder tier by its tier label, so it never receives another user's
+// object. It returns a single page with no continue token: a store's token encodes the next object's
+// name, which may be another user's, or an offset into the unfiltered list.
+func (s *dashboardSettingsStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting requester: %w", err)
+	}
+	// The authorizer already limited what a token may do, and folder and user cleanup must find every
+	// object.
+	if requester.IsIdentityType(authlib.TypeAccessPolicy) {
+		return s.Storage.List(ctx, options)
+	}
+
+	if options == nil {
+		options = &internalversion.ListOptions{}
+	}
+	if options.Continue != "" {
+		return nil, apierrors.NewBadRequest("continue is not supported for dashboard settings")
+	}
+	if options.LabelSelector != nil && !options.LabelSelector.Empty() {
+		return nil, apierrors.NewBadRequest("labelSelector is not supported for dashboard settings")
+	}
+
+	namespace := k8srequest.NamespaceValue(ctx)
+	// Not nil, so an empty list encodes its items as [] like the store's lists.
+	list := &dashv2beta1.DashboardSettingsList{Items: []dashv2beta1.DashboardSettings{}}
+
+	// A name selector reads a single object, which the tier rules can judge like a get.
+	if options.FieldSelector != nil && !options.FieldSelector.Empty() {
+		// The field selector parser reads both = and == as Equals.
+		requirements := options.FieldSelector.Requirements()
+		if len(requirements) != 1 || requirements[0].Field != "metadata.name" || requirements[0].Operator != selection.Equals {
+			return nil, apierrors.NewBadRequest("only a single metadata.name=<name> fieldSelector is supported for dashboard settings")
+		}
+		items, err := s.visibleByName(ctx, requester, namespace, requirements[0].Value)
+		if err != nil {
+			return nil, err
+		}
+		list.Items = append(list.Items, items...)
+		return list, nil
+	}
+
+	names := []string{dashv2beta1.DashboardSettingsOrgName}
+	if requester.IsIdentityType(authlib.TypeUser) {
+		names = append(names, dashv2beta1.DashboardSettingsUserName(requester.GetIdentifier()))
+	}
+	for _, name := range names {
+		items, err := s.visibleByName(ctx, requester, namespace, name)
+		if err != nil {
+			return nil, err
+		}
+		list.Items = append(list.Items, items...)
+	}
+
+	// Other identities, such as a render request that got this far, get the org tier only.
+	if requester.IsIdentityType(authlib.TypeUser, authlib.TypeServiceAccount) {
+		items, err := s.visibleFolderTier(ctx, requester, namespace)
+		if err != nil {
+			return nil, err
+		}
+		list.Items = append(list.Items, items...)
+	}
+	return list, nil
+}
+
+// visibleByName returns the named object if it exists and the caller may read it under the tier rules
+// of a named get, which the authorizer skipped for the list.
+func (s *dashboardSettingsStorage) visibleByName(ctx context.Context, requester identity.Requester, namespace, name string) ([]dashv2beta1.DashboardSettings, error) {
+	scope, ok := dashboardSettingsScopeFromName(name)
+	if !ok {
+		return nil, nil
+	}
+
+	if scope.Tier == dashboardSettingsTierFolder {
+		if !s.canCheckFolderAccess(requester, namespace) {
+			return nil, nil
+		}
+		items, err := s.getStored(ctx, name)
+		if err != nil {
+			return nil, err
+		}
+		// Judged once read, by the same rule as the folder tier of a list.
+		return s.readableFolderTier(ctx, namespace, items)
+	}
+
+	decision, _, err := authorizeDashboardSettingsName(ctx, s.accessClient, requester, namespace, name, utils.VerbGet)
+	if err != nil || decision != authorizer.DecisionAllow {
+		return nil, err
+	}
+	return s.getStored(ctx, name)
+}
+
+// getStored returns the named object, or nothing when it isn't stored.
+func (s *dashboardSettingsStorage) getStored(ctx context.Context, name string) ([]dashv2beta1.DashboardSettings, error) {
+	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	item, ok := obj.(*dashv2beta1.DashboardSettings)
+	if !ok {
+		return nil, fmt.Errorf("expected dashboard settings, got %T", obj)
+	}
+	return []dashv2beta1.DashboardSettings{*item}, nil
+}
+
+// visibleFolderTier returns, in storage order, the folder-tier objects whose folder the caller can read.
+// It finds them by the tier label, so it never receives user-tier objects. A store that answers the
+// label by scanning still counts every tier toward its page limit, so the page cap can be reached
+// with no folder left out.
+func (s *dashboardSettingsStorage) visibleFolderTier(ctx context.Context, requester identity.Requester, namespace string) ([]dashv2beta1.DashboardSettings, error) {
+	if !s.canCheckFolderAccess(requester, namespace) {
+		return nil, nil
+	}
+
+	selector := labels.SelectorFromSet(labels.Set{dashboardSettingsTierLabelKey: string(dashboardSettingsTierFolder)})
+	var items []dashv2beta1.DashboardSettings
+	continueToken := ""
+	for range dashboardSettingsListMaxPages {
+		obj, err := s.Storage.List(ctx, &internalversion.ListOptions{
+			LabelSelector: selector,
+			Limit:         dashboardSettingsListPageSize,
+			Continue:      continueToken,
+		})
+		if err != nil {
+			return nil, err
+		}
+		page, ok := obj.(*dashv2beta1.DashboardSettingsList)
+		if !ok {
+			return nil, fmt.Errorf("expected dashboard settings list, got %T", obj)
+		}
+		items = append(items, page.Items...)
+		continueToken = page.Continue
+		if continueToken == "" {
+			break
+		}
+	}
+	if continueToken != "" {
+		logging.FromContext(ctx).Warn("dashboard settings list reached the folder tier page cap and may have left out folders",
+			"namespace", namespace, "pages", dashboardSettingsListMaxPages)
+	}
+	return s.readableFolderTier(ctx, namespace, items)
+}
+
+// readableFolderTier keeps, in order, the folder-tier objects whose folder the caller can read. The
+// tier label only indexes the tier, so an object belongs to it only if its annotation is the folder its
+// name gives. A folder whose check failed fails the call instead of being left out as if it were denied.
+func (s *dashboardSettingsStorage) readableFolderTier(ctx context.Context, namespace string, items []dashv2beta1.DashboardSettings) ([]dashv2beta1.DashboardSettings, error) {
+	candidates := make([]dashv2beta1.DashboardSettings, 0, len(items))
+	for _, item := range items {
+		scope, ok := dashboardSettingsScopeFromName(item.Name)
+		if ok && scope.Tier == dashboardSettingsTierFolder && item.Annotations[utils.AnnoKeyFolder] == scope.FolderUID {
+			candidates = append(candidates, item)
+		}
+	}
+
+	readable := authz.FilterAuthorized(ctx, batchItemErrorClient{s.accessClient}, slices.Values(candidates), func(item dashv2beta1.DashboardSettings) authz.BatchCheckItem {
+		folderUID := item.Annotations[utils.AnnoKeyFolder]
+		// The folder is its own parent, as in checkDashboardSettingsFolderAccess.
+		return authz.BatchCheckItem{
+			Group:     folders.GROUP,
+			Resource:  folders.RESOURCE,
+			Verb:      utils.VerbGet,
+			Namespace: namespace,
+			Name:      folderUID,
+			Folder:    folderUID,
+		}
+	})
+	visible := make([]dashv2beta1.DashboardSettings, 0, len(candidates))
+	for item, err := range readable {
+		if err != nil {
+			return nil, err
+		}
+		visible = append(visible, item)
+	}
+	return visible, nil
+}
+
+// Without an access client no folder is readable, and the access client fails a check for another
+// namespace, where the caller can read no folder anyway; see checkDashboardSettingsFolderAccess.
+func (s *dashboardSettingsStorage) canCheckFolderAccess(requester identity.Requester, namespace string) bool {
+	return s.accessClient != nil && authlib.NamespaceMatches(requester.GetNamespace(), namespace)
+}
+
+// batchItemErrorClient fails a batch check when any of its items failed. FilterAuthorized reads only
+// Allowed, so it would leave out a folder whose check failed as if it were denied, while a named get
+// of the same object fails.
+type batchItemErrorClient struct {
+	authlib.AccessClient
+}
+
+func (c batchItemErrorClient) BatchCheck(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	resp, err := c.AccessClient.BatchCheck(ctx, info, req)
+	if err != nil {
+		return resp, err
+	}
+	// In request order, because the results are a map and the first failure should not vary.
+	for _, check := range req.Checks {
+		if result := resp.Results[check.CorrelationID]; result.Error != nil {
+			logging.FromContext(ctx).Error("dashboard settings list failed to check folder access",
+				"namespace", req.Namespace, "folder", check.Name, "err", result.Error)
+			return authlib.BatchCheckResponse{}, &folderAccessCheckError{cause: result.Error}
+		}
+	}
+	return resp, nil
+}
+
+// folderAccessCheckError keeps its cause out of its text because the apiserver sends the text of a list
+// error to the client, and a per-item cause can be the access backend's raw message, which can carry
+// datastore details. BatchCheck logs the cause instead.
+type folderAccessCheckError struct {
+	cause error
+}
+
+func (e *folderAccessCheckError) Error() string {
+	return "folder access could not be checked"
+}
+
+func (e *folderAccessCheckError) Unwrap() error {
+	return e.cause
 }
