@@ -91,11 +91,19 @@ async function getSearchResults(
     limit: 100,
     // With read only folders shown, every folder is listed and selectability comes from a separate check
     permission: getSelectableNames ? undefined : permission,
+    includePathToCreatable: Boolean(getSelectableNames),
   });
 
   const items = queryResponse.view.map((v) => queryResultToViewItem(v, queryResponse.view));
-  const selectableNames =
-    getSelectableNames && items.length > 0 ? await getSelectableNames(items.map((item) => item.uid)) : undefined;
+  if (!getSelectableNames || items.length === 0) {
+    return { ...queryResponse, items };
+  }
+
+  // Servers that don't know `include` leave `canCreate` out, so those results need the separate check
+  const canCreate = queryResponse.view.map((v) => v.canCreate);
+  const selectableNames = canCreate.every((value) => typeof value === 'boolean')
+    ? new Set(items.filter((_, i) => canCreate[i]).map((item) => item.uid))
+    : await getSelectableNames(items.map((item) => item.uid));
   return { ...queryResponse, items, selectableNames };
 }
 

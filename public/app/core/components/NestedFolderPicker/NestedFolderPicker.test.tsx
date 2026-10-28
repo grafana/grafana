@@ -758,6 +758,47 @@ describe('NestedFolderPicker', () => {
       ).not.toBeInTheDocument();
     });
 
+    it('marks typed search results from the server marking, without a separate check', async () => {
+      setTestFlags(readOnlyFlags);
+      const selectabilityChecks = jest.fn();
+      server.use(
+        http.get(searchRoute, ({ request }) => {
+          const params = new URL(request.url).searchParams;
+          // The tree also loads, so only count checks for the typed search results
+          if (
+            params.get('permission') === 'create' &&
+            params.getAll('name').some((name) => name.startsWith('searchable-'))
+          ) {
+            selectabilityChecks();
+          }
+          if (params.get('include') !== 'pathToCreatable' || !params.get('query')?.includes('searchable')) {
+            return undefined;
+          }
+          const hits = [
+            {
+              resource: 'folders',
+              name: 'searchable-editable',
+              title: 'Searchable editable',
+              field: { canCreate: true },
+            },
+            { resource: 'folders', name: 'searchable-path', title: 'Searchable path', field: { canCreate: false } },
+          ];
+          return HttpResponse.json({ totalHits: hits.length, hits });
+        })
+      );
+
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+      fireEvent.change(screen.getByPlaceholderText('Search folders'), { target: { value: 'searchable' } });
+
+      const pathOnlyRow = await screen.findByRole('treeitem', { name: /Searchable path/ });
+      expect(within(pathOnlyRow).getByRole('img', { name: 'Read only' })).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('treeitem', { name: /Searchable editable/ })).queryByRole('img', { name: 'Read only' })
+      ).not.toBeInTheDocument();
+      expect(selectabilityChecks).not.toHaveBeenCalled();
+    });
+
     it.each<{ name: string; flags: Parameters<typeof setTestFlags>[0]; permission?: 'view' | 'edit' }>([
       { name: 'the feature flag is off', flags: { foldersAppPlatformAPI: true } },
       {

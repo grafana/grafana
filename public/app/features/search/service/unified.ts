@@ -359,6 +359,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
       uri += `&permission=${query.permission}`;
     }
 
+    if (query.includePathToCreatable) {
+      uri += '&include=pathToCreatable';
+    }
+
     if (query.deleted) {
       uri = `${getAPIBaseURL(DASHBOARD_API_GROUP, 'v1beta1')}/dashboards/?labelSelector=grafana.app/get-trash=true`;
     }

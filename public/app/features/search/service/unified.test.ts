@@ -134,6 +134,31 @@ describe('Unified Storage Searcher', () => {
     // expect(response.view.get(1).description).toBe('foobar');
   });
 
+  it('asks for the path to creatable folders and returns which can be created in', async () => {
+    server.use(
+      http.get(searchRoute, ({ request }) => {
+        const include = new URL(request.url).searchParams.get('include');
+        return HttpResponse.json({
+          totalHits: 2,
+          hits: [
+            {
+              name: 'writable',
+              title: 'Writable',
+              resource: 'folders',
+              field: { canCreate: include === 'pathToCreatable' },
+            },
+            { name: 'path', title: 'Path', resource: 'folders', field: { canCreate: false } },
+          ],
+        });
+      })
+    );
+
+    const response = await new UnifiedSearcher().search({ query: '*', kind: ['folder'], includePathToCreatable: true });
+
+    expect(response.view.get(0).canCreate).toBe(true);
+    expect(response.view.get(1).canCreate).toBe(false);
+  });
+
   it('should filter search results by ownerReference', async () => {
     server.use(
       getCustomSearchHandler([
