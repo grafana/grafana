@@ -598,6 +598,22 @@ it('shows the toolbar Save button in Editing but not in Viewing', () => {
   expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
 });
 
+it('shows the toolbar Save button in Agent editing', async () => {
+  const dashboard = setup();
+  render(
+    <TestProvider>
+      <Actions dashboard={dashboard} />
+    </TestProvider>
+  );
+  expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+
+  await act(async () => {
+    expect((await assistantChangesTitle(dashboard, 'Agent draft')).success).toBe(true);
+  });
+  expect(getDashboardMode(dashboard.state)).toBe('agent');
+  expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+});
+
 it('opens Changes in the existing save drawer without dropping save options', async () => {
   const dashboard = setup();
   dashboard.setDashboardMode('edit');

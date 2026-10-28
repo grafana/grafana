@@ -479,6 +479,7 @@ describe('setupKeyboardShortcuts', () => {
     it.each([
       { mode: 'view', opens: false },
       { mode: 'edit', opens: true },
+      { mode: 'agent', opens: true },
     ] as const)('save shortcut (mod+s) opens the save drawer in $mode mode: $opens', ({ mode, opens }) => {
       setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
       mockScene.setState({ mode, isEditing: true });
