@@ -248,7 +248,7 @@ Organization administrators can choose a default home dashboard for their organi
 1. In the **Home Dashboard** field, search for and select the dashboard that you want to use, or select **Grafana home** to show the instance default.
 1. Click **Save**.
 
-### Set home dashboard for your team
+### Set the home dashboard for your team
 
 Organization administrators and Team Admins can set a default home dashboard for all users on a team. The team's dashboard overrides the organization's dashboard for team members who haven't set their own.
 
