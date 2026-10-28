@@ -731,14 +731,15 @@ export function getAlignmentFactor(
     }
     return alignmentFactor;
   } else {
-    // look at the next 1000 rows
+    // look at the next 1000 rows and keep the longest formatted value, so every cell of the
+    // column reserves the same room for its text and the gauge bars are comparable
     alignmentFactor = { ...displayValue };
     const maxIndex = Math.min(field.values.length, rowIndex + 1000);
 
     for (let i = rowIndex + 1; i < maxIndex; i++) {
-      const nextDisplayValue = field.display?.(field.values[i]) ?? field.values[i];
-      if (formattedValueToString(alignmentFactor).length > formattedValueToString(nextDisplayValue).length) {
-        alignmentFactor.text = displayValue.text;
+      const nextDisplayValue = field.display?.(field.values[i]) ?? { text: String(field.values[i] ?? '') };
+      if (formattedValueToString(alignmentFactor).length < formattedValueToString(nextDisplayValue).length) {
+        alignmentFactor = { ...nextDisplayValue };
       }
     }
 
