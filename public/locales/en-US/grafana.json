@@ -15864,6 +15864,12 @@
       "show-all-tooltip": "Show selected",
       "toolbar-label": "Bulk actions"
     },
+    "datasource-error": {
+      "load-failed": "Failed to load datasource",
+      "load-failed-named": "Failed to load datasource: {{datasource}}",
+      "not-found": "Datasource not found: {{datasource}}",
+      "settings-not-found": "Datasource settings not found for uid: {{datasource}}"
+    },
     "delete-modal": {
       "body-transformation": "Removing one transformation may break others."
     },
