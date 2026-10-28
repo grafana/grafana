@@ -149,6 +149,7 @@ func TestTeamSearchFilters(t *testing.T) {
 		"teamId=9223372036854775808",
 		strings.TrimSuffix(strings.Repeat("uid=one&", maxIDFilterValues+1), "&"),
 		strings.TrimSuffix(strings.Repeat("teamId=1&", maxIDFilterValues+1), "&"),
+		"member=user-1&member=user-2",
 	} {
 		t.Run(url.QueryEscape(params), func(t *testing.T) {
 			backend := &fakeSearchBackend{}

@@ -348,6 +348,11 @@ func (s *SearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if len(queryParams["member"]) > 1 {
+		http.Error(w, "member parameter accepts a single value", http.StatusBadRequest)
+		return
+	}
+
 	searchRequest.Member = queryParams.Get("member")
 	searchRequest.UIDs = uids
 	searchRequest.TeamIDs = teamIds
