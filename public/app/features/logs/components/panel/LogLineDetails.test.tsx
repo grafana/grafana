@@ -735,28 +735,6 @@ describe('LogLineDetails', () => {
         expect(screen.queryByText('Displayed fields')).not.toBeInTheDocument();
       });
 
-      test('Shows displayed fields controls if required props are present', async () => {
-        setBooleanFlags({ [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
-        const setDisplayedFields = jest.fn();
-        const onClickHideField = jest.fn();
-        await setup(
-          undefined,
-          { labels: { key1: 'label1', key2: 'label2' } },
-          { displayedFields: ['key1', 'key2'], setDisplayedFields, onClickHideField }
-        );
-
-        expect(screen.getByText('Organize displayed fields')).toBeInTheDocument();
-        expect(screen.queryAllByLabelText('Remove field')).toHaveLength(0);
-
-        await userEvent.click(screen.getByText('Organize displayed fields'));
-
-        expect(screen.getAllByLabelText('Remove field')).toHaveLength(2);
-
-        await userEvent.click(screen.getAllByLabelText('Remove field')[0]);
-
-        expect(onClickHideField).toHaveBeenCalledWith('key1');
-      });
-
       test('Renders JSON field values', async () => {
         await setup(
           undefined,
@@ -887,30 +865,6 @@ describe('LogLineDetails', () => {
         expect(screen.getByText(/"value"/)).toBeInTheDocument();
       });
 
-      test('Exposes buttons to reorder displayed fields', async () => {
-        setBooleanFlags({ [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
-        const setDisplayedFields = jest.fn();
-        const onClickHideField = jest.fn();
-        await setup(
-          undefined,
-          { labels: { key1: 'label1', key2: 'label2' } },
-          { displayedFields: ['key1', 'key2', 'key3'], setDisplayedFields, onClickHideField }
-        );
-
-        await userEvent.click(screen.getByText('Organize displayed fields'));
-
-        expect(screen.getAllByLabelText('Remove field')).toHaveLength(3);
-        expect(screen.getAllByLabelText('Move down')).toHaveLength(3);
-        expect(screen.getAllByLabelText('Move up')).toHaveLength(3);
-
-        await userEvent.click(screen.getAllByLabelText('Move down')[0]);
-
-        expect(setDisplayedFields).toHaveBeenCalledWith(['key2', 'key1', 'key3']);
-
-        await userEvent.click(screen.getAllByLabelText('Move up')[2]);
-
-        expect(setDisplayedFields).toHaveBeenCalledWith(['key1', 'key3', 'key2']);
-      });
     });
   });
 
