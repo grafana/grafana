@@ -888,18 +888,18 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
   // Reading a panel's queries stacked or one at a time is a per-user habit, not a per-panel one,
   // so the choice has to survive leaving panel edit.
   describe('persistence', () => {
-    it('opens the stack for a user who left it on last time', () => {
-      store.set(QUERY_EDITOR_STACKED_VIEW_KEY, 'true');
+    it('stays closed for a user who turned it off last time', () => {
+      store.set(QUERY_EDITOR_STACKED_VIEW_KEY, 'false');
 
-      const { result } = renderWithWrapper(makeMockDataPane());
-
-      expect(result.current.stackedMode.enabled).toBe(true);
-    });
-
-    it('stays closed for a user who has never turned it on', () => {
       const { result } = renderWithWrapper(makeMockDataPane());
 
       expect(result.current.stackedMode.enabled).toBe(false);
+    });
+
+    it('opens the stack without recording a choice for a user who has never toggled it', () => {
+      const { result } = renderWithWrapper(makeMockDataPane());
+
+      expect(result.current.stackedMode.enabled).toBe(true);
       expect(store.get(QUERY_EDITOR_STACKED_VIEW_KEY)).toBeUndefined();
     });
 
@@ -931,7 +931,7 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     });
   });
 
-  it('stays off after returning from the alerts view when the user never turned it on', () => {
+  it('stays off after returning from the alerts view when the user turned it off', () => {
     mockUseAlertRulesForPanel.mockReturnValue({
       alertRules: [mockAlert],
       loading: false,
@@ -939,6 +939,7 @@ describe('QueryEditorContextWrapper - stacked mode', () => {
     });
     const { result } = renderWithWrapper(makeMockDataPane());
 
+    act(() => result.current.stackedMode.exit());
     act(() => result.current.setSelectedAlert(mockAlert));
     act(() => result.current.setSelectedAlert(null));
 
