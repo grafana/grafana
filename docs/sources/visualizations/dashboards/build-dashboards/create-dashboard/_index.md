@@ -258,18 +258,23 @@ To edit a dashboard, follow these steps:
 
 {{< docs/public-preview product="Dashboard undo and redo" featureFlag="`dashboardUndoRedo`" >}}
 
-While you're editing a dashboard, you can revert a change with the **Undo** option and reinstate it with **Redo** in the toolbar.
+While you're editing a dashboard, you can revert a change with the **Undo** option and reinstate it with **Redo** in the toolbar:
 
-{{< figure src="./screenshot-undo-redo-v13.3.png" max-width="85px" class="float-right" alt="Dashboard toolbar with undo and redo icons highlighted" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-undo-redo-sm-v13.3.png" max-width="85px" alt="Dashboard toolbar with undo and redo icons highlighted" >}}
 
 - Click the **Undo** icon to revert the most recent change.
 - Click the **Redo** icon to reinstate the change you most recently reverted.
-- Hover your cursor over either icon to display the change that will be reverted or reinstated.
+
+Grafana keeps up to 100 changes in the undo and redo history.
+That means you can continue clicking **Undo** to keep undoing changes you've made, or **Redo** to keep reinstating changes, even if you've saved the dashboard.
+Hover your cursor over the icons to display a tooltip with the change you're about to revert or reinstate:
+
+{{< video-embed src="/media/docs/grafana/dashboards/screenrecord-undo-redo-stack-v13.3.mp4" alt="Screen recording of three changes being reverted and reinstated" >}}
 
 While the undo and redo options aren't available when you're in the panel editor, you can undo and redo those panel changes when you go back to the dashboard.
 If you make multiple changes to the panel, all the changes are reverted or reinstated.
 
-You should also keep the following undo and redo behavior in mind:
+Keep the following undo and redo behavior in mind:
 
 - **Options disabled when there are no changes**: **Undo** is disabled until you make a change, and **Redo** is disabled until you undo a change.
 - **History resets in a new session**: You can't undo changes from a previous edit session, even if you haven't saved them.
