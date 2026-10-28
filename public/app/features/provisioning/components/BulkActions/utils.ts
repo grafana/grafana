@@ -17,7 +17,8 @@ export type BulkActionFormData = {
 export interface BulkActionProvisionResourceProps {
   folderUid?: string;
   selectedItems: Omit<DashboardTreeSelection, 'panel' | '$all'>;
-  onActionComplete?: () => void;
+  // Fires once the job exists; the selection it was built from is spent from then on.
+  onJobCreated?: () => void;
   onDismiss?: () => void;
 }
 

@@ -57,13 +57,16 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 		return nil, nil, err
 	}
 	if pluginsURL != "" {
-		patterns := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
+		patterns, err := readGroupPatterns(section, cloudRouterSection, "plugins_group_patterns", "plugins_group_regex")
+		if err != nil {
+			return nil, nil, err
+		}
 		client, err := newPluginManifestsClient(section, "plugins")
 		if err != nil {
 			return nil, nil, err
 		}
 		pluginsTarget, err = newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, pluginsURL,
-			patterns, client, grpcConfig, deps)
+			compileGroupPatterns(patterns), client, grpcConfig, deps)
 		if err != nil {
 			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
@@ -114,14 +117,14 @@ func newPluginManifestsClient(section *setting.DynamicSection, prefix string) (*
 	return &http.Client{Timeout: defaultAggregateDiscoveryTimeout, Transport: transport}, nil
 }
 
-// ProvideCloudRoutesLoaderFactory builds the cloud RoutesLoader from the
+// NewCloudRoutesLoader builds the cloud RoutesLoader from the
 // [cloud_router], [router.aggregate.<name>] and [router.backend_grpc] sections. It returns (nil, nil) when no source is configured
 // (an aggregate target url, plugins_url, core_url or st_discovery_url), and
 // the caller falls back to another loader.
 //
 // Aggregate targets are polled with a CAP token exchanged for a signed access
 // token on every request, unless they set discovery_auth = none.
-func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
+func NewCloudRoutesLoader(cfg *setting.Cfg, deps PluginDependencies) (RoutesLoader, error) {
 	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
 
 	aggregateTargetConfigs, err := parseAggregateTargets(cfg)
@@ -195,7 +198,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 			Timeout:   defaultAggregateDiscoveryTimeout,
 		}
 		if !targetCfg.anonymousDiscovery() {
-			restCfg.WrapTransport = aggregateTokenWrapper(targetCfg.Name, tokenExchanger, targetCfg.Audience)
+			restCfg.WrapTransport = aggregateTokenWrapper(targetCfg, tokenExchanger)
 		}
 		httpClient, err := rest.HTTPClientFor(restCfg)
 		if err != nil {
@@ -428,14 +431,13 @@ func (l *cloudLoader) UnregisteredGroupHandler() http.Handler {
 // far too few to keep keepalive useful under concurrent proxied traffic.
 const aggregateMaxIdleConnsPerHost = 100
 
-// aggregateTokenWrapper picks the header for the exchanged CAP token:
-// cloud_app_platform_apiserver expects a standard Authorization bearer token,
-// while baas_apiserver expects X-Access-Token.
-func aggregateTokenWrapper(name string, tokenExchanger authnlib.TokenExchanger, audience string) transport.WrapperFunc {
-	if name == "cloud_app_platform_apiserver" {
-		return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(tokenExchanger, audience, clientauth.WildcardNamespace)
+// aggregateTokenWrapper picks the header for the exchanged CAP token on a
+// target's discovery polls.
+func aggregateTokenWrapper(targetCfg aggregateTargetConfig, tokenExchanger authnlib.TokenExchanger) transport.WrapperFunc {
+	if targetCfg.bearerDiscovery() {
+		return clientauth.NewStaticTokenExchangeAuthorizationTransportWrapper(tokenExchanger, targetCfg.Audience, clientauth.WildcardNamespace)
 	}
-	return clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, audience, clientauth.WildcardNamespace)
+	return clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, targetCfg.Audience, clientauth.WildcardNamespace)
 }
 
 // newAggregateBaseTransport returns a fresh base transport for one aggregate

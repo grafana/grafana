@@ -1436,7 +1436,8 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "interval": "",
       "recording-rules": {
@@ -1446,6 +1447,58 @@
       "result-count": {
         "alert-rules_other": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -5614,6 +5667,17 @@
       "ungroup-rows": "행 그룹 해제",
       "ungroup-tabs": "탭 그룹 해제"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5794,7 +5858,20 @@
     "edit-actions": {
       "add": "{{typeName}} 추가",
       "add-conditional-rule": "{{ruleDescription}} 규칙 추가",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "모든 행 접기",
+      "collapse-row": "",
       "dashboard-description": "대시보드 설명 변경",
       "dashboard-title": "대시보드 제목 변경",
       "duplicate": "{{typeName}} 복제",
@@ -5803,6 +5880,7 @@
       "edit-template-variable-rule": "템플릿 변수 규칙 변경",
       "edit-time-range-rule": "시간 범위 규칙 변경",
       "expand-all-rows": "모든 행 펼치기",
+      "expand-row": "",
       "group-into-row": "행으로 그룹화",
       "group-into-tab": "탭으로 그룹화",
       "move": "{{typeName}} 이동",
@@ -5818,6 +5896,7 @@
       "paste-panel": "패널 붙여넣기",
       "remove": "{{typeName}} 제거",
       "remove-multiple": " {{typeName}} ({{num}}) 제거",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "행 화면 채우기 비활성화",
       "row-fill-screen-enable": "행 채우기 화면 활성화",
@@ -5825,16 +5904,38 @@
       "row-repeat-variable": "행 반복 기준",
       "row-show-header": "행 헤더 표시",
       "row-title": "행 제목 변경",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "레이아웃 전환",
       "switch-layout-row": "레이아웃 전환",
       "switch-layout-tab": "레이아웃 전환",
       "tab-repeat-variable": "탭 반복 기준",
       "tab-title": "탭 제목 변경",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "변수 설명 변경",
       "variable-hide": "변수 숨기기 옵션 변경",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "변수 레이블 변경",
+      "variable-multi-value": "",
       "variable-name": "변수 이름 변경",
-      "variable-type": "변수 유형 변경"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "변수 유형 변경",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "다른 대시보드와 공유되는 시각화를 추가합니다.",
@@ -6056,8 +6157,12 @@
       "tooltip-previous": "이전"
     },
     "modes": {
-      "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -6967,7 +7072,8 @@
         "change-annotation-controls-display": "주석 제어 표시 변경",
         "change-annotation-enabled-state": "주석 활성화 상태 변경",
         "change-annotation-name": "주석 이름 변경",
-        "change-annotation-panel-filter": "주석 패널 필터 변경"
+        "change-annotation-panel-filter": "주석 패널 필터 변경",
+        "change-annotation-query": ""
       },
       "edit-query": "쿼리 편집"
     },
@@ -12094,10 +12200,14 @@
     },
     "log-line": {
       "has-error": "오류 있음",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "샘플링됨",
       "show-less": "접기",
       "show-more": "더 보기",
-      "tooltip-error": "오류: {{errorMessage}}"
+      "tooltip-error": "오류: {{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "일치하는 줄 가운데로 정렬",
@@ -13314,7 +13424,6 @@
     "add-panel": {
       "cancel": "취소",
       "card-author": "{{author}} 작성",
-      "card-selected": "{{title}}(선택됨)",
       "card-updated": "{{when}}에 업데이트됨",
       "create-name": "노트북 이름",
       "create-name-required": "노트북 이름은 필수 입력 항목입니다",
@@ -13325,6 +13434,7 @@
       "error-open-conflict": "",
       "list-error": "노트북 로딩 실패",
       "list-error-body": "노트북 로딩 중 오류 발생. 다시 시도하거나 대신 새 노트북을 생성하세요.",
+      "list-label": "",
       "list-no-matches": "이 필터와 일치하는 노트북이 없습니다.",
       "list-none": "아직 노트북이 없습니다. 대신 생성하세요.",
       "list-none-read-only": "아직 노트북이 없으며, 노트북을 생성할 권한이 없습니다.",
@@ -16186,8 +16296,8 @@
       "copy-link-button": "복사",
       "info-text": "아래 옵션으로 사용자 정의된 이 대시보드 또는 패널에 대한 직접 링크를 생성합니다.",
       "link-url": "링크 URL",
-      "render-alert": "이미지 렌더러 플러그인 미설치",
-      "render-instructions": "이미지를 렌더링하려면 <2>Grafana 이미지 렌더러 플러그인</2>을 설치해야 합니다. 플러그인을 설치하려면 Grafana 관리자에게 문의하세요.",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "렌더링된 이미지에 직접 연결",
       "save-alert": "대시보드 저장되지 않음",
       "save-dashboard": "패널 이미지를 렌더링하려면 먼저 대시보드를 저장해야 합니다.",
@@ -17001,6 +17111,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {

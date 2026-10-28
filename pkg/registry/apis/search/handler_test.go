@@ -543,13 +543,15 @@ func TestHandler_ReturnsManagerFields(t *testing.T) {
 	cols := []*resourcepb.ResourceTableColumnDefinition{
 		col(resource.SEARCH_FIELD_MANAGER_KIND, resourcepb.ResourceTableColumnDefinition_STRING),
 		col(resource.SEARCH_FIELD_MANAGER_ID, resourcepb.ResourceTableColumnDefinition_STRING),
+		col(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS, resourcepb.ResourceTableColumnDefinition_BOOLEAN),
 	}
 	rows := []map[string]any{{
-		"__name":                           "a",
-		resource.SEARCH_FIELD_MANAGER_KIND: "repo",
-		resource.SEARCH_FIELD_MANAGER_ID:   "my-repo",
+		"__name":                                  "a",
+		resource.SEARCH_FIELD_MANAGER_KIND:        "repo",
+		resource.SEARCH_FIELD_MANAGER_ID:          "my-repo",
+		resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS: false,
 	}}
-	body := `{"apiVersion": "` + searchv0.APIVERSION + `", "kind": "` + searchv0.KindSearchQuery + `", "fields": ["manager.kind", "manager.id"]}`
+	body := `{"apiVersion": "` + searchv0.APIVERSION + `", "kind": "` + searchv0.KindSearchQuery + `", "fields": ["manager.kind", "manager.id", "manager.allowEdits"]}`
 
 	for name, do := range map[string]func(*testing.T, *Handler, string) *httptest.ResponseRecorder{
 		"one kind": doRequest,
@@ -563,7 +565,7 @@ func TestHandler_ReturnsManagerFields(t *testing.T) {
 
 			w := do(t, h, body)
 			require.Equal(t, http.StatusOK, w.Code, w.Body.String())
-			assert.Equal(t, []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ID}, client.got.Fields)
+			assert.Equal(t, []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ID, resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS}, client.got.Fields)
 
 			var got struct {
 				Items []struct {
@@ -572,7 +574,7 @@ func TestHandler_ReturnsManagerFields(t *testing.T) {
 			}
 			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
 			require.Len(t, got.Items, 1)
-			assert.Equal(t, map[string]any{"manager.kind": "repo", "manager.id": "my-repo"}, got.Items[0].Fields)
+			assert.Equal(t, map[string]any{"manager.kind": "repo", "manager.id": "my-repo", "manager.allowEdits": false}, got.Items[0].Fields)
 		})
 	}
 }

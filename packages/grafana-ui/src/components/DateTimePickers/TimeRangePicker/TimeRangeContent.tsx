@@ -29,6 +29,7 @@ import TimePickerCalendar from './TimePickerCalendar';
 
 interface Props {
   isFullscreen: boolean;
+  calendarAnchor?: HTMLElement | null;
   value: TimeRange;
   onApply: (range: TimeRange) => void;
   timeZone?: TimeZone;
@@ -62,6 +63,7 @@ export const TimeRangeContent = (props: Props) => {
   const {
     value,
     isFullscreen = false,
+    calendarAnchor,
     timeZone,
     onApply: onApplyFromProps,
     isReversed,
@@ -257,6 +259,7 @@ export const TimeRangeContent = (props: Props) => {
       </div>
 
       <TimePickerCalendar
+        referenceElement={calendarAnchor}
         isFullscreen={isFullscreen}
         isOpen={isOpen}
         from={dateTimeParse(watch('from'), { timeZone })}
