@@ -90,7 +90,12 @@ To look up a trace:
    The field is marked invalid if the value doesn't start with letters and numbers.
 1. Press <kbd>Enter</kbd> to run the query.
 
-The **Trace ID** field accepts only a trace ID.
+The **Trace ID** field only accepts a trace ID.
+
+#### Span pruning options
+
+Span pruning collapses groups of similar leaf spans into a single summary span, which makes large traces easier to read and smaller to load.
+Each summary span records how many spans it replaces.
 
 {{< admonition type="note" >}}
 Span pruning is an experimental Tempo feature and requires Tempo 3.1 or later.
@@ -99,49 +104,44 @@ The span pruning and filter options might change in future releases.
 For details about the underlying request parameters, refer to the [Tempo HTTP API documentation](https://grafana.com/docs/tempo/<TEMPO_VERSION>/api_docs/#query-v2).
 {{< /admonition >}}
 
-#### Span Pruning Options
-
-Span pruning collapses groups of similar leaf spans into a single summary span, which makes large traces easier to read and smaller to load.
-Each summary span records how many spans it replaces.
-
 Expand **Span Pruning Options** to change how pruning behaves.
 The collapsed section shows a summary of the current values.
 
-On/Off
+**On/Off**
 : Turns span pruning on or off for this query. Default value is **On**.
 
-Group By
+**Group By**
 : A comma-separated list of attribute names used to group spans for pruning, for example `db.sql.table, http.method`. Spans are grouped when they share a name, kind, and status. Spans must also have identical values for every attribute listed here. By default, no attributes are used.
 
-Min Spans
-: The minimum number of similar spans required in a group before pruning is applied. Groups smaller than this value are left as they are. Default value is `5`.
+**Min Spans**
+: The minimum number of similar spans required in a group before pruning is applied. Groups smaller than this value aren't pruned. Default value is `5`.
 
-Max Parent Depth
+**Max Parent Depth**
 : How many ancestor levels above the aggregated leaf spans can also be aggregated. Use `0` to aggregate only leaves, `-1` for unlimited depth, or `n` for a bounded depth. Default value is `1`.
 
-#### Filter Options
+#### Filter options
 
 Filter options reduce the returned trace to the spans that match a TraceQL filter.
 Expand **Filter Options** to set them.
 You can expand **Span Pruning Options** and **Filter Options** independently.
 
-Filter
+**Filter**
 : A TraceQL spanset filter evaluated against the spans in the trace, for example `{ status = error && name = "foo" }`. The filter supports a single `{ ... }` block. Chained filters and pipelines aren't supported. Leave the field empty to skip filtering. The field shows an error when the filter isn't valid.
 
-Keep Hierarchy
+**Keep Hierarchy**
 : Includes each matched span's ancestor path back to the root, so the result displays as a complete waterfall instead of only the matching spans. Default value is **Off**.
 
-Match Depth
+**Match Depth**
 : How many levels of descendants to keep below each matched span, independent of **Keep Hierarchy**. Use `-1` to keep all descendants, `0` for only the matched spans, or `n` for a bounded depth. Default value is `0`.
 
-Ancestor Depth
+**Ancestor Depth**
 : How many levels of ancestors to keep above each matched span. Use `-1` for the whole path to the root, `0` for none, or `n` for a bounded depth. Only used when **Keep Hierarchy** is on. Default value is `-1`.
 
 **Keep Hierarchy**, **Match Depth**, and **Ancestor Depth** are disabled until **Filter** contains a valid filter.
 **Ancestor Depth** is also disabled while **Keep Hierarchy** is off.
 Select **Clear Filter** to remove the filter and reset all filter options.
 
-##### Example: focus on one service in a large trace
+##### Example: Focus on one service in a large trace
 
 A trace that spans many services can contain thousands of spans, and most of them are rarely relevant to the problem you're investigating.
 Use **Filter** and **Match Depth** to load only the part of the trace you care about.
