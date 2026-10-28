@@ -7,12 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-func (dr *DashboardServiceImpl) deleteInFoldersParallel(ctx context.Context, orgID int64, folderUIDs []string, dashes []*dashboards.Dashboard) error {
+func (dr *DashboardServiceImpl) deleteInFoldersParallel(ctx context.Context, orgID int64, folderUIDs []string, dashes []*dashboards.Dashboard, concurrency int) error {
 	jobs := make(chan *dashboards.Dashboard)
 	var workers sync.WaitGroup
-	// Settings reject non-positive values, but a hand-built Cfg can still carry one. Without a
-	// worker, the unbuffered send below would block forever.
-	for range min(max(dr.cfg.FolderParallelDashboardDeleteConcurrency, 1), len(dashes)) {
+	for range min(concurrency, len(dashes)) {
 		workers.Go(func() {
 			for dash := range jobs {
 				// A ready send can race cancellation; do not start another delete afterwards.
