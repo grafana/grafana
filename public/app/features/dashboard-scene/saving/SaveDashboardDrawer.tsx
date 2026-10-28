@@ -208,17 +208,19 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       {/* The form stays mounted (hidden) while the Changes tab is open so its field state survives tab switches */}
       <Box display={showDiff ? 'none' : 'flex'} direction="column" height="100%">
         <ScrollContainer showScrollIndicators>
-          <Stack direction="column" gap={2}>
-            {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
-            {renderForm()}
-            {view.canChooseTarget && (
-              <SaveTargetSwitch
-                resource="dashboard"
-                target={target}
-                onChange={(saveTarget) => model.setState({ saveTarget })}
-              />
-            )}
-          </Stack>
+          <Box padding={0.5}>
+            <Stack direction="column" gap={2}>
+              {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
+              {renderForm()}
+              {view.canChooseTarget && (
+                <SaveTargetSwitch
+                  resource="dashboard"
+                  target={target}
+                  onChange={(saveTarget) => model.setState({ saveTarget })}
+                />
+              )}
+            </Stack>
+          </Box>
         </ScrollContainer>
       </Box>
       {showDiff && changesCount === 0 && (

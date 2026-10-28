@@ -154,6 +154,11 @@ export const versionedComponents = {
       '13.2.0': 'data-testid sidebar add new tab button',
     },
   },
+  EditActionsPopover: {
+    container: {
+      '13.3.0': 'data-testid EditActionsPopover container',
+    },
+  },
   EditPaneHeader: {
     deleteButton: {
       '12.1.0': 'data-testid EditPaneHeader delete panel',
@@ -1686,6 +1691,12 @@ export const versionedComponents = {
       },
       row: {
         '13.3.0': (spanId: string) => `data-testid TraceViewer trace-banner row ${spanId}`,
+      },
+      stacktraceButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner stacktrace-button',
+      },
+      toggleButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner toggle-button',
       },
     },
     spanException: {

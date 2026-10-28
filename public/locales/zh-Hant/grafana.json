@@ -1436,7 +1436,8 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "interval": "",
       "recording-rules": {
@@ -1446,6 +1447,58 @@
       "result-count": {
         "alert-rules_other": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -5614,6 +5667,17 @@
       "ungroup-rows": "解散列群組",
       "ungroup-tabs": "解散分頁群組"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5794,7 +5858,20 @@
     "edit-actions": {
       "add": "新增 {{typeName}}",
       "add-conditional-rule": "新增「{{ruleDescription}}」規則",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "收闔所有列",
+      "collapse-row": "",
       "dashboard-description": "變更儀表板描述",
       "dashboard-title": "變更儀表板標題",
       "duplicate": "複製 {{typeName}}",
@@ -5803,6 +5880,7 @@
       "edit-template-variable-rule": "變更範本變數規則",
       "edit-time-range-rule": "變更時間範圍規則",
       "expand-all-rows": "展開所有列",
+      "expand-row": "",
       "group-into-row": "將群組分成列",
       "group-into-tab": "將群組分成分頁",
       "move": "移動 {{typeName}}",
@@ -5818,6 +5896,7 @@
       "paste-panel": "貼上面板",
       "remove": "移除 {{typeName}}",
       "remove-multiple": "移除 {{typeName}} ({{num}})",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "停用列填滿畫面",
       "row-fill-screen-enable": "啟用列填滿畫面",
@@ -5825,16 +5904,38 @@
       "row-repeat-variable": "列重複方式",
       "row-show-header": "行標題",
       "row-title": "變更列標題",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "切換版面配置",
       "switch-layout-row": "切換版面配置",
       "switch-layout-tab": "切換版面配置",
       "tab-repeat-variable": "分頁重複方式",
       "tab-title": "變更分頁標題",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "變更變數描述",
       "variable-hide": "變更變數隱藏選項",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "變更變數標籤",
+      "variable-multi-value": "",
       "variable-name": "變更變數名稱",
-      "variable-type": "變更變數類型"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "變更變數類型",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "新增與其他儀表板共用的可視化工具。",
@@ -6056,8 +6157,12 @@
       "tooltip-previous": "上一個"
     },
     "modes": {
-      "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -6967,7 +7072,8 @@
         "change-annotation-controls-display": "變更註解控制項顯示",
         "change-annotation-enabled-state": "變更註解啟用狀態",
         "change-annotation-name": "變更註解名稱",
-        "change-annotation-panel-filter": "變更註解面板篩選條件"
+        "change-annotation-panel-filter": "變更註解面板篩選條件",
+        "change-annotation-query": ""
       },
       "edit-query": "編輯查詢"
     },
@@ -12094,10 +12200,14 @@
     },
     "log-line": {
       "has-error": "有錯誤",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "已採樣",
       "show-less": "顯示更少",
       "show-more": "顯示更多",
-      "tooltip-error": "錯誤：{{errorMessage}}"
+      "tooltip-error": "錯誤：{{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "居中對齊行",
@@ -13314,7 +13424,6 @@
     "add-panel": {
       "cancel": "取消",
       "card-author": "由{{author}}執行",
-      "card-selected": "{{title}}（已選取）",
       "card-updated": "{{when}} 已更新",
       "create-name": "筆記本名稱",
       "create-name-required": "必須輸入筆記本名稱",
@@ -13325,6 +13434,7 @@
       "error-open-conflict": "",
       "list-error": "無法載入筆記本",
       "list-error-body": "載入您的筆記本時發生錯誤。請再試一次，或改為建立新的筆記本。",
+      "list-label": "",
       "list-no-matches": "沒有符合這些篩選條件的筆記本。",
       "list-none": "您目前沒有筆記本。請建立新的筆記本。",
       "list-none-read-only": "您目前沒有筆記本，也沒有建立筆記本的權限。",
@@ -16186,8 +16296,8 @@
       "copy-link-button": "複製",
       "info-text": "建立指向此儀表板或面板的直接連結，並使用以下選項自訂。",
       "link-url": "連結網址",
-      "render-alert": "未安裝圖片轉譯器外掛程式",
-      "render-instructions": "若要轉譯圖片，您必須安裝 <2>Grafana 圖片轉譯器外掛程式</2>。請聯絡您的 Grafana 管理員以安裝外掛程式。",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "直接連結轉譯的圖片",
       "save-alert": "儀表板未儲存",
       "save-dashboard": "若要呈現面板圖片，您必須先儲存儀表板。",
@@ -17001,6 +17111,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {
