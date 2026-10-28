@@ -35,7 +35,6 @@ export function OnCallCard({ now }: { now: number }) {
       getItemKey={(row) => row.id}
       renderItem={(row) => (
         <ListRow
-          isCompact
           title={row.name}
           subtitle={
             row.shift && (

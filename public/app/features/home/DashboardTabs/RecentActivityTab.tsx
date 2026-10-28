@@ -13,6 +13,7 @@ import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
+import { HomeList } from '../HomeList';
 import { TimeAgoCell } from '../TimeAgoCell';
 import { ctaClicked, recentActivityShown } from '../analytics/main';
 
@@ -103,7 +104,7 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange }: Props)
   const showTime = items.some((item) => item.lastVisited !== undefined);
 
   return (
-    <ul className={styles.list}>
+    <HomeList>
       {items.map((item, position) => {
         const href = item.pathname + item.search;
         const { title, subtitle } = toRow(item, navTree, foldersByUid);
@@ -111,7 +112,6 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange }: Props)
         return (
           <li key={href}>
             <ListRow
-              isCompact
               title={title}
               subtitle={subtitle}
               href={href}
@@ -149,16 +149,11 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange }: Props)
           </li>
         );
       })}
-    </ul>
+    </HomeList>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  list: css({
-    listStyle: 'none',
-    padding: 0,
-    margin: 0,
-  }),
   // A badge, not a bare icon, so the kind reads as a label and not as another action next to the star. One
   // colour for every kind: the icon says which, the tooltip spells it out.
   kind: css({

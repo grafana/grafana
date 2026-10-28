@@ -246,7 +246,7 @@ describe('HomePage', () => {
 
     // The tabs, the overview and placement all start at mount, and the Assistant slot is held while the registry
     // loads the plugin, so the input lands in place. The tabs' skeleton only lasts until their fetches settle.
-    expect(screen.getByTestId('dashboard-tabs-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('home-tabbed-card-skeleton')).toBeInTheDocument();
     expect(await screen.findByTestId('home-page-assistant-skeleton')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /your observability stack overview/i })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'Metrics & infrastructure' })).toBeInTheDocument();

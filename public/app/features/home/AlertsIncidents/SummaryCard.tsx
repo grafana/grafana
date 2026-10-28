@@ -7,6 +7,8 @@ import { Trans } from '@grafana/i18n';
 import { Alert, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 import { GrotCompleted } from '@grafana/ui/internal';
 
+import { HomeList } from '../HomeList';
+
 interface SummaryCardProps<T> {
   loading: boolean;
   // When set, replaces the list/empty state with a retryable warning alert.
@@ -62,11 +64,11 @@ export function SummaryCard<T>({
       )}
 
       {!loading && !error && items.length > 0 && (
-        <ul>
+        <HomeList>
           {items.map((item) => (
             <li key={getItemKey(item)}>{renderItem(item)}</li>
           ))}
-        </ul>
+        </HomeList>
       )}
     </Stack>
   );

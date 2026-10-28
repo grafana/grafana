@@ -111,11 +111,11 @@ describe('DashboardTabs', () => {
     render(<DashboardTabs />);
 
     // tab bar is hidden behind the skeleton until data lands
-    expect(screen.getByTestId('dashboard-tabs-skeleton')).toBeInTheDocument();
+    expect(screen.getByTestId('home-tabbed-card-skeleton')).toBeInTheDocument();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
 
     expect(await screen.findByRole('tab', { name: /recent/i, selected: true })).toBeInTheDocument();
-    expect(screen.queryByTestId('dashboard-tabs-skeleton')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('home-tabbed-card-skeleton')).not.toBeInTheDocument();
   });
 
   it('lands directly on Starred when Recent is empty, without flashing the Recent tab', async () => {

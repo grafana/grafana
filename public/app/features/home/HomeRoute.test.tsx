@@ -61,13 +61,13 @@ describe('HomeRoute', () => {
     probeCallCount = 0;
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
-    // Deny alerting permission so the FiringAlertsCard renders null
+    // Deny alerting permission so the alerts tab is not offered
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
     // Stub endpoints the alerts/incidents cards probe so unhandled requests don't fail the test
     server.use(
       http.get('/api/user/teams', () => HttpResponse.json([])),
       http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json([])),
-      // IncidentsCard checks the IRM/Incident plugins; report them absent so it renders nothing
+      // The incidents and on-call tabs check the IRM/Incident plugins; report them absent so neither is offered
       http.get('/api/plugins/:pluginId/settings', () => HttpResponse.json({ enabled: false }))
     );
   });

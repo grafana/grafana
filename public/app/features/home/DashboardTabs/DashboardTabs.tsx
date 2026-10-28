@@ -2,21 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { t, Trans } from '@grafana/i18n';
-import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
 import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
-import { CardFooter, FooterAction } from '../FooterActions';
-import { HomeSection } from '../HomeSection';
-import { tabChanged } from '../analytics/main';
+import { FooterAction } from '../FooterActions';
+import { type HomeCardTab, HomeTabbedCard } from '../HomeTabbedCard';
 
-import { DashboardTabsSkeleton } from './DashboardTabsSkeleton';
 import { MostUsedDashboardsTab } from './MostUsedDashboardsTab';
-import { RecentActivityFooter } from './RecentActivityFooter';
+import { ClearRecentActivityAction, RecentActivityFilterCombobox } from './RecentActivityFooter';
 import { RecentActivityTab } from './RecentActivityTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
-import { DASHBOARD_TABS_SCROLL_HEIGHT } from './types';
 import { useRecentActivity } from './useRecentActivity';
 
 const RECENT_TAB_ID = 'recent';
@@ -100,12 +96,24 @@ export function DashboardTabs() {
     }
   }, [initialLoading]);
 
-  const tabs = [
+  // The Recent footer belongs to its list: only once the list is loaded with rows, an empty row of the same height
+  // until then. The dashboard tabs link out.
+  const showRecentFooter = !recent.loading && !recent.error && recent.total > 0;
+  const viewAllDashboards = (
+    <FooterAction href="/dashboards">
+      <Trans i18nKey="home.dashboard-tabs.view-all-dashboards">View all dashboards</Trans>
+    </FooterAction>
+  );
+
+  const tabs: HomeCardTab[] = [
     {
       id: RECENT_TAB_ID,
       label: t('home.dashboard-tabs.recent', 'Recent'),
       // What the list shows; the whole history is one filter option away.
       counter: recent.items.length,
+      content: <RecentActivityTab recent={recent} foldersByUid={foldersByUid} onStarChange={starredRetry} />,
+      filter: showRecentFooter && recent.kinds.length > 1 && <RecentActivityFilterCombobox recent={recent} />,
+      footer: showRecentFooter && <ClearRecentActivityAction recent={recent} />,
     },
     ...(mostUsedAvailable
       ? [
@@ -113,6 +121,16 @@ export function DashboardTabs() {
             id: MOST_USED_TAB_ID,
             label: t('home.dashboard-tabs.most-used', 'Most used'),
             counter: mostUsedDashboards?.length,
+            content: (
+              <MostUsedDashboardsTab
+                dashboards={mostUsedDashboards ?? []}
+                loading={mostUsedLoading}
+                error={mostUsedError}
+                retry={mostUsedRetry}
+                foldersByUid={foldersByUid}
+              />
+            ),
+            footer: viewAllDashboards,
           },
         ]
       : []),
@@ -120,92 +138,28 @@ export function DashboardTabs() {
       id: STARRED_TAB_ID,
       label: t('home.dashboard-tabs.starred', 'Starred'),
       counter: starredDashboards?.length,
+      content: (
+        <StarredDashboardsTab
+          dashboards={starredDashboards ?? []}
+          loading={starredLoading}
+          error={starredError}
+          retry={starredRetry}
+          foldersByUid={foldersByUid}
+        />
+      ),
+      footer: viewAllDashboards,
     },
   ];
 
-  // The Recent footer belongs to its list: only once the list is loaded with rows, an empty row of the same height
-  // until then. The dashboard tabs link out.
-  const footer =
-    activeTab === RECENT_TAB_ID ? (
-      !recent.loading && !recent.error && recent.total > 0 ? (
-        <RecentActivityFooter recent={recent} />
-      ) : (
-        <CardFooter />
-      )
-    ) : (
-      <CardFooter>
-        <FooterAction href="/dashboards">
-          <Trans i18nKey="home.dashboard-tabs.view-all-dashboards">View all dashboards</Trans>
-        </FooterAction>
-      </CardFooter>
-    );
-
-  const renderContent = () => (
-    <>
-      <TabsBar>
-        {tabs.map((tab) => (
-          <Tab
-            key={tab.id}
-            label={tab.label}
-            active={activeTab === tab.id}
-            counter={tab.counter}
-            onChangeTab={() => {
-              setActiveTab(tab.id);
-              tabChanged({ tab: tab.id });
-            }}
-          />
-        ))}
-      </TabsBar>
-
-      <TabContent>
-        <ScrollContainer
-          showScrollIndicators
-          maxHeight={`${DASHBOARD_TABS_SCROLL_HEIGHT}px`}
-          minHeight={`${DASHBOARD_TABS_SCROLL_HEIGHT}px`}
-        >
-          {activeTab === RECENT_TAB_ID && (
-            <RecentActivityTab recent={recent} foldersByUid={foldersByUid} onStarChange={starredRetry} />
-          )}
-          {activeTab === MOST_USED_TAB_ID && (
-            <MostUsedDashboardsTab
-              dashboards={mostUsedDashboards ?? []}
-              loading={mostUsedLoading}
-              error={mostUsedError}
-              retry={mostUsedRetry}
-              foldersByUid={foldersByUid}
-            />
-          )}
-          {activeTab === STARRED_TAB_ID && (
-            <StarredDashboardsTab
-              dashboards={starredDashboards ?? []}
-              loading={starredLoading}
-              error={starredError}
-              retry={starredRetry}
-              foldersByUid={foldersByUid}
-            />
-          )}
-        </ScrollContainer>
-        {/* Pinned below the scroll area so it stays visible however long the list is; always there, at one
-            height, so the card never moves between tabs or while Recent loads. */}
-        <Box padding={1} paddingTop={1.5}>
-          {footer}
-        </Box>
-      </TabContent>
-    </>
-  );
-  // The header and card frame don't depend on data; only the tabs wait, since which one to land on isn't known yet.
-  const content = initialLoadDone ? renderContent() : <DashboardTabsSkeleton />;
   return (
-    <Stack direction="column" gap={1} minWidth={0}>
-      <Stack justifyContent="space-between" alignItems="center" minHeight={4}>
-        <Text element="h2" variant="h5">
-          <Trans i18nKey="home.dashboard-tabs.title">Jump back in</Trans>
-        </Text>
-      </Stack>
-
-      <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>
-        {content}
-      </HomeSection>
-    </Stack>
+    <HomeTabbedCard
+      title={t('home.dashboard-tabs.title', 'Jump back in')}
+      idPrefix="dashboard-tabs"
+      tabs={tabs}
+      activeTabId={activeTab}
+      onTabChange={setActiveTab}
+      // The header and card frame don't depend on data; only the tabs wait, since which one to land on isn't known yet.
+      loading={!initialLoadDone}
+    />
   );
 }

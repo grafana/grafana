@@ -4,15 +4,6 @@ import { type ReactNode, useRef, useState } from 'react';
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { Button, Combobox, type ComboboxOption, Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
 
-/** Right-aligned container for homepage card footer actions. */
-export function FooterActions({ children }: { children: ReactNode }) {
-  return (
-    <Stack justifyContent="flex-end" wrap="wrap" gap={2.5}>
-      {children}
-    </Stack>
-  );
-}
-
 /**
  * Card footer: an optional filter on the left, actions on the right. One height whatever it holds, so tabs and
  * load states never move the card. The filter grows to its cap and gives way first when the row is short: it
@@ -24,9 +15,7 @@ export function CardFooter({ filter, children }: { filter?: ReactNode; children?
   return (
     <div className={styles.row}>
       {filter && <div className={styles.filter}>{filter}</div>}
-      <div className={styles.actions}>
-        <FooterActions>{children}</FooterActions>
-      </div>
+      <div className={styles.actions}>{children}</div>
     </div>
   );
 }
@@ -80,8 +69,13 @@ const getCardFooterStyles = (theme: GrafanaTheme2) => ({
     flex: `1 1 ${theme.spacing(15)}`,
     maxWidth: theme.spacing(30),
   }),
+  // Right-aligned actions; they wrap only once the row cannot fit them beside the filter's floor.
   actions: css({
     flex: '1 0 auto',
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: theme.spacing(2.5),
   }),
 });
 

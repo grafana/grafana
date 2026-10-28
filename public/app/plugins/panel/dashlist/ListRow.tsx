@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import type { ReactNode } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
@@ -10,13 +10,11 @@ interface ListRowProps {
   subtitle?: ReactNode;
   prefix?: ReactNode;
   trailing?: ReactNode;
-  // isCompact is used to make the row leaner (less spacing)
-  isCompact?: boolean;
   href?: string;
   onClick?: () => void;
 }
 
-export function ListRow({ title, subtitle, trailing, isCompact, href, onClick, prefix }: ListRowProps) {
+export function ListRow({ title, subtitle, trailing, href, onClick, prefix }: ListRowProps) {
   const styles = useStyles2(getStyles);
 
   const subtitleDisplay = subtitle && (
@@ -26,7 +24,7 @@ export function ListRow({ title, subtitle, trailing, isCompact, href, onClick, p
   );
 
   const content = (
-    <Stack direction="column" gap={0} alignItems="stretch" grow={1} minWidth={0}>
+    <Stack direction="column" gap={0} grow={1} minWidth={0}>
       {/* Title */}
       <Text truncate element="p">
         {title}
@@ -37,7 +35,7 @@ export function ListRow({ title, subtitle, trailing, isCompact, href, onClick, p
   );
 
   return (
-    <div className={cx(styles.row, isCompact && styles.listCompact)}>
+    <div className={styles.row}>
       <Stack direction="row" alignItems="center" gap={1.5} grow={1} minWidth={0}>
         {prefix && <div className={styles.prefixCell}>{prefix}</div>}
 
@@ -66,9 +64,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     gap: theme.spacing(2),
     justifyContent: 'space-between',
     alignItems: 'center',
-  }),
-  listCompact: css({
-    margin: 0,
   }),
   // Prevents a long title from squeezing the prefix or trailing cells; width policy stays with callers.
   prefixCell: css({

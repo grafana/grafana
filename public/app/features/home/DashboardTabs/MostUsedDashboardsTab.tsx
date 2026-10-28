@@ -1,10 +1,9 @@
-import { css } from '@emotion/css';
-
 import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
+
+import { HomeList } from '../HomeList';
 
 import { DashboardTabEmptyState } from './DashboardTabEmptyState';
 import { DashboardTabError } from './DashboardTabError';
@@ -18,8 +17,6 @@ interface Props {
 }
 
 export function MostUsedDashboardsTab({ dashboards, loading, error, retry, foldersByUid }: Props) {
-  const styles = useStyles2(getStyles);
-
   if (loading) {
     return <PageLoader text={t('home.most-used-dashboards-tab.loading', 'Loading most used dashboards...')} />;
   }
@@ -42,7 +39,7 @@ export function MostUsedDashboardsTab({ dashboards, loading, error, retry, folde
   }
 
   return (
-    <ul className={styles.list}>
+    <HomeList>
       {dashboards.map((dash) => (
         <li key={dash.uid}>
           <DashListItem
@@ -52,18 +49,9 @@ export function MostUsedDashboardsTab({ dashboards, loading, error, retry, folde
             locationInfo={foldersByUid[dash.location]}
             layoutMode="list"
             source="homepage_mostUsedTab"
-            density="compact"
           />
         </li>
       ))}
-    </ul>
+    </HomeList>
   );
 }
-
-const getStyles = () => ({
-  list: css({
-    listStyle: 'none',
-    padding: 0,
-    margin: 0,
-  }),
-});

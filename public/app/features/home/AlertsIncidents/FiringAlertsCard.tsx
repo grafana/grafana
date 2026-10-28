@@ -83,7 +83,6 @@ export function FiringAlertsCard({ data }: { data: FiringAlertsData }) {
         const detailHref = alertDetailHref(alert);
         return (
           <ListRow
-            isCompact
             title={alert.labels.alertname}
             subtitle={alert.labels.team}
             prefix={
