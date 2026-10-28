@@ -1,5 +1,8 @@
+import { waitFor } from '@testing-library/react';
+
 import { type Scope, type ScopeNode, type Store } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
+import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
 import { type ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
@@ -20,6 +23,12 @@ jest.mock('@grafana/runtime', () => ({
     buildInfo: { version: 'test-version' },
   },
 }));
+
+jest.mock('app/features/dashboard/services/DashboardProfiler', () => ({
+  getDashboardSceneProfiler: jest.fn(),
+}));
+
+const getDashboardSceneProfilerMock = jest.mocked(getDashboardSceneProfiler);
 
 describe('ScopesSelectorService', () => {
   let service: ScopesSelectorService;
@@ -762,6 +771,50 @@ describe('ScopesSelectorService', () => {
 
       // Profiler should still be stopped
       expect(profiler.stopInteraction).toHaveBeenCalled();
+    });
+  });
+
+  describe('dashboard profiler loading', () => {
+    const originalMetrics = config.dashboardPerformanceMetrics;
+
+    afterEach(() => {
+      config.dashboardPerformanceMetrics = originalMetrics;
+      getDashboardSceneProfilerMock.mockReset();
+    });
+
+    it('loads the dashboard profiler after construction when performance metrics are configured', async () => {
+      config.dashboardPerformanceMetrics = ['*'];
+      const profiler = { startInteraction: jest.fn(), stopInteraction: jest.fn() };
+      getDashboardSceneProfilerMock.mockReturnValue(profiler as never);
+
+      const serviceWithMetrics = new ScopesSelectorService(apiClient, dashboardsService, store);
+      expect(getDashboardSceneProfilerMock).not.toHaveBeenCalled();
+
+      await waitFor(() => expect(getDashboardSceneProfilerMock).toHaveBeenCalledTimes(1));
+      await serviceWithMetrics.filterNode('', '');
+
+      expect(profiler.startInteraction).toHaveBeenCalledWith('scopeNodeFilter');
+    });
+
+    it('does not load the dashboard profiler when no performance metrics are configured', async () => {
+      config.dashboardPerformanceMetrics = [];
+
+      const serviceWithoutMetrics = new ScopesSelectorService(apiClient, dashboardsService, store);
+      await serviceWithoutMetrics.filterNode('', '');
+
+      expect(serviceWithoutMetrics.state.tree?.expanded).toBe(true);
+      expect(getDashboardSceneProfilerMock).not.toHaveBeenCalled();
+    });
+
+    it('uses a profiler passed to the constructor instead of loading one', async () => {
+      config.dashboardPerformanceMetrics = ['*'];
+      const profiler = { startInteraction: jest.fn(), stopInteraction: jest.fn() };
+
+      const serviceWithProfiler = new ScopesSelectorService(apiClient, dashboardsService, store, profiler as never);
+      await serviceWithProfiler.filterNode('', '');
+
+      expect(profiler.startInteraction).toHaveBeenCalledWith('scopeNodeFilter');
+      expect(getDashboardSceneProfilerMock).not.toHaveBeenCalled();
     });
   });
 
