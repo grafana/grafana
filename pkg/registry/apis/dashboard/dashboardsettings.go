@@ -267,5 +267,14 @@ func validateDashboardSettingsNotManaged(obj *dashv2beta1.DashboardSettings) err
 	if hasKind || hasIdentity {
 		return errors.New("dashboard settings can't be managed by a repository")
 	}
+
+	// Also reject anything the platform's manager accessor reports as managed.
+	accessor, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return err
+	}
+	if _, managed := accessor.GetManagerProperties(); managed {
+		return errors.New("dashboard settings can't be managed by a repository")
+	}
 	return nil
 }

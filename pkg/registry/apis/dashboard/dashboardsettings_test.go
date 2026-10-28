@@ -310,6 +310,7 @@ func TestDashboardsAPIBuilderValidateDashboardSettings(t *testing.T) {
 		{name: "both scopes", attrs: create(newDashboardSettings("folder-f1", "f1", new("u1"))), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "not both"},
 		{name: "repository-managed", attrs: create(withAnnotations(u1Settings(), map[string]string{utils.AnnoKeyManagerKind: "repo"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
 		{name: "repository manager identity", attrs: create(withAnnotations(u1Settings(), map[string]string{utils.AnnoKeyManagerIdentity: "repo-1"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
+		{name: "legacy repository annotation", attrs: create(withAnnotations(u1Settings(), map[string]string{"grafana.app/repoName": "repo-1"})), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
 		{name: "invalid spec", attrs: create(withSpec(u1Settings(), `{"panels":{"decimals":99}}`)), requester: u1, wantErr: apierrors.IsInvalid},
 		{name: "refresh below minimum", attrs: create(withSpec(u1Settings(), `{"autoRefresh":"5s"}`)), requester: u1, wantErr: apierrors.IsBadRequest},
 		{name: "refresh off", attrs: create(withSpec(u1Settings(), `{"autoRefresh":""}`)), requester: u1},
@@ -322,6 +323,7 @@ func TestDashboardsAPIBuilderValidateDashboardSettings(t *testing.T) {
 		{name: "general vs empty is no change on the org tier", attrs: update(newDashboardSettings("namespace", "general", nil), newDashboardSettings("namespace", "", nil)), requester: admin},
 		{name: "update with both scopes", attrs: update(newDashboardSettings("user-u1", "f1", new("u1")), u1Settings()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: "not both"},
 		{name: "repository-managed update", attrs: update(withAnnotations(u1Settings(), map[string]string{utils.AnnoKeyManagerKind: "repo"}), u1Settings()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
+		{name: "legacy repository annotation on update", attrs: update(withAnnotations(u1Settings(), map[string]string{"grafana.app/repoName": "repo-1"}), u1Settings()), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: repositoryManaged},
 		// The stored object has the same name, so only the check against the scope rejects it.
 		{name: "update name mismatch", attrs: update(newDashboardSettings("folder-f1", "", new("u1")), newDashboardSettings("folder-f1", "", new("u1"))), requester: u1, wantErr: apierrors.IsBadRequest, wantErrMsg: `expected "user-u1"`},
 		{name: "update with invalid spec", attrs: update(withSpec(u1Settings(), `{"panels":{"decimals":99}}`), u1Settings()), requester: u1, wantErr: apierrors.IsInvalid},
