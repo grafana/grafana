@@ -260,8 +260,6 @@ To edit a dashboard, follow these steps:
 
 While you're editing a dashboard, you can revert a change with the **Undo** option and reinstate it with **Redo** in the toolbar:
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-undo-redo-sm-v13.3.png" max-width="85px" alt="Dashboard toolbar with undo and redo icons highlighted" >}}
-
 - Click the **Undo** icon to revert the most recent change.
 - Click the **Redo** icon to reinstate the change you most recently reverted.
 
