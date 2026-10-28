@@ -1147,7 +1147,7 @@ func TestEvictExpiredIndexClearsUploadTracking(t *testing.T) {
 	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(index, 42))
 
-	idx := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, nil, be.log)
+	idx := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, be.log)
 	idx.resourceVersion.Store(42)
 	idx.expiration = time.Now().Add(-time.Minute)
 
@@ -1245,7 +1245,7 @@ func TestBleveSnapshotLifecycleWithSharedStore(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), res.TotalHits)
-	require.Equal(t, "dash-prod", res.Results.Rows[0].Key.Name)
+	require.Equal(t, "dash-prod", res.Rows[0].Key.Name)
 }
 
 func newConfiguredSnapshotBackend(t *testing.T, store RemoteIndexStore) (*bleveBackend, *resource.BleveIndexMetrics) {

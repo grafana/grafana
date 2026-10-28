@@ -797,8 +797,9 @@ type Cfg struct {
 	// defaults to dashboards; external defaults to none.
 	VectorAllowedInternalCollections []string
 	VectorAllowedExternalCollections []string
-	VectorSharedExternalCollections  []string
-	VectorSharedWriteServices        []string
+	// Exact group/resource collections readable only by the listed service identities.
+	VectorAllowedReadServices       map[string][]string
+	VectorSharedExternalCollections map[string][]string
 	// Registers the VectorStore write RPCs on the storage server.
 	EnableVectorStore bool
 	// Service identities allowed to call the VectorStore write RPCs.
@@ -1889,6 +1890,12 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
+	if err := cfg.readVectorAllowedReadServices(); err != nil {
+		return err
+	}
+	if err := cfg.readVectorSharedExternalCollections(); err != nil {
+		return err
+	}
 
 	cfg.readStartupParams(iniFile)
 	return nil

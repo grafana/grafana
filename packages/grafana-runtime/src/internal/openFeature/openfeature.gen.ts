@@ -166,12 +166,16 @@ export const FlagKeys = {
   GrafanaAnnouncementBannerDismissible: "grafana.announcementBannerDismissible",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
+  /** Enables using the Config From Query Results transformation's Dynamic Field Name option */
+  GrafanaConfigFromQueryDynamicName: "grafana.configFromQueryDynamicName",
   /** Enables custom dashboard templates for enterprise */
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
   /** Uses auto grid as the default layout for new dashboards */
   GrafanaDashboardAutoGridDefault: "grafana.dashboardAutoGridDefault",
+  /** Enables Composer mode for editing dashboards with Grafana Assistant */
+  GrafanaDashboardComposer: "grafana.dashboardComposer",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
   /** Enables Viewing and Editing modes for dynamic dashboards */
@@ -194,8 +198,6 @@ export const FlagKeys = {
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
-  /** Offers the reserved Grafana home option in the home dashboard preference */
-  GrafanaGlobalHomePreference: "grafana.globalHomePreference",
   /** Enables PLG-focused growth redesign of the unified homepage */
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
@@ -1235,6 +1237,17 @@ export const useFlagGrafanaCmdkHybridSearch = (options?: ReactFlagEvaluationOpti
 };
 
 /**
+ * Enables using the Config From Query Results transformation's Dynamic Field Name option
+ *
+ * **Details:**
+ * - flag key: `grafana.configFromQueryDynamicName`
+ * - default value: `false`
+ */
+export const useFlagGrafanaConfigFromQueryDynamicName = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.configFromQueryDynamicName", false, options).value;
+};
+
+/**
  * Enables custom dashboard templates for enterprise
  *
  * **Details:**
@@ -1265,6 +1278,17 @@ export const useFlagGrafanaCustomizableMegaMenu = (options?: ReactFlagEvaluation
  */
 export const useFlagGrafanaDashboardAutoGridDefault = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardAutoGridDefault", true, options).value;
+};
+
+/**
+ * Enables Composer mode for editing dashboards with Grafana Assistant
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardComposer`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardComposer = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardComposer", false, options).value;
 };
 
 /**
@@ -1386,17 +1410,6 @@ export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagGrafanaGeomapProtomapsBasemap = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.geomapProtomapsBasemap", false, options).value;
-};
-
-/**
- * Offers the reserved Grafana home option in the home dashboard preference
- *
- * **Details:**
- * - flag key: `grafana.globalHomePreference`
- * - default value: `false`
- */
-export const useFlagGrafanaGlobalHomePreference = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.globalHomePreference", false, options).value;
 };
 
 /**
