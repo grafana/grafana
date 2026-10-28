@@ -1,6 +1,7 @@
 import { DragDropContext, type DropResult, Droppable } from '@hello-pangea/dnd';
 import { omit } from 'lodash';
 import { useState } from 'react';
+import { useAsync } from 'react-use';
 
 import {
   type DataSourceInstanceSettings,
@@ -11,12 +12,16 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { getDataSourceSrv } from '@grafana/runtime';
+import {
+  getDataSourceInstanceList,
+  getDataSourceInstanceSettings,
+  getDefaultDataSourceInstanceListItem,
+  useDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Button, Card, Icon, Stack } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { getInstantFromDataQuery } from '../../utils/rule-form';
@@ -28,10 +33,6 @@ import {
   errorFromPreviewData,
   getThresholdsForQueries,
 } from './util';
-
-function getDataSourceSettings(query: AlertQuery): DataSourceInstanceSettings | undefined {
-  return getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-}
 
 interface Props {
   // The query configuration
@@ -93,13 +94,15 @@ export const QueryRows = ({
     );
   };
 
-  const onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
+  const onChangeDataSource = (
+    settings: DataSourceInstanceSettings,
+    previousSettings: DataSourceInstanceSettings | undefined,
+    index: number
+  ) => {
     const updatedQueries = queries.map((item, itemIndex) => {
       if (itemIndex !== index) {
         return item;
       }
-
-      const previousSettings = getDataSourceSettings(item);
 
       // Copy model if changing to a datasource of same type.
       if (settings.type === previousSettings?.type) {
@@ -196,7 +199,11 @@ interface QueryRowItemProps {
   threshold?: ThresholdDefinition;
   onChangeQuery: (query: DataQuery, index: number) => void;
   onRemoveQuery: (query: DataQuery) => void;
-  onChangeDataSource: (settings: DataSourceInstanceSettings, index: number) => void;
+  onChangeDataSource: (
+    settings: DataSourceInstanceSettings,
+    previousSettings: DataSourceInstanceSettings | undefined,
+    index: number
+  ) => void;
   onDuplicateQuery: (query: AlertQuery) => void;
   onChangeTimeRange: (timeRange: RelativeTimeRange, index: number) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
@@ -220,19 +227,23 @@ const QueryRowItem = ({
   onRunQueries,
   onSetCondition,
 }: QueryRowItemProps) => {
-  const dsSettings = getDataSourceSettings(query);
+  const { settings: dsSettings, isLoading } = useDataSourceInstanceSettings(query.datasourceUid);
+
+  if (isLoading) {
+    return null;
+  }
+
+  // The hook keeps the previous settings for one render after datasourceUid changes
+  if (dsSettings && dsSettings.uid !== query.datasourceUid) {
+    return null;
+  }
 
   if (!dsSettings) {
     return (
       <DatasourceNotFound
         index={index}
         model={query.model}
-        onUpdateDatasource={() => {
-          const defaultDataSource = getDatasourceSrv().getInstanceSettings(null);
-          if (defaultDataSource) {
-            onChangeDataSource(defaultDataSource, index);
-          }
-        }}
+        onUpdateDatasource={(settings) => onChangeDataSource(settings, undefined, index)}
         onRemoveQuery={() => onRemoveQuery(query)}
       />
     );
@@ -251,7 +262,7 @@ const QueryRowItem = ({
       onChangeQuery={onChangeQuery}
       onRemoveQuery={onRemoveQuery}
       queries={queries}
-      onChangeDataSource={onChangeDataSource}
+      onChangeDataSource={(settings, index) => onChangeDataSource(settings, dsSettings, index)}
       onDuplicateQuery={onDuplicateQuery}
       onChangeTimeRange={onChangeTimeRange}
       onChangeQueryOptions={onChangeQueryOptions}
@@ -301,21 +312,31 @@ function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<
 interface DatasourceNotFoundProps {
   index: number;
   model: AlertDataQuery;
-  onUpdateDatasource: () => void;
+  onUpdateDatasource: (settings: DataSourceInstanceSettings) => void;
   onRemoveQuery: () => void;
+}
+
+// Same rule as adding a new query: the org default if it supports alerting, else the first data source that does.
+async function getDefaultOrFirstAlertingDataSource(): Promise<DataSourceInstanceSettings | undefined> {
+  const items = await getDataSourceInstanceList({ alerting: true });
+  const item = (await getDefaultDataSourceInstanceListItem(items)) ?? items[0];
+  return item ? getDataSourceInstanceSettings(item.uid) : undefined;
 }
 
 const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }: DatasourceNotFoundProps) => {
   const refId = model.refId;
 
   const [showDetails, setShowDetails] = useState<boolean>(false);
+  const { value: fallbackDataSource } = useAsync(getDefaultOrFirstAlertingDataSource, []);
 
   const toggleDetails = () => {
     setShowDetails((show) => !show);
   };
 
   const handleUpdateDatasource = () => {
-    onUpdateDatasource();
+    if (fallbackDataSource) {
+      onUpdateDatasource(fallbackDataSource);
+    }
   };
 
   return (
@@ -336,7 +357,7 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
             <Icon name="question-circle" />
           </Card.Figure>
           <Card.Actions>
-            <Button key="update" variant="secondary" onClick={handleUpdateDatasource}>
+            <Button key="update" variant="secondary" onClick={handleUpdateDatasource} disabled={!fallbackDataSource}>
               <Trans i18nKey="alerting.datasource-not-found.update-datasource">Update datasource</Trans>
             </Button>
             <Button key="remove" variant="destructive" onClick={onRemoveQuery}>
