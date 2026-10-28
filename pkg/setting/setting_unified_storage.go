@@ -14,33 +14,56 @@ import (
 )
 
 func (cfg *Cfg) readVectorAllowedReadServices() error {
-	raw := strings.TrimSpace(cfg.Raw.Section("unified_storage").Key("vector_allowed_read_services").String())
+	policies, err := parseVectorServiceMap(cfg.Raw.Section("unified_storage").Key("vector_allowed_read_services").String(), "vector_allowed_read_services")
+	if err != nil {
+		return err
+	}
+	cfg.VectorAllowedReadServices = policies
+	return nil
+}
+
+func (cfg *Cfg) readVectorSharedExternalCollections() error {
+	policies, err := parseVectorServiceMap(cfg.Raw.Section("unified_storage").Key("vector_shared_external_collections").String(), "vector_shared_external_collections")
+	if err != nil {
+		return err
+	}
+	cfg.VectorSharedExternalCollections = policies
+	return nil
+}
+
+func parseVectorServiceMap(value, setting string) (map[string][]string, error) {
+	raw := strings.TrimSpace(value)
 	if raw == "" {
-		cfg.VectorAllowedReadServices = nil
-		return nil
+		return nil, nil
 	}
 	var policies map[string][]string
 	if err := json.Unmarshal([]byte(raw), &policies); err != nil {
-		return fmt.Errorf("unified_storage.vector_allowed_read_services: parse JSON object: %w", err)
+		return nil, fmt.Errorf("unified_storage.%s: parse JSON object: %w", setting, err)
 	}
 	if policies == nil {
-		return fmt.Errorf("unified_storage.vector_allowed_read_services: expected JSON object")
+		return nil, fmt.Errorf("unified_storage.%s: expected JSON object", setting)
 	}
+	if err := validateVectorServiceMap(policies, setting); err != nil {
+		return nil, err
+	}
+	return policies, nil
+}
+
+func validateVectorServiceMap(policies map[string][]string, setting string) error {
 	for key, identities := range policies {
 		group, resource, ok := strings.Cut(key, "/")
 		if !ok || group == "" || resource == "" || strings.Contains(resource, "/") || strings.IndexFunc(key, unicode.IsSpace) >= 0 || strings.ContainsAny(key, "*?") {
-			return fmt.Errorf("unified_storage.vector_allowed_read_services: invalid collection %q", key)
+			return fmt.Errorf("unified_storage.%s: invalid collection %q", setting, key)
 		}
 		if len(identities) == 0 {
-			return fmt.Errorf("unified_storage.vector_allowed_read_services: collection %q requires a nonempty identity list", key)
+			return fmt.Errorf("unified_storage.%s: collection %q requires a nonempty identity list", setting, key)
 		}
 		for _, identity := range identities {
 			if identity == "" || strings.TrimSpace(identity) != identity {
-				return fmt.Errorf("unified_storage.vector_allowed_read_services: collection %q has an empty or invalid identity", key)
+				return fmt.Errorf("unified_storage.%s: collection %q has an empty or invalid identity", setting, key)
 			}
 		}
 	}
-	cfg.VectorAllowedReadServices = policies
 	return nil
 }
 
@@ -236,8 +259,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	}
 	cfg.VectorAllowedExternalCollections = section.Key("vector_allowed_external_collections").Strings(",")
 	cfg.VectorAllowedWriteServices = section.Key("vector_allowed_write_services").Strings(",")
-	cfg.VectorSharedExternalCollections = section.Key("vector_shared_external_collections").Strings(",")
-	cfg.VectorSharedWriteServices = section.Key("vector_shared_write_services").Strings(",")
 	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
 	cfg.VectorBackfillPageSize = section.Key("vector_backfill_page_size").MustInt(0)
 	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)
@@ -431,28 +452,19 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 }
 
 func (cfg *Cfg) ValidateSharedVectorConfig() error {
-	if len(cfg.VectorSharedExternalCollections) == 0 {
-		return nil
+	if err := validateVectorServiceMap(cfg.VectorSharedExternalCollections, "vector_shared_external_collections"); err != nil {
+		return err
 	}
 	legacy := make(map[string]struct{}, len(cfg.VectorAllowedInternalCollections)+len(cfg.VectorAllowedExternalCollections))
 	for _, name := range append(append([]string{}, cfg.VectorAllowedInternalCollections...), cfg.VectorAllowedExternalCollections...) {
 		legacy[strings.TrimSpace(name)] = struct{}{}
 	}
-	for _, name := range cfg.VectorSharedExternalCollections {
-		name = strings.TrimSpace(name)
-		if name == "" {
-			return fmt.Errorf("shared vector collection name must not be empty")
-		}
+	for name := range cfg.VectorSharedExternalCollections {
 		if _, ok := legacy[name]; ok {
 			return fmt.Errorf("shared vector collection %q overlaps legacy enrollment", name)
 		}
 	}
-	for _, service := range cfg.VectorSharedWriteServices {
-		if strings.TrimSpace(service) != "" {
-			return nil
-		}
-	}
-	return fmt.Errorf("shared vector collections require an approved publisher service")
+	return nil
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

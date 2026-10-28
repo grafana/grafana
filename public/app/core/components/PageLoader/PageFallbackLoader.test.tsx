@@ -1,6 +1,7 @@
 import { screen } from '@testing-library/react';
 import { getWrapper, render } from 'test/test-utils';
 
+import { StPodReadyService, StPodStatus } from 'app/core/services/StPodReadyService';
 import { configureStore } from 'app/store/configureStore';
 
 import { AppChromeService } from '../AppChrome/AppChromeService';
@@ -122,6 +123,69 @@ describe('PageFallbackLoader', () => {
     const state = chrome.state.getValue();
     expect(state.sectionNav.node.text).toBe('Explore');
     expect(state.pageNav?.text).toBe('Explore');
+  });
+
+  it('does not render the timeout banner or error card while the pod is still being probed', () => {
+    render(<PageFallbackLoader />);
+
+    expect(screen.queryByTestId('st-pod-timeout-banner')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('st-pod-error-card')).not.toBeInTheDocument();
+    expect(screen.getByTestId('page-fallback-loader')).toBeInTheDocument();
+  });
+
+  it('renders the hang-tight banner alongside the loader when the pod ready service reports timeout', () => {
+    const stPodReady = new StPodReadyService();
+    stPodReady.state.next(StPodStatus.Timeout);
+    const wrapper = getWrapper({ grafanaContext: { stPodReady }, renderWithRouter: true });
+
+    render(<PageFallbackLoader />, { wrapper });
+
+    expect(screen.getByTestId('st-pod-timeout-banner')).toHaveTextContent(
+      "Hang tight. This is taking a bit longer than expected, but we're on it."
+    );
+    expect(screen.getByTestId('page-fallback-loader')).toBeInTheDocument();
+    expect(screen.getByTestId('page-fallback-dotfield')).toBeInTheDocument();
+    expect(screen.queryByTestId('st-pod-error-card')).not.toBeInTheDocument();
+  });
+
+  it('renders the error card with the matched page title when the pod ready service reports error', () => {
+    const stPodReady = new StPodReadyService();
+    stPodReady.state.next(StPodStatus.Error);
+    const store = configureStore({ navBarTree: [{ id: 'explore', text: 'Explore', url: '/explore' }] });
+    const wrapper = getWrapper({
+      store,
+      grafanaContext: { stPodReady },
+      renderWithRouter: true,
+      historyOptions: { initialEntries: ['/explore'] },
+    });
+
+    render(<PageFallbackLoader />, { wrapper });
+
+    const card = screen.getByTestId('st-pod-error-card');
+    expect(card).toHaveTextContent("Couldn't load Explore");
+    expect(card).toHaveTextContent('Something went wrong while this was starting up.');
+    expect(card).toHaveTextContent("If you've already reached out, we have your request and we're on it.");
+    expect(screen.getByRole('link', { name: /support@grafana\.com/ })).toHaveAttribute(
+      'href',
+      'mailto:support@grafana.com'
+    );
+    expect(screen.queryByTestId('page-fallback-loader')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('page-fallback-dotfield')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('st-pod-timeout-banner')).not.toBeInTheDocument();
+  });
+
+  it('falls back to the generic error title when no nav item matches the pathname', () => {
+    const stPodReady = new StPodReadyService();
+    stPodReady.state.next(StPodStatus.Error);
+    const wrapper = getWrapper({
+      grafanaContext: { stPodReady },
+      renderWithRouter: true,
+      historyOptions: { initialEntries: ['/some-unknown-page'] },
+    });
+
+    render(<PageFallbackLoader />, { wrapper });
+
+    expect(screen.getByTestId('st-pod-error-card')).toHaveTextContent("Couldn't load page");
   });
 
   it('skips chrome breadcrumbs when the matched item has no entry in navIndex', () => {

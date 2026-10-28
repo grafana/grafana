@@ -1443,7 +1443,8 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "interval": "",
       "recording-rules": {
@@ -1455,6 +1456,58 @@
         "alert-rules_other": "",
         "recording-rules_one": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -5663,6 +5716,17 @@
       "ungroup-rows": "Desagrupar linhas",
       "ungroup-tabs": "Desagrupar abas"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5843,7 +5907,20 @@
     "edit-actions": {
       "add": "Adicionar {{typeName}}",
       "add-conditional-rule": "Adicionar regra {{ruleDescription}}",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "Recolher todas as linhas",
+      "collapse-row": "",
       "dashboard-description": "Alterar descrição do painel de controle",
       "dashboard-title": "Alterar título do painel de controle",
       "duplicate": "Duplicar {{typeName}}",
@@ -5852,6 +5929,7 @@
       "edit-template-variable-rule": "Alterar regra de variável do modelo",
       "edit-time-range-rule": "Alterar regra de intervalo de tempo",
       "expand-all-rows": "Expandir todas as linhas",
+      "expand-row": "",
       "group-into-row": "Agrupar em linha",
       "group-into-tab": "Agrupar em aba",
       "move": "Mover {{typeName}}",
@@ -5867,6 +5945,7 @@
       "paste-panel": "Colar painel",
       "remove": "Remover {{typeName}}",
       "remove-multiple": "Remover {{typeName}} ({{num}})",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "Desativar tela de preenchimento de linha",
       "row-fill-screen-enable": "Ativar tela de preenchimento de linha",
@@ -5874,16 +5953,38 @@
       "row-repeat-variable": "Repetição de linha por",
       "row-show-header": "Mostrar cabeçalho de linha",
       "row-title": "Alterar título da linha",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "Alternar layout",
       "switch-layout-row": "Trocar layout",
       "switch-layout-tab": "Trocar layout",
       "tab-repeat-variable": "Repetição de guia por",
       "tab-title": "Alterar título da aba",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "Alterar descrição da variável",
       "variable-hide": "Alterar opção de ocultar variável",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "Alterar rótulo da variável",
+      "variable-multi-value": "",
       "variable-name": "Alterar nome da variável",
-      "variable-type": "Alterar tipo de variável"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "Alterar tipo de variável",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "Adicione visualizações que são compartilhadas com outros painéis de controle.",
@@ -6105,8 +6206,12 @@
       "tooltip-previous": "Anterior"
     },
     "modes": {
-      "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -7019,7 +7124,8 @@
         "change-annotation-controls-display": "Alterar exibição dos controles de anotação",
         "change-annotation-enabled-state": "Alterar estado de ativação da anotação",
         "change-annotation-name": "Alterar nome da anotação",
-        "change-annotation-panel-filter": "Alterar filtro do painel de anotações"
+        "change-annotation-panel-filter": "Alterar filtro do painel de anotações",
+        "change-annotation-query": ""
       },
       "edit-query": "Editar consulta"
     },
@@ -12199,10 +12305,14 @@
     },
     "log-line": {
       "has-error": "Contém erros",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "É amostrado",
       "show-less": "exibir menos",
       "show-more": "exibir mais",
-      "tooltip-error": "Erro: {{errorMessage}}"
+      "tooltip-error": "Erro: {{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "Centralizar linha correspondente",
@@ -13424,7 +13534,6 @@
     "add-panel": {
       "cancel": "Cancelar",
       "card-author": "Por {{author}}",
-      "card-selected": "{{title}} (selecionado)",
       "card-updated": "Atualizado {{when}}",
       "create-name": "Nome do bloco de anotações",
       "create-name-required": "O nome do bloco de anotações é obrigatório",
@@ -13435,6 +13544,7 @@
       "error-open-conflict": "",
       "list-error": "Erro ao carregar os blocos de anotações",
       "list-error-body": "Ocorreu um erro ao carregar seus blocos de anotações. Tente novamente ou crie um novo.",
+      "list-label": "",
       "list-no-matches": "Nenhum bloco de anotações corresponde a esses filtros.",
       "list-none": "Você ainda não tem blocos de anotações. Em vez disso, crie um.",
       "list-none-read-only": "Você ainda não tem blocos de anotações e não tem permissão para criar um.",
@@ -16326,8 +16436,8 @@
       "copy-link-button": "Copiar",
       "info-text": "Crie um link direto para este painel de controle ou painel, personalizado com as opções abaixo.",
       "link-url": "URL do link",
-      "render-alert": "Plug-in renderizador de imagem não instalado",
-      "render-instructions": "Para renderizar uma imagem, você precisa instalar o <2>plug-in renderizador de imagens do Grafana</2>. Entre em contato com o administrador do Grafana para instalar o plug-in.",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "Link direto de imagem renderizada",
       "save-alert": "O painel de controle não está salvo",
       "save-dashboard": "Para renderizar uma imagem do painel, você deve salvar o painel de controle primeiro.",
@@ -17142,6 +17252,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {

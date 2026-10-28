@@ -17,12 +17,14 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		DescendantCounts{}.OpenAPIModelName():                                       schema_pkg_apis_folder_v1_DescendantCounts(ref),
 		Folder{}.OpenAPIModelName():                                                 schema_pkg_apis_folder_v1_Folder(ref),
 		FolderAccessInfo{}.OpenAPIModelName():                                       schema_pkg_apis_folder_v1_FolderAccessInfo(ref),
+		FolderCascadeDeleteStatus{}.OpenAPIModelName():                              schema_pkg_apis_folder_v1_FolderCascadeDeleteStatus(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.FolderClient":    schema_pkg_apis_folder_v1_FolderClient(ref),
 		FolderInfo{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderInfo(ref),
 		FolderInfoList{}.OpenAPIModelName():                                         schema_pkg_apis_folder_v1_FolderInfoList(ref),
 		"github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1.FolderJSONCodec": schema_pkg_apis_folder_v1_FolderJSONCodec(ref),
 		FolderList{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderList(ref),
 		FolderSpec{}.OpenAPIModelName():                                             schema_pkg_apis_folder_v1_FolderSpec(ref),
+		FolderStatus{}.OpenAPIModelName():                                           schema_pkg_apis_folder_v1_FolderStatus(ref),
 		ResourceStats{}.OpenAPIModelName():                                          schema_pkg_apis_folder_v1_ResourceStats(ref),
 	}
 }
@@ -101,12 +103,18 @@ func schema_pkg_apis_folder_v1_Folder(ref common.ReferenceCallback) common.OpenA
 							Ref:         ref(FolderSpec{}.OpenAPIModelName()),
 						},
 					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(FolderStatus{}.OpenAPIModelName()),
+						},
+					},
 				},
-				Required: []string{"metadata", "spec"},
+				Required: []string{"metadata", "spec", "status"},
 			},
 		},
 		Dependencies: []string{
-			FolderSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			FolderSpec{}.OpenAPIModelName(), FolderStatus{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -176,6 +184,69 @@ func schema_pkg_apis_folder_v1_FolderAccessInfo(ref common.ReferenceCallback) co
 					},
 				},
 				Required: []string{"canSave", "canEdit", "canAdmin", "canDelete"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_folder_v1_FolderCascadeDeleteStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Current phase of the cascade delete.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"total": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Descendants discovered when the cascade started; the fixed denominator for remaining.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"remaining": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Descendants not yet deleted.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"errors": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Errors encountered while deleting descendants.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"string"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+					"started": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the cascade started, in Unix milliseconds.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"finished": {
+						SchemaProps: spec.SchemaProps{
+							Description: "When the cascade reached a terminal state, in Unix milliseconds.",
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+				},
+				Required: []string{"state"},
 			},
 		},
 	}
@@ -389,6 +460,26 @@ func schema_pkg_apis_folder_v1_FolderSpec(ref common.ReferenceCallback) common.O
 				Required: []string{"title"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_folder_v1_FolderStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"cascadeDelete": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Progress of a finalizer-driven cascade delete. Absent until deletion starts.",
+							Ref:         ref(FolderCascadeDeleteStatus{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			FolderCascadeDeleteStatus{}.OpenAPIModelName()},
 	}
 }
 
