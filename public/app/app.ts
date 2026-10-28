@@ -86,6 +86,7 @@ import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks
 import { isPluginNavAvailable } from './core/navtree/utils';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
+import { StPodReadyService } from './core/services/StPodReadyService';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { initEchoSrv } from './core/services/echo/init';
@@ -357,6 +358,7 @@ export class GrafanaApp {
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
+      const stPodReady = new StPodReadyService();
       // The menu as the chrome shows it: the boot copy is empty when the client builds the nav tree.
       pageHistorySrv.start(chromeService, () => getState().navBarTree);
 
@@ -376,6 +378,7 @@ export class GrafanaApp {
         chrome: chromeService,
         keybindings: keybindingsService,
         newAssetsChecker,
+        stPodReady,
         config,
       };
 

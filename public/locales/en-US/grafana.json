@@ -4210,9 +4210,9 @@
   "app-chrome": {
     "skip-content-button": "Skip to main content",
     "st-loading": {
-      "background-tooltip": "{{itemName}} is starting up",
-      "pending-dots-aria-label": "Page is starting up",
-      "pending-dots-aria-label-named": "{{itemName}} is starting up"
+      "background-tooltip": "Preparing {{itemName}}",
+      "pending-dots-aria-label": "Preparing page",
+      "pending-dots-aria-label-named": "Preparing {{itemName}}"
     },
     "top-bar": {
       "sign-in": "Sign in"
@@ -16742,6 +16742,17 @@
     "explain-query": "Explain query",
     "generate-suggestion": "Generate suggestion",
     "improve-query": "Improve query"
+  },
+  "st-pod-ready": {
+    "error": {
+      "body-with-support": "Something went wrong while this was starting up. Contact support and we'll help you get this up and running.",
+      "support-ack": "If you've already reached out, we have your request and we're on it.",
+      "title": "Couldn't load {{pageTitle}}",
+      "title-fallback": "Couldn't load page"
+    },
+    "timeout": {
+      "banner": "Hang tight. This is taking a bit longer than expected, but we're on it."
+    }
   },
   "stars": {
     "mark-as-starred": "Mark as favorite",
