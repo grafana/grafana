@@ -41,7 +41,7 @@ const ruleGroupPath = (namespace: string, group: string) => `${namespacePath(nam
  */
 export const convertAPI = createApi({
   reducerPath: 'alertingConvertAPI',
-  baseQuery: createBaseQuery({ baseURL: `${config.appSubUrl || ''}/api/convert` }),
+  baseQuery: createBaseQuery({ getBaseURL: async () => `${config.appSubUrl || ''}/api/convert` }),
   tagTypes: [RULES_TAG, ALERTMANAGER_TAG],
   endpoints: (build) => ({
     /** All imported rule groups, keyed by namespace. */

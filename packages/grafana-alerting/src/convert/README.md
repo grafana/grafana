@@ -82,6 +82,14 @@ All paths are under `/api/convert`. A few things to know:
 - The read endpoints ask for JSON. Without that, Grafana answers in YAML so mimirtool keeps working.
 - The import endpoints take a `NotificationSettings` value and convert it for the header themselves.
 - Reads only return rules and configs that came in through the convert API, not every rule in a folder.
+- Options travel as HTTP headers and Grafana doesn't decode them yet, so keep text values (`versionMessage`,
+  `extraLabels`) to ASCII. `BackendSrv` percent-encodes a value with a character outside Latin-1, spaces included, and
+  Grafana stores it that way (`a — b` becomes `a%20%E2%80%94%20b`). Latin-1 characters like `é` go out as a single byte
+  that isn't valid UTF-8. An `identifier` must be a lowercase RFC 1123 subdomain, or Grafana answers with a 400.
+- It only invalidates its own cache tags. Importing or deleting an Alertmanager config adds or removes contact points,
+  notification policies, time intervals and templates, and promoting it makes them editable by clearing their
+  `converted_prometheus` provenance. An app that caches those through another client has to refetch them itself after
+  those mutations. A dry run changes nothing.
 - Like the other clients in this package, it needs its reducer and middleware in a Redux store. Pass it to
   `createAlertingStore` from `@grafana/alerting/unstable` to get one store for it and the existing pickers:
   `createAlertingStore([convertAPI])`.
@@ -98,6 +106,9 @@ policy tree. Apps build this value from their own form.
 - `fromRulerNotificationSettings(settings)` reads one back, e.g. from a rule's `notification_settings`.
 
 Both leave out blank durations and empty lists, because the API rejects an empty duration.
+
+A contact point needs a non-empty `receiver`. Neither function checks it, and the import endpoints reject settings
+with neither a receiver nor a policy, so the app's form should require it.
 
 ## What doesn't belong here
 

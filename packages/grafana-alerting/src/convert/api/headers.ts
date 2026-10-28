@@ -14,7 +14,10 @@ export interface ConvertRulesOptions {
   notificationSettings?: NotificationSettings | null;
   /** Labels added to every imported rule. Keys and values can't be empty or contain `,` or `=`. */
   extraLabels?: Record<string, string>;
-  /** A message stored with the rule versions this import creates. At most 500 characters. */
+  /**
+   * A message stored with the rule versions this import creates. At most 500 characters.
+   * Keep it ASCII, see the README.
+   */
   versionMessage?: string;
   /** Import the rules as editable in the UI instead of marking them as managed by the convert API. */
   disableProvenance?: boolean;
@@ -27,7 +30,7 @@ export interface ConvertRulesFolderOptions {
 
 /** Options for importing an Alertmanager config, sent as `X-Grafana-Alerting-*` headers. */
 export interface ConvertAlertmanagerOptions {
-  /** Names the imported config, and the routing tree it produces. */
+  /** Names the imported config, and the routing tree it produces. A lowercase RFC 1123 subdomain. */
   identifier: string;
   /** Replace an existing imported config even when its identifier differs. */
   forceReplace?: boolean;
