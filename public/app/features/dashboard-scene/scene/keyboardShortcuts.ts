@@ -234,9 +234,6 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'mod+o',
     onTrigger: () => {
-      if (!canManuallyEditDashboard(scene.state)) {
-        return;
-      }
       const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
       if (cursorSync instanceof behaviors.CursorSync) {
         const currentSync = cursorSync.state.sync;
@@ -290,7 +287,12 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     if (canSave) {
       keybindings.addBinding({
         key: 'mod+s',
-        onTrigger: () => scene.openSaveDrawer({}),
+        onTrigger: () => {
+          // Viewing keeps the edit session open (isEditing stays true), so gate on the mode as well
+          if (!isViewingDashboard(scene.state)) {
+            scene.openSaveDrawer({});
+          }
+        },
       });
     }
 
