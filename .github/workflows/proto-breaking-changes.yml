@@ -8,6 +8,7 @@ on:
       - 'pkg/registry/apps/annotation/proto/**'
       - 'pkg/storage/unified/proto/**'
       - 'pkg/storage/unified/resourcepb/**'
+      - 'pkg/storage/dbproxy/**'
       - '.github/workflows/proto-breaking-changes.yml'
 
 concurrency:
@@ -31,6 +32,7 @@ jobs:
           # lives in each module's buf.yaml under `breaking.use`.
           - pkg/registry/apps/annotation/proto
           - pkg/storage/unified/proto
+          - pkg/storage/dbproxy/proto
     steps:
       - uses: actions/checkout@v5
         with:
@@ -51,10 +53,16 @@ jobs:
           # The checkout above is a partial clone, so it can't act as a git remote for
           # buf to read the base ref's tree from directly. Exporting just the module's
           # tree to a plain directory sidesteps that and only fetches the blobs it needs.
-          git archive "$base_sha" -- "$MODULE" | tar -x -C "$dir"
+          if git cat-file -e "$base_sha:$MODULE" 2>/dev/null; then
+            git archive "$base_sha" -- "$MODULE" | tar -x -C "$dir"
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
           echo "dir=$dir" >> "$GITHUB_OUTPUT"
 
       - uses: bufbuild/buf-action@8c6a16e16f12ba20b6470afa9c2ba9b5ba8c97c3 # v1.5.0
+        if: steps.base.outputs.present == 'true'
         with:
           version: 1.65.0
           input: ${{ matrix.module }}
@@ -89,12 +97,15 @@ jobs:
       - name: Generate
         run: make protobuf
 
+      - name: Check dbproxy schema
+        run: make -C pkg/storage/dbproxy proto-lint
+
       # `make protobuf` regenerates all modules, but only these directories are checked,
       # because other modules' generated code doesn't match the Makefile versions yet.
       # To check another module, add its generated code directory here and to the `paths:` filter above.
       - name: Check for differences
         run: |
-          dirs="pkg/storage/unified/resourcepb"
+          dirs="pkg/storage/unified/resourcepb pkg/storage/dbproxy/api"
           if [ -n "$(git status --porcelain -- $dirs)" ]; then
             git diff -- $dirs
             echo "Generated protobuf code is out of date. Run 'make protobuf' and commit the changes."
