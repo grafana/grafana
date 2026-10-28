@@ -34,10 +34,10 @@ func TestLegacyCheckResolverParity(t *testing.T) {
 		calls       []string
 	}{
 		{
-			name:       "empty all denies an empty identity",
+			name:       "empty all allows an identity with only shared with me",
 			expression: legacyAllExpression(),
 			skip:       false,
-			allowed:    false,
+			allowed:    true,
 			wantError:  false,
 		},
 		{
@@ -165,11 +165,12 @@ func TestLegacyCheckResolverParity(t *testing.T) {
 			calls:     []string{"dashboards:uid:missing"},
 		},
 		{
-			name:       "no permissions denies before resolution",
+			name:       "shared with me still enables resolution without stored grants",
 			expression: legacyPermissionExpression("dashboards:read", "dashboards:uid:missing"),
 			skip:       false,
 			allowed:    false,
-			wantError:  false,
+			wantError:  true,
+			calls:      []string{"dashboards:uid:missing"},
 		},
 		{
 			name:       "unrelated permissions still expose a resolver failure",
@@ -265,7 +266,9 @@ func TestLegacyCheckResolverParity(t *testing.T) {
 			}
 			evaluator, _, err := convertLegacyExpression(tc.expression)
 			require.NoError(t, err)
-			permissions := make(map[string][]string)
+			permissions := map[string][]string{
+				acimpl.SharedWithMeFolderPermission.Action: {acimpl.SharedWithMeFolderPermission.Scope},
+			}
 			for _, p := range tc.permissions {
 				permissions[p.Action] = append(permissions[p.Action], p.Scope)
 			}
@@ -323,19 +326,15 @@ func TestLegacyCheckResolverParity(t *testing.T) {
 	}
 }
 
-func TestLegacyCheckResolverPresenceQuery(t *testing.T) {
+func TestLegacyCheckSharedWithMeEnablesResolversWithoutStoredGrants(t *testing.T) {
 	ac := acimpl.ProvideAccessControlTest()
 	ac.RegisterScopeAttributeResolver("dashboards:uid:", accesscontrol.ScopeAttributeResolverFunc(
 		func(context.Context, int64, string) ([]string, error) {
 			return nil, errors.New("resource lookup failed")
 		},
 	))
-	s := NewTestService("u-1", []accesscontrol.Permission{
-		{
-			Action: "users:create",
-			Scope:  "",
-		},
-	}, nil).WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
+	s := NewTestService("u-1", nil, nil).
+		WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
 	s.store.(*fakeStore).basicRole = &store.BasicRole{Role: "Viewer"}
 	s.identityStore.(*fakeIdentityStore).userTeams = []int64{10}
 	s.actionResolver = legacyActionResolver{}
@@ -357,14 +356,7 @@ func TestLegacyCheckResolverPresenceQuery(t *testing.T) {
 			ActionSets: []string{"dashboards:view", "dashboards:edit"},
 		},
 	}, permissions.queries)
-	require.Equal(t, []store.PermissionsQuery{
-		{
-			UserID:        1,
-			Role:          "Viewer",
-			TeamIDs:       []int64{10},
-			IsServerAdmin: false,
-		},
-	}, permissions.presenceQueries)
+	require.Empty(t, permissions.presenceQueries)
 }
 
 func TestLegacyCheckResolversOverGRPC(t *testing.T) {
@@ -385,7 +377,9 @@ func TestLegacyCheckResolversOverGRPC(t *testing.T) {
 				IsGrafanaAdmin: false,
 				CacheKey:       "org-12:user:u-1",
 				Permissions: map[int64]map[string][]string{
-					12: {"dashboards:read": {"folders:uid:parent"}},
+					12: {
+						"dashboards:read": {"folders:uid:parent"},
+					},
 				},
 			}, requester)
 			if scope == "dashboards:uid:missing" {

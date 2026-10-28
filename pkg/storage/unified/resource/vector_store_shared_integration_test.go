@@ -99,7 +99,7 @@ func sharedIntegrationFixture(t *testing.T) (resourcepb.VectorStoreClient, vecto
 		return handler(ctx, req)
 	}))
 	resourcepb.RegisterVectorStoreServer(server, NewVectorStoreServer(backend, emb, nil, nil,
-		[]string{group + "/" + resources["manual"], group + "/" + resources["reference"], group + "/" + resources["denied"], group + "/" + resources["lifecycle"], group + "/" + resources["concurrent"]}, []string{"publisher-a", "publisher-b"}, nil))
+		map[string][]string{group + "/" + resources["manual"]: {"publisher-a", "publisher-b"}, group + "/" + resources["reference"]: {"publisher-b"}, group + "/" + resources["denied"]: {"publisher-a"}, group + "/" + resources["lifecycle"]: {"publisher-a", "publisher-b"}, group + "/" + resources["concurrent"]: {"publisher-a", "publisher-b"}}, nil))
 	listener := bufconn.Listen(1 << 20)
 	go func() { _ = server.Serve(listener) }()
 	t.Cleanup(server.Stop)
@@ -144,7 +144,10 @@ func TestIntegrationSharedVectorStorePublication(t *testing.T) {
 	require.EqualValues(t, 1, resp.Updated)
 	require.Equal(t, "tenant-a", provider.calls()[0].Tenant)
 	require.Equal(t, "tenant-b", provider.calls()[1].Tenant)
-	resp = publish(first, "reference", "other collection", "reference title")
+	resp, err = client.UpsertSubresources(second, &resourcepb.VectorUpsertSubresourcesRequest{
+		Namespace: "tenant-b", Group: group, Resource: resources["reference"], Uid: "same-uid", Inputs: []*resourcepb.EmbeddingInput{chunk("other collection", "reference title")},
+	})
+	require.NoError(t, err)
 	require.EqualValues(t, 1, resp.Created)
 	manual, found, err := backend.ResolveCollection(t.Context(), group, resources["manual"])
 	require.NoError(t, err)
@@ -202,6 +205,17 @@ func TestIntegrationSharedVectorStoreRejectsUnauthorizedWritesWithoutProvisionin
 			_, err := client.Upsert(tc.ctx, request)
 			require.Equal(t, tc.code, status.Code(err))
 		})
+	}
+	for _, tc := range []struct{ resource, service string }{
+		{resources["reference"], "publisher-a"},
+		{resources["denied"], "publisher-b"},
+	} {
+		cross := &resourcepb.VectorUpsertRequest{Namespace: "tenant-a", Group: group, Resource: tc.resource, Inputs: req.Inputs}
+		_, err := client.Upsert(sharedPublisherContext(t, "tenant-a", tc.service), cross)
+		require.Equal(t, codes.PermissionDenied, status.Code(err))
+		_, found, err := backend.ResolveCollection(t.Context(), group, tc.resource)
+		require.NoError(t, err)
+		require.False(t, found)
 	}
 	req.Inputs[0].Folder = "tenant-private"
 	_, err := client.Upsert(sharedPublisherContext(t, "tenant-a", "publisher-a"), req)

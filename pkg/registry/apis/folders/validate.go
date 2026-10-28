@@ -582,9 +582,7 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 		children = append(children, row.key.Name)
 	}
 
-	// The bleve Search path populates TotalHits but not Results.NextPageToken, so
-	// pagination must be driven off TotalHits + offset rather than the token.
-	hasMore := resp.GetResults().GetNextPageToken() != "" || offset+int64(len(rows)) < resp.TotalHits
+	hasMore := offset+int64(len(rows)) < resp.TotalHits
 	return children, hasMore, nil
 }
 

@@ -1187,6 +1187,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "authz.legacyUserPermissionsShadow",
+			Description:  "Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "authz.legacyUserPermissions",
 			Description:  "Load legacy Access Control permissions through embedded AuthZ.",
 			Stage:        FeatureStageExperimental,
@@ -3177,6 +3186,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.configFromQueryDynamicName",
+			Description: "Enables using the Config From Query Results transformation's Dynamic Field Name option",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "grafana.thresholdsInterpolation",
 			Description: "Enables using dashboard variables in panel threshold values",
 			Stage:       FeatureStageGeneralAvailability,
@@ -3348,15 +3365,6 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "{}",
-			Generate:     Generate{React: true},
-		},
-		{
-			Name:         "grafana.globalHomePreference",
-			Description:  "Offers the reserved Grafana home option in the home dashboard preference",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendNavigation,
-			HideFromDocs: true,
-			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
 		{

@@ -76,7 +76,7 @@ func TestLegacyResolverLoadsDependenciesAfterFirstResolver(t *testing.T) {
 						resolved = append(resolved, scope)
 						requester, err := identity.GetRequester(ctx)
 						require.NoError(t, err)
-						require.Equal(t, folderVisible, accesscontrol.EvalPermission(folder.ActionFoldersRead).Evaluate(requester.GetPermissions()))
+						require.Equal(t, folderVisible, accesscontrol.EvalPermission(folder.ActionFoldersRead, "folders:uid:parent").Evaluate(requester.GetPermissions()))
 						return []string{"folders:uid:parent"}, nil
 					},
 				), folder.ActionFoldersRead, folder.ActionFoldersRead, "datasources:query"))
@@ -116,7 +116,7 @@ func TestLegacyResolverDependenciesDoNotChangeEvaluationPermissions(t *testing.T
 		func(ctx context.Context, _ int64, _ string) ([]string, error) {
 			requester, err := identity.GetRequester(ctx)
 			require.NoError(t, err)
-			require.Equal(t, []string{"folders:uid:parent"}, requester.GetPermissions()[folder.ActionFoldersRead])
+			require.Equal(t, []string{"folders:uid:parent", acimpl.SharedWithMeFolderPermission.Scope}, requester.GetPermissions()[folder.ActionFoldersRead])
 			return []string{"folders:uid:parent"}, nil
 		},
 	), folder.ActionFoldersRead))

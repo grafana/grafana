@@ -1150,6 +1150,23 @@
     },
     {
       "metadata": {
+        "name": "authz.legacyUserPermissionsShadow",
+        "resourceVersion": "1793097096771",
+        "creationTimestamp": "2026-10-27T09:31:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-27 10:31:36.771288517 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "authz.listFoldersViaSearch",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-28T14:16:08Z"
@@ -2661,6 +2678,23 @@
     },
     {
       "metadata": {
+        "name": "grafana.configFromQueryDynamicName",
+        "resourceVersion": "1792594531964",
+        "creationTimestamp": "2026-09-17T22:29:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-21 14:55:31.964131578 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables using the Config From Query Results transformation's Dynamic Field Name option",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.correlationsSkipLegacy",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-27T17:03:23Z"
@@ -2945,7 +2979,8 @@
       "metadata": {
         "name": "grafana.globalHomePreference",
         "resourceVersion": "1791348293298",
-        "creationTimestamp": "2026-10-07T14:12:16Z"
+        "creationTimestamp": "2026-10-07T14:12:16Z",
+        "deletionTimestamp": "2026-10-28T06:41:18Z"
       },
       "spec": {
         "description": "Offers the reserved Grafana home option in the home dashboard preference",

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -95,7 +95,7 @@ export function AssistantToolbarButtons() {
           }
           onClick={() => setDockedComponentId(isOpen ? undefined : assistantComponentId)}
           variant={isOpen ? 'active' : 'default'}
-          className={isOpen ? styles.chatButtonActive : undefined}
+          className={cx(styles.button, isOpen && styles.chatButtonActive)}
           data-testid={`extension-toolbar-button-${isOpen ? 'close' : 'open'}`}
           aria-expanded={isOpen}
           aria-pressed={isOpen}
@@ -119,6 +119,7 @@ export function AssistantToolbarButtons() {
               <Icon name="message-sparkles" size="lg" />
             </span>
           }
+          className={styles.button}
           onClick={() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true })}
           aria-label={t('navigation.fullscreen-workspace.workspace', 'Workspace')}
           tooltip={t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
@@ -134,6 +135,10 @@ export function AssistantToolbarButtons() {
 const getStyles = (theme: GrafanaTheme2) => ({
   separator: css({
     marginRight: theme.spacing(1),
+  }),
+  button: css({
+    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeightRegular,
   }),
   chatButtonActive: css({
     '&:hover, &:focus': {

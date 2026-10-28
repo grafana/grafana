@@ -3,6 +3,7 @@ import { type Subscription } from 'rxjs';
 
 import { type ScopeDashboardBinding } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
@@ -49,21 +50,33 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
       navScopePath: undefined,
     });
 
-    // Add/ remove location subscribtion based on the drawer opened state
-    this.subscribeToState((state, prevState) => {
-      if (state.drawerOpened === prevState.drawerOpened) {
-        return;
-      }
-      if (state.drawerOpened && !prevState.drawerOpened) {
-        // Before creating a new subscription, ensure any existing subscription is disposed to avoid multiple active subscriptions and potential memory leaks.
-        this.locationSubscription?.unsubscribe();
-        this.locationSubscription = locationService.getLocationObservable().subscribe((location) => {
-          this.onLocationChange(location.pathname);
-        });
-      } else if (!state.drawerOpened && prevState.drawerOpened) {
-        this.locationSubscription?.unsubscribe();
-      }
-    });
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaScopesDashboardsMegaMenu, false)) {
+      // With the mega-menu flag on, ScopesDashboardsMegaMenuSection renders this tree independent of
+      // drawerOpened entirely (unlike the legacy drawer below), so drawerOpened no longer corresponds
+      // to "is anything showing this". Track location for the service's whole lifetime instead, so
+      // the "current folder" state stays fresh for whenever the mega menu is next opened - including
+      // while drawerOpened is temporarily false, e.g. DashboardSceneRenderer flips it during edit mode.
+      this.locationSubscription = locationService.getLocationObservable().subscribe((location) => {
+        this.onLocationChange(location.pathname);
+      });
+    } else {
+      // Flag off: unchanged original behavior. The legacy drawer is the only consumer of this tree
+      // and is itself gated on drawerOpened, so there's no point tracking location while it's closed.
+      this.subscribeToState((state, prevState) => {
+        if (state.drawerOpened === prevState.drawerOpened) {
+          return;
+        }
+        if (state.drawerOpened && !prevState.drawerOpened) {
+          // Before creating a new subscription, ensure any existing subscription is disposed to avoid multiple active subscriptions and potential memory leaks.
+          this.locationSubscription?.unsubscribe();
+          this.locationSubscription = locationService.getLocationObservable().subscribe((location) => {
+            this.onLocationChange(location.pathname);
+          });
+        } else if (!state.drawerOpened && prevState.drawerOpened) {
+          this.locationSubscription?.unsubscribe();
+        }
+      });
+    }
   }
 
   private openSubScopeFolder = (subScopePath: string[]) => {
@@ -110,11 +123,10 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     await this.setNavScopePath(navScopePath);
   };
 
-  // Expand the group that matches the current path, if it is not already expanded
+  // Expand the group that matches the current path, if it is not already expanded. Only ever called
+  // while a location subscription is active - the constructor gates whether that's true (not
+  // necessarily corresponding to the current drawerOpened value, see the flag branch there).
   private onLocationChange = (pathname: string) => {
-    if (!this.state.drawerOpened) {
-      return;
-    }
     const currentPath = pathname;
     const activeScopeNavigation = this.state.scopeNavigations.find((s) => {
       if (!('url' in s.spec) || typeof s.spec.url !== 'string') {
@@ -299,6 +311,7 @@ export class ScopesDashboardsService extends ScopesServiceBase<ScopesDashboardsS
     if (forScopeNames.length === 0) {
       this.updateState({
         dashboards: [],
+        scopeNavigations: [],
         filteredFolders: {},
         folders: {},
         forScopeNames: [],

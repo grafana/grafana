@@ -622,6 +622,11 @@ type Cfg struct {
 	// MaxNestedFolderDepth is the hard ceiling for folder nesting depth.
 	// The SQL query builders use this value to generate JOIN chains.
 	MaxNestedFolderDepth int
+	// FolderParallelDashboardDeleteEnabled deletes the dashboards of a deleted folder concurrently, with
+	// at most FolderParallelDashboardDeleteConcurrency deletes in flight per folder deletion, not per
+	// instance. Experimental and intentionally undocumented.
+	FolderParallelDashboardDeleteEnabled     bool
+	FolderParallelDashboardDeleteConcurrency int
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
@@ -799,8 +804,7 @@ type Cfg struct {
 	VectorAllowedExternalCollections []string
 	// Exact group/resource collections readable only by the listed service identities.
 	VectorAllowedReadServices       map[string][]string
-	VectorSharedExternalCollections []string
-	VectorSharedWriteServices       []string
+	VectorSharedExternalCollections map[string][]string
 	// Registers the VectorStore write RPCs on the storage server.
 	EnableVectorStore bool
 	// Service identities allowed to call the VectorStore write RPCs.
@@ -1821,6 +1825,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
 	cfg.MaxNestedFolderDepth = maxDeptFolderSettings(iniFile)
+	if err := cfg.readFolderParallelDashboardDeleteSettings(iniFile.Section("folder")); err != nil {
+		return err
+	}
 
 	var err error
 	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)
@@ -1892,6 +1899,9 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
 	if err := cfg.readVectorAllowedReadServices(); err != nil {
+		return err
+	}
+	if err := cfg.readVectorSharedExternalCollections(); err != nil {
 		return err
 	}
 

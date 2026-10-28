@@ -164,14 +164,12 @@ func (s *Service) loadLegacyResolverPermissions(
 				grants[action] = scopes
 			}
 		} else {
-			checkUnrelatedPermissions := false
-			scopes, _, err := s.getLegacyIdentityScopes(
+			scopes, err := s.getLegacyIdentityScopes(
 				ctx,
 				req.namespace,
 				req.identityType,
 				req.userUID,
 				action,
-				checkUnrelatedPermissions,
 				req.skipCache,
 			)
 			if err != nil {

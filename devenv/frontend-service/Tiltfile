@@ -17,17 +17,17 @@ port_goff     = base_port + 6   # +6  go feature flag
 manifest_path = 'public/build/assets-manifest.json'
 boot_path = 'public/build/boot.js'
 
-# A cold build (yarn install + serial plugin builds + main rspack compile) can take
+# A cold build (pnpm install + serial plugin builds + main rspack compile) can take
 # longer than Tilt's default 5m readiness timeout, which fails `tilt ci` even though the
 # build succeeds.
 ci_settings(readiness_timeout='15m')
 
 # --- Frontend processes
 local_resource(
-  'yarn install',
-  cmd='yarn install',
+  'pnpm install',
+  cmd='pnpm install',
   deps=[
-    'yarn.lock',
+    'pnpm-lock.yaml',
   ],
   labels=["local"]
 )
@@ -39,7 +39,7 @@ local_resource(
   # files rather than hold them in a dev server.
   # Keep a literal separator for Nx after npm consumes the first one.
   serve_cmd='npm run start:noHmr -- -- --env noTsCheck=1 --env noLint=1',
-  resource_deps=['yarn install'],
+  resource_deps=['pnpm install'],
 
   readiness_probe=probe(
     initial_delay_secs=10,
@@ -57,7 +57,7 @@ local_resource(
   'rspack boot',
   cmd='npm run build:boot -- --env develop',
   deps=['../../public/boot'],
-  resource_deps=['yarn install'],
+  resource_deps=['pnpm install'],
   allow_parallel=True,
   labels=["local"]
 )
