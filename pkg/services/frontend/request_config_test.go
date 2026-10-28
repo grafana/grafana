@@ -292,6 +292,48 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 		assert.Equal(t, "G-legacy", config.GoogleAnalytics4Id)
 	})
 
+	t.Run("should only override the Google Analytics keys present in settings", func(t *testing.T) {
+		for _, tc := range []struct {
+			name        string
+			fullEnabled bool
+		}{
+			{name: "legacy settings", fullEnabled: false},
+			{name: "full frontend settings", fullEnabled: true},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				config := FSRequestConfig{
+					FSFrontendSettings: FSFrontendSettings{
+						GoogleAnalyticsId:                   "UA-base",
+						GoogleAnalytics4Id:                  "G-base",
+						GoogleAnalytics4SendManualPageViews: true,
+					},
+					FullFrontendSettings: &dtos.FrontendSettingsDTO{
+						GoogleAnalyticsId:                   "UA-base",
+						GoogleAnalytics4Id:                  "G-base",
+						GoogleAnalytics4SendManualPageViews: true,
+					},
+				}
+
+				iniFile := ini.Empty()
+				analyticsSection, _ := iniFile.NewSection("analytics")
+				_, _ = analyticsSection.NewKey("google_analytics_4_id", "G-tenant")
+
+				config.ApplyOverrides(iniFile, log.New("test"), tc.fullEnabled)
+
+				uaID, ga4ID, manualPageViews := config.GoogleAnalyticsId, config.GoogleAnalytics4Id, config.GoogleAnalytics4SendManualPageViews
+				if tc.fullEnabled {
+					uaID = config.FullFrontendSettings.GoogleAnalyticsId
+					ga4ID = config.FullFrontendSettings.GoogleAnalytics4Id
+					manualPageViews = config.FullFrontendSettings.GoogleAnalytics4SendManualPageViews
+				}
+
+				assert.Equal(t, "UA-base", uaID)
+				assert.Equal(t, "G-tenant", ga4ID)
+				assert.True(t, manualPageViews)
+			})
+		}
+	})
+
 	// When the flag is enabled the middleware always builds FullFrontendSettings before
 	// calling ApplyOverrides, so the nil case should not happen in production. The nil
 	// guard ensures we degrade gracefully (skip the analytics overrides) rather than
