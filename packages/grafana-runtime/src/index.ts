@@ -73,7 +73,7 @@ export { type MigrationHandler, isMigrationHandler, migrateQuery, migrateRequest
 export { usePluginUserStorage } from './utils/userStorage';
 export { useFavoriteDatasources, type FavoriteDatasources } from './utils/useFavoriteDatasources';
 export { FolderPicker, setFolderPicker } from './components/FolderPicker';
-export * as provisioning from './provisioning';
+export { ManagedBadge, type ManagedBadgeProps } from './provisioning/ManagedBadge';
 export {
   type CorrelationsService,
   type CorrelationData,
