@@ -744,3 +744,42 @@ global:
     expect(reformatPreviewContent(json, 'json')).toBe(redactPreviewSecrets(json, 'json', {}));
   });
 });
+
+describe('Mimir alertmanager_config envelope', () => {
+  const SECRET_URL = 'https://example.com/hooks/abcdEFGH1234ijklMNOP5678';
+  const CONFIG_LINES = ['global:', `  slack_api_url: ${SECRET_URL}`, 'route:', '  receiver: default'];
+  const indent = (lines: string[]) => lines.map((line) => `  ${line}`);
+  const TEMPLATE_FILES = ['template_files:', '  email.tmpl: body', ''];
+
+  const objectForm = ['alertmanager_config:', ...indent(CONFIG_LINES), ...TEMPLATE_FILES].join('\n');
+  const stringForm = ['alertmanager_config: |', ...indent(CONFIG_LINES), ...TEMPLATE_FILES].join('\n');
+
+  it.each([
+    ['an object', objectForm],
+    ['a YAML string', stringForm],
+  ])('redacts the wrapped config and keeps the envelope when alertmanager_config is %s', (_kind, yaml) => {
+    const result = redactPreviewSecrets(yaml, 'yaml', {});
+
+    expect(result).not.toContain(SECRET_URL);
+    expect(result).toContain('<redacted>');
+    expect(result).toContain('alertmanager_config:');
+    expect(result).toContain('email.tmpl');
+  });
+
+  it('keeps the redacted and revealed views the same shape for a YAML string', () => {
+    // Short enough that js-yaml doesn't fold it onto its own line, which would differ from `<redacted>`.
+    const yaml = stringForm.replace(SECRET_URL, 'https://example.com/hook-token');
+    const redacted = redactPreviewSecrets(yaml, 'yaml', {});
+    const revealed = reformatPreviewContent(yaml, 'yaml');
+
+    expect(revealed).toContain('hook-token');
+    expect(redacted.split('\n')).toHaveLength(revealed.split('\n').length);
+  });
+
+  it('fails closed when the embedded YAML string is invalid', () => {
+    const yaml = ['alertmanager_config: |', '  foo: bar: baz', ''].join('\n');
+
+    expect(() => redactPreviewSecrets(yaml, 'yaml', {})).toThrow(PreviewRedactionError);
+    expect(() => reformatPreviewContent(yaml, 'yaml')).toThrow(PreviewRedactionError);
+  });
+});

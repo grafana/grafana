@@ -8,11 +8,11 @@ import (
 
 	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
 
+	"github.com/grafana/grafana/apps/live/pkg/convert"
+	"github.com/grafana/grafana/apps/live/pkg/pushurl"
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/live"
-	"github.com/grafana/grafana/pkg/services/live/convert"
-	"github.com/grafana/grafana/pkg/services/live/pushurl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )

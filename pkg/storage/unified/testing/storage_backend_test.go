@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -68,6 +69,97 @@ func TestBadgerKVStorageBackend(t *testing.T) {
 			TestBlobSupport: true,
 		},
 	})
+}
+
+type folderTreeSearchBuilders struct{}
+
+func (folderTreeSearchBuilders) GetDocumentBuilders(registry *resource.SearchFieldsRegistry) ([]resource.DocumentBuilderInfo, error) {
+	return []resource.DocumentBuilderInfo{{Builder: resource.StandardDocumentBuilder(registry)}}, nil
+}
+
+func TestPerResourceFolderTreeSearchAndStorage(t *testing.T) {
+	backend := setupBadgerKV(t)
+	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
+	searchBackend, err := search.NewBleveBackend(search.BleveOptions{Root: t.TempDir(), FileThreshold: 100, Logger: log.NewNopLogger()}, metrics)
+	require.NoError(t, err)
+	t.Cleanup(searchBackend.Stop)
+	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		Backend:      backend,
+		AccessClient: types.FixedAccessClient(true),
+		IndexMetrics: metrics,
+		Search:       resource.SearchOptions{Backend: searchBackend, Resources: folderTreeSearchBuilders{}},
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, server.Stop(context.WithoutCancel(t.Context()))) })
+	ctx := types.WithAuthInfo(t.Context(), &identity.StaticRequester{
+		Type: types.TypeUser, Namespace: "recursive-search", OrgRole: identity.RoleAdmin,
+	})
+	folderKey := resource.NamespacedResource{Namespace: "recursive-search", Group: "folder.grafana.app", Resource: "folders"}
+	dashKey := resource.NamespacedResource{Namespace: "recursive-search", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	write := func(key resource.NamespacedResource, name, parent string, rv int64) int64 {
+		t.Helper()
+		obj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": key.Group + "/v1", "kind": key.Resource,
+			"metadata": map[string]any{"name": name, "namespace": key.Namespace},
+			"spec":     map[string]any{"title": name},
+		}}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetFolder(parent)
+		value, err := obj.MarshalJSON()
+		require.NoError(t, err)
+		resourceKey := &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name}
+		if rv == 0 {
+			rsp, err := server.Create(ctx, &resourcepb.CreateRequest{Key: resourceKey, Value: value})
+			require.NoError(t, err)
+			require.Nil(t, rsp.Error)
+			return rsp.ResourceVersion
+		}
+		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{Key: resourceKey, Value: value, ResourceVersion: rv})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		return rsp.ResourceVersion
+	}
+	write(folderKey, "top", "", 0)
+	write(folderKey, "other", "", 0)
+	midRV := write(folderKey, "mid", "top", 0)
+	write(folderKey, "leaf", "mid", 0)
+	write(dashKey, "dash-top", "top", 0)
+	write(dashKey, "dash-mid", "mid", 0)
+	write(dashKey, "dash-leaf", "leaf", 0)
+
+	query := func(field, root string) []string {
+		t.Helper()
+		rsp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: dashKey.Namespace, Group: dashKey.Group, Resource: dashKey.Resource},
+				Fields: []*resourcepb.Requirement{{Key: field, Operator: "in", Values: []string{root}}},
+			},
+			Limit:        100,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		names := make([]string, 0, len(rsp.Rows))
+		for _, row := range rsp.Rows {
+			names = append(names, row.Key.Name)
+		}
+		return names
+	}
+	require.Equal(t, []string{"dash-top"}, query(resource.SEARCH_FIELD_FOLDER, "top"))
+	require.Nil(t, searchBackend.GetIndex(folderKey), "a non-recursive query must not build the folder index")
+	require.ElementsMatch(t, []string{"dash-top", "dash-mid", "dash-leaf"}, query(resource.SEARCH_FIELD_FOLDER_TREE, "top"))
+
+	midRV = write(folderKey, "mid", "other", midRV)
+	require.Equal(t, []string{"dash-top"}, query(resource.SEARCH_FIELD_FOLDER_TREE, "top"))
+	require.ElementsMatch(t, []string{"dash-mid", "dash-leaf"}, query(resource.SEARCH_FIELD_FOLDER_TREE, "other"))
+	deleted, err := server.Delete(ctx, &resourcepb.DeleteRequest{
+		Key:             &resourcepb.ResourceKey{Namespace: folderKey.Namespace, Group: folderKey.Group, Resource: folderKey.Resource, Name: "mid"},
+		ResourceVersion: midRV,
+	})
+	require.NoError(t, err)
+	require.Nil(t, deleted.Error)
+	require.Empty(t, query(resource.SEARCH_FIELD_FOLDER_TREE, "other"))
 }
 
 func TestBadgerKVConcurrentCreateNoAlreadyExists(t *testing.T) {

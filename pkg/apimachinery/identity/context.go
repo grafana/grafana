@@ -198,13 +198,15 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"variables:read",        // ActionVariablesRead
 	"variables:write",       // ActionVariablesWrite
 	"variables:delete",      // ActionVariablesDelete
+	"alert.rules:read",      // ActionAlertingRuleRead — rules API deletion requires read and delete.
 	"alert.rules:delete",    // ActionAlertingRuleDelete — folder cascade delete removes contained alert rules.
 	"playlists:read",        // playlist.ActionPlaylistsRead
 	"playlists:write",       // playlist.ActionPlaylistsWrite
 	"alert.provisioning:write",
 	"alert.provisioning.secrets:read",
-	"notifications.alerting.grafana.app/configs:get",           // accesscontrol.ActionAlertingConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
-	"notifications.alerting.grafana.app/configs:update",        // accesscontrol.ActionAlertingConfigUpdate — ExternalAMSyncer creates the Config singleton on first sync.
+	"rules.alerting.grafana.app/configs:delete",         // Config cleanup on org deletion; not granted to human roles.
+	"notifications.alerting.grafana.app/configs:get",    // accesscontrol.ActionAlertingConfigRead — ExternalAMSyncer reads spec.externalAlertmanagerSync.datasourceUid.
+	"notifications.alerting.grafana.app/configs:update", // accesscontrol.ActionAlertingConfigUpdate — ExternalAMSyncer creates the Config singleton on first sync.
 	"notifications.alerting.grafana.app/configs/status:update", // accesscontrol.ActionAlertingConfigStatusUpdate — service-only; humans never write status directly.
 	"alert.notifications.external:read",                        // accesscontrol.ActionAlertingNotificationsExternalRead — the Alertmanager datasource plugin's GET api/v1/alerts route requires this; ExternalAMSyncer fetches the upstream config through it.
 	"users:read",                                               // accesscontrol.ActionUsersRead,

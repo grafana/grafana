@@ -11,14 +11,17 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
@@ -41,6 +44,7 @@ import (
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -2452,6 +2456,233 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 	assert.Equal(t, provisioning.ReasonAuthenticationFailed, readyCond.Reason)
 }
 
+func TestRepositoryController_process_ServerUnavailableBuildFailure(t *testing.T) {
+	unreachable := fmt.Errorf("%w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded)
+	unavailable := repository.ErrServerUnavailable
+	serviceErr := apierrors.NewServiceUnavailable("secrets unavailable")
+	patchErr := errors.New("status write failed")
+	decryptErr := fmt.Errorf("%w: %w", repository.ErrSecretDecryptFailed, context.DeadlineExceeded)
+	for _, tt := range []struct {
+		name       string
+		buildErr   error
+		deleting   bool
+		patchErr   error
+		wantRetry  bool
+		wantReason string
+	}{
+		{name: "unreachable", buildErr: unreachable, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "wrapped unreachable", buildErr: fmt.Errorf("create gitlab client: %w", unreachable), wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "joined unreachable", buildErr: errors.Join(errors.New("resolve project failed"), unreachable), wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "unreachable service unavailable", buildErr: unavailable, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "status write failure", buildErr: unreachable, patchErr: patchErr, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "unreachable during delete", buildErr: unreachable, deleting: true, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "unreachable service unavailable during delete", buildErr: unavailable, deleting: true, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "delete status write failure", buildErr: unavailable, deleting: true, patchErr: patchErr, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "secret decryption timeout still returns error", buildErr: decryptErr, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "generic service unavailable still returns error", buildErr: serviceErr, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "generic service unavailable during delete still returns error", buildErr: serviceErr, deleting: true, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "build timeout", buildErr: context.DeadlineExceeded, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "build timeout during delete", buildErr: context.DeadlineExceeded, deleting: true, wantRetry: true, wantReason: provisioning.ReasonServiceUnavailable},
+		{name: "caller cancellation still returns error", buildErr: context.Canceled, wantReason: provisioning.ReasonInvalidSpec},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 2},
+				Spec:       provisioning.RepositorySpec{Type: provisioning.GitLabRepositoryType},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+					Conditions: []metav1.Condition{{
+						Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue,
+						Reason: provisioning.ReasonAvailable, ObservedGeneration: 1,
+					}},
+				},
+			}
+			if tt.deleting {
+				now := metav1.Now()
+				repo.DeletionTimestamp = &now
+				repo.Finalizers = []string{repository.CleanFinalizer}
+			}
+
+			mockNamespaceLister := &MockRepositoryNamespaceLister{}
+			mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+			mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+			repoGetter := informer.NewCachedRepositoryGetter(&MockRepositoryLister{namespaceLister: mockNamespaceLister})
+			extra := repository.NewMockExtra(t)
+			extra.EXPECT().Type().Return(repo.Spec.Type)
+			extra.EXPECT().Build(mock.Anything, mock.Anything).Run(func(ctx context.Context, _ *provisioning.Repository) {
+				deadline, ok := ctx.Deadline()
+				require.True(t, ok)
+				assert.InDelta(t, 30, time.Until(deadline).Seconds(), 1)
+			}).Return(nil, tt.buildErr).Once()
+			factory, err := repository.ProvideFactory(
+				map[provisioning.RepositoryType]struct{}{repo.Spec.Type: {}},
+				[]repository.Extra{extra}, noop.NewTracerProvider().Tracer("test"),
+			)
+			require.NoError(t, err)
+			patcher := &capturePatcher{err: tt.patchErr}
+			finalizerMetrics := registerFinalizerMetrics(prometheus.NewRegistry())
+			rc := &RepositoryController{
+				repos:         repoGetter,
+				quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+				quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+				healthChecker: NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+				repoFactory:   factory,
+				finalizer:     &finalizer{repoFactory: factory, metrics: &finalizerMetrics},
+				statusPatcher: patcher,
+				logger:        logging.DefaultLogger,
+				tracer:        tracing.InitializeTracerForTest(),
+			}
+
+			_, err = rc.process("default/test-repo")
+			require.ErrorIs(t, err, tt.buildErr)
+			assert.Equal(t, tt.wantRetry, isRetryableProcessError(err))
+			if errors.Is(tt.buildErr, context.DeadlineExceeded) {
+				require.ErrorIs(t, err, repository.ErrServerUnavailable)
+			}
+			if tt.patchErr != nil && !tt.deleting {
+				require.ErrorIs(t, err, tt.patchErr)
+			}
+
+			healthOp, ok := patcher.findPatchOp("/status/health")
+			require.True(t, ok)
+			health, ok := healthOp["value"].(provisioning.HealthStatus)
+			require.True(t, ok)
+			assert.False(t, health.Healthy)
+			assert.Equal(t, provisioning.HealthFailureHealth, health.Error)
+			assert.Positive(t, health.Checked)
+			if tt.deleting {
+				assert.Equal(t, []string{"Repository deletion error"}, health.Message)
+			} else {
+				require.Len(t, health.Message, 1)
+				assert.Contains(t, health.Message[0], tt.buildErr.Error())
+			}
+
+			conditionOp, ok := patcher.findPatchOp("/status/conditions/0")
+			require.True(t, ok)
+			ready, ok := conditionOp["value"].(metav1.Condition)
+			require.True(t, ok)
+			assert.Equal(t, provisioning.ConditionTypeReady, ready.Type)
+			assert.Equal(t, metav1.ConditionFalse, ready.Status)
+			assert.Equal(t, tt.wantReason, ready.Reason)
+			assert.Equal(t, repo.Generation, ready.ObservedGeneration)
+		})
+	}
+}
+
+func TestRepositoryController_process_DefaultBranchFailure(t *testing.T) {
+	wrappedErr := fmt.Errorf("get repository metadata: %w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded)
+	serviceErr := apierrors.NewServiceUnavailable("service unavailable")
+	patchErr := errors.New("status write failed")
+	for _, tt := range []struct {
+		name          string
+		branchErr     error
+		patchErr      error
+		initial       bool
+		wantUnhealthy bool
+		wantRetry     bool
+	}{
+		{name: "initial outage", branchErr: repository.ErrServerUnavailable, initial: true, wantUnhealthy: true, wantRetry: true},
+		{name: "wrapped outage after healthy", branchErr: wrappedErr, wantUnhealthy: true, wantRetry: true},
+		{name: "status write failure", branchErr: wrappedErr, patchErr: patchErr, wantUnhealthy: true, wantRetry: true},
+		{name: "generic service unavailable still returns error", branchErr: serviceErr, wantRetry: true},
+		{name: "unclassified deadline still returns error", branchErr: context.DeadlineExceeded},
+		{name: "caller cancellation still returns error", branchErr: context.Canceled},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 2},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git:  &provisioning.GitRepositoryConfig{URL: "https://git.example.com/repo.git"},
+				},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+					Conditions: []metav1.Condition{{
+						Type: provisioning.ConditionTypeReady, Status: metav1.ConditionTrue,
+						Reason: provisioning.ReasonAvailable, ObservedGeneration: 1,
+					}},
+				},
+			}
+			if tt.initial {
+				repo.Generation = 1
+				repo.Status = provisioning.RepositoryStatus{}
+			}
+
+			mockNamespaceLister := &MockRepositoryNamespaceLister{}
+			mockNamespaceLister.On("List", mock.Anything).Return([]*provisioning.Repository{repo}, nil)
+			mockNamespaceLister.On("Get", repo.Name).Return(repo, nil)
+			getter := informer.NewCachedRepositoryGetter(&MockRepositoryLister{namespaceLister: mockNamespaceLister})
+			gitRepo := git.NewMockGitRepository(t)
+			gitRepo.EXPECT().GetCurrentBranch().Return("").Once()
+			gitRepo.EXPECT().GetDefaultBranch(mock.Anything).Return("", tt.branchErr).Once()
+			factory := repository.NewMockFactory(t)
+			factory.EXPECT().Build(mock.Anything, mock.Anything).Return(gitRepo, nil).Once()
+			patcher := &capturePatcher{err: tt.patchErr}
+			reg := prometheus.NewPedanticRegistry()
+			rc := &RepositoryController{
+				repos:            getter,
+				quotaGetter:      quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+				quotaChecker:     NewRepositoryQuotaChecker(getter),
+				healthChecker:    NewRepositoryHealthChecker(nil, repository.NewTester(), NewMockHealthMetricsRecorder(t)),
+				repoFactory:      factory,
+				statusPatcher:    patcher,
+				reconcileMetrics: registerReconcileErrorMetrics(reg),
+				logger:           logging.DefaultLogger,
+				tracer:           tracing.InitializeTracerForTest(),
+			}
+
+			_, err := rc.process("default/test-repo")
+			require.ErrorIs(t, err, tt.branchErr)
+			assert.Equal(t, tt.wantRetry, isRetryableProcessError(err))
+			if tt.patchErr != nil {
+				require.ErrorIs(t, err, tt.patchErr)
+			}
+			phase := reconcilePhaseBranch
+			if tt.patchErr != nil {
+				phase = reconcilePhaseStatus
+			}
+			assert.Equal(t, 1.0, reconcileErrorCount(t, reg, phase, reconcileCauseSystem))
+			_, branchPatched := patcher.findPatchOp("/spec/git/branch")
+			assert.False(t, branchPatched)
+			_, generationPatched := patcher.findPatchOp("/status/observedGeneration")
+			assert.False(t, generationPatched)
+
+			healthOp, found := patcher.findPatchOp("/status/health")
+			require.Equal(t, tt.wantUnhealthy, found)
+			if !tt.wantUnhealthy {
+				require.ErrorContains(t, err, "failed to get default branch")
+				return
+			}
+			health, ok := healthOp["value"].(provisioning.HealthStatus)
+			require.True(t, ok)
+			assert.False(t, health.Healthy)
+			assert.Equal(t, provisioning.HealthFailureHealth, health.Error)
+			assert.Positive(t, health.Checked)
+			assert.Equal(t, []string{tt.branchErr.Error()}, health.Message)
+
+			var ready metav1.Condition
+			if tt.initial {
+				conditionOp, found := patcher.findPatchOp("/status/conditions")
+				require.True(t, found)
+				conditions := conditionOp["value"].([]metav1.Condition)
+				require.Len(t, conditions, 1)
+				ready = conditions[0]
+			} else {
+				conditionOp, found := patcher.findPatchOp("/status/conditions/0")
+				require.True(t, found)
+				ready = conditionOp["value"].(metav1.Condition)
+			}
+			assert.Equal(t, provisioning.ConditionTypeReady, ready.Type)
+			assert.Equal(t, metav1.ConditionFalse, ready.Status)
+			assert.Equal(t, provisioning.ReasonServiceUnavailable, ready.Reason)
+			assert.Equal(t, repo.Generation, ready.ObservedGeneration)
+			assert.Equal(t, tt.branchErr.Error(), ready.Message)
+		})
+	}
+}
+
 // TestRepositoryController_process_RecordsReconcileErrorPhase drives process()
 // to fail at a stage other than delete/build/hook (quota) and asserts the
 // central recorder still counts it under the right phase -- proving the metric
@@ -2545,6 +2776,9 @@ func TestClassifyBuildFailureReason(t *testing.T) {
 		// A secret that cannot be read (decrypt service/keeper/KMS outage) is a
 		// transient infra failure, not an invalid repository configuration.
 		{"decrypt failure is a service issue", fmt.Errorf("build: %w", repository.ErrSecretDecryptFailed), provisioning.ReasonServiceUnavailable},
+		{"unavailable repository is a service issue", repository.ErrServerUnavailable, provisioning.ReasonServiceUnavailable},
+		{"wrapped unreachable repository is a service issue", fmt.Errorf("build: %w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded), provisioning.ReasonServiceUnavailable},
+		{"unclassified deadline is not a repository connectivity error", context.DeadlineExceeded, provisioning.ReasonInvalidSpec},
 		{"auth failure still classified as auth", fmt.Errorf("build: %w", repository.ErrUnauthorized), provisioning.ReasonAuthenticationFailed},
 		{"k8s 503 is a service issue", apierrors.NewServiceUnavailable("secrets down"), provisioning.ReasonServiceUnavailable},
 		{"unrecognized build failure falls back to invalid spec", errors.New("bad url"), provisioning.ReasonInvalidSpec},
@@ -3171,107 +3405,152 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 // repository token references a secret that can no longer be decrypted (e.g. it was deleted),
 // the controller regenerates it from the connection and rebuilds instead of failing forever.
 func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *testing.T) {
-	namespace := "default"
-	repoName := "test-repo"
-	connName := "my-connection"
+	for name, buildErr := range map[string]error{
+		"rebuild succeeds":                nil,
+		"rebuild cannot reach repository": fmt.Errorf("%w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded),
+		"rebuild times out":               context.DeadlineExceeded,
+	} {
+		t.Run(name, func(t *testing.T) {
+			namespace := "default"
+			repoName := "test-repo"
+			connName := "my-connection"
 
-	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 2,
-		},
-		Spec: provisioning.RepositorySpec{
-			Type:       provisioning.LocalRepositoryType,
-			Sync:       provisioning.SyncOptions{Enabled: false},
-			Connection: &provisioning.ConnectionInfo{Name: connName},
-		},
-		Status: provisioning.RepositoryStatus{
-			// Spec change (Generation != ObservedGeneration) triggers reconcile and reaches Build.
-			ObservedGeneration: 1,
-			Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
-			// Token exists and is far from expiry, so shouldGenerateTokenFromConnection is false.
-			Token: provisioning.TokenStatus{
-				LastUpdated: time.Now().Add(-1 * time.Hour).UnixMilli(),
-				Expiration:  time.Now().Add(2 * time.Hour).UnixMilli(),
-			},
-		},
-		// Orphaned reference: name is set but the secret is gone.
-		Secure: provisioning.SecureValues{
-			Token: common.InlineSecureValue{Name: "orphaned-token"},
-		},
-	}
-
-	indexer := cache.NewIndexer(
-		cache.MetaNamespaceKeyFunc,
-		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
-	)
-	require.NoError(t, indexer.Add(repo))
-	repoLister := listers.NewRepositoryLister(indexer)
-
-	// Plenty of quota so the repository is not blocked.
-	quotaStatus := provisioning.QuotaStatus{MaxRepositories: 100}
-
-	freshToken := &connection.ExpirableSecureValue{
-		Token:     "fresh-token",
-		ExpiresAt: time.Now().Add(2 * time.Hour),
-	}
-	mockConn := connection.NewMockConnection(t)
-	mockConn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.Anything).Return(freshToken, nil).Once()
-
-	mockConnFactory := connection.NewMockFactory(t)
-	mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
-
-	connObj := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace}}
-	provClient := &mockProvisioningV0alpha1Interface{
-		connectionsFunc: func(_ string) client.ConnectionInterface {
-			return mockConnectionInterface{
-				getFunc: func(_ context.Context, _ string, _ metav1.GetOptions) (*provisioning.Connection, error) {
-					return connObj, nil
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:       repoName,
+					Namespace:  namespace,
+					Generation: 2,
+				},
+				Spec: provisioning.RepositorySpec{
+					Type:       provisioning.LocalRepositoryType,
+					Sync:       provisioning.SyncOptions{Enabled: false},
+					Connection: &provisioning.ConnectionInfo{Name: connName},
+				},
+				Status: provisioning.RepositoryStatus{
+					// Spec change (Generation != ObservedGeneration) triggers reconcile and reaches Build.
+					ObservedGeneration: 1,
+					Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+					// Token exists and is far from expiry, so shouldGenerateTokenFromConnection is false.
+					Token: provisioning.TokenStatus{
+						LastUpdated: time.Now().Add(-1 * time.Hour).UnixMilli(),
+						Expiration:  time.Now().Add(2 * time.Hour).UnixMilli(),
+					},
+				},
+				// Orphaned reference: name is set but the secret is gone.
+				Secure: provisioning.SecureValues{
+					Token: common.InlineSecureValue{Name: "orphaned-token"},
 				},
 			}
-		},
+
+			indexer := cache.NewIndexer(
+				cache.MetaNamespaceKeyFunc,
+				cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+			)
+			require.NoError(t, indexer.Add(repo))
+			repoLister := listers.NewRepositoryLister(indexer)
+
+			// Plenty of quota so the repository is not blocked.
+			quotaStatus := provisioning.QuotaStatus{MaxRepositories: 100}
+
+			freshToken := &connection.ExpirableSecureValue{
+				Token:     "fresh-token",
+				ExpiresAt: time.Now().Add(2 * time.Hour),
+			}
+			mockConn := connection.NewMockConnection(t)
+			mockConn.EXPECT().GenerateRepositoryToken(mock.Anything, mock.Anything).Return(freshToken, nil).Once()
+
+			mockConnFactory := connection.NewMockFactory(t)
+			mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
+
+			connObj := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace}}
+			provClient := &mockProvisioningV0alpha1Interface{
+				connectionsFunc: func(_ string) client.ConnectionInterface {
+					return mockConnectionInterface{
+						getFunc: func(_ context.Context, _ string, _ metav1.GetOptions) (*provisioning.Connection, error) {
+							return connObj, nil
+						},
+					}
+				},
+			}
+
+			mockRepo := repository.NewMockRepository(t)
+			mockRepo.On("Config").Return(repo).Maybe()
+			mockRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
+
+			// The first build fails because the token secret is missing, triggering regeneration.
+			repoExtra := repository.NewMockExtra(t)
+			repoExtra.EXPECT().Type().Return(repo.Spec.Type)
+			repoExtra.On("Build", mock.Anything, mock.Anything).
+				Return(nil, fmt.Errorf("error creating git repository: %w", repository.ErrTokenNotFound)).Once()
+			var rebuilt repository.Repository = mockRepo
+			if buildErr != nil {
+				rebuilt = nil
+			}
+			repoExtra.On("Build", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				deadline, ok := args.Get(0).(context.Context).Deadline()
+				require.True(t, ok)
+				assert.InDelta(t, 30, time.Until(deadline).Seconds(), 1)
+			}).Return(rebuilt, buildErr).Once()
+			repoFactory, err := repository.ProvideFactory(
+				map[provisioning.RepositoryType]struct{}{repo.Spec.Type: {}},
+				[]repository.Extra{repoExtra}, noop.NewTracerProvider().Tracer("test"),
+			)
+			require.NoError(t, err)
+
+			healthMetrics := NewMockHealthMetricsRecorder(t)
+			healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
+
+			patcher := &capturePatcher{}
+			healthChecker := NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics)
+
+			repoGetter := informer.NewCachedRepositoryGetter(repoLister)
+			rc := &RepositoryController{
+				repos:             repoGetter,
+				quotaGetter:       quotas.NewFixedQuotaGetter(quotaStatus),
+				quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
+				statusPatcher:     patcher,
+				connectionFactory: mockConnFactory,
+				client:            provClient,
+				repoFactory:       repoFactory,
+				healthChecker:     healthChecker,
+				resyncInterval:    5 * time.Minute,
+				logger:            logging.DefaultLogger.With("logger", loggerName),
+				tracer:            tracing.InitializeTracerForTest(),
+			}
+
+			_, err = rc.process(namespace + "/" + repoName)
+			if buildErr != nil {
+				require.ErrorIs(t, err, buildErr)
+				assert.True(t, isRetryableProcessError(err))
+			} else {
+				require.NoError(t, err)
+			}
+
+			// Regeneration happened: a fresh token status was written and Build was retried.
+			_, found := patcher.findPatchOp("/status/token")
+			assert.True(t, found, "expected /status/token to be written after regenerating the missing token")
+			repoExtra.AssertExpectations(t)
+			mockConn.AssertExpectations(t)
+			if buildErr != nil {
+				healthOp, ok := patcher.findPatchOp("/status/health")
+				require.True(t, ok)
+				health, ok := healthOp["value"].(provisioning.HealthStatus)
+				require.True(t, ok)
+				assert.False(t, health.Healthy)
+				require.Len(t, health.Message, 1)
+				assert.Contains(t, health.Message[0], buildErr.Error())
+
+				conditionOp, ok := patcher.findPatchOp("/status/conditions")
+				require.True(t, ok)
+				conditions, ok := conditionOp["value"].([]metav1.Condition)
+				require.True(t, ok)
+				ready := slices.IndexFunc(conditions, func(c metav1.Condition) bool { return c.Type == provisioning.ConditionTypeReady })
+				require.NotEqual(t, -1, ready)
+				assert.Equal(t, metav1.ConditionFalse, conditions[ready].Status)
+				assert.Equal(t, provisioning.ReasonServiceUnavailable, conditions[ready].Reason)
+			}
+		})
 	}
-
-	mockRepo := repository.NewMockRepository(t)
-	mockRepo.On("Config").Return(repo).Maybe()
-	mockRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
-
-	// First build fails because the token secret is missing; the rebuild after regeneration succeeds.
-	repoFactory := repository.NewMockFactory(t)
-	repoFactory.On("Build", mock.Anything, mock.Anything).
-		Return(nil, fmt.Errorf("error creating git repository: %w", repository.ErrTokenNotFound)).Once()
-	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Once()
-
-	healthMetrics := NewMockHealthMetricsRecorder(t)
-	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
-
-	patcher := &capturePatcher{}
-	healthChecker := NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics)
-
-	repoGetter := informer.NewCachedRepositoryGetter(repoLister)
-	rc := &RepositoryController{
-		repos:             repoGetter,
-		quotaGetter:       quotas.NewFixedQuotaGetter(quotaStatus),
-		quotaChecker:      NewRepositoryQuotaChecker(repoGetter),
-		statusPatcher:     patcher,
-		connectionFactory: mockConnFactory,
-		client:            provClient,
-		repoFactory:       repoFactory,
-		healthChecker:     healthChecker,
-		resyncInterval:    5 * time.Minute,
-		logger:            logging.DefaultLogger.With("logger", loggerName),
-		tracer:            tracing.InitializeTracerForTest(),
-	}
-
-	_, err := rc.process(namespace + "/" + repoName)
-	require.NoError(t, err)
-
-	// Regeneration happened: a fresh token status was written and Build was retried.
-	_, found := patcher.findPatchOp("/status/token")
-	assert.True(t, found, "expected /status/token to be written after regenerating the missing token")
-	repoFactory.AssertExpectations(t)
-	mockConn.AssertExpectations(t)
 }
 
 func TestShouldRotateWebhookSecret(t *testing.T) {
@@ -5015,41 +5294,67 @@ func TestRepositoryController_DeduplicatesEnqueueBeforeProcessing(t *testing.T) 
 // processing stops after maxAttempts total attempts. This tests the NumRequeues-based
 // attempt counting that replaced the old item.attempts field on queueItem.
 func TestRepositoryController_ServiceUnavailableRetriesUpToMaxAttempts(t *testing.T) {
-	var processCount atomic.Int32
-	allAttemptsDone := make(chan struct{})
+	// The process-global error backoff retains wall time from package initialization.
+	// Keep error logging while excluding that unrelated throttle from fake-time retries.
+	previousHandlers := utilruntime.ErrorHandlers
+	utilruntime.ErrorHandlers = previousHandlers[:1]
+	t.Cleanup(func() { utilruntime.ErrorHandlers = previousHandlers })
 
-	rc := &RepositoryController{
-		queue: workqueue.NewTypedRateLimitingQueueWithConfig(
-			workqueue.DefaultTypedControllerRateLimiter[string](),
-			workqueue.TypedRateLimitingQueueConfig[string]{
-				Name: "test-retry",
-			},
-		),
-		logger:       logging.DefaultLogger.With("logger", "test"),
-		drainTimeout: 5 * time.Second,
+	for name, processErr := range map[string]error{
+		"service unavailable":    apierrors.NewServiceUnavailable("test"),
+		"repository unavailable": repository.ErrServerUnavailable,
+		"wrapped timeout":        fmt.Errorf("get default branch: %w: %w", repository.ErrServerUnavailable, context.DeadlineExceeded),
+		"status write failure":   errors.Join(fmt.Errorf("build: %w", repository.ErrServerUnavailable), errors.New("status write failed")),
+	} {
+		t.Run(name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				rc := &RepositoryController{
+					queue: workqueue.NewTypedRateLimitingQueueWithConfig(
+						workqueue.DefaultTypedControllerRateLimiter[string](),
+						workqueue.TypedRateLimitingQueueConfig[string]{
+							Name: "test-retry",
+						},
+					),
+					logger: logging.DefaultLogger.With("logger", "test"),
+				}
+				t.Cleanup(rc.queue.ShutDown)
+				processCount := 0
+
+				rc.processFn = func(key string) (string, error) {
+					processCount++
+					return "", processErr
+				}
+
+				rc.queue.Add("test/repo")
+				for attempt := range maxAttempts {
+					require.True(t, rc.processNextWorkItem(t.Context()))
+					if attempt == maxAttempts-1 {
+						break
+					}
+					assert.Equal(t, attempt+1, rc.queue.NumRequeues("test/repo"))
+
+					// Let the delaying queue register this attempt's exponential backoff timer.
+					synctest.Wait()
+
+					delay := 5 * time.Millisecond * (1 << attempt)
+
+					// Stop just before the retry deadline to verify that backoff gates delivery.
+					synctest.Sleep(delay - time.Nanosecond)
+
+					assert.Zero(t, rc.queue.Len(), "the retry must wait for its exponential backoff")
+
+					// Reach the retry deadline and let the delaying queue make the key available.
+					synctest.Sleep(time.Nanosecond)
+
+					require.Equal(t, 1, rc.queue.Len())
+				}
+
+				assert.Equal(t, maxAttempts, processCount, "ServiceUnavailable should retry exactly maxAttempts times then give up")
+				assert.Zero(t, rc.queue.NumRequeues("test/repo"), "the final attempt must clear the retry budget")
+				assert.Zero(t, rc.queue.Len())
+			})
+		})
 	}
-
-	rc.processFn = func(key string) (string, error) {
-		if processCount.Add(1) == maxAttempts {
-			close(allAttemptsDone)
-		}
-		return "", apierrors.NewServiceUnavailable("test")
-	}
-
-	rc.queue.Add("test/repo")
-
-	ctx, cancel := context.WithCancel(t.Context())
-	runDone := make(chan struct{})
-	go func() {
-		rc.Run(ctx, 1, func() {}, func() {})
-		close(runDone)
-	}()
-
-	// Wait for the final attempt, then shut down. Once Run returns the count is final.
-	<-allAttemptsDone
-	cancel()
-	<-runDone
-	assert.Equal(t, int32(maxAttempts), processCount.Load(), "ServiceUnavailable should retry exactly maxAttempts times then give up")
 }
 
 // TestRepositoryController_DecryptFailureRetriesUpToMaxAttempts verifies that a
@@ -5556,10 +5861,18 @@ func TestRepositoryController_recordReconcileError(t *testing.T) {
 	// User-caused: revoked or insufficient credentials, wrapped as the callers wrap them.
 	rc.recordReconcileError(reconcilePhaseDelete, fmt.Errorf("execute deletion hooks: %w", repository.ErrPermissionDenied))
 	rc.recordReconcileError(reconcilePhaseBuild, fmt.Errorf("create repository from configuration: %w", repository.ErrUnauthorized))
+	// User-caused: unmanaged resources block folder deletion, wrapped as handleDelete wraps it.
+	rc.recordReconcileError(reconcilePhaseDelete, fmt.Errorf("process finalizers: %w", &finalizerError{
+		finalizer: repository.RemoveOrphanResourcesFinalizer,
+		err: fmt.Errorf("remove resources: %w", &nonEmptyFolderError{
+			folder: &provisioning.ResourceListItem{Name: "folder-1"},
+		}),
+	}))
 	// System-caused: anything not attributable to the user.
 	rc.recordReconcileError(reconcilePhaseHook, errors.New("boom"))
 
-	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseDelete, reconcileCauseUser))
+	assert.Equal(t, 2.0, reconcileErrorCount(t, reg, reconcilePhaseDelete, reconcileCauseUser))
+	assert.Equal(t, 0.0, reconcileErrorCount(t, reg, reconcilePhaseDelete, reconcileCauseSystem))
 	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseBuild, reconcileCauseUser))
 	assert.Equal(t, 1.0, reconcileErrorCount(t, reg, reconcilePhaseHook, reconcileCauseSystem))
 	// A system failure must not be miscounted as user-caused (which an SLO would ignore).

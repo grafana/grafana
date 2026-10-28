@@ -109,7 +109,6 @@ func NewSearchOptions(
 			DiskCleanupGracePeriod:         cfg.DiskIndexCleanupGracePeriod,
 			DiskCleanupUnopenedGracePeriod: cfg.DiskIndexCleanupUnopenedGracePeriod,
 			PostRankAuthzEnabled:           cfg.SearchPostRankAuthz,
-			EnforceSortCapability:          cfg.SearchEnforceSortCapability,
 			PostRankAuthz: PostRankAuthzConfig{
 				OverFetchFactor: cfg.SearchPostRankAuthzOverFetchFactor,
 				MaxWindow:       cfg.SearchPostRankAuthzMaxWindow,
@@ -160,12 +159,14 @@ func NewSearchOptions(
 			EmbeddingConfig:                 embeddingConfig,
 			HybridSearchConfig:              hybridSearchConfig,
 			GlobalSearchCoverage:            resource.NewGlobalSearchCoverageRegistry(resource.AppManifests()),
+			AllowedReadServices:             cfg.VectorAllowedReadServices,
 		}, nil
 	}
 	return resource.SearchOptions{
-		EmbeddingConfig:    embeddingConfig,
-		SearchFields:       searchFields,
-		HybridSearchConfig: hybridSearchConfig,
+		EmbeddingConfig:     embeddingConfig,
+		SearchFields:        searchFields,
+		HybridSearchConfig:  hybridSearchConfig,
+		AllowedReadServices: cfg.VectorAllowedReadServices,
 		// it is used for search after write and throttles index updates
 		IndexMinUpdateInterval:    cfg.IndexMinUpdateInterval,
 		IndexModificationCacheTTL: cfg.IndexModificationCacheTTL,

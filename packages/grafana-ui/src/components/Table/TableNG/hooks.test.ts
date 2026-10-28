@@ -1,10 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
-import { useLayoutEffect } from 'react';
+import { createElement, useLayoutEffect } from 'react';
 
 import { createDataFrame, type Field, FieldType, ReducerID } from '@grafana/data';
 import { type DataGridHandle } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
+import { TableFilterProvider, useTableFilters } from './TableFilterContext';
 import { NESTED_TABLE_VERTICAL_PADDING, REFRESHED_NESTED_TABLE_VERTICAL_PADDING, TABLE } from './constants';
 import {
   useFilteredRows,
@@ -24,10 +25,10 @@ import {
   useFlatRowHeight,
   useTextWrapFallback,
 } from './hooks';
-import { type FilterType, type TableRow, type TypographyCtx } from './types';
-import { applyFilter, createTypographyContext, compileFrameToRecords, computeContentAwareColWidths } from './utils';
+import { type TableRow, type TypographyCtx } from './types';
+import { createTypographyContext, compileFrameToRecords, computeContentAwareColWidths } from './utils';
 
-const emptyFilterResult = applyFilter([], {}, []);
+const emptyFilterResult = { filteredRows: [], crossFilterOrder: [], crossFilterRows: {}, crossFilterTailRows: [] };
 
 describe('useScrollbarWidth', () => {
   it('measures the displaced width during layout without waiting for a timer or resize notification', () => {
@@ -266,43 +267,23 @@ describe('TableNG hooks', () => {
   }
 
   describe('useFilteredRows', () => {
-    it('should correctly initialize with provided fields and rows', () => {
+    it('filters and clears rows through table transformation state', () => {
       const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields));
-      expect(result.current.rows[0].name).toBe('Alice');
-    });
-
-    it('should apply filters correctly', () => {
-      const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields));
-
-      act(() => {
-        result.current.setFilter({
-          name: { filteredSet: new Set(['Alice']), displayName: 'name' },
-        });
+      const props = { data: { fields, length: rows.length }, width: 500, height: 300 };
+      const { result } = renderHook(() => ({ filtered: useFilteredRows(rows, fields), view: useTableFilters() }), {
+        wrapper: ({ children }) => createElement(TableFilterProvider, { props, children }),
       });
 
-      expect(result.current.rows.length).toBe(1);
-      expect(result.current.rows[0].name).toBe('Alice');
-    });
-
-    it('should clear filters correctly', () => {
-      const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields));
-
-      act(() => {
-        result.current.setFilter({
-          name: { filteredSet: new Set(['Alice']), displayName: 'name' },
-        });
-      });
-
-      expect(result.current.rows.length).toBe(1);
-
-      act(() => {
-        result.current.setFilter({});
-      });
-
-      expect(result.current.rows.length).toBe(3);
+      expect(result.current.filtered.rows.map((row) => row.name)).toEqual(['Alice', 'Bob', 'Charlie']);
+      act(() =>
+        result.current.view?.applyFilter(fields[0], {
+          id: 'inSet',
+          options: { mode: 'display', values: ['Alice'] },
+        })
+      );
+      expect(result.current.filtered.rows.map((row) => row.name)).toEqual(['Alice']);
+      act(() => result.current.view?.clearFilter(fields[0]));
+      expect(result.current.filtered.rows.map((row) => row.name)).toEqual(['Alice', 'Bob', 'Charlie']);
     });
   });
 
@@ -683,9 +664,11 @@ describe('TableNG hooks', () => {
       { tableRefreshEnabled: true, noPanelPadding: false, height: 58, pageSize: undefined, expected: 1 },
       { tableRefreshEnabled: false, noPanelPadding: false, height: 58, pageSize: undefined, expected: 2 },
       { tableRefreshEnabled: true, noPanelPadding: true, height: 66, pageSize: undefined, expected: 2 },
+      { tableRefreshEnabled: true, noPanelPadding: true, transparent: true, height: 66, expected: 1 },
+      { tableRefreshEnabled: false, noPanelPadding: true, transparent: true, height: 66, expected: 2 },
       { tableRefreshEnabled: true, noPanelPadding: false, height: 58, pageSize: 2, expected: 2 },
     ])(
-      'fits $expected rows with refresh=$tableRefreshEnabled, noPanelPadding=$noPanelPadding, pageSize=$pageSize',
+      'fits $expected rows with refresh=$tableRefreshEnabled, noPanelPadding=$noPanelPadding, transparent=$transparent, pageSize=$pageSize',
       ({ expected, ...options }) => {
         const { rows } = setupData();
         const { result } = renderHook(() =>
@@ -1003,7 +986,6 @@ describe('TableNG hooks', () => {
           frame.fields[1].values.map((v) => v[0]),
           true,
           'nested',
-          {},
           []
         )
       );
@@ -1034,23 +1016,27 @@ describe('TableNG hooks', () => {
         'nested'
       );
 
-      // parentIndex must be set on the filter entry — this is how the UI always scopes filters
-      // for nested tables. Without it the filter is silently skipped (regression test).
-      const { result } = renderHook(() =>
-        useNestedRows(
-          frameToRecords(frame),
-          frame.fields[1].values[0],
-          true,
-          'nested',
-          { 'name-0': { filteredSet: new Set(['Alice', 'Bob']), displayName: 'name', parentIndex: 0 } },
-          [{ columnKey: 'age', direction: 'ASC' }]
+      const props = { data: frame, width: 500, height: 300 };
+      const { result } = renderHook(
+        () => ({
+          nested: useNestedRows(frameToRecords(frame), frame.fields[1].values[0], true, 'nested', [
+            { columnKey: 'age', direction: 'ASC' },
+          ]),
+          view: useTableFilters(),
+        }),
+        { wrapper: ({ children }) => createElement(TableFilterProvider, { props, children }) }
+      );
+      act(() =>
+        result.current.view?.applyFilter(
+          fields[0],
+          { id: 'inSet', options: { mode: 'display', values: ['Alice', 'Bob'] } },
+          0
         )
       );
 
       // filtering reduced raw (3 rows) to final (2 rows: Alice + Bob), sorted by age ASC
-      expect(result.current[0].raw).toHaveLength(3);
-      expect(result.current[0].final).toHaveLength(2);
-      expect(result.current[0].final.map((r) => r['name'])).toEqual(['Bob', 'Alice']);
+      expect(result.current.nested[0].raw).toHaveLength(3);
+      expect(result.current.nested[0].final.map((r) => r['name'])).toEqual(['Bob', 'Alice']);
     });
   });
 
@@ -1228,35 +1214,6 @@ describe('TableNG hooks', () => {
       expect(heightFn).toHaveBeenCalledWith('name', 43, withTooltip[0], -1, TABLE.HEADER_LINE_HEIGHT);
     });
 
-    it('leaves room for the refreshed header menu and its active-filter icon', () => {
-      // Under table.refresh a filtered column carries both the column menu and the persistent filter
-      // icon; neither was subtracted before, so the label was measured against 44px it doesn't have.
-      const heightFn = jest.fn(() => 20);
-      const { fields } = setupData();
-      const filterable = fields.map((field) =>
-        field.name === 'name'
-          ? {
-              ...field,
-              config: { ...field.config, custom: { ...field.config?.custom, wrapHeaderText: true, filterable: true } },
-            }
-          : field
-      );
-
-      renderHook(() =>
-        useHeaderHeight({
-          fields: filterable,
-          columnWidths: [100, 100, 100],
-          enabled: true,
-          typographyCtx: { ...typographyCtx, measureHeight: heightFn },
-          tableRefreshEnabled: true,
-          filter: { name: { filtered: [], searchFilter: '', displayName: 'name' } } as unknown as FilterType,
-        })
-      );
-
-      // colWidth 100 - chrome 13 - sort arrow 22 - column menu 22 - active filter icon 22 = 21
-      expect(heightFn).toHaveBeenCalledWith('name', 21, filterable[0], -1, TABLE.HEADER_LINE_HEIGHT);
-    });
-
     it('gives a wrapped label exactly the room the width path sized its column for', () => {
       // The two paths are halves of one sum: `computeContentAwareColWidths` adds the label width, the
       // cell chrome and the header affordances up into a column width, and `useHeaderHeight` subtracts
@@ -1276,7 +1233,7 @@ describe('TableNG hooks', () => {
 
       const displayName = 'Longer name that needs wrapping';
       const { fields } = setupData();
-      // every affordance at once: type icon, sort arrow, tooltip button, column menu, active filter
+      // type icon, sort arrow, tooltip button, and column menu
       const headerFields = fields.map((field) =>
         field.name === 'name'
           ? {
@@ -1292,7 +1249,6 @@ describe('TableNG hooks', () => {
       const opts = {
         showTypeIcons: true,
         tableRefreshEnabled: true,
-        filter: { name: { filtered: [], searchFilter: '', displayName } } as unknown as FilterType,
       };
 
       // availWidth 0, so nothing is grown into leftover space and each column is its content width

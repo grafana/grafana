@@ -23,18 +23,8 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMap(t *testing.T) {
 	client := resource.NewMockResourceClient(t)
 	validator := newTestFolderTreeValidator(client)
 
-	client.On("Search", mock.Anything, folderSearchRequest()).Return(&resourcepb.ResourceSearchResponse{
-		// An older search server ignores ResultFormat and returns an unspecified table.
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				{Key: &resourcepb.ResourceKey{Name: "root"}, Cells: [][]byte{nil}},
-				{Key: &resourcepb.ResourceKey{Name: "child"}, Cells: [][]byte{[]byte("root")}},
-			},
-		},
-	}, nil).Once()
+	client.On("Search", mock.Anything, folderSearchRequest()).
+		Return(folderFieldValuesPage([]testFolder{{"root", ""}, {"child", "root"}}), nil).Once()
 
 	parentMap, err := validator.buildUnifiedFolderParentMap(ctx, "stack-1", log.NewNopLogger())
 	require.NoError(t, err)
@@ -65,29 +55,24 @@ func TestFolderTreeValidatorBuildUnifiedFolderParentMapPaginates(t *testing.T) {
 	}, parentMap)
 }
 
-func TestFolderTreeValidatorBuildUnifiedFolderParentMapPaginatesResourceTable(t *testing.T) {
-	setFolderSearchPageSize(t, 2)
+func TestFolderTreeValidatorBuildUnifiedFolderParentMapRejectsUnsupportedFormats(t *testing.T) {
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_UNSPECIFIED,
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		42,
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			client := resource.NewMockResourceClient(t)
+			validator := newTestFolderTreeValidator(client)
+			response := folderFieldValuesPage([]testFolder{{"root", ""}})
+			response.ResultFormat = format
+			client.On("Search", mock.Anything, folderSearchRequest()).Return(response, nil).Once()
 
-	client := resource.NewMockResourceClient(t)
-	validator := newTestFolderTreeValidator(client)
-
-	// An older server either leaves the result format unspecified or echoes
-	// RESOURCE_TABLE; both are paged through the same way.
-	unspecified := folderTablePage([]testFolder{{"root", ""}, {"child-a", "root"}})
-	unspecified.ResultFormat = resourcepb.ResourceSearchRequest_UNSPECIFIED
-	explicit := folderTablePage([]testFolder{{"child-b", "child-a"}})
-	explicit.ResultFormat = resourcepb.ResourceSearchRequest_RESOURCE_TABLE
-
-	client.On("Search", mock.Anything, folderSearchRequest()).Return(unspecified, nil).Once()
-	client.On("Search", mock.Anything, folderSearchRequest("child-a")).Return(explicit, nil).Once()
-
-	parentMap, err := validator.buildUnifiedFolderParentMap(t.Context(), "stack-1", log.NewNopLogger())
-	require.NoError(t, err)
-	assert.Equal(t, map[string]string{
-		"root":    "",
-		"child-a": "root",
-		"child-b": "child-a",
-	}, parentMap)
+			parentMap, err := validator.buildUnifiedFolderParentMap(t.Context(), "stack-1", log.NewNopLogger())
+			require.ErrorContains(t, err, "unsupported search result format")
+			require.Nil(t, parentMap)
+		})
+	}
 }
 
 func TestFolderTreeValidatorBuildUnifiedFolderParentMapStopsOnEmptyPage(t *testing.T) {
@@ -248,26 +233,6 @@ func folderFieldValuesPage(folders []testFolder) *resourcepb.ResourceSearchRespo
 	}
 }
 
-// folderTablePage is folderFieldValuesPage for the older table response shape.
-func folderTablePage(folders []testFolder) *resourcepb.ResourceSearchResponse {
-	rows := make([]*resourcepb.ResourceTableRow, 0, len(folders))
-	for _, folder := range folders {
-		rows = append(rows, &resourcepb.ResourceTableRow{
-			Key:        &resourcepb.ResourceKey{Name: folder.name},
-			Cells:      [][]byte{[]byte(folder.parent)},
-			SortFields: []string{folder.name},
-		})
-	}
-	return &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			},
-			Rows: rows,
-		},
-	}
-}
-
 // TestFolderTreeValidatorPagesRealIndex walks a bleve index with a page size
 // smaller than the folder count, so the cursor paging runs against a real search
 // server rather than canned responses.
@@ -302,38 +267,30 @@ func TestDecodeFolderRowsFromBleve(t *testing.T) {
 		folderIndexItem(key, "child", "root"),
 	)
 
-	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
-		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-		resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	} {
-		t.Run(format.String(), func(t *testing.T) {
-			response, err := index.Search(t.Context(), nil, &resourcepb.ResourceSearchRequest{
-				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-					Namespace: key.Namespace,
-					Group:     key.Group,
-					Resource:  key.Resource,
-				}},
-				Limit:        10,
-				Fields:       []string{resource.SEARCH_FIELD_FOLDER},
-				ResultFormat: format,
-			}, nil, nil)
-			require.NoError(t, err)
-			require.Nil(t, response.GetError())
-			require.Equal(t, format, response.GetResultFormat())
+	fieldValues, err := index.Search(t.Context(), nil, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}},
+		Limit:        10,
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, fieldValues.GetError())
 
-			rows, err := decodeFolderRows(response)
-			require.NoError(t, err)
-			require.Len(t, rows, 2)
+	rows, err := decodeFolderRows(fieldValues)
+	require.NoError(t, err)
+	require.Len(t, rows, 2)
 
-			parentMap := map[string]string{}
-			for _, row := range rows {
-				parentMap[row.name] = row.parent
-				// Paging relies on every row carrying the cursor to resume from.
-				assert.NotEmpty(t, row.cursor)
-			}
-			assert.Equal(t, map[string]string{"root": "", "child": "root"}, parentMap)
-		})
+	parentMap := map[string]string{}
+	for _, row := range rows {
+		parentMap[row.name] = row.parent
+		// Paging relies on every row carrying the cursor to resume from.
+		assert.NotEmpty(t, row.cursor)
 	}
+	assert.Equal(t, map[string]string{"root": "", "child": "root"}, parentMap)
 }
 
 func TestDecodeFolderRowsRejectsMalformedFieldValues(t *testing.T) {

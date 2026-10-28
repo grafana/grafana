@@ -1,14 +1,13 @@
 import { expect, test } from '../fixtures';
 import { flows, type Variable } from '../helpers';
 
-import { expectPreviewOfValuesToBe } from './helpers/assertions';
+import { expectPreviewOfValuesToBe, expectVariableOptionsToBe } from './helpers/assertions';
 import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
     'grafana.queryVarEditorRedesign': true,
   },
 });
@@ -219,9 +218,7 @@ test.describe(
 
       await sidebar.variableOptions.query.applyChanges();
 
-      await controls.variables.openDropdown(variable.label);
-      await expect(controls.variables.getOptions()).toHaveText(expectedOptions);
-      await page.keyboard.press('Escape');
+      await expectVariableOptionsToBe(page, controls, variable.label, expectedOptions);
 
       // We select a queried option first because initialization falls back to the static one, so only this proves it is selectable.
       const markdownContent = panels.getBody('Variable output').locator('.markdown-html');
@@ -239,8 +236,7 @@ test.describe(
       await expect(markdownContent).toContainText('VariableUnderTest: static-value');
 
       // We check the options again because they are recomputed on load, so this proves the regex, sort and static options were saved.
-      await controls.variables.openDropdown(variable.label);
-      await expect(controls.variables.getOptions()).toHaveText(expectedOptions);
+      await expectVariableOptionsToBe(page, controls, variable.label, expectedOptions);
     });
 
     test('refetches the options on time range change only when set to refresh on time range change', async ({

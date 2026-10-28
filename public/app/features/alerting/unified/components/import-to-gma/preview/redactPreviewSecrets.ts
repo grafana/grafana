@@ -32,16 +32,10 @@ export function redactPreviewSecrets(
   format: 'yaml' | 'json',
   secretFieldMap: SecretFieldMap
 ): string {
-  let parsed: unknown;
-  try {
-    parsed = load(rawContent);
-  } catch (e) {
-    throw new PreviewRedactionError(e instanceof Error ? e.message : String(e));
-  }
-
-  const redacted = redactNode(parsed, undefined, [], secretFieldMap);
-
-  return format === 'json' ? JSON.stringify(redacted, null, 2) : dump(redacted);
+  return serialize(
+    mapConfig(parseContent(rawContent), (config) => redactNode(config, undefined, [], secretFieldMap)),
+    format
+  );
 }
 
 // Parses and re-serializes content the same way redactPreviewSecrets does, but without
@@ -51,14 +45,35 @@ export function redactPreviewSecrets(
 // toggling between redacted and revealed. Re-serializing both through the same pipeline keeps
 // the formatting identical between the two views — only the redacted values differ.
 export function reformatPreviewContent(rawContent: string, format: 'yaml' | 'json'): string {
-  let parsed: unknown;
+  return serialize(
+    mapConfig(parseContent(rawContent), (config) => config),
+    format
+  );
+}
+
+function parseContent(content: string): unknown {
   try {
-    parsed = load(rawContent);
+    return load(content);
   } catch (e) {
     throw new PreviewRedactionError(e instanceof Error ? e.message : String(e));
   }
+}
 
-  return format === 'json' ? JSON.stringify(parsed, null, 2) : dump(parsed);
+function serialize(value: unknown, format: 'yaml' | 'json'): string {
+  return format === 'json' ? JSON.stringify(value, null, 2) : dump(value);
+}
+
+// Redaction paths are anchored at the config's top level, so unwrap the Mimir `alertmanager_config` envelope
+// (object or embedded YAML string) before applying `fn`, then restore its original form.
+function mapConfig(parsed: unknown, fn: (config: unknown) => unknown): unknown {
+  if (typeof parsed !== 'object' || parsed === null || !('alertmanager_config' in parsed)) {
+    return fn(parsed);
+  }
+  const wrapped = parsed.alertmanager_config;
+  if (typeof wrapped !== 'string') {
+    return { ...parsed, alertmanager_config: fn(wrapped) };
+  }
+  return { ...parsed, alertmanager_config: dump(fn(parseContent(wrapped))) };
 }
 
 // Maps ${schema.type}:${version.version} to the legacy Alertmanager receiver YAML key.

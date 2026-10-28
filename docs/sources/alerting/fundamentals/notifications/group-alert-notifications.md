@@ -27,6 +27,8 @@ For a practical example of grouping, refer to our [Getting Started with Grouping
 
 Grouping combines similar alert instances within a specific period into a single notification, reducing alert noise.
 
+Grafana Alerting uses **alert group** for this temporary notification batch. In [Grafana IRM](/docs/grafana-cloud/alerting-and-irm/irm/use/respond-to-alerts/), the same term refers to a persistent object with a status, responders, and an escalation chain.
+
 In the [notification policy](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/), you can configure how to group multiple alerts into a single notification:
 
 - The `Group by` option specifies the criteria for grouping incoming alerts within the policy. The default is by alert rule.
