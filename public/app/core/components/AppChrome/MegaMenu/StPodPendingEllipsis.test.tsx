@@ -30,7 +30,15 @@ describe('StPodPendingEllipsis', () => {
     return render(<StPodPendingEllipsis url={url} />, { wrapper });
   };
 
-  it('shows the pending dots for a url outside the allow list while the pod is starting', () => {
+  it('shows nothing while the service is still unknown so allow-listed sessions do not see stale dots', () => {
+    const { container } = renderEllipsis('/explore');
+
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('shows the pending dots for a url outside the allow list once the pod reports it is still starting', () => {
+    act(() => service.state.next(StPodStatus.Waiting));
+
     renderEllipsis('/explore');
 
     expect(queryDots()).toBeInTheDocument();
@@ -41,6 +49,7 @@ describe('StPodPendingEllipsis', () => {
     ['an allow-listed path with a query string', '/dashboards?orgId=1'],
     ['an allow-listed path with a hash', '/dashboards#top'],
   ])('shows nothing for %s', (_, url) => {
+    act(() => service.state.next(StPodStatus.Waiting));
     const { container } = renderEllipsis(url);
 
     expect(container).toBeEmptyDOMElement();
@@ -50,6 +59,7 @@ describe('StPodPendingEllipsis', () => {
     ['the pod is ready', StPodStatus.Ready],
     ['waiting for the pod hits a terminal error', StPodStatus.Error],
   ])('removes the pending dots once %s', (_, settled) => {
+    act(() => service.state.next(StPodStatus.Waiting));
     renderEllipsis('/explore');
     expect(queryDots()).toBeInTheDocument();
 
@@ -59,6 +69,7 @@ describe('StPodPendingEllipsis', () => {
   });
 
   it('keeps the pending dots when the pod enters the soft timeout state', () => {
+    act(() => service.state.next(StPodStatus.Waiting));
     renderEllipsis('/explore');
     expect(queryDots()).toBeInTheDocument();
 
@@ -68,6 +79,7 @@ describe('StPodPendingEllipsis', () => {
   });
 
   it('brings the pending dots back when an errored pod transitions to waiting again', () => {
+    act(() => service.state.next(StPodStatus.Waiting));
     renderEllipsis('/explore');
     act(() => service.state.next(StPodStatus.Error));
     expect(queryDots()).not.toBeInTheDocument();
