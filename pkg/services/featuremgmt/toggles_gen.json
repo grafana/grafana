@@ -950,6 +950,22 @@
     },
     {
       "metadata": {
+        "name": "appPlatform.busInformer",
+        "resourceVersion": "1793023766894",
+        "creationTimestamp": "2026-10-26T14:09:26Z",
+        "deletionTimestamp": "2026-10-26T15:03:42Z"
+      },
+      "spec": {
+        "description": "Take app informer deltas from the resource change bus instead of a kubernetes watch",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "appPlatformGrpcClientAuth",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2024-10-14T10:47:18Z"

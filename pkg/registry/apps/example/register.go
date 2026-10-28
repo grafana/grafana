@@ -4,17 +4,22 @@ import (
 	"fmt"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/resourcebus"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/example/pkg/apis/example/v1alpha1"
 	"github.com/grafana/grafana/apps/example/pkg/apis/manifestdata"
 	exampleapp "github.com/grafana/grafana/apps/example/pkg/app"
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
+	"github.com/grafana/grafana/pkg/services/apiserver/keys/keyslister"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
@@ -30,9 +35,19 @@ func (e AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	return exampleapp.GetAuthorizer()
 }
 
-func RegisterAppInstaller(
+// RegisterAppInstaller builds the installer without a delta source, leaving the app's reconciler on the kubernetes
+// watch. It is the signature out-of-tree callers already use; wire uses ProvideAppInstaller.
+func RegisterAppInstaller(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (*AppInstaller, error) {
+	return ProvideAppInstaller(cfg, features, nil, nil)
+}
+
+// ProvideAppInstaller builds the installer, taking the resource change bus and the storage client the keys-only
+// re-list reads through. A nil resourceBus selects the kubernetes watch.
+func ProvideAppInstaller(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	resourceBus resourcebus.Subscriber,
+	unified resource.ResourceClient,
 ) (*AppInstaller, error) {
 	installer := &AppInstaller{
 		cfg: cfg,
@@ -40,6 +55,17 @@ func RegisterAppInstaller(
 	// Config specific to the app. This can pull from feature flags or setting.Cfg.
 	specificConfig := &exampleapp.ExampleConfig{
 		EnableSomeFeature: true,
+		// An app-sdk interface value, so the app depends on neither the bus nor the keys client below. A nil
+		// subscriber selects the kubernetes watch, which is what an instance with NATS off gets.
+		ResourceBus: resourceBus,
+		// The spec registered in watch_metadata.go only reaches the wire when the publisher was configured to send
+		// metadata at all, so the app is told what this deployment actually announces, not what it asked for.
+		BusAnnouncesMetadata: cfg.NATS.NotificationMetadata,
+	}
+	if keyslister.Enabled(cfg) {
+		specificConfig.BusKeyLister = keyslister.Factory(func(gvr schema.GroupVersionResource) keysapi.Lister {
+			return keysapi.NewGRPCLister(unified, gvr)
+		})
 	}
 
 	// Set specificConfig.EnableReconciler to true IFF the v1alpha1 API is enabled in the runtime config.

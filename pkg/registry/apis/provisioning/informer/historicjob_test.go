@@ -13,7 +13,6 @@ import (
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/fake"
-	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
 // addRecorder records the names delivered to OnAdd.
@@ -38,25 +37,25 @@ func (r *addRecorder) got() []string {
 	return append([]string(nil), r.names...)
 }
 
-// TestNewHistoricJobDeltaSource_SelectsSourceByNATS verifies the source selection:
-// an apiserver-backed SharedIndexInformer when NATS is off, and a CachelessPeriodicInformer
-// when NATS is on. The historic-job controller is unaffected either way — it only
-// registers its EventHandler on whichever DeltaSource this returns.
+// TestNewHistoricJobDeltaSource_SelectsSourceByNATS verifies the source selection: an apiserver-backed
+// SharedIndexInformer when NATS is off, and the re-list-only source when NATS is on. The historic-job controller is
+// unaffected either way — it only registers its EventHandler on whichever DeltaSource this returns.
 func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
 	client := fake.NewClientset()
 
 	t.Run("NATS off uses apiserver informer", func(t *testing.T) {
-		src := NewHistoricJobDeltaSource(false, client, time.Minute)
-		_, isPeriodic := src.(*usinformer.CachelessPeriodicInformer)
-		assert.False(t, isPeriodic, "expected the apiserver informer, not the periodic lister")
+		src, err := NewHistoricJobDeltaSource(false, client, time.Minute)
+		require.NoError(t, err)
 		_, isInformer := src.(cache.SharedIndexInformer)
 		assert.True(t, isInformer, "expected an apiserver-backed SharedIndexInformer")
 	})
 
-	t.Run("NATS on uses periodic lister", func(t *testing.T) {
-		src := NewHistoricJobDeltaSource(true, client, time.Minute)
-		_, isPeriodic := src.(*usinformer.CachelessPeriodicInformer)
-		assert.True(t, isPeriodic, "expected the periodic lister when NATS is enabled")
+	t.Run("NATS on uses the periodic source", func(t *testing.T) {
+		src, err := NewHistoricJobDeltaSource(true, client, time.Minute)
+		require.NoError(t, err)
+		_, isInformer := src.(cache.SharedIndexInformer)
+		assert.False(t, isInformer, "expected the periodic source, not an apiserver informer")
+		assert.NotNil(t, src)
 	})
 }
 
@@ -68,9 +67,10 @@ func TestNewHistoricJobPeriodicInformer_ListsFromClient(t *testing.T) {
 			&provisioningapis.HistoricJob{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "old"}},
 		)
 
-		src := NewHistoricJobPeriodicInformer(client, "", time.Hour)
+		src, err := NewHistoricJobPeriodicInformer(client, "", time.Hour)
+		require.NoError(t, err)
 		h := &addRecorder{}
-		_, err := src.AddEventHandler(h)
+		_, err = src.AddEventHandler(h)
 		require.NoError(t, err)
 
 		stop := make(chan struct{})

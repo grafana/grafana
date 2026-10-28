@@ -75,7 +75,10 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 	}
 
 	// The connection delta source and the getter it backs.
-	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, connKeys, controllerCfg.ResyncInterval(), controllerCfg.RelistProjectionMetrics(), controllerCfg.FreshnessMetrics())
+	connSource, connGetter, err := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, connKeys, controllerCfg.ResyncInterval(), controllerCfg.InformerMetrics(), controllerCfg.FreshnessMetrics())
+	if err != nil {
+		return fmt.Errorf("failed to build connection delta source: %w", err)
+	}
 	connController := controller.NewConnectionController(
 		connGetter,
 		statusPatcher,

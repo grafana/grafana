@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -99,13 +98,6 @@ func (r *typeRecorder) last() interface{} {
 
 var _ cache.ResourceEventHandler = (*typeRecorder)(nil)
 
-// newTestRecorder returns a recorder bound to resourceName and the registry it
-// writes to, so tests assert on the real counters.
-func newTestRecorder(gvr schema.GroupVersionResource) (RelistRecorder, *prometheus.Registry) {
-	reg := prometheus.NewRegistry()
-	return NewRelistProjectionMetrics(reg).Recorder(gvr), reg
-}
-
 // counterValue reads one fully labelled counter out of reg, 0 when untouched.
 func counterValue(t *testing.T, reg *prometheus.Registry, name string, labels map[string]string) float64 {
 	t.Helper()
@@ -127,10 +119,4 @@ func counterValue(t *testing.T, reg *prometheus.Registry, name string, labels ma
 		}
 	}
 	return 0
-}
-
-func projectionCount(t *testing.T, reg *prometheus.Registry, gvr schema.GroupVersionResource, projection string) float64 {
-	t.Helper()
-	return counterValue(t, reg, "grafana_provisioning_informer_relist_projection_total",
-		map[string]string{"group": gvr.Group, "resource": gvr.Resource, "projection": projection})
 }

@@ -258,6 +258,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	migrations2 "github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch/natsbus"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	provider2 "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
@@ -878,7 +879,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	exampleAppInstaller, err := example.RegisterAppInstaller(cfg, featureToggles)
+	subscriber := natsbus.ProvideSubscriber(subscriberService)
+	exampleAppInstaller, err := example.ProvideAppInstaller(cfg, featureToggles, subscriber, v5)
 	if err != nil {
 		return nil, err
 	}
@@ -1672,7 +1674,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	exampleAppInstaller, err := example.RegisterAppInstaller(cfg, featureToggles)
+	subscriber := natsbus.ProvideSubscriber(subscriberService)
+	exampleAppInstaller, err := example.ProvideAppInstaller(cfg, featureToggles, subscriber, v5)
 	if err != nil {
 		return nil, err
 	}
