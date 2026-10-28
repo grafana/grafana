@@ -6,6 +6,7 @@ import {
   createTheme,
   DataTransformerID,
   FieldType,
+  formattedValueToString,
   toDataFrame,
   type DataTransformerConfig,
 } from '@grafana/data';
@@ -258,6 +259,61 @@ it('keeps time range bounds editable after the panel timezone changes', async ()
     id: 'between',
     options: { from: first, to: second },
   });
+});
+
+it('stores the panel timezone for a newly selected time value', async () => {
+  const { props, api } = setup();
+  const timeZone = 'Pacific/Auckland';
+  props.data = applyFieldOverrides({
+    data: [toDataFrame({ fields: [{ name: 'Time', type: FieldType.time, values: [1767225600000, 1767312000000] }] })],
+    fieldConfig: { defaults: {}, overrides: [] },
+    theme: createTheme(),
+    timeZone,
+    replaceVariables: (s) => s,
+  })[0];
+  const field = props.data.fields[0];
+  const selected = formattedValueToString(field.display!(field.values[0]));
+
+  render(<TableNG {...props} timeZone={timeZone} />);
+  await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
+  await userEvent.click(screen.getByRole('checkbox', { name: selected }));
+  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+
+  expect(api.get('table')[0].options.filters[0].config.options.timeZone).toBe(timeZone);
+  expect(screen.getAllByRole('row')).toHaveLength(2);
+});
+
+it('keeps time selections editable after the panel timezone changes', async () => {
+  const { props, api } = setup();
+  const makeFrame = (timeZone: string) =>
+    applyFieldOverrides({
+      data: [toDataFrame({ fields: [{ name: 'Time', type: FieldType.time, values: [1767225600000, 1767312000000] }] })],
+      fieldConfig: { defaults: {}, overrides: [] },
+      theme: createTheme(),
+      timeZone,
+      replaceVariables: (s) => s,
+    })[0];
+  props.data = makeFrame('UTC');
+  const first = formattedValueToString(props.data.fields[0].display!(props.data.fields[0].values[0]));
+  const { rerender } = render(<TableNG {...props} timeZone="UTC" />);
+
+  await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
+  await userEvent.click(screen.getByRole('checkbox', { name: first }));
+  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  expect(screen.getAllByRole('row')).toHaveLength(2);
+
+  props.data = makeFrame('Pacific/Auckland');
+  const [firstInNewZone, secondInNewZone] = props.data.fields[0].values.map((value) =>
+    formattedValueToString(props.data.fields[0].display!(value))
+  );
+  rerender(<TableNG {...props} timeZone="Pacific/Auckland" />);
+  await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
+  expect(screen.getByRole('checkbox', { name: firstInNewZone })).toBeChecked();
+  await userEvent.click(screen.getByRole('checkbox', { name: secondInNewZone }));
+  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+
+  expect(screen.getAllByRole('row')).toHaveLength(3);
+  expect(api.get('table')[0].options.filters[0].config.options.timeZone).toBe('Pacific/Auckland');
 });
 
 it.each([false, true])(

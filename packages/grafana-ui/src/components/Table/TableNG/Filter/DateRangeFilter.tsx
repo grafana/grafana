@@ -1,13 +1,13 @@
-import { useId, useRef, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 
 import { dateTimeFormat, dateTimeParse } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
+import { TimeRangeFields } from '../../../DateTimePickers/TimeRangePicker/TimeRangeFields';
 import { adjustDateForReactCalendar } from '../../../DateTimePickers/utils/adjustDateForReactCalendar';
 
 import { RangeFilterFrame } from './RangeFilterFrame';
-import { TableRangeFields } from './TableRangeFields';
 import { type RangeFilterProps } from './rangeFilterTypes';
 import { useFilterInputFocus } from './useFilterInputFocus';
 import { rangeValidation, useRangeValues } from './utils';
@@ -32,7 +32,10 @@ export function DateRangeFilter({
   onCancel,
 }: RangeFilterProps) {
   const validationId = useId();
-  const calendarAnchor = useRef<HTMLElement | null>(null);
+  const [calendarAnchor, setCalendarAnchor] = useState<HTMLElement | null>(null);
+  const setContainerRef = useCallback((element: HTMLDivElement | null) => {
+    setCalendarAnchor(element?.parentElement ?? null);
+  }, []);
   const minimumRef = useFilterInputFocus();
   const formatInput = (value?: number) =>
     value == null ? '' : dateTimeFormat(value, { format: DATE_FORMAT, timeZone });
@@ -56,9 +59,7 @@ export function DateRangeFilter({
 
   return (
     <RangeFilterFrame
-      containerRef={(element) => {
-        calendarAnchor.current = element?.parentElement ?? null;
-      }}
+      containerRef={setContainerRef}
       field={field}
       values={values}
       finite={histogram.finite}
@@ -72,8 +73,8 @@ export function DateRangeFilter({
       onCancel={onCancel}
     >
       <div>
-        <TableRangeFields
-          calendarAnchor={calendarAnchor}
+        <TimeRangeFields
+          inputWidth={30}
           from={{
             label: t('grafana-ui.table.range.start', 'Start'),
             inputRef: minimumRef,
@@ -82,6 +83,7 @@ export function DateRangeFilter({
               ? formatInput(histogram.min)
               : t('grafana-ui.table.range.unbounded', 'No limit'),
             testId: rangeSelectors.minimumInput,
+            fieldTestId: rangeSelectors.field('minimum'),
             onChange: (text) => setLowerDraft({ text, timeZone }),
             invalid: minimumInvalid || boundsReversed,
             errorId: validationId,
@@ -93,11 +95,14 @@ export function DateRangeFilter({
               ? formatInput(histogram.max)
               : t('grafana-ui.table.range.unbounded', 'No limit'),
             testId: rangeSelectors.maximumInput,
+            fieldTestId: rangeSelectors.field('maximum'),
             onChange: (text) => setUpperDraft({ text, timeZone }),
             invalid: maximumInvalid || boundsReversed,
             errorId: validationId,
           }}
           calendar={{
+            isFullscreen: true,
+            referenceElement: calendarAnchor,
             minDate: Number.isFinite(histogram.min) ? calendarBoundary(histogram.min, timeZone, false) : undefined,
             maxDate: Number.isFinite(histogram.max) ? calendarBoundary(histogram.max, timeZone, true) : undefined,
             from: dateTimeParse(min ?? (Number.isFinite(histogram.min) ? histogram.min : Date.now()), { timeZone }),

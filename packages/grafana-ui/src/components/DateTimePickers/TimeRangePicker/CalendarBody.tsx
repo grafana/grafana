@@ -26,10 +26,7 @@ export function Body({
   weekStart,
   minDate,
   maxDate,
-}: Pick<TimePickerCalendarProps, 'onChange' | 'from' | 'to' | 'timeZone' | 'weekStart'> & {
-  minDate?: Date;
-  maxDate?: Date;
-}) {
+}: Pick<TimePickerCalendarProps, 'onChange' | 'from' | 'to' | 'timeZone' | 'weekStart' | 'minDate' | 'maxDate'>) {
   const value = inputToValue(from, to, new Date(), timeZone);
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = useStyles2(getBodyStyles);

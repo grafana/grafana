@@ -19,19 +19,23 @@ interface RangeField {
   error?: string;
   placeholder?: string;
   testId?: string;
+  fieldTestId?: string;
+  invalid?: boolean;
+  errorId?: string;
 }
 
 interface Props {
   from: RangeField;
   to: RangeField;
   inputWidth?: number;
+  calendarDisabled?: boolean;
   onSubmit?: () => void;
   fieldSuffix?: ReactNode;
   calendar: Omit<TimePickerCalendarProps, 'isOpen' | 'onClose'>;
 }
 
 /** Shared absolute-range inputs and calendar; callers own parsing, validation, and applying the range. */
-export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, calendar }: Props) {
+export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, calendar, calendarDisabled }: Props) {
   const fromId = useId();
   const toId = useId();
   const [isOpen, setOpen] = useState(false);
@@ -43,6 +47,7 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
       icon="calendar-alt"
       variant="secondary"
       type="button"
+      disabled={calendarDisabled}
       onClick={() => setOpen(true)}
     />
   );
@@ -54,7 +59,12 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
         { field: to, label: t('time-picker.range-content.to-input', 'To'), id: toId },
       ].map(({ field, label, id }) => (
         <Stack key={id} gap={0}>
-          <Field label={field.label ?? label} invalid={!!field.error} error={field.error}>
+          <Field
+            label={field.label ?? label}
+            invalid={field.invalid ?? !!field.error}
+            error={field.error}
+            data-testid={field.fieldTestId}
+          >
             <Input
               id={id}
               autoComplete="off"
@@ -65,6 +75,7 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
               placeholder={field.placeholder}
               data-testid={field.testId}
               width={inputWidth}
+              aria-describedby={field.invalid ? field.errorId : undefined}
               onClick={(event) => event.stopPropagation()}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') {

@@ -17,28 +17,26 @@ import { Body } from './CalendarBody';
 import { Footer } from './CalendarFooter';
 import { Header } from './CalendarHeader';
 
-export const getCalendarStyles = (theme: GrafanaTheme2) =>
-  css({
-    zIndex: theme.zIndex.modal,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1),
-    label: 'calendar',
-    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
-    backgroundColor: theme.colors.background.elevated,
-    border: `1px solid ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.lg,
-  });
-
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     modalContainer: css({
       label: 'modalContainer',
       margin: '0 auto',
     }),
 
-    calendar: getCalendarStyles(theme),
+    calendar: css({
+      zIndex: theme.zIndex.modal,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: theme.spacing(1),
+      padding: theme.spacing(1),
+      label: 'calendar',
+      boxShadow: visualRefreshEnabled ? theme.shadows.z2 : theme.shadows.z3,
+      backgroundColor: theme.colors.background.elevated,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.lg,
+    }),
 
     modal: css({
       label: 'modal',
@@ -58,9 +56,12 @@ export interface TimePickerCalendarProps {
   from: DateTime;
   to: DateTime;
   onClose: () => void;
-  onApply: (e: FormEvent<HTMLButtonElement>) => void;
+  /** Used by the modal footer; floating calendars only edit the draft range. */
+  onApply?: (e: FormEvent<HTMLButtonElement>) => void;
   onChange: (from: DateTime, to: DateTime) => void;
   weekStart?: WeekStart;
+  minDate?: Date;
+  maxDate?: Date;
 
   /**
    * When true, the calendar is rendered as a floating "tooltip" next to the input.
@@ -119,7 +120,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
     >
       <Header {...props} />
       <Body {...props} />
-      {showInModal && <Footer {...props} />}
+      {showInModal && props.onApply && <Footer {...props} />}
     </section>
   );
 
