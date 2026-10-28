@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { upperFirst } from 'lodash';
 import { useMemo } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
@@ -59,7 +60,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           return (
             <Stack direction="row" gap={1} alignItems="center">
               <Icon name={info?.icon ?? 'file-alt'} />
-              <span>{info?.kind ?? original.resource}</span>
+              <span>{info ? upperFirst(info.getLabel()) : original.resource}</span>
             </Stack>
           );
         },
