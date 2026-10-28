@@ -326,7 +326,7 @@ describe('HeaderCell', () => {
     expect(filterButton).toHaveAttribute('aria-expanded', 'true');
   });
 
-  it('keeps only one column filter popup open', async () => {
+  it('closes the previous filter popup when another filter is opened', async () => {
     const first = makeField({ config: { custom: { filterable: true } } });
     const second = makeField({
       name: 'Field2',
@@ -334,10 +334,12 @@ describe('HeaderCell', () => {
       config: { custom: { filterable: true } },
     });
     render(
-      <TableFilterProvider props={{ data: { fields: [first, second], length: 3 }, width: 300, height: 200 }}>
-        <HeaderCell {...baseProps} field={first} />
-        <HeaderCell {...baseProps} field={second} column={{ key: 'Field2' } as Column<TableRow, TableSummaryRow>} />
-      </TableFilterProvider>
+      <div onClick={(event) => event.stopPropagation()}>
+        <TableFilterProvider props={{ data: { fields: [first, second], length: 3 }, width: 300, height: 200 }}>
+          <HeaderCell {...baseProps} field={first} />
+          <HeaderCell {...baseProps} field={second} column={{ key: 'Field2' } as Column<TableRow, TableSummaryRow>} />
+        </TableFilterProvider>
+      </div>
     );
     const firstButton = screen.getByLabelText('Filter Field1');
     const secondButton = screen.getByLabelText('Filter Field2');
