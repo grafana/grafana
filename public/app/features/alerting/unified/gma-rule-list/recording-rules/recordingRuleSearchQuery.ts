@@ -12,5 +12,18 @@ export function buildRecordingRuleSearchQuery(continueToken?: string) {
   } satisfies ListRecordingRuleSearchRulesV0Alpha1RequestBody;
 }
 
-// `health` is the only status field: recording rules have no alert state.
-const RECORDING_RULE_FIELDS = ['title', 'folder', 'paused', 'health'];
+// `health` and `lastError` are status fields populated by `alerting.ruleStatusSync`.
+// Recording rules have no annotations field; `interval` is the evaluation cadence.
+// `labels` and `datasourceUIDs` are arrays; `metric` and `targetDatasourceUID` are direct strings.
+const RECORDING_RULE_FIELDS = [
+  'title',
+  'folder',
+  'paused',
+  'health',
+  'lastError',
+  'interval',
+  'labels',
+  'datasourceUIDs',
+  'metric',
+  'targetDatasourceUID',
+];

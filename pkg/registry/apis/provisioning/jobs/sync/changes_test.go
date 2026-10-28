@@ -960,55 +960,6 @@ func TestCompare_DuplicateFolderOrphanWithChildren(t *testing.T) {
 	})
 }
 
-func TestChanges_FolderMetadataFlagDisabled(t *testing.T) {
-	t.Run("_folder.json is kept but not treated as resource or metadata when flag off", func(t *testing.T) {
-		source := []repository.FileTreeEntry{
-			{Path: "my-folder/", Hash: "abc", Blob: false},
-			{Path: "my-folder/_folder.json", Hash: "def", Blob: true},
-			{Path: "my-folder/dashboard.json", Hash: "ghi", Blob: true},
-		}
-		target := &provisioning.ResourceList{}
-
-		changes, err := Changes(context.Background(), source, target, false)
-		require.NoError(t, err)
-
-		// With flag off, _folder.json is added to keep trie (prevents parent
-		// folder deletion) but NOT emitted as a resource change or metadata update.
-		paths := make([]string, len(changes))
-		for i, c := range changes {
-			paths[i] = c.Path
-		}
-		require.NotContains(t, paths, "my-folder/_folder.json",
-			"_folder.json should not appear as a change when flag is off")
-		require.Contains(t, paths, "my-folder/dashboard.json",
-			"dashboard should still be created")
-		require.Contains(t, paths, "my-folder/",
-			"folder should still be created")
-	})
-
-	t.Run("_folder.json hash change does not emit folder update when flag off", func(t *testing.T) {
-		source := []repository.FileTreeEntry{
-			{Path: "my-folder/", Hash: "abc", Blob: false},
-			{Path: "my-folder/_folder.json", Hash: "new-hash", Blob: true},
-		}
-		target := &provisioning.ResourceList{
-			Items: []provisioning.ResourceListItem{
-				{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "folder-uid"},
-			},
-		}
-
-		changes, err := Changes(context.Background(), source, target, false)
-		require.NoError(t, err)
-
-		// With flag off, no folder update should be emitted from metadata hash comparison.
-		for _, c := range changes {
-			if c.Path == "my-folder/" && c.Action == repository.FileActionUpdated {
-				t.Fatal("folder update should not be emitted when flag is off")
-			}
-		}
-	})
-}
-
 func TestCompare(t *testing.T) {
 	tests := []struct {
 		name            string
@@ -1095,41 +1046,6 @@ func TestCompare(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestCompare_FolderMetadataFlagDisabled(t *testing.T) {
-	t.Run("augmentChangesForFolderMetadata skipped when flag off", func(t *testing.T) {
-		repo := repository.NewMockRepository(t)
-		repoResources := resources.NewMockRepositoryResources(t)
-
-		source := []repository.FileTreeEntry{
-			{Path: "my-folder/", Hash: "abc", Blob: false},
-			{Path: "my-folder/_folder.json", Hash: "new-hash", Blob: true},
-		}
-		target := &provisioning.ResourceList{
-			Items: []provisioning.ResourceListItem{
-				{Path: "my-folder/", Hash: "old-hash", Resource: resources.FolderResource.Resource, Group: resources.FolderResource.Group, Name: "old-uid"},
-			},
-		}
-
-		repoResources.On("List", mock.Anything).Return(target, nil)
-		repoResources.On("SetTree", mock.Anything).Return().Maybe()
-		repo.On("ReadTree", mock.Anything, "ref").Return(source, nil)
-		// NOT mocking repo.Read — if augmentChangesForUIDChanges ran,
-		// it would call ReadFolderMetadata which calls repo.Read, and
-		// the mock would panic on unexpected call.
-
-		changes, _, invalid, err := Compare(context.Background(), repo, repoResources, "ref", false)
-		require.NoError(t, err)
-		require.Nil(t, invalid)
-
-		// No folder update should be emitted — the metadata processing is skipped.
-		for _, c := range changes {
-			if c.Path == "my-folder/" && c.Action == repository.FileActionUpdated {
-				t.Fatal("folder update should not be emitted when flag is off")
-			}
-		}
-	})
 }
 
 func TestCompare_InvalidFolderMetadataWarning(t *testing.T) {

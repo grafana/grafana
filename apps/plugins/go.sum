@@ -85,8 +85,8 @@ github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRF
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk541a8SKzHPHnH3zbiI+7dagKZ0cgpgrD7Fyho=
 github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b h1:mimo19zliBX/vSQ6PWWSL9lK8qwHozUj03+zLoEB8O0=
 github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b/go.mod h1:fvzegU4vN3H1qMT+8wDmzjAcDONcgo2/SZ/TyfdUOFs=
-github.com/andybalholm/brotli v1.2.3 h1:8H1qwOkl2LPfjf3YezB90JnCliZb6SInJ/OJkEbA5NQ=
-github.com/andybalholm/brotli v1.2.3/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
+github.com/andybalholm/brotli v1.2.7 h1:UgafRPGMam5ySHfRkhthMqOFA6IFoeF3D7mWIDLjG5A=
+github.com/andybalholm/brotli v1.2.7/go.mod h1:rzTDkvFWvIrjDXZHkuS16NPggd91W3kUSvPlQ1pLaKY=
 github.com/antihax/optional v1.0.0/go.mod h1:uupD/76wgC+ih3iEmQUL+0Ugr19nfwCT1kdvxnR2qWY=
 github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYWrPrQ=
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
@@ -432,8 +432,8 @@ github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5T
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
 github.com/grafana/alerting v0.0.0-20261014191024-71374176ca7b h1:yne7FfCc6lErg/adL/+6Xr1OXIGWKmiTcu6jlt6KL5w=
 github.com/grafana/alerting v0.0.0-20261014191024-71374176ca7b/go.mod h1:Nk8imWjRFJbfR6B+ZpFMf0Qs6cYzyNi2sKIIxEncG4U=
-github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3 h1:ZR82gG5heBaj8Dp9UbzruZLzgBSi/JCe1hppeXfWdUo=
-github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3/go.mod h1:EhN0hx/B4OffEAyj5BKhXXiVlH8icKjcoOEnplCRf+k=
+github.com/grafana/authlib v0.0.0-20261023105149-ed7cea0f2b27 h1:+JITeJCAECYl1YY1mTk4XmML9imgO0dov6sUNF/c+PU=
+github.com/grafana/authlib v0.0.0-20261023105149-ed7cea0f2b27/go.mod h1:EhN0hx/B4OffEAyj5BKhXXiVlH8icKjcoOEnplCRf+k=
 github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 h1:w2lobCqO1jqwo5dV64QO5i5QdMomnJQmIbW7ueGZb88=
 github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3/go.mod h1:/AvD+WnWIDMlsvyczIBNXo50NkkJcF6qkoQbUXd3ziE=
 github.com/grafana/dataplane/sdata v0.0.9 h1:AGL1LZnCUG4MnQtnWpBPbQ8ZpptaZs14w6kE/MWfg7s=
@@ -1012,8 +1012,8 @@ golang.org/x/net v0.0.0-20220325170049-de3da57026de/go.mod h1:CfG3xpIq0wQ8r1q4Su
 golang.org/x/net v0.0.0-20220412020605-290c469a71a5/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
 golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
 golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2/go.mod h1:CfG3xpIq0wQ8r1q4Su4UZFWDARRcnwPjda9FqA0JpMk=
-golang.org/x/net v0.61.0 h1:RR+6j/BTBCrggOLugxa+66R8FvoN6MHlzDlZIbN9YFw=
-golang.org/x/net v0.61.0/go.mod h1:WgDCOTH8iwtB66T4/GfI94AHo/hhdb7Hah9NDseQfiI=
+golang.org/x/net v0.62.0 h1:18ELalfM5+XNRwzM2nYqXsZQ9ByS1uhj2O/U7+5jqRY=
+golang.org/x/net v0.62.0/go.mod h1:WgDCOTH8iwtB66T4/GfI94AHo/hhdb7Hah9NDseQfiI=
 golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
 golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=
 golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45/go.mod h1:gOpvHmFTYa4IltrdGE7lF6nIHvwfUNPOp7c8zoXwtLw=

@@ -6,7 +6,7 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/fullstorydev/grpchan v1.1.2
 	github.com/go-jose/go-jose/v4 v4.1.6
-	github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3
+	github.com/grafana/authlib v0.0.0-20261023105149-ed7cea0f2b27
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
 	github.com/grafana/grafana-app-sdk/logging v0.61.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123
@@ -45,7 +45,7 @@ require (
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/net v0.61.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/text v0.43.0 // indirect

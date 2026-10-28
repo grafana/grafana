@@ -90,17 +90,14 @@ func Compare(
 	}
 	changes = attachUnsupportedPaths(changes)
 
-	var invalidFolderMetadata []*resources.InvalidFolderMetadata
-	if folderMetadataEnabled {
-		changes, invalidFolderMetadata, err = augmentChangesForFolderMetadata(ctx, repo, ref, source, target, changes)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("augment changes for folder metadata: %w", err)
-		}
+	changes, invalidFolderMetadata, err := augmentChangesForFolderMetadata(ctx, repo, ref, source, target, changes)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("augment changes for folder metadata: %w", err)
+	}
 
-		changes, err = augmentChangesForFolderMoves(ctx, repo, ref, changes)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("augment changes for folder moves: %w", err)
-		}
+	changes, err = augmentChangesForFolderMoves(ctx, repo, ref, changes)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("augment changes for folder moves: %w", err)
 	}
 
 	if len(changes) > 0 {
@@ -209,14 +206,6 @@ func Changes(
 			// For new folders the parent directory creation handles it;
 			// for existing folders we compare hashes to detect metadata changes.
 			if resources.IsFolderMetadataFile(file.Path) {
-				if !folderMetadataEnabled {
-					logger.Debug("skipping folder metadata file as feature flag is off", "path", file.Path)
-					if err := keep.Add(file.Path); err != nil {
-						return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)
-					}
-					continue
-				}
-
 				logger.Debug("processing folder metadata file", "path", file.Path)
 				if err := keep.Add(file.Path); err != nil {
 					return nil, fmt.Errorf("failed to add path to keep folder metadata file: %w", err)

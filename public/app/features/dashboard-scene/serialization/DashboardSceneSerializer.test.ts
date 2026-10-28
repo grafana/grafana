@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { type AdHocFiltersVariable, type MultiValueVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import { type Dashboard, type VariableModel } from '@grafana/schema';
 import {
@@ -186,14 +185,6 @@ describe('DashboardSceneSerializer', () => {
       });
 
       describe('Experimental variables', () => {
-        beforeAll(() => {
-          config.featureToggles.groupByVariable = true;
-        });
-
-        afterAll(() => {
-          config.featureToggles.groupByVariable = false;
-        });
-
         it('Can detect adhoc filter static options change', () => {
           const adhocVar = {
             id: 'adhoc',
@@ -578,14 +569,6 @@ describe('DashboardSceneSerializer', () => {
       });
 
       describe('Experimental variables', () => {
-        beforeAll(() => {
-          config.featureToggles.groupByVariable = true;
-        });
-
-        afterAll(() => {
-          config.featureToggles.groupByVariable = false;
-        });
-
         it('Can detect adhoc filter static options change', () => {
           const dashboard = setupV2({
             variables: [

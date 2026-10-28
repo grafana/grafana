@@ -51,4 +51,61 @@ describe('recordingRuleSearchHitSchema', () => {
   ])('leaves health unset for $name', ({ health }) => {
     expect(toHit({ health }).health).toBeUndefined();
   });
+
+  it('reads lastError from the search hit', () => {
+    const hit = toHit({ lastError: 'remote write failed' });
+
+    expect(hit.lastError).toBe('remote write failed');
+  });
+
+  it('leaves lastError unset when absent or not a string', () => {
+    expect(toHit({}).lastError).toBeUndefined();
+    expect(toHit({ lastError: 42 }).lastError).toBeUndefined();
+  });
+
+  it('does not expose a summary field even when annotations are present', () => {
+    const annotations = JSON.stringify({ summary: 'some summary' });
+    const hit = toHit({ annotations });
+
+    expect(hit).not.toHaveProperty('summary');
+  });
+
+  it('reads interval from the search hit', () => {
+    const hit = toHit({ interval: '1m' });
+
+    expect(hit.interval).toBe('1m');
+  });
+
+  it('leaves interval unset when absent or not a string', () => {
+    expect(toHit({}).interval).toBeUndefined();
+    expect(toHit({ interval: 60 }).interval).toBeUndefined();
+  });
+
+  it('parses labels using the same rules as alert rules — key=value only, private keys excluded', () => {
+    const hit = toHit({ labels: ['team=platform', '__grafana_origin=plugin', 'env'] });
+    expect(hit.labels).toEqual({ team: 'platform' });
+  });
+
+  it('leaves labels unset when absent or empty', () => {
+    expect(toHit({}).labels).toBeUndefined();
+    expect(toHit({ labels: [] }).labels).toBeUndefined();
+  });
+
+  it('stores datasourceUIDs as-is', () => {
+    const hit = toHit({ datasourceUIDs: ['ds-1'] });
+    expect(hit.datasourceUIDs).toEqual(['ds-1']);
+  });
+
+  it('reads metric from the search hit', () => {
+    expect(toHit({ metric: 'cpu:usage:rate5m' }).metric).toBe('cpu:usage:rate5m');
+  });
+
+  it('reads targetDatasourceUID from the search hit', () => {
+    expect(toHit({ targetDatasourceUID: 'ds-prom' }).targetDatasourceUID).toBe('ds-prom');
+  });
+
+  it('leaves metric and targetDatasourceUID unset when absent', () => {
+    expect(toHit({}).metric).toBeUndefined();
+    expect(toHit({}).targetDatasourceUID).toBeUndefined();
+  });
 });

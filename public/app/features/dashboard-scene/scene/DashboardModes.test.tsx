@@ -1,10 +1,15 @@
 import { act, cleanup, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { cloneDeep } from 'lodash';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { ConstantVariable, SceneVariableSet, sceneGraph } from '@grafana/scenes';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
   createDashboardMutationApi,
   setDashboardMutationClientForTests,
@@ -12,12 +17,13 @@ import {
 
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { changeTitle } from '../actions/dashboard/changeTitle';
+import { addComposerEnterRequestListener, resetComposerEnterRequestsForTests } from '../composer/composerEntryRequests';
 import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
 import { LAZY_DASHBOARD_COMMANDS } from '../mutation-api/commands/lazyRegistry';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { SaveDashboardForm } from '../saving/SaveDashboardForm';
-import { setDashboardModeAfterSave, consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardResourceText } from '../sidebar/codePaneUtils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -26,6 +32,9 @@ import { createDeferred } from '../utils/test-utils';
 import { DashboardModePicker } from './DashboardModePicker';
 import { toggleVizPanelLegend } from './PanelMenuBehavior';
 import { dashboardModesEnabled, getDashboardMode, canManuallyEditDashboard } from './dashboardModes';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
+import { addNewRowTo } from './layouts-shared/addNew';
+import { Actions } from './new-toolbar/Actions';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { isFullDashboardEditing } from './types/dashboard';
 
@@ -39,6 +48,8 @@ jest.mock('app/features/browse-dashboards/api/browseDashboardsAPI', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+  // The v2 built-in annotation layer resolves a datasource on activation; never answer.
+  getDataSourceSrv: () => ({ get: () => new Promise(() => {}), getInstanceSettings: jest.fn() }),
 }));
 
 jest.mock('../saving/createDetectChangesWorker', () => ({
@@ -101,6 +112,27 @@ function setup(withPanel = false, isNew = false) {
   return scene;
 }
 
+function setupV2() {
+  const spec = cloneDeep(handyTestingSchema);
+  spec.variables = [];
+  // Drop the library panel, which would load asynchronously.
+  delete spec.elements['panel-2'];
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the fixture is a grid layout
+  const layout = spec.layout as { spec: { items: Array<{ spec: { element: { name: string } } }> } };
+  layout.spec.items = layout.spec.items.filter((item) => item.spec.element.name !== 'panel-2');
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal resource envelope for the test
+  const dto = {
+    kind: 'DashboardWithAccessInfo',
+    apiVersion: 'dashboard.grafana.app/v2beta1',
+    metadata: { name: 'modes-test', generation: 1, creationTimestamp: '2026-10-23T00:00:00Z', annotations: {} },
+    access: { canEdit: true, canSave: true, canShare: true, canStar: true, canDelete: true, canAdmin: true },
+    spec,
+  } as unknown as DashboardWithAccessInfo<DashboardV2Spec>;
+  const scene = transformSaveModelSchemaV2ToScene(dto);
+  deactivate = scene.activate();
+  return scene;
+}
+
 it.each([
   [false, false, false],
   [false, true, false],
@@ -150,7 +182,7 @@ it.each(['panel_menu', 'shortcut', 'navigation'] as const)(
   }
 );
 
-it('accepts Assistant writes in View and refuses generic plugin writes', async () => {
+it('refuses generic plugin writes in View and switches to Editing on an Assistant write', async () => {
   const scene = setup();
   const client = new DashboardMutationClient(scene);
   const spec = JSON.parse(getDashboardResourceText(scene)).spec;
@@ -158,12 +190,11 @@ it('accepts Assistant writes in View and refuses generic plugin writes', async (
   const mutation = { type: 'APPLY_SPEC', payload: { spec, validate: true } };
   expect((await client.execute(mutation, 'another-app')).success).toBe(false);
   expect(scene.state.title).toBe('Original title');
+  expect((await client.execute({ type: 'GET_SPEC', payload: {} }, 'another-app')).success).toBe(true);
   expect((await client.execute(mutation, 'grafana-assistant-app')).success).toBe(true);
   expect(scene.state.title).toBe('Assistant title');
-  expect(getDashboardMode(scene.state)).toBe('agent');
-  expect((await client.execute(mutation, 'another-app')).success).toBe(false);
-  expect(canManuallyEditDashboard(scene.state)).toBe(false);
-  expect((await client.execute({ type: 'GET_SPEC', payload: {} }, 'another-app')).success).toBe(true);
+  expect(getDashboardMode(scene.state)).toBe('edit');
+  expect(canManuallyEditDashboard(scene.state)).toBe(true);
 });
 
 it('refuses Assistant writes without edit permission', async () => {
@@ -314,53 +345,18 @@ describe('switching an unsaved new dashboard to Viewing', () => {
   });
 });
 
-describe('switching from Agent editing to Viewing with an unsaved Assistant draft', () => {
-  async function chooseViewing() {
-    const dashboard = setup();
-    await assistantChangesTitle(dashboard, 'Agent draft');
-    render(
-      <TestProvider>
-        <DashboardModePicker dashboard={dashboard} />
-      </TestProvider>
-    );
-    const user = userEvent.setup();
-    await user.hover(screen.getByRole('button', { name: 'Dashboard mode: Agent editing' }));
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('Switch to Viewing');
-    await user.click(screen.getByRole('button', { name: 'Dashboard mode: Agent editing' }));
-    expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).toBeInTheDocument();
-    expect(getDashboardMode(dashboard.state)).toBe('agent');
-    return { dashboard, user };
-  }
-
-  it('keeps Agent editing and the draft when the save prompt is cancelled', async () => {
-    const { dashboard, user } = await chooseViewing();
-    await user.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(screen.getByRole('button', { name: 'Dashboard mode: Agent editing' })).toBeInTheDocument();
-    expect(dashboard.state.title).toBe('Agent draft');
-    expect(mockSaveDashboard).not.toHaveBeenCalled();
-  });
-
-  it('discards the draft and switches to Viewing when Discard is chosen', async () => {
-    const { dashboard, user } = await chooseViewing();
-    await user.click(screen.getByRole('button', { name: 'Discard' }));
-    expect(screen.getByRole('button', { name: 'Dashboard mode: Viewing' })).toBeInTheDocument();
-    expect(dashboard.state.title).toBe('Original title');
-    expect(isFullDashboardEditing(dashboard.state)).toBe(false);
-  });
-});
-
-it('asks to save a new dashboard before leaving Agent editing for Viewing', async () => {
+it('asks to save a new dashboard before leaving an Assistant draft for Viewing', async () => {
   const dashboard = setup(false, true);
-  await assistantChangesTitle(dashboard, 'Agent draft');
+  await assistantChangesTitle(dashboard, 'Assistant draft');
   render(
     <TestProvider>
       <DashboardModePicker dashboard={dashboard} />
     </TestProvider>
   );
-  await userEvent.click(screen.getByRole('button', { name: 'Dashboard mode: Agent editing' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Dashboard mode: Editing' }));
   await waitFor(() => expect(dashboard.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
-  expect(getDashboardMode(dashboard.state)).toBe('agent');
-  expect(dashboard.state.title).toBe('Agent draft');
+  expect(getDashboardMode(dashboard.state)).toBe('edit');
+  expect(dashboard.state.title).toBe('Assistant draft');
 });
 
 describe('switching from Editing to Viewing with unsaved changes', () => {
@@ -487,12 +483,6 @@ describe('switching from Editing to Viewing with unsaved changes', () => {
   });
 });
 
-it.each(['view', 'edit', 'agent'] as const)('hands off %s once after first save or copy', (mode) => {
-  setDashboardModeAfterSave('new-uid', mode);
-  expect(consumeDashboardModeAfterSave('new-uid')).toBe(mode);
-  expect(consumeDashboardModeAfterSave('new-uid')).toBeUndefined();
-});
-
 it('binds View mutation permission to the host-provided plugin identity', async () => {
   const scene = setup();
   setDashboardMutationClientForTests(new DashboardMutationClient(scene));
@@ -505,20 +495,44 @@ it('binds View mutation permission to the host-provided plugin identity', async 
   const assistant = await createDashboardMutationApi('grafana-assistant-app').execute(mutation);
   expect(assistant.success).toBe(true);
   expect(scene.state.title).toBe('Assistant edit in View');
-  expect(getDashboardMode(scene.state)).toBe('agent');
+  expect(getDashboardMode(scene.state)).toBe('edit');
 });
 
-it('blocks the legend shortcut from changing panel options in View', () => {
+it.each(['view', 'composer'] as const)('lets the legend shortcut toggle the legend in %s mode', (mode) => {
   const scene = setup(true);
+  scene.setState({ mode, isEditing: mode === 'composer' });
   const panel = dashboardSceneGraph.getVizPanels(scene)[0];
   panel.setState({ options: { legend: { showLegend: true } } });
   const changeOptions = jest.spyOn(panel, 'onOptionsChange').mockImplementation(() => {});
+
   toggleVizPanelLegend(panel);
-  expect(changeOptions).not.toHaveBeenCalled();
-  expect(panel.state.options).toEqual({ legend: { showLegend: true } });
-  scene.setDashboardMode('edit');
-  toggleVizPanelLegend(panel);
+
   expect(changeOptions).toHaveBeenCalledWith({ legend: { showLegend: false } });
+});
+
+it('lets a plugin-managed dashboard enter Editing and save as a copy', async () => {
+  const dashboard = setup();
+  dashboard.setState({
+    meta: { ...dashboard.state.meta, k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Plugin } } },
+  });
+  expect(dashboard.managedResourceCannotBeEdited()).toBe(true);
+  render(
+    <TestProvider>
+      <DashboardModePicker dashboard={dashboard} />
+    </TestProvider>
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Dashboard mode: Viewing' }));
+  expect(getDashboardMode(dashboard.state)).toBe('edit');
+
+  cleanup();
+  render(
+    <TestProvider>
+      <SaveDashboard dashboard={dashboard} />
+    </TestProvider>
+  );
+  await user.click(screen.getByRole('button', { name: 'More save options' }));
+  expect(screen.getByRole('menuitem', { name: 'Save as copy' })).toBeInTheDocument();
 });
 
 it('discards changes while preserving Viewing mode', () => {
@@ -530,6 +544,22 @@ it('discards changes while preserving Viewing mode', () => {
   expect(scene.state.title).toBe('Original title');
   expect(getDashboardMode(scene.state)).toBe('view');
   expect(scene.state.isDirty).toBe(false);
+});
+
+it('shows the toolbar Save button in Editing but not in Viewing', () => {
+  const dashboard = setup();
+  dashboard.setDashboardMode('edit');
+  dashboard.setState({ title: 'Unsaved title', isDirty: true });
+  render(
+    <TestProvider>
+      <Actions dashboard={dashboard} />
+    </TestProvider>
+  );
+  expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+
+  act(() => dashboard.setDashboardMode('view'));
+  expect(dashboard.state.isEditing).toBe(true);
+  expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
 });
 
 it('opens Changes in the existing save drawer without dropping save options', async () => {
@@ -571,7 +601,7 @@ async function assistantChangesTitle(scene: ReturnType<typeof setup>, title: str
   );
 }
 
-it('labels Assistant edits from Viewing as Agent editing without adding a picker option', async () => {
+it('switches the picker to Editing when Assistant edits from Viewing', async () => {
   const scene = setup();
   render(
     <TestProvider>
@@ -581,21 +611,54 @@ it('labels Assistant edits from Viewing as Agent editing without adding a picker
   await act(async () => {
     expect((await assistantChangesTitle(scene, 'Agent draft')).success).toBe(true);
   });
-  expect(screen.getByRole('button', { name: 'Dashboard mode: Agent editing' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Dashboard mode: Editing' })).toBeInTheDocument();
   expect(scene.state.title).toBe('Agent draft');
-  expect(isFullDashboardEditing(scene.state)).toBe(false);
-  const user = userEvent.setup();
-  await user.click(screen.getByRole('button', { name: 'Change dashboard mode' }));
-  expect(screen.queryByRole('menuitemradio', { name: /Agent editing/ })).not.toBeInTheDocument();
-  await user.click(screen.getByRole('menuitemradio', { name: /Manually edit panels/ }));
-  expect(screen.getByRole('button', { name: 'Dashboard mode: Editing' })).toBeInTheDocument();
-  await act(async () => {
-    expect((await assistantChangesTitle(scene, 'Later Agent draft')).success).toBe(true);
-  });
-  expect(screen.getByRole('button', { name: 'Dashboard mode: Editing' })).toBeInTheDocument();
+  expect(isFullDashboardEditing(scene.state)).toBe(true);
 });
 
-it('hands Agent editing to the user on a manual change and preserves the undo history', async () => {
+describe('Assistant edits from Viewing while Composer is on', () => {
+  let stopListening = () => {};
+
+  beforeEach(() => {
+    setTestFlags({
+      dashboardNewLayouts: true,
+      'grafana.dashboardPreviewMode': true,
+      'grafana.dashboardComposer': true,
+    });
+  });
+
+  afterEach(() => {
+    stopListening();
+    stopListening = () => {};
+    resetComposerEnterRequestsForTests();
+  });
+
+  it('asks Assistant to enter Composer once and stays in Viewing until it does', async () => {
+    const listener = jest.fn();
+    stopListening = addComposerEnterRequestListener(listener);
+    const scene = setup();
+
+    expect((await assistantChangesTitle(scene, 'Assistant draft')).success).toBe(true);
+    expect((await assistantChangesTitle(scene, 'Next Assistant draft')).success).toBe(true);
+
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith({ resource: 'dashboard', uid: 'modes-test' });
+    expect(getDashboardMode(scene.state)).toBe('view');
+    expect(scene.state.title).toBe('Next Assistant draft');
+    expect(scene.state.isDirty).toBe(true);
+  });
+
+  it('switches to Editing when no Assistant listener enters Composer on dashboards', async () => {
+    stopListening = addComposerEnterRequestListener(jest.fn(), { resources: ['notebook'] });
+    const scene = setup();
+
+    expect((await assistantChangesTitle(scene, 'Assistant draft')).success).toBe(true);
+
+    expect(getDashboardMode(scene.state)).toBe('edit');
+  });
+});
+
+it('keeps Editing and the undo history across Assistant and manual changes', async () => {
   const scene = setup();
   expect((await assistantChangesTitle(scene, 'Agent draft')).success).toBe(true);
   changeTitle({ source: scene, oldValue: 'Agent draft', newValue: 'Manual draft' });
@@ -621,14 +684,14 @@ it('keeps Viewing for Assistant reads and rejected writes', async () => {
   expect(getDashboardMode(scene.state)).toBe('view');
 });
 
-it('can return to Viewing and lets a new Assistant edit start Agent editing again', async () => {
+it('can return to Viewing and lets a new Assistant edit start Editing again', async () => {
   const scene = setup();
   scene.setDashboardMode('edit');
   expect((await assistantChangesTitle(scene, 'Assistant in Editing')).success).toBe(true);
   expect(getDashboardMode(scene.state)).toBe('edit');
   scene.setDashboardMode('view');
   expect((await assistantChangesTitle(scene, 'Agent from Viewing')).success).toBe(true);
-  expect(getDashboardMode(scene.state)).toBe('agent');
+  expect(getDashboardMode(scene.state)).toBe('edit');
   scene.setDashboardMode('view');
   expect(getDashboardMode(scene.state)).toBe('view');
   expect(scene.state.title).toBe('Agent from Viewing');
@@ -688,14 +751,8 @@ describe('mode instrumentation', () => {
     expect(events('dashboards_mode_changed')).toEqual([
       expect.objectContaining({
         previous_mode: 'view',
-        mode: 'agent',
-        trigger: 'assistant',
-        edit_session_id: session.edit_session_id,
-      }),
-      expect.objectContaining({
-        previous_mode: 'agent',
         mode: 'edit',
-        trigger: 'manual_change',
+        trigger: 'assistant',
         edit_session_id: session.edit_session_id,
       }),
     ]);
@@ -729,7 +786,7 @@ describe('mode instrumentation', () => {
       expect.objectContaining({
         edit_session_id: sessionId,
         actor: 'assistant',
-        mode: initialMode === 'view' ? 'agent' : 'edit',
+        mode: 'edit',
       }),
     ]);
 
@@ -790,13 +847,13 @@ describe('mode instrumentation', () => {
       expect(spec.variables[0].spec.query).toBe('dev');
     }
     expect(events('dashboards_edit_actor_first_change')).toEqual([
-      expect.objectContaining({ actor: 'assistant', mode: 'agent' }),
+      expect.objectContaining({ actor: 'assistant', mode: 'edit' }),
     ]);
     expect((await update(true)).success).toBe(true);
     expect(events('dashboards_edit_actor_first_change')).toHaveLength(1);
   });
 
-  it('reports the first Assistant panel update before the later manual mode switch', async () => {
+  it('reports the first Assistant panel update before the later manual change', async () => {
     const dashboard = setup(true);
     const client = new DashboardMutationClient(dashboard);
     const update = (title: string) =>
@@ -811,13 +868,12 @@ describe('mode instrumentation', () => {
     const sessionId = dashboard.getEditSessionTracking().edit_session_id;
     expect(dashboard.state.body.getVizPanels()[0].state.title).toBe('Assistant notes');
     expect(events('dashboards_edit_actor_first_change')).toEqual([
-      expect.objectContaining({ edit_session_id: sessionId, actor: 'assistant', mode: 'agent' }),
+      expect.objectContaining({ edit_session_id: sessionId, actor: 'assistant', mode: 'edit' }),
     ]);
     expect((await update('More assistant notes')).success).toBe(true);
-    dashboard.setDashboardMode('edit', 'picker');
     changeTitle({ source: dashboard, oldValue: 'Original title', newValue: 'Manual title' });
     expect(events('dashboards_edit_actor_first_change')).toEqual([
-      expect.objectContaining({ edit_session_id: sessionId, actor: 'assistant', mode: 'agent' }),
+      expect.objectContaining({ edit_session_id: sessionId, actor: 'assistant', mode: 'edit' }),
       expect.objectContaining({ edit_session_id: sessionId, actor: 'user', mode: 'edit' }),
     ]);
   });
@@ -831,13 +887,13 @@ describe('mode instrumentation', () => {
     const client = new DashboardMutationClient(dashboard);
     const result = await client.execute({ type: 'ENTER_EDIT_MODE', payload: {} }, 'grafana-assistant-app');
     expect(result.success).toBe(true);
-    expect(getDashboardMode(dashboard.state)).toBe('agent');
+    expect(getDashboardMode(dashboard.state)).toBe('edit');
     expect(events('dashboards_mode_changed')).toEqual([
       expect.objectContaining({ previous_mode: 'view', mode: 'edit', trigger: 'picker' }),
       expect.objectContaining({ previous_mode: 'edit', mode: 'view', trigger: 'picker' }),
       expect.objectContaining({
         previous_mode: 'view',
-        mode: 'agent',
+        mode: 'edit',
         trigger: 'assistant',
         edit_session_id: sessionId,
         has_unsaved_changes: false,
@@ -853,7 +909,7 @@ describe('mode instrumentation', () => {
     expect(dashboard.getEditSessionTracking()).toEqual(
       expect.objectContaining({ had_manual_changes: false, had_assistant_changes: true })
     );
-    expect(events('dashboards_mode_changed')).toHaveLength(2);
+    expect(events('dashboards_mode_changed')).toHaveLength(1);
   });
 
   it('does not report rejected transitions or save-handoff restoration as user activity', () => {
@@ -861,8 +917,8 @@ describe('mode instrumentation', () => {
     dashboard.setState({ meta: { canEdit: false } });
     expect(dashboard.setDashboardMode('edit', 'picker')).toBe(false);
     dashboard.setState({ meta: { canEdit: true } });
-    expect(dashboard.setDashboardMode('agent', 'restore')).toBe(true);
-    expect(getDashboardMode(dashboard.state)).toBe('agent');
+    expect(dashboard.setDashboardMode('edit', 'restore')).toBe(true);
+    expect(getDashboardMode(dashboard.state)).toBe('edit');
     expect(events('dashboards_mode_changed')).toEqual([]);
     expect(events('dashboards_edit_period_started')).toEqual([]);
     changeTitle({ source: dashboard, oldValue: 'Original title', newValue: 'After restore' });
@@ -888,7 +944,7 @@ describe('mode instrumentation', () => {
         expect.objectContaining({
           edit_session_id: session.edit_session_id,
           edit_source: 'assistant',
-          mode: 'agent',
+          mode: 'edit',
           had_assistant_changes: true,
           had_manual_changes: false,
         }),
@@ -898,7 +954,7 @@ describe('mode instrumentation', () => {
           edit_session_id: session.edit_session_id,
           outcome: copy ? 'saved_as_copy' : 'saved',
           edit_source: 'assistant',
-          mode: 'agent',
+          mode: 'edit',
           had_assistant_changes: true,
           had_manual_changes: false,
           elapsed_ms: expect.any(Number),
@@ -931,17 +987,17 @@ describe('mode instrumentation', () => {
     const { result } = renderHook(() => useSaveDashboard(), { wrapper: TestProvider });
     await act(async () => {
       const pendingSave = result.current.onSaveDashboard(dashboard, {});
-      dashboard.setDashboardMode('edit', 'picker');
+      dashboard.setDashboardMode('view', 'navigation');
       completeSave();
       await pendingSave;
     });
     expect(events('grafana_dashboard_saved')).toEqual([
-      expect.objectContaining({ edit_session_id: sessionId, mode: 'agent', had_manual_changes: false }),
+      expect.objectContaining({ edit_session_id: sessionId, mode: 'edit', had_manual_changes: false }),
     ]);
     expect(events('dashboards_edit_period_ended')).toEqual([
-      expect.objectContaining({ edit_session_id: sessionId, outcome: 'saved', mode: 'agent' }),
+      expect.objectContaining({ edit_session_id: sessionId, outcome: 'saved', mode: 'edit' }),
     ]);
-    expect(getDashboardMode(dashboard.state)).toBe('edit');
+    expect(getDashboardMode(dashboard.state)).toBe('view');
   });
 
   it('keeps the session after failed save and correlates explicit discard', async () => {
@@ -964,7 +1020,7 @@ describe('mode instrumentation', () => {
     expect(events('dashboards_edit_period_ended')).toEqual([
       expect.objectContaining({
         edit_session_id: session.edit_session_id,
-        mode: 'agent',
+        mode: 'edit',
         has_unsaved_changes: true,
         had_assistant_changes: true,
         outcome: 'discarded',
@@ -1014,7 +1070,7 @@ describe('mode instrumentation', () => {
     expect(next.edit_session_id).not.toBe(first.edit_session_id);
   });
 
-  it('keeps legacy tracking unchanged when the mode feature is disabled', () => {
+  it('tracks edit periods without reporting mode usage when the mode feature is disabled', () => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': false });
     const dashboard = setup();
     render(
@@ -1034,8 +1090,115 @@ describe('mode instrumentation', () => {
       changeTitle({ source: dashboard, oldValue: 'Original title', newValue: 'Legacy edit' });
     });
     expect(dashboard.state.title).toBe('Legacy edit');
-    expect(events('dashboards_edit_actor_first_change')).toEqual([]);
-    expect(dashboard.getEditSessionTracking()).toEqual({});
+    const sessionId = dashboard.getEditSessionTracking().edit_session_id;
+    expect(events('dashboards_edit_period_started')).toEqual([
+      expect.objectContaining({ source: 'user', edit_session_id: sessionId }),
+    ]);
+    expect(events('dashboards_edit_actor_first_change')).toEqual([
+      expect.objectContaining({ edit_session_id: sessionId, actor: 'user', mode: 'edit' }),
+    ]);
+    expect(dashboard.getEditSessionTracking()).toEqual(
+      expect.objectContaining({ had_manual_changes: true, had_assistant_changes: false, edit_actors: 'manual' })
+    );
+  });
+
+  describe.each([true, false])('edit period outcomes with modes enabled=%s', (enabled) => {
+    beforeEach(() => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': enabled });
+    });
+
+    function changeTitleManually(dashboard: ReturnType<typeof setup>, newValue: string) {
+      act(() => {
+        dashboard.setDashboardMode('edit', 'picker') || dashboard.onEnterEditMode();
+        dashboard.activateSidebar();
+        changeTitle({ source: dashboard, oldValue: dashboard.state.title, newValue });
+        // The change-detection worker is mocked, so mark the draft dirty as it would.
+        dashboard.setState({ isDirty: true });
+      });
+    }
+
+    it.each([
+      ['manual', true, false],
+      ['assistant', false, true],
+      ['mixed', true, true],
+    ] as const)('classifies a discarded period as %s', async (actors, manual, assistant) => {
+      const dashboard = setup();
+      if (assistant) {
+        await assistantChangesTitle(dashboard, 'Agent draft');
+      }
+      if (manual) {
+        changeTitleManually(dashboard, 'Manual draft');
+      }
+      act(() => dashboard.exitEditMode({ skipConfirm: true }));
+      expect(events('dashboards_edit_period_ended')).toEqual([
+        expect.objectContaining({
+          outcome: 'discarded',
+          had_manual_changes: manual,
+          had_assistant_changes: assistant,
+          edit_actors: actors,
+        }),
+      ]);
+    });
+
+    it('reports leaving edit mode without changes as exited with no actors', () => {
+      const dashboard = setup();
+      act(() => dashboard.onEnterEditMode());
+      act(() => dashboard.exitEditMode({ skipConfirm: false }));
+      expect(dashboard.state.isEditing).toBe(false);
+      expect(events('dashboards_edit_period_ended')).toEqual([
+        expect.objectContaining({ outcome: 'exited', edit_actors: 'none', had_unattributed_changes: false }),
+      ]);
+    });
+
+    it('counts a change no actor recorded as manual', () => {
+      const dashboard = setup(true);
+      act(() => dashboard.onEnterEditMode());
+      act(() => {
+        dashboardSceneGraph.getVizPanels(dashboard)[0].setState({ title: 'Dragged elsewhere' });
+        dashboard.setState({ isDirty: true });
+      });
+      expect(dashboard.getEditSessionTracking()).toEqual(
+        expect.objectContaining({
+          had_manual_changes: false,
+          had_assistant_changes: false,
+          had_unattributed_changes: true,
+          edit_actors: 'manual',
+        })
+      );
+    });
+
+    it('groups panels of a v2 dashboard into a row and records the change', () => {
+      const dashboard = setupV2();
+      act(() => {
+        dashboard.setDashboardMode('edit', 'picker') || dashboard.onEnterEditMode();
+        dashboard.activateSidebar();
+      });
+      act(() => {
+        addNewRowTo(dashboard.state.body);
+      });
+      expect(dashboard.state.body).toBeInstanceOf(RowsLayoutManager);
+      expect(dashboard.getEditSessionTracking()).toEqual(expect.objectContaining({ edit_actors: 'manual' }));
+    });
+
+    it('reports an open period as abandoned once when the scene deactivates', async () => {
+      const dashboard = setup();
+      await assistantChangesTitle(dashboard, 'Agent draft');
+      deactivate();
+      deactivate = () => {};
+      window.dispatchEvent(new Event('pagehide'));
+      expect(events('dashboards_edit_period_ended')).toEqual([
+        expect.objectContaining({ outcome: 'abandoned', edit_actors: 'assistant', has_unsaved_changes: true }),
+      ]);
+    });
+
+    it('reports an open period as abandoned when the page is hidden', () => {
+      const dashboard = setup();
+      changeTitleManually(dashboard, 'Manual draft');
+      window.dispatchEvent(new Event('pagehide'));
+      expect(events('dashboards_edit_period_ended')).toEqual([
+        expect.objectContaining({ outcome: 'abandoned', edit_actors: 'manual' }),
+      ]);
+    });
   });
 
   it('includes the session when discarding and exiting edit mode', async () => {
@@ -1050,7 +1213,7 @@ describe('mode instrumentation', () => {
     expect(dashboard.getEditSessionTracking()).toEqual({});
   });
 
-  it.each([false, true])('preserves legacy start and discard behavior with modes enabled=%s', async (enabled) => {
+  it.each([false, true])('reports the same start and discard events with modes enabled=%s', async (enabled) => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': enabled });
     const dashboard = setup();
     await assistantChangesTitle(dashboard, 'First draft');
@@ -1074,16 +1237,12 @@ describe('mode instrumentation', () => {
     ]);
     expect(events('dashboards_edit_discarded')).toEqual([{ isDynamicDashboard: true }]);
     expect(events('grafana_dashboard_saved')).toHaveLength(1);
-    expect(events('dashboards_edit_period_started')).toHaveLength(enabled ? 3 : 0);
-    expect(events('dashboards_edit_period_ended')).toEqual(
-      enabled
-        ? [
-            expect.objectContaining({ outcome: 'saved' }),
-            expect.objectContaining({ outcome: 'discarded' }),
-            expect.objectContaining({ outcome: 'discarded' }),
-          ]
-        : []
-    );
+    expect(events('dashboards_edit_period_started')).toHaveLength(3);
+    expect(events('dashboards_edit_period_ended')).toEqual([
+      expect.objectContaining({ outcome: 'saved' }),
+      expect.objectContaining({ outcome: 'discarded' }),
+      expect.objectContaining({ outcome: 'discarded' }),
+    ]);
   });
 
   it('reports elapsed time as wall time rather than inventing active editing time', () => {

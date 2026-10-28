@@ -42,7 +42,7 @@ require (
 	github.com/go-openapi/swag/yamlutils v0.29.2 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20261020151310-7a9be4c0c1c3 // indirect
+	github.com/grafana/authlib v0.0.0-20261023105149-ed7cea0f2b27 // indirect
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.32.0 // indirect
@@ -76,7 +76,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.11.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/net v0.61.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect

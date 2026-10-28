@@ -2,7 +2,7 @@ import { chain } from 'lodash';
 
 import { type SelectableValue, getDataSourceRef } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime';
+import { getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -176,9 +176,8 @@ export function getVariableTypeSelectOptions({ standalone }: VariableTypeSelectO
   );
 
   return results.filter((option) => {
-    // Legacy standalone groupby is experimental/deprecated; leave it gated only
-    // by groupByVariable and focus new work on the unified adhoc path.
-    if (!config.featureToggles.groupByVariable && option.value === 'groupby') {
+    // Standalone groupby is superseded by the group by support in the unified adhoc filters.
+    if (option.value === 'groupby') {
       return false;
     }
     if (option.value === 'adhoc' && !standalone) {

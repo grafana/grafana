@@ -15,20 +15,20 @@ import (
 // why. A field that is neither set nor listed here fails the test below, so
 // adding an option forces a decision about where its value comes from.
 var callerSuppliedFields = map[string]string{
-	"KvStore":                  "the store itself; chosen by the wiring",
-	"ExperimentalKV":           "an alternative store; chosen by the wiring",
-	"Reg":                      "metrics registry owned by the caller",
-	"Log":                      "logger owned by the caller",
-	"DBKeepAlive":              "reference to the caller's database provider",
-	"GCGate":                   "shared with the caller's startup sequencing",
-	"UseChannelNotifier":       "derived from high-availability detection, not from a single setting",
-	"RvManager":                "built by the caller from a live database connection",
-	"EventPublisher":           "NATS publisher injected by the caller",
-	"WatchInvalidator":         "shared watch invalidation injected by the caller",
-	"EventSubscriber":          "NATS subscriber injected by the caller",
-	"EnableNatsNotifier":       "set together with EventSubscriber by the caller",
-	"EnableNatsNotifierShadow": "set together with EventSubscriber by the caller",
-	"EmbeddingDeleter":         "vector backend injected by the caller",
+	"KvStore":                   "the store itself; chosen by the wiring",
+	"Reg":                       "metrics registry owned by the caller",
+	"Log":                       "logger owned by the caller",
+	"DBKeepAlive":               "reference to the caller's database provider",
+	"GCGate":                    "shared with the caller's startup sequencing",
+	"UseChannelNotifier":        "derived from high-availability detection, not from a single setting",
+	"RvManager":                 "built by the caller from a live database connection",
+	"EventPublisher":            "NATS publisher injected by the caller",
+	"WatchNotificationMetadata": "set together with EventPublisher by the caller",
+	"WatchInvalidator":          "shared watch invalidation injected by the caller",
+	"EventSubscriber":           "NATS subscriber injected by the caller",
+	"EnableNatsNotifier":        "set together with EventSubscriber by the caller",
+	"EnableNatsNotifierShadow":  "set together with EventSubscriber by the caller",
+	"EmbeddingDeleter":          "vector backend injected by the caller",
 	// Derived from cfg.Target rather than a setting of its own, and false for a
 	// process that runs everything, so the non-zero walk cannot check it.
 	// TestNewKVBackendOptionsDisableStorageServices covers it instead.
