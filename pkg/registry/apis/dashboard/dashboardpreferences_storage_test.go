@@ -34,17 +34,17 @@ import (
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
 
-func TestDashboardSettingsStorageUpdate(t *testing.T) {
+func TestDashboardPreferencesStorageUpdate(t *testing.T) {
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
-	gr := dashv2beta1.DashboardSettingsResourceInfo.GroupResource()
-	patchedPanels := &dashv2beta1.DashboardSettingsPanelDefaults{Width: new(float64(2))}
+	gr := dashv2beta1.DashboardPreferencesResourceInfo.GroupResource()
+	patchedDashboard := &dashv2beta1.DashboardPreferencesDashboardDefaults{Preload: new(true)}
 
-	newStore := func(fake *fakeDashboardSettingsStore) *dashboardSettingsStorage {
-		return newDashboardSettingsStorage(fake, dashv2beta1.DashboardSettingsResourceInfo.GroupVersionKind(), nil)
+	newStore := func(fake *fakeDashboardPreferencesStore) *dashboardPreferencesStorage {
+		return newDashboardPreferencesStorage(fake, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), nil)
 	}
 	// Objects the store holds always have a UID.
-	stored := func(name string) *dashv2beta1.DashboardSettings {
-		obj := newDashboardSettings(name, "", nil)
+	stored := func(name string) *dashv2beta1.DashboardPreferences {
+		obj := newDashboardPreferences(name, "", nil)
 		obj.SetNamespace("stacks-1")
 		obj.SetUID("stored-uid")
 		return obj
@@ -53,9 +53,9 @@ func TestDashboardSettingsStorageUpdate(t *testing.T) {
 	// gets a NotFound instead of a create.
 	mergePatch := func(name, patch string) rest.UpdatedObjectInfo {
 		return rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _, oldObj runtime.Object) (runtime.Object, error) {
-			old, ok := oldObj.(*dashv2beta1.DashboardSettings)
+			old, ok := oldObj.(*dashv2beta1.DashboardPreferences)
 			if !ok {
-				return nil, fmt.Errorf("expected dashboard settings, got %T", oldObj)
+				return nil, fmt.Errorf("expected dashboard preferences, got %T", oldObj)
 			}
 			if old.UID == "" {
 				return nil, apierrors.NewNotFound(gr, name)
@@ -68,14 +68,14 @@ func TestDashboardSettingsStorageUpdate(t *testing.T) {
 			if err != nil {
 				return nil, err
 			}
-			patched := &dashv2beta1.DashboardSettings{}
+			patched := &dashv2beta1.DashboardPreferences{}
 			if err := json.Unmarshal(merged, patched); err != nil {
 				return nil, err
 			}
 			return patched, nil
 		})
 	}
-	const widthPatch = `{"spec":{"panels":{"width":2}}}`
+	const preloadPatch = `{"spec":{"dashboard":{"preload":true}}}`
 
 	t.Run("a patch on a missing object creates it in the scope its name gives", func(t *testing.T) {
 		tests := []struct {
@@ -89,18 +89,18 @@ func TestDashboardSettingsStorageUpdate(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				fake := newFakeDashboardSettingsStore()
+				fake := newFakeDashboardPreferencesStore()
 
-				obj, created, err := newStore(fake).Update(ctx, tt.name, mergePatch(tt.name, widthPatch), nil, nil, false, &metav1.UpdateOptions{})
+				obj, created, err := newStore(fake).Update(ctx, tt.name, mergePatch(tt.name, preloadPatch), nil, nil, false, &metav1.UpdateOptions{})
 				require.NoError(t, err)
 				require.True(t, created)
 
-				got := requireDashboardSettings(t, obj)
+				got := requireDashboardPreferences(t, obj)
 				require.Equal(t, tt.name, got.Name)
 				require.Equal(t, "stacks-1", got.Namespace)
 				require.Equal(t, tt.wantAnnotations, got.GetAnnotations())
 				require.Equal(t, tt.wantUserUID, got.Spec.UserUID)
-				require.Equal(t, patchedPanels, got.Spec.Panels)
+				require.Equal(t, patchedDashboard, got.Spec.Dashboard)
 
 				require.Len(t, fake.updates, 1)
 				require.Len(t, fake.creates, 1)
@@ -113,13 +113,13 @@ func TestDashboardSettingsStorageUpdate(t *testing.T) {
 	// the UID and creation time. A deletion timestamp that got through would create an object that is
 	// already being deleted.
 	t.Run("a patch on a missing object can't set the system metadata of what it creates", func(t *testing.T) {
-		fake := newFakeDashboardSettingsStore()
-		const patch = `{"metadata":{"deletionTimestamp":"2020-01-01T00:00:00Z","deletionGracePeriodSeconds":0,"uid":"chosen","creationTimestamp":"2020-01-01T00:00:00Z"},"spec":{"panels":{"width":2}}}`
+		fake := newFakeDashboardPreferencesStore()
+		const patch = `{"metadata":{"deletionTimestamp":"2020-01-01T00:00:00Z","deletionGracePeriodSeconds":0,"uid":"chosen","creationTimestamp":"2020-01-01T00:00:00Z"},"spec":{"dashboard":{"preload":true}}}`
 
 		obj, created, err := newStore(fake).Update(ctx, "user-u1", mergePatch("user-u1", patch), nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.True(t, created)
-		require.Equal(t, patchedPanels, requireDashboardSettings(t, obj).Spec.Panels)
+		require.Equal(t, patchedDashboard, requireDashboardPreferences(t, obj).Spec.Dashboard)
 
 		require.Len(t, fake.creates, 1)
 		sent := fake.creates[0].obj
@@ -131,14 +131,14 @@ func TestDashboardSettingsStorageUpdate(t *testing.T) {
 
 	// PUT and apply build the object without an old one, so the store creates it itself.
 	t.Run("a put on a missing object is created by the store", func(t *testing.T) {
-		fake := newFakeDashboardSettingsStore()
-		put := newDashboardSettings("user-u1", "", new("u1"))
+		fake := newFakeDashboardPreferencesStore()
+		put := newDashboardPreferences("user-u1", "", new("u1"))
 
 		obj, created, err := newStore(fake).Update(ctx, "user-u1", rest.DefaultUpdatedObjectInfo(put), nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.True(t, created)
 
-		require.Equal(t, put, requireDashboardSettings(t, obj))
+		require.Equal(t, put, requireDashboardPreferences(t, obj))
 		require.Len(t, fake.updates, 1)
 		require.Empty(t, fake.creates)
 	})
@@ -146,52 +146,52 @@ func TestDashboardSettingsStorageUpdate(t *testing.T) {
 	t.Run("a patch on an existing object updates it", func(t *testing.T) {
 		existing := stored("user-u1")
 		existing.Spec.UserUID = new("u1")
-		existing.Spec.Preload = new(true)
-		fake := newFakeDashboardSettingsStore(existing)
+		existing.Spec.Dashboard = &dashv2beta1.DashboardPreferencesDashboardDefaults{AutoRefresh: new("1m")}
+		fake := newFakeDashboardPreferencesStore(existing)
 
-		obj, created, err := newStore(fake).Update(ctx, "user-u1", mergePatch("user-u1", widthPatch), nil, nil, false, &metav1.UpdateOptions{})
+		obj, created, err := newStore(fake).Update(ctx, "user-u1", mergePatch("user-u1", preloadPatch), nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.False(t, created)
 
-		got := requireDashboardSettings(t, obj)
-		require.Equal(t, new(true), got.Spec.Preload)
-		require.Equal(t, patchedPanels, got.Spec.Panels)
+		got := requireDashboardPreferences(t, obj)
+		require.Equal(t, &dashv2beta1.DashboardPreferencesDashboardDefaults{AutoRefresh: new("1m"), Preload: new(true)}, got.Spec.Dashboard)
 		require.Len(t, fake.updates, 1)
 		require.Empty(t, fake.creates)
 	})
 
-	// Dropping an emptied panels object is Mutate's job, so storage hands back what the patch made.
-	t.Run("a patch that nulls the last panel field leaves the empty panels object", func(t *testing.T) {
+	// Dropping an emptied object is Mutate's job, so storage hands back what the patch made.
+	t.Run("a patch that nulls the last member of an object leaves the empty object", func(t *testing.T) {
 		existing := stored("namespace")
-		existing.Spec.Panels = &dashv2beta1.DashboardSettingsPanelDefaults{Width: new(float64(2))}
-		fake := newFakeDashboardSettingsStore(existing)
+		existing.Spec.Dashboard = &dashv2beta1.DashboardPreferencesDashboardDefaults{
+			AutoGrid: &dashv2beta1.DashboardPreferencesV2beta1DashboardDefaultsAutoGrid{FillScreen: new(true)},
+		}
+		fake := newFakeDashboardPreferencesStore(existing)
 
-		obj, created, err := newStore(fake).Update(ctx, "namespace", mergePatch("namespace", `{"spec":{"panels":{"width":null}}}`), nil, nil, false, &metav1.UpdateOptions{})
+		obj, created, err := newStore(fake).Update(ctx, "namespace", mergePatch("namespace", `{"spec":{"dashboard":{"autoGrid":{"fillScreen":null}}}}`), nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.False(t, created)
 
-		got := requireDashboardSettings(t, obj)
-		require.NotNil(t, got.Spec.Panels)
-		require.Nil(t, got.Spec.Panels.Width)
+		got := requireDashboardPreferences(t, obj)
+		require.NotNil(t, got.Spec.Dashboard)
+		require.Equal(t, &dashv2beta1.DashboardPreferencesV2beta1DashboardDefaultsAutoGrid{}, got.Spec.Dashboard.AutoGrid)
 	})
 
 	t.Run("losing a create race patches the object that won", func(t *testing.T) {
 		winner := stored("user-u1")
 		winner.Spec.UserUID = new("u1")
-		winner.Spec.Preload = new(true)
-		fake := newFakeDashboardSettingsStore()
+		winner.Spec.Dashboard = &dashv2beta1.DashboardPreferencesDashboardDefaults{AutoRefresh: new("1m")}
+		fake := newFakeDashboardPreferencesStore()
 		fake.concurrent = winner
 		options := &metav1.UpdateOptions{FieldManager: "test"}
 
-		obj, created, err := newStore(fake).Update(ctx, "user-u1", mergePatch("user-u1", widthPatch), nil, nil, true, options)
+		obj, created, err := newStore(fake).Update(ctx, "user-u1", mergePatch("user-u1", preloadPatch), nil, nil, true, options)
 		require.NoError(t, err)
 		require.False(t, created)
 
-		got := requireDashboardSettings(t, obj)
-		require.Equal(t, new(true), got.Spec.Preload)
-		require.Equal(t, patchedPanels, got.Spec.Panels)
+		got := requireDashboardPreferences(t, obj)
+		require.Equal(t, &dashv2beta1.DashboardPreferencesDashboardDefaults{AutoRefresh: new("1m"), Preload: new(true)}, got.Spec.Dashboard)
 		require.Len(t, fake.creates, 1)
-		require.Equal(t, []dashboardSettingsUpdateCall{
+		require.Equal(t, []dashboardPreferencesUpdateCall{
 			{name: "user-u1", forceAllowCreate: true, options: options},
 			{name: "user-u1", forceAllowCreate: true, options: options},
 		}, fake.updates)
@@ -208,10 +208,10 @@ func TestDashboardSettingsStorageUpdate(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				fake := newFakeDashboardSettingsStore()
+				fake := newFakeDashboardPreferencesStore()
 				fake.updateErr = tt.err
 
-				obj, created, err := newStore(fake).Update(ctx, "folder-f1", mergePatch("folder-f1", widthPatch), nil, nil, false, &metav1.UpdateOptions{})
+				obj, created, err := newStore(fake).Update(ctx, "folder-f1", mergePatch("folder-f1", preloadPatch), nil, nil, false, &metav1.UpdateOptions{})
 				require.Same(t, tt.err, err)
 				require.Nil(t, obj)
 				require.False(t, created)
@@ -223,11 +223,11 @@ func TestDashboardSettingsStorageUpdate(t *testing.T) {
 	})
 
 	t.Run("an error from applying the update to the placeholder is returned unchanged", func(t *testing.T) {
-		fake := newFakeDashboardSettingsStore()
+		fake := newFakeDashboardPreferencesStore()
 		rejected := apierrors.NewBadRequest("rejected")
 		// A patch that admission refuses fails like this, but only once the old object has a UID.
 		rejectedPatch := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, _, oldObj runtime.Object) (runtime.Object, error) {
-			if requireDashboardSettings(t, oldObj).UID == "" {
+			if requireDashboardPreferences(t, oldObj).UID == "" {
 				return nil, apierrors.NewNotFound(gr, "user-u1")
 			}
 			return nil, rejected
@@ -247,11 +247,11 @@ func TestDashboardSettingsStorageUpdate(t *testing.T) {
 		// object it can't scope.
 		for _, name := range []string{"bogus", "folder-general", "user-"} {
 			t.Run(name, func(t *testing.T) {
-				fake := newFakeDashboardSettingsStore()
+				fake := newFakeDashboardPreferencesStore()
 
-				_, created, err := newStore(fake).Update(ctx, name, mergePatch(name, widthPatch), nil, nil, false, &metav1.UpdateOptions{})
+				_, created, err := newStore(fake).Update(ctx, name, mergePatch(name, preloadPatch), nil, nil, false, &metav1.UpdateOptions{})
 				require.True(t, apierrors.IsBadRequest(err), "expected a BadRequest, got %v", err)
-				require.ErrorContains(t, err, "invalid dashboard settings name")
+				require.ErrorContains(t, err, "invalid dashboard preferences name")
 				require.False(t, created)
 
 				require.Empty(t, fake.creates)
@@ -262,22 +262,22 @@ func TestDashboardSettingsStorageUpdate(t *testing.T) {
 	// The create validation is where admission authorizes and checks the name and folder, so it has
 	// to see the patched object, scope included.
 	t.Run("the create validation judges the object a patch creates", func(t *testing.T) {
-		fake := newFakeDashboardSettingsStore()
+		fake := newFakeDashboardPreferencesStore()
 		rejected := apierrors.NewBadRequest("rejected")
-		var validated *dashv2beta1.DashboardSettings
+		var validated *dashv2beta1.DashboardPreferences
 		createValidation := func(_ context.Context, obj runtime.Object) error {
-			validated = requireDashboardSettings(t, obj)
+			validated = requireDashboardPreferences(t, obj)
 			return rejected
 		}
 
-		obj, created, err := newStore(fake).Update(ctx, "user-u1", mergePatch("user-u1", widthPatch), createValidation, nil, false, &metav1.UpdateOptions{})
+		obj, created, err := newStore(fake).Update(ctx, "user-u1", mergePatch("user-u1", preloadPatch), createValidation, nil, false, &metav1.UpdateOptions{})
 		require.Same(t, rejected, err)
 		require.Nil(t, obj)
 		require.False(t, created)
 
 		require.NotNil(t, validated)
 		require.Equal(t, new("u1"), validated.Spec.UserUID)
-		require.Equal(t, patchedPanels, validated.Spec.Panels)
+		require.Equal(t, patchedDashboard, validated.Spec.Dashboard)
 		require.Empty(t, fake.items)
 	})
 
@@ -296,9 +296,9 @@ func TestDashboardSettingsStorageUpdate(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				fake := newFakeDashboardSettingsStore()
+				fake := newFakeDashboardPreferencesStore()
 
-				_, created, err := newStore(fake).Update(ctx, "namespace", mergePatch("namespace", widthPatch), nil, nil, false, tt.options)
+				_, created, err := newStore(fake).Update(ctx, "namespace", mergePatch("namespace", preloadPatch), nil, nil, false, tt.options)
 				require.NoError(t, err)
 				require.True(t, created)
 
@@ -309,10 +309,10 @@ func TestDashboardSettingsStorageUpdate(t *testing.T) {
 	})
 }
 
-func TestDashboardSettingsStorageNewEmptyDashboardSettings(t *testing.T) {
+func TestDashboardPreferencesStorageNewEmptyDashboardPreferences(t *testing.T) {
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
-	gvk := dashv2beta1.DashboardSettingsResourceInfo.GroupVersionKind()
-	store := newDashboardSettingsStorage(newFakeDashboardSettingsStore(), gvk, nil)
+	gvk := dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind()
+	store := newDashboardPreferencesStorage(newFakeDashboardPreferencesStore(), gvk, nil)
 
 	tests := []struct {
 		name            string
@@ -325,14 +325,14 @@ func TestDashboardSettingsStorageNewEmptyDashboardSettings(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			obj, err := store.newEmptyDashboardSettings(ctx, tt.name)
+			obj, err := store.newEmptyDashboardPreferences(ctx, tt.name)
 			require.NoError(t, err)
 
 			require.Equal(t, gvk, obj.GroupVersionKind())
 			require.Equal(t, tt.name, obj.Name)
 			require.Equal(t, "stacks-1", obj.Namespace)
 			require.Equal(t, tt.wantAnnotations, obj.GetAnnotations())
-			require.Equal(t, dashv2beta1.DashboardSettingsSpec{UserUID: tt.wantUserUID}, obj.Spec)
+			require.Equal(t, dashv2beta1.DashboardPreferencesSpec{UserUID: tt.wantUserUID}, obj.Spec)
 			// The UID hashes the kind, namespace and name, so it only matches when it is set after them.
 			require.Equal(t, gapiutil.CalculateClusterWideUID(obj), obj.UID)
 		})
@@ -340,19 +340,19 @@ func TestDashboardSettingsStorageNewEmptyDashboardSettings(t *testing.T) {
 }
 
 // A wrapper that picked these up from the store would expose or delete other users' user tier objects.
-func TestDashboardSettingsStorageHidesWatchAndDeleteCollection(t *testing.T) {
-	wrapped := &watchableDashboardSettingsStore{newFakeDashboardSettingsStore()}
+func TestDashboardPreferencesStorageHidesWatchAndDeleteCollection(t *testing.T) {
+	wrapped := &watchableDashboardPreferencesStore{newFakeDashboardPreferencesStore()}
 	require.Implements(t, (*rest.Watcher)(nil), wrapped)
 	require.Implements(t, (*rest.CollectionDeleter)(nil), wrapped)
 
-	store := newDashboardSettingsStorage(wrapped, dashv2beta1.DashboardSettingsResourceInfo.GroupVersionKind(), nil)
+	store := newDashboardPreferencesStorage(wrapped, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), nil)
 
 	require.NotImplements(t, (*rest.Watcher)(nil), store)
 	require.NotImplements(t, (*rest.CollectionDeleter)(nil), store)
 }
 
-func TestIsDashboardSettingsNotFound(t *testing.T) {
-	gr := dashv2beta1.DashboardSettingsResourceInfo.GroupResource()
+func TestIsDashboardPreferencesNotFound(t *testing.T) {
+	gr := dashv2beta1.DashboardPreferencesResourceInfo.GroupResource()
 
 	tests := []struct {
 		name string
@@ -367,46 +367,46 @@ func TestIsDashboardSettingsNotFound(t *testing.T) {
 		{name: "a folder", err: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "f1")},
 		{name: "a NotFound without details", err: &apierrors.StatusError{ErrStatus: metav1.Status{Reason: metav1.StatusReasonNotFound}}},
 		{name: "another failure for this object", err: apierrors.NewForbidden(gr, "folder-f1", errors.New("nope"))},
-		{name: "not an API error", err: errors.New("dashboard settings not found")},
+		{name: "not an API error", err: errors.New("dashboard preferences not found")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			require.Equal(t, tt.want, isDashboardSettingsNotFound(tt.err, "folder-f1"))
+			require.Equal(t, tt.want, isDashboardPreferencesNotFound(tt.err, "folder-f1"))
 		})
 	}
 }
 
-func TestDashboardSettingsStorageList(t *testing.T) {
+func TestDashboardPreferencesStorageList(t *testing.T) {
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
-	gvk := dashv2beta1.DashboardSettingsResourceInfo.GroupVersionKind()
-	stored := map[string]*dashv2beta1.DashboardSettings{}
-	for _, obj := range []*dashv2beta1.DashboardSettings{
-		newDashboardSettings("namespace", "", nil),
-		newDashboardSettings("user-u1", "", new("u1")),
-		newDashboardSettings("user-u2", "", new("u2")),
-		newDashboardSettings("folder-f1", "f1", nil),
-		newDashboardSettings("folder-f2", "f2", nil),
+	gvk := dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind()
+	stored := map[string]*dashv2beta1.DashboardPreferences{}
+	for _, obj := range []*dashv2beta1.DashboardPreferences{
+		newDashboardPreferences("namespace", "", nil),
+		newDashboardPreferences("user-u1", "", new("u1")),
+		newDashboardPreferences("user-u2", "", new("u2")),
+		newDashboardPreferences("folder-f1", "f1", nil),
+		newDashboardPreferences("folder-f2", "f2", nil),
 	} {
 		stored[obj.Name] = obj
 	}
 	// What the store answers for the folder tier label.
-	folderTier := [][]dashv2beta1.DashboardSettings{{*stored["folder-f1"], *stored["folder-f2"]}}
-	newAccessClient := func() *dashboardSettingsAccessClient {
-		return &dashboardSettingsAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}}
+	folderTier := [][]dashv2beta1.DashboardPreferences{{*stored["folder-f1"], *stored["folder-f2"]}}
+	newAccessClient := func() *dashboardPreferencesAccessClient {
+		return &dashboardPreferencesAccessClient{grants: map[string][]string{"f1": {utils.VerbGet}}}
 	}
 	nameIs := func(name string) *metainternalversion.ListOptions {
 		return &metainternalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.name", name)}
 	}
 
-	u1 := dashboardSettingsRequester(authlib.TypeUser, "u1", identity.RoleViewer)
-	u3 := dashboardSettingsRequester(authlib.TypeUser, "u3", identity.RoleViewer)
-	serviceAccount := dashboardSettingsRequester(authlib.TypeServiceAccount, "sa", identity.RoleAdmin)
-	serviceAccountU1 := dashboardSettingsRequester(authlib.TypeServiceAccount, "u1", identity.RoleAdmin)
-	render := dashboardSettingsRequester(authlib.TypeRenderService, "", identity.RoleViewer)
-	grafanaAdmin := dashboardSettingsRequester(authlib.TypeUser, "u1", identity.RoleAdmin)
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	u3 := dashboardPreferencesRequester(authlib.TypeUser, "u3", identity.RoleViewer)
+	serviceAccount := dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", identity.RoleAdmin)
+	serviceAccountU1 := dashboardPreferencesRequester(authlib.TypeServiceAccount, "u1", identity.RoleAdmin)
+	render := dashboardPreferencesRequester(authlib.TypeRenderService, "", identity.RoleViewer)
+	grafanaAdmin := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleAdmin)
 	grafanaAdmin.IsGrafanaAdmin = true
 	// Grafana admins pass the namespace authorizer for every namespace.
-	otherNamespace := dashboardSettingsRequester(authlib.TypeUser, "u1", identity.RoleAdmin)
+	otherNamespace := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleAdmin)
 	otherNamespace.IsGrafanaAdmin = true
 	otherNamespace.Namespace = "stacks-2"
 
@@ -445,20 +445,20 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				store := newDashboardSettingsListStore(t, stored, folderTier)
+				store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-				obj, err := newDashboardSettingsStorage(store, gvk, newAccessClient()).List(identity.WithRequester(ctx, tt.requester), tt.options)
+				obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient()).List(identity.WithRequester(ctx, tt.requester), tt.options)
 				require.NoError(t, err)
 
-				require.Equal(t, tt.want, dashboardSettingsNames(requireFilteredDashboardSettingsList(t, obj).Items))
+				require.Equal(t, tt.want, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
 				require.Equal(t, tt.wantGets, store.gets)
 				// Listing only by the tier label keeps other users' objects out of reach.
 				require.Len(t, store.lists, tt.wantLists)
 				for _, options := range store.lists {
 					require.NotNil(t, options)
 					require.NotNil(t, options.LabelSelector)
-					require.Equal(t, "dashboard.grafana.app/settings-tier=folder", options.LabelSelector.String())
-					require.Equal(t, int64(dashboardSettingsListPageSize), options.Limit)
+					require.Equal(t, "dashboard.grafana.app/preferences-tier=folder", options.LabelSelector.String())
+					require.Equal(t, int64(dashboardPreferencesListPageSize), options.Limit)
 				}
 			})
 		}
@@ -484,12 +484,12 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				accessClient := newAccessClient()
-				store := newDashboardSettingsListStore(t, stored, folderTier)
+				store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-				obj, err := newDashboardSettingsStorage(store, gvk, accessClient).List(identity.WithRequester(allNamespaces, tt.requester), tt.options)
+				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient).List(identity.WithRequester(allNamespaces, tt.requester), tt.options)
 				require.NoError(t, err)
 
-				require.Empty(t, dashboardSettingsNames(requireFilteredDashboardSettingsList(t, obj).Items))
+				require.Empty(t, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
 				require.Empty(t, store.gets)
 				require.Empty(t, store.lists)
 				require.Empty(t, accessClient.batchRequests)
@@ -499,9 +499,9 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 
 	t.Run("checks read access to every folder in one batch, as the caller", func(t *testing.T) {
 		accessClient := newAccessClient()
-		store := newDashboardSettingsListStore(t, stored, folderTier)
+		store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-		_, err := newDashboardSettingsStorage(store, gvk, accessClient).List(identity.WithRequester(ctx, u1), nil)
+		_, err := newDashboardPreferencesStorage(store, gvk, accessClient).List(identity.WithRequester(ctx, u1), nil)
 		require.NoError(t, err)
 
 		require.Len(t, accessClient.batchRequests, 1)
@@ -522,25 +522,25 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 	// The tier label only indexes the folder tier: an object belongs to it only when its folder
 	// annotation is the folder its name gives.
 	t.Run("the folder tier holds only objects whose annotation matches their name", func(t *testing.T) {
-		accessClient := &dashboardSettingsAccessClient{grants: map[string][]string{
+		accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{
 			"f1":      {utils.VerbGet},
 			"f3":      {utils.VerbGet},
 			"f4":      {utils.VerbGet},
 			"general": {utils.VerbGet},
 		}}
-		store := newDashboardSettingsListStore(t, nil, [][]dashv2beta1.DashboardSettings{{
-			*newDashboardSettings("folder-f1", "f1", nil),
-			*newDashboardSettings("folder-f3", "f1", nil),
-			*newDashboardSettings("folder-f4", "", nil),
-			*newDashboardSettings("folder-general", "general", nil),
-			*newDashboardSettings("namespace", "", nil),
-			*newDashboardSettings("user-u1", "", new("u1")),
+		store := newDashboardPreferencesListStore(t, nil, [][]dashv2beta1.DashboardPreferences{{
+			*newDashboardPreferences("folder-f1", "f1", nil),
+			*newDashboardPreferences("folder-f3", "f1", nil),
+			*newDashboardPreferences("folder-f4", "", nil),
+			*newDashboardPreferences("folder-general", "general", nil),
+			*newDashboardPreferences("namespace", "", nil),
+			*newDashboardPreferences("user-u1", "", new("u1")),
 		}})
 
-		items, err := newDashboardSettingsStorage(store, gvk, accessClient).visibleFolderTier(identity.WithRequester(ctx, u1), u1, "stacks-1")
+		items, err := newDashboardPreferencesStorage(store, gvk, accessClient).visibleFolderTier(identity.WithRequester(ctx, u1), u1, "stacks-1")
 		require.NoError(t, err)
 
-		require.Equal(t, []string{"folder-f1"}, dashboardSettingsNames(items))
+		require.Equal(t, []string{"folder-f1"}, dashboardPreferencesNames(items))
 		require.Len(t, accessClient.batchRequests, 1)
 		require.Len(t, accessClient.batchRequests[0].Checks, 1)
 	})
@@ -557,18 +557,18 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				accessClient := &dashboardSettingsAccessClient{grants: map[string][]string{}}
-				pages := make([][]dashv2beta1.DashboardSettings, tt.pages)
+				accessClient := &dashboardPreferencesAccessClient{grants: map[string][]string{}}
+				pages := make([][]dashv2beta1.DashboardPreferences, tt.pages)
 				for i := range pages {
 					folderUID := fmt.Sprintf("f%d", i)
-					pages[i] = []dashv2beta1.DashboardSettings{*newDashboardSettings("folder-"+folderUID, folderUID, nil)}
+					pages[i] = []dashv2beta1.DashboardPreferences{*newDashboardPreferences("folder-"+folderUID, folderUID, nil)}
 					accessClient.grants[folderUID] = []string{utils.VerbGet}
 				}
-				store := newDashboardSettingsListStore(t, nil, pages)
+				store := newDashboardPreferencesListStore(t, nil, pages)
 				var logs bytes.Buffer
 				logCtx := logging.Context(identity.WithRequester(ctx, u1), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
 
-				obj, err := newDashboardSettingsStorage(store, gvk, accessClient).List(logCtx, nil)
+				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient).List(logCtx, nil)
 				require.NoError(t, err)
 
 				want := make([]string, 0, 20)
@@ -577,7 +577,7 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 					want = append(want, fmt.Sprintf("folder-f%d", i))
 					wantContinues = append(wantContinues, store.continueToken(i))
 				}
-				require.Equal(t, want, dashboardSettingsNames(requireFilteredDashboardSettingsList(t, obj).Items))
+				require.Equal(t, want, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
 				continues := make([]string, 0, len(store.lists))
 				for _, options := range store.lists {
 					continues = append(continues, options.Continue)
@@ -591,7 +591,7 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 				var record map[string]any
 				require.NoError(t, json.Unmarshal(logs.Bytes(), &record), "expected one log record, got %s", logs.String())
 				require.Equal(t, "WARN", record["level"])
-				require.Equal(t, "dashboard settings list reached the folder tier page cap and may have left out folders", record["msg"])
+				require.Equal(t, "dashboard preferences list reached the folder tier page cap and may have left out folders", record["msg"])
 				require.Equal(t, "stacks-1", record["namespace"])
 				require.EqualValues(t, 20, record["pages"])
 			})
@@ -610,20 +610,20 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 		}{
 			{name: "the service identity", requester: service},
 			{name: "the provisioning identity", requester: provisioning},
-			{name: "another service's token", requester: dashboardSettingsToken("dashboard.grafana.app/dashboardsettings:*")},
+			{name: "another service's token", requester: dashboardPreferencesToken("dashboard.grafana.app/dashboardpreferences:*")},
 		} {
 			t.Run(caller.name, func(t *testing.T) {
 				options := &metainternalversion.ListOptions{Limit: 2, Continue: "c1"}
-				want := &dashv2beta1.DashboardSettingsList{
+				want := &dashv2beta1.DashboardPreferencesList{
 					ListMeta: metav1.ListMeta{Continue: "c2"},
-					Items:    []dashv2beta1.DashboardSettings{*stored["user-u1"], *stored["user-u2"]},
+					Items:    []dashv2beta1.DashboardPreferences{*stored["user-u1"], *stored["user-u2"]},
 				}
 				store := grafanarest.NewMockStorage(t)
 				store.EXPECT().List(mock.Anything, mock.MatchedBy(func(got *metainternalversion.ListOptions) bool {
 					return got == options
 				})).Return(want, nil).Once()
 
-				obj, err := newDashboardSettingsStorage(store, gvk, newAccessClient()).List(identity.WithRequester(ctx, caller.requester), options)
+				obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient()).List(identity.WithRequester(ctx, caller.requester), options)
 				require.NoError(t, err)
 				require.Same(t, want, obj)
 			})
@@ -631,24 +631,24 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 	})
 
 	t.Run("unsupported list options are a bad request", func(t *testing.T) {
-		const unsupportedFieldSelector = "only a single metadata.name=<name> fieldSelector is supported for dashboard settings"
+		const unsupportedFieldSelector = "only a single metadata.name=<name> fieldSelector is supported for dashboard preferences"
 		tests := []struct {
 			name    string
 			options *metainternalversion.ListOptions
 			wantErr string
 		}{
 			// A store's token encodes the next object's name or an offset into the unfiltered list.
-			{name: "a continue token", options: &metainternalversion.ListOptions{Continue: "abc"}, wantErr: "continue is not supported for dashboard settings"},
-			{name: "a label selector", options: &metainternalversion.ListOptions{LabelSelector: labels.SelectorFromSet(labels.Set{"grafana.app/folder": "f1"})}, wantErr: "labelSelector is not supported for dashboard settings"},
+			{name: "a continue token", options: &metainternalversion.ListOptions{Continue: "abc"}, wantErr: "continue is not supported for dashboard preferences"},
+			{name: "a label selector", options: &metainternalversion.ListOptions{LabelSelector: labels.SelectorFromSet(labels.Set{"grafana.app/folder": "f1"})}, wantErr: "labelSelector is not supported for dashboard preferences"},
 			{name: "a name inequality", options: &metainternalversion.ListOptions{FieldSelector: fields.OneTermNotEqualSelector("metadata.name", "user-u2")}, wantErr: unsupportedFieldSelector},
 			{name: "more than one requirement", options: &metainternalversion.ListOptions{FieldSelector: fields.ParseSelectorOrDie("metadata.name=user-u1,metadata.namespace=stacks-1")}, wantErr: unsupportedFieldSelector},
 			{name: "a field other than the name", options: &metainternalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.namespace", "stacks-1")}, wantErr: unsupportedFieldSelector},
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				store := newDashboardSettingsListStore(t, stored, folderTier)
+				store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-				obj, err := newDashboardSettingsStorage(store, gvk, newAccessClient()).List(identity.WithRequester(ctx, u1), tt.options)
+				obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient()).List(identity.WithRequester(ctx, u1), tt.options)
 				require.True(t, apierrors.IsBadRequest(err), "expected a BadRequest, got %v", err)
 				require.ErrorContains(t, err, tt.wantErr)
 				require.Nil(t, obj)
@@ -673,13 +673,13 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				store := newDashboardSettingsListStore(t, stored, folderTier)
+				store := newDashboardPreferencesListStore(t, stored, folderTier)
 				store.getErr = tt.getErr
 				store.listErr = tt.listErr
 				accessClient := newAccessClient()
 				accessClient.batchErr = tt.batchErr
 
-				obj, err := newDashboardSettingsStorage(store, gvk, accessClient).List(identity.WithRequester(ctx, u1), nil)
+				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient).List(identity.WithRequester(ctx, u1), nil)
 				require.ErrorIs(t, err, boom)
 				require.Nil(t, obj)
 			})
@@ -709,13 +709,13 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				store := newDashboardSettingsListStore(t, stored, folderTier)
+				store := newDashboardPreferencesListStore(t, stored, folderTier)
 				accessClient := newAccessClient()
 				accessClient.batchItemErrs = tt.itemErrs
 				var logs bytes.Buffer
 				logCtx := logging.Context(identity.WithRequester(ctx, u1), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
 
-				obj, err := newDashboardSettingsStorage(store, gvk, accessClient).List(logCtx, tt.options)
+				obj, err := newDashboardPreferencesStorage(store, gvk, accessClient).List(logCtx, tt.options)
 
 				if tt.wantErr != nil {
 					require.ErrorIs(t, err, tt.wantErr)
@@ -734,26 +734,26 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 					return
 				}
 				require.NoError(t, err)
-				require.Equal(t, tt.want, dashboardSettingsNames(requireFilteredDashboardSettingsList(t, obj).Items))
+				require.Equal(t, tt.want, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
 			})
 		}
 	})
 
-	// Like checkDashboardSettingsFolderAccess, which denies every folder without one.
+	// Like checkDashboardPreferencesFolderAccess, which denies every folder without one.
 	t.Run("without an access client no folder tier is read", func(t *testing.T) {
-		store := newDashboardSettingsListStore(t, stored, folderTier)
+		store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-		obj, err := newDashboardSettingsStorage(store, gvk, nil).List(identity.WithRequester(ctx, u1), nil)
+		obj, err := newDashboardPreferencesStorage(store, gvk, nil).List(identity.WithRequester(ctx, u1), nil)
 		require.NoError(t, err)
 
-		require.Equal(t, []string{"namespace", "user-u1"}, dashboardSettingsNames(requireFilteredDashboardSettingsList(t, obj).Items))
+		require.Equal(t, []string{"namespace", "user-u1"}, dashboardPreferencesNames(requireFilteredDashboardPreferencesList(t, obj).Items))
 		require.Empty(t, store.lists)
 	})
 
 	t.Run("a request without a requester fails", func(t *testing.T) {
-		store := newDashboardSettingsListStore(t, stored, folderTier)
+		store := newDashboardPreferencesListStore(t, stored, folderTier)
 
-		obj, err := newDashboardSettingsStorage(store, gvk, newAccessClient()).List(ctx, nil)
+		obj, err := newDashboardPreferencesStorage(store, gvk, newAccessClient()).List(ctx, nil)
 		require.Error(t, err)
 		require.Nil(t, obj)
 
@@ -764,10 +764,10 @@ func TestDashboardSettingsStorageList(t *testing.T) {
 
 // A store's continue token encodes the next object's name or an offset into the unfiltered list, so a
 // filtered list must never pass one on.
-func requireFilteredDashboardSettingsList(t *testing.T, obj runtime.Object) *dashv2beta1.DashboardSettingsList {
+func requireFilteredDashboardPreferencesList(t *testing.T, obj runtime.Object) *dashv2beta1.DashboardPreferencesList {
 	t.Helper()
-	list, ok := obj.(*dashv2beta1.DashboardSettingsList)
-	require.True(t, ok, "expected a dashboard settings list, got %T", obj)
+	list, ok := obj.(*dashv2beta1.DashboardPreferencesList)
+	require.True(t, ok, "expected a dashboard preferences list, got %T", obj)
 	require.Empty(t, list.Continue)
 	require.Nil(t, list.RemainingItemCount)
 	// The store's lists encode no items as [], and clients expect the same here.
@@ -775,7 +775,7 @@ func requireFilteredDashboardSettingsList(t *testing.T, obj runtime.Object) *das
 	return list
 }
 
-func dashboardSettingsNames(items []dashv2beta1.DashboardSettings) []string {
+func dashboardPreferencesNames(items []dashv2beta1.DashboardPreferences) []string {
 	names := make([]string, 0, len(items))
 	for _, item := range items {
 		names = append(names, item.Name)
@@ -783,49 +783,49 @@ func dashboardSettingsNames(items []dashv2beta1.DashboardSettings) []string {
 	return names
 }
 
-func requireDashboardSettings(t *testing.T, obj runtime.Object) *dashv2beta1.DashboardSettings {
+func requireDashboardPreferences(t *testing.T, obj runtime.Object) *dashv2beta1.DashboardPreferences {
 	t.Helper()
-	settings, ok := obj.(*dashv2beta1.DashboardSettings)
-	require.True(t, ok, "expected dashboard settings, got %T", obj)
-	return settings
+	preferences, ok := obj.(*dashv2beta1.DashboardPreferences)
+	require.True(t, ok, "expected dashboard preferences, got %T", obj)
+	return preferences
 }
 
-type dashboardSettingsUpdateCall struct {
+type dashboardPreferencesUpdateCall struct {
 	name             string
 	forceAllowCreate bool
 	options          *metav1.UpdateOptions
 }
 
-type dashboardSettingsCreateCall struct {
-	obj     *dashv2beta1.DashboardSettings
+type dashboardPreferencesCreateCall struct {
+	obj     *dashv2beta1.DashboardPreferences
 	options *metav1.CreateOptions
 }
 
-// fakeDashboardSettingsStore stands in for the registry store: it keeps objects by name, records the
+// fakeDashboardPreferencesStore stands in for the registry store: it keeps objects by name, records the
 // calls the wrapper makes, and fails the way the store does. Any other call panics.
-type fakeDashboardSettingsStore struct {
+type fakeDashboardPreferencesStore struct {
 	grafanarest.Storage
-	items map[string]*dashv2beta1.DashboardSettings
+	items map[string]*dashv2beta1.DashboardPreferences
 
 	// Returned by every Update, in place of looking the object up.
 	updateErr error
 	// Stored by another request just before the next Create runs.
-	concurrent *dashv2beta1.DashboardSettings
+	concurrent *dashv2beta1.DashboardPreferences
 
-	updates []dashboardSettingsUpdateCall
-	creates []dashboardSettingsCreateCall
+	updates []dashboardPreferencesUpdateCall
+	creates []dashboardPreferencesCreateCall
 }
 
-func newFakeDashboardSettingsStore(items ...*dashv2beta1.DashboardSettings) *fakeDashboardSettingsStore {
-	f := &fakeDashboardSettingsStore{items: map[string]*dashv2beta1.DashboardSettings{}}
+func newFakeDashboardPreferencesStore(items ...*dashv2beta1.DashboardPreferences) *fakeDashboardPreferencesStore {
+	f := &fakeDashboardPreferencesStore{items: map[string]*dashv2beta1.DashboardPreferences{}}
 	for _, item := range items {
 		f.items[item.Name] = item
 	}
 	return f
 }
 
-func (f *fakeDashboardSettingsStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	f.updates = append(f.updates, dashboardSettingsUpdateCall{name: name, forceAllowCreate: forceAllowCreate, options: options})
+func (f *fakeDashboardPreferencesStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	f.updates = append(f.updates, dashboardPreferencesUpdateCall{name: name, forceAllowCreate: forceAllowCreate, options: options})
 	if f.updateErr != nil {
 		return nil, false, f.updateErr
 	}
@@ -833,50 +833,50 @@ func (f *fakeDashboardSettingsStore) Update(ctx context.Context, name string, ob
 	// The registry store hands the transformer an empty object when nothing is stored.
 	old, exists := f.items[name]
 	if !exists {
-		old = &dashv2beta1.DashboardSettings{}
+		old = &dashv2beta1.DashboardPreferences{}
 	}
 	obj, err := objInfo.UpdatedObject(ctx, old)
 	if err != nil {
 		return nil, false, err
 	}
-	settings, ok := obj.(*dashv2beta1.DashboardSettings)
+	preferences, ok := obj.(*dashv2beta1.DashboardPreferences)
 	if !ok {
-		return nil, false, fmt.Errorf("expected dashboard settings, got %T", obj)
+		return nil, false, fmt.Errorf("expected dashboard preferences, got %T", obj)
 	}
-	f.items[name] = settings
-	return settings, !exists, nil
+	f.items[name] = preferences
+	return preferences, !exists, nil
 }
 
-func (f *fakeDashboardSettingsStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	settings, ok := obj.(*dashv2beta1.DashboardSettings)
+func (f *fakeDashboardPreferencesStore) Create(ctx context.Context, obj runtime.Object, createValidation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
+	preferences, ok := obj.(*dashv2beta1.DashboardPreferences)
 	if !ok {
-		return nil, fmt.Errorf("expected dashboard settings, got %T", obj)
+		return nil, fmt.Errorf("expected dashboard preferences, got %T", obj)
 	}
-	f.creates = append(f.creates, dashboardSettingsCreateCall{obj: settings, options: options})
+	f.creates = append(f.creates, dashboardPreferencesCreateCall{obj: preferences, options: options})
 
 	if f.concurrent != nil {
 		f.items[f.concurrent.Name] = f.concurrent
 		f.concurrent = nil
 	}
 	if createValidation != nil {
-		if err := createValidation(ctx, settings.DeepCopyObject()); err != nil {
+		if err := createValidation(ctx, preferences.DeepCopyObject()); err != nil {
 			return nil, err
 		}
 	}
-	if _, exists := f.items[settings.Name]; exists {
-		return nil, apierrors.NewAlreadyExists(dashv2beta1.DashboardSettingsResourceInfo.GroupResource(), settings.Name)
+	if _, exists := f.items[preferences.Name]; exists {
+		return nil, apierrors.NewAlreadyExists(dashv2beta1.DashboardPreferencesResourceInfo.GroupResource(), preferences.Name)
 	}
 	// Like the registry store, it answers with a new object, so a caller that returns the object it
 	// passed in instead of the answer is caught.
-	stored := settings.DeepCopy()
+	stored := preferences.DeepCopy()
 	f.items[stored.Name] = stored
 	return stored, nil
 }
 
-// dashboardSettingsListStore is a mock store that answers Get from stored objects and List from pages
+// dashboardPreferencesListStore is a mock store that answers Get from stored objects and List from pages
 // of the folder tier, and records the names it gets and the options of every list. Any other call
 // fails the test.
-type dashboardSettingsListStore struct {
+type dashboardPreferencesListStore struct {
 	*grafanarest.MockStorage
 	gets  []string
 	lists []*metainternalversion.ListOptions
@@ -886,8 +886,8 @@ type dashboardSettingsListStore struct {
 	listErr error
 }
 
-func newDashboardSettingsListStore(t *testing.T, stored map[string]*dashv2beta1.DashboardSettings, folderTier [][]dashv2beta1.DashboardSettings) *dashboardSettingsListStore {
-	s := &dashboardSettingsListStore{MockStorage: grafanarest.NewMockStorage(t)}
+func newDashboardPreferencesListStore(t *testing.T, stored map[string]*dashv2beta1.DashboardPreferences, folderTier [][]dashv2beta1.DashboardPreferences) *dashboardPreferencesListStore {
+	s := &dashboardPreferencesListStore{MockStorage: grafanarest.NewMockStorage(t)}
 	s.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
 		s.gets = append(s.gets, name)
 		if s.getErr != nil {
@@ -895,7 +895,7 @@ func newDashboardSettingsListStore(t *testing.T, stored map[string]*dashv2beta1.
 		}
 		obj, ok := stored[name]
 		if !ok {
-			return nil, apierrors.NewNotFound(dashv2beta1.DashboardSettingsResourceInfo.GroupResource(), name)
+			return nil, apierrors.NewNotFound(dashv2beta1.DashboardPreferencesResourceInfo.GroupResource(), name)
 		}
 		return obj.DeepCopy(), nil
 	}).Maybe()
@@ -911,7 +911,7 @@ func newDashboardSettingsListStore(t *testing.T, stored map[string]*dashv2beta1.
 				return nil, apierrors.NewBadRequest("invalid continue token")
 			}
 		}
-		list := &dashv2beta1.DashboardSettingsList{}
+		list := &dashv2beta1.DashboardPreferencesList{}
 		if page < len(folderTier) {
 			list.Items = folderTier[page]
 		}
@@ -930,23 +930,23 @@ func newDashboardSettingsListStore(t *testing.T, stored map[string]*dashv2beta1.
 }
 
 // continueToken is the token that asks for the given page; the first page needs none.
-func (*dashboardSettingsListStore) continueToken(page int) string {
+func (*dashboardPreferencesListStore) continueToken(page int) string {
 	if page == 0 {
 		return ""
 	}
 	return strconv.Itoa(page)
 }
 
-// watchableDashboardSettingsStore is a store that serves watch and deletecollection, as the registry
+// watchableDashboardPreferencesStore is a store that serves watch and deletecollection, as the registry
 // store does.
-type watchableDashboardSettingsStore struct {
-	*fakeDashboardSettingsStore
+type watchableDashboardPreferencesStore struct {
+	*fakeDashboardPreferencesStore
 }
 
-func (*watchableDashboardSettingsStore) Watch(context.Context, *metainternalversion.ListOptions) (watch.Interface, error) {
+func (*watchableDashboardPreferencesStore) Watch(context.Context, *metainternalversion.ListOptions) (watch.Interface, error) {
 	return watch.NewEmptyWatch(), nil
 }
 
-func (*watchableDashboardSettingsStore) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *metainternalversion.ListOptions) (runtime.Object, error) {
+func (*watchableDashboardPreferencesStore) DeleteCollection(context.Context, rest.ValidateObjectFunc, *metav1.DeleteOptions, *metainternalversion.ListOptions) (runtime.Object, error) {
 	return nil, nil
 }

@@ -29,32 +29,32 @@ import (
 )
 
 const (
-	dashboardSettingsListPageSize = 500
+	dashboardPreferencesListPageSize = 500
 	// Bounds the folder-tier scan; one page holds every folder that has defaults in all but huge orgs.
-	dashboardSettingsListMaxPages = 20
+	dashboardPreferencesListMaxPages = 20
 )
 
 // Embeds grafanarest.Storage, which has no rest.Watcher or rest.CollectionDeleter, so watch and
 // deletecollection are not served: unified storage does no per-user filtering for this resource.
-type dashboardSettingsStorage struct {
+type dashboardPreferencesStorage struct {
 	grafanarest.Storage
 	gvk          schema.GroupVersionKind
 	accessClient authlib.AccessClient
 }
 
-func newDashboardSettingsStorage(store grafanarest.Storage, gvk schema.GroupVersionKind, accessClient authlib.AccessClient) *dashboardSettingsStorage {
-	return &dashboardSettingsStorage{Storage: store, gvk: gvk, accessClient: accessClient}
+func newDashboardPreferencesStorage(store grafanarest.Storage, gvk schema.GroupVersionKind, accessClient authlib.AccessClient) *dashboardPreferencesStorage {
+	return &dashboardPreferencesStorage{Storage: store, gvk: gvk, accessClient: accessClient}
 }
 
-func (s *dashboardSettingsStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+func (s *dashboardPreferencesStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	updated, created, err := s.Storage.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
-	if err == nil || !isDashboardSettingsNotFound(err, name) {
+	if err == nil || !isDashboardPreferencesNotFound(err, name) {
 		return updated, created, err
 	}
 
 	// JSON, merge and strategic-merge PATCH on a missing object get NotFound from the patcher, which
 	// needs an old object with a UID; PUT and apply create directly
-	placeholder, err := s.newEmptyDashboardSettings(ctx, name)
+	placeholder, err := s.newEmptyDashboardPreferences(ctx, name)
 	if err != nil {
 		return nil, false, err
 	}
@@ -72,7 +72,7 @@ func (s *dashboardSettingsStorage) Update(ctx context.Context, name string, objI
 	}
 	rest.WipeObjectMetaSystemFields(accessor)
 
-	createdObj, err := s.Create(ctx, obj, createValidation, dashboardSettingsCreateOptionsFrom(options))
+	createdObj, err := s.Create(ctx, obj, createValidation, dashboardPreferencesCreateOptionsFrom(options))
 	if err == nil {
 		return createdObj, true, nil
 	}
@@ -85,33 +85,33 @@ func (s *dashboardSettingsStorage) Update(ctx context.Context, name string, objI
 
 // The placeholder carries the scope the name gives because a spec-only patch can't supply it, and a
 // UID because the patchers refuse an old object without one.
-func (s *dashboardSettingsStorage) newEmptyDashboardSettings(ctx context.Context, name string) (*dashv2beta1.DashboardSettings, error) {
-	scope, ok := dashboardSettingsScopeFromName(name)
+func (s *dashboardPreferencesStorage) newEmptyDashboardPreferences(ctx context.Context, name string) (*dashv2beta1.DashboardPreferences, error) {
+	scope, ok := dashboardPreferencesScopeFromName(name)
 	if !ok {
-		return nil, apierrors.NewBadRequest("invalid dashboard settings name")
+		return nil, apierrors.NewBadRequest("invalid dashboard preferences name")
 	}
 
-	obj := &dashv2beta1.DashboardSettings{}
+	obj := &dashv2beta1.DashboardPreferences{}
 	obj.GetObjectKind().SetGroupVersionKind(s.gvk)
 	obj.SetName(name)
 	obj.SetNamespace(k8srequest.NamespaceValue(ctx))
 	switch scope.Tier {
-	case dashboardSettingsTierFolder:
+	case dashboardPreferencesTierFolder:
 		accessor, err := utils.MetaAccessor(obj)
 		if err != nil {
 			return nil, err
 		}
 		accessor.SetFolder(scope.FolderUID)
-	case dashboardSettingsTierUser:
+	case dashboardPreferencesTierUser:
 		obj.Spec.UserUID = new(scope.UserUID)
-	case dashboardSettingsTierOrg:
+	case dashboardPreferencesTierOrg:
 		// The org tier has neither a folder nor an owner.
 	}
 	obj.SetUID(gapiutil.CalculateClusterWideUID(obj))
 	return obj, nil
 }
 
-func dashboardSettingsCreateOptionsFrom(options *metav1.UpdateOptions) *metav1.CreateOptions {
+func dashboardPreferencesCreateOptionsFrom(options *metav1.UpdateOptions) *metav1.CreateOptions {
 	opts := &metav1.CreateOptions{}
 	if options != nil {
 		opts.DryRun = options.DryRun
@@ -122,7 +122,7 @@ func dashboardSettingsCreateOptionsFrom(options *metav1.UpdateOptions) *metav1.C
 }
 
 // True only for this resource and name: other NotFounds (for example a missing folder) must not turn an update into a create.
-func isDashboardSettingsNotFound(err error, name string) bool {
+func isDashboardPreferencesNotFound(err error, name string) bool {
 	if !apierrors.IsNotFound(err) {
 		return false
 	}
@@ -131,16 +131,16 @@ func isDashboardSettingsNotFound(err error, name string) bool {
 		return false
 	}
 	details := status.Status().Details
-	gr := dashv2beta1.DashboardSettingsResourceInfo.GroupResource()
+	gr := dashv2beta1.DashboardPreferencesResourceInfo.GroupResource()
 	return details != nil && details.Group == gr.Group && details.Kind == gr.Resource && details.Name == name
 }
 
 // List returns only what the caller can read, because the authorizer lets a list through and unified
-// storage does no per-user filtering for this resource. Like preferences, it reads the org and user
-// tiers by name, and it finds the folder tier by its tier label, so it never receives another user's
-// object. It returns a single page with no continue token: a store's token encodes the next object's
-// name, which may be another user's, or an offset into the unfiltered list.
-func (s *dashboardSettingsStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+// storage does no per-user filtering for this resource. Like preferences.grafana.app, it reads the org
+// and user tiers by name, and it finds the folder tier by its tier label, so it never receives another
+// user's object. It returns a single page with no continue token: a store's token encodes the next
+// object's name, which may be another user's, or an offset into the unfiltered list.
+func (s *dashboardPreferencesStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting requester: %w", err)
@@ -155,22 +155,22 @@ func (s *dashboardSettingsStorage) List(ctx context.Context, options *internalve
 		options = &internalversion.ListOptions{}
 	}
 	if options.Continue != "" {
-		return nil, apierrors.NewBadRequest("continue is not supported for dashboard settings")
+		return nil, apierrors.NewBadRequest("continue is not supported for dashboard preferences")
 	}
 	if options.LabelSelector != nil && !options.LabelSelector.Empty() {
-		return nil, apierrors.NewBadRequest("labelSelector is not supported for dashboard settings")
+		return nil, apierrors.NewBadRequest("labelSelector is not supported for dashboard preferences")
 	}
 
 	namespace := k8srequest.NamespaceValue(ctx)
 	// Not nil, so an empty list encodes its items as [] like the store's lists.
-	list := &dashv2beta1.DashboardSettingsList{Items: []dashv2beta1.DashboardSettings{}}
+	list := &dashv2beta1.DashboardPreferencesList{Items: []dashv2beta1.DashboardPreferences{}}
 
 	// A name selector reads a single object, which the tier rules can judge like a get.
 	if options.FieldSelector != nil && !options.FieldSelector.Empty() {
 		// The field selector parser reads both = and == as Equals.
 		requirements := options.FieldSelector.Requirements()
 		if len(requirements) != 1 || requirements[0].Field != "metadata.name" || requirements[0].Operator != selection.Equals {
-			return nil, apierrors.NewBadRequest("only a single metadata.name=<name> fieldSelector is supported for dashboard settings")
+			return nil, apierrors.NewBadRequest("only a single metadata.name=<name> fieldSelector is supported for dashboard preferences")
 		}
 		items, err := s.visibleByName(ctx, requester, namespace, requirements[0].Value)
 		if err != nil {
@@ -180,9 +180,9 @@ func (s *dashboardSettingsStorage) List(ctx context.Context, options *internalve
 		return list, nil
 	}
 
-	names := []string{dashv2beta1.DashboardSettingsOrgName}
+	names := []string{dashv2beta1.DashboardPreferencesOrgName}
 	if requester.IsIdentityType(authlib.TypeUser) {
-		names = append(names, dashv2beta1.DashboardSettingsUserName(requester.GetIdentifier()))
+		names = append(names, dashv2beta1.DashboardPreferencesUserName(requester.GetIdentifier()))
 	}
 	for _, name := range names {
 		items, err := s.visibleByName(ctx, requester, namespace, name)
@@ -205,13 +205,13 @@ func (s *dashboardSettingsStorage) List(ctx context.Context, options *internalve
 
 // visibleByName returns the named object if it exists and the caller may read it under the tier rules
 // of a named get, which the authorizer skipped for the list.
-func (s *dashboardSettingsStorage) visibleByName(ctx context.Context, requester identity.Requester, namespace, name string) ([]dashv2beta1.DashboardSettings, error) {
-	scope, ok := dashboardSettingsScopeFromName(name)
+func (s *dashboardPreferencesStorage) visibleByName(ctx context.Context, requester identity.Requester, namespace, name string) ([]dashv2beta1.DashboardPreferences, error) {
+	scope, ok := dashboardPreferencesScopeFromName(name)
 	if !ok {
 		return nil, nil
 	}
 
-	if scope.Tier == dashboardSettingsTierFolder {
+	if scope.Tier == dashboardPreferencesTierFolder {
 		if !s.canCheckFolderAccess(requester, namespace) {
 			return nil, nil
 		}
@@ -223,7 +223,7 @@ func (s *dashboardSettingsStorage) visibleByName(ctx context.Context, requester 
 		return s.readableFolderTier(ctx, namespace, items)
 	}
 
-	decision, _, err := authorizeDashboardSettingsName(ctx, s.accessClient, requester, namespace, name, utils.VerbGet)
+	decision, _, err := authorizeDashboardPreferencesName(ctx, s.accessClient, requester, namespace, name, utils.VerbGet)
 	if err != nil || decision != authorizer.DecisionAllow {
 		return nil, err
 	}
@@ -231,7 +231,7 @@ func (s *dashboardSettingsStorage) visibleByName(ctx context.Context, requester 
 }
 
 // getStored returns the named object, or nothing when it isn't stored.
-func (s *dashboardSettingsStorage) getStored(ctx context.Context, name string) ([]dashv2beta1.DashboardSettings, error) {
+func (s *dashboardPreferencesStorage) getStored(ctx context.Context, name string) ([]dashv2beta1.DashboardPreferences, error) {
 	obj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		return nil, nil
@@ -239,37 +239,37 @@ func (s *dashboardSettingsStorage) getStored(ctx context.Context, name string) (
 	if err != nil {
 		return nil, err
 	}
-	item, ok := obj.(*dashv2beta1.DashboardSettings)
+	item, ok := obj.(*dashv2beta1.DashboardPreferences)
 	if !ok {
-		return nil, fmt.Errorf("expected dashboard settings, got %T", obj)
+		return nil, fmt.Errorf("expected dashboard preferences, got %T", obj)
 	}
-	return []dashv2beta1.DashboardSettings{*item}, nil
+	return []dashv2beta1.DashboardPreferences{*item}, nil
 }
 
 // visibleFolderTier returns, in storage order, the folder-tier objects whose folder the caller can read.
 // It finds them by the tier label, so it never receives user-tier objects. A store that answers the
 // label by scanning still counts every tier toward its page limit, so the page cap can be reached
 // with no folder left out.
-func (s *dashboardSettingsStorage) visibleFolderTier(ctx context.Context, requester identity.Requester, namespace string) ([]dashv2beta1.DashboardSettings, error) {
+func (s *dashboardPreferencesStorage) visibleFolderTier(ctx context.Context, requester identity.Requester, namespace string) ([]dashv2beta1.DashboardPreferences, error) {
 	if !s.canCheckFolderAccess(requester, namespace) {
 		return nil, nil
 	}
 
-	selector := labels.SelectorFromSet(labels.Set{dashboardSettingsTierLabelKey: string(dashboardSettingsTierFolder)})
-	var items []dashv2beta1.DashboardSettings
+	selector := labels.SelectorFromSet(labels.Set{dashboardPreferencesTierLabelKey: string(dashboardPreferencesTierFolder)})
+	var items []dashv2beta1.DashboardPreferences
 	continueToken := ""
-	for range dashboardSettingsListMaxPages {
+	for range dashboardPreferencesListMaxPages {
 		obj, err := s.Storage.List(ctx, &internalversion.ListOptions{
 			LabelSelector: selector,
-			Limit:         dashboardSettingsListPageSize,
+			Limit:         dashboardPreferencesListPageSize,
 			Continue:      continueToken,
 		})
 		if err != nil {
 			return nil, err
 		}
-		page, ok := obj.(*dashv2beta1.DashboardSettingsList)
+		page, ok := obj.(*dashv2beta1.DashboardPreferencesList)
 		if !ok {
-			return nil, fmt.Errorf("expected dashboard settings list, got %T", obj)
+			return nil, fmt.Errorf("expected dashboard preferences list, got %T", obj)
 		}
 		items = append(items, page.Items...)
 		continueToken = page.Continue
@@ -278,8 +278,8 @@ func (s *dashboardSettingsStorage) visibleFolderTier(ctx context.Context, reques
 		}
 	}
 	if continueToken != "" {
-		logging.FromContext(ctx).Warn("dashboard settings list reached the folder tier page cap and may have left out folders",
-			"namespace", namespace, "pages", dashboardSettingsListMaxPages)
+		logging.FromContext(ctx).Warn("dashboard preferences list reached the folder tier page cap and may have left out folders",
+			"namespace", namespace, "pages", dashboardPreferencesListMaxPages)
 	}
 	return s.readableFolderTier(ctx, namespace, items)
 }
@@ -287,18 +287,18 @@ func (s *dashboardSettingsStorage) visibleFolderTier(ctx context.Context, reques
 // readableFolderTier keeps, in order, the folder-tier objects whose folder the caller can read. The
 // tier label only indexes the tier, so an object belongs to it only if its annotation is the folder its
 // name gives. A folder whose check failed fails the call instead of being left out as if it were denied.
-func (s *dashboardSettingsStorage) readableFolderTier(ctx context.Context, namespace string, items []dashv2beta1.DashboardSettings) ([]dashv2beta1.DashboardSettings, error) {
-	candidates := make([]dashv2beta1.DashboardSettings, 0, len(items))
+func (s *dashboardPreferencesStorage) readableFolderTier(ctx context.Context, namespace string, items []dashv2beta1.DashboardPreferences) ([]dashv2beta1.DashboardPreferences, error) {
+	candidates := make([]dashv2beta1.DashboardPreferences, 0, len(items))
 	for _, item := range items {
-		scope, ok := dashboardSettingsScopeFromName(item.Name)
-		if ok && scope.Tier == dashboardSettingsTierFolder && item.Annotations[utils.AnnoKeyFolder] == scope.FolderUID {
+		scope, ok := dashboardPreferencesScopeFromName(item.Name)
+		if ok && scope.Tier == dashboardPreferencesTierFolder && item.Annotations[utils.AnnoKeyFolder] == scope.FolderUID {
 			candidates = append(candidates, item)
 		}
 	}
 
-	readable := authz.FilterAuthorized(ctx, batchItemErrorClient{s.accessClient}, slices.Values(candidates), func(item dashv2beta1.DashboardSettings) authz.BatchCheckItem {
+	readable := authz.FilterAuthorized(ctx, batchItemErrorClient{s.accessClient}, slices.Values(candidates), func(item dashv2beta1.DashboardPreferences) authz.BatchCheckItem {
 		folderUID := item.Annotations[utils.AnnoKeyFolder]
-		// The folder is its own parent, as in checkDashboardSettingsFolderAccess.
+		// The folder is its own parent, as in checkDashboardPreferencesFolderAccess.
 		return authz.BatchCheckItem{
 			Group:     folders.GROUP,
 			Resource:  folders.RESOURCE,
@@ -308,7 +308,7 @@ func (s *dashboardSettingsStorage) readableFolderTier(ctx context.Context, names
 			Folder:    folderUID,
 		}
 	})
-	visible := make([]dashv2beta1.DashboardSettings, 0, len(candidates))
+	visible := make([]dashv2beta1.DashboardPreferences, 0, len(candidates))
 	for item, err := range readable {
 		if err != nil {
 			return nil, err
@@ -319,8 +319,8 @@ func (s *dashboardSettingsStorage) readableFolderTier(ctx context.Context, names
 }
 
 // Without an access client no folder is readable, and the access client fails a check for another
-// namespace, where the caller can read no folder anyway; see checkDashboardSettingsFolderAccess.
-func (s *dashboardSettingsStorage) canCheckFolderAccess(requester identity.Requester, namespace string) bool {
+// namespace, where the caller can read no folder anyway; see checkDashboardPreferencesFolderAccess.
+func (s *dashboardPreferencesStorage) canCheckFolderAccess(requester identity.Requester, namespace string) bool {
 	return s.accessClient != nil && authlib.NamespaceMatches(requester.GetNamespace(), namespace)
 }
 
@@ -339,7 +339,7 @@ func (c batchItemErrorClient) BatchCheck(ctx context.Context, info authlib.AuthI
 	// In request order, because the results are a map and the first failure should not vary.
 	for _, check := range req.Checks {
 		if result := resp.Results[check.CorrelationID]; result.Error != nil {
-			logging.FromContext(ctx).Error("dashboard settings list failed to check folder access",
+			logging.FromContext(ctx).Error("dashboard preferences list failed to check folder access",
 				"namespace", req.Namespace, "folder", check.Name, "err", result.Error)
 			return authlib.BatchCheckResponse{}, &folderAccessCheckError{cause: result.Error}
 		}

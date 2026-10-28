@@ -414,18 +414,18 @@ func (b *DashboardsAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 		default:
 			return nil // delete/connect need no validation
 		}
-	// Reachability invariant: dashboard settings storage is always registered, but
-	// FlagGrafanaDashboardSettings is enforced per request in GetAuthorizer. With
+	// Reachability invariant: dashboard preferences storage is always registered, but
+	// FlagGrafanaDashboardPreferences is enforced per request in GetAuthorizer. With
 	// the flag off no identity may create or update, so the create and update
 	// checks only run when the feature is enabled. A delete is not checked: it
 	// must still work once the folder is gone, and for the service identities
-	// that clean up folder and user settings.
-	case dashv2beta1.DashboardSettingsResourceInfo.GroupVersionResource().Resource:
+	// that clean up folder and user preferences.
+	case dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionResource().Resource:
 		switch op {
 		case admission.Create:
-			return b.validateDashboardSettingsCreate(ctx, a)
+			return b.validateDashboardPreferencesCreate(ctx, a)
 		case admission.Update:
-			return b.validateDashboardSettingsUpdate(ctx, a)
+			return b.validateDashboardPreferencesUpdate(ctx, a)
 		default:
 			return nil
 		}
@@ -1758,7 +1758,7 @@ func (b *DashboardsAPIBuilder) GetPolicyRuleEvaluator() auditing.PolicyRuleEvalu
 }
 
 // GetAuthorizer returns a composite authorizer that dispatches by resource type.
-// Notebooks, snapshots, variables, and dashboard settings use dedicated authorizers;
+// Notebooks, snapshots, variables, and dashboard preferences use dedicated authorizers;
 // other resources fall back to ServiceAuthorizer. Variables with no classic accessControl
 // (standalone) fall through to ServiceAuthorizer after the feature flag.
 func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
@@ -1770,9 +1770,9 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	// Variables use classic variables:* when accessControl is wired; otherwise
 	// they fall through to the service authorizer (standalone / Cloud).
 	variableAuthorizer := newVariableAuthorizer(b.accessControl, serviceAuthorizer)
-	// Dashboard settings have no RBAC actions of their own: org role, folder
+	// Dashboard preferences have no RBAC actions of their own: org role, folder
 	// access, and ownership decide each tier.
-	dashboardSettingsAuthorizer := newDashboardSettingsAuthorizer(b.accessClient, serviceAuthorizer)
+	dashboardPreferencesAuthorizer := newDashboardPreferencesAuthorizer(b.accessClient, serviceAuthorizer)
 
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -1782,8 +1782,8 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 					return notebookAuthorizer.Authorize(ctx, attr)
 				case dashv2beta1.VariableResourceInfo.GetName():
 					return variableAuthorizer.Authorize(ctx, attr)
-				case dashv2beta1.DashboardSettingsResourceInfo.GetName():
-					return dashboardSettingsAuthorizer.Authorize(ctx, attr)
+				case dashv2beta1.DashboardPreferencesResourceInfo.GetName():
+					return dashboardPreferencesAuthorizer.Authorize(ctx, attr)
 				case dashv0.SnapshotResourceInfo.GetName():
 					return snapshotAuthorizer.Authorize(ctx, attr)
 				}

@@ -16,10 +16,10 @@ import (
 
 // Built on first use instead of at init, so a schema that can't be built fails writes closed instead of
 // crashing server startup.
-var dashboardSettingsSpecSchema = sync.OnceValues(buildDashboardSettingsSpecSchema)
+var dashboardPreferencesSpecSchema = sync.OnceValues(buildDashboardPreferencesSpecSchema)
 
-func buildDashboardSettingsSpecSchema() (*openapi3.Schema, error) {
-	gvk := dashv2beta1.DashboardSettingsResourceInfo.GroupVersionKind()
+func buildDashboardPreferencesSpecSchema() (*openapi3.Schema, error) {
+	gvk := dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind()
 
 	for _, version := range manifestdata.LocalManifest().ManifestData.Versions {
 		if version.Name != gvk.Version {
@@ -45,19 +45,19 @@ func buildDashboardSettingsSpecSchema() (*openapi3.Schema, error) {
 	return nil, fmt.Errorf("the dashboard manifest has no schema for %s", gvk)
 }
 
-func validateDashboardSettingsSpec(name string, spec dashv2beta1.DashboardSettingsSpec) error {
-	specSchema, err := dashboardSettingsSpecSchema()
+func validateDashboardPreferencesSpec(name string, spec dashv2beta1.DashboardPreferencesSpec) error {
+	specSchema, err := dashboardPreferencesSpecSchema()
 	if err != nil {
 		return err
 	}
 
 	raw, err := json.Marshal(spec)
 	if err != nil {
-		return fmt.Errorf("error marshaling dashboard settings spec: %w", err)
+		return fmt.Errorf("error marshaling dashboard preferences spec: %w", err)
 	}
 	var decoded any
 	if err = json.Unmarshal(raw, &decoded); err != nil {
-		return fmt.Errorf("error decoding dashboard settings spec: %w", err)
+		return fmt.Errorf("error decoding dashboard preferences spec: %w", err)
 	}
 
 	// Unknown keys are not violations: the typed spec has already dropped them, and AsCRDOpenAPI3 removes
@@ -73,12 +73,12 @@ func validateDashboardSettingsSpec(name string, spec dashv2beta1.DashboardSettin
 	}
 	errs := make(field.ErrorList, 0, len(violations))
 	for _, violation := range violations {
-		errs = append(errs, dashboardSettingsSchemaErrorToField(violation))
+		errs = append(errs, dashboardPreferencesSchemaErrorToField(violation))
 	}
-	return apierrors.NewInvalid(dashv2beta1.DashboardSettingsResourceInfo.GroupVersionKind().GroupKind(), name, errs)
+	return apierrors.NewInvalid(dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind().GroupKind(), name, errs)
 }
 
-func dashboardSettingsSchemaErrorToField(err error) *field.Error {
+func dashboardPreferencesSchemaErrorToField(err error) *field.Error {
 	se, ok := errors.AsType[*openapi3.SchemaError](err)
 	if !ok {
 		return field.Invalid(field.NewPath("spec"), nil, err.Error())
