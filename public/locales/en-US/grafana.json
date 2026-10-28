@@ -17625,9 +17625,11 @@
       "placeholder-frame": "Frame"
     },
     "config-from-query-transformer-editor": {
+      "description-dynamic-field-name-matcher": "Set properties for field names that are returned by your config query",
       "label-apply-to": "Apply to",
       "label-apply-to-options": "Apply to options",
-      "label-config-query": "Config query"
+      "label-config-query": "Config query",
+      "name-dynamic-field-name-matcher": "Fields with dynamic names"
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Add a convert field type transformer",
