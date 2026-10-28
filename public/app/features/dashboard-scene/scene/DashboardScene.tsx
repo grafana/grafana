@@ -1,5 +1,5 @@
 import type * as H from 'history';
-import { isEqual } from 'lodash';
+import { isEqual, isPlainObject } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
 import {
@@ -399,6 +399,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (isComposerMode(this.state)) {
       return this._assistantWrites > 0;
     }
+    if (dashboardModesEnabled() && getDashboardMode(this.state) === 'agent' && this._assistantWrites === 0) {
+      return this.setDashboardMode('edit', 'manual_change');
+    }
     return !dashboardModesEnabled() || getDashboardMode(this.state) !== 'view' || this._assistantWrites > 0;
   }
   private _sidebarBeforeViewing?: Pick<DashboardSidebarState, 'openPane' | 'selectionContext'>;
@@ -706,9 +709,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.startEditPeriod(source);
     }
     let mode = this.state.mode ?? 'edit';
-    if (source === 'assistant' && currentMode === 'view') {
+    if (source === 'assistant' && currentMode === 'view' && !dashboardComposerEnabled()) {
+      mode = 'agent';
+    } else if (source === 'assistant' && currentMode === 'view') {
       // Stays in Viewing while Assistant takes the request, so leaving Composer returns to Viewing.
       mode = trigger === 'assistant' && this.requestComposerForAssistantEdit() ? 'view' : 'edit';
+    } else if (source === 'user' && currentMode === 'agent') {
+      mode = 'edit';
     }
     if (!this.state.isEditing) {
       this._editSessionSource = source;
@@ -766,7 +773,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (
       !dashboardModesEnabled() ||
       !this.canEditDashboard() ||
-      this.managedResourceCannotBeEdited() ||
       this.state.planning ||
       this.state.editPanel ||
       this.state.editview ||
@@ -1608,7 +1614,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     try {
       const stylesCopy: CopiedPanelStyles = JSON.parse(stylesJson);
-      return stylesCopy.panelType === panelType;
+      return (
+        stylesCopy.panelType === panelType &&
+        isPlainObject(stylesCopy.styles) &&
+        (stylesCopy.styles.options === undefined || isPlainObject(stylesCopy.styles.options)) &&
+        (stylesCopy.styles.fieldConfig === undefined || isPlainObject(stylesCopy.styles.fieldConfig))
+      );
     } catch (e) {
       return false;
     }

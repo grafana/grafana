@@ -6,6 +6,7 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 
+import { unlinkLibraryPanel } from '../actions/panel/unlinkLibraryPanel';
 import { type ModalSceneObjectLike } from '../sharing/types';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -28,7 +29,7 @@ export class UnlinkLibraryPanelModal
 
   public onConfirm = () => {
     const dashboard = getDashboardSceneFor(this);
-    dashboard.unlinkLibraryPanel(this.state.panelRef!.resolve());
+    unlinkLibraryPanel(dashboard, this.state.panelRef!.resolve());
     dashboard.closeModal();
   };
 }

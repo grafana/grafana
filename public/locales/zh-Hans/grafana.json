@@ -1436,7 +1436,8 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "interval": "",
       "recording-rules": {
@@ -1446,6 +1447,58 @@
       "result-count": {
         "alert-rules_other": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -5614,6 +5667,17 @@
       "ungroup-rows": "取消行分组",
       "ungroup-tabs": "取消选项卡分组"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5794,7 +5858,20 @@
     "edit-actions": {
       "add": "添加{{typeName}}",
       "add-conditional-rule": "添加 {{ruleDescription}} 规则",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "折叠所有行",
+      "collapse-row": "",
       "dashboard-description": "更改数据面板描述",
       "dashboard-title": "更改数据面板标题",
       "duplicate": "复制{{typeName}}",
@@ -5803,6 +5880,7 @@
       "edit-template-variable-rule": "更改模板变量规则",
       "edit-time-range-rule": "更改时间范围规则",
       "expand-all-rows": "展开所有行",
+      "expand-row": "",
       "group-into-row": "分组成行",
       "group-into-tab": "分组成选项卡",
       "move": "移动{{typeName}}",
@@ -5818,6 +5896,7 @@
       "paste-panel": "粘贴面板",
       "remove": "移除{{typeName}}",
       "remove-multiple": "移除 {{typeName}} ({{num}})",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "禁用行填充屏幕",
       "row-fill-screen-enable": "启用行填充屏幕",
@@ -5825,16 +5904,38 @@
       "row-repeat-variable": "行重复方式",
       "row-show-header": "显示行标题",
       "row-title": "更改行标题",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "切换布局",
       "switch-layout-row": "切换布局",
       "switch-layout-tab": "切换布局",
       "tab-repeat-variable": "标签页重复方式",
       "tab-title": "更改选项卡标题",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "更改变量描述",
       "variable-hide": "更改变量隐藏选项",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "更改变量标签",
+      "variable-multi-value": "",
       "variable-name": "更改变量名称",
-      "variable-type": "更改变量类型"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "更改变量类型",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "添加与其他仪表板共享的可视化。",
@@ -6056,8 +6157,12 @@
       "tooltip-previous": "上一个"
     },
     "modes": {
-      "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -6967,7 +7072,8 @@
         "change-annotation-controls-display": "更改注释控件显示",
         "change-annotation-enabled-state": "更改注释启用状态",
         "change-annotation-name": "更改注释名称",
-        "change-annotation-panel-filter": "更改注释面板筛选条件"
+        "change-annotation-panel-filter": "更改注释面板筛选条件",
+        "change-annotation-query": ""
       },
       "edit-query": "编辑查询"
     },
@@ -12094,10 +12200,14 @@
     },
     "log-line": {
       "has-error": "有错误",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "已采样",
       "show-less": "收起",
       "show-more": "展开",
-      "tooltip-error": "错误：{{errorMessage}}"
+      "tooltip-error": "错误：{{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "匹配行居中",
@@ -13314,7 +13424,6 @@
     "add-panel": {
       "cancel": "取消",
       "card-author": "作者：{{author}}",
-      "card-selected": "{{title}}（已选择）",
       "card-updated": "更新于 {{when}}",
       "create-name": "笔记本名称",
       "create-name-required": "笔记本名称为必填项",
@@ -13325,6 +13434,7 @@
       "error-open-conflict": "",
       "list-error": "加载笔记本失败",
       "list-error-body": "加载您的笔记本时出错。请重试，或改为创建新笔记本。",
+      "list-label": "",
       "list-no-matches": "没有符合这些筛选条件的笔记本。",
       "list-none": "您还没有笔记本。请改为创建一个。",
       "list-none-read-only": "您还没有笔记本，也没有创建笔记本的权限。",
@@ -16186,8 +16296,8 @@
       "copy-link-button": "复制",
       "info-text": "创建指向此仪表板或面板的直接链接，通过以下选项自定义。",
       "link-url": "链接网址",
-      "render-alert": "未安装图像渲染器插件",
-      "render-instructions": "要渲染图像，您必须安装 <2>Grafana 图像渲染器插件</2>。请与您的 Grafana 管理员联系以安装插件。",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "直接链接至渲染后的图像",
       "save-alert": "仪表板未保存",
       "save-dashboard": "要渲染面板图像，需要先保存仪表板。",
@@ -17001,6 +17111,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {
