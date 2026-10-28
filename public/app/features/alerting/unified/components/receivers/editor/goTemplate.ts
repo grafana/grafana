@@ -5,7 +5,7 @@ import {
   autocompletion,
   snippetCompletion,
 } from '@codemirror/autocomplete';
-import { LanguageSupport, StreamLanguage, ensureSyntaxTree } from '@codemirror/language';
+import { LanguageSupport, StreamLanguage, type StringStream, ensureSyntaxTree } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 
 import { renderMarkdown } from '@grafana/data';
@@ -25,6 +25,16 @@ interface TemplateState {
   expression: boolean;
   quote: string | null;
   comment: boolean;
+}
+
+function stringToken(stream: StringStream, state: TemplateState) {
+  if (stream.eol() && state.quote !== '`') {
+    state.quote = null;
+    // Recover at the next action after a quoted string runs past its line.
+    state.expression = false;
+    return 'templateInvalidString';
+  }
+  return 'templateString';
 }
 
 const functions = new Set([
@@ -60,7 +70,7 @@ const language = StreamLanguage.define<TemplateState>({
           stream.next();
         }
       }
-      return 'templateString';
+      return stringToken(stream, state);
     }
 
     if (!state.expression) {
@@ -87,7 +97,7 @@ const language = StreamLanguage.define<TemplateState>({
     }
     if (stream.match(/["'`]/)) {
       state.quote = stream.current();
-      return 'templateString';
+      return stringToken(stream, state);
     }
     if (stream.match(/(?:0[xX][\da-fA-F']+|0[bB][01']+|\d[\d']*(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?/)) {
       return 'number';
@@ -108,6 +118,7 @@ const language = StreamLanguage.define<TemplateState>({
     templateDelimiter: tags.brace,
     templateString: tags.string,
     templateStringEnd: tags.string,
+    templateInvalidString: tags.string,
     templateComment: tags.comment,
     templateCommentEnd: tags.comment,
   },
@@ -134,6 +145,9 @@ function templateContext(context: CompletionContext): 'expression' | 'text' | nu
     }
     if (node.name === 'templateString' || node.name === 'templateComment') {
       return null;
+    }
+    if (node.name === 'templateInvalidString') {
+      return context.pos > node.to ? 'text' : null;
     }
     if (node.name === 'templateStringEnd' || node.name === 'templateCommentEnd') {
       return node.to <= context.pos ? 'expression' : null;
@@ -189,6 +203,7 @@ function completeGoTemplate(context: CompletionContext): CompletionResult | null
       const parent = reference.text.split('.').at(-2);
       switch (parent) {
         case '':
+        case '$':
           definitions = [...getGlobalSuggestions(), ...getAlertSuggestions()];
           break;
         case 'Alerts':
@@ -215,7 +230,7 @@ function completeGoTemplate(context: CompletionContext): CompletionResult | null
   return { from, to: context.pos, options: definitions.map(toCompletion), validFor: /^\w*$/ };
 }
 
-/** Load this Alerting-owned extension with the template editor's lazy CodeMirror implementation. */
+/** Dynamically import this module with the template editor's lazy CodeMirror implementation. */
 export function goTemplate(): LanguageSupport {
   return new LanguageSupport(language, autocompletion());
 }

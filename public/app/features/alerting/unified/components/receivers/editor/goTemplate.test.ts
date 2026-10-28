@@ -102,6 +102,7 @@ describe('Alerting Go-template completion', () => {
     { doc: '{{ range .Alerts }}{{ .Labels.¦ }}{{ end }}', labels: ['SortedPairs', 'Names', 'Values', 'Remove'] },
     { doc: '{{-\n .Al¦', labels: ['Alerts', 'Receiver', 'GroupLabels'] },
     { doc: '{{ .Status }}{{ .¦ }}', labels: ['Alerts', 'Receiver', 'Status'] },
+    { doc: '{{ range .Alerts }}{{ $.¦ }}{{ end }}', labels: ['Receiver', 'ExternalURL', 'CommonLabels'] },
   ])('offers template data at $doc', async ({ doc, labels }) => {
     const result = await complete(doc);
     expect(result?.options.map((option) => option.label)).toEqual(expect.arrayContaining(labels));
@@ -136,6 +137,20 @@ describe('Alerting Go-template completion', () => {
     expect(await complete(`{{ $${name} := . }}{{ $${name}.¦ }}`)).toBeNull();
   });
 
+  it.each(['"abc }}', "'abc }}", '"', "'"])(
+    'recovers highlighting and completion after an unterminated %s on the previous line',
+    async (string) => {
+      const doc = `{{ ${string}\nHello {{ .¦ }}`;
+      expect((await complete(doc))?.options.map((option) => option.label)).toContain('Alerts');
+      const state = createState(doc.replace('¦', ''));
+      expect(matchBrackets(state, doc.lastIndexOf('{{'), 1)).toMatchObject({ matched: true });
+    }
+  );
+
+  it('offers snippets on a blank line after an unterminated quoted string', async () => {
+    expect((await complete('{{ "abc\n\n¦', true))?.options.map((option) => option.label)).toContain('alertsloop');
+  });
+
   it.each([
     {
       doc: 'Summary: alert¦ tail',
@@ -147,6 +162,7 @@ describe('Alerting Go-template completion', () => {
     { doc: '{{ .Alerts.Fir¦ }}', label: 'Firing', from: 11, expected: '{{ .Alerts.Firing }}' },
     { doc: '{{ .CommonLabels.Sor¦ }}', label: 'SortedPairs', from: 17, expected: '{{ .CommonLabels.SortedPairs }}' },
     { doc: '{{ data.ToJ¦ }}', label: 'data.ToJSON', from: 3, expected: '{{ data.ToJSON }}' },
+    { doc: '{{ $.Ext¦ }}', label: 'ExternalURL', from: 5, expected: '{{ $.ExternalURL }}' },
   ])('replaces only the completion prefix at $doc', async ({ doc, label, from, expected }) => {
     const result = await complete(doc);
     expect(result?.from).toBe(from);
