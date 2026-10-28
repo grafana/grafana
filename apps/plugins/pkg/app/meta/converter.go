@@ -607,6 +607,8 @@ func pluginStorePluginToMeta(plugin pluginstore.Plugin, moduleHash string) plugi
 		metaSpec.AliasIds = plugin.AliasIDs
 	}
 
+	metaSpec.Apis = pluginAPIs(plugin.ID, metaSpec.PluginJson.Type)
+
 	return metaSpec
 }
 
@@ -715,6 +717,8 @@ func pluginToMetaSpec(plugin *plugins.Plugin) pluginsv0alpha1.MetaSpec {
 	if len(plugin.AliasIDs) > 0 {
 		metaSpec.AliasIds = plugin.AliasIDs
 	}
+
+	metaSpec.Apis = pluginAPIs(plugin.ID, metaSpec.PluginJson.Type)
 
 	return metaSpec
 }
@@ -923,6 +927,7 @@ func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafa
 		logger.Warn("Error building translations", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "error", err)
 	}
 	metaSpec.Translations = translations
+	metaSpec.Apis = pluginAPIs(gcomMeta.PluginSlug, metaSpec.PluginJson.Type)
 
 	return metaSpec, nil
 }

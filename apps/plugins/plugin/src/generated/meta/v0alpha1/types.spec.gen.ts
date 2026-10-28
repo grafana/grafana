@@ -283,6 +283,20 @@ export interface Extensions {
 export const defaultExtensions = (): Extensions => ({
 });
 
+export interface API {
+	group: string;
+	preferredVersion: string;
+	// Served versions, preferred first.
+	// +listType=atomic
+	versions: string[];
+}
+
+export const defaultAPI = (): API => ({
+	group: "",
+	preferredVersion: "",
+	versions: [],
+});
+
 export interface Spec {
 	pluginJson: JSONData;
 	class: "core" | "external";
@@ -302,6 +316,10 @@ export interface Spec {
 	children?: string[];
 	// +listType=atomic
 	aliasIds?: string[];
+	// API groups and versions the frontend should target for this plugin.
+	// +listType=map
+	// +listMapKey=group
+	apis?: API[];
 }
 
 export const defaultSpec = (): Spec => ({

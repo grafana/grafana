@@ -262,6 +262,27 @@ func (MetaExtensions) OpenAPIModelName() string {
 }
 
 // +k8s:openapi-gen=true
+type MetaAPI struct {
+	Group            string `json:"group"`
+	PreferredVersion string `json:"preferredVersion"`
+	// Served versions, preferred first.
+	// +listType=atomic
+	Versions []string `json:"versions"`
+}
+
+// NewMetaAPI creates a new MetaAPI object.
+func NewMetaAPI() *MetaAPI {
+	return &MetaAPI{
+		Versions: []string{},
+	}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for MetaAPI.
+func (MetaAPI) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.plugins.pkg.apis.plugins.v0alpha1.MetaAPI"
+}
+
+// +k8s:openapi-gen=true
 type MetaSpec struct {
 	PluginJson   MetaJSONData              `json:"pluginJson"`
 	Class        MetaSpecClass             `json:"class"`
@@ -273,6 +294,10 @@ type MetaSpec struct {
 	Children []string `json:"children,omitempty"`
 	// +listType=atomic
 	AliasIds []string `json:"aliasIds,omitempty"`
+	// API groups and versions the frontend should target for this plugin.
+	// +listType=map
+	// +listMapKey=group
+	Apis []MetaAPI `json:"apis,omitempty"`
 }
 
 // NewMetaSpec creates a new MetaSpec object.

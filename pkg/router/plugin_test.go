@@ -657,6 +657,18 @@ func TestPluginLoaderServesSettingsUnderPluginID(t *testing.T) {
 	require.NotEqual(t, manifestKey, changed[1].Key())
 }
 
+// The plugin metas API reports app API groups from plugins.DefaultAPIGroupVersion,
+// so it must match what the settings backend registers.
+func TestDefaultAPIGroupVersionMatchesPluginSettingsBackend(t *testing.T) {
+	plugin := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}}
+	backend, err := newPluginSettingsBackend(plugin, nil, PluginDependencies{})
+	require.NoError(t, err)
+	group, version, ok := plugins.DefaultAPIGroupVersion(plugin.JSONData.ID, plugin.JSONData.Type)
+	require.True(t, ok)
+	require.Equal(t, group, backend.Group().Name)
+	require.Equal(t, version, backend.Group().PreferredVersion.Version)
+}
+
 func TestPluginSettingsBackendLoad(t *testing.T) {
 	plugin := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp}}
 	deps := PluginDependencies{

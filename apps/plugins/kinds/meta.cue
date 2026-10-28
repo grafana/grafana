@@ -29,8 +29,20 @@ metaV0Alpha1: {
 			children?: [...string]
 			// +listType=atomic
 			aliasIds?: [...string]
+			// API groups and versions the frontend should target for this plugin.
+			// +listType=map
+			// +listMapKey=group
+			apis?: [...#API]
 		}
 	}
+}
+
+#API: {
+	group:            string
+	preferredVersion: string
+	// Served versions, preferred first.
+	// +listType=atomic
+	versions: [...string]
 }
 
 // JSON configuration schema for Grafana plugins

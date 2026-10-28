@@ -5,6 +5,21 @@ import (
 	"strings"
 )
 
+// DefaultAPIGroupVersion returns the API group and version Grafana serves a
+// plugin's API at, until plugins declare their own. The values mirror what the
+// datasource API server and the app plugin settings API register; they live here
+// so light modules can use them without importing those packages.
+// ok is false for plugin types without an API.
+func DefaultAPIGroupVersion(pluginID string, pluginType Type) (group, version string, ok bool) {
+	switch pluginType {
+	case TypeDataSource:
+		return pluginID + ".datasource.grafana.app", "v0alpha1", true
+	case TypeApp:
+		return pluginID, "v0alpha1", true
+	}
+	return "", "", false
+}
+
 // Get the default API group name for from a plugin ID
 // NOTE: this is a work in progress, and may change without notice
 func GetDatasourceGroupNameFromPluginID(pluginId string) (string, error) {

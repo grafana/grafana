@@ -8,10 +8,22 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// The plugin metas API reports datasource API groups from
+// plugins.DefaultAPIGroupVersion, so it must match what this builder registers.
+func TestDefaultAPIGroupVersionMatchesRegisteredGroupVersion(t *testing.T) {
+	group, version, ok := plugins.DefaultAPIGroupVersion("testdata", plugins.TypeDataSource)
+	require.True(t, ok)
+	b, err := NewDataSourceAPIBuilder(group, plugins.JSONData{ID: "testdata"}, nil, nil, nil, nil, nil, DataSourceAPIBuilderConfig{}, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, "testdata."+datasourceV0.GROUP, group)
+	require.Equal(t, version, b.GetGroupVersion().Version)
+}
 
 func TestApplyDefaultStorageConfig(t *testing.T) {
 	newRI := func(pluginID string) utils.ResourceInfo {
