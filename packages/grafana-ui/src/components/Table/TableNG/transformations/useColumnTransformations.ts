@@ -44,9 +44,17 @@ export function useColumnTransformations(
       sourceFrame && sourceSeries && sourceIndex >= 0 ? prepareColumnContext(sourceSeries, sourceIndex) : undefined,
     [sourceFrame, sourceSeries, sourceIndex]
   );
-  // Keep the last non-empty source catalog per frame; ad-hoc output changes are not the comparison baseline.
+  // Keep the last non-empty source catalog per frame as the comparison baseline.
+  // The baseline belongs to one panel, so it is cleared when the table stays mounted
+  // while the dashboard swaps the panel underneath it (for example undoing an edit).
   const previousCatalogs = useRef(new Map<string, string[]>());
+  const catalogsApi = useRef(api);
   useEffect(() => {
+    if (catalogsApi.current !== api) {
+      catalogsApi.current = api;
+      previousCatalogs.current.clear();
+    }
+
     if (!context || context.catalog.length === 0) {
       return;
     }
@@ -61,7 +69,7 @@ export function useColumnTransformations(
           : current
       );
     }
-  }, [context, sourceFrame?.refId, sourceIndex, update]);
+  }, [api, context, sourceFrame?.refId, sourceIndex, update]);
   const onHiddenColumnsChange = useCallback(
     (hidden: ReadonlySet<string>) => {
       if (context) {
