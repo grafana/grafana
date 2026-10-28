@@ -253,7 +253,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (canManuallyEditDashboard(dashboard.state) && hasLegendOptions(panel.state.options) && !isEditingPanel) {
+    if (hasLegendOptions(panel.state.options) && !isEditingPanel) {
       moreSubMenu.push({
         text: shouldShowLegend(panel.state.options.legend)
           ? t('panel.header-menu.hide-legend', 'Hide legend')
@@ -305,10 +305,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    if (
-      getFeatureFlagClient().getBooleanValue(FlagKeys.PanelTimeSettings, true) &&
-      canManuallyEditDashboard(dashboard.state)
-    ) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.PanelTimeSettings, true)) {
       items.push({
         text: t('panel.header-menu.time-settings', 'Time settings'),
         iconClassName: 'clock-nine',
@@ -649,9 +646,6 @@ const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
 };
 
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {
-  if (dashboardModesEnabled() && !canManuallyEditDashboard(getDashboardSceneFor(vizPanel).state)) {
-    return;
-  }
   const options = vizPanel.state.options;
   if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
     if (shouldShowLegend(options.legend)) {

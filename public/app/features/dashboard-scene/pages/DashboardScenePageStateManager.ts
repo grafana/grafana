@@ -70,9 +70,7 @@ import {
   proposesNewDashboard,
 } from '../lifecycle/pendingChangePreview';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
-import { consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { dashboardModesEnabled } from '../scene/dashboardModes';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
@@ -491,11 +489,6 @@ abstract class DashboardScenePageStateManagerBase<T>
         Boolean(options.uid)
       ) {
         restoreDashboardStateFromLocalStorage(dashboard);
-      }
-
-      const mode = consumeDashboardModeAfterSave(options.uid);
-      if (mode && dashboardModesEnabled()) {
-        dashboard.setDashboardMode(mode, 'restore');
       }
 
       this.setState({ dashboard: dashboard, isLoading: false });

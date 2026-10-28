@@ -1,5 +1,8 @@
 import { render, screen } from 'test/test-utils';
 
+import { mockDataSource } from '../../mocks';
+import { setupDataSources } from '../../testSetup/datasources';
+
 import { RecordingRuleRow } from './RecordingRuleRow';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
 
@@ -71,5 +74,46 @@ describe('RecordingRuleRow', () => {
     renderRow({ searchHit: baseHit() });
 
     expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the recorded metric and target datasource when the hit has them', () => {
+    setupDataSources(mockDataSource({ uid: 'ds-mimir', name: 'Mimir' }));
+    renderRow({
+      searchHit: baseHit({ metric: 'memory:usage:bytes', targetDatasourceUID: 'ds-mimir' }),
+    });
+
+    expect(screen.getByText('memory:usage:bytes')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Mimir' })).toBeInTheDocument();
+  });
+
+  it('shows no recorded metric when metric or targetDatasourceUID is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/Records/)).not.toBeInTheDocument();
+  });
+
+  it('shows queried datasources when the hit has them', () => {
+    setupDataSources(mockDataSource({ uid: 'ds-prom', name: 'Prometheus' }));
+    renderRow({ searchHit: baseHit({ datasourceUIDs: ['ds-prom'] }) });
+
+    expect(screen.getByRole('link', { name: 'Prometheus' })).toBeInTheDocument();
+  });
+
+  it('shows labels when the hit has them', () => {
+    renderRow({ searchHit: baseHit({ labels: { team: 'infra' } }) });
+
+    expect(screen.getByText('1 label')).toBeInTheDocument();
+  });
+
+  it('shows no datasources when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/data source/i)).not.toBeInTheDocument();
+  });
+
+  it('shows no labels when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/label/)).not.toBeInTheDocument();
   });
 });
