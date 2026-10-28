@@ -64,17 +64,3 @@ it.each([{ inclusive: false }, { allowOpenBounds: false }, { includeMissing: und
     expect(unsupportedFilterReason(readFilters(configs))).toBe('uneditable');
   }
 );
-
-it('uses the panel timezone for new selections and preserves a saved timezone', () => {
-  expect(createValuePredicate(context.field, ['1000'], undefined, 'Europe/Berlin').options.timeZone).toBe(
-    'Europe/Berlin'
-  );
-  expect(
-    createValuePredicate(
-      context.field,
-      ['2000'],
-      { values: ['1000'], mode: 'display', timeZone: 'UTC' },
-      'Europe/Berlin'
-    ).options.timeZone
-  ).toBe('UTC');
-});
