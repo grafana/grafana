@@ -4,16 +4,12 @@ import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
-import { setManagedBadge } from '@grafana/runtime/internal';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
 
 import { createFetchResponse } from '../../../test/helpers/createFetchResponse';
 
 import { PlaylistEditPage } from './PlaylistEditPage';
-
-setManagedBadge(ManagedBadge);
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
