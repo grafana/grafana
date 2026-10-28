@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
 
 import { createTheme, type Field, FieldType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type Column } from '@grafana/react-data-grid';
 
 import { TableFilterProvider, useTableFilters } from '../TableFilterContext';
@@ -323,6 +324,31 @@ describe('HeaderCell', () => {
     expect(filterButton).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(filterButton);
     expect(filterButton).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('keeps only one column filter popup open', async () => {
+    const first = makeField({ config: { custom: { filterable: true } } });
+    const second = makeField({
+      name: 'Field2',
+      values: ['x', 'y', 'z'],
+      config: { custom: { filterable: true } },
+    });
+    render(
+      <TableFilterProvider props={{ data: { fields: [first, second], length: 3 }, width: 300, height: 200 }}>
+        <HeaderCell {...baseProps} field={first} />
+        <HeaderCell {...baseProps} field={second} column={{ key: 'Field2' } as Column<TableRow, TableSummaryRow>} />
+      </TableFilterProvider>
+    );
+    const firstButton = screen.getByLabelText('Filter Field1');
+    const secondButton = screen.getByLabelText('Filter Field2');
+
+    await userEvent.click(firstButton);
+    expect(firstButton).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.click(secondButton);
+
+    expect(firstButton).toHaveAttribute('aria-expanded', 'false');
+    expect(secondButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getAllByTestId(selectors.components.Panels.Visualization.TableNG.Filters.Container)).toHaveLength(1);
   });
 
   describe('table.refresh', () => {

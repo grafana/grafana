@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   type Field,
@@ -74,8 +74,24 @@ export function useFilterPopupState({
   const range: RangeValueMatcherOptions<number> | undefined =
     predicate?.id === 'between' ? predicate.options : undefined;
   const filterKey = useMemo(() => (field ? tableFilterKey(field, parentIndex) : name), [field, parentIndex, name]);
+  const setOpenFilterKey = view?.setOpenFilterKey;
 
-  const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
+  const [localPopoverVisible, setLocalPopoverVisible] = useState(false);
+  const isPopoverVisible = view ? view.openFilterKey === filterKey : localPopoverVisible;
+  const setPopoverVisible = useCallback<React.Dispatch<React.SetStateAction<boolean>>>(
+    (next) => {
+      if (!setOpenFilterKey) {
+        setLocalPopoverVisible(next);
+        return;
+      }
+      setOpenFilterKey((current) => {
+        const visible = current === filterKey;
+        const nextVisible = typeof next === 'function' ? next(visible) : next;
+        return nextVisible ? filterKey : visible ? undefined : current;
+      });
+    },
+    [setOpenFilterKey, filterKey]
+  );
   const [searchFilter, setSearchFilter] = useState('');
   const [operator, setOperator] = useState<SelectableValue<FilterOperator>>(
     operatorSelectableValues()[FilterOperator.CONTAINS]
@@ -87,7 +103,7 @@ export function useFilterPopupState({
     if (unsupportedReason) {
       setPopoverVisible(false);
     }
-  }, [snapshot, unsupportedReason]);
+  }, [snapshot, unsupportedReason, setPopoverVisible]);
 
   // Show options scoped to the current cross-filter state:
   // - Active filter: rows available before that filter was applied (keeps its own options visible).

@@ -45,7 +45,9 @@ export function RangeFilterFrame({
   const count = invalid
     ? 0
     : unbounded
-      ? values.length
+      ? includeMissing
+        ? values.length - finite.length
+        : values.length
       : finite.filter((value) => (min == null || value >= min) && (max == null || value <= max)).length +
         (includeMissing ? values.length - finite.length : 0);
 
@@ -66,19 +68,17 @@ export function RangeFilterFrame({
           {t('grafana-ui.table.range.invalid', 'Enter valid bounds with minimum no greater than maximum.')}
         </FieldValidationMessage>
       )}
-      {!unbounded && (
-        <FilterMissingValues
-          value={includeMissing}
-          onChange={setIncludeMissing}
-          testId={rangeSelectors.includeMissingCheckbox}
-        />
-      )}
+      <FilterMissingValues
+        value={includeMissing}
+        onChange={setIncludeMissing}
+        testId={rangeSelectors.includeMissingCheckbox}
+      />
       <FilterPopupFooter
         selectedRows={count}
         totalRows={values.length}
         onClear={range !== undefined ? onClear : undefined}
         onCancel={onCancel}
-        onApply={() => (unbounded ? onClear() : onApply({ min, max, includeMissing }))}
+        onApply={() => (unbounded && !includeMissing ? onClear() : onApply({ min, max, includeMissing }))}
         applyLabel={t('grafana-ui.table.range.apply', 'Apply')}
         applyDisabled={invalid}
         clearTestId={rangeSelectors.clearButton}
