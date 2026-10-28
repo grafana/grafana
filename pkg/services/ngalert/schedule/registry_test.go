@@ -349,6 +349,57 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		require.Equal(t, f, f2)
 	})
 
+	t.Run("fields that cannot change the state cache ID should be excluded from fingerprint", func(t *testing.T) {
+		base := models.CopyRule(rule)
+		base.Record = nil
+		fBase := ruleWithFolder{rule: base, folderTitle: title}.Fingerprint()
+
+		mutations := map[string]func(r *models.AlertRule){
+			"RuleGroup":    func(r *models.AlertRule) { r.RuleGroup += "-changed" },
+			"DashboardUID": func(r *models.AlertRule) { r.DashboardUID = new(uuid.NewV4().String()) },
+			"PanelID":      func(r *models.AlertRule) { r.PanelID = new(int64(123)) },
+			"For":          func(r *models.AlertRule) { r.For += time.Minute },
+			"NoDataState": func(r *models.AlertRule) {
+				if r.NoDataState == models.NoData {
+					r.NoDataState = models.OK
+				} else {
+					r.NoDataState = models.NoData
+				}
+			},
+			"ExecErrState": func(r *models.AlertRule) {
+				if r.ExecErrState == models.ErrorErrState {
+					r.ExecErrState = models.OkErrState
+				} else {
+					r.ExecErrState = models.ErrorErrState
+				}
+			},
+		}
+		for name, mutate := range mutations {
+			t.Run(name, func(t *testing.T) {
+				cp := models.CopyRule(base)
+				mutate(cp)
+				require.Equal(t, fBase, ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint())
+			})
+		}
+
+		t.Run("Record presence", func(t *testing.T) {
+			cp := models.CopyRule(base)
+			cp.Record = &models.Record{Metric: "metric_a", From: "A"}
+			require.Equal(t, fBase, ruleWithFolder{rule: cp, folderTitle: title}.Fingerprint())
+		})
+
+		t.Run("Record content", func(t *testing.T) {
+			a := models.CopyRule(base)
+			a.Record = &models.Record{Metric: "metric_a", From: "A"}
+			b := models.CopyRule(base)
+			b.Record = &models.Record{Metric: "metric_b", From: "B"}
+			require.Equal(t,
+				ruleWithFolder{rule: a, folderTitle: title}.Fingerprint(),
+				ruleWithFolder{rule: b, folderTitle: title}.Fingerprint(),
+			)
+		})
+	})
+
 	t.Run("all other fields should be considered", func(t *testing.T) {
 		r1 := &models.AlertRule{
 			ID:        1,
@@ -453,6 +504,14 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			"GUID":            {},
 			"FolderFullpath":  {}, // Populated lazily from DB, not part of rule fingerprint
 			"K8sStatus":       {},
+			// cannot change the state cache ID
+			"RuleGroup":    {},
+			"DashboardUID": {},
+			"PanelID":      {},
+			"For":          {},
+			"NoDataState":  {},
+			"ExecErrState": {},
+			"Record":       {},
 		}
 
 		tp := reflect.TypeOf(rule).Elem()

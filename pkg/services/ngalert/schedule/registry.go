@@ -240,7 +240,8 @@ type ruleWithFolder struct {
 	folderTitle string
 }
 
-// fingerprint calculates a fingerprint that includes all fields except rule's Version and Update timestamp.
+// Fingerprint calculates a fingerprint of the fields that can change the state cache ID.
+// Changing any other field keeps the fingerprint, so the state of the rule is not reset.
 func (r ruleWithFolder) Fingerprint() fingerprint {
 	rule := r.rule
 
@@ -331,23 +332,6 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 
 	if rule.NotificationSettings != nil {
 		binary.LittleEndian.PutUint64(tmp, uint64(rule.NotificationSettings.Fingerprint(nil)))
-		writeBytes(tmp)
-	}
-
-	// fields that do not affect the state.
-	// TODO consider removing fields below from the fingerprint
-	writeInt(int64(rule.For))
-	if rule.DashboardUID != nil {
-		writeString(*rule.DashboardUID)
-	}
-	if rule.PanelID != nil {
-		writeInt(*rule.PanelID)
-	}
-	writeString(rule.RuleGroup)
-	writeString(string(rule.NoDataState))
-	writeString(string(rule.ExecErrState))
-	if rule.Record != nil {
-		binary.LittleEndian.PutUint64(tmp, uint64(rule.Record.Fingerprint()))
 		writeBytes(tmp)
 	}
 
