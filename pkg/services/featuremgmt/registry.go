@@ -399,6 +399,15 @@ var (
 			Generate:     Generate{LegacyGo: true},
 		},
 		{
+			Name:         "kubernetesFolderCascadeDeleteAsync",
+			Description:  "Enable the async folder controller's cascade-delete finalizer and status.cascadeDelete reporting on folder.grafana.app. Does not yet perform cascade deletion on its own",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true},
+		},
+		{
 			Name:            "kubernetesFolderCountsLegacyStorage",
 			Description:     "Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise",
 			Stage:           FeatureStageExperimental,

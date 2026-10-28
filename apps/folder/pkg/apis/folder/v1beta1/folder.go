@@ -10,10 +10,21 @@ import (
 )
 
 type (
-	Folder          = v1.Folder
-	FolderList      = v1.FolderList
-	FolderSpec      = v1.FolderSpec
-	FolderJSONCodec = v1.FolderJSONCodec
+	Folder                         = v1.Folder
+	FolderList                     = v1.FolderList
+	FolderSpec                     = v1.FolderSpec
+	FolderStatus                   = v1.FolderStatus
+	FolderCascadeDeleteStatus      = v1.FolderCascadeDeleteStatus
+	FolderCascadeDeleteStatusState = v1.FolderCascadeDeleteStatusState
+	FolderJSONCodec                = v1.FolderJSONCodec
+)
+
+const (
+	FolderCascadeDeleteStatusStateNone       = v1.FolderCascadeDeleteStatusStateNone
+	FolderCascadeDeleteStatusStatePending    = v1.FolderCascadeDeleteStatusStatePending
+	FolderCascadeDeleteStatusStateInProgress = v1.FolderCascadeDeleteStatusStateInProgress
+	FolderCascadeDeleteStatusStateCompleted  = v1.FolderCascadeDeleteStatusStateCompleted
+	FolderCascadeDeleteStatusStateFailed     = v1.FolderCascadeDeleteStatusStateFailed
 )
 
 var (

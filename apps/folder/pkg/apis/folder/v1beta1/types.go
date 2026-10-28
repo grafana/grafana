@@ -16,3 +16,6 @@ type (
 )
 
 var UnstructuredToDescendantCounts = folderapiv1.UnstructuredToDescendantCounts
+
+// CascadeDeleteFinalizer is shared with v1; see folderapiv1.CascadeDeleteFinalizer.
+const CascadeDeleteFinalizer = folderapiv1.CascadeDeleteFinalizer

@@ -4074,6 +4074,20 @@
     },
     {
       "metadata": {
+        "name": "kubernetesFolderCascadeDeleteAsync",
+        "resourceVersion": "1793146357081",
+        "creationTimestamp": "2026-10-28T00:12:37Z"
+      },
+      "spec": {
+        "description": "Enable the async folder controller's cascade-delete finalizer and status.cascadeDelete reporting on folder.grafana.app. Does not yet perform cascade deletion on its own",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesFolderCountsLegacyStorage",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-11T15:39:49Z"

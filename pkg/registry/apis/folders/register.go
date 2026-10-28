@@ -292,6 +292,12 @@ func (b *FolderAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
 
+	// Status is served off the raw unified store, bypassing the ST/cascade-delete
+	// wrappers above. GetAuthorizer below is not yet subresource-aware for folders.
+	// TODO: scope status writes to the folder controller's identity (see provisioning's
+	// per-subresource authorizer for the pattern) before anything acts on this status.
+	storage[folders.StoragePath("status")] = grafanaregistry.NewRegistryStatusStore(opts.Scheme, unified)
+
 	b.parents = newParentsGetter(b.storage) // used for validation
 	storage[folders.StoragePath("parents")] = &subParentsREST{
 		getter:  b.storage,
