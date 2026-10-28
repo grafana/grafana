@@ -46,7 +46,7 @@ import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview/DashboardFiltersOverviewPaneToggle';
-import { dashboardModesEnabled, isViewingDashboard } from './dashboardModes';
+import { dashboardModesEnabled, getDashboardMode } from './dashboardModes';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
@@ -325,7 +325,7 @@ function DashboardControlActions({
   const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying && !editPanel;
   const modesEnabled = dashboardModesEnabled();
   const showSaveButton =
-    isEditing && (canSave || canSaveAs) && !isEditingLibraryPanel && !isViewingDashboard(dashboard.state);
+    isEditing && (canSave || canSaveAs) && !isEditingLibraryPanel && getDashboardMode(dashboard.state) !== 'view';
   // A draft (a new dashboard proposed as pending changes) has no uid until it's saved.
   const isDraft = Boolean(meta.newDashboardUid);
   const showEditButton = (hasUid || isDraft) && !isPlaying && canEditDashboard && isEditable && !editPanel;
