@@ -2811,8 +2811,7 @@ func TestDeleteFolderWithParallelDashboardDeletes(t *testing.T) {
 		t.Skip("test only on sqlite for now")
 	}
 
-	t.Setenv("GF_FOLDER_PARALLEL_DASHBOARD_DELETE_ENABLED", "true")
-	t.Setenv("GF_FOLDER_PARALLEL_DASHBOARD_DELETE_CONCURRENCY", "8")
+	t.Setenv("GF_FEATURE_TOGGLES_"+featuremgmt.FlagFoldersParallelDashboardDeleteConcurrency, "8")
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		AppModeProduction:    true,
