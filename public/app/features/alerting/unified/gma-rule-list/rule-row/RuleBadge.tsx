@@ -5,6 +5,7 @@ import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/ru
 import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
+import { getRulePluginOrigin } from '../../utils/rules';
 
 interface RuleBadgeProps {
   rule: Pick<AlertRule | RecordingRule, 'metadata' | 'spec'>;
@@ -16,9 +17,9 @@ interface RuleBadgeProps {
  * Plugin badge takes priority.
  */
 export function RuleBadge({ rule }: RuleBadgeProps): ReactNode {
-  const origin = rule.spec?.labels?.__grafana_origin;
-  if (origin?.startsWith('plugin/')) {
-    return <PluginOriginBadge pluginId={origin.slice('plugin/'.length)} size="sm" />;
+  const pluginOrigin = getRulePluginOrigin({ labels: rule.spec?.labels });
+  if (pluginOrigin) {
+    return <PluginOriginBadge pluginId={pluginOrigin.pluginId} size="sm" />;
   }
   if (isK8sEntityProvisioned(rule)) {
     const provenance = rule.metadata?.annotations?.['grafana.com/provenance'];
