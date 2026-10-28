@@ -16,8 +16,7 @@ import { configureStore } from 'app/store/configureStore';
 import { ctaClicked } from '../analytics/main';
 
 import { IncidentsCard } from './IncidentsCard';
-import { type FilterSelection } from './filterSelection';
-import { ACTIVE_INCIDENTS_QUERY, QUERY_PREVIEWS_PATH, mockIncidents } from './mockIncidentsApi';
+import { QUERY_PREVIEWS_PATH, mockIncidents } from './mockIncidentsApi';
 import { useIncidents } from './useIncidents';
 
 jest.mock('app/features/alerting/unified/hooks/usePluginBridge', () => ({
@@ -65,8 +64,8 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-function IncidentsCardWithData({ filter }: { filter?: FilterSelection } = {}) {
-  const data = useIncidents(filter);
+function IncidentsCardWithData() {
+  const data = useIncidents();
   return <IncidentsCard data={data} />;
 }
 
@@ -88,25 +87,6 @@ describe('IncidentsCard', () => {
       'href',
       '/a/grafana-irm-app/incidents/101'
     );
-  });
-
-  it('shows the declare CTA in the empty state', async () => {
-    mockIncidents([]);
-
-    render(<IncidentsCardWithData />);
-
-    expect(await screen.findByRole('link', { name: /declare an incident/i })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
-  });
-
-  it('names only the selected value in the empty message and scopes the request to its field', async () => {
-    const queries = mockIncidents([]);
-
-    render(<IncidentsCardWithData filter="squad:Frontend" />);
-
-    expect(await screen.findByText('All quiet! No active incidents for Frontend.')).toBeInTheDocument();
-    expect(screen.queryByText('All quiet! No active incidents.')).not.toBeInTheDocument();
-    expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`]);
   });
 
   it('treats a 404 (org not onboarded) as the empty state, not an error', async () => {

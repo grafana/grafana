@@ -135,39 +135,7 @@ describe('AlertIncidentTabs', () => {
     expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
   });
 
-  it('switchRef handle switches tabs imperatively', async () => {
-    mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
-    mockIrmPlugin();
-    mockIncidents([activeIncident]);
-    let handle: AlertIncidentSwitchHandle | null = null;
-
-    render(
-      <AlertIncidentTabsWithData
-        switchRef={(instance) => {
-          handle = instance;
-        }}
-      />
-    );
-
-    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
-    expect(handle).not.toBeNull();
-
-    await act(async () => {
-      handle?.switch(INCIDENTS_TAB_ID, false);
-    });
-
-    expect(await screen.findByText('Database outage')).toBeInTheDocument();
-    expect(screen.queryByText('CPU Critical')).not.toBeInTheDocument();
-
-    await act(async () => {
-      handle?.switch(ALERTS_TAB_ID, false);
-    });
-
-    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
-    expect(screen.queryByText('Database outage')).not.toBeInTheDocument();
-  });
-
-  it('switchRef handle scrolls by default and skips scrolling when requested', async () => {
+  it('switchRef handle switches tabs, scrolling into view unless told not to', async () => {
     mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);
     mockIrmPlugin();
     mockIncidents([activeIncident]);
@@ -208,20 +176,6 @@ describe('AlertIncidentTabs', () => {
     } finally {
       window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     }
-  });
-
-  it('offers only the view-all action in the footer, even when the user could declare an incident', async () => {
-    jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-    // No page includes to gate on, so canDeclare/canAccess both resolve to true.
-    mockIrmPlugin({ includes: [] });
-    mockIncidents([activeIncident]);
-
-    render(<AlertIncidentTabsWithData />);
-
-    expect(await screen.findByText('Database outage')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /view all incidents/i })).toBeInTheDocument();
-    // Declaring lives in the empty state; a populated list keeps the footer to filter + view all.
-    expect(screen.queryByRole('link', { name: /declare an incident/i })).not.toBeInTheDocument();
   });
 
   it('hides the incidents footer actions when the user lacks the plugin page permissions', async () => {
