@@ -46,11 +46,16 @@ The page loads its bundle from `public/build-swagger`, which the normal frontend
 | ------------- | -------------------------------------------- |
 | `/swagger`    | The API navigator                            |
 | `/swagger-ui` | Deprecated, redirects to `/swagger`          |
-| `/openapi3`   | Deprecated, redirects to `/swagger`          |
 | `/public/*`   | The swagger bundle and the OpenAPI spec files |
 | `/metrics`    | Prometheus metrics (standalone only)         |
 | `/-/health`   | Liveness check (standalone only)             |
 
 ## Deploying separately
 
-The page also requests `/openapi/v3`, `/apis` and `/apis/iam.grafana.app/v0alpha1/whoami` (see `public/swagger/SwaggerPage.tsx` and `public/swagger/whoami.ts`). The Grafana API serves those, not this service. A standalone deployment therefore needs a proxy that sends `/swagger` and `/public` here and the API paths to the core server, the same setup the frontend service (`pkg/services/frontend`) uses. Without the proxy, the page still renders, but the API selector and user panes stay empty.
+The page also requests `/openapi/v3`, `/apis` and `/apis/iam.grafana.app/v0alpha1/whoami` (see `public/swagger/apiSpecs.ts` and `public/swagger/whoami.ts`). The Grafana API serves those, not this service. A standalone deployment therefore needs a proxy that sends `/swagger` and `/public` here and the API paths to the core server, the same setup the frontend service (`pkg/services/frontend`) uses. Without the proxy, the page still renders, but the API picker lists only the two Grafana specs and no user is shown.
+
+The proxy is also expected to handle what the core server would. The standalone server:
+
+- Serves plain HTTP only. `protocol`, `cert_file` and `cert_key` are ignored, so terminate TLS at the proxy.
+- Ignores `serve_from_sub_path`. The proxy has to strip the sub-path before forwarding.
+- Serves `/metrics` on `http_port` without authentication. `[metrics] enabled` and the `basic_auth_*` settings don't apply, so don't expose `/metrics` through the proxy.

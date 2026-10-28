@@ -55,10 +55,34 @@ export function compareVersions(a: string, b: string): number {
   return stabilityRank[pb.stability] - stabilityRank[pa.stability] || pb.major - pa.major || pb.minor - pa.minor;
 }
 
+type OpenAPIPaths = Record<string, { serverRelativeURL: string }>;
+
+// loadSpecs lists the specs the picker offers. Either request can fail, for
+// example on a standalone swagger-server without a proxy, and the builtin
+// Grafana specs, which are static files, must still be listed.
+export async function loadSpecs(): Promise<APISpec[]> {
+  const [openapi, groupList] = await Promise.all([
+    fetchJSON<{ paths?: OpenAPIPaths }>('openapi/v3'),
+    fetchJSON<APIGroupList>('apis'),
+  ]);
+  return buildSpecs(openapi?.paths ?? {}, groupList);
+}
+
+async function fetchJSON<T>(url: string): Promise<T | undefined> {
+  try {
+    const rsp = await fetch(url);
+    return rsp.ok ? await rsp.json() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 // buildSpecs lists the Grafana API specs followed by one spec per API group
 // version, sorted by API group and by version priority within each group.
-// paths is the index served at /openapi/v3.
-export function buildSpecs(paths: Record<string, { serverRelativeURL: string }>, groupList?: APIGroupList): APISpec[] {
+// Combobox moves all options without a group into one block, so single-version
+// groups are shown together rather than in this order. paths is the index
+// served at /openapi/v3.
+export function buildSpecs(paths: OpenAPIPaths, groupList?: APIGroupList): APISpec[] {
   const preferred = new Map(groupList?.groups?.map((g) => [g.name, g.preferredVersion?.version]));
 
   const versionsByGroup = new Map<string, Array<{ version: string; url: string }>>();

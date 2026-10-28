@@ -132,6 +132,13 @@ func (s *swaggerService) addMiddlewares(m *web.Mux) {
 	// specs it renders from public/*.json, so the whole public dir is served.
 	s.mapStatic(m, webassets.BuildDir, "public/build")
 	s.mapStatic(m, "", "public")
+
+	// Registered after the static handlers, as on the core server, so static
+	// files keep their cache headers instead of getting no-store.
+	if len(s.cfg.CustomResponseHeaders) > 0 {
+		m.Use(middleware.AddCustomResponseHeaders(s.cfg))
+	}
+	m.Use(middleware.AddDefaultResponseHeaders(s.cfg))
 }
 
 func (s *swaggerService) mapStatic(m *web.Mux, dir string, prefix string) {
@@ -169,8 +176,6 @@ func (s *swaggerService) registerRoutes(m *web.Mux) {
 
 	// Deprecated
 	s.routeGet(m, "/swagger-ui", handleRedirect)
-	// Deprecated
-	s.routeGet(m, "/openapi3", handleRedirect)
 
 	s.routeGet(m, "/swagger", s.handler.handleRequest)
 }

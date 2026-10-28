@@ -8,27 +8,16 @@ import { t, Trans } from '@grafana/i18n';
 import { Alert, Button, Combobox, Icon, Stack, UserIcon } from '@grafana/ui';
 
 import { SpecOption } from './SpecOption';
-import { type APIGroupList, buildSpecs } from './apiSpecs';
+import { loadSpecs } from './apiSpecs';
 import { NamespaceContext } from './contexts';
 import { WrappedPlugins } from './plugins';
 import { loadWhoAmI } from './whoami';
-
-async function loadGroupList(): Promise<APIGroupList | undefined> {
-  // Only used to mark preferred versions, so the picker still works without it.
-  try {
-    const rsp = await fetch('apis');
-    return rsp.ok ? await rsp.json() : undefined;
-  } catch {
-    return undefined;
-  }
-}
 
 export const Page = () => {
   const theme = createTheme({ colors: { mode: 'light' } });
   const [api, setAPI] = useState<string>();
   const specs = useAsync(async () => {
-    const [openapi, groupList] = await Promise.all([fetch('openapi/v3').then((rsp) => rsp.json()), loadGroupList()]);
-    const specs = buildSpecs(openapi.paths, groupList);
+    const specs = await loadSpecs();
 
     const requested = new URLSearchParams(window.location.search).get('api');
     setAPI((specs.find((s) => s.key === requested) ?? specs[0]).key); // Remove to start at the generic landing page

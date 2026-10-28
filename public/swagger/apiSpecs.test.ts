@@ -1,4 +1,4 @@
-import { buildSpecs, compareVersions, grafanaGroup } from './apiSpecs';
+import { buildSpecs, compareVersions, grafanaGroup, loadSpecs } from './apiSpecs';
 
 function paths(...groupVersions: string[]) {
   return Object.fromEntries(
@@ -27,7 +27,7 @@ describe('compareVersions', () => {
 });
 
 describe('buildSpecs', () => {
-  it('lists the Grafana specs first, then sorts by API group, grouping only groups with several versions', () => {
+  it('lists the Grafana specs first, then sorts by API group, setting a group only when there are several versions', () => {
     const specs = buildSpecs(
       paths('folder.grafana.app/v1', 'dashboard.grafana.app/v0alpha1', 'dashboard.grafana.app/v1')
     );
@@ -98,5 +98,37 @@ describe('buildSpecs', () => {
       'iam.grafana.app-v1beta1': false,
       'iam.grafana.app-v0alpha1': false,
     });
+  });
+});
+
+describe('loadSpecs', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('combines the OpenAPI index with discovery', async () => {
+    jest
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async (url) =>
+        url === 'apis'
+          ? new Response(JSON.stringify({ groups: [{ name: 'a.grafana.app', preferredVersion: { version: 'v1' } }] }))
+          : new Response(JSON.stringify({ paths: paths('a.grafana.app/v1', 'a.grafana.app/v0alpha1') }))
+      );
+
+    const specs = await loadSpecs();
+
+    expect(specs.find((s) => s.preferred)?.key).toBe('a.grafana.app-v1');
+  });
+
+  it.each([
+    ['is rejected', () => Promise.resolve(new Response('Unauthorized', { status: 401 }))],
+    ['is not JSON', () => Promise.resolve(new Response('404 page not found'))],
+    ['fails on the network', () => Promise.reject(new Error('offline'))],
+  ])('still lists the Grafana specs when the request %s', async (_, response) => {
+    jest.spyOn(globalThis, 'fetch').mockImplementation(response);
+
+    const specs = await loadSpecs();
+
+    expect(specs.map((s) => s.key)).toEqual(['openapi2', 'openapi3']);
   });
 });

@@ -63,16 +63,6 @@ func TestHandler_HandleRequest(t *testing.T) {
 	})
 }
 
-func TestHandleRedirect(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/openapi3", nil)
-	recorder := httptest.NewRecorder()
-
-	handleRedirect(recorder, req)
-
-	assert.Equal(t, http.StatusMovedPermanently, recorder.Code)
-	assert.Equal(t, "/swagger", recorder.Header().Get("Location"))
-}
-
 func TestHandler_ContentDeliveryURL(t *testing.T) {
 	cfg := newTestCfg(t)
 	cfg.BuildVersion = "10.3.0"
@@ -107,16 +97,19 @@ func TestProvideService(t *testing.T) {
 		assert.Contains(t, recorder.Body.String(), "<title>Grafana API Reference</title>")
 	})
 
-	t.Run("should mount the deprecated redirects on the route register", func(t *testing.T) {
-		for _, path := range []string{"/swagger-ui", "/openapi3"} {
-			t.Run(path, func(t *testing.T) {
-				recorder := httptest.NewRecorder()
-				mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+	t.Run("should redirect the deprecated /swagger-ui to /swagger", func(t *testing.T) {
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/swagger-ui", nil))
 
-				assert.Equal(t, http.StatusMovedPermanently, recorder.Code)
-				assert.Equal(t, "/swagger", recorder.Header().Get("Location"))
-			})
-		}
+		assert.Equal(t, http.StatusMovedPermanently, recorder.Code)
+		assert.Equal(t, "/swagger", recorder.Header().Get("Location"))
+	})
+
+	t.Run("should not mount the removed /openapi3 redirect", func(t *testing.T) {
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/openapi3", nil))
+
+		assert.Equal(t, http.StatusNotFound, recorder.Code)
 	})
 }
 

@@ -107,18 +107,19 @@ func TestSwaggerService_Routes(t *testing.T) {
 		assert.Contains(t, body, `href="public/build-swagger/grafana.swagger.css"`)
 	})
 
-	t.Run("should redirect the deprecated routes to /swagger", func(t *testing.T) {
-		for _, path := range []string{"/swagger-ui", "/openapi3"} {
-			t.Run(path, func(t *testing.T) {
-				req := httptest.NewRequest(http.MethodGet, path, nil)
-				recorder := httptest.NewRecorder()
+	t.Run("should redirect the deprecated /swagger-ui to /swagger", func(t *testing.T) {
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/swagger-ui", nil))
 
-				mux.ServeHTTP(recorder, req)
+		assert.Equal(t, http.StatusMovedPermanently, recorder.Code)
+		assert.Equal(t, "/swagger", recorder.Header().Get("Location"))
+	})
 
-				assert.Equal(t, http.StatusMovedPermanently, recorder.Code)
-				assert.Equal(t, "/swagger", recorder.Header().Get("Location"))
-			})
-		}
+	t.Run("should not serve the removed /openapi3 redirect", func(t *testing.T) {
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/openapi3", nil))
+
+		assert.Equal(t, http.StatusNotFound, recorder.Code)
 	})
 
 	t.Run("should serve the swagger bundle from the static root", func(t *testing.T) {
@@ -152,6 +153,43 @@ func TestSwaggerService_Routes(t *testing.T) {
 		mux.ServeHTTP(recorder, req)
 
 		assert.Contains(t, recorder.Body.String(), "\nshrimp_count 1\n")
+	})
+}
+
+func TestSwaggerService_ResponseHeaders(t *testing.T) {
+	cfg := newTestCfg(t)
+	cfg.ContentTypeProtectionHeader = true
+	cfg.CustomResponseHeaders = map[string]string{"X-Custom": "custom"}
+	mux := newTestMux(t, createTestService(t, cfg))
+
+	t.Run("should add the core server's security and custom headers to the page", func(t *testing.T) {
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/swagger", nil))
+
+		require.Equal(t, http.StatusOK, recorder.Code)
+		assert.Equal(t, "deny", recorder.Header().Get("X-Frame-Options"))
+		assert.Equal(t, "nosniff", recorder.Header().Get("X-Content-Type-Options"))
+		assert.Equal(t, "no-store", recorder.Header().Get("Cache-Control"))
+		assert.Equal(t, "custom", recorder.Header().Get("X-Custom"))
+	})
+
+	t.Run("should allow framing when embedding is enabled", func(t *testing.T) {
+		cfg := newTestCfg(t)
+		cfg.AllowEmbedding = true
+		mux := newTestMux(t, createTestService(t, cfg))
+
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/swagger", nil))
+
+		assert.Empty(t, recorder.Header().Get("X-Frame-Options"))
+	})
+
+	t.Run("should keep the cache headers on static files", func(t *testing.T) {
+		recorder := httptest.NewRecorder()
+		mux.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/public/build-swagger/assets-manifest.json", nil))
+
+		require.Equal(t, http.StatusOK, recorder.Code)
+		assert.NotEqual(t, "no-store", recorder.Header().Get("Cache-Control"))
 	})
 }
 

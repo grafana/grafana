@@ -62,8 +62,6 @@ func newHandler(cfg *setting.Cfg, license licensing.Licensing) *Handler {
 func (h *Handler) registerRoutes(rr routing.RouteRegister) {
 	// Deprecated
 	rr.Get("/swagger-ui", handleRedirect)
-	// Deprecated
-	rr.Get("/openapi3", handleRedirect)
 
 	rr.Get("/swagger", h.handleRequest)
 }
