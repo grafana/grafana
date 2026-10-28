@@ -19,15 +19,15 @@ type UpdateAdminConfigurationCmd struct {
 
 //go:generate mockery --name AdminConfigurationStore --structname AdminConfigurationStoreMock --inpackage --filename admin_configuration_store_mock.go --with-expecter
 type AdminConfigurationStore interface {
-	GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfiguration, error)
-	GetAdminConfigurations() ([]*ngmodels.AdminConfiguration, error)
-	DeleteAdminConfiguration(orgID int64) error
-	UpdateAdminConfiguration(UpdateAdminConfigurationCmd) error
+	GetAdminConfiguration(ctx context.Context, orgID int64) (*ngmodels.AdminConfiguration, error)
+	GetAdminConfigurations(ctx context.Context) ([]*ngmodels.AdminConfiguration, error)
+	DeleteAdminConfiguration(ctx context.Context, orgID int64) error
+	UpdateAdminConfiguration(ctx context.Context, cmd UpdateAdminConfigurationCmd) error
 }
 
-func (st *DBstore) GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfiguration, error) {
+func (st *DBstore) GetAdminConfiguration(ctx context.Context, orgID int64) (*ngmodels.AdminConfiguration, error) {
 	cfg := &ngmodels.AdminConfiguration{}
-	err := st.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		ok, err := sess.Table("ngalert_configuration").Where("org_id = ?", orgID).Get(cfg)
 		if err != nil {
 			return err
@@ -47,9 +47,9 @@ func (st *DBstore) GetAdminConfiguration(orgID int64) (*ngmodels.AdminConfigurat
 	return cfg, nil
 }
 
-func (st DBstore) GetAdminConfigurations() ([]*ngmodels.AdminConfiguration, error) {
+func (st DBstore) GetAdminConfigurations(ctx context.Context) ([]*ngmodels.AdminConfiguration, error) {
 	var cfg []*ngmodels.AdminConfiguration
-	err := st.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		if err := sess.Table("ngalert_configuration").Find(&cfg); err != nil {
 			return err
 		}
@@ -64,8 +64,8 @@ func (st DBstore) GetAdminConfigurations() ([]*ngmodels.AdminConfiguration, erro
 	return cfg, nil
 }
 
-func (st DBstore) DeleteAdminConfiguration(orgID int64) error {
-	return st.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+func (st DBstore) DeleteAdminConfiguration(ctx context.Context, orgID int64) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Exec("DELETE FROM ngalert_configuration WHERE org_id = ?", orgID)
 		if err != nil {
 			return err
@@ -75,8 +75,8 @@ func (st DBstore) DeleteAdminConfiguration(orgID int64) error {
 	})
 }
 
-func (st DBstore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) error {
-	return st.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
+func (st DBstore) UpdateAdminConfiguration(ctx context.Context, cmd UpdateAdminConfigurationCmd) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		existing := &ngmodels.AdminConfiguration{}
 		has, err := sess.Table("ngalert_configuration").Where("org_id = ?", cmd.AdminConfiguration.OrgID).Get(existing)
 		if err != nil {

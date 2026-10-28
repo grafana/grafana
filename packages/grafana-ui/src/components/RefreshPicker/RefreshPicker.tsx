@@ -67,7 +67,7 @@ const RefreshPickerComponent = memo((props: Props) => {
     showAutoInterval,
     width,
     primary,
-    isOnCanvas,
+    isOnCanvas = true,
   } = props;
   const styles = useStyles2(getStyles);
   const currentValue = value || '';

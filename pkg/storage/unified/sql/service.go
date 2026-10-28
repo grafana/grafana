@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
-	appsdk "github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -82,6 +81,7 @@ type service struct {
 	searchRing       *ring.Ring
 	ringLifecycler   *ring.BasicLifecycler // Ring state for sharding
 	searchStandalone bool
+	drainGRPC        func()
 	authenticator    interceptors.AuthenticatorFunc
 
 	// uninitializedSearchServer holds the server created during module init, whose Init() is
@@ -92,6 +92,11 @@ type service struct {
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
 // ServiceOption allows customizing service behavior
 type ServiceOption func(*service)
+
+// WithGRPCDrain keeps search indexes available until accepted RPCs finish.
+func WithGRPCDrain(drain func()) ServiceOption {
+	return func(s *service) { s.drainGRPC = drain }
+}
 
 // WithWatchExpiry shares notification invalidation with the resource server.
 func WithWatchExpiry(expiry resource.WatchExpiry) ServiceOption {
@@ -425,13 +430,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	// its initial poll completes before the index is built.
 	if searchOptions.SearchFields != nil || searchOptions.EmbeddingConfig != nil {
 		if mwCfg := resource.NewManifestWatcherConfig(s.cfg); mwCfg != nil {
-			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, func(live []*appsdk.ManifestData) {
-				if err := searchOptions.ReloadManifests(resource.AppManifests(), live); err != nil {
-					s.log.Error("manifest reload failed, keeping current search fields", "error", err)
-					return
-				}
-				s.log.Info("manifest reload applied", "live_manifests", len(live))
-			})
+			watcher, err := resource.NewManifestWatcher(*mwCfg, s.reg, searchOptions.ManifestReloader(s.log))
 			if err != nil {
 				return err
 			}
@@ -480,15 +479,6 @@ func (s *service) running(ctx context.Context) error {
 	case err := <-s.subservicesWatcher.Chan():
 		return fmt.Errorf("subservice failure: %w", err)
 	case <-ctx.Done():
-		s.log.Info("Stopping resource server")
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := s.serverStopper.Stop(ctx); err != nil {
-			s.log.Warn("Failed to stop resource server", "error", err)
-		} else {
-			s.log.Info("Resource server stopped")
-		}
-
 		return nil
 	}
 }
@@ -508,6 +498,20 @@ func (s *service) CheckHealth(ctx context.Context) (bool, error) {
 }
 
 func (s *service) stopping(_ error) error {
+	// The gRPC module normally stops after its dependents, which is too late for active searches.
+	if s.drainGRPC != nil {
+		s.drainGRPC()
+	}
+
+	s.log.Info("Stopping resource server")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := s.serverStopper.Stop(ctx); err != nil {
+		s.log.Warn("Failed to stop resource server", "error", err)
+	} else {
+		s.log.Info("Resource server stopped")
+	}
+
 	if s.subservicesMngr != nil {
 		err := services.StopManagerAndAwaitStopped(context.Background(), s.subservicesMngr)
 		if err != nil {
@@ -590,7 +594,7 @@ func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts Ser
 
 	var vs *resource.VectorStoreServer
 	if opts.Cfg.EnableVectorStore && opts.VectorBackend != nil && opts.Embedder != nil {
-		vs = resource.NewVectorStoreServer(opts.VectorBackend, opts.Embedder, opts.Cfg.VectorAllowedExternalCollections, opts.Cfg.VectorAllowedWriteServices, opts.VectorMetrics)
+		vs = resource.NewVectorStoreServer(opts.VectorBackend, opts.Embedder, opts.Cfg.VectorAllowedExternalCollections, opts.Cfg.VectorAllowedWriteServices, opts.Cfg.VectorSharedExternalCollections, opts.VectorMetrics)
 	}
 	s.registerUnifiedResourceServer(provider, server, vs)
 	return nil

@@ -16,13 +16,11 @@ import (
 	"github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-type AMConfigDB = definitions.PostableUserConfig // TODO: Define type explicitly and move elsewhere.
-
-// AMConfigV1 is an exact structural copy of PostableUserConfig without json tags.
+// AMConfigV1 is the domain model derived from AMConfigDB (see ToModel/ToDBModel), restructuring
+// templates, receivers, inhibition rules, and time intervals into UID-keyed maps.
 type AMConfigV1 struct {
 	Templates       map[ResourceUID]TemplateGroup
 	InhibitionRules map[ResourceUID]InhibitionRule
@@ -142,17 +140,19 @@ func (c *ExtraAlertmanagerConfig) ToGrafanaReceivers() ([]*PostableApiReceiver, 
 
 // ToGrafanaRoute converts the imported route to Grafana's Route type.
 func (c *ExtraAlertmanagerConfig) ToGrafanaRoute() *Route {
-	return RouteToModel(definition.AsGrafanaRoute(c.Route))
+	return AMRouteToModel(c.Route)
 }
 
-// ToGrafanaTimeIntervals converts the imported time intervals to Grafana's type.
+// ToGrafanaTimeIntervals converts the imported time intervals to Grafana's type. Imported
+// intervals have no Grafana-persisted identity, so their UID is derived from name - same as a
+// legacy Grafana-owned row with none persisted yet.
 func (c *ExtraAlertmanagerConfig) ToGrafanaTimeIntervals() []TimeInterval {
 	out := make([]TimeInterval, 0, len(c.MuteTimeIntervals)+len(c.TimeIntervals))
 	for _, interval := range c.MuteTimeIntervals {
-		out = append(out, NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone))
+		out = append(out, NewTimeInterval(TimeIntervalUID(interval.Name), interval.Name, interval.TimeIntervals, models.ProvenanceNone))
 	}
 	for _, interval := range c.TimeIntervals {
-		out = append(out, NewTimeInterval(interval.Name, interval.TimeIntervals, models.ProvenanceNone))
+		out = append(out, NewTimeInterval(TimeIntervalUID(interval.Name), interval.Name, interval.TimeIntervals, models.ProvenanceNone))
 	}
 	return out
 }
@@ -343,10 +343,8 @@ func allReceivers(route *config.Route) (res []string) {
 }
 
 type Config struct {
-	Global       *config.GlobalConfig
 	Route        *Route
 	InhibitRules []common.InhibitRule
-	Templates    []string
 }
 
 type ObjectMatchers labels.Matchers

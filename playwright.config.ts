@@ -50,7 +50,7 @@ export default defineConfig<PluginOptions>({
   ...baseConfig,
   ...(!process.env.GRAFANA_URL && {
     webServer: {
-      command: 'yarn e2e:plugin:build && ./e2e-playwright/start-server',
+      command: 'npm run e2e:plugin:build && ./e2e-playwright/start-server',
       url: DEFAULT_URL,
       stdout: 'pipe',
       stderr: 'pipe',
@@ -115,10 +115,6 @@ export default defineConfig<PluginOptions>({
     withAuth({
       name: 'grafana-e2etest-datasource',
       testDir: path.join(testDirRoot, '/test-plugins/grafana-test-datasource'),
-    }),
-    withAuth({
-      name: 'cloudwatch',
-      testDir: path.join(pluginDirRoot, '/cloudwatch'),
     }),
     withAuth({
       name: 'azuremonitor',
@@ -200,8 +196,10 @@ export default defineConfig<PluginOptions>({
       name: 'journey-tracking',
       testDir: path.join(testDirRoot, '/journey-tracking'),
       use: {
-        featureToggles: {
-          cujTracking: true,
+        openFeature: {
+          flags: {
+            cujTracking: true,
+          },
         },
       },
     }),

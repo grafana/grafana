@@ -5,12 +5,12 @@
  * Through the exports declared in package.json we can import this code in core Grafana and the grafana/runtime
  * package will continue to be able to access all code when it's published to npm as it's private to the package.
  *
- * During the yarn pack lifecycle the exports[./internal] property is deleted from the package.json
+ * During the pnpm pack lifecycle the exports[./internal] property is deleted from the package.json
  * preventing the code from being importable by plugins or other npm packages making it truly "internal".
  *
  */
 
-export { LegacyDataSourcePicker, setDataSourcePicker } from '../components/DataSourcePicker';
+export { setDataSourcePicker } from '../components/DataSourcePicker';
 export { setPanelDataErrorView } from '../components/PanelDataErrorView';
 export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
@@ -38,7 +38,13 @@ export {
 } from '../internal/openFeature';
 export * from '../internal/openFeature/openfeature.gen';
 
-export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
+export {
+  clearAppPluginMetas,
+  getAppPluginMeta,
+  getAppPluginMetas,
+  getAppPluginMetasSync,
+  setAppPluginMetas,
+} from '../services/pluginMeta/apps';
 export {
   getDatasourcePluginMeta,
   getDatasourcePluginMetas,

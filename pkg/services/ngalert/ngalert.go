@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/expr"
@@ -733,15 +734,9 @@ func (ng *AlertNG) BackfillFolderFullpaths(ctx context.Context) error {
 		default:
 		}
 
-		// Get all unique folder UIDs for this org from alert_rule table where folder_fullpath is NULL
-		var folderUIDs []string
-		err := ng.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-			return sess.SQL(`
-				SELECT DISTINCT namespace_uid
-				FROM alert_rule
-				WHERE org_id = ? AND folder_fullpath IS NULL
-			`, orgID).Find(&folderUIDs)
-		})
+		// A routed legacy database provider needs the org identity during startup too.
+		orgCtx, _ := identity.WithServiceIdentity(ctx, orgID)
+		folderUIDs, err := ng.ruleStore.GetFolderUIDsWithMissingFullpath(orgCtx, orgID)
 		if err != nil {
 			ng.Log.Error("Failed to fetch folder UIDs for backfill", "org_id", orgID, "error", err)
 			continue

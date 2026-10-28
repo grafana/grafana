@@ -495,7 +495,7 @@ describe('AlertIncidentTabs On call tab', () => {
         handle?.switch(INCIDENTS_TAB_ID, false);
       });
 
-      expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
+      expect(await screen.findByText('All quiet! No active incidents.')).toBeInTheDocument();
       expect(window.localStorage.getItem(ALERTS_INCIDENTS_TAB_STORAGE_KEY)).toBe('incidents');
     });
   });

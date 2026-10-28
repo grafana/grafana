@@ -28,6 +28,10 @@ export type DashboardPageRouteSearchParams = {
   // Used by the org dashboard templates flow on DashboardRoutes.Template.
   dashboardTemplateUid?: string;
   editTemplate?: string | true;
+  // The pending changes to preview (see dashboard-scene/lifecycle/pendingChangePreview.ts).
+  pendingChanges?: string;
+  // `original` shows the saved dashboard instead of the pending changes.
+  pendingChangesView?: string;
 };
 
 export type PublicDashboardPageRouteParams = {

@@ -18,15 +18,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// TestIntegrationEmbeddedServer drives the full embedded-server stack end-to-end via
-// the real Provide* constructors and dskit lifecycle, delivering messages over the
-// in-process client hop that production embedded mode uses.
-func TestIntegrationEmbeddedServer(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+// TestEmbeddedServer drives the full embedded-server stack end-to-end via the real
+// Provide* constructors and dskit lifecycle, delivering messages over the in-process
+// client hop that production embedded mode uses. Deliberately not named
+// TestIntegration*: it touches no database, so the per-database matrix would only
+// repeat it.
+func TestEmbeddedServer(t *testing.T) {
 	t.Run("publisher buffer overflows and recovers after reconnect", testPublisherBufferOverflowRecovers)
 	t.Run("publisher requires first success for every connection", testPublisherFirstSuccess)
 	t.Run("publishing fails when the server rejects authentication", testPublishingFailsOnAuthRejection)

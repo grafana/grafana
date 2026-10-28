@@ -19,15 +19,23 @@ const (
 
 func convertLegacyExpression(
 	expression *authzextv1.LegacyExpression,
-) (accesscontrol.Evaluator, error) {
-	converter := legacyExpressionConverter{actions: make(map[string]struct{})}
-	return converter.convert(expression, 1)
+) (accesscontrol.Evaluator, []string, error) {
+	converter := legacyExpressionConverter{seenActions: make(map[string]struct{})}
+
+	evaluator, err := converter.convert(expression, 1)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return evaluator, converter.actions, nil
 }
 
 type legacyExpressionConverter struct {
-	nodes   int
-	scopes  int
-	actions map[string]struct{}
+	nodes  int
+	scopes int
+
+	actions     []string
+	seenActions map[string]struct{}
 }
 
 func (c *legacyExpressionConverter) convert(
@@ -55,11 +63,12 @@ func (c *legacyExpressionConverter) convert(
 			return nil, fmt.Errorf("legacy expression exceeds maximum scopes (%d)", maxLegacyExpressionScopes)
 		}
 		c.scopes += len(permission.Scopes)
-		if _, exists := c.actions[permission.Action]; !exists {
+		if _, exists := c.seenActions[permission.Action]; !exists {
 			if len(c.actions) >= maxLegacyExpressionActions {
 				return nil, fmt.Errorf("legacy expression exceeds maximum distinct actions (%d)", maxLegacyExpressionActions)
 			}
-			c.actions[permission.Action] = struct{}{}
+			c.seenActions[permission.Action] = struct{}{}
+			c.actions = append(c.actions, permission.Action)
 		}
 
 		// Protobuf does not distinguish nil and empty repeated fields. Both must

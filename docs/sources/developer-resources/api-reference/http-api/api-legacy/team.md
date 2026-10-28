@@ -519,7 +519,7 @@ JSON Body Schema:
 
 - **theme** - One of: `light`, `dark`, or an empty string for the default theme
 - **homeDashboardId** - Deprecated. Use `homeDashboardUID` instead.
-- **homeDashboardUID** - The `:uid` of a dashboard
+- **homeDashboardUID** - The `:uid` of a dashboard, or the reserved value `global-home` to show the instance default home instead of the organization's dashboard. An empty string clears the preference so the organization's dashboard applies.
 - **timezone** - One of: `utc`, `browser`, or an empty string for the default
 
 Omitting a key will cause the current value to be replaced with the system default value.

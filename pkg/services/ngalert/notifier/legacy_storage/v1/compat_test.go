@@ -18,10 +18,13 @@ import (
 	"github.com/grafana/alerting/receivers/schema"
 	"github.com/grafana/alerting/receivers/teams"
 	webhookV0 "github.com/grafana/alerting/receivers/webhook/v0mimir1"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
 
 func TestRoundTripConversion(t *testing.T) {
@@ -157,6 +160,7 @@ inhibit_rules:
 			],
 			"time_intervals": [
 				{
+					"uid": "biz-hours-static-uid",
 					"name": "business-hours",
 					"time_intervals": [
 						{
@@ -228,7 +232,7 @@ inhibit_rules:
 		]
 	}`, extraConfig)
 
-	originalDB := &AMConfigDB{}
+	originalDB := &store.AMConfigDB{}
 	err := json.Unmarshal([]byte(configJSON), originalDB)
 	require.NoError(t, err, "failed to unmarshal test config")
 
@@ -239,6 +243,44 @@ inhibit_rules:
 	// Ensure passes validation.
 	require.NoError(t, model.Validate())
 
+	// Spot-check that ToModel actually mapped fields correctly, not just that a round trip through
+	// ToModel/ToDBModel comes back unchanged (which the JSONEq check below verifies separately).
+	tmpl, ok := model.Templates["template1.tmpl"]
+	require.True(t, ok, "expected template with UID template1.tmpl (managed_templates map key)")
+	assert.Equal(t, `{{ define "test" }}Hello {{ .CommonLabels.alertname }}{{ end }}`, tmpl.Content)
+
+	recv, ok := model.Receivers[ReceiverUID("default-receiver")]
+	require.True(t, ok, "expected receiver default-receiver")
+	require.Len(t, recv.GrafanaManagedReceivers, 1)
+	assert.Equal(t, "uid-default-1", recv.GrafanaManagedReceivers[0].UID)
+	assert.Equal(t, "email", recv.GrafanaManagedReceivers[0].Type)
+
+	// Deprecated mute_time_intervals and time_intervals are folded into one map. "weekends" has no
+	// persisted UID (legacy row), so it falls back to the name-derived UID; "business-hours" has an
+	// explicit persisted UID that doesn't match its name-derived one, confirming it's honored as-is.
+	weekends, ok := model.TimeIntervals[TimeIntervalUID("weekends")]
+	require.True(t, ok, "expected time interval weekends (folded from mute_time_intervals)")
+	assert.Equal(t, "weekends", weekends.Title)
+	businessHours, ok := model.TimeIntervals[ResourceUID("biz-hours-static-uid")]
+	require.True(t, ok, "expected time interval business-hours under its persisted UID")
+	assert.Equal(t, "business-hours", businessHours.Title)
+
+	// Inhibition rules are keyed by their stored name verbatim (not hashed).
+	rule, ok := model.InhibitionRules["inhibit-rule-1"]
+	require.True(t, ok, "expected inhibition rule inhibit-rule-1")
+	require.Len(t, rule.SourceMatchers, 1)
+	assert.Equal(t, Matcher{Type: MatcherEqual, Label: "alertname", Value: "HighCPU"}, rule.SourceMatchers[0])
+
+	route, ok := model.ManagedRoutes["managed-route-1"]
+	require.True(t, ok, "expected managed route managed-route-1")
+	assert.Equal(t, "critical-receiver", route.Receiver)
+
+	require.Len(t, model.ExtraConfigs, 1)
+	assert.Equal(t, "remote-primary", model.ExtraConfigs[0].Identifier)
+
+	require.NotNil(t, model.AlertmanagerConfig.Route)
+	assert.Equal(t, "default-receiver", model.AlertmanagerConfig.Route.Receiver)
+
 	// Convert Model -> DB
 	convertedDB, err := ToDBModel(model)
 	require.NoError(t, err)
@@ -246,20 +288,26 @@ inhibit_rules:
 
 	// The round-trip is lossless except that deprecated mute_time_intervals are folded into
 	// time_intervals (sorted by name) by design, so build the expectation from the same fold.
-	for _, mt := range originalDB.AlertmanagerConfig.MuteTimeIntervals {
-		originalDB.AlertmanagerConfig.TimeIntervals = append(originalDB.AlertmanagerConfig.TimeIntervals, config.TimeInterval(mt))
-	}
+	originalDB.AlertmanagerConfig.TimeIntervals = append(originalDB.AlertmanagerConfig.TimeIntervals, originalDB.AlertmanagerConfig.MuteTimeIntervals...)
 	originalDB.AlertmanagerConfig.MuteTimeIntervals = nil
-	slices.SortFunc(originalDB.AlertmanagerConfig.TimeIntervals, func(a, b config.TimeInterval) int {
+	slices.SortFunc(originalDB.AlertmanagerConfig.TimeIntervals, func(a, b store.TimeIntervalDB) int {
 		return strings.Compare(a.Name, b.Name)
 	})
+	// "weekends" has no persisted UID in the input, so loading/saving it assigns and persists the
+	// name-derived UID as a side effect - unlike "business-hours", whose explicit UID round-trips
+	// unchanged.
+	for i, ti := range originalDB.AlertmanagerConfig.TimeIntervals {
+		if ti.UID == "" {
+			originalDB.AlertmanagerConfig.TimeIntervals[i].UID = string(TimeIntervalUID(ti.Name))
+		}
+	}
 
 	// Receivers are now a top-level map keyed by name, so they serialize sorted by name too.
-	slices.SortFunc(originalDB.AlertmanagerConfig.Receivers, func(a, b *definition.PostableApiReceiver) int {
+	slices.SortFunc(originalDB.AlertmanagerConfig.Receivers, func(a, b *store.ReceiverDB) int {
 		return strings.Compare(a.Name, b.Name)
 	})
 
-	diff := cmp.Diff(originalDB, convertedDB, cmpopts.IgnoreUnexported(AMConfigDB{}, definition.Route{}, labels.Matcher{}))
+	diff := cmp.Diff(originalDB, convertedDB, cmpopts.IgnoreUnexported(store.AMConfigDB{}, definition.Route{}, labels.Matcher{}))
 	if diff != "" {
 		t.Errorf("Unexpected change in converted DB: %v", diff)
 	}
@@ -273,10 +321,98 @@ inhibit_rules:
 		"Round-trip conversion should be lossless")
 }
 
+// TestToDBModel_ToStaticJSON hand-builds an AMConfigV1 (not derived from unmarshalling/ToModel)
+// and asserts the JSON ToDBModel produces against an independently-authored expected literal.
+// This is the direction TestRoundTripConversion can't cover on its own: that test's "expected"
+// value is itself produced by the same ToModel/ToDBModel helpers being tested (checking internal
+// round-trip consistency), whereas this pins the actual external JSON contract.
+func TestToDBModel_ToStaticJSON(t *testing.T) {
+	model := &AMConfigV1{
+		Templates: map[ResourceUID]TemplateGroup{
+			"tmpl-uid": NewTemplateGroup("tmpl-uid", "welcome.tmpl", "hi", TemplateKindGrafana, models.ProvenanceNone),
+		},
+		InhibitionRules: map[ResourceUID]InhibitionRule{
+			"rule-1": NewInhibitionRule(
+				"rule-1",
+				[]Matcher{{Type: MatcherEqual, Label: "severity", Value: "critical"}},
+				[]Matcher{{Type: MatcherEqual, Label: "severity", Value: "warning"}},
+				[]string{"alertname"},
+				models.ProvenanceNone,
+			),
+		},
+		TimeIntervals: map[ResourceUID]TimeInterval{
+			TimeIntervalUID("business-hours"): NewTimeInterval(
+				TimeIntervalUID("business-hours"),
+				"business-hours",
+				[]timeinterval.TimeInterval{{Weekdays: []timeinterval.WeekdayRange{{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 5}}}}},
+				models.ProvenanceNone,
+			),
+		},
+		Receivers: map[ResourceUID]PostableApiReceiver{
+			ReceiverUID("email-receiver"): NewReceiver("email-receiver", []*PostableGrafanaReceiver{
+				{UID: "int-1", Name: "email-receiver", Type: "email"},
+			}, models.ProvenanceNone),
+		},
+		AlertmanagerConfig: PostableApiAlertingConfig{
+			Config: Config{
+				Route: &Route{Receiver: "email-receiver", GroupByStr: []string{"alertname"}},
+			},
+		},
+		ManagedRoutes: map[string]*Route{
+			"imported": {Receiver: "email-receiver"},
+		},
+		ExtraConfigs: []ExtraConfiguration{
+			{Identifier: "remote-1", TemplateFiles: map[string]string{}, AlertmanagerConfig: "route:\n  receiver: x\n"},
+		},
+	}
+
+	dbModel, err := ToDBModel(model)
+	require.NoError(t, err)
+
+	actual, err := json.Marshal(dbModel)
+	require.NoError(t, err)
+
+	const expected = `{
+		"managed_templates": {
+			"tmpl-uid": {"name": "welcome.tmpl", "content": "hi", "kind": "grafana"}
+		},
+		"alertmanager_config": {
+			"route": {"receiver": "email-receiver", "group_by": ["alertname"]},
+			"receivers": [
+				{
+					"name": "email-receiver",
+					"grafana_managed_receiver_configs": [
+						{"uid": "int-1", "name": "email-receiver", "type": "email", "disableResolveMessage": false}
+					]
+				}
+			],
+			"time_intervals": [
+				{"uid": "YnVzaW5lc3MtaG91cnM", "name": "business-hours", "time_intervals": [{"weekdays": ["monday:friday"]}]}
+			]
+		},
+		"managed_routes": {
+			"imported": {"receiver": "email-receiver"}
+		},
+		"managed_inhibition_rules": {
+			"rule-1": {
+				"name": "rule-1",
+				"source_matchers": ["severity=\"critical\""],
+				"target_matchers": ["severity=\"warning\""],
+				"equal": ["alertname"]
+			}
+		},
+		"extra_config": [
+			{"identifier": "remote-1", "template_files": {}, "alertmanager_config": "route:\n  receiver: x\n"}
+		]
+	}`
+
+	assert.JSONEq(t, expected, string(actual))
+}
+
 func TestMigrationFromTemplateFiles(t *testing.T) {
 	// Old configs stored templates in template_files. Verify they load correctly
 	// and are converted to managed_templates on save.
-	input := &AMConfigDB{}
+	input := &store.AMConfigDB{}
 	require.NoError(t, json.Unmarshal([]byte(`{
 		"template_files": {
 			"tmpl.tmpl": "{{ define \"alert\" }}hello{{ end }}"
@@ -300,7 +436,7 @@ func TestMigrationFromTemplateFiles(t *testing.T) {
 	mt, ok := output.ManagedTemplates[expectedUID]
 	require.True(t, ok)
 	assert.Equal(t, "tmpl.tmpl", mt.Name)
-	assert.Equal(t, definition.GrafanaTemplateKind, mt.Kind)
+	assert.Equal(t, string(definition.GrafanaTemplateKind), mt.Kind)
 }
 
 func TestToModel_TemplateConflicts(t *testing.T) {
@@ -309,7 +445,7 @@ func TestToModel_TemplateConflicts(t *testing.T) {
 	t.Run("managed_templates_wins_on_uid_conflict", func(t *testing.T) {
 		// A template present in both fields with the same UID: ManagedTemplates must win.
 		conflictUID := string(TemplateUID(TemplateKindGrafana, "tmpl.tmpl"))
-		input := &AMConfigDB{}
+		input := &store.AMConfigDB{}
 		require.NoError(t, json.Unmarshal([]byte(`{
 			"template_files": {"tmpl.tmpl": "{{ define \"alert\" }}old{{ end }}"},
 			"managed_templates": {"`+conflictUID+`": {"name":"tmpl.tmpl","content":"{{ define \"alert\" }}new{{ end }}","kind":"grafana"}},
@@ -323,7 +459,7 @@ func TestToModel_TemplateConflicts(t *testing.T) {
 
 	t.Run("no_conflict_both_templates_present", func(t *testing.T) {
 		// Different UIDs: both templates should be in the merged result.
-		input := &AMConfigDB{}
+		input := &store.AMConfigDB{}
 		require.NoError(t, json.Unmarshal([]byte(`{
 			"template_files": {"a.tmpl": "{{ define \"a\" }}A{{ end }}"},
 			"managed_templates": {"`+string(TemplateUID(TemplateKindGrafana, "b.tmpl"))+`": {"name":"b.tmpl","content":"{{ define \"b\" }}B{{ end }}","kind":"grafana"}},

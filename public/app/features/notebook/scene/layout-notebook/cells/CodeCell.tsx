@@ -3,7 +3,8 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, Combobox, type ComboboxOption, Stack, Text, useStyles2, useTheme2, CodeMirrorEditor } from '@grafana/ui';
+import { Box, Combobox, type ComboboxOption, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import {

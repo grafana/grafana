@@ -12,27 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCanonicalAPIPath(t *testing.T) {
-	for target, want := range map[string]bool{
-		"/apis":                           true,
-		"/apis/":                          true,
-		"/apis/g/v1/":                     true,
-		"/apis/g/v1/namespaces/ns/things": true,
-		"/apis/g/v1/namespaces/ns/things?watch=1": true,
-		"/openapi/v3/apis/g/v1?hash=abc":          true,
-		"/apis/g/v1/namespaces/ns/things/a%20b":   true,
-		"/apis//v1/things":                        false,
-		"/apis/g/./v1/things":                     false,
-		"/apis/g/../other/v1/things":              false,
-		"/apis/g/v1/..":                           false,
-		"/apis/g%2Fother/v1/things":               false,
-		"/apis/g%2fother/v1/things":               false,
-		"/openapi/v3/apis/g/../other/v1":          false,
-	} {
-		require.Equal(t, want, canonicalAPIPath(httptest.NewRequest(http.MethodGet, target, nil).URL), target)
-	}
-}
-
 func TestHandleFuncRejectsNonCanonicalPaths(t *testing.T) {
 	var calls atomic.Int32
 	router := withGroupHandler("g", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -40,13 +19,13 @@ func TestHandleFuncRejectsNonCanonicalPaths(t *testing.T) {
 	}))
 	for _, target := range []string{"/apis/g/../other/v1/things", "/apis/g%2Fother/v1/things", "/openapi/v3/apis/g/./v1"} {
 		recorder := httptest.NewRecorder()
-		router.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, target, nil), http.NotFoundHandler())
+		router.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, target, nil))
 		require.Equal(t, http.StatusBadRequest, recorder.Code, target)
 	}
 	require.Zero(t, calls.Load())
 }
 
-// proxiedRouter serves group "test-app" through a real forward proxy to upstream.
+// proxiedRouter serves group "test-app" through a real reverse proxy to upstream.
 func proxiedRouter(t *testing.T, upstream string, transport *http.Transport) *GrafanaRouter {
 	t.Helper()
 	handler, err := proxyBackend(t, "test-app", upstream, transport).Load(t.Context())
@@ -56,7 +35,7 @@ func proxiedRouter(t *testing.T, upstream string, transport *http.Transport) *Gr
 
 func serveRouter(router *GrafanaRouter, target string) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
-	router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, target, nil), http.NotFoundHandler())
+	router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, target, nil))
 	return recorder
 }
 

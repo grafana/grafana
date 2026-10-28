@@ -606,6 +606,30 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	onlyPathToCreatable, err := wantsPathToCreatable(ctx, queryParams)
+	if err != nil {
+		errhttp.Write(ctx, err, w)
+		return
+	}
+	var path *creatablePath
+	if onlyPathToCreatable {
+		if path, err = s.creatablePath(ctx, user); err != nil {
+			errhttp.Write(ctx, err, w)
+			return
+		}
+	}
+	if path != nil {
+		if len(path.reachable) == 0 {
+			s.write(w, dashboardv0alpha1.SearchResults{Hits: []dashboardv0alpha1.DashboardHit{}})
+			return
+		}
+		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
+			Key:      "name",
+			Operator: "in",
+			Values:   path.reachableNames(),
+		})
+	}
+
 	result, err := s.client.Search(ctx, searchRequest)
 	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
 		errhttp.Write(ctx, err, w)
@@ -620,6 +644,10 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
+	}
+
+	if path != nil {
+		path.markCreatable(parsedResults.Hits)
 	}
 
 	if len(searchRequest.SortBy) == 0 {
@@ -828,6 +856,7 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 			Title:    r.GetTitle(),
 			Folder:   r.GetFolder(),
 			Score:    r.GetScore(),
+			Tags:     r.GetTags(),
 			ManagedBy: dashboardv0alpha1.ManagedBy{
 				Kind: utils.ManagerKind(r.GetManagedByKind()),
 				ID:   r.GetManagedById(),
@@ -1217,7 +1246,9 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	if err != nil {
 		return sharedDashboards, err
 	}
-	if !searchResponseHasField(dashboardResult, resource.SEARCH_FIELD_FOLDER) {
+	if !slices.ContainsFunc(dashboardResult.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
+		return field.GetName() == resource.SEARCH_FIELD_FOLDER
+	}) {
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
@@ -1273,15 +1304,4 @@ func nameLookupRequest(key *resourcepb.ResourceKey, names []string, permission d
 			}},
 		},
 	}
-}
-
-func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name string) bool {
-	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
-		return slices.ContainsFunc(response.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
-			return field.GetName() == name
-		})
-	}
-	return slices.ContainsFunc(response.GetResults().GetColumns(), func(field *resourcepb.ResourceTableColumnDefinition) bool {
-		return field.GetName() == name
-	})
 }

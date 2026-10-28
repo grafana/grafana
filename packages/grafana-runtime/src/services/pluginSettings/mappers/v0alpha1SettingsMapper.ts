@@ -55,22 +55,15 @@ export function inlineSecureValuesMapper(data: Partial<PluginMeta>): v0alpha1Inl
       continue;
     }
 
-    // Key doesn't exist on the server, so we create it in-place by sending
-    // the new plaintext in `create`.
-    if (secureJsonFields?.[key] === undefined) {
-      result[key] = { create: secureValue };
-      continue;
-    }
-
     // Key exists on the server but is marked for deletion, so we delete it in-place by sending `remove: true`.
     if (secureJsonFields?.[key] === false) {
       result[key] = { remove: true };
       continue;
     }
 
-    // Key already exists on the server, so we update it in-place by sending
-    // the new plaintext in `name`.
-    result[key] = { name: secureValue };
+    // New plaintext always goes in `create`, whether or not the key already exists on the server.
+    // A `name` on write references an existing secure value, so the server would keep the old value.
+    result[key] = { create: secureValue };
   }
 
   for (const key of Object.keys(secureJsonFields)) {

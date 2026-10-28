@@ -15,6 +15,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/blevesearch/bleve/v2"
+	"github.com/grafana/authlib/types"
 	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -1146,7 +1147,7 @@ func TestEvictExpiredIndexClearsUploadTracking(t *testing.T) {
 	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(index, 42))
 
-	idx := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, nil, be.log)
+	idx := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, be.log)
 	idx.resourceVersion.Store(42)
 	idx.expiration = time.Now().Add(-time.Minute)
 
@@ -1244,7 +1245,7 @@ func TestBleveSnapshotLifecycleWithSharedStore(t *testing.T) {
 	}, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(1), res.TotalHits)
-	require.Equal(t, "dash-prod", res.Results.Rows[0].Key.Name)
+	require.Equal(t, "dash-prod", res.Rows[0].Key.Name)
 }
 
 func newConfiguredSnapshotBackend(t *testing.T, store RemoteIndexStore) (*bleveBackend, *resource.BleveIndexMetrics) {
@@ -1595,6 +1596,116 @@ func (ct coldStartTest) coordinate(ctx context.Context, lastImportTime time.Time
 
 func (ct coldStartTest) coldStartCounter(outcome string) float64 {
 	return testutil.ToFloat64(ct.metrics.IndexSnapshotBuildCoordinations.WithLabelValues(snapshotBuildFlowColdStart, outcome))
+}
+
+type pausedInitialListing struct {
+	resource.StorageBackend
+	once    sync.Once
+	started chan struct{}
+	release <-chan struct{}
+}
+
+func (s *pausedInitialListing) ListIterator(ctx context.Context, req *resourcepb.ListRequest, callback func(resource.ListIterator) error) (int64, error) {
+	pause := false
+	s.once.Do(func() {
+		pause = true
+		close(s.started)
+	})
+	if pause {
+		select {
+		case <-ctx.Done():
+			return 0, ctx.Err()
+		case <-s.release:
+		}
+	}
+	return s.StorageBackend.ListIterator(ctx, req, callback)
+}
+
+func TestBackgroundGlobalIndexBuildAndSnapshotRestore(t *testing.T) {
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	ctx = types.WithAuthInfo(ctx, &identity.StaticRequester{
+		Type: types.TypeUser, Login: "testuser", UserID: 1, UserUID: "u1", Namespace: "default", IsGrafanaAdmin: true,
+	})
+	kvStore := newTestBadgerKV(t)
+	storage, err := resource.NewKVStorageBackend(resource.KVBackendOptions{KvStore: kvStore, DisableStorageServices: true})
+	require.NoError(t, err)
+	writer, err := resource.NewResourceServer(resource.ResourceServerOptions{Backend: storage})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, writer.Stop(t.Context())) })
+	for _, kind := range []struct{ group, resource, name string }{
+		{group: "dashboard.grafana.app", resource: "dashboards", name: "Dashboard"},
+		{group: "folder.grafana.app", resource: "folders", name: "Folder"},
+	} {
+		for i := range 3 {
+			name := fmt.Sprintf("%s-%d", kind.resource, i)
+			rsp, err := writer.Create(ctx, &resourcepb.CreateRequest{
+				Key: &resourcepb.ResourceKey{Namespace: "default", Group: kind.group, Resource: kind.resource, Name: name},
+				Value: fmt.Appendf(nil, `{"apiVersion":%q,"kind":%q,"metadata":{"name":%q,"namespace":"default"},"spec":{"title":%q}}`,
+					kind.group+"/v1", kind.name, name, name),
+			})
+			require.NoError(t, err)
+			require.Nil(t, rsp.Error)
+		}
+	}
+	key := resource.GlobalSearchKey("default")
+	newServer := func(backend *bleveBackend, storage resource.StorageBackend) resource.SearchServer {
+		t.Helper()
+		server, err := resource.NewUninitializedSearchServer(resource.ResourceServerOptions{
+			Backend: storage,
+			Search: resource.SearchOptions{
+				Backend: backend,
+				Resources: &resource.TestDocumentBuilderSupplier{GroupsResources: map[string]string{
+					"dashboard.grafana.app": "dashboards", "folder.grafana.app": "folders",
+				}},
+				GlobalIndexEnabled: true,
+				InitMinCount:       4,
+			},
+			AccessClient: types.FixedAccessClient(true),
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, server.Stop(t.Context())) })
+		return server
+	}
+	store := newTestKVRemoteIndexStoreOn(t, kvStore, "builder")
+	backend, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 5, MaxIndexAge: time.Hour})
+	release := make(chan struct{})
+	paused := &pausedInitialListing{StorageBackend: storage, started: make(chan struct{}), release: release}
+	server := newServer(backend, paused)
+	require.NoError(t, server.Init(ctx))
+	select {
+	case <-paused.started:
+	case <-ctx.Done():
+		t.Fatal("background build did not start")
+	}
+	req := &resourcepb.ResourceSearchRequest{
+		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+		Limit:        10,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
+	rsp, err := server.Search(ctx, req)
+	require.NoError(t, err)
+	require.Equal(t, resource.NewServiceUnavailableError("the global search index for this namespace is still being built"), rsp.Error)
+	close(release)
+	assertSearch := func(server resource.SearchServer) {
+		t.Helper()
+		require.Eventually(t, func() bool {
+			rsp, err := server.Search(ctx, req)
+			return err == nil && rsp.Error == nil && rsp.TotalHits == 6
+		}, 5*time.Second, 10*time.Millisecond)
+	}
+	assertSearch(server)
+	require.Eventually(t, func() bool {
+		snapshots, err := ListIndexSnapshots(ctx, store, key, testLogger)
+		return err == nil && len(snapshots) == 1
+	}, 5*time.Second, 10*time.Millisecond)
+
+	followerStore := newTestKVRemoteIndexStoreOn(t, kvStore, "restorer")
+	followerBackend, metrics := newTestBleveBackend(t, SnapshotOptions{Store: followerStore, MinDocCount: 5, MaxIndexAge: time.Hour})
+	follower := newServer(followerBackend, storage)
+	require.NoError(t, follower.Init(ctx))
+	assertSearch(follower)
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotDownloadAttempts.WithLabelValues(snapshotPolicyTiered, snapshotStatusSuccess)))
 }
 
 func TestColdStartReplicasShareOneBuild(t *testing.T) {

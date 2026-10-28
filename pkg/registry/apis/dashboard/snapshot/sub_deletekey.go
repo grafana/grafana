@@ -85,6 +85,7 @@ func (r *deleteKeyREST) Connect(ctx context.Context, name string, opts runtime.O
 		// Return the snapshot with deleteKey, but strip it from the embedded spec
 		result := snap.DeepCopy()
 		result.Spec.DeleteKey = nil
+		result.Spec.ExternalDeleteUrl = nil
 
 		responder.Object(http.StatusOK, &dashv0.DashboardSnapshotWithDeleteKey{
 			Snapshot:  *result,

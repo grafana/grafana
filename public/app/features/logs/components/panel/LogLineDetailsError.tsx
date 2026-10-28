@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, Icon, useStyles2 } from '@grafana/ui';
 
 import { type FieldDef } from '../logParser';
@@ -14,6 +15,7 @@ import { useLogListContext } from './LogListContext';
 import { getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsErrorProps {
+  className?: string;
   fields: FieldDef[];
   labels: LabelWithLinks[];
 }
@@ -23,7 +25,7 @@ interface ErrorDisplayItem {
   value: string;
 }
 
-export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps) => {
+export const LogLineDetailsError = ({ className, fields, labels }: LogLineDetailsErrorProps) => {
   const { fontSize } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
 
@@ -48,7 +50,7 @@ export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps
   }
 
   return (
-    <div className={styles.container}>
+    <div className={`${styles.container} ${className ? className : ''}`}>
       <div className={styles.header}>
         <Icon name="exclamation-circle" className={styles.icon} />
         <span>{t('logs.log-details.error.error-details', 'Error details')}</span>
@@ -83,14 +85,28 @@ function toLabelItems(labels: LabelWithLinks[]): ErrorDisplayItem[] {
 }
 
 function StacktraceValue({ item }: { item: ErrorDisplayItem }) {
-  const { fontSize } = useLogListContext();
+  const { fontSize, noInteractions } = useLogListContext();
   const styles = useStyles2(getValueStyles, fontSize, 'stacktrace');
   const [isOpen, setIsOpen] = useState(false);
   const label = getNormalizedFieldName(item.key);
 
+  const toggleStacktrace = () => {
+    const state = isOpen ? 'closed' : 'open';
+    setIsOpen(!isOpen);
+    if (!noInteractions) {
+      reportInteraction('logs_log_line_details_error_stacktrace_toggled', { state });
+    }
+  };
+
+  const copyStacktrace = () => {
+    if (!noInteractions) {
+      reportInteraction('logs_log_line_details_error_stacktrace_copied');
+    }
+  };
+
   return (
     <div className={styles.row}>
-      <button type="button" className={styles.toggle} aria-expanded={isOpen} onClick={() => setIsOpen((open) => !open)}>
+      <button type="button" className={styles.toggle} aria-expanded={isOpen} onClick={toggleStacktrace}>
         <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
         <span>{label}</span>
       </button>
@@ -100,6 +116,7 @@ function StacktraceValue({ item }: { item: ErrorDisplayItem }) {
           <div className={styles.actions}>
             <ClipboardButton
               getText={() => item.value}
+              onClipboardCopy={copyStacktrace}
               aria-label={t('logs.log-line-details.fields.copy-value-to-clipboard', 'Copy value to clipboard')}
               fill="text"
               variant="secondary"
@@ -147,10 +164,10 @@ type ErrorAttributeVariant = 'message' | 'stacktrace' | 'other';
 
 const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   container: css({
-    background: theme.colors.background.secondary,
-    borderLeft: `2px solid ${theme.colors.error.border}`,
+    background: `linear-gradient(${theme.colors.error.main}, ${theme.colors.error.main}) left 0 top 0 / 6px 100% no-repeat, ${theme.colors.background.secondary}`,
     borderRadius: theme.shape.radius.default,
     padding: theme.spacing(1),
+    paddingLeft: `calc(6px + ${theme.spacing(1)})`,
   }),
   header: css({
     alignItems: 'center',

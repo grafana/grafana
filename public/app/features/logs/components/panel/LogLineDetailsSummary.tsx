@@ -7,6 +7,7 @@ import { Badge, type BadgeColor, DataLinkButton, useStyles2 } from '@grafana/ui'
 
 import { createLogLineLinks } from '../logParser';
 
+import { LogLinksResolver } from './LogLinksResolver';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
@@ -18,7 +19,8 @@ interface LogLineDetailsSummaryProps {
 export const LogLineDetailsSummary = ({ log }: LogLineDetailsSummaryProps) => {
   const { app, fontSize, noInteractions, pinLineButtonTooltipTitle, timestampResolution } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
-  const links = useMemo(() => collectLogLinks(log), [log]);
+  const linksMap = useMemo(() => getLinksFromLog(log), [log]);
+  const links = useMemo(() => linksMap.map((link) => link.link), [linksMap]);
   const level = formatLevel(log.logLevel);
   const timestamp = timestampResolution === 'ms' ? log.timestamp : log.timestampNs;
 
@@ -43,27 +45,39 @@ export const LogLineDetailsSummary = ({ log }: LogLineDetailsSummaryProps) => {
         <span className={styles.timestamp}>{timestamp}</span>
       </div>
       {links.length > 0 && (
-        <div className={styles.links}>
-          {links.map(({ fieldKey, link }, index) => (
-            <DataLinkButton
-              key={`${link.title}-${index}`}
-              buttonProps={{
-                tooltip:
-                  typeof pinLineButtonTooltipTitle === 'object' && link.onClick ? pinLineButtonTooltipTitle : undefined,
-                variant: 'secondary',
-                fill: 'outline',
-                onClick: () => reportLinkClick(fieldKey),
-              }}
-              link={link}
-            />
-          ))}
-        </div>
+        <LogLinksResolver links={links}>
+          {(resolvedLinks) => (
+            <div className={styles.links}>
+              {linksMap.map(({ fieldKey }, index) => {
+                const link = resolvedLinks?.[index];
+                if (!link) {
+                  return null;
+                }
+                return (
+                  <DataLinkButton
+                    key={`${link.title}-${index}`}
+                    buttonProps={{
+                      tooltip:
+                        typeof pinLineButtonTooltipTitle === 'object' && link.onClick
+                          ? pinLineButtonTooltipTitle
+                          : undefined,
+                      variant: 'secondary',
+                      fill: 'outline',
+                      onClick: () => reportLinkClick(fieldKey),
+                    }}
+                    link={link}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </LogLinksResolver>
       )}
     </div>
   );
 };
 
-function collectLogLinks(log: LogListModel): Array<{ fieldKey: string; link: LinkModel<Field> }> {
+function getLinksFromLog(log: LogListModel): Array<{ fieldKey: string; link: LinkModel<Field> }> {
   const fieldsWithLinks = log.fields.filter((field) => field.links?.length);
   const displayed = fieldsWithLinks.filter((field) => field.fieldIndex !== log.entryFieldIndex);
   const fromLogLine = createLogLineLinks(fieldsWithLinks.filter((field) => field.fieldIndex === log.entryFieldIndex));

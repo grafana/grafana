@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apiserver/pkg/endpoints/request"
 )
 
@@ -45,7 +46,7 @@ func TestRemoteSettingService_writes(t *testing.T) {
 		handler       func(reqs *[]string) http.HandlerFunc
 		wantErr       assert.ErrorAssertionFunc
 		wantMethods   []string
-		wantNamePath  bool   // a request must target testName (the PUT)
+		wantNamePath  bool   // a request must target testName (the PUT or per-name DELETE)
 		wantURISubstr string // a request URI must contain this (delete label selector)
 	}{
 		{
@@ -102,34 +103,96 @@ func TestRemoteSettingService_writes(t *testing.T) {
 			wantMethods: []string{http.MethodPost},
 		},
 		{
-			name:          "delete issues a collection delete by (section,key) labels",
+			name:          "delete lists by (section,key) labels, then deletes each match by name",
 			op:            del,
 			wantErr:       assert.NoError,
-			wantURISubstr: "auth.generic_oauth",
+			wantURISubstr: "key%3Dclient_id%2Csection%3Dauth.generic_oauth%2Csource%3Dus",
+			wantNamePath:  true,
 			handler: func(reqs *[]string) http.HandlerFunc {
 				return func(w http.ResponseWriter, r *http.Request) {
 					*reqs = append(*reqs, r.Method+" "+r.URL.RequestURI())
+					if r.Method == http.MethodGet {
+						w.Header().Set("Content-Type", "application/json")
+						_, _ = w.Write([]byte(`{"items":[{"metadata":{"name":"` + testName + `"}}]}`))
+						return
+					}
 					w.WriteHeader(http.StatusOK)
 				}
 			},
-			wantMethods: []string{http.MethodDelete},
+			wantMethods: []string{http.MethodGet, http.MethodDelete},
 		},
 		{
-			name:    "delete surfaces an error",
+			name:    "delete is a no-op when nothing matches",
 			op:      del,
-			wantErr: assert.Error,
+			wantErr: assert.NoError,
+			handler: func(reqs *[]string) http.HandlerFunc {
+				return func(w http.ResponseWriter, r *http.Request) {
+					*reqs = append(*reqs, r.Method+" "+r.URL.RequestURI())
+					w.Header().Set("Content-Type", "application/json")
+					_, _ = w.Write([]byte(`{"items":[]}`))
+				}
+			},
+			wantMethods: []string{http.MethodGet},
+		},
+		{
+			name:    "delete ignores a not-found on the per-name delete",
+			op:      del,
+			wantErr: assert.NoError,
+			handler: func(reqs *[]string) http.HandlerFunc {
+				return func(w http.ResponseWriter, r *http.Request) {
+					*reqs = append(*reqs, r.Method+" "+r.URL.RequestURI())
+					w.Header().Set("Content-Type", "application/json")
+					if r.Method == http.MethodGet {
+						_, _ = w.Write([]byte(`{"items":[{"metadata":{"name":"` + testName + `"}}]}`))
+						return
+					}
+					w.WriteHeader(http.StatusNotFound)
+					_, _ = w.Write([]byte(`{"kind":"Status","apiVersion":"v1","status":"Failure","reason":"NotFound","code":404}`))
+				}
+			},
+			wantMethods: []string{http.MethodGet, http.MethodDelete},
+		},
+		{
+			name: "delete surfaces a list error",
+			op:   del,
+			wantErr: func(t assert.TestingT, err error, _ ...any) bool {
+				return assert.ErrorContains(t, err, "list:") && assert.True(t, apierrors.IsInternalError(err), "got %v", err)
+			},
 			handler: func(reqs *[]string) http.HandlerFunc {
 				return func(w http.ResponseWriter, r *http.Request) {
 					*reqs = append(*reqs, r.Method+" "+r.URL.RequestURI())
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 			},
-			wantMethods: []string{http.MethodDelete},
+			wantMethods: []string{http.MethodGet},
 		},
 		{
-			name:    "upsert errors when the context carries no namespace",
-			op:      func(w Writer) error { return w.Upsert(context.Background(), setting) },
-			wantErr: assert.Error,
+			name: "delete surfaces a per-name delete error",
+			op:   del,
+			wantErr: func(t assert.TestingT, err error, _ ...any) bool {
+				return assert.ErrorContains(t, err, "delete setting auth.generic_oauth/client_id: ") &&
+					assert.NotContains(t, err.Error(), "list:") &&
+					assert.True(t, apierrors.IsInternalError(err), "got %v", err)
+			},
+			handler: func(reqs *[]string) http.HandlerFunc {
+				return func(w http.ResponseWriter, r *http.Request) {
+					*reqs = append(*reqs, r.Method+" "+r.URL.RequestURI())
+					if r.Method == http.MethodGet {
+						w.Header().Set("Content-Type", "application/json")
+						_, _ = w.Write([]byte(`{"items":[{"metadata":{"name":"` + testName + `"}}]}`))
+						return
+					}
+					w.WriteHeader(http.StatusInternalServerError)
+				}
+			},
+			wantMethods: []string{http.MethodGet, http.MethodDelete},
+		},
+		{
+			name: "upsert errors when the context carries no namespace",
+			op:   func(w Writer) error { return w.Upsert(context.Background(), setting) },
+			wantErr: func(t assert.TestingT, err error, _ ...any) bool {
+				return assert.ErrorContains(t, err, "missing namespace in context")
+			},
 			handler: func(reqs *[]string) http.HandlerFunc {
 				return func(w http.ResponseWriter, r *http.Request) { *reqs = append(*reqs, r.Method) }
 			},

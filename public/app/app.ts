@@ -1,5 +1,3 @@
-import 'jquery';
-
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -42,6 +40,7 @@ import {
   logError,
 } from '@grafana/runtime';
 import {
+  getAppPluginMetas,
   getFeatureFlagClient,
   FlagKeys,
   initDataSourceInstanceSettings,
@@ -84,10 +83,10 @@ import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
-import { navTreeInitialized } from './core/reducers/navBarTree';
-import { navIndexInitialized } from './core/reducers/navModel';
+import { isPluginNavAvailable } from './core/navtree/utils';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
+import { StPodReadyService } from './core/services/StPodReadyService';
 import { backendSrv } from './core/services/backend_srv';
 import { contextSrv } from './core/services/context_srv';
 import { initEchoSrv } from './core/services/echo/init';
@@ -139,10 +138,10 @@ import { createSwitchVariableAdapter } from './features/variables/switch/adapter
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
 import { configureStore } from './store/configureStore';
-import { dispatch, getState } from './store/store';
+import { getState } from './store/store';
 
-// import symlinked extensions
-const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
+// Only the top-level overlay entrypoint is loaded; scanning the entire app follows pnpm workspace symlinks.
+const extensionsIndex = require.context('./extensions', false, /^\.\/index\.ts$/);
 const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });
@@ -202,7 +201,7 @@ export class GrafanaApp {
       // This needs to be done after the `initEchoSrv` since it is being used under the hood.
       startMeasure('frontend_app_init');
 
-      if (config.featureToggles.cujTracking) {
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.CujTracking, false)) {
         setJourneyTracker(new JourneyTrackerImpl());
 
         // Initialize the journey registry (metadata + split triggers)
@@ -246,22 +245,29 @@ export class GrafanaApp {
       // We must wait for translations to load because some preloaded store state requires translating
       await initI18nPromise;
 
-      // Important that extension reducers are initialized before store
-      addExtensionReducers();
-      configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
-
-      // The multi-tenant frontend service ships a reduced boot with no user
-      // permissions, so fetch them before anything permission-gated renders. The
-      // nav tree needs rebuilding either way: configureStore built it with an
-      // empty permission set, and its sections are permission-gated.
+      // configureStore builds the nav tree, so whatever that build reads has to
+      // land first. Fetched in parallel, because neither depends on the other, and
+      // each only when it is actually needed: the metas feed the plugin items, and
+      // the permissions its sections and plugin access checks are gated on — which
+      // bootdata already carries everywhere except the multi-tenant frontend
+      // service, whose reduced boot ships none.
+      const bootTasks: Array<Promise<unknown>> = [];
+      // isPluginNavAvailable covers the session too: the metas endpoint 401s
+      // without one, and a login or public dashboard boot renders chromeless anyway
+      if (isPluginNavAvailable()) {
+        bootTasks.push(getAppPluginMetas());
+      }
       if (
         isFrontendService() &&
         getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantUserPermissions, false)
       ) {
-        await contextSrv.fetchUserPermissions();
-        dispatch(navTreeInitialized());
-        dispatch(navIndexInitialized());
+        bootTasks.push(contextSrv.fetchUserPermissions());
       }
+      await Promise.all(bootTasks);
+
+      // Important that extension reducers are initialized before store
+      addExtensionReducers();
+      configureStore(undefined, { mergedPreferences: options?.mergedPreferences });
 
       initExtensions();
 
@@ -352,6 +358,7 @@ export class GrafanaApp {
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
+      const stPodReady = new StPodReadyService();
       // The menu as the chrome shows it: the boot copy is empty when the client builds the nav tree.
       pageHistorySrv.start(chromeService, () => getState().navBarTree);
 
@@ -371,6 +378,7 @@ export class GrafanaApp {
         chrome: chromeService,
         keybindings: keybindingsService,
         newAssetsChecker,
+        stPodReady,
         config,
       };
 

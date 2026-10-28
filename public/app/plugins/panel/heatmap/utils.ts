@@ -92,6 +92,7 @@ export function prepConfig(opts: PrepConfigOpts) {
   }
 
   let heatmapType = dataRef.current?.heatmap?.meta?.type;
+  let fillValues = dataRef.current?.heatmapColors?.values;
   const exemplarFillColor = theme.visualization.getColorByName(opts.exemplarColor);
 
   let qt: Quadtree;
@@ -109,24 +110,29 @@ export function prepConfig(opts: PrepConfigOpts) {
     });
   });
 
-  if (isTime) {
+  builder.addHook('setData', (u) => {
+    // Keep fills aligned with the data committed to uPlot; dataRef may advance before a deferred draw runs.
+    fillValues = dataRef.current?.heatmapColors?.values;
+
+    if (!isTime) {
+      return;
+    }
+
     // this is a tmp hack because in mode: 2, uplot does not currently call scales.x.range() for setData() calls
     // scales.x.range() typically reads back from drilled-down panelProps.timeRange via getTimeRange()
-    builder.addHook('setData', (u) => {
-      //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, xScaleKey);
+    //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, xScaleKey);
 
-      let { min: xMin, max: xMax } = u.scales!.x;
+    let { min: xMin, max: xMax } = u.scales!.x;
 
-      let min = getTimeRange().from.valueOf();
-      let max = getTimeRange().to.valueOf();
+    let min = getTimeRange().from.valueOf();
+    let max = getTimeRange().to.valueOf();
 
-      if (xMin !== min || xMax !== max) {
-        queueMicrotask(() => {
-          u.setScale(xScaleKey, { min, max });
-        });
-      }
-    });
-  }
+    if (xMin !== min || xMax !== max) {
+      queueMicrotask(() => {
+        u.setScale(xScaleKey, { min, max });
+      });
+    }
+  });
 
   builder.addHook('drawClear', (u) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
@@ -494,7 +500,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       ySizeDivisor,
       disp: {
         fill: {
-          values: (u, seriesIdx) => dataRef.current?.heatmapColors?.values!,
+          values: () => fillValues!,
           index: dataRef.current?.heatmapColors?.palette!,
         },
       },

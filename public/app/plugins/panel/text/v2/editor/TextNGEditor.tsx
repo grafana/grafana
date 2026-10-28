@@ -4,20 +4,8 @@ import { useDebounce } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  Alert,
-  Button,
-  Dropdown,
-  Icon,
-  Menu,
-  RadioButtonGroup,
-  Stack,
-  useStyles2,
-  useTheme2,
-  CodeMirrorEditor,
-  createCodeEditorTheme,
-  type CodeMirrorEditorLanguage,
-} from '@grafana/ui';
+import { Alert, Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
+import { CodeMirrorEditor, createCodeEditorTheme, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 import config from 'app/core/config';
 
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
@@ -26,13 +14,13 @@ import { TextNGHtmlView } from '../TextNGHtmlView';
 import { TextNGTruncationNotice } from '../TextNGTruncationNotice';
 import { type TextSandboxProps } from '../TextSandbox';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
-import { getInterpolateFormat, transformContent, getCodeMirrorLanguage } from '../utils';
+import { getInterpolateFormat, transformContent, getCodeMirrorLanguage, isTextNewFeaturesEnabled } from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFeedbackButton } from './TextNGFeedbackButton';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
 import { getEditorLayoutStyles } from './editorLayout';
-import { variableCompletion } from './variableCompletion';
+import { reducerCompletion, variableCompletion } from './variableCompletion';
 import { type ViewMode } from './viewMode';
 
 export const PREVIEW_TEST_ID = 'TextNGEditor-preview';
@@ -198,7 +186,10 @@ export function TextNGEditor({
     editorLanguage = getCodeMirrorLanguage(codeLanguage);
   }
 
-  const completionSources = useMemo(() => [variableCompletion(suggestions ?? [])], [suggestions]);
+  const completionSources = useMemo(
+    () => [variableCompletion(suggestions ?? []), ...(isTextNewFeaturesEnabled() ? [reducerCompletion] : [])],
+    [suggestions]
+  );
 
   const basicSetup = useMemo(
     () => ({ lineNumbers: mode === TextMode.Code ? showLineNumbers : false }),
