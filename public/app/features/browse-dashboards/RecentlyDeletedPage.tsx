@@ -6,6 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, FilterInput, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { useDashboardsPageNav } from 'app/features/browse-dashboards/hooks/useDashboardsPageNav';
 import { ActionRow } from 'app/features/search/page/components/ActionRow';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useDispatch } from 'app/types/store';
@@ -45,8 +46,10 @@ const RecentlyDeletedPage = memo(() => {
     );
   }, [dispatch, stateManager]);
 
+  const pageNav = useDashboardsPageNav('dashboards/recently-deleted');
+
   return (
-    <Page navId="dashboards/recently-deleted">
+    <Page navId="dashboards/recently-deleted" pageNav={pageNav}>
       <Page.Contents className={styles.pageContents}>
         <DeletedDashboardsLimitBanner />
         <div>

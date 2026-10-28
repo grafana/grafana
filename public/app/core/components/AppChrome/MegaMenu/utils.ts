@@ -276,6 +276,11 @@ export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
  * Should be a temporary way to fix the menu sprawl until a more robust solution.
  */
 export const HIDDEN_NAV_ITEMS = new Set<string>([
+  // Shown as tabs on the browse dashboards view instead
+  'dashboards/library-panels',
+  'dashboards/variables',
+  'dashboards/recently-deleted',
+
   '/a/grafana-adaptive-metrics-app/configuration',
   '/a/grafana-adaptive-metrics-app/rule-management',
   '/a/grafana-adaptive-metrics-app/segments',
