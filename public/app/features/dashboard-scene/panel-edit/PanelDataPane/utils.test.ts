@@ -1,15 +1,15 @@
 import { renderHook, waitFor } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { hasBackendDatasource, useHasBackendDatasource } from './utils';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: jest.fn(),
 }));
 

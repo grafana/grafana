@@ -244,10 +244,10 @@ func (s *SecureValueService) createNewVersion(ctx context.Context, keeperName st
 
 func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace, name string) (_ *secretv1beta1.SecureValue, readErr error) {
 	if namespace == "" {
-		return nil, fmt.Errorf("namespace cannot be empty")
+		return nil, contracts.ErrSecureValueNamespaceEmpty
 	}
 	if name == "" {
-		return nil, fmt.Errorf("name cannot be empty")
+		return nil, contracts.ErrSecureValueNameEmpty
 	}
 
 	start := time.Now()
@@ -283,7 +283,7 @@ func (s *SecureValueService) Read(ctx context.Context, namespace xkube.Namespace
 
 func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace) (_ *secretv1beta1.SecureValueList, listErr error) {
 	if namespace == "" {
-		return nil, fmt.Errorf("namespace cannot be empty")
+		return nil, contracts.ErrSecureValueNamespaceEmpty
 	}
 
 	start := time.Now()
@@ -350,10 +350,10 @@ func (s *SecureValueService) List(ctx context.Context, namespace xkube.Namespace
 
 func (s *SecureValueService) Delete(ctx context.Context, namespace xkube.Namespace, name string) (_ *secretv1beta1.SecureValue, deleteErr error) {
 	if namespace == "" {
-		return nil, fmt.Errorf("namespace cannot be empty")
+		return nil, contracts.ErrSecureValueNamespaceEmpty
 	}
 	if name == "" {
-		return nil, fmt.Errorf("name cannot be empty")
+		return nil, contracts.ErrSecureValueNameEmpty
 	}
 
 	start := time.Now()

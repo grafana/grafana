@@ -2,8 +2,7 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { Trans } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { locationService, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { Page } from 'app/core/components/Page/Page';
 import { useDispatch } from 'app/types/store';
 

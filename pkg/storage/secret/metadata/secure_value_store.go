@@ -658,7 +658,7 @@ func (s *secureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Conte
 			span.RecordError(err)
 		}
 
-		s.metrics.SecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
+		s.metrics.SecureValueLeaseInactiveDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
 	leaseToken := uuid.NewV4().String()
@@ -680,25 +680,83 @@ func (s *secureValueMetadataStorage) acquireLeases(ctx context.Context, leaseTok
 		attribute.Int("maxBatchSize", int(maxBatchSize)),
 	))
 	defer span.End()
+
+	now := s.clock.Now().UTC().Unix()
+
+	candidates, err := s.listLeaseCandidates(ctx, maxBatchSize, now)
+	if err != nil {
+		return err
+	}
+	if len(candidates) == 0 {
+		return nil
+	}
+
+	if _, err := s.leaseCandidates(ctx, leaseToken, candidates, now); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *secureValueMetadataStorage) leaseCandidates(ctx context.Context, leaseToken string, candidates []string, now int64) (int64, error) {
 	req := leaseInactiveSecureValues{
-		SQLTemplate:  sqltemplate.New(s.dialect),
-		LeaseToken:   leaseToken,
-		MaxBatchSize: maxBatchSize,
-		MinAge:       int64((10 * time.Minute).Seconds()),
-		LeaseTTL:     int64((5 * time.Minute).Seconds()),
-		Now:          s.clock.Now().UTC().Unix(),
+		SQLTemplate:    sqltemplate.New(s.dialect),
+		SecureValueIDs: candidates,
+		LeaseToken:     leaseToken,
+		LeaseTTL:       int64((5 * time.Minute).Seconds()),
+		Now:            now,
 	}
 
 	q, err := sqltemplate.Execute(sqlSecureValueLeaseInactive, req)
 	if err != nil {
-		return fmt.Errorf("execute template %q: %w", sqlSecureValueLeaseInactive.Name(), err)
+		return 0, fmt.Errorf("execute template %q: %w", sqlSecureValueLeaseInactive.Name(), err)
 	}
 
-	if _, err := s.db.ExecContext(ctx, q, req.GetArgs()...); err != nil {
-		return fmt.Errorf("leasing inactive secure values: %w", err)
+	res, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return 0, fmt.Errorf("leasing inactive secure values: %w", err)
 	}
 
-	return nil
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("getting rows affected: %w", err)
+	}
+
+	return affected, nil
+}
+
+func (s *secureValueMetadataStorage) listLeaseCandidates(ctx context.Context, maxBatchSize uint16, now int64) ([]string, error) {
+	req := listLeaseInactiveCandidates{
+		SQLTemplate:  sqltemplate.New(s.dialect),
+		MaxBatchSize: maxBatchSize,
+		MinAge:       int64((10 * time.Minute).Seconds()),
+		Now:          now,
+	}
+
+	q, err := sqltemplate.Execute(sqlSecureValueLeaseInactiveCandidates, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueLeaseInactiveCandidates.Name(), err)
+	}
+
+	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("listing lease candidates: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	candidates := make([]string, 0, maxBatchSize)
+	for rows.Next() {
+		var guid string
+		if err := rows.Scan(&guid); err != nil {
+			return nil, fmt.Errorf("reading lease candidate row: %w", err)
+		}
+		candidates = append(candidates, guid)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
+	}
+
+	return candidates, nil
 }
 
 func (s *secureValueMetadataStorage) listByLeaseToken(ctx context.Context, leaseToken string) ([]secretv1beta1.SecureValue, error) {

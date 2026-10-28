@@ -112,7 +112,7 @@ approval_rules:
           - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
           - ^(?:(?:[^/]*(?:/|$))*)go\.work$
           - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
-          - ^(?:[^/]*)\.go$
+          - ^.*\.go$
           - ^pkg\/(?:(?:[^/]*(?:/|$))*)$
           - ^apps\/(?:(?:[^/]*(?:/|$))*)$
           - ^Makefile$
@@ -415,7 +415,7 @@ approval_rules:
           - ^go\.work\.sum$
           - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
           - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
-          - ^(?:[^/]*)\.go$
+          - ^.*\.go$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/pr-bot-update-go-workspace\.yml$
@@ -643,13 +643,17 @@ approval_rules:
           - ^(?:(?:[^/]*(?:/|$))*)nx\.json$
           - ^(?:(?:[^/]*(?:/|$))*)project\.json$
           - ^(?:(?:[^/]*(?:/|$))*)yarn\.lock$
+          - ^pnpm-lock\.yaml$
+          - ^pnpm-workspace\.yaml$
+          - ^\.npmrc$
+          - ^patches\/(?:(?:[^/]*(?:/|$))*)$
           - ^conf\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.yarnrc\.yml$
           - ^\.yarn\/(?:(?:[^/]*(?:/|$))*)$
           - ^tsconfig\.json$
-          - ^(?:[^/]*)\.js$
+          - ^.*\.js$
           - ^(?:[^/]*)\.ts$
-          - ^(?:[^/]*)\.config\.ts$
+          - ^.*\.config\.ts$
           - ^scripts\/(?:(?:[^/]*(?:/|$))*)$
           - ^emails\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.citools\/(?:(?:[^/]*(?:/|$))*)$
@@ -704,7 +708,7 @@ approval_rules:
           - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
           - ^(?:(?:[^/]*(?:/|$))*)go\.work$
           - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
-          - ^(?:[^/]*)\.go$
+          - ^.*\.go$
           - ^pkg\/(?:(?:[^/]*(?:/|$))*)$
           - ^apps\/(?:(?:[^/]*(?:/|$))*)$
           - ^scripts\/ci\/backend-tests\/(?:(?:[^/]*(?:/|$))*)$
@@ -852,12 +856,12 @@ approval_rules:
       Policy-bot can be overridden in emergency situations.
       **Only use this when absolutely neccesary, as it allows PRs with unfinished/unvalidated CI jobs to be merged.**
       Note that a reason is required, IE: `policy-bot disable: We need to deploy this fix to resolve [this ongoing incident with policy-bot](...).`
-    options:
-      methods:
-        comment_patterns:
-          - (?s)policy[- ]bot:? (?:approve|disable)d?(?::?(?<reason>.*))
-        github_review: false
     requires:
       count: 1
       permissions:
         - write
+    options:
+      methods:
+        comment_patterns:
+          - "(?s)policy[- ]bot:? (?:approve|disable)d?(?::?(?<reason>.*))"
+        github_review: false

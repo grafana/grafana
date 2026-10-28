@@ -56,6 +56,20 @@ jest.mock('kbar', () => ({
   KBarAnimator: jest.fn().mockImplementation(({ children }) => <div>{children}</div>),
 }));
 
+// jsdom has no layout, so the real virtualizer renders an arbitrary few-row window and rows
+// later in the list (e.g. notebook results, which come last) are only sometimes in the DOM.
+jest.mock('react-virtual', () => ({
+  useVirtual: ({ size }: { size: number }) => ({
+    virtualItems: Array.from({ length: size }, (_, index) => ({
+      index,
+      start: index * 50,
+      measureRef: jest.fn(),
+    })),
+    totalSize: size * 50,
+    scrollToIndex: jest.fn(),
+  }),
+}));
+
 const setup = () => {
   return render(
     <KBarProvider>
@@ -528,8 +542,7 @@ describe('CommandPalette', () => {
       const user = userEvent.setup();
       // "dark" matches the static change-theme action (a command, not a link, so no navigation)
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'dark');
-      const options = await screen.findAllByRole('option', {}, { timeout: 3000 });
-      await user.click(options[0]);
+      await user.click(await screen.findByRole('option', { name: /^Preferences: Change theme/ }, { timeout: 3000 }));
 
       expect(reportInteraction).toHaveBeenCalledWith(
         'command_palette_action_selected',

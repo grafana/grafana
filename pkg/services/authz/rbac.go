@@ -31,7 +31,9 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
@@ -74,9 +76,12 @@ func ProvideAuthZClients(
 	reg prometheus.Registerer,
 	db db.DB,
 	acService accesscontrol.Service,
+	actionResolver accesscontrol.ActionResolver,
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 	eventualResourceClient *resource.EventualClient,
+	legacyLoader *legacypermissions.Loader,
+	scopeResolvers *accesscontrol.ScopeResolverRegistry,
 ) (*AuthZClients, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -111,9 +116,9 @@ func ProvideAuthZClients(
 		}
 		return newAuthZClients(accessClient, rbacClient), nil
 	default:
-		userPermissionsEvaluator, ok := acService.(accesscontrol.UserPermissionsEvaluator)
-		if !ok {
-			return nil, errors.New("access control service does not support local user permission evaluation")
+		serverCfg := readEmbeddedRBACServerSettings(cfg)
+		if legacyLoader == nil {
+			return nil, errors.New("embedded user permission loader is not configured")
 		}
 		sql := legacysql.NewDatabaseProvider(db)
 		rbacSettings := rbac.Settings{
@@ -139,16 +144,19 @@ func ProvideAuthZClients(
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
-				store.NewSQLPermissionStore(sql, tracer),
+				store.NewSQLPermissionStore(sql, tracer, serverCfg.ForcePermissionRoleActionIndex),
 			),
-			userPermissionsEvaluator,
+			legacyLoader,
 			nil,
-			nil,
+			actionResolver,
 			log.New("authz-grpc-server"),
 			tracer,
 			reg,
 			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
 			rbacSettings,
+		).WithLegacyScopeResolvers(
+			scopeResolvers,
+			apirequest.GetNamespaceMapper(cfg),
 		)
 
 		channel := &inprocgrpc.Channel{}
@@ -398,7 +406,7 @@ func RegisterRBACAuthZService(
 		db,
 		folderStore,
 		legacy.NewLegacySQLStores(db),
-		store.NewSQLPermissionStore(db, tracer),
+		store.NewSQLPermissionStore(db, tracer, cfg.ForcePermissionRoleActionIndex),
 		nil,
 		userPermissionsResolver,
 		actionResolver,

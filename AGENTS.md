@@ -18,9 +18,9 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 ## Principles
 
 - Follow existing patterns in the surrounding code
-- Write tests for new functionality — for frontend code, use the `frontend-testing-strategy`
-  skill for this repo's testing conventions (and `panel-testing-strategy` on top of it for
-  visualization/panel code)
+- Write tests for new functionality — for Go code, use `testing/synctest` over sleeps and
+  time-based assertions; for frontend code, use the `frontend-testing-strategy` skill for this
+  repo's testing conventions (and `panel-testing-strategy` on top of it for visualization/panel code)
 - Keep changes focused — avoid over-engineering
 - Separate PRs for frontend and backend changes (deployed at different cadences)
 - Security: prevent XSS, SQL injection, command injection
@@ -154,6 +154,7 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 - **Config**: Defaults in `conf/defaults.ini`, overrides in `conf/custom.ini`.
 - **Database migrations**: Live in `pkg/services/sqlstore/migrations/`. Test with `make devenv sources=postgres_tests,mysql_tests` then `make test-go-integration-postgres`.
 - **CI sharding**: Backend tests use `SHARD`/`SHARDS` env vars for parallelization.
+- **Backend test classification**: Use `TestIntegration*` for tests that need the SQL database matrix. SQLite-only tests and SQL-independent tests should run once in the normal suite. Follow the [backend testing guidelines](contribute/backend/style-guide.md#integration-tests) for short-mode guards, mixed-backend suites, and external-service tests.
 - **Metrics**: Before adding, renaming or registering metrics, read `contribute/backend/instrumentation.md` for naming and registration conventions.
 - **Service compatibility**: Unified storage/search (`pkg/storage/unified/`) can be deployed as separate services at a different cadence than the Grafana API layer. Changes spanning API-layer callers and `pkg/storage/unified/` must be backwards compatible in both directions — see `pkg/storage/unified/AGENTS.md`.
 
@@ -161,7 +162,7 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 
 ### Prerequisites
 
-- **Node.js** — version pinned in `.nvmrc` (check that file for the exact version). Installed via nvm and set as the nvm default. **PATH gotcha:** the infra injects `/exec-daemon/node` ahead of nvm, so the plain non-login shell may resolve `node` to an older version — check it satisfies the `engines` range in `package.json` (it does today, so builds/tests work), but it is not the pinned version. Login shells (tmux sessions, `bash -lc '...'`) get the pinned version because `~/.bashrc` prepends the nvm bin. Run `yarn` / `yarn start` / `jest` / webpack via a login shell (tmux or `bash -lc`) to use the pinned Node.
+- **Node.js** — version pinned in `.nvmrc` (check that file for the exact version). Installed via nvm and set as the nvm default. **PATH gotcha:** the infra injects `/exec-daemon/node` ahead of nvm, so the plain non-login shell may resolve `node` to an older version — check it satisfies the `engines` range in `package.json` (it does today, so builds/tests work), but it is not the pinned version. Login shells (tmux sessions, `bash -lc '...'`) get the pinned version because `~/.bashrc` prepends the nvm bin. Run `yarn` / `yarn start` / `jest` / rspack via a login shell (tmux or `bash -lc`) to use the pinned Node.
 - **Go** — version pinned in `go.mod` (check that file for the exact version), installed at `/usr/local/go` and symlinked to `/usr/local/bin/go`. The distro `/usr/bin/go` is older; `/usr/local/bin` wins in PATH so `go` resolves correctly. If `go.mod` bumps Go, reinstall a matching toolchain into `/usr/local/go`.
 - **Yarn** via corepack — version pinned by `package.json` `packageManager` (check that field for the exact version). Run `corepack enable` if `yarn` is not found. `.yarnrc.yml` sets `enableScripts: false`, so dependency build/lifecycle scripts are disabled by default.
 - **GCC** required for CGo/SQLite compilation of the backend.
@@ -170,7 +171,7 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 ### Running services
 
 - **Backend**: `make run` — builds and starts Grafana backend with hot-reload (air) on `localhost:3000`. Default login: `admin`/`admin`. First build takes ~3 minutes due to debug symbols (`-gcflags all=-N -l`); subsequent hot-reload rebuilds are faster.
-- **Frontend**: `yarn start` — starts webpack dev server that watches for changes. The backend proxies to it. First compile takes ~45s.
+- **Frontend**: `yarn start` — starts the rspack dev server, which hot-reloads changes. The backend points the browser at it for frontend assets.
 - No external databases required — Grafana uses embedded SQLite by default.
 
 ### Testing gotchas

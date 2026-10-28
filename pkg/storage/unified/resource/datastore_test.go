@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"iter"
 	"slices"
 	"strings"
 	"testing"
@@ -1078,6 +1079,51 @@ func testDataStoreIntegration(t *testing.T, ctx context.Context, ds *dataStore) 
 	})
 }
 
+type noNULCursorKV struct{ kv.KV }
+
+func (s noNULCursorKV) Keys(ctx context.Context, section string, opt kv.ListOptions) iter.Seq2[string, error] {
+	if strings.ContainsRune(opt.StartKey, 0) || strings.ContainsRune(opt.EndKey, 0) {
+		return func(yield func(string, error) bool) {
+			yield("", fmt.Errorf("invalid byte sequence for encoding UTF8: 0x00"))
+		}
+	}
+	return s.KV.Keys(ctx, section, opt)
+}
+
+func TestPagedKeysNoNULCursor(t *testing.T) {
+	store := noNULCursorKV{setupBadgerKV(t)}
+	for _, key := range []string{"a", "a-long", "b"} {
+		w, err := store.Save(t.Context(), kv.EventsSection, key)
+		require.NoError(t, err)
+		_, err = w.Write([]byte("value"))
+		require.NoError(t, err)
+		require.NoError(t, w.Close())
+	}
+	var got []string
+	for key, err := range pagedKeys(t.Context(), store, kv.EventsSection, kv.ListOptions{}, 1) {
+		require.NoError(t, err)
+		got = append(got, key)
+	}
+	require.Equal(t, []string{"a", "a-long", "b"}, got)
+
+	got = nil
+	for key, err := range pagedKeys(t.Context(), store, kv.EventsSection, kv.ListOptions{StartKey: "a-long"}, 1) {
+		require.NoError(t, err)
+		got = append(got, key)
+	}
+	require.Equal(t, []string{"a-long", "b"}, got)
+
+	got = nil
+	for key, err := range pagedKeys(t.Context(), store, kv.EventsSection, kv.ListOptions{}, 1) {
+		require.NoError(t, err)
+		got = append(got, key)
+		if key == "a" {
+			require.NoError(t, store.Delete(t.Context(), kv.EventsSection, key))
+		}
+	}
+	require.Equal(t, []string{"a", "a-long", "b"}, got)
+}
+
 func TestIntegrationDataStore_Keys(t *testing.T) {
 	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreKeys)
 	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreKeys)
@@ -1654,9 +1700,24 @@ func testDataStoreLastResourceVersion(t *testing.T, ctx context.Context, ds *dat
 	})
 }
 
+// runLatestKeyLookupTest runs testFn on both KV engines, with the fast
+// latest-key lookup off and on.
+func runLatestKeyLookupTest(t *testing.T, testFn func(*testing.T, context.Context, *dataStore)) {
+	for _, fast := range []bool{false, true} {
+		withFast := func(newStore func(*testing.T) *dataStore) func(*testing.T) *dataStore {
+			return func(t *testing.T) *dataStore {
+				ds := newStore(t)
+				ds.fastLatestKeyLookup = fast
+				return ds
+			}
+		}
+		runDataStoreTestWith(t, fmt.Sprintf("badger/fast=%t", fast), withFast(setupTestDataStore), testFn)
+		runDataStoreTestWith(t, fmt.Sprintf("sqlkv/fast=%t", fast), withFast(setupTestDataStoreSqlKv), testFn)
+	}
+}
+
 func TestIntegrationDataStore_GetLatestResourceKey(t *testing.T) {
-	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestResourceKey)
-	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKey)
+	runLatestKeyLookupTest(t, testDataStoreGetLatestResourceKey)
 }
 
 func testDataStoreGetLatestResourceKey(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1721,8 +1782,7 @@ func testDataStoreGetLatestResourceKey(t *testing.T, ctx context.Context, ds *da
 }
 
 func TestIntegrationDataStore_GetLatestResourceKey_Deleted(t *testing.T) {
-	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestResourceKeyDeleted)
-	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKeyDeleted)
+	runLatestKeyLookupTest(t, testDataStoreGetLatestResourceKeyDeleted)
 }
 
 func testDataStoreGetLatestResourceKeyDeleted(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1749,11 +1809,14 @@ func testDataStoreGetLatestResourceKeyDeleted(t *testing.T, ctx context.Context,
 
 	_, err = ds.GetLatestResourceKey(ctx, key)
 	require.Equal(t, ErrNotFound, err)
+
+	tombstone, err := ds.GetResourceKeyAtRevision(ctx, key, 0, true)
+	require.NoError(t, err)
+	require.Equal(t, dataKey, tombstone)
 }
 
 func TestIntegrationDataStore_GetLatestResourceKey_NotFound(t *testing.T) {
-	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetLatestResourceKeyNotFound)
-	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetLatestResourceKeyNotFound)
+	runLatestKeyLookupTest(t, testDataStoreGetLatestResourceKeyNotFound)
 }
 
 func testDataStoreGetLatestResourceKeyNotFound(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1770,8 +1833,7 @@ func testDataStoreGetLatestResourceKeyNotFound(t *testing.T, ctx context.Context
 }
 
 func TestIntegrationDataStore_GetResourceKeyAtRevision(t *testing.T) {
-	runDataStoreTestWith(t, "badger", setupTestDataStore, testDataStoreGetResourceKeyAtRevision)
-	runDataStoreTestWith(t, "sqlkv", setupTestDataStoreSqlKv, testDataStoreGetResourceKeyAtRevision)
+	runLatestKeyLookupTest(t, testDataStoreGetResourceKeyAtRevision)
 }
 
 func testDataStoreGetResourceKeyAtRevision(t *testing.T, ctx context.Context, ds *dataStore) {
@@ -1845,6 +1907,61 @@ func testDataStoreGetResourceKeyAtRevision(t *testing.T, ctx context.Context, ds
 
 	require.Equal(t, rv3, dataKey.ResourceVersion)
 	require.Equal(t, DataActionUpdated, dataKey.Action)
+}
+
+// keysRecordingKV records the options of every Keys call.
+type keysRecordingKV struct {
+	KV
+	calls []ListOptions
+}
+
+func (k *keysRecordingKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
+	k.calls = append(k.calls, opt)
+	return k.KV.Keys(ctx, section, opt)
+}
+
+func TestDataStore_GetLatestResourceKey_FastLookupOption(t *testing.T) {
+	ctx := context.Background()
+	recorder := &keysRecordingKV{KV: setupBadgerKV(t)}
+	ds := newDataStore(recorder, nil)
+	require.False(t, ds.fastLatestKeyLookup, "fast latest-key lookup must be off by default")
+
+	key := GetRequestKey{Group: "apps", Resource: "resources", Namespace: "default", Name: "test-resource"}
+	var latest DataKey
+	for i := range 3 {
+		action := DataActionUpdated
+		if i == 0 {
+			action = DataActionCreated
+		}
+		latest = DataKey{
+			Group: key.Group, Resource: key.Resource, Namespace: key.Namespace, Name: key.Name,
+			ResourceVersion: node.Generate().Int64(), Action: action, Folder: "f",
+		}
+		require.NoError(t, ds.Save(ctx, latest, bytes.NewReader([]byte("v"))))
+	}
+
+	t.Run("disabled scans the history in ascending order", func(t *testing.T) {
+		ds.fastLatestKeyLookup = false
+		recorder.calls = nil
+		got, err := ds.GetResourceKeyAtRevision(ctx, key, 0, false)
+		require.NoError(t, err)
+		require.Equal(t, latest, got)
+
+		require.Len(t, recorder.calls, 1)
+		require.Equal(t, SortOrderAsc, recorder.calls[0].Sort)
+	})
+
+	t.Run("enabled reads only the newest key", func(t *testing.T) {
+		ds.fastLatestKeyLookup = true
+		recorder.calls = nil
+		got, err := ds.GetResourceKeyAtRevision(ctx, key, 0, false)
+		require.NoError(t, err)
+		require.Equal(t, latest, got)
+
+		require.Len(t, recorder.calls, 1)
+		require.Equal(t, SortOrderDesc, recorder.calls[0].Sort)
+		require.Equal(t, int64(1), recorder.calls[0].Limit)
+	})
 }
 
 func TestIntegrationDataStore_ListLatestResourceKeys(t *testing.T) {

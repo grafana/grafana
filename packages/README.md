@@ -31,7 +31,7 @@ Package authors are free to create as many exports as they like but should consi
 
 ## Versioning
 
-We use [Lerna](https://github.com/lerna/lerna) for packages versioning and releases.
+We use [Nx Release](https://nx.dev/docs/guides/nx-release) to version packages. The `release` block in `nx.json` lists the packages that are versioned together. `@grafana/plugin-compat` is not in it because it has its own version.
 
 All packages are versioned according to the current Grafana version:
 
@@ -53,11 +53,7 @@ Alpha and beta releases are published under the `next` tag on npm.
 
 ### Automatic prereleases
 
-Every commit to main that has changes within the `packages` directory is a subject of npm packages release. _ALL_ packages must be released under version from lerna.json file with the drone build number added to it:
-
-```
-<lerna.json version>-<DRONE_BUILD_NUMBER>
-```
+The `release-npm.yml` workflow publishes packages and is given the version to publish. Nightly runs publish only `@grafana/e2e-selectors`, and only if it changed since the last nightly publish.
 
 ### Manual release
 
@@ -66,9 +62,8 @@ Every commit to main that has changes within the `packages` directory is a subje
 > You must be logged in to NPM as part of Grafana NPM org before attempting to publish to the npm registry.
 
 1. Run `yarn packages:clean` script from the root directory. This will delete any previous builds of the packages.
-2. Run `yarn packages:prepare` script from the root directory. This performs tests on the packages and prompts for the version of the packages. The version should be the same as the one being released.
+2. Run `yarn packages:prepare <version>` script from the root directory, for example `yarn packages:prepare 6.3.0-alpha.1`. This writes the version to every package in the release group. The version should be the same as the one being released.
    - Make sure you use semver convention. So, _place a dot between prerelease id and prerelease number_, i.e. 6.3.0-alpha.1
-   - Make sure you confirm the version bump when prompted!
 3. Run `yarn packages:build` script that compiles distribution code in `packages/grafana-*/dist`.
 4. Run `yarn packages:pack` script to compress each package into `npm-artifacts/*.tgz` files. This is required for yarn to replace properties in the package.json files declared in the `publishConfig` property.
 5. Depending on whether or not it's a prerelease:
@@ -83,7 +78,7 @@ Every commit to main that has changes within the `packages` directory is a subje
 To build individual packages, run:
 
 ```
-yarn packages:build --scope=@grafana/<data|e2e|e2e-selectors|runtime|schema|ui>
+yarn nx run @grafana/<data|e2e-selectors|runtime|schema|ui>:build
 ```
 
 ### Setting up @grafana/\* packages for local development

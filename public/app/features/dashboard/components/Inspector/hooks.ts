@@ -1,5 +1,5 @@
 import { type DataSourceApi, type PanelData } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 
 export async function getDataSourceWithInspector(data?: PanelData): Promise<DataSourceApi | undefined> {
   const targets = data?.request?.targets || [];

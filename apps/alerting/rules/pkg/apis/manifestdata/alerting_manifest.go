@@ -17,6 +17,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	v1beta1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 )
 
 var (
@@ -32,13 +33,22 @@ var (
 	rawSchemaConfigv0alpha1            = []byte(`{"Condition":{"additionalProperties":false,"description":"Condition mirrors metav1.Condition. Inlined because the app-sdk codegen\nhere can't reference metav1.Condition from CUE. Field semantics are\nk8s-standard; reason values are produced by SyncReason in the syncer.","properties":{"lastTransitionTime":{"description":"RFC3339","type":"string"},"message":{"type":"string"},"observedGeneration":{"type":"integer"},"reason":{"type":"string"},"status":{"enum":["True","False","Unknown"],"type":"string"},"type":{"type":"string"}},"required":["type","status","lastTransitionTime","reason"],"type":"object"},"Config":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"spec":{"additionalProperties":false,"properties":{"externalRulerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID of the Mimir/Cortex Prometheus datasource to\nsync alert rules from. Empty means no sync is configured for the current\norg. The operator ini setting ` + "`" + `unified_alerting.external_ruler_uid` + "`" + `\noverrides this when set; see status.externalRulerSync.origin.","type":"string"},"pollInterval":{"description":"pollInterval sets how often this org's rules are re-synced from\ndatasourceUid. Empty defaults to 5m; must be between 1m and 1h. The\nworker checks orgs against a short internal baseline and only does\nreal work for an org once its own pollInterval has elapsed, so this\nis a lower bound, not a guarantee — an org's actual sync can lag\nslightly past its configured interval. Has no effect on the operator\nini path, which always uses the 5m default.","type":"string"}},"type":"object"}},"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"conditions":{"description":"Standard k8s-style condition list. Each binary-state feature owns one\ncondition type. Current types:\n  - ExternalRulerSynced: True after a successful sync, False after a\n    failed attempt, Unknown until the first attempt.","items":{"$ref":"#/components/schemas/Condition"},"type":"array"},"externalRulerSync":{"additionalProperties":false,"properties":{"datasourceUid":{"description":"datasourceUid is the UID actually used on the last sync attempt; may lag\nspec until the next tick. When origin=ini, this is the ini override value.","type":"string"},"lastAppliedHash":{"description":"lastAppliedHash is the upstream config hash from the last successful\nsync via this resource. The worker reads it back (API path only) to\nskip an unchanged re-apply across restarts and replicas, where an\nin-memory-only dedup cache would otherwise start empty. Internal\nbookkeeping; not user-facing.","type":"string"},"origin":{"description":"origin records which source supplied datasourceUid on the last run. \"ini\"\n(grafana.ini's unified_alerting.external_ruler_uid) wins over \"api\"\n(spec.externalRulerSync.datasourceUid).","enum":["api","ini"],"type":"string"}},"type":"object"},"observedGeneration":{"description":"observedGeneration is the spec.generation last evaluated by the\ncontrollers writing this status.","type":"integer"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
 	versionSchemaConfigv0alpha1        app.VersionSchema
 	_                                  = json.Unmarshal(rawSchemaConfigv0alpha1, &versionSchemaConfigv0alpha1)
+	rawSchemaAlertRulev1beta1          = []byte(`{"AlertRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"AlertRuleHealth":{"enum":["Unknown","OK","Paused","Error","NoData"],"type":"string"},"AlertRuleInstanceTotals":{"additionalProperties":false,"description":"Count of alert instances per state. error also counts instances whose evaluation\nerrored but were mapped to another state via execErrState, so it can overlap.","properties":{"error":{"type":"integer"},"firing":{"type":"integer"},"healthy":{"type":"integer"},"nodata":{"type":"integer"},"pending":{"type":"integer"},"recovering":{"type":"integer"}},"type":"object"},"AlertRuleState":{"enum":["Inactive","Healthy","Firing","Pending","Recovering"],"type":"string"},"AlertRuleStateReason":{"enum":["Evaluated","KeepLast"],"type":"string"},"DatasourceUID":{"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"ExecErrState":{"enum":["Error","Ok","Alerting","KeepLast"],"type":"string"},"Expression":{"additionalProperties":false,"properties":{"datasourceUID":{"$ref":"#/components/schemas/DatasourceUID","description":"The UID of the datasource to run this expression against. If omitted, the expression will be run against the ` + "`" + `__expr__` + "`" + ` datasource"},"model":{"additionalProperties":{},"type":"object"},"queryType":{"description":"The type of query if this is a query expression","type":"string"},"relativeTimeRange":{"$ref":"#/components/schemas/RelativeTimeRange"},"source":{"description":"Used to mark the expression to be used as the final source for the rule evaluation\nOnly one expression in a rule can be marked as the source\nFor AlertRules, this is the expression that will be evaluated against the alerting condition\nFor RecordingRules, this is the expression that will be recorded","type":"boolean"}},"required":["model"],"type":"object"},"ExpressionMap":{"additionalProperties":{"$ref":"#/components/schemas/Expression"},"type":"object"},"IntervalTrigger":{"additionalProperties":false,"properties":{"interval":{"$ref":"#/components/schemas/PromDuration"}},"required":["interval"],"type":"object"},"NamedRoutingTree":{"additionalProperties":false,"properties":{"routingTree":{"type":"string"},"type":{"allOf":[{"$ref":"#/components/schemas/NotificationSettingsType"}],"default":"NamedRoutingTree"}},"required":["type","routingTree"],"type":"object"},"NoDataState":{"enum":["NoData","Ok","Alerting","KeepLast"],"type":"string"},"NotificationSettings":{"oneOf":[{"$ref":"#/components/schemas/SimplifiedRouting"},{"$ref":"#/components/schemas/NamedRoutingTree"}]},"NotificationSettingsType":{"enum":["SimplifiedRouting","NamedRoutingTree"],"type":"string"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PanelRef":{"additionalProperties":false,"properties":{"dashboardUID":{"minLength":1,"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"panelID":{"exclusiveMinimum":true,"minimum":0,"type":"integer"}},"required":["dashboardUID","panelID"],"type":"object"},"PromDuration":{"not":{"pattern":"hmuµn"},"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$","type":"string"},"PromDurationWMillis":{"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$","type":"string"},"RelativeTimeRange":{"additionalProperties":false,"properties":{"from":{"$ref":"#/components/schemas/PromDurationWMillis"},"to":{"$ref":"#/components/schemas/PromDurationWMillis"}},"required":["from","to"],"type":"object"},"SimplifiedRouting":{"additionalProperties":false,"properties":{"activeTimeIntervals":{"items":{"$ref":"#/components/schemas/TimeIntervalRef"},"type":"array"},"groupBy":{"items":{"type":"string"},"type":"array"},"groupInterval":{"$ref":"#/components/schemas/PromDuration"},"groupWait":{"$ref":"#/components/schemas/PromDuration"},"muteTimeIntervals":{"items":{"$ref":"#/components/schemas/TimeIntervalRef"},"type":"array"},"receiver":{"type":"string"},"repeatInterval":{"$ref":"#/components/schemas/PromDuration"},"type":{"allOf":[{"$ref":"#/components/schemas/NotificationSettingsType"}],"default":"SimplifiedRouting"}},"required":["type","receiver"],"type":"object"},"TemplateString":{"type":"string"},"TimeIntervalRef":{"type":"string"},"spec":{"additionalProperties":false,"properties":{"annotations":{"additionalProperties":{"$ref":"#/components/schemas/TemplateString"},"type":"object"},"execErrState":{"$ref":"#/components/schemas/ExecErrState","default":"Error"},"expressions":{"$ref":"#/components/schemas/ExpressionMap"},"for":{"type":"string"},"keepFiringFor":{"type":"string"},"labels":{"additionalProperties":{"$ref":"#/components/schemas/TemplateString"},"type":"object"},"missingSeriesEvalsToResolve":{"minimum":0,"type":"integer"},"noDataState":{"$ref":"#/components/schemas/NoDataState","default":"NoData"},"notificationSettings":{"$ref":"#/components/schemas/NotificationSettings"},"panelRef":{"$ref":"#/components/schemas/PanelRef"},"paused":{"type":"boolean"},"title":{"type":"string"},"trigger":{"$ref":"#/components/schemas/IntervalTrigger"}},"required":["title","trigger","noDataState","execErrState","expressions"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"evaluationDuration":{"description":"duration of the last evaluation in seconds","type":"number"},"health":{"$ref":"#/components/schemas/AlertRuleHealth"},"lastError":{"type":"string"},"lastEvaluationTime":{"format":"date-time","type":"string"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"},"state":{"$ref":"#/components/schemas/AlertRuleState"},"stateReason":{"$ref":"#/components/schemas/AlertRuleStateReason"},"totals":{"$ref":"#/components/schemas/AlertRuleInstanceTotals"}},"type":"object"}}`)
+	versionSchemaAlertRulev1beta1      app.VersionSchema
+	_                                  = json.Unmarshal(rawSchemaAlertRulev1beta1, &versionSchemaAlertRulev1beta1)
+	rawSchemaRecordingRulev1beta1      = []byte(`{"DatasourceUID":{"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"Expression":{"additionalProperties":false,"properties":{"datasourceUID":{"$ref":"#/components/schemas/DatasourceUID","description":"The UID of the datasource to run this expression against. If omitted, the expression will be run against the ` + "`" + `__expr__` + "`" + ` datasource"},"model":{"additionalProperties":{},"type":"object"},"queryType":{"description":"The type of query if this is a query expression","type":"string"},"relativeTimeRange":{"$ref":"#/components/schemas/RelativeTimeRange"},"source":{"description":"Used to mark the expression to be used as the final source for the rule evaluation\nOnly one expression in a rule can be marked as the source\nFor AlertRules, this is the expression that will be evaluated against the alerting condition\nFor RecordingRules, this is the expression that will be recorded","type":"boolean"}},"required":["model"],"type":"object"},"ExpressionMap":{"additionalProperties":{"$ref":"#/components/schemas/Expression"},"type":"object"},"IntervalTrigger":{"additionalProperties":false,"properties":{"interval":{"$ref":"#/components/schemas/PromDuration"}},"required":["interval"],"type":"object"},"MetricName":{"pattern":"^[a-zA-Z_:][a-zA-Z0-9_:]*$","type":"string"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PromDuration":{"not":{"pattern":"hmuµn"},"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$","type":"string"},"PromDurationWMillis":{"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?(([0-9]+)ms)?|0)$","type":"string"},"RecordingRule":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"RecordingRuleHealth":{"enum":["Unknown","Recording","Paused","Error","NoData"],"type":"string"},"RelativeTimeRange":{"additionalProperties":false,"properties":{"from":{"$ref":"#/components/schemas/PromDurationWMillis"},"to":{"$ref":"#/components/schemas/PromDurationWMillis"}},"required":["from","to"],"type":"object"},"TemplateString":{"type":"string"},"spec":{"additionalProperties":false,"properties":{"expressions":{"$ref":"#/components/schemas/ExpressionMap"},"labels":{"additionalProperties":{"$ref":"#/components/schemas/TemplateString"},"type":"object"},"metric":{"$ref":"#/components/schemas/MetricName"},"paused":{"type":"boolean"},"targetDatasourceUID":{"$ref":"#/components/schemas/DatasourceUID"},"title":{"type":"string"},"trigger":{"$ref":"#/components/schemas/IntervalTrigger"}},"required":["title","trigger","metric","expressions","targetDatasourceUID"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"evaluationDuration":{"description":"duration of the last evaluation in seconds","type":"number"},"health":{"$ref":"#/components/schemas/RecordingRuleHealth"},"lastError":{"type":"string"},"lastEvaluationTime":{"format":"date-time","type":"string"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaRecordingRulev1beta1  app.VersionSchema
+	_                                  = json.Unmarshal(rawSchemaRecordingRulev1beta1, &versionSchemaRecordingRulev1beta1)
+	rawSchemaRuleSequencev1beta1       = []byte(`{"IntervalTrigger":{"additionalProperties":false,"properties":{"interval":{"$ref":"#/components/schemas/PromDuration"}},"required":["interval"],"type":"object"},"OperatorState":{"additionalProperties":false,"properties":{"descriptiveState":{"description":"descriptiveState is an optional more descriptive state field which has no requirements on format","type":"string"},"details":{"additionalProperties":true,"description":"details contains any extra information that is operator-specific","type":"object"},"lastEvaluation":{"description":"lastEvaluation is the ResourceVersion last evaluated","type":"string"},"state":{"description":"state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.","enum":["success","in_progress","failed"],"type":"string"}},"required":["lastEvaluation","state"],"type":"object"},"PromDuration":{"not":{"pattern":"hmuµn"},"pattern":"^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$","type":"string"},"RuleRef":{"additionalProperties":false,"properties":{"name":{"$ref":"#/components/schemas/RuleUID","description":"name is the metadata.name of an AlertRule or RecordingRule resource."}},"required":["name"],"type":"object"},"RuleSequence":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"RuleUID":{"pattern":"^[a-zA-Z0-9_-]+$","type":"string"},"spec":{"additionalProperties":false,"properties":{"alertRules":{"items":{"$ref":"#/components/schemas/RuleRef"},"type":"array"},"recordingRules":{"items":{"$ref":"#/components/schemas/RuleRef"},"type":"array"},"trigger":{"$ref":"#/components/schemas/IntervalTrigger"}},"required":["trigger","recordingRules"],"type":"object"},"status":{"additionalProperties":false,"properties":{"additionalFields":{"additionalProperties":true,"description":"additionalFields is reserved for future use","type":"object"},"operatorStates":{"additionalProperties":{"$ref":"#/components/schemas/OperatorState"},"description":"operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.","type":"object"}},"type":"object"}}`)
+	versionSchemaRuleSequencev1beta1   app.VersionSchema
+	_                                  = json.Unmarshal(rawSchemaRuleSequencev1beta1, &versionSchemaRuleSequencev1beta1)
 )
 
 var appManifestData = app.ManifestData{
 	AppName:          "alerting",
 	AppDisplayName:   "alerting",
 	Group:            "rules.alerting.grafana.app",
-	PreferredVersion: "v0alpha1",
+	PreferredVersion: "v1beta1",
 	Versions: []app.ManifestVersion{
 		{
 			Name:   "v0alpha1",
@@ -378,6 +388,31 @@ var appManifestData = app.ManifestData{
 						},
 					},
 					Schema: &versionSchemaRuleSequencev0alpha1,
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "recordingRuleUIDs",
+							Path:         "spec.recordingRules[*].name",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "UIDs of the recording rules in the sequence",
+						},
+						{
+							Name:         "alertRuleUIDs",
+							Path:         "spec.alertingRules[*].name",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "UIDs of the alert rules in the sequence",
+						},
+						{
+							Name:         "interval",
+							Path:         "spec.trigger.interval",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The evaluation interval of the sequence",
+						},
+					},
 				},
 
 				{
@@ -396,9 +431,10 @@ var appManifestData = app.ManifestData{
 					Schema: &versionSchemaConfigv0alpha1,
 				},
 			},
+			// nolint:staticcheck
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
-					"/alertrules/searchRules": {
+					"/searchAlertRules": {
 						Post: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
@@ -573,7 +609,7 @@ var appManifestData = app.ManifestData{
 							},
 						},
 					},
-					"/recordingrules/searchRules": {
+					"/searchRecordingRules": {
 						Post: &spec3.Operation{
 							OperationProps: spec3.OperationProps{
 
@@ -1632,11 +1668,378 @@ var appManifestData = app.ManifestData{
 			},
 			OpenAPI: func() app.ManifestVersionOpenAPI {
 				var openAPI app.ManifestVersionOpenAPI
-				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/alertrules/searchRules\":{\"post\":{\"operationId\":\"listAlertRuleSearchRulesV0alpha1\",\"requestBody\":{\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"continue\":{\"description\":\"Opaque token from the previous page.\",\"type\":\"string\"},\"facetLimit\":{\"description\":\"Per-facet term limit. Zero uses the default; larger values are clamped.\",\"type\":\"integer\"},\"facets\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"fields\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"kind\":{\"type\":\"string\"},\"labelSelector\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchLabelSelector\"},\"limit\":{\"description\":\"Page size. Zero uses the default; larger values are clamped.\",\"type\":\"integer\"},\"sort\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchSortField\"}},\"where\":{\"description\":\"Omitted where matches all authorised rules satisfying labelSelector.\",\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode\"}},\"additionalProperties\":false}}}},\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"description\":\"SearchResults supplies its own metadata; omit listMeta.\",\"type\":\"object\",\"required\":[\"metadata\",\"items\",\"apiVersion\",\"kind\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"facets\":{\"description\":\"Counts use a bounded sample and are best-effort.\",\"type\":\"object\",\"additionalProperties\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1FacetValue\"}}},\"items\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultHit\"}},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"metadata\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultsMetadata\"}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]},\"/namespaces/{namespace}/recordingrules/searchRules\":{\"post\":{\"operationId\":\"listRecordingRuleSearchRulesV0alpha1\",\"requestBody\":{\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"continue\":{\"description\":\"Opaque token from the previous page.\",\"type\":\"string\"},\"facetLimit\":{\"description\":\"Per-facet term limit. Zero uses the default; larger values are clamped.\",\"type\":\"integer\"},\"facets\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"fields\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"kind\":{\"type\":\"string\"},\"labelSelector\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchLabelSelector\"},\"limit\":{\"description\":\"Page size. Zero uses the default; larger values are clamped.\",\"type\":\"integer\"},\"sort\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchSortField\"}},\"where\":{\"description\":\"Omitted where matches all authorised rules satisfying labelSelector.\",\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode\"}},\"additionalProperties\":false}}}},\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"metadata\",\"items\",\"apiVersion\",\"kind\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"facets\":{\"description\":\"Counts use a bounded sample and are best-effort.\",\"type\":\"object\",\"additionalProperties\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1FacetValue\"}}},\"items\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultHit\"}},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"metadata\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultsMetadata\"}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}},\"components\":{\"schemas\":{\"listAlertRuleSearchRulesV0alpha1FacetValue\":{\"type\":\"object\",\"required\":[\"value\",\"count\"],\"properties\":{\"count\":{\"type\":\"integer\"},\"value\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchExistsLeaf\":{\"description\":\"Retained for generic schema compatibility; rejected by the compatibility handler.\",\"type\":\"object\",\"required\":[\"field\"],\"properties\":{\"field\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchFilterLeaf\":{\"type\":\"object\",\"required\":[\"field\",\"operator\",\"values\"],\"properties\":{\"field\":{\"type\":\"string\"},\"operator\":{\"type\":\"string\",\"enum\":[\"In\",\"NotIn\",\"All\"]},\"values\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchLabelSelector\":{\"description\":\"Selects metadata.labels, not alerting labels, and is ANDed with where.\\nFilter alerting labels through the indexed \\\"labels\\\" field instead.\",\"type\":\"object\",\"properties\":{\"matchExpressions\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement\"}},\"matchLabels\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement\":{\"description\":\"Only In and NotIn are accepted by the compatibility handler.\",\"type\":\"object\",\"required\":[\"key\",\"operator\"],\"properties\":{\"key\":{\"type\":\"string\"},\"operator\":{\"type\":\"string\",\"enum\":[\"In\",\"NotIn\",\"Exists\",\"DoesNotExist\"]},\"values\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchRangeLeaf\":{\"description\":\"Retained for generic schema compatibility; rejected by the compatibility handler.\",\"type\":\"object\",\"required\":[\"field\"],\"properties\":{\"field\":{\"type\":\"string\"},\"gt\":{\"type\":\"number\"},\"gte\":{\"type\":\"number\"},\"lt\":{\"type\":\"number\"},\"lte\":{\"type\":\"number\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchRegexLeaf\":{\"description\":\"Supported on the \\\"labels\\\" field only, as \\\"key=\\u003cvalue regex\\u003e\\\": the key is\\nliteral, and the value regex matches the whole label value, case-sensitively\\nunless it starts with (?i). A missing label is matched as an empty value.\",\"type\":\"object\",\"required\":[\"field\",\"pattern\"],\"properties\":{\"field\":{\"type\":\"string\"},\"negate\":{\"type\":\"boolean\"},\"pattern\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchResultHit\":{\"type\":\"object\",\"required\":[\"resource\"],\"properties\":{\"fields\":{\"description\":\"Open to match the generic endpoint's unstructured field values.\",\"type\":\"object\",\"additionalProperties\":true},\"resource\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultResource\"},\"score\":{\"description\":\"Present only when a text query was evaluated.\",\"type\":\"number\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchResultResource\":{\"description\":\"Namespace is implicit in the URL.\",\"type\":\"object\",\"required\":[\"group\",\"resource\",\"kind\",\"name\"],\"properties\":{\"group\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"resource\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchResultsMetadata\":{\"type\":\"object\",\"required\":[\"totalHits\",\"totalHitsRelation\"],\"properties\":{\"continue\":{\"description\":\"Opaque next-page token; clients must not construct it.\",\"type\":\"string\"},\"totalHits\":{\"description\":\"Interpret with totalHitsRelation, not as an exact count unconditionally.\",\"type\":\"integer\"},\"totalHitsRelation\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1TotalHitsRelation\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchSortField\":{\"description\":\"Defaults to ascending; only scalar fields with the sort capability are valid.\",\"type\":\"object\",\"required\":[\"field\"],\"properties\":{\"direction\":{\"type\":\"string\",\"enum\":[\"asc\",\"desc\"]},\"field\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchTextLeaf\":{\"description\":\"Omitted fields default to title. All whitespace-separated terms must match\\nin any order; punctuation and short-term matching are backend-defined.\",\"type\":\"object\",\"required\":[\"value\"],\"properties\":{\"boost\":{\"description\":\"boost is a future per-leaf score multiplier. Setting it is rejected.\",\"type\":\"number\"},\"fields\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"value\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchWhereNode\":{\"description\":\"Exactly one key must be set. The compatibility handler accepts only a\\ntext/filter/regex leaf or a top-level \\\"and\\\" of those leaves.\",\"type\":\"object\",\"properties\":{\"and\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode\"}},\"exists\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchExistsLeaf\"},\"filter\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchFilterLeaf\"},\"not\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode\"},\"or\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode\"}},\"range\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRangeLeaf\"},\"regex\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRegexLeaf\"},\"text\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchTextLeaf\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1TotalHitsRelation\":{\"description\":\"\\\"eq\\\" means exact; \\\"lte\\\" means totalHits is an upper bound after authorisation.\",\"type\":\"string\",\"enum\":[\"eq\",\"lte\"]},\"listRecordingRuleSearchRulesV0alpha1FacetValue\":{\"type\":\"object\",\"required\":[\"value\",\"count\"],\"properties\":{\"count\":{\"type\":\"integer\"},\"value\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchExistsLeaf\":{\"description\":\"Retained for generic schema compatibility; rejected by the compatibility handler.\",\"type\":\"object\",\"required\":[\"field\"],\"properties\":{\"field\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf\":{\"type\":\"object\",\"required\":[\"field\",\"operator\",\"values\"],\"properties\":{\"field\":{\"type\":\"string\"},\"operator\":{\"type\":\"string\",\"enum\":[\"In\",\"NotIn\",\"All\"]},\"values\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchLabelSelector\":{\"description\":\"Selects metadata.labels, not alerting labels, and is ANDed with where.\\nFilter alerting labels through the indexed \\\"labels\\\" field instead.\",\"type\":\"object\",\"properties\":{\"matchExpressions\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement\"}},\"matchLabels\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement\":{\"description\":\"Only In and NotIn are accepted by the compatibility handler.\",\"type\":\"object\",\"required\":[\"key\",\"operator\"],\"properties\":{\"key\":{\"type\":\"string\"},\"operator\":{\"type\":\"string\",\"enum\":[\"In\",\"NotIn\",\"Exists\",\"DoesNotExist\"]},\"values\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf\":{\"description\":\"Retained for generic schema compatibility; rejected by the compatibility handler.\",\"type\":\"object\",\"required\":[\"field\"],\"properties\":{\"field\":{\"type\":\"string\"},\"gt\":{\"type\":\"number\"},\"gte\":{\"type\":\"number\"},\"lt\":{\"type\":\"number\"},\"lte\":{\"type\":\"number\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchRegexLeaf\":{\"description\":\"Supported on the \\\"labels\\\" field only, as \\\"key=\\u003cvalue regex\\u003e\\\": the key is\\nliteral, and the value regex matches the whole label value, case-sensitively\\nunless it starts with (?i). A missing label is matched as an empty value.\",\"type\":\"object\",\"required\":[\"field\",\"pattern\"],\"properties\":{\"field\":{\"type\":\"string\"},\"negate\":{\"type\":\"boolean\"},\"pattern\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchResultHit\":{\"type\":\"object\",\"required\":[\"resource\"],\"properties\":{\"fields\":{\"description\":\"Open to match the generic endpoint's unstructured field values.\",\"type\":\"object\",\"additionalProperties\":true},\"resource\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultResource\"},\"score\":{\"description\":\"Present only when a text query was evaluated.\",\"type\":\"number\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchResultResource\":{\"description\":\"Namespace is implicit in the URL.\",\"type\":\"object\",\"required\":[\"group\",\"resource\",\"kind\",\"name\"],\"properties\":{\"group\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"resource\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchResultsMetadata\":{\"type\":\"object\",\"required\":[\"totalHits\",\"totalHitsRelation\"],\"properties\":{\"continue\":{\"description\":\"Opaque next-page token; clients must not construct it.\",\"type\":\"string\"},\"totalHits\":{\"description\":\"Interpret with totalHitsRelation, not as an exact count unconditionally.\",\"type\":\"integer\"},\"totalHitsRelation\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1TotalHitsRelation\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchSortField\":{\"description\":\"Defaults to ascending; only scalar fields with the sort capability are valid.\",\"type\":\"object\",\"required\":[\"field\"],\"properties\":{\"direction\":{\"type\":\"string\",\"enum\":[\"asc\",\"desc\"]},\"field\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchTextLeaf\":{\"description\":\"Omitted fields default to title. All whitespace-separated terms must match\\nin any order; punctuation and short-term matching are backend-defined.\",\"type\":\"object\",\"required\":[\"value\"],\"properties\":{\"boost\":{\"description\":\"boost is a future per-leaf score multiplier. Setting it is rejected.\",\"type\":\"number\"},\"fields\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"value\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchWhereNode\":{\"description\":\"Exactly one key must be set. The compatibility handler accepts only a\\ntext/filter/regex leaf or a top-level \\\"and\\\" of those leaves.\",\"type\":\"object\",\"properties\":{\"and\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode\"}},\"exists\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchExistsLeaf\"},\"filter\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf\"},\"not\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode\"},\"or\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode\"}},\"range\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf\"},\"regex\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRegexLeaf\"},\"text\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchTextLeaf\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1TotalHitsRelation\":{\"description\":\"\\\"eq\\\" means exact; \\\"lte\\\" means totalHits is an upper bound after authorisation.\",\"type\":\"string\",\"enum\":[\"eq\",\"lte\"]}}}}"), &openAPI); err != nil {
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/searchAlertRules\":{\"post\":{\"operationId\":\"listAlertRuleSearchRulesV0alpha1\",\"requestBody\":{\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"continue\":{\"description\":\"Opaque token from the previous page.\",\"type\":\"string\"},\"facetLimit\":{\"description\":\"Per-facet term limit. Zero uses the default; larger values are clamped.\",\"type\":\"integer\"},\"facets\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"fields\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"kind\":{\"type\":\"string\"},\"labelSelector\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchLabelSelector\"},\"limit\":{\"description\":\"Page size. Zero uses the default; larger values are clamped.\",\"type\":\"integer\"},\"sort\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchSortField\"}},\"where\":{\"description\":\"Omitted where matches all authorised rules satisfying labelSelector.\",\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode\"}},\"additionalProperties\":false}}}},\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"description\":\"SearchResults supplies its own metadata; omit listMeta.\",\"type\":\"object\",\"required\":[\"metadata\",\"items\",\"apiVersion\",\"kind\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"facets\":{\"description\":\"Counts use a bounded sample and are best-effort.\",\"type\":\"object\",\"additionalProperties\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1FacetValue\"}}},\"items\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultHit\"}},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"metadata\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultsMetadata\"}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]},\"/namespaces/{namespace}/searchRecordingRules\":{\"post\":{\"operationId\":\"listRecordingRuleSearchRulesV0alpha1\",\"requestBody\":{\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"properties\":{\"apiVersion\":{\"type\":\"string\"},\"continue\":{\"description\":\"Opaque token from the previous page.\",\"type\":\"string\"},\"facetLimit\":{\"description\":\"Per-facet term limit. Zero uses the default; larger values are clamped.\",\"type\":\"integer\"},\"facets\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"fields\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"kind\":{\"type\":\"string\"},\"labelSelector\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchLabelSelector\"},\"limit\":{\"description\":\"Page size. Zero uses the default; larger values are clamped.\",\"type\":\"integer\"},\"sort\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchSortField\"}},\"where\":{\"description\":\"Omitted where matches all authorised rules satisfying labelSelector.\",\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode\"}},\"additionalProperties\":false}}}},\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"metadata\",\"items\",\"apiVersion\",\"kind\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"facets\":{\"description\":\"Counts use a bounded sample and are best-effort.\",\"type\":\"object\",\"additionalProperties\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1FacetValue\"}}},\"items\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultHit\"}},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"metadata\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultsMetadata\"}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}},\"components\":{\"schemas\":{\"listAlertRuleSearchRulesV0alpha1FacetValue\":{\"type\":\"object\",\"required\":[\"value\",\"count\"],\"properties\":{\"count\":{\"type\":\"integer\"},\"value\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchExistsLeaf\":{\"description\":\"Retained for generic schema compatibility; rejected by the compatibility handler.\",\"type\":\"object\",\"required\":[\"field\"],\"properties\":{\"field\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchFilterLeaf\":{\"type\":\"object\",\"required\":[\"field\",\"operator\",\"values\"],\"properties\":{\"field\":{\"type\":\"string\"},\"operator\":{\"type\":\"string\",\"enum\":[\"In\",\"NotIn\",\"All\"]},\"values\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchLabelSelector\":{\"description\":\"Selects metadata.labels, not alerting labels, and is ANDed with where.\\nFilter alerting labels through the indexed \\\"labels\\\" field instead.\",\"type\":\"object\",\"properties\":{\"matchExpressions\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement\"}},\"matchLabels\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement\":{\"description\":\"Only In and NotIn are accepted by the compatibility handler.\",\"type\":\"object\",\"required\":[\"key\",\"operator\"],\"properties\":{\"key\":{\"type\":\"string\"},\"operator\":{\"type\":\"string\",\"enum\":[\"In\",\"NotIn\",\"Exists\",\"DoesNotExist\"]},\"values\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchRangeLeaf\":{\"description\":\"Retained for generic schema compatibility; rejected by the compatibility handler.\",\"type\":\"object\",\"required\":[\"field\"],\"properties\":{\"field\":{\"type\":\"string\"},\"gt\":{\"type\":\"number\"},\"gte\":{\"type\":\"number\"},\"lt\":{\"type\":\"number\"},\"lte\":{\"type\":\"number\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchRegexLeaf\":{\"description\":\"Supported on the \\\"labels\\\" field only, as \\\"key=\\u003cvalue regex\\u003e\\\": the key is\\nliteral, and the value regex matches the whole label value, case-sensitively\\nunless it starts with (?i). A missing label is matched as an empty value.\",\"type\":\"object\",\"required\":[\"field\",\"pattern\"],\"properties\":{\"field\":{\"type\":\"string\"},\"negate\":{\"type\":\"boolean\"},\"pattern\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchResultHit\":{\"type\":\"object\",\"required\":[\"resource\"],\"properties\":{\"fields\":{\"description\":\"Open to match the generic endpoint's unstructured field values.\",\"type\":\"object\",\"additionalProperties\":true},\"resource\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultResource\"},\"score\":{\"description\":\"Present only when a text query was evaluated.\",\"type\":\"number\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchResultResource\":{\"description\":\"Namespace is implicit in the URL.\",\"type\":\"object\",\"required\":[\"group\",\"resource\",\"kind\",\"name\"],\"properties\":{\"group\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"resource\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchResultsMetadata\":{\"type\":\"object\",\"required\":[\"totalHits\",\"totalHitsRelation\"],\"properties\":{\"continue\":{\"description\":\"Opaque next-page token; clients must not construct it.\",\"type\":\"string\"},\"totalHits\":{\"description\":\"Interpret with totalHitsRelation, not as an exact count unconditionally.\",\"type\":\"integer\"},\"totalHitsRelation\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1TotalHitsRelation\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchSortField\":{\"description\":\"Defaults to ascending; only scalar fields with the sort capability are valid.\",\"type\":\"object\",\"required\":[\"field\"],\"properties\":{\"direction\":{\"type\":\"string\",\"enum\":[\"asc\",\"desc\"]},\"field\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchTextLeaf\":{\"description\":\"Omitted fields default to title. All whitespace-separated terms must match\\nin any order; punctuation and short-term matching are backend-defined.\",\"type\":\"object\",\"required\":[\"value\"],\"properties\":{\"boost\":{\"description\":\"boost is a future per-leaf score multiplier. Setting it is rejected.\",\"type\":\"number\"},\"fields\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"value\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1SearchWhereNode\":{\"description\":\"Exactly one key must be set. The compatibility handler accepts only a\\ntext/filter/regex leaf or a top-level \\\"and\\\" of those leaves.\",\"type\":\"object\",\"properties\":{\"and\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode\"}},\"exists\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchExistsLeaf\"},\"filter\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchFilterLeaf\"},\"not\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode\"},\"or\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode\"}},\"range\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRangeLeaf\"},\"regex\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRegexLeaf\"},\"text\":{\"$ref\":\"#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchTextLeaf\"}},\"additionalProperties\":false},\"listAlertRuleSearchRulesV0alpha1TotalHitsRelation\":{\"description\":\"\\\"eq\\\" means exact; \\\"lte\\\" means totalHits is an upper bound after authorisation.\",\"type\":\"string\",\"enum\":[\"eq\",\"lte\"]},\"listRecordingRuleSearchRulesV0alpha1FacetValue\":{\"type\":\"object\",\"required\":[\"value\",\"count\"],\"properties\":{\"count\":{\"type\":\"integer\"},\"value\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchExistsLeaf\":{\"description\":\"Retained for generic schema compatibility; rejected by the compatibility handler.\",\"type\":\"object\",\"required\":[\"field\"],\"properties\":{\"field\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf\":{\"type\":\"object\",\"required\":[\"field\",\"operator\",\"values\"],\"properties\":{\"field\":{\"type\":\"string\"},\"operator\":{\"type\":\"string\",\"enum\":[\"In\",\"NotIn\",\"All\"]},\"values\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchLabelSelector\":{\"description\":\"Selects metadata.labels, not alerting labels, and is ANDed with where.\\nFilter alerting labels through the indexed \\\"labels\\\" field instead.\",\"type\":\"object\",\"properties\":{\"matchExpressions\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement\"}},\"matchLabels\":{\"type\":\"object\",\"additionalProperties\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement\":{\"description\":\"Only In and NotIn are accepted by the compatibility handler.\",\"type\":\"object\",\"required\":[\"key\",\"operator\"],\"properties\":{\"key\":{\"type\":\"string\"},\"operator\":{\"type\":\"string\",\"enum\":[\"In\",\"NotIn\",\"Exists\",\"DoesNotExist\"]},\"values\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf\":{\"description\":\"Retained for generic schema compatibility; rejected by the compatibility handler.\",\"type\":\"object\",\"required\":[\"field\"],\"properties\":{\"field\":{\"type\":\"string\"},\"gt\":{\"type\":\"number\"},\"gte\":{\"type\":\"number\"},\"lt\":{\"type\":\"number\"},\"lte\":{\"type\":\"number\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchRegexLeaf\":{\"description\":\"Supported on the \\\"labels\\\" field only, as \\\"key=\\u003cvalue regex\\u003e\\\": the key is\\nliteral, and the value regex matches the whole label value, case-sensitively\\nunless it starts with (?i). A missing label is matched as an empty value.\",\"type\":\"object\",\"required\":[\"field\",\"pattern\"],\"properties\":{\"field\":{\"type\":\"string\"},\"negate\":{\"type\":\"boolean\"},\"pattern\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchResultHit\":{\"type\":\"object\",\"required\":[\"resource\"],\"properties\":{\"fields\":{\"description\":\"Open to match the generic endpoint's unstructured field values.\",\"type\":\"object\",\"additionalProperties\":true},\"resource\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultResource\"},\"score\":{\"description\":\"Present only when a text query was evaluated.\",\"type\":\"number\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchResultResource\":{\"description\":\"Namespace is implicit in the URL.\",\"type\":\"object\",\"required\":[\"group\",\"resource\",\"kind\",\"name\"],\"properties\":{\"group\":{\"type\":\"string\"},\"kind\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"resource\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchResultsMetadata\":{\"type\":\"object\",\"required\":[\"totalHits\",\"totalHitsRelation\"],\"properties\":{\"continue\":{\"description\":\"Opaque next-page token; clients must not construct it.\",\"type\":\"string\"},\"totalHits\":{\"description\":\"Interpret with totalHitsRelation, not as an exact count unconditionally.\",\"type\":\"integer\"},\"totalHitsRelation\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1TotalHitsRelation\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchSortField\":{\"description\":\"Defaults to ascending; only scalar fields with the sort capability are valid.\",\"type\":\"object\",\"required\":[\"field\"],\"properties\":{\"direction\":{\"type\":\"string\",\"enum\":[\"asc\",\"desc\"]},\"field\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchTextLeaf\":{\"description\":\"Omitted fields default to title. All whitespace-separated terms must match\\nin any order; punctuation and short-term matching are backend-defined.\",\"type\":\"object\",\"required\":[\"value\"],\"properties\":{\"boost\":{\"description\":\"boost is a future per-leaf score multiplier. Setting it is rejected.\",\"type\":\"number\"},\"fields\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"value\":{\"type\":\"string\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1SearchWhereNode\":{\"description\":\"Exactly one key must be set. The compatibility handler accepts only a\\ntext/filter/regex leaf or a top-level \\\"and\\\" of those leaves.\",\"type\":\"object\",\"properties\":{\"and\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode\"}},\"exists\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchExistsLeaf\"},\"filter\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf\"},\"not\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode\"},\"or\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode\"}},\"range\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf\"},\"regex\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRegexLeaf\"},\"text\":{\"$ref\":\"#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchTextLeaf\"}},\"additionalProperties\":false},\"listRecordingRuleSearchRulesV0alpha1TotalHitsRelation\":{\"description\":\"\\\"eq\\\" means exact; \\\"lte\\\" means totalHits is an upper bound after authorisation.\",\"type\":\"string\",\"enum\":[\"eq\",\"lte\"]}}}}"), &openAPI); err != nil {
 					panic(err)
 				}
 				return openAPI
 			}(),
+		},
+
+		{
+			Name:   "v1beta1",
+			Served: true,
+			Kinds: []app.ManifestVersionKind{
+				{
+					Kind:       "AlertRule",
+					Plural:     "AlertRules",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+								app.AdmissionOperationDelete,
+							},
+						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaAlertRulev1beta1,
+					SelectableFields: []string{
+						"spec.title",
+						"spec.paused",
+						"spec.panelRef.dashboardUID",
+						"spec.panelRef.panelID",
+						"spec.notificationSettings.type",
+						"spec.notificationSettings.receiver",
+						"spec.notificationSettings.routingTree",
+					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "totalsHealthy",
+							Path:         "status.totals.healthy",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of healthy alert instances",
+						},
+						{
+							Name:         "totalsFiring",
+							Path:         "status.totals.firing",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of firing alert instances",
+						},
+						{
+							Name:         "totalsPending",
+							Path:         "status.totals.pending",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of pending alert instances",
+						},
+						{
+							Name:         "totalsRecovering",
+							Path:         "status.totals.recovering",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of recovering alert instances",
+						},
+						{
+							Name:         "totalsNoData",
+							Path:         "status.totals.nodata",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of no-data alert instances",
+						},
+						{
+							Name:         "totalsError",
+							Path:         "status.totals.error",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of alert instances with evaluation errors, including errors mapped to another state",
+						},
+						{
+							Name:         "health",
+							Path:         "status.health",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The health of the rule",
+						},
+						{
+							Name:         "lastEvaluationTime",
+							Path:         "status.lastEvaluationTime",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The time of the last rule evaluation",
+						},
+						{
+							Name:         "evaluationDuration",
+							Path:         "status.evaluationDuration",
+							Type:         "double",
+							Capabilities: []string{"retrieve"},
+							Description:  "The duration of the last rule evaluation in seconds",
+						},
+						{
+							Name:         "lastError",
+							Path:         "status.lastError",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The error from the last rule evaluation",
+						},
+						{
+							Name:         "state",
+							Path:         "status.state",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The state of the alert rule",
+						},
+						{
+							Name:         "stateReason",
+							Path:         "status.stateReason",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The reason for the alert rule state",
+						},
+						{
+							Name:         "type",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The rule type discriminator (always \"alertrule\")",
+						},
+						{
+							Name:         "interval",
+							Path:         "spec.trigger.interval",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The evaluation interval of the rule",
+						},
+						{
+							Name:         "paused",
+							Path:         "spec.paused",
+							Type:         "boolean",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "Whether the rule is paused",
+						},
+						{
+							Name:         "labels",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The rule's labels, flattened to key and key=value terms",
+						},
+						{
+							Name:         "annotations",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The rule's annotations, JSON-encoded for display",
+						},
+						{
+							Name:         "for",
+							Path:         "spec.for",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "How long the condition must be met before the rule fires",
+						},
+						{
+							Name:         "keepFiringFor",
+							Path:         "spec.keepFiringFor",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "How long the rule keeps firing after the condition clears",
+						},
+						{
+							Name:         "datasourceUIDs",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The query datasource UIDs referenced by the rule's expressions",
+						},
+						{
+							Name:         "dashboardUID",
+							Path:         "spec.panelRef.dashboardUID",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The UID of the dashboard the rule is associated with",
+						},
+						{
+							Name:         "panelID",
+							Path:         "spec.panelRef.panelID",
+							Type:         "int64",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The ID of the panel the rule is associated with",
+						},
+						{
+							Name:         "receiver",
+							Path:         "spec.notificationSettings.receiver",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The receiver for simplified-routing notification settings",
+						},
+						{
+							Name:         "notificationType",
+							Path:         "spec.notificationSettings.type",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "Which notification routing branch is configured",
+						},
+						{
+							Name:         "routingTree",
+							Path:         "spec.notificationSettings.routingTree",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The named routing tree for the rule's notifications",
+						},
+					},
+				},
+
+				{
+					Kind:       "RecordingRule",
+					Plural:     "RecordingRules",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+								app.AdmissionOperationDelete,
+							},
+						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaRecordingRulev1beta1,
+					SelectableFields: []string{
+						"spec.title",
+						"spec.paused",
+						"spec.metric",
+						"spec.targetDatasourceUID",
+					},
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "health",
+							Path:         "status.health",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The health of the rule",
+						},
+						{
+							Name:         "lastEvaluationTime",
+							Path:         "status.lastEvaluationTime",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The time of the last rule evaluation",
+						},
+						{
+							Name:         "evaluationDuration",
+							Path:         "status.evaluationDuration",
+							Type:         "double",
+							Capabilities: []string{"retrieve"},
+							Description:  "The duration of the last rule evaluation in seconds",
+						},
+						{
+							Name:         "lastError",
+							Path:         "status.lastError",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The error from the last rule evaluation",
+						},
+						{
+							Name:         "type",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The rule type discriminator (always \"recordingrule\")",
+						},
+						{
+							Name:         "interval",
+							Path:         "spec.trigger.interval",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The evaluation interval of the rule",
+						},
+						{
+							Name:         "paused",
+							Path:         "spec.paused",
+							Type:         "boolean",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "Whether the rule is paused",
+						},
+						{
+							Name:         "labels",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The rule's labels, flattened to key and key=value terms",
+						},
+						{
+							Name:         "datasourceUIDs",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The query datasource UIDs referenced by the rule's expressions",
+						},
+						{
+							Name:         "metric",
+							Path:         "spec.metric",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The name of the recorded metric",
+						},
+						{
+							Name:         "targetDatasourceUID",
+							Path:         "spec.targetDatasourceUID",
+							Type:         "string",
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "The UID of the datasource the metric is written to",
+						},
+					},
+				},
+
+				{
+					Kind:       "RuleSequence",
+					Plural:     "RuleSequences",
+					Scope:      "Namespaced",
+					Conversion: false,
+					Admission: &app.AdmissionCapabilities{
+						Validation: &app.ValidationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+						Mutation: &app.MutationCapability{
+							Operations: []app.AdmissionOperation{
+								app.AdmissionOperationCreate,
+								app.AdmissionOperationUpdate,
+							},
+						},
+					},
+					Schema: &versionSchemaRuleSequencev1beta1,
+					SearchFields: []app.ManifestVersionKindSearchField{
+						{
+							Name:         "recordingRuleUIDs",
+							Path:         "spec.recordingRules[*].name",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "UIDs of the recording rules in the sequence",
+						},
+						{
+							Name:         "alertRuleUIDs",
+							Path:         "spec.alertRules[*].name",
+							Type:         "string",
+							Array:        true,
+							Capabilities: []string{"filter", "retrieve"},
+							Description:  "UIDs of the alert rules in the sequence",
+						},
+						{
+							Name:         "interval",
+							Path:         "spec.trigger.interval",
+							Type:         "string",
+							Capabilities: []string{"retrieve"},
+							Description:  "The evaluation interval of the sequence",
+						},
+					},
+				},
+			},
 		},
 	},
 }
@@ -1654,6 +2057,9 @@ var kindVersionToGoType = map[string]resource.Kind{
 	"RecordingRule/v0alpha1": v0alpha1.RecordingRuleKind(),
 	"RuleSequence/v0alpha1":  v0alpha1.RuleSequenceKind(),
 	"Config/v0alpha1":        v0alpha1.ConfigKind(),
+	"AlertRule/v1beta1":      v1beta1.AlertRuleKind(),
+	"RecordingRule/v1beta1":  v1beta1.RecordingRuleKind(),
+	"RuleSequence/v1beta1":   v1beta1.RuleSequenceKind(),
 }
 
 // ManifestGoTypeAssociator returns the associated resource.Kind instance for a given Kind and Version, if one exists.
@@ -1664,8 +2070,8 @@ func ManifestGoTypeAssociator(kind, version string) (goType resource.Kind, exist
 }
 
 var customRouteToGoResponseType = map[string]any{
-	"v0alpha1||<namespace>/alertrules/searchRules|POST":     v0alpha1.ListAlertRuleSearchRulesV0alpha1Response{},
-	"v0alpha1||<namespace>/recordingrules/searchRules|POST": v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response{},
+	"v0alpha1||<namespace>/searchAlertRules|POST":     v0alpha1.ListAlertRuleSearchRulesV0alpha1Response{},
+	"v0alpha1||<namespace>/searchRecordingRules|POST": v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response{},
 }
 
 // ManifestCustomRouteResponsesAssociator returns the associated response go type for a given kind, version, custom route path, and method, if one exists.
@@ -1691,8 +2097,8 @@ func ManifestCustomRouteQueryAssociator(kind, version, path, verb string) (goTyp
 }
 
 var customRouteToGoRequestBodyType = map[string]any{
-	"v0alpha1||<namespace>/alertrules/searchRules|POST":     v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestBody{},
-	"v0alpha1||<namespace>/recordingrules/searchRules|POST": v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestBody{},
+	"v0alpha1||<namespace>/searchAlertRules|POST":     v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestBody{},
+	"v0alpha1||<namespace>/searchRecordingRules|POST": v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestBody{},
 }
 
 func ManifestCustomRouteRequestBodyAssociator(kind, version, path, verb string) (goType any, exists bool) {

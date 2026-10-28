@@ -212,6 +212,19 @@ func newStreamDecoderGRPCClient(t *testing.T, handler func(resourcepb.ResourceSt
 	return client, cancel
 }
 
+// outOfRangeExpiredError is the 410 a storage server sent before it used the
+// HTTP status as the gRPC code; clients must keep recognising it.
+func outOfRangeExpiredError(t *testing.T) error {
+	t.Helper()
+	st, err := status.New(codes.OutOfRange, "too old resource version: 1234").WithDetails(&resourcepb.ErrorResult{
+		Code:    http.StatusGone,
+		Reason:  string(metav1.StatusReasonExpired),
+		Message: "too old resource version: 1234",
+	})
+	require.NoError(t, err)
+	return st.Err()
+}
+
 func TestStreamDecoderGRPCTermination(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
@@ -219,6 +232,7 @@ func TestStreamDecoderGRPCTermination(t *testing.T) {
 		expired bool
 	}{
 		{name: "expired resource version", err: resourceutil.NewResourceVersionExpiredError(1234), expired: true},
+		{name: "expired by a storage server sending OutOfRange", err: outOfRangeExpiredError(t), expired: true},
 		{name: "clean close"},
 		{name: "canceled", err: status.Error(codes.Canceled, "watch canceled")},
 		{name: "max age disconnect", err: status.Error(codes.Unavailable, "transport is closing")},

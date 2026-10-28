@@ -1,8 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { type DataQuery, generateUUID, store } from '@grafana/data';
-import { config, getBackendSrv, reportInteraction } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { config, getBackendSrv, reportInteraction, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { DEFAULT_RICH_HISTORY_SETTINGS } from 'app/core/utils/richHistoryTypes';
 
 import type { IndexedDBMigrationAccess } from './RichHistoryIndexedDBStorage';

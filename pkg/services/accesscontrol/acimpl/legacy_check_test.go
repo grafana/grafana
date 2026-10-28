@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
@@ -18,10 +19,6 @@ import (
 func TestLegacyCheck_AccessControlEvaluate(t *testing.T) {
 	for _, tc := range accessControlEvaluateTestCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			if tc.scopeResolver != nil {
-				t.Skip("pending: wire server-side scope resolvers into LegacyCheck")
-			}
-
 			var permissions []accesscontrol.Permission
 			for action, scopes := range tc.user.GetPermissions() {
 				for _, scope := range scopes {
@@ -30,7 +27,18 @@ func TestLegacyCheck_AccessControlEvaluate(t *testing.T) {
 			}
 
 			var folders = []store.Folder{}
-			service := rbac.NewTestService(tc.user.GetIdentifier(), permissions, folders)
+			ac := acimpl.ProvideAccessControlTest()
+			service := rbac.NewTestService(
+				tc.user.GetIdentifier(),
+				permissions,
+				folders,
+			).WithLegacyScopeResolvers(
+				acimpl.ProvideScopeResolverRegistry(ac),
+				types.OrgNamespaceFormatter,
+			)
+			if tc.scopeResolver != nil {
+				ac.RegisterScopeAttributeResolver(tc.resolverPrefix, tc.scopeResolver)
+			}
 			namespace := types.OrgNamespaceFormatter(tc.user.OrgID)
 			caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
 				Claims: jwt.Claims{Subject: "service-account:test"},
@@ -42,8 +50,11 @@ func TestLegacyCheck_AccessControlEvaluate(t *testing.T) {
 				&authzextv1.LegacyCheckRequest{
 					Namespace: namespace,
 					Subject:   tc.user.GetUID(),
-					Action:    tc.action,
-					Scope:     tc.scope,
+					Expression: &authzextv1.LegacyExpression{
+						Node: &authzextv1.LegacyExpression_Permission{
+							Permission: &authzextv1.LegacyPermission{Action: tc.action, Scopes: []string{tc.scope}},
+						},
+					},
 				},
 			)
 			require.NoError(t, err)

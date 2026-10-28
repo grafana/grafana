@@ -5292,3 +5292,76 @@ func TestGitRepository_AuditLog(t *testing.T) {
 	require.Contains(t, output, `"repository_name":"my-repo"`)
 	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
 }
+
+func TestGitRepository_CompareFiles_DeletedDirectories(t *testing.T) {
+	mockClient := &mocks.FakeClient{}
+	mockClient.GetRefReturns(nanogit.Ref{Hash: hash.Hash{1}}, nil)
+	mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+		{Path: "configs/empty.json", Type: protocol.ObjectTypeTree, Status: protocol.FileStatusDeleted},
+		{Path: "configs/dashboard.json", Type: protocol.ObjectTypeBlob, Status: protocol.FileStatusDeleted},
+	}, nil)
+	repo := &gitRepository{client: mockClient, gitConfig: RepositoryConfig{Path: "configs"}, config: &provisioning.Repository{}}
+	changes, err := repo.CompareFiles(t.Context(), "main", "feature")
+	require.NoError(t, err)
+	require.Equal(t, []repository.VersionedFileChange{
+		{Action: repository.FileActionDeleted, Path: "empty.json/", PreviousPath: "empty.json/", Ref: "feature", PreviousRef: "main"},
+		{Action: repository.FileActionDeleted, Path: "dashboard.json", PreviousPath: "dashboard.json", Ref: "feature", PreviousRef: "main"},
+	}, changes)
+}
+
+func TestGitRepository_CompareFiles_HiddenPaths(t *testing.T) {
+	for _, status := range []protocol.FileStatus{protocol.FileStatusAdded, protocol.FileStatusModified, protocol.FileStatusDeleted, protocol.FileStatusTypeChanged} {
+		t.Run(string(status), func(t *testing.T) {
+			mockClient := &mocks.FakeClient{}
+			mockClient.GetRefReturns(nanogit.Ref{Hash: hash.Hash{1}}, nil)
+			mockClient.CompareCommitsReturns([]nanogit.CommitFile{
+				{Path: "configs/.ci/dashboard.json", Type: protocol.ObjectTypeBlob, Status: status},
+				{Path: "configs/.ci/.keep", Type: protocol.ObjectTypeBlob, Status: status},
+				{Path: "configs/team/.keep", Type: protocol.ObjectTypeTree, Status: status},
+				{Path: "configs/visible/.keep", Type: protocol.ObjectTypeBlob, Status: status},
+			}, nil)
+			repo := &gitRepository{client: mockClient, gitConfig: RepositoryConfig{Path: "configs"}, config: &provisioning.Repository{}}
+			changes, err := repo.CompareFiles(t.Context(), "main", "feature")
+			require.NoError(t, err)
+			require.Len(t, changes, 1)
+			require.Equal(t, "visible/.keep", changes[0].Path)
+		})
+	}
+}
+
+func TestGitRepository_CompareFiles_HiddenPathRenames(t *testing.T) {
+	for _, prefix := range []string{"", "configs/"} {
+		for _, tt := range []struct {
+			from, to string
+			kind     protocol.ObjectType
+			want     []repository.VersionedFileChange
+		}{
+			{"dashboard.json", ".ci/dashboard.json", protocol.ObjectTypeBlob, []repository.VersionedFileChange{
+				{Action: repository.FileActionDeleted, Path: "dashboard.json", PreviousPath: "dashboard.json", Ref: "feature", PreviousRef: "main"},
+			}},
+			{".ci/dashboard.json", "dashboard.json", protocol.ObjectTypeBlob, []repository.VersionedFileChange{
+				{Action: repository.FileActionCreated, Path: "dashboard.json", Ref: "feature"},
+			}},
+			{".ci/old.json", ".ci/new.json", protocol.ObjectTypeBlob, []repository.VersionedFileChange{}},
+			{"team", ".ci", protocol.ObjectTypeTree, []repository.VersionedFileChange{
+				{Action: repository.FileActionDeleted, Path: "team/", PreviousPath: "team/", Ref: "feature", PreviousRef: "main"},
+			}},
+			{".ci", "team", protocol.ObjectTypeTree, []repository.VersionedFileChange{
+				{Action: repository.FileActionCreated, Path: "team/", Ref: "feature"},
+			}},
+			{".ci", ".github", protocol.ObjectTypeTree, []repository.VersionedFileChange{}},
+		} {
+			t.Run(prefix+tt.from+" to "+tt.to, func(t *testing.T) {
+				mockClient := &mocks.FakeClient{}
+				mockClient.GetRefReturns(nanogit.Ref{Hash: hash.Hash{1}}, nil)
+				mockClient.CompareCommitsReturns([]nanogit.CommitFile{{
+					Path: prefix + tt.to, OldPath: prefix + tt.from, Type: tt.kind, Status: protocol.FileStatusRenamed,
+				}}, nil)
+				repo := &gitRepository{client: mockClient, gitConfig: RepositoryConfig{Path: prefix}, config: &provisioning.Repository{}}
+				changes, err := repo.CompareFiles(t.Context(), "main", "feature")
+				require.NoError(t, err)
+				require.Equal(t, tt.want, changes)
+			})
+		}
+	}
+}

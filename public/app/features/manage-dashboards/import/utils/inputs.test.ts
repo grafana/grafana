@@ -1,9 +1,5 @@
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
-import {
-  getDataSourceInstance,
-  getDataSourceInstanceList,
-  getDataSourceInstanceSettings,
-} from '@grafana/runtime/unstable';
+import { getDataSourceInstance, getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   type AnnotationQueryKind,
   type PanelKind,
@@ -35,8 +31,8 @@ import {
   type DatasourceMappings,
 } from './inputs';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceList: jest.fn(),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceSettings: jest.fn(),

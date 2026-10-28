@@ -1,18 +1,31 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import {
+  CoreApp,
+  createTheme,
+  type DataQueryRequest,
+  getDefaultTimeRange,
+  type GrafanaTheme2,
+  type InterpolateFunction,
+  ThemeContext,
+  toDataFrame,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
+import { allowOrigins, getBlockedSummary } from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { SandboxFrame } from './SandboxFrame';
 import { FOOTER_TEST_ID } from './TextNGFooter';
 import { type Props, TextNGPanel } from './TextNGPanel';
+import { TRUNCATION_NOTICE_TEST_ID } from './TextNGTruncationNotice';
 import { PREVIEW_TEST_ID } from './editor/TextNGEditor';
+import { MAX_RENDERED_CHARS } from './renderContent';
 import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
@@ -561,6 +574,22 @@ describe('TextNGPanel', () => {
       expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
     });
 
+    it('pages a panel sized to its content when the layout caps its height', () => {
+      const props = createProps(reportRowIndex, {
+        width: 1000,
+        height: 0,
+        fitContent: true,
+        fitMaxHeight: 400,
+        data: createData([numberedFrame(150)]),
+        options: { content: 'row', mode: TextMode.Markdown, renderMode: RenderMode.PerRow },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      expect(renderedRows().length).toBeLessThan(150);
+      expect(screen.getByRole('navigation')).toBeInTheDocument();
+    });
+
     it('renders a once template whole, having no per-row blocks to page', () => {
       setupPaged({ renderMode: RenderMode.Once });
 
@@ -839,6 +868,27 @@ describe('TextNGPanel', () => {
       expect(html()).toContain('second');
     });
 
+    // Both passes cut on the ceiling, so the output is byte-identical and only the flag moves.
+    it('shows the truncation notice when a refresh crosses the ceiling without changing the output', () => {
+      const dataOf = (length: number) =>
+        createData([toDataFrame({ fields: [{ name: 'n', values: ['x'.repeat(length)] }] })]);
+      const props = createProps((target) => target, {
+        data: dataOf(MAX_RENDERED_CHARS),
+        options: { content: '{{#each data}}{{n}}{{/each}}', mode: TextMode.HTML },
+      });
+
+      const { rerender } = render(viewing(props));
+      settle();
+      const before = html();
+      expect(screen.queryByTestId(TRUNCATION_NOTICE_TEST_ID)).not.toBeInTheDocument();
+
+      rerender(viewing(Object.assign({}, props, { data: dataOf(MAX_RENDERED_CHARS + 1) })));
+      settle();
+
+      expect(html()).toBe(before);
+      expect(screen.getByTestId(TRUNCATION_NOTICE_TEST_ID)).toBeInTheDocument();
+    });
+
     it('re-renders the content when a referenced variable changes', () => {
       let value = 'first';
       const props = createProps((target) => target.replace('${host}', value), {
@@ -855,6 +905,40 @@ describe('TextNGPanel', () => {
 
       expect(html()).toContain('second');
       expect(html()).not.toContain('first');
+    });
+
+    describe('with a ${__theme} macro', () => {
+      const originalTheme = config.theme2;
+      const dark = createTheme({ colors: { mode: 'dark' } });
+      const light = createTheme({ colors: { mode: 'light' } });
+
+      // The app's ThemeProvider updates config.theme2 before its children render.
+      const themed = (theme: GrafanaTheme2, props: Props) => {
+        config.theme2 = theme;
+        return <ThemeContext.Provider value={theme}>{viewing(props)}</ThemeContext.Provider>;
+      };
+
+      afterEach(() => {
+        config.theme2 = originalTheme;
+      });
+
+      it('re-renders the content with the new theme tokens when the theme changes', () => {
+        const props = createProps(
+          (target) => target.replace('${__theme.colors.text.primary}', () => config.theme2.colors.text.primary),
+          {
+            options: { content: '<span style="color: ${__theme.colors.text.primary}">hi</span>', mode: TextMode.HTML },
+          }
+        );
+
+        const { rerender } = render(themed(dark, props));
+        settle();
+        expect(screen.getByText('hi')).toHaveStyle({ color: dark.colors.text.primary });
+
+        rerender(themed(light, props));
+        settle();
+
+        expect(screen.getByText('hi')).toHaveStyle({ color: light.colors.text.primary });
+      });
     });
   });
 
@@ -898,6 +982,39 @@ describe('TextNGPanel', () => {
     });
   });
 
+  it('keeps consent for a repeated copy to that copy, not every copy of the panel', () => {
+    const origin = 'https://images.example.com';
+    const request: DataQueryRequest = {
+      app: CoreApp.Dashboard,
+      dashboardUID: 'repeats',
+      // A repeat clone shares `id` with its source, but the dashboard gives it its own id here.
+      panelId: 1234,
+      requestId: 'A',
+      interval: '1s',
+      intervalMs: 1000,
+      range: getDefaultTimeRange(),
+      scopedVars: {},
+      targets: [],
+      timezone: 'utc',
+      startTime: 0,
+    };
+    const props = createProps((target) => target, {
+      id: 3,
+      data: { ...createData([toDataFrame({ fields: [] })]), request },
+      options: { content: `<img src="${origin}/a.png">`, mode: TextMode.HTML },
+    });
+    setup(props, CoreApp.Dashboard);
+    const frame = () => jest.mocked(SandboxFrame).mock.calls.at(-1)![0];
+
+    act(() => frame().onState({ status: 'ready', resources: [{ directive: 'img-src', origin, urls: [] }] }));
+    expect(getBlockedSummary('repeats')).toEqual([expect.objectContaining({ origin, panelIds: [1234] })]);
+
+    act(() => allowOrigins([{ origin, panelIds: [3] }], 'dashboard', 'repeats'));
+    expect(frame().policy).not.toContain(origin);
+    act(() => allowOrigins([{ origin, panelIds: [1234] }], 'dashboard', 'repeats'));
+    expect(frame().policy).toContain(origin);
+  });
+
   it('evaluates handlebars expressions against the query data', () => {
     const series = [toDataFrame({ fields: [{ name: 'host', values: ['web-1', 'web-2'] }] })];
     const props = createProps((target) => target, {
@@ -921,5 +1038,33 @@ describe('TextNGPanel', () => {
 
     expect(screen.getByTestId('TextNGPanel-error')).toHaveTextContent('Handlebars error:');
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
+  });
+
+  describe('truncation notice', () => {
+    /** A row wide enough to pass the character ceiling, if the template emits it. */
+    function setupWide(content: string) {
+      const wide = toDataFrame({ fields: [{ name: 'n', values: ['x'.repeat(MAX_RENDERED_CHARS * 2)] }] });
+      const props = createProps((target) => target, {
+        data: createData([wide]),
+        options: { content, mode: TextMode.HTML, renderMode: RenderMode.Once },
+      });
+
+      setup(props, CoreApp.Dashboard);
+    }
+
+    it('says the render was cut short, and still shows what fit', async () => {
+      setupWide('<b>kept</b>\n{{#each data}}{{n}}{{/each}}');
+      const footer = await screen.findByTestId(FOOTER_TEST_ID);
+
+      expect(screen.getByText('kept')).toBeInTheDocument();
+      expect(within(footer).getByTestId(TRUNCATION_NOTICE_TEST_ID)).toHaveTextContent('Content truncated');
+    });
+
+    it('stays quiet when the render fit under the ceiling', () => {
+      setupWide('<b>kept</b>');
+
+      expect(screen.getByText('kept')).toBeInTheDocument();
+      expect(screen.queryByTestId(TRUNCATION_NOTICE_TEST_ID)).not.toBeInTheDocument();
+    });
   });
 });

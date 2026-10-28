@@ -27,16 +27,18 @@ function PublicDashboardBadgeInternal({ uid, hasPublicDashboard }: { uid: string
   // and decouple the usage of `meta.publicDashboardEnabled`
   const fromApi = useFlagDashboardsPublicDashboardBadgeFromApi();
 
-  const { data: publicDashboard } = useGetPublicDashboardQuery(uid, {
+  const { data: publicDashboard, isError } = useGetPublicDashboardQuery(uid, {
     skip: !fromApi && hasPublicDashboard !== undefined && !hasPublicDashboard,
   });
   const styles = useStyles2(getStyles);
 
+  // RTK Query keeps the last successful data after a failed refetch.
+  const isPublicInApi = !isError && !!publicDashboard;
   let showBadge: boolean;
   if (fromApi) {
-    showBadge = !!publicDashboard;
+    showBadge = isPublicInApi;
   } else {
-    showBadge = hasPublicDashboard !== undefined ? hasPublicDashboard : !!publicDashboard;
+    showBadge = hasPublicDashboard !== undefined ? hasPublicDashboard : isPublicInApi;
   }
 
   if (!showBadge) {

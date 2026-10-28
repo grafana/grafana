@@ -51,20 +51,18 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 			server := &snapshotBlobServer{}
 			channel := &inprocgrpc.Channel{}
 			channel.RegisterService(&resourcepb.BlobStore_ServiceDesc, server)
-			client, err := resourceclient.NewRemoteResourceClient(noop.NewTracerProvider().Tracer("snapshot-test"), channel, channel, resourceclient.RemoteResourceClientConfig{
-				TokenExchanger:        authnlib.NewStaticTokenExchanger("service-token"),
-				RequireCallerIdentity: func(context.Context) bool { return true },
-				OnBehalfOf:            func(context.Context) bool { return false },
+			client, err := resourceclient.NewStandaloneRemoteResourceClient(noop.NewTracerProvider().Tracer("snapshot-test"), channel, channel, resourceclient.RemoteResourceClientConfig{
+				TokenExchanger: authnlib.NewStaticTokenExchanger("service-token"),
 			})
 			require.NoError(t, err)
 			snap := newBlobTestSnapshot()
 			snap.Namespace = namespace
 			snap.Spec.Dashboard = nil
 			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
-			// Only blob-read credentials are exercised here. The initial snapshot lookup
-			// is mocked and can still reject anonymous callers under strict identity enforcement.
+			// Exercise blob credentials independently of the remote metadata lookup
+			// covered by TestPublicSnapshotMetadataWithStandaloneRemoteClient.
 			getter := grafanarest.NewMockStorage(t)
-			getter.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
+			getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*snap}}, nil)
 			r, err := NewDashboardREST(getter, client)
 			require.NoError(t, err)
 			ctx := k8srequest.WithNamespace(t.Context(), "default")

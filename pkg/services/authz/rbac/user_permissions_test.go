@@ -451,6 +451,15 @@ func (s *snapshotPermissionStore) GetUserPermissions(_ context.Context, _ types.
 	return s.permissions, nil
 }
 
+func (s *snapshotPermissionStore) HasUserPermissions(
+	_ context.Context,
+	_ types.NamespaceInfo,
+	query store.PermissionsQuery,
+) (bool, error) {
+	s.query = query
+	return len(s.permissions) > 0, nil
+}
+
 type collectUserPermissionsStream struct {
 	grpc.ServerStream
 	ctx       context.Context

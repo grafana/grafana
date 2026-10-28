@@ -1,6 +1,6 @@
 import { FieldConfigProperty, type PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
@@ -36,7 +36,7 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     category,
     description: t('canvas.description-pan-zoom', 'Enable pan and zoom'),
     defaultValue: false,
-    showIf: () => config.featureToggles.canvasPanelPanZoom,
+    showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.CanvasPanelPanZoom, false),
   });
   builder.addCustomEditor({
     id: 'panZoomHelp',
@@ -44,14 +44,14 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     name: '',
     category,
     editor: PanZoomHelp,
-    showIf: (opts) => config.featureToggles.canvasPanelPanZoom && opts.panZoom,
+    showIf: (opts) => getFeatureFlagClient().getBooleanValue(FlagKeys.CanvasPanelPanZoom, false) && opts.panZoom,
   });
   builder.addBooleanSwitch({
     path: 'zoomToContent',
     name: 'Zoom to content',
     description: 'Automatically zoom to fit content',
     defaultValue: false,
-    showIf: () => config.featureToggles.canvasPanelPanZoom,
+    showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.CanvasPanelPanZoom, false),
   });
 
   category = [t('canvas.category-tooltip', 'Tooltip')];

@@ -1,12 +1,14 @@
 import { lastValueFrom, Observable, of } from 'rxjs';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { type BackendSrv, type DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import {
+  type BackendSrv,
+  type DataSourceWithBackend,
+  getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
   getDefaultDataSourceInstanceListItem,
-} from '@grafana/runtime/unstable';
+} from '@grafana/runtime';
 
 import {
   abortNotifier,
@@ -27,15 +29,10 @@ import { backendInstance, deferred } from './test-utils';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
   getDefaultDataSourceInstanceListItem: jest.fn(),
 }));
-
 const getDataSourceInstanceListMock = jest.mocked(getDataSourceInstanceList);
 const healthGetMock = jest.fn();
 

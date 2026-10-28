@@ -124,7 +124,7 @@ func TestComputeDiffStreaming(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("datasource permission downgrade keeps query tuple", func(t *testing.T) {
-		const group = "loki.datasource.grafana.app"
+		const group = "datasource.grafana.app"
 		currentBase := common.NewResourceTuple("user:u1", "admin", group, "datasources", "", "ds-1")
 		query := common.NewResourceTuple("user:u1", common.RelationCreate, group, "datasources", "query", "ds-1")
 		expectedBase := common.NewResourceTuple("user:u1", "view", group, "datasources", "", "ds-1")
@@ -144,7 +144,7 @@ func TestComputeDiffStreaming(t *testing.T) {
 	})
 
 	t.Run("datasource permission removal deletes both tuples", func(t *testing.T) {
-		const group = "loki.datasource.grafana.app"
+		const group = "datasource.grafana.app"
 		base := common.NewResourceTuple("user:u1", "admin", group, "datasources", "", "ds-1")
 		query := common.NewResourceTuple("user:u1", common.RelationCreate, group, "datasources", "query", "ds-1")
 		r := newTestReconciler([][]*openfgav1.Tuple{{toTuple(base), toTuple(query)}})

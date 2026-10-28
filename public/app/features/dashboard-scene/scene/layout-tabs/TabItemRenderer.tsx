@@ -8,6 +8,7 @@ import { t } from '@grafana/i18n';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Icon, Tab, TabContent, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
@@ -28,7 +29,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
 
   const { isSelected, onSelect, isSelectable } = useElementSelection(key);
   const { isSelected: isSourceSelected } = useElementSelection(repeatSourceKey);
-  const { isEditing } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const isEditing = isFullDashboardEditing(dashboardState);
   const mySlug = model.getSlug();
   const urlKey = parentLayout.getUrlKey();
   const isActive = mySlug === currentTabSlug;

@@ -4,16 +4,21 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	"github.com/grafana/dskit/middleware"
 	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -241,4 +246,34 @@ func TestPanicRecoveryInterceptor_Stream(t *testing.T) {
 	_, err = stream.Recv()
 	require.Error(t, err)
 	require.Equal(t, codes.Internal, status.Code(err), "panic in stream handler should surface as codes.Internal, got %v", err)
+}
+
+// Watches expire on purpose, so the gRPC request metric must not count the
+// expiry as an error the way it counts genuine failures.
+func TestWatchExpiryIsNotAGRPCErrorInRequestMetrics(t *testing.T) {
+	const route = "/resource.ResourceStore/Watch"
+	hist := prometheus.NewHistogramVec(prometheus.HistogramOpts{Name: "grpc_request_duration_seconds"}, []string{"method", "route", "status_code", "ws"})
+	instrument := middleware.StreamServerInstrumentInterceptor(hist)
+	observed := func(statusCode string) uint64 {
+		m := &dto.Metric{}
+		require.NoError(t, hist.WithLabelValues("gRPC", route, statusCode, "false").(prometheus.Metric).Write(m))
+		return m.GetHistogram().GetSampleCount()
+	}
+
+	srv := newWatchTestServer(t, watchTestServerOpts{NatsWatchMaxAge: 20 * time.Millisecond})
+	req := &resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource}}}
+	ctx, cancel := context.WithTimeout(authlib.WithAuthInfo(t.Context(), newWatchTestUser()), 5*time.Second)
+	defer cancel()
+	err := instrument(nil, newMockWatchServer(ctx), &grpc.StreamServerInfo{FullMethod: route}, func(_ any, ss grpc.ServerStream) error {
+		return srv.Watch(req, ss.(resourcepb.ResourceStore_WatchServer))
+	})
+	require.True(t, IsResourceVersionExpired(err), "expected the max age to expire the watch, got %v", err)
+	require.EqualValues(t, 1, observed("410"))
+	require.Zero(t, observed("error"))
+
+	err = instrument(nil, newMockWatchServer(ctx), &grpc.StreamServerInfo{FullMethod: route}, func(any, grpc.ServerStream) error {
+		return status.Error(codes.Internal, "storage failed")
+	})
+	require.Error(t, err)
+	require.EqualValues(t, 1, observed("error"), "genuine failures must still count as errors")
 }

@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { VariableHide } from '@grafana/data';
 import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -57,6 +59,8 @@ function buildRowsLayoutManager(rows: RowItem[] = []) {
   return rowsLayoutManager;
 }
 
+afterEach(() => setTestFlags({}));
+
 describe('RowsLayoutManager', () => {
   describe('getSlug', () => {
     it('generates slugs based on row titles', () => {
@@ -104,12 +108,22 @@ describe('RowsLayoutManager', () => {
   });
 
   describe('addNewRow', () => {
-    beforeEach(() => {
-      lastUndo = undefined;
+    it('disables interaction in the inner layout added during review', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const manager = new RowsLayoutManager({ rows: [] });
+      new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
+      const layout = AutoGridLayoutManager.createEmpty();
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+
+      manager.addNewRow(new RowItem({ layout }));
+
+      expect(layout.state.layout.state.isDraggable).toBe(false);
+      manager.editModeChanged(true);
+      expect(layout.state.layout.state.isDraggable).toBe(true);
     });
 
-    afterEach(() => {
-      setTestFlags({});
+    beforeEach(() => {
+      lastUndo = undefined;
     });
 
     it('should add a new row with default title when no title is provided', () => {
@@ -166,9 +180,7 @@ describe('RowsLayoutManager', () => {
       expect(rowsLayoutManager.state.rows).toHaveLength(0);
     });
 
-    it('should sync edit mode to a new row inner layout when the dashboard is already editing', () => {
-      // addNewRow's editModeChanged runs inside an edit action the sidebar performs. This test never activates it.
-      setTestFlags({ dashboardNewLayouts: false });
+    it('should sync edit mode to a new row inner layout when the dashboard is already editing', async () => {
       // New rows use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
       // RowItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
       // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.
@@ -198,7 +210,7 @@ describe('RowsLayoutManager', () => {
       expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
 
       const grid = (layout as DefaultGridLayoutManager).state.grid;
-      expect(grid.state.isDraggable).toBe(true);
+      await waitFor(() => expect(grid.state.isDraggable).toBe(true));
       expect(grid.state.isResizable).toBe(true);
     });
   });
@@ -635,6 +647,30 @@ describe('RowsLayoutManager', () => {
       expect(edit).not.toHaveBeenCalled();
       expect(lastEditUndo).toBeUndefined();
     });
+
+    it.each([false, true])(
+      'should toggle rows without an edit action in view mode (isEditing=%s), where edit actions are refused',
+      (isEditing) => {
+        setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+        const rowsLayoutManager = new RowsLayoutManager({
+          rows: [new RowItem({ title: 'Row 1', collapse: false }), new RowItem({ title: 'Row 2', collapse: true })],
+        });
+        new DashboardScene({ body: rowsLayoutManager, isEditing, mode: 'view' });
+        const [row1, row2] = rowsLayoutManager.state.rows;
+
+        rowsLayoutManager.collapseAllRows();
+
+        expect(edit).not.toHaveBeenCalled();
+        expect(row1.getCollapsedState()).toBe(true);
+        expect(row2.getCollapsedState()).toBe(true);
+
+        rowsLayoutManager.expandAllRows();
+
+        expect(edit).not.toHaveBeenCalled();
+        expect(row1.getCollapsedState()).toBe(false);
+        expect(row2.getCollapsedState()).toBe(false);
+      }
+    );
   });
 
   describe('duplicate', () => {

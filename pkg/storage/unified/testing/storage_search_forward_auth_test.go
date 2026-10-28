@@ -79,7 +79,7 @@ func TestStorageSearchForwardAuth(t *testing.T) {
 	// This exercises both delegated grants and filtering of individual search hits.
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
-		AccessClient: resource.NewAuthzLimitedClient(denyFolderAccess{denied: "denied"}, resource.AuthzOptions{
+		AccessClient: resource.NewAuthzLimitedClient(&denyFolderAccess{denied: "denied"}, resource.AuthzOptions{
 			Registry: prometheus.NewRegistry(),
 		}),
 		Search: resource.SearchOptions{
@@ -149,8 +149,9 @@ func TestStorageSearchForwardAuth(t *testing.T) {
 				Resource:  searchBackedTrashResource,
 			},
 		},
-		Query: "Matching",
-		Limit: 10,
+		Query:        "Matching",
+		Limit:        10,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	sign := func(signingKey *ecdsa.PrivateKey, tokenType string, claims any) string {
 		signer, err := jose.NewSigner(jose.SigningKey{
@@ -237,15 +238,15 @@ func TestStorageSearchForwardAuth(t *testing.T) {
 						require.NotNil(t, resp.Error)
 						require.Contains(t, resp.Error.Message, resource.ErrServiceCannotDelegate.Error())
 						require.Contains(t, resp.Error.Message, permission)
-						require.Empty(t, resp.Results.GetRows())
+						require.Empty(t, resp.Rows)
 						return
 					}
 					// A valid delegated grant permits the search but does not grant access to every hit.
 					require.Equal(t, []string{permission}, info.GetTokenDelegatedPermissions())
 					require.Nil(t, resp.Error)
 					require.Equal(t, int64(1), resp.TotalHits)
-					require.Len(t, resp.Results.Rows, 1)
-					require.Equal(t, "allowed", resp.Results.Rows[0].Key.Name)
+					require.Len(t, resp.Rows, 1)
+					require.Equal(t, "allowed", resp.Rows[0].Key.Name)
 				})
 			}
 		})

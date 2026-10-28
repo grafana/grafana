@@ -165,9 +165,7 @@ export function buildVizPanel(panel: PanelKind, id?: number, buildOptions: Build
  * and therefore require a DashboardScene ancestor.
  */
 function addDashboardPanelChrome(vizPanelState: VizPanelState): void {
-  vizPanelState.headerActions = new VizPanelHeaderActions({
-    hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
-  });
+  vizPanelState.headerActions = new VizPanelHeaderActions({});
   vizPanelState.subHeader = new VizPanelSubHeader({});
   vizPanelState.extendPanelContext = setDashboardPanelContext;
 

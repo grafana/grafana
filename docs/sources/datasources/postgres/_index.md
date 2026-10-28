@@ -82,7 +82,7 @@ After you configure the PostgreSQL data source, you can:
 
 To see the PostgreSQL data source in action, explore the demo dashboard on Grafana Play:
 
-{{< docs/play title="PostgreSQL Overview" url="https://play.grafana.org/d/ddvpgdhiwjvuod/postgresql-overview" >}}
+{{< docs/play title="PostgreSQL Overview" url="https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard" >}}
 
 ## Plugin updates
 

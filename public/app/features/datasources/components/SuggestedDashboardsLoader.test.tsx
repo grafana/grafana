@@ -40,8 +40,8 @@ jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/SuggestedDashboardsM
     ) : null,
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   // The loader uses the hook to expose `datasourceType` as a prop on the modal, and the
   // async function inside `triggerFetch` to look the same datasource up. Mock both with a
   // synchronous-by-default behaviour so existing assertions don't have to await an extra

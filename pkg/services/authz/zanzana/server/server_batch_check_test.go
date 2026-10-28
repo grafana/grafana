@@ -528,7 +528,7 @@ func TestIntegrationServerBatchCheck_FolderDeduplication(t *testing.T) {
 	})
 
 	t.Run("phase 3: mixed verbs in same folder via set_edit", func(t *testing.T) {
-		// user:5 has set_edit on dashboards in folder 1, which grants get/update/create/delete.
+		// Dashboard edit grants get/update/delete, but creation requires a separate grant.
 		items := make([]*authzv1.BatchCheckItem, 0, 3*5)
 		verbs := []string{utils.VerbGet, utils.VerbUpdate, utils.VerbCreate, utils.VerbDelete}
 		for i, verb := range verbs {
@@ -544,8 +544,14 @@ func TestIntegrationServerBatchCheck_FolderDeduplication(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, res.GetResults(), len(items))
 		for _, item := range items {
-			assert.True(t, res.GetResults()[item.CorrelationId].GetAllowed(),
-				"%s should be allowed via set_edit on folder 1", item.CorrelationId)
+			require.Contains(t, res.GetResults(), item.CorrelationId)
+			result := res.GetResults()[item.CorrelationId]
+			require.Empty(t, result.GetError())
+			if item.Verb == utils.VerbCreate {
+				assert.False(t, result.GetAllowed(), "%s requires a creation grant", item.CorrelationId)
+			} else {
+				assert.True(t, result.GetAllowed(), "%s should be allowed via set_edit on folder 1", item.CorrelationId)
+			}
 		}
 	})
 

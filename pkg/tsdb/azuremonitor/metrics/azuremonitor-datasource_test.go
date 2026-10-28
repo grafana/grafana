@@ -415,6 +415,29 @@ func TestAzureMonitorBuildQueriesRejectsMultiValueStartsWithFilter(t *testing.T)
 	}
 }
 
+func TestAzureMonitorBuildQueryWithoutAzureMonitorObject(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+	query := backend.DataQuery{
+		RefID:     "A",
+		QueryType: string(dataquery.AzureQueryTypeAzureMonitor),
+		JSON: []byte(`{
+			"queryType": "Azure Monitor",
+			"subscription": "12345678-aaaa-bbbb-cccc-123456789abc"
+		}`),
+		TimeRange: backend.TimeRange{
+			From: time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC),
+			To:   time.Date(2018, 3, 15, 13, 34, 0, 0, time.UTC),
+		},
+	}
+
+	var err error
+	require.NotPanics(t, func() {
+		_, err = datasource.buildQuery(query, types.DatasourceInfo{})
+	})
+	require.ErrorContains(t, err, "query A: the Azure Monitor metrics query has no azureMonitor object")
+	require.True(t, backend.IsDownstreamError(err), "a query without an azureMonitor object is a query configuration error, not a plugin error")
+}
+
 func TestCustomNamespace(t *testing.T) {
 	datasource := &AzureMonitorDatasource{}
 

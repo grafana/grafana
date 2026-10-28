@@ -11,6 +11,8 @@
 import { waitFor } from '@testing-library/react';
 import { cloneDeep } from 'lodash';
 
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -18,9 +20,11 @@ import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { type DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { dashboardViews } from '../../scene/dashboardViewRegistry';
+import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { findVizPanelByKey } from '../../utils/findVizPanel';
+import { createDeferred } from '../../utils/test-utils';
 import { getLibraryPanelBehavior } from '../../utils/utils';
 
 import { applySpecCommand } from './applySpec';
@@ -35,6 +39,11 @@ jest.mock('../../saving/createDetectChangesWorker', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({ getInstanceSettings: jest.fn() }),
+}));
+
+jest.mock('app/features/library-panels/state/api', () => ({
+  ...jest.requireActual('app/features/library-panels/state/api'),
+  getLibraryPanel: jest.fn(() => new Promise(() => {})),
 }));
 
 /**
@@ -101,7 +110,58 @@ function editorIsAttached(scene: DashboardScene) {
   return panel !== undefined && panel === findVizPanelByKey(scene, panel.state.key!);
 }
 
+describe('APPLY_SPEC during review', () => {
+  beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
+  it('switches Viewing to Editing and makes the rebuilt grid draggable', async () => {
+    const scene = buildScene(makeSpec());
+    scene.onEnterEditMode();
+    scene.setDashboardMode('view');
+
+    try {
+      const result = await scene.withAssistantWrite(() =>
+        applySpec(
+          scene,
+          makeSpec((spec) => {
+            spec.title = 'Replacement during review';
+          })
+        )
+      );
+
+      expect(result.success).toBe(true);
+      expect((await readSpec(scene)).title).toBe('Replacement during review');
+      expect(scene.state.mode).toBe('edit');
+      const layout = scene.state.body;
+      if (!(layout instanceof DefaultGridLayoutManager)) {
+        throw new Error('Expected the replacement spec to use a grid layout');
+      }
+      await waitFor(() => expect(layout.state.grid.state.isDraggable).toBe(true));
+      expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
+
+      scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+      expect((await readSpec(scene)).title).toBe(handyTestingSchema.title);
+    } finally {
+      if (scene.state.isEditing) {
+        scene.exitEditMode({ skipConfirm: true });
+      }
+    }
+  });
+});
+
 describe('APPLY_SPEC with a panel open for editing', () => {
+  beforeAll(() => {
+    setPluginImportUtils({
+      importPanelPlugin: async () => getPanelPlugin({}),
+      getPanelPluginFromCache: () => undefined,
+    });
+  });
+
   it('re-binds the editor onto the panel in the rebuilt tree', async () => {
     const scene = buildScene(makeSpec());
     const beforeSwap = openPanelEdit(scene, 'panel-1');
@@ -157,11 +217,11 @@ describe('APPLY_SPEC with a panel open for editing', () => {
 
     await applySpec(scene, makeSpec());
     const stale = getLibraryPanelBehavior(findVizPanelByKey(scene, 'panel-2')!)!;
-    // `editPanel` is unset for the whole wait, so this rebuild has no key to re-open from.
+    // The pending editor's URL key must survive even though its pane is not available yet.
     await applySpec(scene, makeSpec());
     expect(editedPanelKey(scene)).toBeUndefined();
 
-    // The load the discarded tree started completes, and hands off to the live tree's own wait.
+    // Completing the discarded tree's load must not reopen an editor attached to it.
     stale.setState({ isLoaded: true });
     expect(editedPanelKey(scene)).toBeUndefined();
 
@@ -169,6 +229,53 @@ describe('APPLY_SPEC with a panel open for editing', () => {
     await waitFor(() => expect(editedPanelKey(scene)).toBe('panel-2'));
     expect(editorIsAttached(scene)).toBe(true);
   });
+
+  it.each(['library fetch', 'editor bundle'])(
+    'does not restore a pending %s loader on undo and reopens on redo',
+    async (phase) => {
+      const scene = buildScene(makeSpec());
+      scene.onEnterEditMode();
+      const originalBody = scene.state.body;
+      const ready = createDeferred<void>();
+      const original = dashboardViews.editPanel;
+      const loadEditor = jest.spyOn(dashboardViews, 'editPanel').mockImplementation((...args) => {
+        const view = original(...args);
+        return {
+          ...view,
+          load: async (signal) => {
+            await ready.promise;
+            return view.load(signal);
+          },
+        };
+      });
+      const key = phase === 'library fetch' ? 'panel-2' : 'panel-1';
+      try {
+        scene.urlSync!.updateFromUrl({ editPanel: key });
+        expect(scene.state.loadingView).toBe('editPanel');
+        await applySpec(scene, makeSpec());
+        if (phase === 'library fetch') {
+          getLibraryPanelBehavior(findVizPanelByKey(scene, key)!)!.setState({ isLoaded: true });
+        }
+        ready.resolve();
+        await waitFor(() => expect(editedPanelKey(scene)).toBe(key));
+        expect(editorIsAttached(scene)).toBe(true);
+
+        scene.state.sidebar.undoAction();
+        expect(scene.state.body === originalBody).toBe(true);
+        expect(scene.state.loadingView).toBeUndefined();
+        expect(editedPanelKey(scene)).toBeUndefined();
+
+        scene.state.sidebar.redoAction();
+        await waitFor(() => expect(editedPanelKey(scene)).toBe(key));
+        expect(editorIsAttached(scene)).toBe(true);
+        expect(scene.state.loadingView).toBeUndefined();
+      } finally {
+        ready.resolve();
+        scene.cancelPendingViews();
+        loadEditor.mockRestore();
+      }
+    }
+  );
 
   it('recovers the pane when a rebuild races an in-flight `?editPanel=` wait', async () => {
     const scene = buildScene(makeSpec());
@@ -277,14 +384,6 @@ describe('APPLY_SPEC with a user-set transformation refId', () => {
 });
 
 describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
-  beforeEach(() => {
-    setTestFlags({ dashboardNewLayouts: false });
-  });
-
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   // Regression: the rebuild swaps in a freshly-deserialized layout manager whose grid is not
   // draggable/resizable by default. Only the pre-rebuild body ever got `editModeChanged(true)`
   // (via entering edit mode), so panels stayed frozen in the new tree until the command also
@@ -298,8 +397,7 @@ describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
     expect(scene.state.isEditing).toBeFalsy();
 
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
-
-    expect(isDraggable(scene)).toBe(true);
+    await waitFor(() => expect(isDraggable(scene)).toBe(true));
   });
 
   it('when the scene was already in edit mode before applying the spec', async () => {
@@ -307,7 +405,6 @@ describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
     scene.onEnterEditMode();
 
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
-
-    expect(isDraggable(scene)).toBe(true);
+    await waitFor(() => expect(isDraggable(scene)).toBe(true));
   });
 });
