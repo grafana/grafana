@@ -42,8 +42,6 @@ type Service interface {
 	EmailVerificationMailer
 }
 
-var mailTemplates *template.Template
-
 const (
 	tmplResetPassword   = "reset_password"
 	tmplSignUpStarted   = "signup_started"
@@ -66,19 +64,19 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, cfgProvider configprovider.Co
 	ns.Bus.AddEventListener(ns.signUpStartedHandler)
 	ns.Bus.AddEventListener(ns.signUpCompletedHandler)
 
-	mailTemplates = template.New("name")
-	mailTemplates.Funcs(template.FuncMap{
+	ns.mailTemplates = template.New("name")
+	ns.mailTemplates.Funcs(template.FuncMap{
 		"Subject":                 subjectTemplateFunc,
 		"HiddenSubject":           hiddenSubjectTemplateFunc,
 		"__dangerouslyInjectHTML": __dangerouslyInjectHTML,
 	})
-	mailTemplates.Funcs(sprig.FuncMap())
+	ns.mailTemplates.Funcs(sprig.FuncMap())
 
 	// Parse invalid templates using 'or' logic. Return an error only if no paths are valid.
 	invalidTemplates := make([]string, 0)
 	for _, pattern := range ns.Cfg.Smtp.TemplatesPatterns {
 		templatePattern := filepath.Join(ns.Cfg.StaticRootPath, pattern)
-		_, err := mailTemplates.ParseGlob(templatePattern)
+		_, err := ns.mailTemplates.ParseGlob(templatePattern)
 		if err != nil {
 			invalidTemplates = append(invalidTemplates, templatePattern)
 		}
@@ -110,11 +108,12 @@ type NotificationService struct {
 	Cfg         *setting.Cfg
 	cfgProvider configprovider.ConfigProvider
 
-	mailQueue    chan *Message
-	webhookQueue chan *Webhook
-	mailer       Mailer
-	log          log.Logger
-	store        TempUserStore
+	mailQueue     chan *Message
+	webhookQueue  chan *Webhook
+	mailer        Mailer
+	log           log.Logger
+	store         TempUserStore
+	mailTemplates *template.Template
 }
 
 func (ns *NotificationService) Run(ctx context.Context) error {

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
@@ -185,4 +186,15 @@ func (t *truncateDatabaseSetup) Exec(sess *xorm.Session, migrator *migrator.Migr
 
 type truncateBean struct {
 	Value int
+}
+
+func TestSQLiteTestDatabaseAliases(t *testing.T) {
+	for _, name := range []string{"sqlite", "sqlite3"} {
+		t.Run(name, func(t *testing.T) {
+			t.Setenv("GRAFANA_TEST_DB", name)
+			require.Equal(t, "sqlite3", sqlutil.GetTestDBType())
+			store := sqlstore.NewTestStore(t, sqlstore.WithoutMigrator())
+			require.Equal(t, "sqlite3", string(store.GetDBType()))
+		})
+	}
 }

@@ -19,6 +19,33 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+type stopFunc func(context.Context) error
+
+func (f stopFunc) Stop(ctx context.Context) error { return f(ctx) }
+
+func TestFederatedClientPreservesStop(t *testing.T) {
+	base := resource.NewMockResourceClient(t)
+	_, ok := NewFederatedClient(base, nil, nil).(resource.ResourceServerStopper)
+	require.False(t, ok)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	wantErr := errors.New("stop failed")
+	called := false
+	owned := struct {
+		resource.ResourceClient
+		resource.ResourceServerStopper
+	}{base, stopFunc(func(got context.Context) error {
+		called = true
+		require.Same(t, ctx, got)
+		return wantErr
+	})}
+	stopper, ok := NewFederatedClient(owned, nil, nil).(resource.ResourceServerStopper)
+	require.True(t, ok, "federation hid the owned server's lifecycle")
+	require.ErrorIs(t, stopper.Stop(ctx), wantErr)
+	require.True(t, called)
+}
+
 func TestFederatedGetStatsErrors(t *testing.T) {
 	result := &resourcepb.ErrorResult{Code: 404, Reason: "NotFound", Message: "folder not found"}
 	st, err := status.New(codes.NotFound, result.Message).WithDetails(result)

@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"testing"
 	"time"
@@ -18,14 +19,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/apiserver"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 // go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceGet$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationUserServiceGet(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type createUserResponse struct {
 		ID  int64  `json:"id"`
@@ -41,24 +42,23 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 
 	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
 		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				APIServerStorageType:   "unified",
-				RBACSingleOrganization: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 					featuremgmt.FlagKubernetesUsersRedirect,
 				},
 			})
 
-			firstUser := apis.DoRequest(helper, apis.RequestParams{
+			firstUser := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: "POST",
 				Path:   "/api/admin/users",
@@ -69,7 +69,7 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 			require.Equal(t, 200, firstUser.Response.StatusCode, "body: %s", string(firstUser.Body))
 			require.NotEmpty(t, firstUser.Result.UID)
 
-			secondUser := apis.DoRequest(helper, apis.RequestParams{
+			secondUser := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: "POST",
 				Path:   "/api/admin/users",
@@ -81,12 +81,12 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 			require.NotEmpty(t, secondUser.Result.UID)
 
 			t.Cleanup(func() {
-				apis.DoRequest(helper, apis.RequestParams{
+				apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "DELETE",
 					Path:   fmt.Sprintf("/api/admin/users/%d", firstUser.Result.ID),
 				}, &struct{}{})
-				apis.DoRequest(helper, apis.RequestParams{
+				apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "DELETE",
 					Path:   fmt.Sprintf("/api/admin/users/%d", secondUser.Result.ID),
@@ -95,7 +95,7 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 
 			// /api/users/lookup routes through UserK8sService.GetByLogin
 			t.Run("should find user by email via GetByLogin", func(t *testing.T) {
-				byEmailRsp := apis.DoRequest(helper, apis.RequestParams{
+				byEmailRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   "/api/users/lookup?loginOrEmail=first@example.com",
@@ -110,7 +110,7 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 
 			// /api/users/lookup routes through UserK8sService.GetByLogin
 			t.Run("should find user by login via GetByLogin", func(t *testing.T) {
-				byLoginRsp := apis.DoRequest(helper, apis.RequestParams{
+				byLoginRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   "/api/users/lookup?loginOrEmail=second-user",
@@ -124,7 +124,7 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 			})
 
 			t.Run("should return 404 for unknown login", func(t *testing.T) {
-				notFoundRsp := apis.DoRequest(helper, apis.RequestParams{
+				notFoundRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   "/api/users/lookup?loginOrEmail=nobody",
@@ -139,6 +139,7 @@ func TestIntegrationUserServiceGet(t *testing.T) {
 // go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceUpdate$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationUserServiceUpdate(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type createUserResponse struct {
 		ID  int64  `json:"id"`
@@ -147,24 +148,23 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 
 	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
 		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				APIServerStorageType:   "unified",
-				RBACSingleOrganization: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 					featuremgmt.FlagKubernetesUsersRedirect,
 				},
 			})
 
-			createRsp := apis.DoRequest(helper, apis.RequestParams{
+			createRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: "POST",
 				Path:   "/api/admin/users",
@@ -179,14 +179,14 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 				require.NotZero(t, createRsp.Result.ID)
 
 				t.Cleanup(func() {
-					apis.DoRequest(helper, apis.RequestParams{
+					apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 						User:   helper.Org1.Admin,
 						Method: "DELETE",
 						Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
 					}, &struct{}{})
 				})
 
-				updateRsp := apis.DoRequest(helper, apis.RequestParams{
+				updateRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "PUT",
 					Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
@@ -201,7 +201,7 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 					Login string `json:"login"`
 				}
 
-				getRsp := apis.DoRequest(helper, apis.RequestParams{
+				getRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
@@ -219,6 +219,7 @@ func TestIntegrationUserServiceUpdate(t *testing.T) {
 // go test --tags "pro" -timeout 120s -run ^TestIntegrationUserService$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationUserService(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type createUserResponse struct {
 		ID  int64  `json:"id"`
@@ -227,24 +228,23 @@ func TestIntegrationUserService(t *testing.T) {
 
 	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
 		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				APIServerStorageType:   "unified",
-				RBACSingleOrganization: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 					featuremgmt.FlagKubernetesUsersRedirect,
 				},
 			})
 
-			createRsp := apis.DoRequest(helper, apis.RequestParams{
+			createRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: "POST",
 				Path:   "/api/admin/users",
@@ -266,7 +266,7 @@ func TestIntegrationUserService(t *testing.T) {
 					Login string `json:"login"`
 				}
 
-				getRsp := apis.DoRequest(helper, apis.RequestParams{
+				getRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
@@ -279,7 +279,7 @@ func TestIntegrationUserService(t *testing.T) {
 				require.Equal(t, "k8s-service-user@example.com", getRsp.Result.Email)
 				require.Equal(t, "k8s-service-user", getRsp.Result.Login)
 
-				deleteRsp := apis.DoRequest(helper, apis.RequestParams{
+				deleteRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "DELETE",
 					Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
@@ -293,6 +293,7 @@ func TestIntegrationUserService(t *testing.T) {
 // go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceDelete$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationUserServiceDelete(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type createUserResponse struct {
 		ID  int64  `json:"id"`
@@ -309,24 +310,23 @@ func TestIntegrationUserServiceDelete(t *testing.T) {
 
 	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
 		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				APIServerStorageType:   "unified",
-				RBACSingleOrganization: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 					featuremgmt.FlagKubernetesUsersRedirect,
 				},
 			})
 
-			createRsp := apis.DoRequest(helper, apis.RequestParams{
+			createRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: "POST",
 				Path:   "/api/admin/users",
@@ -337,7 +337,7 @@ func TestIntegrationUserServiceDelete(t *testing.T) {
 			require.NotEmpty(t, createRsp.Result.UID)
 
 			t.Run("user exists after creation", func(t *testing.T) {
-				getRsp := apis.DoRequest(helper, apis.RequestParams{
+				getRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
@@ -348,7 +348,7 @@ func TestIntegrationUserServiceDelete(t *testing.T) {
 			})
 
 			t.Run("delete succeeds", func(t *testing.T) {
-				deleteRsp := apis.DoRequest(helper, apis.RequestParams{
+				deleteRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "DELETE",
 					Path:   fmt.Sprintf("/api/admin/users/%d", createRsp.Result.ID),
@@ -357,7 +357,7 @@ func TestIntegrationUserServiceDelete(t *testing.T) {
 			})
 
 			t.Run("user is gone after deletion", func(t *testing.T) {
-				getRsp := apis.DoRequest(helper, apis.RequestParams{
+				getRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   fmt.Sprintf("/api/users/%d", createRsp.Result.ID),
@@ -371,6 +371,7 @@ func TestIntegrationUserServiceDelete(t *testing.T) {
 // go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceSearch$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationUserServiceSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type createUserResponse struct {
 		ID  int64  `json:"id"`
@@ -396,24 +397,23 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 
 	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5} {
 		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				APIServerStorageType:   "unified",
-				RBACSingleOrganization: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 					featuremgmt.FlagKubernetesUsersRedirect,
 				},
 			})
 
-			alphaUser := apis.DoRequest(helper, apis.RequestParams{
+			alphaUser := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: "POST",
 				Path:   "/api/admin/users",
@@ -423,7 +423,7 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			require.NotEmpty(t, alphaUser.Result.UID)
 			require.NotZero(t, alphaUser.Result.ID)
 
-			betaUser := apis.DoRequest(helper, apis.RequestParams{
+			betaUser := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: "POST",
 				Path:   "/api/admin/users",
@@ -434,32 +434,37 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			require.NotZero(t, betaUser.Result.ID)
 
 			// Give alpha-user an external auth module so the search response carries its provider labels.
-			userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 				User:      helper.Org1.Admin,
-				Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+				Namespace: helper.Org1.Admin.Identity.Namespace,
 				GVR:       gvrUsers,
 			})
 			ctx := context.Background()
-			alphaObj, err := userClient.Resource.Get(ctx, alphaUser.Result.UID, metav1.GetOptions{})
+			alphaObj, err := userClient.Get(ctx, alphaUser.Result.UID, metav1.GetOptions{})
 			require.NoError(t, err)
 			alphaSpec := alphaObj.Object["spec"].(map[string]interface{})
 			alphaSpec["externalAuthInfo"] = []interface{}{
 				map[string]interface{}{"module": "ldap", "authID": "alpha-ldap"},
 			}
 			alphaObj.Object["spec"] = alphaSpec
-			_, err = userClient.Resource.Update(ctx, alphaObj, metav1.UpdateOptions{})
+			_, err = userClient.Update(ctx, alphaObj, metav1.UpdateOptions{})
 			require.NoError(t, err)
 
-			// Wait for the search index to be populated.
-			time.Sleep(2 * time.Second)
+			require.Eventually(t, func() bool {
+				rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
+					User: helper.Org1.Admin, Method: "GET", Path: "/api/users/search?query=alpha",
+				}, &searchUsersResponse{})
+				return rsp.Result != nil && len(rsp.Result.Users) == 1 &&
+					(mode < rest.Mode4 || slices.Contains(rsp.Result.Users[0].AuthLabels, "LDAP"))
+			}, 10*time.Second, 10*time.Millisecond, "created user and auth labels should be searchable")
 
 			t.Cleanup(func() {
-				apis.DoRequest(helper, apis.RequestParams{
+				apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "DELETE",
 					Path:   fmt.Sprintf("/api/admin/users/%d", alphaUser.Result.ID),
 				}, &struct{}{})
-				apis.DoRequest(helper, apis.RequestParams{
+				apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "DELETE",
 					Path:   fmt.Sprintf("/api/admin/users/%d", betaUser.Result.ID),
@@ -467,7 +472,7 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			})
 
 			t.Run("should return users with correct fields", func(t *testing.T) {
-				rsp := apis.DoRequest(helper, apis.RequestParams{
+				rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   "/api/users/search?query=alpha",
@@ -496,7 +501,7 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			})
 
 			t.Run("should filter results by query", func(t *testing.T) {
-				rsp := apis.DoRequest(helper, apis.RequestParams{
+				rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   "/api/users/search?query=beta",
@@ -514,7 +519,7 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			})
 
 			t.Run("should return all users when no query given", func(t *testing.T) {
-				rsp := apis.DoRequest(helper, apis.RequestParams{
+				rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   "/api/users/search",
@@ -531,7 +536,7 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 			})
 
 			t.Run("should respect perpage and page parameters", func(t *testing.T) {
-				rsp := apis.DoRequest(helper, apis.RequestParams{
+				rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   "/api/users/search?perpage=1&page=1",
@@ -544,7 +549,7 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 
 				allLogins := []string{rsp.Result.Users[0].Login}
 				for page := 2; page <= int(rsp.Result.TotalCount); page++ {
-					pageRsp := apis.DoRequest(helper, apis.RequestParams{
+					pageRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 						User:   helper.Org1.Admin,
 						Method: "GET",
 						Path:   fmt.Sprintf("/api/users/search?perpage=1&page=%d", page),
@@ -571,7 +576,7 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 				{"email-desc", false},
 			} {
 				t.Run(fmt.Sprintf("should sort users by %s", tc.sortParam), func(t *testing.T) {
-					rsp := apis.DoRequest(helper, apis.RequestParams{
+					rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 						User:   helper.Org1.Admin,
 						Method: "GET",
 						Path:   fmt.Sprintf("/api/users/search?sort=%s", tc.sortParam),
@@ -603,6 +608,7 @@ func TestIntegrationUserServiceSearch(t *testing.T) {
 // go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceOrgUsers$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type createUserResponse struct {
 		ID  int64  `json:"id"`
@@ -632,24 +638,23 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 
 	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5} {
 		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				APIServerStorageType:   "unified",
-				RBACSingleOrganization: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 					featuremgmt.FlagKubernetesUsersRedirect,
 				},
 			})
 
-			firstUser := apis.DoRequest(helper, apis.RequestParams{
+			firstUser := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: "POST",
 				Path:   "/api/admin/users",
@@ -658,7 +663,7 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 			require.Equal(t, 200, firstUser.Response.StatusCode, "body: %s", string(firstUser.Body))
 			require.NotEmpty(t, firstUser.Result.UID)
 
-			secondUser := apis.DoRequest(helper, apis.RequestParams{
+			secondUser := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: "POST",
 				Path:   "/api/admin/users",
@@ -668,12 +673,12 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 			require.NotEmpty(t, secondUser.Result.UID)
 
 			t.Cleanup(func() {
-				apis.DoRequest(helper, apis.RequestParams{
+				apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "DELETE",
 					Path:   fmt.Sprintf("/api/admin/users/%d", firstUser.Result.ID),
 				}, &struct{}{})
-				apis.DoRequest(helper, apis.RequestParams{
+				apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "DELETE",
 					Path:   fmt.Sprintf("/api/admin/users/%d", secondUser.Result.ID),
@@ -681,7 +686,7 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 			})
 
 			t.Run("GET /api/org/users returns the org users via the redirect", func(t *testing.T) {
-				rsp := apis.DoRequest(helper, apis.RequestParams{
+				rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   "/api/org/users",
@@ -696,14 +701,14 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 			// The non-paged list must return the same users as the paged variant;
 			// they previously diverged because only the paged handler was redirected.
 			t.Run("GET /api/org/users agrees with /api/org/users/search", func(t *testing.T) {
-				listRsp := apis.DoRequest(helper, apis.RequestParams{
+				listRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   "/api/org/users",
 				}, &[]orgUser{})
 				require.Equal(t, 200, listRsp.Response.StatusCode, "body: %s", string(listRsp.Body))
 
-				searchRsp := apis.DoRequest(helper, apis.RequestParams{
+				searchRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   "/api/org/users/search?perpage=100",
@@ -718,21 +723,21 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 					// Unified-only users have no legacy SQL row for the ID-to-UID resolver.
 					scopeAttr, scopeID = "uid", firstUser.Result.UID
 				}
-				scoped := helper.CreateUser("lookup-scoped", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+				scoped := createUser(t, helper, "lookup-scoped", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 					{Actions: []string{accesscontrol.ActionOrgUsersRead}, Resource: "users", ResourceAttribute: scopeAttr, ResourceID: scopeID},
 				})
-				teamPermissionsOnly := helper.CreateUser("lookup-team-permissions", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+				teamPermissionsOnly := createUser(t, helper, "lookup-team-permissions", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
 					{Actions: []string{accesscontrol.ActionTeamsPermissionsWrite}, Resource: "teams", ResourceAttribute: "id", ResourceID: "*"},
 				})
-				hs := helper.GetEnv().Server.HTTPServer
-				cfg := helper.GetEnv().Cfg
+				hs := helper.HTTPServer
+				cfg := helper.Cfg
 				// Route authorization is registered with the startup license; swapping it below only changes the handler.
 				routeEnforcement := hs.License.FeatureEnabled("accesscontrol.enforcement")
 				for _, tt := range []struct {
 					name    string
 					enforce bool
 					hidden  bool
-					caller  apis.User
+					caller  apiserver.User
 					want    []string
 				}{
 					{name: "team permission writers respect route enforcement", caller: teamPermissionsOnly, want: []string{"org-user-one", "org-user-two"}},
@@ -752,7 +757,7 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 							cfg.HiddenUsers = map[string]struct{}{"org-user-two": {}}
 						}
 						require.EventuallyWithT(t, func(collect *assert.CollectT) {
-							rsp := apis.DoRequest(helper, apis.RequestParams{
+							rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 								User: tt.caller, Method: "GET", Path: "/api/org/users/lookup?query=org-user-",
 							}, &[]orgUser{})
 							if routeEnforcement && tt.caller.Identity.GetUID() == teamPermissionsOnly.Identity.GetUID() {
@@ -772,6 +777,7 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 // go test --tags "pro" -timeout 120s -run ^TestIntegrationUserServiceSearchAuthorization$ github.com/grafana/grafana/pkg/tests/apis/iam -count=1
 func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	type searchUserHit struct {
 		UID   string `json:"uid"`
@@ -790,22 +796,21 @@ func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 
 	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5} {
 		t.Run(fmt.Sprintf("dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				APIServerStorageType:   "unified",
-				RBACSingleOrganization: true,
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {DualWriterMode: mode},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {DualWriterMode: mode},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 					featuremgmt.FlagKubernetesUsersRedirect,
 				},
 			})
 
-			alphaResp := apis.DoRequest(helper, apis.RequestParams{
+			alphaResp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: "POST",
 				Path:   "/api/admin/users",
@@ -815,7 +820,7 @@ func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 			require.NotZero(t, alphaResp.Result.ID, "alpha create returned zero ID; body=%s", string(alphaResp.Body))
 			alphaID := alphaResp.Result.ID
 
-			betaResp := apis.DoRequest(helper, apis.RequestParams{
+			betaResp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 				User:   helper.Org1.Admin,
 				Method: "POST",
 				Path:   "/api/admin/users",
@@ -846,9 +851,8 @@ func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 				orgUsersReadScopeAttr = "uid"
 				orgUsersReadScopeID = alphaResp.Result.UID
 			}
-			scopedUser := helper.CreateUser(
+			scopedUser := createUser(t, helper,
 				"scoped-search-user",
-				apis.Org1,
 				org.RoleEditor,
 				[]resourcepermissions.SetResourcePermissionCommand{
 					{
@@ -866,11 +870,15 @@ func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 				},
 			)
 
-			// Wait for the search index to pick up the new users.
-			time.Sleep(2 * time.Second)
+			require.Eventually(t, func() bool {
+				rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
+					User: helper.Org1.Admin, Method: "GET", Path: "/api/users/search?query=authz&perpage=100",
+				}, &searchUsersResponse{})
+				return rsp.Result != nil && len(rsp.Result.Users) == 2
+			}, 10*time.Second, 10*time.Millisecond, "created users should be searchable")
 
 			t.Run("server admin sees all users via the K8s redirect", func(t *testing.T) {
-				rsp := apis.DoRequest(helper, apis.RequestParams{
+				rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Admin,
 					Method: "GET",
 					Path:   "/api/users/search?perpage=100",
@@ -889,7 +897,7 @@ func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 				// Org1.Editor holds org.users:read but no users:read. The
 				// /api/users/search route gate requires ActionUsersRead, so it
 				// 403s before reaching the K8s redirect or the bleve filter.
-				rsp := apis.DoRequest(helper, apis.RequestParams{
+				rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   helper.Org1.Editor,
 					Method: "GET",
 					Path:   "/api/users/search",
@@ -898,7 +906,7 @@ func TestIntegrationUserServiceSearchAuthorization(t *testing.T) {
 			})
 
 			t.Run("scoped users:read returns only the allowed user", func(t *testing.T) {
-				rsp := apis.DoRequest(helper, apis.RequestParams{
+				rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 					User:   scopedUser,
 					Method: "GET",
 					Path:   "/api/users/search?perpage=100",

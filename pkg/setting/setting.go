@@ -136,6 +136,7 @@ type Cfg struct {
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
 	commandLineProps             map[string]string
+	skipGlobalSettings           bool
 
 	// HTTP Server Settings
 	CertFile          string
@@ -984,6 +985,9 @@ type CommandLineArgs struct {
 }
 
 func copyServerURLSettingsToGlobals(cfg *Cfg) {
+	if cfg.skipGlobalSettings {
+		return
+	}
 	AppUrl = cfg.AppURL
 	AppSubUrl = cfg.AppSubURL
 }
@@ -1548,6 +1552,14 @@ func NewCfgFromINIFile(iniFile *ini.File) (*Cfg, error) {
 	return cfg, nil
 }
 
+// ApplySettings parses instance configuration without changing legacy process
+// settings or environment variables. The caller owns iniFile and cfg.
+func (cfg *Cfg) ApplySettings(iniFile *ini.File) error {
+	cfg.skipGlobalSettings = true
+	defer func() { cfg.skipGlobalSettings = false }()
+	return cfg.parseINIFile(iniFile)
+}
+
 func (cfg *Cfg) validateStaticRootPath() error {
 	if skipStaticRootValidation {
 		return nil
@@ -1931,6 +1943,9 @@ func (cfg *Cfg) handleAWSConfig() {
 	cfg.AWSSessionDuration = awsPluginSec.Key("session_duration").Value()
 	cfg.AWSForwardSettingsPlugins = util.SplitString(awsPluginSec.Key("forward_settings_to_plugins").String())
 
+	if cfg.skipGlobalSettings {
+		return
+	}
 	// Also set environment variables that can be used by core plugins
 	err := os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
 	if err != nil {
@@ -2147,6 +2162,9 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 }
 
 func copyCookieSecuritySettingsToGlobals(cfg *Cfg) {
+	if cfg.skipGlobalSettings {
+		return
+	}
 	CookieSecure = cfg.CookieSecure
 	if cfg.CookieSameSiteDisabled {
 		CookieSameSiteDisabled = cfg.CookieSameSiteDisabled

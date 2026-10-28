@@ -25,10 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var (
-	grpcRequestDuration *prometheus.HistogramVec
-)
-
 type Provider interface {
 	registry.BackgroundService
 	registry.CanBeDisabled
@@ -64,19 +60,16 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 		listener:         listener,
 	}
 
-	// Register the metric here instead of an init() function so that we do
-	// nothing unless the gRPC server is actually enabled.
-	if grpcRequestDuration == nil {
-		grpcRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-			Namespace:                       "grafana",
-			Name:                            "grpc_request_duration_seconds",
-			Help:                            "Time (in seconds) spent serving gRPC calls.",
-			Buckets:                         instrument.DefBuckets,
-			NativeHistogramBucketFactor:     1.1, // enable native histograms
-			NativeHistogramMaxBucketNumber:  160,
-			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"method", "route", "status_code", "ws"})
-
+	grpcRequestDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace:                       "grafana",
+		Name:                            "grpc_request_duration_seconds",
+		Help:                            "Time (in seconds) spent serving gRPC calls.",
+		Buckets:                         instrument.DefBuckets,
+		NativeHistogramBucketFactor:     1.1, // enable native histograms
+		NativeHistogramMaxBucketNumber:  160,
+		NativeHistogramMinResetDuration: time.Hour,
+	}, []string{"method", "route", "status_code", "ws"})
+	if registerer != nil {
 		if err := registerer.Register(grpcRequestDuration); err != nil {
 			return nil, err
 		}

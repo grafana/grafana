@@ -2,7 +2,9 @@ package grpcserver
 
 import (
 	"context"
+	"errors"
 	"net"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -14,11 +16,56 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/test/bufconn"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestProviderMetricsAreIsolated(t *testing.T) {
+	for _, calls := range []int{1, 2} {
+		t.Run(strconv.Itoa(calls), func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+			defer cancel()
+			registry := prometheus.NewRegistry()
+			provider, err := ProvideService(setting.NewCfg(), nil, noop.NewTracerProvider().Tracer(""), registry)
+			require.NoError(t, err)
+			server := provider.GetServer()
+			grpc_health_v1.RegisterHealthServer(server, health.NewServer())
+			listener := bufconn.Listen(1024 * 1024)
+			served := make(chan error, 1)
+			go func() { served <- server.Serve(listener) }()
+			t.Cleanup(func() {
+				server.Stop()
+				err := <-served
+				require.True(t, err == nil || errors.Is(err, grpc.ErrServerStopped), "%v", err)
+				require.NoError(t, listener.Close())
+			})
+			conn, err := grpc.NewClient("passthrough:///metrics", grpc.WithTransportCredentials(insecure.NewCredentials()),
+				grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) { return listener.DialContext(ctx) }))
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, conn.Close()) })
+			client := grpc_health_v1.NewHealthClient(conn)
+			for range calls {
+				_, err := client.Check(ctx, &grpc_health_v1.HealthCheckRequest{})
+				require.NoError(t, err)
+			}
+			families, err := registry.Gather()
+			require.NoError(t, err)
+			for _, family := range families {
+				if family.GetName() == "grafana_grpc_request_duration_seconds" {
+					require.Len(t, family.Metric, 1)
+					require.Equal(t, uint64(calls), family.Metric[0].GetHistogram().GetSampleCount())
+					return
+				}
+			}
+			t.Fatal("server registry has no gRPC request histogram")
+		})
+	}
+}
 
 func TestDSKitDrainTimeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)

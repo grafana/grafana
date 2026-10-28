@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -84,7 +85,14 @@ var PathRewriters = []filters.PathRewriter{
 	},
 }
 
+// The crash policy is process-wide; changing it for another chain races with
+// requests already running through panic recovery.
+var configurePanicRecovery = sync.OnceFunc(func() {
+	utilruntime.ReallyCrash = false
+})
+
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
+	configurePanicRecovery()
 	watchMetrics := newWatchMetrics(reg)
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
 		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
@@ -119,9 +127,6 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		// filters.WithWatchInstrumentation for the upstream request span.
 		handler = withoutWatchServerSpan(handler, c.TracerProvider)
 		handler = filters.WithExtractJaegerTrace(handler)
-		// Configure filters.WithPanicRecovery to not crash on panic
-		utilruntime.ReallyCrash = false
-
 		return handler
 	}
 }

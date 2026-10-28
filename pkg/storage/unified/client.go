@@ -2,6 +2,7 @@ package unified
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"time"
@@ -122,14 +123,14 @@ type clientMetrics struct {
 }
 
 // This adds a UnifiedStorage client into the wire dependency tree
-func ProvideUnifiedStorageClient(opts *Options,
+func ProvideUnifiedStorageClient(ctx context.Context, opts *Options,
 	storageMetrics *resource.StorageMetrics,
 	indexMetrics *resource.BleveIndexMetrics,
 	vectorMetrics *resource.VectorMetrics,
 	gcGate *resource.GCGate,
 ) (resource.ResourceClient, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
-	client, err := newClient(options.StorageOptions{
+	client, err := newClient(ctx, options.StorageOptions{
 		StorageType:             options.StorageType(apiserverCfg.Key("storage_type").MustString(string(options.StorageTypeUnified))),
 		DataPath:                apiserverCfg.Key("storage_path").MustString(filepath.Join(opts.Cfg.DataPath, "grafana-apiserver")),
 		Address:                 apiserverCfg.Key("address").MustString(""),
@@ -153,7 +154,21 @@ func ProvideUnifiedStorageClient(opts *Options,
 	return client, err
 }
 
-func newClient(opts options.StorageOptions,
+type localResourceClient struct {
+	resource.ResourceClient
+	server  resource.ResourceServerStopper
+	backend services.Service
+}
+
+func (c *localResourceClient) Stop(ctx context.Context) error {
+	err := c.server.Stop(ctx)
+	if c.backend != nil {
+		err = errors.Join(err, services.StopAndAwaitTerminated(ctx, c.backend))
+	}
+	return err
+}
+
+func newClient(ctx context.Context, opts options.StorageOptions,
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	tracer tracing.Tracer,
@@ -176,8 +191,6 @@ func newClient(opts options.StorageOptions,
 	watchExpiry resource.WatchExpiry,
 	manifestDiscovery resource.ManifestDiscovery,
 ) (resource.ResourceClient, error) {
-	ctx := context.Background()
-
 	switch opts.StorageType {
 	case options.StorageTypeFile:
 		backend, err := sql.NewFileBackend(cfg, kvStore)
@@ -196,7 +209,7 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
-		return resource.NewLocalResourceClient(server), nil
+		return &localResourceClient{ResourceClient: resource.NewLocalResourceClient(server), server: server}, nil
 
 	case options.StorageTypeUnifiedGrpc:
 		if opts.Address == "" {
@@ -328,7 +341,8 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		return resource.NewLocalResourceClient(server), nil
+		backendService, _ := backend.(services.Service)
+		return &localResourceClient{ResourceClient: resource.NewLocalResourceClient(server), server: server, backend: backendService}, nil
 	}
 }
 

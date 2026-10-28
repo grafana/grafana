@@ -288,7 +288,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	clientConfigProvider grafanaapiserver.DirectRestConfigProvider, clientGenerator resource.ClientGenerator,
 	userVerifier user.Verifier, pluginPreinstall pluginchecker.Preinstall, publicDashboardsService publicdashboards.Service,
 ) (*HTTPServer, error) {
-	web.Env = cfg.Env
 	m := web.New()
 
 	var diagnosticsMetrics *diagnostics.Metrics
@@ -460,6 +459,7 @@ func (w *customErrorLogger) Write(msg []byte) (int, error) {
 }
 
 func (hs *HTTPServer) Run(ctx context.Context) error {
+	web.Env = hs.Cfg.Env
 	hs.context = ctx
 
 	hs.applyRoutes()

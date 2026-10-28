@@ -1,9 +1,13 @@
 package apiserver
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/synctest"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
@@ -13,15 +17,162 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	discoveryendpoint "k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
+	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
+	apirequest "k8s.io/apiserver/pkg/endpoints/request"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/util/notfoundhandler"
+	clientrest "k8s.io/client-go/rest"
 	openapicommon "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/setting"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/user"
 )
+
+func TestRunningWaitsForServerShutdown(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		s := &service{stoppedCh: make(chan error, 1)}
+		done := make(chan error, 1)
+		go func() { done <- s.running(ctx) }()
+		cancel()
+		synctest.Wait()
+		select {
+		case err := <-done:
+			t.Fatalf("service returned before server shutdown completed: %v", err)
+		default:
+		}
+		shutdownErr := errors.New("server shutdown failed")
+		s.stoppedCh <- shutdownErr
+		require.ErrorIs(t, <-done, shutdownErr)
+	})
+}
+
+func TestInProcessServerDrainsBeforeDestroyingStorage(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		cfg := genericapiserver.NewRecommendedConfig(builder.ProvideCodecFactory(builder.ProvideScheme()))
+		cfg.ExternalAddress = "127.0.0.1:3000"
+		cfg.LoopbackClientConfig = &clientrest.Config{Host: "http://127.0.0.1:3000"}
+		cfg.EffectiveVersion = builder.GetEffectiveVersion(0, "0.0.0", "", "")
+		cfg.EnableMetrics = false
+		server, err := cfg.Complete().New("lifecycle-test", genericapiserver.NewEmptyDelegate())
+		require.NoError(t, err)
+		destroyed := make(chan struct{})
+		server.RegisterDestroyFunc(func() { close(destroyed) })
+		shutdownStarted := make(chan struct{})
+		require.NoError(t, server.AddPreShutdownHook("lifecycle-test", func() error {
+			close(shutdownStarted)
+			return nil
+		}))
+		require.NoError(t, server.NonLongRunningRequestWaitGroup.Add(1))
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		s := &service{stoppedCh: make(chan error, 1)}
+		_, err = s.startCoreServer(ctx, &options.RoundTripperFunc{Ready: make(chan struct{})}, server)
+		require.NoError(t, err)
+		cancel()
+		<-shutdownStarted
+		synctest.Wait()
+		select {
+		case <-destroyed:
+			t.Fatal("storage destroyed before in-flight requests drained")
+		default:
+		}
+		server.NonLongRunningRequestWaitGroup.Done()
+		require.NoError(t, <-s.stoppedCh)
+		select {
+		case <-destroyed:
+		default:
+			t.Fatal("server stopped before storage was destroyed")
+		}
+	})
+}
+
+func TestInProcessServerDiscoveryAndWatchShutdown(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		cfg := genericapiserver.NewRecommendedConfig(builder.ProvideCodecFactory(builder.ProvideScheme()))
+		cfg.ExternalAddress = "127.0.0.1:3000"
+		cfg.LoopbackClientConfig = &clientrest.Config{Host: "http://127.0.0.1:3000"}
+		cfg.EffectiveVersion = builder.GetEffectiveVersion(0, "0.0.0", "", "")
+		cfg.EnableMetrics = false
+		cfg.ShutdownWatchTerminationGracePeriod = time.Second
+		missingHandler := notfoundhandler.New(cfg.Serializer, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
+		server, err := cfg.Complete().New("watch-lifecycle-test", genericapiserver.NewEmptyDelegateWithCustomHandler(missingHandler))
+		require.NoError(t, err)
+		started, finished := make(chan struct{}), make(chan struct{})
+		const watchPath = "/apis/lifecycle.test/v1/namespaces/default/resources"
+		server.Handler.NonGoRestfulMux.HandleFunc(watchPath, func(w http.ResponseWriter, r *http.Request) {
+			defer close(finished)
+			signal := apirequest.ServerShutdownSignalFrom(r.Context())
+			if signal == nil {
+				t.Error("watch request must receive the server shutdown signal")
+				close(started)
+				return
+			}
+			close(started)
+			select {
+			case <-signal.ShuttingDown():
+			case <-r.Context().Done():
+				t.Error("watch must end on server shutdown without client cancellation")
+			}
+			w.WriteHeader(http.StatusNoContent)
+		})
+		server.RegisterDestroyFunc(func() {
+			select {
+			case <-started:
+				select {
+				case <-finished:
+				default:
+					t.Error("storage destroyed before watch drained")
+				}
+			default:
+			}
+		})
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		s := &service{stoppedCh: make(chan error, 1)}
+		_, err = s.startCoreServer(ctx, &options.RoundTripperFunc{Ready: make(chan struct{})}, server)
+		require.NoError(t, err)
+		stopped := make(chan struct{})
+		var stopErr error
+		go func() {
+			stopErr = <-s.stoppedCh
+			close(stopped)
+		}()
+		defer func() {
+			cancel()
+			<-stopped
+			require.NoError(t, stopErr)
+		}()
+		synctest.Wait()
+		missing := httptest.NewRecorder()
+		server.Handler.ServeHTTP(missing, httptest.NewRequest(http.MethodGet, "/apis/missing.test/v1/resources", nil))
+		require.Equal(t, http.StatusNotFound, missing.Code, "discovery must finish before serving missing resources")
+		requestCtx, cancelRequest := context.WithCancel(context.Background())
+		defer cancelRequest()
+		requestDone := make(chan struct{})
+		go func() {
+			defer close(requestDone)
+			server.Handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequestWithContext(requestCtx, http.MethodGet, watchPath+"?watch=true", nil))
+		}()
+		<-started
+		cancel()
+		<-stopped
+		synctest.Wait()
+		select {
+		case <-requestDone:
+		default:
+			t.Error("server stopped with an active watch")
+			cancelRequest()
+			<-requestDone
+		}
+	})
+}
 
 func Test_useNamespaceFromPath(t *testing.T) {
 	tests := []struct {

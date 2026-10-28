@@ -37,6 +37,9 @@ func GetTestDBType() string {
 	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
 		dbType = db
 	}
+	if dbType == "sqlite" {
+		return "sqlite3"
+	}
 	return dbType
 }
 

@@ -1,22 +1,38 @@
 package server
 
 import (
+	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/mock"
 
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	infranats "github.com/grafana/grafana/pkg/infra/nats"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -87,4 +103,30 @@ type TestEnv struct {
 	QuotaGetter             quotas.QuotaGetter
 	// NATSConfig lets a test dial its own client to the embedded NATS server.
 	NATSConfig *infranats.Config
+}
+
+// APIServices exposes the production dependencies used by isolated API tests.
+// The normal server sets own their construction and authentication registration.
+type APIServices struct {
+	HTTPServer         *api.HTTPServer
+	DualWriter         dualwrite.Service
+	ResourceClient     resource.ResourceClient
+	InlineSecrets      secret.InlineSecureValueSupport
+	ConfigProvider     configprovider.ConfigProvider
+	Users              user.Service
+	Organizations      org.Service
+	Teams              team.Service
+	AccessControl      accesscontrol.AccessControl
+	Permissions        *acimpl.Service
+	AccessClient       types.AccessClient
+	RemoteCache        *remotecache.RemoteCache
+	AuthInfoStore      *authinfoimpl.Store
+	IDService          auth.IDService
+	Registration       authnimpl.Registration
+	Features           featuremgmt.FeatureToggles
+	Tracer             *tracing.TracingService
+	Routes             routing.RouteRegister
+	RestConfigProvider *apiserver.EventualRestConfigProvider
+	EventualResource   *resource.EventualClient
+	GRPCServer         grpcserver.Provider
 }

@@ -57,18 +57,19 @@ type Index struct {
 }
 
 func (index *Index) XName(tableName string) string {
-	if index.Name == "" {
-		index.Name = strings.Join(index.Cols, "_")
+	name := index.Name
+	if name == "" {
+		name = strings.Join(index.Cols, "_")
 	}
 
-	if !strings.HasPrefix(index.Name, "UQE_") &&
-		!strings.HasPrefix(index.Name, "IDX_") {
+	if !strings.HasPrefix(name, "UQE_") &&
+		!strings.HasPrefix(name, "IDX_") {
 		if index.Type == UniqueIndex {
-			return fmt.Sprintf("UQE_%v_%v", tableName, index.Name)
+			return fmt.Sprintf("UQE_%v_%v", tableName, name)
 		}
-		return fmt.Sprintf("IDX_%v_%v", tableName, index.Name)
+		return fmt.Sprintf("IDX_%v_%v", tableName, name)
 	}
-	return index.Name
+	return name
 }
 
 var (

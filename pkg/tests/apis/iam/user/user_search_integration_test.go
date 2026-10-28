@@ -18,35 +18,30 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/apiserver"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationUserSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				RBACSingleOrganization: true,
-				APIServerStorageType:   "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
-			})
-
-			t.Cleanup(func() {
-				helper.Shutdown()
 			})
 
 			setupUsers(t, helper)
@@ -74,28 +69,24 @@ func TestIntegrationUserSearch(t *testing.T) {
 
 func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				RBACSingleOrganization: true,
-				APIServerStorageType:   "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
-			})
-
-			t.Cleanup(func() {
-				helper.Shutdown()
 			})
 
 			setupUsers(t, helper)
@@ -173,28 +164,24 @@ func TestIntegrationUserSearch_WithSorting(t *testing.T) {
 
 func TestIntegrationUserSearch_SortCompareLegacy(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	modes := []rest.DualWriterMode{rest.Mode1}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				RBACSingleOrganization: true,
-				APIServerStorageType:   "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
-			})
-
-			t.Cleanup(func() {
-				helper.Shutdown()
 			})
 
 			setupUsers(t, helper)
@@ -240,28 +227,24 @@ func TestIntegrationUserSearch_SortCompareLegacy(t *testing.T) {
 
 func TestIntegrationUserSearch_Paging(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				RBACSingleOrganization: true,
-				APIServerStorageType:   "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
-			})
-
-			t.Cleanup(func() {
-				helper.Shutdown()
 			})
 
 			setupUsers(t, helper)
@@ -340,28 +323,24 @@ func TestIntegrationUserSearch_Paging(t *testing.T) {
 
 func TestIntegrationUserSearch_AccessControl(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				RBACSingleOrganization: true,
-				APIServerStorageType:   "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
-			})
-
-			t.Cleanup(func() {
-				helper.Shutdown()
 			})
 
 			setupUsers(t, helper)
@@ -394,11 +373,11 @@ func TestIntegrationUserSearch_AccessControl(t *testing.T) {
 	}
 }
 
-func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
+func setupUsers(t *testing.T, helper *testEnvironment) {
 	ctx := context.Background()
-	userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+	userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 		User:      helper.Org1.Admin,
-		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+		Namespace: helper.Org1.Admin.Identity.Namespace,
 		GVR:       gvrUsers,
 	})
 
@@ -463,19 +442,20 @@ func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
 	for _, u := range users {
 		uMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&u)
 		require.NoError(t, err)
-		_, err = userClient.Resource.Create(ctx, &unstructured.Unstructured{Object: uMap}, metav1.CreateOptions{})
+		_, err = userClient.Create(ctx, &unstructured.Unstructured{Object: uMap}, metav1.CreateOptions{})
 		require.NoError(t, err)
 	}
 
-	// Wait for indexing
-	time.Sleep(2 * time.Second)
+	require.Eventually(t, func() bool {
+		return len(searchUsers(t, helper, "TestUser").Hits) == len(users)
+	}, 10*time.Second, 10*time.Millisecond, "created users should be searchable")
 }
 
-func searchUsers(t *testing.T, helper *apis.K8sTestHelper, query string) *iamv0.GetSearchUsersResponse {
+func searchUsers(t *testing.T, helper *testEnvironment, query string) *iamv0.GetSearchUsersResponse {
 	return searchUsersWithSort(t, helper, query, "")
 }
 
-func searchUsersWithSort(t *testing.T, helper *apis.K8sTestHelper, query string, sort string) *iamv0.GetSearchUsersResponse {
+func searchUsersWithSort(t *testing.T, helper *testEnvironment, query string, sort string) *iamv0.GetSearchUsersResponse {
 	q := url.Values{}
 	q.Set("query", query)
 	if sort != "" {
@@ -486,7 +466,7 @@ func searchUsersWithSort(t *testing.T, helper *apis.K8sTestHelper, query string,
 	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
 
 	res := &iamv0.GetSearchUsersResponse{}
-	rsp := apis.DoRequest(helper, apis.RequestParams{
+	rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 		User:   helper.Org1.Admin,
 		Method: "GET",
 		Path:   path,
@@ -496,7 +476,7 @@ func searchUsersWithSort(t *testing.T, helper *apis.K8sTestHelper, query string,
 	return res
 }
 
-func searchUsersWithAccessControl(t *testing.T, helper *apis.K8sTestHelper, query string, accessControl bool) *iamv0.GetSearchUsersResponse {
+func searchUsersWithAccessControl(t *testing.T, helper *testEnvironment, query string, accessControl bool) *iamv0.GetSearchUsersResponse {
 	q := url.Values{}
 	q.Set("query", query)
 	q.Set("limit", "100")
@@ -505,7 +485,7 @@ func searchUsersWithAccessControl(t *testing.T, helper *apis.K8sTestHelper, quer
 	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
 
 	res := &iamv0.GetSearchUsersResponse{}
-	rsp := apis.DoRequest(helper, apis.RequestParams{
+	rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 		User:   helper.Org1.Admin,
 		Method: "GET",
 		Path:   path,
@@ -515,7 +495,7 @@ func searchUsersWithAccessControl(t *testing.T, helper *apis.K8sTestHelper, quer
 	return res
 }
 
-func searchUsersWithPaging(t *testing.T, helper *apis.K8sTestHelper, query string, page, limit int) *iamv0.GetSearchUsersResponse {
+func searchUsersWithPaging(t *testing.T, helper *testEnvironment, query string, page, limit int) *iamv0.GetSearchUsersResponse {
 	q := url.Values{}
 	q.Set("query", query)
 	q.Set("page", fmt.Sprintf("%d", page))
@@ -526,7 +506,7 @@ func searchUsersWithPaging(t *testing.T, helper *apis.K8sTestHelper, query strin
 	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
 
 	res := &iamv0.GetSearchUsersResponse{}
-	rsp := apis.DoRequest(helper, apis.RequestParams{
+	rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 		User:   helper.Org1.Admin,
 		Method: "GET",
 		Path:   path,
@@ -536,7 +516,7 @@ func searchUsersWithPaging(t *testing.T, helper *apis.K8sTestHelper, query strin
 	return res
 }
 
-func searchUsersWithOffset(t *testing.T, helper *apis.K8sTestHelper, query string, offset, limit int) *iamv0.GetSearchUsersResponse {
+func searchUsersWithOffset(t *testing.T, helper *testEnvironment, query string, offset, limit int) *iamv0.GetSearchUsersResponse {
 	q := url.Values{}
 	q.Set("query", query)
 	q.Set("offset", fmt.Sprintf("%d", offset))
@@ -547,7 +527,7 @@ func searchUsersWithOffset(t *testing.T, helper *apis.K8sTestHelper, query strin
 	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/searchUsers?%s", q.Encode())
 
 	res := &iamv0.GetSearchUsersResponse{}
-	rsp := apis.DoRequest(helper, apis.RequestParams{
+	rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 		User:   helper.Org1.Admin,
 		Method: "GET",
 		Path:   path,
@@ -564,7 +544,7 @@ type LegacyUserSearchHit struct {
 	Email  string `json:"email"`
 }
 
-func searchUsersLegacy(t *testing.T, helper *apis.K8sTestHelper, query string, sort string) []LegacyUserSearchHit {
+func searchUsersLegacy(t *testing.T, helper *testEnvironment, query string, sort string) []LegacyUserSearchHit {
 	q := url.Values{}
 	q.Set("query", query)
 
@@ -580,7 +560,7 @@ func searchUsersLegacy(t *testing.T, helper *apis.K8sTestHelper, query string, s
 		OrgUsers []LegacyUserSearchHit `json:"orgUsers"`
 	}
 
-	rsp := apis.DoRequest(helper, apis.RequestParams{
+	rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 		User:   helper.Org1.Admin,
 		Method: "GET",
 		Path:   path,
@@ -611,9 +591,9 @@ func verifyOrder(t *testing.T, hits []iamv0.GetSearchUsersUserHit, expectedValue
 	require.Equal(t, expectedValues, actualValues)
 }
 
-func updateLastSeenAt(t *testing.T, helper *apis.K8sTestHelper, login string, lastSeen time.Time, mode rest.DualWriterMode) {
+func updateLastSeenAt(t *testing.T, helper *testEnvironment, login string, lastSeen time.Time, mode rest.DualWriterMode) {
 	if mode < rest.Mode4 {
-		err := helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		err := helper.DB.WithDbSession(context.Background(), func(sess *db.Session) error {
 			_, err := sess.Table("user").Where("login = ?", login).Update(map[string]interface{}{
 				"last_seen_at": lastSeen,
 			})
@@ -625,19 +605,19 @@ func updateLastSeenAt(t *testing.T, helper *apis.K8sTestHelper, login string, la
 	// Use the new APIs to update the user resource status in Mode4+
 	if mode >= rest.Mode4 {
 		ctx := context.Background()
-		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			Namespace: helper.Org1.Admin.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
-		u, err := userClient.Resource.Get(ctx, login, metav1.GetOptions{})
+		u, err := userClient.Get(ctx, login, metav1.GetOptions{})
 		require.NoError(t, err)
 
 		err = unstructured.SetNestedField(u.Object, lastSeen.Unix(), "status", "lastSeenAt")
 		require.NoError(t, err)
 
-		_, err = userClient.Resource.Update(ctx, u, metav1.UpdateOptions{})
+		_, err = userClient.Update(ctx, u, metav1.UpdateOptions{})
 		require.NoError(t, err)
 	}
 }

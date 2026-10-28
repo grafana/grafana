@@ -2,6 +2,7 @@ package setting
 
 import (
 	"bufio"
+	"fmt"
 	"net/url"
 	"os"
 	"path"
@@ -12,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
@@ -803,6 +805,50 @@ func TestNewCfgFromINIFile(t *testing.T) {
 	require.NotNil(t, cfg)
 	require.Equal(t, Prod, cfg.Env)
 	require.Equal(t, "test.com", cfg.Domain)
+}
+
+func TestApplySettings(t *testing.T) {
+	t.Run("preserves process settings", func(t *testing.T) {
+		oldURL, oldSubURL := AppUrl, AppSubUrl
+		oldSecure, oldDisabled, oldMode := CookieSecure, CookieSameSiteDisabled, CookieSameSiteMode
+		t.Cleanup(func() {
+			AppUrl, AppSubUrl = oldURL, oldSubURL
+			CookieSecure, CookieSameSiteDisabled, CookieSameSiteMode = oldSecure, oldDisabled, oldMode
+		})
+		keys := []string{awsds.AssumeRoleEnabledEnvVarKeyName, awsds.AllowedAuthProvidersEnvVarKeyName,
+			awsds.ListMetricsPageLimitKeyName, awsds.GrafanaAssumeRoleExternalIdKeyName, awsds.SessionDurationEnvVarKeyName}
+		for _, key := range keys {
+			t.Setenv(key, "process-value")
+		}
+		settings, err := ini.Load([]byte(fmt.Sprintf("[server]\nroot_url=http://instance.example.com/grafana/\n[security]\ncookie_secure=%t\ncookie_samesite=strict", !oldSecure)))
+		require.NoError(t, err)
+		cfg := NewCfg()
+		require.NoError(t, cfg.ApplySettings(settings))
+		require.Equal(t, "http://instance.example.com/grafana/", cfg.AppURL)
+		require.Equal(t, !oldSecure, cfg.CookieSecure)
+		require.Equal(t, AnnotationAPIMigrationPhaseOff, cfg.AnnotationAppPlatform.APIMigrationPhase)
+		require.Equal(t, oldURL, AppUrl)
+		require.Equal(t, oldSubURL, AppSubUrl)
+		require.Equal(t, oldSecure, CookieSecure)
+		require.Equal(t, oldDisabled, CookieSameSiteDisabled)
+		require.Equal(t, oldMode, CookieSameSiteMode)
+		for _, key := range keys {
+			require.Equal(t, "process-value", os.Getenv(key), key)
+		}
+	})
+	t.Run("parallel instances", func(t *testing.T) {
+		for i := range 8 {
+			t.Run(fmt.Sprint(i), func(t *testing.T) {
+				t.Parallel()
+				url := fmt.Sprintf("http://instance-%d.example.com/", i)
+				settings, err := ini.Load([]byte("[server]\nroot_url=" + url))
+				require.NoError(t, err)
+				cfg := NewCfg()
+				require.NoError(t, cfg.ApplySettings(settings))
+				require.Equal(t, url, cfg.AppURL)
+			})
+		}
+	})
 }
 
 func TestDashboardDefaultPreload(t *testing.T) {

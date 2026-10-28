@@ -83,7 +83,7 @@ func (ns *NotificationService) buildEmailMessage(ctx context.Context, cmd *SendE
 			return nil, err
 		}
 		var buffer bytes.Buffer
-		err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template+fileExtension, data)
+		err = ns.mailTemplates.ExecuteTemplate(&buffer, cmd.Template+fileExtension, data)
 		if err != nil {
 			return nil, err
 		}

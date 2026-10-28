@@ -26,7 +26,7 @@ type streamDecoder struct {
 	predicate   storage.SelectionPredicate
 	serializer  Serializer
 	cancelWatch context.CancelFunc
-	done        sync.WaitGroup
+	decodeMu    sync.Mutex
 
 	sendInitialEvents   bool
 	initialBookmarkSent bool
@@ -57,8 +57,8 @@ func (d *streamDecoder) toObject(w *resourcepb.WatchEvent_Resource) (runtime.Obj
 
 // nolint: gocyclo // we may be able to simplify this in the future, but this is a complex function by nature
 func (d *streamDecoder) Decode() (action watch.EventType, object runtime.Object, err error) {
-	d.done.Add(1)
-	defer d.done.Done()
+	d.decodeMu.Lock()
+	defer d.decodeMu.Unlock()
 	logger := logging.FromContext(d.client.Context())
 decode:
 	for {
@@ -245,8 +245,9 @@ func (d *streamDecoder) Close() {
 	}
 	// Cancel the send context
 	d.cancelWatch()
-	// Wait for all decode operations to finish
-	d.done.Wait()
+	// Join the active decode even when Close races with its first call.
+	d.decodeMu.Lock()
+	d.decodeMu.Unlock()
 }
 
 var _ watch.Decoder = (*streamDecoder)(nil)

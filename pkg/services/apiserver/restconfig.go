@@ -63,6 +63,10 @@ var (
 	_ DirectRestConfigProvider = (*eventualRestConfigProvider)(nil)
 )
 
+// EventualRestConfigProvider is the loopback configuration slot shared by API
+// dependencies before the API server becomes ready.
+type EventualRestConfigProvider = eventualRestConfigProvider
+
 // eventualRestConfigProvider is a RestConfigProvider that will not return a rest config until the ready channel is closed.
 // This exists to alleviate a circular dependency between the apiserver.server's dependencies and their dependencies wanting a rest config.
 // Importantly, this is handled by wire as opposed to a mutable global.

@@ -51,6 +51,56 @@ func (m *mockWatchClient) CloseSend() error             { return nil }
 func (m *mockWatchClient) SendMsg(any) error            { return nil }
 func (m *mockWatchClient) RecvMsg(any) error            { return nil }
 
+type blockingWatchClient struct {
+	*mockWatchClient
+	receiving chan struct{}
+}
+
+func (m *blockingWatchClient) Recv() (*resourcepb.WatchEvent, error) {
+	if m.receiving != nil {
+		close(m.receiving)
+	}
+	<-m.ctx.Done()
+	return nil, m.ctx.Err()
+}
+
+func TestStreamDecoderStop(t *testing.T) {
+	for _, waitForReceive := range []bool{false, true} {
+		name, iterations := "immediate", 1024
+		if waitForReceive {
+			name, iterations = "blocked receive", 1
+		}
+		t.Run(name, func(t *testing.T) {
+			testCtx, cancelTest := context.WithTimeout(t.Context(), 10*time.Second)
+			defer cancelTest()
+			for range iterations {
+				ctx, cancel := context.WithCancel(testCtx)
+				client := &blockingWatchClient{mockWatchClient: &mockWatchClient{ctx: ctx}}
+				if waitForReceive {
+					client.receiving = make(chan struct{})
+				}
+				decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, JSONSerializer(), cancel, false)
+				watcher := watch.NewStreamWatcher(decoder, apierrors.NewClientErrorReporter(http.StatusInternalServerError, "WATCH", ""))
+				if waitForReceive {
+					select {
+					case <-client.receiving:
+					case <-testCtx.Done():
+						t.Fatal("watch did not start receiving")
+					}
+				}
+				watcher.Stop()
+				select {
+				case event, ok := <-watcher.ResultChan():
+					require.False(t, ok, "stopped watch emitted an event: %v", event)
+				case <-testCtx.Done():
+					t.Fatal("stopped watch did not close its result channel")
+				}
+				require.ErrorIs(t, ctx.Err(), context.Canceled)
+			}
+		})
+	}
+}
+
 func TestStreamDecoderBookmarkAnnotation(t *testing.T) {
 	newFunc := func() runtime.Object { return &unstructured.Unstructured{} }
 	predicate := storage.Everything

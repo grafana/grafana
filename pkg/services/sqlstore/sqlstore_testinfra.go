@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -351,12 +352,7 @@ func applySeedConfigDefaults(cfg *setting.Cfg) {
 }
 
 func getTestDBType() string {
-	dbType := "sqlite3"
-
-	if db, present := os.LookupEnv("GRAFANA_TEST_DB"); present {
-		dbType = db
-	}
-	return dbType
+	return sqlutil.GetTestDBType()
 }
 
 func newFeatureToggles(toggles map[string]bool) featuremgmt.FeatureToggles {

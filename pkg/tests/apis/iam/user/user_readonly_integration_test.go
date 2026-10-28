@@ -12,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -21,49 +23,46 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/apiserver"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationUsersReadOnly(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction:      false,
-		DisableAnonymous:       true,
-		RBACSingleOrganization: true,
-		APIServerStorageType:   "unified",
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"users.iam.grafana.app": {
-				DualWriterMode: rest.Mode0,
-			},
+	helper := newTestEnvironment(t, apiserver.Options{
+		Configure: func(cfg *setting.Cfg) {
+			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+				"users.iam.grafana.app": {
+					DualWriterMode: rest.Mode0,
+				},
+			}
 		},
-		EnableFeatureToggles: []string{
+		FeatureFlags: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 			featuremgmt.FlagKubernetesUsersReadApi,
 			featuremgmt.FlagKubernetesTeamsApi,
 		},
 	})
-	t.Cleanup(func() {
-		helper.Shutdown()
-	})
 
 	ctx := context.Background()
-	userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+	userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 		User:      helper.Org1.Admin,
-		Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+		Namespace: helper.Org1.Admin.Identity.Namespace,
 		GVR:       gvrUsers,
 	})
 
 	// Users created by the test helper through the legacy user service.
-	list, err := userClient.Resource.List(ctx, metav1.ListOptions{})
+	list, err := userClient.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err)
 	require.NotEmpty(t, list.Items)
 	existing := list.Items[0]
 
 	t.Run("discovery only advertises read verbs", func(t *testing.T) {
-		resources, err := helper.NewDiscoveryClient().ServerResourcesForGroupVersion(gvrUsers.GroupVersion().String())
+		client, err := discovery.NewDiscoveryClientForConfig(helper.ClientConfig(helper.Org1.Admin))
+		require.NoError(t, err)
+		resources, err := client.ServerResourcesForGroupVersion(gvrUsers.GroupVersion().String())
 		require.NoError(t, err)
 
 		var verbs []string
@@ -82,7 +81,7 @@ func TestIntegrationUsersReadOnly(t *testing.T) {
 	})
 
 	t.Run("get returns the user", func(t *testing.T) {
-		fetched, err := userClient.Resource.Get(ctx, existing.GetName(), metav1.GetOptions{})
+		fetched, err := userClient.Get(ctx, existing.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, existing.GetName(), fetched.GetName())
 	})
@@ -93,7 +92,7 @@ func TestIntegrationUsersReadOnly(t *testing.T) {
 	})
 
 	t.Run("teams subresource is readable", func(t *testing.T) {
-		rsp := apis.DoRequest(helper, apis.RequestParams{
+		rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: "GET",
 			Path:   fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams", existing.GetName()),
@@ -102,38 +101,38 @@ func TestIntegrationUsersReadOnly(t *testing.T) {
 	})
 
 	t.Run("create is not allowed", func(t *testing.T) {
-		_, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		_, err := userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.True(t, errors.IsMethodNotSupported(err), "unexpected error: %v", err)
 	})
 
 	t.Run("update is not allowed", func(t *testing.T) {
 		toUpdate := existing.DeepCopy()
 		toUpdate.Object["spec"].(map[string]any)["title"] = "Updated"
-		_, err := userClient.Resource.Update(ctx, toUpdate, metav1.UpdateOptions{})
+		_, err := userClient.Update(ctx, toUpdate, metav1.UpdateOptions{})
 		require.True(t, errors.IsMethodNotSupported(err), "unexpected error: %v", err)
 	})
 
 	t.Run("patch is not allowed", func(t *testing.T) {
-		_, err := userClient.Resource.Patch(ctx, existing.GetName(), types.MergePatchType, []byte(`{"spec":{"title":"Patched"}}`), metav1.PatchOptions{})
+		_, err := userClient.Patch(ctx, existing.GetName(), types.MergePatchType, []byte(`{"spec":{"title":"Patched"}}`), metav1.PatchOptions{})
 		require.True(t, errors.IsMethodNotSupported(err), "unexpected error: %v", err)
 	})
 
 	t.Run("delete is not allowed", func(t *testing.T) {
-		err := userClient.Resource.Delete(ctx, existing.GetName(), metav1.DeleteOptions{})
+		err := userClient.Delete(ctx, existing.GetName(), metav1.DeleteOptions{})
 		require.True(t, errors.IsMethodNotSupported(err), "unexpected error: %v", err)
 
-		_, err = userClient.Resource.Get(ctx, existing.GetName(), metav1.GetOptions{})
+		_, err = userClient.Get(ctx, existing.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 	})
 
 	t.Run("status subresource is not served", func(t *testing.T) {
-		_, err := userClient.Resource.UpdateStatus(ctx, existing.DeepCopy(), metav1.UpdateOptions{})
+		_, err := userClient.UpdateStatus(ctx, existing.DeepCopy(), metav1.UpdateOptions{})
 		require.True(t, errors.IsNotFound(err), "unexpected error: %v", err)
 	})
 
 	t.Run("non-admin access", func(t *testing.T) {
-		alpha := helper.CreateUser("alpha-authz", apis.Org1, org.RoleViewer, nil)
-		beta := helper.CreateUser("beta-authz", apis.Org1, org.RoleViewer, nil)
+		alpha := createUser(t, helper, "alpha-authz", org.RoleViewer, nil)
+		beta := createUser(t, helper, "beta-authz", org.RoleViewer, nil)
 		alphaID, err := alpha.Identity.GetInternalID()
 		require.NoError(t, err)
 		betaID, err := beta.Identity.GetInternalID()
@@ -141,7 +140,7 @@ func TestIntegrationUsersReadOnly(t *testing.T) {
 
 		// Resource names are the user UIDs, which the legacy user service generates.
 		var alphaName, betaName string
-		all, err := userClient.Resource.List(ctx, metav1.ListOptions{})
+		all, err := userClient.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		for _, item := range all.Items {
 			switch login, _, _ := unstructured.NestedString(item.Object, "spec", "login"); login {
@@ -155,23 +154,23 @@ func TestIntegrationUsersReadOnly(t *testing.T) {
 		require.NotEmpty(t, betaName)
 
 		// A user with no basic role holds no users permissions at all.
-		noPerms := helper.CreateUser("no-perms-authz", apis.Org1, org.RoleNone, nil)
+		noPerms := createUser(t, helper, "no-perms-authz", org.RoleNone, nil)
 		// A user with no basic role whose only grant is org.users:read on alpha.
-		scoped := helper.CreateUser("scoped-authz", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{{
+		scoped := createUser(t, helper, "scoped-authz", org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{{
 			Actions:           []string{accesscontrol.ActionOrgUsersRead},
 			Resource:          "users",
 			ResourceAttribute: "id",
 			ResourceID:        strconv.FormatInt(alphaID, 10),
 		}})
 
-		clientFor := func(u apis.User, ns string) *apis.K8sResourceClient {
-			return helper.GetResourceClient(apis.ResourceClientArgs{User: u, Namespace: ns, GVR: gvrUsers})
+		clientFor := func(u apiserver.User, ns string) dynamic.ResourceInterface {
+			return helper.GetResourceClient(t, apiserver.ResourceClientArgs{User: u, Namespace: ns, GVR: gvrUsers})
 		}
-		orgNS := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+		orgNS := helper.Org1.Admin.Identity.Namespace
 
-		listNames := func(t *testing.T, c *apis.K8sResourceClient, opts metav1.ListOptions) []string {
+		listNames := func(t *testing.T, c dynamic.ResourceInterface, opts metav1.ListOptions) []string {
 			t.Helper()
-			l, err := c.Resource.List(ctx, opts)
+			l, err := c.List(ctx, opts)
 			require.NoError(t, err)
 			names := make([]string, 0, len(l.Items))
 			for _, item := range l.Items {
@@ -180,9 +179,9 @@ func TestIntegrationUsersReadOnly(t *testing.T) {
 			return names
 		}
 
-		searchLogins := func(t *testing.T, u apis.User, ns string) (int, []string) {
+		searchLogins := func(t *testing.T, u apiserver.User, ns string) (int, []string) {
 			t.Helper()
-			rsp := apis.DoRequest(helper, apis.RequestParams{
+			rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 				User:   u,
 				Method: "GET",
 				Path:   fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchUsers?limit=100", ns),
@@ -215,7 +214,7 @@ func TestIntegrationUsersReadOnly(t *testing.T) {
 			require.NotContains(t, names, alphaName)
 			require.NotContains(t, names, betaName)
 
-			_, err := c.Resource.Get(ctx, alphaName, metav1.GetOptions{})
+			_, err := c.Get(ctx, alphaName, metav1.GetOptions{})
 			require.True(t, errors.IsForbidden(err), "unexpected error: %v", err)
 
 			status, logins := searchLogins(t, noPerms, orgNS)
@@ -234,11 +233,11 @@ func TestIntegrationUsersReadOnly(t *testing.T) {
 			require.Contains(t, names, alphaName)
 			require.NotContains(t, names, betaName)
 
-			got, err := c.Resource.Get(ctx, alphaName, metav1.GetOptions{})
+			got, err := c.Get(ctx, alphaName, metav1.GetOptions{})
 			require.NoError(t, err)
 			require.Equal(t, alphaName, got.GetName())
 
-			_, err = c.Resource.Get(ctx, betaName, metav1.GetOptions{})
+			_, err = c.Get(ctx, betaName, metav1.GetOptions{})
 			require.True(t, errors.IsForbidden(err), "unexpected error: %v", err)
 
 			status, logins := searchLogins(t, scoped, orgNS)
@@ -269,13 +268,13 @@ func TestIntegrationUsersReadOnly(t *testing.T) {
 
 		t.Run("admin of another org cannot reach this org's users", func(t *testing.T) {
 			otherAdmin := helper.OrgB.Admin
-			otherNS := helper.Namespacer(otherAdmin.Identity.GetOrgID())
+			otherNS := otherAdmin.Identity.Namespace
 
 			// Addressing the Org1 namespace.
 			c := clientFor(otherAdmin, orgNS)
-			_, err := c.Resource.List(ctx, metav1.ListOptions{})
+			_, err := c.List(ctx, metav1.ListOptions{})
 			require.True(t, errors.IsForbidden(err), "unexpected error: %v", err)
-			_, err = c.Resource.Get(ctx, alphaName, metav1.GetOptions{})
+			_, err = c.Get(ctx, alphaName, metav1.GetOptions{})
 			require.True(t, errors.IsForbidden(err), "unexpected error: %v", err)
 			status, _ := searchLogins(t, otherAdmin, orgNS)
 			require.Equal(t, 403, status)
@@ -285,7 +284,7 @@ func TestIntegrationUsersReadOnly(t *testing.T) {
 			names := listNames(t, own, metav1.ListOptions{})
 			require.NotContains(t, names, alphaName)
 			require.NotContains(t, names, betaName)
-			_, err = own.Resource.Get(ctx, alphaName, metav1.GetOptions{})
+			_, err = own.Get(ctx, alphaName, metav1.GetOptions{})
 			require.Error(t, err)
 			status, logins := searchLogins(t, otherAdmin, otherNS)
 			require.Equal(t, 200, status)

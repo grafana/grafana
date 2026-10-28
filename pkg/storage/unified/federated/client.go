@@ -16,13 +16,20 @@ import (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/federated")
 
 func NewFederatedClient(base resource.ResourceClient, sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg) resource.ResourceClient {
-	return &federatedClient{
+	client := &federatedClient{
 		ResourceClient: base,
 		stats: &LegacyStatsGetter{
 			SQL: sql,
 			Cfg: cfg,
 		},
 	}
+	if stopper, ok := base.(resource.ResourceServerStopper); ok {
+		return struct {
+			resource.ResourceClient
+			resource.ResourceServerStopper
+		}{client, stopper}
+	}
+	return client
 }
 
 type federatedClient struct {

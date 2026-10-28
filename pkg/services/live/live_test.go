@@ -30,6 +30,28 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+func TestShutdownStopsNode(t *testing.T) {
+	service, err := setupLiveService(nil, t)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, service.node.Shutdown(context.Background()))
+	})
+
+	select {
+	case <-service.node.NotifyShutdown():
+		t.Fatal("node stopped before shutdown")
+	default:
+	}
+
+	require.NoError(t, service.Shutdown(t.Context()))
+	select {
+	case <-service.node.NotifyShutdown():
+	default:
+		t.Fatal("shutdown left the node running")
+	}
+	require.NoError(t, service.Shutdown(t.Context()))
+}
+
 func TestIntegration_provideLiveService_RedisUnavailable(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

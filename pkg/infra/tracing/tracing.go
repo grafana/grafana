@@ -79,11 +79,7 @@ type Tracer interface {
 	Inject(context.Context, http.Header, trace.Span)
 }
 
-func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
-	if tracingCfg == nil {
-		return nil, fmt.Errorf("tracingCfg cannot be nil")
-	}
-
+func init() {
 	log.RegisterContextualLogProvider(func(ctx context.Context) ([]any, bool) {
 		if traceID := TraceIDFromContext(ctx, false); traceID != "" {
 			return []any{"traceID", traceID}, true
@@ -91,6 +87,12 @@ func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
 
 		return nil, false
 	})
+}
+
+func ProvideService(tracingCfg *TracingConfig) (*TracingService, error) {
+	if tracingCfg == nil {
+		return nil, fmt.Errorf("tracingCfg cannot be nil")
+	}
 
 	ots := &TracingService{
 		cfg: tracingCfg,

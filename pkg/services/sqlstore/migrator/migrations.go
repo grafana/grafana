@@ -179,9 +179,6 @@ func NewDropIndexMigration(table Table, index *Index) *DropIndexMigration {
 }
 
 func (m *DropIndexMigration) SQL(dialect Dialect) string {
-	if m.index.Name == "" {
-		m.index.Name = strings.Join(m.index.Cols, "_")
-	}
 	return dialect.DropIndexSQL(m.tableName, m.index)
 }
 

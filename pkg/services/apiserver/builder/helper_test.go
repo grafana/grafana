@@ -2,10 +2,12 @@ package builder_test
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -134,6 +136,29 @@ func TestRedirection(t *testing.T) {
 			handler.ServeHTTP(rr, req)
 			assert.Equal(t, http.StatusOK, rr.Code)
 			assert.Equal(t, tt.expect, rr.Body.String())
+		})
+	}
+}
+
+func TestDefaultHandlerChainPanicRecoveryParallel(t *testing.T) {
+	for i := range 8 {
+		t.Run(fmt.Sprintf("server %d", i), func(t *testing.T) {
+			t.Parallel()
+			cfg := server.NewRecommendedConfig(builder.ProvideCodecFactory(builder.ProvideScheme()))
+			cfg.ExternalAddress = "127.0.0.1:3000"
+			cfg.EffectiveVersion = builder.GetEffectiveVersion(0, "0.0.0", "", "")
+			cfg.Complete()
+			called := false
+			handler := builder.GetDefaultBuildHandlerChainFunc(nil, prometheus.NewRegistry())(
+				http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+					called = true
+					panic("test handler panic")
+				}), &cfg.Config,
+			)
+			recorder := httptest.NewRecorder()
+			handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/panic", nil))
+			require.True(t, called)
+			require.Equal(t, http.StatusInternalServerError, recorder.Code)
 		})
 	}
 }

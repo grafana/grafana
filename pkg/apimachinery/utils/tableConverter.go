@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"slices"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -62,6 +63,7 @@ func NewTableConverter(gr schema.GroupResource, columns TableColumns) TableConve
 	}
 
 	// Replace the description on standard columns with the global values
+	columns.Definition = slices.Clone(columns.Definition)
 	for idx, column := range columns.Definition {
 		if column.Description == "" {
 			switch column.Name {

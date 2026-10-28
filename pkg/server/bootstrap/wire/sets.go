@@ -249,8 +249,6 @@ var Basic = wire.NewSet(
 	wire.Bind(new(pluginDashboards.FileStore), new(*pluginDashboards.FileStoreManager)),
 	azuremonitor.ProvideService,
 	legacydualwrite.ProvideService,
-	httpclientprovider.New,
-	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	serverlock.ProvideService,
 	wire.Bind(new(installsync.ServerLock), new(*serverlock.ServerLockService)),
 	annotationsimpl.ProvideCleanupService,
@@ -497,6 +495,8 @@ var Basic = wire.NewSet(
 
 var Server = wire.NewSet(
 	Basic,
+	httpclientprovider.New,
+	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	legacywatch.ProvidePublisher,
 	wire.Bind(new(legacywatch.Bus), new(*infranats.PublisherService)),
 	metricsservice.WireSet,
@@ -519,6 +519,8 @@ var Server = wire.NewSet(
 var CLI = wire.NewSet(
 	server.NewRunner,
 	Basic,
+	httpclientprovider.New,
+	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	legacywatch.ProvideDisabledPublisher, // No need for real legacywatch support
 	metricsservice.WireSet,
 	sqlstore.ProvideService,
@@ -538,6 +540,8 @@ var CLI = wire.NewSet(
 
 var Test = wire.NewSet(
 	Basic,
+	httpclientprovider.New,
+	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	legacywatch.ProvidePublisher,
 	wire.Bind(new(legacywatch.Bus), new(*infranats.PublisherService)),
 	server.ProvideTestEnv,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -12,6 +13,26 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+func TestTableConverterConcurrentColumnReuse(t *testing.T) {
+	columns := utils.TableColumns{
+		Definition: []metav1.TableColumnDefinition{{Name: "Name"}, {Name: "Created At"}, {Name: "Custom", Description: "preserved"}},
+		Reader:     func(any) ([]interface{}, error) { return nil, nil },
+	}
+	original := slices.Clone(columns.Definition)
+	for i := range 16 {
+		t.Run(fmt.Sprint(i), func(t *testing.T) {
+			t.Parallel()
+			converter := utils.NewTableConverter(schema.GroupResource{}, columns)
+			table, err := converter.ConvertToTable(t.Context(), &metav1.Status{}, nil)
+			require.NoError(t, err)
+			require.NotEmpty(t, table.ColumnDefinitions[0].Description)
+			require.NotEmpty(t, table.ColumnDefinitions[1].Description)
+			require.Equal(t, "preserved", table.ColumnDefinitions[2].Description)
+			require.Equal(t, original, columns.Definition)
+		})
+	}
+}
 
 func TestTableConverter(t *testing.T) {
 	// dummy converter

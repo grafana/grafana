@@ -2,6 +2,7 @@ package unified
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"net"
@@ -11,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dgraph-io/badger/v4"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,13 +27,100 @@ import (
 	"google.golang.org/grpc/status"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/services"
+	appmanifest "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+type resourceStopFunc func(context.Context) error
+
+func (f resourceStopFunc) Stop(ctx context.Context) error { return f(ctx) }
+
+type contextManifestDiscovery struct {
+	resource.ManifestDiscovery
+	contexts chan context.Context
+}
+
+func (d contextManifestDiscovery) ListManifests(ctx context.Context) (*appmanifest.AppManifestList, error) {
+	select {
+	case d.contexts <- ctx:
+	default:
+	}
+	return &appmanifest.AppManifestList{}, nil
+}
+
+func TestLocalStorageClientStopsBackend(t *testing.T) {
+	backend := services.NewIdleService(nil, nil)
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), backend))
+	wantErr := errors.New("server stop failed")
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	client := &localResourceClient{
+		server: resourceStopFunc(func(got context.Context) error {
+			require.Same(t, ctx, got)
+			return wantErr
+		}),
+		backend: backend,
+	}
+	require.ErrorIs(t, client.Stop(ctx), wantErr)
+	require.Equal(t, services.Terminated, backend.State())
+}
+
+func TestIntegrationLocalStorageClientStop(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, storageType := range []options.StorageType{options.StorageTypeFile, options.StorageTypeUnified} {
+		t.Run(string(storageType), func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.DataPath = t.TempDir()
+			cfg.DisablePruner = true
+			cfg.Raw.Section("grafana-apiserver").Key("storage_type").SetValue(string(storageType))
+			store := db.NewTestStore(t)
+			dbProvider, err := sql.ProvideResourceDB(cfg, store)
+			require.NoError(t, err)
+			kvDB, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, kvDB.Close()) })
+			reg := prometheus.NewRegistry()
+			type contextKey struct{}
+			ctx := context.WithValue(t.Context(), contextKey{}, t.Name())
+			discovery := contextManifestDiscovery{contexts: make(chan context.Context, 1)}
+			client, err := ProvideUnifiedStorageClient(ctx, &Options{
+				Cfg: cfg, DB: store, EDB: dbProvider, KV: resource.NewBadgerKV(kvDB),
+				Features: featuremgmt.WithFeatures(), Tracer: tracing.NewNoopTracerService(), Reg: reg,
+				Authzc: authlib.FixedAccessClient(true), ManifestDiscovery: discovery,
+			}, resource.ProvideStorageMetrics(reg), resource.ProvideIndexMetrics(reg), resource.ProvideVectorMetrics(reg), resource.NewGCGate())
+			require.NoError(t, err)
+			stopper, ok := client.(resource.ResourceServerStopper)
+			require.True(t, ok, "local client hid the owned server's lifecycle")
+			stop := sync.OnceValue(func() error { return stopper.Stop(context.WithoutCancel(t.Context())) })
+			t.Cleanup(func() { require.NoError(t, stop()) })
+			if storageType == options.StorageTypeUnified {
+				select {
+				case observed := <-discovery.contexts:
+					require.Equal(t, t.Name(), observed.Value(contextKey{}), "manifest watcher lost the initializer context")
+				case <-time.After(10 * time.Second):
+					t.Fatal("manifest watcher did not start")
+				}
+			}
+			req := &resourcepb.ListStoredResourcesRequest{Namespace: "default"}
+			ctx = identity.WithServiceIdentityContext(ctx, 1)
+			_, err = client.ListStoredResources(ctx, req)
+			require.NoError(t, err)
+			require.NoError(t, stop())
+			_, err = client.ListStoredResources(ctx, req)
+			require.ErrorContains(t, err, "service is stopped")
+		})
+	}
+}
 
 func clientIdentityCounts(t *testing.T) map[string]float64 {
 	t.Helper()
@@ -166,7 +255,7 @@ func TestUnifiedStorageClient(t *testing.T) {
 			resourceServer.resetCalls()
 			indexServer.resetCalls()
 
-			client, err := newClient(
+			client, err := newClient(t.Context(),
 				options.StorageOptions{
 					StorageType: options.StorageTypeUnifiedGrpc,
 					Address:     resourceServerAddress,
@@ -210,7 +299,7 @@ func TestUnifiedStorageClient(t *testing.T) {
 			resourceServer.resetCalls()
 			indexServer.resetCalls()
 
-			client, err := newClient(
+			client, err := newClient(t.Context(),
 				options.StorageOptions{
 					StorageType:         options.StorageTypeUnifiedGrpc,
 					Address:             resourceServerAddress,

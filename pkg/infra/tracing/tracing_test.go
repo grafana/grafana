@@ -2,8 +2,10 @@ package tracing
 
 import (
 	"context"
+	"sync"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
@@ -11,6 +13,28 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 )
+
+func TestProvideServiceKeepsSingleTraceLogContext(t *testing.T) {
+	span := trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID: trace.TraceID{1}, SpanID: trace.SpanID{1}, TraceFlags: trace.FlagsSampled,
+	})
+	ctx := trace.ContextWithSpanContext(t.Context(), span)
+	errs := make(chan error, 8)
+	var constructors sync.WaitGroup
+	for range cap(errs) {
+		constructors.Go(func() {
+			_, err := ProvideService(NewEmptyTracingConfig())
+			errs <- err
+			_ = log.FromContext(ctx)
+		})
+	}
+	constructors.Wait()
+	close(errs)
+	for err := range errs {
+		require.NoError(t, err)
+	}
+	require.Equal(t, []any{"traceID", span.TraceID().String()}, log.FromContext(ctx))
+}
 
 func TestInitSampler(t *testing.T) {
 	otel := &TracingService{}

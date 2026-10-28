@@ -15,10 +15,13 @@ import (
 	shorturlV1 "github.com/grafana/grafana/apps/shorturl/pkg/apis/shorturl/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	shorturlapi "github.com/grafana/grafana/pkg/registry/apps/shorturl"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
+	"github.com/grafana/grafana/pkg/tests/apiserver"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -74,22 +77,9 @@ func TestIntegrationShortURL(t *testing.T) {
 					},
 				})
 				doDualWriteTests(t, helper, mode)
+				doUnifiedOnlyTests(t, helper)
 			})
 		}
-	})
-
-	t.Run("with dual write (unified storage, mode 5)", func(t *testing.T) {
-		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    false,
-			DisableAnonymous:     true,
-			APIServerStorageType: options.StorageTypeUnified,
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				RESOURCEGROUP: {
-					DualWriterMode: grafanarest.Mode5,
-				},
-			},
-		})
-		doUnifiedOnlyTests(t, helper)
 	})
 }
 
@@ -317,12 +307,20 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 		deleteAsAdmin(t, helper, uid)
 	})
 
-	t.Run("K8s API validation - invalid paths", func(t *testing.T) {
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.None,
-			GVR:  gvr,
-		})
+	env := apiserver.New(t, apiserver.Options{
+		Register: func(env *apiserver.Environment) {
+			app, err := shorturlapi.RegisterAppInstaller(env.Cfg, shorturlimpl.ProvideService(env.DB))
+			require.NoError(t, err)
+			env.Registrar.RegisterAppInstaller(app)
+		},
+	})
+	users := env.CreateOrgUsers(t, apiserver.OrgUsersArgs{})
+	adminClient := env.GetResourceClient(t, apiserver.ResourceClientArgs{
+		User: users.Admin,
+		GVR:  gvr,
+	})
 
+	t.Run("K8s API validation - invalid paths", func(t *testing.T) {
 		testCases := []struct {
 			name          string
 			path          string
@@ -347,10 +345,11 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
 				// Attempt to create ShortURL with invalid path
 				invalidBody := fmt.Sprintf(`{ "metadata": { "generateName": "invalid-" }, "spec": { "path": "%s" } }`, tc.path)
-				response := apis.DoRequest(helper, apis.RequestParams{
-					User:   client.Args.User,
+				response := apiserver.DoRequest(t, env, apiserver.RequestParams{
+					User:   users.None,
 					Method: http.MethodPost,
 					Path:   "/apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls",
 					Body:   []byte(invalidBody),
@@ -371,11 +370,6 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 
 	t.Run("K8s API validation - valid edge cases", func(t *testing.T) {
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.None,
-			GVR:  gvr,
-		})
-
 		validPaths := []string{
 			"d/dashboard/valid-path",
 			"dashboard/some-id",
@@ -385,9 +379,10 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		for _, validPath := range validPaths {
 			t.Run(fmt.Sprintf("valid path: %s", validPath), func(t *testing.T) {
+				t.Parallel()
 				validBody := fmt.Sprintf(`{ "metadata": { "generateName": "valid-" }, "spec": { "path": "%s" } }`, validPath)
-				response := apis.DoRequest(helper, apis.RequestParams{
-					User:   client.Args.User,
+				response := apiserver.DoRequest(t, env, apiserver.RequestParams{
+					User:   users.None,
 					Method: http.MethodPost,
 					Path:   "/apis/shorturl.grafana.app/v1beta1/namespaces/default/shorturls",
 					Body:   []byte(validBody),
@@ -402,7 +397,7 @@ func doUnifiedOnlyTests(t *testing.T, helper *apis.K8sTestHelper) {
 					uid := response.Result.GetName()
 
 					// Clean up (delete is admin-only)
-					deleteAsAdmin(t, helper, uid)
+					require.NoError(t, adminClient.Delete(t.Context(), uid, metav1.DeleteOptions{}))
 				}
 			})
 		}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"strings"
+	"sync"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -212,34 +213,51 @@ func InstallAPIs(
 	return nil
 }
 
-// RegisterPostStartHooks registers individual post start hooks for each app installer
+// RegisterPostStartHooks registers individual post start hooks for each app installer.
+// The returned function lets startup await the same initialization used by the hooks.
 func RegisterPostStartHooks(
 	appInstallers []appsdkapiserver.AppInstaller,
 	serverConfig *genericapiserver.RecommendedConfig,
-) error {
+) (func() error, error) {
+	initializers := make([]func() error, 0, len(appInstallers))
 	for _, installer := range appInstallers {
 		md := installer.ManifestData()
 		if md == nil {
-			return fmt.Errorf("app installer has nil manifest data: %T", installer)
+			return nil, fmt.Errorf("app installer has nil manifest data: %T", installer)
 		}
-		hook := createPostStartHook(installer)
+		initialize := sync.OnceValue(func() error {
+			if err := installer.InitializeApp(*serverConfig.LoopbackClientConfig); err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
+				return fmt.Errorf("failed to initialize app %s: %w", md.AppName, err)
+			}
+			return nil
+		})
+		hook := createPostStartHook(installer, initialize)
 		if err := serverConfig.AddPostStartHook(md.AppName, hook); err != nil {
-			return fmt.Errorf("failed to register post start hook for app %s: %w", md.AppName, err)
+			return nil, fmt.Errorf("failed to register post start hook for app %s: %w", md.AppName, err)
 		}
+		initializers = append(initializers, initialize)
 	}
-	return nil
+	return func() error {
+		for _, initialize := range initializers {
+			if err := initialize(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}, nil
 }
 
 func createPostStartHook(
 	installer appsdkapiserver.AppInstaller,
+	initialize func() error,
 ) genericapiserver.PostStartHookFunc {
 	return func(hookContext genericapiserver.PostStartHookContext) error {
 		logger := logging.FromContext(hookContext.Context)
 		logger.Debug("Initializing app", "app", installer.ManifestData().AppName)
 
-		if err := installer.InitializeApp(*hookContext.LoopbackClientConfig); err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
+		if err := initialize(); err != nil {
 			logger.Error("Failed to initialize app", "app", installer.ManifestData().AppName, "error", err)
-			return fmt.Errorf("failed to initialize app %s: %w", installer.ManifestData().AppName, err)
+			return err
 		}
 
 		logger.Info("App initialized", "app", installer.ManifestData().AppName)

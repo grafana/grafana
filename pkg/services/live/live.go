@@ -581,6 +581,10 @@ func (g *GrafanaLive) Run(ctx context.Context) error {
 	return eGroup.Wait()
 }
 
+func (g *GrafanaLive) Shutdown(ctx context.Context) error {
+	return g.node.Shutdown(ctx)
+}
+
 func getCheckOriginFunc(appURL *url.URL, originPatterns []string, originGlobs []glob.Glob) func(r *http.Request) bool {
 	return func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")

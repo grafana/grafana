@@ -2,11 +2,12 @@ package apiserver
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -165,6 +166,7 @@ func ProvideService(
 		log:                               log.New(modules.GrafanaAPIServer),
 		cfg:                               cfg,
 		features:                          features,
+		stoppedCh:                         make(chan error, 1),
 		rr:                                rr,
 		builders:                          []builder.APIGroupBuilder{},
 		authorizer:                        authorizer.NewGrafanaBuiltInSTAuthorizer(),
@@ -359,6 +361,10 @@ func (s *service) start(ctx context.Context) error {
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
 	}
+	if serverConfig.SecureServing == nil && serverConfig.ShutdownWatchTerminationGracePeriod == 0 {
+		// In-process watches have no HTTP connection for net/http to cancel.
+		serverConfig.ShutdownWatchTerminationGracePeriod = serverConfig.RequestTimeout
+	}
 	serverConfig.EffectiveVersion = builder.GetEffectiveVersion(
 		s.cfg.BuildStamp,
 		s.cfg.BuildVersion,
@@ -500,7 +506,8 @@ func (s *service) start(ctx context.Context) error {
 
 	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
 
-	if err := appinstaller.RegisterPostStartHooks(s.appInstallers, serverConfig); err != nil {
+	initializeApps, err := appinstaller.RegisterPostStartHooks(s.appInstallers, serverConfig)
+	if err != nil {
 		return fmt.Errorf("failed to register post start hooks for app installers: %w", err)
 	}
 
@@ -664,14 +671,7 @@ func (s *service) start(ctx context.Context) error {
 		Fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(s.serveRouted)),
 	}
 
-	for _, installer := range s.appInstallers {
-		err := installer.InitializeApp(*s.restConfig)
-		if err != nil && !errors.Is(err, appsdkapiserver.ErrAppAlreadyInitialized) {
-			return err
-		}
-	}
-
-	return nil
+	return initializeApps()
 }
 
 func (s *service) startCoreServer(
@@ -686,12 +686,38 @@ func (s *service) startCoreServer(
 	transport.Fn = grafanaresponsewriter.WrapHandler(server.Handler)
 	close(transport.Ready)
 
+	if server.SecureServingInfo == nil {
+		// The upstream lifecycle requires listener shutdown signals even when
+		// Grafana owns the HTTP transport. No socket or connections are needed.
+		server.SecureServingInfo = &genericapiserver.SecureServingInfo{
+			Listener: &inProcessListener{closed: make(chan struct{})},
+		}
+	}
 	prepared := server.PrepareRun()
 	go func() {
 		s.stoppedCh <- prepared.RunWithContext(ctx)
 	}()
 
 	return server, nil
+}
+
+type inProcessListener struct {
+	closed chan struct{}
+	once   sync.Once
+}
+
+func (l *inProcessListener) Accept() (net.Conn, error) {
+	<-l.closed
+	return nil, net.ErrClosed
+}
+
+func (l *inProcessListener) Close() error {
+	l.once.Do(func() { close(l.closed) })
+	return nil
+}
+
+func (l *inProcessListener) Addr() net.Addr {
+	return &net.TCPAddr{IP: net.IPv4(127, 0, 0, 1)}
 }
 
 func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
@@ -750,6 +776,7 @@ func (s *service) running(ctx context.Context) error {
 			return err
 		}
 	case <-ctx.Done():
+		return <-s.stoppedCh
 	}
 	return nil
 }

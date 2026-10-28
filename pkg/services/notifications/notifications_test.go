@@ -4,8 +4,11 @@ import (
 	"context"
 	"errors"
 	"maps"
+	"os"
+	"path/filepath"
 	"regexp"
 	"slices"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,6 +54,41 @@ func TestProvideService(t *testing.T) {
 
 		require.NoError(t, err)
 	})
+}
+
+func TestNotificationTemplatesAreIsolated(t *testing.T) {
+	t.Parallel()
+	bodies := []string{"first instance", "second instance"}
+	services := make([]*NotificationService, len(bodies))
+	errs := make([]error, len(bodies))
+	constructors := make([]func(), 0, len(bodies))
+	for i, body := range bodies {
+		cfg := createSmtpConfig(t)
+		cfg.StaticRootPath = t.TempDir()
+		cfg.Smtp.TemplatesPatterns = []string{"instance.html"}
+		setRawKeys(t, cfg, "emails", map[string]string{"content_types": "text/html"})
+		require.NoError(t, os.WriteFile(filepath.Join(cfg.StaticRootPath, "instance.html"), []byte(body), 0600))
+		provider, err := configprovider.ProvideService(cfg)
+		require.NoError(t, err)
+		mailer, err := ProvideSmtpService(cfg, provider)
+		require.NoError(t, err)
+		constructors = append(constructors, func() {
+			services[i], errs[i] = ProvideService(bus.ProvideBus(tracing.NewNoopTracerService()), cfg, provider, mailer, nil)
+		})
+	}
+	var constructed sync.WaitGroup
+	for _, construct := range constructors {
+		constructed.Go(construct)
+	}
+	constructed.Wait()
+	for i, service := range services {
+		require.NoError(t, errs[i])
+		message, err := service.buildEmailMessage(t.Context(), &SendEmailCommand{
+			Subject: "subject", Template: "instance", To: []string{"user@example.com"},
+		})
+		require.NoError(t, err)
+		require.Equal(t, bodies[i], message.Body["text/html"])
+	}
 }
 
 func TestSendEmailSync(t *testing.T) {

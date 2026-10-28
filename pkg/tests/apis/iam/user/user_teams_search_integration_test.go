@@ -14,8 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/apiserver"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -33,66 +32,64 @@ type userTeamsResponse struct {
 
 func TestIntegrationUserTeams(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("With dual writer mode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				RBACSingleOrganization: true,
-				APIServerStorageType:   "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
-					"teams.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+						"teams.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesTeamsApi,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
 			})
 
-			t.Cleanup(func() { helper.Shutdown() })
-
 			doUserTeamsTests(t, helper)
 		})
 	}
 }
 
-func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
+func doUserTeamsTests(t *testing.T, helper *testEnvironment) {
 	ctx := context.Background()
-	orgNS := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+	orgNS := helper.Org1.Admin.Identity.Namespace
 
-	userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+	userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: orgNS,
 		GVR:       gvrUsers,
 	})
 
-	teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+	teamClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: orgNS,
 		GVR:       gvrTeams,
 	})
 
 	// Create u1 - will be bound to all 5 teams
-	u1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+	u1, err := userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, u1)
 
 	// Create u2 - no bindings
-	u2Obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
+	u2Obj := apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v0.yaml")
 	u2Obj.Object["metadata"].(map[string]any)["name"] = "user-no-binding"
 	u2Obj.Object["spec"].(map[string]any)["login"] = "user-no-binding"
 	u2Obj.Object["spec"].(map[string]any)["email"] = "user-no-binding@example.com"
 
-	u2, err := userClient.Resource.Create(ctx, u2Obj, metav1.CreateOptions{})
+	u2, err := userClient.Create(ctx, u2Obj, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, u2)
 
@@ -102,12 +99,12 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 	teams := make([]*unstructured.Unstructured, 0, 5)
 	teamPermissions := []string{"admin", "member", "admin", "member", "admin"}
 	for i := 1; i <= 5; i++ {
-		teamObj := createTeamObject(helper,
+		teamObj := createTeamObject(t, helper,
 			fmt.Sprintf("team-%d", i),
 			fmt.Sprintf("Team %d", i),
 			fmt.Sprintf("team-%d@example.com", i),
 		)
-		team, err := teamClient.Resource.Create(ctx, teamObj, metav1.CreateOptions{})
+		team, err := teamClient.Create(ctx, teamObj, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, team)
 
@@ -119,7 +116,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 				"external":   false,
 			},
 		}, "spec", "members"))
-		team, err = teamClient.Resource.Update(ctx, team, metav1.UpdateOptions{})
+		team, err = teamClient.Update(ctx, team, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		teams = append(teams, team)
 	}
@@ -128,7 +125,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams", u1.GetName())
 
 		var res userTeamsResponse
-		rsp := apis.DoRequest(helper, apis.RequestParams{
+		rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
 			Path:   path,
@@ -152,7 +149,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams", u1.GetName())
 
 		var res userTeamsResponse
-		rsp := apis.DoRequest(helper, apis.RequestParams{
+		rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
 			Path:   path,
@@ -171,7 +168,7 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams", u2.GetName())
 
 		var res userTeamsResponse
-		rsp := apis.DoRequest(helper, apis.RequestParams{
+		rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodGet,
 			Path:   path,
@@ -206,8 +203,8 @@ func doUserTeamsTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-func createTeamObject(helper *apis.K8sTestHelper, teamName string, title string, email string) *unstructured.Unstructured {
-	teamObj := helper.LoadYAMLOrJSONFile("../testdata/team-test-create-v0.yaml")
+func createTeamObject(t *testing.T, helper *testEnvironment, teamName string, title string, email string) *unstructured.Unstructured {
+	teamObj := apiserver.LoadYAMLOrJSONFile(t, "../testdata/team-test-create-v0.yaml")
 	teamObj.Object["metadata"].(map[string]any)["name"] = teamName
 	teamObj.Object["spec"].(map[string]any)["title"] = title
 	teamObj.Object["spec"].(map[string]any)["email"] = email
@@ -238,7 +235,7 @@ func findTeam(res userTeamsResponse, teamName string) (out struct {
 	return out
 }
 
-func getUserTeamsWithContinue(t *testing.T, helper *apis.K8sTestHelper, userName string, limit int, cont string) userTeamsResponse {
+func getUserTeamsWithContinue(t *testing.T, helper *testEnvironment, userName string, limit int, cont string) userTeamsResponse {
 	path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/users/%s/teams?limit=%d", userName, limit)
 	if cont != "" {
 		// Continue tokens are base64 — escape so '+' / '/' / '=' survive
@@ -247,7 +244,7 @@ func getUserTeamsWithContinue(t *testing.T, helper *apis.K8sTestHelper, userName
 	}
 
 	var res userTeamsResponse
-	rsp := apis.DoRequest(helper, apis.RequestParams{
+	rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 		User:   helper.Org1.Admin,
 		Method: http.MethodGet,
 		Path:   path,

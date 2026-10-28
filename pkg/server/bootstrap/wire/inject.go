@@ -7,16 +7,28 @@ import (
 	"context"
 
 	"github.com/google/wire"
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/server/wireext"
 	"github.com/grafana/grafana/pkg/services/apiserver/standalone"
+	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 )
 
 func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiOpts api.ServerOptions) (*server.Server, error) {
@@ -60,4 +72,28 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 
 func provideRoutesLoaderContext() context.Context {
 	return context.Background()
+}
+
+// InitializeAPIServices reuses the production graph with an owned test database
+// and registry, including HTTPServer's production route registration.
+func InitializeAPIServices(ctx context.Context, cfg *setting.Cfg, store *sqlstore.SQLStore, reg *prometheus.Registry) (*server.APIServices, error) {
+	wire.Build(Basic, wireext.BasicSet,
+		httpclientprovider.NewForConfig,
+		wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
+		wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+		wire.Bind(new(prometheus.Registerer), new(*prometheus.Registry)),
+		wire.Bind(new(prometheus.Gatherer), new(*prometheus.Registry)),
+		wire.Value(api.ServerOptions{}),
+		legacywatch.ProvideDisabledPublisher,
+		leaderelection.NewDefaultElector,
+		wire.Bind(new(leaderelection.Elector), new(*leaderelection.DefaultElector)),
+		oauthtoken.ProvideService,
+		wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+		wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
+		ngmetrics.ProvideService,
+		wire.Bind(new(ngrules.MaintenanceStore), new(*ngrules.RuleStore)),
+		prefimpl.ProvideService,
+		wire.Struct(new(server.APIServices), "*"),
+	)
+	return nil, nil
 }

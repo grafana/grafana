@@ -2,7 +2,10 @@ package appinstaller
 
 import (
 	"context"
+	"errors"
+	"sync/atomic"
 	"testing"
+	"testing/synctest"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -11,9 +14,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	clientrest "k8s.io/client-go/rest"
 
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -24,6 +30,107 @@ import (
 // would silently stop per-resource registrations from reaching storage, and each
 // resource would go back to sharing one answer across its versions.
 var _ appsdkapiserver.RESTOptionsGetterForResource = (*apistore.RESTOptionsGetter)(nil)
+
+func TestRegisterPostStartHooksSharesInitialization(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var calls atomic.Int32
+		initializing, release := make(chan struct{}), make(chan struct{})
+		running, stopped := make(chan struct{}), make(chan struct{})
+		installer := &initializingAppInstaller{
+			initialize: func(cfg clientrest.Config) error {
+				assert.Equal(t, "http://127.0.0.1:3000", cfg.Host)
+				if calls.Add(1) == 1 {
+					close(initializing)
+				}
+				<-release
+				return nil
+			},
+			application: &runningApp{run: func(ctx context.Context) error {
+				close(running)
+				defer close(stopped)
+				<-ctx.Done()
+				return nil
+			}},
+		}
+		cfg := genericapiserver.NewRecommendedConfig(builder.ProvideCodecFactory(builder.ProvideScheme()))
+		cfg.ExternalAddress = "127.0.0.1:3000"
+		cfg.LoopbackClientConfig = &clientrest.Config{Host: "http://127.0.0.1:3000"}
+		cfg.EffectiveVersion = builder.GetEffectiveVersion(0, "0.0.0", "", "")
+		cfg.EnableMetrics = false
+		initialize, err := RegisterPostStartHooks([]appsdkapiserver.AppInstaller{installer}, cfg)
+		require.NoError(t, err)
+		server, err := cfg.Complete().New("app-initialization-test", genericapiserver.NewEmptyDelegate())
+		require.NoError(t, err)
+		defer server.Destroy()
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		initialized := make(chan error, 1)
+		go func() { initialized <- initialize() }()
+		<-initializing
+		server.RunPostStartHooks(ctx)
+		close(release)
+		require.NoError(t, <-initialized)
+		<-running
+		require.NoError(t, initialize())
+		require.Equal(t, int32(1), calls.Load(), "startup and post-start hook must share one initialization")
+		cancel()
+		<-stopped
+	})
+}
+
+func TestRegisterPostStartHooksInitializationError(t *testing.T) {
+	for _, initializeErr := range []error{errors.New("initialization failed"), appsdkapiserver.ErrAppAlreadyInitialized} {
+		t.Run(initializeErr.Error(), func(t *testing.T) {
+			calls := 0
+			installer := &initializingAppInstaller{initialize: func(clientrest.Config) error {
+				calls++
+				return initializeErr
+			}}
+			cfg := genericapiserver.NewRecommendedConfig(builder.ProvideCodecFactory(builder.ProvideScheme()))
+			cfg.LoopbackClientConfig = &clientrest.Config{}
+			initialize, err := RegisterPostStartHooks([]appsdkapiserver.AppInstaller{installer}, cfg)
+			require.NoError(t, err)
+			for range 2 {
+				err := initialize()
+				if errors.Is(initializeErr, appsdkapiserver.ErrAppAlreadyInitialized) {
+					require.NoError(t, err)
+				} else {
+					require.ErrorIs(t, err, initializeErr)
+				}
+			}
+			require.Equal(t, 1, calls)
+		})
+	}
+}
+
+type initializingAppInstaller struct {
+	appsdkapiserver.AppInstaller
+	initialize  func(clientrest.Config) error
+	application app.App
+}
+
+func (i *initializingAppInstaller) ManifestData() *app.ManifestData {
+	return &app.ManifestData{AppName: "initialization-test"}
+}
+
+func (i *initializingAppInstaller) InitializeApp(cfg clientrest.Config) error {
+	return i.initialize(cfg)
+}
+
+func (i *initializingAppInstaller) App() (app.App, error) {
+	return i.application, nil
+}
+
+type runningApp struct {
+	app.App
+	run runnableFunc
+}
+
+func (a *runningApp) Runner() app.Runnable { return a.run }
+
+type runnableFunc func(context.Context) error
+
+func (f runnableFunc) Run(ctx context.Context) error { return f(ctx) }
 
 func TestRegisterAuthorizers(t *testing.T) {
 	tests := []struct {

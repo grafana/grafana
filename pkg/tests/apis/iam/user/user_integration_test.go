@@ -22,35 +22,30 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
+	"github.com/grafana/grafana/pkg/tests/apiserver"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestIntegrationUsers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				AppModeProduction:      false,
-				DisableAnonymous:       true,
-				RBACSingleOrganization: true,
-				APIServerStorageType:   "unified",
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"users.iam.grafana.app": {
-						DualWriterMode: mode,
-					},
+			t.Parallel()
+			helper := newTestEnvironment(t, apiserver.Options{
+				Configure: func(cfg *setting.Cfg) {
+					cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+						"users.iam.grafana.app": {
+							DualWriterMode: mode,
+						},
+					}
 				},
-				EnableFeatureToggles: []string{
+				FeatureFlags: []string{
 					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 					featuremgmt.FlagKubernetesUsersApi,
 				},
-			})
-
-			t.Cleanup(func() {
-				helper.Shutdown()
 			})
 
 			doUserCRUDTestsUsingTheNewAPIs(t, helper)
@@ -68,18 +63,18 @@ func TestIntegrationUsers(t *testing.T) {
 	}
 }
 
-func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
+func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *testEnvironment) {
 	t.Run("should create user and delete it using the new APIs as a GrafanaAdmin", func(t *testing.T) {
 		ctx := context.Background()
 
-		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			Namespace: helper.Org1.Admin.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
 		// Create the user
-		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		created, err := userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
@@ -94,10 +89,10 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		createdUID := created.GetName()
 		require.NotEmpty(t, createdUID)
 
-		_, err = userClient.Resource.List(ctx, metav1.ListOptions{})
+		_, err = userClient.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 
-		fetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		fetched, err := userClient.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, fetched)
 
@@ -112,11 +107,11 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, createdUID, fetched.GetName())
 		require.Equal(t, "default", fetched.GetNamespace())
 
-		err = userClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		err = userClient.Delete(ctx, createdUID, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
 		// Verify deletion
-		_, err = userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		_, err = userClient.Get(ctx, createdUID, metav1.GetOptions{})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "not found")
 	})
@@ -124,23 +119,23 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("should update user using the new APIs as a GrafanaAdmin", func(t *testing.T) {
 		ctx := context.Background()
 
-		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			Namespace: helper.Org1.Admin.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
 		// Create the user
-		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
+		created, err := userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 		t.Cleanup(func() {
-			_ = userClient.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+			_ = userClient.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
 		})
 
 		// Get the user to update
 		createdUID := created.GetName()
-		userToUpdate, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		userToUpdate, err := userClient.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
 
 		// Modify the user spec
@@ -150,7 +145,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		userToUpdate.Object["spec"] = spec
 
 		// Update the user
-		updated, err := userClient.Resource.Update(ctx, userToUpdate, metav1.UpdateOptions{})
+		updated, err := userClient.Update(ctx, userToUpdate, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, updated)
 
@@ -160,33 +155,33 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, "updated.test.user@example", updatedSpec["email"])
 
 		// Fetch again to confirm
-		fetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		fetched, err := userClient.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
 		require.Equal(t, "Updated Test User", fetchedSpec["title"])
 		require.Equal(t, "updated.test.user@example", fetchedSpec["email"])
 
 		// Cleanup
-		err = userClient.Resource.Delete(ctx, fetched.GetName(), metav1.DeleteOptions{})
+		err = userClient.Delete(ctx, fetched.GetName(), metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 
 	t.Run("should not be able to create user when using a user with insufficient permissions", func(t *testing.T) {
-		for _, user := range []apis.User{
+		for _, user := range []apiserver.User{
 			helper.OrgB.Admin, // Not a Grafana Admin
 			helper.Org1.Editor,
 			helper.Org1.Viewer,
 		} {
 			t.Run(fmt.Sprintf("with basic role_%s", user.Identity.GetOrgRole()), func(t *testing.T) {
 				ctx := context.Background()
-				userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 					User:      user,
-					Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+					Namespace: helper.Org1.Admin.Identity.Namespace,
 					GVR:       gvrUsers,
 				})
 
 				// Create the user
-				_, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+				_, err := userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 				require.Error(t, err)
 				var statusErr *errors.StatusError
 				require.ErrorAs(t, err, &statusErr)
@@ -197,19 +192,19 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 
 	t.Run("should not be able to create a user with a duplicate email", func(t *testing.T) {
 		ctx := context.Background()
-		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			Namespace: helper.Org1.Admin.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
 		// Create the first user
-		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-duplicate-email-v0.yaml"), metav1.CreateOptions{})
+		created, err := userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-duplicate-email-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
 		// Attempt to create another user with the same email
-		_, err = userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-duplicate-email-other.yaml"), metav1.CreateOptions{})
+		_, err = userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-duplicate-email-other.yaml"), metav1.CreateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -217,25 +212,25 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Contains(t, statusErr.ErrStatus.Message, "email 'testuser-email-1@example' is already taken")
 
 		// Cleanup
-		err = userClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		err = userClient.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 
 	t.Run("should not be able to create a user with a duplicate login", func(t *testing.T) {
 		ctx := context.Background()
-		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			Namespace: helper.Org1.Admin.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
 		// Create the first user
-		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-duplicate-login-v0.yaml"), metav1.CreateOptions{})
+		created, err := userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-duplicate-login-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 
 		// Attempt to create a second user with the same login
-		_, err = userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-duplicate-login-other.yaml"), metav1.CreateOptions{})
+		_, err = userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-duplicate-login-other.yaml"), metav1.CreateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -243,30 +238,30 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Contains(t, statusErr.ErrStatus.Message, "login 'testuser-login-1' is already taken")
 
 		// Cleanup
-		err = userClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
+		err = userClient.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 
 	t.Run("should not be able to update a user with an existing email", func(t *testing.T) {
 		ctx := context.Background()
-		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			Namespace: helper.Org1.Admin.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
 		// Create the first user
-		user1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		user1, err := userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, user1)
 
 		// Create the second user
-		user2, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
+		user2, err := userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, user2)
 
 		// Get the user to update
-		userToUpdate, err := userClient.Resource.Get(ctx, user2.GetName(), metav1.GetOptions{})
+		userToUpdate, err := userClient.Get(ctx, user2.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 
 		// Modify the user spec to have the same email as user1
@@ -276,7 +271,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		userToUpdate.Object["spec"] = spec
 
 		// Attempt to update the user
-		_, err = userClient.Resource.Update(ctx, userToUpdate, metav1.UpdateOptions{})
+		_, err = userClient.Update(ctx, userToUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -284,32 +279,32 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Contains(t, statusErr.ErrStatus.Message, "email 'testuser1@example123' is already taken")
 
 		// Cleanup
-		err = userClient.Resource.Delete(ctx, user1.GetName(), metav1.DeleteOptions{})
+		err = userClient.Delete(ctx, user1.GetName(), metav1.DeleteOptions{})
 		require.NoError(t, err)
-		err = userClient.Resource.Delete(ctx, user2.GetName(), metav1.DeleteOptions{})
+		err = userClient.Delete(ctx, user2.GetName(), metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 
 	t.Run("should not be able to update a user with an existing login", func(t *testing.T) {
 		ctx := context.Background()
-		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			Namespace: helper.Org1.Admin.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
 		// Create the first user
-		user1, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		user1, err := userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, user1)
 
 		// Create the second user
-		user2, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
+		user2, err := userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v1.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, user2)
 
 		// Get the user to update
-		userToUpdate, err := userClient.Resource.Get(ctx, user2.GetName(), metav1.GetOptions{})
+		userToUpdate, err := userClient.Get(ctx, user2.GetName(), metav1.GetOptions{})
 		require.NoError(t, err)
 
 		// Modify the user spec to have the same login as user1
@@ -319,7 +314,7 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		userToUpdate.Object["spec"] = spec
 
 		// Attempt to update the user
-		_, err = userClient.Resource.Update(ctx, userToUpdate, metav1.UpdateOptions{})
+		_, err = userClient.Update(ctx, userToUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -327,17 +322,17 @@ func doUserCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Contains(t, statusErr.ErrStatus.Message, "login 'testuser1' is already taken")
 
 		// Cleanup
-		err = userClient.Resource.Delete(ctx, user1.GetName(), metav1.DeleteOptions{})
+		err = userClient.Delete(ctx, user1.GetName(), metav1.DeleteOptions{})
 		require.NoError(t, err)
-		err = userClient.Resource.Delete(ctx, user2.GetName(), metav1.DeleteOptions{})
+		err = userClient.Delete(ctx, user2.GetName(), metav1.DeleteOptions{})
 		require.NoError(t, err)
 	})
 }
 
-func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper) {
+func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *testEnvironment) {
 	t.Run("should create user using legacy APIs and delete it using the new APIs", func(t *testing.T) {
 		ctx := context.Background()
-		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User: helper.Org1.Admin,
 			GVR:  gvrUsers,
 		})
@@ -349,7 +344,7 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 			"password": "password123"
 		}`
 
-		rsp := apis.DoRequest(helper, apis.RequestParams{
+		rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: "POST",
 			Path:   "/api/admin/users",
@@ -361,7 +356,7 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 		require.NotEmpty(t, rsp.Result.UID)
 
 		// Now try to fetch the user via the new API
-		user, err := userClient.Resource.Get(context.Background(), rsp.Result.UID, metav1.GetOptions{})
+		user, err := userClient.Get(context.Background(), rsp.Result.UID, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, user)
 
@@ -377,15 +372,15 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 		require.Equal(t, "default", user.GetNamespace())
 
 		// Now delete the user using the legacy API
-		deleteRsp := apis.DoRequest(helper, apis.RequestParams{
+		deleteRsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: "DELETE",
 			Path:   fmt.Sprintf("/api/admin/users/%d", rsp.Result.ID),
-		}, &apis.AnyResource{})
+		}, &map[string]any{})
 		require.Equal(t, 200, deleteRsp.Response.StatusCode)
 
 		// Verify deletion
-		_, err = userClient.Resource.Get(ctx, rsp.Result.UID, metav1.GetOptions{})
+		_, err = userClient.Get(ctx, rsp.Result.UID, metav1.GetOptions{})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "not found")
 	})
@@ -398,38 +393,38 @@ func doUserCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sTestHelper)
 // permission), so a user without users:read gets a 200 filtered result rather
 // than a 403. Admin listing is already covered by the CRUD, hidden-user and
 // field-selector tests.
-func doUserListFilteringTest(t *testing.T, helper *apis.K8sTestHelper) {
+func doUserListFilteringTest(t *testing.T, helper *testEnvironment) {
 	t.Run("list is allowed at the API layer and filtered by permissions", func(t *testing.T) {
 		ctx := context.Background()
 
-		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		adminClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			Namespace: helper.Org1.Admin.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
-		target := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
+		target := apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v0.yaml")
 		target.Object["metadata"].(map[string]any)["name"] = "listfiltertarget"
 		target.Object["spec"].(map[string]any)["login"] = "listfiltertarget"
 		target.Object["spec"].(map[string]any)["email"] = "listfiltertarget@example.com"
-		created, err := adminClient.Resource.Create(ctx, target, metav1.CreateOptions{})
+		created, err := adminClient.Create(ctx, target, metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 		t.Cleanup(func() {
-			_ = adminClient.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+			_ = adminClient.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
 		})
 
 		// A user with no basic role has no users:read permission.
-		lister := helper.CreateUser("user-list-filter-user", apis.Org1, org.RoleNone, nil)
-		listerClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		lister := createUser(t, helper, "user-list-filter-user", org.RoleNone, nil)
+		listerClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      lister,
-			Namespace: helper.Namespacer(lister.Identity.GetOrgID()),
+			Namespace: lister.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
 		// The nameless list must succeed (200) rather than 403, and must not
 		// surface a user the caller has no permission to read.
-		list, err := listerClient.Resource.List(ctx, metav1.ListOptions{})
+		list, err := listerClient.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		names := make([]string, 0, len(list.Items))
 		for _, item := range list.Items {
@@ -439,46 +434,46 @@ func doUserListFilteringTest(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
+func doHiddenUsersTests(t *testing.T, helper *testEnvironment) {
 	t.Run("should hide users from the hidden users list on Get and List", func(t *testing.T) {
 		ctx := context.Background()
 
 		const hiddenLogin = "hidden-integration-user"
 
-		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		adminClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			Namespace: helper.Org1.Admin.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
 		// Create the user before marking it as hidden so BeforeCreate does not block it.
-		obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
+		obj := apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v0.yaml")
 		spec := obj.Object["spec"].(map[string]interface{})
 		spec["login"] = hiddenLogin
 		spec["email"] = hiddenLogin + "@example.com"
 		obj.Object["spec"] = spec
 
-		created, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		created, err := adminClient.Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err)
 		createdUID := created.GetName()
 
 		// Register the hidden login in the live Cfg so UserFilter picks it up.
-		helper.GetEnv().Cfg.HiddenUsers[hiddenLogin] = struct{}{}
+		helper.Cfg.HiddenUsers[hiddenLogin] = struct{}{}
 		// Cleanup: remove from hidden list first so that Delete can succeed.
 		t.Cleanup(func() {
-			delete(helper.GetEnv().Cfg.HiddenUsers, hiddenLogin)
-			_ = adminClient.Resource.Delete(context.Background(), createdUID, metav1.DeleteOptions{})
+			delete(helper.Cfg.HiddenUsers, hiddenLogin)
+			_ = adminClient.Delete(context.Background(), createdUID, metav1.DeleteOptions{})
 		})
 
 		// Get should return 404 when the requester is not the hidden user.
-		_, err = adminClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		_, err = adminClient.Get(ctx, createdUID, metav1.GetOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
 
 		// List should not include the hidden user.
-		list, err := adminClient.Resource.List(ctx, metav1.ListOptions{})
+		list, err := adminClient.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
 		for _, item := range list.Items {
 			itemSpec := item.Object["spec"].(map[string]interface{})
@@ -490,14 +485,14 @@ func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 		updateSpec := userToUpdate.Object["spec"].(map[string]interface{})
 		updateSpec["title"] = "Updated Title"
 		userToUpdate.Object["spec"] = updateSpec
-		_, err = adminClient.Resource.Update(ctx, userToUpdate, metav1.UpdateOptions{})
+		_, err = adminClient.Update(ctx, userToUpdate, metav1.UpdateOptions{})
 		require.Error(t, err)
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
 		require.Contains(t, statusErr.ErrStatus.Message, "operation not permitted")
 
 		// Delete should return 403 for a hidden user.
-		err = adminClient.Resource.Delete(ctx, createdUID, metav1.DeleteOptions{})
+		err = adminClient.Delete(ctx, createdUID, metav1.DeleteOptions{})
 		require.Error(t, err)
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(403), statusErr.ErrStatus.Code)
@@ -509,24 +504,24 @@ func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 		const hiddenLogin = "hidden-create-blocked-user"
 
-		adminClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		adminClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			Namespace: helper.Org1.Admin.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
-		helper.GetEnv().Cfg.HiddenUsers[hiddenLogin] = struct{}{}
+		helper.Cfg.HiddenUsers[hiddenLogin] = struct{}{}
 		t.Cleanup(func() {
-			delete(helper.GetEnv().Cfg.HiddenUsers, hiddenLogin)
+			delete(helper.Cfg.HiddenUsers, hiddenLogin)
 		})
 
-		obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
+		obj := apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v0.yaml")
 		spec := obj.Object["spec"].(map[string]interface{})
 		spec["login"] = hiddenLogin
 		spec["email"] = hiddenLogin + "@example.com"
 		obj.Object["spec"] = spec
 
-		_, err := adminClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+		_, err := adminClient.Create(ctx, obj, metav1.CreateOptions{})
 		require.Error(t, err)
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
@@ -535,27 +530,27 @@ func doHiddenUsersTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
+func doUserFieldSelectorTests(t *testing.T, helper *testEnvironment) {
 	t.Run("should list users using field selectors", func(t *testing.T) {
 		ctx := context.Background()
 
 		var userNames []string
 
-		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			Namespace: helper.Org1.Admin.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
 		createUser := func(name string, email string, login string) {
-			obj := helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml")
+			obj := apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v0.yaml")
 			obj.SetName(name)
 
 			spec := obj.Object["spec"].(map[string]interface{})
 			spec["email"] = email
 			spec["login"] = login
 
-			created, err := userClient.Resource.Create(ctx, obj, metav1.CreateOptions{})
+			created, err := userClient.Create(ctx, obj, metav1.CreateOptions{})
 			require.NoError(t, err)
 			userNames = append(userNames, created.GetName())
 		}
@@ -567,12 +562,12 @@ func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
 		t.Cleanup(func() {
 			cleanupCtx := context.Background()
 			for _, name := range userNames {
-				_ = userClient.Resource.Delete(cleanupCtx, name, metav1.DeleteOptions{})
+				_ = userClient.Delete(cleanupCtx, name, metav1.DeleteOptions{})
 			}
 		})
 
 		// Select by spec.email — should return exactly 1 user
-		listByEmail, err := userClient.Resource.List(ctx, metav1.ListOptions{
+		listByEmail, err := userClient.List(ctx, metav1.ListOptions{
 			FieldSelector: "spec.email=fs-user2@example.com",
 		})
 		require.NoError(t, err)
@@ -582,7 +577,7 @@ func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, "fs-user2", emailSpec["login"])
 
 		// Select by spec.login — should return exactly 1 user
-		listByLogin, err := userClient.Resource.List(ctx, metav1.ListOptions{
+		listByLogin, err := userClient.List(ctx, metav1.ListOptions{
 			FieldSelector: "spec.login=fs-user3",
 		})
 		require.NoError(t, err)
@@ -592,7 +587,7 @@ func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, "fs-user3", loginSpec["login"])
 
 		// Select by a non-existent email — should return empty list
-		listByUnknownEmail, err := userClient.Resource.List(ctx, metav1.ListOptions{
+		listByUnknownEmail, err := userClient.List(ctx, metav1.ListOptions{
 			FieldSelector: "spec.email=does-not-exist@example.com",
 		})
 		require.NoError(t, err)
@@ -600,27 +595,27 @@ func doUserFieldSelectorTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
+func doUserStatusUpdateTests(t *testing.T, helper *testEnvironment) {
 	t.Run("should update lastSeenAt via status subresource with the provided value", func(t *testing.T) {
 		ctx := context.Background()
 
-		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
+		userClient := helper.GetResourceClient(t, apiserver.ResourceClientArgs{
 			User:      helper.Org1.Admin,
-			Namespace: helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID()),
+			Namespace: helper.Org1.Admin.Identity.Namespace,
 			GVR:       gvrUsers,
 		})
 
 		// Create a user
-		created, err := userClient.Resource.Create(ctx, helper.LoadYAMLOrJSONFile("../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
+		created, err := userClient.Create(ctx, apiserver.LoadYAMLOrJSONFile(t, "../testdata/user-test-create-v0.yaml"), metav1.CreateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, created)
 		createdUID := created.GetName()
 		t.Cleanup(func() {
-			_ = userClient.Resource.Delete(context.Background(), createdUID, metav1.DeleteOptions{})
+			_ = userClient.Delete(context.Background(), createdUID, metav1.DeleteOptions{})
 		})
 
 		// Get the user and check initial lastSeenAt (should be old — set to 10 years ago on creation)
-		fetched, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		fetched, err := userClient.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		status := fetched.Object["status"].(map[string]interface{})
 		initialLastSeenAt := toInt64(t, status["lastSeenAt"])
@@ -638,12 +633,12 @@ func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
 		statusMap["lastSeenAt"] = wantLastSeenAt
 		statusObj.Object["status"] = statusMap
 
-		updated, err := userClient.Resource.UpdateStatus(ctx, statusObj, metav1.UpdateOptions{})
+		updated, err := userClient.UpdateStatus(ctx, statusObj, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, updated)
 
 		// Fetch the user and verify the exact value was persisted
-		fetchedAfter, err := userClient.Resource.Get(ctx, createdUID, metav1.GetOptions{})
+		fetchedAfter, err := userClient.Get(ctx, createdUID, metav1.GetOptions{})
 		require.NoError(t, err)
 		statusAfter := fetchedAfter.Object["status"].(map[string]interface{})
 		gotLastSeenAt := toInt64(t, statusAfter["lastSeenAt"])
@@ -652,7 +647,7 @@ func doUserStatusUpdateTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-func doDisplayTests(t *testing.T, helper *apis.K8sTestHelper) {
+func doDisplayTests(t *testing.T, helper *testEnvironment) {
 	t.Run("display endpoint returns identity info for known users and magic keys", func(t *testing.T) {
 		adminID, err := identity.UserIdentifier(helper.Org1.Admin.Identity.GetID())
 		require.NoError(t, err)
@@ -670,7 +665,7 @@ func doDisplayTests(t *testing.T, helper *apis.K8sTestHelper) {
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/display?%s", q.Encode())
 
 		res := &iam.DisplayList{}
-		rsp := apis.DoRequest(helper, apis.RequestParams{
+		rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: "GET",
 			Path:   path,
@@ -715,12 +710,12 @@ func doDisplayTests(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("display endpoint resolves service accounts with the service-account type", func(t *testing.T) {
 		sa := helper.Org1.AdminServiceAccount
 		q := url.Values{}
-		q.Add("key", strconv.FormatInt(sa.Id, 10))
+		q.Add("key", strconv.FormatInt(sa.ID, 10))
 
 		path := fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/default/display?%s", q.Encode())
 
 		res := &iam.DisplayList{}
-		rsp := apis.DoRequest(helper, apis.RequestParams{
+		rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: "GET",
 			Path:   path,
@@ -730,20 +725,20 @@ func doDisplayTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Empty(t, res.InvalidKeys)
 		require.Len(t, res.Items, 1)
 		require.Equal(t, authlib.TypeServiceAccount, res.Items[0].Identity.Type)
-		require.Equal(t, sa.Id, res.Items[0].InternalID)
+		require.Equal(t, sa.ID, res.Items[0].InternalID)
 	})
 }
 
-func doSelfTests(t *testing.T, helper *apis.K8sTestHelper) {
+func doSelfTests(t *testing.T, helper *testEnvironment) {
 	// selfPath is the "who am I" endpoint. A literal `~` token must not be
 	// shadowed by the users/{name} resource route.
 	const selfPath = "/apis/iam.grafana.app/v0alpha1/namespaces/default/users/~"
 
-	assertSelf := func(t *testing.T, caller apis.User, path string) {
+	assertSelf := func(t *testing.T, caller apiserver.User, path string) {
 		t.Helper()
 
 		res := &iam.CurrentUserInfo{}
-		rsp := apis.DoRequest(helper, apis.RequestParams{
+		rsp := apiserver.DoRequest(t, helper.Environment, apiserver.RequestParams{
 			User:   caller,
 			Method: "GET",
 			Path:   path,

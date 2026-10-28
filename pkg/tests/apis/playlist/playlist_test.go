@@ -12,23 +12,25 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	playlist "github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/tests/apiserver"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestMain(m *testing.M) {
-	testsuite.Run(m)
+	apiserver.Run(m)
 }
 
 var gvr = schema.GroupVersionResource{
@@ -41,16 +43,24 @@ var RESOURCEGROUP = gvr.GroupResource().String()
 
 func TestIntegrationPlaylist(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
+	t.Parallel()
 
 	t.Run("default setup", func(t *testing.T) {
-		h := doPlaylistTests(t, apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-			AppModeProduction:    true, // do not start extra port 6443
-			DisableAnonymous:     true,
-			EnableFeatureToggles: []string{"playlistsRBAC"},
-		}))
+		env := apiserver.New(t, apiserver.Options{
+			FeatureFlags: []string{featuremgmt.FlagPlaylistsRBAC, featuremgmt.FlagAppPlatformGrpcClientAuth},
+			Register: func(env *apiserver.Environment) {
+				installer, err := playlist.RegisterAppInstaller(env.Cfg, env.Permissions, env.AccessClient)
+				require.NoError(t, err)
+				env.Registrar.RegisterAppInstaller(installer)
+			},
+		})
+		users := env.CreateOrgUsers(t, apiserver.OrgUsersArgs{
+			GrafanaAdmin: true,
+		})
+		doPlaylistTests(t, env, users)
 
 		// The accepted verbs will change when dual write is enabled
-		disco, err := h.GetGroupVersionInfoJSON("playlist.grafana.app")
+		disco, err := env.GroupVersionInfoJSON(t, users.Admin, "playlist.grafana.app")
 		require.NoError(t, err)
 		// t.Logf("%s", disco)
 		require.JSONEq(t, `[
@@ -140,65 +150,82 @@ func TestIntegrationPlaylist(t *testing.T) {
 	})
 }
 
-func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper {
+func doPlaylistTests(t *testing.T, env *apiserver.Environment, users apiserver.OrgUsers) {
+	admin := users.Admin
+	editor := users.Editor
+	viewer := users.Viewer
+	none := users.None
+	otherOrg, err := env.Organizations.CreateWithMember(env.Context(t.Context()), &org.CreateOrgCommand{
+		Name:   "OrgB",
+		UserID: admin.Identity.UserID,
+	})
+	require.NoError(t, err)
+	require.NotEqual(t, admin.Identity.OrgID, otherOrg.ID)
+	otherViewer := env.CreateUser(t, &user.CreateUserCommand{
+		Login:          "other-viewer",
+		Password:       user.Password("other-password"),
+		OrgID:          otherOrg.ID,
+		DefaultOrgRole: string(org.RoleViewer),
+	})
+
 	t.Run("Check direct List permissions from different org users", func(t *testing.T) {
 		// Check view permissions
-		rsp := helper.List(helper.Org1.Viewer, "default", gvr)
+		rsp := env.List(t, viewer, "default", gvr)
 		require.Equal(t, 200, rsp.Response.StatusCode)
 		require.NotNil(t, rsp.Result)
 		require.Empty(t, rsp.Result.Items)
 		require.Nil(t, rsp.Status)
 
 		// Check view permissions
-		rsp = helper.List(helper.OrgB.Viewer, "default", gvr)
+		rsp = env.List(t, otherViewer, "default", gvr)
 		require.Equal(t, 403, rsp.Response.StatusCode) // OrgB can not see default namespace
 		require.Nil(t, rsp.Result)
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
 
 		// Check view permissions
-		rsp = helper.List(helper.OrgB.Viewer, "org-22", gvr)
+		rsp = env.List(t, otherViewer, "org-22", gvr)
 		require.Equal(t, 403, rsp.Response.StatusCode) // Unknown/not a member
 		require.Nil(t, rsp.Result)
 		require.Equal(t, metav1.StatusReasonForbidden, rsp.Status.Reason)
 	})
 
 	t.Run("Check CRUD operations with None role", func(t *testing.T) {
-		clientAdmin := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Admin,
+		clientAdmin := env.GetResourceClient(t, apiserver.ResourceClientArgs{
+			User: admin,
 			GVR:  gvr,
 		})
-		created, err := clientAdmin.Resource.Create(context.Background(),
-			helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
+		created, err := clientAdmin.Create(context.Background(),
+			apiserver.LoadYAMLOrJSONFile(t, "testdata/playlist-generate.yaml"),
 			metav1.CreateOptions{},
 		)
 		require.NoError(t, err)
 		t.Cleanup(func() {
-			_ = clientAdmin.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+			_ = clientAdmin.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
 		})
 
-		clientNone := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.None,
+		clientNone := env.GetResourceClient(t, apiserver.ResourceClientArgs{
+			User: none,
 			GVR:  gvr,
 		})
 
 		// Without any RBAC grant, a None-role user is denied all playlist operations.
 		t.Run("None role denied by default", func(t *testing.T) {
-			_, err = clientNone.Resource.Get(context.Background(), created.GetName(), metav1.GetOptions{})
+			_, err = clientNone.Get(context.Background(), created.GetName(), metav1.GetOptions{})
 			require.Error(t, err)
 
-			_, err = clientNone.Resource.List(context.Background(), metav1.ListOptions{})
+			_, err = clientNone.List(context.Background(), metav1.ListOptions{})
 			require.Error(t, err)
 
-			_, err = clientNone.Resource.Create(context.Background(),
-				helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
+			_, err = clientNone.Create(context.Background(),
+				apiserver.LoadYAMLOrJSONFile(t, "testdata/playlist-generate.yaml"),
 				metav1.CreateOptions{},
 			)
 			require.Error(t, err)
 
-			_, err = clientNone.Resource.Update(context.Background(), created, metav1.UpdateOptions{})
+			_, err = clientNone.Update(context.Background(), created, metav1.UpdateOptions{})
 			require.Error(t, err)
 
-			err = clientNone.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+			err = clientNone.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
 			require.Error(t, err)
 		})
 
@@ -210,12 +237,17 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		// visible to GetUserPermissions (which filters by OSSRolesPrefixes = ["managed:", "extsvc:"]).
 		// AddUserPermissionToDB uses "test:role" which is silently filtered out.
 		t.Run("None role with explicit playlists:read can read but not write", func(t *testing.T) {
-			noneWithRead := helper.CreateUser("none-with-read", apis.Org1, org.RoleNone, nil)
+			noneWithRead := env.CreateUser(t, &user.CreateUserCommand{
+				Login:          "none-with-read",
+				Password:       user.Password("read-password"),
+				OrgID:          users.OrgID,
+				DefaultOrgRole: string(org.RoleNone),
+			})
 			noneUserID, err := noneWithRead.Identity.GetInternalID()
 			require.NoError(t, err)
 
 			orgID := noneWithRead.Identity.GetOrgID()
-			err = helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			err = env.DB.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 				roleName := accesscontrol.ManagedUserRoleName(noneUserID)
 				role := &accesscontrol.Role{
 					OrgID:   orgID,
@@ -248,68 +280,69 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			})
 			require.NoError(t, err)
 
-			clientNoneWithRead := helper.GetResourceClient(apis.ResourceClientArgs{
+			clientNoneWithRead := env.GetResourceClient(t, apiserver.ResourceClientArgs{
 				User: noneWithRead,
 				GVR:  gvr,
 			})
 
-			_, err = clientNoneWithRead.Resource.Get(context.Background(), created.GetName(), metav1.GetOptions{})
+			_, err = clientNoneWithRead.Get(context.Background(), created.GetName(), metav1.GetOptions{})
 			require.NoError(t, err, "None user with playlists:read should be able to get a playlist")
 
-			_, err = clientNoneWithRead.Resource.List(context.Background(), metav1.ListOptions{})
+			_, err = clientNoneWithRead.List(context.Background(), metav1.ListOptions{})
 			require.NoError(t, err, "None user with playlists:read should be able to list playlists")
 
-			_, err = clientNoneWithRead.Resource.Create(context.Background(),
-				helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
+			_, err = clientNoneWithRead.Create(context.Background(),
+				apiserver.LoadYAMLOrJSONFile(t, "testdata/playlist-generate.yaml"),
 				metav1.CreateOptions{},
 			)
 			require.Error(t, err, "None user with only playlists:read should not be able to create")
 
-			_, err = clientNoneWithRead.Resource.Update(context.Background(), created, metav1.UpdateOptions{})
+			_, err = clientNoneWithRead.Update(context.Background(), created, metav1.UpdateOptions{})
 			require.Error(t, err, "None user with only playlists:read should not be able to update")
 
-			err = clientNoneWithRead.Resource.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
+			err = clientNoneWithRead.Delete(context.Background(), created.GetName(), metav1.DeleteOptions{})
 			require.Error(t, err, "None user with only playlists:read should not be able to delete")
 		})
 	})
 
 	t.Run("Check k8s client-go List from different org users", func(t *testing.T) {
 		// Check Org1 Viewer
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.Org1.Viewer,
-			Namespace: "", // << fills in the value org1 is allowed to see!
+		client := env.GetResourceClient(t, apiserver.ResourceClientArgs{
+			User:      viewer,
+			Namespace: "", // fills in the viewer's organization
 			GVR:       gvr,
 		})
-		rsp, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+		rsp, err := client.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Empty(t, rsp.Items)
 
 		// Check org2 viewer can not see org1 (default namespace)
-		client = helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.OrgB.Viewer,
+		client = env.GetResourceClient(t, apiserver.ResourceClientArgs{
+			User:      otherViewer,
 			Namespace: "default", // actually org1
 			GVR:       gvr,
 		})
-		rsp, err = client.Resource.List(context.Background(), metav1.ListOptions{})
-		statusError := helper.AsStatusError(err)
+		rsp, err = client.List(context.Background(), metav1.ListOptions{})
+		var statusError *apierrors.StatusError
+		require.ErrorAs(t, err, &statusError)
 		require.Nil(t, rsp)
 		require.Equal(t, metav1.StatusReasonForbidden, statusError.Status().Reason)
 
 		// Check invalid namespace
-		client = helper.GetResourceClient(apis.ResourceClientArgs{
-			User:      helper.OrgB.Viewer,
+		client = env.GetResourceClient(t, apiserver.ResourceClientArgs{
+			User:      otherViewer,
 			Namespace: "org-22", // org 22 does not exist
 			GVR:       gvr,
 		})
-		rsp, err = client.Resource.List(context.Background(), metav1.ListOptions{})
-		statusError = helper.AsStatusError(err)
+		rsp, err = client.List(context.Background(), metav1.ListOptions{})
+		require.ErrorAs(t, err, &statusError)
 		require.Nil(t, rsp)
 		require.Equal(t, metav1.StatusReasonForbidden, statusError.Status().Reason)
 	})
 
 	t.Run("Check playlist CRUD in legacy API appears in k8s apis", func(t *testing.T) {
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
+		client := env.GetResourceClient(t, apiserver.ResourceClientArgs{
+			User: editor,
 			GVR:  gvr,
 		})
 
@@ -340,8 +373,8 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 			],
 			"uid": ""
 		  }`
-		legacyCreate := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
+		legacyCreate := apiserver.DoRequest(t, env, apiserver.RequestParams{
+			User:   editor,
 			Method: http.MethodPost,
 			Path:   "/api/playlists",
 			Body:   []byte(legacyPayload),
@@ -379,22 +412,22 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 }`
 
 		// List includes the expected result
-		k8sList, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+		k8sList, err := client.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Equal(t, 1, len(k8sList.Items))
-		require.JSONEq(t, expectedResult, client.SanitizeJSON(&k8sList.Items[0], "labels"))
+		require.JSONEq(t, expectedResult, apiserver.SanitizeJSON(t, &k8sList.Items[0], "labels"))
 
 		// Get should return the same result
-		found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+		found, err := client.Get(context.Background(), uid, metav1.GetOptions{})
 		require.NoError(t, err)
-		require.JSONEq(t, expectedResult, client.SanitizeJSON(found, "labels"))
+		require.JSONEq(t, expectedResult, apiserver.SanitizeJSON(t, found, "labels"))
 
 		// Now modify the interval
 		updatedInterval := `"interval": "10m"`
 		legacyPayload = strings.Replace(legacyPayload, `"interval": "20s"`, updatedInterval, 1)
-		require.JSONEq(t, expectedResult, client.SanitizeJSON(&k8sList.Items[0], "labels"))
-		dtoResponse := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
+		require.JSONEq(t, expectedResult, apiserver.SanitizeJSON(t, &k8sList.Items[0], "labels"))
+		dtoResponse := apiserver.DoRequest(t, env, apiserver.RequestParams{
+			User:   editor,
 			Method: http.MethodPut,
 			Path:   "/api/playlists/" + uid,
 			Body:   []byte(legacyPayload),
@@ -438,7 +471,7 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.NoError(t, err)
 
 		// Make sure the changed interval is now returned from k8s
-		found, err = client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+		found, err = client.Get(context.Background(), uid, metav1.GetOptions{})
 		require.NoError(t, err)
 		foundSpec, _, err := unstructured.NestedMap(found.Object, "spec")
 		require.NoError(t, err)
@@ -447,30 +480,31 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.Equal(t, expectedSpec, foundSpec)
 
 		// Delete does not return anything
-		deleteResponse := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
+		deleteResponse := apiserver.DoRequest(t, env, apiserver.RequestParams{
+			User:   editor,
 			Method: http.MethodDelete,
 			Path:   "/api/playlists/" + uid,
 			Body:   []byte(legacyPayload),
-		}, &playlist.PlaylistDTO{}) // response is empty
+		}, (*playlist.PlaylistDTO)(nil)) // response is empty
 		require.Equal(t, 200, deleteResponse.Response.StatusCode)
 
-		found, err = client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
-		statusError := helper.AsStatusError(err)
+		found, err = client.Get(context.Background(), uid, metav1.GetOptions{})
+		var statusError *apierrors.StatusError
+		require.ErrorAs(t, err, &statusError)
 		require.Nil(t, found)
 		require.Equal(t, metav1.StatusReasonNotFound, statusError.Status().Reason)
 	})
 
 	t.Run("Do CRUD via k8s (and check that legacy api still works)", func(t *testing.T) {
 		t.Skip()
-		client := helper.GetResourceClient(apis.ResourceClientArgs{
-			User: helper.Org1.Editor,
+		client := env.GetResourceClient(t, apiserver.ResourceClientArgs{
+			User: editor,
 			GVR:  gvr,
 		})
 
 		// Create the playlist "test"
-		first, err := client.Resource.Create(context.Background(),
-			helper.LoadYAMLOrJSONFile("testdata/playlist-test-create.yaml"),
+		first, err := client.Create(context.Background(),
+			apiserver.LoadYAMLOrJSONFile(t, "testdata/playlist-test-create.yaml"),
 			metav1.CreateOptions{},
 		)
 		require.NoError(t, err)
@@ -479,8 +513,8 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 
 		// Create (with name generation) two playlists
 		for range 2 {
-			out, err := client.Resource.Create(context.Background(),
-				helper.LoadYAMLOrJSONFile("testdata/playlist-generate.yaml"),
+			out, err := client.Create(context.Background(),
+				apiserver.LoadYAMLOrJSONFile(t, "testdata/playlist-generate.yaml"),
 				metav1.CreateOptions{},
 			)
 			require.NoError(t, err)
@@ -489,15 +523,15 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		slices.Sort(uids) // make list compare stable
 
 		// Check that everything is returned from the List command
-		list, err := client.Resource.List(context.Background(), metav1.ListOptions{})
+		list, err := client.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Equal(t, uids, SortSlice(Map(list.Items, func(item unstructured.Unstructured) string {
 			return item.GetName()
 		})))
 
 		// The legacy endpoint has the same results
-		searchResponse := apis.DoRequest(helper, apis.RequestParams{
-			User:   client.Args.User,
+		searchResponse := apiserver.DoRequest(t, env, apiserver.RequestParams{
+			User:   editor,
 			Method: http.MethodGet,
 			Path:   "/api/playlists",
 		}, &playlist.Playlists{})
@@ -508,27 +542,27 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 
 		// Check all playlists
 		for _, uid := range uids {
-			getFromBothAPIs(t, helper, client, uid, nil)
+			getFromBothAPIs(t, env, client, editor, uid, nil)
 		}
 
 		// PUT :: Update the title (full payload)
-		updated, err := client.Resource.Update(context.Background(),
-			helper.LoadYAMLOrJSONFile("testdata/playlist-test-replace.yaml"),
+		updated, err := client.Update(context.Background(),
+			apiserver.LoadYAMLOrJSONFile(t, "testdata/playlist-test-replace.yaml"),
 			metav1.UpdateOptions{},
 		)
 		require.NoError(t, err)
 		require.Equal(t, first.GetName(), updated.GetName())
 		require.Equal(t, first.GetUID(), updated.GetUID())
 		require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
-		out := getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
+		out := getFromBothAPIs(t, env, client, editor, "test", &playlist.PlaylistDTO{
 			Name:     "Test playlist (replaced from k8s; 22m; 1 items; PUT)",
 			Interval: "22m",
 		})
 		require.Equal(t, updated.GetResourceVersion(), out.GetResourceVersion())
 
 		// PATCH :: apply only some fields
-		updated, err = client.Resource.Apply(context.Background(), "test",
-			helper.LoadYAMLOrJSONFile("testdata/playlist-test-apply.yaml"),
+		updated, err = client.Apply(context.Background(), "test",
+			apiserver.LoadYAMLOrJSONFile(t, "testdata/playlist-test-apply.yaml"),
 			metav1.ApplyOptions{
 				Force:        true,
 				FieldManager: "testing",
@@ -538,34 +572,34 @@ func doPlaylistTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelp
 		require.Equal(t, first.GetName(), updated.GetName())
 		require.Equal(t, first.GetUID(), updated.GetUID())
 		require.Less(t, first.GetResourceVersion(), updated.GetResourceVersion())
-		getFromBothAPIs(t, helper, client, "test", &playlist.PlaylistDTO{
+		getFromBothAPIs(t, env, client, editor, "test", &playlist.PlaylistDTO{
 			Name:     "Test playlist (apply from k8s; ??m; ?? items; PATCH)",
 			Interval: "22m", // has not changed from previous update
 		})
 
 		// Now delete all playlist (three)
 		for _, uid := range uids {
-			err := client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
+			err := client.Delete(context.Background(), uid, metav1.DeleteOptions{})
 			require.NoError(t, err)
 
 			// Second call is not found!
-			err = client.Resource.Delete(context.Background(), uid, metav1.DeleteOptions{})
-			statusError := helper.AsStatusError(err)
+			err = client.Delete(context.Background(), uid, metav1.DeleteOptions{})
+			var statusError *apierrors.StatusError
+			require.ErrorAs(t, err, &statusError)
 			require.Equal(t, metav1.StatusReasonNotFound, statusError.Status().Reason)
 
 			// Not found from k8s getter
-			_, err = client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
-			statusError = helper.AsStatusError(err)
+			_, err = client.Get(context.Background(), uid, metav1.GetOptions{})
+			require.ErrorAs(t, err, &statusError)
 			require.Equal(t, metav1.StatusReasonNotFound, statusError.Status().Reason)
 		}
 
 		// Check that they are all gone
-		list, err = client.Resource.List(context.Background(), metav1.ListOptions{})
+		list, err = client.List(context.Background(), metav1.ListOptions{})
 		require.NoError(t, err)
 		require.Empty(t, list.Items)
 	})
 
-	return helper
 }
 
 // typescript style map function
@@ -584,20 +618,21 @@ func SortSlice[A cmp.Ordered](input []A) []A {
 
 // This does a get with both k8s and legacy API, and verifies the results are the same
 func getFromBothAPIs(t *testing.T,
-	helper *apis.K8sTestHelper,
-	client *apis.K8sResourceClient,
+	env *apiserver.Environment,
+	client dynamic.ResourceInterface,
+	caller apiserver.User,
 	uid string,
 	// Optionally match some expect some values
 	expect *playlist.PlaylistDTO,
 ) *unstructured.Unstructured {
 	t.Helper()
 
-	found, err := client.Resource.Get(context.Background(), uid, metav1.GetOptions{})
+	found, err := client.Get(context.Background(), uid, metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Equal(t, uid, found.GetName())
 
-	dto := apis.DoRequest(helper, apis.RequestParams{
-		User:   client.Args.User,
+	dto := apiserver.DoRequest(t, env, apiserver.RequestParams{
+		User:   caller,
 		Method: http.MethodGet,
 		Path:   "/api/playlists/" + uid,
 	}, &playlist.PlaylistDTO{}).Result

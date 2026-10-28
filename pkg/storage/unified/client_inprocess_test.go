@@ -57,7 +57,7 @@ func newInProcessTestClient(t *testing.T, kvBackend, snapshotsEnabled bool) (res
 	require.NoError(t, err)
 
 	reg := prometheus.NewRegistry()
-	return newClient(
+	return newClient(t.Context(),
 		options.StorageOptions{StorageType: options.StorageTypeUnified},
 		cfg,
 		featuremgmt.WithFeatures(),

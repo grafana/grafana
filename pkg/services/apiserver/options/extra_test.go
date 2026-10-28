@@ -1,10 +1,12 @@
 package options
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 )
 
 // The multi-tenant apiserver takes its defaults from here, so changing them changes
@@ -34,4 +36,19 @@ func TestExtraOptions_KeysAPICanBeTurnedOn(t *testing.T) {
 	require.NoError(t, fs.Parse([]string{"--grafana-apiserver-enable-keys-api=true"}))
 	require.True(t, o.EnableKeysAPI)
 	require.True(t, o.EnableHybridAPI)
+}
+
+func TestExtraOptionsApplyToParallel(t *testing.T) {
+	for i := range 8 {
+		t.Run(fmt.Sprintf("server %d", i), func(t *testing.T) {
+			t.Parallel()
+			opts := NewOptions(nil).ExtraOptions
+			opts.ExternalAddress = fmt.Sprintf("127.0.0.1:%d", 3000+i)
+			opts.Verbosity = i + 1
+			cfg := &genericapiserver.RecommendedConfig{}
+			require.NoError(t, opts.ApplyTo(cfg))
+			require.Equal(t, opts.ExternalAddress, cfg.ExternalAddress)
+			require.Equal(t, min(i+1, 7), opts.Verbosity)
+		})
+	}
 }
