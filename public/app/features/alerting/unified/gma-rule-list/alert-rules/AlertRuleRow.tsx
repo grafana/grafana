@@ -1,5 +1,6 @@
-import { type ReactNode, useId } from 'react';
+import { useId } from 'react';
 
+import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { Stack, TextLink } from '@grafana/ui';
 
 import { grafanaRulesNav } from '../../utils/navigation';
@@ -9,6 +10,7 @@ import { RuleDescription } from '../rule-row/RuleDescription';
 import { RuleInterval } from '../rule-row/RuleInterval';
 import { RuleLabels } from '../rule-row/RuleLabels';
 import { RuleListItem } from '../rule-row/RuleListItem';
+import { RuleOriginBadge } from '../rule-row/RuleOriginBadge';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
@@ -17,12 +19,12 @@ interface AlertRuleRowProps {
   searchHit: AlertRuleSearchHit;
   /** Absent while the folder path loads or when its lookup failed. */
   folderPath?: string[];
-  /** Plugin or provisioning badge; absent while the full rule loads or when there is no badge. */
-  badge?: ReactNode;
+  /** Full rule resource; absent while loading or when the fetch failed. */
+  rule?: AlertRule;
 }
 
 /** Presentation-only; missing state/health renders "unavailable", never healthy. */
-export function AlertRuleRow({ searchHit, folderPath, badge }: AlertRuleRowProps) {
+export function AlertRuleRow({ searchHit, folderPath, rule }: AlertRuleRowProps) {
   const titleId = useId();
 
   return (
@@ -34,7 +36,7 @@ export function AlertRuleRow({ searchHit, folderPath, badge }: AlertRuleRowProps
           <TextLink id={titleId} href={grafanaRulesNav.viewLink(searchHit.uid)} color="primary" inline={false}>
             {searchHit.title}
           </TextLink>
-          {badge}
+          {rule && <RuleOriginBadge rule={rule} />}
         </Stack>
       }
       description={

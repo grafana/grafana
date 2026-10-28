@@ -2,7 +2,7 @@ import { render, screen } from 'test/test-utils';
 
 import { mockK8sAlertRule } from '../mocks/handlers';
 
-import { RuleBadge } from './RuleBadge';
+import { RuleOriginBadge } from './RuleOriginBadge';
 
 // PluginOriginBadge loads plugin settings async; stub it for badge-logic tests.
 jest.mock('../../plugins/PluginOriginBadge', () => ({
@@ -23,28 +23,28 @@ function makeRule(overrides: { labels?: Record<string, string>; annotations?: Re
   };
 }
 
-describe('RuleBadge', () => {
+describe('RuleOriginBadge', () => {
   it('renders the plugin badge when __grafana_origin starts with plugin/', () => {
-    render(<RuleBadge rule={makeRule({ labels: { __grafana_origin: 'plugin/grafana-ml-app' } })} />);
+    render(<RuleOriginBadge rule={makeRule({ labels: { __grafana_origin: 'plugin/grafana-ml-app' } })} />);
 
     expect(screen.getByTestId('plugin-badge')).toHaveTextContent('grafana-ml-app');
   });
 
   it('extracts the plugin ID after the plugin/ prefix', () => {
-    render(<RuleBadge rule={makeRule({ labels: { __grafana_origin: 'plugin/my-cool-plugin' } })} />);
+    render(<RuleOriginBadge rule={makeRule({ labels: { __grafana_origin: 'plugin/my-cool-plugin' } })} />);
 
     expect(screen.getByTestId('plugin-badge')).toHaveTextContent('my-cool-plugin');
   });
 
   it('renders the provisioning badge when provenance is set and no plugin origin', () => {
-    render(<RuleBadge rule={makeRule({ annotations: { 'grafana.com/provenance': 'terraform' } })} />);
+    render(<RuleOriginBadge rule={makeRule({ annotations: { 'grafana.com/provenance': 'terraform' } })} />);
 
     expect(screen.getByText('Provisioned')).toBeInTheDocument();
   });
 
   it('renders the plugin badge and not the provisioning badge when both apply', () => {
     render(
-      <RuleBadge
+      <RuleOriginBadge
         rule={makeRule({
           labels: { __grafana_origin: 'plugin/grafana-ml-app' },
           annotations: { 'grafana.com/provenance': 'terraform' },
@@ -57,12 +57,12 @@ describe('RuleBadge', () => {
   });
 
   it('renders nothing when neither plugin origin nor provenance is set', () => {
-    const { container } = render(<RuleBadge rule={makeRule({})} />);
+    const { container } = render(<RuleOriginBadge rule={makeRule({})} />);
     expect(container).toBeEmptyDOMElement();
   });
 
   it('renders nothing when __grafana_origin does not start with plugin/', () => {
-    render(<RuleBadge rule={makeRule({ labels: { __grafana_origin: 'terraform' } })} />);
+    render(<RuleOriginBadge rule={makeRule({ labels: { __grafana_origin: 'terraform' } })} />);
 
     expect(screen.queryByTestId('plugin-badge')).not.toBeInTheDocument();
     expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();

@@ -1,5 +1,6 @@
-import { type ReactNode, useId } from 'react';
+import { useId } from 'react';
 
+import { type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { Stack, TextLink } from '@grafana/ui';
 
 import { grafanaRulesNav } from '../../utils/navigation';
@@ -9,6 +10,7 @@ import { RuleDescription } from '../rule-row/RuleDescription';
 import { RuleInterval } from '../rule-row/RuleInterval';
 import { RuleLabels } from '../rule-row/RuleLabels';
 import { RuleListItem } from '../rule-row/RuleListItem';
+import { RuleOriginBadge } from '../rule-row/RuleOriginBadge';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 
 import { RuleRecordedMetric } from './RuleRecordedMetric';
@@ -18,12 +20,12 @@ interface RecordingRuleRowProps {
   searchHit: RecordingRuleSearchHit;
   /** Absent while the folder path loads or when its lookup failed. */
   folderPath?: string[];
-  /** Plugin or provisioning badge; absent while the full rule loads or when there is no badge. */
-  badge?: ReactNode;
+  /** Full rule resource; absent while loading or when the fetch failed. */
+  rule?: RecordingRule;
 }
 
 /** Presentation-only; missing health renders "unavailable", never recording. */
-export function RecordingRuleRow({ searchHit, folderPath, badge }: RecordingRuleRowProps) {
+export function RecordingRuleRow({ searchHit, folderPath, rule }: RecordingRuleRowProps) {
   const titleId = useId();
   const href = grafanaRulesNav.viewLink(searchHit.uid, { includeReturnTo: true });
   // The write target is already shown in RuleRecordedMetric; exclude it from the queried list.
@@ -38,7 +40,7 @@ export function RecordingRuleRow({ searchHit, folderPath, badge }: RecordingRule
           <TextLink id={titleId} href={href} color="primary" inline={false}>
             {searchHit.title}
           </TextLink>
-          {badge}
+          {rule && <RuleOriginBadge rule={rule} />}
         </Stack>
       }
       description={searchHit.lastError && <RuleDescription lastError={searchHit.lastError} />}

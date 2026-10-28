@@ -4,10 +4,11 @@ import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/ru
 
 import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
-import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
+import { K8sAnnotations } from '../../utils/k8s/constants';
+import { getAnnotation, isK8sEntityProvisioned } from '../../utils/k8s/utils';
 import { getRulePluginOrigin } from '../../utils/rules';
 
-interface RuleBadgeProps {
+interface RuleOriginBadgeProps {
   rule: Pick<AlertRule | RecordingRule, 'metadata' | 'spec'>;
 }
 
@@ -16,14 +17,13 @@ interface RuleBadgeProps {
  * otherwise the provisioning badge when the rule is provisioned, otherwise nothing.
  * Plugin badge takes priority.
  */
-export function RuleBadge({ rule }: RuleBadgeProps): ReactNode {
+export function RuleOriginBadge({ rule }: RuleOriginBadgeProps): ReactNode {
   const pluginOrigin = getRulePluginOrigin({ labels: rule.spec?.labels });
   if (pluginOrigin) {
     return <PluginOriginBadge pluginId={pluginOrigin.pluginId} size="sm" />;
   }
   if (isK8sEntityProvisioned(rule)) {
-    const provenance = rule.metadata?.annotations?.['grafana.com/provenance'];
-    return <ProvisioningBadge tooltip provenance={provenance} />;
+    return <ProvisioningBadge tooltip provenance={getAnnotation(rule, K8sAnnotations.Provenance)} />;
   }
   return null;
 }
