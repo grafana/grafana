@@ -4,17 +4,8 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import {
-  Alert,
-  Button,
-  DeleteButton,
-  LinkButton,
-  Stack,
-  Tab,
-  TabContent,
-  TabsBar,
-  CodeMirrorEditor,
-} from '@grafana/ui';
+import { Alert, Button, DeleteButton, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import {
   type ResourceWrapper,
   useDeleteRepositoryFilesWithPathMutation,

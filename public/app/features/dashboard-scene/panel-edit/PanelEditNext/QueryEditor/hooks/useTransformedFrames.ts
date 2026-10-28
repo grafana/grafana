@@ -52,7 +52,7 @@ const reportedUnresolvable = new WeakSet<DataTransformerConfig>();
  * Custom operators are skipped, matching the pipeline: their options are captured in a closure, so
  * there is nothing here to resolve.
  */
-function interpolateConfigs(configs: TransformationConfigs): TransformationConfigs {
+export function interpolateConfigs<T extends TransformationConfigs[number]>(configs: T[]): T[] {
   return configs.map((config) => {
     if (!isInterpolatable(config)) {
       return config;

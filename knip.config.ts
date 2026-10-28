@@ -28,7 +28,7 @@ const nonProductionFiles = [
 
 const defaultProject = ['**/*.{js,mjs,cjs,jsx,ts,tsx,mts,cts,mdx}!', ...nonProductionFiles];
 
-const externalisedDatasources = ['azuremonitor', 'cloudwatch', 'grafana-testdata-datasource', 'graphite'];
+const externalisedDatasources = ['azuremonitor', 'grafana-testdata-datasource', 'graphite'];
 
 const config: KnipConfig = {
   compilers: {
@@ -52,12 +52,9 @@ const config: KnipConfig = {
     // vendored temporarily
     'packages/grafana-data/src/datetime/easytz.js',
     'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
-    // TODO: Remove once Rspack replaces Webpack.
-    'public/app/core/utils/CorsWorker.rspack.ts',
-    'public/app/core/utils/CorsSharedWorker.rspack.ts',
   ],
-  // nx and webpack are devDependencies run by production scripts (e.g. `start`), so --production flags them as unlisted
-  ignoreBinaries: ['jq', 'lerna', 'make', 'nx', 'shellcheck', 'webpack'],
+  // nx and rspack are devDependencies run by production scripts (e.g. `start`), so --production flags them as unlisted
+  ignoreBinaries: ['jq', 'lerna', 'make', 'nx', 'rspack', 'shellcheck'],
   tags: ['-lintignore'],
   workspaces: {
     '.': {
@@ -81,6 +78,9 @@ const config: KnipConfig = {
         // react-router-dom-v5-compat wins the hoist). Remove both when core swaps to react-router 6.
         'react-router',
         '@types/react-router',
+
+        // not imported; pinned so pnpm resolves debug's optional peer once instead of duplicating emotion per workspace
+        'supports-color',
       ],
       project: [
         'public/app/**!',
@@ -124,14 +124,8 @@ const config: KnipConfig = {
         // custom jest config for code coverage
         'jest.config.codeowner.js',
       ],
-      webpack: {
-        config: ['scripts/webpack/webpack.dev.ts', 'scripts/webpack/webpack.prod.ts'],
-      },
       rspack: {
         config: ['scripts/rspack/rspack.dev.ts', 'scripts/rspack/rspack.prod.ts'],
-      },
-      postcss: {
-        config: 'scripts/webpack/postcss.config.js',
       },
       playwright: {
         config: [
@@ -147,7 +141,7 @@ const config: KnipConfig = {
       entry: [...defaultEntries, 'module.{ts,tsx,js}!'],
       project: defaultProject,
       // these are provided by grafana-plugin-configs
-      ignoreDependencies: ['@swc/jest'],
+      ignoreDependencies: ['@swc/jest', 'imports-loader', 'style-loader'],
       ignoreUnresolved: ['identity-obj-proxy'],
     },
     'e2e-playwright/test-plugins/*': {
@@ -186,6 +180,8 @@ const config: KnipConfig = {
       webpack: false,
       // dev tooling only, so nothing is part of production
       project: ['**/*.{js,ts}'],
+      // knip's rspack plugin calls the config with (env, argv), and argv lands in `pluginDir`
+      rspack: false,
       ignoreDependencies: ['.*'],
     },
     'packages/grafana-plugin-compat': {

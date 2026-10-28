@@ -39,7 +39,6 @@ type BleveIndexMetrics struct {
 	IndexDiskCleanupRuns        *prometheus.CounterVec
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 
-	SearchCapabilityViolations      *prometheus.CounterVec
 	SearchResultFormats             *prometheus.CounterVec
 	SearchServicePermissionFailures *prometheus.CounterVec
 
@@ -197,7 +196,7 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		IndexSnapshotBuildCoordinations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_snapshot_build_coordinations_total",
 			Help: "Number of snapshot build coordination outcomes, by flow and outcome.",
-		}, []string{"flow", "outcome"}), // flow: cold_start, rebuild. outcome: acquired_lock, downloaded_after_wait, wait_timed_out, lock_error, context_canceled
+		}, []string{"flow", "outcome"}), // flow: cold_start, rebuild. outcome: acquired_lock, downloaded_after_wait, lock_held, lock_error, context_canceled
 		IndexSnapshotNamespaceCleanups: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_snapshot_namespace_cleanups_total",
 			Help: "Number of namespace-level remote index snapshot cleanup attempts, by outcome.",
@@ -234,13 +233,9 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_build_indexed_bytes_total",
 			Help: "Bytes the index reports for the documents it was given. Compare with source bytes to see how much bigger or smaller search documents are.",
 		}, []string{"path", "group", "resource"}),
-		SearchCapabilityViolations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_index_server_search_capability_violations_total",
-			Help: "Number of search requests that used a field in a way its declaration does not allow. Counted whether or not the request was rejected.",
-		}, []string{"resource", "capability"}),
 		SearchServicePermissionFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_search_service_permission_failures_total",
-			Help: "Search preflight checks where the service token lacks a required direct or delegated permission, regardless of RBAC exemption. Filter exempt=\"false\" for rejected requests.",
+			Help: "Search preflight checks where the service token lacks a required direct or delegated permission, regardless of RBAC exemption. With exempt=\"false\", a search of one type was rejected, and a global search left the type out.",
 		}, []string{"group", "resource", "verb", "mode", "exempt"}),
 		SearchResultFormats: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_search_result_format_total",
@@ -281,6 +276,7 @@ func (m *BleveIndexMetrics) InitSnapshotMetrics() {
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "acquired_lock").Add(0)
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "downloaded_after_wait").Add(0)
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "wait_timed_out").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "lock_held").Add(0)
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "lock_error").Add(0)
 		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "context_canceled").Add(0)
 	}

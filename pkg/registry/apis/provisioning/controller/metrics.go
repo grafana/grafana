@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -110,6 +111,17 @@ func classifyHealthCheckErrorCause(err error) string {
 	if err == nil {
 		// Successful check executions have no error cause.
 		return ""
+	}
+	return classifyTokenErrorCause(err)
+}
+
+// classifyDeletionErrorCause extends the shared classification with blockers
+// only the delete path produces: unmanaged resources left in a repository
+// folder must be moved or removed by the user before deletion can finish.
+func classifyDeletionErrorCause(err error) string {
+	var folderErr *nonEmptyFolderError
+	if errors.As(err, &folderErr) {
+		return reconcileCauseUser
 	}
 	return classifyTokenErrorCause(err)
 }

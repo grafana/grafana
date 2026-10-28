@@ -15,10 +15,11 @@ import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { setStarred, updateDashboardName } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AnnoKeyFolder, type Resource, type TableResponse } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, type Resource } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
+import { clearDashboardsPageCache } from 'app/features/dashboard-scene/utils/cache';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { TEAM_FOLDERS_UID } from 'app/features/search/constants';
 import { dispatch, getState } from 'app/store/store';
@@ -31,7 +32,6 @@ import {
   type FolderListItemDTO,
 } from 'app/types/folders';
 
-import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
 import { invalidateVariablesAfterFolderDelete } from '../../variables-management/cache';
 import { refetchChildren, refreshParents } from '../state/actions';
@@ -404,7 +404,6 @@ export const browseDashboardsAPI = createApi({
     deleteDashboards: builder.mutation<void, DeleteDashboardsArgs>({
       invalidatesTags: invalidateFolderListOnSuccess,
       queryFn: async ({ dashboardUIDs }) => {
-        const pageStateManager = getDashboardScenePageStateManager();
         let deletedCount = 0;
         const deletedDashboardUIDs: string[] = [];
         // Delete all the dashboards sequentially
@@ -433,11 +432,8 @@ export const browseDashboardsAPI = createApi({
           }
         } finally {
           if (deletedCount > 0) {
-            pageStateManager.clearDashboardCache();
             deletedDashboardsCache.clear();
-            for (const uid of deletedDashboardUIDs) {
-              pageStateManager.removeSceneCache(uid);
-            }
+            clearDashboardsPageCache(deletedDashboardUIDs);
 
             // Show notification with button to Recently Deleted
             const title =
@@ -540,21 +536,6 @@ export const browseDashboardsAPI = createApi({
             dispatch(updateDashboardName({ id: data.uid, title, url }));
           }
         });
-      },
-    }),
-
-    // RTK wrapper for the dashboard API
-    listDeletedDashboards: builder.query<TableResponse, void>({
-      providesTags: ['getFolder'],
-      queryFn: async () => {
-        try {
-          const api = await getDashboardAPI();
-          const response = await api.listDeletedDashboards({});
-
-          return { data: response };
-        } catch (error) {
-          return handleRequestError(error);
-        }
       },
     }),
 

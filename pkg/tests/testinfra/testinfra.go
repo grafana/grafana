@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 
@@ -197,6 +198,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
 			env.Cfg.Logger, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, nil, nil, grpcService)
 		require.NoError(t, err)
+		grpcService.Health.Register(storage, resourcepb.ResourceStore_ServiceDesc.ServiceName)
 		err = grpcService.StartAsync(ctx)
 		require.NoError(t, err)
 		err = grpcService.AwaitRunning(ctx)
@@ -280,33 +282,7 @@ func CreateGrafDirShared(t *testing.T, opts GrafanaOpts) (string, string) {
 func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, string) {
 	t.Helper()
 
-	// Search upwards in directory tree for project root
-	var rootDir string
-	found := false
-	for range 20 {
-		rootDir = filepath.Join(rootDir, "..")
-
-		dir, err := filepath.Abs(rootDir)
-		require.NoError(t, err)
-
-		// When running within an enterprise test, we need to move to the grafana directory
-		if strings.HasSuffix(dir, "grafana-enterprise") {
-			rootDir = filepath.Join(rootDir, "..", "grafana")
-			dir, err = filepath.Abs(rootDir)
-			require.NoError(t, err)
-		}
-
-		exists, err := fs.Exists(filepath.Join(dir, "public", "views"))
-		require.NoError(t, err)
-
-		if exists {
-			rootDir = dir
-			found = true
-			break
-		}
-	}
-
-	require.True(t, found, "Couldn't detect project root directory")
+	rootDir := testutil.GrafanaRootDir(t)
 
 	cfgDir := filepath.Join(tmpDir, "conf")
 	err := os.MkdirAll(cfgDir, 0o750)

@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -33,7 +34,7 @@ var gvr = schema.GroupVersionResource{
 }
 
 // Spelled out, so a test cannot pass comparing the projection against itself.
-const listKind = "PartialObjectMetadataList"
+const listKind = storagev0.KindListKeyResponse
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
@@ -130,6 +131,14 @@ func servedSpecPaths(t *testing.T, helper *apis.K8sTestHelper) map[string]any {
 	return paths
 }
 
+func dig(v any, keys ...string) any {
+	for _, k := range keys {
+		m, _ := v.(map[string]any)
+		v = m[k]
+	}
+	return v
+}
+
 // Through the real apiserver: routing, the authorizer restatement, the namespace
 // off the path, and the projection. The handler unit tests see none of those.
 func TestIntegrationListKeys_ServesTheProjection(t *testing.T) {
@@ -145,13 +154,13 @@ func TestIntegrationListKeys_ServesTheProjection(t *testing.T) {
 		Path:   namespacedPath(namespace),
 		User:   helper.Org1.Admin,
 		Body:   []byte(`{}`),
-	}, &metav1.PartialObjectMetadataList{})
+	}, &storagev0.ListKeyResponse{})
 
 	require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
 	require.NotNil(t, rsp.Result)
 
 	assert.Equal(t, listKind, rsp.Result.Kind)
-	assert.Equal(t, "meta.k8s.io/v1", rsp.Result.APIVersion)
+	assert.Equal(t, storagev0.APIVERSION, rsp.Result.APIVersion)
 	assert.NotEmpty(t, rsp.Result.ResourceVersion, "the snapshot version is what callers arbitrate races with")
 
 	got := map[string]string{}
@@ -254,6 +263,11 @@ func TestIntegrationListKeys_IsAdvertisedInTheSpec(t *testing.T) {
 			require.True(t, ok)
 			assert.Contains(t, ops, "post", "%s must be a POST", want)
 			assert.NotContains(t, ops, "get", "%s must not offer GET", want)
+
+			// Swagger UI pre-fills the body from the served example.
+			example, err := json.Marshal(dig(ops, "post", "requestBody", "content", "application/json", "example"))
+			require.NoError(t, err)
+			assert.JSONEq(t, `{"apiVersion":"storage.grafana.app/v0alpha1","kind":"ListKeyRequest","limit":100}`, string(example))
 		})
 	}
 }
@@ -297,7 +311,7 @@ func TestIntegrationListKeys_ClusterWideSpansNamespaces(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 
-	var list metav1.PartialObjectMetadataList
+	var list storagev0.ListKeyResponse
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &list))
 	assert.Equal(t, listKind, list.Kind)
 

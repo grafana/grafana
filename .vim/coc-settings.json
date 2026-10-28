@@ -1,6 +1,4 @@
 {
-  "eslint.packageManager": "yarn",
-  "eslint.nodePath": ".yarn/sdks",
-  "workspace.workspaceFolderCheckCwd": false,
-  "tsserver.tsdk": ".yarn/sdks/typescript/lib"
+  "eslint.packageManager": "pnpm",
+  "workspace.workspaceFolderCheckCwd": false
 }

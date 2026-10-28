@@ -60,6 +60,13 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     };
   }
 
+  function enterEditingForShortcut(): boolean {
+    if (canManuallyEditDashboard(scene.state)) {
+      return true;
+    }
+    return isViewingDashboard(scene.state) && scene.setDashboardMode('edit', 'shortcut');
+  }
+
   // View panel
   keybindings.addBinding({
     key: 'v',
@@ -227,9 +234,6 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'mod+o',
     onTrigger: () => {
-      if (!canManuallyEditDashboard(scene.state)) {
-        return;
-      }
       const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
       if (cursorSync instanceof behaviors.CursorSync) {
         const currentSync = cursorSync.state.sync;
@@ -246,10 +250,8 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'e',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-        if (!canManuallyEditDashboard(scene.state)) {
-          if (!isViewingDashboard(scene.state) || !scene.setDashboardMode('edit', 'shortcut')) {
-            return;
-          }
+        if (!enterEditingForShortcut()) {
+          return;
         }
         const panelId = getPanelIdForVizPanel(vizPanel);
         DashboardInteractions.panelActionClicked('edit', panelId, 'keyboard', vizPanel.state.pluginId);
@@ -274,14 +276,23 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     // Dashboard settings
     keybindings.addBinding({
       key: 'd s',
-      onTrigger: scene.onOpenSettings,
+      onTrigger: () => {
+        if (enterEditingForShortcut()) {
+          scene.onOpenSettings();
+        }
+      },
     });
 
     // Open save drawer
     if (canSave) {
       keybindings.addBinding({
         key: 'mod+s',
-        onTrigger: () => scene.openSaveDrawer({}),
+        onTrigger: () => {
+          // Viewing keeps the edit session open (isEditing stays true), so gate on the mode as well
+          if (!isViewingDashboard(scene.state)) {
+            scene.openSaveDrawer({});
+          }
+        },
       });
     }
 

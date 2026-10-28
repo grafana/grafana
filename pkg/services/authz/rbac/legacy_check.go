@@ -2,14 +2,17 @@ package rbac
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 // LegacyCheck is a deprecated compatibility RPC used by ST callers during the
@@ -17,127 +20,218 @@ import (
 // Evaluation failures are returned as deny-with-error to avoid fail-open.
 func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
 	// TODO: Complete in subsequent PRs:
-	//   - ANY/ALL execution: multi-action permission loading and empty-permission denial.
-	//   - Scope resolution: inheritance, MutateScopes after denial, errors and WithoutResolvers.
-	//   - Resolver caching: tenant isolation, bypass and invalidation.
-	//   - Permissions: NoOrgID globals, contextual team grants, SharedWithMe and empty-permission denial.
+	//   - Standalone scope resolution: replace embedded service dependencies with namespace-aware providers.
+	//			MT AuthZ: https://github.com/grafana/identity-access-team/issues/2436
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
+
+	if err := s.validateLegacyScopeNamespace(ns); err != nil {
+		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
+	}
+
 	userUID, idType, err := s.validateSubject(ctx, req.GetSubject())
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
+
 	ctx = request.WithNamespace(ctx, ns.Value)
-
-	evaluator, err := convertLegacyExpression(req.GetExpression())
-	if err != nil {
-		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
-	}
-	permission := req.GetExpression().GetPermission()
-	if permission == nil {
-		// Composite evaluation also needs complete permission loading and the
-		// AccessControl empty-permission guard before it can be enabled.
-		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: "composite legacy expressions are not supported yet"}, nil
-	}
-
-	scopes, err := s.getLegacyIdentityScopes(ctx, ns, idType, userUID, permission.GetAction(), req.GetSkipCache())
+	evaluator, actions, err := convertLegacyExpression(req.GetExpression())
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
 
-	permissions := make(map[string][]string, 1)
-	if len(scopes) > 0 {
-		permissions[permission.GetAction()] = scopes
+	scopeRequest := legacyScopeRequest{
+		namespace:    ns,
+		identityType: idType,
+		userUID:      userUID,
+		skipCache:    req.GetSkipCache(),
 	}
 
-	allowed := evaluator.Evaluate(permissions)
+	var args legacyEvaluationArgs
+	if global := req.GetGlobalEvaluation(); global != nil {
+		args, err = s.prepareLegacyGlobalEvaluation(ctx, global, actions, scopeRequest)
+	} else {
+		args, err = s.prepareLegacyOrgEvaluation(ctx, actions, scopeRequest)
+	}
+
+	if err != nil {
+		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
+	}
+
+	if !args.hasAnyPermissions {
+		return &authzextv1.LegacyCheckResponse{Allowed: false}, nil
+	}
+
+	allowed, err := s.evaluateLegacyWithResolvers(
+		ctx,
+		evaluator,
+		args.permissions,
+		args.hasAnyPermissions,
+		req.GetSkipScopeResolution(),
+		args.scopeRequest,
+	)
+	if err != nil {
+		code := authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_UNSPECIFIED
+		if errors.Is(err, accesscontrol.ErrScopeResourceNotFound) {
+			code = authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND
+		}
+		return &authzextv1.LegacyCheckResponse{
+			Allowed:   false,
+			Error:     err.Error(),
+			ErrorCode: code,
+		}, nil
+	}
 
 	return &authzextv1.LegacyCheckResponse{Allowed: allowed}, nil
 }
 
+// getLegacyIdentityScopes loads one action for resolver callbacks that perform
+// further checks as the subject. Composite checks use getLegacyIdentityPermissions.
 func (s *Service) getLegacyIdentityScopes(
 	ctx context.Context,
 	ns types.NamespaceInfo,
 	idType types.IdentityType,
-	userUID,
+	userUID string,
 	action string,
 	skipCache bool,
 ) ([]string, error) {
-	var actionSets []string
-	if s.actionResolver != nil {
-		actionSets = s.actionResolver.ResolveAction(action)
+	permissions, err := s.getLegacyIdentityPermissions(
+		ctx,
+		ns,
+		idType,
+		userUID,
+		[]string{action},
+		skipCache,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("could not get legacy identity permissions: %w", err)
 	}
 
-	query := store.PermissionsQuery{Action: action, ActionSets: actionSets}
+	return permissions[action], nil
+}
+
+// getLegacyIdentityPermissions loads only the requested actions, including
+// implicit grants that are not stored in the permission store.
+func (s *Service) getLegacyIdentityPermissions(
+	ctx context.Context,
+	ns types.NamespaceInfo,
+	idType types.IdentityType,
+	userUID string,
+	actions []string,
+	skipCache bool,
+) (map[string][]string, error) {
+	permissions := make(map[string][]string, len(actions))
+	query := store.PermissionsQuery{}
 	switch idType {
 	case types.TypeUser, types.TypeServiceAccount:
 		identifiers, err := s.getUserIdentifiers(ctx, ns, userUID, skipCache)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not get user identifiers: %w", err)
 		}
 
-		query, err = s.getLegacyUserPermissionQuery(ctx, ns, identifiers, action, actionSets, skipCache)
+		query, err = s.getLegacyUserPermissionQuery(ctx, ns, identifiers, skipCache)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("could not get legacy user permission query: %w", err)
 		}
 	case types.TypeAnonymous:
 		query.Role = s.settings.AnonOrgRole
 	case types.TypeRenderService:
-		scopes, err := s.getRendererPermissions(ctx, action)
-		if err != nil {
-			return nil, err
+		for _, action := range actions {
+			scopes, err := s.getRendererPermissions(ctx, action)
+			if err != nil {
+				return nil, fmt.Errorf("could not get renderer permissions: %w", err)
+			}
+			if scopes["*"] {
+				permissions[action] = []string{"*"}
+			}
 		}
-
-		if scopes["*"] {
-			return []string{"*"}, nil
-		}
-
-		return nil, nil
+		return permissions, nil
 	default:
 		return nil, fmt.Errorf("unsupported identity type: %s", idType)
 	}
 
-	permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, query)
-	if err != nil {
-		return nil, err
+	for _, action := range actions {
+		actionQuery := query
+		actionQuery.Action = action
+		if s.actionResolver != nil {
+			actionQuery.ActionSets = s.actionResolver.ResolveAction(action)
+		}
+
+		grants, err := s.permissionStore.GetUserPermissions(ctx, ns, actionQuery)
+		if err != nil {
+			return nil, fmt.Errorf("could not get user permissions: %w", err)
+		}
+		// Modern Kubernetes checks normalize scopes. Legacy evaluators need
+		// the original strings, including empty scopes on action-only grants.
+		for _, grant := range grants {
+			permissions[action] = append(permissions[action], grant.Scope)
+		}
+
+		if action == folder.ActionFoldersRead {
+			sharedWithMeScope := folder.ScopeFoldersProvider.GetResourceScopeUID(folder.SharedWithMeFolderUID)
+			permissions[action] = append(permissions[action], sharedWithMeScope)
+		}
 	}
 
-	// getIdentityPermissions normalizes wildcards and resolves granted scopes for
-	// Kubernetes checks. Legacy evaluators require the original scope strings.
-	scopes := make([]string, 0, len(permissions))
-	for _, permission := range permissions {
-		scopes = append(scopes, permission.Scope)
-	}
-
-	return scopes, nil
+	return permissions, nil
 }
 
 func (s *Service) getLegacyUserPermissionQuery(
 	ctx context.Context,
 	ns types.NamespaceInfo,
 	userIdentifiers *store.UserIdentifiers,
-	action string,
-	actionSets []string,
 	skipCache bool,
 ) (store.PermissionsQuery, error) {
 	basicRole, err := s.getUserBasicRoleWithCache(ctx, ns, userIdentifiers, skipCache)
 	if err != nil {
-		return store.PermissionsQuery{}, err
+		return store.PermissionsQuery{}, fmt.Errorf("could not get user basic role: %w", err)
 	}
 
 	teamIDs, err := s.getUserTeamsWithCache(ctx, ns, userIdentifiers, skipCache)
 	if err != nil {
-		return store.PermissionsQuery{}, err
+		return store.PermissionsQuery{}, fmt.Errorf("could not get user teams: %w", err)
 	}
 
 	return store.PermissionsQuery{
 		UserID:        userIdentifiers.ID,
-		Action:        action,
-		ActionSets:    actionSets,
 		TeamIDs:       teamIDs,
 		Role:          basicRole.Role,
 		IsServerAdmin: basicRole.IsAdmin,
+	}, nil
+}
+
+type legacyEvaluationArgs struct {
+	permissions       map[string][]string
+	hasAnyPermissions bool
+	scopeRequest      legacyScopeRequest
+}
+
+func (s *Service) prepareLegacyOrgEvaluation(
+	ctx context.Context,
+	actions []string,
+	scopeRequest legacyScopeRequest,
+) (legacyEvaluationArgs, error) {
+	permissions, err := s.getLegacyIdentityPermissions(
+		ctx,
+		scopeRequest.namespace,
+		scopeRequest.identityType,
+		scopeRequest.userUID,
+		actions,
+		scopeRequest.skipCache,
+	)
+	if err != nil {
+		return legacyEvaluationArgs{}, err
+	}
+
+	// The legacy loader adds SharedWithMe for users, service accounts and anonymous
+	// identities even without stored grants (legacypermissions/loader.go). Renderers
+	// have fixed grants. Their full permission sets are nonempty even when this
+	// filtered result is empty.
+	return legacyEvaluationArgs{
+		permissions:       permissions,
+		hasAnyPermissions: true,
+		scopeRequest:      scopeRequest,
 	}, nil
 }

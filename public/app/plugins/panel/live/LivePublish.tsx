@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { type LiveChannelAddress, isValidLiveChannelAddress } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
-import { Button, CodeMirrorEditor } from '@grafana/ui';
+import { Button } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import { MessagePublishMode } from './types';
 

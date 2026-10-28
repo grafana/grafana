@@ -62,19 +62,20 @@ export function mergeStored(state: HistoryState, snapshot: HistorySnapshot): His
 
 /**
  * Records a visit to `page` with `search` as the state to come back to. Query churn refreshes the search and
- * moves the row to the top. A rewrite (a REPLACE that corrects the URL of the page the user is on) refreshes
- * that page's row but never adds one, so the `/` → home dashboard rewrite does not list the home dashboard.
- * Returns `state` itself when nothing is recorded.
+ * moves the row to the top. With `refreshOnly` the visit refreshes the page's row but never adds one: a rewrite
+ * (a REPLACE that corrects the URL of the page the user is on) must not list the home dashboard the `/` rewrite
+ * lands on, and a page with nothing to resume is not worth a row, but a row it already has must say where the
+ * user left it. Returns `state` itself when nothing is recorded.
  */
 export function recordVisit(
   state: HistoryState,
   page: PageIdentity,
   search: string,
   wallClock: number,
-  isRewrite: boolean
+  refreshOnly: boolean
 ): HistoryState {
   const existing = findRow(state, page);
-  if (isRewrite && !existing) {
+  if (refreshOnly && !existing) {
     return state;
   }
   // The title is kept until the page sets its nav again, in case the user leaves before it does.

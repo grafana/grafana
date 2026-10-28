@@ -11,7 +11,7 @@ import { TimeAgoCell } from '../TimeAgoCell';
 import { ctaClicked } from '../analytics/main';
 
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
-import { SummaryCard, SummaryCardPrefix } from './SummaryCard';
+import { AllClearGrot, SummaryCard, SummaryCardPrefix } from './SummaryCard';
 import { type FilterScope } from './filterSelection';
 import { severityLevelColor } from './severity';
 import { type IncidentsData } from './useIncidents';
@@ -21,12 +21,12 @@ function emptyMessage(filterScope: FilterScope): string {
   if (filterScope.kind === 'label') {
     // Value only: the dropdown headers show field names, and the selection only holds the slug.
     // Key and param predate the widening past `team`; the copy fits any field value, so they stay.
-    return t('home.incidents-card.empty-selected-team', 'No active incidents for {{team}}.', {
+    return t('home.incidents-card.empty-selected-team', 'All quiet! No active incidents for {{team}}.', {
       team: filterScope.label.value,
       interpolation: { escapeValue: false },
     });
   }
-  return t('home.incidents-card.empty', 'No active incidents.');
+  return t('home.incidents-card.empty', 'All quiet! No active incidents.');
 }
 
 /** Render-only card body; data comes from useIncidents so callers control where the hook runs. */
@@ -54,6 +54,7 @@ export function IncidentsCard({
           : undefined
       }
       emptyMessage={emptyMessage(filterScope)}
+      emptyImage={<AllClearGrot />}
       items={displayed}
       getItemKey={(incident) => incident.incidentID}
       renderItem={(incident) => (
@@ -87,6 +88,7 @@ export function IncidentsCard({
         canDeclare ? (
           <LinkButton
             variant="primary"
+            size="sm"
             icon="fire"
             href={createBridgeURL(pluginId, '/incidents', { declare: 'new' })}
             onClick={() =>

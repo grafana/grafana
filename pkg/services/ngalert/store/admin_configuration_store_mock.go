@@ -3,6 +3,8 @@
 package store
 
 import (
+	context "context"
+
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -20,17 +22,17 @@ func (_m *AdminConfigurationStoreMock) EXPECT() *AdminConfigurationStoreMock_Exp
 	return &AdminConfigurationStoreMock_Expecter{mock: &_m.Mock}
 }
 
-// DeleteAdminConfiguration provides a mock function with given fields: orgID
-func (_m *AdminConfigurationStoreMock) DeleteAdminConfiguration(orgID int64) error {
-	ret := _m.Called(orgID)
+// DeleteAdminConfiguration provides a mock function with given fields: ctx, orgID
+func (_m *AdminConfigurationStoreMock) DeleteAdminConfiguration(ctx context.Context, orgID int64) error {
+	ret := _m.Called(ctx, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteAdminConfiguration")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(int64) error); ok {
-		r0 = rf(orgID)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) error); ok {
+		r0 = rf(ctx, orgID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -44,14 +46,15 @@ type AdminConfigurationStoreMock_DeleteAdminConfiguration_Call struct {
 }
 
 // DeleteAdminConfiguration is a helper method to define mock.On call
+//   - ctx context.Context
 //   - orgID int64
-func (_e *AdminConfigurationStoreMock_Expecter) DeleteAdminConfiguration(orgID interface{}) *AdminConfigurationStoreMock_DeleteAdminConfiguration_Call {
-	return &AdminConfigurationStoreMock_DeleteAdminConfiguration_Call{Call: _e.mock.On("DeleteAdminConfiguration", orgID)}
+func (_e *AdminConfigurationStoreMock_Expecter) DeleteAdminConfiguration(ctx interface{}, orgID interface{}) *AdminConfigurationStoreMock_DeleteAdminConfiguration_Call {
+	return &AdminConfigurationStoreMock_DeleteAdminConfiguration_Call{Call: _e.mock.On("DeleteAdminConfiguration", ctx, orgID)}
 }
 
-func (_c *AdminConfigurationStoreMock_DeleteAdminConfiguration_Call) Run(run func(orgID int64)) *AdminConfigurationStoreMock_DeleteAdminConfiguration_Call {
+func (_c *AdminConfigurationStoreMock_DeleteAdminConfiguration_Call) Run(run func(ctx context.Context, orgID int64)) *AdminConfigurationStoreMock_DeleteAdminConfiguration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(int64))
+		run(args[0].(context.Context), args[1].(int64))
 	})
 	return _c
 }
@@ -61,14 +64,14 @@ func (_c *AdminConfigurationStoreMock_DeleteAdminConfiguration_Call) Return(_a0 
 	return _c
 }
 
-func (_c *AdminConfigurationStoreMock_DeleteAdminConfiguration_Call) RunAndReturn(run func(int64) error) *AdminConfigurationStoreMock_DeleteAdminConfiguration_Call {
+func (_c *AdminConfigurationStoreMock_DeleteAdminConfiguration_Call) RunAndReturn(run func(context.Context, int64) error) *AdminConfigurationStoreMock_DeleteAdminConfiguration_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetAdminConfiguration provides a mock function with given fields: orgID
-func (_m *AdminConfigurationStoreMock) GetAdminConfiguration(orgID int64) (*models.AdminConfiguration, error) {
-	ret := _m.Called(orgID)
+// GetAdminConfiguration provides a mock function with given fields: ctx, orgID
+func (_m *AdminConfigurationStoreMock) GetAdminConfiguration(ctx context.Context, orgID int64) (*models.AdminConfiguration, error) {
+	ret := _m.Called(ctx, orgID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAdminConfiguration")
@@ -76,19 +79,19 @@ func (_m *AdminConfigurationStoreMock) GetAdminConfiguration(orgID int64) (*mode
 
 	var r0 *models.AdminConfiguration
 	var r1 error
-	if rf, ok := ret.Get(0).(func(int64) (*models.AdminConfiguration, error)); ok {
-		return rf(orgID)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (*models.AdminConfiguration, error)); ok {
+		return rf(ctx, orgID)
 	}
-	if rf, ok := ret.Get(0).(func(int64) *models.AdminConfiguration); ok {
-		r0 = rf(orgID)
+	if rf, ok := ret.Get(0).(func(context.Context, int64) *models.AdminConfiguration); ok {
+		r0 = rf(ctx, orgID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.AdminConfiguration)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(int64) error); ok {
-		r1 = rf(orgID)
+	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
+		r1 = rf(ctx, orgID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,14 +105,15 @@ type AdminConfigurationStoreMock_GetAdminConfiguration_Call struct {
 }
 
 // GetAdminConfiguration is a helper method to define mock.On call
+//   - ctx context.Context
 //   - orgID int64
-func (_e *AdminConfigurationStoreMock_Expecter) GetAdminConfiguration(orgID interface{}) *AdminConfigurationStoreMock_GetAdminConfiguration_Call {
-	return &AdminConfigurationStoreMock_GetAdminConfiguration_Call{Call: _e.mock.On("GetAdminConfiguration", orgID)}
+func (_e *AdminConfigurationStoreMock_Expecter) GetAdminConfiguration(ctx interface{}, orgID interface{}) *AdminConfigurationStoreMock_GetAdminConfiguration_Call {
+	return &AdminConfigurationStoreMock_GetAdminConfiguration_Call{Call: _e.mock.On("GetAdminConfiguration", ctx, orgID)}
 }
 
-func (_c *AdminConfigurationStoreMock_GetAdminConfiguration_Call) Run(run func(orgID int64)) *AdminConfigurationStoreMock_GetAdminConfiguration_Call {
+func (_c *AdminConfigurationStoreMock_GetAdminConfiguration_Call) Run(run func(ctx context.Context, orgID int64)) *AdminConfigurationStoreMock_GetAdminConfiguration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(int64))
+		run(args[0].(context.Context), args[1].(int64))
 	})
 	return _c
 }
@@ -119,14 +123,14 @@ func (_c *AdminConfigurationStoreMock_GetAdminConfiguration_Call) Return(_a0 *mo
 	return _c
 }
 
-func (_c *AdminConfigurationStoreMock_GetAdminConfiguration_Call) RunAndReturn(run func(int64) (*models.AdminConfiguration, error)) *AdminConfigurationStoreMock_GetAdminConfiguration_Call {
+func (_c *AdminConfigurationStoreMock_GetAdminConfiguration_Call) RunAndReturn(run func(context.Context, int64) (*models.AdminConfiguration, error)) *AdminConfigurationStoreMock_GetAdminConfiguration_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetAdminConfigurations provides a mock function with no fields
-func (_m *AdminConfigurationStoreMock) GetAdminConfigurations() ([]*models.AdminConfiguration, error) {
-	ret := _m.Called()
+// GetAdminConfigurations provides a mock function with given fields: ctx
+func (_m *AdminConfigurationStoreMock) GetAdminConfigurations(ctx context.Context) ([]*models.AdminConfiguration, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAdminConfigurations")
@@ -134,19 +138,19 @@ func (_m *AdminConfigurationStoreMock) GetAdminConfigurations() ([]*models.Admin
 
 	var r0 []*models.AdminConfiguration
 	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]*models.AdminConfiguration, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(context.Context) ([]*models.AdminConfiguration, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func() []*models.AdminConfiguration); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) []*models.AdminConfiguration); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*models.AdminConfiguration)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -160,13 +164,14 @@ type AdminConfigurationStoreMock_GetAdminConfigurations_Call struct {
 }
 
 // GetAdminConfigurations is a helper method to define mock.On call
-func (_e *AdminConfigurationStoreMock_Expecter) GetAdminConfigurations() *AdminConfigurationStoreMock_GetAdminConfigurations_Call {
-	return &AdminConfigurationStoreMock_GetAdminConfigurations_Call{Call: _e.mock.On("GetAdminConfigurations")}
+//   - ctx context.Context
+func (_e *AdminConfigurationStoreMock_Expecter) GetAdminConfigurations(ctx interface{}) *AdminConfigurationStoreMock_GetAdminConfigurations_Call {
+	return &AdminConfigurationStoreMock_GetAdminConfigurations_Call{Call: _e.mock.On("GetAdminConfigurations", ctx)}
 }
 
-func (_c *AdminConfigurationStoreMock_GetAdminConfigurations_Call) Run(run func()) *AdminConfigurationStoreMock_GetAdminConfigurations_Call {
+func (_c *AdminConfigurationStoreMock_GetAdminConfigurations_Call) Run(run func(ctx context.Context)) *AdminConfigurationStoreMock_GetAdminConfigurations_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run()
+		run(args[0].(context.Context))
 	})
 	return _c
 }
@@ -176,22 +181,22 @@ func (_c *AdminConfigurationStoreMock_GetAdminConfigurations_Call) Return(_a0 []
 	return _c
 }
 
-func (_c *AdminConfigurationStoreMock_GetAdminConfigurations_Call) RunAndReturn(run func() ([]*models.AdminConfiguration, error)) *AdminConfigurationStoreMock_GetAdminConfigurations_Call {
+func (_c *AdminConfigurationStoreMock_GetAdminConfigurations_Call) RunAndReturn(run func(context.Context) ([]*models.AdminConfiguration, error)) *AdminConfigurationStoreMock_GetAdminConfigurations_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateAdminConfiguration provides a mock function with given fields: _a0
-func (_m *AdminConfigurationStoreMock) UpdateAdminConfiguration(_a0 UpdateAdminConfigurationCmd) error {
-	ret := _m.Called(_a0)
+// UpdateAdminConfiguration provides a mock function with given fields: ctx, cmd
+func (_m *AdminConfigurationStoreMock) UpdateAdminConfiguration(ctx context.Context, cmd UpdateAdminConfigurationCmd) error {
+	ret := _m.Called(ctx, cmd)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateAdminConfiguration")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(UpdateAdminConfigurationCmd) error); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(context.Context, UpdateAdminConfigurationCmd) error); ok {
+		r0 = rf(ctx, cmd)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -205,14 +210,15 @@ type AdminConfigurationStoreMock_UpdateAdminConfiguration_Call struct {
 }
 
 // UpdateAdminConfiguration is a helper method to define mock.On call
-//   - _a0 UpdateAdminConfigurationCmd
-func (_e *AdminConfigurationStoreMock_Expecter) UpdateAdminConfiguration(_a0 interface{}) *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call {
-	return &AdminConfigurationStoreMock_UpdateAdminConfiguration_Call{Call: _e.mock.On("UpdateAdminConfiguration", _a0)}
+//   - ctx context.Context
+//   - cmd UpdateAdminConfigurationCmd
+func (_e *AdminConfigurationStoreMock_Expecter) UpdateAdminConfiguration(ctx interface{}, cmd interface{}) *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call {
+	return &AdminConfigurationStoreMock_UpdateAdminConfiguration_Call{Call: _e.mock.On("UpdateAdminConfiguration", ctx, cmd)}
 }
 
-func (_c *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call) Run(run func(_a0 UpdateAdminConfigurationCmd)) *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call {
+func (_c *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call) Run(run func(ctx context.Context, cmd UpdateAdminConfigurationCmd)) *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(UpdateAdminConfigurationCmd))
+		run(args[0].(context.Context), args[1].(UpdateAdminConfigurationCmd))
 	})
 	return _c
 }
@@ -222,7 +228,7 @@ func (_c *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call) Return(_a0 
 	return _c
 }
 
-func (_c *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call) RunAndReturn(run func(UpdateAdminConfigurationCmd) error) *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call {
+func (_c *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call) RunAndReturn(run func(context.Context, UpdateAdminConfigurationCmd) error) *AdminConfigurationStoreMock_UpdateAdminConfiguration_Call {
 	_c.Call.Return(run)
 	return _c
 }

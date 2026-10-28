@@ -119,7 +119,7 @@ describe('APPLY_SPEC during review', () => {
     setTestFlags({});
   });
 
-  it('keeps the rebuilt grid non-draggable until the user returns to Edit', async () => {
+  it('switches Viewing to Editing and makes the rebuilt grid draggable', async () => {
     const scene = buildScene(makeSpec());
     scene.onEnterEditMode();
     scene.setDashboardMode('view');
@@ -136,16 +136,11 @@ describe('APPLY_SPEC during review', () => {
 
       expect(result.success).toBe(true);
       expect((await readSpec(scene)).title).toBe('Replacement during review');
-      expect(scene.state.mode).toBe('agent');
-      expect(scene.state.sidebar.state.selectionContext.enabled).toBe(false);
+      expect(scene.state.mode).toBe('edit');
       const layout = scene.state.body;
       if (!(layout instanceof DefaultGridLayoutManager)) {
         throw new Error('Expected the replacement spec to use a grid layout');
       }
-      expect(layout.state.grid.state.isDraggable).toBe(false);
-
-      scene.openFullEditor();
-
       await waitFor(() => expect(layout.state.grid.state.isDraggable).toBe(true));
       expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
 
@@ -389,14 +384,6 @@ describe('APPLY_SPEC with a user-set transformation refId', () => {
 });
 
 describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
-  beforeEach(() => {
-    setTestFlags({ dashboardNewLayouts: false });
-  });
-
-  afterEach(() => {
-    setTestFlags({});
-  });
-
   // Regression: the rebuild swaps in a freshly-deserialized layout manager whose grid is not
   // draggable/resizable by default. Only the pre-rebuild body ever got `editModeChanged(true)`
   // (via entering edit mode), so panels stayed frozen in the new tree until the command also
@@ -410,8 +397,7 @@ describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
     expect(scene.state.isEditing).toBeFalsy();
 
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
-
-    expect(isDraggable(scene)).toBe(true);
+    await waitFor(() => expect(isDraggable(scene)).toBe(true));
   });
 
   it('when the scene was already in edit mode before applying the spec', async () => {
@@ -419,7 +405,6 @@ describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
     scene.onEnterEditMode();
 
     expect((await applySpec(scene, makeSpec())).success).toBe(true);
-
-    expect(isDraggable(scene)).toBe(true);
+    await waitFor(() => expect(isDraggable(scene)).toBe(true));
   });
 });

@@ -131,7 +131,7 @@ func TestGlobalSearchRoute_DescribesItsFieldsAndHasAValidExample(t *testing.T) {
 	h := NewHandler(client, nil, noop.NewTracerProvider().Tracer(""))
 	r := h.GlobalSearchRoute(nil)
 
-	for _, field := range []string{resource.SEARCH_FIELD_GROUP_RESOURCE, resource.SEARCH_FIELD_CREATED, resource.SEARCH_FIELD_UPDATED, resource.SEARCH_FIELD_FOLDER_TREE} {
+	for _, field := range []string{resource.SEARCH_FIELD_GROUP_RESOURCE, resource.SEARCH_FIELD_FOLDER_TREE} {
 		assert.Contains(t, r.Spec.Post.Description, "`"+field+"`")
 	}
 	for _, gr := range resource.GlobalSearchResourceTypes() {
@@ -146,7 +146,7 @@ func TestGlobalSearchRoute_DescribesItsFieldsAndHasAValidExample(t *testing.T) {
 
 	const pkg = "com.github.grafana.grafana.pkg.apis.search.v0alpha1."
 	assert.Contains(t, r.Schemas, pkg+"SearchQuery")
-	assert.Contains(t, r.Schemas, pkg+"SearchResults")
+	assert.Contains(t, r.Schemas, pkg+"GlobalSearchResults")
 	for name, schema := range r.Schemas {
 		for _, ref := range collectRefs(&schema) {
 			assert.Contains(t, r.Schemas, ref, "%s references %s, which is not published", name, ref)

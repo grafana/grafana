@@ -9,7 +9,7 @@ import {
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { locationService, setRunRequest } from '@grafana/runtime';
+import { getDataSourceInstanceSettings, locationService, setRunRequest } from '@grafana/runtime';
 import {
   type AdHocFiltersVariable,
   type MultiValueVariable,
@@ -51,6 +51,7 @@ const variableDatasource = {
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  getDataSourceInstanceSettings: jest.fn(async () => variableDatasource),
   getDataSourceSrv: () => ({
     get: async () => ({
       ...variableDatasource,
@@ -283,6 +284,25 @@ describe('applyDashboardSpec', () => {
     applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
     expect(scene.state.meta.libraryPanelRepeatUnresolved).toBe(undefined);
+  });
+
+  // Ad hoc variables look up their data source's multi-value operator support after the build (#133913), on
+  // the objects the build made; the swap installs clones of those.
+  it('resolves multi-value operator support on the ad hoc variables it swaps in', async () => {
+    jest.mocked(getDataSourceInstanceSettings).mockResolvedValue({
+      ...variableDatasource,
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- only the flag is read
+      meta: { ...variableDatasource.meta, multiValueFilterOperators: true } as never,
+    } as never);
+    const scene = buildScene(makeSpec('Old title'));
+    const spec = { ...makeSpec('New title'), variables: [adhocVariable('prod')] };
+
+    applyDashboardSpec({ scene, spec, description: 'Apply spec', scope: 'code-pane' });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(lookup<AdHocFiltersVariable>(scene, 'filters').state.supportsMultiValueOperators).toBe(true);
+    jest.mocked(getDataSourceInstanceSettings).mockImplementation(async () => variableDatasource as never);
   });
 
   it('applies the spec, and undo/redo toggle between the old and new scene', () => {
@@ -717,8 +737,16 @@ describe('applyDashboardSpec', () => {
     });
 
     describe('reading the previous spec off the dashboard', () => {
-      it('is skipped when the URL agrees with the spec the apply sets', async () => {
+      // Edit-period tracking serializes once per period to tell real manual changes from no-ops.
+      // Record one up front so the count below is only the URL-state read.
+      async function openWithEditRecorded() {
         const scene = await open(makeSyncedSpec(), 'var-namespace=a&var-service=$__all');
+        scene.recordEditMutation();
+        return scene;
+      }
+
+      it('is skipped when the URL agrees with the spec the apply sets', async () => {
+        const scene = await openWithEditRecorded();
         mockSerializeCount = 0;
 
         await apply(scene, makeSyncedSpec({ title: 'Renamed' }));
@@ -728,7 +756,7 @@ describe('applyDashboardSpec', () => {
       });
 
       it('happens once when the URL holds a value the spec changes, and is reused by undo and redo', async () => {
-        const scene = await open(makeSyncedSpec(), 'var-namespace=a&var-service=$__all');
+        const scene = await openWithEditRecorded();
         mockSerializeCount = 0;
 
         await apply(scene, makeSyncedSpec({ namespace: 'b' }));
@@ -745,7 +773,7 @@ describe('applyDashboardSpec', () => {
       });
 
       it('happens on undo, off the restored dashboard, when the apply skipped it', async () => {
-        const scene = await open(makeSyncedSpec(), 'var-namespace=a&var-service=$__all');
+        const scene = await openWithEditRecorded();
         mockSerializeCount = 0;
 
         await apply(scene, makeSyncedSpec({ title: 'Renamed' }));

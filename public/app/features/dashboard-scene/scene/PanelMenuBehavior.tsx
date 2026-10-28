@@ -35,6 +35,7 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { pastePanelStyles } from '../actions/panel/pastePanelStyles';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -253,7 +254,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (canManuallyEditDashboard(dashboard.state) && hasLegendOptions(panel.state.options) && !isEditingPanel) {
+    if (hasLegendOptions(panel.state.options) && !isEditingPanel) {
       moreSubMenu.push({
         text: shouldShowLegend(panel.state.options.legend)
           ? t('panel.header-menu.hide-legend', 'Hide legend')
@@ -305,7 +306,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    if (config.featureToggles.panelTimeSettings && canManuallyEditDashboard(dashboard.state)) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.PanelTimeSettings, true)) {
       items.push({
         text: t('panel.header-menu.time-settings', 'Time settings'),
         iconClassName: 'clock-nine',
@@ -366,7 +367,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
               panel.state.pluginId,
               getPanelIdForVizPanel(panel) ?? -1
             );
-            dashboard.pastePanelStyles(panel);
+            pastePanelStyles(dashboard, panel);
           },
         });
       }
@@ -646,9 +647,6 @@ const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
 };
 
 export function toggleVizPanelLegend(vizPanel: VizPanel): void {
-  if (dashboardModesEnabled() && !canManuallyEditDashboard(getDashboardSceneFor(vizPanel).state)) {
-    return;
-  }
   const options = vizPanel.state.options;
   if (hasLegendOptions(options) && typeof options.legend.showLegend === 'boolean') {
     if (shouldShowLegend(options.legend)) {

@@ -126,7 +126,7 @@ func TestProvisioningRESTClientCarriesTheExchangedToken(t *testing.T) {
 		gotAuth = r.Header.Get("X-Access-Token")
 		gotPath = r.URL.Path
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"kind":"PartialObjectMetadataList","metadata":{"resourceVersion":"1"},"items":[]}`))
+		_, _ = w.Write([]byte(`{"apiVersion":"storage.grafana.app/v0alpha1","kind":"ListKeyResponse","resourceVersion":"1","items":[]}`))
 	}))
 	t.Cleanup(apiserver.Close)
 

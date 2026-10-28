@@ -5,7 +5,8 @@ import { keymap, placeholder as placeholderExtension, type KeyBinding } from '@c
 import { useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { useTheme2, CodeMirrorEditor } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { MarkdownFormatToolbar } from './MarkdownFormatToolbar';

@@ -31,6 +31,58 @@ func globalHybridTargets() map[schema.GroupResource]schema.GroupVersionKind {
 	}
 }
 
+func TestGlobalHybridSearchDefaultResources(t *testing.T) {
+	dashboards := searchv0.HybridSearchResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	folders := searchv0.HybridSearchResource{Group: "folder.grafana.app", Resource: "folders"}
+	for _, tc := range []struct {
+		name       string
+		defaults   []searchv0.HybridSearchResource
+		resources  []searchv0.HybridSearchResource
+		deny       bool
+		wantStatus int
+		wantRPC    []searchv0.HybridSearchResource
+	}{
+		{name: "omitted resources use defaults", defaults: []searchv0.HybridSearchResource{dashboards, folders}, wantStatus: http.StatusOK, wantRPC: []searchv0.HybridSearchResource{dashboards, folders}},
+		{name: "empty resources use defaults", defaults: []searchv0.HybridSearchResource{dashboards}, resources: []searchv0.HybridSearchResource{}, wantStatus: http.StatusOK, wantRPC: []searchv0.HybridSearchResource{dashboards}},
+		{name: "explicit resources override defaults", defaults: []searchv0.HybridSearchResource{dashboards}, resources: []searchv0.HybridSearchResource{folders}, wantStatus: http.StatusOK, wantRPC: []searchv0.HybridSearchResource{folders}},
+		{name: "empty defaults retain validation", wantStatus: http.StatusUnprocessableEntity},
+		{name: "denied default stops before RPC", defaults: []searchv0.HybridSearchResource{dashboards}, deny: true, wantStatus: http.StatusForbidden},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakeHybridIndexClient{response: &resourcepb.HybridSearchResponse{}}
+			var checks []string
+			auth := authorizer.AuthorizerFunc(func(_ context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+				checks = append(checks, attr.GetResource())
+				if tc.deny {
+					return authorizer.DecisionDeny, "", nil
+				}
+				return authorizer.DecisionAllow, "", nil
+			})
+			q := hybridQuery()
+			q.Resources = tc.resources
+			route := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchRoute(globalHybridTargets(), nil, auth, tc.defaults)
+			body := hybridBody(t, q)
+			if tc.resources != nil && len(tc.resources) == 0 {
+				body = strings.TrimSuffix(body, "}") + `,"resources":[]}`
+			}
+			w := doHybridRequest(route.Handler, body, "default", "default")
+			require.Equal(t, tc.wantStatus, w.Code, w.Body.String())
+			if tc.wantRPC == nil {
+				assert.Nil(t, client.request)
+				return
+			}
+			require.NotNil(t, client.request)
+			require.Len(t, client.request.Resources, len(tc.wantRPC))
+			require.Len(t, checks, len(tc.wantRPC))
+			for i, target := range tc.wantRPC {
+				assert.Equal(t, target.Group, client.request.Resources[i].Group)
+				assert.Equal(t, target.Resource, client.request.Resources[i].Resource)
+				assert.Equal(t, target.Resource, checks[i])
+			}
+		})
+	}
+}
+
 func TestGlobalHybridSearchRoute(t *testing.T) {
 	client := &fakeHybridIndexClient{response: &resourcepb.HybridSearchResponse{Results: []*resourcepb.HybridSearchResult{
 		{Key: &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "same-uid"}, Title: "Operations dashboard", Score: 0.9},
@@ -41,7 +93,7 @@ func TestGlobalHybridSearchRoute(t *testing.T) {
 		checks = append(checks, attr)
 		return authorizer.DecisionAllow, "", nil
 	})
-	route := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchRoute(globalHybridTargets(), auth)
+	route := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchRoute(globalHybridTargets(), nil, auth, nil)
 	assert.Equal(t, "global/search/hybrid", route.Path)
 	assert.Equal(t, "listGlobalHybridSearchV0alpha1", route.Spec.Post.OperationId)
 	assert.Nil(t, route.Spec.Get)
@@ -83,6 +135,50 @@ func TestGlobalHybridSearchRoute(t *testing.T) {
 	assert.Equal(t, 0.9, response.Items[0].Score)
 }
 
+func TestGlobalHybridSearchUsesKindsReportedByServer(t *testing.T) {
+	client := &fakeHybridIndexClient{response: &resourcepb.HybridSearchResponse{
+		Results: []*resourcepb.HybridSearchResult{
+			{Key: &resourcepb.ResourceKey{Group: "example.grafana.app", Resource: "widgets", Name: "widget-a"}},
+			{Key: &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"}},
+			{Key: &resourcepb.ResourceKey{Group: "folder.grafana.app", Resource: "folders", Name: "folder-a"}},
+			{Key: &resourcepb.ResourceKey{Group: "external.ext.grafana.app", Resource: "documents", Name: "doc-a"}},
+		},
+		Kinds: map[string]string{
+			"example.grafana.app/widgets":      "Widget",
+			"dashboard.grafana.app/dashboards": "DisplayDashboard",
+		},
+	}}
+	auth := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
+		return authorizer.DecisionAllow, "", nil
+	})
+	h := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchFor(globalHybridTargets(), nil, auth, nil)
+	q := hybridQuery()
+	q.Resources = []searchv0.HybridSearchResource{
+		{Group: "example.grafana.app", Resource: "widgets"},
+		{Group: "dashboard.grafana.app", Resource: "dashboards"},
+		{Group: "folder.grafana.app", Resource: "folders"},
+		{Group: "external.ext.grafana.app", Resource: "documents"},
+	}
+	kinds := func() []string {
+		t.Helper()
+		w := doHybridRequest(h, hybridBody(t, q), "default", "default")
+		require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+		var out searchv0.HybridSearchResults
+		require.NoError(t, json.Unmarshal(w.Body.Bytes(), &out))
+		require.Len(t, out.Items, 4)
+		got := make([]string, 0, len(out.Items))
+		for _, item := range out.Items {
+			got = append(got, item.Resource.Kind)
+		}
+		return got
+	}
+	assert.Equal(t, []string{"Widget", "DisplayDashboard", "Folder", ""}, kinds())
+	client.response.Kinds = nil
+	assert.Equal(t, []string{"", "Dashboard", "Folder", ""}, kinds())
+	client.response.Kinds = map[string]string{}
+	assert.Equal(t, []string{"", "Dashboard", "Folder", ""}, kinds())
+}
+
 func TestGlobalHybridSearchUnknownResources(t *testing.T) {
 	remote := searchv0.HybridSearchResource{Group: "example.grafana.app", Resource: "widgets"}
 	dashboards := searchv0.HybridSearchResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
@@ -111,7 +207,7 @@ func TestGlobalHybridSearchUnknownResources(t *testing.T) {
 			})
 			q := hybridQuery()
 			q.Resources = tc.resources
-			h := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchFor(globalHybridTargets(), auth)
+			h := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchFor(globalHybridTargets(), nil, auth, nil)
 			w := doHybridRequest(h, hybridBody(t, q), "default", "default")
 			require.Equal(t, tc.wantStatus, w.Code, w.Body.String())
 			assert.Equal(t, tc.wantChecks, checks)
@@ -169,7 +265,7 @@ func TestGlobalHybridSearchRejectsBeforeRPC(t *testing.T) {
 				{Group: "dashboard.grafana.app", Resource: "dashboards"},
 				{Group: "folder.grafana.app", Resource: tc.resource},
 			}
-			h := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchFor(globalHybridTargets(), auth)
+			h := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchFor(globalHybridTargets(), nil, auth, nil)
 			w := doHybridRequest(h, hybridBody(t, q), tc.namespace, tc.namespace)
 			assert.Equal(t, tc.wantStatus, w.Code, w.Body.String())
 			assert.Equal(t, tc.wantChecks, checks)
@@ -196,8 +292,34 @@ func TestGlobalHybridSearchAuthorizesKnownExtApp(t *testing.T) {
 	q := hybridQuery()
 	q.Resources = []searchv0.HybridSearchResource{{Group: gr.Group, Resource: gr.Resource}}
 	targets := map[schema.GroupResource]schema.GroupVersionKind{gr: {Group: gr.Group, Version: "v1", Kind: "Widget"}}
-	h := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchFor(targets, auth)
+	h := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchFor(targets, nil, auth, nil)
 	w := doHybridRequest(h, hybridBody(t, q), "default", "default")
 	assert.Equal(t, http.StatusForbidden, w.Code, w.Body.String())
 	assert.Nil(t, client.request)
+}
+
+// targets holds the versions this process serves, so it must not decide the
+// name when kinds has one.
+func TestGlobalHybridSearchNamesResultsFromKinds(t *testing.T) {
+	client := &fakeHybridIndexClient{response: &resourcepb.HybridSearchResponse{Results: []*resourcepb.HybridSearchResult{
+		{Key: &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "d1"}},
+		{Key: &resourcepb.ResourceKey{Group: "folder.grafana.app", Resource: "folders", Name: "f1"}},
+	}}}
+	auth := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
+		return authorizer.DecisionAllow, "", nil
+	})
+	kinds := map[schema.GroupResource]string{{Group: "dashboard.grafana.app", Resource: "dashboards"}: "DashboardV2"}
+	h := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchFor(globalHybridTargets(), kinds, auth, nil)
+	q := hybridQuery()
+	q.Resources = []searchv0.HybridSearchResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}, {Group: "folder.grafana.app", Resource: "folders"}}
+	w := doHybridRequest(h, hybridBody(t, q), "default", "default")
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	var response searchv0.HybridSearchResults
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &response))
+	names := map[string]string{}
+	for _, item := range response.Items {
+		names[item.Resource.Name] = item.Resource.Kind
+	}
+	assert.Equal(t, map[string]string{"d1": "DashboardV2", "f1": "Folder"}, names)
 }

@@ -1010,6 +1010,7 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 				{Name: "Watchers", Path: "/a/grafana-assistant-app/watchers", Type: "page", AddToNav: true},
 				{Name: "Search", Path: "/a/grafana-assistant-app/assistant-search", Type: "page", AddToNav: true},
 				{Name: "Settings", Path: "/a/grafana-assistant-app/settings", Type: "page", AddToNav: true},
+				{Name: "Pages", Path: "/a/grafana-assistant-app/pages", Type: "page", AddToNav: true},
 				{Name: "Irrelevant", Path: "/a/grafana-assistant-app/irrelevant", Type: "page", AddToNav: true},
 			},
 		},
@@ -1022,6 +1023,7 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 		"/a/grafana-assistant-app/watchers",
 		"/a/grafana-assistant-app/assistant-search",
 		"/a/grafana-assistant-app/settings",
+		"/a/grafana-assistant-app/pages",
 		"/a/grafana-assistant-app/irrelevant",
 	}
 	ossChildPaths := []string{
@@ -1082,13 +1084,14 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 			wantChildPaths: cloudChildPaths,
 		},
 		{
-			name: "Trial mode only includes the homepage and workspace",
+			name: "Trial mode only includes the homepage, workspace and pages",
 			jsonData: map[string]any{
 				"trialMode": true,
 				"ossMode":   true,
 			},
 			wantChildPaths: []string{
 				"/a/grafana-assistant-app/workspace",
+				"/a/grafana-assistant-app/pages",
 			},
 		},
 	} {
@@ -1103,6 +1106,7 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 			}
 			service := ServiceImpl{
 				cfg:            cfg,
+				accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: plugins},
 			}
 			treeRoot := navtree.NavTreeRoot{}
@@ -1129,7 +1133,7 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 	}{
 		{name: "cloud", role: identity.RoleAdmin, wantPages: true},
 		{name: "OSS", role: identity.RoleAdmin, ossMode: true},
-		{name: "trial", role: identity.RoleAdmin, trialMode: true},
+		{name: "trial", role: identity.RoleAdmin, trialMode: true, wantPages: true},
 		{name: "without access", role: identity.RoleViewer},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1409,7 +1413,7 @@ func TestAssistantPagesCreateAction(t *testing.T) {
 		{name: "plugin without Pages", permissions: map[string][]string{readAction: {}, createAction: {}}, omitPages: true},
 		{name: "Pages not in navigation", permissions: map[string][]string{readAction: {}, createAction: {}}, hidePages: true},
 		{name: "OSS mode", permissions: map[string][]string{readAction: {}, createAction: {}}, jsonData: map[string]any{"ossMode": true}},
-		{name: "trial mode", permissions: map[string][]string{readAction: {}, createAction: {}}, jsonData: map[string]any{"trialMode": true}},
+		{name: "trial mode", permissions: map[string][]string{readAction: {}, createAction: {}}, jsonData: map[string]any{"trialMode": true}, wantAction: true},
 		{name: "Grafana subpath", permissions: map[string][]string{readAction: {}, createAction: {}}, subURL: "/grafana", wantAction: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

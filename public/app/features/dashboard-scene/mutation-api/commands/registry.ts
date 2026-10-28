@@ -24,6 +24,7 @@ import { listVariablesCommand } from './listVariables';
 import { movePanelCommand } from './movePanel';
 import { moveRowCommand } from './moveRow';
 import { moveTabCommand } from './moveTab';
+import { reloadFromServerCommand } from './reloadFromServer';
 import { removeAnnotationCommand } from './removeAnnotation';
 import { removePanelCommand } from './removePanel';
 import { removeRowCommand } from './removeRow';
@@ -75,4 +76,5 @@ export const DASHBOARD_COMMANDS: Array<MutationCommand<any>> = [
   applySpecCommand,
   renderPlanCommand,
   endPlanningCommand,
+  reloadFromServerCommand,
 ];

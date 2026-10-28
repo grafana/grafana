@@ -8,11 +8,11 @@ import { invalidateStPodReadiness, markStPodReady, markStPodTimeout, markStPodWa
 
 // The gate suspends during its first render, and React requires the surrounding act() to be
 // awaited when that happens — RTL's own render() only wraps a synchronous one.
-async function renderGate(isUrlAllowed: boolean) {
+async function renderGate(skip: boolean) {
   await act(async () => {
     render(
       <Suspense fallback={<div>waiting for pod</div>}>
-        <STPodReadinessCheck isUrlAllowed={isUrlAllowed} />
+        <STPodReadinessCheck skip={skip} />
         <div>the page</div>
       </Suspense>
     );
@@ -30,7 +30,7 @@ async function renderGateWithBoundary() {
             <div>caught: {error.message}</div>
           ) : (
             <Suspense fallback={<div>waiting for pod</div>}>
-              <STPodReadinessCheck isUrlAllowed={false} />
+              <STPodReadinessCheck skip={false} />
               <div>the page</div>
             </Suspense>
           )
@@ -49,7 +49,7 @@ describe('STPodReadinessCheck', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders the page without suspending when the url is allow-listed', async () => {
+  it('renders the page without suspending when the check is skipped', async () => {
     await renderGate(true);
 
     expect(await screen.findByText('the page')).toBeInTheDocument();

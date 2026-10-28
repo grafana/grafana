@@ -294,7 +294,7 @@ The following example shows a template variable `myinterval` in a Graphite funct
 summarize($myinterval, sum, false)
 ```
 
-The following example shows a more complex Graphite example, from the [Graphite Template Nested Requests panel](https://play.grafana.org/d/000000056/graphite-templated-nested?editPanel=2&orgId=1):
+The following example shows a more complex Graphite example, from the [Graphite Template Nested Requests panel](https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard):
 
 ```
 groupByNode(summarize(movingAverage(apps.$app.$server.counters.requests.count, 5), '$interval', 'sum', false), 2, 'sum')
