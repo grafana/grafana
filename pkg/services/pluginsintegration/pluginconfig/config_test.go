@@ -94,3 +94,35 @@ func TestProvidePluginInstanceConfigPluginAuth(t *testing.T) {
 	require.False(t, pluginCfg.LocalPluginTokens, "without a decision, Grafana does not sign plugin tokens")
 	require.Empty(t, pluginCfg.LocalAPIURL)
 }
+
+func TestNATSClientURLs(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		cfg      setting.NATSSettings
+		expected []string
+	}{
+		{
+			name: "disabled",
+			cfg:  setting.NATSSettings{Mode: setting.NATSModeEmbedded, ListenAddress: "127.0.0.1", ClientPort: 4222},
+		},
+		{
+			name:     "embedded",
+			cfg:      setting.NATSSettings{Enabled: true, Mode: setting.NATSModeEmbedded, ListenAddress: "127.0.0.1", ClientPort: 4222},
+			expected: []string{"nats://127.0.0.1:4222"},
+		},
+		{
+			name:     "embedded on wildcard address with peers",
+			cfg:      setting.NATSSettings{Enabled: true, Mode: setting.NATSModeEmbedded, ListenAddress: "0.0.0.0", ClientPort: 5222, ClientURLs: []string{"nats://peer:4222"}},
+			expected: []string{"nats://127.0.0.1:5222", "nats://peer:4222"},
+		},
+		{
+			name:     "external",
+			cfg:      setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ListenAddress: "127.0.0.1", ClientPort: 4222, ClientURLs: []string{"nats://a:4222", "nats://b:4222"}},
+			expected: []string{"nats://a:4222", "nats://b:4222"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expected, natsClientURLs(tc.cfg))
+		})
+	}
+}

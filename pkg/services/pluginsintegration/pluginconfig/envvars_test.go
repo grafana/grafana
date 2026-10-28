@@ -1144,6 +1144,25 @@ func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
 	}
 }
 
+func TestPluginEnvVarsProvider_natsEnvVar(t *testing.T) {
+	ctx := setOpenFeatureFlags(t, marketplaceLicensingOff)
+
+	t.Run("not set when NATS is disabled", func(t *testing.T) {
+		p := NewEnvVarsProvider(&PluginInstanceCfg{Features: featuremgmt.WithFeatures()}, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
+		_, ok := getEnvVarWithExists(p.PluginEnvVars(ctx, &plugins.Plugin{}), "GRAFANA_NATS_URL")
+		assert.False(t, ok)
+	})
+
+	t.Run("joins the NATS client URLs", func(t *testing.T) {
+		cfg := &PluginInstanceCfg{
+			Features: featuremgmt.WithFeatures(),
+			NATSURLs: []string{"nats://127.0.0.1:4222", "nats://peer:4222"},
+		}
+		p := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
+		assert.Equal(t, "nats://127.0.0.1:4222,nats://peer:4222", getEnvVar(p.PluginEnvVars(ctx, &plugins.Plugin{}), "GRAFANA_NATS_URL"))
+	})
+}
+
 func TestPluginEnvVarsProvider_featureToggleEnvVar(t *testing.T) {
 	ctx := setOpenFeatureFlags(t, marketplaceLicensingOff)
 	t.Run("backend datasource with feature toggle", func(t *testing.T) {

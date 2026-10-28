@@ -2,6 +2,9 @@ package pluginconfig
 
 import (
 	"fmt"
+	"net"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
@@ -92,6 +95,9 @@ type PluginInstanceCfg struct {
 	SigV4VerboseLogging bool
 
 	LiveClientQueueMaxSize int
+
+	// NATSURLs are the NATS client URLs plugins should connect to. Empty when NATS is disabled.
+	NATSURLs []string
 }
 
 // ProvidePluginInstanceConfig returns a new PluginInstanceCfg.
@@ -146,7 +152,25 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		SigV4AuthEnabled:                    cfg.SigV4AuthEnabled,
 		SigV4VerboseLogging:                 cfg.SigV4VerboseLogging,
 		LiveClientQueueMaxSize:              cfg.LiveClientQueueMaxSize,
+		NATSURLs:                            natsClientURLs(cfg.NATS),
 	}, nil
+}
+
+// natsClientURLs mirrors the URLs Grafana's own NATS connections use. It is derived from settings
+// rather than the running embedded server because plugins can start before that server does.
+func natsClientURLs(cfg setting.NATSSettings) []string {
+	if !cfg.Enabled {
+		return nil
+	}
+	if !cfg.Embedded() {
+		return append([]string(nil), cfg.ClientURLs...)
+	}
+	host := cfg.ListenAddress
+	if host == "" || host == "0.0.0.0" || host == "::" {
+		host = "127.0.0.1"
+	}
+	local := url.URL{Scheme: "nats", Host: net.JoinHostPort(host, strconv.Itoa(cfg.ClientPort))}
+	return append([]string{local.String()}, cfg.ClientURLs...)
 }
 
 func extractPluginSettings(settingProvider setting.Provider) config.PluginSettings {
