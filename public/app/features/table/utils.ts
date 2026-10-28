@@ -1,14 +1,24 @@
 import {
   type ActionModel,
+  AppEvents,
   type DataFrame,
   type Field,
   type FieldConfigSource,
   FieldMatcherID,
   type InterpolateFunction,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { getAppEvents } from '@grafana/runtime';
 import { type MatcherScope } from '@grafana/schema';
 import { type TableSortByFieldState } from '@grafana/ui/internal';
 import { getActions } from 'app/features/actions/utils';
+
+export function notifyTableFilterError() {
+  getAppEvents().publish({
+    type: AppEvents.alertError.name,
+    payload: [t('table.filter.error', 'Table filters could not be applied. Showing unfiltered rows.')],
+  });
+}
 
 /**
  * Returns the index of the frame to display, clamped to the range of available frames.

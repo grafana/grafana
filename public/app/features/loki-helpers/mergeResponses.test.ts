@@ -360,6 +360,45 @@ describe('combineResponses', () => {
     expect(onlyInDest?.values).toEqual([undefined, 'd1', 'd2']);
   });
 
+  it('keeps a dest-only field on the overlapping row when that row is updated in place', () => {
+    // Source repeats time/id 20 (updated in place) and adds time 25 (inserted between 20 and 30).
+    // A field that exists only in dest must stay put on the overlapping row and gain a placeholder
+    // only for the new row. Splicing on the overlap shifts d2/d3 onto the wrong rows.
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 3,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [10, 20, 30] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line1', 'line2', 'line3'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1', 'id2', 'id3'] },
+        { name: 'onlyInDest', type: FieldType.string, config: {}, values: ['d1', 'd2', 'd3'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [20, 25] },
+        { name: 'Line', type: FieldType.string, config: {}, values: ['line2-updated', 'line-new'] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id2', 'id-new'] },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const fields = combined.data[0].fields;
+
+    expect(fields.find((field: Field) => field.name === 'Time')?.values).toEqual([10, 20, 25, 30]);
+    expect(fields.find((field: Field) => field.name === 'Line')?.values).toEqual([
+      'line1',
+      'line2-updated',
+      'line-new',
+      'line3',
+    ]);
+    expect(fields.find((field: Field) => field.name === 'id')?.values).toEqual(['id1', 'id2', 'id-new', 'id3']);
+    expect(fields.find((field: Field) => field.name === 'onlyInDest')?.values).toEqual(['d1', 'd2', undefined, 'd3']);
+    expect(combined.data[0].length).toBe(4);
+  });
+
   it('combines metric frames', () => {
     const { metricFrameA, metricFrameB } = getMockFrames();
     const responseA: DataQueryResponse = {
@@ -783,6 +822,43 @@ describe('combineResponses', () => {
         },
       ],
     });
+  });
+
+  it('merges prepended nanosecond fractions for a new timestamp column and leaves the source frame unchanged', () => {
+    // Dest has no timestamp column. Copying the source field keeps its nanos array, and
+    // prepending the first of two rows splices that same array so the next read sees 100.
+    const sourceNanos = [100, 200];
+    const sourceTimestampValues = [10, 20];
+    const dest: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [30, 40] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id3', 'id4'] },
+      ],
+    };
+    const source: DataFrame = {
+      refId: 'A',
+      length: 2,
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [10, 20] },
+        { name: 'id', type: FieldType.string, config: {}, values: ['id1', 'id2'] },
+        {
+          name: 'timestamp',
+          type: FieldType.time,
+          config: {},
+          values: sourceTimestampValues,
+          nanos: sourceNanos,
+        },
+      ],
+    };
+
+    const combined = combineResponses({ data: [dest] }, { data: [source] });
+    const timestamp = combined.data[0].fields.find((field: Field) => field.name === 'timestamp');
+
+    expect(timestamp?.nanos).toEqual([100, 200, 0, 0]);
+    expect(sourceNanos).toEqual([100, 200]);
+    expect(sourceTimestampValues).toEqual([10, 20]);
   });
 
   describe('combine stats', () => {

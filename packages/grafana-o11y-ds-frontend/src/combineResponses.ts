@@ -64,10 +64,14 @@ function combineFrames(dest: DataFrame, source: DataFrame) {
   if (destOriginalTimeValuesLength !== undefined) {
     source.fields.forEach((sourceField, index) => {
       if (!findSourceField(sourceField, dest.fields, index)) {
-        dest.fields.push({
+        const newField: Field = {
           ...sourceField,
           values: new Array(destOriginalTimeValuesLength).fill(undefined),
-        });
+        };
+        if (sourceField.nanos) {
+          newField.nanos = new Array(destOriginalTimeValuesLength).fill(undefined);
+        }
+        dest.fields.push(newField);
       }
     });
   }
@@ -86,7 +90,7 @@ function combineFrames(dest: DataFrame, source: DataFrame) {
     dest.fields[i].values = [].concat.apply(sourceField.values, dest.fields[i].values);
     if (sourceField.nanos) {
       const nanos: number[] = dest.fields[i].nanos?.slice() || [];
-      dest.fields[i].nanos = source.fields[i].nanos?.concat(nanos);
+      dest.fields[i].nanos = sourceField.nanos.concat(nanos);
     }
   }
   dest.length += source.length;

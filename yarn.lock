@@ -2125,6 +2125,8 @@ __metadata:
     "@grafana/runtime": "npm:13.3.0-pre"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/ui": "npm:13.3.0-pre"
+    "@rspack/cli": "npm:^2"
+    "@rspack/core": "npm:^2.1.7"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
     "@testing-library/react": "npm:16.3.0"
@@ -2143,7 +2145,6 @@ __metadata:
     react-use: "npm:17.6.1"
     rxjs: "npm:7.8.2"
     typescript: "npm:6.0.2"
-    webpack: "npm:^5.105.0"
   peerDependencies:
     "@grafana/runtime": "*"
   languageName: unknown
@@ -2643,6 +2644,7 @@ __metadata:
   resolution: "@grafana/plugin-configs@workspace:packages/grafana-plugin-configs"
   dependencies:
     "@grafana/tsconfig": "npm:^2.0.0"
+    "@rspack/core": "npm:^2.1.7"
     "@swc/core": "npm:1.13.3"
     "@swc/helpers": "npm:^0.5.0"
     "@swc/jest": "npm:^0.2.26"
@@ -2652,6 +2654,7 @@ __metadata:
     copy-webpack-plugin: "npm:^14.0.0"
     css-loader: "npm:7.1.2"
     eslint: "npm:9.32.0"
+    eslint-rspack-plugin: "npm:^5"
     eslint-webpack-plugin: "npm:5.0.2"
     fork-ts-checker-webpack-plugin: "npm:9.1.0"
     identity-obj-proxy: "npm:^3.0.0"
@@ -2663,6 +2666,7 @@ __metadata:
     style-loader: "npm:4.0.0"
     swc-loader: "npm:0.2.6"
     terser-webpack-plugin: "npm:^5.4.0"
+    ts-checker-rspack-plugin: "npm:^1.5.1"
     typescript: "npm:6.0.2"
     webpack: "npm:^5.105.0"
     webpack-bundle-analyzer: "npm:^4.10.2"
@@ -2829,7 +2833,6 @@ __metadata:
   dependencies:
     "@alwaysmeticulous/sdk-bundles-api": "npm:2.341.0"
     "@grafana/data": "npm:13.3.0-pre"
-    "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.12.0"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/ui": "npm:13.3.0-pre"
@@ -2841,7 +2844,6 @@ __metadata:
     "@rollup/plugin-node-resolve": "npm:16.0.1"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/react": "npm:16.3.0"
-    "@testing-library/user-event": "npm:14.6.1"
     "@types/history": "npm:4.7.11"
     "@types/jest": "npm:29.5.14"
     "@types/lodash": "npm:^4.17.25"
@@ -2870,33 +2872,33 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes-react@npm:8.21.2":
-  version: 8.21.2
-  resolution: "@grafana/scenes-react@npm:8.21.2"
+"@grafana/scenes-react@npm:9.0.0":
+  version: 9.0.0
+  resolution: "@grafana/scenes-react@npm:9.0.0"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
-    "@grafana/scenes": "npm:8.21.2"
+    "@grafana/scenes": "npm:9.0.0"
     lodash: "npm:^4.17.21"
     lru-cache: "npm:^10.2.2"
     react-use: "npm:^17.4.0"
   peerDependencies:
-    "@grafana/data": ">=11.6"
-    "@grafana/e2e-selectors": ">=11.6"
-    "@grafana/runtime": ">=11.6"
-    "@grafana/schema": ">=11.6"
-    "@grafana/ui": ">=11.6"
+    "@grafana/data": ">=12.4"
+    "@grafana/e2e-selectors": ">=12.4"
+    "@grafana/runtime": ">=12.4"
+    "@grafana/schema": ">=12.4"
+    "@grafana/ui": ">=12.4"
     react: ^18.0.0 || ^19.0.0
     react-dom: ^18.0.0 || ^19.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/900e9173c280082682bbc331bea7884b34cd03eeb850a7a74a449054d663cbd3523806c5f4be774c3a3a8b8905c12ee5ac603bb1e086bed9b907e43013afe780
+  checksum: 10/a7fe62a13f5c8cdf40c6229c15dad4d8766fe6609cc0c0d0ba6cbad90bc4177f654a2809e011f9cecc477e940d5cc1f18b7379485693ab2dbd47a4db6e37a445
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:8.21.2":
-  version: 8.21.2
-  resolution: "@grafana/scenes@npm:8.21.2"
+"@grafana/scenes@npm:9.0.0":
+  version: 9.0.0
+  resolution: "@grafana/scenes@npm:9.0.0"
   dependencies:
     "@emotion/css": "npm:^11.13.5"
     "@emotion/react": "npm:^11.14.0"
@@ -2911,17 +2913,17 @@ __metadata:
     react-virtualized-auto-sizer: "npm:^1.0.24"
     uuid: "npm:^11.0.0"
   peerDependencies:
-    "@grafana/data": ">=11.6"
-    "@grafana/e2e-selectors": ">=11.6"
-    "@grafana/i18n": "*"
-    "@grafana/runtime": ">=11.6"
-    "@grafana/schema": ">=11.6"
-    "@grafana/ui": ">=11.6"
+    "@grafana/data": ">=12.4"
+    "@grafana/e2e-selectors": ">=12.4"
+    "@grafana/i18n": ">=12.4"
+    "@grafana/runtime": ">=12.4"
+    "@grafana/schema": ">=12.4"
+    "@grafana/ui": ">=12.4"
     react: ^18.0.0 || ^19.0.0
     react-dom: ^18.0.0 || ^19.0.0
     react-router-dom: ^6.28.0
     rxjs: ^7.8.1
-  checksum: 10/7a9d542e93c6ddbf08e8a8e38c7afc989709f231ebc98f58e6230862241ce0e346652940eff8ad3b2c13f0a359772cbee8c908bb47da4758cdd0031bb0343a91
+  checksum: 10/0cf2a3199e4c25eb90879a99f0168d58ab4725cc7665ef78c71f4c96bd0a99637db40e337fd70acf13202a4d98f033ab830ac6a2d0a8a9ee6af8c7ad2b405ed5
   languageName: node
   linkType: hard
 
@@ -18287,8 +18289,8 @@ __metadata:
     "@grafana/plugin-ui": "npm:^0.17.3"
     "@grafana/prometheus": "npm:13.2.1"
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "npm:8.21.2"
-    "@grafana/scenes-react": "npm:8.21.2"
+    "@grafana/scenes": "npm:9.0.0"
+    "@grafana/scenes-react": "npm:9.0.0"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
     "@grafana/test-utils": "workspace:*"
@@ -18487,13 +18489,13 @@ __metadata:
     ol: "npm:10.7.0"
     ol-ext: "npm:4.0.38"
     ol-mapbox-style: "npm:^13.0.1"
-    ol-pmtiles: "npm:2.0.2"
     open: "npm:^10.2.0"
     ora: "npm:^9.0.0"
     papaparse: "npm:5.5.3"
     pdf-parse: "npm:^1.1.1"
     playwright: "npm:1.56.1"
     pluralize: "npm:^8.0.0"
+    pmtiles: "npm:4.5.0"
     prettier: "npm:3.6.2"
     prismjs: "npm:1.30.0"
     prom-client: "npm:^15.1.3"
@@ -18808,9 +18810,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"history@patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch::locator=grafana%40workspace%3A.":
+"history@patch:history@npm%3A4.10.1#./patches/history-npm-4.10.1-ee217563ae.patch::locator=grafana%40workspace%3A.":
   version: 4.10.1
-  resolution: "history@patch:history@npm%3A4.10.1#./.yarn/patches/history-npm-4.10.1-ee217563ae.patch::version=4.10.1&hash=b8466f&locator=grafana%40workspace%3A."
+  resolution: "history@patch:history@npm%3A4.10.1#./patches/history-npm-4.10.1-ee217563ae.patch::version=4.10.1&hash=b8466f&locator=grafana%40workspace%3A."
   dependencies:
     "@babel/runtime": "npm:^7.1.2"
     loose-envify: "npm:^1.2.0"
@@ -24026,17 +24028,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-pmtiles@npm:2.0.2":
-  version: 2.0.2
-  resolution: "ol-pmtiles@npm:2.0.2"
-  dependencies:
-    pmtiles: "npm:^4.3.0"
-  peerDependencies:
-    ol: ">=9.0.0"
-  checksum: 10/25889371842209c97fec7ce5845711bd0f45f9a21453cdb9f2fceb9811bb7ca2c12f0ea79a6e0bb872d4842b9352332425bfab9c78c299fc19882a70006e5590
-  languageName: node
-  linkType: hard
-
 "ol@npm:10.7.0, ol@npm:^10.7.0":
   version: 10.7.0
   resolution: "ol@npm:10.7.0"
@@ -25000,7 +24991,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pmtiles@npm:^4.3.0":
+"pmtiles@npm:4.5.0":
   version: 4.5.0
   resolution: "pmtiles@npm:4.5.0"
   dependencies:
@@ -25667,9 +25658,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-calendar@patch:react-calendar@npm%3A6.0.1#~/.yarn/patches/react-calendar-npm-6.0.1-22fe91a41c.patch":
+"react-calendar@patch:react-calendar@npm%3A6.0.1#~/patches/react-calendar-npm-6.0.1-22fe91a41c.patch":
   version: 6.0.1
-  resolution: "react-calendar@patch:react-calendar@npm%3A6.0.1#~/.yarn/patches/react-calendar-npm-6.0.1-22fe91a41c.patch::version=6.0.1&hash=738a30"
+  resolution: "react-calendar@patch:react-calendar@npm%3A6.0.1#~/patches/react-calendar-npm-6.0.1-22fe91a41c.patch::version=6.0.1&hash=738a30"
   dependencies:
     "@wojtekmaj/date-utils": "npm:^2.0.2"
     clsx: "npm:^2.0.0"
@@ -25867,9 +25858,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-grid-layout@patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch":
+"react-grid-layout@patch:react-grid-layout@npm%3A1.4.4#~/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch":
   version: 1.4.4
-  resolution: "react-grid-layout@patch:react-grid-layout@npm%3A1.4.4#~/.yarn/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch::version=1.4.4&hash=e69ce6"
+  resolution: "react-grid-layout@patch:react-grid-layout@npm%3A1.4.4#~/patches/react-grid-layout-npm-1.4.4-4024c5395b.patch::version=1.4.4&hash=e69ce6"
   dependencies:
     clsx: "npm:^2.0.0"
     fast-equals: "npm:^4.0.3"
@@ -26259,9 +26250,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-split-pane@patch:react-split-pane@npm:0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch::locator=grafana%40workspace%3A.":
+"react-split-pane@patch:react-split-pane@npm:0.1.92#./patches/react-split-pane-npm-0.1.92-93dbf51dff.patch::locator=grafana%40workspace%3A.":
   version: 0.1.92
-  resolution: "react-split-pane@patch:react-split-pane@npm%3A0.1.92#.yarn/patches/react-split-pane-npm-0.1.92-93dbf51dff.patch::version=0.1.92&hash=23e19a&locator=grafana%40workspace%3A."
+  resolution: "react-split-pane@patch:react-split-pane@npm%3A0.1.92#./patches/react-split-pane-npm-0.1.92-93dbf51dff.patch::version=0.1.92&hash=23e19a&locator=grafana%40workspace%3A."
   dependencies:
     prop-types: "npm:^15.7.2"
     react-lifecycles-compat: "npm:^3.0.4"
@@ -27918,9 +27909,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"slate-dev-environment@patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch::locator=grafana%40workspace%3A.":
+"slate-dev-environment@patch:slate-dev-environment@npm:0.2.5#./patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch::locator=grafana%40workspace%3A.":
   version: 0.2.5
-  resolution: "slate-dev-environment@patch:slate-dev-environment@npm%3A0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch::version=0.2.5&hash=18ffc0&locator=grafana%40workspace%3A."
+  resolution: "slate-dev-environment@patch:slate-dev-environment@npm%3A0.2.5#./patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch::version=0.2.5&hash=18ffc0&locator=grafana%40workspace%3A."
   dependencies:
     is-in-browser: "npm:^1.1.3"
   checksum: 10/ec235f5513ca5a76db86ec71ba3b8f11dfc1ac06d9a466c9b0f7f5da893d0a64dac556cd1e17feb3d381222aac3b4acc3e4d06cbb81bafbdb1063a7c30370bf7
@@ -28520,9 +28511,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"storybook@patch:storybook@npm%3A10.6.2#~/.yarn/patches/storybook-npm-10.6.2-7da1cdbbd6.patch":
+"storybook@patch:storybook@npm%3A10.6.2#~/patches/storybook-npm-10.6.2-7da1cdbbd6.patch":
   version: 10.6.2
-  resolution: "storybook@patch:storybook@npm%3A10.6.2#~/.yarn/patches/storybook-npm-10.6.2-7da1cdbbd6.patch::version=10.6.2&hash=3d1970"
+  resolution: "storybook@patch:storybook@npm%3A10.6.2#~/patches/storybook-npm-10.6.2-7da1cdbbd6.patch::version=10.6.2&hash=3d1970"
   dependencies:
     "@storybook/global": "npm:^5.0.0"
     "@storybook/icons": "npm:^2.0.2"
@@ -31583,9 +31574,9 @@ __metadata:
   linkType: hard
 
 "zod@npm:^3.25 || ^4.0, zod@npm:^4.1.11, zod@npm:^4.3.0":
-  version: 4.6.5
-  resolution: "zod@npm:4.6.5"
-  checksum: 10/db004952e4dc6eab38b70f0cdef9251a65da84f5d08c5a0ef85e2590cfa9c477544ce734161ff5c05f89a15f0967137607a7feb16716195e04965f030db47213
+  version: 4.6.7
+  resolution: "zod@npm:4.6.7"
+  checksum: 10/3ca8b8d6bb401538e59504c543db629ea7beaa775e504c3f22269b406fdffbf1431c856d59a597bf66d8487e4d2be12b03a55d76fc2c63d9f046eae1ca173bca
   languageName: node
   linkType: hard
 

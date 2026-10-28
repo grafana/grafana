@@ -51,4 +51,33 @@ describe('recordingRuleSearchHitSchema', () => {
   ])('leaves health unset for $name', ({ health }) => {
     expect(toHit({ health }).health).toBeUndefined();
   });
+
+  it('reads lastError from the search hit', () => {
+    const hit = toHit({ lastError: 'remote write failed' });
+
+    expect(hit.lastError).toBe('remote write failed');
+  });
+
+  it('leaves lastError unset when absent or not a string', () => {
+    expect(toHit({}).lastError).toBeUndefined();
+    expect(toHit({ lastError: 42 }).lastError).toBeUndefined();
+  });
+
+  it('does not expose a summary field even when annotations are present', () => {
+    const annotations = JSON.stringify({ summary: 'some summary' });
+    const hit = toHit({ annotations });
+
+    expect(hit).not.toHaveProperty('summary');
+  });
+
+  it('reads interval from the search hit', () => {
+    const hit = toHit({ interval: '1m' });
+
+    expect(hit.interval).toBe('1m');
+  });
+
+  it('leaves interval unset when absent or not a string', () => {
+    expect(toHit({}).interval).toBeUndefined();
+    expect(toHit({ interval: 60 }).interval).toBeUndefined();
+  });
 });

@@ -170,7 +170,7 @@ openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 alread
 .PHONY: generate-openapi
 generate-openapi: openapi3-gen
 	$(GO) test ./pkg/tests/apis || true
-	yarn workspace @grafana/openapi process-specs
+	npm run --prefix packages/grafana-openapi process-specs
 
 ##@ Internationalisation
 .PHONY: i18n-extract-enterprise
@@ -181,17 +181,17 @@ i18n-extract-enterprise:
 else
 i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
-	cd public/locales/enterprise && LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
+	cd public/locales/enterprise && LANG=en_US.UTF-8 npm exec --no -- i18next-cli extract --sync-primary
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
-	LANG=en_US.UTF-8 yarn run i18next-cli extract --sync-primary
+	LANG=en_US.UTF-8 npm exec --no -- i18next-cli extract --sync-primary
 	@echo "Extracting i18n strings for packages"
-	LANG=en_US.UTF-8 yarn run packages:i18n-extract
+	LANG=en_US.UTF-8 npm run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
-	LANG=en_US.UTF-8 yarn run plugin:i18n-extract
+	LANG=en_US.UTF-8 npm run plugin:i18n-extract
 
 ##@ Building
 .PHONY: gen-cue
@@ -353,7 +353,7 @@ build-air: build-go
 .PHONY: build-js
 build-js: ## Build frontend assets.
 	@echo "building frontend"
-	yarn run build
+	npm run build
 
 public/build:
 	$(MAKE) build-js
@@ -527,7 +527,7 @@ run-go: ## Build and run web server immediately.
 
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild.
-	yarn start
+	npm run start
 
 .PHONY: frontend-service-check
 frontend-service-check:
@@ -609,7 +609,7 @@ test-go-integration-memcached: ## Run integration tests for memcached cache.
 .PHONY: test-js
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
-	yarn test
+	npm run test
 
 .PHONY: test
 test: test-go test-js ## Run all tests.
@@ -834,7 +834,7 @@ help: ## Display this help.
 check-licenses:
 	license_finder --decisions-file .github/license_finder.yaml
 
-GENERATE_POLICY_BOT_CONFIG_SHA := sha256:d05ff5c7d4247da155c85f8c6f1f9f7c6d013d1f3fd9fd9d68eb06f1e7b0393d # v0.2.0
+GENERATE_POLICY_BOT_CONFIG_SHA := sha256:ebd798a15f5d05af418da11366eb7cc01d1c4741f18d0c982fccda032ff405f5 # v0.2.1
 .PHONY: .policy.yml
 .policy.yml:
 	docker run -u "$(shell id -u):$(shell id -g)" \

@@ -1443,6 +1443,12 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
+        "rules-error": "",
+        "search-issues": ""
+      },
+      "interval": "",
+      "recording-rules": {
+        "no-rules": "",
         "rules-error": ""
       },
       "result-count": {
@@ -1450,6 +1456,58 @@
         "alert-rules_other": "",
         "recording-rules_one": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -2168,14 +2226,14 @@
     },
     "max-data-points-option": {
       "label-max-data-points": "Max. Datenpunkte",
-      "tooltip-max-data-points": "Die maximalen Datenpunkte pro Reihe. Wird direkt von einigen Datenquellen genutzt und für die Berechnung des automatischen Intervalls verwendet. Beim Datenstreaming wird dieser Wert für den rollierenden Puffer verwendet."
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": "neu"
     },
     "min-interval-option": {
       "label-interval": "Intervall",
-      "tooltip-interval": "Intervall an die Datenquelle gesendet. Es wird empfohlen, die Schreibfrequenz einzustellen, zum Beispiel <1>1m</1>, wenn Ihre Daten jede Minute geschrieben werden."
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
@@ -4143,6 +4201,11 @@
   },
   "app-chrome": {
     "skip-content-button": "Weiter zum Hauptinhalt",
+    "st-loading": {
+      "background-tooltip": "",
+      "pending-dots-aria-label": "",
+      "pending-dots-aria-label-named": ""
+    },
     "top-bar": {
       "sign-in": "Anmelden"
     }
@@ -4612,8 +4675,7 @@
       "delete-warning": "Dadurch werden dieser und alle untergeordneten Ordner gelöscht.",
       "folder-empty": "Der ausgewählte Ordner ist leer",
       "folder-not-empty": "Der ausgewählte Ordner enthält Ressourcen, die gelöscht werden",
-      "missing-info": "Fehlende Pflichtfelder",
-      "success-message": "Ordner erfolgreich gelöscht"
+      "missing-info": "Fehlende Pflichtfelder"
     },
     "empty-state": {
       "button-title": "Dashboard erstellen",
@@ -5654,6 +5716,17 @@
       "ungroup-rows": "Gruppierung von Zeilen aufheben",
       "ungroup-tabs": "Gruppierung von Tabs aufheben"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5834,7 +5907,20 @@
     "edit-actions": {
       "add": "{{typeName}} hinzufügen",
       "add-conditional-rule": "Hinzufügen von {{ruleDescription}}-Regel",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "Alle Zeilen einklappen",
+      "collapse-row": "",
       "dashboard-description": "Dashboard-Beschreibung ändern",
       "dashboard-title": "Dashboard-Titel ändern",
       "duplicate": "{{typeName}} duplizieren",
@@ -5843,6 +5929,7 @@
       "edit-template-variable-rule": "Regel für Vorlagenvariable ändern",
       "edit-time-range-rule": "Regel für Zeitbereich ändern",
       "expand-all-rows": "Alle Zeilen ausklappen",
+      "expand-row": "",
       "group-into-row": "In Zeile gruppieren",
       "group-into-tab": "In Registerkarte gruppieren",
       "move": "Verschieben von {{typeName}}",
@@ -5858,6 +5945,7 @@
       "paste-panel": "Panel einfügen",
       "remove": "{{typeName}} entfernen",
       "remove-multiple": "{{typeName}} ({{num}}) entfernen",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "Bildschirmfüllung für Zeilen deaktivieren",
       "row-fill-screen-enable": "Bildschirmfüllung für Zeilen aktivieren",
@@ -5865,16 +5953,38 @@
       "row-repeat-variable": "Zeilenwiederholung nach",
       "row-show-header": "Zeilenkopf anzeigen",
       "row-title": "Zeilentitel ändern",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "Layout wechseln",
       "switch-layout-row": "Layout wechseln",
       "switch-layout-tab": "Layout wechseln",
       "tab-repeat-variable": "Tab-Wiederholung nach",
       "tab-title": "Tab-Titel ändern",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "Variablenbeschreibung ändern",
       "variable-hide": "Option zum Ausblenden von Variablen ändern",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "Variablenlabel ändern",
+      "variable-multi-value": "",
       "variable-name": "Variablennamen ändern",
-      "variable-type": "Variablentyp ändern"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "Variablentyp ändern",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "Füge Visualisierungen hinzu, die mit anderen Dashboards geteilt werden.",
@@ -6096,8 +6206,12 @@
       "tooltip-previous": "Zurück"
     },
     "modes": {
-      "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -7010,7 +7124,8 @@
         "change-annotation-controls-display": "Anzeige der Anmerkungssteuerung ändern",
         "change-annotation-enabled-state": "Aktivierungsstatus der Anmerkung ändern",
         "change-annotation-name": "Anmerkungsnamen ändern",
-        "change-annotation-panel-filter": "Filter für das Anmerkungs-Panel ändern"
+        "change-annotation-panel-filter": "Filter für das Anmerkungs-Panel ändern",
+        "change-annotation-query": ""
       },
       "edit-query": "Abfrage bearbeiten"
     },
@@ -7251,8 +7366,7 @@
       "delete-error": "Das Dashboard konnte nicht gelöscht werden",
       "deleting": "Löschen...",
       "drawer-title": "Bereitgestelltes Dashboard löschen",
-      "no-repository-selected": "Fehlendes erforderliches Repository zum Löschen",
-      "success-message": "Dashboard erfolgreich gelöscht"
+      "no-repository-selected": "Fehlendes erforderliches Repository zum Löschen"
     },
     "description-label": {
       "description": "Beschreibung"
@@ -7289,6 +7403,7 @@
       "copy": "In die Zwischenablage kopieren",
       "learn-more": "Mehr erfahren",
       "no-issues": "Keine Fehler oder Hinweise für diese Abfrage.",
+      "no-panel-issues": "",
       "severity-error": "Fehler",
       "severity-info": "Info",
       "severity-warning": "Warnung"
@@ -7531,14 +7646,10 @@
       "already-in-folder": "Das Dashboard ist bereits im ausgewählten Ordner.",
       "api-error": "Dashboard konnte nicht verschoben werden",
       "cancel-action": "Abbrechen",
-      "current-file-not-found": "Die aktuelle Dashboard-Datei konnte nicht gefunden werden",
       "drawer-title": "Bereitgestelltes Dashboard verschieben",
-      "file-load-error": "Fehler beim Laden des Dashboards",
-      "loading-dashboard-data": "Daten des Dashboards werden geladen",
       "move-action": "Dashboard verschieben",
       "move-read-only-message": "Dieses Dashboard kann nicht direkt von Grafana aus verschoben werden, da das Repository schreibgeschützt ist. Um dieses Dashboard zu verschieben, verschieben Sie die Datei bitte in Ihrem Git-Repository.",
       "moving": "Wird verschoben ...",
-      "success-message": "Dashboard erfolgreich verschoben",
       "target-path-label": "Zielpfad",
       "title-this-repository-is-read-only": "Dieses Repository ist schreibgeschützt"
     },
@@ -8121,8 +8232,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Abfragebereich öffnen",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Abfragebereich öffnen"
     },
     "viz-panel-links-renderer": {
@@ -12196,10 +12305,14 @@
     },
     "log-line": {
       "has-error": "Hat Fehler",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "Ist gesampelt",
       "show-less": "weniger anzeigen",
       "show-more": "mehr anzeigen",
-      "tooltip-error": "Fehler: {{errorMessage}}"
+      "tooltip-error": "Fehler: {{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "Zentral ausgerichtete Linie",
@@ -13161,7 +13274,8 @@
         "close": "Schließen von {{title}}",
         "open": "Öffnen von {{title}}",
         "open-all": "Open-AI-Assistenten und Seitenleisten-Apps"
-      }
+      },
+      "floating-resize": ""
     },
     "fullscreen-workspace": {
       "enter": "Workspace aufrufen",
@@ -13420,7 +13534,6 @@
     "add-panel": {
       "cancel": "Abbrechen",
       "card-author": "Von {{author}}",
-      "card-selected": "{{title}} (ausgewählt)",
       "card-updated": "Aktualisiert am {{when}}",
       "create-name": "Notizbuchname",
       "create-name-required": "Ein Notizbuchname ist erforderlich",
@@ -13431,6 +13544,7 @@
       "error-open-conflict": "",
       "list-error": "Notizbücher konnten nicht geladen werden",
       "list-error-body": "Beim Laden Ihrer Notizbücher ist ein Fehler aufgetreten. Versuchen Sie es erneut oder erstellen Sie stattdessen ein neues.",
+      "list-label": "",
       "list-no-matches": "Keine Notizbücher entsprechen diesen Filtern.",
       "list-none": "Sie haben noch keine Notizbücher. Erstellen Sie stattdessen eines.",
       "list-none-read-only": "Sie haben noch keine Notizbücher und keine Berechtigung, eines zu erstellen.",
@@ -14322,6 +14436,7 @@
       "description-folder": "Ordner innerhalb des Repositorys. Für das Repository-Stammverzeichnis leer lassen.",
       "description-folder-path": "",
       "description-inside-repository": "",
+      "error-configured-branch-disabled": "",
       "info-branch-disabled": "Push zum konfigurierten Branch ist deaktiviert",
       "label-branch": "Branch",
       "label-comment": "Kommentar",
@@ -15867,6 +15982,7 @@
     }
   },
   "query-editor-renderer": {
+    "datasource-error-title": "",
     "datasource-load-error-body": "Wählen Sie zum Fortfahren eine Datenquelle für diese Abfrage aus.",
     "datasource-load-error-title": "Die Datenquelle für diese Abfrage konnte nicht geladen werden",
     "loading-datasource": "Datenquelle wird geladen",
@@ -16063,6 +16179,7 @@
       "expand": "Ausklappen",
       "filter": "",
       "loading": "Dashboards werden geladen",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Keine Ergebnisse für deine Abfrage gefunden",
       "noResultsForFilterClear": "Suche löschen",
       "noResultsForScopes": "Es wurden keine Dashboards oder Links für die ausgewählten Bereiche gefunden",
@@ -16319,8 +16436,8 @@
       "copy-link-button": "Kopieren",
       "info-text": "Erstelle einen direkten Link zu diesem Dashboard oder Panel mit den folgenden angepassten Optionen.",
       "link-url": "Link-URL",
-      "render-alert": "Bild-Render-Plug-in nicht installiert",
-      "render-instructions": "Um ein Bild zu rendern, müssen Sie das <2>Grafana Image Renderer Plugin</2> installieren. Bitte kontaktieren Sie Ihren Grafana-Administrator, um das Plugin zu installieren.",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "Direktlink zum gerenderten Bild",
       "save-alert": "Dashboard nicht gespeichert",
       "save-dashboard": "Um ein Panel-Bild zu rendern, muss zuerst das Dashboard gespeichert werden.",
@@ -16774,8 +16891,61 @@
   },
   "swagger": {
     "login": "Anmelden",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Überprüfen Sie den Namensraum, bevor Sie Abfragen senden, oder laden Sie die Seite neu, um es erneut zu versuchen.",
-    "namespace-unavailable-title": "Namensraum kann nicht geladen werden"
+    "namespace-unavailable-title": "Namensraum kann nicht geladen werden",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16829,6 +16999,9 @@
     "description-styling-from-field": "Ein Feld, das JSON-Objekte mit CSS-Eigenschaften enthält",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Hintergrundfarbe jeder zweiten Zeile abwechseln",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Abfrage"
     },
@@ -17079,6 +17252,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {
@@ -18377,6 +18553,7 @@
       "body_other": "Sind Sie sicher, dass Sie {{count}} Variablen löschen möchten?"
     },
     "editor": {
+      "back": "",
       "cancel": "Abbrechen",
       "delete": "Löschen",
       "delete-modal-body": "Sind Sie sicher, dass Sie „{{name}}“ löschen möchten?",
@@ -18385,6 +18562,7 @@
       "folder-description": "Ordnen Sie die Variable einem Ordner zu oder wählen Sie den Stammordner der Dashboards aus, um sie global zugänglich zu machen (für alle Dashboards verfügbar)",
       "folder-description-folder-only": "Ordnen Sie die Variable einem Ordner zu, den Sie bearbeiten können",
       "folder-label": "Ordner",
+      "load-error-title": "",
       "moved": "Variable verschoben",
       "name-exists": "Eine Variable mit diesem Namen ist im ausgewählten Ordner bereits vorhanden",
       "save": "Speichern",

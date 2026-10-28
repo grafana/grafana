@@ -647,6 +647,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "grafana.mobileEditDeprecation",
+			Description: "Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports",
+			Stage:       FeatureStagePublicPreview,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboards.libraryPanelRepeatFromServerResolution",
 			Description: "Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state",
 			Stage:       FeatureStageExperimental,
@@ -682,6 +690,22 @@ var (
 			Name:        "dashboard.notebooks",
 			Description: "Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels",
 			Stage:       FeatureStagePublicPreview,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.dashboardComposer",
+			Description: "Enables Composer mode for editing dashboards with Grafana Assistant",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.savedDashboardViews",
+			Description: "Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state",
+			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaSharingSquad,
 			Expression:  "false",
@@ -912,15 +936,6 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "groupByVariable",
-			Description:  "Enable groupBy variable support in scenes dashboards",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaDashboardsSquad,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-		},
-		{
 			Name:            "scopeFilters",
 			Description:     "Enables the use of scope filters in Grafana",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
@@ -963,7 +978,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "cloudWatchNewLabelParsing",
@@ -990,14 +1005,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "queryLibrary",
-			Description: "Enables Saved queries (query library) feature",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "true",                                                      // enabled by default
 		},
 		{
 			Name:        "grafana.savedQueriesSearch",
@@ -1518,26 +1525,10 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "teamLBACApiReadFromAppPlatform",
-			Description: "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       identityAccessTeam,
-			Expression:  "false",
-		},
-		{
 			Name:        "teamlbac.usageFromAppPlatform",
 			Description: "Collect Team LBAC usage through the IAM API instead of legacy datasource JSON",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true},
-			Owner:       identityAccessTeam,
-			Expression:  "false",
-		},
-		{
-			Name:        "teamLBACApiWriteFromAppPlatform",
-			Description: "Use the Kubernetes TeamLBACRule API for writing team LBAC rules in the legacy API server",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       identityAccessTeam,
 			Expression:  "false",
 		},
@@ -2170,6 +2161,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "grafana.restrictWatchToServiceIdentities",
+			Description:  "Restrict API watches to service accounts, service identities, and privileged loopback clients",
+			Stage:        FeatureStageExperimental,
+			Generate:     Generate{Go: true},
+			HideFromDocs: true,
+			Owner:        grafanaSearchAndStorageSquad,
+			Expression:   "false",
+		},
+		{
 			Name:            "grafana.publishLegacySQLEvents",
 			Description:     "Publish watch events when values are saved to legacy SQL tables",
 			Stage:           FeatureStageExperimental,
@@ -2203,7 +2203,7 @@ var (
 		{
 			Name:        "grafana.dashboardGlobalVariables",
 			Description: "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
@@ -2466,15 +2466,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "dashboard.recentlyDeletedViaTrash",
-			Description:  "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaSearchAndStorageSquad,
-			HideFromDocs: true,
-			Expression:   "true", // enabled by default
-			Generate:     Generate{React: true},
-		},
-		{
 			Name:            "deletedFolderResourceCleanup",
 			Description:     "Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair",
 			Stage:           FeatureStageExperimental,
@@ -2618,9 +2609,9 @@ var (
 		{
 			Name:        "profilesHeatmap",
 			Description: "Enables heatmap visualization support for Pyroscope profiles",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityTracesAndProfilingSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
@@ -3186,11 +3177,19 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.configFromQueryDynamicName",
+			Description: "Enables using the Config From Query Results transformation's Dynamic Field Name option",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "grafana.thresholdsInterpolation",
 			Description: "Enables using dashboard variables in panel threshold values",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDashboardsSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{React: true},
 		},
 		{
@@ -3235,14 +3234,6 @@ var (
 			Owner:       grafanaDataSourcesPlugins,
 			Generate:    Generate{LegacyGo: true},
 			Expression:  "false",
-		},
-		{
-			Name:        "grafana.unifiedDataSourcePicker",
-			Description: "Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{React: true},
 		},
 		{
 			Name:        "rawPrometheus.tableNg",
@@ -3435,6 +3426,15 @@ var (
 			Generate:    Generate{React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
+		},
+		{
+			Name:         "dashboards.disablePublicDashboards",
+			Description:  "Disables public dashboards for the stack",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaBackendServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

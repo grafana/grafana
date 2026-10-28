@@ -153,7 +153,7 @@ func TestRouterStatusListsLoadFailures(t *testing.T) {
 		require.True(t, doc.LoadFailures[0].Serving)
 
 		rec := httptest.NewRecorder()
-		router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/status", nil), http.NotFoundHandler())
+		router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/status", nil))
 		require.NotContains(t, rec.Body.String(), "load failed", "error text stays in the log")
 	})
 }

@@ -100,6 +100,12 @@ func WithEventPublisher(p resource.EventPublisher) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) { o.EventPublisher = p }
 }
 
+// WithWatchNotificationMetadata adds allowlisted object metadata to the
+// notifications the event publisher announces. KV backend only.
+func WithWatchNotificationMetadata() StorageBackendOption {
+	return func(o *resource.KVBackendOptions) { o.WatchNotificationMetadata = true }
+}
+
 // WithVectorBackend lets the KV backend's tenant deleter remove a deleted
 // tenant's embeddings from the vector store. A nil vb (vector backend disabled)
 // leaves embedding cleanup off.
@@ -131,12 +137,6 @@ func WithNatsNotifier(s resource.EventSubscriber, invalidator resource.Invalidat
 		o.EnableNatsNotifier = true
 		o.WatchInvalidator = invalidator
 	}
-}
-
-// WithExperimentalKV routes flagged experimental use-cases to an alternative
-// KV. Nil preserves existing behavior. KV backend only.
-func WithExperimentalKV(e *resource.ExperimentalKVOptions) StorageBackendOption {
-	return func(o *resource.KVBackendOptions) { o.ExperimentalKV = e }
 }
 
 // NewStorageBackend creates the unified storage backend based on options.StorageType.

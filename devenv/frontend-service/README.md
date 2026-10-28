@@ -25,11 +25,11 @@ Hot module replacement is off in this stack on purpose: the CDN serves assets fr
 
 ### Grafana config
 
-The Grafana API and frontend-service containers are configured in two places:
+The Grafana API and frontend-service containers are configured in three places:
 
 - `GF_` environment variables in the docker-compose file. Config specific to this development stack, that should be the same for everyone, is set here.
-
-- `configs/{frontend-service,grafana-api}.local.ini` file is where you can set your own personal config values, such as feature toggles. This file is git-ignored.
+- `configs/grafana-api.local.ini` — git-ignored local config for the backend container. Feature toggles set here resolve to the browser's React `useFlagX` hooks via OFREP.
+- `configs/frontend-service.local.ini` — git-ignored local config for the frontend-service container. Feature toggles set here only affect server-side rendering and legacy bootdata.
 
 ### Frontend Observability (Faro)
 

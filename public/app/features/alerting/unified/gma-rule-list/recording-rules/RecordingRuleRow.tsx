@@ -4,6 +4,8 @@ import { TextLink } from '@grafana/ui';
 
 import { grafanaRulesNav } from '../../utils/navigation';
 import { FolderPath } from '../rule-row/FolderPath';
+import { RuleDescription } from '../rule-row/RuleDescription';
+import { RuleInterval } from '../rule-row/RuleInterval';
 import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 
@@ -29,6 +31,8 @@ export function RecordingRuleRow({ searchHit, folderPath }: RecordingRuleRowProp
           {searchHit.title}
         </TextLink>
       }
+      description={searchHit.lastError && <RuleDescription lastError={searchHit.lastError} />}
+      right={searchHit.interval && <RuleInterval interval={searchHit.interval} />}
       meta={[folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />]}
     />
   );

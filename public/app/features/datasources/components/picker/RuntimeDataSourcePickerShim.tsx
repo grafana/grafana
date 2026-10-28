@@ -4,7 +4,6 @@ import Skeleton from 'react-loading-skeleton';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { type DataSourcePickerProps } from '@grafana/runtime';
-import { LegacyDataSourcePicker, useFlagGrafanaUnifiedDataSourcePicker } from '@grafana/runtime/internal';
 import { getInputStyles, useStyles2 } from '@grafana/ui';
 
 const SuspendingDataSourcePicker = lazy(() =>
@@ -16,12 +15,6 @@ const SuspendingDataSourcePicker = lazy(() =>
  * Lazily loads the core picker to keep it out of the initial bundle.
  */
 export function RuntimeDataSourcePickerShim(props: DataSourcePickerProps) {
-  const unifiedPickerEnabled = useFlagGrafanaUnifiedDataSourcePicker();
-
-  if (!unifiedPickerEnabled) {
-    return <LegacyDataSourcePicker {...props} />;
-  }
-
   // The core picker manages its own focus and open state, so these props are not supported
   const { onBlur, autoFocus, openMenuOnFocus, ...rest } = props;
 

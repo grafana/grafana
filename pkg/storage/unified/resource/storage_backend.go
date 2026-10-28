@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"iter"
 	"maps"
+	"math"
 	"math/rand/v2"
 	"net/http"
 	"os"
@@ -30,6 +30,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -52,6 +53,9 @@ const (
 	defaultResourceVersionMaxWait     = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
 	persistDeadline                   = 10 * time.Second
+	eventStoreRetentionMargin         = 2 * time.Minute
+	// Assumed upper bound between a write getting its RV and committing it.
+	maxWriteCommitDelay = 2 * time.Minute
 )
 
 // IsResourceNameMixedCase reports whether a successful read returned a
@@ -92,6 +96,8 @@ type kvStorageBackend struct {
 	eventStore             *eventStore
 	notifier               notifier
 	eventPublisher         EventPublisher
+	// watchNotificationMetadata adds object metadata to published notifications.
+	watchNotificationMetadata bool
 	// keysSubscriber lets search watch written keys straight from the bus. Set only
 	// when the NATS notifier is on: shadow mode is for observation, and must not
 	// change how anything receives updates.
@@ -146,6 +152,7 @@ type kvBackendMetrics struct {
 	NatsNotifierDropped               *prometheus.CounterVec
 	WatchNotificationsPublished       *prometheus.CounterVec
 	WatchNotificationPublishFailures  *prometheus.CounterVec
+	WatchNotificationMetadataDropped  *prometheus.CounterVec
 	GCGroupResourceDuration           *prometheus.HistogramVec
 	GCCycleDuration                   *prometheus.HistogramVec
 	GCCycleBatches                    *prometheus.HistogramVec
@@ -209,6 +216,10 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 		WatchNotificationPublishFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_storage_server_watch_notifications_publish_failures_total",
 			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
+		}, []string{"group", "resource", "action"}),
+		WatchNotificationMetadataDropped: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_storage_server_watch_notification_metadata_dropped_total",
+			Help: "Watch notifications published without their metadata because it pushed the message over the size limit, by group, resource, and action.",
 		}, []string{"group", "resource", "action"}),
 		GCCycleDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_storage_server_gc_cycle_duration_seconds",
@@ -274,6 +285,10 @@ func (m *kvBackendMetrics) recordWatchNotificationPublished(event Event) {
 	m.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
 
+func (m *kvBackendMetrics) recordWatchNotificationMetadataDropped(event Event) {
+	m.WatchNotificationMetadataDropped.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
+}
+
 func (m *kvBackendMetrics) recordWatchNotificationPublishFailure(event Event) {
 	m.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
@@ -299,20 +314,8 @@ type KVBackend interface {
 	LeaseManager() *lease.Manager
 }
 
-// ExperimentalKVOptions carries an alternative KV plus per-use-case flags
-// selecting which backend components use it.
-type ExperimentalKVOptions struct {
-	KV KV
-	// TenantMetadata stores tenant pending-delete metadata (written by
-	// the tenant watcher, read by the tenant deleter) in KV instead of KvStore.
-	TenantMetadata bool
-}
-
 type KVBackendOptions struct {
-	KvStore KV
-	// ExperimentalKV, when set, routes flagged use-cases to an alternative KV.
-	// Nil preserves existing behavior.
-	ExperimentalKV       *ExperimentalKVOptions
+	KvStore              KV
 	EventRetentionPeriod time.Duration // How long to keep events (default: 1 hour)
 	EventPruningInterval time.Duration // How often to run the event pruning (default: 5 minutes)
 	Reg                  prometheus.Registerer
@@ -332,6 +335,10 @@ type KVBackendOptions struct {
 	// EventPublisher, when set, is used to announce committed writes on an
 	// external message bus (NATS). Optional; nil disables external publishing.
 	EventPublisher EventPublisher
+
+	// WatchNotificationMetadata adds allowlisted object metadata (labels,
+	// annotations, finalizers, generation, timestamps) to published notifications.
+	WatchNotificationMetadata bool
 
 	// EventSubscriber feeds the shadow NATS notifier; nil disables it.
 	EventSubscriber EventSubscriber
@@ -438,11 +445,7 @@ func newLeaseHolder(instanceID string) string {
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 	kv := opts.KvStore
-	pdKV := opts.KvStore
-	if opts.ExperimentalKV != nil && opts.ExperimentalKV.TenantMetadata {
-		pdKV = opts.ExperimentalKV.KV
-	}
-	pds := newPendingDeleteStore(pdKV)
+	pds := newPendingDeleteStore(kv)
 
 	logger := opts.Log
 	if opts.Log == nil {
@@ -501,28 +504,29 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			natsDropped:        metrics.NatsNotifierDropped,
 			invalidator:        opts.WatchInvalidator,
 		}),
-		eventPublisher:          opts.EventPublisher,
-		keysSubscriber:          keysSubscriber(opts),
-		watchOpts:               opts.WatchOptions.normalize(),
-		resourceVersions:        processResourceVersions,
-		resourceVersionMaxWait:  resourceVersionMaxWait,
-		log:                     logger,
-		eventRetentionPeriod:    eventRetentionPeriod,
-		eventPruningInterval:    eventPruningInterval,
-		rvManager:               opts.RvManager,
-		leaseManager:            leaseManager,
-		leaseTTL:                opts.LeaseTTL,
-		dbKeepAlive:             opts.DBKeepAlive,
-		lastImportStore:         newLastImportStore(kv),
-		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
-		garbageCollection:       garbageCollection,
-		blobGCMetrics:           NewBlobGCMetricsIfEnabled(opts.Reg, "kv", garbageCollection.Enabled && garbageCollection.BlobEnabled),
-		gcGate:                  opts.GCGate,
-		searchLookback:          opts.SearchLookback,
-		disableStorageServices:  opts.DisableStorageServices,
-		dashboardVersionsToKeep: opts.DashboardVersionsToKeep,
-		cancel:                  cancel,
-		metrics:                 metrics,
+		eventPublisher:            opts.EventPublisher,
+		watchNotificationMetadata: opts.WatchNotificationMetadata,
+		keysSubscriber:            keysSubscriber(opts),
+		watchOpts:                 opts.WatchOptions.normalize(),
+		resourceVersions:          processResourceVersions,
+		resourceVersionMaxWait:    resourceVersionMaxWait,
+		log:                       logger,
+		eventRetentionPeriod:      eventRetentionPeriod,
+		eventPruningInterval:      eventPruningInterval,
+		rvManager:                 opts.RvManager,
+		leaseManager:              leaseManager,
+		leaseTTL:                  opts.LeaseTTL,
+		dbKeepAlive:               opts.DBKeepAlive,
+		lastImportStore:           newLastImportStore(kv),
+		lastImportTimeMaxAge:      opts.LastImportTimeMaxAge,
+		garbageCollection:         garbageCollection,
+		blobGCMetrics:             NewBlobGCMetricsIfEnabled(opts.Reg, "kv", garbageCollection.Enabled && garbageCollection.BlobEnabled),
+		gcGate:                    opts.GCGate,
+		searchLookback:            opts.SearchLookback,
+		disableStorageServices:    opts.DisableStorageServices,
+		dashboardVersionsToKeep:   opts.DashboardVersionsToKeep,
+		cancel:                    cancel,
+		metrics:                   metrics,
 	}
 	err := backend.initPruner(ctx, opts.Reg)
 	if err != nil {
@@ -1416,6 +1420,9 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		PreviousAction:  previousKey.Action,
 		PreviousFolder:  previousKey.Folder,
 	}
+	if k.watchNotificationMetadata {
+		eventData.Metadata = newWatchMetadata(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, obj)
+	}
 	if err := k.eventStore.Save(ctx, eventData); err != nil {
 		k.metrics.recordEventEmitFailure(event)
 		k.log.Error("data committed but failed to emit event; data and event store diverged",
@@ -1524,7 +1531,7 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
-	value, err := readAndClose(data)
+	value, err := kv.ReadAllAndClose(data)
 	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
@@ -1682,7 +1689,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []Bat
 				Folder:          entry.key.Folder,
 			}
 			if hasPeek && peek.Key.String() == entry.key.String() {
-				value, err := readAndClose(peek.Value)
+				value, err := kv.ReadAllAndClose(peek.Value)
 				hasPeek = false
 				if err != nil {
 					response.Error = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
@@ -1791,7 +1798,7 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 		if stats != nil {
 			stats.bodiesConsumed++
 		}
-		value, err := readAndClose(obj.Value)
+		value, err := kv.ReadAllAndClose(obj.Value)
 		if err != nil {
 			found(i, &BackendReadResponse{
 				Key:             requests[i].Key,
@@ -1841,7 +1848,7 @@ func (k *kvStorageBackend) FetchValues(ctx context.Context, items []BackendListK
 				return
 			}
 
-			value, err := readAndClose(obj.Value)
+			value, err := kv.ReadAllAndClose(obj.Value)
 			if err != nil {
 				yield(nil, err)
 				return
@@ -2159,7 +2166,7 @@ func (i *kvListIterator) Next() bool {
 	}
 
 	if !i.keysOnly {
-		i.value, i.err = readAndClose(i.currentDataObj.Value)
+		i.value, i.err = kv.ReadAllAndClose(i.currentDataObj.Value)
 		if i.err != nil {
 			return false
 		}
@@ -2344,19 +2351,6 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	))
 	defer span.End()
 
-	latestEvent, err := k.eventStore.LastEventKey(ctx)
-	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			return sinceRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
-		}
-
-		err = fmt.Errorf("error trying to retrieve last event key: %w", err)
-		recordSpanError(span, err)
-		return 0, func(yield func(*ModifiedResource, error) bool) {
-			yield(nil, err)
-		}
-	}
-
 	// Determine whether to apply the lookback window. If the caller has previously
 	// called with this same sinceRv and enough wall-clock time has elapsed since that
 	// call, any in-flight concurrent writes at sinceRv time must have committed, so
@@ -2376,20 +2370,70 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 		}
 	}
 
-	// If no new events since effectiveRv, return early and avoid doing a range query.
-	if latestEvent.ResourceVersion <= effectiveRv {
-		return latestEvent.ResourceVersion, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
+	sinceRvAge := time.Since(sinceRvTime)
+	effectiveRvTime := time.UnixMilli(snowflakeTimestampMillis(effectiveRv))
+	// Events past the retention period may already be pruned.
+	useDataStore := time.Since(effectiveRvTime) > k.maxEventStoreAge()
+
+	latestEvent, err := k.eventStore.LastEventKey(ctx)
+	if errors.Is(err, ErrNotFound) {
+		// A write committed since the caller's last successful call would still
+		// have its event, so an empty event store means nothing changed since.
+		calledRecently := lastCalledWithSinceRv != nil &&
+			time.Since(*lastCalledWithSinceRv) < k.maxEventStoreAge()-maxWriteCommitDelay
+		if !useDataStore || calledRecently {
+			return sinceRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
+		}
+		// Pruning may have removed every event since effectiveRv. Without a
+		// committed RV to advance to, keep the checkpoint.
+		k.log.Debug("ListModifiedSince using data store, event store is empty", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge)
+		return sinceRv, k.listModifiedSinceDataStore(ctx, key, effectiveRv, math.MaxInt64)
+	}
+	if err != nil {
+		err = fmt.Errorf("error trying to retrieve last event key: %w", err)
+		recordSpanError(span, err)
+		return 0, func(yield func(*ModifiedResource, error) bool) {
+			yield(nil, err)
+		}
 	}
 
-	sinceRvAge := time.Since(sinceRvTime)
+	latestRv := latestEvent.ResourceVersion
+	// If no new events since effectiveRv, return early and avoid doing a range query.
+	if latestRv <= effectiveRv {
+		return latestRv, func(yield func(*ModifiedResource, error) bool) { /* nothing to return */ }
+	}
 
-	if sinceRvAge > time.Hour {
+	if useDataStore {
 		k.log.Debug("ListModifiedSince using data store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
-		return latestEvent.ResourceVersion, k.listModifiedSinceDataStore(ctx, key, effectiveRv)
+		return latestRv, k.listModifiedSinceDataStore(ctx, key, effectiveRv, math.MaxInt64)
 	}
 
 	k.log.Debug("ListModifiedSince using event store", "sinceRv", sinceRv, "sinceRvAge", sinceRvAge, "searchLookback", k.searchLookback)
-	return latestEvent.ResourceVersion, k.listModifiedSinceEventStore(ctx, key, effectiveRv)
+	lowestRead := int64(math.MaxInt64)
+	events := k.listModifiedSinceEventStore(ctx, key, effectiveRv, &lowestRead)
+	return latestRv, func(yield func(*ModifiedResource, error) bool) {
+		for mr, err := range events {
+			if !yield(mr, err) || err != nil {
+				return
+			}
+		}
+		// The scan reads the oldest events last, so pruning may have overtaken a long one.
+		if time.Since(effectiveRvTime) > k.eventRetentionPeriod-eventStoreRetentionMargin {
+			k.log.Info("ListModifiedSince event store scan outlived the retention period, rescanning the data store", "sinceRv", sinceRv, "group", key.Group, "resource", key.Resource)
+			// The descending scan read every event from lowestRead up, and pruning
+			// removes the oldest first, so only resources last changed below it can be missing.
+			for mr, err := range k.listModifiedSinceDataStore(ctx, key, effectiveRv, lowestRead) {
+				if !yield(mr, err) {
+					return
+				}
+			}
+		}
+	}
+}
+
+// The margin covers clock skew between this instance and the one pruning events.
+func (k *kvStorageBackend) maxEventStoreAge() time.Duration {
+	return min(time.Hour, k.eventRetentionPeriod-eventStoreRetentionMargin)
 }
 
 func convertEventType(action kv.DataAction) resourcepb.WatchEvent_Type {
@@ -2414,7 +2458,7 @@ func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey Da
 		return []byte{}, err
 	}
 
-	value, err := io.ReadAll(raw)
+	value, err := kv.ReadAllAndClose(raw)
 	if err != nil {
 		return []byte{}, err
 	}
@@ -2422,7 +2466,8 @@ func (k *kvStorageBackend) getValueFromDataStore(ctx context.Context, dataKey Da
 	return value, nil
 }
 
-func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+// listModifiedSinceDataStore skips resources whose latest version is at or above belowRv.
+func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key NamespacedResource, sinceRv, belowRv int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
 		var lastSeenResource *ModifiedResource
 		var lastSeenDataKey DataKey
@@ -2456,7 +2501,8 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 			// keys in ascending lex order with the shape
 			// `group/resource/ns/name/rv`, so all rows for a given
 			// (namespace, name) are contiguous.
-			if lastSeenResource.Key.Namespace != dataKey.Namespace || lastSeenResource.Key.Name != dataKey.Name {
+			if (lastSeenResource.Key.Namespace != dataKey.Namespace || lastSeenResource.Key.Name != dataKey.Name) &&
+				lastSeenDataKey.ResourceVersion < belowRv {
 				value, err := k.getValueFromDataStore(ctx, lastSeenDataKey)
 				if err != nil {
 					yield(&ModifiedResource{}, err)
@@ -2483,7 +2529,7 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 			lastSeenDataKey = dataKey
 		}
 
-		if lastSeenResource != nil {
+		if lastSeenResource != nil && lastSeenDataKey.ResourceVersion < belowRv {
 			value, err := k.getValueFromDataStore(ctx, lastSeenDataKey)
 			if err != nil {
 				yield(&ModifiedResource{}, err)
@@ -2497,7 +2543,8 @@ func (k *kvStorageBackend) listModifiedSinceDataStore(ctx context.Context, key N
 	}
 }
 
-func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64) iter.Seq2[*ModifiedResource, error] {
+// listModifiedSinceEventStore records in lowestRead the lowest event RV it read.
+func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key NamespacedResource, sinceRv int64, lowestRead *int64) iter.Seq2[*ModifiedResource, error] {
 	return func(yield func(*ModifiedResource, error) bool) {
 		// we only care about the latest revision of every resource in the list
 		seen := make(map[string]struct{})
@@ -2512,6 +2559,7 @@ func (k *kvStorageBackend) listModifiedSinceEventStore(ctx context.Context, key 
 				yield(&ModifiedResource{}, err)
 				return
 			}
+			*lowestRead = min(*lowestRead, evtKey.ResourceVersion)
 
 			if evtKey.Group != key.Group || evtKey.Resource != key.Resource {
 				continue
@@ -2778,7 +2826,7 @@ func (i *kvHistoryIterator) Next() bool {
 
 		i.currentDataObj = &dataObj
 
-		i.value, err = readAndClose(dataObj.Value)
+		i.value, err = kv.ReadAllAndClose(dataObj.Value)
 		if err != nil {
 			i.err = err
 			return false
@@ -2927,7 +2975,7 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			readFailed = true
 			break
 		}
-		data, err := readAndClose(obj.Value)
+		data, err := kv.ReadAllAndClose(obj.Value)
 		if err != nil {
 			k.log.Error("failed to read data for event", "key", obj.Key.String(), "error", err)
 			if unreadable == nil {
@@ -3417,13 +3465,6 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	}
 
 	return rsp
-}
-
-// readAndClose reads all data from a ReadCloser and ensures it's closed,
-// combining any errors from both operations.
-func readAndClose(r io.ReadCloser) ([]byte, error) {
-	data, err := io.ReadAll(r)
-	return data, errors.Join(err, r.Close())
 }
 
 // keysSubscriber is the subscriber search may watch written keys with: the one

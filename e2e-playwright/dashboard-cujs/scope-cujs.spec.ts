@@ -18,7 +18,6 @@ import { getRecentScopesSelector, getScopesSelectorInput, getScopeTreeCheckboxes
 test.use({
   featureToggles: {
     scopeFilters: true,
-    groupByVariable: true,
   },
   openFeature: {
     flags: {

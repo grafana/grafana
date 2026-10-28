@@ -71,6 +71,9 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		return tracing.Error(span, fmt.Errorf("list managed resources: %w", err))
 	}
 
+	deletedPaths := deletedNonResourceFolderPaths(diff)
+	cleanupCandidates := managedFoldersAtPaths(target, deletedPaths)
+
 	for i := range target.Items {
 		if target.Items[i].Hash != "" {
 			existingHashes[target.Items[i].Path] = target.Items[i].Hash
@@ -116,7 +119,10 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetMessage(ctx, "versioned changes replicated")
 
 	cleanupStart := time.Now()
-	foldersToDelete := findOrphanedFolders(ctx, repo, currentRef, affectedFolders, relocations, tracer)
+	for path, uid := range affectedFolders {
+		cleanupCandidates = append(cleanupCandidates, folderDeletion{Path: path, UID: uid})
+	}
+	foldersToDelete := findOrphanedFolders(ctx, repo, currentRef, deduplicateFolderDeletions(cleanupCandidates), relocations, tracer)
 
 	for _, r := range replaced {
 		if progress.HasDirPathFailedCreation(r.Path) {
@@ -187,10 +193,12 @@ func applyIncrementalChanges(
 		}
 
 		if err := resources.IsPathSupported(change.Path); err != nil {
-			// Files that are not resources (README.md, .keep, hidden files) and deletes
-			// of unsupported paths are not reported.
-			if change.Action != repository.FileActionDeleted &&
-				!safepath.IsHidden(change.Path) && resources.HasResourceExtension(change.Path) {
+			if change.Action == repository.FileActionDeleted {
+				progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).WithAction(repository.FileActionIgnored).Build())
+				continue
+			}
+			// Files that are not resources (README.md, .keep, hidden files) are not reported.
+			if !safepath.IsHidden(change.Path) && resources.HasResourceExtension(change.Path) {
 				progress.Record(ctx, applyUnsupportedPath(ctx, change, err, repositoryResources, quotaTracker, affectedFolders))
 				continue
 			}
@@ -237,8 +245,8 @@ func applyIncrementalChanges(
 		// - Renamed directories reach RenameFolderPath below.
 		// - Updated directories are emitted by planFolderMetadataChanges when a
 		//   parent folder's UID changed; re-parent them via EnsureFolderPathExist.
-		// - Created/deleted directory entries from cross-boundary renames are
-		//   skipped since individual file-level changes handle them.
+		// - Created directories are handled by individual file-level changes;
+		//   deleted directories are handled by orphan cleanup after apply.
 		if safepath.IsDir(change.Path) && change.Action != repository.FileActionRenamed {
 			if change.Action == repository.FileActionUpdated {
 				folderResultBuilder := jobs.NewFolderResult(change.Path).WithAction(change.Action)
@@ -521,13 +529,49 @@ func deduplicateFolderDeletions(deletions []folderDeletion) []folderDeletion {
 	return result
 }
 
+// Non-resource deletions do not call RemoveResourceFromFile, so they must
+// contribute their own folder cleanup candidates, including empty ancestors.
+func deletedNonResourceFolderPaths(diff []repository.VersionedFileChange) map[string]struct{} {
+	paths := make(map[string]struct{})
+	for _, change := range diff {
+		if change.Action != repository.FileActionDeleted ||
+			(!safepath.IsDir(change.Path) && resources.IsPathSupported(change.Path) == nil) {
+			continue
+		}
+
+		// Include the full safe path to match directory deletions even without
+		// a trailing slash; only managed folders become cleanup candidates.
+		for path := safepath.EnsureTrailingSlash(safepath.SafeSegment(change.Path)); path != ""; path = safepath.Dir(path) {
+			paths[path] = struct{}{}
+		}
+	}
+	return paths
+}
+
+func managedFoldersAtPaths(target *provisioning.ResourceList, paths map[string]struct{}) []folderDeletion {
+	var folders []folderDeletion
+	if target == nil || len(paths) == 0 {
+		return folders
+	}
+	for _, item := range target.Items {
+		if item.Group != resources.FolderResource.Group || item.Path == "" {
+			continue
+		}
+		path := safepath.EnsureTrailingSlash(item.Path)
+		if _, ok := paths[path]; ok {
+			folders = append(folders, folderDeletion{Path: path, UID: item.Name})
+		}
+	}
+	return folders
+}
+
 // findOrphanedFolders checks which affected folders no longer exist in git
 // and returns a list of folders to delete.
 func findOrphanedFolders(
 	ctx context.Context,
 	repo repository.Versioned,
 	currentRef string,
-	affectedFolders map[string]string,
+	affectedFolders []folderDeletion,
 	relocations map[string][]string,
 	tracer tracing.Tracer,
 ) []folderDeletion {
@@ -549,7 +593,8 @@ func findOrphanedFolders(
 
 	logger := logging.FromContext(ctx)
 	var orphaned []folderDeletion
-	for path, folderName := range affectedFolders {
+	for _, folder := range affectedFolders {
+		path, folderName := folder.Path, folder.UID
 		span.SetAttributes(attribute.String("folder", folderName))
 
 		if _, ok := relocatedUIDs[folderName]; ok {
