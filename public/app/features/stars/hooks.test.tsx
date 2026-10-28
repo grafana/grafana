@@ -81,6 +81,7 @@ function setupSearchMock(items: Array<{ uid: string; name: string; url: string; 
   const view = {
     length: items.length,
     get: (i: number) => items[i],
+    toArray: () => items,
     dataFrame: { fields: [], length: items.length },
   };
   const mockSearcher = {

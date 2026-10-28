@@ -8,10 +8,10 @@ import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'ap
 import { setStarred, setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getFolderURL, starredFoldersEnabled } from 'app/features/browse-dashboards/utils/dashboards';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { getIconForKind } from 'app/features/search/service/utils';
 import { dispatch } from 'app/store/store';
 
+import { useSearchStarredQuery } from './api';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 type StarItemArgs = {
@@ -85,9 +85,9 @@ export const useStarredItems = (group: string, kind: string, options?: { skip?: 
   const skip = options?.skip ?? false;
   const response = useListStarsQuery(skip ? skipToken : { fieldSelector: userStarsFieldSelector() });
 
+  // Keyed on the response data, not the response: a refetch that returns the same stars keeps the same array.
+  const { data, isLoading, isUninitialized } = response;
   const starredItems = useMemo(() => {
-    const { data, isLoading, isUninitialized } = response;
-
     // If query hasn't been initiated yet or is still loading, return undefined to show loading state
     if (isUninitialized || isLoading) {
       return undefined;
@@ -99,13 +99,53 @@ export const useStarredItems = (group: string, kind: string, options?: { skip?: 
     }
 
     return findStarredNames(data, group, kind);
-  }, [response, group, kind]);
+  }, [data, isLoading, isUninitialized, group, kind]);
 
   return {
     ...response,
     data: starredItems,
     // Ensure isLoading is true when data is undefined (still loading or uninitialized)
     isLoading: starredItems === undefined ? true : response.isLoading,
+  };
+};
+
+/**
+ * The user's starred dashboards, and folders where those can be starred, as search rows that follow the star set.
+ * The set is RTK cache every star toggle invalidates and the search is keyed by it, so a toggle anywhere re-searches
+ * while the previous rows stay up.
+ */
+export const useStarredSearch = (limit: number) => {
+  const foldersEnabled = starredFoldersEnabled();
+  const dashboards = useStarredItems(DASHBOARD_API_GROUP, 'Dashboard');
+  // A skipped query reports loading forever, so the folder set only counts while the feature is on.
+  const folders = useStarredItems(FOLDER_API_GROUP, 'Folder', { skip: !foldersEnabled });
+  const starsLoading = dashboards.isLoading || (foldersEnabled && folders.isLoading);
+
+  // Sorted so the cache key is the set, not the order the API listed it in.
+  const args = useMemo(
+    () =>
+      starsLoading || !dashboards.data
+        ? skipToken
+        : { dashboards: [...dashboards.data].sort(), folders: [...(folders.data ?? [])].sort(), limit },
+    [starsLoading, dashboards.data, folders.data, limit]
+  );
+  const search = useSearchStarredQuery(args, { refetchOnMountOrArgChange: true });
+
+  return {
+    uids: search.data?.uids,
+    rows: search.data?.rows,
+    // Until the first rows land; a changed star set keeps the previous rows up while it loads.
+    loading: starsLoading || search.isLoading,
+    error: dashboards.isError || (foldersEnabled && folders.isError) || search.isError,
+    retry: () => {
+      dashboards.refetch();
+      if (foldersEnabled) {
+        folders.refetch();
+      }
+      if (args !== skipToken) {
+        search.refetch();
+      }
+    },
   };
 };
 
@@ -118,96 +158,27 @@ const STARRED_NAV_CAP = 50;
  */
 export const useSyncStarredItemsInNav = () => {
   const foldersEnabled = starredFoldersEnabled();
-  const {
-    data: dashboardUids,
-    isLoading: dashboardsLoading,
-    isError: dashboardsError,
-  } = useStarredItems(DASHBOARD_API_GROUP, 'Dashboard');
-  const {
-    data: folderUids,
-    isLoading: folderLoadingRaw,
-    isError: folderError,
-  } = useStarredItems(FOLDER_API_GROUP, 'Folder', { skip: !foldersEnabled });
+  const { uids, rows, loading, error } = useStarredSearch(STARRED_NAV_CAP);
 
-  // A skipped useStarredItems reports isLoading:true indefinitely, so only honor
-  // the folder query's loading/error when the feature is actually on.
-  const folderLoading = foldersEnabled ? folderLoadingRaw : false;
-  const isLoading = dashboardsLoading || folderLoading;
-  const isError = dashboardsError || (foldersEnabled && folderError);
-
-  // Initialized from the stars query so a remount with a warm RTK cache doesn't
-  // flash a loading state — the nav tree is already correct from the prior sync
-  const [hasSynced, setHasSynced] = useState(!isLoading);
-  const [searchFailed, setSearchFailed] = useState(false);
-
-  // Stable identities so the effect doesn't re-fire when an array ref changes but content is identical
-  const dashboardKey = useMemo(() => dashboardUids && [...dashboardUids].sort().join(','), [dashboardUids]);
-  const folderKey = useMemo(
-    () => (foldersEnabled ? folderUids && [...folderUids].sort().join(',') : ''),
-    [folderUids, foldersEnabled]
-  );
+  // Initialized from the search so a remount with a warm RTK cache doesn't flash a loading state: the nav tree is
+  // already correct from the prior sync.
+  const [hasSynced, setHasSynced] = useState(rows !== undefined);
 
   useEffect(() => {
-    if (isLoading || dashboardKey === undefined || folderKey === undefined) {
+    if (!uids || !rows) {
       return;
     }
+    const items: StarredNavItem[] = rows.map((row) => ({
+      id: row.uid,
+      title: row.name,
+      url: row.url,
+      icon: foldersEnabled ? getIconForKind(row.kind) : undefined,
+      sortWeight: row.kind === 'folder' ? STARRED_FOLDER_SORT_WEIGHT : undefined,
+    }));
+    dispatch(setStarredItems({ uids, items }));
+    setHasSynced(true);
+  }, [uids, rows, foldersEnabled]);
 
-    const dashboardNames = dashboardKey === '' ? [] : dashboardKey.split(',');
-    const folderNames = folderKey === '' ? [] : folderKey.split(',');
-    // Dedupe so a uid starred as both kinds can't occupy two cap slots or render twice
-    const names = [...new Set([...dashboardNames, ...folderNames])].sort().slice(0, STARRED_NAV_CAP);
-
-    if (names.length === 0) {
-      dispatch(setStarredItems({ uids: [], items: [] }));
-      setHasSynced(true);
-      setSearchFailed(false);
-      return;
-    }
-
-    const kinds = foldersEnabled ? ['dashboard', 'folder'] : ['dashboard'];
-    // The search matches the uid union against both kinds, so a cross-kind uid collision can
-    // return an item that was never starred as that kind — keep only kind-matching hits.
-    const starredUidsByKind: Record<string, Set<string> | undefined> = {
-      dashboard: new Set(dashboardNames),
-      folder: new Set(folderNames),
-    };
-    let cancelled = false;
-
-    getGrafanaSearcher()
-      .search({ name: names, kind: kinds })
-      .then((response) => {
-        if (cancelled) {
-          return;
-        }
-        const items: StarredNavItem[] = [];
-        for (let i = 0; i < response.view.length; i++) {
-          const row = response.view.get(i);
-          if (!starredUidsByKind[row.kind]?.has(row.uid)) {
-            continue;
-          }
-          items.push({
-            id: row.uid,
-            title: row.name,
-            url: row.url,
-            icon: foldersEnabled ? getIconForKind(row.kind) : undefined,
-            sortWeight: row.kind === 'folder' ? STARRED_FOLDER_SORT_WEIGHT : undefined,
-          });
-        }
-        dispatch(setStarredItems({ uids: names, items }));
-        setHasSynced(true);
-        setSearchFailed(false);
-      })
-      .catch((err) => {
-        console.error('Failed to sync starred items to nav', err);
-        // Resolve the loading state rather than showing it forever
-        setHasSynced(true);
-        setSearchFailed(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [dashboardKey, folderKey, isLoading, foldersEnabled]);
-
-  return { isLoading: isLoading || !hasSynced, isError: isError || searchFailed };
+  // A failed search resolves loading too, rather than spinning forever.
+  return { isLoading: loading || (!hasSynced && !error), isError: error };
 };

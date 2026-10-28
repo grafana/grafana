@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
-import { render, screen, within } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
@@ -8,7 +8,7 @@ import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setMockStarredDashboards } from '@grafana/test-utils/unstable';
+import { setMockStarredDashboards, setMockStarredFolders, setTestFlags } from '@grafana/test-utils/unstable';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -242,6 +242,77 @@ describe('DashboardTabs', () => {
     expect(await screen.findByRole('tab', { name: /starred.*3/i })).toBeInTheDocument();
   });
 
+  describe('Starred folders', () => {
+    beforeEach(() => {
+      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
+      setMockStarredFolders(['folder-1']);
+      server.use(
+        getCustomSearchHandler([
+          ...starredHits,
+          makeDashboardHit({ name: 'folder-1', title: 'Starred Folder', resource: 'folders' }),
+        ])
+      );
+    });
+
+    afterEach(async () => {
+      setMockStarredFolders([]);
+      // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates while the
+      // component is still mounted.
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    it('lists a starred folder as starred and drops it once unstarred', async () => {
+      const { user } = render(<DashboardTabs />);
+
+      // Recent is empty, so the card lands on Starred.
+      expect(await screen.findByRole('tab', { name: /starred.*1/i, selected: true })).toBeInTheDocument();
+      await user.click(await screen.findByRole('button', { name: 'Unmark "Starred Folder" as favorite' }));
+
+      await waitFor(() => expect(screen.queryByText('Starred Folder')).not.toBeInTheDocument());
+      expect(screen.getByRole('tab', { name: /starred.*0/i })).toBeInTheDocument();
+    });
+
+    it('ignores a folder uid starred under the dashboard kind', async () => {
+      // What the star button used to record for a folder row; the folder is no longer starred as a folder, while
+      // another one is, so the search spans both kinds.
+      setMockStarredFolders(['folder-2']);
+      setMockStarredDashboards(['folder-1', 'starred-1']);
+      server.use(
+        getCustomSearchHandler([
+          ...starredHits,
+          makeDashboardHit({ name: 'folder-1', title: 'Starred Folder', resource: 'folders' }),
+          makeDashboardHit({ name: 'folder-2', title: 'Other Folder', resource: 'folders' }),
+        ])
+      );
+
+      render(<DashboardTabs />);
+
+      expect(await screen.findByText('Other Folder')).toBeInTheDocument();
+      expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
+      expect(screen.queryByText('Starred Folder')).not.toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
+    });
+  });
+
+  it('keeps the rows up while a star toggle re-searches instead of flashing a loader', async () => {
+    setMockStarredDashboards(['starred-1', 'starred-2']);
+
+    const { user } = render(<DashboardTabs />);
+
+    const unstar = await screen.findByRole('button', { name: 'Unmark "Starred Dashboard 1" as favorite' });
+    // The re-search never answers, so the state it leaves on screen is the one the user sees in between.
+    server.use(http.get(searchRoute, () => new Promise(() => {})));
+
+    await user.click(unstar);
+
+    expect(await screen.findByRole('button', { name: 'Mark "Starred Dashboard 1" as favorite' })).toBeInTheDocument();
+    expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
+    expect(screen.getByText('Starred Dashboard 2')).toBeInTheDocument();
+    expect(screen.queryByText('Loading starred dashboards...')).not.toBeInTheDocument();
+  });
+
   describe('Most used tab', () => {
     beforeEach(() => {
       config.licenseInfo.enabledFeatures = { analytics: true };
@@ -312,6 +383,20 @@ describe('DashboardTabs', () => {
         'grafana_browse_dashboards_page_click_list_item',
         expect.objectContaining({ source: 'homepage_mostUsedTab' })
       );
+    });
+
+    it('lets the user star a dashboard row, which updates the Starred tab', async () => {
+      const { user } = render(<DashboardTabs />);
+
+      await user.click(await screen.findByRole('tab', { name: /most used/i }));
+      expect(screen.getByRole('tab', { name: /starred.*0/i })).toBeInTheDocument();
+
+      await user.click(await screen.findByRole('button', { name: 'Mark "Most Used Dashboard 1" as favorite' }));
+
+      expect(
+        await screen.findByRole('button', { name: 'Unmark "Most Used Dashboard 1" as favorite' })
+      ).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: /starred.*1/i })).toBeInTheDocument();
     });
   });
 

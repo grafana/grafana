@@ -4,7 +4,7 @@ import { useAsyncRetry } from 'react-use';
 import { t, Trans } from '@grafana/i18n';
 import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { useStarredSearch } from 'app/features/stars/hooks';
 
 import { FooterAction } from '../FooterActions';
 import { type HomeCardTab, HomeTabbedCard } from '../HomeTabbedCard';
@@ -26,16 +26,12 @@ export function DashboardTabs() {
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
   const recent = useRecentActivity();
-
   const {
-    value: starredDashboards,
+    rows: starredDashboards,
     loading: starredLoading,
     error: starredError,
     retry: starredRetry,
-  } = useAsyncRetry(async () => {
-    const response = await getGrafanaSearcher().starred({ limit: MAX_STARRED });
-    return response.view.toArray();
-  }, []);
+  } = useStarredSearch(MAX_STARRED);
 
   const {
     value: mostUsedDashboards,
@@ -110,7 +106,7 @@ export function DashboardTabs() {
       label: t('home.dashboard-tabs.recent', 'Recent'),
       // What the list shows; the whole history is one filter option away.
       counter: recent.items.length,
-      content: <RecentActivityTab recent={recent} foldersByUid={foldersByUid} onStarChange={starredRetry} />,
+      content: <RecentActivityTab recent={recent} foldersByUid={foldersByUid} />,
       filter: showRecentFooter && recent.kinds.length > 1 && <RecentActivityFilterCombobox recent={recent} />,
       footer: showRecentFooter && <ClearRecentActivityAction recent={recent} />,
     },
@@ -124,7 +120,7 @@ export function DashboardTabs() {
               <DashboardListTab
                 dashboards={mostUsedDashboards ?? []}
                 loading={mostUsedLoading}
-                error={mostUsedError}
+                error={!!mostUsedError}
                 retry={mostUsedRetry}
                 foldersByUid={foldersByUid}
                 loadingText={t('home.most-used-dashboards-tab.loading', 'Loading most used dashboards...')}
@@ -152,8 +148,6 @@ export function DashboardTabs() {
           errorTitle={t('home.starred-dashboards-tab.error-title', 'Could not load starred dashboards')}
           emptyMessage={t('home.starred-dashboards-tab.empty', 'Your starred dashboards will appear here.')}
           source="homepage_starredTab"
-          // Unstarring a row here removes it from this list.
-          onStarChange={starredRetry}
         />
       ),
       footer: viewAllDashboards,
