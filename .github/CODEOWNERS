@@ -683,6 +683,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/components/QueryEditorWithMigration* @grafana/grafana-catalog
 /packages/grafana-runtime/src/config.test.ts @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/config.ts @grafana/grafana-frontend-platform
+/packages/grafana-runtime/src/provisioning @grafana/grafana-app-platform-squad
 /packages/grafana-runtime/src/services/ @grafana/grafana-frontend-platform
 /packages/grafana-runtime/src/services/dataSource @grafana/grafana-catalog
 /packages/grafana-runtime/src/services/logging @grafana/grafana-frontend-platform
