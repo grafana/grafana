@@ -875,6 +875,46 @@ func TestBuildGlobalHybridSearch_NamesKindsItDoesNotServe(t *testing.T) {
 	assert.Equal(t, map[string]string{"d1": "Dashboard", "f1": "Folder", "t1": ""}, kinds)
 }
 
+// hybridRequestRecorder keeps the hybrid search request it is sent and finds nothing.
+type hybridRequestRecorder struct {
+	resourcepb.ResourceIndexClient
+	request *resourcepb.HybridSearchRequest
+}
+
+func (c *hybridRequestRecorder) HybridSearch(_ context.Context, req *resourcepb.HybridSearchRequest, _ ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	c.request = req
+	return &resourcepb.HybridSearchResponse{}, nil
+}
+
+// DashboardPreferences lists hide other users' objects in a way a search index can't repeat. The global
+// hybrid route authorizes the kind like any target, and the kind's authorizer lets an unnamed list through
+// for its storage to filter, so the backend's hybrid opt-in check is what keeps the objects out. The
+// backend builds that check, and the types the global index covers, from the compiled-in manifests.
+func TestGlobalSearchesLeaveOutDashboardPreferences(t *testing.T) {
+	gr := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboardpreferences"}
+	b := &fakeBuilder{gvs: []schema.GroupVersion{{Group: gr.Group, Version: "v2beta1"}}}
+	var authorized []string
+	auth := authorizer.AuthorizerFunc(func(_ context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		authorized = append(authorized, attr.GetAPIGroup()+"/"+attr.GetResource())
+		return authorizer.DecisionAllow, "", nil
+	})
+	client := &hybridRequestRecorder{}
+	routes := BuildGlobalHybridSearch(tracing.NewNoopTracerService(), client, []builder.APIGroupBuilder{b}, nil, auth)
+	require.Len(t, routes, 1)
+	require.Len(t, routes[0].Routes.Namespace, 1)
+
+	r := httptest.NewRequest(http.MethodPost, "/global/search/hybrid", strings.NewReader(`{"apiVersion":"search.grafana.app/v0alpha1","kind":"HybridSearchQuery","query":"cpu","resources":[{"group":"dashboard.grafana.app","resource":"dashboardpreferences"}]}`))
+	w := httptest.NewRecorder()
+	routes[0].Routes.Namespace[0].Handler(w, r.WithContext(request.WithNamespace(r.Context(), "default")))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.Equal(t, []string{"dashboard.grafana.app/dashboardpreferences"}, authorized)
+	require.NotNil(t, client.request)
+	assert.True(t, client.request.RequireHybridEnabled)
+
+	assert.False(t, resource.NewHybridSearchConfigRegistry(resource.AppManifests()).Enabled(gr.Group, gr.Resource))
+	assert.False(t, resource.NewGlobalSearchCoverageRegistry(resource.AppManifests()).Covers(gr))
+}
+
 func TestGlobalHybridSearchTargets_LocalAPIAuthorization(t *testing.T) {
 	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
 	no := false
