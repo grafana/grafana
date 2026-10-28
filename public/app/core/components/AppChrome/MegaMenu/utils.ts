@@ -4,6 +4,7 @@ import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
+import { DASHBOARDS_TAB_NAV_IDS } from 'app/core/navtree/constants';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
@@ -277,9 +278,7 @@ export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
  */
 export const HIDDEN_NAV_ITEMS = new Set<string>([
   // Shown as tabs on the browse dashboards view instead
-  'dashboards/library-panels',
-  'dashboards/variables',
-  'dashboards/recently-deleted',
+  ...DASHBOARDS_TAB_NAV_IDS,
 
   '/a/grafana-adaptive-metrics-app/configuration',
   '/a/grafana-adaptive-metrics-app/rule-management',

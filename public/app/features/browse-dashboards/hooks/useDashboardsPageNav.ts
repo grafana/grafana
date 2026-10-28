@@ -2,11 +2,8 @@ import { useMemo } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
 import { useFlagGrafanaNavigationInfoArchRefresh } from '@grafana/runtime/internal';
-import { NavID } from 'app/core/navtree/constants';
+import { DASHBOARDS_TAB_NAV_IDS, NavID } from 'app/core/navtree/constants';
 import { useSelector } from 'app/types/store';
-
-/** The Dashboards pages that become tabs, in the order they are shown */
-const TAB_NAV_IDS = ['dashboards/library-panels', 'dashboards/variables', 'dashboards/recently-deleted'];
 
 /**
  * The tab bar shared by the dashboard list and the Dashboards pages beside it,
@@ -32,7 +29,7 @@ export function useDashboardsPageNav(activeId: string): NavModelItem | undefined
 
     // The list is the section itself, so its tab is the one that has to be made
     const listTab: NavModelItem = { id: NavID.dashboards, text: section.text, url: '/dashboards', icon: 'apps' };
-    const tabs = [listTab, ...TAB_NAV_IDS.map((id) => section.children?.find((child) => child.id === id))]
+    const tabs = [listTab, ...DASHBOARDS_TAB_NAV_IDS.map((id) => section.children?.find((child) => child.id === id))]
       .filter((tab) => tab !== undefined)
       .map((tab) => ({ ...tab, active: tab.id === activeId }));
 

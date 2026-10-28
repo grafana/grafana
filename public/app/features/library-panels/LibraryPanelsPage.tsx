@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { Page } from 'app/core/components/Page/Page';
+import { NavID } from 'app/core/navtree/constants';
 import { useDashboardsPageNav } from 'app/features/browse-dashboards/hooks/useDashboardsPageNav';
 
 import { LibraryPanelsSearch } from './components/LibraryPanelsSearch/LibraryPanelsSearch';
@@ -9,7 +10,7 @@ import { type LibraryElementDTO } from './types';
 
 export const LibraryPanelsPage = () => {
   const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
-  const pageNav = useDashboardsPageNav('dashboards/library-panels');
+  const pageNav = useDashboardsPageNav(NavID.dashboardsLibraryPanels);
 
   return (
     <Page navId="dashboards/library-panels" pageNav={pageNav}>
