@@ -1,12 +1,11 @@
 import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 
-import { type RepoType } from '../Wizard/types';
 import { getReadOnlyTooltipText } from '../utils/tooltip';
 
 interface ReadOnlyBadgeProps {
   /** Type of the managing repository. Local (file) provisioning changes the tooltip copy. */
-  repoType?: RepoType;
+  repoType?: string;
 }
 
 /**

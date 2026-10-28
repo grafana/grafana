@@ -12,6 +12,7 @@ import { initReactI18next } from 'react-i18next';
 import { matchers } from '@grafana/test-utils';
 
 import { setManagedBadge } from '../../packages/grafana-runtime/src/provisioning/ManagedBadge';
+import { setReadOnlyBadge } from '../../packages/grafana-runtime/src/provisioning/ReadOnlyBadge';
 import { setPluginComponentsHook } from '../../packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents';
 import { getEnvConfig } from '../../scripts/cli/env-util';
 
@@ -73,6 +74,9 @@ jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 setManagedBadge((props) =>
   createElement(require('app/features/provisioning/components/ManagedBadge').ManagedBadge, props)
+);
+setReadOnlyBadge((props) =>
+  createElement(require('app/features/provisioning/components/ReadOnlyBadge').ReadOnlyBadge, props)
 );
 
 // our tests are heavy in CI due to parallelisation and monaco and kusto

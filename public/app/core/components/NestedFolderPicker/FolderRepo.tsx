@@ -1,9 +1,8 @@
 import { memo } from 'react';
 
-import { ManagedBadge } from '@grafana/runtime';
+import { ManagedBadge, ReadOnlyBadge } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
 import { ensureFolderPathTrailingSlash } from 'app/features/provisioning/components/utils/path';
 import {
   RepoViewStatus,

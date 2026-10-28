@@ -54,6 +54,7 @@ import {
   setJourneyTracker,
   setPanelDataErrorView,
   setManagedBadge,
+  setReadOnlyBadge,
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
@@ -122,6 +123,7 @@ import { pluginImporter } from './features/plugins/importer/pluginImporter';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { ManagedBadge } from './features/provisioning/components/ManagedBadge';
+import { ReadOnlyBadge } from './features/provisioning/components/ReadOnlyBadge';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -230,6 +232,7 @@ export class GrafanaApp {
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
       setManagedBadge(ManagedBadge);
+      setReadOnlyBadge(ReadOnlyBadge);
       setFolderPicker(LazyFolderPicker);
       setDataSourcePicker(RuntimeDataSourcePickerShim);
       setPanelDataErrorView(LazyPanelDataErrorView);
