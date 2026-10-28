@@ -4,6 +4,7 @@ import { API_GROUP as FOLDER_API_GROUP, API_VERSION as FOLDER_API_VERSION } from
 import {
   getBackendSrv,
   locationService,
+  SaveResourceDrawer,
   type SaveResourceDrawerBranchCommit,
   type SaveResourceDrawerResource,
 } from '@grafana/runtime';
@@ -11,8 +12,6 @@ import { getAPIBaseURL } from 'app/api/utils';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
 
 import { getKindInfoByGroupKind } from '../../utils/resourceKinds';
-
-import { SaveProvisionedResourceDrawer } from './SaveProvisionedResourceDrawer';
 
 export interface InterceptedWriteDrawerProps {
   url: string;
@@ -127,8 +126,8 @@ export function InterceptedWriteDrawer({
   };
 
   return action === 'create' ? (
-    <SaveProvisionedResourceDrawer action="create" repositoryName={repositoryName ?? ''} {...handlers} />
+    <SaveResourceDrawer action="create" repositoryName={repositoryName ?? ''} {...handlers} />
   ) : (
-    <SaveProvisionedResourceDrawer action={action} {...handlers} />
+    <SaveResourceDrawer action={action} {...handlers} />
   );
 }
