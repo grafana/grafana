@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
-import classnames from 'clsx';
 import { debounce } from 'lodash';
-import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useEffect, useEffectEvent, useRef, useState } from 'react';
 import * as React from 'react';
 import { type Value } from 'slate';
 import Plain from 'slate-plain-serializer';
@@ -96,47 +95,28 @@ export const QueryField = memo(function QueryField({
   const editorRef = useRef<Editor | null>(null);
   const lastExecutedValue = useRef<Value | null>(null);
   const prevSyntaxLoaded = useRef(syntaxLoaded);
-
-  // Handle two way binging between local state and outside prop.
-  // if query changed from the outside
-  if (query !== prevQuery) {
-    setPrevQuery(query);
-    // and we have a version that differs
-    if (query !== Plain.serialize(value)) {
-      setValue(makeValue(query || '', syntax));
-    }
-  }
-
-  const runOnChange = (value: Value) => {
+  const styles = useStyles2(getStyles);
+  const runOnChange = useEffectEvent(() => {
     if (onChange) {
       onChange(cleanText(Plain.serialize(value)));
     }
-  };
-
-  const runOnChangeAndRunQuery = (value: Value) => {
+  });
+  const runOnChangeAndRunQuery = useEffectEvent(() => {
     // onRunQuery executes query from Redux in Explore so it needs to be updated sync in case we want to run
     // the query.
-    runOnChange(value);
+    runOnChange();
     if (onRunQuery) {
       onRunQuery();
       lastExecutedValue.current = value;
     }
-  };
-
-  // The plugins and debounced callback are created once, so they read the latest render through this ref
-  const latest = useRef({ value, runOnChange, runOnChangeAndRunQuery });
-  useEffect(() => {
-    latest.current = { value, runOnChange, runOnChangeAndRunQuery };
   });
-
-  const [runOnChangeDebounced] = useState(() => debounce(() => latest.current.runOnChange(latest.current.value), 500));
-
+  const [runOnChangeDebounced] = useState(() => debounce(runOnChange, 500));
   const [plugins] = useState<Array<Plugin<Editor>>>(() =>
     [
       // SuggestionsPlugin and RunnerPlugin need to be before NewlinePlugin
       // because they override Enter behavior
       SuggestionsPlugin({ onTypeahead, cleanText: cleanTextProp, portalOrigin, onWillApplySuggestion }),
-      RunnerPlugin({ handler: () => latest.current.runOnChangeAndRunQuery(latest.current.value) }),
+      RunnerPlugin({ handler: runOnChangeAndRunQuery }),
       NewlinePlugin(),
       ClearPlugin(),
       SelectionShortcutsPlugin(),
@@ -146,10 +126,19 @@ export const QueryField = memo(function QueryField({
     ].filter((p) => p)
   );
 
+  useEffect(() => {
+    if (!prevSyntaxLoaded.current && syntaxLoaded && editorRef.current) {
+      // Need a bogus edit to re-render the editor after syntax has fully loaded
+      const editor = editorRef.current.insertText(' ').deleteBackward(1);
+      handleChange(editor.value);
+    }
+    prevSyntaxLoaded.current = syntaxLoaded;
+  });
+
   /**
-   * Update local state, propagate change upstream and optionally run the query afterwards.
+   * Update local state and propagate change upstream.
    */
-  const handleChange = (newValue: Value, runQuery?: boolean) => {
+  const handleChange = (newValue: Value) => {
     if (onRichValueChange) {
       onRichValueChange(newValue);
     }
@@ -160,23 +149,10 @@ export const QueryField = memo(function QueryField({
     // that is not passed upstream so every change of editor value does not mean change of the query text.
     const documentChanged = newValue.document !== value.document;
     if (documentChanged && Plain.serialize(value) !== Plain.serialize(newValue)) {
-      if (runQuery) {
-        runOnChangeAndRunQuery(newValue);
-      } else {
-        // Debounce change propagation by default for perf reasons.
-        runOnChangeDebounced();
-      }
+      // Debounce change propagation for perf reasons.
+      runOnChangeDebounced();
     }
   };
-
-  useEffect(() => {
-    if (!prevSyntaxLoaded.current && syntaxLoaded && editorRef.current) {
-      // Need a bogus edit to re-render the editor after syntax has fully loaded
-      const editor = editorRef.current.insertText(' ').deleteBackward(1);
-      handleChange(editor.value, true);
-    }
-    prevSyntaxLoaded.current = syntaxLoaded;
-  });
 
   /**
    * We need to handle blur events here mainly because of dashboard panels which expect to have query executed on blur.
@@ -190,19 +166,32 @@ export const QueryField = memo(function QueryField({
       const currentValue = Plain.serialize(editor.value);
 
       if (previousValue !== currentValue) {
-        runOnChangeAndRunQuery(editor.value);
+        runOnChangeAndRunQuery();
       }
     }
     return next();
   };
 
-  const wrapperClassName = classnames('slate-query-field__wrapper', {
-    'slate-query-field__wrapper--disabled': disabled,
-  });
-  const styles = useStyles2(getStyles);
+  // Handle two way binging between local state and outside prop.
+  // if query changed from the outside
+  if (query !== prevQuery) {
+    setPrevQuery(query);
+    // and we have a version that differs
+    if (query !== Plain.serialize(value)) {
+      setValue(makeValue(query || '', syntax));
+    }
+  }
 
   return (
-    <div className={cx(wrapperClassName, styles.wrapper)}>
+    <div
+      className={cx(
+        'slate-query-field__wrapper',
+        {
+          'slate-query-field__wrapper--disabled': disabled,
+        },
+        styles.wrapper
+      )}
+    >
       <div className="slate-query-field" data-testid={selectors.components.QueryField.container}>
         <Suspense fallback={<LoadingPlaceholder text={t('grafana-ui.query-field.loading', 'Loading editor')} />}>
           <LazyEditor
@@ -214,7 +203,7 @@ export const QueryField = memo(function QueryField({
             onBlur={handleBlur}
             onClick={onClick}
             onChange={(change: { value: Value }) => {
-              handleChange(change.value, false);
+              handleChange(change.value);
             }}
             placeholder={placeholder}
             plugins={plugins}
