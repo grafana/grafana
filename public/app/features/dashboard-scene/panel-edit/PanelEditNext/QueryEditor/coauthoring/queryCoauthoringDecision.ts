@@ -3,7 +3,8 @@ import { type EvaluationDetails } from '@openfeature/react-sdk';
 import { reportInteraction } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 
-import { DashboardScene } from '../../../../scene/DashboardScene';
+import { isDashboardSceneLike } from '../../../../scene/types/dashboard';
+import { getDashboardSceneFor } from '../../../../utils/utils';
 import { type PanelEditor } from '../../../PanelEditor';
 
 // A panel editor outlives its query rows, including stacked-layout remounts.
@@ -40,11 +41,11 @@ export function reportQueryCoauthoringDecision(
     return;
   }
 
-  const dashboard = panel.getRoot();
-  if (!(dashboard instanceof DashboardScene)) {
+  if (!isDashboardSceneLike(panel.getRoot())) {
     return;
   }
 
+  const dashboard = getDashboardSceneFor(panel);
   const editor = dashboard.state.editPanel;
   if (!editor || editor.getPanel() !== panel) {
     return;
