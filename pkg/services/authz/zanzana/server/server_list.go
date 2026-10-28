@@ -20,6 +20,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/roleauth"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -62,6 +63,11 @@ func (s *Server) List(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.ListResponse, error) {
 	if err := authorize(ctx, r.GetNamespace(), s.cfg); err != nil {
 		return nil, err
+	}
+
+	if roleauth.IsBindingMutation(r.GetGroup(), r.GetResource(), r.GetSubresource(), r.GetVerb()) {
+		res, err := s.checkBinding(ctx, &authzv1.CheckRequest{Namespace: r.GetNamespace(), Subject: r.GetSubject(), Teams: r.GetTeams(), Group: r.GetGroup(), Resource: r.GetResource(), Verb: r.GetVerb(), Name: "*"})
+		return &authzv1.ListResponse{All: res.GetAllowed()}, err
 	}
 
 	store, err := s.getStoreInfo(ctx, r.GetNamespace())

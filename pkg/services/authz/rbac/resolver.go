@@ -197,7 +197,7 @@ func permissionsTypeResolverFunc(scope string) (string, error) {
 func isRoleManagementAction(action string) bool {
 	switch action {
 	case "roles:read", "roles:write", "roles:delete",
-		"users.roles:read", "users.roles:add", "users.roles:remove":
+		"users.roles:read", "users.roles:add", "users.roles:remove", "teams.roles:add", "teams.roles:remove":
 		return true
 	}
 	return false

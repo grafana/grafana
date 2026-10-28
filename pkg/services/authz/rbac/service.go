@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/authz/roleauth"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
@@ -999,6 +1000,17 @@ func (s *Service) newFolderTreeGetter(ctx context.Context, ns types.NamespaceInf
 // The fork is intentionally explicit so the folder-authz behaviour is easy to
 // read and easy to retire once all resources move to the mapper.
 func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool, getFolderScope folderScopeGetter, req *checkRequest, getTree folderTreeGetter) (bool, error) {
+	if roleauth.IsBindingMutation(req.Group, req.Resource, req.Subresource, req.Verb) {
+		return roleauth.CheckBinding(req.Name, req.Verb, func(family string) (bool, error) {
+			action, sets, err := s.validateAction(ctx, req.Group, req.Resource, family, req.Verb)
+			if err != nil {
+				return false, err
+			}
+			scopes, err := s.getIdentityPermissions(ctx, req.Namespace, req.IdentityType, req.UserUID, action, sets)
+			return scopes["*"], err
+		})
+	}
+
 	ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.checkPermission", trace.WithAttributes(
 		attribute.Int("scope_count", len(scopeMap)),
 		attribute.String("group", req.Group),
@@ -1295,6 +1307,11 @@ func (s *Service) buildFolderTree(ctx context.Context, ns types.NamespaceInfo) (
 }
 
 func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, req *listRequest) (*authzv1.ListResponse, error) {
+	if roleauth.IsBindingMutation(req.Group, req.Resource, req.Subresource, req.Verb) {
+		allowed, err := s.checkPermission(ctx, nil, nil, &checkRequest{Namespace: req.Namespace, UserUID: req.UserUID, IdentityType: req.IdentityType, Group: req.Group, Resource: req.Resource, Verb: req.Verb, Name: "*"}, nil)
+		return &authzv1.ListResponse{All: allowed}, err
+	}
+
 	// Mapper-miss resources (folder-scoped CRDs, *.ext.grafana.app) use the
 	// dual-check folder-authz model. Fork here before the scopeMap["*"] early
 	// return so a resource-type wildcard does not auto-allow all objects for

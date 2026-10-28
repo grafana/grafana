@@ -17,6 +17,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/grafana/grafana/pkg/services/authz/roleauth"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -119,6 +120,18 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest, n
 			resource:      resource,
 			relation:      relation,
 			resolved:      isLegacyPermissionDelegation(item.GetGroup(), item.GetResource(), item.GetSubresource()),
+		}
+	}
+
+	for _, item := range checks {
+		if roleauth.IsBindingMutation(item.GetGroup(), item.GetResource(), item.GetSubresource(), item.GetVerb()) {
+			res, err := s.checkBinding(ctx, &authzv1.CheckRequest{Namespace: namespace, Subject: subject, Teams: r.GetTeams(), Group: item.GetGroup(), Resource: item.GetResource(), Verb: item.GetVerb(), Name: item.GetName()})
+			entry := items[item.GetCorrelationId()]
+			entry.resolved = true
+			entry.allowed = res.GetAllowed()
+			if err != nil {
+				entry.err = err.Error()
+			}
 		}
 	}
 

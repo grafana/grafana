@@ -434,9 +434,9 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 
 		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
 			{User: "role:role-assigner#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/rolebindings"},
-			{User: "role:role-assigner#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/rolebindings"},
-			{User: "role:role-assigner#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/rolebindings"},
-			{User: "role:role-assigner#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/rolebindings"},
+			{User: "role:role-assigner#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/rolebindings/users"},
+			{User: "role:role-assigner#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/rolebindings/users"},
+			{User: "role:role-assigner#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/rolebindings/users"},
 		}), tupleKeyStrings(tuples))
 	})
 
@@ -512,10 +512,9 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 		}), tupleKeyStrings(tuples))
 	})
 
-	t.Run("should reconcile team and user role-assignment permissions to the same rolebindings", func(t *testing.T) {
+	t.Run("should keep role assignment writes separate and reads shared", func(t *testing.T) {
 		// teams.roles:* and users.roles:* both gate iam.grafana.app/rolebindings —
-		// team and user role-assignments are not distinguished at the group_resource
-		// level — so their tuples dedupe onto the same object.
+		// writes target the recipient family, while reads share the collection.
 		permissions := []RolePermission{
 			{Action: "teams.roles:read", Kind: "teams", Identifier: "*"},
 			{Action: "teams.roles:add", Kind: "permissions", Identifier: "delegate"},
@@ -528,9 +527,9 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 
 		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
 			{User: "role:role-assigner#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/rolebindings"},
-			{User: "role:role-assigner#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/rolebindings"},
-			{User: "role:role-assigner#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/rolebindings"},
-			{User: "role:role-assigner#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/rolebindings"},
+			{User: "role:role-assigner#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/rolebindings/teams"},
+			{User: "role:role-assigner#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/rolebindings/teams"},
+			{User: "role:role-assigner#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/rolebindings/teams"},
 		}), tupleKeyStrings(tuples))
 	})
 
@@ -602,11 +601,11 @@ func TestUserManagementToTuples(t *testing.T) {
 			}},
 			// add maps to both create and update on rolebindings.
 			{"users.roles:add", "permissions", "delegate", []*openfgav1.TupleKey{
-				{User: subject, Relation: "create", Object: roleBindingsObject},
-				{User: subject, Relation: "update", Object: roleBindingsObject},
+				{User: subject, Relation: "create", Object: roleBindingsObject + "/users"},
+				{User: subject, Relation: "update", Object: roleBindingsObject + "/users"},
 			}},
 			{"users.roles:remove", "permissions", "delegate", []*openfgav1.TupleKey{
-				{User: subject, Relation: "delete", Object: roleBindingsObject},
+				{User: subject, Relation: "delete", Object: roleBindingsObject + "/users"},
 			}},
 		}
 
@@ -653,11 +652,11 @@ func TestTeamRoleBindingManagementToTuples(t *testing.T) {
 				{User: subject, Relation: "get", Object: roleBindingsObject},
 			}},
 			{"teams.roles:add", "permissions", "delegate", []*openfgav1.TupleKey{
-				{User: subject, Relation: "create", Object: roleBindingsObject},
-				{User: subject, Relation: "update", Object: roleBindingsObject},
+				{User: subject, Relation: "create", Object: roleBindingsObject + "/teams"},
+				{User: subject, Relation: "update", Object: roleBindingsObject + "/teams"},
 			}},
 			{"teams.roles:remove", "permissions", "delegate", []*openfgav1.TupleKey{
-				{User: subject, Relation: "delete", Object: roleBindingsObject},
+				{User: subject, Relation: "delete", Object: roleBindingsObject + "/teams"},
 			}},
 		}
 

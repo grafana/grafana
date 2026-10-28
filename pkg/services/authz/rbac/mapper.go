@@ -748,6 +748,8 @@ func NewMapperRegistry() MapperRegistry {
 				// No need to skip scope on create for roles because we translate `permissions:type:delegate` to `roles:*``
 				skipScopeOnVerb: nil,
 			},
+			"rolebindings/users": newBindingTranslation("users"),
+			"rolebindings/teams": newBindingTranslation("teams"),
 			"rolebindings": translation{
 				resource: "rolebindings",
 				// rolebidings should only be modifiable by admins with a wildcard access
@@ -926,4 +928,11 @@ func (m mapper) GetGroups() []string {
 		groups = append(groups, group)
 	}
 	return groups
+}
+
+func newBindingTranslation(family string) translation {
+	return translation{resource: "rolebindings", useWildcardScope: true, verbMapping: map[string]string{
+		"create": family + ".roles:add", "update": family + ".roles:add", "patch": family + ".roles:add",
+		"delete": family + ".roles:remove", "deletecollection": family + ".roles:remove",
+	}}
 }

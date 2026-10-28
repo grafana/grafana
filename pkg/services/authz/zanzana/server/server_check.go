@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/grafana/grafana/pkg/services/authz/roleauth"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -61,6 +62,9 @@ func (s *Server) check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 		return nil, err
 	}
 
+	if roleauth.IsBindingMutation(r.GetGroup(), r.GetResource(), r.GetSubresource(), r.GetVerb()) {
+		return s.checkBinding(ctx, r)
+	}
 	if isLegacyPermissionDelegation(r.GetGroup(), r.GetResource(), r.GetSubresource()) {
 		return &authzv1.CheckResponse{Allowed: false}, nil
 	}

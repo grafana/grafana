@@ -113,8 +113,7 @@ var userManagementMappings = map[string]iamActionMapping{
 // teamRoleBindingMappings maps each team-management action to the iam group_resource
 // relation(s) it grants, inverting the iam "teams" and "rolebindings" mapper entries.
 // Core team actions gate iam.grafana.app/teams; teams.roles:* gate
-// iam.grafana.app/rolebindings (the same resource user role-bindings gate — team and
-// user role-assignments are not distinguished at the group_resource level).
+// iam.grafana.app/rolebindings. Mutation grants use separate recipient subresources.
 var teamRoleBindingMappings = map[string]iamActionMapping{
 	actionTeamsRolesRead:   {resource: roleBindingsResource, relations: []string{RelationGet}},
 	actionTeamsRolesAdd:    {resource: roleBindingsResource, relations: []string{RelationCreate, RelationUpdate}},
@@ -409,9 +408,13 @@ func UserManagementToTuples(subject string, permission RolePermission) []*openfg
 		return nil
 	}
 
+	subresource := ""
+	if permission.Action == actionUsersRolesAdd || permission.Action == actionUsersRolesRemove {
+		subresource = "users"
+	}
 	tuples := make([]*openfgav1.TupleKey, 0, len(m.relations))
 	for _, relation := range m.relations {
-		tuples = append(tuples, NewGroupResourceTuple(subject, relation, iamGroup, m.resource, ""))
+		tuples = append(tuples, NewGroupResourceTuple(subject, relation, iamGroup, m.resource, subresource))
 	}
 	return tuples
 }
@@ -449,9 +452,13 @@ func TeamRoleBindingManagementToTuples(subject string, permission RolePermission
 		return nil
 	}
 
+	subresource := ""
+	if permission.Action == actionTeamsRolesAdd || permission.Action == actionTeamsRolesRemove {
+		subresource = "teams"
+	}
 	tuples := make([]*openfgav1.TupleKey, 0, len(m.relations))
 	for _, relation := range m.relations {
-		tuples = append(tuples, NewGroupResourceTuple(subject, relation, iamGroup, m.resource, ""))
+		tuples = append(tuples, NewGroupResourceTuple(subject, relation, iamGroup, m.resource, subresource))
 	}
 	return tuples
 }
