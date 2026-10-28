@@ -16,8 +16,8 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
   getDataSourceInstance: (ref?: DataSourceRef | string) => {
-    const uid = typeof ref === 'string' ? ref : ref?.uid ?? 'mock-uid';
-    const type = typeof ref === 'object' ? ref?.type ?? 'prometheus' : 'prometheus';
+    const uid = typeof ref === 'string' ? ref : (ref?.uid ?? 'mock-uid');
+    const type = typeof ref === 'object' ? (ref?.type ?? 'prometheus') : 'prometheus';
     return Promise.resolve({
       uid,
       type,
