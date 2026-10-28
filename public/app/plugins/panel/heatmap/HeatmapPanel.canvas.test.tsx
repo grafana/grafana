@@ -525,6 +525,44 @@ describe('HeatmapPanel (canvas)', () => {
       );
       await assertCanvasOutput(compactCanvas);
     });
+
+    /** Evenly spaced buckets 10-20 and 20-30, with the y field declaring a linear scale. */
+    function createLinearSparseFrame() {
+      return toDataFrame({
+        meta: { type: DataFrameType.HeatmapCells },
+        fields: [
+          { name: 'xMax', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
+          {
+            name: 'yMin',
+            type: FieldType.number,
+            values: [10, 20, 10, 20],
+            config: { custom: { scaleDistribution: { type: ScaleDistribution.Linear } } },
+          },
+          { name: 'yMax', type: FieldType.number, values: [20, 30, 20, 30] },
+          { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
+        ],
+      });
+    }
+
+    /** Heights of the cell tiles the heatmap layer filled, rounded past float noise. */
+    function filledCellHeights() {
+      return uPlotInstance!.ctx
+        .__getEvents()
+        .filter((event) => event.type === 'fill' && event.props.path?.length === 1)
+        .map((event) => Math.round(event.props.path[0].props.height * 100) / 100);
+    }
+
+    // Both buckets span 10 units, so a linear y scale gives them the same height. Before the
+    // declared scale was read, the forced log scale drew the same two buckets at 115.33 and
+    // 67.05 pixels.
+    it('draws evenly spaced buckets at equal heights when the y field declares linear', async () => {
+      renderHeatmapPanel({ series: [createLinearSparseFrame()] }, undefined, { timeRange });
+      await assertUPlotReady();
+
+      const heights = filledCellHeights();
+      expect(heights).toHaveLength(4);
+      expect(new Set(heights).size).toBe(1);
+    });
   });
   describe('Exemplars', () => {
     it('renders', async () => {

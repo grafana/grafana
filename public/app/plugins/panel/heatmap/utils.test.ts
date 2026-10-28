@@ -1,7 +1,7 @@
 import uPlot from 'uplot';
 
 import { createDataFrame, createTheme, DataFrameType, dateTime, FieldType } from '@grafana/data';
-import { AxisPlacement, HeatmapCellLayout, ScaleDistribution } from '@grafana/schema';
+import { AxisPlacement, HeatmapCellLayout, ScaleDistribution, type ScaleDistributionConfig } from '@grafana/schema';
 import { type UPlotConfigBuilder } from '@grafana/ui';
 
 import { type HeatmapData } from './fields';
@@ -442,6 +442,71 @@ describe('prepConfig', () => {
     expect(builder.scales.map((s) => s.props.scaleKey)).toEqual(['x']);
     expect(builder.getConfig().axes?.map((a) => a.scale)).toEqual(['x']);
     expect(builder.series).toEqual([]);
+  });
+
+  describe('y scale distribution', () => {
+    /** Puts a declared scale on the y field, the way a datasource would send it on the frame. */
+    function declaring(data: HeatmapData, scaleDistribution?: ScaleDistributionConfig): HeatmapData {
+      if (scaleDistribution) {
+        data.heatmap!.fields[1].config.custom = { scaleDistribution };
+      }
+      return data;
+    }
+
+    // uPlot scale distributions: 1 is linear, 3 is log.
+    it.each([
+      { desc: 'sparse frame, nothing declared, falls back to log', sparse: true, declared: undefined, distr: 3 },
+      { desc: 'dense frame, nothing declared, falls back to linear', sparse: false, declared: undefined, distr: 1 },
+      {
+        desc: 'sparse frame uses a declared linear scale',
+        sparse: true,
+        declared: { type: ScaleDistribution.Linear },
+        distr: 1,
+      },
+      {
+        desc: 'sparse frame uses a declared log scale',
+        sparse: true,
+        declared: { type: ScaleDistribution.Log, log: 2 },
+        distr: 3,
+      },
+      {
+        desc: 'a declared ordinal scale keeps falling back to log',
+        sparse: true,
+        declared: { type: ScaleDistribution.Ordinal },
+        distr: 3,
+      },
+    ])('$desc', ({ sparse, declared, distr }) => {
+      const data = declaring(sparse ? createSparseHeatmapData() : createMinimalHeatmapData(), declared);
+
+      const builder = prepConfig({
+        dataRef: { current: data },
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'magenta',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      });
+
+      const { scaleKey } = getYScaleRangeInfo(builder);
+      expect(builder.getConfig().scales?.[scaleKey]).toMatchObject({ distr });
+    });
+
+    it('takes the panel option over a declared scale', () => {
+      const data = declaring(createSparseHeatmapData(), { type: ScaleDistribution.Linear });
+
+      const builder = prepConfig({
+        dataRef: { current: data },
+        theme,
+        timeZone: 'utc',
+        getTimeRange: () => timeRange,
+        exemplarColor: 'magenta',
+        yAxisConfig: { axisPlacement: AxisPlacement.Left },
+        rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log: 2 } },
+      });
+
+      const { scaleKey } = getYScaleRangeInfo(builder);
+      expect(builder.getConfig().scales?.[scaleKey]).toMatchObject({ distr: 3, log: 2 });
+    });
   });
 
   it.each([
