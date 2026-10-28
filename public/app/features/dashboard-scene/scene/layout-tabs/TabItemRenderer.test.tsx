@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
@@ -56,10 +56,18 @@ describe('TabItemRenderer', () => {
       )
     );
 
+    const historyLength = locationService.getHistory().length;
+
     await user.click(await screen.findByRole('tab', { name: 'Details' }));
 
     expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('aria-selected', 'true');
     expect(new URLSearchParams(locationService.getLocation().search).get('dtab')).toBe('Details');
+    expect(locationService.getHistory().length).toBe(historyLength + 1);
+
+    act(() => locationService.getHistory().goBack());
+
+    await waitFor(() => expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true'));
+    expect(screen.getByRole('tab', { name: 'Details' })).toHaveAttribute('aria-selected', 'false');
   });
 
   it('stamps data-dashboard-element-key and data-dashboard-element-type on the tab', async () => {
