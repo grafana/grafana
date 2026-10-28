@@ -41,6 +41,8 @@ export const dashboardAPIv0alpha1 = generatedAPI.enhanceEndpoints({}).injectEndp
             limit,
             offset,
             permission: markReadOnly ? undefined : permission,
+            // Lets the server drop folders that lead to nothing the user can pick, and say which can be picked
+            include: markReadOnly ? 'pathToCreatable' : undefined,
           },
         });
         if (page.error) {
@@ -51,6 +53,11 @@ export const dashboardAPIv0alpha1 = generatedAPI.enhanceEndpoints({}).injectEndp
 
         if (!markReadOnly || hits.length === 0) {
           return { data: { hits } };
+        }
+
+        // Servers that don't know `include` leave `canCreate` out, so those folders need the separate check below
+        if (hits.every((hit) => typeof hit.field?.canCreate === 'boolean')) {
+          return { data: { hits: hits.map((hit) => ({ ...hit, readOnly: !hit.field.canCreate })) } };
         }
 
         try {

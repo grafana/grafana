@@ -669,6 +669,35 @@ describe('NestedFolderPicker', () => {
       expect(mockOnChange).toHaveBeenCalledWith(folderA.item.uid, folderA.item.title);
     });
 
+    it('uses the server marking of which folders can be picked, without a separate check', async () => {
+      setTestFlags(readOnlyFlags);
+      const selectabilityChecks = jest.fn();
+      server.use(
+        http.get(searchRoute, ({ request }) => {
+          const params = new URL(request.url).searchParams;
+          if (params.get('permission') === 'create') {
+            selectabilityChecks();
+          }
+          if (params.get('include') !== 'pathToCreatable' || params.get('folder') !== 'general') {
+            return undefined;
+          }
+          const hits = [
+            { resource: 'folders', name: folderA.item.uid, title: folderA.item.title, field: { canCreate: true } },
+            { resource: 'folders', name: folderC.item.uid, title: folderC.item.title, field: { canCreate: false } },
+          ];
+          return HttpResponse.json({ totalHits: hits.length, hits });
+        })
+      );
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+
+      const pathOnlyRow = await screen.findByRole('treeitem', { name: new RegExp(folderC.item.title) });
+      expect(pathOnlyRow).toHaveAttribute('aria-disabled', 'true');
+      const creatableRow = screen.getByRole('treeitem', { name: new RegExp(folderA.item.title) });
+      expect(creatableRow).not.toHaveAttribute('aria-disabled', 'true');
+      expect(selectabilityChecks).not.toHaveBeenCalled();
+    });
+
     it('keeps folders reachable but not selectable when the selectability check fails', async () => {
       setTestFlags(readOnlyFlags);
       server.use(
