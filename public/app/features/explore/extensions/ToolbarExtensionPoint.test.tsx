@@ -208,7 +208,7 @@ describe('ToolbarExtensionPoint', () => {
       // Compile-time regression guard (2026-07-02 DataPro code audit, finding #28): assigning a
       // fresh object literal to `PluginExtensionExploreContext` triggers excess-property checking,
       // so if the field regresses to the misspelled `panelsSate`, `panelsState` becomes an unknown
-      // property and `yarn typecheck` fails. Extension authors read `context.panelsState`, so the
+      // property and `pnpm typecheck` fails. Extension authors read `context.panelsState`, so the
       // type must expose it under that name.
       const context: PluginExtensionExploreContext = {
         exploreId: 'left',

@@ -130,12 +130,12 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[5].text).toBe('Time settings');
   });
 
-  it('opens panel editing from the view menu and enters Editing', async () => {
+  it.each(['view', 'agent'] as const)('opens panel editing from the %s menu and enters Editing', async (mode) => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     const { scene, panel, menu } = await buildTestScene({});
     let deactivateMenu = () => {};
     try {
-      scene.setState({ mode: 'view', isEditing: true, editable: true });
+      scene.setState({ mode, isEditing: true, editable: true });
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
       deactivateMenu = menu.activate();
       await waitFor(() =>
