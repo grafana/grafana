@@ -1456,7 +1456,8 @@
       },
       "recording-rules": {
         "no-rules": "No recording rules found",
-        "rules-error": "Failed to load recording rules"
+        "rules-error": "Failed to load recording rules",
+        "search-issues": "Change the search to see results"
       },
       "result-count": {
         "alert-rules_one": "{{formatted}} alert rule",
@@ -16904,6 +16905,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": "Preferred"
+    },
     "login": "Login",
     "manifests": {
       "api-docs": "API docs",

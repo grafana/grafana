@@ -11,6 +11,7 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -165,9 +166,15 @@ func NewFolderManifest(uid, title string, gvk schema.GroupVersionKind) *folders.
 
 // marshalFolderManifest serializes a Folder resource to pretty-printed JSON so
 // the _folder.json written to the repository matches the formatting of other
-// resource files (see ParsedResource.ToSaveBytes).
+// resource files (see ParsedResource.ToSaveBytes). Status is server-owned and, like
+// ToSaveBytes, is never written to the repository.
 func marshalFolderManifest(folder *folders.Folder) ([]byte, error) {
-	data, err := json.MarshalIndent(folder, "", "  ")
+	manifest := struct {
+		metav1.TypeMeta `json:",inline"`
+		Metadata        metav1.ObjectMeta  `json:"metadata"`
+		Spec            folders.FolderSpec `json:"spec"`
+	}{folder.TypeMeta, folder.ObjectMeta, folder.Spec}
+	data, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("marshal folder manifest: %w", err)
 	}
