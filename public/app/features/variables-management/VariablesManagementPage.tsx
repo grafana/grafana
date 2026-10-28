@@ -14,6 +14,7 @@ import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useDashboardsPageNav } from 'app/features/browse-dashboards/hooks/useDashboardsPageNav';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -43,6 +44,8 @@ export default function VariablesManagementPage() {
   // feature flag is enforced here via the OpenFeature hook. When it is off the variables page
   // is not a real route, so we render the standard not-found page.
   const globalVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
+  // The tab bar belongs to the list; the new/edit views keep their own pageNav
+  const listPageNav = useDashboardsPageNav('dashboards/variables');
 
   const styles = useStyles2(getStyles);
   const { name: editName } = useParams<{ name?: string }>();
@@ -251,6 +254,7 @@ export default function VariablesManagementPage() {
   return (
     <Page
       navId="dashboards/variables"
+      pageNav={listPageNav}
       actions={
         !isEmpty &&
         canCreate && (
