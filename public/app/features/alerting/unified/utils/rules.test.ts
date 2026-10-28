@@ -1,5 +1,5 @@
 import { PluginLoadingStrategy } from '@grafana/data';
-import { setAppPluginMetas } from '@grafana/runtime/internal';
+import { clearAppPluginMetas, setAppPluginMetas } from '@grafana/runtime/internal';
 import { type RuleGroupIdentifier } from 'app/types/unified-alerting';
 import { type GrafanaNotificationSettings } from 'app/types/unified-alerting-dto';
 
@@ -27,7 +27,7 @@ import {
 
 describe('getRuleOrigin', () => {
   afterEach(() => {
-    setAppPluginMetas({});
+    clearAppPluginMetas();
   });
 
   it('returns undefined when no origin label is present', () => {

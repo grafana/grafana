@@ -106,7 +106,7 @@ func realRuleIndex(t *testing.T, key *resourcepb.ResourceKey, value string, getB
 			Action: unifiedresource.ActionIndex,
 			Doc:    doc,
 		}}})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, unifiedresource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }

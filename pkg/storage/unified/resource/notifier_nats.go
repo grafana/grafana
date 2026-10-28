@@ -287,6 +287,7 @@ func (n *natsNotifier) decode(subject string, data []byte) (Event, bool) {
 		PreviousRV:      notification.PreviousResourceVersion,
 		PreviousAction:  previousAction,
 		PreviousFolder:  notification.PreviousFolder,
+		Metadata:        notification.GetMetadata(),
 	}, true
 }
 
@@ -305,12 +306,12 @@ const writtenKeysBufferSize = 10000
 
 // WatchWrittenKeys subscribes to NATS directly, one subscription per type, so
 // other types' notifications are never received.
-func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *resourcepb.ResourceKey, error) {
+func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *WrittenEvent, error) {
 	if k.keysSubscriber == nil || !k.keysSubscriber.Enabled() {
 		return nil, ErrWrittenKeysUnsupported
 	}
 
-	keys := make(chan *resourcepb.ResourceKey, writtenKeysBufferSize)
+	keys := make(chan *WrittenEvent, writtenKeysBufferSize)
 	dropLog := newThrottledLog(dropLogInterval)
 	handler := func(subject string, data []byte) {
 		var notification resourcepb.WatchNotification
@@ -320,19 +321,22 @@ func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.
 			}
 			return
 		}
-		key := &resourcepb.ResourceKey{
-			Namespace: notification.Namespace,
-			Group:     notification.Group,
-			Resource:  notification.Resource,
-			Name:      notification.Name,
+		written := &WrittenEvent{
+			Key: &resourcepb.ResourceKey{
+				Namespace: notification.Namespace,
+				Group:     notification.Group,
+				Resource:  notification.Resource,
+				Name:      notification.Name,
+			},
+			ResourceVersion: notification.ResourceVersion,
 		}
 		select {
-		case keys <- key:
+		case keys <- written:
 		default:
 			if suppressed, ok := dropLog.next("full"); ok {
 				k.log.Warn("dropped written keys, the consumer is not keeping up", "subject", subject, "alsoDropped", suppressed)
 			}
-			onLost(key.Namespace)
+			onLost(notification.Namespace)
 		}
 	}
 

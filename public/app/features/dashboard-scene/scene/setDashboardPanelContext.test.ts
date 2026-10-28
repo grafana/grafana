@@ -7,16 +7,15 @@ import {
   CoreApp,
   EventBusSrv,
   getDefaultTimeRange,
-  type GroupByVariableModel,
   LoadingState,
   type Scope,
   type VariableModel,
 } from '@grafana/data';
+import { getPanelDataStatusItems, type PanelStatusStore } from '@grafana/data/internal';
 import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
-  GroupByVariable,
   SceneDataNode,
   sceneGraph,
   SceneDataTransformer,
@@ -53,8 +52,8 @@ jest.mock('@grafana/runtime/internal', () => ({
   getDatasourcePluginMeta: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn().mockResolvedValue({ uid: 'my-ds-uid', type: 'prometheus' }),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
@@ -482,7 +481,7 @@ describe('setDashboardPanelContext', () => {
         canDelete: true,
       });
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
+        planning: { phase: 'preview', planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
 
       await context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
@@ -505,7 +504,7 @@ describe('setDashboardPanelContext', () => {
       );
       const { scene, context } = buildTestScene({ dashboardCanEdit: true });
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
+        planning: { phase: 'preview', planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
 
       expect(context.onOpenInspector).toBeDefined();
@@ -627,83 +626,58 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('getFiltersBasedOnGrouping', () => {
-    beforeAll(() => {
-      config.featureToggles.groupByVariable = true;
-    });
+    const filters: AdHocFilterItem[] = [
+      { key: 'container', value: 'container', operator: '=' },
+      { key: 'cluster', value: 'cluster', operator: '=' },
+      { key: 'cpu', value: 'cpu', operator: '=' },
+      { key: 'id', value: 'id', operator: '=' },
+    ];
 
-    afterAll(() => {
-      config.featureToggles.groupByVariable = false;
-    });
+    function setupGrouping(adhocState: Partial<AdHocFiltersVariable['state']>) {
+      const { scene, context } = buildTestScene({ existingFilterVariable: true });
+      const adhoc = sceneGraph.getVariables(scene).state.variables.find((v) => v instanceof AdHocFiltersVariable);
+      adhoc?.setState(adhocState);
+      return context;
+    }
 
     it('should return filters based on grouping', () => {
-      const { scene, context } = buildTestScene({ existingFilterVariable: true, existingGroupByVariable: true });
+      const context = setupGrouping({
+        enableGroupBy: true,
+        filters: [
+          { key: 'container', operator: 'groupBy', value: '' },
+          { key: 'cluster', operator: 'groupBy', value: '' },
+        ],
+      });
 
-      const groupBy = sceneGraph.getVariables(scene).state.variables.find((f) => f instanceof GroupByVariable);
-
-      groupBy?.changeValueTo(['container', 'cluster']);
-
-      const filters: AdHocFilterItem[] = [
-        { key: 'container', value: 'container', operator: '=' },
-        { key: 'cluster', value: 'cluster', operator: '=' },
-        { key: 'cpu', value: 'cpu', operator: '=' },
-        { key: 'id', value: 'id', operator: '=' },
-      ];
-
-      const result = context.getFiltersBasedOnGrouping?.(filters);
-      expect(result).toEqual([
+      expect(context.getFiltersBasedOnGrouping?.(filters)).toEqual([
         { key: 'container', value: 'container', operator: '=' },
         { key: 'cluster', value: 'cluster', operator: '=' },
       ]);
     });
 
     it('should return empty filters if there is no groupBy selection', () => {
-      const { context } = buildTestScene({ existingFilterVariable: true, existingGroupByVariable: true });
+      const context = setupGrouping({ enableGroupBy: true, filters: [] });
 
-      const filters: AdHocFilterItem[] = [
-        { key: 'container', value: 'container', operator: '=' },
-        { key: 'cluster', value: 'cluster', operator: '=' },
-        { key: 'cpu', value: 'cpu', operator: '=' },
-        { key: 'id', value: 'id', operator: '=' },
-      ];
-
-      const result = context.getFiltersBasedOnGrouping?.(filters);
-      expect(result).toEqual([]);
+      expect(context.getFiltersBasedOnGrouping?.(filters)).toEqual([]);
     });
 
-    it('should return empty filters if there is no groupBy variable', () => {
-      const { context } = buildTestScene({ existingFilterVariable: true, existingGroupByVariable: false });
-
-      const filters: AdHocFilterItem[] = [
-        { key: 'container', value: 'container', operator: '=' },
-        { key: 'cluster', value: 'cluster', operator: '=' },
-        { key: 'cpu', value: 'cpu', operator: '=' },
-        { key: 'id', value: 'id', operator: '=' },
-      ];
-
-      const result = context.getFiltersBasedOnGrouping?.(filters);
-      expect(result).toEqual([]);
-    });
-
-    it('should return empty filters if panel and groupBy ds differs', () => {
-      const { scene, context } = buildTestScene({
-        existingFilterVariable: true,
-        existingGroupByVariable: true,
-        groupByDatasourceUid: 'different-ds',
+    it('should return empty filters if group by is not enabled on the filters variable', () => {
+      const context = setupGrouping({
+        enableGroupBy: false,
+        filters: [{ key: 'container', operator: 'groupBy', value: '' }],
       });
 
-      const groupBy = sceneGraph.getVariables(scene).state.variables.find((f) => f instanceof GroupByVariable);
+      expect(context.getFiltersBasedOnGrouping?.(filters)).toEqual([]);
+    });
 
-      groupBy?.changeValueTo(['container', 'cluster']);
+    it('should return empty filters if panel and filters variable ds differs', () => {
+      const context = setupGrouping({
+        enableGroupBy: true,
+        datasource: { uid: 'different-ds', type: 'prometheus' },
+        filters: [{ key: 'container', operator: 'groupBy', value: '' }],
+      });
 
-      const filters: AdHocFilterItem[] = [
-        { key: 'container', value: 'container', operator: '=' },
-        { key: 'cluster', value: 'cluster', operator: '=' },
-        { key: 'cpu', value: 'cpu', operator: '=' },
-        { key: 'id', value: 'id', operator: '=' },
-      ];
-
-      const result = context.getFiltersBasedOnGrouping?.(filters);
-      expect(result).toEqual([]);
+      expect(context.getFiltersBasedOnGrouping?.(filters)).toEqual([]);
     });
   });
 
@@ -811,7 +785,9 @@ describe('setDashboardPanelContext', () => {
     });
 
     it('is not set when the new panel query errors UI feature flag is disabled', () => {
-      stubFFEnabled(false);
+      getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+        key === FlagKeys.GrafanaNewPanelQueryErrorsUI ? false : defaultValue
+      );
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
       const { context } = buildTestScene({});
@@ -916,6 +892,16 @@ describe('setDashboardPanelContext', () => {
       expect(forceRenderSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('does not investigate panel-owned notices', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { context } = buildTestScene({});
+      context.notices!.createSource().set([{ id: 'field', severity: 'error', text: 'Choose a numeric field' }]);
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).not.toHaveBeenCalled();
+    });
+
     it('does nothing when the panel currently has no errors or notices', async () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
@@ -955,6 +941,96 @@ describe('setDashboardPanelContext', () => {
       expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
         data: { name: 'Panel: CPU usage', panelId: '4', panelKey: 'panel-4' },
       });
+    });
+
+    it('keeps the query-error prompt and live panel reference after host status initializes', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'Query failed' }],
+          },
+        }),
+      });
+      const panelData = sceneGraph.getData(vizPanel).state.data;
+      (vizPanel.getPanelContext().notices as PanelStatusStore).setExternal(getPanelDataStatusItems(panelData));
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt:
+            'Investigate and fix the query errors listed below. Ignore other query errors or notices on this panel.\n\n- error: Query failed',
+        })
+      );
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
+        data: { name: 'Panel: Untitled', panelId: '4', panelKey: 'panel-4' },
+      });
+    });
+
+    it('investigates current query errors after an equivalent status refresh', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { vizPanel, context } = buildTestScene({});
+      const store = vizPanel.getPanelContext().notices as PanelStatusStore;
+      const setError = () => {
+        vizPanel.setState({
+          $data: new SceneDataNode({
+            data: {
+              state: LoadingState.Error,
+              series: [],
+              timeRange: getDefaultTimeRange(),
+              errors: [{ message: 'Query failed' }],
+            },
+          }),
+        });
+        store.setExternal(getPanelDataStatusItems(sceneGraph.getData(vizPanel).state.data));
+      };
+
+      setError();
+      const snapshot = store.getSnapshot();
+      setError();
+      expect(store.getSnapshot()).toBe(snapshot);
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({ prompt: expect.stringContaining('- error: Query failed') })
+      );
+    });
+
+    it('investigates current query notices after an equivalent status refresh', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { vizPanel, context } = buildTestScene({});
+      const store = vizPanel.getPanelContext().notices as PanelStatusStore;
+      const setNotice = () => {
+        vizPanel.setState({
+          $data: new SceneDataNode({
+            data: {
+              state: LoadingState.Done,
+              series: [
+                { name: 'A', fields: [], length: 0, meta: { notices: [{ severity: 'warning', text: 'Slow query' }] } },
+              ],
+              timeRange: getDefaultTimeRange(),
+            },
+          }),
+        });
+        store.setExternal(getPanelDataStatusItems(sceneGraph.getData(vizPanel).state.data));
+      };
+
+      setNotice();
+      const snapshot = store.getSnapshot();
+      setNotice();
+      expect(store.getSnapshot()).toBe(snapshot);
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({ prompt: expect.stringContaining('- warning: Slow query') })
+      );
     });
 
     it('falls back to a placeholder name for an untitled panel', () => {
@@ -1062,8 +1138,6 @@ interface SceneOptions {
   canEdit?: boolean;
   canDelete?: boolean;
   existingFilterVariable?: boolean;
-  existingGroupByVariable?: boolean;
-  groupByDatasourceUid?: string;
   panelDatasourceUndefined?: boolean;
 }
 
@@ -1076,14 +1150,6 @@ function buildTestScene(options: SceneOptions) {
       name: 'Filters',
       datasource: { uid: 'my-ds-uid' },
     } as AdHocVariableModel);
-  }
-
-  if (options.existingGroupByVariable) {
-    varList.push({
-      type: 'groupby',
-      name: 'Group By',
-      datasource: { uid: options.groupByDatasourceUid ?? 'my-ds-uid', type: 'prometheus' },
-    } as GroupByVariableModel);
   }
 
   const scene = transformSaveModelToScene({

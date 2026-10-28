@@ -39,6 +39,8 @@ interface Props {
   isPlanning?: boolean;
   body?: React.ReactNode;
   controls?: React.ReactNode;
+  /** Covers the controls and body, for example the Composer overlay. */
+  overlay?: React.ReactNode;
 }
 
 export function DashboardSidebarSplitter(props: Props) {
@@ -64,7 +66,7 @@ function DashboardSidebarSplitterLegacy({ dashboard, isPlanning, body, controls 
   );
 }
 
-function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, body, controls }: Props) {
+function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, body, controls, overlay }: Props) {
   const { sidebar } = dashboard.state;
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
@@ -99,7 +101,8 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
     persistenceKey: isEditing ? 'dashboard' : 'dashboard-view',
     hiddenPersistenceKey: 'dashboard',
     defaultToDocked: isEditing ? true : false,
-    onClosePane: () => sidebar.closePane(),
+    onClosePane: () => sidebar.closePane('explicit'),
+    onClickAway: () => sidebar.closePane('click-away'),
     onGoBack: () => sidebar.goBackToPrevious(),
     canGoBack: previousState !== undefined,
     defaultIsHidden: isEditing ? false : isMobile,
@@ -131,7 +134,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
   function renderBody() {
     const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
 
-    // In kiosk mode the full document body scrolls so we don't need to wrap in our own scrollbar
+    // Full-page views use document scrolling.
     if (renderWithoutSidebar) {
       return (
         <div
@@ -147,12 +150,12 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
       <div
         className={styles.bodyWrapper}
         data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
-        {...sidebarContext.outerWrapperProps}
+        {...(renderWithoutSidebar ? {} : sidebarContext.outerWrapperProps)}
       >
         <div
           className={cx(
             styles.scrollContainer,
-            sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar,
+            (renderWithoutSidebar || sidebarContext.isHiddenPreference) && styles.scrollContainerNoSidebar,
             isPlanning && styles.planningCanvas
           )}
           ref={onBodyRef}
@@ -167,9 +170,11 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
           {body}
         </div>
 
-        <Sidebar contextValue={sidebarContext}>
-          <DashboardSidebarRenderer dashboard={dashboard} />
-        </Sidebar>
+        {!renderWithoutSidebar && (
+          <Sidebar contextValue={sidebarContext}>
+            <DashboardSidebarRenderer dashboard={dashboard} />
+          </Sidebar>
+        )}
       </div>
     );
   }
@@ -186,6 +191,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
           {renderBody()}
         </ElementSelectionContext.Provider>
       </EditActionsLayoutProvider>
+      {overlay}
     </div>
   );
 }

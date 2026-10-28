@@ -197,4 +197,44 @@ func TestService_SignIdentity(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotEqual(t, first, third)
 	})
+
+	t.Run("should not reuse a token signed for another auth module of the same user", func(t *testing.T) {
+		s := ProvideService(
+			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+		)
+
+		newIdent := func(authenticatedBy string) *authn.Identity {
+			return &authn.Identity{
+				ID:              "1",
+				Type:            claims.TypeUser,
+				AuthenticatedBy: authenticatedBy,
+				Login:           "U1",
+				UID:             "edpu3nnt61se8e",
+				OrgID:           1,
+				OrgRoles:        map[int64]org.RoleType{1: org.RoleAdmin},
+				Groups:          []string{"team-uid-1"},
+			}
+		}
+
+		// A render (e.g. a scheduled report) signs in as the user first.
+		renderToken, renderClaims, err := s.SignIdentity(context.Background(), newIdent(login.RenderModule))
+		require.NoError(t, err)
+		assert.Equal(t, login.RenderModule, renderClaims.Rest.AuthenticatedBy)
+
+		// The same user's browser session must get its own token, not the cached render token.
+		proxyToken, proxyClaims, err := s.SignIdentity(context.Background(), newIdent(login.AuthProxyAuthModule))
+		require.NoError(t, err)
+		assert.NotEqual(t, renderToken, proxyToken)
+		assert.Equal(t, login.AuthProxyAuthModule, proxyClaims.Rest.AuthenticatedBy)
+
+		// Each auth module still reuses its own cached token.
+		renderAgain, _, err := s.SignIdentity(context.Background(), newIdent(login.RenderModule))
+		require.NoError(t, err)
+		assert.Equal(t, renderToken, renderAgain)
+
+		proxyAgain, _, err := s.SignIdentity(context.Background(), newIdent(login.AuthProxyAuthModule))
+		require.NoError(t, err)
+		assert.Equal(t, proxyToken, proxyAgain)
+	})
 }

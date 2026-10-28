@@ -58,8 +58,9 @@ func TestDocumentMapping(t *testing.T) {
 	fmt.Printf("DOC: size %d\n", doc.Size())
 	// created and updated are int64 standard fields mapped as numbers, so they
 	// are indexed alongside the string standard fields. _rv is stored rather than
-	// indexed, but still counts as a field on the document.
-	require.Equal(t, 22, len(doc.Fields))
+	// indexed, but still counts as a field on the document, as do the stored
+	// manager.allowEdits and the empty updatedBy.
+	require.Equal(t, 24, len(doc.Fields))
 	require.False(t, doc.HasComposite(), "_all composite field should be disabled")
 }
 
@@ -161,8 +162,8 @@ func TestTagsFacetPreservesMultiWordValues(t *testing.T) {
 
 // TestStandardCreatedUpdatedAreNumeric guards that the int64 standard fields
 // created and updated are stored as numbers and returned on retrieve: with a
-// keyword mapping bleve dropped the numeric value entirely. They are
-// retrieve-only (store, not index), so they are not queryable.
+// keyword mapping bleve dropped the numeric value entirely. They are also
+// indexed, so a range query finds them.
 func TestStandardCreatedUpdatedAreNumeric(t *testing.T) {
 	mappings, err := search.GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
@@ -185,14 +186,12 @@ func TestStandardCreatedUpdatedAreNumeric(t *testing.T) {
 	assert.Equal(t, float64(created), res.Hits[0].Fields["created"])
 	assert.Equal(t, float64(updated), res.Hits[0].Fields["updated"])
 
-	// Retrieve-only: the field is stored but not indexed, so it is not
-	// queryable (a numeric range query does not match).
 	lo, hi := float64(created-1), float64(created+1)
 	rangeQuery := bleve.NewNumericRangeQuery(&lo, &hi)
 	rangeQuery.SetField("created")
 	res, err = idx.Search(bleve.NewSearchRequest(rangeQuery))
 	require.NoError(t, err)
-	assert.Equal(t, uint64(0), res.Total)
+	assert.Equal(t, uint64(1), res.Total)
 }
 
 func TestStoredTitleSurvivesMergeAfterDelete(t *testing.T) {
@@ -298,6 +297,8 @@ func TestDocValuesConfiguration(t *testing.T) {
 			resource.SEARCH_FIELD_NAME:         true,
 			resource.SEARCH_FIELD_FOLDER:       true,
 			resource.SEARCH_FIELD_TITLE_PHRASE: true,
+			resource.SEARCH_FIELD_CREATED:      true,
+			resource.SEARCH_FIELD_UPDATED:      true,
 		}
 
 		for _, f := range doc.Fields {

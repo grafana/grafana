@@ -509,20 +509,17 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 
 	access := &denyFolderAccess{denied: deniedFolder}
 	newServer := func(allowSearch bool) resource.ResourceServer {
-		config := resource.SearchBackedListConfig{}
 		searchOptions := resource.SearchOptions{}
 		if allowSearch {
-			config.AllowedResources = map[string]bool{searchBackedTrashGroup + "/" + searchBackedTrashResource: true}
 			searchOptions = resource.SearchOptions{
 				Backend:   searchBackend,
 				Resources: labelFolderBuilderSupplier{},
 			}
 		}
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend:                counting,
-			AccessClient:           access,
-			SearchBackedListConfig: config,
-			Search:                 searchOptions,
+			Backend:      counting,
+			AccessClient: access,
+			Search:       searchOptions,
 		})
 		require.NoError(t, err)
 		t.Cleanup(func() {

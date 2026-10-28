@@ -1,11 +1,26 @@
 import type { MermaidConfig } from 'mermaid';
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 import { textUtil } from '@grafana/data';
 
 import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
-import { resourceOrigin, type TextSandboxState } from './sandboxPolicy';
-import { isFrameNotification, TEXT_FRAME_PROTOCOL, type RenderCommand, type MermaidCommand } from './sandboxProtocol';
+import {
+  MAX_BLOCKED_URL_CHARS,
+  resourceOrigin,
+  urlChars,
+  type BlockedResource,
+  type BlockedUrl,
+  type TextSandboxState,
+} from './sandboxPolicy';
+import {
+  isFrameNotification,
+  randomId,
+  TEXT_FRAME_PROTOCOL,
+  type RenderCommand,
+  type MermaidCommand,
+} from './sandboxProtocol';
+
+export const WATCHDOG_TIMEOUT_MS = 15_000;
 
 let shellPolicy: Pick<TrustedTypePolicy, 'createHTML'> | undefined;
 
@@ -22,224 +37,45 @@ export interface SandboxFrameProps {
   onHeight: (height: number, contentHeight: number) => void;
 }
 
-function randomChannel() {
-  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (value) => value.toString(16).padStart(2, '0')).join(
-    ''
-  );
-}
-
 export function SandboxFrame(props: SandboxFrameProps) {
   const { html, globalCss, policy, mermaid, diagramError } = props;
-  const [generation, setGeneration] = useState({ html, globalCss, policy, mermaid, diagramError, id: 0 });
+  const [documentVersion, setDocumentVersion] = useState({ html, globalCss, policy, mermaid, diagramError, id: 0 });
   if (
-    generation.html !== html ||
-    generation.globalCss !== globalCss ||
-    generation.policy !== policy ||
-    generation.mermaid !== mermaid ||
-    generation.diagramError !== diagramError
+    documentVersion.html !== html ||
+    documentVersion.globalCss !== globalCss ||
+    documentVersion.policy !== policy ||
+    documentVersion.mermaid !== mermaid ||
+    documentVersion.diagramError !== diagramError
   ) {
-    setGeneration({ html, globalCss, policy, mermaid, diagramError, id: generation.id + 1 });
+    setDocumentVersion({ html, globalCss, policy, mermaid, diagramError, id: documentVersion.id + 1 });
   }
-  // An applied CSP cannot be relaxed in place; policy changes need a fresh document.
-  return <FrameDocument key={generation.id} {...props} />;
+  // Fresh documents isolate each render's messages and runtime; an applied CSP also cannot be relaxed in place.
+  return <FrameDocument key={documentVersion.id} {...props} />;
 }
 
-function FrameDocument({
-  html,
-  globalCss,
-  policy,
-  mermaid,
-  diagramError = 'Diagram could not be rendered',
-  title,
-  onState,
-  onHeight,
-}: SandboxFrameProps) {
-  const frame = useRef<HTMLIFrameElement>(null);
-  const [state, setState] = useState<TextSandboxState>({ status: 'loading', resources: [] });
-  const [size, setSize] = useState({ height: 1, contentHeight: 0 });
-  const [source, setSource] = useState<string>();
-  const [channel] = useState(randomChannel);
-  // srcdoc inherits deployment CSP, so reuse Grafana's server nonce when one is present.
-  const [nonce] = useState(() => document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce || randomChannel());
-  const appliedPolicy = policy?.replace("script-src 'none'", `script-src 'nonce-${nonce}'`);
-  const protectedFrame = policy !== undefined;
+function FrameDocument(props: SandboxFrameProps) {
+  const { title, onState, onHeight } = props;
+  const { iframeRef, sandboxState, dimensions, protectedFrame } = useFrameRuntime(props);
 
+  // Keep reporting separate from runtime setup: state or consumer changes must not restart the frame's protocol.
   useLayoutEffect(() => {
-    onState(state);
-  }, [onState, state]);
-  useLayoutEffect(() => () => onState(undefined), [onState]);
+    onState(sandboxState);
+  }, [onState, sandboxState]);
+  // Combining this cleanup with reporting would emit undefined before every state update.
+  // Only consumer replacement or document unmount should invalidate the previous report.
   useLayoutEffect(() => {
-    if (size.contentHeight > 0) {
-      onHeight(size.height, size.contentHeight);
+    return () => onState(undefined);
+  }, [onState]);
+  // Dimensions and sandbox reports change independently; combining them would notify unrelated consumers.
+  useLayoutEffect(() => {
+    if (dimensions.contentHeight > 0) {
+      onHeight(dimensions.height, dimensions.contentHeight);
     }
-  }, [onHeight, size]);
-
-  useLayoutEffect(() => {
-    let disposed = false;
-    void loadSandboxRuntime()
-      .then((source) => {
-        if (!disposed) {
-          setSource(source);
-        }
-      })
-      .catch(() => {
-        if (!disposed) {
-          setState((current) => ({ ...current, status: 'error' }));
-        }
-      });
-    return () => {
-      disposed = true;
-    };
-  }, []);
-
-  useLayoutEffect(() => {
-    let sent = false;
-    let disposed = false;
-    let mermaidRequested = false;
-    let failed = false;
-    const fail = () => {
-      failed = true;
-      setState((current) => ({ ...current, status: 'error' }));
-    };
-    const watchdog = window.setTimeout(fail, 15000);
-    const onMessage = (event: MessageEvent) => {
-      const message = event.data;
-      if (
-        !frame.current ||
-        event.source !== frame.current.contentWindow ||
-        event.origin !== (protectedFrame ? 'null' : window.location.origin) ||
-        !isFrameNotification(message) ||
-        message.channel !== channel
-      ) {
-        return;
-      }
-      switch (message.type) {
-        case 'mermaid-needed': {
-          if (!sent || failed || !mermaid || mermaidRequested) {
-            return;
-          }
-          mermaidRequested = true;
-          const target = frame.current.contentWindow;
-          void loadSandboxMermaid()
-            .then((source) => {
-              if (disposed || failed || !target || frame.current?.contentWindow !== target) {
-                return;
-              }
-              const command: MermaidCommand = {
-                protocol: TEXT_FRAME_PROTOCOL,
-                channel,
-                type: 'mermaid-source',
-                source,
-              };
-              target.postMessage(command, protectedFrame ? '*' : window.location.origin);
-            })
-            .catch(() => {
-              if (!disposed) {
-                clearTimeout(watchdog);
-                fail();
-              }
-            });
-          break;
-        }
-        case 'ready': {
-          // Protected frames send ready only after verifying CSP violation delivery, before receiving panel data.
-          if (sent || failed) {
-            return;
-          }
-          sent = true;
-          const command: RenderCommand = {
-            protocol: TEXT_FRAME_PROTOCOL,
-            channel,
-            type: 'render',
-            html,
-            globalCss,
-            mermaid,
-            diagramError,
-          };
-          // Opaque-origin frames require '*'; target only this generation's WindowProxy.
-          frame.current.contentWindow?.postMessage(command, protectedFrame ? '*' : window.location.origin);
-          break;
-        }
-        case 'rendered':
-          if (sent && !failed) {
-            clearTimeout(watchdog);
-            setState((current) => ({ ...current, status: 'ready' }));
-          }
-          break;
-        case 'resize':
-          if (sent) {
-            setSize({ height: message.height, contentHeight: message.contentHeight });
-          }
-          break;
-        case 'blocked':
-          if (!sent) {
-            break;
-          }
-          setState((current) => {
-            const resources = [...current.resources];
-            for (const resource of message.resources) {
-              const normalized = {
-                directive: resource.directive,
-                origin: resource.origin ? resourceOrigin(resource.origin) : undefined,
-              };
-              if (
-                !resources.some(
-                  (entry) => entry.directive === normalized.directive && entry.origin === normalized.origin
-                )
-              ) {
-                resources.push(normalized);
-              }
-            }
-            return resources.length === current.resources.length ? current : { ...current, resources };
-          });
-          break;
-        case 'error':
-          clearTimeout(watchdog);
-          fail();
-          break;
-      }
-    };
-    window.addEventListener('message', onMessage);
-    return () => {
-      disposed = true;
-      clearTimeout(watchdog);
-      window.removeEventListener('message', onMessage);
-    };
-  }, [channel, diagramError, globalCss, html, mermaid, protectedFrame]);
-
-  const shell = useMemo(() => {
-    if (source === undefined) {
-      return undefined;
-    }
-    const escape = textUtil.escapeHtml;
-    const csp =
-      appliedPolicy === undefined
-        ? ''
-        : `<meta http-equiv="Content-Security-Policy" content="${escape(appliedPolicy)}">`;
-    const policyAttribute = appliedPolicy === undefined ? '' : ` data-policy="${escape(appliedPolicy)}"`;
-    return `<!doctype html><html><head><meta http-equiv="x-dns-prefetch-control" content="off">${csp}<base target="_blank"></head><body><script nonce="${escape(nonce)}" data-channel="${escape(channel)}" data-parent-origin="${escape(window.location.origin)}"${policyAttribute}>${source.replace(/<\/script/gi, '<\\/script')}</script></body></html>`;
-  }, [appliedPolicy, channel, nonce, source]);
-
-  useLayoutEffect(() => {
-    // Do not navigate to an empty srcdoc: it can race the runtime navigation in Chromium.
-    if (shell === undefined || !frame.current) {
-      return;
-    }
-    try {
-      // Only the application-built shell reaches this policy; panel HTML arrives later by message.
-      shellPolicy ??= window.trustedTypes?.createPolicy('grafana-text-panel-shell', {
-        createHTML: (html: string) => html,
-      });
-      // React stringifies srcDoc, discarding TrustedHTML. Assign it directly without changing the default policy.
-      Object.assign(frame.current, { srcdoc: shellPolicy?.createHTML(shell) ?? shell });
-    } catch {
-      setState((current) => ({ ...current, status: 'error' }));
-    }
-  }, [shell]);
+  }, [onHeight, dimensions]);
 
   return (
     <iframe
-      ref={frame}
+      ref={iframeRef}
       title={title}
       sandbox={
         protectedFrame
@@ -247,12 +83,308 @@ function FrameDocument({
           : undefined
       }
       referrerPolicy={protectedFrame ? 'no-referrer' : undefined}
-      data-text-content-height={size.contentHeight || undefined}
+      data-text-content-height={dimensions.contentHeight || undefined}
       style={{
         width: '100%',
-        height: size.height,
+        height: dimensions.height,
         border: 0,
       }}
     />
   );
+}
+
+function useFrameRuntime({
+  html,
+  globalCss,
+  policy,
+  mermaid,
+  diagramError = 'Diagram could not be rendered',
+}: SandboxFrameProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [sandboxState, setSandboxState] = useState<TextSandboxState>({ status: 'loading', resources: [] });
+  const [dimensions, setDimensions] = useState({ height: 1, contentHeight: 0 });
+  const [channel] = useState(randomId);
+  // srcdoc inherits deployment CSP, so reuse Grafana's server nonce when one is present.
+  const [nonce] = useState(() => document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce || randomId());
+  const protectedFrame = policy !== undefined;
+
+  useLayoutEffect(() => {
+    if (!iframeRef.current) {
+      return;
+    }
+    const controller = createFrameController({
+      iframe: iframeRef.current,
+      policy,
+      nonce,
+      protectedFrame,
+      renderCommand: {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel,
+        type: 'render',
+        html,
+        globalCss,
+        mermaid,
+        diagramError,
+      },
+      onStatus: (status) =>
+        setSandboxState((current) => (current.status === status ? current : { ...current, status })),
+      onResize: setDimensions,
+      onBlocked: (incoming) =>
+        setSandboxState((current) => {
+          const resources = mergeResources(current.resources, incoming);
+          return resources === current.resources ? current : { ...current, resources };
+        }),
+    });
+    return controller.dispose;
+  }, [channel, diagramError, globalCss, html, mermaid, nonce, policy, protectedFrame]);
+
+  return { iframeRef, sandboxState, dimensions, protectedFrame };
+}
+
+interface FrameControllerOptions {
+  iframe: HTMLIFrameElement;
+  policy?: string;
+  nonce: string;
+  protectedFrame: boolean;
+  renderCommand: RenderCommand;
+  onStatus: (status: TextSandboxState['status']) => void;
+  onResize: (dimensions: { height: number; contentHeight: number }) => void;
+  onBlocked: (resources: BlockedResource[]) => void;
+}
+
+function createFrameController({
+  iframe,
+  policy,
+  nonce,
+  protectedFrame,
+  renderCommand,
+  onStatus,
+  onResize,
+  onBlocked,
+}: FrameControllerOptions) {
+  // Protocol guards update synchronously, independently of React's reported state.
+  let renderedDocument: string | undefined;
+  let hasFailed = false;
+  let mermaidRequested = false;
+  let disposed = false;
+  const expectedOrigin = protectedFrame ? 'null' : window.location.origin;
+  // Opaque-origin frames require '*'; commands still target only this document's WindowProxy.
+  const targetOrigin = protectedFrame ? '*' : window.location.origin;
+  let watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
+  window.addEventListener('message', onMessage);
+  void loadSandboxRuntime()
+    .then((runtimeSource) => {
+      if (disposed) {
+        return;
+      }
+      const shell = buildFrameShell({
+        runtimeSource,
+        policy,
+        nonce,
+        channel: renderCommand.channel,
+        parentOrigin: window.location.origin,
+      });
+      assignFrameShell(iframe, shell);
+    })
+    .catch(() => {
+      if (!disposed) {
+        fail();
+      }
+    });
+
+  function onMessage(event: MessageEvent) {
+    const message = event.data;
+    if (
+      disposed ||
+      !iframe.contentWindow ||
+      event.source !== iframe.contentWindow ||
+      event.origin !== expectedOrigin ||
+      !isFrameNotification(message) ||
+      message.channel !== renderCommand.channel
+    ) {
+      return;
+    }
+    switch (message.type) {
+      case 'ready':
+        return sendRender(message.document);
+      case 'mermaid-needed':
+        return loadRequestedMermaid();
+      case 'rendered':
+        return markRendered();
+      case 'resize':
+        return updateDimensions(message.height, message.contentHeight);
+      case 'blocked':
+        return recordBlockedResources(message.resources);
+      case 'error':
+        return fail();
+    }
+  }
+
+  function sendRender(documentId: string) {
+    // Protected frames verify CSP violation delivery before sending ready and receiving panel data.
+    if (renderedDocument === documentId) {
+      return;
+    }
+    // Moving an iframe within the DOM reloads its srcdoc. The new document passed its own CSP check, so it is a
+    // fresh attempt even if the previous one failed.
+    if (renderedDocument !== undefined) {
+      hasFailed = false;
+      mermaidRequested = false;
+      clearTimeout(watchdog);
+      watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
+    } else if (hasFailed) {
+      return;
+    }
+    renderedDocument = documentId;
+    iframe.contentWindow?.postMessage(renderCommand, targetOrigin);
+  }
+
+  function loadRequestedMermaid() {
+    if (renderedDocument === undefined || hasFailed || !renderCommand.mermaid || mermaidRequested) {
+      return;
+    }
+    mermaidRequested = true;
+    const target = iframe.contentWindow;
+    // A reloaded document requests its own copy; a late result for the previous one must not fail it.
+    const requestedBy = renderedDocument;
+    const isCurrent = () => !disposed && renderedDocument === requestedBy;
+    void loadSandboxMermaid()
+      .then((source) => {
+        if (!isCurrent() || hasFailed || !target || iframe.contentWindow !== target) {
+          return;
+        }
+        const command: MermaidCommand = {
+          protocol: TEXT_FRAME_PROTOCOL,
+          channel: renderCommand.channel,
+          type: 'mermaid-source',
+          source,
+        };
+        target.postMessage(command, targetOrigin);
+      })
+      .catch(() => {
+        if (isCurrent()) {
+          fail();
+        }
+      });
+  }
+
+  function markRendered() {
+    if (renderedDocument !== undefined && !hasFailed) {
+      clearTimeout(watchdog);
+      onStatus('ready');
+    }
+  }
+
+  // Content can still resize or report violations after a rendering failure.
+  function updateDimensions(height: number, contentHeight: number) {
+    if (renderedDocument !== undefined) {
+      onResize({ height, contentHeight });
+    }
+  }
+
+  function recordBlockedResources(resources: BlockedResource[]) {
+    if (renderedDocument !== undefined) {
+      onBlocked(resources);
+    }
+  }
+
+  function fail() {
+    hasFailed = true;
+    clearTimeout(watchdog);
+    onStatus('error');
+  }
+
+  function dispose() {
+    disposed = true;
+    clearTimeout(watchdog);
+    window.removeEventListener('message', onMessage);
+  }
+
+  return { dispose };
+}
+
+function buildFrameShell({
+  runtimeSource,
+  policy,
+  nonce,
+  channel,
+  parentOrigin,
+}: {
+  runtimeSource: string;
+  policy?: string;
+  nonce: string;
+  channel: string;
+  parentOrigin: string;
+}) {
+  const escape = textUtil.escapeHtml;
+  const appliedPolicy = policy?.replace("script-src 'none'", `script-src 'nonce-${nonce}'`);
+  const escapedPolicy = appliedPolicy === undefined ? undefined : escape(appliedPolicy);
+  const cspMeta =
+    escapedPolicy === undefined ? '' : `<meta http-equiv="Content-Security-Policy" content="${escapedPolicy}">`;
+  const policyAttribute = escapedPolicy === undefined ? '' : ` data-policy="${escapedPolicy}"`;
+  const scriptSource = runtimeSource.replace(/<\/script/gi, '<\\/script');
+
+  return `<!doctype html><html><head><meta http-equiv="x-dns-prefetch-control" content="off">${cspMeta}<base target="_blank"></head><body><script nonce="${escape(nonce)}" data-channel="${escape(channel)}" data-parent-origin="${escape(parentOrigin)}"${policyAttribute}>${scriptSource}</script></body></html>`;
+}
+
+function assignFrameShell(iframe: HTMLIFrameElement, shell: string) {
+  // Only the application-built shell reaches this policy; panel HTML arrives later by message.
+  shellPolicy ??= window.trustedTypes?.createPolicy('grafana-text-panel-shell', {
+    createHTML: (html: string) => html,
+  });
+  // React stringifies srcDoc, discarding TrustedHTML. Assign it directly without changing the default policy.
+  Object.assign(iframe, { srcdoc: shellPolicy?.createHTML(shell) ?? shell });
+}
+
+/** Returns `current` when nothing changed, so a repeated report doesn't re-render. */
+function mergeResources(current: BlockedResource[], reported: BlockedResource[]): BlockedResource[] {
+  let changed = false;
+  const resources = [...current];
+  for (const resource of reported) {
+    const origin = resource.origin ? resourceOrigin(resource.origin) : undefined;
+    // The frame is untrusted, so drop URLs that don't match the origin they're reported under.
+    const urls = origin ? resource.urls?.filter(({ url }) => resourceOrigin(url) === origin) : undefined;
+    let index = resources.findIndex((entry) => entry.directive === resource.directive && entry.origin === origin);
+    if (index === -1) {
+      index = resources.push({ directive: resource.directive, origin }) - 1;
+      changed = true;
+    }
+    if (!urls) {
+      continue;
+    }
+    const entry = resources[index];
+    const merged = mergeUrls(entry.urls ?? [], urls);
+    const truncated = Boolean(entry.truncated || resource.truncated || merged.dropped);
+    if (merged.urls !== entry.urls || truncated !== Boolean(entry.truncated)) {
+      resources[index] = { ...entry, urls: merged.urls, ...(truncated && { truncated }) };
+      changed = true;
+    }
+  }
+  return changed ? resources : current;
+}
+
+/** `dropped` is true when the budget left out a URL. */
+function mergeUrls(current: BlockedUrl[], reported: BlockedUrl[]): { urls: BlockedUrl[]; dropped: boolean } {
+  let changed = false;
+  let dropped = false;
+  let chars = urlChars(current);
+  const urls = [...current];
+  const indexes = new Map(urls.map(({ url }, index) => [url, index]));
+  for (const entry of reported) {
+    const index = indexes.get(entry.url);
+    if (index === undefined) {
+      if (chars + entry.url.length > MAX_BLOCKED_URL_CHARS) {
+        dropped = true;
+        continue;
+      }
+      indexes.set(entry.url, urls.length);
+      urls.push({ url: entry.url, count: entry.count });
+      chars += entry.url.length;
+      changed = true;
+    } else if (entry.count > urls[index].count) {
+      urls[index] = { url: entry.url, count: entry.count };
+      changed = true;
+    }
+  }
+  return { urls: changed ? urls : current, dropped };
 }

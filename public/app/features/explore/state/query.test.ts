@@ -109,10 +109,6 @@ jest.mock('@grafana/runtime', () => ({
       },
     };
   },
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: (ref?: DataSourceRef | string) => {
     if (!ref) {
       return Promise.resolve(datasources[0]);

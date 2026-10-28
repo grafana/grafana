@@ -38,7 +38,7 @@ func TestIntegration_OSSBasicRolePermissions_PersistAndRefreshOnRegisterFixedRol
 		sql,
 		permreg.ProvidePermissionRegistry(),
 		nil,
-		iam.Features{},
+		iam.Features{}, nil, nil,
 	)
 
 	require.NoError(t, svc.DeclareFixedRoles(accesscontrol.RoleRegistration{
@@ -99,7 +99,7 @@ func TestIntegration_OSSBasicRolePermissions_PersistAndRefreshOnRegisterFixedRol
 		sql,
 		permreg.ProvidePermissionRegistry(),
 		nil,
-		iam.Features{},
+		iam.Features{}, nil, nil,
 	)
 	require.NoError(t, svc2.DeclareFixedRoles(accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{

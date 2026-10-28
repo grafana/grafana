@@ -274,6 +274,8 @@ func withConversionMetrics(sourceVersionAPI, targetVersionAPI string, conversion
 			}
 		}
 
+		ctx = withNamespaceAndServiceIdentity(ctx, a)
+
 		tracer := otel.GetTracerProvider().Tracer("dashboard-converter")
 		ctx, span := tracer.Start(ctx, "dashboard.conversion",
 			trace.WithAttributes(

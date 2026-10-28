@@ -315,6 +315,11 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 							wrap.JsonApiErr(http.StatusBadRequest, "dashboard UID is required", nil)
 							return
 						}
+						allowed, err := accessControl.Evaluate(ctx, signedInUser, ac.EvalPermission(dashboards.ActionDashboardsRead, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dashboardUID)))
+						if !allowed || err != nil {
+							wrap.JsonApiErr(http.StatusForbidden, "access denied to source dashboard", err)
+							return
+						}
 						_, err = dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
 							UID:   dashboardUID,
 							OrgID: signedInUser.GetOrgID(),
@@ -467,6 +472,11 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 					vars := mux.Vars(r)
 					deleteKey := vars["deleteKey"]
 					namespace := vars["namespace"]
+					ns, err := authlib.ParseNamespace(namespace)
+					if err != nil || ns.OrgID != user.GetOrgID() || deleteKey == "" {
+						errhttp.Write(ctx, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), ""), w)
+						return
+					}
 
 					storage := storageGetter()
 					if storage == nil {
@@ -477,13 +487,15 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 					// Set namespace in context for k8s storage layer
 					ctx = k8srequest.WithNamespace(ctx, namespace)
 
+					// The validated delete key is a separate capability, not general read access.
+					capabilityCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
 					// Look up snapshot by deleteKey using field selector
 					lister, ok := storage.(rest.Lister)
 					if !ok {
 						errhttp.Write(ctx, fmt.Errorf("snapshot storage does not support list"), w)
 						return
 					}
-					obj, err := lister.List(ctx, &internalversion.ListOptions{
+					obj, err := lister.List(capabilityCtx, &internalversion.ListOptions{
 						FieldSelector: fields.OneTermEqualSelector("spec.deleteKey", deleteKey),
 					})
 					if err != nil {
@@ -498,7 +510,12 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 					if len(snapList.Items) > 1 {
 						klog.Warningf("multiple snapshots found for delete key in namespace %q (count=%d); deleting only the first", namespace, len(snapList.Items))
 					}
-					snapshotName := snapList.Items[0].Name
+					snap := &snapList.Items[0]
+					if snap.Namespace != namespace || snap.Spec.DeleteKey == nil || *snap.Spec.DeleteKey != deleteKey {
+						errhttp.Write(ctx, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), ""), w)
+						return
+					}
+					snapshotName := snap.Name
 
 					deleter, ok := storage.(rest.GracefulDeleter)
 					if !ok {
@@ -506,7 +523,15 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 						return
 					}
 
-					_, _, err = deleter.Delete(ctx, snapshotName, nil, &metav1.DeleteOptions{})
+					deleteURL, err := deleteSnapshotFromExternalHost(ctx, snap, options)
+					if err != nil {
+						errhttp.Write(ctx, err, w)
+						return
+					}
+					if deleteURL != "" {
+						capabilityCtx = context.WithValue(capabilityCtx, externalSnapshotDeleteURLKey{}, deleteURL)
+					}
+					_, _, err = deleter.Delete(capabilityCtx, snapshotName, nil, &metav1.DeleteOptions{})
 					if err != nil {
 						errhttp.Write(ctx, fmt.Errorf("failed to delete snapshot: %w", err), w)
 						return

@@ -1,8 +1,7 @@
 import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   type CancelActivationHandler,
   type CustomVariable,
@@ -57,7 +56,7 @@ const V1_PANEL_PROPERTIES = {
  * Whether the new panel query errors & notices UI (header popover + dedicated inspector tab) is enabled.
  */
 export function isNewPanelQueryErrorsUIEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, false);
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, true);
 }
 
 export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
@@ -230,9 +229,7 @@ export async function getDefaultVizPanel(): Promise<VizPanel> {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
-    headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
-    }),
+    headerActions: new VizPanelHeaderActions({}),
     $data: datasourceSettings
       ? new SceneDataTransformer({
           $data: new SceneQueryRunner({

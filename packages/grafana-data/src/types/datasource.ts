@@ -4,6 +4,7 @@ import { type Observable } from 'rxjs';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2beta1';
 
+import type { PanelStatusActions, PanelStatusActionContext, PanelStatusItem } from '../panel/PanelNotices';
 import { deprecationWarning } from '../utils/deprecationWarning';
 import { makeClassES5Compatible } from '../utils/makeClassES5Compatible';
 import { throwIfAngular } from '../utils/throwIfAngular';
@@ -405,6 +406,12 @@ abstract class DataSourceApi<
    * we attach the components to this instance for easy access
    */
   components?: DataSourcePluginComponents<DataSourceApi<TQuery, TOptions>, TQuery, TOptions>;
+
+  /** Supplies runtime actions for this datasource's query errors and notices. @alpha */
+  getPanelStatusActions?(
+    statusItem: Readonly<PanelStatusItem>,
+    context: PanelStatusActionContext
+  ): PanelStatusActions | undefined;
 
   /**
    * static information about the datasource
@@ -875,7 +882,6 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
 export interface DataSourceInstanceListItem {
   uid: string;
   type: string;
-  apiVersion?: string;
   name: string;
   meta: DataSourcePluginMeta;
 }

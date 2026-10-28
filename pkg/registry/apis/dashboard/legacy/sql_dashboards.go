@@ -332,50 +332,76 @@ func (a *dashboardSqlAccess) MigrateFolders(ctx context.Context, orgId int64, op
 
 // MigrateLibraryPanels handles the library panel migration logic
 func (a *dashboardSqlAccess) MigrateLibraryPanels(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+	return migrateLibraryPanelPages(ctx, orgId, opts, stream, a.GetLibraryPanels, 1000)
+}
+
+func migrateLibraryPanelPages(
+	ctx context.Context,
+	orgID int64,
+	opts migrations.MigrateOptions,
+	stream resourcepb.BulkStore_BulkProcessClient,
+	getPanels func(context.Context, LibraryPanelQuery) (*dashboardV0.LibraryPanelList, error),
+	pageSize int64,
+) error {
 	opts.Progress(-1, "migrating library panels...")
-	panels, err := a.GetLibraryPanels(ctx, LibraryPanelQuery{
-		OrgID: orgId,
-		Limit: 1000000,
-	})
-	if err != nil {
-		return err
-	}
-	for i, panel := range panels.Items {
-		meta, err := utils.MetaAccessor(&panel)
+	var lastID int64
+	count := 0
+	for {
+		panels, err := getPanels(ctx, LibraryPanelQuery{
+			OrgID:  orgID,
+			Limit:  pageSize,
+			LastID: lastID,
+		})
 		if err != nil {
 			return err
 		}
-		body, err := json.Marshal(panel)
-		if err != nil {
-			return err
-		}
-
-		req := &resourcepb.BulkRequest{
-			Key: &resourcepb.ResourceKey{
-				Namespace: opts.Namespace,
-				Group:     dashboardV1.GROUP,
-				Resource:  dashboardV1.LIBRARY_PANEL_RESOURCE,
-				Name:      panel.Name,
-			},
-			Value:  body,
-			Folder: meta.GetFolder(),
-			Action: resourcepb.BulkRequest_ADDED,
-		}
-		if panel.Generation > 1 {
-			req.Action = resourcepb.BulkRequest_MODIFIED
-		}
-
-		opts.Progress(i, fmt.Sprintf("[v:%d] %s (%d)", i, meta.GetName(), len(req.Value)))
-
-		err = stream.Send(req)
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				err = nil
+		for _, panel := range panels.Items {
+			panel.Namespace = opts.Namespace
+			meta, err := utils.MetaAccessor(&panel)
+			if err != nil {
+				return err
 			}
-			return err
+			body, err := json.Marshal(panel)
+			if err != nil {
+				return err
+			}
+
+			req := &resourcepb.BulkRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: opts.Namespace,
+					Group:     dashboardV1.GROUP,
+					Resource:  dashboardV1.LIBRARY_PANEL_RESOURCE,
+					Name:      panel.Name,
+				},
+				Value:  body,
+				Folder: meta.GetFolder(),
+				Action: resourcepb.BulkRequest_ADDED,
+			}
+			if panel.Generation > 1 {
+				req.Action = resourcepb.BulkRequest_MODIFIED
+			}
+
+			count++
+			opts.Progress(count, fmt.Sprintf("[v:%d] %s (%d)", panel.Generation, meta.GetName(), len(req.Value)))
+
+			err = stream.Send(req)
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					err = nil
+				}
+				return err
+			}
 		}
+		if panels.Continue == "" {
+			break
+		}
+		nextID, err := strconv.ParseInt(panels.Continue, 10, 64)
+		if err != nil || nextID <= 0 || (lastID > 0 && nextID >= lastID) {
+			return fmt.Errorf("invalid library panel continuation token %q", panels.Continue)
+		}
+		lastID = nextID
 	}
-	opts.Progress(-2, fmt.Sprintf("finished panels... (%d)", len(panels.Items)))
+	opts.Progress(-2, fmt.Sprintf("finished panels... (%d)", count))
 	return nil
 }
 

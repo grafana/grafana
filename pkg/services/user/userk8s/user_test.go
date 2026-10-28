@@ -2844,10 +2844,11 @@ func newTestK8sUser(uid, namespace, login, email string) v0alpha1.User {
 
 type testDirectRestConfigProvider struct {
 	serverURL string
+	transport http.RoundTripper
 }
 
 func (p *testDirectRestConfigProvider) GetDirectRestConfig(_ *contextmodel.ReqContext) *rest.Config {
-	return &rest.Config{Host: p.serverURL}
+	return &rest.Config{Host: p.serverURL, Transport: p.transport}
 }
 
 func (p *testDirectRestConfigProvider) DirectlyServeHTTP(_ http.ResponseWriter, _ *http.Request) {}
@@ -2939,4 +2940,76 @@ func TestUserK8sService_Search_MapsExtendedFields(t *testing.T) {
 	assert.True(t, got.IsProvisioned)
 	assert.Equal(t, created.UTC(), got.Created.UTC())
 	assert.Equal(t, lastSeen.UTC(), got.LastSeenAt.UTC())
+}
+
+func TestUserK8sService_UpdateLastSeenAtChecksKnownTimestampBeforeLookup(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		lastSeen time.Time
+		interval time.Duration
+		skip     bool
+	}{
+		{"recent", time.Now(), 5 * time.Minute, true},
+		{"stale", time.Now().Add(-10 * time.Minute), 5 * time.Minute, false},
+		{"unknown", time.Time{}, 5 * time.Minute, false},
+		{"future", time.Now().Add(time.Minute), 5 * time.Minute, true},
+		{"custom interval", time.Now().Add(-time.Minute), 30 * time.Second, false},
+		{"zero interval", time.Now().Add(-time.Second), 0, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				cfg: &setting.Cfg{UserLastSeenUpdateInterval: tc.interval}, nilProvider: true,
+			})
+			err := svc.UpdateLastSeenAt(ctx, &user.UpdateUserLastSeenAtCommand{UserID: 42, OrgID: 1, LastSeenAt: tc.lastSeen})
+			if tc.skip {
+				require.ErrorIs(t, err, user.ErrLastSeenUpToDate)
+			} else {
+				require.EqualError(t, err, "config provider not initialized")
+			}
+		})
+	}
+}
+
+func TestUserK8sService_GetSignedInUserByUID(t *testing.T) {
+	for _, status := range []int{http.StatusOK, http.StatusNotFound, http.StatusForbidden} {
+		t.Run(strconv.Itoa(status), func(t *testing.T) {
+			calls := 0
+			svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+				serverResponse: func(w http.ResponseWriter, r *http.Request) {
+					calls++
+					assert.Equal(t, http.MethodGet, r.Method)
+					assert.Equal(t, "/apis/iam.grafana.app/v0alpha1/namespaces/default/users/12345", r.URL.Path)
+					assert.Empty(t, r.URL.RawQuery)
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(status)
+					if status != http.StatusOK {
+						_ = json.NewEncoder(w).Encode(metav1.Status{
+							TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+							Status:   metav1.StatusFailure, Code: int32(status),
+							Reason: metav1.StatusReason(http.StatusText(status)),
+						})
+						return
+					}
+					_ = json.NewEncoder(w).Encode(v0alpha1.User{
+						TypeMeta:   metav1.TypeMeta{APIVersion: v0alpha1.GroupVersion.Identifier(), Kind: "User"},
+						ObjectMeta: metav1.ObjectMeta{Name: "12345", Namespace: "default", Labels: map[string]string{"grafana.app/deprecatedInternalID": "42"}},
+						Spec:       v0alpha1.UserSpec{Login: "jdoe", Role: "Viewer"},
+					})
+				},
+			})
+			got, err := svc.GetSignedInUser(ctx, &user.GetSignedInUserQuery{UserUID: "12345", UserID: 42, OrgID: 1})
+			require.Equal(t, 1, calls)
+			switch status {
+			case http.StatusOK:
+				require.NoError(t, err)
+				require.Equal(t, "12345", got.UserUID)
+				require.Equal(t, int64(42), got.UserID)
+			case http.StatusNotFound:
+				require.ErrorIs(t, err, user.ErrUserNotFound)
+			default:
+				require.Error(t, err)
+				require.NotErrorIs(t, err, user.ErrUserNotFound)
+			}
+		})
+	}
 }

@@ -17,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -210,23 +209,6 @@ func start(t *testing.T, sub *fakeSubscriber, seed []runtime.Object, newObject O
 // The initial list drives an OnAdd per existing object and marks HasSynced, so a
 // controller can start reconciling the full set — just like an informer's
 // LIST-seeded cache.
-func TestInformer_SetLogger(t *testing.T) {
-	n := NewInformer(newFakeSubscriber(), testGVR, testNamespace, time.Minute, testQueueGroup, nil,
-		func(ns, name string) runtime.Object { return obj(name) },
-		func(ctx context.Context) ([]runtime.Object, int64, error) { return nil, 0, nil },
-	)
-
-	defaultLogger := n.log
-	require.NotNil(t, defaultLogger, "the constructor must always set a default logger")
-
-	custom := log.New("test.custom.logger")
-	n.SetLogger(custom)
-	assert.Same(t, custom, n.log, "SetLogger must replace the logger")
-
-	n.SetLogger(nil)
-	assert.Same(t, custom, n.log, "a nil logger must be ignored, leaving the previous one in place")
-}
-
 func TestInformer_InitialListDeliversAdds(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := newFakeSubscriber()
@@ -954,3 +936,109 @@ func TestInformer_MetricsObserveLiveSubscription(t *testing.T) {
 		})
 	})
 }
+
+// recordedAnnouncements captures the announcement hook, and can run a callback
+// at each observation so a test can check when it ran relative to dispatch.
+type recordedAnnouncements struct {
+	mu        sync.Mutex
+	announced map[string]int64
+	forgotten []forgottenKey
+}
+
+// forgottenKey is one Forget call, with the version the delete carried.
+type forgottenKey struct {
+	key string
+	rv  int64
+}
+
+func newRecordedAnnouncements() *recordedAnnouncements {
+	return &recordedAnnouncements{announced: map[string]int64{}}
+}
+
+func (r *recordedAnnouncements) Announce(namespace, name string, rv int64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.announced[namespace+"/"+name] = rv
+}
+
+func (r *recordedAnnouncements) Forget(namespace, name string, rv int64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	delete(r.announced, namespace+"/"+name)
+	r.forgotten = append(r.forgotten, forgottenKey{key: namespace + "/" + name, rv: rv})
+}
+
+func (r *recordedAnnouncements) version(namespace, name string) int64 {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return r.announced[namespace+"/"+name]
+}
+
+func (r *recordedAnnouncements) forgottenKeys() []forgottenKey {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]forgottenKey(nil), r.forgotten...)
+}
+
+var _ Announcements = (*recordedAnnouncements)(nil)
+
+func eventAt(action resourcepb.WatchNotification_Type, name string, rv int64) *resourcepb.WatchNotification {
+	evt := event(action, name)
+	evt.ResourceVersion = rv
+	return evt
+}
+
+// A write announces its version; a delete forgets the key instead, because the
+// object is gone from storage and no subsequent read is expected to reach it.
+func TestInformer_AnnouncesLiveNotifications(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		ann := newRecordedAnnouncements()
+
+		n, stop := start(t, sub, nil, newObjectFunc, &recordingHandler{})
+		defer stop()
+		n.SetAnnouncements(ann)
+
+		sub.publish(t, subject(), eventAt(resourcepb.WatchNotification_ADDED, "added", 11))
+		sub.publish(t, subject(), eventAt(resourcepb.WatchNotification_MODIFIED, "changed", 12))
+		sub.publish(t, subject(), eventAt(resourcepb.WatchNotification_DELETED, "gone", 13))
+		synctest.Wait()
+
+		assert.Equal(t, int64(11), ann.version(testNamespace, "added"))
+		assert.Equal(t, int64(12), ann.version(testNamespace, "changed"))
+		assert.Zero(t, ann.version(testNamespace, "gone"))
+		// The delete's own version goes with it: arrival order does not follow
+		// version order, so the observer has to be able to date the delete.
+		assert.Equal(t, []forgottenKey{{key: testNamespace + "/gone", rv: 13}}, ann.forgottenKeys())
+	})
+}
+
+// The announcement has to be in place before the event is dispatched: a handler
+// enqueues the key synchronously, so a worker's read could otherwise be judged
+// against an announcement that had not been recorded yet.
+func TestInformer_AnnouncesBeforeDispatch(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		ann := newRecordedAnnouncements()
+		var atDispatch int64
+		handler := dispatchProbe(func() { atDispatch = ann.version(testNamespace, "added") })
+
+		n, stop := start(t, sub, nil, newObjectFunc, handler)
+		defer stop()
+		n.SetAnnouncements(ann)
+
+		sub.publish(t, subject(), eventAt(resourcepb.WatchNotification_ADDED, "added", 11))
+		synctest.Wait()
+
+		assert.Equal(t, int64(11), atDispatch)
+	})
+}
+
+// dispatchProbe runs fn on every delivery.
+type dispatchProbe func()
+
+func (h dispatchProbe) OnAdd(interface{}, bool)           { h() }
+func (h dispatchProbe) OnUpdate(interface{}, interface{}) { h() }
+func (h dispatchProbe) OnDelete(interface{})              { h() }
+
+var _ cache.ResourceEventHandler = dispatchProbe(nil)

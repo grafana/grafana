@@ -1010,6 +1010,7 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 				{Name: "Watchers", Path: "/a/grafana-assistant-app/watchers", Type: "page", AddToNav: true},
 				{Name: "Search", Path: "/a/grafana-assistant-app/assistant-search", Type: "page", AddToNav: true},
 				{Name: "Settings", Path: "/a/grafana-assistant-app/settings", Type: "page", AddToNav: true},
+				{Name: "Pages", Path: "/a/grafana-assistant-app/pages", Type: "page", AddToNav: true},
 				{Name: "Irrelevant", Path: "/a/grafana-assistant-app/irrelevant", Type: "page", AddToNav: true},
 			},
 		},
@@ -1022,6 +1023,7 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 		"/a/grafana-assistant-app/watchers",
 		"/a/grafana-assistant-app/assistant-search",
 		"/a/grafana-assistant-app/settings",
+		"/a/grafana-assistant-app/pages",
 		"/a/grafana-assistant-app/irrelevant",
 	}
 	ossChildPaths := []string{
@@ -1082,13 +1084,14 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 			wantChildPaths: cloudChildPaths,
 		},
 		{
-			name: "Trial mode only includes the homepage and workspace",
+			name: "Trial mode only includes the homepage, workspace and pages",
 			jsonData: map[string]any{
 				"trialMode": true,
 				"ossMode":   true,
 			},
 			wantChildPaths: []string{
 				"/a/grafana-assistant-app/workspace",
+				"/a/grafana-assistant-app/pages",
 			},
 		},
 	} {
@@ -1103,6 +1106,7 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 			}
 			service := ServiceImpl{
 				cfg:            cfg,
+				accessControl:  acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
 				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: plugins},
 			}
 			treeRoot := navtree.NavTreeRoot{}
@@ -1115,6 +1119,69 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 			for i, wantPath := range tt.wantChildPaths {
 				require.Equal(t, wantPath, appLink.Children[i].Url)
 			}
+		})
+	}
+}
+
+func TestAssistantPagesTopLevelNavigation(t *testing.T) {
+	for _, tt := range []struct {
+		name      string
+		ossMode   bool
+		trialMode bool
+		role      identity.RoleType
+		wantPages bool
+	}{
+		{name: "cloud", role: identity.RoleAdmin, wantPages: true},
+		{name: "OSS", role: identity.RoleAdmin, ossMode: true},
+		{name: "trial", role: identity.RoleAdmin, trialMode: true, wantPages: true},
+		{name: "without access", role: identity.RoleViewer},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AppSubURL = "/grafana"
+			service := ServiceImpl{
+				cfg:           cfg,
+				accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+					assistantAppID: {JSONData: map[string]any{"ossMode": tt.ossMode, "trialMode": tt.trialMode}},
+				}},
+			}
+			service.readNavigationSettings()
+			httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+			require.NoError(t, err)
+			reqCtx := &contextmodel.ReqContext{
+				SignedInUser: &user.SignedInUser{OrgRole: tt.role},
+				Context:      &web.Context{Req: httpReq},
+			}
+			plugin := pluginstore.Plugin{JSONData: plugins.JSONData{
+				ID:   assistantAppID,
+				Type: plugins.TypeApp,
+				Includes: []*plugins.Includes{
+					{Name: "Assistant", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
+					{Name: "Pages", Path: "/a/grafana-assistant-app/pages", Icon: "file-alt", Type: "page", AddToNav: true, Role: identity.RoleAdmin},
+				},
+			}}
+			dashboards := &navtree.NavLink{Id: navtree.NavIDDashboards, SortWeight: navtree.WeightDashboard}
+			explore := &navtree.NavLink{Id: navtree.NavIDExplore, SortWeight: navtree.WeightExplore}
+			tree := navtree.NavTreeRoot{Children: []*navtree.NavLink{dashboards, explore}}
+			service.processAppPlugin(plugin, reqCtx, &tree)
+			ai := tree.FindById("plugin-page-" + assistantAppID)
+			require.NotNil(t, ai)
+			require.Len(t, ai.Children, 1)
+			require.Equal(t, "Assistant", ai.Children[0].Text)
+			pages := tree.FindByURL("/grafana/a/grafana-assistant-app/pages")
+			if !tt.wantPages {
+				require.Nil(t, pages)
+				return
+			}
+			require.NotNil(t, pages)
+			require.Contains(t, tree.Children, pages)
+			require.Equal(t, "Pages", pages.Text)
+			require.Equal(t, "pages", pages.Icon)
+			require.True(t, pages.IsNew)
+			require.Equal(t, assistantAppID, pages.PluginID)
+			tree.Sort()
+			require.Equal(t, []*navtree.NavLink{dashboards, pages, explore, ai}, tree.Children)
 		})
 	}
 }
@@ -1137,7 +1204,7 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 	}
 	mwApp := pluginstore.Plugin{
 		JSONData: plugins.JSONData{
-			ID: "grafana-maintenancewindows-app", Name: "Maintenance Windows", Type: plugins.TypeApp,
+			ID: "grafana-maintenancewindows-app", Name: "Maintenance windows", Type: plugins.TypeApp,
 			Includes: []*plugins.Includes{
 				{Name: "Maintenance windows", Path: "/a/grafana-maintenancewindows-app/maintenance-windows", Type: "page", AddToNav: true, DefaultNav: true},
 			},
@@ -1176,10 +1243,10 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 		require.NotNil(t, sloNode)
 		mwChild := navtree.FindByURL(sloNode.Children, "/a/grafana-maintenancewindows-app/maintenance-windows")
 		require.NotNil(t, mwChild)
-		require.Equal(t, "Maintenance Windows", mwChild.Text)
+		require.Equal(t, mwApp.Name, mwChild.Text)
 		require.Equal(t, "grafana-maintenancewindows-app", mwChild.PluginID)
 		require.Equal(t, "standalone-plugin-page-grafana-maintenancewindows-app", mwChild.Id)
-		require.True(t, mwChild.IsNew)
+		require.False(t, mwChild.IsNew)
 
 		require.Nil(t, treeRoot.FindById(navtree.NavIDApps))
 	})
@@ -1191,7 +1258,10 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Nil(t, treeRoot.FindById("plugin-page-grafana-slo-app"))
-		require.NotNil(t, treeRoot.FindById("plugin-page-grafana-maintenancewindows-app"))
+		mwNode := treeRoot.FindById("plugin-page-grafana-maintenancewindows-app")
+		require.NotNil(t, mwNode)
+		require.Equal(t, mwApp.Name, mwNode.Text)
+		require.False(t, mwNode.IsNew)
 	})
 }
 
@@ -1321,4 +1391,80 @@ func TestNestPluginIncludesByPath(t *testing.T) {
 
 		require.Len(t, appNode.Children, 2)
 	})
+}
+
+func TestAssistantPagesCreateAction(t *testing.T) {
+	const readAction = "assistant.ext.grafana.app/pages:get"
+	const createAction = "assistant.ext.grafana.app/pages:create"
+
+	for _, tt := range []struct {
+		name        string
+		permissions map[string][]string
+		jsonData    map[string]any
+		subURL      string
+		omitPages   bool
+		hidePages   bool
+		wantAction  bool
+	}{
+		{name: "page creator", permissions: map[string][]string{readAction: {}, createAction: {}}, wantAction: true},
+		{name: "read only", permissions: map[string][]string{readAction: {}}},
+		{name: "no page access", permissions: map[string][]string{createAction: {}}},
+		{name: "no permissions"},
+		{name: "plugin without Pages", permissions: map[string][]string{readAction: {}, createAction: {}}, omitPages: true},
+		{name: "Pages not in navigation", permissions: map[string][]string{readAction: {}, createAction: {}}, hidePages: true},
+		{name: "OSS mode", permissions: map[string][]string{readAction: {}, createAction: {}}, jsonData: map[string]any{"ossMode": true}},
+		{name: "trial mode", permissions: map[string][]string{readAction: {}, createAction: {}}, jsonData: map[string]any{"trialMode": true}, wantAction: true},
+		{name: "Grafana subpath", permissions: map[string][]string{readAction: {}, createAction: {}}, subURL: "/grafana", wantAction: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			httpReq, err := http.NewRequest(http.MethodGet, "/", nil)
+			require.NoError(t, err)
+			reqCtx := &contextmodel.ReqContext{
+				SignedInUser: &user.SignedInUser{
+					OrgID:       1,
+					OrgRole:     identity.RoleViewer,
+					Permissions: map[int64]map[string][]string{1: tt.permissions},
+				},
+				Context: &web.Context{Req: httpReq},
+			}
+			app := pluginstore.Plugin{JSONData: plugins.JSONData{
+				ID: assistantAppID, Name: "Assistant", Type: plugins.TypeApp,
+			}}
+			if !tt.omitPages {
+				app.Includes = []*plugins.Includes{{
+					Name: "Pages", Path: assistantAppHomePath + "/pages", Type: "page",
+					AddToNav: !tt.hidePages, Action: readAction,
+				}}
+			}
+			cfg := setting.NewCfg()
+			cfg.IsEnterprise = true
+			cfg.AppSubURL = tt.subURL
+			service := ServiceImpl{
+				cfg:           cfg,
+				log:           log.New("navtree"),
+				accessControl: acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+				pluginSettings: &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
+					assistantAppID: {OrgID: 1, PluginID: assistantAppID, JSONData: tt.jsonData},
+				}},
+			}
+			treeRoot := navtree.NavTreeRoot{}
+			service.processAppPlugin(app, reqCtx, &treeRoot)
+			action := treeRoot.FindById("assistant/pages/new")
+			if !tt.wantAction {
+				require.Nil(t, action)
+				return
+			}
+			require.NotNil(t, action)
+			require.Equal(t, "New Grafana Page", action.Text)
+			require.Equal(t, tt.subURL+assistantAppHomePath+"/pages/new", action.Url)
+			require.Equal(t, "plus", action.Icon)
+			require.Empty(t, action.PluginID)
+			require.True(t, action.IsCreateAction)
+			require.True(t, action.HideFromTabs)
+			appLink := treeRoot.FindById("plugin-page-" + assistantAppID)
+			require.Len(t, appLink.Children, 1)
+			require.Equal(t, "Pages", appLink.Children[0].Text)
+			require.Equal(t, []*navtree.NavLink{action}, appLink.Children[0].Children)
+		})
+	}
 }

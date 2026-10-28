@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
-	"path"
 	"slices"
-	"strings"
 
 	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
@@ -377,7 +375,7 @@ func (s *server) authorizeSearchRows(ctx context.Context, rows []listSearchRow) 
 	for i, err := range authz.FilterAuthorized(ctx, s.access, batched, func(i int) authz.BatchCheckItem {
 		row := rows[i]
 		return listAuthorizationItem(row.key, row.key.Name, row.folder, row.resourceVersion)
-	}, authz.WithTracer(tracer)) {
+	}, authz.WithTracer(tracer), authz.WithSizeHint(len(rows))) {
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
@@ -525,33 +523,6 @@ func indexableSelectorOperator(op string) bool {
 	}
 }
 
-type SearchBackedListConfig struct {
-	AllowedResources map[string]bool
-}
-
-func (c SearchBackedListConfig) Allowed(group, resource string) bool {
-	return resourceAllowed(c.AllowedResources, group, resource)
-}
-
-func resourceAllowed(allowed map[string]bool, group, resource string) bool {
-	if enabled, ok := allowed[group+"/"+resource]; ok {
-		return enabled
-	}
-	if enabled, ok := allowed[group]; ok {
-		return enabled
-	}
-	for pattern, enabled := range allowed {
-		if !enabled || strings.Contains(pattern, "/") {
-			continue
-		}
-		matched, err := path.Match(pattern, group)
-		if err == nil && matched {
-			return true
-		}
-	}
-	return false
-}
-
 func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 	if (s.searchClient == nil && s.search == nil) || req.Source != resourcepb.ListRequest_STORE {
 		return false
@@ -569,7 +540,7 @@ func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 		return false
 	}
 	hasSelectors := len(req.Options.Fields) > 0 || len(req.Options.Labels) > 0
-	if !hasSelectors && !s.searchBackedListResources.Allowed(req.Options.Key.Group, req.Options.Key.Resource) {
+	if !hasSelectors {
 		return false
 	}
 

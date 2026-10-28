@@ -9,8 +9,13 @@ import {
   type PanelData,
   type QueryRunner,
 } from '@grafana/data';
-import { type BackendSrv, createQueryRunner, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstanceList, getDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
+import {
+  type BackendSrv,
+  createQueryRunner,
+  getBackendSrv,
+  getDataSourceInstanceList,
+  getDefaultDataSourceInstanceListItem,
+} from '@grafana/runtime';
 
 import { resetProbeHealth } from './probeUtils';
 import {
@@ -24,14 +29,9 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   createQueryRunner: jest.fn(),
   getBackendSrv: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceList: jest.fn(),
   getDefaultDataSourceInstanceListItem: jest.fn(),
 }));
-
 const mockCreateQueryRunner = jest.mocked(createQueryRunner);
 const mockGetDataSourceInstanceList = jest.mocked(getDataSourceInstanceList);
 const mockGetDefaultDataSourceInstanceListItem = jest.mocked(getDefaultDataSourceInstanceListItem);

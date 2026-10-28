@@ -12,7 +12,6 @@ import (
 	"github.com/fullstorydev/grpchan"
 	"github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/trace"
@@ -26,13 +25,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-)
-
-// Feature flag names as generated in pkg/services/featuremgmt, repeated so this module does
-// not depend on the grafana core module.
-const (
-	FlagUnifiedStorageClientRequireCallerIdentity = "unifiedStorageClient.requireCallerIdentity"
-	FlagUnifiedStorageClientOnBehalfOf            = "unifiedStorageClient.onBehalfOf"
 )
 
 //go:generate mockery --name ResourceClient --structname MockResourceClient --inpackage --filename client_mock.go --with-expecter
@@ -91,36 +83,49 @@ type RemoteResourceClientConfig struct {
 	IsDev            bool
 	// TokenExchanger overrides the default exchange client when non-nil.
 	TokenExchanger authnlib.TokenExchanger
-
-	// RequireCallerIdentity decides, per request, whether to fail a user request the client
-	// cannot carry an identity for rather than calling storage as the service. Nil defers to
-	// the unifiedStorageClient.requireCallerIdentity feature flag.
-	RequireCallerIdentity func(context.Context) bool
-
-	// OnBehalfOf decides, per request, whether a caller already carried inside the verified
-	// access token is exchanged on behalf of that caller (caller's token as exchange subject,
-	// scoped to the caller's namespace) instead of being flattened into the plain service
-	// exchange. Nil defers to the unifiedStorageClient.onBehalfOf feature flag.
-	OnBehalfOf func(context.Context) bool
-
-	// CarriesCallerIdentity marks a client whose TokenExchanger already puts the caller in
-	// the access token, so a missing ID token is not an identity drop.
-	//
-	// Deprecated: superseded by OnBehalfOf; kept only until enterprise apiextensions migrates.
-	CarriesCallerIdentity bool
 }
 
-// onBehalfOfPolicy resolves the per-request OBO decision, deferring to the feature flag
-// when the config does not override it.
-func (cfg RemoteResourceClientConfig) onBehalfOfPolicy() func(context.Context) bool {
-	if cfg.OnBehalfOf != nil {
-		return cfg.OnBehalfOf
-	}
-	return onBehalfOfFlag
+// ClientMode is where a remote client runs, which fixes how it handles a user request it
+// cannot carry an identity for.
+type ClientMode int
+
+const (
+	// ModeEmbedded is a client inside the single Grafana binary. Such a request is sent as
+	// the service and counted as fallback_service.
+	ModeEmbedded ClientMode = iota + 1
+	// ModeStandalone is a client in a separately deployed service. Such a request is denied.
+	ModeStandalone
+)
+
+// identityPolicy is how a client carries the caller to storage.
+type identityPolicy struct {
+	// onBehalfOf leaves a caller already inside the verified access token to the exchanger,
+	// instead of forwarding its ID token.
+	onBehalfOf bool
+	// requireCallerIdentity denies a user request the client cannot carry, instead of
+	// sending it as the service.
+	requireCallerIdentity bool
 }
 
-func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
-	clientInt, err := NewAuthnGrpcClientInterceptor(tracer, cfg)
+func (m ClientMode) policy() identityPolicy {
+	// Any mode but embedded fails closed.
+	return identityPolicy{onBehalfOf: true, requireCallerIdentity: m != ModeEmbedded}
+}
+
+// NewEmbeddedRemoteResourceClient is for Grafana running every service in a single binary.
+// A user request it cannot carry an identity for is still sent as the service.
+func NewEmbeddedRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+	return newRemoteResourceClient(tracer, conn, indexConn, cfg, ModeEmbedded)
+}
+
+// NewStandaloneRemoteResourceClient is for separately deployed services. A user request it
+// cannot carry an identity for is denied.
+func NewStandaloneRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+	return newRemoteResourceClient(tracer, conn, indexConn, cfg, ModeStandalone)
+}
+
+func newRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig, mode ClientMode) (ResourceClient, error) {
+	clientInt, err := NewAuthnGrpcClientInterceptor(tracer, cfg, mode)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +137,7 @@ func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface,
 
 // NewAuthnGrpcClientInterceptor builds the authlib gRPC client interceptor used to authenticate outbound calls to
 // unified storage services. Will use the in-process token exchanger when the token exchange url is empty and dev mode is enabled.
-func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClientConfig) (*authnlib.GrpcClientInterceptor, error) {
+func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClientConfig, mode ClientMode) (*authnlib.GrpcClientInterceptor, error) {
 	var tc authnlib.TokenExchanger
 	if cfg.TokenExchanger != nil {
 		tc = cfg.TokenExchanger
@@ -158,16 +163,12 @@ func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClient
 		tc = client
 	}
 
-	// Wrapped unconditionally: the wrapper passes through unless the per-request policy
-	// says otherwise, so flag-off behaviour is identical to an unwrapped exchanger.
-	tc = &onBehalfOfExchanger{delegate: tc, enabled: cfg.onBehalfOfPolicy()}
-
 	return authnlib.NewGrpcClientInterceptor(
-		tc,
+		&onBehalfOfExchanger{delegate: tc},
 		authnlib.WithClientInterceptorTracer(tracer),
 		authnlib.WithClientInterceptorNamespace(cfg.Namespace),
 		authnlib.WithClientInterceptorAudience(cfg.Audiences),
-		authnlib.WithClientInterceptorIDTokenExtractor(newIDTokenExtractor(cfg)),
+		authnlib.WithClientInterceptorIDTokenExtractor(newIDTokenExtractor(mode.policy())),
 	), nil
 }
 
@@ -202,26 +203,9 @@ func RecordForwardedClientIdentity() {
 // IDTokenExtractor keeps the service-identity fallback unconditionally and never exchanges
 // on behalf of the caller. Used by the in-process client, whose token never leaves the
 // process and whose on-prem users have no ID token.
-var IDTokenExtractor = newIDTokenExtractor(RemoteResourceClientConfig{
-	RequireCallerIdentity: func(context.Context) bool { return false },
-	OnBehalfOf:            func(context.Context) bool { return false },
-})
+var IDTokenExtractor = newIDTokenExtractor(identityPolicy{})
 
-// requireCallerIdentityFlag reads the deny policy from OpenFeature per request: the provider is
-// only reachable after the client is built, and targeting is per namespace.
-func requireCallerIdentityFlag(ctx context.Context) bool {
-	return openfeature.NewDefaultClient().Boolean(ctx,
-		FlagUnifiedStorageClientRequireCallerIdentity, false,
-		openfeature.TransactionContext(ctx))
-}
-
-func newIDTokenExtractor(cfg RemoteResourceClientConfig) func(context.Context) (string, error) {
-	requireCallerIdentity := cfg.RequireCallerIdentity
-	if requireCallerIdentity == nil {
-		requireCallerIdentity = requireCallerIdentityFlag
-	}
-	onBehalfOf := cfg.onBehalfOfPolicy()
-
+func newIDTokenExtractor(policy identityPolicy) func(context.Context) (string, error) {
 	return func(ctx context.Context) (string, error) {
 		if identity.IsServiceIdentity(ctx) {
 			clientIdentityTotal.WithLabelValues(identityModeService).Inc()
@@ -240,15 +224,12 @@ func newIDTokenExtractor(cfg RemoteResourceClientConfig) func(context.Context) (
 			return "", nil
 		// The exchanger applies the same predicate and carries the caller inside the
 		// exchanged token, so nothing is forwarded here: pure OBO, no ID token.
-		case onBehalfOfSubjectToken(info) != "" && onBehalfOf(ctx):
+		case policy.onBehalfOf && onBehalfOfSubjectToken(info) != "":
 			clientIdentityTotal.WithLabelValues(identityModeOnBehalfOf).Inc()
 			return "", nil
 		case len(info.GetIDToken()) != 0:
 			clientIdentityTotal.WithLabelValues(identityModeIDToken).Inc()
 			return info.GetIDToken(), nil
-		case cfg.CarriesCallerIdentity:
-			clientIdentityTotal.WithLabelValues(identityModeOnBehalfOf).Inc()
-			return "", nil
 		}
 
 		// A user request with nothing to forward. The exchanged service token is all storage
@@ -268,7 +249,7 @@ func newIDTokenExtractor(cfg RemoteResourceClientConfig) func(context.Context) (
 			return "", status.FromContextError(err).Err()
 		}
 
-		if requireCallerIdentity(ctx) {
+		if policy.requireCallerIdentity {
 			clientIdentityTotal.WithLabelValues(identityModeDenied).Inc()
 			logger.Error("refusing to call resource store as the service for a user request without an id token")
 			return "", status.Error(codes.PermissionDenied, "caller identity is required to call unified storage")

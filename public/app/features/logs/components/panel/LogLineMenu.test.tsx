@@ -2,8 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataSourceApi, CoreApp, createTheme, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
-import { type DataSourceSrv, getDataSourceSrv } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { type DataSourceSrv, getDataSourceSrv, getDataSourceInstance } from '@grafana/runtime';
 
 import * as logsUtils from '../../utils';
 import { createLogLine } from '../mocks/logRow';
@@ -30,13 +29,8 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   isAssistantAvailable: true,
   getDataSourceSrv: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
 }));
-
 const theme = createTheme();
 const styles = getStyles(theme);
 const contextProps = {
