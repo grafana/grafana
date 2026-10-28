@@ -20,8 +20,6 @@ interface RangeField {
   placeholder?: string;
   testId?: string;
   fieldTestId?: string;
-  invalid?: boolean;
-  errorId?: string;
 }
 
 interface Props {
@@ -59,7 +57,7 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
         <Stack key={id} gap={0}>
           <Field
             label={field.label ?? label}
-            invalid={field.invalid ?? !!field.error}
+            invalid={!!field.error}
             error={field.error}
             data-testid={field.fieldTestId}
           >
@@ -73,7 +71,6 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
               placeholder={field.placeholder}
               data-testid={field.testId}
               width={inputWidth}
-              aria-describedby={field.invalid ? field.errorId : undefined}
               onClick={(event) => event.stopPropagation()}
               onKeyDown={(event) => {
                 if (event.key === 'Enter') {

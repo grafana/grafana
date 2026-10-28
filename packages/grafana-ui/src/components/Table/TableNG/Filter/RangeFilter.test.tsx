@@ -137,27 +137,30 @@ it('rejects reversed bounds and supports cancellation without applying', async (
   expect(onApply).not.toHaveBeenCalled();
 });
 
-it.each([
-  [FieldType.number, 'Minimum', 'Maximum'],
-  [FieldType.time, 'Start', 'End'],
-])('marks only the malformed %s bound invalid', async (type, firstLabel, secondLabel) => {
-  const { user } = setup(type);
-  await user.type(screen.getByRole('textbox', { name: firstLabel }), 'invalid');
+it('marks only the malformed numeric bound invalid', async () => {
+  const { user } = setup(FieldType.number);
+  await user.type(screen.getByRole('textbox', { name: 'Minimum' }), 'invalid');
   const alert = screen.getByRole('alert');
   expect(alert).toHaveTextContent('Enter valid bounds');
-  expect(screen.getByRole('textbox', { name: firstLabel })).toHaveAttribute('aria-invalid', 'true');
-  expect(screen.getByRole('textbox', { name: firstLabel })).toHaveAttribute('aria-describedby', alert.id);
-  expect(screen.getByRole('textbox', { name: secondLabel })).toHaveAttribute('aria-invalid', 'false');
+  expect(screen.getByRole('textbox', { name: 'Minimum' })).toHaveAttribute('aria-invalid', 'true');
+  expect(screen.getByRole('textbox', { name: 'Minimum' })).toHaveAttribute('aria-describedby', alert.id);
+  expect(screen.getByRole('textbox', { name: 'Maximum' })).toHaveAttribute('aria-invalid', 'false');
   expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled();
 });
 
-it('marks both date inputs invalid when the start exceeds the end', async () => {
+it('rejects a malformed date bound without extending the shared time-range field API', async () => {
+  const { user } = setup(FieldType.time);
+  await user.type(screen.getByRole('textbox', { name: 'Start' }), 'invalid');
+  expect(screen.getByRole('alert')).toHaveTextContent('Enter valid bounds');
+  expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled();
+});
+
+it('rejects a date range when the start exceeds the end', async () => {
   const { user } = setup(FieldType.time);
   await user.type(screen.getByRole('textbox', { name: 'Start' }), '2026-09-18 12:00:00.000');
   await user.type(screen.getByRole('textbox', { name: 'End' }), '2026-09-17 12:00:00.000');
-  expect(screen.getByRole('textbox', { name: 'Start' })).toHaveAttribute('aria-invalid', 'true');
-  expect(screen.getByRole('textbox', { name: 'End' })).toHaveAttribute('aria-invalid', 'true');
   expect(screen.getByRole('alert')).toHaveTextContent('minimum no greater than maximum');
+  expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled();
 });
 
 it('converts date bounds in the host timezone to absolute timestamps', async () => {

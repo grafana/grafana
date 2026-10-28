@@ -55,7 +55,7 @@ export function DateRangeFilter({
   const upper = displayDraft(upperDraft);
   const min = parse(lowerDraft);
   const max = parse(upperDraft);
-  const { minimumInvalid, maximumInvalid, boundsReversed, invalid } = rangeValidation(min, max);
+  const { invalid } = rangeValidation(min, max);
 
   return (
     <RangeFilterFrame
@@ -85,8 +85,6 @@ export function DateRangeFilter({
             testId: rangeSelectors.minimumInput,
             fieldTestId: rangeSelectors.field('minimum'),
             onChange: (text) => setLowerDraft({ text, timeZone }),
-            invalid: minimumInvalid || boundsReversed,
-            errorId: validationId,
           }}
           to={{
             label: t('grafana-ui.table.range.end', 'End'),
@@ -97,8 +95,6 @@ export function DateRangeFilter({
             testId: rangeSelectors.maximumInput,
             fieldTestId: rangeSelectors.field('maximum'),
             onChange: (text) => setUpperDraft({ text, timeZone }),
-            invalid: maximumInvalid || boundsReversed,
-            errorId: validationId,
           }}
           calendar={{
             isFullscreen: true,
