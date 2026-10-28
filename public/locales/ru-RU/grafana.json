@@ -1457,7 +1457,8 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "interval": "",
       "recording-rules": {
@@ -1473,6 +1474,58 @@
         "recording-rules_few": "",
         "recording-rules_many": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -5761,6 +5814,17 @@
       "ungroup-rows": "Разгруппировать строки",
       "ungroup-tabs": "Разгруппировать вкладки"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5941,7 +6005,20 @@
     "edit-actions": {
       "add": "Добавить {{typeName}}",
       "add-conditional-rule": "Добавить {{ruleDescription}} правило",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "Свернуть все строки",
+      "collapse-row": "",
       "dashboard-description": "Изменить описание дашборда",
       "dashboard-title": "Изменить заголовок дашборда",
       "duplicate": "Дублировать {{typeName}}",
@@ -5950,6 +6027,7 @@
       "edit-template-variable-rule": "Изменить правило переменной шаблона",
       "edit-time-range-rule": "Изменить правило временного диапазона",
       "expand-all-rows": "Развернуть все строки",
+      "expand-row": "",
       "group-into-row": "Группировать в строку",
       "group-into-tab": "Группировать во вкладку",
       "move": "Переместить {{typeName}}",
@@ -5965,6 +6043,7 @@
       "paste-panel": "Вставка панели",
       "remove": "Удалить {{typeName}}",
       "remove-multiple": "Удалить {{typeName}} ({{num}})",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "Отключить заполнение экрана строкой",
       "row-fill-screen-enable": "Включить заполнение экрана строкой",
@@ -5972,16 +6051,38 @@
       "row-repeat-variable": "Повтор строки по",
       "row-show-header": "Показывать заголовки строк",
       "row-title": "Измените заголовок строки",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "Переключить макет",
       "switch-layout-row": "Переключить макет",
       "switch-layout-tab": "Переключить макет",
       "tab-repeat-variable": "Повтор вкладки по",
       "tab-title": "Измените заголовок вкладки",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "Изменить описание переменной",
       "variable-hide": "Изменить параметр скрытия переменной",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "Изменить метку переменной",
+      "variable-multi-value": "",
       "variable-name": "Изменить имя переменной",
-      "variable-type": "Изменить тип переменной"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "Изменить тип переменной",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "Добавьте визуализации, которые используются совместно с другими дашбордами.",
@@ -6203,8 +6304,12 @@
       "tooltip-previous": "Назад"
     },
     "modes": {
-      "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -7123,7 +7228,8 @@
         "change-annotation-controls-display": "Изменить отображение элементов управления аннотациями",
         "change-annotation-enabled-state": "Изменить состояние включенной аннотации",
         "change-annotation-name": "Изменить имя аннотации",
-        "change-annotation-panel-filter": "Изменить фильтр панели аннотаций"
+        "change-annotation-panel-filter": "Изменить фильтр панели аннотаций",
+        "change-annotation-query": ""
       },
       "edit-query": "Редактировать запрос"
     },
@@ -12409,10 +12515,14 @@
     },
     "log-line": {
       "has-error": "Содержит ошибки",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "Подвергается выборке",
       "show-less": "меньше",
       "show-more": "больше",
-      "tooltip-error": "Ошибка: {{errorMessage}}"
+      "tooltip-error": "Ошибка: {{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "Выровнять по центру совпадающую строку",
@@ -13644,7 +13754,6 @@
     "add-panel": {
       "cancel": "Отменить",
       "card-author": "Автор: {{author}}",
-      "card-selected": "{{title}} (выбрано)",
       "card-updated": "Время изменения: {{when}}",
       "create-name": "Имя блокнота",
       "create-name-required": "Укажите имя блокнота",
@@ -13655,6 +13764,7 @@
       "error-open-conflict": "",
       "list-error": "Не удалось загрузить блокноты",
       "list-error-body": "Ошибка при загрузке блокнотов. Создайте новый или повторите попытку.",
+      "list-label": "",
       "list-no-matches": "Ни один запрос не соответствует выбранным фильтрам.",
       "list-none": "У вас пока нет блокнотов. Создайте первый.",
       "list-none-read-only": "У вас нет блокнотов и прав на их создание.",
@@ -16606,8 +16716,8 @@
       "copy-link-button": "Копировать",
       "info-text": "Создайте прямую ссылку на дашборд или панель, настроенные с помощью приведенных ниже параметров.",
       "link-url": "Привязать URL-адрес",
-      "render-alert": "Плагин визуализации изображений не установлен",
-      "render-instructions": "Чтобы визуализировать изображение, необходимо установить <2>плагин визуализации изображений Grafana</2>. Чтобы установить плагин, обратитесь к своему администратору Grafana.",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "Прямая ссылка на визуализированное изображение",
       "save-alert": "Дашборд не сохранен",
       "save-dashboard": "Чтобы визуализировать изображение панели, сначала необходимо сохранить дашборд.",
@@ -17424,6 +17534,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {
