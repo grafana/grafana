@@ -1,15 +1,71 @@
 package setting
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"slices"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/util/osutil"
 )
+
+func (cfg *Cfg) readVectorAllowedReadServices() error {
+	policies, err := parseVectorServiceMap(cfg.Raw.Section("unified_storage").Key("vector_allowed_read_services").String(), "vector_allowed_read_services")
+	if err != nil {
+		return err
+	}
+	cfg.VectorAllowedReadServices = policies
+	return nil
+}
+
+func (cfg *Cfg) readVectorSharedExternalCollections() error {
+	policies, err := parseVectorServiceMap(cfg.Raw.Section("unified_storage").Key("vector_shared_external_collections").String(), "vector_shared_external_collections")
+	if err != nil {
+		return err
+	}
+	cfg.VectorSharedExternalCollections = policies
+	return nil
+}
+
+func parseVectorServiceMap(value, setting string) (map[string][]string, error) {
+	raw := strings.TrimSpace(value)
+	if raw == "" {
+		return nil, nil
+	}
+	var policies map[string][]string
+	if err := json.Unmarshal([]byte(raw), &policies); err != nil {
+		return nil, fmt.Errorf("unified_storage.%s: parse JSON object: %w", setting, err)
+	}
+	if policies == nil {
+		return nil, fmt.Errorf("unified_storage.%s: expected JSON object", setting)
+	}
+	if err := validateVectorServiceMap(policies, setting); err != nil {
+		return nil, err
+	}
+	return policies, nil
+}
+
+func validateVectorServiceMap(policies map[string][]string, setting string) error {
+	for key, identities := range policies {
+		group, resource, ok := strings.Cut(key, "/")
+		if !ok || group == "" || resource == "" || strings.Contains(resource, "/") || strings.IndexFunc(key, unicode.IsSpace) >= 0 || strings.ContainsAny(key, "*?") {
+			return fmt.Errorf("unified_storage.%s: invalid collection %q", setting, key)
+		}
+		if len(identities) == 0 {
+			return fmt.Errorf("unified_storage.%s: collection %q requires a nonempty identity list", setting, key)
+		}
+		for _, identity := range identities {
+			if identity == "" || strings.TrimSpace(identity) != identity {
+				return fmt.Errorf("unified_storage.%s: collection %q has an empty or invalid identity", setting, key)
+			}
+		}
+	}
+	return nil
+}
 
 // knownUnifiedStorageKeys maps uppercased env-var-style key suffixes to their
 // actual camelCase ini key names used in [unified_storage.*] sections.
@@ -393,6 +449,22 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.RerankVertexModel = rerankSection.Key("vertex_model").MustString("semantic-ranker-fast-004")
 	cfg.RerankBedrockRegion = rerankSection.Key("bedrock_region").MustString("us-east-1")
 	cfg.RerankBedrockModel = rerankSection.Key("bedrock_model").MustString("cohere.rerank-v3-5:0")
+}
+
+func (cfg *Cfg) ValidateSharedVectorConfig() error {
+	if err := validateVectorServiceMap(cfg.VectorSharedExternalCollections, "vector_shared_external_collections"); err != nil {
+		return err
+	}
+	legacy := make(map[string]struct{}, len(cfg.VectorAllowedInternalCollections)+len(cfg.VectorAllowedExternalCollections))
+	for _, name := range append(append([]string{}, cfg.VectorAllowedInternalCollections...), cfg.VectorAllowedExternalCollections...) {
+		legacy[strings.TrimSpace(name)] = struct{}{}
+	}
+	for name := range cfg.VectorSharedExternalCollections {
+		if _, ok := legacy[name]; ok {
+			return fmt.Errorf("shared vector collection %q overlaps legacy enrollment", name)
+		}
+	}
+	return nil
 }
 
 // applyMigrationEnforcements enforces unified storage migration configs when migrations should run,

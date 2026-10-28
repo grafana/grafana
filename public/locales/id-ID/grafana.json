@@ -1436,7 +1436,8 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "interval": "",
       "recording-rules": {
@@ -1446,6 +1447,58 @@
       "result-count": {
         "alert-rules_other": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -5614,6 +5667,17 @@
       "ungroup-rows": "Pisahkan baris",
       "ungroup-tabs": "Pisah grup tab"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5794,7 +5858,20 @@
     "edit-actions": {
       "add": "Tambahkan {{typeName}}",
       "add-conditional-rule": "Tambah aturan {{ruleDescription}}",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "Ciutkan semua baris",
+      "collapse-row": "",
       "dashboard-description": "Ubah deskripsi dasbor",
       "dashboard-title": "Ubah judul dasbor",
       "duplicate": "Duplikasikan {{typeName}}",
@@ -5803,6 +5880,7 @@
       "edit-template-variable-rule": "Ubah aturan variabel templat",
       "edit-time-range-rule": "Ubah aturan rentang waktu",
       "expand-all-rows": "Perluas semua baris",
+      "expand-row": "",
       "group-into-row": "Kelompokkan ke dalam baris",
       "group-into-tab": "Kelompokkan ke dalam tab",
       "move": "Pindahkan {{typeName}}",
@@ -5818,6 +5896,7 @@
       "paste-panel": "Tempel panel",
       "remove": "Hapus {{typeName}}",
       "remove-multiple": "Hapus {{typeName}} ({{num}})",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "Nonaktifkan pengisian layar oleh baris",
       "row-fill-screen-enable": "Aktifkan pengisian layar oleh baris",
@@ -5825,16 +5904,38 @@
       "row-repeat-variable": "Pengulangan baris berdasarkan",
       "row-show-header": "Tampilkan header baris",
       "row-title": "Ubah judul baris",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "Ganti tata letak",
       "switch-layout-row": "Ganti tata letak",
       "switch-layout-tab": "Ganti tata letak",
       "tab-repeat-variable": "Pengulangan tab berdasarkan",
       "tab-title": "Ubah judul tab",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "Ubah deskripsi variabel",
       "variable-hide": "Ubah opsi sembunyikan variabel",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "Ubah label variabel",
+      "variable-multi-value": "",
       "variable-name": "Ubah nama variabel",
-      "variable-type": "Ubah jenis variabel"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "Ubah jenis variabel",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "Tambahkan visualisasi yang dibagikan dengan dasbor lain.",
@@ -6056,8 +6157,12 @@
       "tooltip-previous": "Sebelumnya"
     },
     "modes": {
-      "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -6967,7 +7072,8 @@
         "change-annotation-controls-display": "Ubah tampilan kontrol anotasi",
         "change-annotation-enabled-state": "Ubah status anotasi yang diaktifkan",
         "change-annotation-name": "Ubah nama anotasi",
-        "change-annotation-panel-filter": "Ubah filter panel anotasi"
+        "change-annotation-panel-filter": "Ubah filter panel anotasi",
+        "change-annotation-query": ""
       },
       "edit-query": "Edit kueri"
     },
@@ -7245,6 +7351,7 @@
       "copy": "Salin ke papan klip",
       "learn-more": "Pelajari lebih lanjut",
       "no-issues": "Tidak ada kesalahan atau pemberitahuan untuk kueri ini.",
+      "no-panel-issues": "",
       "severity-error": "Kesalahan",
       "severity-info": "Info",
       "severity-warning": "Peringatan Awal"
@@ -8062,8 +8169,6 @@
     },
     "viz-and-data-pane": {
       "aria-label-open-query-pane": "Buka panel kueri",
-      "open-query-pane": "",
-      "open-sidebar": "",
       "tooltip-open-query-pane": "Buka panel kueri"
     },
     "viz-panel-links-renderer": {
@@ -12095,10 +12200,14 @@
     },
     "log-line": {
       "has-error": "Memiliki kesalahan",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "Diambil sampelnya",
       "show-less": "tampilkan lebih sedikit",
       "show-more": "tampilkan lebih banyak",
-      "tooltip-error": "Kesalahan: {{errorMessage}}"
+      "tooltip-error": "Kesalahan: {{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "Terapkan center pada baris yang cocok",
@@ -13315,7 +13424,6 @@
     "add-panel": {
       "cancel": "Batalkan",
       "card-author": "Oleh {{author}}",
-      "card-selected": "{{title}} (dipilih)",
       "card-updated": "Diperbarui {{when}}",
       "create-name": "Nama notebook",
       "create-name-required": "Nama notebook wajib diisi",
@@ -13326,6 +13434,7 @@
       "error-open-conflict": "",
       "list-error": "Gagal memuat notebook",
       "list-error-body": "Terjadi kesalahan saat memuat notebook Anda. Coba lagi, atau buat yang baru.",
+      "list-label": "",
       "list-no-matches": "Tidak ada notebook yang cocok dengan filter ini.",
       "list-none": "Anda belum memiliki notebook. Buat satu notebook.",
       "list-none-read-only": "Anda belum memiliki notebook, dan tidak memiliki izin untuk membuatnya.",
@@ -15931,6 +16040,7 @@
       "expand": "Perluas",
       "filter": "",
       "loading": "Memuat dasbor",
+      "megaMenuSectionHeading": "",
       "noResultsForFilter": "Hasil untuk kueri Anda tidak ditemukan",
       "noResultsForFilterClear": "Hapus pencarian",
       "noResultsForScopes": "Tidak ada dasbor atau tautan yang ditemukan untuk cakupan yang dipilih",
@@ -16186,8 +16296,8 @@
       "copy-link-button": "Salin",
       "info-text": "Buat tautan langsung ke dasbor atau panel ini, disesuaikan dengan opsi di bawah ini.",
       "link-url": "Tautkan URL",
-      "render-alert": "Plugin perender gambar belum diinstal",
-      "render-instructions": "Untuk merender gambar, Anda harus menginstal <2>plugin perender gambar Grafana</2>. Hubungi administrator Grafana Anda untuk menginstal plugin.",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "Tautan langsung gambar yang dirender",
       "save-alert": "Dasbor tidak disimpan",
       "save-dashboard": "Untuk merender gambar panel, Anda harus menyimpan dasbor terlebih dahulu.",
@@ -16640,8 +16750,61 @@
   },
   "swagger": {
     "login": "Login",
+    "manifests": {
+      "api-docs": "",
+      "collapse": "",
+      "collapse-all": "",
+      "count": "",
+      "error-title": "",
+      "expand": "",
+      "expand-all": "",
+      "filter-placeholder": "",
+      "folder-scoped": "",
+      "no-kinds": "",
+      "not-served": "",
+      "preferred": "",
+      "refresh": "",
+      "roles": "",
+      "routes": "",
+      "title": "",
+      "user-readable": ""
+    },
     "namespace-unavailable": "Periksa namespace sebelum mengirim permintaan, atau muat ulang halaman untuk mencoba lagi.",
-    "namespace-unavailable-title": "Tidak dapat memuat namespace"
+    "namespace-unavailable-title": "Tidak dapat memuat namespace",
+    "router-nav": {
+      "api-docs": "",
+      "manifests": "",
+      "status": ""
+    },
+    "router-status": {
+      "all-sources": "",
+      "breaker-settings": "",
+      "discovery-cached": "",
+      "discovery-expired": "",
+      "discovery-not-cached": "",
+      "discovery-provided": "",
+      "error-title": "",
+      "failures-description": "",
+      "filter-placeholder": "",
+      "filtered": "",
+      "groups": "",
+      "last-failed": "",
+      "load-failures": "",
+      "never": "",
+      "no-backend": "",
+      "no-breaker": "",
+      "not-ready": "",
+      "per-destination": "",
+      "ready": "",
+      "reconciler": "",
+      "refresh": "",
+      "requests-description": "",
+      "shadowed": "",
+      "shadowed-description": "",
+      "sources": "",
+      "stack-lookups": "",
+      "title": ""
+    }
   },
   "table": {
     "bar-gauge-cell-options-editor": {
@@ -16695,6 +16858,9 @@
     "description-styling-from-field": "Bidang yang berisi objek JSON dengan properti CSS",
     "description-tooltip-from-field": "Render sel dari bidang (tersembunyi atau terlihat) dalam tooltip",
     "description-zebra-striping": "Ganti warna latar belakang setiap baris berikutnya",
+    "filter": {
+      "error": ""
+    },
     "frame-picker": {
       "label": "Kueri"
     },
@@ -16945,6 +17111,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {
@@ -18239,6 +18408,7 @@
       "body_other": "Yakin ingin menghapus {{count}} variabel?"
     },
     "editor": {
+      "back": "",
       "cancel": "Batalkan",
       "delete": "Hapus",
       "delete-modal-body": "Yakin ingin menghapus '{{name}}'?",
@@ -18247,6 +18417,7 @@
       "folder-description": "Tentukan cakupan variabel ke folder, atau pilih folder Dasbor root untuk menjadikannya global (tersedia di semua dasbor)",
       "folder-description-folder-only": "Atur ruang lingkup variabel ke folder yang dapat Anda edit",
       "folder-label": "Folder",
+      "load-error-title": "",
       "moved": "Variabel dipindahkan",
       "name-exists": "Variabel dengan nama ini sudah ada di folder yang dipilih",
       "save": "Simpan",

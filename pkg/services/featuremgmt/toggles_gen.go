@@ -327,10 +327,6 @@ const (
 	// Enables Grafana-managed recording rules.
 	FlagGrafanaManagedRecordingRules = "grafanaManagedRecordingRules"
 
-	// FlagQueryLibrary
-	// Enables Saved queries (query library) feature
-	FlagQueryLibrary = "queryLibrary"
-
 	// FlagGrafanaSavedQueriesSearch
 	// Enables unified search for saved queries
 	FlagGrafanaSavedQueriesSearch = "grafana.savedQueriesSearch"
@@ -390,6 +386,10 @@ const (
 	// FlagAuthZGRPCServer
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
+
+	// FlagAuthzLegacyUserPermissionsShadow
+	// Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.
+	FlagAuthzLegacyUserPermissionsShadow = "authz.legacyUserPermissionsShadow"
 
 	// FlagAuthzLegacyUserPermissions
 	// Load legacy Access Control permissions through embedded AuthZ.

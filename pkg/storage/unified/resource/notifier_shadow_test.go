@@ -5,6 +5,7 @@ import (
 	"errors"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -42,16 +43,22 @@ func (c *countingSubscriber) callCount() int {
 }
 
 func TestNatsShadow_ReSubscribesAfterInitialFailure(t *testing.T) {
-	sub := &countingSubscriber{failFirst: 2}
-	// Small backoff bounds keep the notifier's subscription retry loop fast.
-	s := newNatsShadow(sub, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond}, prometheus.NewRegistry(), &logging.NoOpLogger{})
+	synctest.Test(t, func(t *testing.T) {
+		sub := &countingSubscriber{failFirst: 2}
+		// Bound both retry delays so the test can advance through them explicitly.
+		s := newNatsShadow(sub, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond}, prometheus.NewRegistry(), &logging.NoOpLogger{})
 
-	ctx := t.Context()
-	s.start(ctx)
+		ctx := t.Context()
+		s.start(ctx)
 
-	// The first two Subscribe calls fail; the loop must keep retrying until one
-	// succeeds rather than giving up after the first failure.
-	require.Eventually(t, func() bool {
-		return sub.callCount() > 2
-	}, 2*time.Second, 5*time.Millisecond, "shadow did not re-subscribe after initial failures")
+		// Finish the first failed subscribe before advancing through the retry backoff.
+		synctest.Wait()
+
+		require.Equal(t, 1, sub.callCount())
+
+		// Cover both bounded retries and let the third subscription succeed.
+		synctest.Sleep(40 * time.Millisecond)
+
+		require.Equal(t, 3, sub.callCount())
+	})
 }

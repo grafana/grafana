@@ -302,26 +302,48 @@ func TestDecodeFolderRowsFromBleve(t *testing.T) {
 		folderIndexItem(key, "child", "root"),
 	)
 
-	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
-		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
-		resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	} {
-		t.Run(format.String(), func(t *testing.T) {
-			response, err := index.Search(t.Context(), nil, &resourcepb.ResourceSearchRequest{
-				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-					Namespace: key.Namespace,
-					Group:     key.Group,
-					Resource:  key.Resource,
-				}},
-				Limit:        10,
-				Fields:       []string{resource.SEARCH_FIELD_FOLDER},
-				ResultFormat: format,
-			}, nil, nil)
-			require.NoError(t, err)
-			require.Nil(t, response.GetError())
-			require.Equal(t, format, response.GetResultFormat())
+	fieldValues, err := index.Search(t.Context(), nil, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}},
+		Limit:        10,
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, fieldValues.GetError())
 
-			rows, err := decodeFolderRows(response)
+	table, err := resource.NewTableBuilder([]*resourcepb.ResourceTableColumnDefinition{
+		resource.StandardSearchFields().Field(resource.SEARCH_FIELD_FOLDER),
+	})
+	require.NoError(t, err)
+	for _, row := range []struct {
+		name   string
+		parent string
+	}{
+		{name: "root"},
+		{name: "child", parent: "root"},
+	} {
+		require.NoError(t, table.AddRow(&resourcepb.ResourceKey{Name: row.name}, 0, map[string]any{
+			resource.SEARCH_FIELD_FOLDER: row.parent,
+		}))
+		table.Rows[len(table.Rows)-1].SortFields = []string{row.name}
+	}
+
+	for _, tc := range []struct {
+		name     string
+		response *resourcepb.ResourceSearchResponse
+	}{
+		{name: "RESOURCE_TABLE", response: &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+			Results:      &table.ResourceTable,
+		}},
+		{name: "FIELD_VALUES", response: fieldValues},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rows, err := decodeFolderRows(tc.response)
 			require.NoError(t, err)
 			require.Len(t, rows, 2)
 

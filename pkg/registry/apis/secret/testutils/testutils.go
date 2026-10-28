@@ -6,6 +6,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/dgraph-io/badger/v4"
 	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/mutator"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/snowflake"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/validator"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -36,6 +38,7 @@ import (
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type SetupConfig struct {
@@ -43,15 +46,22 @@ type SetupConfig struct {
 	RunSecretsDBMigrations   bool
 	RunDataKeyMigration      bool
 	SystemKeeperWrapperFunc  func(contracts.Keeper) contracts.Keeper
+	StorageType              contracts.StorageBackendType
 }
 
 func defaultSetupCfg() SetupConfig {
-	return SetupConfig{}
+	return SetupConfig{StorageType: contracts.StorageBackendSQL}
 }
 
 func WithMutateCfg(f func(*SetupConfig)) func(*SetupConfig) {
 	return func(cfg *SetupConfig) {
 		f(cfg)
+	}
+}
+
+func WithKVStorage() func(*SetupConfig) {
+	return func(cfg *SetupConfig) {
+		cfg.StorageType = contracts.StorageBackendKV
 	}
 }
 
@@ -67,13 +77,35 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 
 	database := database.ProvideDatabase(testDB, tracer)
 
-	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, tracer, nil)
-	require.NoError(t, err)
-
 	clock := NewFakeClock()
 
-	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(clock, database, tracer, nil)
-	require.NoError(t, err)
+	var (
+		keeperMetadataStorage      contracts.KeeperMetadataStorage
+		secureValueMetadataStorage contracts.SecureValueMetadataStorage
+	)
+	switch setupCfg.StorageType {
+	case contracts.StorageBackendSQL:
+		k, err := metadata.ProvideKeeperMetadataStorage(database, tracer, nil)
+		require.NoError(t, err)
+		keeperMetadataStorage = k
+
+		s, err := metadata.ProvideSecureValueMetadataStorage(clock, database, tracer, nil)
+		require.NoError(t, err)
+		secureValueMetadataStorage = s
+	case contracts.StorageBackendKV:
+		// Create in-memory BadgerDB
+		opts := badger.DefaultOptions("").WithInMemory(true).WithLoggingLevel(badger.ERROR)
+		db, err := badger.Open(opts)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = db.Close()
+		})
+		kvStore := resource.NewBadgerKV(db)
+		keeperMetadataStorage = metadata.NewKVKeeperMetadataStorage(kvStore, snowflake.New(), tracer, nil)
+		secureValueMetadataStorage = metadata.NewKVSecureValueMetadataStorage(kvStore, snowflake.New(), clock, tracer, nil)
+	default:
+		panic(fmt.Sprintf("unhandled storage type: %+v", setupCfg))
+	}
 
 	// Initialize access client + access control
 	accessControl := acimpl.ProvideAccessControl(nil)
@@ -195,6 +227,8 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	}
 }
 
+// The system under test and all of its dependencies.
+// This type can also contain generic methods to make testing easier (e.g. CreateSv).
 type Sut struct {
 	SecureValueService              contracts.SecureValueService
 	SecureValueMetadataStorage      contracts.SecureValueMetadataStorage
