@@ -85,7 +85,7 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 // authorizedTotal counts only matches the caller can read. If the count is still inexact,
 // it returns zero so the caller falls back to the hits it has seen.
 func (c *unifiedSearchClient) authorizedTotal(ctx context.Context, req *resourcepb.ResourceSearchRequest) (int64, error) {
-	countReq := &resourcepb.ResourceSearchRequest{Options: req.Options, Query: req.Query}
+	countReq := &resourcepb.ResourceSearchRequest{Options: req.Options, Query: req.Query, ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}
 	resp, err := c.client.Search(ctx, countReq)
 	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
 		return 0, err
