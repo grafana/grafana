@@ -11,8 +11,10 @@ import (
 
 	"github.com/prometheus/alertmanager/timeinterval"
 	"go.yaml.in/yaml/v3"
+	k8svalidation "k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 )
 
 type TimeInterval struct {
@@ -59,10 +61,14 @@ func (c *AMConfigV1) SortedTimeIntervals() []TimeInterval {
 	})
 }
 
-func NewTimeInterval(name string, intervals []timeinterval.TimeInterval, provenance models.Provenance) TimeInterval {
+// NewTimeInterval builds a TimeInterval with the given UID. It never derives one from name
+// itself - callers that need a name-derived UID (loading a legacy row with none persisted yet,
+// or converting an imported config with no Grafana identity at all) compute it explicitly via
+// TimeIntervalUID and pass it in.
+func NewTimeInterval(uid ResourceUID, name string, intervals []timeinterval.TimeInterval, provenance models.Provenance) TimeInterval {
 	ti := TimeInterval{
 		ResourceMetadata: ResourceMetadata{
-			UID:        TimeIntervalUID(name),
+			UID:        uid,
 			Provenance: provenance,
 		},
 		Title:         name,
@@ -70,6 +76,25 @@ func NewTimeInterval(name string, intervals []timeinterval.TimeInterval, provena
 	}
 	ti.Version = TimeIntervalFingerprint(ti)
 	return ti
+}
+
+// ValidateTimeIntervalUID validates a client-supplied time interval UID: non-empty, no ':',
+// a valid DNS-1123 subdomain, and not longer than ualert.UIDMaxLength. Mirrors
+// validateManagedRouteName (legacy_storage/routes.go) and InhibitionRule.Validate's UID check.
+func ValidateTimeIntervalUID(uid string) error {
+	if strings.TrimSpace(uid) == "" {
+		return fmt.Errorf("time interval uid is required")
+	}
+	if strings.Contains(uid, ":") {
+		return fmt.Errorf("time interval uid cannot contain invalid character ':'")
+	}
+	if len(uid) > ualert.UIDMaxLength {
+		return fmt.Errorf("time interval uid cannot be longer than %d characters", ualert.UIDMaxLength)
+	}
+	if errs := k8svalidation.IsDNS1123Subdomain(uid); len(errs) > 0 {
+		return fmt.Errorf("time interval uid must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
+	}
+	return nil
 }
 
 func TimeIntervalUID(name string) ResourceUID {
