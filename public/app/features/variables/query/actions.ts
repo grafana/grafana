@@ -1,7 +1,6 @@
 import { Subscription } from 'rxjs';
 
-import { toDataQueryError } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { toDataQueryError, getDataSourceInstance } from '@grafana/runtime';
 import { type ThunkResult } from 'app/types/store';
 
 import { getVariable } from '../state/selectors';
@@ -47,25 +46,6 @@ export const updateQueryVariableOptions = (
     }
   };
 };
-
-export function hasSelfReferencingQuery(name: string, query: any): boolean {
-  if (typeof query === 'string' && query.match(new RegExp('\\$' + name + '(/| |$)'))) {
-    return true;
-  }
-
-  const flattened = flattenQuery(query);
-
-  for (let prop in flattened) {
-    if (flattened.hasOwnProperty(prop)) {
-      const value = flattened[prop];
-      if (typeof value === 'string' && value.match(new RegExp('\\$' + name + '(/| |$)'))) {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
 
 /*
  * Function that takes any object and flattens all props into one level deep object

@@ -26,19 +26,19 @@ import (
 // when no provider is configured. Callers (the search server) treat nil as
 // "vector search is disabled" and surface Unimplemented to clients.
 //
-// vectorMetrics is optional; when non-nil, provider calls are timed and their input tokens tallied.
+// Provider calls are timed and their input tokens tallied. Nil vectorMetrics
+// means unregistered metrics, for callers without a registry.
 //
 // The configured provider's connection fields (project ID for Vertex, region
 // + credentials for Bedrock, endpoint + AZURE_OPENAI_API_KEY for Azure) must
 // be present when the provider is set; missing required fields return an error
 // so misconfiguration fails at startup, not at first request.
 func ProvideEmbedder(cfg *setting.Cfg, vectorMetrics *resource.VectorMetrics) (*embedder.Embedder, error) {
-	var hist *prometheus.HistogramVec
-	var tokensTotal *prometheus.CounterVec
-	if vectorMetrics != nil {
-		hist = vectorMetrics.EmbedDuration
-		tokensTotal = vectorMetrics.EmbedTokensTotal
+	if vectorMetrics == nil {
+		vectorMetrics = resource.ProvideVectorMetrics(nil)
 	}
+	hist := vectorMetrics.EmbedDuration
+	tokensTotal := vectorMetrics.EmbedTokensTotal
 	switch cfg.EmbeddingProvider {
 	case "":
 		return nil, nil

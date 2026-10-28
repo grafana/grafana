@@ -20,7 +20,8 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { AnnotationsEditView, MoveDirection } from './AnnotationsEditView';
+import { AnnotationsEditView } from './AnnotationsEditView';
+import { MoveDirection } from './annotations/MoveDirection';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {
@@ -91,10 +92,6 @@ jest.mock('@grafana/runtime', () => ({
     ...jest.requireActual('@grafana/runtime').config,
     publicDashboardAccessToken: 'ac123',
   },
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceSettings: jest.fn(async (ref: DataSourceRef | string | null) => {
     if (!ref) {
       return noAnnotationsDsInstanceSettings;
@@ -105,7 +102,6 @@ jest.mock('@grafana/runtime/unstable', () => ({
     return { uid: 'ds1' };
   }),
 }));
-
 describe('AnnotationsEditView', () => {
   describe('Dashboard annotations state', () => {
     let annotationsView: AnnotationsEditView;

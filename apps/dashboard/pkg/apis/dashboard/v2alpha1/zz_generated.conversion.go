@@ -56,9 +56,7 @@ func RegisterConversions(s *runtime.Scheme) error {
 }
 
 func autoConvert_v2alpha1_AnnotationActions_To_dashboard_AnnotationActions(in *AnnotationActions, out *dashboard.AnnotationActions, s conversion.Scope) error {
-	out.CanAdd = in.CanAdd
-	out.CanEdit = in.CanEdit
-	out.CanDelete = in.CanDelete
+	*out = *(*dashboard.AnnotationActions)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -68,9 +66,7 @@ func Convert_v2alpha1_AnnotationActions_To_dashboard_AnnotationActions(in *Annot
 }
 
 func autoConvert_dashboard_AnnotationActions_To_v2alpha1_AnnotationActions(in *dashboard.AnnotationActions, out *AnnotationActions, s conversion.Scope) error {
-	out.CanAdd = in.CanAdd
-	out.CanEdit = in.CanEdit
-	out.CanDelete = in.CanDelete
+	*out = *(*AnnotationActions)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -80,9 +76,7 @@ func Convert_dashboard_AnnotationActions_To_v2alpha1_AnnotationActions(in *dashb
 }
 
 func autoConvert_v2alpha1_AnnotationPermission_To_dashboard_AnnotationPermission(in *AnnotationPermission, out *dashboard.AnnotationPermission, s conversion.Scope) error {
-	if err := Convert_v2alpha1_AnnotationActions_To_dashboard_AnnotationActions(&in.Dashboard, &out.Dashboard, s); err != nil {
-		return err
-	}
+	*out = *(*dashboard.AnnotationPermission)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -92,9 +86,7 @@ func Convert_v2alpha1_AnnotationPermission_To_dashboard_AnnotationPermission(in 
 }
 
 func autoConvert_dashboard_AnnotationPermission_To_v2alpha1_AnnotationPermission(in *dashboard.AnnotationPermission, out *AnnotationPermission, s conversion.Scope) error {
-	if err := Convert_dashboard_AnnotationActions_To_v2alpha1_AnnotationActions(&in.Dashboard, &out.Dashboard, s); err != nil {
-		return err
-	}
+	*out = *(*AnnotationPermission)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -104,15 +96,7 @@ func Convert_dashboard_AnnotationPermission_To_v2alpha1_AnnotationPermission(in 
 }
 
 func autoConvert_v2alpha1_DashboardAccess_To_dashboard_DashboardAccess(in *DashboardAccess, out *dashboard.DashboardAccess, s conversion.Scope) error {
-	out.Slug = in.Slug
-	out.Url = in.Url
-	out.IsPublic = in.IsPublic
-	out.CanSave = in.CanSave
-	out.CanEdit = in.CanEdit
-	out.CanAdmin = in.CanAdmin
-	out.CanStar = in.CanStar
-	out.CanDelete = in.CanDelete
-	out.AnnotationsPermissions = (*dashboard.AnnotationPermission)(unsafe.Pointer(in.AnnotationsPermissions))
+	*out = *(*dashboard.DashboardAccess)(unsafe.Pointer(in))
 	return nil
 }
 
@@ -122,15 +106,7 @@ func Convert_v2alpha1_DashboardAccess_To_dashboard_DashboardAccess(in *Dashboard
 }
 
 func autoConvert_dashboard_DashboardAccess_To_v2alpha1_DashboardAccess(in *dashboard.DashboardAccess, out *DashboardAccess, s conversion.Scope) error {
-	out.Slug = in.Slug
-	out.Url = in.Url
-	out.IsPublic = in.IsPublic
-	out.CanSave = in.CanSave
-	out.CanEdit = in.CanEdit
-	out.CanAdmin = in.CanAdmin
-	out.CanStar = in.CanStar
-	out.CanDelete = in.CanDelete
-	out.AnnotationsPermissions = (*AnnotationPermission)(unsafe.Pointer(in.AnnotationsPermissions))
+	*out = *(*DashboardAccess)(unsafe.Pointer(in))
 	return nil
 }
 

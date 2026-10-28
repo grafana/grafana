@@ -7,6 +7,7 @@ SELECT
     s.user_id,
     s.external,
     s.external_url,
+    s.external_delete_url,
     s.dashboard_encrypted,
     s.expires,
     s.created,

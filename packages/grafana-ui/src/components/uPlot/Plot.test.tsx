@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import createMockRaf from 'mock-raf';
+import { useLayoutEffect } from 'react';
 import uPlot from 'uplot';
 
 import { type FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
@@ -10,7 +10,6 @@ import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import { type SeriesProps } from './config/UPlotSeriesBuilder';
 import { preparePlotData2, getStackingGroups } from './utils';
 
-const mockRaf = createMockRaf();
 const setDataMock = jest.fn();
 const setSizeMock = jest.fn();
 const initializeMock = jest.fn();
@@ -62,7 +61,7 @@ describe('UPlotChart', () => {
     initializeMock.mockClear();
     destroyMock.mockClear();
 
-    jest.spyOn(window, 'requestAnimationFrame').mockImplementation(mockRaf.raf);
+    jest.spyOn(window, 'requestAnimationFrame');
   });
 
   it('destroys uPlot instance when component unmounts', () => {
@@ -195,6 +194,51 @@ describe('UPlotChart', () => {
       expect(destroyMock).toBeCalledTimes(0);
       expect(uPlot).toBeCalledTimes(1);
       expect(setSizeMock).toBeCalledTimes(1);
+    });
+  });
+
+  describe('plot lifecycle timing', () => {
+    function LayoutEffectProbe({ onLayoutEffect }: { onLayoutEffect: () => void }) {
+      useLayoutEffect(onLayoutEffect);
+      return null;
+    }
+
+    // uPlot copies its hooks at construction and fires `ready` in a microtask afterwards. Plugins
+    // (e.g. AnnotationsPlugin) rely on no render landing in between, which only holds while the plot is
+    // constructed in the same commit's layout phase. Constructing it in a passive effect caused annotations
+    // to intermittently never render.
+    it('has constructed uPlot by the time sibling layout effects run, on mount and on config change', () => {
+      const { data, config } = mockData();
+      const plotsConstructedAtLayoutEffect: number[] = [];
+      const recordPlotCount = () => {
+        plotsConstructedAtLayoutEffect.push(jest.mocked(uPlot).mock.calls.length);
+      };
+
+      const { rerender } = render(
+        <>
+          <UPlotChart data={preparePlotData2(data, getStackingGroups(data))} config={config} width={100} height={100} />
+          <LayoutEffectProbe onLayoutEffect={recordPlotCount} />
+        </>
+      );
+
+      const nextConfig = new UPlotConfigBuilder();
+      nextConfig.addSeries({} as SeriesProps);
+
+      rerender(
+        <>
+          <UPlotChart
+            data={preparePlotData2(data, getStackingGroups(data))}
+            config={nextConfig}
+            width={100}
+            height={100}
+          />
+          <LayoutEffectProbe onLayoutEffect={recordPlotCount} />
+        </>
+      );
+
+      // The probe runs after the layout effects of UPlotChart and before its passive effects. If a passive effect
+      // constructs uPlot, the probe records [0, 1].
+      expect(plotsConstructedAtLayoutEffect).toEqual([1, 2]);
     });
   });
 });

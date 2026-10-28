@@ -253,7 +253,7 @@ For Kubernetes APIs and new schemas – use the `@grafana/alerting` package.
 Mock factories are defined in `packages/grafana-alerting/src/grafana/api/notifications/v1beta1/mocks/fakes`
 MSW handlers in `packages/grafana-alerting/src/grafana/api/notifications/v1beta1/mocks/handlers`
 
-And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.test.scenario.ts` and is used for integration tests.
+And there are "scenarios" that combine the two above. An example of such is `packages/grafana-alerting/src/grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.scenario.ts` and is used for integration tests.
 
 Additionally alerting uses **`alertingFactory`** from `mocks/server/db` for building test data:
 
@@ -316,13 +316,31 @@ mockFolder();
 
 A full list of features can be found in `pkg/services/featuremgmt/toggles_gen.csv` – focus on feature toggles owned by `@grafana/alerting-squad`.
 
-```typescript
-import { config } from '@grafana/runtime';
+Read flags through OpenFeature. Reading `config.featureToggles` is blocked by the
+`@grafana/no-config-feature-toggles` lint rule — that map is empty in the multi-tenant frontend
+service, so flags read from it are always `false` there.
 
-if (config.featureToggles.alertingTriage) {
+```typescript
+import { useFlagAlertingTriage } from '@grafana/runtime/internal';
+
+const isTriageEnabled = useFlagAlertingTriage();
+if (isTriageEnabled) {
   // Render triage view
 }
 ```
+
+Outside React — including the page-access predicates in `utils/pageAccess.ts`, which run during
+redux store creation — use the client instead:
+
+```typescript
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+
+getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingTriage, false);
+```
+
+If a flag has no OpenFeature target yet, see the migration steps in
+`contribute/feature-toggles.md`. In tests, gate migrated flags with `setTestFlags` from
+`@grafana/test-utils/unstable` rather than `testWithFeatureToggles`.
 
 A common configuration setting would be `unifiedAlertingEnabled` which allows a user to configure Grafana without any alerting UI or backend enabled at all.
 

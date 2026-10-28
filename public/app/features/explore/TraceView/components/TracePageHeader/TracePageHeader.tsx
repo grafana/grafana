@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css, cx } from '@emotion/css';
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import {
@@ -34,6 +34,7 @@ import {
   usePluginComponents,
   usePluginLinks,
   config,
+  logError,
 } from '@grafana/runtime';
 import { AdHocFiltersComboboxRenderer } from '@grafana/scenes';
 import { type TimeZone } from '@grafana/schema';
@@ -42,6 +43,7 @@ import {
   type BadgeColor,
   Button,
   CollapsableSection,
+  copyTextToClipboard,
   Dropdown,
   Icon,
   Label,
@@ -59,7 +61,7 @@ import {
   type TUpdateViewRangeTimeFunction,
   type ViewRange,
 } from '../TraceTimelineViewer/types';
-import { isErrorSpan } from '../TraceTimelineViewer/utils';
+import { SpanErrorIcon } from '../common/SpanErrorIcon';
 import { getHeaderTags, getRootSpan } from '../model/trace-viewer';
 import { type Trace, type TraceViewPluginExtensionContext } from '../types/trace';
 import { formatDuration } from '../utils/date';
@@ -67,14 +69,10 @@ import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name
 
 import TracePageSearchBar from './SearchBar/TracePageSearchBar';
 import SpanGraph from './SpanGraph';
+import { TraceBanner } from './TraceBanner/TraceBanner';
+import { findTraceBanner, HttpStatusClass } from './TraceBanner/findTraceBanner';
 import { TraceFilterPills } from './TraceFilterPills';
 import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
-
-enum HttpStatusClass {
-  Success = '2',
-  ClientError = '4',
-  ServerError = '5',
-}
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -85,7 +83,8 @@ export type TracePageHeaderProps = {
   setSearch: (newSearch: TraceSearchProps) => void;
   showSpanFilters: boolean;
   setShowSpanFilters: (isOpen: boolean) => void;
-  setFocusedSpanIdForSearch: React.Dispatch<React.SetStateAction<string>>;
+  setFocusedSpanIdForSearch: (spanID: string) => void;
+  onGoToSpan: (spanID: string) => void;
   spanFilterMatches: Set<string> | undefined;
   datasourceType: string;
   datasourceName: string;
@@ -109,6 +108,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     setSearch,
     showSpanFilters,
     setFocusedSpanIdForSearch,
+    onGoToSpan,
     spanFilterMatches,
     datasourceType,
     datasourceName,
@@ -127,6 +127,19 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
   const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
+
+  const goToBannerSpan = useCallback(
+    (spanId: string) => {
+      reportInteraction('grafana_traces_trace_view_go_to_span_clicked', {
+        app,
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+      });
+      onGoToSpan(spanId);
+    },
+    [app, datasourceType, onGoToSpan]
+  );
 
   // Create controller for adhoc filters
   const controller = useTraceAdHocFiltersController(trace, search, setSearch);
@@ -153,9 +166,19 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     extensionPointId: PluginExtensionPoints.TraceViewHeaderActions,
   });
 
+  const traceBanner = useMemo(() => (trace ? findTraceBanner(trace.spans) : undefined), [trace]);
+
   useEffect(() => {
     setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
-  }, [setHeaderHeight, showSpanFilters, styles.header, extensionComponents, extensionLinks, logsLinkModel]);
+  }, [
+    setHeaderHeight,
+    showSpanFilters,
+    styles.header,
+    extensionComponents,
+    extensionLinks,
+    logsLinkModel,
+    traceBanner,
+  ]);
 
   // Memoize service count to avoid recomputing on every render
   // Uses getServiceColorKey to count namespace/serviceName pairs as distinct services
@@ -174,10 +197,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const traceTitle = [serviceName, operationName].filter(Boolean).join(' ');
   const statusValue = status?.length ? status[0].value.toString() : undefined;
   const statusClass = statusValue?.charAt(0);
-  const showWarningIcon = statusClass === HttpStatusClass.ClientError;
-  const showErrorIcon =
-    !showWarningIcon && ((rootSpan != null && isErrorSpan(rootSpan)) || statusClass === HttpStatusClass.ServerError);
-  const showSuccessIcon = !showErrorIcon && !showWarningIcon && statusClass === HttpStatusClass.Success;
+  // Match the banner: severity comes from every span, not only the root / first HTTP span.
+  const showErrorIcon = traceBanner?.severity === 'error';
+  const showWarningIcon = traceBanner?.severity === 'warning';
+  const showSuccessIcon = !traceBanner && statusClass === HttpStatusClass.Success;
 
   // Convert date from micro to milli seconds
   const formattedTimestamp = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
@@ -214,9 +237,14 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           label={t('explore.trace-page-header.share-copy-link', 'Copy link')}
           icon="link"
           testId={selectors.components.TraceViewer.shareMenu.copyLinkButton}
-          onClick={() => {
-            navigator.clipboard.writeText(window.location.href);
-            notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+          onClick={async () => {
+            try {
+              await copyTextToClipboard(window.location.href);
+              notifyApp.success(t('explore.trace-page-header.link-copied', 'Link copied to clipboard'));
+            } catch (e) {
+              logError(e instanceof Error ? e : new Error(String(e)));
+              notifyApp.error(t('explore.trace-page-header.link-copy-failed', 'Could not copy link to clipboard'));
+            }
           }}
         />
         <Menu.Item
@@ -249,11 +277,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       <div className={styles.titleRow}>
         <div className={styles.titleSection}>
           {showErrorIcon && (
-            <Icon
-              name="exclamation-triangle"
-              className={styles.errorIcon}
-              aria-label={t('explore.trace-page-header.error-indicator', 'Trace has errors')}
-            />
+            <SpanErrorIcon ariaLabel={t('explore.trace-page-header.error-indicator', 'Trace has errors')} />
           )}
           {showWarningIcon && (
             <Icon
@@ -324,8 +348,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
               <Button
                 size="sm"
-                variant="primary"
-                fill="outline"
+                variant="secondary"
+                fill="text"
                 icon="ellipsis-v"
                 tooltip={t('explore.trace-page-header.share-tooltip', 'Share and feedback')}
                 aria-label={t('explore.trace-page-header.aria-label-share-dropdown', 'Open share and feedback menu')}
@@ -336,6 +360,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
           </div>
         )}
       </div>
+
+      {!hideHeaderDetails && traceBanner && (
+        <TraceBanner highlight={traceBanner} traceDuration={trace.duration} onGoToSpan={goToBannerSpan} />
+      )}
 
       {/* Metadata row */}
       {!hideHeaderDetails && (
@@ -533,11 +561,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
-    }),
-
-    errorIcon: css({
-      color: theme.colors.error.text,
-      flexShrink: 0,
     }),
 
     warningIcon: css({

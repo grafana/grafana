@@ -6,6 +6,7 @@ import (
 	"math/rand/v2"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -20,40 +21,42 @@ func TestMain(m *testing.M) {
 }
 
 func TestQueueBasic(t *testing.T) {
-	q := NewQueue(func(a, b int) (c int, ok bool) {
-		return a + b, true
+	synctest.Test(t, func(t *testing.T) {
+		q := NewQueue(func(a, b int) (c int, ok bool) {
+			return a + b, true
+		})
+
+		ctx, cancel := context.WithTimeout(t.Context(), 1*time.Millisecond)
+		defer cancel()
+		// Empty queue will time out.
+		require.Equal(t, context.DeadlineExceeded, nextErr(t, q, ctx))
+
+		q.Add(10)
+		require.Equal(t, 10, next(t, q))
+		require.Equal(t, 0, q.Len())
+
+		q.Add(20)
+		require.Equal(t, 20, next(t, q))
+		require.Equal(t, 0, q.Len())
+
+		q.Add(10)
+		require.Equal(t, 1, q.Len())
+		q.Add(20)
+		require.Equal(t, 1, q.Len())
+		require.Equal(t, 30, next(t, q))
+		require.Equal(t, 0, q.Len())
+
+		q.Add(100)
+		require.Equal(t, 1, q.Len())
+		q.Close()
+		require.Equal(t, 1, q.Len())
+		require.Equal(t, 100, next(t, q))
+		require.Equal(t, ErrClosed, nextErr(t, q, t.Context()))
+		require.Equal(t, 0, q.Len())
+
+		// We can call Next repeatedly, but will always get error.
+		require.Equal(t, ErrClosed, nextErr(t, q, t.Context()))
 	})
-
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
-	defer cancel()
-	// Empty queue will time out.
-	require.Equal(t, context.DeadlineExceeded, nextErr(t, q, ctx))
-
-	q.Add(10)
-	require.Equal(t, 10, next(t, q))
-	require.Equal(t, 0, q.Len())
-
-	q.Add(20)
-	require.Equal(t, 20, next(t, q))
-	require.Equal(t, 0, q.Len())
-
-	q.Add(10)
-	require.Equal(t, 1, q.Len())
-	q.Add(20)
-	require.Equal(t, 1, q.Len())
-	require.Equal(t, 30, next(t, q))
-	require.Equal(t, 0, q.Len())
-
-	q.Add(100)
-	require.Equal(t, 1, q.Len())
-	q.Close()
-	require.Equal(t, 1, q.Len())
-	require.Equal(t, 100, next(t, q))
-	require.Equal(t, ErrClosed, nextErr(t, q, context.Background()))
-	require.Equal(t, 0, q.Len())
-
-	// We can call Next repeatedly, but will always get error.
-	require.Equal(t, ErrClosed, nextErr(t, q, context.Background()))
 }
 
 func TestQueueConcurrency(t *testing.T) {
@@ -118,20 +121,22 @@ func TestQueueConcurrency(t *testing.T) {
 }
 
 func TestQueueCloseUnblocksReaders(t *testing.T) {
-	q := NewQueue(func(a, b int) (c int, ok bool) {
-		return a + b, true
+	synctest.Test(t, func(t *testing.T) {
+		q := NewQueue(func(a, b int) (c int, ok bool) {
+			return a + b, true
+		})
+
+		wg := sync.WaitGroup{}
+		wg.Go(func() {
+			time.Sleep(50 * time.Millisecond)
+			q.Close()
+		})
+
+		_, err := q.Next(t.Context())
+		require.ErrorIs(t, err, ErrClosed)
+
+		wg.Wait()
 	})
-
-	wg := sync.WaitGroup{}
-	wg.Go(func() {
-		time.Sleep(50 * time.Millisecond)
-		q.Close()
-	})
-
-	_, err := q.Next(context.Background())
-	require.ErrorIs(t, err, ErrClosed)
-
-	wg.Wait()
 }
 
 func next[T any](t *testing.T, q *Queue[T]) T {

@@ -57,7 +57,8 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
 
   beforeEach(() => {
     config.unifiedAlertingEnabled = true;
-    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true });
+    // foldersAppPlatformAPI defaults to on, but this suite's folder handlers are the legacy ones.
+    setTestFlags({ [GLOBAL_DASHBOARD_VARIABLES_FLAG]: true, foldersAppPlatformAPI: false });
     server.use(
       http.get('/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/variables', () => {
         return HttpResponse.json({
@@ -118,8 +119,8 @@ describe('browse-dashboards BrowseFolderVariablesPage', () => {
     expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toBeInTheDocument();
     expect(await screen.findByRole('tab', { name: /^Alert rules/ })).toHaveAttribute('aria-selected', 'false');
 
-    expect(await screen.findByRole('tab', { name: 'Variables' })).toBeInTheDocument();
-    expect(await screen.findByRole('tab', { name: 'Variables' })).toHaveAttribute('aria-selected', 'true');
+    expect(await screen.findByRole('tab', { name: /^Variables/ })).toBeInTheDocument();
+    expect(await screen.findByRole('tab', { name: /^Variables/ })).toHaveAttribute('aria-selected', 'true');
   });
 
   it('displays folder-scoped variables returned by the API', async () => {

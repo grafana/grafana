@@ -10,7 +10,6 @@ import {
   type ActionModel,
   type FieldType,
   type DataFrameWithValue,
-  type SelectableValue,
   type FieldState,
 } from '@grafana/data';
 import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
@@ -19,6 +18,8 @@ import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
+import { type TableRowTransformations } from './TableFilterContext';
+import { type CellOption } from './cellMenuOptions';
 import { type TextAlign } from './styles';
 import { type ApplyFilterResult } from './utils';
 
@@ -30,6 +31,7 @@ export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilte
 export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number, fieldScope?: MatcherScope) => void;
 type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+type TableDisplayedRowIndicesCallback = (rowIndices: number[]) => void;
 type FooterItem = Array<KeyValue<string>> | string | undefined;
 
 type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
@@ -46,18 +48,6 @@ export enum FilterOperator {
   LESS_OR_EQUAL = '<=',
   EXPRESSION = 'Expression',
 }
-
-export type FilterType = Record<
-  string,
-  {
-    filteredSet: Set<string>;
-    displayName: string;
-    filtered?: Array<SelectableValue<unknown>>;
-    searchFilter?: string;
-    operator?: SelectableValue<FilterOperator>;
-    parentIndex?: number;
-  }
->;
 
 /* ----------------------------- Table specific types ----------------------------- */
 export interface TableSummaryRow {
@@ -108,6 +98,13 @@ export interface TableSortByFieldState {
 export type SortByBehavior = 'initial' | 'managed';
 
 interface BaseTableProps {
+  /** Experimental transformation-backed table view, explicitly owned by its host. */
+  rowTransformationsEnabled?: boolean;
+  rowTransformations?: TableRowTransformations;
+  /** Stable identity for local filters when the host changes a frame's shape or display settings. */
+  localFilterScope?: string;
+  /** Called once when table value-filter evaluation fails. The host may show a notification. */
+  onFilterError?: (error: Error) => void;
   ariaLabel?: string;
   data: DataFrame;
   width: number;
@@ -118,11 +115,20 @@ interface BaseTableProps {
   noHeader?: boolean;
   showTypeIcons?: boolean;
   resizable?: boolean;
+  /** Whether all columns can be reordered from the header or sidebar. */
+  reorderable?: boolean;
   sortBy?: TableSortByFieldState[];
   sortByBehavior?: SortByBehavior;
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
+  /**
+   * Called when the filtered + sorted row order changes. Values are original
+   * frame indexes (`TableRow.__index`), not the current page slice.
+   */
+  onDisplayedRowIndicesChange?: TableDisplayedRowIndicesCallback;
+  onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
   onCellFilterAdded?: TableFilterActionCallback;
+  onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
@@ -132,23 +138,58 @@ interface BaseTableProps {
   maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
+  /**
+   * Set by callers whose surrounding panel renders without padding, so the table can indent the
+   * first column's content back into line with the panel title.
+   */
+  noPanelPadding?: boolean;
   /* message to show when no rows are present */
   noValue?: string;
   /** used by SparklineCell when provided */
   timeRange?: TimeRange;
+  /** Timezone used by the field display processors and value-filter matcher. */
+  timeZone?: string;
   enableSharedCrosshair?: boolean;
   // The index of the field value that the table will initialize scrolled to
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
-  // Used solely for testing as RTL can't correctly render the table otherwise
+  /**
+   * Renders every row into the DOM instead of only the visible window. Needed when the
+   * table is captured as a static image (PDF reporting) rather than scrolled by a user.
+   */
   enableVirtualization?: boolean;
   // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
   disableSanitizeHtml?: boolean;
   // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
   disableKeyboardEvents?: boolean;
+  // controls whether cells overflow when hovered. Selected cells always overflow.
+  hoverOverflow?: boolean;
   // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
   contentAwareWidthsEnabled?: boolean;
+  /**
+   * Set by callers that would rather see a column's content truncated than have the table scroll
+   * sideways — a table embedded in a fixed layout, where a horizontal scrollbar hides columns the
+   * surrounding UI has already reserved room for. Auto columns are then levelled down to fit the
+   * available width, widest first, instead of keeping their content width. Only affects
+   * content-aware widths (`contentAwareWidthsEnabled`).
+   */
+  preventHorizontalOverflow?: boolean;
+  // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
+  tableRefreshEnabled?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
+  // alternates the background color of every other row (table.refreshNewFeatures)
+  zebraStriping?: boolean;
+  /** Initial sidebar state. Later prop changes also update the sidebar. */
+  showColumnsSidebar?: boolean;
+  /** Controlled column order, by display name. */
+  columnOrder?: string[];
+  onColumnOrderChange?: (columnOrder: string[]) => void;
+  /** Controlled hidden columns, by display name. */
+  hiddenColumns?: ReadonlySet<string>;
+  onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
+  /** All columns the controlling owner can show, including those removed from `data`. */
+  columnCatalog?: string[];
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -157,6 +198,8 @@ export interface TableNGProps extends BaseTableProps {}
 export type TableCellRenderer = FC<TableCellRendererProps>;
 
 export interface TableCellRendererProps {
+  tableRefreshEnabled?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
@@ -181,16 +224,21 @@ export type InspectCellProps = {
   preformatted?: boolean;
 };
 
-export interface TableCellActionsProps {
+interface TableCellActionsBaseProps {
+  onAddToAssistant?: () => void;
   field: Field;
   value: TableCellValue;
   displayName: string;
-  cellInspect: boolean;
-  showFilters: boolean;
   setInspectCell: React.Dispatch<React.SetStateAction<InspectCellProps | null>>;
   className?: string;
   onCellFilterAdded?: TableFilterActionCallback;
 }
+
+export type TableCellActionsProps = TableCellActionsBaseProps &
+  (
+    | { tableRefreshEnabled: true; groups: CellOption[][]; cellInspect?: never; showFilters?: never }
+    | { tableRefreshEnabled?: false; groups?: never; cellInspect: boolean; showFilters: boolean }
+  );
 
 /* ------------------------- Specialized Cell Props ------------------------- */
 export interface RowExpanderNGProps {
@@ -235,6 +283,7 @@ export interface GeoCellProps {
 }
 
 export interface AutoCellProps {
+  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   rowIdx: number;
@@ -259,10 +308,17 @@ export interface PillCellProps {
   getTextColorForBackground: (color: string) => string;
 }
 
+export interface TableWarning {
+  id: string;
+  message: string;
+}
+
 export interface TableCellStyleOptions {
+  tableRefreshEnabled?: boolean;
   textWrap: boolean;
   textAlign: TextAlign;
   shouldOverflow: boolean;
+  hoverOverflow: boolean;
   maxHeight?: number;
 }
 
@@ -288,8 +344,24 @@ export interface TypographyCtx {
   fontFamily: string;
   letterSpacing: number;
   avgCharWidth: number;
+  /**
+   * Width of a single digit under `font-variant-numeric: tabular-nums` (which react-data-grid applies
+   * to every cell): all digits render at this uniform, wider advance. Used to size digit-heavy
+   * numeric/date columns, which `avgCharWidth` (a prose average) under-measures.
+   * Only applied when `dataviz.tabularNums` is enabled, otherwise set to `normal`.
+   */
+  numericCharWidth: number;
+  /** Width of a single character in the monospace font used by JSON/Geo cells (all chars are equal). */
+  monoCharWidth: number;
   estimateHeight: MeasureCellHeight;
   measureHeight: MeasureCellHeight;
+  /**
+   * The narrowest width at which the line counter keeps a string on one line — see
+   * `createTypographyContext`. Anything that sizes a column so its text fits has to measure with
+   * this rather than with `ctx.measureText`, or the counter and the sizing disagree about the same
+   * string and the row reserves a line the browser doesn't draw.
+   */
+  measureWidth: (text: string) => number;
 }
 
 export type MeasureCellHeight = (
@@ -299,6 +371,12 @@ export type MeasureCellHeight = (
   rowIdx: number,
   lineHeight: number
 ) => number;
+
+export interface TextWrapFallback {
+  disabledFields: ReadonlySet<string>;
+  shouldDisable: (field: Field, value: unknown) => boolean;
+}
+
 export interface MeasureCellHeightEntry {
   /**
    * given a values and the available width, returns the line count for that value

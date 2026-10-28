@@ -3,6 +3,8 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { locationUtil, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type SceneObject, type SceneObjectState } from '@grafana/scenes';
+import { type Dashboard } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -19,6 +21,7 @@ export interface DashboardEditListViewState extends DashboardEditViewState {
 
 export interface DashboardEditView extends SceneObject {
   getUrlKey(): string;
+  getEditedSaveModel?(): Dashboard | DashboardV2Spec;
 }
 
 export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditView: string) {

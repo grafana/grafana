@@ -1,6 +1,7 @@
 import { createTheme, MappingType, ThresholdsMode } from '@grafana/data';
 import { BigValueColorMode } from '@grafana/ui';
 import { mockAlertWithState as withState } from 'app/features/alerting/unified/mocks';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { type Alert } from 'app/types/unified-alerting';
 import { GrafanaAlertState } from 'app/types/unified-alerting-dto';
 
@@ -339,5 +340,38 @@ describe('buildAlertingListUrl', () => {
     expect(url).toContain('datasource');
     expect(url).toContain('firing');
     expect(url).toContain('error');
+  });
+});
+
+describe('buildAlertingListUrl - handing over to the Prometheus Alerting plugin', () => {
+  const options: UnifiedAlertListOptions = {
+    ...defaultOption,
+    alertName: 'cpu-high',
+    datasource: 'Mimir',
+    stateFilter: {
+      firing: true,
+      pending: false,
+      noData: false,
+      normal: false,
+      error: false,
+      recovering: false,
+    },
+  };
+
+  it('points at the plugin with the same filters when the plugin owns the data source', () => {
+    const url = buildAlertingListUrl(options, undefined, true);
+
+    expect(url).toContain(`/a/${SupportedPlugin.PrometheusAlerting}/rules`);
+    expect(url).not.toContain('/alerting/list');
+
+    const search = new URL(url, 'http://localhost').searchParams.get('search');
+    expect(search).toBe('rule:"cpu-high" datasource:"Mimir" state:"firing" namespace:"test folder"');
+  });
+
+  it('stays on Grafana otherwise', () => {
+    const url = buildAlertingListUrl(options);
+
+    expect(url).toContain('/alerting/list');
+    expect(url).not.toContain(`/a/${SupportedPlugin.PrometheusAlerting}`);
   });
 });

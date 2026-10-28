@@ -33,6 +33,7 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
   const {
     currentLog,
     closeDetails,
+    displayedRowIndices,
     enableLogDetails,
     logs,
     prettifyDetailsJSON,
@@ -48,6 +49,20 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
   const inputRef = useRef('');
   const styles = useStyles2(getStyles);
   const dragStyles = useStyles2(getDragStyles);
+
+  const navigableLogs = useMemo(() => {
+    if (!displayedRowIndices.length) {
+      return logs;
+    }
+    const next: typeof logs = [];
+    for (const index of displayedRowIndices) {
+      const log = logs[index];
+      if (log) {
+        next.push(log);
+      }
+    }
+    return next;
+  }, [displayedRowIndices, logs]);
 
   const handleCloseDetails = useCallback(() => {
     inputRef.current = '';
@@ -85,10 +100,10 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
       } else {
         return;
       }
-      if (!currentLog || logs.findIndex((log) => log.uid === currentLog.uid) < 0) {
+      if (!currentLog || navigableLogs.findIndex((log) => log.uid === currentLog.uid) < 0) {
         return;
       }
-      const nextLog = logs[logs.findIndex((log) => log.uid === currentLog.uid) + delta];
+      const nextLog = navigableLogs[navigableLogs.findIndex((log) => log.uid === currentLog.uid) + delta];
       if (!nextLog) {
         return;
       }
@@ -97,7 +112,7 @@ export const LogsTableDetails = ({ containerElement, options, onOptionsChange, t
     }
     document.addEventListener('keydown', handleKeydown);
     return () => document.removeEventListener('keydown', handleKeydown);
-  }, [containerElement, currentLog, logs, replaceDetails]);
+  }, [containerElement, currentLog, navigableLogs, replaceDetails]);
 
   const handleSearch = useCallback((newSearch: string) => {
     inputRef.current = newSearch;
@@ -237,8 +252,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: '100%',
   }),
   container: css({
-    backgroundColor: theme.colors.background.elevated,
-    border: `1px solid ${theme.colors.border.weak}`,
+    backgroundColor: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.medium}`,
     boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     // position is required for zIndex to take effect and establish a stacking
     // context, otherwise the tabs render behind elements in the table below.

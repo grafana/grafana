@@ -26,10 +26,7 @@ func (v1 *NotificiationPolicyV1) UnmarshalYAML(unmarshal func(any) error) error 
 }
 
 func (v1 *NotificiationPolicyV1) mapToModel() (NotificiationPolicy, error) {
-	orgID := v1.OrgID.Value()
-	if orgID < 1 {
-		orgID = 1
-	}
+	orgID := max(v1.OrgID.Value(), 1)
 	var route definitions.Route
 	// We need the string json representation, so we marshal the policy back
 	// as a string and interpolate it at the same time.

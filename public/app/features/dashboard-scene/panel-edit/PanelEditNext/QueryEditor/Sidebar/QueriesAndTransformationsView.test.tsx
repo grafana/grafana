@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 
 import { type DataQuery } from '@grafana/schema';
 
@@ -19,12 +19,16 @@ describe('QueryEditorSidebar', () => {
     jest.clearAllMocks();
   });
 
-  it('should always render transformations section even when no transformations exist', () => {
+  it('should always render transformations section even when no transformations exist', async () => {
     const queries: DataQuery[] = [{ refId: 'A', datasource: { type: 'test', uid: 'test' } }];
 
     renderWithQueryEditorProvider(<QueriesAndTransformationsView />, {
       queries,
       selectedQuery: queries[0],
+    });
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-rfd-droppable-id="query-sidebar-queries"]')).toBeInTheDocument();
     });
 
     expect(screen.getByText('Transformations')).toBeInTheDocument();

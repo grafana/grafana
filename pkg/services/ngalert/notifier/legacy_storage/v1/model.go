@@ -5,30 +5,43 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/definition/compat"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-type AMConfigDB = definitions.PostableUserConfig // TODO: Define type explicitly and move elsewhere.
-
-// AMConfigV1 is an exact structural copy of PostableUserConfig without json tags.
+// AMConfigV1 is the domain model derived from AMConfigDB (see ToModel/ToDBModel), restructuring
+// templates, receivers, inhibition rules, and time intervals into UID-keyed maps.
 type AMConfigV1 struct {
 	Templates       map[ResourceUID]TemplateGroup
 	InhibitionRules map[ResourceUID]InhibitionRule
 	TimeIntervals   map[ResourceUID]TimeInterval
+	Receivers       map[ResourceUID]PostableApiReceiver
 
 	AlertmanagerConfig PostableApiAlertingConfig
 	ExtraConfigs       []ExtraConfiguration
-	ManagedRoutes      ManagedRoutes
+	ManagedRoutes      map[string]*Route
+}
+
+// GetReceivers returns the receivers sorted by name, for deterministic iteration and serialization.
+func (c *AMConfigV1) GetReceivers() []*PostableApiReceiver {
+	res := make([]*PostableApiReceiver, 0, len(c.Receivers))
+	for _, r := range c.Receivers {
+		res = append(res, &r)
+	}
+	slices.SortFunc(res, func(a, b *PostableApiReceiver) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	return res
 }
 
 // SortedTemplates returns templates ordered by kind and title.
@@ -49,7 +62,7 @@ func (c *AMConfigV1) SortedTemplates() []TemplateGroup {
 // GetGrafanaReceiverMap returns a map that associates UUIDs to grafana receivers
 func (c *AMConfigV1) GetGrafanaReceiverMap() map[string]*PostableGrafanaReceiver {
 	UIDs := make(map[string]*PostableGrafanaReceiver)
-	for _, r := range c.AlertmanagerConfig.Receivers {
+	for _, r := range c.Receivers {
 		for _, gr := range r.GrafanaManagedReceivers {
 			UIDs[gr.UID] = gr
 		}
@@ -83,10 +96,16 @@ func (c *AMConfigV1) Validate() error {
 			return err
 		}
 	}
-	return c.AlertmanagerConfig.Validate()
-}
+	if err := c.AlertmanagerConfig.Validate(); err != nil {
+		return err
+	}
 
-type ManagedRoutes map[string]*Route
+	receivers := make(map[string]struct{}, len(c.Receivers))
+	for _, r := range c.Receivers {
+		receivers[r.Name] = struct{}{}
+	}
+	return c.AlertmanagerConfig.Route.ValidateReceivers(receivers)
+}
 
 // ExtraAlertmanagerConfig is a parsed imported Prometheus/Mimir Alertmanager configuration.
 // It preserves the upstream config types; conversion to Grafana's wire format is left to
@@ -94,7 +113,7 @@ type ManagedRoutes map[string]*Route
 type ExtraAlertmanagerConfig struct {
 	Global       *config.GlobalConfig
 	Route        *config.Route
-	InhibitRules []config.InhibitRule
+	InhibitRules []common.InhibitRule
 
 	// MuteTimeIntervals is deprecated and will be removed before Alertmanager 1.0.
 	MuteTimeIntervals []config.MuteTimeInterval
@@ -121,7 +140,7 @@ func (c *ExtraAlertmanagerConfig) ToGrafanaReceivers() ([]*PostableApiReceiver, 
 
 // ToGrafanaRoute converts the imported route to Grafana's Route type.
 func (c *ExtraAlertmanagerConfig) ToGrafanaRoute() *Route {
-	return RouteToModel(definition.AsGrafanaRoute(c.Route))
+	return AMRouteToModel(c.Route)
 }
 
 // ToGrafanaTimeIntervals converts the imported time intervals to Grafana's type.
@@ -280,25 +299,14 @@ func (c ExtraConfiguration) Validate() error {
 
 type PostableApiAlertingConfig struct {
 	Config
-	Receivers []*PostableApiReceiver
-}
-
-func (c *PostableApiAlertingConfig) GetReceivers() []*PostableApiReceiver {
-	return c.Receivers
 }
 
 func (c *PostableApiAlertingConfig) GetRoute() *Route {
 	return c.Route
 }
 
-// Validate ensures that the two routing trees use the correct receiver types.
+// Validate ensures the root route is well-formed.
 func (c *PostableApiAlertingConfig) Validate() error {
-	receivers := make(map[string]struct{}, len(c.Receivers))
-
-	for _, r := range c.Receivers {
-		receivers[r.Name] = struct{}{}
-	}
-
 	// Taken from https://github.com/prometheus/alertmanager/blob/14cbe6301c732658d6fe877ec55ad5b738abcf06/config/config.go#L171-L192
 	// Check if we have a root route. We cannot check for it in the
 	// UnmarshalYAML method because it won't be called if the input is empty
@@ -310,10 +318,6 @@ func (c *PostableApiAlertingConfig) Validate() error {
 	// Check if continue in root route.
 	if c.Route.Continue {
 		return fmt.Errorf("cannot have continue in root route")
-	}
-
-	if err := c.Route.ValidateReceivers(receivers); err != nil {
-		return err
 	}
 
 	return nil
@@ -337,10 +341,8 @@ func allReceivers(route *config.Route) (res []string) {
 }
 
 type Config struct {
-	Global       *config.GlobalConfig
 	Route        *Route
-	InhibitRules []config.InhibitRule
-	Templates    []string
+	InhibitRules []common.InhibitRule
 }
 
 type ObjectMatchers labels.Matchers
@@ -355,8 +357,8 @@ type Route struct {
 	// Deprecated. Remove before v1.0 release.
 	Match map[string]string
 	// Deprecated. Remove before v1.0 release.
-	MatchRE             config.MatchRegexps
-	Matchers            config.Matchers
+	MatchRE             common.MatchRegexps
+	Matchers            common.Matchers
 	ObjectMatchers      ObjectMatchers
 	MuteTimeIntervals   []string
 	ActiveTimeIntervals []string
@@ -370,8 +372,8 @@ type Route struct {
 	Provenance Provenance
 }
 
-func (r *Route) AllMatchers() (config.Matchers, error) {
-	matchers := make(config.Matchers, 0, len(r.Matchers)+len(r.ObjectMatchers)+len(r.Match)+len(r.MatchRE))
+func (r *Route) AllMatchers() (common.Matchers, error) {
+	matchers := make(common.Matchers, 0, len(r.Matchers)+len(r.ObjectMatchers)+len(r.Match)+len(r.MatchRE))
 	for ln, lv := range r.Match {
 		matcher, err := labels.NewMatcher(labels.MatchEqual, ln, lv)
 		if err != nil {
@@ -506,6 +508,8 @@ func (r *Route) ResourceID() string {
 type Provenance string
 
 type PostableApiReceiver struct {
+	ResourceMetadata
+
 	Name                    string
 	GrafanaManagedReceivers []*PostableGrafanaReceiver
 }

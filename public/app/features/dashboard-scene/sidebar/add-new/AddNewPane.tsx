@@ -1,13 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd';
 import SVG from 'react-inlinesvg';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase } from '@grafana/scenes';
 import { ScrollContainer, Sidebar, useStyles2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import addPanelSvg from 'img/dashboards/add-panel.svg';
 
@@ -33,6 +32,7 @@ export class AddNewPane extends SceneObjectBase {
 }
 
 function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
+  const { DragDropContext, Draggable, Droppable } = useDragAndDrop();
   const sidebar = sceneGraph.getAncestor(model, DashboardSidebar);
   const { hasCopiedPanel } = useClipboardState();
   const styles = useStyles2(getStyles);
@@ -133,7 +133,7 @@ function AddNewPaneRenderer({ model }: SceneComponentProps<AddNewPane>) {
           <AddTab dashboardScene={dashboardScene} selectedElement={selectedObj} />
         </AddNewSection>
         <AddNewSection title={t('dashboard.sidebar.add.dashboard-controls', 'Dashboard controls')}>
-          {config.featureToggles.dashboardUnifiedDrilldownControls && <AddFilters dashboardScene={dashboardScene} />}
+          <AddFilters dashboardScene={dashboardScene} />
           <AddVariable dashboardScene={dashboardScene} selectedElement={selectedObj} />
           <AddAnnotationQuery dashboardScene={dashboardScene} />
           <AddLink dashboardScene={dashboardScene} />

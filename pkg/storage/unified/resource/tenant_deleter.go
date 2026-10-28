@@ -25,8 +25,10 @@ type TenantDeleterConfig struct {
 	DryRun   bool
 	Interval time.Duration
 	Log      log.Logger
-	// Gcom, when non-nil, is used to confirm the stack is removed in GCOM before local
-	// tenant data is deleted: GetInstanceByID returns Instance with Status "deleted" or 404.
+	// An empty ClusterSlug disables cleanup of stacks assigned to another cluster.
+	ClusterSlug string
+	// Gcom verifies that the stack is deleted or belongs to another cluster before
+	// local tenant data is deleted.
 	Gcom gcom.Service
 }
 
@@ -50,10 +52,11 @@ func NewTenantDeleterConfig(cfg *setting.Cfg) *TenantDeleterConfig {
 	}
 
 	return &TenantDeleterConfig{
-		DryRun:   cfg.TenantDeleterDryRun,
-		Interval: interval,
-		Log:      log.New("tenant-deleter"),
-		Gcom:     gcomClient,
+		DryRun:      cfg.TenantDeleterDryRun,
+		Interval:    interval,
+		Log:         log.New("tenant-deleter"),
+		ClusterSlug: cfg.UnifiedStorageClusterSlug,
+		Gcom:        gcomClient,
 	}
 }
 
@@ -173,8 +176,8 @@ func (td *TenantDeleter) runDeletionPass(ctx context.Context) {
 	}
 }
 
-// gcomAllowsTenantDeletion returns true when GCOM returns 200 with Status "deleted" or 404 for
-// the given tenant name. Otherwise it returns false and logs.
+// gcomAllowsTenantDeletion returns true when the stack is deleted, absent from GCOM,
+// or assigned to another known cluster. The caller must first check the local deletion deadline.
 func (td *TenantDeleter) gcomAllowsTenantDeletion(ctx context.Context, tenantName string) bool {
 	ctx, span := tracer.Start(ctx, "resource.TenantDeleter.gcomAllowsTenantDeletion", trace.WithAttributes(
 		attribute.String("tenant", tenantName),
@@ -220,13 +223,32 @@ func (td *TenantDeleter) gcomAllowsTenantDeletion(ctx context.Context, tenantNam
 	}
 
 	span.SetAttributes(attribute.String("gcom_status", inst.Status))
-	if inst.Status != "deleted" {
-		td.log.Warn("stack still active in GCOM; skipping local data deletion",
-			"tenant", tenantName, "gcom_instance_id", instanceID, "gcom_status", inst.Status)
-		return false
+	if inst.Status == "deleted" {
+		return true
 	}
 
-	return true
+	localClusterSlug := strings.TrimSpace(td.cfg.ClusterSlug)
+	gcomClusterSlug := strings.TrimSpace(inst.ClusterSlug)
+	span.SetAttributes(
+		attribute.String("cluster_slug", localClusterSlug),
+		attribute.String("gcom_cluster_slug", gcomClusterSlug),
+	)
+	// Require both identities so missing configuration or GCOM metadata cannot allow deletion.
+	if localClusterSlug != "" && gcomClusterSlug != "" && localClusterSlug != gcomClusterSlug {
+		td.log.Info("stack belongs to another cluster in GCOM; proceeding with local data deletion",
+			"tenant", tenantName, "gcom_instance_id", instanceID, "gcom_status", inst.Status,
+			"cluster_slug", localClusterSlug, "gcom_cluster_slug", gcomClusterSlug, "reason", "cluster_mismatch")
+		return true
+	}
+
+	reason := "same_cluster"
+	if localClusterSlug == "" || gcomClusterSlug == "" {
+		reason = "unknown_cluster"
+	}
+	td.log.Warn("stack still active in GCOM; skipping local data deletion",
+		"tenant", tenantName, "gcom_instance_id", instanceID, "gcom_status", inst.Status,
+		"cluster_slug", localClusterSlug, "gcom_cluster_slug", gcomClusterSlug, "reason", reason)
+	return false
 }
 
 // deleteTenant removes all resource data for the given tenant from the data
@@ -281,7 +303,7 @@ func (td *TenantDeleter) deleteTenant(ctx context.Context, tenantName string, gr
 		}
 
 		grStart := time.Now()
-		if err := td.dataStore.batchDelete(ctx, keys); err != nil {
+		if err := td.dataStore.BatchDelete(ctx, keys); err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, "batch delete failed")
 			return err

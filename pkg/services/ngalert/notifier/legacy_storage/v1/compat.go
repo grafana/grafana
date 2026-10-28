@@ -7,17 +7,19 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/grafana/alerting/definition"
 	"github.com/grafana/alerting/definition/compat"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
+	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1/store"
 )
 
-func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
+func ToModel(in *store.AMConfigDB) *AMConfigV1 {
 	if in == nil {
 		return nil
 	}
@@ -34,25 +36,23 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 		Templates:          templates,
 		InhibitionRules:    InhibitionRulesToModel(in.ManagedInhibitionRules),
 		TimeIntervals:      TimeIntervalsToModel(in.AlertmanagerConfig.MuteTimeIntervals, in.AlertmanagerConfig.TimeIntervals),
+		Receivers:          ReceiversToModel(in.AlertmanagerConfig.Receivers),
 		AlertmanagerConfig: PostableApiAlertingConfigToModel(in.AlertmanagerConfig),
 		ExtraConfigs:       ExtraConfigsToModel(in.ExtraConfigs),
 		ManagedRoutes:      ManagedRoutesToModel(in.ManagedRoutes),
 	}
 }
 
-func PostableApiAlertingConfigToModel(in definition.PostableApiAlertingConfig) PostableApiAlertingConfig {
+func PostableApiAlertingConfigToModel(in store.AlertingConfigDB) PostableApiAlertingConfig {
 	return PostableApiAlertingConfig{
 		Config: Config{
-			Global:       in.Global,
 			Route:        RouteToModel(in.Route),
 			InhibitRules: slices.Clone(in.InhibitRules),
-			Templates:    slices.Clone(in.Templates),
 		},
-		Receivers: ReceiversToModel(in.Receivers),
 	}
 }
 
-func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals []config.TimeInterval) map[ResourceUID]TimeInterval {
+func TimeIntervalsToModel(muteIntervals []store.TimeIntervalDB, timeIntervals []store.TimeIntervalDB) map[ResourceUID]TimeInterval {
 	if muteIntervals == nil && timeIntervals == nil {
 		return nil
 	}
@@ -71,50 +71,91 @@ func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals
 	return out
 }
 
-func ReceiversToModel(in []*definition.PostableApiReceiver) []*PostableApiReceiver {
+func ReceiversToModel(in []*store.ReceiverDB) map[ResourceUID]PostableApiReceiver {
 	if in == nil {
 		return nil
 	}
-	out := make([]*PostableApiReceiver, 0, len(in))
+	out := make(map[ResourceUID]PostableApiReceiver, len(in))
 	for _, receiver := range in {
-		out = append(out, PostableApiReceiverToModel(receiver))
+		if receiver == nil {
+			continue
+		}
+		m := NewReceiver(receiver.Name, PostableGrafanaReceiverDBsToModel(receiver.GrafanaManagedReceivers), models.ProvenanceNone)
+		out[m.UID] = m
 	}
 	return out
 }
 
-func PostableApiReceiverToModel(in *definition.PostableApiReceiver) *PostableApiReceiver {
-	if in == nil {
-		return nil
-	}
-	return &PostableApiReceiver{
-		Name:                    in.Name,
-		GrafanaManagedReceivers: PostableGrafanaReceiversToModel(in.GrafanaManagedReceivers),
-	}
-}
-
-func PostableGrafanaReceiversToModel(in []*definition.PostableGrafanaReceiver) []*PostableGrafanaReceiver {
+func PostableGrafanaReceiverDBsToModel(in []*store.PostableGrafanaReceiverDB) []*PostableGrafanaReceiver {
 	if in == nil {
 		return nil
 	}
 	out := make([]*PostableGrafanaReceiver, 0, len(in))
-	for _, receiver := range in {
-		out = append(out, new(PostableGrafanaReceiver(*receiver)))
+	for _, r := range in {
+		out = append(out, &PostableGrafanaReceiver{
+			UID:                   r.UID,
+			Name:                  r.Name,
+			Type:                  r.Type,
+			Version:               r.Version,
+			DisableResolveMessage: r.DisableResolveMessage,
+			Settings:              slices.Clone(r.Settings),
+			SecureSettings:        maps.Clone(r.SecureSettings),
+		})
 	}
 	return out
 }
 
-func ManagedRoutesToModel(in map[string]*definition.Route) ManagedRoutes {
+func ManagedRoutesToModel(in map[string]*store.ManagedRouteDB) map[string]*Route {
 	if in == nil {
 		return nil
 	}
 	routes := make(map[string]*Route, len(in))
 	for name, route := range in {
-		routes[name] = RouteToModel(route)
+		routes[name] = ManagedRouteToModel(route)
 	}
 	return routes
 }
 
-func RouteToModel(in *definition.Route) *Route {
+// ManagedRouteToModel converts a persisted managed route into the domain model, computing the
+// derived GroupBy/GroupByAll fields from GroupByStr.
+func ManagedRouteToModel(in *store.ManagedRouteDB) *Route {
+	if in == nil {
+		return nil
+	}
+	out := Route{
+		Receiver:       in.Receiver,
+		GroupByStr:     slices.Clone(in.GroupByStr),
+		GroupWait:      in.GroupWait,
+		GroupInterval:  in.GroupInterval,
+		RepeatInterval: in.RepeatInterval,
+		Provenance:     Provenance(in.Provenance),
+	}
+	out.GroupBy, out.GroupByAll = splitGroupBy(in.GroupByStr)
+
+	if in.Routes != nil {
+		out.Routes = make([]*Route, 0, len(in.Routes))
+		for _, r := range in.Routes {
+			out.Routes = append(out.Routes, RouteToModel(r))
+		}
+	}
+
+	return &out
+}
+
+// splitGroupBy derives Route.GroupBy/GroupByAll from the persisted group_by strings.
+func splitGroupBy(groupByStr []string) (groupBy []model.LabelName, groupByAll bool) {
+	for _, l := range groupByStr {
+		if l == "..." {
+			groupByAll = true
+		} else {
+			groupBy = append(groupBy, model.LabelName(l))
+		}
+	}
+	return groupBy, groupByAll
+}
+
+// AMRouteToModel converts an upstream Alertmanager route into the domain model.
+func AMRouteToModel(in *config.Route) *Route {
 	if in == nil {
 		return nil
 	}
@@ -123,6 +164,34 @@ func RouteToModel(in *definition.Route) *Route {
 		GroupByStr:          slices.Clone(in.GroupByStr),
 		GroupBy:             slices.Clone(in.GroupBy),
 		GroupByAll:          in.GroupByAll,
+		Match:               maps.Clone(in.Match),
+		MatchRE:             maps.Clone(in.MatchRE),
+		Matchers:            slices.Clone(in.Matchers),
+		MuteTimeIntervals:   slices.Clone(in.MuteTimeIntervals),
+		ActiveTimeIntervals: slices.Clone(in.ActiveTimeIntervals),
+		Continue:            in.Continue,
+		GroupWait:           in.GroupWait,
+		GroupInterval:       in.GroupInterval,
+		RepeatInterval:      in.RepeatInterval,
+	}
+
+	out.Routes = make([]*Route, 0, len(in.Routes))
+	for _, r := range in.Routes {
+		out.Routes = append(out.Routes, AMRouteToModel(r))
+	}
+
+	return &out
+}
+
+// RouteToModel converts a persisted route into the domain model, computing the derived
+// GroupBy/GroupByAll fields from GroupByStr.
+func RouteToModel(in *store.RouteDB) *Route {
+	if in == nil {
+		return nil
+	}
+	out := Route{
+		Receiver:            in.Receiver,
+		GroupByStr:          slices.Clone(in.GroupByStr),
 		Match:               maps.Clone(in.Match),
 		MatchRE:             maps.Clone(in.MatchRE),
 		Matchers:            slices.Clone(in.Matchers),
@@ -135,6 +204,7 @@ func RouteToModel(in *definition.Route) *Route {
 		RepeatInterval:      in.RepeatInterval,
 		Provenance:          Provenance(in.Provenance),
 	}
+	out.GroupBy, out.GroupByAll = splitGroupBy(in.GroupByStr)
 
 	if in.Routes != nil {
 		out.Routes = make([]*Route, 0, len(in.Routes))
@@ -153,7 +223,7 @@ func ObjectMatchersToModel(in definitions.ObjectMatchers) ObjectMatchers {
 	return ObjectMatchers(slices.Clone(in))
 }
 
-func InhibitionRulesToModel(in definitions.ManagedInhibitionRules) map[ResourceUID]InhibitionRule {
+func InhibitionRulesToModel(in store.ManagedInhibitionRulesDB) map[ResourceUID]InhibitionRule {
 	if in == nil {
 		return nil
 	}
@@ -168,11 +238,11 @@ func InhibitionRulesToModel(in definitions.ManagedInhibitionRules) map[ResourceU
 	return out
 }
 
-func InhibitionRuleToModel(in definitions.InhibitionRule) InhibitionRule {
+func InhibitionRuleToModel(in store.InhibitionRuleDB) InhibitionRule {
 	return NewInhibitionRule(in.Name, MatchersToModel(in.SourceMatchers), MatchersToModel(in.TargetMatchers), in.Equal, models.Provenance(in.Provenance))
 }
 
-func MatchersToModel(in config.Matchers) []Matcher {
+func MatchersToModel(in common.Matchers) []Matcher {
 	out := make([]Matcher, 0, len(in))
 	for _, m := range in {
 		if m == nil {
@@ -183,7 +253,7 @@ func MatchersToModel(in config.Matchers) []Matcher {
 	return out
 }
 
-func ExtraConfigsToModel(in []definitions.ExtraConfiguration) []ExtraConfiguration {
+func ExtraConfigsToModel(in []store.ExtraConfigurationDB) []ExtraConfiguration {
 	if in == nil {
 		return nil
 	}
@@ -194,7 +264,7 @@ func ExtraConfigsToModel(in []definitions.ExtraConfiguration) []ExtraConfigurati
 	return out
 }
 
-func ExtraConfigToModel(in definitions.ExtraConfiguration) ExtraConfiguration {
+func ExtraConfigToModel(in store.ExtraConfigurationDB) ExtraConfiguration {
 	return ExtraConfiguration{
 		Identifier:         in.Identifier,
 		TemplateFiles:      maps.Clone(in.TemplateFiles),
@@ -204,15 +274,21 @@ func ExtraConfigToModel(in definitions.ExtraConfiguration) ExtraConfiguration {
 
 // -----------------
 
-func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
+func ToDBModel(in *AMConfigV1) (*store.AMConfigDB, error) {
 	if in == nil {
 		return nil, nil
 	}
-	dbModel := AMConfigDB{
-		ManagedTemplates:   TemplatesToManagedTemplates(in.Templates),
-		AlertmanagerConfig: PostableApiAlertingConfigToDB(in.AlertmanagerConfig, in.SortedTimeIntervals()),
-		ExtraConfigs:       ExtraConfigsToDB(in.ExtraConfigs),
-		ManagedRoutes:      ManagedRoutesToDB(in.ManagedRoutes),
+	dbModel := store.AMConfigDB{
+		ManagedTemplates: TemplatesToManagedTemplates(in.Templates),
+		AlertmanagerConfig: store.AlertingConfigDB{
+			Route:        RouteToDB(in.AlertmanagerConfig.Route),
+			InhibitRules: slices.Clone(in.AlertmanagerConfig.InhibitRules),
+			// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
+			TimeIntervals: TimeIntervalsToDB(in.SortedTimeIntervals()),
+			Receivers:     ReceiversToDB(in.GetReceivers()),
+		},
+		ExtraConfigs:  ExtraConfigsToDB(in.ExtraConfigs),
+		ManagedRoutes: ManagedRoutesToDB(in.ManagedRoutes),
 	}
 
 	var errs []error
@@ -225,28 +301,14 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 	return &dbModel, errors.Join(errs...)
 }
 
-func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig, timeIntervals []TimeInterval) definition.PostableApiAlertingConfig {
-	return definition.PostableApiAlertingConfig{
-		Config: definition.Config{
-			Global:       in.Global,
-			Route:        RouteToDB(in.Route),
-			InhibitRules: slices.Clone(in.InhibitRules),
-			Templates:    slices.Clone(in.Templates),
-			// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
-			TimeIntervals: TimeIntervalsToDB(timeIntervals),
-		},
-		Receivers: ReceiversToDB(in.Receivers),
-	}
-}
-
-func TimeIntervalsToDB(in []TimeInterval) []config.TimeInterval {
-	// Keep the DB model free of an empty time_intervals array when there are none.
+// TimeIntervalsToDB converts the domain time intervals into the persisted DB shape.
+func TimeIntervalsToDB(in []TimeInterval) []store.TimeIntervalDB {
 	if len(in) == 0 {
 		return nil
 	}
-	out := make([]config.TimeInterval, 0, len(in))
+	out := make([]store.TimeIntervalDB, 0, len(in))
 	for _, interval := range in {
-		out = append(out, config.TimeInterval{
+		out = append(out, store.TimeIntervalDB{
 			Name:          interval.Title,
 			TimeIntervals: interval.TimeIntervals,
 		})
@@ -254,60 +316,91 @@ func TimeIntervalsToDB(in []TimeInterval) []config.TimeInterval {
 	return out
 }
 
-func ReceiversToDB(in []*PostableApiReceiver) []*definition.PostableApiReceiver {
+// ReceiversToDB converts the domain receivers into the persisted DB shape.
+func ReceiversToDB(in []*PostableApiReceiver) []*store.ReceiverDB {
 	if in == nil {
 		return nil
 	}
-	out := make([]*definition.PostableApiReceiver, 0, len(in))
+	out := make([]*store.ReceiverDB, 0, len(in))
 	for _, receiver := range in {
 		out = append(out, PostableApiReceiverToDB(receiver))
 	}
 	return out
 }
 
-func PostableApiReceiverToDB(in *PostableApiReceiver) *definition.PostableApiReceiver {
+func PostableApiReceiverToDB(in *PostableApiReceiver) *store.ReceiverDB {
 	if in == nil {
 		return nil
 	}
-	return &definition.PostableApiReceiver{
-		Name: in.Name,
-		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.GrafanaManagedReceivers),
-		},
+	return &store.ReceiverDB{
+		Name:                    in.Name,
+		GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.GrafanaManagedReceivers),
 	}
 }
 
-func PostableGrafanaReceiversToDB(in []*PostableGrafanaReceiver) []*definition.PostableGrafanaReceiver {
+func PostableGrafanaReceiversToDB(in []*PostableGrafanaReceiver) []*store.PostableGrafanaReceiverDB {
 	if in == nil {
 		return nil
 	}
-	out := make([]*definition.PostableGrafanaReceiver, 0, len(in))
-	for _, receiver := range in {
-		out = append(out, new(definition.PostableGrafanaReceiver(*receiver)))
+	out := make([]*store.PostableGrafanaReceiverDB, 0, len(in))
+	for _, r := range in {
+		out = append(out, &store.PostableGrafanaReceiverDB{
+			UID:                   r.UID,
+			Name:                  r.Name,
+			Type:                  r.Type,
+			Version:               r.Version,
+			DisableResolveMessage: r.DisableResolveMessage,
+			Settings:              slices.Clone(r.Settings),
+			SecureSettings:        maps.Clone(r.SecureSettings),
+		})
 	}
 	return out
 }
 
-func ManagedRoutesToDB(in map[string]*Route) definitions.ManagedRoutes {
+func ManagedRoutesToDB(in map[string]*Route) map[string]*store.ManagedRouteDB {
 	if in == nil {
 		return nil
 	}
-	routes := make(definitions.ManagedRoutes, len(in))
+	routes := make(map[string]*store.ManagedRouteDB, len(in))
 	for name, route := range in {
-		routes[name] = RouteToDB(route)
+		routes[name] = ManagedRouteToDB(route)
 	}
 	return routes
 }
 
-func RouteToDB(in *Route) *definition.Route {
+// ManagedRouteToDB converts a domain managed route into its persisted shape, which only holds the
+// fields a managed (root) route supports.
+func ManagedRouteToDB(in *Route) *store.ManagedRouteDB {
 	if in == nil {
 		return nil
 	}
-	out := definition.Route{
+	out := store.ManagedRouteDB{
+		Receiver:       in.Receiver,
+		GroupByStr:     slices.Clone(in.GroupByStr),
+		GroupWait:      in.GroupWait,
+		GroupInterval:  in.GroupInterval,
+		RepeatInterval: in.RepeatInterval,
+		Provenance:     string(in.Provenance),
+	}
+
+	if in.Routes != nil {
+		out.Routes = make([]*store.RouteDB, 0, len(in.Routes))
+		for _, r := range in.Routes {
+			out.Routes = append(out.Routes, RouteToDB(r))
+		}
+	}
+
+	return &out
+}
+
+// RouteToDB converts a domain route into its persisted shape.
+func RouteToDB(in *Route) *store.RouteDB {
+	if in == nil {
+		return nil
+	}
+	out := store.RouteDB{
 		Receiver:            in.Receiver,
 		GroupByStr:          slices.Clone(in.GroupByStr),
-		GroupBy:             slices.Clone(in.GroupBy),
-		GroupByAll:          in.GroupByAll,
 		Match:               maps.Clone(in.Match),
 		MatchRE:             maps.Clone(in.MatchRE),
 		Matchers:            slices.Clone(in.Matchers),
@@ -318,11 +411,11 @@ func RouteToDB(in *Route) *definition.Route {
 		GroupWait:           in.GroupWait,
 		GroupInterval:       in.GroupInterval,
 		RepeatInterval:      in.RepeatInterval,
-		Provenance:          definition.Provenance(in.Provenance),
+		Provenance:          string(in.Provenance),
 	}
 
 	if in.Routes != nil {
-		out.Routes = make([]*definition.Route, 0, len(in.Routes))
+		out.Routes = make([]*store.RouteDB, 0, len(in.Routes))
 		for _, r := range in.Routes {
 			out.Routes = append(out.Routes, RouteToDB(r))
 		}
@@ -338,12 +431,12 @@ func ObjectMatchersToDB(in ObjectMatchers) definitions.ObjectMatchers {
 	return definitions.ObjectMatchers(slices.Clone(in))
 }
 
-func InhibitionRulesToDB(in map[ResourceUID]InhibitionRule) (definitions.ManagedInhibitionRules, error) {
+func InhibitionRulesToDB(in map[ResourceUID]InhibitionRule) (store.ManagedInhibitionRulesDB, error) {
 	if in == nil {
 		return nil, nil
 	}
 	var errs []error
-	out := make(definitions.ManagedInhibitionRules, len(in))
+	out := make(store.ManagedInhibitionRulesDB, len(in))
 	for _, ir := range in {
 		m, err := InhibitionRuleToDB(ir)
 		if err != nil {
@@ -354,7 +447,7 @@ func InhibitionRulesToDB(in map[ResourceUID]InhibitionRule) (definitions.Managed
 	return out, errors.Join(errs...)
 }
 
-func InhibitionRuleToDB(in InhibitionRule) (*definitions.InhibitionRule, error) {
+func InhibitionRuleToDB(in InhibitionRule) (*store.InhibitionRuleDB, error) {
 	var errs []error
 
 	sourceMatchers, err := MatchersToDB(in.SourceMatchers)
@@ -365,24 +458,22 @@ func InhibitionRuleToDB(in InhibitionRule) (*definitions.InhibitionRule, error) 
 	if err != nil {
 		errs = append(errs, fmt.Errorf("invalid target matchers: %w", err))
 	}
-	return &definitions.InhibitionRule{
-		Name: string(in.UID),
-		InhibitRule: definitions.InhibitRule{
-			SourceMatchers: sourceMatchers,
-			TargetMatchers: targetMatchers,
-			Equal:          slices.Clone(in.Equal),
-		},
-		Provenance: definition.Provenance(in.Provenance),
+	return &store.InhibitionRuleDB{
+		Name:           string(in.UID),
+		SourceMatchers: sourceMatchers,
+		TargetMatchers: targetMatchers,
+		Equal:          slices.Clone(in.Equal),
+		Provenance:     string(in.Provenance),
 	}, errors.Join(errs...)
 }
 
-func MatchersToDB(in []Matcher) (config.Matchers, error) {
+func MatchersToDB(in []Matcher) (common.Matchers, error) {
 	if len(in) == 0 {
 		return nil, nil
 	}
 
 	var errs []error
-	result := make(config.Matchers, 0, len(in))
+	result := make(common.Matchers, 0, len(in))
 	for _, m := range in {
 		matchType, err := MatcherTypeToDB(m.Type)
 		if err != nil {
@@ -418,19 +509,19 @@ func MatcherTypeToDB(mType MatcherType) (labels.MatchType, error) {
 	}
 }
 
-func ExtraConfigsToDB(in []ExtraConfiguration) []definitions.ExtraConfiguration {
+func ExtraConfigsToDB(in []ExtraConfiguration) []store.ExtraConfigurationDB {
 	if in == nil {
 		return nil
 	}
-	out := make([]definitions.ExtraConfiguration, len(in))
+	out := make([]store.ExtraConfigurationDB, len(in))
 	for i, cfg := range in {
 		out[i] = ExtraConfigToDB(cfg)
 	}
 	return out
 }
 
-func ExtraConfigToDB(in ExtraConfiguration) definitions.ExtraConfiguration {
-	return definitions.ExtraConfiguration{
+func ExtraConfigToDB(in ExtraConfiguration) store.ExtraConfigurationDB {
+	return store.ExtraConfigurationDB{
 		Identifier:         in.Identifier,
 		TemplateFiles:      maps.Clone(in.TemplateFiles),
 		AlertmanagerConfig: in.AlertmanagerConfig,
@@ -445,10 +536,7 @@ func PostableMimirReceiverToPostableGrafanaReceiver(r compat.Receiver) (*Postabl
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
 	}
-	result := &PostableApiReceiver{
-		Name:                    r.Name,
-		GrafanaManagedReceivers: make([]*PostableGrafanaReceiver, 0, len(v0)),
-	}
+	integrations := make([]*PostableGrafanaReceiver, 0, len(v0))
 	typeCount := make(map[string]int)
 	for _, cfg := range v0 {
 		integrationType := string(cfg.Schema.Type())
@@ -458,9 +546,9 @@ func PostableMimirReceiverToPostableGrafanaReceiver(r compat.Receiver) (*Postabl
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert Mimir integration config to PostableGrafanaReceiver: %w", err)
 		}
-		result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, integration)
+		integrations = append(integrations, integration)
 	}
-	return result, nil
+	return new(NewReceiver(r.Name, integrations, models.ProvenanceNone)), nil
 }
 
 // MimirIntegrationConfigToPostableGrafanaReceiver converts a Mimir integration configuration to a PostableGrafanaReceiver. All settings are unencrypted. Needs to be encrypted later.

@@ -1,5 +1,4 @@
-import { openAssistant } from '@grafana/assistant';
-import { locationService } from '@grafana/runtime';
+import { type ChatContextItem, openAssistant } from '@grafana/assistant';
 
 import { buildPlanningInstructions, startPlanningInAssistant } from './handoff';
 import { PROMPT_ORIGIN, MAX_LISTED_DATASOURCES } from './prompts';
@@ -21,26 +20,7 @@ jest.mock('@grafana/assistant', () => ({
   })),
 }));
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  locationService: { push: jest.fn(), getLocation: jest.fn() },
-}));
-
 const openAssistantMock = jest.mocked(openAssistant);
-const pushMock = jest.mocked(locationService.push);
-const getLocationMock = jest.mocked(locationService.getLocation);
-
-/** Navigation succeeded: we're on the new-dashboard editor afterwards. */
-function landedOnNewDashboard() {
-  getLocationMock.mockReturnValue({ pathname: '/dashboard/new' } as ReturnType<typeof locationService.getLocation>);
-}
-
-/** Navigation was refused, e.g. by the unsaved-changes blocker. */
-function stayedPut() {
-  getLocationMock.mockReturnValue({ pathname: '/d/abc/my-dashboard' } as ReturnType<
-    typeof locationService.getLocation
-  >);
-}
 
 const args = {
   request: 'Monitor my checkout service\n\nWhere this request came from:\nPrometheus datasource page',
@@ -51,13 +31,11 @@ const args = {
 describe('startPlanningInAssistant', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    landedOnNewDashboard();
   });
 
-  it('lands in the new-dashboard editor and opens a dashboarding conversation', () => {
-    expect(startPlanningInAssistant(args)).toBe(true);
+  it('opens a dashboarding conversation', () => {
+    startPlanningInAssistant(args);
 
-    expect(pushMock).toHaveBeenCalledWith('/dashboard/new');
     expect(openAssistantMock).toHaveBeenCalledTimes(1);
 
     const call = openAssistantMock.mock.calls[0][0];
@@ -79,42 +57,35 @@ describe('startPlanningInAssistant', () => {
     expect(planningItem?.node.name).toBe('Dashboard planning instructions');
     expect(planningItem?.node.data?.params?.hidden).toBe(true);
   });
-});
+  it('preserves selected context objects alongside the hidden planning instructions', () => {
+    const contextItems: ChatContextItem[] = [
+      {
+        node: {
+          id: 'prom-1',
+          name: 'Prometheus',
+          navigable: false,
+          img: '/prometheus.svg',
+          data: { type: 'datasource', datasourceUid: 'prom-1', formatForLLM: () => 'Datasource context' },
+        },
+        occurrences: ['mention-1'],
+      },
+      {
+        node: {
+          id: 'dashboards/dash-1',
+          name: 'Checkout',
+          navigable: false,
+          data: { type: 'dashboard', dashboardUid: 'dash-1', folderUid: 'folder-2', folderTitle: 'Payments' },
+        },
+        occurrences: [],
+      },
+    ];
+    startPlanningInAssistant({ ...args, context: contextItems });
 
-describe('startPlanningInAssistant when navigation is refused', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    stayedPut();
-  });
-
-  it('starts nothing, so the assistant is never pointed at the wrong dashboard', () => {
-    expect(startPlanningInAssistant(args)).toBe(false);
-
-    // The push was attempted; the blocker swallowed it.
-    expect(pushMock).toHaveBeenCalledWith('/dashboard/new');
-    expect(openAssistantMock).not.toHaveBeenCalled();
-  });
-});
-
-describe('startPlanningInAssistant folder handling', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    landedOnNewDashboard();
-  });
-
-  it('creates the draft in the folder the entry point knew about', () => {
-    startPlanningInAssistant({ ...args, folderUid: 'folder-1' });
-    expect(pushMock).toHaveBeenCalledWith('/dashboard/new?folderUid=folder-1');
-  });
-
-  it('escapes the folder uid', () => {
-    startPlanningInAssistant({ ...args, folderUid: 'a b/c&d' });
-    expect(pushMock).toHaveBeenCalledWith('/dashboard/new?folderUid=a%20b%2Fc%26d');
-  });
-
-  it('goes to the bare new-dashboard path when no folder is known', () => {
-    startPlanningInAssistant(args);
-    expect(pushMock).toHaveBeenCalledWith('/dashboard/new');
+    const context = openAssistantMock.mock.calls[0][0].context;
+    expect(context).toHaveLength(3);
+    expect(context?.[0].node.name).toBe('Dashboard planning instructions');
+    expect(context?.[1]).toBe(contextItems[0]);
+    expect(context?.[2]).toBe(contextItems[1]);
   });
 });
 
@@ -129,6 +100,17 @@ describe('buildPlanningInstructions', () => {
     expect(instructions).toContain('Prometheus (type: prometheus, uid: prom-1)');
     expect(instructions).toContain('no others exist');
     expect(instructions).toContain('Do NOT save the dashboard');
+    expect(instructions).toContain('starting from a brand-new dashboard');
+  });
+
+  it('lists attached dashboards', () => {
+    const instructions = buildPlanningInstructions({
+      ...args,
+      dashboards: [{ uid: 'dash-1', title: 'Checkout' }],
+    });
+
+    expect(instructions).toContain('Dashboards the user attached as context');
+    expect(instructions).toContain('Checkout (uid: dash-1)');
   });
 
   it('does not claim completeness when the datasource scope is truncated', () => {

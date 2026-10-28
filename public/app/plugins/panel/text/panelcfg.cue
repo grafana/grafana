@@ -39,8 +39,8 @@ composableKinds: PanelCfg: {
 					mode:        TextMode & (*"markdown" | _)
 					renderMode?: RenderMode & (*"once" | _)
 					code?:       CodeOptions
-					// How many rows of query data the content template may render. Unset renders every row.
-					maxRows?: number
+					// Rows per page once a per-row render pages its content. Unset fits the page to the panel height.
+					pageSize?: number
 					content: string | *"""
 						# Title
 

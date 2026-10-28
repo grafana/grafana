@@ -1,8 +1,10 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAsync } from 'react-use';
 
+import { store } from '@grafana/data';
 import { useStoredBoolean } from 'app/core/hooks/useStored';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isOnPrem } from 'app/core/utils/isOnPrem';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -12,19 +14,22 @@ import { getTelemetrySetupLink } from '../solutions/telemetrySetup';
 import { type SolutionId } from '../solutions/types';
 import { type HomepageSolutions } from '../useHomepageSolutions';
 
-import { RecommendationsSkeleton } from './RecommendationsSkeleton';
-import { RecommendationsView } from './RecommendationsView';
+import { RecommendationsSkeleton, RecommendationsView } from './RecommendationsView';
 import { fetchInstalledPlugins, getRecommendationCards, type PluginRecommendationCard } from './pluginRecommendations';
 import { orderCardsForSolution, type RecommendedCardId, selectRecommendations } from './solutionsMatrix';
 import { type RecommendationItem } from './types';
 
 const HOME_RECOMMENDATIONS_COLLAPSED_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.collapsed';
+const HOME_RECOMMENDATIONS_EMPTY_LOCAL_STORAGE_KEY = 'grafana.home.recommendations.empty';
 
 interface RecommendationsProps {
   solutions: HomepageSolutions;
 }
 
 export function Recommendations({ solutions }: RecommendationsProps) {
+  if (isOnPrem()) {
+    return null;
+  }
   // Unscoped pre-gate; each card re-checks its scoped permission. Plugin management or
   // datasource creation qualifies — everyone else is spared the recommendation work.
   const canWriteSome = contextSrv.hasPermission(AccessControlAction.PluginsWrite);
@@ -111,7 +116,10 @@ function selectRecommendationState(inventory: LocalPlugin[], signals: SolutionSt
     synthetics: forSolution('synthetics'),
   };
 
-  return { selection, recommendations, recommendationsBySolution };
+  // Unknown signals and an unreliable plugin list are transient, so an empty verdict built on them says nothing.
+  // Every signal counts: a gated probe (span metrics, synthetics, IRM) hides its card without marking the row unknown.
+  const conclusive = listReady && Object.values(signals).every((status) => status !== 'unknown');
+  return { selection, recommendations, recommendationsBySolution, conclusive };
 }
 
 function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
@@ -124,31 +132,42 @@ function GatedRecommendations({ solutions }: GatedRecommendationsProps) {
   }
   const selectionEnabled = everExpanded.current;
 
+  // Keyed on the signal snapshot, not the solution set: the set changes when the Kubernetes filter
+  // changes, but the signals do not, and re-selecting would re-report the shown recommendations.
+  const { signals } = solutions;
   const selected = useAsync(async () => {
     if (!selectionEnabled) {
       return undefined;
     }
-    const [inventory, signals, guideEnabled] = await Promise.all([
+    const [inventory, state, guideEnabled] = await Promise.all([
       fetchInstalledPlugins().catch(() => []),
-      solutions.signals(),
+      signals(),
       setupGuideEnabled(),
     ]);
-    return selectRecommendationState(inventory, signals, guideEnabled);
-  }, [selectionEnabled, solutions]);
+    return selectRecommendationState(inventory, state, guideEnabled);
+  }, [selectionEnabled, signals]);
 
-  // The region renders once the selection settles; recommendations only decide the right column.
-  // Collapsed (gated-off) renders immediately as just the header row.
+  // While the selection runs, the region holds its space unless this browser's last conclusive verdict was empty:
+  // a stack with nothing left to recommend rarely changes, and reserving space only to collapse it moves the page.
+  // A verdict that flips to non-empty mounts the region late, once (also after an org switch: the hint is per
+  // browser). Read once per mount, so another tab's verdict cannot swap this visit's reservation mid-load.
+  const [knownEmpty] = useState(() => store.getBool(HOME_RECOMMENDATIONS_EMPTY_LOCAL_STORAGE_KEY, false));
   const state = selected.value;
-  if (selectionEnabled && !state) {
-    return <RecommendationsSkeleton />;
-  }
-
-  // All-or-nothing: the region never renders one column alone. An empty right column —
-  // inconclusive detection (the matrix's unknown short-circuit), nothing left to recommend,
-  // or every card failing closed — hides the whole region. The collapsed-gated render
-  // (selectionEnabled false) keeps its header row: without selection, emptiness is unknowable.
-  if (selectionEnabled && state && state.recommendations.length === 0) {
-    return null;
+  useEffect(() => {
+    if (state?.conclusive) {
+      store.set(HOME_RECOMMENDATIONS_EMPTY_LOCAL_STORAGE_KEY, state.recommendations.length === 0);
+    }
+  }, [state]);
+  if (selectionEnabled) {
+    if (!state) {
+      return knownEmpty ? null : <RecommendationsSkeleton />;
+    }
+    // All-or-nothing: the region never renders one column alone, so an empty right column (inconclusive detection,
+    // nothing left to recommend, every card failing closed) hides it. The collapsed render keeps its header row:
+    // without selection, emptiness is unknowable.
+    if (state.recommendations.length === 0) {
+      return null;
+    }
   }
 
   return (

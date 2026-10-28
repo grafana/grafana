@@ -16,7 +16,7 @@ import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
 import { getRawDashboardChanges, getRawDashboardV2Changes } from '../saving/getDashboardChanges';
-import { type DashboardChangeInfo } from '../saving/shared';
+import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
@@ -71,7 +71,7 @@ export interface DashboardTrackingInfo {
   schemaVersion: number;
   panels_count: number;
   rowCount?: number;
-  settings_nowdelay?: number;
+  settings_nowdelay?: string;
   settings_livenow?: boolean;
 }
 
@@ -214,6 +214,7 @@ export class V1DashboardSerializer
       hasFolderChanges,
       hasPredefinedVariablesChanges,
       hasChanges: changeInfo.hasChanges || hasFolderChanges || hasPredefinedVariablesChanges,
+      isNew: isNewDashboard(scene.state),
       hasMigratedToV2: false,
     };
   }
@@ -417,7 +418,8 @@ export class V2DashboardSerializer
     return {
       ...saveModel,
       title: options.title || '',
-      description: options.description || '',
+      // Match normal serialization so an empty description doesn't mark the dashboard dirty after saving.
+      description: options.description || undefined,
       tags: options.copyTags === false ? [] : saveModel.tags,
     };
   }
@@ -443,14 +445,13 @@ export class V2DashboardSerializer
 
     const hasFolderChanges = scene.getInitialState()?.meta.folderUid !== scene.state.meta.folderUid;
     const hasPredefinedVariablesChanges = hasPredefinedVariablesAnnotationChanges(scene);
-    const isNew = !Boolean(scene.getInitialState()?.uid);
 
     return {
       ...changeInfo,
       hasFolderChanges,
       hasPredefinedVariablesChanges,
       hasChanges: changeInfo.hasChanges || hasFolderChanges || hasPredefinedVariablesChanges,
-      isNew,
+      isNew: isNewDashboard(scene.state),
       hasMigratedToV2: !!changeInfo.hasMigratedToV2,
     };
   }

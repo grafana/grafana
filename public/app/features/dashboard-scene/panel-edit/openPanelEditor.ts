@@ -1,6 +1,8 @@
 import { type VizPanel } from '@grafana/scenes';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { canManuallyEditDashboard } from '../scene/dashboardModes';
+import { dashboardViews } from '../scene/dashboardViewRegistry';
 
 /**
  * Enters panel edit for `panel`.
@@ -11,6 +13,9 @@ import { type DashboardScene } from '../scene/DashboardScene';
  * by the time this returns.
  */
 export async function openPanelEditor(dashboard: DashboardScene, panel: VizPanel, isNewPanel = false) {
-  const { buildPanelEditScene } = await import(/* webpackChunkName: "panel-edit" */ './PanelEditor');
-  dashboard.setState({ editPanel: buildPanelEditScene(panel, isNewPanel) });
+  if (!canManuallyEditDashboard(dashboard.state)) {
+    return;
+  }
+  dashboard.openFullEditor();
+  await dashboard.loadView(dashboardViews.editPanel(panel, isNewPanel));
 }

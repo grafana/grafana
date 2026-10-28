@@ -19,7 +19,9 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -163,8 +165,8 @@ func TestTableConvertor(t *testing.T) {
 func TestStoreStrategyDefaults(t *testing.T) {
 	s := testStore(false, false)
 
-	require.False(t, s.AllowCreateOnUpdate())
-	require.False(t, s.AllowUnconditionalUpdate())
+	require.False(t, s.AllowCreateOnUpdate(context.Background()))
+	require.False(t, s.AllowUnconditionalUpdate(context.Background()))
 	require.Nil(t, s.WarningsOnCreate(context.Background(), nil))
 	require.Nil(t, s.WarningsOnUpdate(context.Background(), nil, nil))
 
@@ -243,34 +245,38 @@ func TestTableConvertorPriority(t *testing.T) {
 }
 
 // newStoreOpts builds the options an API group installer passes in, recording
-// what the kind registers with unified storage.
-func newStoreOpts(t *testing.T, gvk schema.GroupVersionKind) (Options, map[schema.GroupResource]apistore.StorageOptions) {
+// the storage options the kind asks unified storage for. The returned pointer is
+// filled in by New, which scopes options once per store.
+func newStoreOpts(t *testing.T, gvk schema.GroupVersionKind) (Options, *apistore.StorageOptions) {
 	t.Helper()
 
-	scheme := runtime.NewScheme()
-	scheme.AddKnownTypeWithName(gvk, &unstructured.Unstructured{})
-	scheme.AddKnownTypeWithName(gvk.GroupVersion().WithKind(gvk.Kind+"List"), &unstructured.UnstructuredList{})
-
-	registered := map[schema.GroupResource]apistore.StorageOptions{}
+	parent := apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+	scoped := &apistore.StorageOptions{}
 	return Options{
-		Scheme:     scheme,
-		OptsGetter: apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
-		StorageOptsRegister: func(gr schema.GroupResource, opts apistore.StorageOptions) {
-			registered[gr] = opts
+		StorageOptsGetter: func(opts apistore.StorageOptions) generic.RESTOptionsGetter {
+			*scoped = opts
+			return parent.WithStorageOptions(opts)
 		},
-	}, registered
+	}, scoped
 }
 
 func TestNew(t *testing.T) {
 	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v1alpha1", Kind: "TestKind"}
 	falseValue := false
 	admission := &reviewClient{}
+	t.Run("a kind declaring conversion requires a client", func(t *testing.T) {
+		opts, _ := newStoreOpts(t, gvk)
+		_, err := New(gvk, app.ManifestVersionKind{
+			Kind: gvk.Kind, Plural: "testkinds", Conversion: true,
+		}, nil, nil, opts, nil)
+		require.ErrorContains(t, err, "declares conversion but has no plugin client")
+	})
 
 	t.Run("a namespaced kind is folder scoped by default", func(t *testing.T) {
-		opts, registered := newStoreOpts(t, gvk)
+		opts, scoped := newStoreOpts(t, gvk)
 		s, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "TestKinds", Scope: "Namespaced",
-		}, admission, opts, nil)
+		}, admission, nil, opts, nil)
 		require.NoError(t, err)
 
 		require.True(t, s.NamespaceScoped())
@@ -280,12 +286,13 @@ func TestNew(t *testing.T) {
 		require.Equal(t, schema.GroupResource{Group: "example-app", Resource: "testkind"},
 			s.SingularQualifiedResource)
 
-		require.Equal(t, apistore.StorageOptions{
-			EnableFolderSupport:  true,
-			RequireFolder:        true,
-			DeprecatedInternalID: apistore.DeprecatedID_None,
-			Scheme:               opts.Scheme,
-		}, registered[gr])
+		// Asserted field by field: StorageOptions carries interface and func
+		// members, and comparing two of those by value buries the diff in
+		// reflect internals.
+		require.Equal(t, gvk, scoped.GVK, "the served version reaches storage")
+		require.True(t, scoped.EnableFolderSupport)
+		require.True(t, scoped.RequireFolder)
+		require.Equal(t, apistore.DeprecatedID_None, scoped.DeprecatedInternalID)
 
 		// No schema means no body validation and no status subresource.
 		require.Nil(t, s.validator)
@@ -296,60 +303,58 @@ func TestNew(t *testing.T) {
 	})
 
 	t.Run("folderScoped false opts out of folder support", func(t *testing.T) {
-		opts, registered := newStoreOpts(t, gvk)
+		opts, scoped := newStoreOpts(t, gvk)
 		_, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
-		}, admission, opts, nil)
+		}, admission, nil, opts, nil)
 		require.NoError(t, err)
 
-		stored := registered[schema.GroupResource{Group: "example-app", Resource: "testkinds"}]
+		stored := *scoped
 		require.False(t, stored.EnableFolderSupport)
 		require.False(t, stored.RequireFolder)
 	})
 
-	t.Run("the resolved folder scope wins over this version's own", func(t *testing.T) {
-		// v2 dropped folderScoped, but v1 still requires it, and both versions
-		// register against the same GroupResource.
-		opts, registered := newStoreOpts(t, gvk)
-		opts.FolderScopedResources = map[string]bool{"testkinds": true}
+	// Options are scoped to the store, not registered against the shared
+	// GroupResource, so each version gets the scope it declared rather than one
+	// answer coalesced across the manifest.
+	t.Run("versions of one kind can declare different folder scopes", func(t *testing.T) {
+		v1, v1Scoped := newStoreOpts(t, gvk)
 		_, err := New(gvk, app.ManifestVersionKind{
-			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
-		}, admission, opts, nil)
+			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
+		}, admission, nil, v1, nil)
 		require.NoError(t, err)
 
-		stored := registered[schema.GroupResource{Group: "example-app", Resource: "testkinds"}]
-		require.True(t, stored.EnableFolderSupport)
-		require.True(t, stored.RequireFolder)
-	})
-
-	t.Run("a resource absent from the resolved map keeps its own scope", func(t *testing.T) {
-		opts, registered := newStoreOpts(t, gvk)
-		opts.FolderScopedResources = map[string]bool{"others": true}
-		_, err := New(gvk, app.ManifestVersionKind{
+		v2gvk := schema.GroupVersionKind{Group: gvk.Group, Version: "v2alpha1", Kind: gvk.Kind}
+		v2, v2Scoped := newStoreOpts(t, v2gvk)
+		_, err = New(v2gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
-		}, admission, opts, nil)
+		}, admission, nil, v2, nil)
 		require.NoError(t, err)
 
-		stored := registered[schema.GroupResource{Group: "example-app", Resource: "testkinds"}]
-		require.False(t, stored.RequireFolder)
+		require.True(t, v1Scoped.RequireFolder, "v1alpha1 declared the default folder scope")
+		require.False(t, v2Scoped.RequireFolder, "v2alpha1 opted out and is not overridden by v1alpha1")
+
+		// Same kind, same resource, different storage identity.
+		require.Equal(t, gvk, v1Scoped.GVK)
+		require.Equal(t, v2gvk, v2Scoped.GVK)
 	})
 
 	t.Run("a cluster kind cannot use folders", func(t *testing.T) {
-		opts, registered := newStoreOpts(t, gvk)
+		opts, scoped := newStoreOpts(t, gvk)
 		s, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: ClusterScope,
-		}, admission, opts, nil)
+		}, admission, nil, opts, nil)
 		require.NoError(t, err)
 
 		require.False(t, s.NamespaceScoped())
-		stored := registered[schema.GroupResource{Group: "example-app", Resource: "testkinds"}]
+		stored := *scoped
 		require.False(t, stored.EnableFolderSupport, "cluster kinds are outside the folder tree")
 		require.False(t, stored.RequireFolder)
 	})
 
 	t.Run("a kind schema installs validation and the status subresource", func(t *testing.T) {
 		manifest := testManifest(t)
-		// NewAppPluginAPIBuilder serves manifest kinds under the plugin ID.
+		// Resolve the schema under the same group as the store.
 		manifest.Group = gvk.Group
 		defs := LoadOpenAPIDefinitions(func(name string) spec.Ref {
 			return spec.MustCreateRef(name)
@@ -357,7 +362,7 @@ func TestNew(t *testing.T) {
 		kind := manifest.Versions[1].Kinds[0] // v1alpha1 TestKind declares status
 
 		opts, _ := newStoreOpts(t, gvk)
-		s, err := New(gvk, kind, admission, opts, defs)
+		s, err := New(gvk, kind, admission, nil, opts, defs)
 		require.NoError(t, err)
 
 		require.NotNil(t, s.validator)
@@ -366,7 +371,7 @@ func TestNew(t *testing.T) {
 		// v0alpha1 has the same kind without a status property.
 		v0 := schema.GroupVersionKind{Group: "example-app", Version: "v0alpha1", Kind: "TestKind"}
 		opts, _ = newStoreOpts(t, v0)
-		s, err = New(v0, manifest.Versions[0].Kinds[0], admission, opts, defs)
+		s, err = New(v0, manifest.Versions[0].Kinds[0], admission, nil, opts, defs)
 		require.NoError(t, err)
 		require.NotNil(t, s.validator)
 		require.False(t, s.hasStatus)
@@ -375,7 +380,7 @@ func TestNew(t *testing.T) {
 	t.Run("a schema missing from the definitions is an error", func(t *testing.T) {
 		opts, _ := newStoreOpts(t, gvk)
 		kind := testManifest(t).Versions[1].Kinds[0]
-		_, err := New(gvk, kind, admission, opts, map[string]common.OpenAPIDefinition{})
+		_, err := New(gvk, kind, admission, nil, opts, map[string]common.OpenAPIDefinition{})
 		require.ErrorContains(t, err, "missing expected schema key")
 	})
 
@@ -383,16 +388,18 @@ func TestNew(t *testing.T) {
 	// unreachable resource, so New rejects it up front.
 	t.Run("a kind without a plural is an error", func(t *testing.T) {
 		opts, _ := newStoreOpts(t, gvk)
-		_, err := New(gvk, app.ManifestVersionKind{Kind: "TestKind"}, admission, opts, nil)
+		_, err := New(gvk, app.ManifestVersionKind{Kind: "TestKind"}, admission, nil, opts, nil)
 		require.ErrorContains(t, err, "missing a plural name")
 	})
 
 	t.Run("storage that cannot be completed is an error", func(t *testing.T) {
 		opts, _ := newStoreOpts(t, gvk)
-		opts.OptsGetter = failingRESTOptionsGetter{}
+		opts.StorageOptsGetter = func(apistore.StorageOptions) generic.RESTOptionsGetter {
+			return failingRESTOptionsGetter{}
+		}
 		_, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
-		}, admission, opts, nil)
+		}, admission, nil, opts, nil)
 		require.ErrorContains(t, err, "no storage configured")
 	})
 
@@ -402,7 +409,7 @@ func TestNew(t *testing.T) {
 		opts, _ := newStoreOpts(t, gvk)
 		s, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
-		}, admission, opts, nil)
+		}, admission, nil, opts, nil)
 		require.NoError(t, err)
 
 		require.Equal(t, gvk, s.New().GetObjectKind().GroupVersionKind())
@@ -478,70 +485,36 @@ func TestStatusStrategyResetFields(t *testing.T) {
 	require.Equal(t, base.NamespaceScoped(), s.NamespaceScoped())
 }
 
-// Storage options are keyed by resource, not by version, so every served
-// version of a kind has to register the same folder scope. Any version
-// requiring a folder decides for all of them.
-func TestFolderScopedResources(t *testing.T) {
-	falseValue := false
-	trueValue := true
+func TestStoreReadContext(t *testing.T) {
+	user := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgID: 1, Namespace: "default"}
+	service := &identity.StaticRequester{Type: claims.TypeAccessPolicy, OrgID: 1, Namespace: "*"}
 
-	t.Run("nil manifest", func(t *testing.T) {
-		require.Nil(t, FolderScopedResources(nil))
+	readAs := func(s *Store, requester identity.Requester) identity.Requester {
+		r, err := identity.GetRequester(s.readContext(identity.WithRequester(context.Background(), requester)))
+		require.NoError(t, err)
+		return r
+	}
+
+	t.Run("a user reads a userReadable cluster-scoped kind as the service", func(t *testing.T) {
+		s := testStore(true, false)
+		s.userReadable = true
+		r := readAs(s, user)
+		require.True(t, r.IsIdentityType(claims.TypeAccessPolicy))
+		require.Equal(t, "*", r.GetNamespace())
+		require.Equal(t, int64(1), r.GetOrgID())
 	})
 
-	t.Run("one version requiring a folder decides for the resource", func(t *testing.T) {
-		got := FolderScopedResources(&app.ManifestData{Versions: []app.ManifestVersion{
-			{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{
-				{Kind: "Thing", Plural: "Things", Scope: "Namespaced"}, // defaults to true
-			}},
-			{Name: "v2", Served: true, Kinds: []app.ManifestVersionKind{
-				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
-			}},
-		}})
-		require.Equal(t, map[string]bool{"things": true}, got)
+	t.Run("an access policy keeps its own identity", func(t *testing.T) {
+		s := testStore(true, false)
+		s.userReadable = true
+		require.Same(t, service, readAs(s, service))
 	})
 
-	// Declaration order must not change the answer.
-	t.Run("order does not matter", func(t *testing.T) {
-		got := FolderScopedResources(&app.ManifestData{Versions: []app.ManifestVersion{
-			{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{
-				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
-			}},
-			{Name: "v2", Served: true, Kinds: []app.ManifestVersionKind{
-				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &trueValue},
-			}},
-		}})
-		require.Equal(t, map[string]bool{"things": true}, got)
+	t.Run("a kind that is not userReadable keeps the user", func(t *testing.T) {
+		require.Same(t, user, readAs(testStore(true, false), user))
 	})
 
-	t.Run("every version opting out leaves the resource unscoped", func(t *testing.T) {
-		got := FolderScopedResources(&app.ManifestData{Versions: []app.ManifestVersion{
-			{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{
-				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
-			}},
-			{Name: "v2", Served: true, Kinds: []app.ManifestVersionKind{
-				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
-			}},
-		}})
-		require.Equal(t, map[string]bool{"things": false}, got)
-	})
-
-	t.Run("an unserved version has no say", func(t *testing.T) {
-		got := FolderScopedResources(&app.ManifestData{Versions: []app.ManifestVersion{
-			{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{
-				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
-			}},
-			{Name: "v2", Served: false, Kinds: []app.ManifestVersionKind{
-				{Kind: "Thing", Plural: "Things", Scope: "Namespaced"},
-			}},
-		}})
-		require.Equal(t, map[string]bool{"things": false}, got)
-	})
-
-	t.Run("a kind with no plural has no resource to key", func(t *testing.T) {
-		got := FolderScopedResources(&app.ManifestData{Versions: []app.ManifestVersion{
-			{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Thing", Scope: "Namespaced"}}},
-		}})
-		require.Empty(t, got)
+	t.Run("a namespaced kind keeps the user", func(t *testing.T) {
+		require.Same(t, user, readAs(testStore(false, false), user))
 	})
 }

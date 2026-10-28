@@ -8,7 +8,7 @@ import {
   useFloating,
   useInteractions,
 } from '@floating-ui/react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { CSSTransition } from 'react-transition-group';
 
@@ -26,6 +26,8 @@ export interface Props {
   placement?: TooltipPlacement;
   children: React.ReactElement<Record<string, unknown>>;
   root?: HTMLElement;
+  /** Position against this element while keeping interactions and focus on the trigger. */
+  positioningReference?: HTMLElement | null;
   /** Amount in pixels to nudge the dropdown vertically and horizontally, respectively. */
   offset?: [number, number];
   onVisibleChange?: (state: boolean) => void;
@@ -36,91 +38,101 @@ export interface Props {
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/overlays-dropdown--docs
  */
-export const Dropdown = React.memo(({ children, overlay, placement, offset, root, onVisibleChange }: Props) => {
-  const [show, setShow] = useState(false);
-  const transitionRef = useRef(null);
-  const floatingUIPlacement = getPlacement(placement);
+export const Dropdown = React.memo(
+  ({ children, overlay, placement, offset, root, positioningReference, onVisibleChange }: Props) => {
+    const [show, setShow] = useState(false);
+    const transitionRef = useRef(null);
+    const floatingUIPlacement = getPlacement(placement);
 
-  const handleOpenChange = useCallback(
-    (newState: boolean) => {
-      setShow(newState);
-      onVisibleChange?.(newState);
-    },
-    [onVisibleChange]
-  );
+    const handleOpenChange = useCallback(
+      (newState: boolean) => {
+        setShow(newState);
+        onVisibleChange?.(newState);
+      },
+      [onVisibleChange]
+    );
 
-  // the order of middleware is important!
-  const middleware = [
-    floatingUIOffset({
-      mainAxis: offset?.[0] ?? 8,
-      crossAxis: offset?.[1] ?? 0,
-    }),
-    ...getPositioningMiddleware(floatingUIPlacement),
-  ];
+    // the order of middleware is important!
+    const middleware = [
+      floatingUIOffset({
+        mainAxis: offset?.[0] ?? 8,
+        crossAxis: offset?.[1] ?? 0,
+      }),
+      ...getPositioningMiddleware(floatingUIPlacement),
+    ];
 
-  const { context, refs, floatingStyles } = useFloating({
-    open: show,
-    placement: floatingUIPlacement,
-    onOpenChange: handleOpenChange,
-    middleware,
-    whileElementsMounted: autoUpdate,
-  });
+    const { context, refs, floatingStyles } = useFloating({
+      open: show,
+      placement: floatingUIPlacement,
+      onOpenChange: handleOpenChange,
+      middleware,
+      whileElementsMounted: autoUpdate,
+    });
 
-  const click = useClick(context);
-  const dismiss = useDismiss(context);
-  const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
+    useEffect(() => {
+      if (positioningReference) {
+        refs.setPositionReference(positioningReference);
+        return () => refs.setPositionReference(refs.domReference.current);
+      }
+      return;
+    }, [refs, positioningReference]);
 
-  const animationDuration = 150;
-  const animationStyles = useStyles2(getStyles, animationDuration);
+    const click = useClick(context);
+    const dismiss = useDismiss(context);
+    const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
-  const onOverlayClicked = () => {
-    handleOpenChange(false);
-  };
+    const animationDuration = 150;
+    const animationStyles = useStyles2(getStyles, animationDuration);
 
-  const handleKeys = (event: React.KeyboardEvent) => {
-    if (event.key === 'Tab') {
+    const onOverlayClicked = () => {
       handleOpenChange(false);
-    }
-  };
+    };
 
-  return (
-    <>
-      {React.cloneElement(children, {
-        ref: refs.setReference,
-        ...getReferenceProps(),
-        'aria-expanded': show,
-      })}
-      {show && (
-        <Portal root={root}>
-          <FloatingFocusManager context={context}>
-            {/*
+    const handleKeys = (event: React.KeyboardEvent) => {
+      if (event.key === 'Tab') {
+        handleOpenChange(false);
+      }
+    };
+
+    return (
+      <>
+        {React.cloneElement(children, {
+          ref: refs.setReference,
+          ...getReferenceProps(),
+          'aria-expanded': show,
+        })}
+        {show && (
+          <Portal root={root}>
+            <FloatingFocusManager context={context}>
+              {/*
               this is handling bubbled events from the inner overlay
               see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-static-element-interactions.md#case-the-event-handler-is-only-being-used-to-capture-bubbled-events
             */}
-            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
-            <div
-              ref={refs.setFloating}
-              style={floatingStyles}
-              onClick={onOverlayClicked}
-              onKeyDown={handleKeys}
-              {...getFloatingProps()}
-            >
-              <CSSTransition
-                nodeRef={transitionRef}
-                appear={true}
-                in={true}
-                timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
-                classNames={animationStyles}
+              {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
+              <div
+                ref={refs.setFloating}
+                style={floatingStyles}
+                onClick={onOverlayClicked}
+                onKeyDown={handleKeys}
+                {...getFloatingProps()}
               >
-                <div ref={transitionRef}>{renderOrCallToRender(overlay, {})}</div>
-              </CSSTransition>
-            </div>
-          </FloatingFocusManager>
-        </Portal>
-      )}
-    </>
-  );
-});
+                <CSSTransition
+                  nodeRef={transitionRef}
+                  appear={true}
+                  in={true}
+                  timeout={{ appear: animationDuration, exit: 0, enter: 0 }}
+                  classNames={animationStyles}
+                >
+                  <div ref={transitionRef}>{renderOrCallToRender(overlay, {})}</div>
+                </CSSTransition>
+              </div>
+            </FloatingFocusManager>
+          </Portal>
+        )}
+      </>
+    );
+  }
+);
 
 Dropdown.displayName = 'Dropdown';
 

@@ -1,6 +1,9 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 import { FieldType, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { PrometheusQueryResultsContainer } from './PrometheusQueryResultsContainer';
@@ -59,13 +62,36 @@ const defaultProps = {
   showRawPrometheus: false,
 };
 
+const renderContainer = (propOverrides = {}) =>
+  render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <PrometheusQueryResultsContainer {...defaultProps} {...propOverrides} />
+    </OpenFeatureProvider>
+  );
+
 describe('PrometheusQueryResultsContainer', () => {
   beforeAll(() => {
     getTemplateSrv();
   });
 
+  beforeEach(async () => {
+    // Keep the toggle at off so the legacy Table path (the one under test here) renders.
+    // See RawPrometheusContainerPure.test.tsx for the rawPrometheus.tableNg=true coverage.
+    // setTestFlags fires OpenFeature events that update React state; wrap in act() since a
+    // component from the previous test may still be mounted when this runs.
+    await act(async () => {
+      setTestFlags({ [FlagKeys.RawPrometheusTableNg]: false });
+    });
+  });
+
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
   it('should render table with data and toggle when showRawPrometheus is true', async () => {
-    render(<PrometheusQueryResultsContainer {...defaultProps} showRawPrometheus={true} />);
+    renderContainer({ showRawPrometheus: true });
 
     // Wait for lazy-loaded component to render
     await waitFor(() => {
@@ -77,6 +103,7 @@ describe('PrometheusQueryResultsContainer', () => {
 
     fireEvent.click(getTableToggle());
 
+    await screen.findAllByRole('columnheader');
     expect(getTable()).toBeInTheDocument();
     const rows = within(getTable()).getAllByRole('row');
     expect(rows).toHaveLength(5);
@@ -89,7 +116,7 @@ describe('PrometheusQueryResultsContainer', () => {
   });
 
   it('should render table without toggle when showRawPrometheus is false', async () => {
-    render(<PrometheusQueryResultsContainer {...defaultProps} showRawPrometheus={false} />);
+    renderContainer({ showRawPrometheus: false });
 
     // Wait for lazy-loaded component to render
     await waitFor(() => {
@@ -101,7 +128,7 @@ describe('PrometheusQueryResultsContainer', () => {
   });
 
   it('should render empty state when no data', async () => {
-    render(<PrometheusQueryResultsContainer {...defaultProps} tableResult={[]} showRawPrometheus={true} />);
+    renderContainer({ tableResult: [], showRawPrometheus: true });
 
     // Wait for lazy-loaded component to render
     await waitFor(() => {
@@ -110,7 +137,7 @@ describe('PrometheusQueryResultsContainer', () => {
   });
 
   it('should handle undefined tableResult gracefully', async () => {
-    render(<PrometheusQueryResultsContainer {...defaultProps} tableResult={undefined} />);
+    renderContainer({ tableResult: undefined });
 
     await waitFor(() => {
       expect(screen.getByText('0 series returned')).toBeInTheDocument();
@@ -126,7 +153,7 @@ describe('PrometheusQueryResultsContainer', () => {
       ],
     });
 
-    render(<PrometheusQueryResultsContainer {...defaultProps} tableResult={[emptyFrame]} />);
+    renderContainer({ tableResult: [emptyFrame] });
 
     await waitFor(() => {
       expect(screen.getByText('0 series returned')).toBeInTheDocument();
@@ -134,7 +161,11 @@ describe('PrometheusQueryResultsContainer', () => {
   });
 
   it('should use default width and timeZone when not provided', async () => {
-    render(<PrometheusQueryResultsContainer tableResult={defaultProps.tableResult} />);
+    render(
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <PrometheusQueryResultsContainer tableResult={defaultProps.tableResult} />
+      </OpenFeatureProvider>
+    );
 
     await waitFor(() => {
       expect(screen.queryAllByRole('table').length).toBe(1);
@@ -142,7 +173,9 @@ describe('PrometheusQueryResultsContainer', () => {
   });
 
   it('should show loading state', async () => {
-    render(<PrometheusQueryResultsContainer {...defaultProps} loading={LoadingState.Loading} />);
+    renderContainer({ loading: LoadingState.Loading });
+
+    expect(await screen.findByText('test_string_1')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByLabelText('Panel loading bar')).toBeInTheDocument();

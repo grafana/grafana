@@ -1,16 +1,21 @@
 import { isEqual } from 'lodash';
 
+import { reportInteraction } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   type SceneObject,
   SceneObjectBase,
   SceneObjectRemovedEvent,
   sceneGraph,
+  StateCommittedEvent,
+  type StateCommittedPayload,
 } from '@grafana/scenes';
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
+import { isFullDashboardEditing, isDashboardReviewing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
-import { getEditableElementFor } from '../actions/utils/getEditableElementFor';
+import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
+import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -19,16 +24,24 @@ import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '..
 import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
+  type DashboardBatchEditActionEventPayload,
+  DashboardBatchEditActionEndEvent,
+  DashboardBatchEditActionStartEvent,
   DashboardEditActionEvent,
+  type DashboardActionMeta,
   type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
+  PaneClosedEvent,
+  type PaneCloseReason,
   RepeatsUpdatedEvent,
 } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarPane, type DashboardSidebarLike, type DashboardSidebarState } from './types';
+
+export const MAX_UNDO_ACTIONS = 100;
 
 export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> implements DashboardSidebarLike {
   public constructor(state?: Partial<DashboardSidebarState>) {
@@ -49,26 +62,114 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   private panelEditAction?: DashboardEditActionEvent;
+  private _paneRequest?: AbortController;
+
+  public beginPaneRequest(): AbortSignal {
+    this.cancelPaneRequest();
+    const controller = new AbortController();
+    this._paneRequest = controller;
+    this.setState({ isLoading: true });
+    if (!this.isActive) {
+      this.cancelPaneRequest();
+    }
+
+    return controller.signal;
+  }
+
+  public async runPaneRequest(load: (signal: AbortSignal) => Promise<void>) {
+    const signal = this.beginPaneRequest();
+    try {
+      if (!signal.aborted) {
+        await load(signal);
+      }
+    } finally {
+      // An older load must not clear the indicator for a newer selection.
+      if (this._paneRequest?.signal === signal) {
+        this.cancelPaneRequest();
+      }
+    }
+  }
+
+  public cancelPaneRequest() {
+    const request = this._paneRequest;
+    this._paneRequest = undefined;
+    request?.abort();
+    if (this.state.isLoading) {
+      this.setState({ isLoading: false });
+    }
+  }
+
+  /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
+  private _activeBatch?: {
+    meta: DashboardActionMeta;
+    source: SceneObject;
+    description?: string;
+    actions: DashboardEditActionEventPayload[];
+  };
+
+  private _batchSizes = new WeakMap<DashboardEditActionEventPayload, number>();
 
   public setPanelEditAction(editAction: DashboardEditActionEvent) {
     this.panelEditAction = editAction;
   }
 
+  public recordCompletedEdit(action: DashboardEditActionEventPayload) {
+    this.handleEditAction(action, true);
+  }
+
   public clone(withState: Partial<DashboardSidebarState>): this {
-    // Clone without any undo/redo history
-    return super.clone({ ...withState, redoStack: [], undoStack: [] });
+    // Pending requests and edit history belong to the live sidebar, not its snapshots.
+    return super.clone({ ...withState, redoStack: [], undoStack: [], isLoading: false });
+  }
+
+  /**
+   * Drops all undo/redo entries. Use when the dashboard state changed outside the edit action pipeline,
+   * since the recorded closures would otherwise replay over (and silently revert) that change.
+   */
+  public clearHistory() {
+    if (this.state.undoStack.length === 0 && this.state.redoStack.length === 0) {
+      return;
+    }
+
+    this.setState({ undoStack: [], redoStack: [] });
   }
 
   private onActivate() {
     const dashboard = getDashboardSceneFor(this);
 
-    if (dashboard.state.isEditing) {
+    this._subs.add(
+      dashboard.subscribeToState((state, previous) => {
+        if (dashboardViewChanged(state, previous)) {
+          this.cancelPaneRequest();
+        }
+      })
+    );
+
+    if (isFullDashboardEditing(dashboard.state)) {
       this.enableSelection();
     }
 
     this._subs.add(
       dashboard.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
         this.handleEditAction(payload);
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(StateCommittedEvent, ({ payload }) => {
+        this.handleStateCommitted(payload);
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(DashboardBatchEditActionStartEvent, ({ payload }) => {
+        this.startBatchAction(payload);
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(DashboardBatchEditActionEndEvent, () => {
+        this.endBatchAction();
       })
     );
 
@@ -126,63 +227,164 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     action.payload.source.publishEvent(action, true);
   }
 
+  private startBatchAction({ source, description, meta }: DashboardBatchEditActionEventPayload) {
+    if (this.state.redoStack.length > 0) {
+      this.setState({ redoStack: [] });
+    }
+
+    this._activeBatch = { source, description, meta, actions: [] };
+  }
+
+  private endBatchAction() {
+    const batch = this._activeBatch;
+    this._activeBatch = undefined;
+
+    if (!batch || batch.actions.length === 0) {
+      return;
+    }
+
+    const action: DashboardEditActionEventPayload = {
+      source: batch.source,
+      meta: batch.meta,
+      description: batch.description,
+      perform: () => {
+        batch.actions.forEach((childAction) => this.performAction(childAction));
+      },
+      undo: () => {
+        [...batch.actions].reverse().forEach((childAction) => this.undoSingleAction(childAction));
+      },
+    };
+
+    this._batchSizes.set(action, batch.actions.length);
+    this.setState({ undoStack: this.pushToUndoStack(action) });
+  }
+
   /**
    * Handles all edit actions
    * Adds to undo history and selects new object
-   * @param payload
    */
-  private handleEditAction(action: DashboardEditActionEventPayload) {
+  private handleEditAction(action: DashboardEditActionEventPayload, skipPerform = false) {
+    if (!getDashboardSceneFor(this).prepareEditAction()) {
+      return;
+    }
+    if (skipPerform) {
+      getDashboardSceneFor(this).recordEditMutation();
+    }
+    if (this._activeBatch) {
+      this._activeBatch.actions.push(action);
+      if (!skipPerform) {
+        this.performAction(action);
+      }
+      return;
+    }
     // Clear redo stack when user performs a new action
     // Otherwise things can get into very broken states
     if (this.state.redoStack.length > 0) {
       this.setState({ redoStack: [] });
     }
 
-    this.performAction(action);
+    if (!skipPerform) {
+      this.performAction(action);
+    }
 
-    this.setState({ undoStack: [...this.state.undoStack, action] });
+    this.setState({ undoStack: this.pushToUndoStack(action) });
+  }
+
+  /**
+   * Any SceneObject can perform state changes inside the object (e.g., drag and drop or resize).
+   * To make such changes undoable SceneObject can provide a closure to revert and replay
+   * the change. Since the change already happens inside SceneObject we skip perform and just add
+   * the action to the stack.
+   * @private
+   */
+  private handleStateCommitted(payload: StateCommittedPayload) {
+    this.handleEditAction(
+      {
+        source: payload.source,
+        meta: { actionId: 'panel.moveOrResize' },
+        description: payload.description,
+        perform: payload.replay,
+        undo: payload.revert,
+      },
+      true
+    );
+    payload.source.publishEvent(new DashboardStateChangedEvent({ source: payload.source }), true);
+  }
+
+  /**
+   * Only the oldest entries are dropped, and a batch only as a whole: each entry's closures reference the
+   * objects left behind by the entries before it, so removing one from the middle would leave the later
+   * ones acting on detached objects. The newest entry is always kept, even a batch larger than the limit,
+   * so the change just made can be undone.
+   */
+  private pushToUndoStack(action: DashboardEditActionEventPayload): DashboardEditActionEventPayload[] {
+    const undoStack = [...this.state.undoStack, action];
+    const sizeOf = (entry: DashboardEditActionEventPayload) => this._batchSizes.get(entry) ?? 1;
+
+    let total = undoStack.reduce((sum, entry) => sum + sizeOf(entry), 0);
+    let start = 0;
+    while (total > MAX_UNDO_ACTIONS && start < undoStack.length - 1) {
+      total -= sizeOf(undoStack[start]);
+      start++;
+    }
+
+    return undoStack.slice(start);
   }
 
   /**
    * Removes last action from undo stack and adds it to redo stack.
    */
   public undoAction() {
+    if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+      return;
+    }
+    // How far back the user has already stepped through history before this undo
+    const redoDepth = this.state.redoStack.length;
     const undoStack = this.state.undoStack.slice();
     const action = undoStack.pop();
     if (!action) {
       return;
     }
 
-    action.undo();
+    this.undoSingleAction(action);
+
+    this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
+    reportInteraction('grafana_dashboard_undo', {
+      actionId: action.meta.actionId,
+      scope: action.meta.scope,
+      redoDepth,
+    });
+  }
+
+  private undoSingleAction(action: DashboardEditActionEventPayload) {
+    getDashboardSceneFor(this).trackEditMutation(() => action.undo());
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
     if (action.addedObject) {
       this.clearSelection();
     }
 
-    if (action.movedObject) {
+    if (action.movedObject && action.selectOnMove !== false) {
       this.selectObject(action.movedObject, { force: true });
     }
 
     if (action.removedObject) {
       this.newObjectAddedToCanvas(action.removedObject);
     }
-
-    this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
   }
 
   /**
    * Some edit actions also require clearing selection or selecting new objects
    */
   private performAction(action: DashboardEditActionEventPayload) {
-    action.perform();
+    getDashboardSceneFor(this).trackEditMutation(() => action.perform());
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
     if (action.addedObject) {
       this.newObjectAddedToCanvas(action.addedObject);
     }
 
-    if (action.movedObject) {
+    if (action.movedObject && action.selectOnMove !== false) {
       this.selectObject(action.movedObject, { force: true });
     }
 
@@ -199,6 +401,10 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from redo stack and adds it to undo stack.
    */
   public redoAction() {
+    if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+      return;
+    }
+    const redoDepth = this.state.redoStack.length;
     const redoStack = this.state.redoStack.slice();
     const action = redoStack.pop();
     if (!action) {
@@ -207,10 +413,18 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     this.performAction(action);
 
-    this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
+    this.setState({ redoStack, undoStack: this.pushToUndoStack(action) });
+    reportInteraction('grafana_dashboard_redo', {
+      actionId: action.meta.actionId,
+      scope: action.meta.scope,
+      redoDepth,
+    });
   }
 
   public enableSelection() {
+    if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
+      return;
+    }
     if (this.state.selectionContext.enabled) {
       return;
     }
@@ -219,6 +433,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public disableSelection() {
+    this.cancelPaneRequest();
     if (!this.state.selectionContext.enabled) {
       return;
     }
@@ -249,6 +464,10 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public selectObject(obj: SceneObject, { multi, force }: ElementSelectionOnSelectOptions = {}) {
+    this.cancelPaneRequest();
+    if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
+      return;
+    }
     const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
@@ -297,7 +516,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public goBackToPrevious() {
-    if (!this.state.previousState) {
+    this.cancelPaneRequest();
+    if (isDashboardReviewing(getDashboardSceneFor(this).state) || !this.state.previousState) {
       return;
     }
 
@@ -311,8 +531,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (this.state.openPane?.getId() === 'element' && this.state.selectionContext.selected.length === 1) {
       const selectedObj = this.getSelectedObject();
       if (selectedObj) {
-        const element = getEditableElementFor(selectedObj);
-        element?.scrollIntoView?.();
+        void import(/* webpackChunkName: "dashboard-edit-actions" */ '../actions/utils/getEditableElementFor').then(
+          ({ getEditableElementFor }) => {
+            const element = getEditableElementFor(selectedObj);
+            element?.scrollIntoView?.();
+          }
+        );
       }
     }
   }
@@ -368,6 +592,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * @returns
    */
   public clearSelection(force = false) {
+    this.cancelPaneRequest();
     if (!this.state.selectionContext.selected.length) {
       return;
     }
@@ -386,6 +611,13 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public openPane(openPane: DashboardSidebarPane) {
+    this.cancelPaneRequest();
+    if (
+      isDashboardReviewing(getDashboardSceneFor(this).state) &&
+      ['add', 'element', 'code', 'cross-dashboard-variables'].includes(openPane.getId())
+    ) {
+      return;
+    }
     if (this.state.openPane?.getId() === openPane.getId()) {
       this.setState({ openPane: undefined });
       return;
@@ -397,7 +629,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.publishEvent(new NewSceneObjectAddedEvent(openPane), true);
   }
 
-  public closePane() {
+  public closePane(reason: PaneCloseReason = 'programmatic') {
+    this.cancelPaneRequest();
     if (this.state.selectionContext.selected.length) {
       this.clearSelection(true);
     }
@@ -408,10 +641,48 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
       // UrlSyncManager subscribes to this and removes the pane url state from url
       this.publishEvent(new SceneObjectRemovedEvent(openPane), true);
+      this.publishEvent(new PaneClosedEvent({ pane: openPane, reason }));
+    }
+  }
+
+  /**
+   * This should be called when state of the DashboardScene got swapped
+   * and selected element or code pane needs to be refreshed. In case the change
+   * in DashboardScene means the element no longer exists - the sidebar is closed
+   */
+  public refreshAfterRebuild() {
+    const { openPane, selectionContext, selectedDisconnectedObject } = this.state;
+    if (openPane?.getId() === 'code') {
+      this.setState({
+        // force remount: we cannot call new DashboardCodePane({}) to ensure DashboardCodePane can be lazy loaded
+        openPane: openPane.clone({ key: undefined }),
+        selectionContext: { ...selectionContext, selected: [] },
+        selectedDisconnectedObject: undefined,
+        isNewElement: false,
+        previousState: undefined,
+      });
+    } else if (
+      openPane?.getId() === 'element' &&
+      !selectedDisconnectedObject &&
+      selectionContext.selected.length > 0 &&
+      selectionContext.selected.every(({ id }) => this.getSelectedObject(id))
+    ) {
+      this.setState({
+        openPane: new ElementEditPane({}),
+        selectionContext: { ...selectionContext, selected: [...selectionContext.selected] },
+        isNewElement: false,
+        previousState: undefined,
+      });
+    } else {
+      this.setState({ previousState: undefined });
+      this.closePane();
     }
   }
 
   private newObjectAddedToCanvas(obj: SceneObject) {
+    if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
+      return;
+    }
     this.selectObject(obj, { force: true });
     this.setState({ isNewElement: true });
   }

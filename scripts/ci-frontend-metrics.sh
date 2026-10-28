@@ -11,11 +11,23 @@ EMOTION_IMPORTS="$(grep -r -o -E --include="*.ts*" --exclude="*.test*" "\{.*css.
 TS_FILES="$(find public/app -type f -name "*.ts*" -not -name "*.test*" | wc -l)"
 DEPRECATED_DATA_SOURCE_SRV="$(grep -r -oE --include="*.ts*" --exclude="*.test.*" --exclude="*.spec.*" --exclude-dir={__mocks__,mocks,spec,node_modules,dist,compiled} "get(DataSource|Datasource)Srv\(\)" public/app packages | grep -cvE "packages/grafana-runtime/src/services/|public/app/features/plugins/datasource_srv" || true)"
 SCSS_FILES="$(find public packages -name '*.scss' -not -path '*/node_modules/*' | wc -l)"
-# ignore minimal age gate in this `yarn outdated` call
-OUTDATED_DEPENDENCIES="$(YARN_NPM_MINIMAL_AGE_GATE=0 yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)' || true)"
-TOTAL_OUTDATED_DEPENDENCIES="${OUTDATED_DEPENDENCIES:-0}"
-CIRCULAR_DEPENDENCIES="$(yarn lint:circular 2>&1 >/dev/null | sed -n 's/.*Found \([0-9]*\) circular.*/\1/p')"
+PM="$(node -p "require('./package.json').packageManager.split('@')[0]")"
+if [ "$PM" = "yarn" ]; then
+  # ignore minimal age gate in this `yarn outdated` call
+  OUTDATED_DEPENDENCIES="$(YARN_NPM_MINIMAL_AGE_GATE=0 yarn outdated --all | grep -oP '[[:digit:]]+ *(?= dependencies are out of date)' || true)"
+  TOTAL_OUTDATED_DEPENDENCIES="${OUTDATED_DEPENDENCIES:-0}"
+elif [ "$PM" = "pnpm" ]; then
+  OUTDATED_DEPENDENCIES="$(pnpm outdated --recursive --format json --config.minimum-release-age=0 || true)"
+  TOTAL_OUTDATED_DEPENDENCIES="$(printf '%s' "$OUTDATED_DEPENDENCIES" | node -e "try { const deps = JSON.parse(require('fs').readFileSync(0, 'utf8') || '{}'); console.log(Object.values(deps).reduce((n, d) => n + d.dependentPackages.length, 0)) } catch { console.log(0) }")"
+else
+  echo "Unsupported package manager: $PM" >&2
+  exit 1
+fi
+CIRCULAR_DEPENDENCIES="$(npm run --silent lint:circular 2>&1 >/dev/null | sed -n 's/.*Found \([0-9]*\) circular.*/\1/p')"
 TOTAL_CIRCULAR_DEPENDENCIES="${CIRCULAR_DEPENDENCIES:-0}"
+# Count direct and total resolved third-party package versions across all workspaces, including dev dependencies.
+DEPENDENCY_METRICS="$(node ./scripts/cli/reportDependencyMetrics.mjs)"
+read -r DIRECT_DEPENDENCIES TOTAL_DEPENDENCIES <<< "$DEPENDENCY_METRICS"
 
 echo -e "Typescript errors: $ERROR_COUNT"
 echo -e "Directives: $DIRECTIVES"
@@ -31,7 +43,7 @@ echo -e "Total SCSS files: $SCSS_FILES"
 echo -e "Total circular dependencies: $TOTAL_CIRCULAR_DEPENDENCIES"
 
 ESLINT_STATS=""
-yarn lint:ts --format ./scripts/cli/eslint-stats-reporter.mjs -o eslint-stats.txt
+npm run lint:ts -- --format ./scripts/cli/eslint-stats-reporter.mjs -o eslint-stats.txt
 while read -r name value
 do
   ESLINT_STATS+=$'\n  '
@@ -46,30 +58,34 @@ while read -r name value
 do
   I18N_STATS+=$'\n  '
   I18N_STATS+="\"grafana.ci-code.i18n.${name}\": \"${value}\","
-done <<< "$(yarn i18n:stats)"
+done <<< "$(npm run --silent i18n:stats)"
 
-# Requires the frontend to have been built (yarn build) so the assets manifests exist.
+# Requires the frontend to have been built (npm run build) so the assets manifests exist.
 # Assigned separately from the herestring below so that set -e catches a failure here.
-BUNDLE_SIZES="$(yarn bundle-size:stats)"
-BUNDLE_SIZE_STATS=""
-while read -r name value
-do
-  BUNDLE_SIZE_STATS+=$'\n  '
-  BUNDLE_SIZE_STATS+="\"grafana.ci-code.bundleSize.${name}\": \"${value}\","
-done <<< "$BUNDLE_SIZES"
+BUNDLE_METRICS="$(npm run --silent bundle-metrics)"
+BUNDLE_STATS=""
+if [[ -n "$BUNDLE_METRICS" ]]; then
+  while read -r name value
+  do
+    BUNDLE_STATS+=$'\n  '
+    BUNDLE_STATS+="\"grafana.ci-code.${name}\": \"${value}\","
+  done <<< "$BUNDLE_METRICS"
+fi
 
 THEME_TOKEN_USAGE=""
 while read -r name value
 do
   THEME_TOKEN_USAGE+=$'\n  '
   THEME_TOKEN_USAGE+="\"grafana.ci-code.themeUsage.${name}\": \"${value}\","
-done <<< "$(yarn themes:usage | awk '$4 == "@grafana/theme-token-usage" {print $3}' | awk '{!seen[$0]++}END{for (i in seen) print i, seen[i]}')"
+done <<< "$(npm run --silent themes:usage | awk '$4 == "@grafana/theme-token-usage" {print $3}' | awk '{!seen[$0]++}END{for (i in seen) print i, seen[i]}')"
 
 echo "Metrics: {
   $THEME_TOKEN_USAGE
   $ESLINT_STATS
   $I18N_STATS
-  $BUNDLE_SIZE_STATS
+  $BUNDLE_STATS
+  \"grafana.ci-code.dependencies.direct\": \"${DIRECT_DEPENDENCIES}\",
+  \"grafana.ci-code.dependencies.total\": \"${TOTAL_DEPENDENCIES}\",
   \"grafana.ci-code.strictErrors\": \"${ERROR_COUNT}\",
   \"grafana.ci-code.directives\": \"${DIRECTIVES}\",
   \"grafana.ci-code.controllers\": \"${CONTROLLERS}\",

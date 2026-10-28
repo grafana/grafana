@@ -13,11 +13,14 @@ ARG JS_SRC=js-builder
 
 # Dependabot cannot update dependencies listed in ARGs
 # By using FROM instructions we can delegate dependency updates to dependabot
-FROM alpine:3.24.1 AS alpine-base
+FROM alpine:3.24.3 AS alpine-base
 FROM ubuntu:24.04 AS ubuntu-base
-FROM golang:1.26.6-alpine AS go-builder-base
+FROM golang:1.27.3-alpine AS go-builder-base
 FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
 FROM gcr.io/distroless/static-debian13 AS distroless-base
+# Empty by default. For local enterprise builds, override with:
+#   --build-context enterprise-src=../grafana-enterprise
+FROM scratch AS enterprise-src
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 ARG JS_NODE_ENV=production
@@ -32,6 +35,7 @@ RUN apk add --no-cache make build-base python3
 
 COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
+COPY patches patches
 COPY packages packages
 COPY e2e-playwright e2e-playwright
 COPY public public
@@ -67,12 +71,15 @@ ARG WIRE_TAGS="oss"
 
 RUN if grep -i -q alpine /etc/issue; then \
   apk add --no-cache \
-  bash \
   # Install build dependencies
   make git; \
   fi
 
 WORKDIR /tmp/grafana
+
+# The enterprise overlay adds `replace github.com/grafana/grafana-enterprise => ../grafana-enterprise`
+# to go.mod, which resolves to this path. No-op when building OSS.
+COPY --from=enterprise-src / /tmp/grafana-enterprise
 
 COPY go.mod go.sum go.work go.work.sum ./
 COPY .citools .citools
@@ -226,7 +233,7 @@ ENV PATH="/usr/share/grafana/bin:$PATH" \
 
 WORKDIR $GF_PATHS_HOME
 
-RUN apk add --no-cache ca-certificates bash bubblewrap curl tzdata musl-utils && \
+RUN apk add --no-cache ca-certificates bubblewrap curl tzdata musl-utils && \
   apk info -vv | sort
 
 # glibc support for alpine x86_64 only

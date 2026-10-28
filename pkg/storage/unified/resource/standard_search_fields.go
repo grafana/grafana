@@ -40,9 +40,8 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 		{
 			Name: SEARCH_FIELD_DESCRIPTION,
 			Type: SearchFieldTypeString,
-			// unranked: description is indexed as text (the proto column declares
-			// FreeText:true), but no caller scores against it today; skipping
-			// BM25 frequency and length stats keeps the index small.
+			// Keep description indexing compact: text matching works without
+			// storing full BM25 frequency and length stats.
 			Capabilities: []SearchCapability{SearchCapabilityText, SearchCapabilityRetrieve, SearchCapabilityUnranked},
 			Description:  "Free-text description of the resource.",
 		},
@@ -82,25 +81,43 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 			Capabilities: []SearchCapability{SearchCapabilityFacet},
 			Description:  "Manager identity in format {kind}:{id}; used for faceting.",
 		},
-		// created and updated are unix-millis timestamps. They are stored so search
-		// results can return them, but a retrieve-only non-string field is not
-		// indexed, so they cannot be filtered, sorted or used in a range query.
-		//
-		// Giving them filter (which is what a range query needs) or sort would index
-		// them, changing the index-affecting hash and rebuilding every kind's index.
-		// That is worth doing once someone needs to query on a timestamp; exact
-		// equality to the millisecond is not a useful query on its own.
+		{
+			Name:         SEARCH_FIELD_UPDATED_BY,
+			Type:         SearchFieldTypeString,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Who last updated the resource (format: user:<uid>).",
+		},
 		{
 			Name:         SEARCH_FIELD_CREATED,
 			Type:         SearchFieldTypeInt64,
-			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort, SearchCapabilityRetrieve},
 			Description:  "Creation timestamp (unix millis).",
 		},
 		{
 			Name:         SEARCH_FIELD_UPDATED,
 			Type:         SearchFieldTypeInt64,
-			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilitySort, SearchCapabilityRetrieve},
 			Description:  "Update timestamp (unix millis).",
+		},
+		// The manager fields live in the manager sub-document, so their names are
+		// paths into it.
+		{
+			Name:         SEARCH_FIELD_MANAGER_KIND,
+			Type:         SearchFieldTypeString,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Kind of tool that manages the resource, such as repo for Git Sync. Empty when nothing manages it.",
+		},
+		{
+			Name:         SEARCH_FIELD_MANAGER_ID,
+			Type:         SearchFieldTypeString,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Which instance of that tool manages the resource, such as the repository name.",
+		},
+		{
+			Name:         SEARCH_FIELD_MANAGER_ALLOW_EDITS,
+			Type:         SearchFieldTypeBoolean,
+			Capabilities: []SearchCapability{SearchCapabilityRetrieve},
+			Description:  "Whether the manager allows others to edit the resource.",
 		},
 	}
 }
@@ -134,7 +151,9 @@ func TrashSearchFieldDefinitions() []SearchFieldDefinition {
 		},
 		// A string, unlike deletion_time: resource versions are snowflake ids around
 		// 1.8e18, where a float64 can only represent multiples of 256, so a number
-		// would come back rounded. It has to stay exact to be usable for a restore.
+		// would come back rounded. The search backend prepares a separate fixed-width
+		// sort key, but the public capability remains disabled until clients can fall
+		// back from search servers deployed before that mapping.
 		{
 			Name:         SEARCH_FIELD_DELETED_RV,
 			Type:         SearchFieldTypeString,
@@ -152,6 +171,23 @@ var trashSearchFieldNames = func() map[string]bool {
 	}
 	return names
 }()
+
+// internalSearchFieldNames are index fields no caller may name. They are mapped
+// without being declared as search fields, so nothing else refuses them.
+//
+// Not every underscore-prefixed name belongs here: _id, _score, _explain and
+// _all_columns are part of the request API.
+var internalSearchFieldNames = map[string]bool{
+	SEARCH_FIELD_IS_DELETED:      true,
+	SEARCH_FIELD_IS_PROVISIONED:  true,
+	SEARCH_FIELD_RV_STRING:       true,
+	SEARCH_FIELD_DELETED_RV_SORT: true,
+}
+
+// IsInternalSearchField reports whether name is an index field callers cannot use.
+func IsInternalSearchField(name string) bool {
+	return internalSearchFieldNames[name]
+}
 
 // IsTrashSearchField reports whether name is a field only deleted documents carry.
 func IsTrashSearchField(name string) bool {

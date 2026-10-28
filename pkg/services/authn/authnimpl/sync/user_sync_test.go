@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
@@ -13,11 +14,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/singleflight"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	types "k8s.io/apimachinery/pkg/types"
 
 	claims "github.com/grafana/authlib/types"
+
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -2443,8 +2446,6 @@ func TestUserSync_SyncUserHook_AlignsOrgIDForK8sRole(t *testing.T) {
 	}
 }
 
-func strPtr(s string) *string { return &s }
-
 func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 	tests := []struct {
 		name                    string
@@ -2462,7 +2463,7 @@ func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 			syncOrgRoles:            true,
 			currentRole:             "Admin",
 			assertedRole:            org.RoleEditor,
-			wantUpdateRole:          strPtr("Editor"),
+			wantUpdateRole:          new("Editor"),
 		},
 		{
 			name:                    "explicit None role is synced (demotion)",
@@ -2471,7 +2472,7 @@ func TestUserSync_updateUserAttributes_SyncsOrgRoleForK8s(t *testing.T) {
 			syncOrgRoles:            true,
 			currentRole:             "Editor",
 			assertedRole:            org.RoleNone,
-			wantUpdateRole:          strPtr("None"),
+			wantUpdateRole:          new("None"),
 		},
 		{
 			name:                    "unchanged role is not synced",
@@ -2818,4 +2819,40 @@ func TestUserSync_SyncUserHook_SkipsAnonymousIdentity(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, createCalled, "anonymous identity must not create a user")
 	assert.False(t, updateCalled, "anonymous identity must not update a user")
+}
+
+func TestUserSync_SyncLastSeenHook(t *testing.T) {
+	for _, typ := range []claims.IdentityType{claims.TypeUser, claims.TypeServiceAccount} {
+		t.Run(string(typ), func(t *testing.T) {
+			lastSeen := time.Now()
+			svc := usertest.NewMockService(t)
+			svc.On("UpdateLastSeenAt", mock.Anything, &user.UpdateUserLastSeenAtCommand{
+				UserID: 5, OrgID: 2, LastSeenAt: lastSeen,
+			}).Return(user.ErrLastSeenUpToDate).Once()
+			s := &UserSync{
+				userService: svc,
+				tracer:      tracing.InitializeTracerForTest(),
+				log:         log.New("test"),
+				lastSeenSF:  &singleflight.Group{},
+			}
+			id := &authn.Identity{ID: "5", Type: typ, OrgID: 2, LastSeenAt: lastSeen}
+			require.NoError(t, s.SyncLastSeenHook(context.Background(), id, &authn.Request{}))
+		})
+	}
+}
+
+func TestUserSync_FetchSyncedUserHookPassesUID(t *testing.T) {
+	svc := usertest.NewMockService(t)
+	svc.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{
+		UserID: 5, UserUID: "uid-5", OrgID: 2,
+	}).Return(&user.SignedInUser{UserID: 5, UserUID: "uid-5", OrgID: 2}, nil).Once()
+	s := &UserSync{userService: svc, tracer: tracing.InitializeTracerForTest()}
+	id := &authn.Identity{
+		ID:           "5",
+		UID:          "uid-5",
+		Type:         claims.TypeUser,
+		ClientParams: authn.ClientParams{FetchSyncedUser: true},
+	}
+	require.NoError(t, s.FetchSyncedUserHook(context.Background(), id, &authn.Request{OrgID: 2}))
+	require.Equal(t, "uid-5", id.UID)
 }

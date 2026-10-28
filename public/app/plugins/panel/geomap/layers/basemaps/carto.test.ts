@@ -1,8 +1,12 @@
+import Feature from 'ol/Feature';
 import type OpenLayersMap from 'ol/Map';
 import type LayerGroup from 'ol/layer/Group';
 import Layer from 'ol/layer/Layer';
 import VectorLayer from 'ol/layer/Vector';
+import VectorTileLayer from 'ol/layer/VectorTile';
 import VectorSource from 'ol/source/Vector';
+import VectorTileSource from 'ol/source/VectorTile';
+import { createXYZ } from 'ol/tilegrid';
 
 import { type EventBus, type GrafanaTheme2, type MapLayerOptions } from '@grafana/data';
 
@@ -100,6 +104,42 @@ describe('CARTO basemap', () => {
       const layer = await initLayer({ theme: LayerTheme.Light });
 
       expect(attributionsOf(layer)).toEqual([expect.stringContaining('©CARTO')]);
+    });
+  });
+
+  describe('styling beyond the tiles', () => {
+    // OpenLayers measures zoom in 256px worlds, so CARTO's 512px tiles run out at view zoom 1 and
+    // anything wider used to fall below every style rule's first zoom stop, leaving a flat color.
+    const WIDEST_TILE = 78271.51696402048;
+
+    async function initWithTiles() {
+      const styleFunction = jest.fn();
+      applyMock.mockImplementationOnce(async (group: LayerGroup) => {
+        const tiles = new VectorTileLayer({
+          source: new VectorTileSource({ tileGrid: createXYZ({ maxZoom: 14, tileSize: 512 }) }),
+        });
+        tiles.setStyle(styleFunction);
+        group.getLayers().push(tiles);
+      });
+
+      const group = await initLayer({ theme: LayerTheme.Dark });
+      const tiles = group
+        .getLayers()
+        .getArray()
+        .find((child) => child instanceof VectorTileLayer)!;
+      return { style: tiles.getStyleFunction()!, styleFunction };
+    }
+
+    it.each([
+      { desc: 'clamps resolutions wider than the widest tile', resolution: 156543.03392804097, styled: WIDEST_TILE },
+      { desc: 'passes resolutions the tiles cover through', resolution: 39135.75848201024, styled: 39135.75848201024 },
+    ])('$desc', async ({ resolution, styled }) => {
+      const { style, styleFunction } = await initWithTiles();
+      const feature = new Feature();
+
+      style(feature, resolution);
+
+      expect(styleFunction).toHaveBeenCalledWith(feature, styled);
     });
   });
 });

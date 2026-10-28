@@ -672,6 +672,10 @@ func testPrivateEndpointGitRepository(repoType provisioning.RepositoryType, rawU
 }
 
 func newAdmissionValidatorTestAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
+	return newAdmissionValidatorTestAttributesWithSubresource(obj, old, op, "")
+}
+
+func newAdmissionValidatorTestAttributesWithSubresource(obj, old runtime.Object, op admission.Operation, subresource string) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,
 		old,
@@ -679,7 +683,7 @@ func newAdmissionValidatorTestAttributes(obj, old runtime.Object, op admission.O
 		"default",
 		"test",
 		provisioning.RepositoryResourceInfo.GroupVersionResource(),
-		"",
+		subresource,
 		op,
 		nil,
 		false,
@@ -957,6 +961,59 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 			require.NoError(t, err)
 		})
 	}
+}
+
+func TestAdmissionValidator_Validate_SkipsSubresourcePatches(t *testing.T) {
+	mockFactory := NewMockFactory(t)
+	// No EXPECT() set up for Validate: the mock will fail the test if it's called,
+	// confirming the factory/extras validation never runs for status patches.
+
+	validator := NewValidator(false, mockFactory)
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
+		validator,
+	)
+
+	// Missing finalizers and title would normally fail RepositoryValidator.Validate,
+	// but since old carries the exact same spec/secure, this is a pure status patch.
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec:       provisioning.RepositorySpec{},
+	}
+	old := repo.DeepCopy()
+
+	attr := newAdmissionValidatorTestAttributesWithSubresource(repo, old, admission.Update, "status")
+
+	require.NoError(t, admissionValidator.Validate(context.Background(), attr, nil))
+}
+
+func TestAdmissionValidator_Validate_RunsForBundledSpecChange(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:       "test",
+			Finalizers: []string{CleanFinalizer, RemoveOrphanResourcesFinalizer},
+		},
+		Spec: provisioning.RepositorySpec{Title: "Test Repo"},
+	}
+	// Bundled onto a /status request: spec.title is cleared, which
+	// RepositoryValidator.Validate rejects.
+	repo := old.DeepCopy()
+	repo.Spec.Title = ""
+
+	mockFactory := NewMockFactory(t)
+	mockFactory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Once()
+
+	validator := NewValidator(false, mockFactory)
+	admissionValidator := NewAdmissionValidator(
+		[]provisioning.SyncTargetType{provisioning.SyncTargetTypeFolder},
+		validator,
+	)
+
+	attr := newAdmissionValidatorTestAttributesWithSubresource(repo, old, admission.Update, "status")
+
+	err := admissionValidator.Validate(context.Background(), attr, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "spec.title: Required value")
 }
 
 func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {

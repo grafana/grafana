@@ -90,6 +90,7 @@ var (
 // and delegates actual storage operations to the Store interface.
 type k8sRESTAdapter struct {
 	store          Store
+	tracer         trace.Tracer
 	tableConverter rest.TableConvertor
 	accessClient   authtypes.AccessClient
 	folderResolver DashboardFolderResolver
@@ -106,6 +107,10 @@ type k8sRESTAdapter struct {
 	// matching the cleanup window so we don't accept data that would be
 	// immediately purged. A zero TTL disables this bound.
 	retentionTTL time.Duration
+
+	// maxAge bounds how far in the past an annotation's time may be on write.
+	// If unset, the retention TTL is used as the maximum age (if one is set).
+	maxAge time.Duration
 
 	metrics *Metrics
 	logger  log.Logger
@@ -149,7 +154,7 @@ func (s *k8sRESTAdapter) ConvertToTable(ctx context.Context, object runtime.Obje
 
 func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.ListOptions) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := tracer.Start(ctx, "annotation.k8s.list", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.list", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
@@ -191,7 +196,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 	}
 
 	// TODO: post-fetch filtering breaks pagination - cursor advances by opts.Limit regardless of authz results.
-	allowed, err := canAccessAnnotations(ctx, s.accessClient, s.folderResolver, namespace, result.Items, utils.VerbList)
+	allowed, err := canAccessAnnotations(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, result.Items, utils.VerbList)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +215,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 
 func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.GetOptions) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := tracer.Start(ctx, "annotation.k8s.get", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.get", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
@@ -223,7 +228,7 @@ func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.G
 		return nil, toAPIError(err, name)
 	}
 
-	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
+	allowed, err := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +251,7 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	options *metav1.CreateOptions,
 ) (out runtime.Object, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := tracer.Start(ctx, "annotation.k8s.create", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.create", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 	))
 	defer span.End()
@@ -267,11 +272,15 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 		return nil, err
 	}
 
+	if annotation.Spec.TimeEnd == nil {
+		annotation.Spec.TimeEnd = new(annotation.Spec.Time)
+	}
+
 	if annotation.Name == "" && annotation.GenerateName != "" {
 		annotation.Name = annotation.GenerateName + util.GenerateShortUID()
 	}
 
-	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbCreate)
+	allowed, err := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbCreate)
 	if err != nil {
 		return nil, err
 	}
@@ -308,7 +317,7 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	options *metav1.UpdateOptions,
 ) (out runtime.Object, created bool, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := tracer.Start(ctx, "annotation.k8s.update", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.update", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
@@ -349,14 +358,14 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	}
 
 	// Check authz on both existing and new body: prevents privilege escalation via scope changes.
-	allowed, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, existing, utils.VerbUpdate)
+	allowed, err := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, existing, utils.VerbUpdate)
 	if err != nil {
 		return nil, false, err
 	}
 	if !allowed {
 		return nil, false, apierrors.NewForbidden(annotationGR, existing.Name, fmt.Errorf("insufficient permissions"))
 	}
-	allowed, err = canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, resource, utils.VerbUpdate)
+	allowed, err = canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, resource, utils.VerbUpdate)
 	if err != nil {
 		return nil, false, err
 	}
@@ -367,6 +376,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	// Surface the tombstone only after authz, so 410 does not leak existence.
 	if existing.DeletionTimestamp != nil {
 		return nil, false, goneError(name)
+	}
+
+	if resource.Spec.TimeEnd == nil {
+		resource.Spec.TimeEnd = new(resource.Spec.Time)
 	}
 
 	if err := validateUpdate(existing, resource); err != nil {
@@ -390,7 +403,7 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 
 func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (out runtime.Object, completed bool, err error) {
 	namespace := request.NamespaceValue(ctx)
-	ctx, span := tracer.Start(ctx, "annotation.k8s.delete", trace.WithAttributes(
+	ctx, span := s.tracer.Start(ctx, "annotation.k8s.delete", trace.WithAttributes(
 		attribute.String("namespace", namespace),
 		attribute.String("name", name),
 	))
@@ -407,13 +420,13 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 		return nil, false, toAPIError(err, name)
 	}
 
-	allowedDelete, err := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbDelete)
+	allowedDelete, err := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbDelete)
 	if err != nil {
 		return nil, false, err
 	}
 	if !allowedDelete {
 		// Return 404 if caller can't read (don't leak existence), 403 if readable but not deletable.
-		allowedRead, rerr := canAccessAnnotation(ctx, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
+		allowedRead, rerr := canAccessAnnotation(ctx, s.tracer, s.accessClient, s.folderResolver, namespace, annotation, utils.VerbGet)
 		if rerr != nil {
 			return nil, false, rerr
 		}
@@ -563,12 +576,13 @@ func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
 		return apierrors.NewBadRequest(
 			fmt.Sprintf("%v: time cannot be more than 1 week in the future", ErrInvalidInput))
 	}
-	if s.retentionTTL > 0 {
-		maxPast := now.Add(-s.retentionTTL).UnixMilli()
-		if anno.Spec.Time < maxPast {
-			return apierrors.NewBadRequest(
-				fmt.Sprintf("%v: time cannot be older than retention TTL (%v)", ErrInvalidInput, s.retentionTTL))
-		}
+	maxAge := s.maxAge
+	if maxAge == 0 {
+		maxAge = s.retentionTTL
+	}
+	if maxAge > 0 && anno.Spec.Time < now.Add(-maxAge).UnixMilli() {
+		return apierrors.NewBadRequest(
+			fmt.Sprintf("%v: time cannot be older than %v", ErrInvalidInput, maxAge))
 	}
 
 	// If timeEnd is set, validate it's after time and within future bounds

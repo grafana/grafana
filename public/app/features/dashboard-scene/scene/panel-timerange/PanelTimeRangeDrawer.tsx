@@ -1,6 +1,5 @@
-import { FeatureState } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -9,31 +8,14 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type TimeCompareOptions, TimeCompareColorMode } from '@grafana/schema';
-import {
-  Box,
-  Button,
-  Combobox,
-  type ComboboxOption,
-  Drawer,
-  FeatureBadge,
-  Field,
-  Label,
-  Stack,
-  Switch,
-} from '@grafana/ui';
+import { Box, Button, Combobox, type ComboboxOption, Drawer, Field, Stack, Switch } from '@grafana/ui';
 
 import { getQuickOptions } from '../../../../../../packages/grafana-ui/src/components/DateTimePickers/options';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { PanelTimeRange } from './PanelTimeRange';
-
-export const getCompareOptions = () => [
-  { label: t('common.disabled', 'Disabled'), value: '' },
-  { label: t('dashboard.panel.time-range-settings.compare-day-before', 'Day before'), value: '1d' },
-  { label: t('dashboard.panel.time-range-settings.compare-week-before', 'Week before'), value: '1w' },
-  { label: t('dashboard.panel.time-range-settings.compare-month-before', 'Month before'), value: '1M' },
-];
+import { TimeComparisonField } from './timeCompare/TimeComparisonField';
 
 const getCompareColorModeOptions = (): Array<ComboboxOption<TimeCompareColorMode>> => [
   {
@@ -136,6 +118,7 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
 
   static Component = ({ model }: SceneComponentProps<PanelTimeRangeDrawer>) => {
     const { timeFrom, timeShift, compareWith, compareColorMode, hideTimeOverride, panelRef } = model.useState();
+    const isTimeComparisonEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.TimeComparison, true);
 
     const supportsComparisonDelta = PLUGINS_WITH_COMPARISON_DELTA.has(panelRef.resolve().state.pluginId);
 
@@ -202,33 +185,11 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
             />
           </Field>
 
-          {config.featureToggles.timeComparison && (
-            <Field
-              noMargin
-              label={
-                <Stack alignItems={'center'} justifyContent={'space-between'}>
-                  <Label
-                    description={t(
-                      'dashboard.panel.time-range-settings.time-window-compare-description',
-                      'Compare data between two time ranges'
-                    )}
-                  >
-                    <Trans i18nKey="dashboard.panel.time-range-settings.time-window-compare">Time comparison</Trans>
-                  </Label>
-                  <FeatureBadge featureState={FeatureState.new} />
-                </Stack>
-              }
-            >
-              <Combobox
-                options={getCompareOptions()}
-                createCustomValue={true}
-                value={compareWith ?? ''}
-                onChange={(x) => model.setState({ compareWith: x.value })}
-              />
-            </Field>
+          {isTimeComparisonEnabled && (
+            <TimeComparisonField value={compareWith} onChange={(compareWith) => model.setState({ compareWith })} />
           )}
 
-          {config.featureToggles.timeComparison && compareWith && supportsComparisonDelta && (
+          {isTimeComparisonEnabled && compareWith && supportsComparisonDelta && (
             <Field
               noMargin
               label={t('dashboard.panel.time-range-settings.compare-color-mode', 'Comparison tooltip delta color')}
@@ -261,11 +222,11 @@ export class PanelTimeRangeDrawer extends SceneObjectBase<PanelTimeRangeDrawerSt
 
           <Box paddingTop={3}>
             <Stack>
-              <Button variant="secondary" onClick={model.onClose}>
-                <Trans i18nKey="common.cancel">Cancel</Trans>
-              </Button>
               <Button variant="primary" onClick={model.onApply}>
                 <Trans i18nKey="common.apply">Apply</Trans>
+              </Button>
+              <Button variant="secondary" onClick={model.onClose}>
+                <Trans i18nKey="common.cancel">Cancel</Trans>
               </Button>
             </Stack>
           </Box>

@@ -55,7 +55,7 @@ func TestKVReader_Read(t *testing.T) {
 	t.Run("reads across BatchGet chunk boundaries", func(t *testing.T) {
 		store := seedKV(t)
 		const n = readBatchSize*2 + 3 // more than one batch, non-multiple
-		for i := 0; i < n; i++ {
+		for i := range n {
 			save(t, store, fmt.Sprintf("g%03d.grafana.app", i), `{"maxAllowedVersion":"v1"}`)
 		}
 

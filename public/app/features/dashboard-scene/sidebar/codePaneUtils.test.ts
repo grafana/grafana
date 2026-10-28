@@ -1,6 +1,6 @@
 import yaml from 'js-yaml';
 
-import { type DashboardScene } from '../scene/DashboardScene';
+import { DashboardScene } from '../scene/DashboardScene';
 
 import { applyJsonToDashboard, getDashboardDiffTexts, getDashboardResourceText } from './codePaneUtils';
 
@@ -14,11 +14,12 @@ jest.mock('../../dashboard/api/ResponseTransformers', () => ({
 }));
 
 jest.mock('../../dashboard/api/utils', () => ({
+  ...jest.requireActual('../../dashboard/api/utils'),
   isDashboardV2Spec: (obj: unknown) => typeof obj === 'object' && obj !== null && 'elements' in obj,
 }));
 
 jest.mock('../serialization/transformSaveModelSchemaV2ToScene', () => ({
-  transformSaveModelSchemaV2ToScene: jest.fn(() => ({ state: {} })),
+  transformSaveModelSchemaV2ToScene: jest.fn(() => ({ state: {}, forEachChild: jest.fn() })),
 }));
 
 jest.mock('@grafana/scenes', () => {
@@ -43,11 +44,28 @@ function buildDashboard(uid?: string): DashboardScene {
 
 function buildApplyDashboard(uid?: string): DashboardScene {
   return {
-    state: { uid, key: 'key-1', isEditing: true, meta: {}, body: { editModeChanged: jest.fn() } },
-    serializer: { metadata: {} },
+    state: {
+      uid,
+      key: 'key-1',
+      isEditing: true,
+      meta: {},
+      body: { editModeChanged: jest.fn() },
+      sidebar: {
+        closePane: jest.fn(),
+        enableSelection: jest.fn(),
+        disableSelection: jest.fn(),
+        refreshAfterRebuild: jest.fn(),
+      },
+    },
+    serializer: { metadata: {}, getK8SMetadata: () => ({}) },
     onEnterEditMode: jest.fn(),
+    applyDashboardMode: DashboardScene.prototype.applyDashboardMode,
+    activateSidebar: jest.fn(),
     setState: jest.fn(),
-    publishEvent: jest.fn(),
+    forEachChild: jest.fn(),
+    publishEvent: jest.fn((event: { payload?: { perform?: () => void } }) => {
+      event.payload?.perform?.();
+    }),
   } as unknown as DashboardScene;
 }
 
@@ -226,7 +244,7 @@ describe('applyJsonToDashboard', () => {
   it('applies the resource text generated for a saved dashboard', () => {
     const text = getDashboardResourceText(buildDashboard('abc-123'));
     const result = applyJsonToDashboard(buildApplyDashboard('abc-123'), text);
-    expect(result.success).toBe(true);
+    expect(result).toEqual({ success: true });
   });
 
   // Regression: the pane emits a placeholder metadata.name for a dashboard with no uid yet;
@@ -234,7 +252,7 @@ describe('applyJsonToDashboard', () => {
   it('applies the placeholder resource text for an unsaved dashboard', () => {
     const text = getDashboardResourceText(buildDashboard(undefined));
     const result = applyJsonToDashboard(buildApplyDashboard(undefined), text);
-    expect(result.success).toBe(true);
+    expect(result).toEqual({ success: true });
   });
 
   // Regression: the rebuild swaps in a freshly-deserialized layout manager, which is not
@@ -245,7 +263,7 @@ describe('applyJsonToDashboard', () => {
     const dashboard = buildApplyDashboard('abc-123');
     const text = getDashboardResourceText(buildDashboard('abc-123'));
 
-    applyJsonToDashboard(dashboard, text);
+    expect(applyJsonToDashboard(dashboard, text)).toEqual({ success: true });
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- reach into the test double's mock
     const editModeChanged = (dashboard.state.body as unknown as { editModeChanged: jest.Mock }).editModeChanged;

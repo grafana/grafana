@@ -1238,6 +1238,35 @@ func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, n
 	require.NoError(t, err, "failed to patch status for connection %s", name)
 }
 
+func (h *ProvisioningTestHelper) AuthorizeConnection(t *testing.T, name, code, redirectURI string) {
+	t.Helper()
+	body, err := json.Marshal(&provisioning.ConnectionAuthorizeRequest{
+		Spec: provisioning.ConnectionAuthorizeRequestSpec{
+			Code:        code,
+			RedirectURI: redirectURI,
+		},
+	})
+	require.NoError(t, err)
+
+	var statusCode int
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("connections").
+		Name(name).
+		SubResource("authorize").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context()).
+		StatusCode(&statusCode)
+	require.NoError(t, result.Error(), "authorize should succeed")
+	require.Equal(t, http.StatusOK, statusCode)
+
+	var res provisioning.ConnectionAuthorizeRequest
+	require.NoError(t, result.Into(&res))
+	assert.True(t, res.Status.Authorized, "response should report authorized")
+	assert.Empty(t, res.Spec.Code, "authorization code should not be echoed back")
+}
+
 // TriggerRepositoryReconciliation forces the controller to re-process a repo
 // by touching its status (aging the health timestamp by 1ms).
 // Updating it by incrementing its generation by +1 is not triggering a reconciliation.
@@ -1611,6 +1640,16 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 	}
 }
 
+// WithKeysOnlyReList sets [provisioning] keys_only_relist, so the connection
+// informer's periodic re-list asks storage for keys instead of whole objects.
+// Off by default in Grafana, so a test that wants the keys path must say so, and
+// the tests that do not keep covering the full-object path.
+func WithKeysOnlyReList() GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningKeysOnlyReList = true
+	}
+}
+
 // WithProvisioningHistoryExpiration overrides [provisioning] history_expiration,
 // which is both the HistoricJob retention and the historic-job informer's
 // resync. A short value lets tests exercise the re-list-driven cleanup quickly.
@@ -1636,7 +1675,6 @@ func defaultGrafanaOpts(provisioningPath string) testinfra.GrafanaOpts {
 	return testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagProvisioningExport,
-			featuremgmt.FlagProvisioningUserAttribution,
 			// Lets CleanupAllResources force-delete folders (gracePeriodSeconds=0),
 			// bypassing the eventually-consistent "folder is empty" admission check.
 			// Normal (non-force) deletes still enforce the check, so test behavior
@@ -2323,6 +2361,45 @@ func (h *ProvisioningTestHelper) CleanupAllRepos(t *testing.T) {
 		}
 		assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repositories should be cleaned up between subtests")
+}
+
+// GithubConnectionObject builds a minimal GitHub connection body: the fields the
+// API requires and nothing test-specific, so a caller only has to name it. Pass
+// it to CreateGithubConnection, which installs the mocked GitHub client.
+func (h *ProvisioningTestHelper) GithubConnectionObject(name string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": provisioning.APIVERSION,
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      name,
+			"namespace": h.Namespace,
+		},
+		"spec": map[string]any{
+			"title": name,
+			"type":  provisioning.GitHubRepositoryType,
+			"github": map[string]any{
+				"appID":          "123456",
+				"installationID": "454545",
+			},
+		},
+		"secure": map[string]any{
+			"privateKey": map[string]any{
+				"create": base64.StdEncoding.EncodeToString([]byte(TestGithubPrivateKeyPEM)),
+			},
+		},
+	}}
+}
+
+// CreateNamedGithubConnection builds and creates a connection in one step, and
+// removes it when the test ends.
+func (h *ProvisioningTestHelper) CreateNamedGithubConnection(t *testing.T, name string) *unstructured.Unstructured {
+	t.Helper()
+	created, err := h.CreateGithubConnection(t, h.GithubConnectionObject(name))
+	require.NoError(t, err, "failed to create connection %q", name)
+	t.Cleanup(func() {
+		_ = h.Connections.Resource.Delete(context.WithoutCancel(t.Context()), created.GetName(), metav1.DeleteOptions{})
+	})
+	return created
 }
 
 func (h *ProvisioningTestHelper) CreateGithubConnection(
@@ -3136,7 +3213,7 @@ func (h *GitTestHelper) GitServer() *gittest.Server {
 	return h.gitServer
 }
 
-func (h *GitTestHelper) githubTransportUser(t *testing.T) *gittest.User {
+func (h *GitTestHelper) GithubTransportUser(t *testing.T) *gittest.User {
 	t.Helper()
 
 	h.githubUserOnce.Do(func() {
@@ -3304,6 +3381,13 @@ func (h *GitTestHelper) CreateFolderTargetGitRepo(t *testing.T, repoName string,
 	})
 }
 
+func (h *GitTestHelper) CreateFolderlessTargetGitRepo(t *testing.T, repoName string, initialFiles map[string][]byte, workflows ...string) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	return h.createGitRepo(t, repoName, "folderless", createRepoOpts{
+		initialFiles: initialFiles,
+		workflows:    workflows,
+	})
+}
+
 // CreateSyncEnabledGitRepo creates a git repository with sync target "instance"
 // and sync.enabled=true. Sync must be on for the provisioning files endpoint to
 // dual-write into unified storage — without it, callers that write a new
@@ -3333,7 +3417,7 @@ func (h *GitTestHelper) CreateGithubRepo(t *testing.T, repoName string, initialF
 		waitForReady:      true,
 		initialFiles:      initialFiles,
 		templateVariables: extraValues,
-		user:              h.githubTransportUser(t),
+		user:              h.GithubTransportUser(t),
 		workflows:         workflows,
 	})
 }
@@ -3352,7 +3436,7 @@ func (h *GitTestHelper) CreateGithubRepoWithoutWaitingForReady(t *testing.T, rep
 		waitForReady:      false,
 		initialFiles:      initialFiles,
 		templateVariables: extraValues,
-		user:              h.githubTransportUser(t),
+		user:              h.GithubTransportUser(t),
 		workflows:         workflows,
 	})
 }
@@ -3364,7 +3448,7 @@ func (h *GitTestHelper) CreateGithubRepoWithWebhookDisabled(t *testing.T, repoNa
 		templateVariables: map[string]any{
 			"WebhookDisabled": true,
 		},
-		user:      h.githubTransportUser(t),
+		user:      h.GithubTransportUser(t),
 		workflows: workflows,
 	})
 }
@@ -3404,36 +3488,10 @@ func (h *GitTestHelper) createRepo(
 		require.NoError(t, err, "failed to create user")
 	}
 
-	remote, err := h.gitServer.CreateRepo(t.Context(), repoName, user)
-	require.NoError(t, err, "failed to create remote repository")
+	remote, local := h.CreateRemoteGitRepo(t, repoName, user, opts.initialFiles)
 
 	if opts.exportRepo {
 		h.exportRepoInfos[repoName] = &exportRepoInfo{user: user, remote: remote}
-	}
-
-	local, err := gittest.NewLocalRepo(t.Context())
-	require.NoError(t, err, "failed to create local repository")
-	t.Cleanup(func() {
-		if err := local.Cleanup(); err != nil {
-			t.Logf("failed to cleanup local repo: %v", err)
-		}
-	})
-
-	_, err = local.InitWithRemote(user, remote)
-	require.NoError(t, err, "failed to initialize local repo with remote")
-
-	for filePath, content := range opts.initialFiles {
-		err = local.CreateFile(filePath, string(content))
-		require.NoError(t, err, "failed to create file %s", filePath)
-	}
-
-	if len(opts.initialFiles) > 0 {
-		_, err = local.Git("add", ".")
-		require.NoError(t, err, "failed to add files")
-		_, err = local.Git("commit", "-m", "Add initial files")
-		require.NoError(t, err, "failed to commit files")
-		_, err = local.Git("push")
-		require.NoError(t, err, "failed to push files")
 	}
 
 	workflows := []string{"write"}
@@ -3463,6 +3521,40 @@ func (h *GitTestHelper) createRepo(
 
 	if opts.waitForReady {
 		h.waitForReadyRepository(t, repoName)
+	}
+
+	return remote, local
+}
+
+func (h *GitTestHelper) CreateRemoteGitRepo(t *testing.T, repoName string, user *gittest.User, initialFiles map[string][]byte) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	t.Helper()
+
+	remote, err := h.gitServer.CreateRepo(t.Context(), repoName, user)
+	require.NoError(t, err, "failed to create remote repository")
+
+	local, err := gittest.NewLocalRepo(t.Context())
+	require.NoError(t, err, "failed to create local repository")
+	t.Cleanup(func() {
+		if err := local.Cleanup(); err != nil {
+			t.Logf("failed to cleanup local repo: %v", err)
+		}
+	})
+
+	_, err = local.InitWithRemote(user, remote)
+	require.NoError(t, err, "failed to initialize local repo with remote")
+
+	for filePath, content := range initialFiles {
+		err = local.CreateFile(filePath, string(content))
+		require.NoError(t, err, "failed to create file %s", filePath)
+	}
+
+	if len(initialFiles) > 0 {
+		_, err = local.Git("add", ".")
+		require.NoError(t, err, "failed to add files")
+		_, err = local.Git("commit", "-m", "Add initial files")
+		require.NoError(t, err, "failed to commit files")
+		_, err = local.Git("push")
+		require.NoError(t, err, "failed to push files")
 	}
 
 	return remote, local

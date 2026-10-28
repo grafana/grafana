@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { type Locator, test } from '@playwright/test';
 
 import { PageObject, type PageObjectArgs } from '../PageObject';
 
@@ -19,12 +19,15 @@ export class TabOptions extends PageObject {
     this.repeatOptions = new RepeatOptions(args, 'repeat-options');
   }
 
+  /** Returns the tab title input */
+  getTitleInput(): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput);
+  }
+
   /** Sets the tab title */
   async setTitle(tabTitle: string) {
     await test.step(`Set tab title to "${tabTitle}"`, async () => {
-      const titleInput = this.getByGrafanaSelector(
-        this.selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput
-      );
+      const titleInput = this.getTitleInput();
       await titleInput.fill(tabTitle);
       await titleInput.blur();
     });

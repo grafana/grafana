@@ -811,6 +811,10 @@ export interface TableColorTextCellOptions {
  * Json view cell options
  */
 export interface TableJsonViewCellOptions {
+  /**
+   * Enables syntax highlighting. Defaults to true when omitted.
+   */
+  syntaxHighlighting?: boolean;
   type: TableCellDisplayMode.JSONView;
 }
 
@@ -851,6 +855,7 @@ export interface TableBarGaugeCellOptions {
  */
 export interface TableSparklineCellOptions extends GraphFieldConfig {
   hideValue?: boolean;
+  showTooltip?: boolean;
   type: TableCellDisplayMode.Sparkline;
 }
 
@@ -1052,6 +1057,10 @@ export interface TableOptions {
     left?: number;
   };
   /**
+   * Controls whether cells overflow when hovered. Selected cells always overflow.
+   */
+  hoverOverflow?: boolean;
+  /**
    * limits the maximum height of a row, if text wrapping or dynamic height is enabled
    */
   maxRowHeight?: number;
@@ -1059,6 +1068,10 @@ export interface TableOptions {
    * When pagination is enabled, sets a fixed number of rows per page. When unset, the page size is derived from the panel height.
    */
   pageSize?: number;
+  /**
+   * Whether the column management sidebar starts open.
+   */
+  showColumnsSidebar?: boolean;
   /**
    * Controls whether the panel should show the header
    */
@@ -1071,14 +1084,21 @@ export interface TableOptions {
    * Used to control row sorting
    */
   sortBy?: Array<TableSortByFieldState>;
+  /**
+   * Alternates the background color of every other row. Only applies when the
+   * `table.refreshNewFeatures` feature toggle is enabled.
+   */
+  zebraStriping?: boolean;
 }
 
 export const defaultTableOptions: Partial<TableOptions> = {
   cellHeight: TableCellHeight.Sm,
   frameIndex: 0,
+  hoverOverflow: true,
   showHeader: true,
   showTypeIcons: false,
   sortBy: [],
+  zebraStriping: false,
 };
 
 /**
@@ -1101,6 +1121,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
    * Hides any header for a column, useful for columns that show some static content or buttons.
    */
   hideHeader?: boolean;
+  /**
+   * Whether the column can be hidden from the table.
+   */
+  hideable?: boolean;
   inspect: boolean;
   minWidth?: number;
   /**

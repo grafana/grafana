@@ -1,9 +1,10 @@
-import { css } from '@emotion/css';
-import { useCallback } from 'react';
+import { css, cx } from '@emotion/css';
+import { useCallback, type MouseEvent } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ClipboardButton, type CustomCellRendererProps, IconButton, useTheme2 } from '@grafana/ui';
+import { getIconButtonStyles } from 'app/features/logs/components/panel/activeIconButtonStyles';
 import { type LogsFrame } from 'app/features/logs/logsFrame';
 
 import { useLogDetailsContext } from '../LogDetailsContext';
@@ -25,9 +26,13 @@ export function LogsTableRowActionButtons(props: Props) {
   const styles = getStyles(theme);
   const { enableLogDetails, detailsDisplayed, toggleDetails } = useLogDetailsContext();
 
-  const handleDetailsClick = useCallback(() => {
-    toggleDetails(rowIndex);
-  }, [rowIndex, toggleDetails]);
+  const handleDetailsClick = useCallback(
+    (e: MouseEvent<HTMLElement>) => {
+      const modifierKeyPressed = e.ctrlKey || e.metaKey || e.shiftKey;
+      toggleDetails(rowIndex, modifierKeyPressed);
+    },
+    [rowIndex, toggleDetails]
+  );
 
   return (
     <>
@@ -35,9 +40,12 @@ export function LogsTableRowActionButtons(props: Props) {
         {enableLogDetails && (
           <div className={styles.buttonWrapper}>
             <IconButton
-              className={styles.inspectButton}
+              className={cx(
+                styles.inspectButton,
+                styles.iconButton,
+                detailsDisplayed(rowIndex) && styles.activeIconButton
+              )}
               tooltip={t('explore.logs-table.action-buttons.show-details', 'Show details')}
-              variant={detailsDisplayed(rowIndex) ? 'primary' : 'secondary'}
               aria-label={t('explore.logs-table.action-buttons.show-details', 'Show details')}
               tooltipPlacement="top"
               size="md"
@@ -98,15 +106,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     alignItems: 'center',
   }),
   inspectButton: css({
-    borderRadius: theme.shape.radius.default,
     display: 'inline-flex',
-    margin: 0,
-    overflow: 'hidden',
     verticalAlign: 'middle',
     cursor: 'pointer',
-    height: '24px',
-    width: '20px',
   }),
+  ...getIconButtonStyles(theme),
   clipboardButton: css({
     lineHeight: '1',
     padding: 0,

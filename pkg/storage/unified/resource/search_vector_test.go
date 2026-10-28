@@ -71,11 +71,13 @@ type fakeVectorBackend struct {
 	// {PartitionKey: resource}. Set collection to override, or
 	// resolveNotFound/resolveErr to exercise those paths.
 	collection      *vector.Collection
+	resolveCalls    int
 	resolveNotFound bool
 	resolveErr      error
 }
 
 func (f *fakeVectorBackend) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	f.resolveCalls++
 	if f.resolveErr != nil {
 		return vector.Collection{}, false, f.resolveErr
 	}
@@ -86,6 +88,10 @@ func (f *fakeVectorBackend) ResolveCollection(_ context.Context, group, resource
 		return *f.collection, true, nil
 	}
 	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
+}
+
+func (f *fakeVectorBackend) EnsureCollectionWithScope(ctx context.Context, group, resource string, isExternal bool, scope vector.CollectionScope) (vector.Collection, error) {
+	return f.EnsureCollection(ctx, group, resource, isExternal)
 }
 
 func (f *fakeVectorBackend) EnsureCollection(_ context.Context, group, resource string, isExternal bool) (vector.Collection, error) {
@@ -141,6 +147,9 @@ func (f *fakeVectorBackend) ContentVersion(context.Context, string, string, stri
 func (f *fakeVectorBackend) UpdateContentVersion(context.Context, string, string, string, string, int) error {
 	return nil
 }
+func (f *fakeVectorBackend) UpdateFolder(context.Context, string, string, string, string, string) error {
+	return nil
+}
 func (f *fakeVectorBackend) GetLatestRV(context.Context) (int64, error) { return 0, nil }
 func (f *fakeVectorBackend) SetLatestRV(context.Context, int64) error   { return nil }
 func (f *fakeVectorBackend) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {
@@ -185,6 +194,8 @@ func newTestSearchServer(emb *embedder.Embedder, backend vector.VectorBackend, a
 		vectorBackend: backend,
 		embedder:      emb,
 		access:        ac,
+		indexMetrics:  ProvideIndexMetrics(nil),
+		vectorMetrics: ProvideVectorMetrics(nil),
 		// validKey()'s pair, allowed on both lists so tests exercise paths past the allowlist.
 		collectionAllowlist: vector.NewCollectionAllowlist([]string{"g/r"}, []string{"g/r"}),
 	}

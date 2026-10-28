@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, LoadingPlaceholder, Text } from '@grafana/ui';
+import { Alert, Box, LoadingPlaceholder, Pagination, Text } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { AlertState, AlertmanagerChoice } from '../../../plugins/datasource/alertmanager/types';
@@ -12,9 +12,10 @@ import { InhibitionRulesAlert } from './components/InhibitionRulesAlert';
 import { AlertGroup } from './components/alert-groups/AlertGroup';
 import { AlertGroupFilter } from './components/alert-groups/AlertGroupFilter';
 import { useGroupedAlerts } from './hooks/useGroupedAlerts';
+import { usePagination } from './hooks/usePagination';
 import { useAlertGroupsNav } from './navigation/useAlertActivityNav';
 import { useAlertmanager } from './state/AlertmanagerContext';
-import { NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
+import { GROUPS_PER_PAGE, NOTIFICATIONS_POLL_INTERVAL_MS } from './utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
 import { getFiltersFromUrlParams, stringifyErrorLike } from './utils/misc';
@@ -66,6 +67,7 @@ const AlertGroups = () => {
     {
       skip: !selectedAlertmanager,
       pollingInterval: NOTIFICATIONS_POLL_INTERVAL_MS,
+      skipPollingIfUnfocused: true,
     }
   );
 
@@ -76,6 +78,8 @@ const AlertGroups = () => {
     receivers && receivers.length > 1
       ? groupedAlerts.filter((g) => receivers.includes(g.receiver.name))
       : groupedAlerts;
+
+  const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredAlertGroups, 1, GROUPS_PER_PAGE);
 
   const grafanaAmDeliveryDisabled =
     selectedAlertmanager === GRAFANA_RULES_SOURCE_NAME &&
@@ -113,11 +117,12 @@ const AlertGroups = () => {
       {selectedAlertmanager && <InhibitionRulesAlert alertmanagerSourceName={selectedAlertmanager} />}
 
       {results &&
-        filteredAlertGroups.map((group, index) => {
+        pageItems.map((group, index) => {
+          const absoluteIndex = (page - 1) * GROUPS_PER_PAGE + index;
           return (
-            <Fragment key={`${JSON.stringify(group.labels)}-group-${index}`}>
-              {((index === 1 && Object.keys(filteredAlertGroups[0].labels).length === 0) ||
-                (index === 0 && Object.keys(group.labels).length > 0)) && (
+            <Fragment key={`${JSON.stringify(group.labels)}-group-${absoluteIndex}`}>
+              {((absoluteIndex === 1 && Object.keys(filteredAlertGroups[0].labels).length === 0) ||
+                (absoluteIndex === 0 && Object.keys(group.labels).length > 0)) && (
                 <Box paddingY={2}>
                   <Text element="h2" variant="body">
                     <Trans
@@ -137,6 +142,11 @@ const AlertGroups = () => {
         <p>
           <Trans i18nKey="alerting.alert-groups.no-results">No results.</Trans>
         </p>
+      )}
+      {results && numberOfPages > 1 && (
+        <Box paddingTop={2}>
+          <Pagination currentPage={page} numberOfPages={numberOfPages} onNavigate={onPageChange} hideWhenSinglePage />
+        </Box>
       )}
     </>
   );

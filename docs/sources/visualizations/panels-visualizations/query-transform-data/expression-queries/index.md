@@ -90,7 +90,7 @@ The example above will produce a number that works with expressions. The string 
 
 ### Operations
 
-You can use the following operations in expressions: math, reduce, and resample.
+You can use the following operations in expressions: math, reduce, resample, and SQL.
 
 #### Math
 

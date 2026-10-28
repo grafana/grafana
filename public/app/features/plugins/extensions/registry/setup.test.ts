@@ -1,6 +1,7 @@
+import { PluginExtensionExposedComponents } from '@grafana/data';
 import { TracedError, type MonitoringLogger } from '@grafana/runtime';
 import { getAppPluginMetas, invalidateCachedPromisesCache } from '@grafana/runtime/internal';
-import { mockLogger } from '@grafana/test-utils/unstable';
+import { mockLogger, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { getPluginExtensionRegistries } from './setup';
 
@@ -62,5 +63,22 @@ describe('getPluginExtensionRegistries', () => {
     expect(loggedError.message).toBe('getCachedPromise: Something failed while resolving a cached promise');
     expect(loggedError.cause).toStrictEqual(new Error('Some error'));
     expect(context).toEqual({ key: expect.stringMatching(/^initPluginExtensionRegistries:-?\d+$/) });
+  });
+
+  describe('the add-to-notebook form', () => {
+    afterEach(() => setTestFlags({}));
+
+    test.each([
+      ['on', true],
+      ['off', false],
+    ])('with dashboard.notebooks %s, is registered: %s', async (_label, notebooksOn) => {
+      setTestFlags({ 'dashboard.notebooks': notebooksOn });
+
+      const { exposedComponentsRegistry } = await getPluginExtensionRegistries();
+      const state = await exposedComponentsRegistry.getState();
+
+      expect(PluginExtensionExposedComponents.AddToNotebookFormV1 in state).toBe(notebooksOn);
+      expect(PluginExtensionExposedComponents.AddToNotebookFormV2 in state).toBe(notebooksOn);
+    });
   });
 });

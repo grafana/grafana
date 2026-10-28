@@ -1,10 +1,10 @@
 package builder
 
 import (
+	"errors"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 // Server names for the handler chains built in one process.
@@ -35,15 +35,25 @@ type watchMetrics struct {
 // registerer from ServerRegisterer, so chains built for different servers do not
 // collide.
 func newWatchMetrics(reg prometheus.Registerer) *watchMetrics {
-	return &watchMetrics{
-		establishmentDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: "grafana",
-			Subsystem: "apiserver",
-			Name:      "watch_establishment_duration_seconds",
-			Help:      "Time from receiving a watch request to the first byte written to the client, by server, group and resource.",
-			Buckets:   prometheus.DefBuckets,
-		}, []string{"group", "resource"}),
+	duration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "grafana",
+		Subsystem: "apiserver",
+		Name:      "watch_establishment_duration_seconds",
+		Help:      "Time from receiving a watch request to the first byte written to the client, by server, group and resource.",
+		Buckets:   prometheus.DefBuckets,
+	}, []string{"group", "resource"})
+	if reg != nil {
+		if err := reg.Register(duration); err != nil {
+			// Plugin handlers can be rebuilt against the same registry. Reuse the
+			// collector so both existing and replacement handlers keep recording.
+			var registered prometheus.AlreadyRegisteredError
+			if !errors.As(err, &registered) {
+				panic(err)
+			}
+			duration = registered.ExistingCollector.(*prometheus.HistogramVec)
+		}
 	}
+	return &watchMetrics{establishmentDuration: duration}
 }
 
 // observeEstablishment matches filters.WatchEstablishmentRecorder.

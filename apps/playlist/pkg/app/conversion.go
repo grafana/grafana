@@ -37,12 +37,15 @@ func (e *ExampleConverter) Convert(obj k8s.RawKind, targetAPIVersion string) ([]
 		return obj.Raw, nil
 	}
 
-	// This conversion is dump... since both objects are identical just remove the apiVersion
+	// Both versions have the same schema, so only the apiVersion changes. It
+	// must be set: callers such as the router check the converted object's
+	// apiVersion, as Kubernetes does for conversion webhooks.
 	out := &v1.Playlist{}
 	err := json.Unmarshal(obj.Raw, out)
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal JSON bytes into Playlist: %w", err)
 	}
-	out.APIVersion = "" // empty... filled in later
+	out.APIVersion = dstGVK.GroupVersion().String()
+	out.Kind = dstGVK.Kind
 	return json.Marshal(out)
 }

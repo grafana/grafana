@@ -705,7 +705,7 @@ func estimateFieldBytes(field *data.Field) int {
 	switch field.Type() {
 	case data.FieldTypeString, data.FieldTypeNullableString:
 		total := 0
-		for i := 0; i < n; i++ {
+		for i := range n {
 			switch v := field.At(i).(type) {
 			case string:
 				total += len(v)
@@ -718,7 +718,7 @@ func estimateFieldBytes(field *data.Field) int {
 		return total
 	case data.FieldTypeJSON, data.FieldTypeNullableJSON: //nolint:staticcheck
 		total := 0
-		for i := 0; i < n; i++ {
+		for i := range n {
 			switch v := field.At(i).(type) {
 			case json.RawMessage:
 				total += len(v)

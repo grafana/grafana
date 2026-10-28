@@ -9,180 +9,128 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
-	res "github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func TestLegacyTeamSearchClient_Search(t *testing.T) {
-	t.Run("search by query", func(t *testing.T) {
-		mockTeamService := teamtest.NewFakeService()
-		client := NewLegacyTeamSearchClient(mockTeamService, tracing.InitializeTracerForTest())
+type searchTeamService struct {
+	team.Service
+	search func(context.Context, *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
+}
 
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, Namespace: "default"})
-		req := &resourcepb.ResourceSearchRequest{
-			Limit:  10,
-			Page:   1,
-			Query:  "test",
-			Fields: []string{"name", "email", "provisioned", "externalUID"},
-		}
+func (s *searchTeamService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+	return s.search(ctx, query)
+}
 
-		mockTeamService.ExpectedSearchTeamsResult = team.SearchTeamQueryResult{
-			Teams: []*team.TeamDTO{
-				{
-					UID:           "testTeamUID",
-					Name:          "test team",
-					Email:         "test@example.com",
-					IsProvisioned: true,
-					ExternalUID:   "testExternalUID",
-				},
-			},
-			TotalCount: 1,
-			Page:       1,
-			PerPage:    10,
-		}
+func TestLegacyTeamSearch(t *testing.T) {
+	requester := &user.SignedInUser{OrgID: 1, UserID: 2, Namespace: "default"}
+	for _, tt := range []struct {
+		name      string
+		query     SearchQuery
+		wantIDs   []int64
+		wantLimit int
+	}{
+		{name: "query", query: SearchQuery{Query: "test", Limit: 10, Page: 2, Offset: 15}, wantLimit: 10},
+		{name: "title", query: SearchQuery{Title: "Engineering", Limit: 2, Page: 1}, wantLimit: 2},
+		{name: "UIDs", query: SearchQuery{UIDs: []string{"team-1", "team-2"}, Limit: 10, Page: 1}, wantLimit: 10},
+		{name: "legacy IDs", query: SearchQuery{TeamIDs: []string{"001", "2"}, Limit: 10, Page: 1}, wantIDs: []int64{1, 2}, wantLimit: 10},
+		{name: "defaults", wantLimit: common.DefaultListLimit},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			called := false
+			service := &searchTeamService{search: func(_ context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+				called = true
+				require.Same(t, requester, query.SignedInUser)
+				require.Equal(t, int64(1), query.OrgID)
+				require.Equal(t, tt.query.Query, query.Query)
+				require.Equal(t, tt.query.Title, query.Name)
+				require.Equal(t, tt.query.UIDs, query.UIDs)
+				require.Equal(t, tt.wantIDs, query.TeamIds)
+				require.Equal(t, tt.wantLimit, query.Limit)
+				require.Equal(t, int(tt.query.Page), query.Page)
+				return team.SearchTeamQueryResult{
+					Teams:      []*team.TeamDTO{{ID: 42, UID: "team-1", Name: "Engineering", Email: "team@example.com", IsProvisioned: true, ExternalUID: "external-1"}},
+					TotalCount: 5,
+				}, nil
+			}}
+			backend := NewLegacyTeamSearchClient(service, tracing.NewNoopTracerService())
+			result, err := backend.Search(identity.WithRequester(t.Context(), requester), tt.query)
+			require.NoError(t, err)
+			require.True(t, called)
+			require.Equal(t, int64(5), result.TotalHits)
+			require.Equal(t, tt.query.Offset, result.Offset)
+			id := int64(42)
+			require.Equal(t, []iamv0.GetSearchTeamsTeamHit{{Name: "team-1", Title: "Engineering", Email: "team@example.com", Provisioned: true, ExternalUID: "external-1", InternalId: &id}}, result.Hits)
+		})
+	}
+}
 
-		resp, err := client.Search(ctx, req)
+func TestLegacyTeamSearchErrors(t *testing.T) {
+	for _, tt := range []struct {
+		name  string
+		query SearchQuery
+		err   string
+	}{
+		{name: "negative page", query: SearchQuery{Page: -1}, err: "invalid page number: -1"},
+		{name: "large page", query: SearchQuery{Page: math.MaxInt32 + 1}, err: "invalid page number: 2147483648"},
+		{name: "large limit", query: SearchQuery{Limit: common.MaxListLimit + 1}, err: fmt.Sprintf("limit cannot be greater than %d", common.MaxListLimit)},
+		{name: "invalid ID", query: SearchQuery{TeamIDs: []string{"invalid"}}, err: "invalid legacy team ID"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			service := &searchTeamService{search: func(context.Context, *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+				t.Fatal("invalid query must not reach the service")
+				return team.SearchTeamQueryResult{}, nil
+			}}
+			backend := NewLegacyTeamSearchClient(service, tracing.NewNoopTracerService())
+			ctx := identity.WithRequester(t.Context(), &user.SignedInUser{OrgID: 1})
+			result, err := backend.Search(ctx, tt.query)
+			require.ErrorContains(t, err, tt.err)
+			require.Nil(t, result)
+		})
+	}
 
-		require.NoError(t, err)
-		require.Equal(t, int64(1), resp.TotalHits)
-		require.Len(t, resp.Results.Rows, 1)
-		require.Len(t, resp.Results.Columns, 5)
-		require.Equal(t, "default", resp.Results.Rows[0].Key.Namespace)
-		require.Equal(t, "iam.grafana.app", resp.Results.Rows[0].Key.Group)
-		require.Equal(t, "teams", resp.Results.Rows[0].Key.Resource)
-		require.Equal(t, "testTeamUID", resp.Results.Rows[0].Key.Name)
-		require.Equal(t, "testTeamUID", string(resp.Results.Rows[0].Cells[0]))
-		require.Equal(t, "test team", string(resp.Results.Rows[0].Cells[1]))
-		require.Equal(t, "test@example.com", string(resp.Results.Rows[0].Cells[2]))
-		require.Equal(t, "true", string(resp.Results.Rows[0].Cells[3]))
-		require.Equal(t, "testExternalUID", string(resp.Results.Rows[0].Cells[4]))
+	t.Run("service error", func(t *testing.T) {
+		wantErr := errors.New("search teams failed")
+		service := &searchTeamService{search: func(context.Context, *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
+			return team.SearchTeamQueryResult{}, wantErr
+		}}
+		backend := NewLegacyTeamSearchClient(service, tracing.NewNoopTracerService())
+		ctx := identity.WithRequester(t.Context(), &user.SignedInUser{OrgID: 1})
+		_, err := backend.Search(ctx, SearchQuery{})
+		require.ErrorIs(t, err, wantErr)
 	})
 
-	t.Run("returns error if page is negative", func(t *testing.T) {
-		mockTeamService := teamtest.NewFakeService()
-		client := NewLegacyTeamSearchClient(mockTeamService, tracing.InitializeTracerForTest())
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, Namespace: "default"})
-		req := &resourcepb.ResourceSearchRequest{
-			Limit: 10,
-			Page:  -1,
-		}
-
-		_, err := client.Search(ctx, req)
+	t.Run("missing requester", func(t *testing.T) {
+		backend := NewLegacyTeamSearchClient(nil, tracing.NewNoopTracerService())
+		_, err := backend.Search(t.Context(), SearchQuery{})
 		require.Error(t, err)
-		require.Equal(t, "invalid page number: -1", err.Error())
-	})
-
-	t.Run("returns error if page is greater than math.MaxInt32", func(t *testing.T) {
-		mockTeamService := teamtest.NewFakeService()
-		client := NewLegacyTeamSearchClient(mockTeamService, tracing.InitializeTracerForTest())
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, Namespace: "default"})
-		req := &resourcepb.ResourceSearchRequest{
-			Limit: 10,
-			Page:  math.MaxInt32 + 1,
-		}
-
-		_, err := client.Search(ctx, req)
-		require.Error(t, err)
-		require.Equal(t, "invalid page number: 2147483648", err.Error())
-	})
-
-	t.Run("returns error if limit exceeds common.MaxListLimit", func(t *testing.T) {
-		mockTeamService := teamtest.NewFakeService()
-		client := NewLegacyTeamSearchClient(mockTeamService, tracing.InitializeTracerForTest())
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, Namespace: "default"})
-		req := &resourcepb.ResourceSearchRequest{
-			Limit: common.MaxListLimit + 1,
-			Page:  1,
-		}
-
-		resp, err := client.Search(ctx, req)
-		require.Error(t, err)
-		require.Nil(t, resp)
-		require.Equal(t, fmt.Sprintf("limit cannot be greater than %d", common.MaxListLimit), err.Error())
-	})
-
-	t.Run("returns error if search teams fails", func(t *testing.T) {
-		mockTeamService := teamtest.NewFakeService()
-		client := NewLegacyTeamSearchClient(mockTeamService, tracing.InitializeTracerForTest())
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, Namespace: "default"})
-		req := &resourcepb.ResourceSearchRequest{
-			Limit: 10,
-			Page:  1,
-			Query: "test",
-		}
-
-		mockTeamService.ExpectedError = errors.New("search teams failed")
-
-		_, err := client.Search(ctx, req)
-		require.Error(t, err)
-		require.Equal(t, "search teams failed", err.Error())
 	})
 }
 
-func Test_titleFromRequirements(t *testing.T) {
-	t.Run("should extract title from fields", func(t *testing.T) {
-		opts := &resourcepb.ListOptions{
-			Fields: []*resourcepb.Requirement{
-				{Key: res.SEARCH_FIELD_TITLE, Values: []string{"My Team"}},
-			},
-		}
-		title, err := titleFromRequirements(opts)
-		require.NoError(t, err)
-		require.Equal(t, "My Team", title)
-	})
-
-	t.Run("should return empty string when no title requirement", func(t *testing.T) {
-		opts := &resourcepb.ListOptions{
-			Fields: []*resourcepb.Requirement{
-				{Key: "other.field", Values: []string{"value"}},
-			},
-		}
-		title, err := titleFromRequirements(opts)
-		require.NoError(t, err)
-		require.Equal(t, "", title)
-	})
-
-	t.Run("should return error when values are empty", func(t *testing.T) {
-		opts := &resourcepb.ListOptions{
-			Fields: []*resourcepb.Requirement{
-				{Key: res.SEARCH_FIELD_TITLE, Values: []string{}},
-			},
-		}
-		_, err := titleFromRequirements(opts)
-		require.EqualError(t, err, "title filter requires exactly one value, got 0")
-	})
-
-	t.Run("should return error when multiple values provided", func(t *testing.T) {
-		opts := &resourcepb.ListOptions{
-			Fields: []*resourcepb.Requirement{
-				{Key: res.SEARCH_FIELD_TITLE, Values: []string{"a", "b"}},
-			},
-		}
-		_, err := titleFromRequirements(opts)
-		require.EqualError(t, err, "title filter requires exactly one value, got 2")
-	})
-
-	t.Run("should return empty string when opts is nil", func(t *testing.T) {
-		title, err := titleFromRequirements(nil)
-		require.NoError(t, err)
-		require.Equal(t, "", title)
-	})
-
-	t.Run("should skip nil requirements", func(t *testing.T) {
-		opts := &resourcepb.ListOptions{
-			Fields: []*resourcepb.Requirement{
-				nil,
-				{Key: res.SEARCH_FIELD_TITLE, Values: []string{"Found"}},
-			},
-		}
-		title, err := titleFromRequirements(opts)
-		require.NoError(t, err)
-		require.Equal(t, "Found", title)
-	})
+func TestLegacyTeamSortOptions(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		sort []string
+		want []string
+	}{
+		{name: "empty", want: []string{}},
+		{name: "title", sort: []string{"title"}, want: []string{"name-asc"}},
+		{name: "descending", sort: []string{"-title", "-email"}, want: []string{"name-desc", "email-desc"}},
+		{name: "legacy priority", sort: []string{"-email", "title"}, want: []string{"name-asc", "email-desc"}},
+		{name: "prefixed fields", sort: []string{"fields.email", "-fields.title"}, want: []string{"name-desc", "email-asc"}},
+		{name: "unknown ignored", sort: []string{"invalid"}, want: []string{}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			opts := legacyTeamSortOptions(tt.sort)
+			names := make([]string, 0, len(opts))
+			for _, opt := range opts {
+				names = append(names, opt.Name)
+			}
+			require.Equal(t, tt.want, names)
+		})
+	}
 }

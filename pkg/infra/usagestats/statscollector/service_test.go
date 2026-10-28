@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
@@ -68,8 +67,6 @@ func TestTotalStatsUpdate(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
-
 		t.Run(fmt.Sprintf(
 			"metricsEnabled(%v) * totalStatsDisabled(%v) = %v",
 			tc.MetricsEndpointEnabled,

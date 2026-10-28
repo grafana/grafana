@@ -1,4 +1,4 @@
-import { act, fireEvent, render, within } from '@testing-library/react';
+import { act, fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,9 +9,10 @@ import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsD
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { annotationEditActions } from '../../settings/annotations/actions';
+import { partitionAnnotationsByDisplay } from '../../settings/annotations/partitionAnnotations';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
-import { DashboardAnnotationsList, partitionAnnotationsByDisplay } from './DashboardAnnotationsList';
+import { DashboardAnnotationsList } from './DashboardAnnotationsList';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -231,6 +232,9 @@ describe('User interactions', () => {
       direction: 'up' | 'down',
       positions = 1
     ) {
+      await waitFor(() => {
+        expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(itemIndex);
+      });
       const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
       const handle = dragHandles[itemIndex] as HTMLElement;
       handle.focus();

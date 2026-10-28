@@ -1,12 +1,16 @@
 import { act, renderHook } from '@testing-library/react';
+import { createElement, useLayoutEffect } from 'react';
 
 import { createDataFrame, type Field, FieldType, ReducerID } from '@grafana/data';
+import { type DataGridHandle } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { TABLE } from './constants';
+import { TableFilterProvider, useTableFilters } from './TableFilterContext';
+import { NESTED_TABLE_VERTICAL_PADDING, REFRESHED_NESTED_TABLE_VERTICAL_PADDING, TABLE } from './constants';
 import {
   useFilteredRows,
   useNestedColWidths,
+  useNotifyDisplayedRowIndices,
   usePaginatedRows,
   useSortedRows,
   useHeaderHeight,
@@ -16,13 +20,217 @@ import {
   useNestedRows,
   useColWidths,
   useRowCompiler,
+  useScrollShadows,
+  useScrollbarWidth,
+  useFlatRowHeight,
+  useTextWrapFallback,
 } from './hooks';
-import { type TableRow } from './types';
-import { applyFilter, createTypographyContext, compileFrameToRecords } from './utils';
+import { type TableRow, type TypographyCtx } from './types';
+import { createTypographyContext, compileFrameToRecords, computeContentAwareColWidths } from './utils';
 
-const emptyFilterResult = applyFilter([], {}, []);
+const emptyFilterResult = { filteredRows: [], crossFilterOrder: [], crossFilterRows: {}, crossFilterTailRows: [] };
+
+describe('useScrollbarWidth', () => {
+  it('measures the displaced width during layout without waiting for a timer or resize notification', () => {
+    jest.useFakeTimers();
+    try {
+      let layoutFinished = false;
+      const measurementPhases: boolean[] = [];
+      const element = document.createElement('div');
+      Object.defineProperties(element, {
+        offsetWidth: { value: 500 },
+        clientWidth: {
+          get: () => {
+            measurementPhases.push(layoutFinished);
+            return 485;
+          },
+        },
+      });
+      const ref = { current: { element } as DataGridHandle };
+      const { result, unmount } = renderHook(() => {
+        const width = useScrollbarWidth(ref, 300);
+        useLayoutEffect(() => {
+          layoutFinished = true;
+        }, []);
+        return width;
+      });
+
+      expect(measurementPhases[0]).toBe(false);
+      expect(result.current).toBe(15);
+      unmount();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+});
 
 describe('TableNG hooks', () => {
+  describe('oversized wrapped text', () => {
+    const typographyCtx = createTypographyContext(14, 'sans-serif');
+    const columnWidths = [300, 300, 300];
+    const data = createDataFrame({
+      fields: ['first', 'second', 'unaffected'].map((name) => ({
+        name,
+        type: FieldType.string,
+        config: { custom: { wrapText: true } },
+        values: [],
+      })),
+    });
+    const fields = data.fields;
+
+    it('returns a constant height without reading values when no fields wrap, including after refresh', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'message', type: FieldType.string, values: ['x'.repeat(28_000)] }],
+      });
+      const values = frame.fields[0].values;
+      const readValues = jest.fn(() => values);
+      Object.defineProperty(frame.fields[0], 'values', { get: readValues });
+      const { result, rerender } = renderHook(
+        ({ frame }) => {
+          const wrapFallback = useTextWrapFallback(frame);
+          return useFlatRowHeight({
+            fields: frame.fields,
+            columnWidths,
+            defaultHeight: 34,
+            typographyCtx,
+            wrapFallback,
+          });
+        },
+        { initialProps: { frame } }
+      );
+
+      expect(result.current).toBe(34);
+      rerender({ frame: { ...frame } });
+      expect(result.current).toBe(34);
+      expect(readValues).not.toHaveBeenCalled();
+    });
+
+    it('calculates unwrapped nested height from the row count without visiting nested rows or values', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'message', type: FieldType.string, values: ['x'.repeat(28_000), 'short'] }],
+      });
+      const values = frame.fields[0].values;
+      const readValues = jest.fn(() => values);
+      Object.defineProperty(frame.fields[0], 'values', { get: readValues });
+      const nestedRecords = [
+        { __index: 0, __depth: 0, __parentIndex: 0 },
+        { __index: 1, __depth: 0, __parentIndex: 0 },
+      ];
+      const firstRow = nestedRecords[0];
+      const readRow = jest.fn(() => firstRow);
+      Object.defineProperty(nestedRecords, '0', { get: readRow });
+      const entry = {
+        raw: [],
+        final: nestedRecords,
+        filterResult: emptyFilterResult,
+      };
+      const { result } = renderHook(() => {
+        const wrapFallback = useTextWrapFallback(frame);
+        const rowHeight = useRowHeight({
+          fields: frame.fields,
+          nestedFields: frame.fields,
+          columnWidths,
+          nestedColWidths: columnWidths,
+          defaultHeight: 34,
+          defaultNestedHeight: 34,
+          typographyCtx,
+          wrapFallback,
+          nestedWrapFallback: wrapFallback,
+          hasNestedFrames: true,
+          visibleNestedRowCounts: [2],
+          nestedRows: [entry],
+        });
+        return typeof rowHeight === 'function' ? rowHeight({ __index: 0, __depth: 1 }) : rowHeight;
+      });
+
+      expect(result.current).toBe(114);
+      expect(readRow).not.toHaveBeenCalled();
+      expect(readValues).not.toHaveBeenCalled();
+    });
+
+    it('collects multiple columns in one scan and repairs earlier cached heights once', () => {
+      const measureHeight = jest.fn((value: unknown) => String(value).split('\n').length * 22);
+      const typography = { ...typographyCtx, measureHeight };
+      const rows: TableRow[] = [
+        { __index: 0, __depth: 0, first: 'a\nb\nc', second: 'a\nb', unaffected: 'x\ny' },
+        { __index: 1, __depth: 0, first: 'a'.repeat(10_001), second: 'a', unaffected: 'x' },
+        { __index: 2, __depth: 0, first: 'a', second: 'b'.repeat(10_001), unaffected: 'x' },
+      ];
+      const scans: unknown[][] = [];
+      const { result, rerender } = renderHook(() => {
+        const wrapFallback = useTextWrapFallback(data);
+        const rowHeight = useFlatRowHeight({
+          fields,
+          columnWidths,
+          defaultHeight: 34,
+          typographyCtx: typography,
+          wrapFallback,
+        });
+        const heights = rows.map((row) => (typeof rowHeight === 'function' ? rowHeight(row) : rowHeight));
+        scans.push(heights);
+        return { wrapFallback, rowHeight };
+      });
+
+      expect(scans).toEqual([
+        [78, 34, 34],
+        [56, 34, 34],
+      ]);
+      expect([...result.current.wrapFallback.disabledFields]).toEqual(['first', 'second']);
+      expect(measureHeight.mock.calls.map(([value]) => value)).toEqual(['a\nb\nc', 'x\ny']);
+      const repairedHeight = result.current.rowHeight;
+      rerender();
+      expect(result.current.rowHeight).toBe(repairedHeight);
+      expect(measureHeight).toHaveBeenCalledTimes(2);
+    });
+
+    it.each([9_999, 10_000, 10_001])('checks all %i characters before the single-line estimate shortcut', (length) => {
+      const value = 'a'.repeat(length);
+      const { result } = renderHook(() => {
+        const wrapFallback = useTextWrapFallback(data);
+        const rowHeight = useFlatRowHeight({ fields, columnWidths, defaultHeight: 34, typographyCtx, wrapFallback });
+        const height =
+          typeof rowHeight === 'function' ? rowHeight({ __index: 0, __depth: 0, first: value }) : rowHeight;
+        return { height, disabled: [...wrapFallback.disabledFields] };
+      });
+
+      expect(result.current).toEqual({ height: 34, disabled: length > 10_000 ? ['first'] : [] });
+    });
+
+    it('recalculates pagination from repaired heights after a late discovery in its sample', () => {
+      const rows: TableRow[] = Array.from({ length: 101 }, (_, index) => ({
+        __index: index,
+        __depth: 0,
+        first: index === 99 ? 'x'.repeat(10_001) : 'a\nb\nc',
+      }));
+      const typography = {
+        ...typographyCtx,
+        measureHeight: (value: unknown) => String(value).split('\n').length * 22,
+      };
+      const { result } = renderHook(() => {
+        const wrapFallback = useTextWrapFallback(data);
+        const rowHeight = useFlatRowHeight({
+          fields,
+          columnWidths,
+          defaultHeight: 34,
+          typographyCtx: typography,
+          wrapFallback,
+        });
+        return usePaginatedRows(rows, {
+          height: 200,
+          width: 800,
+          headerHeight: 34,
+          footerHeight: 0,
+          rowHeight,
+          enabled: true,
+        });
+      });
+
+      expect(result.current.rowsPerPage).toBe(3);
+      expect(result.current.numPages).toBe(34);
+      expect(result.current.pageRangeEnd).toBe(3);
+    });
+  });
+
   function setupData() {
     // Mock data for testing
     const fields: Field[] = [
@@ -59,43 +267,23 @@ describe('TableNG hooks', () => {
   }
 
   describe('useFilteredRows', () => {
-    it('should correctly initialize with provided fields and rows', () => {
+    it('filters and clears rows through table transformation state', () => {
       const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields));
-      expect(result.current.rows[0].name).toBe('Alice');
-    });
-
-    it('should apply filters correctly', () => {
-      const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields));
-
-      act(() => {
-        result.current.setFilter({
-          name: { filteredSet: new Set(['Alice']), displayName: 'name' },
-        });
+      const props = { data: { fields, length: rows.length }, width: 500, height: 300 };
+      const { result } = renderHook(() => ({ filtered: useFilteredRows(rows, fields), view: useTableFilters() }), {
+        wrapper: ({ children }) => createElement(TableFilterProvider, { props, children }),
       });
 
-      expect(result.current.rows.length).toBe(1);
-      expect(result.current.rows[0].name).toBe('Alice');
-    });
-
-    it('should clear filters correctly', () => {
-      const { fields, rows } = setupData();
-      const { result } = renderHook(() => useFilteredRows(rows, fields));
-
-      act(() => {
-        result.current.setFilter({
-          name: { filteredSet: new Set(['Alice']), displayName: 'name' },
-        });
-      });
-
-      expect(result.current.rows.length).toBe(1);
-
-      act(() => {
-        result.current.setFilter({});
-      });
-
-      expect(result.current.rows.length).toBe(3);
+      expect(result.current.filtered.rows.map((row) => row.name)).toEqual(['Alice', 'Bob', 'Charlie']);
+      act(() =>
+        result.current.view?.applyFilter(fields[0], {
+          id: 'inSet',
+          options: { mode: 'display', values: ['Alice'] },
+        })
+      );
+      expect(result.current.filtered.rows.map((row) => row.name)).toEqual(['Alice']);
+      act(() => result.current.view?.clearFilter(fields[0]));
+      expect(result.current.filtered.rows.map((row) => row.name)).toEqual(['Alice', 'Bob', 'Charlie']);
     });
   });
 
@@ -153,6 +341,241 @@ describe('TableNG hooks', () => {
       );
 
       expect(setSortColumns).toHaveBeenCalledTimes(0);
+    });
+  });
+
+  describe('useNotifyDisplayedRowIndices', () => {
+    it('reports parent row __index values in display order and skips nested rows', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const rows: TableRow[] = [
+        { __depth: 0, __index: 2 },
+        { __depth: 1, __index: 2 },
+        { __depth: 0, __index: 0 },
+        { __depth: 1, __index: 0 },
+      ];
+
+      renderHook(() => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange));
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledWith([2, 0]);
+    });
+
+    it('does not notify again when the index order is unchanged', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 0, __index: 1 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('notifies when sort order changes', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 1 },
+          { __depth: 0, __index: 0 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([1, 0]);
+    });
+
+    it('does not notify again when parent order is unchanged even if nested rows are present', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 2 },
+            { __depth: 1, __index: 2 },
+            { __depth: 0, __index: 0 },
+            { __depth: 1, __index: 0 },
+          ] as TableRow[],
+        },
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledWith([2, 0]);
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 2 },
+          { __depth: 1, __index: 2 },
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not notify when only nested rows are added, removed, or moved', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledWith([0, 1]);
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+          { __depth: 0, __index: 1 },
+          { __depth: 1, __index: 1 },
+        ],
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 0, __index: 1 },
+          { __depth: 1, __index: 1 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('notifies when a parent row is filtered out', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 1, __index: 0 },
+            { __depth: 0, __index: 1 },
+            { __depth: 0, __index: 2 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+          { __depth: 0, __index: 2 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([0, 2]);
+    });
+
+    it('notifies when a parent row is added', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 2 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 0, __index: 1 },
+          { __depth: 0, __index: 2 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([0, 1, 2]);
+    });
+
+    it('notifies when displayed parent rows become empty', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 0, __index: 1 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({ rows: [] });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([]);
+    });
+
+    it('notifies when a single parent index changes and the list length stays the same', () => {
+      const onDisplayedRowIndicesChange = jest.fn();
+      const { rerender } = renderHook(({ rows }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange), {
+        initialProps: {
+          rows: [
+            { __depth: 0, __index: 0 },
+            { __depth: 1, __index: 0 },
+            { __depth: 0, __index: 1 },
+            { __depth: 0, __index: 2 },
+          ] as TableRow[],
+        },
+      });
+
+      rerender({
+        rows: [
+          { __depth: 0, __index: 0 },
+          { __depth: 1, __index: 0 },
+          { __depth: 0, __index: 3 },
+          { __depth: 0, __index: 2 },
+        ],
+      });
+
+      expect(onDisplayedRowIndicesChange).toHaveBeenCalledTimes(2);
+      expect(onDisplayedRowIndicesChange).toHaveBeenLastCalledWith([0, 3, 2]);
+    });
+
+    it('does not notify when only the callback reference changes', () => {
+      const firstCallback = jest.fn();
+      const secondCallback = jest.fn();
+      const rows: TableRow[] = [
+        { __depth: 0, __index: 0 },
+        { __depth: 0, __index: 1 },
+      ];
+      const { rerender } = renderHook(
+        ({ rows, onDisplayedRowIndicesChange }) => useNotifyDisplayedRowIndices(rows, onDisplayedRowIndicesChange),
+        {
+          initialProps: { rows, onDisplayedRowIndicesChange: firstCallback },
+        }
+      );
+
+      rerender({ rows, onDisplayedRowIndicesChange: secondCallback });
+
+      expect(firstCallback).toHaveBeenCalledTimes(1);
+      expect(firstCallback).toHaveBeenCalledWith([0, 1]);
+      expect(secondCallback).not.toHaveBeenCalled();
     });
   });
 
@@ -237,6 +660,30 @@ describe('TableNG hooks', () => {
   });
 
   describe('usePaginatedRows', () => {
+    it.each([
+      { tableRefreshEnabled: true, noPanelPadding: false, height: 58, pageSize: undefined, expected: 1 },
+      { tableRefreshEnabled: false, noPanelPadding: false, height: 58, pageSize: undefined, expected: 2 },
+      { tableRefreshEnabled: true, noPanelPadding: true, height: 66, pageSize: undefined, expected: 2 },
+      { tableRefreshEnabled: true, noPanelPadding: true, transparent: true, height: 66, expected: 1 },
+      { tableRefreshEnabled: false, noPanelPadding: true, transparent: true, height: 66, expected: 2 },
+      { tableRefreshEnabled: true, noPanelPadding: false, height: 58, pageSize: 2, expected: 2 },
+    ])(
+      'fits $expected rows with refresh=$tableRefreshEnabled, noPanelPadding=$noPanelPadding, transparent=$transparent, pageSize=$pageSize',
+      ({ expected, ...options }) => {
+        const { rows } = setupData();
+        const { result } = renderHook(() =>
+          usePaginatedRows(rows, {
+            ...options,
+            enabled: true,
+            width: 800,
+            rowHeight: 10,
+            headerHeight: 0,
+            footerHeight: 0,
+          })
+        );
+        expect(result.current.rowsPerPage).toBe(expected);
+      }
+    );
     it('should return defaults for pagination values when pagination is disabled', () => {
       const { rows } = setupData();
       const { result } = renderHook(() =>
@@ -258,7 +705,8 @@ describe('TableNG hooks', () => {
     });
 
     it('should handle pagination correctly', () => {
-      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total.
+      // with the numbers provided here, we have 3 rows, with 2 rows per page, over 2 pages total:
+      // (60 - pagination chrome 38) / rowHeight 10 = 2.
       const { rows } = setupData();
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
@@ -417,8 +865,32 @@ describe('TableNG hooks', () => {
       expect(result.current.rows[0].__index).toBe(2);
     });
 
+    it('reserves an extra margin under the controls when the panel has no padding of its own', () => {
+      // The pager only needs a bottom margin when the panel has dropped its padding, and that margin
+      // comes out of the row area: (58 - 38) / 10 = 2 rows with the panel's padding in place, and
+      // (58 - 46) / 10 = 1 without it.
+      const { rows } = setupData();
+      const options = {
+        enabled: true,
+        height: 58,
+        width: 800,
+        rowHeight: 10,
+        headerHeight: 0,
+        footerHeight: 0,
+      };
+
+      const { result: withPanelPadding } = renderHook(() => usePaginatedRows(rows, options));
+      expect(withPanelPadding.current.rowsPerPage).toBe(2);
+
+      const { result: withoutPanelPadding } = renderHook(() =>
+        usePaginatedRows(rows, { ...options, noPanelPadding: true })
+      );
+      expect(withoutPanelPadding.current.rowsPerPage).toBe(1);
+    });
+
     it('should fall back to the height-derived page size when pageSize is not a positive number', () => {
-      // (60 - 38) / 10 = 2 rows per page from height; pageSize: 0 must not override that.
+      // (60 - pagination chrome 38) / 10 = 2 rows per page from height; pageSize: 0 must not
+      // override that.
       const { rows } = setupData();
       const { result } = renderHook(() =>
         usePaginatedRows(rows, {
@@ -514,7 +986,6 @@ describe('TableNG hooks', () => {
           frame.fields[1].values.map((v) => v[0]),
           true,
           'nested',
-          {},
           []
         )
       );
@@ -545,23 +1016,27 @@ describe('TableNG hooks', () => {
         'nested'
       );
 
-      // parentIndex must be set on the filter entry — this is how the UI always scopes filters
-      // for nested tables. Without it the filter is silently skipped (regression test).
-      const { result } = renderHook(() =>
-        useNestedRows(
-          frameToRecords(frame),
-          frame.fields[1].values[0],
-          true,
-          'nested',
-          { 'name-0': { filteredSet: new Set(['Alice', 'Bob']), displayName: 'name', parentIndex: 0 } },
-          [{ columnKey: 'age', direction: 'ASC' }]
+      const props = { data: frame, width: 500, height: 300 };
+      const { result } = renderHook(
+        () => ({
+          nested: useNestedRows(frameToRecords(frame), frame.fields[1].values[0], true, 'nested', [
+            { columnKey: 'age', direction: 'ASC' },
+          ]),
+          view: useTableFilters(),
+        }),
+        { wrapper: ({ children }) => createElement(TableFilterProvider, { props, children }) }
+      );
+      act(() =>
+        result.current.view?.applyFilter(
+          fields[0],
+          { id: 'inSet', options: { mode: 'display', values: ['Alice', 'Bob'] } },
+          0
         )
       );
 
       // filtering reduced raw (3 rows) to final (2 rows: Alice + Bob), sorted by age ASC
-      expect(result.current[0].raw).toHaveLength(3);
-      expect(result.current[0].final).toHaveLength(2);
-      expect(result.current[0].final.map((r) => r['name'])).toEqual(['Bob', 'Alice']);
+      expect(result.current.nested[0].raw).toHaveLength(3);
+      expect(result.current.nested[0].final.map((r) => r['name'])).toEqual(['Bob', 'Alice']);
     });
   });
 
@@ -616,11 +1091,18 @@ describe('TableNG hooks', () => {
           }),
           columnWidths: [100, 100, 100],
           enabled: true,
-          typographyCtx: { ...typographyCtx, avgCharWidth: 5, measureHeight: jest.fn(() => 44) },
+          // two lines at the header label's own line box
+          typographyCtx: {
+            ...typographyCtx,
+            avgCharWidth: 5,
+            measureHeight: jest.fn(() => 2 * TABLE.HEADER_LINE_HEIGHT),
+          },
         });
       });
 
-      expect(result.current).toBe(50);
+      // ...plus the cell's 6px padding on both block edges. The header row was 2px short of this
+      // while it multiplied the *row* line height (22) and counted the padding only once.
+      expect(result.current).toBe(2 * TABLE.HEADER_LINE_HEIGHT + 2 * TABLE.CELL_PADDING);
     });
 
     it('should calculate the available width for a header cell based on the icons rendered within it', () => {
@@ -655,9 +1137,14 @@ describe('TableNG hooks', () => {
         });
       });
 
-      // colWidth 100 - chrome 13 - the sort arrow (reserved on every sortable column) 22 = 65,
-      // floor - 1 = 64.
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 64, modifiedFields[0], -1, 22);
+      // colWidth 100 - chrome 13 - the sort arrow (reserved on every sortable column) 22 = 65
+      expect(heightFn).toHaveBeenCalledWith(
+        'Longer name that needs wrapping',
+        65,
+        modifiedFields[0],
+        -1,
+        TABLE.HEADER_LINE_HEIGHT
+      );
 
       modifiedFields = fields.map((field) => {
         if (field.name === 'name') {
@@ -687,8 +1174,100 @@ describe('TableNG hooks', () => {
         });
       });
 
-      // colWidth 100 - chrome 13 - 3 icons (filter + sort + type) * 22 = 21, floor - 1 = 20.
-      expect(heightFn).toHaveBeenCalledWith('Longer name that needs wrapping', 20, modifiedFields[0], -1, 22);
+      // colWidth 100 - chrome 13 - 3 icons (filter + sort + type) * 22 = 21
+      expect(heightFn).toHaveBeenCalledWith(
+        'Longer name that needs wrapping',
+        21,
+        modifiedFields[0],
+        -1,
+        TABLE.HEADER_LINE_HEIGHT
+      );
+    });
+
+    it('leaves room for the header tooltip button, as the width path does', () => {
+      // The info button renders in both header variants, so a wrapped label has 22px less room than
+      // the height path used to give it — it wrapped a line late and the header clipped.
+      const heightFn = jest.fn(() => 20);
+      const { fields } = setupData();
+      const withTooltip = fields.map((field) =>
+        field.name === 'name'
+          ? {
+              ...field,
+              config: {
+                ...field.config,
+                custom: { ...field.config?.custom, wrapHeaderText: true, headerTooltip: 'why' },
+              },
+            }
+          : field
+      );
+
+      renderHook(() =>
+        useHeaderHeight({
+          fields: withTooltip,
+          columnWidths: [100, 100, 100],
+          enabled: true,
+          typographyCtx: { ...typographyCtx, measureHeight: heightFn },
+        })
+      );
+
+      // colWidth 100 - chrome 13 - sort arrow 22 - tooltip button 22 = 43
+      expect(heightFn).toHaveBeenCalledWith('name', 43, withTooltip[0], -1, TABLE.HEADER_LINE_HEIGHT);
+    });
+
+    it('gives a wrapped label exactly the room the width path sized its column for', () => {
+      // The two paths are halves of one sum: `computeContentAwareColWidths` adds the label width, the
+      // cell chrome and the header affordances up into a column width, and `useHeaderHeight` subtracts
+      // the chrome and affordances back out to find the label's room. Drop an affordance on either
+      // side, or measure the label any differently from the way the line counter measures it, and a
+      // content-sized column lands a fraction inside the wrap boundary: the header then reserves a
+      // second line for a label the browser draws on one.
+      const CHAR_W = 8;
+      const measureWidth = (text: string) => text.length * CHAR_W;
+      const ctx: TypographyCtx = {
+        ...typographyCtx,
+        measureWidth,
+        // count lines the way uwrap does — off the summed per-character widths, not a kerned string
+        measureHeight: (value, width, _field, _rowIdx, lineHeight) =>
+          Math.max(1, Math.ceil(measureWidth(String(value)) / width)) * lineHeight,
+      };
+
+      const displayName = 'Longer name that needs wrapping';
+      const { fields } = setupData();
+      // type icon, sort arrow, tooltip button, and column menu
+      const headerFields = fields.map((field) =>
+        field.name === 'name'
+          ? {
+              ...field,
+              name: displayName,
+              config: {
+                ...field.config,
+                custom: { ...field.config?.custom, wrapHeaderText: true, filterable: true, headerTooltip: 'why' },
+              },
+            }
+          : field
+      );
+      const opts = {
+        showTypeIcons: true,
+        tableRefreshEnabled: true,
+      };
+
+      // availWidth 0, so nothing is grown into leftover space and each column is its content width
+      const columnWidths = computeContentAwareColWidths(headerFields, 0, {
+        typographyCtx: ctx,
+        headerTypographyCtx: ctx,
+        ...opts,
+      });
+
+      const headerHeight = (widths: number[]) =>
+        renderHook(() =>
+          useHeaderHeight({ fields: headerFields, columnWidths: widths, enabled: true, typographyCtx: ctx, ...opts })
+        ).result.current;
+
+      expect(headerHeight(columnWidths)).toBe(TABLE.HEADER_HEIGHT);
+      // and the column is that wide exactly, not comfortably wider: a single pixel less wraps
+      expect(headerHeight(columnWidths.map((w, i) => (i === 0 ? w - 1 : w)))).toBe(
+        2 * TABLE.HEADER_LINE_HEIGHT + 2 * TABLE.CELL_PADDING
+      );
     });
 
     it('does not throw if a field has been deleted but the colWidth has not yet been updated', () => {
@@ -706,7 +1285,39 @@ describe('TableNG hooks', () => {
   });
 
   describe('useRowHeight', () => {
+    it.each([0, 6])('measures the last column with %ipx extra padding', (lastColumnExtraPadding) => {
+      const frame = createDataFrame({
+        fields: [{ name: 'text', type: FieldType.string, values: ['wrapped'], config: { custom: { wrapText: true } } }],
+      });
+      const measureHeight = jest.fn<number, Parameters<TypographyCtx['measureHeight']>>(() => 40);
+      const { result } = renderHook(() =>
+        useRowHeight({
+          fields: frame.fields,
+          columnWidths: [100],
+          defaultHeight: 30,
+          defaultNestedHeight: 30,
+          typographyCtx: {
+            ...createTypographyContext(14, 'Arial'),
+            measureHeight,
+            estimateHeight: () => 40,
+          },
+          hasNestedFrames: true,
+          visibleNestedRowCounts: [],
+          nestedRows: [],
+          nestedFields: [],
+          nestedColWidths: [],
+          lastColumnExtraPadding,
+        })
+      );
+      if (typeof result.current !== 'function') {
+        throw new Error('Expected a row height function');
+      }
+      expect(result.current({ __index: 0, __depth: 0, text: 'wrapped' })).toBeGreaterThan(30);
+      expect(measureHeight.mock.calls[0][1]).toBe(lastColumnExtraPadding === 6 ? 81 : 87);
+    });
     const typographyCtx = createTypographyContext(14, 'sans-serif');
+    const expectHeightWithoutNestedTablePadding = (height: number, tableRefreshEnabled = false) =>
+      expect(height - (tableRefreshEnabled ? REFRESHED_NESTED_TABLE_VERTICAL_PADDING : NESTED_TABLE_VERTICAL_PADDING));
 
     it('returns the default height if there are no wrapped columns or nested frames', () => {
       const { fields } = setupData();
@@ -815,7 +1426,7 @@ describe('TableNG hooks', () => {
         const defaultHeight = 40;
         const nestedFooterHeight = 34; // equivalent to 1 reducer: LINE_HEIGHT + CELL_PADDING * 2
 
-        expect(
+        expectHeightWithoutNestedTablePadding(
           renderHook(() => {
             const rowHeight = useRowHeight({
               nestedData: [frame],
@@ -839,8 +1450,8 @@ describe('TableNG hooks', () => {
             }
             return rowHeight({ __index: 0, __depth: 1, data: frame });
           }).result.current
-          // 3 nested rows + header + footer + padding + scrollbar
-        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE + nestedFooterHeight);
+          // 3 nested rows + header + footer + scrollbar
+        ).toBe(defaultHeight * 4 + TABLE.SCROLLBAR_AFFORDANCE + nestedFooterHeight);
       });
 
       it('includes nestedFooterHeight in the no-data expanded row height', () => {
@@ -878,7 +1489,7 @@ describe('TableNG hooks', () => {
         ).toBe(TABLE.NESTED_NO_DATA_HEIGHT + TABLE.CELL_PADDING * 2 + nestedFooterHeight);
       });
 
-      it('calculates the height to return using default height', () => {
+      it.each([false, true])('calculates the height with table.refresh=%s', (tableRefreshEnabled) => {
         const { fields } = setupData();
         const frame = createDataFrame({ fields });
         const fieldNames = frame.fields.map((f) => f.name);
@@ -886,7 +1497,7 @@ describe('TableNG hooks', () => {
         const nestedRows = frameToRecords(frame);
         const defaultHeight = 40;
 
-        expect(
+        expectHeightWithoutNestedTablePadding(
           renderHook(() => {
             const rowHeight = useRowHeight({
               nestedData: [frame],
@@ -903,6 +1514,7 @@ describe('TableNG hooks', () => {
               nestedFields: fields,
               nestedColWidths: [100, 100, 100],
               visibleNestedRowCounts: [3],
+              tableRefreshEnabled,
             });
             if (typeof rowHeight !== 'function') {
               throw new Error('Expected rowHeight to be a function');
@@ -912,8 +1524,9 @@ describe('TableNG hooks', () => {
               __depth: 1,
               data: frame,
             });
-          }).result.current
-        ).toBe(defaultHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE); // 3 rows + header + padding + scrollbar
+          }).result.current,
+          tableRefreshEnabled
+        ).toBe(defaultHeight * 4 + TABLE.SCROLLBAR_AFFORDANCE); // 3 rows + header + scrollbar
       });
 
       it('uses defaultNestedHeight (not defaultHeight) for the nested sub-table header', () => {
@@ -925,7 +1538,7 @@ describe('TableNG hooks', () => {
         const defaultNonNestedHeight = 60;
         const defaultNestedHeight = 40;
 
-        expect(
+        expectHeightWithoutNestedTablePadding(
           renderHook(() => {
             const rowHeight = useRowHeight({
               fields: [
@@ -951,8 +1564,8 @@ describe('TableNG hooks', () => {
               data: frame,
             });
           }).result.current
-          // 3 nested rows + nested header (uses defaultNestedHeight, not parent defaultHeight) + padding + scrollbar
-        ).toBe(defaultNestedHeight * 4 + TABLE.CELL_PADDING * 2 + TABLE.SCROLLBAR_AFFORDANCE);
+          // 3 nested rows + nested header (uses defaultNestedHeight, not parent defaultHeight) + scrollbar
+        ).toBe(defaultNestedHeight * 4 + TABLE.SCROLLBAR_AFFORDANCE);
       });
 
       it('uses a string-based default height for the nested rows', () => {
@@ -992,7 +1605,7 @@ describe('TableNG hooks', () => {
         const nestedRecords = frameToRecords(frame);
         const defaultHeight = 40;
 
-        expect(
+        expectHeightWithoutNestedTablePadding(
           renderHook(() => {
             const rowHeight = useRowHeight({
               nestedData: [frame],
@@ -1022,7 +1635,7 @@ describe('TableNG hooks', () => {
               data: frame,
             });
           }).result.current
-        ).toBe(defaultHeight * 3 + TABLE.CELL_PADDING * 2); // 3 rows + padding (no header)
+        ).toBe(defaultHeight * 3); // 3 rows (no header)
       });
     });
 
@@ -1703,5 +2316,61 @@ describe('TableNG hooks', () => {
 
       expect(result.current).not.toBe(first);
     });
+  });
+});
+
+describe('useScrollShadows', () => {
+  it('tracks scroll edges without rerendering between visibility transitions', () => {
+    const wrapper = document.createElement('div');
+    const element = document.createElement('div');
+    wrapper.appendChild(element);
+    Object.defineProperties(element, {
+      scrollHeight: { value: 1000 },
+      clientHeight: { value: 200 },
+      offsetHeight: { value: 210, configurable: true },
+    });
+    const ref = { current: { element } as DataGridHandle };
+    let count = 0;
+    const { result, rerender } = renderHook(
+      ({ enabled }) => {
+        count++;
+        return useScrollShadows(ref, enabled, { topOffset: 30, bottomOffset: 20 });
+      },
+      { initialProps: { enabled: true } }
+    );
+
+    expect(result.current).toMatchObject({ top: false, bottom: true });
+    expect(result.current.scrollbarHeight).toBe(10);
+
+    act(() => {
+      element.scrollTop = 100;
+      result.current.onScroll();
+    });
+    expect(result.current).toMatchObject({ top: true, bottom: true });
+    const countAfterTransition = count;
+    act(() => {
+      element.scrollTop = 200;
+      result.current.onScroll();
+    });
+    expect(count).toBe(countAfterTransition);
+
+    rerender({ enabled: true });
+    expect(result.current).toMatchObject({ top: true, bottom: true });
+
+    act(() => {
+      element.scrollTop = 800;
+      result.current.onScroll();
+    });
+    expect(result.current).toMatchObject({ top: true, bottom: false });
+
+    Object.defineProperty(element, 'offsetHeight', { value: 200 });
+    rerender({ enabled: true });
+    expect(result.current.scrollbarHeight).toBe(0);
+
+    rerender({ enabled: false });
+    expect(result.current).toMatchObject({ top: false, bottom: false, className: '' });
+    element.scrollTop = 0;
+    rerender({ enabled: true });
+    expect(result.current).toMatchObject({ top: false, bottom: true });
   });
 });

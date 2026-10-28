@@ -5,9 +5,9 @@ import { ScaleDistributionEditor } from '@grafana/ui/internal';
 
 import { AxisEditor } from './AxisEditor';
 
-export function addHeatmapCalculationOptions(
+export function addHeatmapCalculationOptions<TOptions>(
   prefix: string,
-  builder: PanelOptionsEditorBuilder<any>,
+  builder: PanelOptionsEditorBuilder<TOptions>,
   source?: HeatmapCalculationOptions,
   category?: string[]
 ) {

@@ -1,17 +1,25 @@
 import {
   EventBusSrv,
+  type FieldConfig,
   type FieldConfigOptionsRegistry,
   type FieldConfigPropertyItem,
+  type FieldConfigSource,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
+  type PanelOptionsEditorBuilder,
   type PanelPlugin,
   Registry,
+  type StandardEditorContext,
   toDataFrame,
 } from '@grafana/data';
 import { VizPanel } from '@grafana/scenes';
 
-import { getStandardEditorContext, getVisualizationOptions2 } from './getVisualizationOptions';
+import {
+  getStandardEditorContext,
+  getVisualizationOptions2,
+  isFieldConfigOptionVisible,
+} from './getVisualizationOptions';
 
 describe('getVisualizationOptions', () => {
   describe('getStandardEditorContext', () => {
@@ -20,6 +28,7 @@ describe('getVisualizationOptions', () => {
         data: undefined,
         replaceVariables: jest.fn(),
         options: {},
+        fieldConfig: { defaults: {}, overrides: [] },
         eventBus: new EventBusSrv(),
         instanceState: {},
       });
@@ -32,6 +41,7 @@ describe('getVisualizationOptions', () => {
         data: undefined,
         replaceVariables: jest.fn(),
         options: {},
+        fieldConfig: { defaults: {}, overrides: [] },
         eventBus: new EventBusSrv(),
         instanceState: {},
       });
@@ -103,6 +113,7 @@ describe('getVisualizationOptions', () => {
         data: panelData,
         replaceVariables: jest.fn(),
         options: {},
+        fieldConfig: { defaults: {}, overrides: [] },
         eventBus: new EventBusSrv(),
         instanceState: {},
       });
@@ -426,6 +437,228 @@ describe('getVisualizationOptions', () => {
       expect(showIfSpy.mock.calls.length).toEqual(1);
       expect(showIfSpy.mock.calls[0][0].displayName).toBe('default');
       expect(showIfSpy.mock.calls[0][2][0].fields[0].config.displayName).toBe('annotation');
+    });
+  });
+
+  describe('isFieldConfigOptionVisible', () => {
+    const fieldConfig: FieldConfigSource = {
+      defaults: {
+        unit: 'bytes',
+        custom: { lineWidth: 2 },
+      },
+      overrides: [],
+    };
+
+    const makeItem = <TContextOptions = unknown>(
+      overrides: Partial<FieldConfigPropertyItem<FieldConfig, unknown, {}, TContextOptions>> = {}
+    ): FieldConfigPropertyItem => ({
+      id: 'unit',
+      path: 'unit',
+      name: 'Unit',
+      process: (value) => value,
+      shouldApply: () => true,
+      override: jest.fn(),
+      editor: jest.fn(),
+      ...overrides,
+    });
+
+    const context = { data: [], options: { showValues: true }, fieldConfig } as StandardEditorContext<unknown, unknown>;
+
+    it('shows a property that declares no showIf', () => {
+      expect(isFieldConfigOptionVisible(makeItem(), undefined, context)).toBe(true);
+    });
+
+    it('hides a property flagged hideFromDefaults without consulting showIf', () => {
+      const showIf = jest.fn().mockReturnValue(true);
+
+      expect(isFieldConfigOptionVisible(makeItem({ hideFromDefaults: true, showIf }), undefined, context)).toBe(false);
+      expect(showIf).not.toHaveBeenCalled();
+    });
+
+    it('hides the property when showIf returns undefined', () => {
+      const item = makeItem({ showIf: () => undefined });
+
+      expect(isFieldConfigOptionVisible(item, undefined, context)).toBe(false);
+    });
+
+    it('passes the standard defaults to a standard property and the custom defaults to a custom one', () => {
+      const standardShowIf = jest.fn().mockReturnValue(true);
+      const customShowIf = jest.fn().mockReturnValue(true);
+
+      isFieldConfigOptionVisible(makeItem({ showIf: standardShowIf }), undefined, context);
+      isFieldConfigOptionVisible(makeItem({ isCustom: true, showIf: customShowIf }), undefined, context);
+
+      expect(standardShowIf.mock.calls[0][0]).toEqual({ unit: 'bytes', custom: { lineWidth: 2 } });
+      expect(customShowIf.mock.calls[0][0]).toEqual({ lineWidth: 2 });
+    });
+
+    it('lets a standard property condition on a panel option via the editor context', () => {
+      // ctx.options is typed here, not unknown - this stops compiling if that regresses
+      const item = makeItem<{ showValues: boolean }>({
+        showIf: (_defaults, _data, _annotations, ctx) => ctx?.options?.showValues === true,
+      });
+
+      expect(isFieldConfigOptionVisible(item, undefined, context)).toBe(true);
+      expect(isFieldConfigOptionVisible(item, undefined, { ...context, options: { showValues: false } })).toBe(false);
+    });
+
+    it('lets a custom property condition on the standard defaults via the editor context', () => {
+      const item = makeItem({
+        isCustom: true,
+        showIf: (_custom, _data, _annotations, ctx) => ctx?.fieldConfig?.defaults.unit === 'bytes',
+      });
+
+      expect(isFieldConfigOptionVisible(item, undefined, context)).toBe(true);
+
+      const withoutUnit: FieldConfigSource = { defaults: { custom: { lineWidth: 2 } }, overrides: [] };
+      expect(isFieldConfigOptionVisible(item, undefined, { ...context, fieldConfig: withoutUnit })).toBe(false);
+    });
+
+    it('hides a property whose showIf needs the field config when the context has none', () => {
+      // transformation editors and canvas inline edit build a context without a field config
+      const item = makeItem({ showIf: (defaults) => defaults.unit === 'bytes' });
+
+      expect(isFieldConfigOptionVisible(item, undefined, { data: [] })).toBe(false);
+    });
+
+    it('passes the series and annotations through to showIf', () => {
+      const showIf = jest.fn().mockReturnValue(true);
+      const series = [toDataFrame({ fields: [{ name: 'value', values: [1] }] })];
+      const annotations = [toDataFrame({ fields: [{ name: 'time', values: [1] }] })];
+
+      isFieldConfigOptionVisible(
+        makeItem({ showIf }),
+        { series, annotations, state: LoadingState.Done, timeRange: getDefaultTimeRange() },
+        context
+      );
+
+      expect(showIf.mock.calls[0][1]).toBe(series);
+      expect(showIf.mock.calls[0][2]).toBe(annotations);
+    });
+  });
+
+  describe('editor context in showIf', () => {
+    const fieldConfig: FieldConfigSource = {
+      defaults: { unit: 'bytes', custom: { lineWidth: 2 } },
+      overrides: [],
+    };
+
+    const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'timeseries', key: 'panel-12', fieldConfig });
+
+    const getPlugin = <TOptions>(
+      fieldConfigItems: FieldConfigPropertyItem[],
+      optionsSupplier?: (builder: PanelOptionsEditorBuilder<TOptions>) => void
+    ) =>
+      ({
+        meta: { skipDataQuery: false, name: 'Timeseries' },
+        getPanelOptionsSupplier: () => optionsSupplier ?? (() => {}),
+        fieldConfigRegistry: new Registry<FieldConfigPropertyItem>(() => fieldConfigItems),
+      }) as unknown as PanelPlugin;
+
+    const buildOptions = (plugin: PanelPlugin, currentOptions: Record<string, unknown>) =>
+      getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions,
+        currentFieldConfig: fieldConfig,
+        reportInteractionUI: 'panel-edit',
+      });
+
+    it('hands a field config showIf the panel options and the whole field config', () => {
+      const showIf = jest.fn().mockReturnValue(true);
+      const plugin = getPlugin([
+        {
+          id: 'custom.property1',
+          path: 'property1',
+          isCustom: true,
+          process: (value) => value,
+          shouldApply: () => true,
+          override: jest.fn(),
+          editor: jest.fn(),
+          name: 'Property 1',
+          showIf,
+        },
+      ]);
+
+      buildOptions(plugin, { showValues: true });
+
+      const context = showIf.mock.calls[0][3];
+      expect(context.options).toEqual({ showValues: true });
+      expect(context.fieldConfig).toEqual(fieldConfig);
+    });
+
+    it('hides a standard field config property when a panel option turns it off', () => {
+      const makePlugin = () =>
+        getPlugin([
+          {
+            id: 'unit',
+            path: 'unit',
+            name: 'Unit',
+            process: (value) => value,
+            shouldApply: () => true,
+            override: jest.fn(),
+            editor: jest.fn(),
+            showIf: (_defaults, _data, _annotations, ctx) =>
+              (ctx?.options as { showUnit?: boolean } | undefined)?.showUnit === true,
+          },
+        ]);
+
+      expect(buildOptions(makePlugin(), { showUnit: true })[0].items.length).toEqual(1);
+      expect(buildOptions(makePlugin(), { showUnit: false })).toEqual([]);
+    });
+
+    it('hides a panel option when its showIf inspects the field config', () => {
+      const supplier = (builder: PanelOptionsEditorBuilder<unknown>) => {
+        builder.addCustomEditor({
+          id: 'lineStyle',
+          path: 'lineStyle',
+          name: 'Line style',
+          editor: jest.fn(),
+          showIf: (_options, _data, _annotations, ctx) =>
+            (ctx?.fieldConfig?.defaults.custom as { lineWidth?: number } | undefined)?.lineWidth === 99,
+        });
+      };
+
+      expect(buildOptions(getPlugin([], supplier), {})).toEqual([]);
+    });
+
+    it('types the editor context to the panel options, so a showIf needs no cast', () => {
+      interface LegendOptions {
+        legend: { showLegend: boolean };
+      }
+
+      const supplier = (builder: PanelOptionsEditorBuilder<LegendOptions>) => {
+        builder.addCustomEditor({
+          id: 'legendValues',
+          path: 'legend.values',
+          name: 'Legend values',
+          editor: jest.fn(),
+          // ctx.options is LegendOptions here, not unknown - this stops compiling if that regresses
+          showIf: (_options, _data, _annotations, ctx) => ctx?.options?.legend.showLegend === true,
+        });
+      };
+
+      expect(buildOptions(getPlugin([], supplier), { legend: { showLegend: true } })[0].items.length).toEqual(1);
+      expect(buildOptions(getPlugin([], supplier), { legend: { showLegend: false } })).toEqual([]);
+    });
+
+    it('shows a panel option when its showIf matches the field config', () => {
+      const supplier = (builder: PanelOptionsEditorBuilder<unknown>) => {
+        builder.addCustomEditor({
+          id: 'lineStyle',
+          path: 'lineStyle',
+          name: 'Line style',
+          editor: jest.fn(),
+          showIf: (_options, _data, _annotations, ctx) =>
+            (ctx?.fieldConfig?.defaults.custom as { lineWidth?: number } | undefined)?.lineWidth === 2,
+        });
+      };
+
+      const categories = buildOptions(getPlugin([], supplier), {});
+      expect(categories.length).toEqual(1);
+      expect(categories[0].items.length).toEqual(1);
     });
   });
 });

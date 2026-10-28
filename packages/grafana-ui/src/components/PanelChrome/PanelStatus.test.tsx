@@ -1,10 +1,26 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type ReactElement, useState } from 'react';
 
+import { EventBusSrv } from '@grafana/data';
+// Tests exercise host integration against Grafana's internal store without making it public package API.
+// eslint-disable-next-line no-restricted-imports
+import { PanelStatusStore } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { Drawer } from '../Drawer/Drawer';
+
+import { type PanelContext, PanelContextProvider } from './PanelContext';
 import { PanelStatus } from './PanelStatus';
 import { type PanelStatusItem } from './types';
+
+function renderWithPanelContext(ui: ReactElement, context: Partial<PanelContext> = {}) {
+  return render(
+    <PanelContextProvider value={{ eventsScope: 'global', eventBus: new EventBusSrv(), ...context }}>
+      {ui}
+    </PanelContextProvider>
+  );
+}
 
 describe('PanelStatus', () => {
   describe('legacy single message', () => {
@@ -42,15 +58,27 @@ describe('PanelStatus', () => {
       expect(screen.getByTestId(selectors.components.Panels.Panel.status('warning'))).toBeInTheDocument();
     });
 
-    it('shows a tooltip listing all items on hover', async () => {
+    it('does not call onClick (inspect) directly - clicking the trigger opens the popover instead', async () => {
+      const onClick = jest.fn();
+      render(<PanelStatus items={items} onClick={onClick} />);
+
+      expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+
+      expect(await screen.findByTestId('toggletip-content')).toBeInTheDocument();
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('shows a popover listing all items on click', async () => {
       render(<PanelStatus items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]} />);
 
-      // Tooltip content is not shown until the trigger is hovered.
-      expect(screen.queryByText('Errors and notices')).not.toBeInTheDocument();
+      // Popover content is not shown until the trigger is clicked.
+      expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
 
-      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
 
-      expect(await screen.findByText('Errors and notices')).toBeInTheDocument();
+      expect(await screen.findByTestId('toggletip-content')).toBeInTheDocument();
       expect(screen.getByText('Preparing expression failed')).toBeInTheDocument();
       expect(screen.getByText('Query marked as big')).toBeInTheDocument();
       expect(screen.getByText('Window size adjusted')).toBeInTheDocument();
@@ -67,7 +95,7 @@ describe('PanelStatus', () => {
         />
       );
 
-      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
 
       const error = await screen.findByText('an error');
       const warning = screen.getByText('a warning notice');
@@ -90,7 +118,7 @@ describe('PanelStatus', () => {
         />
       );
 
-      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
       await screen.findByText('first error');
 
       const texts = ['first error', 'second error', 'first warning', 'second warning', 'first info', 'second info'].map(
@@ -102,22 +130,180 @@ describe('PanelStatus', () => {
       }
     });
 
-    it('calls onClick (inspect) from the tooltip', async () => {
+    it('renders an Inspect button in the popover and calls onClick (inspect) when clicked', async () => {
       const onClick = jest.fn();
       render(<PanelStatus items={items} onClick={onClick} />);
 
-      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
-      await userEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+      const inspectButton = await screen.findByRole('button', { name: 'Inspect' });
 
+      await userEvent.click(inspectButton);
       expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(['onClick', 'onOpenInspector'] as const)('closes on Inspect through %s and can reopen', async (handler) => {
+      const onInspect = jest.fn();
+      renderWithPanelContext(<PanelStatus items={items} onClick={handler === 'onClick' ? onInspect : undefined} />, {
+        onOpenInspector: handler === 'onOpenInspector' ? onInspect : undefined,
+      });
+      const trigger = screen.getByTestId(selectors.components.Panels.Panel.status('warning'));
+      await userEvent.click(trigger);
+      await userEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+      expect(onInspect).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(trigger).toHaveAttribute('aria-expanded', 'false'));
+      expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+      await userEvent.click(trigger);
+      expect(await screen.findByText('Query marked as big')).toBeVisible();
+    });
+
+    it('hands focus to the inspector drawer and returns it to the status trigger on close', async () => {
+      function PanelWithInspector() {
+        const [isOpen, setIsOpen] = useState(false);
+        return (
+          <>
+            <PanelStatus items={items} onClick={() => setIsOpen(true)} />
+            {isOpen && (
+              <Drawer title="Inspect panel" onClose={() => setIsOpen(false)}>
+                <p>Inspector details</p>
+              </Drawer>
+            )}
+          </>
+        );
+      }
+      render(<PanelWithInspector />);
+      const trigger = screen.getByTestId(selectors.components.Panels.Panel.status('warning'));
+      await userEvent.click(trigger);
+      await userEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+      const drawer = await screen.findByRole('dialog');
+      await waitFor(() => expect(drawer).toContainElement(document.activeElement as HTMLElement));
+      expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByTestId(selectors.components.Drawer.General.close));
+      await waitFor(() => expect(trigger).toHaveFocus());
+    });
+
+    it('does not render an assistant button when no onInvestigateErrors is provided', async () => {
+      render(<PanelStatus items={items} />);
+
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+      expect(await screen.findByTestId('toggletip-content')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /with Assistant$/ })).not.toBeInTheDocument();
     });
 
     it('does not render an Inspect button when no onClick is provided', async () => {
       render(<PanelStatus items={items} />);
 
-      await userEvent.hover(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
-      expect(await screen.findByText('Errors and notices')).toBeInTheDocument();
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+      expect(await screen.findByTestId('toggletip-content')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Inspect' })).not.toBeInTheDocument();
+    });
+
+    it('runs the Assistant action for errors from the popover', async () => {
+      const onInvestigateErrors = jest.fn();
+      renderWithPanelContext(
+        <PanelStatus items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]} />,
+        { onInvestigateErrors }
+      );
+
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+      expect(await screen.findByText('Preparing expression failed')).toBeVisible();
+      await userEvent.click(screen.getByRole('button', { name: 'Fix with Assistant' }));
+      expect(onInvestigateErrors).toHaveBeenCalledTimes(1);
+    });
+
+    it('runs the Assistant action for notices from the popover', async () => {
+      const onInvestigateErrors = jest.fn();
+      renderWithPanelContext(<PanelStatus items={items} />, { onInvestigateErrors });
+
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+
+      expect(await screen.findByText('Query marked as big')).toBeVisible();
+      await userEvent.click(screen.getByRole('button', { name: 'Explain with Assistant' }));
+      expect(onInvestigateErrors).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows panel-owned notices with Inspect but without query investigation', async () => {
+      const notices = new PanelStatusStore();
+      notices.createSource().set([
+        {
+          id: 'error',
+          severity: 'error',
+          text: 'Choose a field',
+          actions: [{ id: 'choose', label: 'Choose field', onClick: jest.fn() }],
+        },
+        { id: 'warning', severity: 'warning', text: 'Partial data' },
+      ]);
+      const onOpenInspector = jest.fn();
+      const onInvestigateErrors = jest.fn();
+      renderWithPanelContext(<PanelStatus />, {
+        notices,
+        onOpenInspector,
+        onInvestigateErrors,
+      });
+
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+
+      expect(await screen.findByText('Choose a field')).toBeVisible();
+      expect(screen.getByText('Partial data')).toBeVisible();
+      expect(screen.queryByRole('button', { name: 'Choose field' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /with Assistant$/ })).not.toBeInTheDocument();
+      const inspectButton = screen.getByRole('button', { name: 'Inspect' });
+      await userEvent.click(inspectButton);
+      expect(onOpenInspector).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not show query investigation for plugin-load errors', async () => {
+      const notices = new PanelStatusStore();
+      notices.setExternal([{ id: 'plugin-load', origin: 'plugin-load', severity: 'error', text: 'Plugin failed' }]);
+      renderWithPanelContext(<PanelStatus />, { notices, onInvestigateErrors: jest.fn() });
+
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+
+      expect(await screen.findByText('Plugin failed')).toBeVisible();
+      expect(screen.queryByRole('button', { name: /with Assistant$/ })).not.toBeInTheDocument();
+    });
+
+    it('labels the panel-level Assistant action from eligible runtime items', async () => {
+      const notices = new PanelStatusStore();
+      notices
+        .createSource()
+        .set([{ id: 'manual', severity: 'error', text: 'Manual repair required', assistant: 'hidden' }]);
+      notices.setExternal([{ id: 'slow', origin: 'notice', severity: 'warning', text: 'Slow query' }]);
+      renderWithPanelContext(<PanelStatus />, { notices, onInvestigateErrors: jest.fn() });
+
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+
+      expect(await screen.findByText('Manual repair required')).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Explain with Assistant' })).toBeVisible();
+      expect(screen.queryByRole('button', { name: 'Fix with Assistant' })).not.toBeInTheDocument();
+    });
+
+    it('traps focus within the popover and returns it to the trigger on Escape', async () => {
+      // The portaled popover content sits elsewhere in the DOM than the trigger, so this only
+      // reproduces the real page's Tab order if there's another focusable element right after the
+      // trigger for focus to potentially escape to.
+      renderWithPanelContext(
+        <>
+          <PanelStatus items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]} />
+          <button>Next focusable element on the page</button>
+        </>,
+        { onInvestigateErrors: jest.fn() }
+      );
+
+      const trigger = screen.getByTestId(selectors.components.Panels.Panel.status('error'));
+      await userEvent.click(trigger);
+
+      const closeButton = await screen.findByTestId('toggletip-header-close');
+      // Toggletip focuses its own close button first, per its own focus-management contract.
+      await waitFor(() => {
+        expect(closeButton).toHaveFocus();
+      });
+
+      await userEvent.keyboard('{Escape}');
+      expect(trigger).toHaveFocus();
+      expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+
+      await userEvent.tab();
+      expect(screen.getByRole('button', { name: 'Next focusable element on the page' })).toHaveFocus();
     });
   });
 

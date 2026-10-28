@@ -1,8 +1,14 @@
 import { of } from 'rxjs';
 
-import { type DataQueryRequest, type DataSourceApi, LoadingState, type PanelPlugin, store } from '@grafana/data';
+import {
+  type DataQueryRequest,
+  type DataSourceApi,
+  type DataTransformerConfig,
+  LoadingState,
+  type PanelPlugin,
+  store,
+} from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config } from '@grafana/runtime';
 import {
   type CancelActivationHandler,
   CustomVariable,
@@ -19,6 +25,8 @@ import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/hooks';
+import { dispatch } from 'app/store/store';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -26,9 +34,9 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { activateFullSceneTree } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
@@ -80,6 +88,11 @@ const dataSources = {
 
 setupDataSources(...Object.values(dataSources));
 
+jest.mock('app/store/store', () => ({
+  ...jest.requireActual('app/store/store'),
+  dispatch: jest.fn(),
+}));
+
 let deactivate: CancelActivationHandler | undefined;
 
 describe('PanelEditor', () => {
@@ -121,6 +134,33 @@ describe('PanelEditor', () => {
   });
 
   describe('Entering panel edit', () => {
+    beforeEach(() => jest.mocked(dispatch).mockClear());
+
+    it('pauses ad hoc table transformations and restores them on exit', async () => {
+      const transformations: DataTransformerConfig[] = [{ id: 'organize', options: { indexByName: { B: 0, A: 1 } } }];
+      const { panel } = await setup({ pluginId: 'table', initialTableTransformations: transformations });
+
+      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
+      expect(dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          payload: expect.objectContaining({
+            title: 'Ad hoc transformations are disabled in edit mode',
+          }),
+        })
+      );
+
+      deactivate!();
+      deactivate = undefined;
+      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(transformations);
+    });
+
+    it('does not notify when the table has no ad hoc transformations', async () => {
+      const { panel } = await setup({ pluginId: 'table' });
+
+      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
+      expect(dispatch).not.toHaveBeenCalled();
+    });
+
     it('should clear sidebar selection', () => {
       pluginPromise = Promise.resolve(getPanelPlugin({ id: 'text', skipDataQuery: true }));
 
@@ -219,14 +259,6 @@ describe('PanelEditor', () => {
   });
 
   describe('When the scene is rebuilt underneath the editor', () => {
-    beforeAll(() => {
-      config.featureToggles.dashboardNewLayouts = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.dashboardNewLayouts = false;
-    });
-
     /** Replace the layout tree wholesale, as APPLY_SPEC and the json/code editors do. */
     function swapBody(dashboard: DashboardScene) {
       dashboard.setState({
@@ -477,6 +509,7 @@ interface SetupOptions {
   repeatByVariable?: string;
   skipWait?: boolean;
   pluginLoadTime?: number;
+  initialTableTransformations?: DataTransformerConfig[];
 }
 
 async function setup(options: SetupOptions = {}) {
@@ -501,6 +534,10 @@ async function setup(options: SetupOptions = {}) {
       }),
     }),
   });
+
+  if (options.initialTableTransformations) {
+    panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, options.initialTableTransformations);
+  }
 
   const gridItem = new DashboardGridItem({ body: panel, variableName: options.repeatByVariable });
 

@@ -1,16 +1,18 @@
 import { locationUtil, type DataSourceInstanceListItem, type PluginMeta } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { contextSrv } from 'app/core/services/context_srv';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
-import { canAccessPluginPage, isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/pluginBridgeProbe';
+import { canAccessPluginPage } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
-import { PROBE_TIMEOUT_MS, withTimeout } from './probeUtils';
+import { PROBE_TIMEOUT_MS, withDeadline } from './probeUtils';
 import { type SolutionCta } from './types';
 
 async function probeApp(appId: string): Promise<PluginMeta<{}> | null> {
   try {
     // getPluginSettings has no timeout, and some offer checks block Overview grouping.
-    const { settings } = await withTimeout(probePlugin(appId), PROBE_TIMEOUT_MS);
+    const { settings } = await withDeadline(PROBE_TIMEOUT_MS, undefined, () => probePlugin(appId));
     return settings && isPluginEnabled(settings) ? settings : null;
   } catch {
     return null;
@@ -38,10 +40,12 @@ export async function drilldownActiveCta(
   appId: string,
   appName: string,
   appPath: string
-): Promise<SolutionCta<'open_solution'>> {
-  return (await isDrilldownAvailable(appId, appPath))
-    ? { label: openAppLabel(appName), href: locationUtil.assureBaseUrl(appPath), action: 'open_solution' }
-    : { label: openExploreLabel(), href: constructDataSourceExploreUrl({ name: ds.name }), action: 'open_solution' };
+): Promise<SolutionCta<'open_solution'> | null> {
+  if (await isDrilldownAvailable(appId, appPath)) {
+    return { label: openAppLabel(appName), href: locationUtil.assureBaseUrl(appPath), action: 'open_solution' };
+  }
+
+  return exploreFallbackCta(ds);
 }
 
 // Product names are not translated.
@@ -49,6 +53,16 @@ export function openAppLabel(appName: string): string {
   return t('home.solutions.cta.open-app', 'Open {{appName}}', { appName });
 }
 
-export function openExploreLabel(): string {
+function openExploreLabel(): string {
   return t('home.solutions.cta.open-explore', 'Open in Explore');
+}
+
+export function exploreFallbackCta(ds: DataSourceInstanceListItem): SolutionCta<'open_solution'> | null {
+  return contextSrv.hasAccessToExplore()
+    ? {
+        label: openExploreLabel(),
+        href: constructDataSourceExploreUrl({ name: ds.name }),
+        action: 'open_solution',
+      }
+    : null;
 }

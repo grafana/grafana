@@ -17,8 +17,8 @@ import {
   type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { setPluginLinksHook, usePluginLinks, getDataSourceInstance } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { createLokiDatasource } from 'app/features/loki-helpers/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
@@ -33,8 +33,23 @@ import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 import { createTempoDatasource } from './__mocks__/createTempoDatasource';
 
+const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+const useFlagMock = jest.fn((_: string, defaultValue: boolean) => ({ value: defaultValue }));
+
+const setBooleanFlags = (flags: Record<string, boolean>) => {
+  const getFlagValue = (flag: string, defaultValue: boolean) =>
+    Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => getFlagValue(flag, defaultValue));
+  useFlagMock.mockImplementation((flag: string, defaultValue: boolean) => ({
+    value: getFlagValue(flag, defaultValue),
+  }));
+};
+
 jest.mock('@openfeature/react-sdk', () => ({
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
+  ...jest.requireActual('@openfeature/react-sdk'),
+  useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+  useFlag: (flag: string, defaultValue: boolean) => useFlagMock(flag, defaultValue),
 }));
 
 jest.mock('../fieldSelector/FieldSelector');
@@ -56,13 +71,8 @@ jest.mock('@grafana/assistant', () => {
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
 }));
-
 jest.mock('./LogListContext');
 jest.mock('app/features/explore/TraceView/TraceView', () => ({
   TraceView: () => <div>Trace view</div>,
@@ -142,6 +152,7 @@ const setup = async (
 
 describe('LogLineDetails', () => {
   beforeEach(() => {
+    setBooleanFlags({});
     lokiDS = createLokiDatasource(undefined, { uid: 'loki-ds' });
     tempoDS = createTempoDatasource(undefined, { uid: 'tempo-ds' });
     jest.mocked(usePluginLinks).mockReturnValue({
@@ -312,6 +323,9 @@ describe('LogLineDetails', () => {
         { displayedFields: ['key1'], onClickShowField, onClickHideField: jest.fn() }
       );
       expect(screen.getByText('key1')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('Log line'));
+
       expect(screen.getByLabelText('Show log line')).toBeInTheDocument();
 
       await userEvent.click(screen.getByLabelText('Show log line'));
@@ -327,6 +341,9 @@ describe('LogLineDetails', () => {
         { displayedFields: ['key1', LOG_LINE_BODY_FIELD_NAME], onClickHideField, onClickShowField: jest.fn() }
       );
       expect(screen.getByText('key1')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('Log line'));
+
       expect(screen.getByLabelText('Hide log line')).toBeInTheDocument();
 
       await userEvent.click(screen.getByLabelText('Hide log line'));
@@ -336,6 +353,9 @@ describe('LogLineDetails', () => {
     test('should not show an option to display the log line when displayed fields are not used', async () => {
       await setup(undefined, { labels: { key1: 'label1' } }, { displayedFields: [] });
       expect(screen.getByText('key1')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('Log line'));
+
       expect(screen.queryByLabelText('Show log line')).not.toBeInTheDocument();
     });
     test('should render the filter controls when the callbacks are provided', async () => {
@@ -701,7 +721,7 @@ describe('LogLineDetails', () => {
 
         await userEvent.type(input, 'something else');
 
-        expect(screen.getAllByText('No results to display.')).toHaveLength(3);
+        expect(screen.getAllByText('No matching results.')).toHaveLength(3);
       });
     });
     describe('Default label types', () => {
@@ -716,6 +736,7 @@ describe('LogLineDetails', () => {
       });
 
       test('Shows displayed fields controls if required props are present', async () => {
+        setBooleanFlags({ [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
         const setDisplayedFields = jest.fn();
         const onClickHideField = jest.fn();
         await setup(
@@ -867,6 +888,7 @@ describe('LogLineDetails', () => {
       });
 
       test('Exposes buttons to reorder displayed fields', async () => {
+        setBooleanFlags({ [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
         const setDisplayedFields = jest.fn();
         const onClickHideField = jest.fn();
         await setup(
@@ -1175,9 +1197,142 @@ describe('LogLineDetails', () => {
 
     await setup(undefined, { labels: { label: 'value' } });
 
+    const link = screen.getByRole('link', { name: 'Open service overview for label' });
+    expect(link).toHaveAttribute('href', 'https://example.com');
+    expect(link).toHaveTextContent('value');
     expect(screen.getByText('label')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'value' })).not.toBeInTheDocument();
+  });
+
+  test('shows a dropdown when a label has multiple extension links', async () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({
+      links: [
+        {
+          type: 'link',
+          title: 'APM',
+          path: 'https://example.com/apm',
+          category: 'label',
+          icon: 'compass',
+        },
+        {
+          type: 'link',
+          title: 'Kubernetes',
+          path: 'https://example.com/k8s',
+          category: 'label',
+          icon: 'apps',
+        },
+      ],
+    });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    await setup(undefined, { labels: { label: 'value' } });
+
+    expect(screen.queryByRole('link', { name: 'APM' })).not.toBeInTheDocument();
     expect(screen.getByText('value')).toBeInTheDocument();
-    expect(screen.getByText('Open service overview for label')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'value' }));
+
+    expect(await screen.findByText('OPEN VALUE IN')).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'APM' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Kubernetes' })).toBeInTheDocument();
+  });
+
+  test('shows legacy log details for an OTel log when otel log details are disabled', async () => {
+    await setup(undefined, { labels: { severity_number: '9', 'service.name': 'checkout' } });
+
+    expect(screen.getByText('Log line')).toBeInTheDocument();
+    expect(screen.queryByText('Service')).not.toBeInTheDocument();
+  });
+
+  test('shows OTel log details when the log has an OTel language and the flag is enabled', async () => {
+    setBooleanFlags({ [FlagKeys.GrafanaOtelLogDetails]: true });
+
+    await setup(
+      undefined,
+      { labels: { severity_number: '9', 'service.name': 'checkout' } },
+      undefined,
+      undefined,
+      'Service'
+    );
+
+    expect(screen.getByText('Service')).toBeInTheDocument();
+    expect(screen.getByText('checkout')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Log line' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
+  });
+
+  test('OTel details wrap a single attribute extension link around the value', async () => {
+    setBooleanFlags({ [FlagKeys.GrafanaOtelLogDetails]: true });
+
+    const usePluginLinksMock = jest.fn().mockReturnValue({
+      links: [
+        {
+          type: 'link',
+          title: 'Open service overview',
+          path: 'https://example.com/overview',
+          category: 'service.name',
+          icon: 'compass',
+        },
+      ],
+    });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    await setup(
+      undefined,
+      { labels: { severity_number: '9', 'service.name': 'checkout' } },
+      undefined,
+      undefined,
+      'checkout'
+    );
+
+    const link = screen.getByRole('link', { name: 'Open service overview' });
+    expect(link).toHaveAttribute('href', 'https://example.com/overview');
+    expect(link).toHaveTextContent('checkout');
+    expect(screen.queryByRole('button', { name: 'checkout' })).not.toBeInTheDocument();
+  });
+
+  test('OTel details show a dropdown when an attribute has multiple extension links', async () => {
+    setBooleanFlags({ [FlagKeys.GrafanaOtelLogDetails]: true });
+
+    const usePluginLinksMock = jest.fn().mockReturnValue({
+      links: [
+        {
+          type: 'link',
+          title: 'APM',
+          path: 'https://example.com/apm',
+          category: 'service.name',
+          icon: 'compass',
+        },
+        {
+          type: 'link',
+          title: 'Kubernetes',
+          path: 'https://example.com/k8s',
+          category: 'service.name',
+          icon: 'apps',
+        },
+      ],
+    });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    await setup(
+      undefined,
+      { labels: { severity_number: '9', 'service.name': 'checkout' } },
+      undefined,
+      undefined,
+      'checkout'
+    );
+
+    expect(screen.queryByRole('link', { name: 'APM' })).not.toBeInTheDocument();
+    expect(screen.getByText('checkout')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'checkout' }));
+
+    expect(await screen.findByText('OPEN VALUE IN')).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'APM' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Kubernetes' })).toBeInTheDocument();
   });
 
   describe('Width regressions', () => {

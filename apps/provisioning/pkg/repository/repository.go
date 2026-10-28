@@ -37,6 +37,20 @@ var ErrRefNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "ref not found",
 }}
 
+// CompareRefNotFoundError identifies which CompareFiles operand could not be resolved.
+type CompareRefNotFoundError struct {
+	Ref string
+	Err error
+}
+
+func (e *CompareRefNotFoundError) Error() string {
+	return e.Err.Error()
+}
+
+func (e *CompareRefNotFoundError) Unwrap() error {
+	return e.Err
+}
+
 var ErrFileAlreadyExists error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Status:  metav1.StatusFailure,
 	Code:    http.StatusConflict,
@@ -135,7 +149,9 @@ type Reader interface {
 	// Read all file names from the tree.
 	// This data will be parsed and validated before it is shown.
 	//
-	// TODO: Make some API contract that lets us ignore files that aren't relevant to us (e.g. CI/CD, CODEOWNERS, other configs or source code).
+	// Excludes dot-prefixed files and directories, including their descendants,
+	// relative to the configured root. Retains .keep files in visible directories
+	// as folder markers.
 	// TODO: Test scale: do we want to stream entries instead somehow?
 	ReadTree(ctx context.Context, ref string) ([]FileTreeEntry, error)
 }
@@ -239,6 +255,10 @@ type Versioned interface {
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
 	ListRefs(ctx context.Context) ([]provisioning.RefItem, error)
+	// CompareFiles applies the same hidden-path policy as Reader.ReadTree.
+	// Renames into ignored paths are deletions of the old path; renames out of
+	// ignored paths are creations at the new path. Renames between ignored paths
+	// are omitted.
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
 }
 

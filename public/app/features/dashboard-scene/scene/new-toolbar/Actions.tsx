@@ -7,6 +7,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
 import { type DashboardScene } from '../DashboardScene';
+import { isViewingDashboard } from '../dashboardModes';
 
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
@@ -17,7 +18,7 @@ import { SaveDashboard } from './actions/SaveDashboard';
 import { getDynamicActions, renderActionElements } from './utils';
 
 export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
-  const { editPanel, editable, editview, isEditing, meta, viewPanel } = dashboard.useState();
+  const { editPanel, editable, editview, isEditing, meta, mode, viewPanel } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const styles = useStyles2(getStyles);
 
@@ -70,7 +71,7 @@ export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
             key: 'save-dashboard',
             component: SaveDashboard,
             group: 'panel',
-            condition: isEditingDashboard && (canSave || canSaveInFolder),
+            condition: isEditingDashboard && !isViewingDashboard({ mode, isEditing }) && (canSave || canSaveInFolder),
           },
           {
             key: 'make-dashboard-editable-button',

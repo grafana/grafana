@@ -7,7 +7,7 @@ import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { createLogLine } from '../mocks/logRow';
 
-import { getTempoTraceFromLinks, getTraceIdFromTraceQlQuery } from './links';
+import { getTempoTraceFromLinks, getTraceIdFromTempoQuery, getTraceIdFromTraceQlQuery } from './links';
 import { type LogListModel } from './processing';
 
 describe('getTempoTraceFromLinks', () => {
@@ -107,4 +107,21 @@ describe('getTraceIdFromTraceQlQuery', () => {
   ])('returns undefined for non trace-id lookups: %s', (query) => {
     expect(getTraceIdFromTraceQlQuery(query)).toBeUndefined();
   });
+});
+
+describe('getTraceIdFromTempoQuery', () => {
+  test.each([
+    ['2203801e0171aa8b', '2203801e0171aa8b'],
+    ['{ trace:id = "2203801e0171aa8b" }', '2203801e0171aa8b'],
+    ['  abcdef0123456789abcdef0123456789  ', 'abcdef0123456789abcdef0123456789'],
+  ])('reads a trace id from %s', (query, expected) => {
+    expect(getTraceIdFromTempoQuery(query)).toBe(expected);
+  });
+
+  test.each([['abc'], ['{ span.foo = "bar" }'], ['']])(
+    'returns undefined when %s is not a trace id lookup',
+    (query) => {
+      expect(getTraceIdFromTempoQuery(query)).toBeUndefined();
+    }
+  );
 });

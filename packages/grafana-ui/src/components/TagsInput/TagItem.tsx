@@ -1,10 +1,9 @@
-import { css, cx } from '@emotion/css';
-import { useMemo } from 'react';
+import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
+import { useStyles2 } from '../../themes/ThemeContext';
 import { getTagColorsFromName } from '../../utils/tags';
 import { IconButton } from '../IconButton/IconButton';
 
@@ -22,31 +21,10 @@ interface Props {
  * Only used internally by TagsInput
  * */
 export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) => {
-  const theme = useTheme2();
-  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
-  const styles = useStyles2(getStyles);
-
-  // If configured, use random colors based on name.
-  // Otherwise, a default class name will be applied to the tag.
-  const tagColors = useMemo(() => {
-    if (autoColors) {
-      const { background, text } = getTagColorsFromName(name, theme);
-      return { background, text };
-    }
-    return undefined;
-  }, [name, autoColors, theme]);
+  const styles = useStyles2(getStyles, autoColors, disabled, name);
 
   return (
-    <li
-      className={cx(styles.itemStyle, !tagColors && styles.defaultTagColor)}
-      style={
-        tagColors
-          ? visualRefreshEnabled
-            ? { backgroundColor: tagColors.background, color: tagColors.text }
-            : { backgroundColor: tagColors.background, borderColor: theme.colors.emphasize(tagColors.background, 0.2) }
-          : undefined
-      }
-    >
+    <li className={styles.itemStyle}>
       <span className={styles.nameStyle}>{name}</span>
       <IconButton
         name="times"
@@ -60,42 +38,65 @@ export const TagItem = ({ name, disabled, onRemove, autoColors = true }: Props) 
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, autoColors?: Boolean, disabled?: Boolean, name?: string) => {
   const height = theme.spacing.gridSize * 3;
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
+  let backgroundColor = theme.colors.background.secondary;
+  let borderColor = theme.components.input.borderColor;
+  let textColor = theme.colors.text.primary;
+
+  if (autoColors) {
+    const { background, text } = getTagColorsFromName(name, theme);
+    backgroundColor = background;
+    textColor = text;
+    borderColor = theme.colors.emphasize(backgroundColor, 0.2);
+  }
+
   return {
-    itemStyle: css({
-      display: 'flex',
-      gap: '3px',
-      alignItems: 'center',
-      height: `${height}px`,
-      lineHeight: `${height - 2}px`,
-      borderWidth: visualRefreshEnabled ? 0 : '1px',
-      borderStyle: 'solid',
-      borderRadius: theme.shape.radius.default,
-      padding: `0 ${theme.spacing(0.5)}`,
-      whiteSpace: 'nowrap',
-      textShadow: 'none',
-      fontWeight: 500,
-      fontSize: theme.typography.size.sm,
-      color: '#fff',
-    }),
-    defaultTagColor: css({
-      backgroundColor: theme.colors.background.secondary,
-      borderColor: theme.components.input.borderColor,
-      color: theme.colors.text.primary,
-    }),
+    itemStyle: css(
+      {
+        display: 'flex',
+        gap: '3px',
+        alignItems: 'center',
+        height: `${height}px`,
+        lineHeight: `${height - 2}px`,
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderRadius: theme.shape.radius.default,
+        padding: `0 ${theme.spacing(0.5)}`,
+        whiteSpace: 'nowrap',
+        textShadow: 'none',
+        fontWeight: 500,
+        fontSize: theme.typography.size.sm,
+        color: textColor,
+        borderColor,
+        backgroundColor,
+      },
+      visualRefreshEnabled && {
+        borderWidth: 0,
+        borderRadius: theme.shape.radius.pill,
+        padding: `0 ${theme.spacing.x1}`,
+        fontSize: theme.typography.size.xs,
+        color: disabled ? theme.colors.text.disabled : textColor,
+      }
+    ),
     nameStyle: css({
       maxWidth: '25ch',
       textOverflow: 'ellipsis',
       overflow: 'hidden',
     }),
-    buttonStyles: css({
-      margin: 0,
-      '&:hover::before': {
-        display: 'none',
+    buttonStyles: css(
+      {
+        margin: 0,
+        '&:hover::before': {
+          display: 'none',
+        },
       },
-    }),
+      // Lets the close icon pick up the tag's own text color instead of IconButton's default variant color.
+      visualRefreshEnabled && {
+        color: 'inherit',
+      }
+    ),
   };
 };

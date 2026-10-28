@@ -14,19 +14,13 @@ labels:
 menuTitle: Microsoft Teams
 title: Configure Microsoft Teams for Alerting
 weight: 135
-refs:
-  notification-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
 ---
 
 # Configure Microsoft Teams for Alerting
 
 Use the Grafana Alerting - Microsoft Teams integration to receive notifications in your team’s channel when your alerts are firing.
 
-Note that you can customize the `title` and `message` of the notification using [notification templates](ref:notification-templates); however, you cannot modify its visual appearance with adaptive cards.
+Note that you can customize the `title` and `message` of the notification using [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/); however, you cannot modify its visual appearance with adaptive cards.
 
 ## Before you begin
 
@@ -73,4 +67,4 @@ To add this contact point to your alert, complete the following steps.
 
 ## Troubleshooting
 
-- If Grafana reports that notification was sent successfully but it was not delivered to the channel, check the workflow's run history. You can find it in the workflow details page.
+- If Grafana reports that the notification was sent successfully but it was not delivered to the channel, check the workflow's run history. You can find it in the workflow details page.

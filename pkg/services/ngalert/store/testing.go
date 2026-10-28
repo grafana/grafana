@@ -5,15 +5,10 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func NewFakeImageStore(t *testing.T, images ...*models.Image) *FakeImageStore {
@@ -105,13 +100,13 @@ type FakeAdminConfigStore struct {
 	Configs map[int64]*models.AdminConfiguration
 }
 
-func (f *FakeAdminConfigStore) GetAdminConfiguration(orgID int64) (*models.AdminConfiguration, error) {
+func (f *FakeAdminConfigStore) GetAdminConfiguration(_ context.Context, orgID int64) (*models.AdminConfiguration, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	return f.Configs[orgID], nil
 }
 
-func (f *FakeAdminConfigStore) GetAdminConfigurations() ([]*models.AdminConfiguration, error) {
+func (f *FakeAdminConfigStore) GetAdminConfigurations(_ context.Context) ([]*models.AdminConfiguration, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	acs := make([]*models.AdminConfiguration, 0, len(f.Configs))
@@ -122,13 +117,13 @@ func (f *FakeAdminConfigStore) GetAdminConfigurations() ([]*models.AdminConfigur
 	return acs, nil
 }
 
-func (f *FakeAdminConfigStore) DeleteAdminConfiguration(orgID int64) error {
+func (f *FakeAdminConfigStore) DeleteAdminConfiguration(_ context.Context, orgID int64) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	delete(f.Configs, orgID)
 	return nil
 }
-func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigurationCmd) error {
+func (f *FakeAdminConfigStore) UpdateAdminConfiguration(_ context.Context, cmd UpdateAdminConfigurationCmd) error {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 	f.Configs[cmd.AdminConfiguration.OrgID] = cmd.AdminConfiguration
@@ -138,17 +133,9 @@ func (f *FakeAdminConfigStore) UpdateAdminConfiguration(cmd UpdateAdminConfigura
 
 func SetupStoreForTesting(t *testing.T, db db.DB) *DBstore {
 	t.Helper()
-	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: 1 * time.Second}
-
-	service := foldertest.NewFakeService()
-
 	store := &DBstore{
-		SQLStore:      db,
-		Cfg:           cfg.UnifiedAlerting,
-		FolderService: service,
-		Logger:        &logtest.Fake{},
-		Bus:           bus.ProvideBus(tracing.InitializeTracerForTest()),
+		SQLStore: db,
+		Logger:   &logtest.Fake{},
 	}
 	return store
 }

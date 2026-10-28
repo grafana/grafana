@@ -148,7 +148,7 @@ jobs:
 
       - name: Typecheck packages
         if: steps.plan.outputs.should_publish == 'true'
-        run: yarn run packages:typecheck
+        run: npm run packages:typecheck
 
       - name: Version, build, and pack packages
         if: steps.plan.outputs.should_publish == 'true'
@@ -156,18 +156,24 @@ jobs:
           VERSION: ${{ inputs.version }}
           GRAFANA_COMMIT: ${{ inputs.grafana_commit }}
         run: |
-          yarn run packages:build
-          yarn lerna version "$VERSION" \
-            --exact \
-            --no-git-tag-version \
-            --no-push \
-            --force-publish \
-            --yes
+          npm run packages:build
+          # This workflow runs from main against grafana_commit, which may be on a release
+          # branch cut before lerna was replaced with nx release.
+          if [ -f lerna.json ]; then
+            npm exec --no -- lerna version "$VERSION" \
+              --exact \
+              --no-git-tag-version \
+              --no-push \
+              --force-publish \
+              --yes
+          else
+            npm exec --no -- nx release version "$VERSION"
+          fi
           # packages:pack runs each package's prepack (scripts/prepare-npm-package.js),
           # which stamps GRAFANA_COMMIT as gitHead into the packed manifest. npm doesn't
           # record gitHead for tarball publishes, and the nightly change-detection reads
           # it back to anchor on the exact commit the last artifact was built from.
-          yarn run packages:pack
+          npm run packages:pack
 
       # For pre-releases we only ship @grafana/e2e-selectors, so drop every other
       # packed tarball before validating and publishing.

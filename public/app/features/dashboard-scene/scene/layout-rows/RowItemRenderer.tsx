@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { Draggable } from '@hello-pangea/dnd';
 import { useCallback, useId, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -15,7 +14,10 @@ import {
   usePointerDistance,
   useStyles2,
 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
+import { toggleRowCollapse } from '../../actions/layout/toggleRowCollapse';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -42,7 +44,9 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const contentId = useId();
   const isCollapsed = collapse && !isHeaderHidden; // never allow a row without a header to be collapsed
   const isClone = isRepeatCloneOrChildOf(model);
-  const { isEditing } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const isEditing = isFullDashboardEditing(dashboardState);
+  const { planning } = dashboardState;
   const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
     model.state.conditionalRendering
   );
@@ -69,6 +73,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
   const isDraggable = !isClone && isEditing;
+  const { Draggable } = useDragAndDrop(isDraggable);
 
   if (isHidden) {
     return null;
@@ -149,11 +154,17 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               className={cx(styles.rowHeader, 'dashboard-row-header')}
               onMouseEnter={isSelectable ? onHeaderEnter : undefined}
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
+              data-dashboard-element-key={key}
+              data-dashboard-element-type="row"
               {...dragProvided.dragHandleProps}
             >
               <button
                 onClick={(evt) => {
-                  model.onCollapseToggle();
+                  if (isEditing) {
+                    toggleRowCollapse(model);
+                  } else {
+                    model.onCollapseToggle();
+                  }
                   onClearSelection?.();
                 }}
                 className={cx(clearStyles, styles.rowTitleButton)}
@@ -170,7 +181,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 {!isEditing && titleElement}
               </button>
               {isEditing && titleElement}
-              {!isEditing && (
+              {!isEditing && !planning && (
                 <ClipboardButton
                   icon="link"
                   size="sm"

@@ -72,11 +72,8 @@ export function BrowseFolderVariablesPage() {
         {folderDTO && (
           <Stack direction="column" gap={3}>
             <div>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Text element="h3">
-                  <Trans i18nKey="browse-dashboards.folder-variables.list-heading">Folder variables</Trans>
-                </Text>
-                {canCreate && folderDTO.canEdit && (
+              {canCreate && folderDTO.canEdit && (
+                <Stack direction="row" justifyContent="flex-end" alignItems="center">
                   <Button
                     onClick={() =>
                       navigate(locationUtil.assureBaseUrl(`/dashboards/variables/new?folderUid=${folderUID}`))
@@ -84,8 +81,8 @@ export function BrowseFolderVariablesPage() {
                   >
                     <Trans i18nKey="browse-dashboards.folder-variables.new">New folder variable</Trans>
                   </Button>
-                )}
-              </Stack>
+                </Stack>
+              )}
               {folderVariables.length === 0 ? (
                 <Text color="secondary">
                   <Trans i18nKey="browse-dashboards.folder-variables.empty">

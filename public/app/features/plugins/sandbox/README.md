@@ -24,6 +24,11 @@ When a plugin is marked for loading, grafana decides if it should load it in the
 In either case, Grafana receives a pluginExport object that later uses to initialize plugins. For Grafana's core, this
 pluginExport is identical in functionality and properties regardless of the loading method.
 
+## Shared dependencies
+
+Entries in [`sharedDependencies.ts`](../loader/sharedDependencies.ts) can use async factories to keep code that only plugins need out of the initial chunks.
+SystemJS and the sandbox loader await these dependencies before executing the plugin, so plugins can use their exports synchronously.
+
 # Plugin execution
 
 The plugin execution from Grafana's perspective doesn't change in anyway when loaded inside a sandbox.

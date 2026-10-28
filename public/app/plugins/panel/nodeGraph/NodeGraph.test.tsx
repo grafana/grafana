@@ -273,6 +273,39 @@ describe('NodeGraph', () => {
     await expectNodePositionCloseTo('service:1', { x: 60, y: -60 });
     await expectNodePositionCloseTo('service:2', { x: -60, y: 80 });
   });
+
+  it('should show an actionable error when an edge references a missing node', () => {
+    render(
+      <NodeGraph
+        dataFrames={[makeNodesDataFrame(1), makeEdgesDataFrame([{ source: 'missing-source', target: '0' }])]}
+        getLinks={() => []}
+      />
+    );
+
+    expect(screen.getByText(/1 edge references a missing node/)).toBeInTheDocument();
+    expect(screen.getByText(/source “missing-source” is absent from the node data/)).toBeInTheDocument();
+    expect(screen.getByText(/Ensure every edge source and target has a matching node/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Node: service:0')).not.toBeInTheDocument();
+  });
+
+  it('should pass the formatted error to the custom error renderer', () => {
+    const renderError = jest.fn((message: string) => <div role="alert">{message}</div>);
+
+    render(
+      <NodeGraph
+        dataFrames={[makeNodesDataFrame(1), makeEdgesDataFrame([{ source: 'missing-source', target: '0' }])]}
+        getLinks={() => []}
+        renderError={renderError}
+      />
+    );
+
+    expect(renderError).toHaveBeenCalledTimes(1);
+    expect(renderError).toHaveBeenCalledWith(
+      expect.stringContaining('Cannot visualize graph data: 1 edge references a missing node.')
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent(/Ensure every edge source and target has a matching node/);
+    expect(screen.queryByLabelText('Node: service:0')).not.toBeInTheDocument();
+  });
 });
 
 async function expectNodePositionCloseTo(node: string, pos: { x: number; y: number }) {

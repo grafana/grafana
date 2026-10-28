@@ -5,6 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useFlagGrafanaDashboardsAutoHeightPanels } from '@grafana/runtime/internal';
 import { type SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { useStyles2 } from '@grafana/ui';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -18,13 +19,15 @@ import { type AutoGridLayout, type AutoGridLayoutState } from './AutoGridLayout'
 import { AutoGridLayoutManager } from './AutoGridLayoutManager';
 
 export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLayout>) {
-  const { children, isHidden } = model.useState();
+  const { children, isHidden, draggedChildren } = model.useState();
   const styles = useStyles2(getStyles, model.state);
+  const dashboardState = useDashboardState(model);
   const {
     layoutOrchestrator,
-    isEditing,
+
     meta: { isEmbedded },
-  } = useDashboardState(model);
+  } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
   const layoutManager = sceneGraph.getAncestor(model, AutoGridLayoutManager);
   const { fillScreen, matchRowHeights, dropPosition } = layoutManager.useState();
   const soloPanelContext = useSoloPanelContext();
@@ -42,21 +45,23 @@ export function AutoGridLayoutRenderer({ model }: SceneComponentProps<AutoGridLa
     return children.map((item) => <item.Component key={item.state.key} model={item} />);
   }
 
+  const displayChildren = draggedChildren ?? children;
+
   // Build children with placeholder inserted at dropPosition
   const renderChildren = () => {
     if (dropPosition === null || dropPosition === undefined) {
-      return children.map((item) => <item.Component key={item.state.key} model={item} />);
+      return displayChildren.map((item) => <item.Component key={item.state.key} model={item} />);
     }
 
     const result: React.ReactNode[] = [];
-    const insertPosition = Math.min(dropPosition, children.length);
+    const insertPosition = Math.min(dropPosition, displayChildren.length);
 
-    for (let i = 0; i <= children.length; i++) {
+    for (let i = 0; i <= displayChildren.length; i++) {
       if (i === insertPosition) {
         result.push(<DropPlaceholder key="drop-placeholder" styles={styles} />);
       }
-      if (i < children.length) {
-        const item = children[i];
+      if (i < displayChildren.length) {
+        const item = displayChildren[i];
         result.push(<item.Component key={item.state.key} model={item} />);
       }
     }

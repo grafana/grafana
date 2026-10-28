@@ -106,7 +106,11 @@ receivers:
 
 		// Test that we can get the alertmanager config from raw storage
 		// We need to pass a decrypt function since the config is now encrypted
-		stored := v1.ExtraConfigToModel(gettableConfig.ExtraConfigs[0])
+		stored := v1.ExtraConfiguration{
+			Identifier:         gettableConfig.ExtraConfigs[0].Identifier,
+			TemplateFiles:      gettableConfig.ExtraConfigs[0].TemplateFiles,
+			AlertmanagerConfig: gettableConfig.ExtraConfigs[0].AlertmanagerConfig,
+		}
 		amConfig, err := stored.GetAlertmanagerConfig()
 		require.NoError(t, err)
 		require.Equal(t, "test-receiver", amConfig.Route.Receiver)
@@ -327,12 +331,12 @@ receivers:
 						Receiver: "initial-receiver",
 					},
 				},
-				Receivers: []*v1.PostableApiReceiver{
-					{
-						Name: "initial-receiver",
-					},
-				},
 			},
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+				{
+					Name: "initial-receiver",
+				},
+			}),
 		}
 
 		cfgToSave, err := legacy_storage.SerializeAlertmanagerConfig(cfg)

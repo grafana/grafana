@@ -9,6 +9,7 @@ describe('navBarItem-translations', () => {
       ['extensions', 'Extensions'],
       ['provisioning', 'Provisioning'],
       ['observability', 'Observability'],
+      ['dashboards/variables', 'Variables'],
     ])('returns the %s title', (navId, title) => {
       expect(getNavTitle(navId)).toBe(title);
     });

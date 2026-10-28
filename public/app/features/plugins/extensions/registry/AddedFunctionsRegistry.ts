@@ -4,7 +4,7 @@ import { type ReplaySubject } from 'rxjs';
 import { type AppPluginConfig, type PluginExtensionAddedFunctionConfig } from '@grafana/data';
 
 import * as errors from '../errors';
-import { isGrafanaDevMode } from '../utils';
+import { isGrafanaDevMode } from '../isGrafanaDevMode';
 import { isAddedFunctionMetaInfoMissing } from '../validators';
 
 import { type PluginExtensionConfigs, Registry, type RegistryType } from './Registry';

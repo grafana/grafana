@@ -57,6 +57,18 @@ describe('NewsCard', () => {
     });
   });
 
+  it('renders blog article links in level-three headings below the level-two blog heading', () => {
+    render(<NewsCard />);
+
+    expect(screen.getByRole('heading', { name: 'Latest from the blog', level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Post One', level: 3 })).toContainElement(
+      screen.getByRole('link', { name: 'Post One' })
+    );
+    expect(screen.getByRole('heading', { name: 'Post Two', level: 3 })).toContainElement(
+      screen.getByRole('link', { name: 'Post Two' })
+    );
+  });
+
   it('fires the read_more_news cta event when the footer link is clicked', async () => {
     const { user } = render(<NewsCard />);
 

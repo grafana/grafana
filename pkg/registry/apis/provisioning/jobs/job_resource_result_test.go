@@ -352,6 +352,25 @@ func TestNewJobResourceResult_WithErrorAsRegularError(t *testing.T) {
 	assert.Nil(t, result.Warning(), "Regular error should not be stored as warning")
 }
 
+func TestNewJobResourceResult_WithUnsupportedPathAsWarning(t *testing.T) {
+	unsupportedErr := &resources.UnsupportedPathError{Path: "folder/Backend & UI.json", Err: errors.New("path contains invalid characters")}
+
+	t.Run("is a warning, not an error", func(t *testing.T) {
+		result := NewResourceResult().WithError(unsupportedErr).Build()
+
+		assert.NoError(t, result.Error())
+		assert.Equal(t, unsupportedErr, result.Warning())
+		assert.Equal(t, provisioning.ReasonUnsupportedPath, result.WarningReason())
+	})
+
+	t.Run("stays a warning when wrapped", func(t *testing.T) {
+		result := NewResourceResult().WithError(fmt.Errorf("sync: %w", unsupportedErr)).Build()
+
+		assert.NoError(t, result.Error())
+		assert.Equal(t, provisioning.ReasonUnsupportedPath, result.WarningReason())
+	})
+}
+
 func TestJobResourceResult_WarningReason(t *testing.T) {
 	t.Run("QuotaExceededError returns ReasonQuotaExceeded", func(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))

@@ -12,7 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	publicdashboards "github.com/grafana/grafana/pkg/services/publicdashboards/internal"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 // Define the storage implementation. We're generating the mock implementation
@@ -22,6 +24,9 @@ type PublicDashboardStoreImpl struct {
 	log      log.Logger
 	cfg      *setting.Cfg
 	features featuremgmt.FeatureToggles
+	// LegacyDatabaseProvider resolves table names for this store's SQL queries. If unset, queries
+	// use bare table names.
+	LegacyDatabaseProvider legacysql.LegacyDatabaseProvider
 }
 
 var LogPrefix = "publicdashboards.store"
@@ -37,7 +42,24 @@ func ProvideStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.Feature
 		log:      log.New(LogPrefix),
 		cfg:      cfg,
 		features: features,
+		// LegacyDatabaseProvider is left unset here: it must stay nil unless a deployment
+		// explicitly routes to a different database.
 	}
+}
+
+// legacyDatabaseProvider falls back to bare table names when LegacyDatabaseProvider is unset, so
+// a PublicDashboardStoreImpl built directly (as in tests) keeps working unchanged.
+func (d *PublicDashboardStoreImpl) legacyDatabaseProvider(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+	if d.LegacyDatabaseProvider == nil {
+		return legacysql.NewDatabaseProvider(d.sqlStore)(ctx)
+	}
+	return d.LegacyDatabaseProvider(ctx)
+}
+
+// withoutAmbientSession forces a fresh session, since sqlstore reuses whatever's on ctx without
+// checking it came from the right db.DB.
+func withoutAmbientSession(ctx context.Context) context.Context {
+	return context.WithValue(ctx, sqlstore.ContextSessionKey{}, nil)
 }
 
 // FindAllWithPagination Returns a list of public dashboards by orgId, based on permissions and with pagination
@@ -306,9 +328,21 @@ func (d *PublicDashboardStoreImpl) DeleteByDashboardUIDs(ctx context.Context, or
 		return nil
 	}
 
-	return d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+	conn := d.sqlStore
+	dashboardPublicTable := "dashboard_public"
+	if d.LegacyDatabaseProvider != nil {
+		dbHelper, err := d.legacyDatabaseProvider(ctx)
+		if err != nil {
+			return err
+		}
+		conn = dbHelper.DB
+		dashboardPublicTable = dbHelper.Table("dashboard_public")
+		ctx = withoutAmbientSession(ctx)
+	}
+
+	return conn.WithDbSession(ctx, func(sess *db.Session) error {
 		s := strings.Builder{}
-		s.WriteString("DELETE FROM dashboard_public WHERE org_id = ? AND ")
+		s.WriteString(fmt.Sprintf("DELETE FROM %s WHERE org_id = ? AND ", dashboardPublicTable))
 		s.WriteString(fmt.Sprintf("dashboard_uid IN (%s)", strings.Repeat("?,", len(dashboardUIDs)-1)+"?"))
 		sql := s.String()
 		args := make([]any, 0, len(dashboardUIDs)+2)

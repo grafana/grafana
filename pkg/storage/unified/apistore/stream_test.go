@@ -19,12 +19,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -52,12 +51,6 @@ func (m *mockWatchClient) CloseSend() error             { return nil }
 func (m *mockWatchClient) SendMsg(any) error            { return nil }
 func (m *mockWatchClient) RecvMsg(any) error            { return nil }
 
-func unstructuredCodec() runtime.Codec {
-	scheme := runtime.NewScheme()
-	codecs := serializer.NewCodecFactory(scheme)
-	return codecs.LegacyCodec()
-}
-
 func TestStreamDecoderBookmarkAnnotation(t *testing.T) {
 	newFunc := func() runtime.Object { return &unstructured.Unstructured{} }
 	predicate := storage.Everything
@@ -81,7 +74,7 @@ func TestStreamDecoderBookmarkAnnotation(t *testing.T) {
 			},
 		}
 
-		decoder := newStreamDecoder(client, newFunc, predicate, unstructuredCodec(), func() {}, true)
+		decoder := newStreamDecoder(client, newFunc, predicate, &jsonSerializer{}, func() {}, true)
 
 		// First bookmark should have the initial-events-end annotation.
 		action, obj, err := decoder.Decode()
@@ -119,7 +112,7 @@ func TestStreamDecoderBookmarkAnnotation(t *testing.T) {
 			},
 		}
 
-		decoder := newStreamDecoder(client, newFunc, predicate, unstructuredCodec(), func() {}, false)
+		decoder := newStreamDecoder(client, newFunc, predicate, &jsonSerializer{}, func() {}, false)
 
 		for range 2 {
 			action, obj, err := decoder.Decode()
@@ -131,6 +124,54 @@ func TestStreamDecoderBookmarkAnnotation(t *testing.T) {
 			require.Empty(t, annotations["k8s.io/initial-events-end"])
 		}
 	})
+}
+
+// errWatchClient implements resourcepb.ResourceStore_WatchClient and always
+// fails Recv with the same error, like a terminated gRPC stream does.
+type errWatchClient struct {
+	grpc.ClientStream
+	ctx context.Context
+	err error
+}
+
+func (m *errWatchClient) Recv() (*resourcepb.WatchEvent, error) { return nil, m.err }
+func (m *errWatchClient) Context() context.Context              { return m.ctx }
+func (m *errWatchClient) Header() (metadata.MD, error)          { return nil, nil }
+func (m *errWatchClient) Trailer() metadata.MD                  { return nil }
+func (m *errWatchClient) CloseSend() error                      { return nil }
+func (m *errWatchClient) SendMsg(any) error                     { return nil }
+func (m *errWatchClient) RecvMsg(any) error                     { return nil }
+
+func TestStreamDecoderExpiredResourceVersion(t *testing.T) {
+	for _, canceled := range []bool{false, true} {
+		name := "active context"
+		if canceled {
+			name = "already canceled context"
+		}
+		t.Run(name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			t.Cleanup(cancel)
+			if canceled {
+				cancel()
+			}
+			client := &errWatchClient{ctx: ctx, err: resourceutil.NewResourceVersionExpiredError(1234)}
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, &jsonSerializer{}, cancel, false)
+			t.Cleanup(decoder.Close)
+
+			action, obj, err := decoder.Decode()
+			require.NoError(t, err)
+			require.Equal(t, watch.Error, action)
+			s, ok := obj.(*metav1.Status)
+			require.True(t, ok, "expected a metav1.Status, got %T", obj)
+			require.Equal(t, int32(http.StatusGone), s.Code)
+			require.Equal(t, metav1.StatusReasonExpired, s.Reason)
+			require.True(t, apierrors.IsResourceExpired(apierrors.FromObject(s)))
+
+			// The stream is done: the same error must not be reported again.
+			_, _, err = decoder.Decode()
+			require.ErrorIs(t, err, io.EOF)
+		})
+	}
 }
 
 type streamDecoderTestServer struct {
@@ -171,40 +212,31 @@ func newStreamDecoderGRPCClient(t *testing.T, handler func(resourcepb.ResourceSt
 	return client, cancel
 }
 
-func TestStreamDecoderExpiredResourceVersion(t *testing.T) {
-	newFunc := func() runtime.Object { return &unstructured.Unstructured{} }
-	client, cancel := newStreamDecoderGRPCClient(t, func(resourcepb.ResourceStore_WatchServer) error {
-		return resource.NewResourceVersionExpiredError(1234)
+// outOfRangeExpiredError is the 410 a storage server sent before it used the
+// HTTP status as the gRPC code; clients must keep recognising it.
+func outOfRangeExpiredError(t *testing.T) error {
+	t.Helper()
+	st, err := status.New(codes.OutOfRange, "too old resource version: 1234").WithDetails(&resourcepb.ErrorResult{
+		Code:    http.StatusGone,
+		Reason:  string(metav1.StatusReasonExpired),
+		Message: "too old resource version: 1234",
 	})
-	decoder := newStreamDecoder(client, newFunc, storage.Everything, unstructuredCodec(), cancel, false)
-	t.Cleanup(decoder.Close)
-
-	// Real gRPC cancels the stream context when Recv returns a terminal error.
-	// That cancellation must not hide the 410 status from the watch client.
-	action, obj, err := decoder.Decode()
 	require.NoError(t, err)
-	require.Equal(t, watch.Error, action)
-	require.ErrorIs(t, client.Context().Err(), context.Canceled)
-	status, ok := obj.(*metav1.Status)
-	require.True(t, ok, "expected a metav1.Status, got %T", obj)
-	require.Equal(t, int32(http.StatusGone), status.Code)
-	require.Equal(t, metav1.StatusReasonExpired, status.Reason)
-	require.True(t, apierrors.IsResourceExpired(apierrors.FromObject(status)))
-
-	_, _, err = decoder.Decode()
-	require.ErrorIs(t, err, io.EOF)
+	return st.Err()
 }
 
 func TestStreamDecoderGRPCTermination(t *testing.T) {
 	for _, tc := range []struct {
-		name string
-		err  error
-		eof  bool
+		name    string
+		err     error
+		expired bool
 	}{
-		{name: "clean close", eof: true},
-		{name: "canceled", err: status.Error(codes.Canceled, "watch canceled"), eof: true},
+		{name: "expired resource version", err: resourceutil.NewResourceVersionExpiredError(1234), expired: true},
+		{name: "expired by a storage server sending OutOfRange", err: outOfRangeExpiredError(t), expired: true},
+		{name: "clean close"},
+		{name: "canceled", err: status.Error(codes.Canceled, "watch canceled")},
+		{name: "max age disconnect", err: status.Error(codes.Unavailable, "transport is closing")},
 		{name: "deadline exceeded", err: status.Error(codes.DeadlineExceeded, "watch deadline exceeded")},
-		{name: "unavailable", err: status.Error(codes.Unavailable, "storage unavailable")},
 		{name: "permission denied", err: status.Error(codes.PermissionDenied, "watch denied")},
 		{name: "internal", err: status.Error(codes.Internal, "storage error")},
 		{name: "out of range without expiry details", err: status.Error(codes.OutOfRange, "invalid range")},
@@ -219,7 +251,7 @@ func TestStreamDecoderGRPCTermination(t *testing.T) {
 				}
 				return tc.err
 			})
-			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, unstructuredCodec(), cancel, false)
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, &jsonSerializer{}, cancel, false)
 			t.Cleanup(decoder.Close)
 
 			action, obj, err := decoder.Decode()
@@ -229,13 +261,20 @@ func TestStreamDecoderGRPCTermination(t *testing.T) {
 
 			action, obj, err = decoder.Decode()
 			require.Equal(t, watch.Error, action)
-			require.Nil(t, obj)
 			require.ErrorIs(t, client.Context().Err(), context.Canceled)
-			if tc.eof {
-				require.ErrorIs(t, err, io.EOF)
-			} else {
-				require.EqualError(t, err, tc.err.Error())
+			if tc.expired {
+				require.NoError(t, err)
+				s, ok := obj.(*metav1.Status)
+				require.True(t, ok, "expected a metav1.Status, got %T", obj)
+				require.Equal(t, int32(http.StatusGone), s.Code)
+				require.Equal(t, metav1.StatusReasonExpired, s.Reason)
+				require.True(t, apierrors.IsResourceExpired(apierrors.FromObject(s)))
+
+				action, obj, err = decoder.Decode()
+				require.Equal(t, watch.Error, action)
 			}
+			require.Nil(t, obj)
+			require.ErrorIs(t, err, io.EOF)
 		})
 	}
 }
@@ -245,7 +284,7 @@ func TestStreamDecoderCallerCancellation(t *testing.T) {
 		<-stream.Context().Done()
 		return status.FromContextError(stream.Context().Err()).Err()
 	})
-	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, unstructuredCodec(), cancel, false)
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, &jsonSerializer{}, cancel, false)
 	t.Cleanup(decoder.Close)
 
 	cancel()
@@ -253,4 +292,128 @@ func TestStreamDecoderCallerCancellation(t *testing.T) {
 	require.Equal(t, watch.Error, action)
 	require.Nil(t, obj)
 	require.ErrorIs(t, err, io.EOF)
+}
+
+func TestStreamDecoderSerializerContext(t *testing.T) {
+	type contextKey struct{}
+	ctx, cancel := context.WithCancel(context.WithValue(t.Context(), contextKey{}, "request"))
+	t.Cleanup(cancel)
+	current := []byte(`{"apiVersion":"example.com/v1","kind":"Widget","metadata":{"name":"current"}}`)
+	previous := []byte(`{"apiVersion":"example.com/v1","kind":"Widget","metadata":{"name":"previous"}}`)
+	client := &mockWatchClient{
+		ctx: ctx,
+		events: []*resourcepb.WatchEvent{{
+			Type:     resourcepb.WatchEvent_MODIFIED,
+			Resource: &resourcepb.WatchEvent_Resource{Value: current, Version: 12},
+			Previous: &resourcepb.WatchEvent_Resource{Value: previous, Version: 11},
+		}},
+	}
+	var decoded [][]byte
+	serializer := &testSerializer{
+		decode: func(gotCtx context.Context, data []byte, into runtime.Object) (runtime.Object, error) {
+			require.Equal(t, "request", gotCtx.Value(contextKey{}))
+			require.Equal(t, ctx.Done(), gotCtx.Done())
+			if err := gotCtx.Err(); err != nil {
+				return nil, err
+			}
+			decoded = append(decoded, data)
+			return JSONSerializer().Decode(gotCtx, data, into)
+		},
+	}
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, serializer, cancel, false)
+	t.Cleanup(decoder.Close)
+	action, obj, err := decoder.Decode()
+	require.NoError(t, err)
+	require.Equal(t, watch.Modified, action)
+	require.Equal(t, [][]byte{current, previous}, decoded)
+	require.Equal(t, "current", obj.(*unstructured.Unstructured).GetName())
+	require.Equal(t, "12", obj.(*unstructured.Unstructured).GetResourceVersion())
+
+	cancel()
+	_, err = decoder.toObject(client.events[0].Resource)
+	require.ErrorIs(t, err, context.Canceled)
+}
+
+func TestStreamDecoderDeletedEvents(t *testing.T) {
+	deleted := []byte(`{"apiVersion":"example.com/v1","kind":"Widget","metadata":{"name":"deleted","resourceVersion":"12"}}`)
+	for name, event := range map[string]*resourcepb.WatchEvent{
+		// Servers remove the deletion marker and send the deleted object as Previous.
+		"empty value with previous": {
+			Type:     resourcepb.WatchEvent_DELETED,
+			Resource: &resourcepb.WatchEvent_Resource{Version: 13},
+			Previous: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 12},
+		},
+		"previous takes precedence over value": {
+			Type:     resourcepb.WatchEvent_DELETED,
+			Resource: &resourcepb.WatchEvent_Resource{Value: []byte(`{"apiVersion":"example.com/v1","kind":"Widget","metadata":{"name":"current"}}`), Version: 13},
+			Previous: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 12},
+		},
+		"value without previous": {
+			Type:     resourcepb.WatchEvent_DELETED,
+			Resource: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 13},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := &mockWatchClient{ctx: t.Context(), events: []*resourcepb.WatchEvent{event}}
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, JSONSerializer(), func() {}, false)
+			t.Cleanup(decoder.Close)
+			action, obj, err := decoder.Decode()
+			require.NoError(t, err)
+			require.Equal(t, watch.Deleted, action)
+			require.Equal(t, "deleted", obj.(*unstructured.Unstructured).GetName())
+			require.Equal(t, "13", obj.(*unstructured.Unstructured).GetResourceVersion(), "a delete carries the deletion's resource version")
+		})
+	}
+}
+
+func TestStreamDecoderDeletedEventWithoutObject(t *testing.T) {
+	client := &mockWatchClient{ctx: t.Context(), events: []*resourcepb.WatchEvent{{
+		Type:     resourcepb.WatchEvent_DELETED,
+		Resource: &resourcepb.WatchEvent_Resource{Version: 13},
+	}}}
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, JSONSerializer(), func() {}, false)
+	t.Cleanup(decoder.Close)
+
+	action, obj, err := decoder.Decode()
+	require.Error(t, err)
+	require.Equal(t, watch.Error, action)
+	require.Nil(t, obj)
+}
+
+func TestStreamDecoderDeletedEventsSharedStorage(t *testing.T) {
+	other := []byte(`{"apiVersion":"shared.example.com/v1","kind":"Widget","metadata":{"name":"other"}}`)
+	deleted := []byte(`{"apiVersion":"shared.example.com/v1","kind":"Widget","metadata":{"name":"stored"}}`)
+	client := &mockWatchClient{
+		ctx: t.Context(),
+		events: []*resourcepb.WatchEvent{
+			{
+				Type:     resourcepb.WatchEvent_DELETED,
+				Resource: &resourcepb.WatchEvent_Resource{Version: 13},
+				Previous: &resourcepb.WatchEvent_Resource{Value: other, Version: 11},
+			},
+			{
+				Type:     resourcepb.WatchEvent_DELETED,
+				Resource: &resourcepb.WatchEvent_Resource{Version: 14},
+				Previous: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 12},
+			},
+		},
+	}
+	serializer := &sharedSerializer{
+		inner: JSONSerializer(),
+		shared: SharedStorage{
+			Group: "shared.example.com",
+			Name:  &SharedName{Stored: "stored", Served: "instance"},
+		},
+		served: "served.example.com",
+	}
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, serializer, func() {}, false)
+	t.Cleanup(decoder.Close)
+
+	action, obj, err := decoder.Decode()
+	require.NoError(t, err)
+	require.Equal(t, watch.Deleted, action)
+	deletedObj := obj.(*unstructured.Unstructured)
+	require.Equal(t, "instance", deletedObj.GetName())
+	require.Equal(t, "served.example.com/v1", deletedObj.GetAPIVersion())
+	require.Equal(t, "14", deletedObj.GetResourceVersion())
 }

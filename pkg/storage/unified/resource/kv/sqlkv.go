@@ -10,9 +10,9 @@ import (
 	"iter"
 	"strings"
 	"time"
+	"uuid"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 
@@ -21,36 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
-const (
-	DataSection                   = "unified/data"
-	EventsSection                 = "unified/events"
-	LastImportTimeSection         = "unified/lastimport"
-	PendingDeleteSection          = "unified/pendingdelete"
-	LeasesSection                 = "unified/leases"
-	SearchSnapshotManifestSection = "search/snapshot-manifest"
-	SearchSnapshotDataSection     = "search/snapshot-data"
-	StatsDailySection             = "stats/daily"
-	StatsAggregatesSection        = "stats/aggregates"
-	NATSPeersSection              = "nats/peers"
-	VersionPolicySection          = "apiserver/versionpolicy"
-)
-
-// validSaveSections is the set of sections accepted by SqlKV.Save.
-var validSaveSections = map[string]bool{
-	DataSection:                   true,
-	EventsSection:                 true,
-	PendingDeleteSection:          true,
-	LastImportTimeSection:         true,
-	LeasesSection:                 true,
-	SearchSnapshotManifestSection: true,
-	SearchSnapshotDataSection:     true,
-	StatsDailySection:             true,
-	StatsAggregatesSection:        true,
-	NATSPeersSection:              true,
-	VersionPolicySection:          true,
-}
-
-var _ KV = &SqlKV{}
+var _ KV = (*SqlKV)(nil)
 
 // DataImportRow represents a single append-only resource_history row written during bulk import.
 type DataImportRow struct {
@@ -233,10 +204,7 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 	statementCount := dataImportBatchStatementCount(len(rows), maxRows)
 	payloadBytes := dataImportBatchPayloadBytes(rows)
 	for start := 0; start < len(rows); start += maxRows {
-		end := start + maxRows
-		if end > len(rows) {
-			end = len(rows)
-		}
+		end := min(start+maxRows, len(rows))
 
 		query, args, err := qb.buildInsertDatastoreBatchQuery(rows[start:end])
 		if err != nil {
@@ -294,6 +262,10 @@ func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 			k.lastImportTimeKeys(ctx, opt, yield)
 			return
 		}
+		if section == BlobDataSection {
+			k.blobKeys(ctx, opt, yield)
+			return
+		}
 
 		qb, err := k.getQueryBuilder(section)
 		if err != nil {
@@ -342,6 +314,9 @@ func (k *SqlKV) Get(ctx context.Context, section string, key string) (io.ReadClo
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
+	if section == BlobDataSection {
+		return k.getBlob(ctx, key)
+	}
 
 	qb, err := k.getQueryBuilder(section)
 	if err != nil {
@@ -360,7 +335,7 @@ func (k *SqlKV) Get(ctx context.Context, section string, key string) (io.ReadClo
 		return nil, fmt.Errorf("failed to get key: %w", err)
 	}
 
-	return io.NopCloser(bytes.NewReader(value)), nil
+	return NewBytesValue(value), nil
 }
 
 func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error] {
@@ -395,7 +370,7 @@ func (k *SqlKV) BatchGet(ctx context.Context, section string, keys []string) ite
 
 			kv := KeyValue{
 				Key:   strings.TrimPrefix(key, section+"/"),
-				Value: io.NopCloser(bytes.NewReader(value)),
+				Value: NewBytesValue(value),
 			}
 			if shouldYield = yield(kv, nil); !shouldYield {
 				return
@@ -415,7 +390,7 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
-	if !validSaveSections[section] {
+	if !IsSupportedSection(section) {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 
@@ -460,6 +435,9 @@ func (w *sqlWriteCloser) Close() error {
 	if w.section == LastImportTimeSection {
 		return w.kv.saveLastImportTime(w.ctx, w.key)
 	}
+	if w.section == BlobDataSection {
+		return w.kv.saveBlob(w.ctx, w.key, value)
+	}
 
 	qb, err := w.kv.getQueryBuilder(w.section)
 	if err != nil {
@@ -487,7 +465,7 @@ func (w *sqlWriteCloser) Close() error {
 		// This can be simplified once resource_history columns are dropped
 		_, err := w.kv.Get(w.ctx, w.section, w.key)
 		if errors.Is(err, ErrNotFound) {
-			query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.New().String())
+			query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.NewV4().String())
 			_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 			if err != nil {
 				return fmt.Errorf("failed to insert to datastore: %w", err)
@@ -541,6 +519,9 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 
 	if section == LastImportTimeSection {
 		return k.deleteLastImportTime(ctx, key)
+	}
+	if section == BlobDataSection {
+		return k.deleteBlob(ctx, key)
 	}
 
 	qb, err := k.getQueryBuilder(section)

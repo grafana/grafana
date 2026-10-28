@@ -1,5 +1,5 @@
 import { type AdHocVariableFilter, type DrilldownsApplicability } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import {
   type AdHocFiltersVariable,
   type GroupByVariable,

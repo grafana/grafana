@@ -1,5 +1,7 @@
-import { render, screen, testWithFeatureToggles } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
+
+import { config } from '@grafana/runtime';
 
 import HistoryPage from './CentralAlertHistoryPage';
 
@@ -29,7 +31,57 @@ function renderHistoryPage(initialUrl = '/alerting/history') {
 }
 
 describe('CentralAlertHistoryPage', () => {
-  describe('when alertingNotificationHistoryGlobal is disabled', () => {
+  const originalStateHistory = config.unifiedAlerting.stateHistory;
+
+  beforeEach(() => {
+    config.unifiedAlerting.stateHistory = { backend: 'loki' };
+  });
+
+  afterEach(() => {
+    config.unifiedAlerting.stateHistory = originalStateHistory;
+  });
+
+  it.each([
+    { name: 'disabled history', stateHistory: undefined },
+    { name: 'annotations', stateHistory: { backend: 'annotations' } },
+    { name: 'Prometheus', stateHistory: { backend: 'prometheus' } },
+    { name: 'annotations primary', stateHistory: { backend: 'multiple', primary: 'annotations' } },
+  ])('shows configuration guidance instead of querying alert events with $name', ({ stateHistory }) => {
+    config.unifiedAlerting.stateHistory = stateHistory;
+
+    renderHistoryPage();
+
+    expect(screen.getByRole('status', { name: 'Configure Loki to view alert history' })).toHaveTextContent(
+      'Configure Loki to view alert history'
+    );
+    expect(screen.getByRole('link', { name: 'Configure alert state history' })).toHaveAttribute(
+      'href',
+      'https://grafana.com/docs/grafana/latest/alerting/set-up/configure-alert-state-history/'
+    );
+    expect(ui.alertEventsScene()).not.toBeInTheDocument();
+  });
+
+  it.each([{ backend: 'multiple', primary: 'loki' }, { backend: ' LoKi ' }])(
+    'loads alert events when Loki serves history queries: %j',
+    (stateHistory) => {
+      config.unifiedAlerting.stateHistory = stateHistory;
+
+      renderHistoryPage();
+
+      expect(ui.alertEventsScene()).toBeInTheDocument();
+      expect(screen.queryByRole('status', { name: 'Configure Loki to view alert history' })).not.toBeInTheDocument();
+    }
+  );
+
+  describe('when notification history is disabled', () => {
+    beforeEach(() => {
+      config.unifiedAlerting.notificationHistoryEnabled = false;
+    });
+
+    afterEach(() => {
+      config.unifiedAlerting.notificationHistoryEnabled = undefined;
+    });
+
     it('should not render tabs', () => {
       renderHistoryPage();
 
@@ -53,8 +105,31 @@ describe('CentralAlertHistoryPage', () => {
     });
   });
 
-  describe('when alertingNotificationHistoryGlobal is enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingNotificationHistoryGlobal'] });
+  describe('when notification history is enabled', () => {
+    beforeEach(() => {
+      config.unifiedAlerting.notificationHistoryEnabled = true;
+    });
+
+    afterEach(() => {
+      config.unifiedAlerting.notificationHistoryEnabled = undefined;
+    });
+
+    it('keeps notifications accessible when alert event history is unavailable', async () => {
+      config.unifiedAlerting.stateHistory = { backend: 'annotations' };
+      const { user } = renderHistoryPage();
+
+      await user.click(ui.notificationsTab.get());
+
+      expect(ui.notificationsScene()).toBeInTheDocument();
+      expect(screen.queryByRole('status', { name: 'Configure Loki to view alert history' })).not.toBeInTheDocument();
+
+      await user.click(ui.alertEventsTab.get());
+
+      expect(screen.getByRole('status', { name: 'Configure Loki to view alert history' })).toHaveTextContent(
+        'Configure Loki to view alert history'
+      );
+      expect(ui.alertEventsScene()).not.toBeInTheDocument();
+    });
 
     it('should render both tabs', () => {
       renderHistoryPage();

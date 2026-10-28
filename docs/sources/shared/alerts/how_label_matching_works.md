@@ -8,7 +8,7 @@ title: 'How label matching works'
 
 {{< collapse title="How label matching works" >}}
 
-Use [labels](ref:shared-alert-labels) and label matchers to link alert rules to [notification policies](ref:shared-notification-policies) and [silences](ref:shared-silences). This allows for a flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
+Use [labels](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/) and label matchers to link alert rules to [notification policies](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/) and [silences](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/). This allows for a flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
 
 A label matchers consists of 3 distinct parts, the **label**, the **value** and the **operator**.
 

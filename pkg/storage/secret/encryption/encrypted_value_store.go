@@ -161,10 +161,7 @@ func (s *encryptedValStorage) UpdateBulk(ctx context.Context, namespace xkube.Na
 	nsStr := namespace.String()
 
 	for start := 0; start < len(updates); start += chunkSize {
-		end := start + chunkSize
-		if end > len(updates) {
-			end = len(updates)
-		}
+		end := min(start+chunkSize, len(updates))
 		chunk := updates[start:end]
 		rows := make([]bulkUpdateRow, len(chunk))
 		for i, u := range chunk {

@@ -213,8 +213,6 @@ func TestCSRF_Check(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		tc := tc
-
 		t.Run(tc.name, func(t *testing.T) {
 			csrf := ProvideCSRFFilter(tc.getCfg())
 			csrf.trustedOrigins = tc.trustedOrigins

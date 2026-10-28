@@ -9,6 +9,7 @@ import (
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource/tableconvertor"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -22,9 +23,11 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
-	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -36,17 +39,14 @@ const ClusterScope = "Cluster"
 // it. Named here rather than taking the installer's own options type, so this
 // package depends on nothing it does not use.
 type Options struct {
-	// Scheme the kind is registered in.
-	Scheme *runtime.Scheme
-	// OptsGetter resolves the backing storage.
-	OptsGetter generic.RESTOptionsGetter
-	// StorageOptsRegister declares a resource's storage options, and has to be
-	// called before OptsGetter resolves that resource.
-	StorageOptsRegister apistore.StorageOptionsRegister
-	// FolderScopedResources is each resource's folder scope resolved across
-	// every served version, as [FolderScopedResources] computes it. A resource
-	// missing from the map falls back to the kind's own declaration.
-	FolderScopedResources map[string]bool
+	// StorageOptsGetter resolves the backing storage for the one
+	// group+version+resource being installed, given the options this kind needs.
+	// Callers inside an API group pass builder.APIGroupOptions.StorageOptsGetter.
+	//
+	// It is a function rather than a plain RESTOptionsGetter so a kind's storage
+	// cannot be completed without its options: they used to be declared through a
+	// separate by-GroupResource registration that every version of a kind shared.
+	StorageOptsGetter func(apistore.StorageOptions) generic.RESTOptionsGetter
 }
 
 func IsFolderScoped(kind app.ManifestVersionKind) bool {
@@ -57,35 +57,6 @@ func IsFolderScoped(kind app.ManifestVersionKind) bool {
 	return kind.FolderScoped == nil || *kind.FolderScoped
 }
 
-// FolderScopedResources resolves each resource's folder scope across every
-// served version of the manifest.
-//
-// Storage options are keyed by GroupResource, which carries no version, so all
-// versions of a kind share one registration and whichever registered last would
-// otherwise decide for the rest. A resource is folder scoped when any served
-// version says so: a write through a version that dropped the requirement would
-// store an object with no folder, which the versions that require one cannot
-// account for.
-func FolderScopedResources(manifest *app.ManifestData) map[string]bool {
-	if manifest == nil {
-		return nil
-	}
-	out := map[string]bool{}
-	for _, version := range manifest.Versions {
-		if !version.Served {
-			continue
-		}
-		for _, kind := range version.Kinds {
-			if kind.Plural == "" {
-				continue // New refuses these, so they have no resource
-			}
-			resource := strings.ToLower(kind.Plural)
-			out[resource] = out[resource] || IsFolderScoped(kind)
-		}
-	}
-	return out
-}
-
 // Store applies a manifest kind's storage and REST strategies.
 type Store struct {
 	*registry.Store
@@ -94,8 +65,13 @@ type Store struct {
 	gvk           schema.GroupVersionKind
 	clusterScoped bool
 
+	// userReadable marks a cluster-scoped kind users may read. Storage rejects
+	// users on cluster-scoped objects, since their identity is bound to a
+	// namespace, so reads the authorizer allowed are served as the service.
+	userReadable bool
+
 	// used for admission hooks
-	admission pluginv3.AdmissionServiceClient
+	admission appclientv3.AdmissionClient
 
 	// mutation and validation are the operations the manifest declared each
 	// admission capability for. Nil when the kind declares none.
@@ -128,7 +104,8 @@ var (
 func New(
 	gvk schema.GroupVersionKind,
 	kind app.ManifestVersionKind,
-	admission pluginv3.AdmissionServiceClient,
+	admission appclientv3.AdmissionClient,
+	conversion appclientv3.ConversionClient,
 	opts Options,
 	defs map[string]common.OpenAPIDefinition,
 ) (*Store, error) {
@@ -136,6 +113,12 @@ func New(
 	// code can omit it, and an empty resource name registers an unreachable path.
 	if kind.Plural == "" {
 		return nil, fmt.Errorf("kind %s is missing a plural name", gvk.Kind)
+	}
+	if opts.StorageOptsGetter == nil {
+		return nil, fmt.Errorf("kind %s has no storage options getter", gvk.Kind)
+	}
+	if kind.Conversion && conversion == nil {
+		return nil, fmt.Errorf("kind %s declares conversion but has no plugin client", gvk.Kind)
 	}
 
 	gr := schema.GroupResource{Group: gvk.Group, Resource: strings.ToLower(kind.Plural)}
@@ -151,6 +134,7 @@ func New(
 		NameGenerator: names.SimpleNameGenerator,
 		gvk:           gvk,
 		clusterScoped: clusterScoped,
+		userReadable:  clusterScoped && kind.UserReadable,
 		admission:     admission,
 	}
 
@@ -194,17 +178,22 @@ func New(
 	}
 	wrap.fieldManager = fieldManager
 
-	// Register before CompleteWithOptions resolves this resource.
+	// Scoped to this group+version+resource, so a kind that changes its folder
+	// scope between versions gets what each version declared.
 	folder := IsFolderScoped(kind)
-	if resolved, ok := opts.FolderScopedResources[gr.Resource]; ok {
-		folder = resolved
-	}
-	opts.StorageOptsRegister(gr, apistore.StorageOptions{
+	storageOpts := apistore.StorageOptions{
+		GVK:                  gvk,
 		EnableFolderSupport:  folder,
 		RequireFolder:        folder, // always true for manifest based kinds with folder support
 		DeprecatedInternalID: apistore.DeprecatedID_None,
-		Scheme:               opts.Scheme,
-	})
+	}
+	if conversion != nil {
+		storageOpts.Serializer = &conversionSerializer{
+			client: conversion,
+			gvk:    gvk,
+		}
+	}
+	optsGetter := opts.StorageOptsGetter(storageOpts)
 
 	store := &registry.Store{
 		NewFunc: func() runtime.Object {
@@ -231,7 +220,7 @@ func New(
 	}
 	wrap.Store = store
 	if err := store.CompleteWithOptions(&generic.StoreOptions{
-		RESTOptions: opts.OptsGetter,
+		RESTOptions: optsGetter,
 		AttrFunc:    grafanaregistry.GetAttrs,
 	}); err != nil {
 		return nil, err
@@ -273,6 +262,28 @@ func (s *Store) HasStatus() bool {
 	return s.hasStatus
 }
 
+func (s *Store) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return s.Store.Get(s.readContext(ctx), name, options)
+}
+
+func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	return s.Store.List(s.readContext(ctx), options)
+}
+
+// readContext serves a user's read of a userReadable cluster-scoped kind as the
+// service identity. The appplugin authorizer only lets users get & list
+// these kinds, so this never widens what a user can do.
+func (s *Store) readContext(ctx context.Context) context.Context {
+	if !s.userReadable {
+		return ctx
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user.IsIdentityType(claims.TypeAccessPolicy) {
+		return ctx
+	}
+	return identity.WithServiceIdentityContext(ctx, user.GetOrgID())
+}
+
 // NamespaceScoped avoids recursion through the embedded store's strategy.
 func (s *Store) NamespaceScoped() bool {
 	return !s.clusterScoped
@@ -291,12 +302,12 @@ func (s *Store) GetResetFields() map[fieldpath.APIVersion]*fieldpath.Set {
 }
 
 // AllowCreateOnUpdate implements [rest.RESTUpdateStrategy].
-func (s *Store) AllowCreateOnUpdate() bool {
+func (s *Store) AllowCreateOnUpdate(ctx context.Context) bool {
 	return false
 }
 
 // AllowUnconditionalUpdate implements [rest.RESTUpdateStrategy].
-func (s *Store) AllowUnconditionalUpdate() bool {
+func (s *Store) AllowUnconditionalUpdate(ctx context.Context) bool {
 	return false
 }
 

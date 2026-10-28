@@ -1,9 +1,13 @@
+import { waitFor } from '@testing-library/react';
+
 import { VariableHide } from '@grafana/data';
 import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { removeElement } from '../../actions/element/removeElement';
+import { edit } from '../../actions/utils/edit';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
@@ -55,6 +59,8 @@ function buildRowsLayoutManager(rows: RowItem[] = []) {
   return rowsLayoutManager;
 }
 
+afterEach(() => setTestFlags({}));
+
 describe('RowsLayoutManager', () => {
   describe('getSlug', () => {
     it('generates slugs based on row titles', () => {
@@ -102,6 +108,20 @@ describe('RowsLayoutManager', () => {
   });
 
   describe('addNewRow', () => {
+    it('disables interaction in the inner layout added during review', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const manager = new RowsLayoutManager({ rows: [] });
+      new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
+      const layout = AutoGridLayoutManager.createEmpty();
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+
+      manager.addNewRow(new RowItem({ layout }));
+
+      expect(layout.state.layout.state.isDraggable).toBe(false);
+      manager.editModeChanged(true);
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+    });
+
     beforeEach(() => {
       lastUndo = undefined;
     });
@@ -160,7 +180,7 @@ describe('RowsLayoutManager', () => {
       expect(rowsLayoutManager.state.rows).toHaveLength(0);
     });
 
-    it('should sync edit mode to a new row inner layout when the dashboard is already editing', () => {
+    it('should sync edit mode to a new row inner layout when the dashboard is already editing', async () => {
       // New rows use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
       // RowItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
       // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.
@@ -190,7 +210,7 @@ describe('RowsLayoutManager', () => {
       expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
 
       const grid = (layout as DefaultGridLayoutManager).state.grid;
-      expect(grid.state.isDraggable).toBe(true);
+      await waitFor(() => expect(grid.state.isDraggable).toBe(true));
       expect(grid.state.isResizable).toBe(true);
     });
   });
@@ -553,6 +573,104 @@ describe('RowsLayoutManager', () => {
       expect(rowsLayoutManager.state.rows[0]).toBe(innerRow);
       expect(scene.state.$variables?.state.variables).toContain(variable);
     });
+  });
+
+  describe('collapseAllRows / expandAllRows', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+      lastEditPerform = undefined;
+      lastEditUndo = undefined;
+    });
+
+    it('should collapse all rows, including repeated rows, as a single undoable action', () => {
+      const repeatedRow = new RowItem({ title: 'Row 1 (b)', collapse: false });
+      const rowsLayoutManager = buildRowsLayoutManager([
+        new RowItem({ title: 'Row 1', collapse: false, repeatedRows: [repeatedRow] }),
+        new RowItem({ title: 'Row 2', collapse: false }),
+      ]);
+      const [row1, row2] = rowsLayoutManager.state.rows;
+
+      rowsLayoutManager.collapseAllRows();
+
+      expect(edit).toHaveBeenCalledTimes(1);
+      expect(edit).toHaveBeenCalledWith(
+        expect.objectContaining({ source: rowsLayoutManager, description: 'Collapse all rows' })
+      );
+      expect(row1.getCollapsedState()).toBe(true);
+      expect(row2.getCollapsedState()).toBe(true);
+      expect(repeatedRow.getCollapsedState()).toBe(true);
+
+      lastEditUndo!();
+
+      expect(row1.getCollapsedState()).toBe(false);
+      expect(row2.getCollapsedState()).toBe(false);
+      expect(repeatedRow.getCollapsedState()).toBe(false);
+
+      lastEditPerform!();
+
+      expect(row1.getCollapsedState()).toBe(true);
+      expect(row2.getCollapsedState()).toBe(true);
+      expect(repeatedRow.getCollapsedState()).toBe(true);
+    });
+
+    it('should expand all rows and only restore the rows that were actually toggled on undo', () => {
+      const rowsLayoutManager = buildRowsLayoutManager([
+        new RowItem({ title: 'Row 1', collapse: true }),
+        new RowItem({ title: 'Row 2', collapse: false }),
+      ]);
+      const [row1, row2] = rowsLayoutManager.state.rows;
+
+      rowsLayoutManager.expandAllRows();
+
+      expect(edit).toHaveBeenCalledWith(
+        expect.objectContaining({ source: rowsLayoutManager, description: 'Expand all rows' })
+      );
+      expect(row1.getCollapsedState()).toBe(false);
+      expect(row2.getCollapsedState()).toBe(false);
+
+      lastEditUndo!();
+
+      // Row 2 was already expanded, so undo must not collapse it
+
+      expect(row1.getCollapsedState()).toBe(true);
+      expect(row2.getCollapsedState()).toBe(false);
+    });
+
+    it('should not record an edit action when no row needs to change', () => {
+      const rowsLayoutManager = buildRowsLayoutManager([
+        new RowItem({ title: 'Row 1', collapse: true }),
+        new RowItem({ title: 'Row 2', collapse: true }),
+      ]);
+
+      rowsLayoutManager.collapseAllRows();
+
+      expect(edit).not.toHaveBeenCalled();
+      expect(lastEditUndo).toBeUndefined();
+    });
+
+    it.each([false, true])(
+      'should toggle rows without an edit action in view mode (isEditing=%s), where edit actions are refused',
+      (isEditing) => {
+        setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+        const rowsLayoutManager = new RowsLayoutManager({
+          rows: [new RowItem({ title: 'Row 1', collapse: false }), new RowItem({ title: 'Row 2', collapse: true })],
+        });
+        new DashboardScene({ body: rowsLayoutManager, isEditing, mode: 'view' });
+        const [row1, row2] = rowsLayoutManager.state.rows;
+
+        rowsLayoutManager.collapseAllRows();
+
+        expect(edit).not.toHaveBeenCalled();
+        expect(row1.getCollapsedState()).toBe(true);
+        expect(row2.getCollapsedState()).toBe(true);
+
+        rowsLayoutManager.expandAllRows();
+
+        expect(edit).not.toHaveBeenCalled();
+        expect(row1.getCollapsedState()).toBe(false);
+        expect(row2.getCollapsedState()).toBe(false);
+      }
+    );
   });
 
   describe('duplicate', () => {

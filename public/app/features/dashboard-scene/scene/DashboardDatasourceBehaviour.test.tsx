@@ -1040,6 +1040,99 @@ describe('DashboardDatasourceBehaviour', () => {
     expect(spy).toHaveBeenCalled();
   });
 
+  describe('source panel without user transformations', () => {
+    let sourcePanel: VizPanel;
+    let spy: jest.SpyInstance;
+    let deactivate: (() => void) | undefined;
+    let deactivateSource: (() => void) | undefined;
+
+    beforeEach(() => {
+      deactivate = undefined;
+      deactivateSource = undefined;
+      sourcePanel = new VizPanel({
+        title: 'Panel A',
+        pluginId: 'table',
+        key: 'panel-1',
+        applyPluginTransformations: false,
+        $data: new SceneDataTransformer({
+          transformations: [],
+          $data: new SceneQueryRunner({
+            datasource: { uid: 'grafana' },
+            queries: [{ refId: 'A', queryType: 'randomWalk' }],
+          }),
+        }),
+      });
+
+      const dashboardDSPanel = new VizPanel({
+        title: 'Panel B',
+        pluginId: 'table',
+        key: 'panel-2',
+        $data: new SceneDataTransformer({
+          transformations: [],
+          $data: new SceneQueryRunner({
+            datasource: { uid: MIXED_DATASOURCE_NAME },
+            queries: [{ datasource: { uid: SHARED_DASHBOARD_QUERY }, refId: 'B', panelId: 1 }],
+            $behaviors: [new DashboardDatasourceBehaviour({})],
+          }),
+        }),
+      });
+
+      new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        meta: { canEdit: true },
+        body: DefaultGridLayoutManager.fromVizPanels([sourcePanel, dashboardDSPanel]),
+      });
+
+      const queryRunner = dashboardDSPanel.state.$data!.state.$data as SceneQueryRunner;
+      spy = jest.spyOn(queryRunner, 'runQueries').mockImplementation();
+      const behavior = queryRunner.state.$behaviors![0] as DashboardDatasourceBehaviour;
+      deactivate = behavior.activate();
+    });
+
+    afterEach(() => {
+      deactivate?.();
+      deactivateSource?.();
+      spy?.mockRestore();
+    });
+
+    it('reruns the consumer when the source transformer updates', () => {
+      expect(spy).not.toHaveBeenCalled();
+
+      (sourcePanel.state.$data as SceneDataTransformer).setState({
+        data: {
+          state: LoadingState.Done,
+          series: [],
+          timeRange: getDefaultTimeRange(),
+          request: { requestId: 'new-request-id' } as DataQueryRequest,
+        },
+      });
+
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+
+    it('reruns the consumer when the source query runner updates with plugin transformations disabled', () => {
+      const sourceTransformer = sourcePanel.state.$data as SceneDataTransformer;
+      const sourceQueryRunner = sourceTransformer.state.$data as SceneQueryRunner;
+      deactivateSource = sourceTransformer.activate();
+
+      expect(sourcePanel.state.applyPluginTransformations).toBe(false);
+      expect(spy).not.toHaveBeenCalled();
+
+      sourceQueryRunner.setState({
+        data: {
+          state: LoadingState.Done,
+          series: [],
+          timeRange: getDefaultTimeRange(),
+          request: { requestId: 'new-request-id' } as DataQueryRequest,
+        },
+      });
+
+      expect(sourceTransformer.state.data).toBe(sourceQueryRunner.state.data);
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('Cancel and streaming scenarios', () => {
     it('Should NOT re-run query when source panel is cancelled (same requestId)', async () => {
       jest.spyOn(console, 'error').mockImplementation();

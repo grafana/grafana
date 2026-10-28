@@ -10,14 +10,14 @@ import {
   type ScopedVars,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
 import { buildAllRowsContext, buildRows, type CompiledTemplate, compileTemplate } from './handlebars';
-import { transformContent } from './utils';
+import { withReducerMacros } from './reducerMacros';
+import { isTextNewFeaturesEnabled, transformContent } from './utils';
 
-/** Ceiling for the `maxRows` option, so a typed value cannot hang the panel. */
+/** Hard ceiling on the rows a single render pass may cover, so a large query cannot hang the panel. */
 export const MAX_RENDERED_ROWS = 1000;
 
 /** Render cost follows output size, not row count, and markdown-it degrades superlinearly. */
@@ -26,6 +26,12 @@ export const MAX_RENDERED_CHARS = 100_000;
 /** How far back from the cap a line break is still worth cutting on. */
 const CUT_BACKTRACK_CHARS = 1000;
 
+/** Counted across all frames. */
+export interface RowWindow {
+  start: number;
+  count: number;
+}
+
 /** What to render, built from either the panel options or the editor's draft. */
 export interface TextTemplate {
   content: string;
@@ -33,19 +39,28 @@ export interface TextTemplate {
   series?: DataFrame[];
   renderMode?: RenderMode;
   format?: string;
-  maxRows?: number;
+  /** Per-row renders only. */
+  rowWindow?: RowWindow;
 }
 
 /** A finished render pass, or the error that stopped it. */
 export interface RenderedContent {
   content: string;
   error?: string;
+  /** The character ceiling cut the output short, so what renders is incomplete. */
+  truncated?: boolean;
+}
+
+/** Interpolated output, and whether the character ceiling cut it short. */
+export interface InterpolatedContent {
+  content: string;
+  truncated: boolean;
 }
 
 /** Turns a broken Handlebars template into an error to display instead of content. */
-export function catchTemplateError(render: () => string): RenderedContent {
+export function catchTemplateError(render: () => InterpolatedContent): RenderedContent {
   try {
-    return { content: render() };
+    return render();
   } catch (error) {
     return {
       content: '',
@@ -60,49 +75,88 @@ export function hasRenderableData(series?: DataFrame[]): series is DataFrame[] {
   return series?.some((frame) => frame.fields.length > 0 && frame.length > 0) ?? false;
 }
 
-// Not cached: the flag value can change after the providers settle.
-function handlebarsEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue('text.newFeatures', false);
+/** Counted across all frames, skipping those a template is given no rows for. */
+export function countRows(series: DataFrame[]): number {
+  return series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
 }
 
-// A cleared or zeroed field falls back to the ceiling.
-function resolveMaxRows(maxRows?: number): number {
-  return maxRows ? Math.max(1, Math.min(Math.floor(maxRows), MAX_RENDERED_ROWS)) : MAX_RENDERED_ROWS;
-}
-
-export function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction): string {
+export function interpolateTemplate(
+  template: TextTemplate,
+  replaceVariables: InterpolateFunction
+): InterpolatedContent {
   const { content, mode, series = [], renderMode, format } = template;
-  const maxRows = resolveMaxRows(template.maxRows);
+  const interpolate = isTextNewFeaturesEnabled() ? withReducerMacros(replaceVariables) : replaceVariables;
 
   // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
   const compiled =
-    handlebarsEnabled() && mode !== TextMode.Code ? compileTemplate(content, replaceVariables) : undefined;
+    isTextNewFeaturesEnabled() && mode !== TextMode.Code
+      ? compileTemplate(escapeCommentedTemplates(content), replaceVariables)
+      : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
-    return interpolateEveryRow(template, series, replaceVariables, maxRows, compiled);
+    return interpolateEveryRow(template, series, interpolate, compiled);
   }
 
   const scopedVars = buildOnceContext(series);
 
   if (!compiled) {
-    return replaceVariables(content, scopedVars, format);
+    return { content: interpolate(content, scopedVars, format), truncated: false };
   }
 
-  const rendered = replaceVariables(compiled(buildAllRowsContext(series, maxRows)), scopedVars, format);
+  let readRows = false;
+  const context = buildAllRowsContext(series, MAX_RENDERED_ROWS, () => {
+    readRows = true;
+  });
+  const rendered = interpolate(compiled(context), scopedVars, format);
 
-  // A Once template emits one string, so the row limit cannot bound its size.
-  return cutToMaxChars(rendered);
+  // A Once template emits one string, so the row ceiling cannot bound its size.
+  const cut = cutToMaxChars(rendered);
+
+  // Rows past the ceiling never reach `data`, and Once has no pagination to cover them. Left
+  // unreported the panel reads as complete, and `{{data.length}}` states the ceiling as the count.
+  // Only counts against a template that read a row: the default content ignores its data, and a
+  // panel showing a title over a thousand-row query has lost nothing.
+  const rowsDropped = readRows && countRows(series) > MAX_RENDERED_ROWS;
+
+  return { ...cut, truncated: cut.truncated || rowsDropped };
+}
+
+// Matched the way the sanitizer reads a comment: `<!-->` and `<!--->` close abruptly, and an
+// unterminated one runs to the end of the document.
+const HTML_COMMENT = /<!--(?:-?>|[\s\S]*?(?:-->|$))/g;
+
+/** Already escaped by the author, so escaping again would interpolate what they opted out of. */
+const UNESCAPED_MUSTACHE = /(?<!\\)\{\{/g;
+
+// Expressions inside an HTML comment render output the sanitizer always discards, so running
+// them only spends the character budget - and a cut landing inside the comment takes the rest
+// of the template with it. A comment is commented-out template, so its expressions are escaped
+// to render as themselves rather than run.
+//
+// Escaped rather than dropped, so the comment survives as text: in markdown it may be the
+// content, inside a code span or fence, and with `disable_sanitize_html` it reaches the DOM the
+// way a comment holding no expression always has.
+//
+// A comment the template itself builds, as in `{{#if hide}}<!--{{/if}}`, is not rescued by this.
+// Its delimiters sit inside the comment span either way, so the `{{#if}}` outside pairs with a
+// different `{{/if}}` than the author wrote, whatever is done to the contents.
+function escapeCommentedTemplates(content: string): string {
+  return content.replace(HTML_COMMENT, (comment) => comment.replace(UNESCAPED_MUSTACHE, '\\{{'));
 }
 
 // Cut on a line break so the tail lands between elements rather than inside a tag, but
 // only a nearby one - a single-line block's nearest break can be the top of the output.
-function cutToMaxChars(rendered: string): string {
+function cutToMaxChars(rendered: string): InterpolatedContent {
   if (rendered.length <= MAX_RENDERED_CHARS) {
-    return rendered;
+    return { content: rendered, truncated: false };
   }
 
   const boundary = rendered.lastIndexOf('\n', MAX_RENDERED_CHARS);
-  return rendered.slice(0, boundary >= MAX_RENDERED_CHARS - CUT_BACKTRACK_CHARS ? boundary : MAX_RENDERED_CHARS);
+
+  return {
+    content: rendered.slice(0, boundary >= MAX_RENDERED_CHARS - CUT_BACKTRACK_CHARS ? boundary : MAX_RENDERED_CHARS),
+    truncated: true,
+  };
 }
 
 // Never the time field, where ${__field.labels.x} is always empty.
@@ -150,12 +204,15 @@ function interpolateEveryRow(
   template: TextTemplate,
   series: DataFrame[],
   replaceVariables: InterpolateFunction,
-  maxRows: number,
   compiled?: CompiledTemplate
-): string {
-  const { content, mode, format } = template;
+): InterpolatedContent {
+  const { content, mode, format, rowWindow } = template;
+  const windowStart = rowWindow?.start ?? 0;
+  const maxBlocks = Math.min(rowWindow?.count ?? MAX_RENDERED_ROWS, MAX_RENDERED_ROWS);
   const blocks: string[] = [];
   let renderedChars = 0;
+  // The window spans frames.
+  let skipped = 0;
 
   for (const [frameIndex, frame] of series.entries()) {
     const field = getMacroField(frame);
@@ -163,15 +220,19 @@ function interpolateEveryRow(
       continue;
     }
 
-    const rowCount = Math.min(frame.length, maxRows - blocks.length);
-    const rows = compiled ? buildRows(frame, series, rowCount) : [];
+    const firstRow = Math.min(windowStart - skipped, frame.length);
+    skipped += firstRow;
 
-    for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+    const rowCount = Math.min(frame.length - firstRow, maxBlocks - blocks.length);
+    const rows = compiled ? buildRows(frame, series, rowCount, firstRow) : [];
+
+    for (let offset = 0; offset < rowCount; offset++) {
+      const rowIndex = firstRow + offset;
       const scopedVars: ScopedVars = {
         __dataContext: { value: { data: series, frame, field, rowIndex, frameIndex } },
       };
 
-      const block = replaceVariables(compiled ? compiled(rows[rowIndex]) : content, scopedVars, format);
+      const block = replaceVariables(compiled ? compiled(rows[offset]) : content, scopedVars, format);
 
       blocks.push(block);
       renderedChars += block.length;
@@ -181,19 +242,28 @@ function interpolateEveryRow(
       }
     }
 
-    if (renderedChars >= MAX_RENDERED_CHARS || blocks.length >= maxRows) {
+    if (renderedChars >= MAX_RENDERED_CHARS || blocks.length >= maxBlocks) {
       break;
     }
   }
 
   // The loop breaks after appending, so the last block and the separators can still push past the limit.
-  return cutToMaxChars(joinBlocks(blocks, mode));
+  const cut = cutToMaxChars(joinBlocks(blocks, mode));
+
+  // Every row this pass was meant to cover: the page when paginated, and otherwise all of them,
+  // since nothing else will render the rest. A shortfall is a row the reader never sees.
+  const totalRows = countRows(series);
+  const requestedRows = rowWindow ? Math.min(rowWindow.count, Math.max(0, totalRows - windowStart)) : totalRows;
+
+  return { ...cut, truncated: cut.truncated || blocks.length < requestedRows };
 }
 
 export function renderContent(
   template: TextTemplate,
   replaceVariables: InterpolateFunction,
   disableSanitizeHtml: boolean
-): string {
-  return transformContent(template.mode, interpolateTemplate(template, replaceVariables), disableSanitizeHtml);
+): InterpolatedContent {
+  const { content, truncated } = interpolateTemplate(template, replaceVariables);
+
+  return { content: transformContent(template.mode, content, disableSanitizeHtml), truncated };
 }

@@ -1,6 +1,5 @@
 import { DEFAULT_LANGUAGE } from '@grafana/i18n';
 import { getResolvedLanguage } from '@grafana/i18n/internal';
-import { config } from '@grafana/runtime';
 import { getLogger } from '@grafana/runtime/unstable';
 
 import builtInPlugins, { isBuiltinPluginPath } from '../built_in_plugins';
@@ -49,17 +48,15 @@ export async function importPluginModule({
   const modulePath = resolveModulePath(path);
 
   // inject integrity hash into SystemJS import map
-  if (config.featureToggles.pluginsSriChecks) {
-    const resolvedModule = System.resolve(modulePath);
-    const integrityMap = System.getImportMap().integrity;
+  const resolvedModule = System.resolve(modulePath);
+  const integrityMap = System.getImportMap().integrity;
 
-    if (moduleHash && integrityMap && !integrityMap[resolvedModule]) {
-      SystemJS.addImportMap({
-        integrity: {
-          [resolvedModule]: moduleHash,
-        },
-      });
-    }
+  if (moduleHash && integrityMap && !integrityMap[resolvedModule]) {
+    SystemJS.addImportMap({
+      integrity: {
+        [resolvedModule]: moduleHash,
+      },
+    });
   }
 
   // the sandboxing environment code cannot work in nodejs and requires a real browser
@@ -85,7 +82,6 @@ export async function importPluginModule({
       pluginVersion: version ?? '',
       expectedHash: moduleHash ?? '',
       loadingStrategy: loadingStrategy.toString(),
-      sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
       originalErrorMessage: e.originalErr?.message || '',
       originalErrorStack: e.originalErr?.stack || '',
       systemJSOriginalErr: e.originalErr?.message || '',

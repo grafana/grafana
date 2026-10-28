@@ -1083,8 +1083,8 @@ func (rs *Rows) ScanStructByIndex(dest ...interface{}) error {
 
 	var i = 0
 	for _, vvv := range vvvs {
-		for j := 0; j < vvv.NumField(); j++ {
-			newDest[i] = vvv.Field(j).Addr().Interface()
+		for _, field := range vvv.Fields() {
+			newDest[i] = field.Addr().Interface()
 			i = i + 1
 		}
 	}
@@ -1160,7 +1160,7 @@ func (rs *Rows) ScanSlice(dest interface{}) error {
 
 	newDest := make([]interface{}, len(cols))
 
-	for j := 0; j < len(cols); j++ {
+	for j := range cols {
 		if j >= vvv.Len() {
 			newDest[j] = reflect.New(vvv.Type().Elem()).Interface()
 		} else {

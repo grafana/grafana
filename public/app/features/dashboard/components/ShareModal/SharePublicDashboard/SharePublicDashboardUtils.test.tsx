@@ -1,16 +1,15 @@
-import { type DataSourceApi, type DataSourceRef, type DataQuery, type TypedVariableModel } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { type DataSourceApi, type DataSourceRef, type DataQuery } from '@grafana/data';
+import { config, DataSourceWithBackend, getDataSourceInstance } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { updateConfig } from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 
 import {
   type PublicDashboard,
-  dashboardHasTemplateVariables,
-  publicDashboardPersisted,
   generatePublicDashboardUrl,
   getUnsupportedDashboardDatasources,
+  isEmailSharingEnabled,
 } from './SharePublicDashboardUtils';
 
 const mockDS = mockDataSource({
@@ -18,8 +17,8 @@ const mockDS = mockDataSource({
   type: 'mock-ds-type',
 });
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
 }));
 
@@ -36,19 +35,6 @@ beforeEach(() => {
   );
 });
 
-describe('dashboardHasTemplateVariables', () => {
-  it('false', () => {
-    let variables: TypedVariableModel[] = [];
-    expect(dashboardHasTemplateVariables(variables)).toBe(false);
-  });
-
-  it('true', () => {
-    //@ts-ignore
-    let variables: TypedVariableModel[] = ['a'];
-    expect(dashboardHasTemplateVariables(variables)).toBe(true);
-  });
-});
-
 describe('generatePublicDashboardUrl', () => {
   it('uses the grafana config appUrl to generate the url', () => {
     const appUrl = 'http://localhost/';
@@ -60,17 +46,55 @@ describe('generatePublicDashboardUrl', () => {
   });
 });
 
-describe('publicDashboardPersisted', () => {
-  it('true', () => {
-    let pubdash = { uid: 'abcd1234' } as PublicDashboard;
-    expect(publicDashboardPersisted(pubdash)).toBe(true);
+describe('isEmailSharingEnabled', () => {
+  const originalPublicDashboardsEnabled = config.publicDashboardsEnabled;
+  const originalLicenseInfo = config.licenseInfo;
+
+  beforeEach(() => {
+    config.publicDashboardsEnabled = true;
+    config.licenseInfo = { ...originalLicenseInfo, enabledFeatures: { publicDashboardsEmailSharing: true } };
   });
 
-  it('false', () => {
-    let pubdash = { uid: '' } as PublicDashboard;
-    expect(publicDashboardPersisted(pubdash)).toBe(false);
-    pubdash = {} as PublicDashboard;
-    expect(publicDashboardPersisted(pubdash)).toBe(false);
+  afterEach(() => {
+    setTestFlags({});
+    config.publicDashboardsEnabled = originalPublicDashboardsEnabled;
+    config.licenseInfo = originalLicenseInfo;
+  });
+
+  it.each([
+    { name: 'all gates are enabled', publicDashboardsEnabled: true, flag: true, licensed: true, expected: true },
+    {
+      name: 'public dashboards are disabled',
+      publicDashboardsEnabled: false,
+      flag: true,
+      licensed: true,
+      expected: false,
+    },
+    { name: 'the flag is disabled', publicDashboardsEnabled: true, flag: false, licensed: true, expected: false },
+    { name: 'the license is missing', publicDashboardsEnabled: true, flag: true, licensed: false, expected: false },
+  ])('returns $expected when $name', ({ publicDashboardsEnabled, flag, licensed, expected }) => {
+    config.publicDashboardsEnabled = publicDashboardsEnabled;
+    config.licenseInfo = { ...originalLicenseInfo, enabledFeatures: { publicDashboardsEmailSharing: licensed } };
+    setTestFlags({ publicDashboardsEmailSharing: flag });
+
+    expect(isEmailSharingEnabled()).toBe(expected);
+  });
+
+  it('defaults to disabled when the flag is not configured', () => {
+    setTestFlags({});
+
+    expect(isEmailSharingEnabled()).toBe(false);
+  });
+
+  it('evaluates the current flag value on every call', () => {
+    setTestFlags({ publicDashboardsEmailSharing: false });
+    expect(isEmailSharingEnabled()).toBe(false);
+
+    setTestFlags({ publicDashboardsEmailSharing: true });
+    expect(isEmailSharingEnabled()).toBe(true);
+
+    setTestFlags({ publicDashboardsEmailSharing: false });
+    expect(isEmailSharingEnabled()).toBe(false);
   });
 });
 

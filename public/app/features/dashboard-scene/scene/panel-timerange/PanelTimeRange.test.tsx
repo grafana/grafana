@@ -101,38 +101,6 @@ describe('PanelTimeRange', () => {
     expect(extraQueries[0].req.targets).toEqual([{ refId: 'A-compare' }]);
   });
 
-  it('should give compare requests distinct refIds from the primary', () => {
-    const panelTime = new PanelTimeRange({ compareWith: '1d' });
-
-    buildAndActivateSceneFor(panelTime);
-
-    const extraQueries = panelTime.getExtraQueries({
-      targets: [{ refId: 'A' }, { refId: 'B', timeRangeCompare: false }, { refId: 'C' }],
-      range: panelTime.state.value,
-    } as DataQueryRequest);
-
-    expect(extraQueries).toHaveLength(1);
-    expect(extraQueries[0].req.targets).toEqual([{ refId: 'A-compare' }, { refId: 'C-compare' }]);
-  });
-
-  it('should set rangeRaw on compare requests from the shifted compare range', () => {
-    // Without this, spreading the primary request leaves rangeRaw.to as 'now', which makes
-    // Prometheus incremental caching treat the compare query as cache-eligible.
-    const panelTime = new PanelTimeRange({ compareWith: '1d' });
-
-    buildAndActivateSceneFor(panelTime);
-
-    const extraQueries = panelTime.getExtraQueries({
-      targets: [{ refId: 'A' }],
-      range: panelTime.state.value,
-      rangeRaw: { from: 'now-6h', to: 'now' },
-    } as DataQueryRequest);
-
-    expect(extraQueries).toHaveLength(1);
-    expect(extraQueries[0].req.rangeRaw).toEqual({ from: 'now-6h-1d', to: 'now-1d' });
-    expect(extraQueries[0].req.range.raw).toEqual({ from: 'now-6h-1d', to: 'now-1d' });
-  });
-
   it('should update timeInfo when timeShift and timeFrom are variable expressions', async () => {
     const customTimeFrom = new TestVariable({
       name: 'testFrom',
@@ -288,6 +256,73 @@ describe('PanelTimeRange', () => {
 
       expect(panelTime.state.from).toBe('now-12h-1h');
       expect(panelTime.state.to).toBe('now-1h');
+    });
+  });
+
+  describe('fiscal year start month', () => {
+    // April fiscal year: on 2019-02-11 the current fiscal year started 2018-04-01, so anything
+    // resolving to 2019-01-01 means the panel fell back to a January fiscal year.
+    const APRIL = 3;
+
+    function buildAprilFiscalSceneFor(panelTime: PanelTimeRange) {
+      const sceneTimeRange = new SceneTimeRange({
+        from: 'now-6h',
+        to: 'now',
+        timeZone: 'utc',
+        fiscalYearStartMonth: APRIL,
+      });
+      const panel = new SceneCanvasText({ text: 'Hello', $timeRange: panelTime });
+      const scene = new SceneFlexLayout({
+        $timeRange: sceneTimeRange,
+        children: [new SceneFlexItem({ body: panel })],
+      });
+      activateFullSceneTree(scene);
+
+      return sceneTimeRange;
+    }
+
+    it('should round a fiscal timeFrom to the dashboard fiscal year start', () => {
+      const panelTime = new PanelTimeRange({ timeFrom: 'now/fy' });
+
+      buildAprilFiscalSceneFor(panelTime);
+
+      expect(panelTime.state.value.from.toISOString()).toBe('2018-04-01T00:00:00.000Z');
+      expect(panelTime.state.value.to.toISOString()).toBe(fakeCurrentDate.toISOString());
+    });
+
+    it('should round a fiscal timeFrom to the dashboard fiscal year start before applying the timeShift', () => {
+      const panelTime = new PanelTimeRange({ timeFrom: 'now/fy', timeShift: '1d' });
+
+      buildAprilFiscalSceneFor(panelTime);
+
+      expect(panelTime.state.value.from.toISOString()).toBe('2018-03-31T00:00:00.000Z');
+      expect(panelTime.state.value.to.toISOString()).toBe('2019-02-10T19:00:00.000Z');
+    });
+
+    it('should offset the time comparison range from the fiscal-rounded panel range', () => {
+      const panelTime = new PanelTimeRange({ timeFrom: 'now/fy', compareWith: '1d' });
+
+      buildAprilFiscalSceneFor(panelTime);
+
+      const extraQueries = panelTime.getExtraQueries({
+        targets: [{ refId: 'A' }],
+        range: panelTime.state.value,
+      } as DataQueryRequest);
+
+      // 2018-04-01 fiscal start minus the 1d compare offset, not 2019-01-01 minus 1d.
+      expect(extraQueries[0].req.range.from.toISOString()).toBe('2018-03-31T00:00:00.000Z');
+      expect(extraQueries[0].req.range.to.toISOString()).toBe('2019-02-10T19:00:00.000Z');
+      expect(extraQueries[0].req.rangeRaw).toEqual({ from: 'now/fy-1d', to: 'now-1d' });
+    });
+
+    it('should re-round a fiscal timeFrom when the dashboard fiscal year start month changes', () => {
+      const panelTime = new PanelTimeRange({ timeFrom: 'now/fy' });
+      const sceneTimeRange = buildAprilFiscalSceneFor(panelTime);
+
+      // July fiscal year: the current fiscal year on 2019-02-11 started 2018-07-01.
+      sceneTimeRange.setState({ fiscalYearStartMonth: 6 });
+
+      expect(panelTime.state.value.from.toISOString()).toBe('2018-07-01T00:00:00.000Z');
     });
   });
 

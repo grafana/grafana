@@ -32,6 +32,12 @@ var (
 	ErrSecretDecryptFailed = errors.New("secure value could not be decrypted")
 )
 
+// decryptTimeout bounds a single decrypt call so a hung or unreachable secrets
+// service can't block a reconcile indefinitely. It covers the gRPC client's
+// internal retries, which share this context. Reconcile retries on failure, so
+// this is a fail-fast bound, not a hard SLA.
+const decryptTimeout = 30 * time.Second
+
 type secretTypeLabel string
 
 const (
@@ -72,6 +78,9 @@ func (s *secureValues) get(ctx context.Context, sv common.InlineSecureValue, st 
 			s.metrics.recordSuccess(st, elapsed)
 		}
 	}()
+
+	ctx, cancel := context.WithTimeout(ctx, decryptTimeout)
+	defer cancel()
 
 	results, err := s.svc.Decrypt(ctx, provisioning.GROUP, s.namespace, sv.Name)
 	if err != nil {

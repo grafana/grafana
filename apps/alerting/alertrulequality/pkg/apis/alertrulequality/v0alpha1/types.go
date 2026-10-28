@@ -35,22 +35,33 @@ func (AlertRuleQualityPolicyList) OpenAPIModelName() string {
 	return OpenAPIPrefix + "AlertRuleQualityPolicyList"
 }
 
-// AlertRuleQualityPolicySpec lists the fields an alert rule must carry.
-//
-// Both lists are optional and an empty policy requires nothing: a required field rejects
-// rule creation and editing, so a policy nobody configured must not enforce anything.
+// AlertRuleQualityPolicySpec defines compliance independently of write enforcement.
 type AlertRuleQualityPolicySpec struct {
-	// Annotation keys that must be present and non-empty on every alert rule,
+	// Annotation keys that must be present and non-empty for a rule to be compliant,
 	// e.g. "summary", "description", "runbook_url".
-	// +listType=set
-	RequiredAnnotations []string `json:"requiredAnnotations,omitempty" yaml:"requiredAnnotations,omitempty" jsonschema:"description=Annotation keys every alert rule must set"`
+	// +listType=map
+	// +listMapKey=key
+	RequiredAnnotations []FieldRequirement `json:"requiredAnnotations,omitempty" yaml:"requiredAnnotations,omitempty" jsonschema:"description=Annotation requirements for alert rule compliance"`
 
-	// Label keys that must be present and non-empty on every alert rule,
+	// Label keys that must be present and non-empty for a rule to be compliant,
 	// e.g. "team", "severity".
-	// +listType=set
-	RequiredLabels []string `json:"requiredLabels,omitempty" yaml:"requiredLabels,omitempty" jsonschema:"description=Label keys every alert rule must set"`
+	// +listType=map
+	// +listMapKey=key
+	RequiredLabels []FieldRequirement `json:"requiredLabels,omitempty" yaml:"requiredLabels,omitempty" jsonschema:"description=Label requirements for alert rule compliance"`
 }
 
 func (AlertRuleQualityPolicySpec) OpenAPIModelName() string {
 	return OpenAPIPrefix + "AlertRuleQualityPolicySpec"
+}
+
+type FieldRequirement struct {
+	Key string `json:"key" yaml:"key"`
+
+	// Enforcement is opt-in so a newly configured requirement can be assessed without
+	// blocking alert rule writes.
+	Enforce bool `json:"enforce,omitempty" yaml:"enforce,omitempty"`
+}
+
+func (FieldRequirement) OpenAPIModelName() string {
+	return OpenAPIPrefix + "FieldRequirement"
 }

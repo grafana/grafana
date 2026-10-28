@@ -481,6 +481,9 @@ export type ObjectMeta = {
   uid?: string;
 };
 export type PlaylistPlaylistItem = {
+  /** Optional per-item display interval (e.g. "30s", "2m"). When unset, the
+    playlist's global spec.interval is used. */
+  interval?: string;
   /** type of the item. */
   type: 'dashboard_by_tag' | 'dashboard_by_uid' | 'dashboard_by_id';
   /** Value depends on type and describes the playlist item.

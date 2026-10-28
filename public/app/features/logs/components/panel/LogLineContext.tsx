@@ -26,8 +26,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { reportInteraction } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery, type TimeZone } from '@grafana/schema';
 import { Button, Collapse, Combobox, type ComboboxOption, InlineLabel, Modal, Stack, useTheme2 } from '@grafana/ui';
 import { splitOpen } from 'app/features/explore/state/main';
@@ -530,6 +529,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: 0,
     }),
     wrapper: css({
+      background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.weak}`,
       padding: theme.spacing(0, 1, 1, 0),
       flex: '1 1 auto',

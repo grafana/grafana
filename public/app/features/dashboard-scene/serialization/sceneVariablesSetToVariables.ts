@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import {
   type AdHocFilterWithLabels as SceneAdHocFilterWithLabels,
   type MultiValueVariable,
@@ -31,7 +30,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
-import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
+import { getIntervalsQueryFromNewIntervalModel } from '../utils/getIntervalsQueryFromNewIntervalModel';
 
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
 import { getDataSourceForQuery } from './layoutSerializers/utils';
@@ -211,32 +210,6 @@ export function sceneVariablesSetToVariables(
         options: [{ ...current, selected: true }],
         query: variable.state.value,
       });
-    } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
-      // @ts-expect-error
-      const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
-        ? {
-            value: variable.state.defaultValue.value,
-            text: variable.state.defaultValue.text,
-          }
-        : undefined;
-
-      variables.push({
-        ...commonProperties,
-        datasource: variable.state.datasource,
-        // Only persist the statically defined options
-        options: variable.state.defaultOptions?.map((option) => ({
-          text: option.text,
-          value: String(option.value),
-        })),
-        current: {
-          // @ts-expect-error
-          text: variable.state.text,
-          // @ts-expect-error
-          value: variable.state.value,
-        },
-        defaultValue: defaultVariableOption,
-        ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
-      });
     } else if (sceneUtils.isAdHocVariable(variable)) {
       const adhocVariable: VariableModel = {
         ...commonProperties,
@@ -253,9 +226,7 @@ export function sceneVariablesSetToVariables(
         ],
         defaultKeys: variable.state.defaultKeys,
         ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
-        enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-          ? (variable.state.enableGroupBy ?? false)
-          : false,
+        enableGroupBy: variable.state.enableGroupBy ?? false,
       };
       variables.push(adhocVariable);
     } else if (sceneUtils.isSwitchVariable(variable)) {
@@ -538,44 +509,6 @@ export function sceneVariablesSetToSchemaV2Variables(
 
       variables.push(textBoxVariable);
 
-      // Groupby variable
-    } else if (sceneUtils.isGroupByVariable(variable) && config.featureToggles.groupByVariable) {
-      options = variableValueOptionsToVariableOptions(variable.state);
-
-      // @ts-expect-error
-      const defaultVariableOption: VariableOption | undefined = variable.state.defaultValue
-        ? {
-            value: variable.state.defaultValue.value,
-            text: variable.state.defaultValue.text,
-          }
-        : undefined;
-
-      const ds = getDataSourceForQuery(
-        variable.state.datasource,
-        variable.state.datasource?.type || getDefaultDatasource().type!
-      );
-
-      const groupVariable: GroupByVariableKind = {
-        kind: 'GroupByVariable',
-        group: ds.type!,
-        datasource: {
-          name: ds.uid,
-        },
-        spec: {
-          ...commonProperties,
-          // Only persist the statically defined options
-          options:
-            variable.state.defaultOptions?.map((option) => ({
-              text: option.text,
-              value: String(option.value),
-            })) || [],
-          current: currentVariableOption,
-          defaultValue: defaultVariableOption,
-          multi: variable.state.isMulti || false,
-        },
-      };
-      variables.push(groupVariable);
-
       // Adhoc variable
     } else if (sceneUtils.isAdHocVariable(variable)) {
       const ds = getDataSourceForQuery(
@@ -603,9 +536,7 @@ export function sceneVariablesSetToSchemaV2Variables(
           ],
           defaultKeys: variable.state.defaultKeys || [],
           allowCustomValue: variable.state.allowCustomValue ?? true,
-          enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-            ? (variable.state.enableGroupBy ?? false)
-            : false,
+          enableGroupBy: variable.state.enableGroupBy ?? false,
         },
       };
       variables.push(adhocVariable);

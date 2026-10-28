@@ -22,7 +22,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     icon: css({
       color: theme.colors.accent.text,
-      backgroundColor: theme.colors.accent.background,
+      backgroundColor: theme.colors.accent.subtleBackground,
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(1),
       width: theme.spacing(4.5),

@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -7,10 +7,8 @@ import { Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 
-import {
-  getComponentIdFromComponentMeta,
-  useExtensionSidebarContext,
-} from '../ExtensionSidebar/ExtensionSidebarProvider';
+import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
+import { getComponentIdFromComponentMeta } from '../ExtensionSidebar/extensionSidebarUtils';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
@@ -22,6 +20,24 @@ function getOrangeColor(theme: GrafanaTheme2) {
 }
 function getPurpleColor(theme: GrafanaTheme2) {
   return theme.visualization.getColorByName('dark-purple');
+}
+
+/**
+ * The Assistant sparkle's orange-to-purple gradient, for another surface that shows the `ai-sparkle` icon
+ * (the Chat button's look). Fill the icon's paths with `url(#<id>)`; each surface passes its own `id`.
+ */
+export function AssistantSparkleGradient({ id }: { id: string }) {
+  const theme = useTheme2();
+  return (
+    <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden focusable="false">
+      <defs>
+        <linearGradient id={id} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="32" y2="32">
+          <stop offset="0%" stopColor={getOrangeColor(theme)} />
+          <stop offset="80%" stopColor={getPurpleColor(theme)} />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
 }
 
 function AssistantIconGradientDefs() {
@@ -56,13 +72,14 @@ export function AssistantToolbarButtons() {
   const { chrome } = useGrafana();
   const fullscreenWorkspaceEnabled = useFlagAssistantFullscreenWorkspace();
   const isSmallScreen = !useMediaQueryMinWidth('sm');
-  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
+  const { availableComponents, dockedComponentId, setDockedComponentId, floatingHidden } = useExtensionSidebarContext();
 
   const assistantComponentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;
   const assistantComponentId = assistantComponentTitle
     ? getComponentIdFromComponentMeta(ASSISTANT_PLUGIN_ID, assistantComponentTitle)
     : undefined;
-  const isOpen = assistantComponentId !== undefined && dockedComponentId === assistantComponentId;
+  // Held hidden, the sidebar reads as closed, so the button shows it instead of closing it unseen.
+  const isOpen = assistantComponentId !== undefined && dockedComponentId === assistantComponentId && !floatingHidden;
 
   const shouldRender = fullscreenWorkspaceEnabled && !isSmallScreen && assistantComponentId !== undefined;
 
@@ -78,7 +95,7 @@ export function AssistantToolbarButtons() {
           }
           onClick={() => setDockedComponentId(isOpen ? undefined : assistantComponentId)}
           variant={isOpen ? 'active' : 'default'}
-          className={isOpen ? styles.chatButtonActive : undefined}
+          className={cx(styles.button, isOpen && styles.chatButtonActive)}
           data-testid={`extension-toolbar-button-${isOpen ? 'close' : 'open'}`}
           aria-expanded={isOpen}
           aria-pressed={isOpen}
@@ -102,6 +119,7 @@ export function AssistantToolbarButtons() {
               <Icon name="message-sparkles" size="lg" />
             </span>
           }
+          className={styles.button}
           onClick={() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true })}
           aria-label={t('navigation.fullscreen-workspace.workspace', 'Workspace')}
           tooltip={t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
@@ -117,6 +135,10 @@ export function AssistantToolbarButtons() {
 const getStyles = (theme: GrafanaTheme2) => ({
   separator: css({
     marginRight: theme.spacing(1),
+  }),
+  button: css({
+    color: theme.colors.text.primary,
+    fontWeight: theme.typography.fontWeightRegular,
   }),
   chatButtonActive: css({
     '&:hover, &:focus': {

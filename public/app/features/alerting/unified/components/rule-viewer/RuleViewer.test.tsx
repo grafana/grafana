@@ -3,7 +3,7 @@ import { HttpResponse, delay, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
-import { setPluginLinksHook } from '@grafana/runtime';
+import { config, setPluginLinksHook } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -258,7 +258,7 @@ describe('RuleViewer', () => {
 
         expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
-        expect(screen.getAllByRole('row')).toHaveLength(7);
+        expect(await screen.findAllByRole('row')).toHaveLength(7);
         expect(screen.getAllByRole('row')[1]).toHaveTextContent(/6Provisioning2025-01-18 04:35:17/i);
         expect(screen.getAllByRole('row')[1]).toHaveTextContent('Updated by provisioning service');
         expect(screen.getAllByRole('row')[1]).toHaveTextContent('+4-3Latest');
@@ -295,7 +295,7 @@ describe('RuleViewer', () => {
         expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
         // Check for special updated_by values - use getAllByRole since some text appears in multiple columns
-        expect(screen.getAllByRole('cell', { name: /provisioning/i }).length).toBeGreaterThan(0);
+        expect((await screen.findAllByRole('cell', { name: /provisioning/i })).length).toBeGreaterThan(0);
         expect(screen.getByRole('cell', { name: /^alerting$/i })).toBeInTheDocument();
         expect(screen.getByRole('cell', { name: /^Unknown$/i })).toBeInTheDocument();
         expect(screen.getByRole('cell', { name: /user id foo/i })).toBeInTheDocument();
@@ -305,7 +305,7 @@ describe('RuleViewer', () => {
         const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
         expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
-        await user.click(screen.getByLabelText('1'));
+        await user.click(await screen.findByLabelText('1'));
         await user.click(screen.getByLabelText('2'));
         // The button becomes enabled only after both checkboxes have been processed and the
         // component re-renders with canCompare=true. Wait explicitly rather than relying on
@@ -325,7 +325,7 @@ describe('RuleViewer', () => {
         const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
         expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
-        await user.click(screen.getByLabelText('6'));
+        await user.click(await screen.findByLabelText('6'));
         await user.click(screen.getByLabelText('5'));
         const compareButton = screen.getByRole('button', { name: /Compare versions/i });
         await waitFor(() => expect(compareButton).toBeEnabled());
@@ -387,7 +387,7 @@ describe('RuleViewer', () => {
 
         await screen.findByRole('button', { name: /Compare versions/i });
 
-        expect(screen.getAllByRole('row')).toHaveLength(3); // 1 header + 2 data rows
+        expect(await screen.findAllByRole('row')).toHaveLength(3); // 1 header + 2 data rows
         expect(screen.queryByRole('columnheader', { name: /Notes/i })).not.toBeInTheDocument();
       });
     });
@@ -607,6 +607,45 @@ describe('RuleViewer', () => {
       expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(2);
 
       expect(ELEMENTS.details.pendingPeriod.get()).toHaveTextContent(/15m/i);
+    });
+  });
+
+  describe('History tab', () => {
+    const mockRule = getGrafanaRule(
+      { name: 'Test alert', uid: 'test-rule-uid' },
+      { uid: grafanaRulerRule.grafana_alert.uid }
+    );
+    const mockRuleIdentifier = ruleId.fromCombinedRule('grafana', mockRule);
+    const originalStateHistory = config.unifiedAlerting.stateHistory;
+    const originalDeprecatedBackend = config.unifiedAlerting.alertStateHistoryBackend;
+
+    beforeEach(() => {
+      grantPermissionsHelper([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingInstanceRead]);
+    });
+
+    afterEach(() => {
+      config.unifiedAlerting.stateHistory = originalStateHistory;
+      config.unifiedAlerting.alertStateHistoryBackend = originalDeprecatedBackend;
+    });
+
+    it('shows the history tab when a backend records state history', async () => {
+      config.unifiedAlerting.stateHistory = { backend: 'annotations' };
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query);
+
+      expect(screen.getByText('History')).toBeInTheDocument();
+    });
+
+    it.each([
+      { name: 'the prometheus backend cannot answer history queries', stateHistory: { backend: 'prometheus' } },
+      { name: 'state history is turned off', stateHistory: undefined },
+    ])('hides the history tab when $name', async ({ stateHistory }) => {
+      config.unifiedAlerting.stateHistory = stateHistory;
+      config.unifiedAlerting.alertStateHistoryBackend = undefined;
+
+      await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Query);
+
+      expect(screen.queryByText('History')).not.toBeInTheDocument();
     });
   });
 

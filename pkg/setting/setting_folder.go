@@ -13,10 +13,7 @@ func maxDeptFolderSettings(iniFile *ini.File) int {
 	}
 
 	folderSection := iniFile.Section("folder")
-	cfgMaxNestedFolderDepth := folderSection.Key("max_nested_folder_depth").MustInt(DefaultMaxNestedFolderDepth)
-	if cfgMaxNestedFolderDepth > maxNestedFolderDepth {
-		cfgMaxNestedFolderDepth = maxNestedFolderDepth
-	}
+	cfgMaxNestedFolderDepth := min(folderSection.Key("max_nested_folder_depth").MustInt(DefaultMaxNestedFolderDepth), maxNestedFolderDepth)
 
 	if cfgMaxNestedFolderDepth <= 0 {
 		cfgMaxNestedFolderDepth = DefaultMaxNestedFolderDepth

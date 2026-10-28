@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -29,7 +30,7 @@ const activeUserTimeLimit = time.Hour * 24 * 30
 const dailyActiveUserTimeLimit = time.Hour * 24
 
 func ProvideService(cfg *setting.Cfg, db db.DB, dashSvc dashboards.DashboardService, folderSvc folder.Service,
-	orgSvc org.Service, unifiedStorage resource.ResourceClient, features featuremgmt.FeatureToggles) stats.Service {
+	orgSvc org.Service, unifiedStorage resource.ResourceClient, features featuremgmt.FeatureToggles, ruleStore rules.Store) stats.Service {
 	namespacer := request.GetNamespaceMapper(cfg)
 	return &sqlStatsService{
 		cfg:            cfg,
@@ -40,6 +41,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashSvc dashboards.DashboardServ
 		dashSvc:        dashSvc,
 		orgSvc:         orgSvc,
 		features:       features,
+		ruleStore:      ruleStore,
 	}
 }
 
@@ -52,6 +54,7 @@ type sqlStatsService struct {
 	orgSvc         org.Service
 	namespacer     request.NamespaceMapper
 	unifiedStorage resource.ResourceClient
+	ruleStore      rules.Store
 }
 
 func (ss *sqlStatsService) getTagCount(ctx context.Context, orgs []*org.OrgDTO) (int64, error) {
@@ -91,7 +94,7 @@ func (ss *sqlStatsService) getResourceCounts(ctx context.Context, orgs []*org.Or
 			Namespace: ss.namespacer(org.ID),
 			Kinds:     kinds,
 		})
-		if err != nil {
+		if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
 			return nil, err
 		}
 		for i, s := range resp.Stats {
@@ -166,16 +169,12 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("annotation") + `) AS annotations,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("team") + `) AS teams,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("user_auth_token") + `) AS auth_tokens,`)
-		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("alert_rule") + `) AS alert_rules,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("api_key") + `WHERE service_account_id IS NULL) AS api_keys,`)
 		sb.Write(`(SELECT COUNT(id) FROM `+dialect.Quote("library_element")+` WHERE kind = ?) AS library_panels,`, model.PanelElement)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `) AS data_keys,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("data_keys") + `WHERE active = true) AS active_data_keys,`)
 		sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("dashboard_public") + `) AS public_dashboards,`)
 		sb.Write(`(SELECT MIN(timestamp) FROM ` + dialect.Quote("migration_log") + `) AS database_created_time,`)
-		if ss.IsUnifiedAlertingEnabled() {
-			sb.Write(`(SELECT COUNT(DISTINCT (` + dialect.Quote("rule_group") + `)) FROM ` + dialect.Quote("alert_rule") + `) AS rule_groups,`)
-		}
 
 		sb.Write(ss.roleCounterSQL(ctx))
 
@@ -193,6 +192,15 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 	})
 	if err != nil {
 		return result, err
+	}
+
+	result.AlertRules, err = ss.ruleStore.Count(ctx, 0)
+	if err != nil {
+		return result, fmt.Errorf("counting alert rules: %w", err)
+	}
+	result.RuleGroups, err = ss.ruleStore.CountRuleGroups(ctx, 0)
+	if err != nil {
+		return result, fmt.Errorf("counting rule groups: %w", err)
 	}
 
 	orgs, err := ss.orgSvc.Search(ctx, &org.SearchOrgsQuery{})
@@ -252,11 +260,6 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 		dailyActiveEndDate := now.Add(-dailyActiveUserTimeLimit)
 		monthlyActiveEndDate := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 
-		alertsQuery := fmt.Sprintf("SELECT COUNT(*) FROM %s", dialect.Quote("alert"))
-		if ss.IsUnifiedAlertingEnabled() {
-			alertsQuery = fmt.Sprintf("SELECT COUNT(*) FROM %s", dialect.Quote("alert_rule"))
-		}
-
 		var rawSQL = `SELECT
 		(
 			SELECT COUNT(*)
@@ -270,7 +273,6 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("star") + `
 		) AS stars,
-		(` + alertsQuery + ` ) AS alerts,
 		(
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("user") + ` WHERE ` + notServiceAccount(dialect) + `
@@ -308,6 +310,11 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAd
 	})
 	if err != nil {
 		return result, err
+	}
+
+	result.Alerts, err = ss.ruleStore.Count(ctx, 0)
+	if err != nil {
+		return result, fmt.Errorf("counting alert rules: %w", err)
 	}
 
 	orgs, err := ss.orgSvc.Search(ctx, &org.SearchOrgsQuery{})

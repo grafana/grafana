@@ -13,8 +13,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1123,6 +1123,41 @@ func TestIntegrationFolderGetPermissions(t *testing.T) {
 	}
 }
 
+func TestIntegrationLegacyFolderMoveSanitizesSearchFailure(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	if !db.IsTestDbSQLite() {
+		t.Skip("test only on sqlite for now")
+	}
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:           true,
+		DisableAnonymous:            true,
+		APIServerStorageType:        "unified",
+		SearchInjectFailuresPercent: 100,
+	})
+	for _, uid := range []string{"move-source", "move-target"} {
+		created := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   "/api/folders",
+			Body:   []byte(fmt.Sprintf(`{"uid":%q,"title":%q}`, uid, uid)),
+		}, &folder.Folder{})
+		require.Equal(t, http.StatusOK, created.Response.StatusCode)
+	}
+	var public map[string]any
+	moved := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   "/api/folders/move-source/move",
+		Body:   []byte(`{"parentUid":"move-target"}`),
+	}, &public)
+	require.Equal(t, http.StatusInternalServerError, moved.Response.StatusCode)
+	require.NotEmpty(t, public["message"])
+	body, err := json.Marshal(public)
+	require.NoError(t, err)
+	require.NotContains(t, string(body), "injected search failure")
+	require.NotContains(t, string(body), "failed to decode")
+}
+
 // TestFoldersCreateAPIEndpointK8S is the counterpart of pkg/api/folder_test.go TestFoldersCreateAPIEndpoint
 func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -1197,9 +1232,9 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 		{
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
-			expectedCode:           http.StatusPreconditionFailed,
-			expectedMessage:        folder.ErrVersionMismatch.Error(),
-			expectedFolderSvcError: folder.ErrVersionMismatch,
+			expectedCode:           http.StatusConflict,
+			expectedMessage:        "a folder with the same UID already exists",
+			expectedFolderSvcError: folder.ErrSameUIDExists,
 			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
 		},
@@ -1627,7 +1662,7 @@ func TestIntegrationFolderDeletionBlockedByConnectedLibraryPanels(t *testing.T) 
 	})
 
 	// Create parent and child folders
-	uid := uuid.NewString()[:8]
+	uid := uuid.NewV4().String()[:8]
 	parentUID := fmt.Sprintf("connected-parent-%s", uid)
 	childUID := fmt.Sprintf("connected-child-%s", uid)
 	createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %s", uid), "")
@@ -1690,7 +1725,7 @@ func TestIntegrationFolderDeletionWithDanglingLibraryPanels(t *testing.T) {
 	})
 
 	// Create parent and child folders
-	uid := uuid.NewString()[:8]
+	uid := uuid.NewV4().String()[:8]
 	parentUID := fmt.Sprintf("dangling-parent-%s", uid)
 	childUID := fmt.Sprintf("dangling-child-%s", uid)
 	createTestFolder(t, helper, client, parentUID, fmt.Sprintf("Parent Folder %s", uid), "")
@@ -2185,6 +2220,7 @@ func TestIntegrationProvisionedFolderPropagatesLabelsAndAnnotations(t *testing.T
 
 	expectedAnnotations := map[string]string{
 		"grafana.app/createdBy": "access-policy:service",
+		"grafana.app/updatedBy": "access-policy:service",
 		"grafana.app/managedBy": "classic-file-provisioning",
 		"grafana.app/managerId": "provisioned dashboards",
 	}

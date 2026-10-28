@@ -1,5 +1,6 @@
 import {
   groupAttributesByCategory,
+  isCloudProviderAttribute,
   isDatabaseAttribute,
   isFrontendObservabilityAttribute,
   isKnowledgeGraphAttribute,
@@ -62,6 +63,24 @@ describe('isKnowledgeGraphAttribute', () => {
       expect(isKnowledgeGraphAttribute(key)).toBe(false);
     }
   );
+});
+
+describe('isCloudProviderAttribute', () => {
+  it.each([
+    'cloud.provider',
+    'cloud.region',
+    'aws.region',
+    'aws_account_id',
+    'gcp.project.id',
+    'azure.resourcegroup.name',
+    'google.cloud.location',
+  ])('matches %s', (key) => {
+    expect(isCloudProviderAttribute(key)).toBe(true);
+  });
+
+  it.each(['service.name', 'k8s.pod.name', 'db.system', 'http.method', 'session.id'])('does not match %s', (key) => {
+    expect(isCloudProviderAttribute(key)).toBe(false);
+  });
 });
 
 describe('groupAttributesByCategory', () => {

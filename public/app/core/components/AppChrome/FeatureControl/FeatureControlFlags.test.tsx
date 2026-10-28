@@ -9,7 +9,7 @@ import { FeatureControlContext } from './FeatureControlProvider';
 const setIsAccessible = jest.fn();
 const setIsOpen = jest.fn();
 
-const renderComponent = () => {
+const renderComponent = (overrides: Array<{ key: string; value: string }> = []) => {
   return render(
     <FeatureControlContext.Provider
       value={{
@@ -17,6 +17,7 @@ const renderComponent = () => {
         setIsAccessible,
         isOpen: true,
         setIsOpen,
+        overrides,
       }}
     >
       <FeatureControlFlags />
@@ -34,17 +35,18 @@ describe('FeatureControlFlags', () => {
     delete window.__grafanaPreviewAssets;
   });
 
-  it('renders flags from local storage', async () => {
-    getLocalStorageProvider().setFlags({ alpha: true, beta: 'custom-value' });
-
-    renderComponent();
+  it('renders flag overrides from the context', async () => {
+    renderComponent([
+      { key: 'alpha', value: 'true' },
+      { key: 'beta', value: 'custom-value' },
+    ]);
 
     expect(await screen.findByText('alpha')).toBeInTheDocument();
     expect(screen.getByText('beta')).toBeInTheDocument();
     expect(screen.getByText('custom-value')).toBeInTheDocument();
   });
 
-  it('dismisses feature control', async () => {
+  it('dismisses feature control without removing overrides', async () => {
     getLocalStorageProvider().setFlags({ alpha: true });
 
     renderComponent();

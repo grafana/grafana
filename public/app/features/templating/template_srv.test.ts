@@ -49,6 +49,11 @@ describe('templateSrv', () => {
   silenceConsoleOutput();
   let _templateSrv: TemplateSrv;
 
+  beforeAll(() => {
+    // DataSourceVariable activation still uses the legacy list API.
+    setupDataSources(mockDataSource({ isDefault: true }));
+  });
+
   describe('init', () => {
     beforeEach(() => {
       _templateSrv = initTemplateSrv(key, [{ type: 'query', name: 'test', current: { value: 'oogle' } }]);

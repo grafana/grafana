@@ -1,4 +1,5 @@
 import { type MemoryHistoryBuildOptions } from 'history';
+import { HttpResponse, http } from 'msw';
 import { type ComponentProps, type ReactNode } from 'react';
 import { render, screen, userEvent, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
 
@@ -184,6 +185,18 @@ describe('contact points', () => {
         await screen.findByText(/create notification templates/i);
         expect(screen.queryByText(/^misconfigured$/i)).not.toBeInTheDocument();
       });
+    });
+
+    it('warns that legacy integrations are excluded when exporting all contact points', async () => {
+      server.use(http.get('/api/v1/provisioning/contact-points/export/', () => HttpResponse.text('')));
+      const user = userEvent.setup();
+
+      renderWithProvider(<ContactPointsPageContents />);
+      await waitForElementToBeRemoved(screen.queryByText('Loading...'));
+      await user.click(screen.getByRole('button', { name: 'export all' }));
+
+      expect(await screen.findByText('Legacy integrations are not included')).toBeInTheDocument();
+      expect(screen.getByText(/Contact points that contain only legacy integrations are omitted/)).toBeInTheDocument();
     });
 
     it('should show / hide loading states, have all actions enabled', async () => {

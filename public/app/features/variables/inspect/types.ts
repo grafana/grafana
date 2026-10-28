@@ -12,11 +12,6 @@ export interface VariableUsageTree {
   tree: object;
 }
 
-export interface VariableUsages {
-  unUsed: BaseVariableModel[];
-  usages: VariableUsageTree[];
-}
-
 export interface GraphNode {
   id: string;
   label: string;

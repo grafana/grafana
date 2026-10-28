@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/react';
 import { of } from 'rxjs';
 import { testWithFeatureToggles } from 'test/test-utils';
 
@@ -22,6 +23,7 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
+import { LegendDisplayMode, type VizLegendOptions } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { LS_STYLES_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -37,7 +39,7 @@ import { DashboardInteractions } from '../utils/interactions';
 import { DashboardScene } from './DashboardScene';
 import { NewAlertRuleDrawer } from './NewAlertRuleDrawer';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
-import { panelMenuBehavior } from './PanelMenuBehavior';
+import { panelMenuBehavior, toggleVizPanelLegend } from './PanelMenuBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 const mocks = {
@@ -65,6 +67,15 @@ setGetObservablePluginLinks(getObservablePluginLinksMock);
 describe('panelMenuBehavior', () => {
   beforeAll(() => {
     locationService.push('/d/dash-1?from=now-5m&to=now');
+  });
+
+  // The exact item counts asserted below assume the menu has no Time settings item.
+  beforeEach(() => {
+    setTestFlags({ panelTimeSettings: false });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
   });
 
   it('Given standard panel', async () => {
@@ -99,6 +110,95 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);
+  });
+
+  it('adds a Time settings item after Inspect when panelTimeSettings is on', async () => {
+    setTestFlags({ panelTimeSettings: true });
+    const { menu, panel } = await buildTestScene({});
+
+    panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+
+    mocks.contextSrv.hasAccessToExplore.mockReturnValue(true);
+    mocks.getExploreUrl.mockReturnValue(Promise.resolve('/explore'));
+
+    menu.activate();
+
+    await new Promise((r) => setTimeout(r, 1));
+
+    expect(menu.state.items?.length).toBe(7);
+    expect(menu.state.items?.[4].text).toBe('Inspect');
+    expect(menu.state.items?.[5].text).toBe('Time settings');
+  });
+
+  it('opens panel editing from the view menu and enters Editing', async () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    const { scene, panel, menu } = await buildTestScene({});
+    let deactivateMenu = () => {};
+    try {
+      scene.setState({ mode: 'view', isEditing: true, editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      deactivateMenu = menu.activate();
+      await waitFor(() =>
+        expect(menu.state.items?.find((item) => item.text === 'Edit')?.href).toContain('editPanel=12')
+      );
+      scene.urlSync?.updateFromUrl({ editPanel: 'panel-12' });
+      await waitFor(() => expect(scene.state.editPanel?.getUrlKey()).toBe('12'));
+      expect(scene.state.mode).toBe('edit');
+    } finally {
+      deactivateMenu();
+      setTestFlags({});
+    }
+  });
+
+  describe('legend toggle', () => {
+    const legend = (overrides: Partial<VizLegendOptions>): VizLegendOptions => ({
+      showLegend: true,
+      displayMode: LegendDisplayMode.List,
+      placement: 'bottom',
+      calcs: [],
+      ...overrides,
+    });
+
+    it.each([
+      { name: 'visible list legend', legend: legend({}), expected: 'Hide legend' },
+      { name: 'showLegend: false', legend: legend({ showLegend: false }), expected: 'Show legend' },
+      {
+        name: 'deprecated hidden display mode',
+        legend: legend({ displayMode: LegendDisplayMode.Hidden }),
+        expected: 'Show legend',
+      },
+    ])('labels the menu item "$expected" for a $name', async ({ legend, expected }) => {
+      const { menu, panel } = await buildTestScene({});
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      panel.setState({ options: { legend } });
+
+      menu.activate();
+      await new Promise((r) => setTimeout(r, 1));
+
+      const moreSubMenu = menu.state.items?.find((i) => i.text === 'More...')?.subMenu;
+      expect(moreSubMenu?.find((i) => /legend/.test(i.text))?.text).toBe(expected);
+    });
+
+    it.each([
+      { name: 'hides a visible legend', legend: legend({}), update: { showLegend: false } },
+      {
+        name: 'shows a legend hidden by showLegend',
+        legend: legend({ showLegend: false }),
+        update: { showLegend: true },
+      },
+      {
+        name: 'shows a legend hidden by the deprecated display mode by switching it to list',
+        legend: legend({ displayMode: LegendDisplayMode.Hidden }),
+        update: { showLegend: true, displayMode: LegendDisplayMode.List },
+      },
+    ])('$name', ({ legend, update }) => {
+      const onOptionsChange = jest.fn();
+      const panel = { state: { options: { legend } }, onOptionsChange } as unknown as VizPanel;
+
+      toggleVizPanelLegend(panel);
+
+      expect(onOptionsChange).toHaveBeenCalledWith({ legend: update });
+    });
   });
 
   it('should have reduced menu options when panel editor is open', async () => {
@@ -1164,7 +1264,7 @@ describe('panelMenuBehavior', () => {
       const items = await itemsWith({ notebooks: true, permission: true });
 
       expect(items.find((item) => item.text === 'Add to notebook')).toEqual(
-        expect.objectContaining({ iconClassName: 'search' })
+        expect.objectContaining({ iconClassName: 'book' })
       );
       expect(items.find((item) => item.text === 'Remove')).toBeUndefined();
     });

@@ -29,8 +29,8 @@ import { type DashboardDataDTO } from 'app/types/dashboard';
 import { type AlertQuery, type PromRulesResponse } from 'app/types/unified-alerting-dto';
 
 import { createDashboardSceneFromDashboardModel } from '../../serialization/transformSaveModelToScene';
+import { findVizPanelByKey } from '../../utils/findVizPanel';
 import * as utils from '../../utils/utils';
-import { findVizPanelByKey } from '../../utils/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
 import { PanelDataAlertingTab, PanelDataAlertingTabRendered } from './PanelDataAlertingTab';

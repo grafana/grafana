@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useToggle } from 'react-use';
-import { mergeMap } from 'rxjs';
+import { mergeMap, type Subscription } from 'rxjs';
 
 import {
   type DataTransformerConfig,
   type TransformerRegistryItem,
   FrameMatcherID,
   type DataTransformContext,
+  type FrameMatcher,
   getFrameMatchers,
   transformDataFrame,
   type DataFrame,
+  transformerUsesDynamicRefId,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -20,13 +22,17 @@ import {
   QueryOperationToggleAction,
 } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import { interpolateConfigs } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/hooks/useTransformedFrames';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { TransformationEditor } from './TransformationEditor';
 import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDisplay';
 import { TransformationFilter } from './TransformationFilter';
-import { type TransformationData } from './TransformationsEditor';
-import { type TransformationsEditorTransformation } from './types';
+import { TransformationOperationRowHeader } from './TransformationOperationRowHeader';
+import { type TransformationData, type TransformationsEditorTransformation } from './types';
+
+// Keyed on the stored config so re-renders stay quiet, while an edit to the transformation reports afresh.
+const reportedReplayFailures = new WeakSet<DataTransformerConfig>();
 
 interface TransformationOperationRowProps {
   id: string;
@@ -58,6 +64,13 @@ export const TransformationOperationRow = ({
   const [output, setOutput] = useState<DataFrame[]>([]);
   // output of previous transformation
   const [prevOutput, setPrevOutput] = useState<DataFrame[]>([]);
+  const [generatedRefId, setGeneratedRefId] = useState<string | undefined>(undefined);
+
+  // Whether the name can be pinned follows the configuration, not the data, so the editor does not
+  // appear and disappear as queries come and go.
+  const canSetRefId = transformerUsesDynamicRefId(uiConfig, configs[index].transformation.options);
+  // prevOutput is this transformation's unfiltered input, so its refIds are the reserved ones.
+  const reservedRefIds = prevOutput.map((frame) => frame.refId).filter((refId): refId is string => !!refId);
 
   const onDisableToggle = useCallback(
     (index: number) => {
@@ -102,8 +115,9 @@ export const TransformationOperationRow = ({
   );
 
   useEffect(() => {
-    const config = configs[index].transformation;
-    const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
+    // transformDataFrame skips variable interpolation under Scenes, so resolve them here as the panel does.
+    const resolved = interpolateConfigs(configs.map((t) => t.transformation));
+    const config = resolved[index];
     // we need previous transformation index to get its outputs
     //    to be used in this transforms inputs
     const prevTransformIndex = index - 1;
@@ -112,46 +126,117 @@ export const TransformationOperationRow = ({
     let prevOutputTransforms: Array<DataTransformerConfig<{}>> = [];
 
     if (prevTransformIndex >= 0) {
-      prevInputTransforms = configs.slice(0, prevTransformIndex).map((t) => t.transformation);
-      prevOutputTransforms = configs.slice(prevTransformIndex, index).map((t) => t.transformation);
+      prevInputTransforms = resolved.slice(0, prevTransformIndex);
+      prevOutputTransforms = resolved.slice(prevTransformIndex, index);
     }
 
-    const inputTransforms = configs.slice(0, index).map((t) => t.transformation);
-    const outputTransforms = configs.slice(index, index + 1).map((t) => t.transformation);
+    const inputTransforms = resolved.slice(0, index);
+    const outputTransforms = resolved.slice(index, index + 1);
 
     const ctx: DataTransformContext = {
       interpolate: (v: string) => getTemplateSrv().replace(v),
     };
 
-    const inputSubscription = transformDataFrame(inputTransforms, data.series, ctx).subscribe((data) => {
-      if (matcher) {
-        data = data.filter((frame) => matcher(frame));
+    // A resolved filter can be an invalid regex, which throws while building the matcher, while
+    // transformDataFrame builds its operators, and inside the replay; the panel reports that itself,
+    // so the row must not crash.
+    const subscriptions: Subscription[] = [];
+    const storedConfig = configs[index].transformation;
+    const error = (err: unknown) => {
+      if (!reportedReplayFailures.has(storedConfig)) {
+        reportedReplayFailures.add(storedConfig);
+        console.error('Failed to replay transformations for the editor', err);
       }
-      setInput(data);
-    });
-    const outputSubscription = transformDataFrame(inputTransforms, data.series, ctx)
-      .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
-      .subscribe(setOutput);
-    const prevOutputSubscription = transformDataFrame(prevInputTransforms, data.series, ctx)
-      .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
-      .subscribe((result) => {
-        let mergedResult = [...result];
-        // add refIds that were requested even if they did not return a result
-        data.request?.targets.forEach((series) => {
-          const refIdInResult = mergedResult.some((frame) => frame.refId === series.refId);
-          if (!refIdInResult) {
-            mergedResult.push({ refId: series.refId, fields: [], length: 0 });
-          }
-        });
-        setPrevOutput(mergedResult);
-      });
+    };
+
+    // An unbuildable filter falls back to none, so the input preview still reflects the preceding transformations.
+    let matcher: FrameMatcher | undefined;
+    try {
+      matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
+    } catch (err) {
+      error(err);
+    }
+    const applyFilter = (frames: DataFrame[]) => (matcher ? frames.filter((frame) => matcher(frame)) : frames);
+
+    try {
+      subscriptions.push(
+        transformDataFrame(inputTransforms, data.series, ctx).subscribe({
+          next: (data) => setInput(applyFilter(data)),
+          error,
+        })
+      );
+
+      // The generated name has to come from what this transformation actually emits. Guessing it from
+      // the input is wrong wherever the two diverge: Reduce in fields mode keeps the incoming refIds,
+      // transformers that drop empty frames build the name from fewer of them, and the no-op paths
+      // return their input untouched. Run without the filter (already applied) or the static refId, so
+      // what comes back is the name the user would get by leaving the field blank; without `disabled`
+      // too, so a disabled row still shows one. Only the rows that can pin a name render it, and the
+      // rest would pay for the extra replay on every data or config change.
+      if (canSetRefId) {
+        const previewConfig: DataTransformerConfig = {
+          ...config,
+          refId: undefined,
+          filter: undefined,
+          disabled: undefined,
+        };
+        subscriptions.push(
+          transformDataFrame(inputTransforms, data.series, ctx)
+            .pipe(mergeMap((before) => transformDataFrame([previewConfig], applyFilter(before), ctx)))
+            .subscribe({
+              // More than one frame means there is no single output to name, so the row shows "(Auto)".
+              next: (frames) => setGeneratedRefId(frames.length === 1 ? frames[0].refId : undefined),
+              error,
+            })
+        );
+      }
+      subscriptions.push(
+        transformDataFrame(inputTransforms, data.series, ctx)
+          .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before, ctx)))
+          .subscribe({ next: setOutput, error })
+      );
+      subscriptions.push(
+        transformDataFrame(prevInputTransforms, data.series, ctx)
+          .pipe(mergeMap((before) => transformDataFrame(prevOutputTransforms, before, ctx)))
+          .subscribe({
+            next: (result) => {
+              let mergedResult = [...result];
+              // add refIds that were requested even if they did not return a result
+              data.request?.targets.forEach((series) => {
+                const refIdInResult = mergedResult.some((frame) => frame.refId === series.refId);
+                if (!refIdInResult) {
+                  mergedResult.push({ refId: series.refId, fields: [], length: 0 });
+                }
+              });
+              setPrevOutput(mergedResult);
+            },
+            error,
+          })
+      );
+    } catch (err) {
+      error(err);
+    }
 
     return function unsubscribe() {
-      inputSubscription.unsubscribe();
-      outputSubscription.unsubscribe();
-      prevOutputSubscription.unsubscribe();
+      subscriptions.forEach((subscription) => subscription.unsubscribe());
     };
-  }, [index, data, configs]);
+  }, [index, data, configs, canSetRefId]);
+
+  const renderHeader = () => {
+    return (
+      <TransformationOperationRowHeader
+        index={index}
+        transformation={configs[index].transformation}
+        transformations={configs.map((config) => config.transformation)}
+        transformationTypeName={`${index + 1} - ${uiConfig.name}`}
+        disabled={disabled}
+        onChange={onChange}
+        canSetRefId={canSetRefId}
+        dynamicRefId={generatedRefId}
+        reservedRefIds={reservedRefIds}
+      />
+    );
+  };
 
   const renderActions = () => {
     return (
@@ -222,10 +307,9 @@ export const TransformationOperationRow = ({
       <QueryOperationRow
         id={id}
         index={index}
-        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
-        title={`${index + 1} - ${uiConfig.name}`}
         draggable
         actions={renderActions}
+        headerElement={renderHeader}
         disabled={disabled}
         expanderMessages={{
           close: 'Collapse transformation row',
@@ -241,7 +325,6 @@ export const TransformationOperationRow = ({
             onChange={onChange}
           />
         )}
-
         <TransformationEditor
           input={input}
           output={output}

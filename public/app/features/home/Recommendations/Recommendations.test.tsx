@@ -1,15 +1,18 @@
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { type DataSourceInstanceListItem } from '@grafana/data';
+import { type DataSourceInstanceListItem, store } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from 'app/core/appPluginIds';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { contextSrv } from 'app/core/services/context_srv';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { type LocalPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { ctaClicked, recommendationsShown } from '../analytics/main';
-import { APP_OBSERVABILITY_APP_ID, HOSTED_TRACES_APP_ID } from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { type SignalStatus, type SolutionState } from '../solutions/solutionState';
+import { deferred, stubDatasource, stubSolution } from '../solutions/test-utils';
 import { type Solution, type SolutionId } from '../solutions/types';
 import { type HomepageSolutions } from '../useHomepageSolutions';
 
@@ -17,19 +20,12 @@ import { Recommendations } from './Recommendations';
 import { resetInstalledPlugins } from './pluginRecommendations';
 
 const mockGet = jest.fn();
+const originalNamespace = config.namespace;
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({ get: mockGet }),
 }));
 jest.mock('../analytics/main', () => ({ ctaClicked: jest.fn(), recommendationsShown: jest.fn() }));
-
-const datasource: DataSourceInstanceListItem = {
-  uid: 'prometheus',
-  name: 'Prometheus',
-  type: 'prometheus',
-  meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-  isDefault: true,
-};
 
 const DEFAULT_STATE: SolutionState = {
   metrics: 'active',
@@ -38,6 +34,21 @@ const DEFAULT_STATE: SolutionState = {
   kubernetes: 'inactive',
   spanMetrics: 'inactive',
   synthetics: 'inactive',
+  irm: 'inactive',
+};
+
+// Kubernetes gives IRM its use case; the Synthetic Monitoring card it also selects stays out of the inventory.
+const KUBERNETES_STATE: SolutionState = { ...DEFAULT_STATE, kubernetes: 'active' };
+
+// Everything active: a conclusive verdict with nothing left to recommend.
+const SATURATED_STATE: SolutionState = {
+  metrics: 'active',
+  logs: 'active',
+  traces: 'active',
+  kubernetes: 'active',
+  spanMetrics: 'active',
+  synthetics: 'active',
+  irm: 'active',
 };
 
 function plugin(id: string, enabled = false, canWrite = true, canAccess = true): LocalPlugin {
@@ -57,21 +68,7 @@ function solution(
   data: DataSourceInstanceListItem | null,
   overrides: Partial<Solution> = {}
 ): Solution {
-  return {
-    id,
-    title: id,
-    icon: 'chart-line',
-    signal: async () => status,
-    datasource: async () => data,
-    needsAttention: async () => false,
-    stats: async () => null,
-    refinedStats: async () => null,
-    sparkline: async () => null,
-    cta: async () => null,
-    alert: async () => null,
-    offer: async () => null,
-    ...overrides,
-  };
+  return stubSolution(id, { signal: async () => status, datasource: async () => data, ...overrides });
 }
 
 function homepageSolutions(
@@ -80,14 +77,6 @@ function homepageSolutions(
   signals: HomepageSolutions['signals'] = jest.fn(async () => state)
 ): HomepageSolutions {
   return { solutions, signals };
-}
-
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>((res) => {
-    resolve = res;
-  });
-  return { promise, resolve };
 }
 
 const carouselRegion = () => screen.findByRole('region', { name: 'Recommended apps' });
@@ -105,6 +94,7 @@ beforeEach(() => {
   resetInstalledPlugins();
   window.localStorage.clear();
   mockGet.mockReset().mockResolvedValue([plugin(HOSTED_TRACES_APP_ID), plugin(KUBERNETES_APP_ID)]);
+  config.namespace = 'stacks-123';
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasPermissionInMetadata').mockImplementation((action, metadata) => {
     return Boolean(metadata.accessControl?.[action]);
@@ -116,6 +106,7 @@ beforeEach(() => {
 
 afterEach(() => {
   document.removeEventListener('click', interceptLinkClicks);
+  config.namespace = originalNamespace;
   jest.restoreAllMocks();
 });
 
@@ -140,6 +131,16 @@ describe('Recommendations', () => {
     expect(mockGet).not.toHaveBeenCalled();
   });
 
+  it('renders nothing and starts no recommendation work on self-managed instances', () => {
+    config.namespace = 'default';
+    const signals = jest.fn(async () => DEFAULT_STATE);
+    const { container } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [], signals)} />);
+
+    expect(container).toBeEmptyDOMElement();
+    expect(signals).not.toHaveBeenCalled();
+    expect(mockGet).not.toHaveBeenCalled();
+  });
+
   it('holds the region skeleton until every selection input settles', async () => {
     const state = deferred<SolutionState>();
     const signals = jest.fn(() => state.promise);
@@ -151,6 +152,77 @@ describe('Recommendations', () => {
     await act(async () => state.resolve(DEFAULT_STATE));
 
     expect(await screen.findByText('Recommendations for your stack')).toBeInTheDocument();
+  });
+
+  it('remembers an empty verdict and reserves no space on the next visit until a verdict says otherwise', async () => {
+    const first = render(<Recommendations solutions={homepageSolutions(SATURATED_STATE)} />);
+    await waitFor(() => expect(first.container).toBeEmptyDOMElement());
+    expect(window.localStorage.getItem('grafana.home.recommendations.empty')).toBe('true');
+    first.unmount();
+
+    // Next visit: the selection runs again, but nothing is reserved for it.
+    const state = deferred<SolutionState>();
+    const signals = jest.fn(() => state.promise);
+    const { container } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [], signals)} />);
+    expect(signals).toHaveBeenCalledTimes(1);
+    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByTestId('recommendations-skeleton')).not.toBeInTheDocument();
+
+    // A verdict with recommendations mounts the region and forgets the empty verdict.
+    await act(async () => state.resolve(DEFAULT_STATE));
+
+    expect(await carouselRegion()).toBeInTheDocument();
+    expect(window.localStorage.getItem('grafana.home.recommendations.empty')).toBe('false');
+  });
+
+  it('does not remember an inconclusive verdict, so the next visit still reserves the region', async () => {
+    const unknown: SolutionState = { ...DEFAULT_STATE, logs: 'unknown' };
+    const first = render(<Recommendations solutions={homepageSolutions(unknown)} />);
+    await waitFor(() => expect(first.container).toBeEmptyDOMElement());
+    expect(window.localStorage.getItem('grafana.home.recommendations.empty')).toBeNull();
+    first.unmount();
+
+    const state = deferred<SolutionState>();
+    render(
+      <Recommendations
+        solutions={homepageSolutions(
+          DEFAULT_STATE,
+          [],
+          jest.fn(() => state.promise)
+        )}
+      />
+    );
+    expect(await screen.findByTestId('recommendations-skeleton')).toBeInTheDocument();
+  });
+
+  it('does not remember an empty verdict built on an unknown gated probe, which the matrix hides without marking the row', async () => {
+    // Everything active and App Observability undecided: the only card the row could offer is withheld, not ruled out.
+    const undecided: SolutionState = { ...SATURATED_STATE, spanMetrics: 'unknown' };
+    const { container } = render(<Recommendations solutions={homepageSolutions(undecided)} />);
+    await waitFor(() => expect(container).toBeEmptyDOMElement());
+    expect(window.localStorage.getItem('grafana.home.recommendations.empty')).toBeNull();
+  });
+
+  it('keeps this visit’s reservation when another tab stores an empty verdict mid-selection', async () => {
+    const state = deferred<SolutionState>();
+    render(
+      <Recommendations
+        solutions={homepageSolutions(
+          DEFAULT_STATE,
+          [],
+          jest.fn(() => state.promise)
+        )}
+      />
+    );
+    expect(await screen.findByTestId('recommendations-skeleton')).toBeInTheDocument();
+
+    await act(async () => {
+      store.set('grafana.home.recommendations.empty', true);
+    });
+
+    expect(screen.getByTestId('recommendations-skeleton')).toBeInTheDocument();
+    await act(async () => state.resolve(DEFAULT_STATE));
+    expect(await carouselRegion()).toBeInTheDocument();
   });
 
   it('renders the matrix-selected cards in matrix order', async () => {
@@ -178,12 +250,27 @@ describe('Recommendations', () => {
     );
   });
 
+  it('does not reselect or re-report when the solution set is recreated with the same signals', async () => {
+    const signals = jest.fn(async () => DEFAULT_STATE);
+    const metrics = solution('metrics', 'active', stubDatasource, { title: 'Metrics & infrastructure' });
+    const { rerender } = render(<Recommendations solutions={{ solutions: [metrics], signals }} />);
+
+    await carouselRegion();
+
+    // A filter change recreates one solution and with it the set; the signal snapshot is unchanged.
+    rerender(<Recommendations solutions={{ solutions: [solution('metrics', 'active', stubDatasource)], signals }} />);
+    await act(async () => {});
+
+    expect(signals).toHaveBeenCalledTimes(1);
+    expect(jest.mocked(recommendationsShown)).toHaveBeenCalledTimes(1);
+  });
+
   it('follows the selected solution order and resets the carousel when the solution changes', async () => {
-    const metrics = solution('metrics', 'active', datasource, { title: 'Metrics & infrastructure' });
+    const metrics = solution('metrics', 'active', stubDatasource, { title: 'Metrics & infrastructure' });
     const logs = solution(
       'logs',
       'active',
-      { ...datasource, uid: 'loki', name: 'Loki', type: 'loki' },
+      { ...stubDatasource, uid: 'loki', name: 'Loki', type: 'loki' },
       { title: 'Logs' }
     );
     const { user } = render(<Recommendations solutions={homepageSolutions(DEFAULT_STATE, [metrics, logs])} />);
@@ -204,7 +291,7 @@ describe('Recommendations', () => {
 
   it('does not let inactive datasource details delay the recommendation order', async () => {
     const logsDatasource = jest.fn(() => new Promise<DataSourceInstanceListItem | null>(() => {}));
-    const metrics = solution('metrics', 'active', datasource, { title: 'Metrics & infrastructure' });
+    const metrics = solution('metrics', 'active', stubDatasource, { title: 'Metrics & infrastructure' });
     const logs = solution('logs', 'inactive', null, {
       title: 'Logs',
       datasource: logsDatasource,
@@ -234,8 +321,8 @@ describe('Recommendations', () => {
   });
 
   it('keeps the mounted solution facts when collapsed and expanded again', async () => {
-    const getDatasource = jest.fn(async () => datasource);
-    const metrics = solution('metrics', 'active', datasource, {
+    const getDatasource = jest.fn(async () => stubDatasource);
+    const metrics = solution('metrics', 'active', stubDatasource, {
       title: 'Metrics & infrastructure',
       datasource: getDatasource,
     });
@@ -355,6 +442,23 @@ describe('Recommendations', () => {
       recommendation_id: 'kubernetes-monitoring',
       starting_state: 'ml_no_traces',
     });
+  });
+
+  it('offers to enable a disabled IRM plugin on a Kubernetes stack', async () => {
+    mockGet.mockResolvedValue([plugin(SupportedPlugin.Irm)]);
+    render(<Recommendations solutions={homepageSolutions(KUBERNETES_STATE)} />);
+
+    const link = await screen.findByRole('link', { name: /Enable IRM/ });
+    expect(link).toHaveAttribute('href', '/plugins/grafana-irm-app/');
+    expect(screen.getByRole('heading', { name: 'Get paged when it matters' })).toBeInTheDocument();
+  });
+
+  it('sends an enabled but unconnected IRM to its home page', async () => {
+    mockGet.mockResolvedValue([plugin(SupportedPlugin.Irm, true)]);
+    render(<Recommendations solutions={homepageSolutions(KUBERNETES_STATE)} />);
+
+    const link = await screen.findByRole('link', { name: 'Set up IRM' });
+    expect(link).toHaveAttribute('href', '/a/grafana-irm-app');
   });
 
   it('does not invent install actions for plugins missing from the inventory', async () => {

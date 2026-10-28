@@ -1,5 +1,5 @@
 import { type ManagedBy } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
-import { type DataFrame, type DataFrameView, type IconName, fuzzySearch } from '@grafana/data';
+import { type DataFrame, type DataFrameView, type IconName } from '@grafana/data';
 import { type DashboardViewItemWithUIItems } from 'app/features/browse-dashboards/types';
 import {
   isSharedWithMe,
@@ -7,14 +7,11 @@ import {
   isVirtualTeamFolder,
 } from 'app/features/browse-dashboards/utils/dashboards';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { AnnoKeyFolder, AnnoKeyUpdatedBy, type ManagerKind, type ResourceList } from '../../apiserver/types';
-import { isRootFolderUID } from '../constants';
+import { type ManagerKind } from '../../apiserver/types';
 import { type DashboardViewItem, type DashboardViewItemKind } from '../types';
 
 import { type DashboardQueryResult, type SearchQuery, type SearchResultMeta } from './types';
-import { type SearchHit } from './unified';
 
 /**
  * Marker stored in `field.deletedBy` when IAM lookup succeeded but the deleter UID had no
@@ -128,13 +125,16 @@ export function extractManagerKind(managedBy?: ManagedBy | ManagerKind): Manager
   return typeof managedBy === 'string' ? managedBy : (managedBy?.kind as ManagerKind);
 }
 
+export function extractManagerId(managedBy?: ManagedBy | ManagerKind): string | undefined {
+  return typeof managedBy === 'object' ? managedBy?.id : undefined;
+}
+
 export function queryResultToViewItem(
   item: DashboardQueryResult,
   view?: DataFrameView<DashboardQueryResult>
 ): DashboardViewItem {
   const customMeta = view?.dataFrame.meta?.custom;
   const meta: SearchResultMeta | undefined = isSearchResultMeta(customMeta) ? customMeta : undefined;
-  const managedByStr = extractManagerKind(item.managedBy);
 
   const viewItem: DashboardViewItem = {
     kind: parseKindString(item.kind),
@@ -143,7 +143,8 @@ export function queryResultToViewItem(
     description: item.description,
     url: item.url,
     tags: item.tags ?? [],
-    managedBy: managedByStr,
+    managedBy: extractManagerKind(item.managedBy),
+    managerId: extractManagerId(item.managedBy),
   };
 
   // Set enterprise sort value property
@@ -170,116 +171,16 @@ export function queryResultToViewItem(
   return viewItem;
 }
 
-export function resourceToSearchResult(
-  resource: ResourceList<DashboardDataDTO>,
-  deletedByDisplayMap?: Map<string, string>
-): SearchHit[] {
-  return resource.items.map((item) => {
-    const field: Record<string, string | number> = {};
-    if (item.metadata.deletionTimestamp) {
-      field.deletionTimestamp = item.metadata.deletionTimestamp;
-    }
-
-    const deletedByUid = item.metadata.annotations?.[AnnoKeyUpdatedBy];
-    if (deletedByUid) {
-      field.deletedBy = deletedByDisplayMap?.get(deletedByUid) ?? DELETED_BY_UNKNOWN;
-    }
-
-    // Collapse root-parented items ("" or "general") into the "general" UID
-    // the rest of the search UI uses for the synthetic root folder.
-    const folderAnno = item?.metadata?.annotations?.[AnnoKeyFolder] ?? '';
-    const folder = isRootFolderUID(folderAnno) ? 'general' : folderAnno;
-    const hit: SearchHit = {
-      resource: 'dashboards',
-      name: item.metadata.name,
-      title: item.spec?.title,
-      folder,
-      tags: item.spec?.tags || [],
-      field,
-      url: '',
-    };
-
-    return hit;
-  });
-}
-
 /**
- * Filters search results based on query parameters
- * This is used when backend filtering is not available (e.g., for deleted dashboards)
- * Supports fuzzy search for tags and titles, alphabetical sorting, and deletion timestamp sorting
+ * The deletion time of a search hit, or undefined when it carries none, which is the case
+ * for an object deleted before deletion times were recorded.
  */
-export function filterSearchResults(
-  results: SearchHit[],
-  query: {
-    query?: string;
-    tag?: string[];
-    sort?: string;
+export function parseDeletionTimestamp(value: string | number | undefined | null): Date | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
   }
-): SearchHit[] {
-  let filtered = results;
-
-  if ((query.query && query.query.trim() !== '' && query.query !== '*') || (query.tag && query.tag.length > 0)) {
-    const searchString = query.query || query.tag?.join(',') || '';
-    const haystack = results.map((hit) => `${hit.title},${hit.tags.join(',')}`);
-    const indices = fuzzySearch(haystack, searchString);
-    filtered = indices.map((index) => results[index]);
-  }
-
-  if (query.sort) {
-    if (query.sort === 'deleted-asc' || query.sort === 'deleted-desc') {
-      const mult = query.sort === 'deleted-desc' ? -1 : 1;
-      filtered.sort((a, b) => {
-        const timestampA = a.field.deletionTimestamp;
-        const timestampB = b.field.deletionTimestamp;
-
-        // Handle missing or invalid timestamps - items without timestamps go to the end
-        if (typeof timestampA !== 'string' && typeof timestampB !== 'string') {
-          return 0;
-        }
-        if (typeof timestampA !== 'string') {
-          return 1;
-        }
-        if (typeof timestampB !== 'string') {
-          return -1;
-        }
-
-        const timeA = Date.parse(timestampA);
-        const timeB = Date.parse(timestampB);
-        return mult * (timeA - timeB);
-      });
-    } else if (query.sort === 'deletedby-asc' || query.sort === 'deletedby-desc') {
-      const collator = new Intl.Collator();
-      const mult = query.sort === 'deletedby-desc' ? -1 : 1;
-      const isSortable = (v: string | number | undefined): v is string =>
-        typeof v === 'string' && v !== DELETED_BY_REMOVED && v !== DELETED_BY_UNKNOWN;
-      filtered.sort((a, b) => {
-        const byA = a.field.deletedBy;
-        const byB = b.field.deletedBy;
-
-        // Missing or sentinel deleter values sort to the end regardless of direction.
-        const sortableA = isSortable(byA);
-        const sortableB = isSortable(byB);
-        if (!sortableA && !sortableB) {
-          return 0;
-        }
-        if (!sortableA) {
-          return 1;
-        }
-        if (!sortableB) {
-          return -1;
-        }
-
-        return mult * collator.compare(byA, byB);
-      });
-    } else {
-      // Alphabetical sorting
-      const collator = new Intl.Collator();
-      const mult = query.sort === 'alpha-desc' ? -1 : 1;
-      filtered.sort((a, b) => mult * collator.compare(a.title, b.title));
-    }
-  }
-
-  return filtered;
+  const parsed = Date.parse(value);
+  return isNaN(parsed) ? undefined : new Date(parsed);
 }
 
 /**

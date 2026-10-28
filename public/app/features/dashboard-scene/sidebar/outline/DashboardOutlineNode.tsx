@@ -18,7 +18,7 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
-import { LinkEdit } from '../../settings/links/LinkAddEditableElement';
+import { LinkEdit } from '../../settings/links/LinkEdit';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -60,9 +60,11 @@ export function DashboardOutlineNode({
 
   const noTitleText = t('dashboard.sidebar.outline.tree-item.no-title', '<no title>');
 
+  // Re-render when the name changes outside the outline, e.g. on undo/redo
+  sceneObject.useState();
   const elementInfo = editableElement.getEditableElementInfo();
   const instanceName = elementInfo.instanceName || noTitleText;
-  const outlineRename = useOutlineRename(editableElement, isEditing);
+  const outlineRename = useOutlineRename(sceneObject, editableElement, isEditing);
   const isContainer = editableElement.getOutlineChildren ? true : false;
   const visibleChildren = useMemo(
     () => getVisibleOutlineChildren(sceneObject, Boolean(isEditing)),
@@ -159,6 +161,7 @@ export function DashboardOutlineNode({
             instanceName={instanceName}
             isCloned={isCloned}
             isRenaming={outlineRename.isRenaming}
+            renameValue={outlineRename.draftName}
             renameInputRef={outlineRename.renameInputRef}
             onChangeName={outlineRename.onChangeName}
             onInputBlur={outlineRename.onInputBlur}

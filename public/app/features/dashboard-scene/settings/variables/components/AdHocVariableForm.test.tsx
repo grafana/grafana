@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 
@@ -84,7 +83,7 @@ describe('AdHocVariableForm', () => {
   it('should not render code editor when no default keys provided', async () => {
     await setup(defaultProps);
 
-    expect(screen.queryByTestId(selectors.components.CodeEditor.container)).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Static dimensions CSV' })).not.toBeInTheDocument();
   });
 
   it('should render code editor when defaultKeys and onDefaultKeysChange are provided', async () => {
@@ -95,7 +94,7 @@ describe('AdHocVariableForm', () => {
       onDefaultKeysChange: mockOnStaticKeysChange,
     });
 
-    expect(await screen.findByTestId(selectors.components.CodeEditor.container)).toBeInTheDocument();
+    expect(await screen.findByRole('textbox', { name: 'Static dimensions CSV' })).toBeInTheDocument();
   });
 
   it('should call onDefaultKeysChange when toggling on default options', async () => {
@@ -154,13 +153,7 @@ describe('AdHocVariableForm', () => {
   });
 
   describe('enable group by', () => {
-    afterEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-    });
-
     it('should show Enable group by toggle as on when no datasource is selected', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-
       const { renderer } = await setup({
         ...defaultProps,
         datasource: undefined,

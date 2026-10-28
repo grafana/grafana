@@ -176,6 +176,18 @@ describe('BarGauge', () => {
       const styles = getBasicAndGradientStyles(props);
       expect(styles.emptyBar.width).toBe('150px');
     });
+
+    it('should keep empty region the same width as colored bar when value is hidden', () => {
+      const props = getProps({
+        width: 150,
+        value: getValue(50, 'ServerA'),
+        orientation: VizOrientation.Vertical,
+        valueDisplayMode: BarGaugeValueMode.Hidden,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.emptyBar.width).toBe('150px');
+      expect(styles.emptyBar.width).toBe(styles.bar.width);
+    });
   });
 
   describe('Vertical bar without title', () => {
@@ -312,6 +324,18 @@ describe('BarGauge', () => {
       });
       const styles = getBasicAndGradientStyles(props);
       expect(styles.emptyBar.height).toBe('150px');
+    });
+
+    it('should keep empty region the same height as colored bar when value is hidden', () => {
+      const props = getProps({
+        height: 150,
+        value: getValue(50, 'ServerA'),
+        orientation: VizOrientation.Horizontal,
+        valueDisplayMode: BarGaugeValueMode.Hidden,
+      });
+      const styles = getBasicAndGradientStyles(props);
+      expect(styles.emptyBar.height).not.toBe('0px');
+      expect(styles.emptyBar.height).toBe(styles.bar.height);
     });
   });
 

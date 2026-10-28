@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -60,7 +61,7 @@ func (v *DataSourceCountValidator) Validate(ctx context.Context, sess *xorm.Sess
 				Namespace: summary.Namespace,
 				Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
 			})
-			if err != nil {
+			if err := resource.ErrorFromResponse(statsResp.GetError(), err); err != nil {
 				return fmt.Errorf("failed to get stats for %s/%s: %w",
 					summary.Group, summary.Resource, err)
 			}

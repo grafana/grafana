@@ -3,13 +3,19 @@ package folderimpl
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -31,6 +37,38 @@ func TestMain(m *testing.M) {
 
 var orgID = int64(1)
 var noPermUsr = &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{}}
+
+func TestToFolderErrorStorageClassification(t *testing.T) {
+	for _, reason := range []string{string(metav1.StatusReasonForbidden), "", "CustomDenied"} {
+		t.Run("forbidden/"+reason, func(t *testing.T) {
+			result := &resourcepb.ErrorResult{Code: http.StatusForbidden, Reason: reason}
+			st, err := status.New(codes.PermissionDenied, "denied").WithDetails(result)
+			require.NoError(t, err)
+			for _, input := range []error{resource.ErrorFromResponse(result, nil), st.Err(), fmt.Errorf("search: %w", st.Err())} {
+				require.Same(t, folder.ErrAccessDenied, toFolderError(input))
+			}
+		})
+	}
+	t.Run("known non-forbidden reason", func(t *testing.T) {
+		result := &resourcepb.ErrorResult{Code: http.StatusForbidden, Reason: string(metav1.StatusReasonInvalid)}
+		st, err := status.New(codes.PermissionDenied, "denied").WithDetails(result)
+		require.NoError(t, err)
+		for _, input := range []error{resource.ErrorFromResponse(result, nil), st.Err(), fmt.Errorf("search: %w", st.Err())} {
+			require.Same(t, input, toFolderError(input))
+		}
+	})
+	t.Run("namespace mismatch", func(t *testing.T) {
+		require.Same(t, folder.ErrAccessDenied, toFolderError(claims.ErrNamespaceMismatch))
+	})
+	t.Run("wrapped namespace mismatch", func(t *testing.T) {
+		err := fmt.Errorf("search: %w", claims.ErrNamespaceMismatch)
+		require.Same(t, folder.ErrAccessDenied, toFolderError(err))
+	})
+	t.Run("ordinary error unchanged", func(t *testing.T) {
+		err := errors.New("connection refused")
+		require.Same(t, err, toFolderError(err))
+	})
+}
 
 func TestSupportBundle(t *testing.T) {
 	f := func(uid, parent string) *folder.Folder { return &folder.Folder{UID: uid, ParentUID: parent} }
@@ -189,6 +227,7 @@ func TestGetUIDFromLegacyID(t *testing.T) {
 
 	gvr := folderv1.FolderResourceInfo.GroupVersionResource()
 	searchReq := &resourcepb.ResourceSearchRequest{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
 				Namespace: "default",

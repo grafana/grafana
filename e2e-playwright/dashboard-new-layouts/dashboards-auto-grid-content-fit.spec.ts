@@ -11,6 +11,8 @@ const STANDARD_ROW_HEIGHT = 320;
 // Custom bounds configured on the "Min & max bounds" tab of the dashboard.
 const CUSTOM_MIN_HEIGHT = 100;
 const CUSTOM_MAX_HEIGHT = 400;
+// Vertical gap between auto-grid rows: theme.spacing(1) (AutoGridLayoutRenderer.tsx).
+const GRID_ROW_GAP = 8;
 
 // Rendered heights can be off by a border/rounding pixel; anything within this
 // tolerance counts as "at" a bound. Growth must exceed it clearly (GROWTH_MARGIN).
@@ -157,6 +159,39 @@ test.describe(
 
       // Removing the floor must not cap growth: tall content still fits itself.
       await expectHeightGrewBeyond(panels.getPanel('Long — still grows'), STANDARD_ROW_HEIGHT);
+    });
+
+    test('a short panel alone on its row leaves no dead space before the next row', async ({
+      gotoDashboardPage,
+      tabs,
+      panels,
+    }) => {
+      // Regression: the row track used to floor at the standard row height even
+      // when the fit min height sat below it, so a short panel alone on its row
+      // was followed by ~220px of dead space before the next row.
+      await gotoDashboardPage({ uid: DASHBOARD_UID });
+      await tabs.select('8. Row packs to short panel');
+
+      const shortPanel = panels.getPanel('Tiny — alone on its row');
+      const nextRowPanel = panels.getPanel('Non-fit next row — keeps row height');
+
+      // Precondition: the short panel clamps at the custom 100px floor.
+      await expectHeightAt(shortPanel, CUSTOM_MIN_HEIGHT);
+      // Lowering the shared grid track floor must not shrink non-fit rows.
+      await expectHeightAt(nextRowPanel, STANDARD_ROW_HEIGHT);
+
+      // The next row starts right below the short panel, separated only by the
+      // grid row gap — not padded out to the standard row height.
+      const gapBetweenRows = async () => {
+        const shortBox = await shortPanel.boundingBox();
+        const nextBox = await nextRowPanel.boundingBox();
+        if (!shortBox || !nextBox) {
+          return Number.NaN;
+        }
+        return nextBox.y - (shortBox.y + shortBox.height);
+      };
+      await expect.poll(gapBetweenRows).toBeGreaterThanOrEqual(GRID_ROW_GAP - HEIGHT_TOLERANCE);
+      await expect.poll(gapBetweenRows).toBeLessThanOrEqual(GRID_ROW_GAP + HEIGHT_TOLERANCE);
     });
   }
 );

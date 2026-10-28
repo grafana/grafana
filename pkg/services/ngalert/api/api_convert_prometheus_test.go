@@ -32,7 +32,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -349,7 +349,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		acFake := &acfakes.FakeRuleService{}
 		srv, _, _ := createConvertPrometheusSrv(t, withFakeAccessControlRuleService(acFake))
 
-		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *store.GroupDelta) error {
+		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *rulestore.GroupDelta) error {
 			return datasources.ErrDataSourceAccessDenied
 		}
 

@@ -55,8 +55,28 @@ var defaultTextFields = []string{resource.SEARCH_FIELD_TITLE}
 // (gvr) and, on success, returns the backend request scoped to namespace.
 // On failure it returns a field.ErrorList suitable for a 400 BadRequest.
 func TranslateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResource, namespace string, provider resource.SearchFieldsProvider) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
+	return translateSearchQuery(q, gvr, namespace, newFieldSet(gvr, provider, false))
+}
+
+// GlobalSearchGVR names the global index. It is not a stored resource,
+// so no kind is served under it; it identifies the index the request reads.
+func GlobalSearchGVR() schema.GroupVersionResource {
+	return schema.GroupVersionResource{
+		Group:    resource.GlobalSearchGroup,
+		Version:  searchv0.VERSION,
+		Resource: resource.GlobalSearchResource,
+	}
+}
+
+// TranslateGlobalSearchQuery is TranslateSearchQuery for a search that spans
+// resource types. The fields come from the global index rather than from
+// a kind's declarations, so no kind is named and no provider is consulted.
+func TranslateGlobalSearchQuery(q *searchv0.SearchQuery, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
+	return translateSearchQuery(q, GlobalSearchGVR(), namespace, globalFieldSet())
+}
+
+func translateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResource, namespace string, fs *fieldSet) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
 	errs := validateEnvelope(q.TypeMeta, searchv0.KindSearchQuery)
-	fs := newFieldSet(gvr, provider)
 
 	leaves, whereErrs := validateWhere(q.Where, fs, field.NewPath("where"))
 	errs = append(errs, whereErrs...)
@@ -132,9 +152,12 @@ type fieldSet struct {
 	byName map[string]resource.SearchFieldDefinition
 }
 
-func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFieldsProvider) *fieldSet {
+func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFieldsProvider, allowFolderTree bool) *fieldSet {
 	m := map[string]resource.SearchFieldDefinition{}
 	for _, d := range resource.StandardSearchFieldDefinitions() {
+		m[d.Name] = d
+	}
+	for _, d := range managerFields() {
 		m[d.Name] = d
 	}
 	if provider != nil {
@@ -142,7 +165,59 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 			m[d.Name] = d
 		}
 	}
+	// A manifest must not bypass the flag for this computed field.
+	delete(m, resource.SEARCH_FIELD_FOLDER_TREE)
+	if allowFolderTree {
+		m[resource.SEARCH_FIELD_FOLDER_TREE] = folderTreeField()
+	}
 	return &fieldSet{byName: m}
+}
+
+// globalFieldSet is the field set of the global index, plus folderTree.
+//
+// folderTree is not stored in the index: the index works it out from its folder
+// tree when searching, so it is declared here rather than with the index's
+// stored fields.
+func globalFieldSet() *fieldSet {
+	m := map[string]resource.SearchFieldDefinition{}
+	for _, d := range resource.GlobalSearchFieldDefinitions() {
+		m[d.Name] = d
+	}
+	for _, d := range managerFields() {
+		m[d.Name] = d
+	}
+	m[resource.SEARCH_FIELD_FOLDER_TREE] = folderTreeField()
+	return &fieldSet{byName: m}
+}
+
+// managerFields can be returned because every index stores them. They are
+// declared here rather than with the index's fields, because declaring them
+// there would rebuild every index. They should move to the standard field
+// definitions together with the next change that rebuilds every index anyway.
+func managerFields() []resource.SearchFieldDefinition {
+	return []resource.SearchFieldDefinition{
+		{
+			Name:         resource.SEARCH_FIELD_MANAGER_KIND,
+			Type:         resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
+			Description:  "Kind of tool that manages the resource, such as repo for Git Sync. Empty when nothing manages it.",
+		},
+		{
+			Name:         resource.SEARCH_FIELD_MANAGER_ID,
+			Type:         resource.SearchFieldTypeString,
+			Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve},
+			Description:  "Which instance of that tool manages the resource, such as the repository name.",
+		},
+	}
+}
+
+func folderTreeField() resource.SearchFieldDefinition {
+	return resource.SearchFieldDefinition{
+		Name:         resource.SEARCH_FIELD_FOLDER_TREE,
+		Type:         resource.SearchFieldTypeString,
+		Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter},
+		Description:  "Kubernetes name of the folder containing the resource, or of any folder above it. Filter only, with In.",
+	}
 }
 
 // trashFieldSet is the fixed uniform field set for /trash, expressed as a
@@ -224,8 +299,8 @@ func validateWhere(where *searchv0.WhereNode, fs *fieldSet, p *field.Path) ([]se
 				errs = append(errs, cerr)
 				continue
 			}
-			if ck != "text" && ck != "filter" && ck != "range" {
-				errs = append(errs, field.Invalid(cp, ck, "only text, filter and range leaves are allowed inside and in v1"))
+			if ck != "text" && ck != "filter" && ck != "range" && ck != "regex" {
+				errs = append(errs, field.Invalid(cp, ck, "only text, filter, range and regex leaves are allowed inside and in v1"))
 				continue
 			}
 			// A second text leaf would overwrite the backend Query, so v1 rejects it.
@@ -240,7 +315,7 @@ func validateWhere(where *searchv0.WhereNode, fs *fieldSet, p *field.Path) ([]se
 			leaves = append(leaves, child)
 		}
 		return leaves, errs
-	case "text", "filter", "range":
+	case "text", "filter", "range", "regex":
 		return []searchv0.WhereNode{*where}, validateLeaf(where, key, fs, p)
 	default:
 		// or, not, exists: modelled for the future, rejected in v1.
@@ -270,6 +345,9 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	if n.Range != nil {
 		set = append(set, "range")
 	}
+	if n.Regex != nil {
+		set = append(set, "regex")
+	}
 	if n.Exists != nil {
 		set = append(set, "exists")
 	}
@@ -277,7 +355,7 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	case 1:
 		return set[0], nil
 	case 0:
-		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter, range")
+		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter, range, regex")
 	default:
 		return "", field.Invalid(p, strings.Join(set, ", "), "node must set exactly one key")
 	}
@@ -330,13 +408,15 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 				// A field holding one value cannot hold two, so this would always come
 				// back empty and the caller would have no way to tell that apart from
 				// nothing matching.
-				if f.Operator == "All" && len(f.Values) > 1 && !def.Array {
+				if f.Operator == "All" && len(f.Values) > 1 && !def.Array && f.Field != resource.SEARCH_FIELD_FOLDER_TREE {
 					errs = append(errs, field.Invalid(fp.Child("operator"), f.Operator,
 						fmt.Sprintf("All with several values requires a field holding a list of values; %q holds a single value", f.Field)))
 				}
 			}
 		}
-		if f.Operator != "In" && f.Operator != "NotIn" && f.Operator != "All" {
+		if f.Field == resource.SEARCH_FIELD_FOLDER_TREE {
+			errs = append(errs, validateFolderTreeFilter(f, fp)...)
+		} else if f.Operator != "In" && f.Operator != "NotIn" && f.Operator != "All" {
 			errs = append(errs, field.NotSupported(fp.Child("operator"), f.Operator, []string{"In", "NotIn", "All"}))
 		}
 		if len(f.Values) == 0 {
@@ -352,6 +432,41 @@ func validateLeaf(n *searchv0.WhereNode, key string, fs *fieldSet, p *field.Path
 		}
 	case "range":
 		errs = append(errs, validateRangeLeaf(n.Range, fs, p.Child("range"))...)
+	case "regex":
+		errs = append(errs, validateRegexLeaf(n.Regex, fs, p.Child("regex"))...)
+	}
+	return errs
+}
+
+// validateRegexLeaf checks only what this layer can decide locally: the field
+// exists, is filterable, and holds a string, and the pattern is present. The
+// backend owns the regex subset, case-preservation, and the caps on how many
+// terms a pattern may expand to, and answers a violation with a 400, so nothing
+// here re-implements that parser.
+func validateRegexLeaf(r *searchv0.RegexPredicate, fs *fieldSet, p *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	if r.Field == "" {
+		errs = append(errs, field.Required(p.Child("field"), "regex field is required"))
+	} else {
+		capErrs := checkCapability(fs, r.Field, resource.SearchCapabilityFilter, p.Child("field"))
+		errs = append(errs, capErrs...)
+		if len(capErrs) == 0 {
+			// Regex matches whole string terms; numbers and booleans are indexed in
+			// their native form, so a pattern would never reach them.
+			if def := fs.byName[r.Field]; def.Type != resource.SearchFieldTypeString {
+				errs = append(errs, field.Invalid(p.Child("field"), r.Field, "regex supports string fields only"))
+			}
+			// Not stored, so there are no terms to match a pattern against.
+			if r.Field == resource.SEARCH_FIELD_FOLDER_TREE {
+				errs = append(errs, field.Invalid(p.Child("field"), r.Field, "regex is not supported; filter it with In"))
+			}
+		}
+	}
+	// An empty pattern matches only the empty string, which on a whole-term match
+	// almost never means anything and silently returns nothing. Requiring a
+	// pattern turns that into a clear error.
+	if r.Pattern == "" {
+		errs = append(errs, field.Required(p.Child("pattern"), "regex pattern is required"))
 	}
 	return errs
 }
@@ -543,6 +658,22 @@ func validateLabelSelector(sel *metav1.LabelSelector, p *field.Path) field.Error
 	return errs
 }
 
+// validateFolderTreeFilter allows only In, the one operator the index works out
+// a folder tree for, and requires the root folder to be named "general" rather
+// than left empty.
+func validateFolderTreeFilter(f *searchv0.FilterPredicate, p *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	if f.Operator != "In" {
+		errs = append(errs, field.NotSupported(p.Child("operator"), f.Operator, []string{"In"}))
+	}
+	for i, v := range f.Values {
+		if v == "" {
+			errs = append(errs, field.Invalid(p.Child("values").Index(i), v, `must not be empty; the root folder is "general"`))
+		}
+	}
+	return errs
+}
+
 func checkCapability(fs *fieldSet, name string, cap resource.SearchCapability, p *field.Path) field.ErrorList {
 	def, ok := fs.byName[name]
 	if !ok {
@@ -558,6 +689,7 @@ func checkCapability(fs *fieldSet, name string, cap resource.SearchCapability, p
 
 func newRequest(gvr schema.GroupVersionResource, namespace string) *resourcepb.ResourceSearchRequest {
 	return &resourcepb.ResourceSearchRequest{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
 				Group:     gvr.Group,
@@ -594,8 +726,18 @@ func applyLeaves(req *resourcepb.ResourceSearchRequest, leaves []searchv0.WhereN
 			req.Options.Fields = append(req.Options.Fields, filterRequirement(n.Filter))
 		case n.Range != nil:
 			req.Options.Fields = append(req.Options.Fields, rangeRequirements(n.Range)...)
+		case n.Regex != nil:
+			req.Options.Fields = append(req.Options.Fields, regexRequirement(n.Regex))
 		}
 	}
+}
+
+func regexRequirement(r *searchv0.RegexPredicate) *resourcepb.Requirement {
+	op := resource.OperatorRegex
+	if r.Negate {
+		op = resource.OperatorNotRegex
+	}
+	return &resourcepb.Requirement{Key: r.Field, Operator: string(op), Values: []string{r.Pattern}}
 }
 
 func applyText(req *resourcepb.ResourceSearchRequest, t *searchv0.TextPredicate) {

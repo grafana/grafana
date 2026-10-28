@@ -8,11 +8,41 @@ import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
+import { dashboardModesEnabled, getDashboardMode, type DashboardMode } from '../dashboardModes';
 
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
 
-export interface DashboardSceneState extends SceneObjectState {
+/** Changes to any field cancel pending view loading. */
+export interface DashboardViewState {
+  /**
+   * Layout of panels. Any kind, because a sibling resource's layout manager (the notebook) also
+   * rides this scene and serializes its own kind rather than a dashboard layout kind.
+   */
+  body: AnyDashboardLayoutManager;
+  /** True when editing */
+  isEditing?: boolean;
+  mode?: DashboardMode;
+  /** Panel to inspect */
+  inspectPanelKey?: string;
+  /** Panel key to view in fullscreen */
+  viewPanel?: string;
+  /** Edit view */
+  editview?: DashboardEditView;
+  /** Edit panel */
+  editPanel?: PanelEditor;
+  /** Scene object that handles the current drawer or modal */
+  overlay?: SceneObject;
+  /** Share view */
+  shareView?: string;
+}
+
+interface DashboardLoadingState {
+  /** The view whose implementation is being loaded. */
+  loadingView?: keyof DashboardViewState;
+}
+
+export interface DashboardSceneState extends SceneObjectState, DashboardViewState, DashboardLoadingState {
   /** Dashboard-specific preferences **/
   preferences?: DashboardScenePreferences;
 
@@ -32,35 +62,16 @@ export interface DashboardSceneState extends SceneObjectState {
   uid?: string;
   /** @experimental */
   scopeMeta?: ScopeMeta;
-  /**
-   * Layout of panels. Any kind, because a sibling resource's layout manager (the notebook) also
-   * rides this scene and serializes its own kind rather than a dashboard layout kind.
-   */
-  body: AnyDashboardLayoutManager;
   /** NavToolbar actions */
   actions?: SceneObject[];
   /** Fixed row at the top of the canvas with for example variables and time range controls */
   controls?: DashboardControls;
-  /** True when editing */
-  isEditing?: boolean;
   /** True when user made a change */
   isDirty?: boolean;
   /** meta flags */
   meta: Omit<DashboardMeta, 'isNew'>;
   /** Version of the dashboard */
   version?: number;
-  /** Panel to inspect */
-  inspectPanelKey?: string;
-  /** Panel key to view in fullscreen */
-  viewPanel?: string;
-  /** Edit view */
-  editview?: DashboardEditView;
-  /** Edit panel */
-  editPanel?: PanelEditor;
-  /** Scene object that handles the current drawer or modal */
-  overlay?: SceneObject;
-  /** Share view */
-  shareView?: string;
   /** Renders panels in grid and filtered */
   panelSearch?: string;
   /** How many panels to show per row for search results */
@@ -73,7 +84,49 @@ export interface DashboardSceneState extends SceneObjectState {
   defaultVariablesLoading?: boolean;
   /** True while default links from datasources are being loaded */
   defaultLinksLoading?: boolean;
+  /**
+   * Set while a dashboard plan is being previewed: panels stay query-less placeholders and the
+   * toolbar shows only the plan banner (Build/Dismiss) in place of the normal actions.
+   */
+  planning?: DashboardPlanningState;
 }
+
+export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
+  const mode = getDashboardMode(state);
+  return Boolean(state.isEditing && mode !== 'composer' && (!dashboardModesEnabled() || mode === 'edit'));
+}
+
+export function isDashboardReviewing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
+  const mode = getDashboardMode(state);
+  return mode === 'composer' || (dashboardModesEnabled() && mode !== 'edit');
+}
+
+interface DashboardPlanningBase {
+  /** Identifies the plan being previewed, so a stale request against a superseded plan can be refused. */
+  planId: string;
+  /** Title of the plan being previewed, shown in the banner. */
+  planTitle: string;
+}
+
+/** The plan rendered with sample data, waiting for the user to build or dismiss it. */
+export interface DashboardPlanPreviewState extends DashboardPlanningBase {
+  phase: 'preview';
+  /** Build the plan: attach real queries to the scaffolded panels. */
+  onBuild: () => void;
+  /** Discard the plan and remove its scaffolded panels. */
+  onDismiss: () => void;
+}
+
+/**
+ * The user chose Build and the builder has not written anything yet. The dashboard shows a
+ * loading screen, with nothing left to decide, until the build's first write replaces it or
+ * END_PLANNING clears it.
+ */
+interface DashboardPlanBuildingState extends DashboardPlanningBase {
+  phase: 'building';
+}
+
+export type DashboardPlanningState = DashboardPlanPreviewState | DashboardPlanBuildingState;
 
 interface DashboardScenePreferences {
   defaultLayoutTemplate?: DashboardLayoutManager;
@@ -87,8 +140,8 @@ export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, La
   getDefaultLayout(): DashboardLayoutManager | undefined;
 }
 
-function isDashboardSceneLike(obj: SceneObject): obj is DashboardSceneLike {
-  return 'isDashboardScene' in obj;
+export function isDashboardSceneLike(obj: unknown): obj is DashboardSceneLike {
+  return typeof obj === 'object' && obj !== null && 'isDashboardScene' in obj && obj.isDashboardScene === true;
 }
 
 export function getDashboardSceneLike(sceneObject: SceneObject): DashboardSceneLike {

@@ -5,7 +5,7 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { EmbeddedScene, SceneFlexLayout, SceneTimeRange, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Button, ConfirmModal, Field, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Field, Spinner, Stack, useStyles2 } from '@grafana/ui';
 import {
   useCreateVariableMutation,
   useDeleteVariableMutation,
@@ -27,7 +27,8 @@ import { type EditableVariableType, getVariableScene } from 'app/features/dashbo
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { invalidatePredefinedVariableCaches, recreateVariable } from './api';
+import { recreateVariable } from './api';
+import { invalidatePredefinedVariableCaches } from './cache';
 import { useVariableNameCollisionCheck } from './useVariableNameCollisionCheck';
 import {
   buildVariableResource,
@@ -60,15 +61,12 @@ export interface VariableEditorViewProps {
 export function VariableEditorView({ source, existingNames = [], onBack }: VariableEditorViewProps) {
   const styles = useStyles2(getStyles);
   const [defaultName] = useState(() => getNextAvailableVariableName('query', existingNames));
-  const [initialVariable, setInitialVariable] = useState<SceneVariable | undefined>(() =>
-    source
-      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        createSceneVariableFromVariableModel(getVariableKind(source) as TypedVariableModelV2)
-      : undefined
-  );
+  const [sourceVariable] = useState(() => (source ? createSourceSceneVariable(source) : undefined));
+  const [initialVariable, setInitialVariable] = useState<SceneVariable | undefined>(sourceVariable?.variable);
 
   useEffect(() => {
-    if (initialVariable) {
+    // An existing variable that can't be built must not fall back to a new one, or saving would overwrite it.
+    if (initialVariable || source) {
       return;
     }
 
@@ -82,7 +80,25 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
     return () => {
       cancelled = true;
     };
-  }, [defaultName, initialVariable]);
+  }, [defaultName, initialVariable, source]);
+
+  if (sourceVariable?.error) {
+    return (
+      <div className={styles.container}>
+        <Alert
+          severity="error"
+          title={t('variables-management.editor.load-error-title', 'This variable cannot be edited')}
+        >
+          {sourceVariable.error}
+        </Alert>
+        <Stack>
+          <Button variant="secondary" fill="outline" onClick={onBack}>
+            <Trans i18nKey="variables-management.editor.back">Back</Trans>
+          </Button>
+        </Stack>
+      </div>
+    );
+  }
 
   if (!initialVariable) {
     return (
@@ -93,6 +109,15 @@ export function VariableEditorView({ source, existingNames = [], onBack }: Varia
   }
 
   return <VariableEditorLoaded source={source} onBack={onBack} initialVariable={initialVariable} />;
+}
+
+function createSourceSceneVariable(source: Variable): { variable?: SceneVariable; error?: string } {
+  try {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return { variable: createSceneVariableFromVariableModel(getVariableKind(source) as TypedVariableModelV2) };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
 }
 
 interface VariableEditorLoadedProps {

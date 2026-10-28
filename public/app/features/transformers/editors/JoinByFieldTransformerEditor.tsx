@@ -4,7 +4,7 @@ import { type SelectableValue, type TransformerUIProps } from '@grafana/data';
 import { type JoinByFieldOptions, JoinMode } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Combobox, InlineFieldRow, InlineField } from '@grafana/ui';
+import { Combobox, InlineFieldRow, InlineField, InlineSwitch } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 
 export function SeriesToFieldsTransformerEditor({ input, options, onChange }: TransformerUIProps<JoinByFieldOptions>) {
@@ -64,6 +64,13 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
     [onChange, options]
   );
 
+  const onToggleKeepUnjoinedFrames = useCallback(() => {
+    onChange({
+      ...options,
+      keepUnjoinedFrames: !options.keepUnjoinedFrames,
+    });
+  }, [onChange, options]);
+
   return (
     <>
       <InlineFieldRow>
@@ -89,6 +96,22 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
             /* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */
             placeholder="time"
             isClearable
+          />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField
+          label={t('transformers.series-to-fields-transformer-editor.label-keep-unjoined', 'Keep unjoined')}
+          tooltip={t(
+            'transformers.series-to-fields-transformer-editor.tooltip-keep-unjoined',
+            'Pass queries that do not have the selected field through untouched instead of dropping them, so a later Join by field transformation can join them on a different field. Requires a field to be selected.'
+          )}
+          labelWidth={16}
+          disabled={!options.byField}
+        >
+          <InlineSwitch
+            value={Boolean(options.byField) && Boolean(options.keepUnjoinedFrames)}
+            onChange={onToggleKeepUnjoinedFrames}
           />
         </InlineField>
       </InlineFieldRow>

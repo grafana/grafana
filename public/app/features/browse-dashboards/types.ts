@@ -24,11 +24,23 @@ export type DashboardViewItemCollection = {
 
 export interface BrowseDashboardsState {
   rootItems: DashboardViewItemCollection | undefined;
+  // Keyed by parent folder UID. UIDs are unique per kind only (a dashboard may share a UID with a folder),
+  // so only ever index this and openFolders with a folder's UID.
   childrenByParentUID: Record<string, DashboardViewItemCollection | undefined>;
   selectedItems: DashboardTreeSelection;
 
   // Only folders can ever be open or closed, so no need to seperate this by kind
   openFolders: Record<string, boolean>;
+
+  // `finished` of the newest pull of each repository (by name) the loaded collections reflect.
+  // Lives with the cache it stamps: both outlive the browse page, so a pull that lands while the
+  // user is elsewhere is still noticed when they come back.
+  repositorySyncedAt?: Record<string, number>;
+
+  // Per collection, keyed by parent folder UID (root under GENERAL_FOLDER_UID): bumped whenever the
+  // collection is dropped, marked for refresh or replaced. A load that started before the bump
+  // belongs to an old listing and must not be appended or applied once it completes.
+  collectionGenerations?: Record<string, number>;
 }
 
 export interface UIDashboardViewItem {

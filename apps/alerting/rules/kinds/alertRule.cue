@@ -2,17 +2,28 @@ package kinds
 
 import (
 	"github.com/grafana/grafana/apps/alerting/rules/kinds/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/kinds/v1beta1"
 )
-
-alertRuleKind: {
-	kind:       "AlertRule"
-	pluralName: "AlertRules"
-}
 
 alertRulev0alpha1: alertRuleKind & {
 	schema: {
-		spec: v0alpha1.#AlertRuleSpec
+		spec:   v0alpha1.#AlertRuleSpec
+		status: v0alpha1.#AlertRuleStatus
 	}
+}
+
+alertRulev1beta1: alertRuleKind & {
+	schema: {
+		spec:   v1beta1.#AlertRuleSpec
+		status: v1beta1.#AlertRuleStatus
+	}
+}
+
+// Shared by every served version: unified search requires the searchFields of
+// all versions of a resource to agree on type, array and capabilities.
+alertRuleKind: {
+	kind:       "AlertRule"
+	pluralName: "AlertRules"
 	validation: {
 		operations: [
 			"CREATE",
@@ -53,6 +64,90 @@ alertRulev0alpha1: alertRuleKind & {
 	// routingTree for NamedRoutingTree) at the same level, so all three read
 	// from spec.notificationSettings.* directly.
 	searchFields: [
+		{
+			name: "totalsHealthy"
+			path: "status.totals.healthy"
+			type: "int64"
+			capabilities: ["retrieve"]
+			description: "The number of healthy alert instances"
+		},
+		{
+			name: "totalsFiring"
+			path: "status.totals.firing"
+			type: "int64"
+			capabilities: ["retrieve"]
+			description: "The number of firing alert instances"
+		},
+		{
+			name: "totalsPending"
+			path: "status.totals.pending"
+			type: "int64"
+			capabilities: ["retrieve"]
+			description: "The number of pending alert instances"
+		},
+		{
+			name: "totalsRecovering"
+			path: "status.totals.recovering"
+			type: "int64"
+			capabilities: ["retrieve"]
+			description: "The number of recovering alert instances"
+		},
+		{
+			name: "totalsNoData"
+			path: "status.totals.nodata"
+			type: "int64"
+			capabilities: ["retrieve"]
+			description: "The number of no-data alert instances"
+		},
+		{
+			name: "totalsError"
+			path: "status.totals.error"
+			type: "int64"
+			capabilities: ["retrieve"]
+			description: "The number of alert instances with evaluation errors, including errors mapped to another state"
+		},
+		{
+			name: "health"
+			path: "status.health"
+			type: "string"
+			capabilities: ["filter", "retrieve"]
+			description: "The health of the rule"
+		},
+		{
+			name: "lastEvaluationTime"
+			path: "status.lastEvaluationTime"
+			type: "string"
+			capabilities: ["retrieve"]
+			description: "The time of the last rule evaluation"
+		},
+		{
+			name: "evaluationDuration"
+			path: "status.evaluationDuration"
+			type: "double"
+			capabilities: ["retrieve"]
+			description: "The duration of the last rule evaluation in seconds"
+		},
+		{
+			name: "lastError"
+			path: "status.lastError"
+			type: "string"
+			capabilities: ["retrieve"]
+			description: "The error from the last rule evaluation"
+		},
+		{
+			name: "state"
+			path: "status.state"
+			type: "string"
+			capabilities: ["filter", "retrieve"]
+			description: "The state of the alert rule"
+		},
+		{
+			name: "stateReason"
+			path: "status.stateReason"
+			type: "string"
+			capabilities: ["retrieve"]
+			description: "The reason for the alert rule state"
+		},
 		{
 			name: "type"
 			type: "string"

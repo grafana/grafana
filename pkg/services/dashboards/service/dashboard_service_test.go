@@ -2,22 +2,32 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"reflect"
 	"slices"
 	"testing"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"gopkg.in/ini.v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
+	dashboardapp "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -25,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -32,7 +43,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -47,6 +59,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -64,7 +77,6 @@ func TestDashboardServiceValidation(t *testing.T) {
 		log:                    log.New("test.logger"),
 		folderService:          foldertest.NewFakeService(),
 		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
-		features:               featuremgmt.WithFeatures(),
 		publicDashboardService: fakePublicDashboardService,
 	}
 
@@ -767,7 +779,6 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 		folderPermissions: folderPermService,
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
-				ID:  0,
 				UID: "general",
 			},
 		},
@@ -781,7 +792,6 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 		OrgID: 1,
 	}
 
-	service.features = featuremgmt.WithFeatures()
 	folder, err := service.SaveFolderForProvisionedDashboards(context.Background(), cmd, "")
 	require.NoError(t, err)
 	require.NotNil(t, folder)
@@ -789,18 +799,60 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 	folderPermService.AssertNumberOfCalls(t, "SetPermissions", 0)
 }
 
+func TestSetDefaultPermissionsUsesIAMStartupResourcePermissionsAPI(t *testing.T) {
+	f := ini.Empty()
+	f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("dashboard")
+	cfg, err := setting.NewCfgFromINIFile(f)
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		name       string
+		apiEnabled bool
+		wantLegacy bool
+	}{
+		{name: "legacy permissions when API is unavailable", wantLegacy: true},
+		{name: "App Platform permissions when API is available", apiEnabled: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			permissions := acmock.NewMockedPermissionsService()
+			permissions.On("SetPermissions", mock.Anything, int64(1), "dashboard-uid", mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Maybe()
+
+			service := &DashboardServiceImpl{
+				cfg:                       cfg,
+				log:                       log.NewNopLogger(),
+				iamFeatures:               iamapi.Features{ResourcePermissionsAPI: tt.apiEnabled},
+				dashboardPermissionsReady: make(chan struct{}),
+				acService:                 &actest.FakeService{},
+			}
+			service.RegisterDashboardPermissions(permissions)
+
+			service.SetDefaultPermissions(
+				context.Background(),
+				&dashboards.SaveDashboardDTO{OrgID: 1, User: &user.SignedInUser{IsAnonymous: true}},
+				&dashboards.Dashboard{UID: "dashboard-uid"},
+				false,
+			)
+
+			if tt.wantLegacy {
+				permissions.AssertCalled(t, "SetPermissions", mock.Anything, int64(1), "dashboard-uid", mock.Anything)
+			} else {
+				permissions.AssertNotCalled(t, "SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+			}
+		})
+	}
+}
+
 func TestSaveProvisionedDashboard(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg: setting.NewCfg(),
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
-				ID:  0,
+				ID:  0, //nolint:staticcheck // Exercise legacy field compatibility.
 				UID: "general",
 			},
 		},
-		ac:       actest.FakeAccessControl{ExpectedEvaluate: true},
-		log:      log.NewNopLogger(),
-		features: featuremgmt.WithFeatures(),
+		ac:  actest.FakeAccessControl{ExpectedEvaluate: true},
+		log: log.NewNopLogger(),
 	}
 
 	query := &dashboards.SaveDashboardDTO{
@@ -845,8 +897,7 @@ func TestSaveDashboard(t *testing.T) {
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{},
 		},
-		ac:       actest.FakeAccessControl{ExpectedEvaluate: true},
-		features: featuremgmt.WithFeatures(),
+		ac: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
 
 	query := &dashboards.SaveDashboardDTO{
@@ -968,16 +1019,85 @@ func TestDeleteDashboard(t *testing.T) {
 }
 
 func TestDeleteAllDashboards(t *testing.T) {
-	service := &DashboardServiceImpl{
-		cfg: setting.NewCfg(),
-	}
+	t.Run("deletes the collection when supported", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg()}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		k8sCliMock.On("DeleteCollection", mock.Anything, int64(1), metav1.ListOptions{}).Return(nil).Once()
 
-	ctx, k8sCliMock := setupK8sDashboardTests(service)
-	k8sCliMock.On("DeleteCollection", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+		err := service.DeleteAllDashboards(ctx, 1)
 
-	err := service.DeleteAllDashboards(ctx, 1)
-	require.NoError(t, err)
-	k8sCliMock.AssertExpectations(t)
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("falls back to individual deletes when collection deletion is unsupported", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg()}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		methodNotSupported := apierrors.NewMethodNotSupported(
+			schema.GroupResource{Resource: "dashboards"},
+			"deletecollection",
+		)
+		k8sCliMock.On("DeleteCollection", mock.Anything, int64(1), metav1.ListOptions{}).Return(methodNotSupported).Once()
+		k8sCliMock.On("List", mock.Anything, int64(1), mock.MatchedBy(func(opts metav1.ListOptions) bool {
+			return opts.Limit == listAllDashboardsLimit && opts.Continue == ""
+		})).Return(&unstructured.UnstructuredList{
+			Object: map[string]any{
+				"metadata": map[string]any{"continue": "next-page"},
+			},
+			Items: []unstructured.Unstructured{
+				{Object: map[string]any{"metadata": map[string]any{"name": "dashboard-1"}}},
+			},
+		}, nil).Once()
+		forceDelete := mock.MatchedBy(func(opts metav1.DeleteOptions) bool {
+			return opts.GracePeriodSeconds != nil && *opts.GracePeriodSeconds == 0
+		})
+		k8sCliMock.On("Delete", mock.Anything, "dashboard-1", int64(1), forceDelete).Return(nil).Once()
+		k8sCliMock.On("List", mock.Anything, int64(1), mock.MatchedBy(func(opts metav1.ListOptions) bool {
+			return opts.Limit == listAllDashboardsLimit && opts.Continue == "next-page"
+		})).Return(&unstructured.UnstructuredList{
+			Items: []unstructured.Unstructured{
+				{Object: map[string]any{"metadata": map[string]any{"name": "dashboard-2"}}},
+			},
+		}, nil).Once()
+		notFound := apierrors.NewNotFound(schema.GroupResource{Resource: "dashboards"}, "dashboard-2")
+		k8sCliMock.On("Delete", mock.Anything, "dashboard-2", int64(1), forceDelete).Return(notFound).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+
+		require.NoError(t, err)
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("deletes an empty organization when collection deletion is unsupported", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg()}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		methodNotSupported := apierrors.NewMethodNotSupported(
+			schema.GroupResource{Resource: "dashboards"},
+			"deletecollection",
+		)
+		k8sCliMock.On("DeleteCollection", mock.Anything, int64(1), metav1.ListOptions{}).Return(methodNotSupported).Once()
+		k8sCliMock.On("List", mock.Anything, int64(1), mock.MatchedBy(func(opts metav1.ListOptions) bool {
+			return opts.Limit == listAllDashboardsLimit && opts.Continue == ""
+		})).Return(&unstructured.UnstructuredList{}, nil).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+
+		require.NoError(t, err)
+		k8sCliMock.AssertNotCalled(t, "Delete")
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("returns errors other than method not supported", func(t *testing.T) {
+		service := &DashboardServiceImpl{cfg: setting.NewCfg()}
+		ctx, k8sCliMock := setupK8sDashboardTests(service)
+		expectedErr := apierrors.NewInternalError(errors.New("storage failure"))
+		k8sCliMock.On("DeleteCollection", mock.Anything, int64(1), metav1.ListOptions{}).Return(expectedErr).Once()
+
+		err := service.DeleteAllDashboards(ctx, 1)
+
+		require.ErrorIs(t, err, expectedErr)
+		k8sCliMock.AssertExpectations(t)
+	})
 }
 
 func TestSearchDashboards(t *testing.T) {
@@ -989,7 +1109,6 @@ func TestSearchDashboards(t *testing.T) {
 	fakeFolders.ExpectedFolders = []*folder.Folder{fakeFolders.ExpectedFolder}
 	service := &DashboardServiceImpl{
 		cfg:           setting.NewCfg(),
-		features:      featuremgmt.WithFeatures(),
 		folderService: fakeFolders,
 		metrics:       newDashboardsMetrics(prometheus.NewRegistry()),
 	}
@@ -1426,7 +1545,11 @@ func TestGetDashboardTags(t *testing.T) {
 		OrgID: 1,
 	}
 	ctx, k8sCliMock := setupK8sDashboardTests(service)
-	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+		facet, ok := req.Facet["tags"]
+		return req.Limit == 0 && req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
+			ok && facet.Field == "tags" && facet.Limit == 100000
+	})).Return(&resourcepb.ResourceSearchResponse{
 		Facet: map[string]*resourcepb.ResourceSearchResponse_Facet{
 			"tags": {
 				Terms: []*resourcepb.ResourceSearchResponse_TermFacet{
@@ -1446,6 +1569,219 @@ func TestGetDashboardTags(t *testing.T) {
 	result, err := service.GetDashboardTags(ctx, query)
 	require.NoError(t, err)
 	require.Equal(t, expectedResult, result)
+}
+
+func TestGetDashboardTagsErrors(t *testing.T) {
+	embedded := &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "tags search denied"}
+	transport := status.Error(codes.Unavailable, "tags search unavailable")
+	for _, tc := range []struct {
+		name string
+		resp *resourcepb.ResourceSearchResponse
+		err  error
+		want error
+	}{
+		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: embedded}, want: resource.StatusError(embedded)},
+		{name: "transport nil response", err: transport, want: transport},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := new(client.MockK8sHandler)
+			cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(tc.resp, tc.err).Once()
+			service := &DashboardServiceImpl{k8sclient: cli}
+			got, err := service.GetDashboardTags(t.Context(), &dashboards.GetDashboardTagsQuery{OrgID: 1})
+			require.Equal(t, tc.want, err)
+			require.Nil(t, got)
+			if tc.err != nil {
+				require.Same(t, tc.err, err)
+			}
+			cli.AssertExpectations(t)
+		})
+	}
+}
+
+type dashboardTagSearchClient struct {
+	dashboardclient.K8sHandlerWithFallback
+	index         resource.ResourceIndex
+	access        *dashboardTagSearchAccess
+	mode          string
+	calls         int
+	responseBytes int
+	rows          int
+	facet         *resourcepb.ResourceSearchResponse_Facet
+}
+
+func (c *dashboardTagSearchClient) Search(ctx context.Context, _ int64, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	c.calls++
+	req.Options = &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+		Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards",
+	}}
+	// Compare request shapes without changing the production caller.
+	switch c.mode {
+	case "all-fields":
+		req.Limit, req.Fields = 100000, nil
+	case "name-only":
+		req.Limit, req.Fields = 100000, []string{resource.SEARCH_FIELD_NAME}
+	case "facets-only":
+		req.Limit, req.Fields = 0, nil
+	}
+	res, err := c.index.Search(ctx, c.access, req, nil, nil)
+	if err == nil && res != nil {
+		c.facet = res.Facet["tags"]
+		if c.responseBytes == 0 {
+			c.responseBytes = proto.Size(res)
+			c.rows = len(res.Rows)
+		}
+	}
+	return res, err
+}
+
+type dashboardTagSearchAccess struct {
+	claims.AccessClient
+	allowedFolders map[string]bool
+	checked        int
+}
+
+func (c *dashboardTagSearchAccess) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	c.checked += len(req.Checks)
+	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
+	for _, check := range req.Checks {
+		results[check.CorrelationID] = claims.BatchCheckResult{Allowed: c.allowedFolders == nil || c.allowedFolders[check.Folder]}
+	}
+	return claims.BatchCheckResponse{Results: results}, nil
+}
+
+func newDashboardTagSearchService(t testing.TB, count int, cfg unifiedsearch.PostRankAuthzConfig) (*DashboardServiceImpl, *dashboardTagSearchClient) {
+	t.Helper()
+	backend, err := unifiedsearch.NewBleveBackend(unifiedsearch.BleveOptions{
+		Root:                 t.TempDir(),
+		FileThreshold:        100,
+		PostRankAuthzEnabled: true,
+		PostRankAuthz:        cfg,
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): resource.NewManifestBackedProvider(dashboardapp.LocalManifest().ManifestData),
+		}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	index, err := backend.BuildIndex(t.Context(), resource.NamespacedResource{
+		Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards",
+	}, int64(count), "test", func(idx resource.ResourceIndex) (int64, error) {
+		items := make([]*resource.BulkIndexItem, count)
+		for i := range items {
+			name := fmt.Sprintf("dashboard-%05d", i)
+			parent := "readable"
+			if i%2 == 1 {
+				parent = "hidden"
+			}
+			var tags []string
+			if i%11 != 0 {
+				tags = []string{"metrics", parent, fmt.Sprintf("service-%03d", i%100)}
+			}
+			items[i] = &resource.BulkIndexItem{
+				Action: resource.ActionIndex,
+				Doc: &resource.IndexableDocument{
+					Key: &resourcepb.ResourceKey{
+						Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: name,
+					},
+					Name: name, Title: name, Folder: parent, RV: 1, Tags: tags,
+					Description: "Service health, request latency, error rates and resource usage.",
+					Created:     1700000000000,
+					Updated:     1700000001000,
+					CreatedBy:   "user:creator",
+					UpdatedBy:   "user:editor",
+					Labels: map[string]string{
+						utils.LabelKeyDeprecatedInternalID: fmt.Sprint(i + 1), //nolint:staticcheck
+						"team":                             "observability",
+					},
+					Manager: &utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "test-repository"},
+				},
+			}
+		}
+		return int64(count), idx.BulkIndex(&resource.BulkIndexRequest{Items: items, ResourceVersion: 1})
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+
+	cli := &dashboardTagSearchClient{index: index, access: &dashboardTagSearchAccess{AccessClient: claims.FixedAccessClient(true)}}
+	return &DashboardServiceImpl{k8sclient: cli}, cli
+}
+
+func TestGetDashboardTagsSearchVariants(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		count          int
+		allowedFolders map[string]bool
+		cfg            unifiedsearch.PostRankAuthzConfig
+	}{
+		{name: "empty"},
+		{name: "all readable", count: 64},
+		{name: "restricted", count: 64, allowedFolders: map[string]bool{"readable": true}},
+		{name: "denied", count: 64, allowedFolders: map[string]bool{}},
+		{name: "sample budget", count: 64, allowedFolders: map[string]bool{"readable": true},
+			cfg: unifiedsearch.PostRankAuthzConfig{MaxWindow: 7, MaxCandidates: 11, FacetSampleSize: 20}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			service, cli := newDashboardTagSearchService(t, tc.count, tc.cfg)
+			cli.access.allowedFolders = tc.allowedFolders
+			ctx := claims.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+			query := &dashboards.GetDashboardTagsQuery{OrgID: 1}
+			baseline, err := service.GetDashboardTags(ctx, query)
+			require.NoError(t, err)
+			baselineFacet := cli.facet
+			for _, mode := range []string{"all-fields", "name-only", "facets-only"} {
+				cli.mode = mode
+				got, err := service.GetDashboardTags(ctx, query)
+				require.NoError(t, err)
+				require.Equal(t, baseline, got)
+				require.True(t, proto.Equal(baselineFacet, cli.facet), "facet terms, counts, missing values and sample totals must match")
+			}
+			if tc.allowedFolders != nil {
+				for _, tag := range baseline {
+					require.NotEqual(t, "hidden", tag.Term)
+				}
+			}
+		})
+	}
+}
+
+// In-process timings exclude RPC transport and real authorization-service latency.
+func BenchmarkGetDashboardTags(b *testing.B) {
+	for _, count := range []int{1000, 10000, 20000} {
+		for _, restricted := range []bool{false, true} {
+			for _, mode := range []string{"all-fields", "name-only", "facets-only"} {
+				b.Run(fmt.Sprintf("docs=%d/restricted=%t/%s", count, restricted, mode), func(b *testing.B) {
+					service, cli := newDashboardTagSearchService(b, count, unifiedsearch.PostRankAuthzConfig{})
+					if restricted {
+						cli.access.allowedFolders = map[string]bool{"readable": true}
+					}
+					ctx := claims.WithAuthInfo(b.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+					query := &dashboards.GetDashboardTagsQuery{OrgID: 1}
+					baseline, err := service.GetDashboardTags(ctx, query)
+					require.NoError(b, err)
+					baselineFacet := cli.facet
+					cli.mode, cli.responseBytes = mode, 0
+					got, err := service.GetDashboardTags(ctx, query)
+					require.NoError(b, err)
+					require.Equal(b, baseline, got)
+					require.True(b, proto.Equal(baselineFacet, cli.facet))
+					cli.calls, cli.access.checked = 0, 0
+					b.ReportAllocs()
+					for b.Loop() {
+						tags, err := service.GetDashboardTags(ctx, query)
+						if err != nil {
+							b.Fatal(err)
+						}
+						if len(tags) != len(baseline) {
+							b.Fatalf("got %d tag terms, want %d", len(tags), len(baseline))
+						}
+					}
+					b.ReportMetric(float64(cli.calls)/float64(b.N), "searches/op")
+					b.ReportMetric(float64(cli.access.checked)/float64(b.N), "authz-hits/op")
+					b.ReportMetric(float64(cli.rows), "unused-rows/op")
+					b.ReportMetric(float64(cli.responseBytes), "response-bytes")
+				})
+			}
+		}
+	}
 }
 
 func TestQuotaCount(t *testing.T) {
@@ -1498,6 +1834,41 @@ func TestQuotaCount(t *testing.T) {
 	require.NoError(t, err)
 	c, _ = result.Get(globalTag)
 	require.Equal(t, c, int64(3))
+}
+
+func TestQuotaCountCanceled(t *testing.T) {
+	for name, failure := range map[string]error{
+		"canceled":         context.Canceled,
+		"wrapped canceled": fmt.Errorf("get stats: %w", context.Canceled),
+	} {
+		t.Run(name, func(t *testing.T) {
+			service := &DashboardServiceImpl{
+				orgService: &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 1}}},
+			}
+			ctx, k8sCliMock := setupK8sDashboardTests(service)
+			k8sCliMock.On("GetStats", mock.Anything, int64(1)).Return(nil, failure).Once()
+
+			_, err := service.Count(ctx, &quota.ScopeParameters{OrgID: 1})
+
+			require.ErrorIs(t, err, context.Canceled)
+			require.Same(t, failure, err)
+			require.Equal(t, 499, response.ErrOrFallback(http.StatusInternalServerError, "failed to get quota", err).Status())
+			k8sCliMock.AssertExpectations(t)
+		})
+	}
+}
+
+func TestCountDashboardsInOrgEmbeddedError(t *testing.T) {
+	service := &DashboardServiceImpl{}
+	ctx, k8sCliMock := setupK8sDashboardTests(service)
+	failure := resource.NewServiceUnavailableError("stats unavailable")
+	k8sCliMock.On("GetStats", mock.Anything, int64(1)).Return(&resourcepb.ResourceStatsResponse{Error: failure}, nil).Once()
+
+	count, err := service.CountDashboardsInOrg(ctx, 1)
+
+	require.Zero(t, count)
+	require.Equal(t, resource.StatusError(failure), err)
+	k8sCliMock.AssertExpectations(t)
 }
 
 func TestCountDashboardsInOrg(t *testing.T) {
@@ -1569,9 +1940,85 @@ func TestCountInFolders(t *testing.T) {
 	require.Equal(t, result, int64(2))
 }
 
+func TestSearchDashboardsThroughK8sRawErrors(t *testing.T) {
+	result := &resourcepb.ErrorResult{
+		Code: http.StatusUnprocessableEntity, Reason: string(metav1.StatusReasonInvalid), Message: "invalid search",
+		Details: &resourcepb.ErrorDetails{
+			Group: "dashboard.grafana.app", Kind: "dashboards", Name: "dashboard", Uid: "uid",
+			Causes: []*resourcepb.ErrorCause{{Reason: "FieldValueInvalid", Field: "query", Message: "invalid value"}},
+		},
+	}
+	grpcStatus, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
+	require.NoError(t, err)
+	for _, tc := range []struct {
+		name string
+		resp *resourcepb.ResourceSearchResponse
+		err  error
+		want error
+	}{
+		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: result}, want: resource.StatusError(result)},
+		{name: "grpc nil response", err: grpcStatus.Err(), want: grpcStatus.Err()},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := new(client.MockK8sHandler)
+			cli.On("GetNamespace", int64(1)).Return("default").Once()
+			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+				return req.Page == 2 && req.Limit == 3 && req.Offset == 3
+			})).Return(tc.resp, tc.err).Once()
+			svc := &DashboardServiceImpl{k8sclient: cli}
+			got, err := svc.searchDashboardsThroughK8sRaw(t.Context(), &dashboards.FindPersistedDashboardsQuery{OrgId: 1, Page: 2, Limit: 3})
+			require.Equal(t, tc.want, err)
+			if tc.err != nil {
+				require.Same(t, tc.err, err)
+			} else {
+				require.IsType(t, &apierrors.StatusError{}, err)
+			}
+			require.Empty(t, got.Hits)
+			cli.AssertExpectations(t)
+		})
+	}
+}
+
 func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
-	t.Run("can search dashboards", func(t *testing.T) {
-		ctx := context.Background()
+	t.Run("uses field-value results with the requested response fields", func(t *testing.T) {
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		fields := []string{resource.SEARCH_FIELD_TITLE}
+
+		request, err := service.buildDashboardSearchRequest(&dashboards.FindPersistedDashboardsQuery{OrgId: 1}, fields)
+		require.NoError(t, err)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
+		assert.Equal(t, fields, request.Fields)
+	})
+
+	t.Run("internal searches request field-value results and accept a legacy response", func(t *testing.T) {
+		k8sCliMock := new(client.MockK8sHandler)
+		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES
+		})).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
+				},
+				Rows: []*resourcepb.ResourceTableRow{
+					{Key: &resourcepb.ResourceKey{Name: "uid"}, Cells: [][]byte{[]byte("Dashboard 1")}},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Once()
+
+		result, err := service.searchAllDashboardsThroughK8sRaw(t.Context(), &dashboards.FindPersistedDashboardsQuery{OrgId: 1})
+		require.NoError(t, err)
+		require.Len(t, result.Hits, 1)
+		assert.Equal(t, "uid", result.Hits[0].Name)
+		assert.Equal(t, "Dashboard 1", result.Hits[0].Title)
+	})
+
+	t.Run("requests field-value results and accepts a legacy response", func(t *testing.T) {
+		ctx := t.Context()
 		k8sCliMock := new(client.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		query := &dashboards.FindPersistedDashboardsQuery{
@@ -1580,19 +2027,12 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-			// should include sort field only once
-			titleFieldCount := 0
-			for _, field := range req.Fields {
-				if field == "title" {
-					titleFieldCount++
-				}
-			}
-
-			return len(req.SortBy) == 1 &&
+			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
+				slices.Equal(req.Fields, dashboardsearch.FieldValueIncludeFields) &&
+				len(req.SortBy) == 1 &&
 				// should be converted to "title" due to ParseSortName
 				req.SortBy[0].Field == "title" &&
-				!req.SortBy[0].Desc &&
-				titleFieldCount == 1
+				!req.SortBy[0].Desc
 		})).Return(&resourcepb.ResourceSearchResponse{
 			Results: &resourcepb.ResourceTable{
 				Columns: []*resourcepb.ResourceTableColumnDefinition{
@@ -1929,15 +2369,12 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				ctx = identity.WithRequester(ctx, user)
 
 				// Setup mocks and service
-				features := featuremgmt.WithFeatures()
-
 				permService := acmock.NewMockedPermissionsService()
 				permService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
 				service := &DashboardServiceImpl{
 					cfg:                       setting.NewCfg(),
 					log:                       log.New("test-logger"),
-					features:                  features,
 					dashboardPermissions:      permService,
 					folderPermissions:         permService,
 					dashboardPermissionsReady: make(chan struct{}),
@@ -2030,7 +2467,7 @@ func TestCleanUpDashboard(t *testing.T) {
 		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			item := annotations.Item{
 				OrgID:       orgID,
-				DashboardID: 0,
+				DashboardID: 0, //nolint:staticcheck // Exercise legacy field compatibility.
 				Text:        "org annotation",
 				Epoch:       1,
 				Created:     1,
@@ -2218,8 +2655,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 
 			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 			fakeOrgService := orgtest.NewOrgServiceFake()
-			features := featuremgmt.WithFeatures()
-
 			service := &DashboardServiceImpl{
 				cfg:                    setting.NewCfg(),
 				log:                    log.New("test.logger"),
@@ -2228,7 +2663,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				orgService:             fakeOrgService,
 				serverLockService:      lockService,
 				kvstore:                kv,
-				features:               features,
 			}
 
 			ctx, k8sCliMock := setupK8sDashboardTests(service)
@@ -2262,7 +2696,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 		service := &DashboardServiceImpl{
 			cfg:               cfg,
 			log:               log.New("test.logger"),
-			features:          featuremgmt.WithFeatures(),
 			serverLockService: lockService,
 		}
 
@@ -2316,68 +2749,49 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 		log:                    log.New("test.logger"),
 		folderService:          folderSvc,
 		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
-		features:               featuremgmt.WithFeatures(),
 		publicDashboardService: fakePublicDashboardService,
 		k8sclient:              k8sCliMock,
 	}
 
 	searchResponse := &resourcepb.ResourceSearchResponse{
-		TotalHits: 3,
+		ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		TotalHits:    3,
 		Results: &resourcepb.ResourceTable{
 			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				{Name: resource.SEARCH_FIELD_TAGS, Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceTableColumnDefinition_INT64},
+				{Name: resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceTableColumnDefinition_STRING},
 			},
 			Rows: []*resourcepb.ResourceTableRow{
 				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "dashboard1",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 1"),
-						[]byte("folder1"),
-						[]byte("[]"),
-						[]byte("1"),
-					},
+					Key:   &resourcepb.ResourceKey{Name: "dashboard1", Resource: "dashboard"},
+					Cells: [][]byte{[]byte("folder1"), []byte("1"), []byte("1")},
 				},
 				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "dashboard2",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 2"),
-						[]byte("folder2"),
-						[]byte("[]"),
-						[]byte("2"),
-					},
+					Key:   &resourcepb.ResourceKey{Name: "dashboard2", Resource: "dashboard"},
+					Cells: [][]byte{[]byte("folder2"), []byte("2"), []byte("2")},
 				},
 				{
-					Key: &resourcepb.ResourceKey{
-						Name:     "dashboard3",
-						Resource: "dashboard",
-					},
-					Cells: [][]byte{
-						[]byte("Dashboard 3"),
-						[]byte(""),
-						[]byte("[]"),
-						[]byte("3"),
-					},
+					Key:   &resourcepb.ResourceKey{Name: "dashboard3", Resource: "dashboard"},
+					Cells: [][]byte{nil, []byte("3"), []byte("3")},
 				},
 			},
 		},
 	}
 
 	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-		return len(req.Options.Fields) == 1 &&
+		return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
+			slices.Equal(req.Fields, []string{
+				resource.SEARCH_FIELD_FOLDER,
+				resource.SEARCH_FIELD_LEGACY_ID,
+				resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+			}) &&
+			len(req.Options.Fields) == 1 &&
 			req.Options.Fields[0].Key == builders.DASHBOARD_LIBRARY_PANEL_REFERENCE &&
 			req.Options.Fields[0].Values[0] == "test-library-panel"
 	})).Return(searchResponse, nil).Once()
 
-	results, err := service.GetDashboardsByLibraryPanelUID(context.Background(), "test-library-panel", 1)
+	results, err := service.GetDashboardsByLibraryPanelUID(t.Context(), "test-library-panel", 1)
 
 	require.NoError(t, err)
 	require.Len(t, results, 3)
@@ -2402,5 +2816,45 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 		require.Equal(t, expected.id, result.ID, "ID mismatch for %s", uid) // nolint:staticcheck
 	}
 
+	k8sCliMock.AssertExpectations(t)
+}
+
+func TestGetDashboardsByLibraryPanelUIDWithFieldValueResponse(t *testing.T) {
+	k8sCliMock := new(client.MockK8sHandler)
+	service := &DashboardServiceImpl{k8sclient: k8sCliMock}
+
+	k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_INT64},
+			{Name: resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{
+				Key: &resourcepb.ResourceKey{Name: "dashboard1", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 0, StringValues: []string{"folder1"}},
+					{FieldIndex: 1, Int64Values: []int64{1}},
+					{FieldIndex: 2, StringValues: []string{"1"}},
+				},
+			},
+			{
+				Key: &resourcepb.ResourceKey{Name: "dashboard2", Resource: "dashboard"},
+				Values: []*resourcepb.ResourceSearchValue{
+					{FieldIndex: 1, Int64Values: []int64{2}},
+					{FieldIndex: 2, StringValues: []string{"2"}},
+				},
+			},
+		},
+		TotalHits: 2,
+	}, nil).Once()
+
+	results, err := service.GetDashboardsByLibraryPanelUID(t.Context(), "test-library-panel", 1)
+	require.NoError(t, err)
+	require.Equal(t, []*dashboards.DashboardRef{
+		{UID: "dashboard1", FolderUID: "folder1", ID: 1},
+		{UID: "dashboard2", ID: 2},
+	}, results)
 	k8sCliMock.AssertExpectations(t)
 }

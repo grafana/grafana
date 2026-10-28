@@ -45,17 +45,31 @@ import (
 `))
 
 func run() error {
-	srcDir := filepath.Join(*enterprisePath, "src")
+	// Enterprise code lives in two places while it migrates out of the overlay: the copied
+	// tree in src/, and the grafana-enterprise Go module in pkg/. Both are scanned so a
+	// migrated package keeps its third-party dependencies in this repo's go.mod, which is
+	// the module graph the shared SBOM is built from.
+	scanDirs := []string{
+		filepath.Join(*enterprisePath, "src"),
+		filepath.Join(*enterprisePath, "pkg"),
+	}
 
-	if _, err := os.Stat(srcDir); os.IsNotExist(err) {
-		fmt.Printf("enterprise source directory %s does not exist, skipping\n", srcDir)
+	present := make([]string, 0, len(scanDirs))
+	for _, dir := range scanDirs {
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			fmt.Printf("enterprise source directory %s does not exist, skipping\n", dir)
+			continue
+		}
+		present = append(present, dir)
+	}
+	if len(present) == 0 {
 		return nil
 	}
 
 	regularImports := make(map[string]struct{})
 	testImports := make(map[string]struct{})
 
-	err := filepath.Walk(srcDir, func(path string, info os.FileInfo, err error) error {
+	walk := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -98,7 +112,14 @@ func run() error {
 			}
 		}
 		return nil
-	})
+	}
+
+	var err error
+	for _, dir := range present {
+		if err = filepath.Walk(dir, walk); err != nil {
+			break
+		}
+	}
 	if err != nil {
 		return fmt.Errorf("walking enterprise source: %w", err)
 	}

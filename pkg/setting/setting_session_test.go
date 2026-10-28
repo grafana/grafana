@@ -25,7 +25,7 @@ func TestSessionSettings(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		require.Equal(t, 1, logger.WarnLogs.Calls)
+		require.Equal(t, 2, logger.WarnLogs.Calls)
 		require.Greater(t, len(logger.WarnLogs.Message), 0)
 	})
 }

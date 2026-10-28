@@ -11,7 +11,15 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
+
+// muteTimingRuleStore is the rule-store surface the mute timing service needs: it looks up which
+// rules route through a time interval before renaming or deleting it.
+type muteTimingRuleStore interface {
+	rulestore.TimeIntervalRenamer
+	rulestore.ContactPointRoutingReader
+}
 
 type MuteTimingService struct {
 	configStore            alertmanagerConfigStore
@@ -19,7 +27,7 @@ type MuteTimingService struct {
 	xact                   TransactionManager
 	log                    log.Logger
 	validator              validation.ProvenanceStatusTransitionValidator
-	ruleNotificationsStore AlertRuleNotificationSettingsStore
+	ruleNotificationsStore muteTimingRuleStore
 	routeService           timeIntervalRouteRefService
 	includeImported        bool
 }
@@ -33,7 +41,7 @@ func NewMuteTimingService(
 	prov ProvisioningStore,
 	xact TransactionManager,
 	log log.Logger,
-	ns AlertRuleNotificationSettingsStore,
+	ns muteTimingRuleStore,
 	routeService timeIntervalRouteRefService,
 	validator validation.ProvenanceStatusTransitionValidator,
 ) *MuteTimingService {

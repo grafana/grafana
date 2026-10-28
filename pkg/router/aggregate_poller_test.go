@@ -1,0 +1,333 @@
+package router
+
+import (
+	"context"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
+	"testing"
+	"testing/synctest"
+	"time"
+
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+func TestAggregateTarget_DiscoversAndFiltersGroups(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			list := metav1.APIGroupList{Groups: []metav1.APIGroup{
+				{Name: "dashboard.grafana.app"},
+				{Name: "coordination.k8s.io"},
+			}}
+			_ = json.NewEncoder(w).Encode(list)
+		}))
+		_ = srv.Client()
+		defer srv.Close()
+
+		target, err := newAggregateTarget(aggregateTargetConfig{
+			Name:          "baas_apiserver",
+			URL:           srv.URL,
+			GroupPatterns: []string{"*.grafana.app"},
+		}, srv.Client(), srv.Client().Transport)
+		require.NoError(t, err)
+
+		ctx, cancel := context.WithCancel(t.Context())
+		dirty := make(chan struct{}, 1)
+		go target.run(ctx, dirty)
+
+		// Finish discovery and reconciliation before inspecting the served groups.
+		synctest.Wait()
+
+		require.True(t, len(target.Backends()) == 1)
+
+		backends := target.Backends()
+		require.Equal(t, "dashboard.grafana.app", backends[0].Group().Name)
+
+		// The first successful poll took the discovered key set from empty to
+		// non-empty, so it must have signaled dirty.
+		require.Len(t, dirty, 1, "the first successful poll must signal its changed key set")
+		<-dirty
+
+		cancel()
+	})
+}
+
+// TestAggregateTarget_DropsTheDiscoveryGroupOfAnotherRouter points a target at
+// another router, whose /apis always lists the discovery group, in both
+// discovery formats.
+func TestAggregateTarget_DropsTheDiscoveryGroupOfAnotherRouter(t *testing.T) {
+	upstream := discoveryRouter(t, "dashboard.grafana.app", http.NotFoundHandler())
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		upstream.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())))
+	}))
+	defer srv.Close()
+
+	for _, accept := range []string{aggregatedDiscoveryJSON + ", application/json", "application/json"} {
+		client := srv.Client()
+		client.Transport = acceptTransport{accept: accept, next: http.DefaultTransport}
+		groups, err := discoverGroupResources(t.Context(), client, srv.URL)
+		require.NoError(t, err)
+		names := make([]string, 0, len(groups))
+		for _, g := range groups {
+			names = append(names, g.group.Name)
+		}
+		require.Equal(t, []string{"dashboard.grafana.app"}, names, "accept=%s", accept)
+	}
+
+	target, err := newAggregateTarget(aggregateTargetConfig{Name: "router", URL: srv.URL}, srv.Client(), srv.Client().Transport)
+	require.NoError(t, err)
+	target.poll(t.Context(), make(chan struct{}, 1))
+	require.Len(t, target.Backends(), 1)
+	require.Equal(t, "dashboard.grafana.app", target.Backends()[0].Group().Name)
+	require.Zero(t, target.status.status("router").Skipped, "an expected group is not a skipped backend")
+}
+
+// acceptTransport overrides the Accept header, to force a discovery format.
+type acceptTransport struct {
+	accept string
+	next   http.RoundTripper
+}
+
+func (a acceptTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = req.Clone(req.Context())
+	req.Header.Set("Accept", a.accept)
+	return a.next.RoundTrip(req)
+}
+
+func TestAggregateTarget_CooldownLimitsRequestsWhileDown(t *testing.T) {
+	var attempts atomic.Int64
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		attempts.Add(1)
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer srv.Close()
+
+	target, err := newAggregateTarget(aggregateTargetConfig{
+		Name: "baas_apiserver",
+		URL:  srv.URL,
+	}, srv.Client(), srv.Client().Transport)
+	require.NoError(t, err)
+	target.cooldown = newCooldown(10*time.Millisecond, 200*time.Millisecond, time.Second)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	dirty := make(chan struct{}, 1)
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		target.run(ctx, dirty)
+	}()
+
+	time.Sleep(150 * time.Millisecond)
+	cancel()
+	<-done
+
+	// Without backoff, the 10ms steady interval over 150ms would be ~15
+	// attempts; with a 200ms floor after the first failure, it must be
+	// at most 2 (the initial attempt plus, at most, one more right at
+	// the boundary).
+	require.LessOrEqual(t, attempts.Load(), int64(2))
+	require.Empty(t, target.Backends())
+
+	// A poll that only ever fails signals dirty once, for its first attempt,
+	// which ends the cloud loader's wait for it. Later failures leave the key
+	// set unchanged, so they don't. dirty holds one wake, so drain it and
+	// check again after one more failed poll.
+	require.Len(t, dirty, 1, "the first failed poll wakes the router")
+	<-dirty
+	target.poll(t.Context(), dirty)
+	require.Empty(t, dirty, "later failed polls don't")
+}
+
+// TestAggregateTarget_BackoffLadderDrivesRetries pins down the fix for the
+// double-pacing bug: retries after a failure must be scheduled by the
+// cooldown's backoff ladder, not by a separate steady-interval ticker. The
+// steady interval here (1s) is far longer than the test window, so every
+// attempt after the first can only have come from the backoff schedule --
+// under the old ticker-plus-Ready-gate loop this would have produced exactly
+// one attempt.
+func TestAggregateTarget_BackoffLadderDrivesRetries(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var attempts atomic.Int64
+		srv := httptest.NewTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			attempts.Add(1)
+			w.WriteHeader(http.StatusServiceUnavailable)
+		}))
+		_ = srv.Client()
+		defer srv.Close()
+
+		target, err := newAggregateTarget(aggregateTargetConfig{
+			Name: "baas_apiserver",
+			URL:  srv.URL,
+		}, srv.Client(), srv.Client().Transport)
+		require.NoError(t, err)
+		target.cooldown = newCooldown(time.Second, 10*time.Millisecond, 40*time.Millisecond)
+
+		ctx, cancel := context.WithCancel(t.Context())
+		dirty := make(chan struct{}, 1)
+		go target.run(ctx, dirty)
+		defer cancel()
+
+		// Finish the initial failed poll before advancing through the retry ladder.
+		synctest.Wait()
+
+		require.Equal(t, int64(1), attempts.Load())
+
+		// Reach both retry deadlines, well before the one-second steady interval.
+		synctest.Sleep(30 * time.Millisecond)
+
+		require.Equal(t, int64(3), attempts.Load())
+	})
+}
+
+// TestAggregateTarget_SignalsDirtyOnlyOnKeySetChange exercises poll()
+// directly (bypassing the timer-driven run loop) so the "no signal when
+// unchanged" case doesn't depend on real-time scheduling: sameKeySet's
+// diffing is the reason dirty exists rather than firing on every successful
+// poll, so it needs to be pinned down explicitly.
+func TestAggregateTarget_SignalsDirtyOnlyOnKeySetChange(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		list := metav1.APIGroupList{Groups: []metav1.APIGroup{
+			{Name: "dashboard.grafana.app"},
+		}}
+		_ = json.NewEncoder(w).Encode(list)
+	}))
+	defer srv.Close()
+
+	target, err := newAggregateTarget(aggregateTargetConfig{
+		Name:          "baas_apiserver",
+		URL:           srv.URL,
+		GroupPatterns: []string{"*.grafana.app"},
+	}, srv.Client(), srv.Client().Transport)
+	require.NoError(t, err)
+
+	ctx := t.Context()
+	dirty := make(chan struct{}, 1)
+
+	// First poll: key set goes from empty to {dashboard.grafana.app} -- must signal.
+	target.poll(ctx, dirty)
+	require.Len(t, target.Backends(), 1)
+	select {
+	case <-dirty:
+	default:
+		t.Fatal("expected dirty to be signaled on the first poll (empty -> non-empty key set)")
+	}
+
+	// Second poll: same upstream response, same key set -- must not signal.
+	// No need to reopen the cooldown first: poll() no longer gates itself on
+	// it (run()'s timer is the only gate), it just records the outcome.
+	target.poll(ctx, dirty)
+	require.Len(t, target.Backends(), 1)
+	select {
+	case <-dirty:
+		t.Fatal("dirty must not be signaled when the discovered key set is unchanged from the previous poll")
+	default:
+	}
+}
+
+// taggedTransport counts calls to distinguish discovery from resource traffic.
+type taggedTransport struct {
+	http.RoundTripper
+	calls int
+}
+
+func (t *taggedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	t.calls++
+	return t.RoundTripper.RoundTrip(req)
+}
+
+// TestAggregateTarget_PollUsesDedicatedProxyTransportNotDiscoveryClient pins
+// the fix for aggregate targets signing real proxied resource requests with
+// the router's own CAP-token-derived credentials: the discovery client's
+// transport (CAP-token-wrapped, used only for the router's own /apis poll)
+// must never end up as the aggregateBackend's proxy transport (which carries
+// real caller traffic and must forward the caller's own credentials
+// transparently).
+func TestAggregateTarget_PollUsesDedicatedProxyTransportNotDiscoveryClient(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		list := metav1.APIGroupList{Groups: []metav1.APIGroup{
+			{Name: "dashboard.grafana.app"},
+		}}
+		_ = json.NewEncoder(w).Encode(list)
+	}))
+	defer srv.Close()
+
+	discoveryTransport := &taggedTransport{RoundTripper: http.DefaultTransport}
+	proxyTransport := &taggedTransport{RoundTripper: http.DefaultTransport}
+	discoveryClient := &http.Client{Transport: discoveryTransport}
+
+	target, err := newAggregateTarget(aggregateTargetConfig{
+		Name: "baas_apiserver",
+		URL:  srv.URL,
+	}, discoveryClient, proxyTransport)
+	require.NoError(t, err)
+
+	target.poll(t.Context(), make(chan struct{}, 1))
+
+	backends := target.Backends()
+	require.Len(t, backends, 1)
+	ab, ok := backends[0].(*aggregateBackend)
+	require.True(t, ok)
+	discoveryCalls := discoveryTransport.calls
+	ab.proxy.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/apis/dashboard.grafana.app/v1", nil))
+	require.Equal(t, 1, proxyTransport.calls, "resource requests must use the dedicated proxy transport")
+	require.Equal(t, discoveryCalls, discoveryTransport.calls, "resource requests must not use the discovery credentials")
+}
+
+// TestNewAggregateTarget_RejectsNonAbsoluteURL pins the construction-time URL
+// check: url.Parse accepts all of these, so without the explicit scheme/host
+// rejection a misconfigured target would be built and its breakage would show
+// up only as a recurring background WARN.
+func TestNewAggregateTarget_RejectsNonAbsoluteURL(t *testing.T) {
+	for _, badURL := range []string{"", "/just/a/path", "baas.example.invalid", "//host/path"} {
+		t.Run(badURL, func(t *testing.T) {
+			_, err := newAggregateTarget(aggregateTargetConfig{
+				Name: "baas_apiserver",
+				URL:  badURL,
+			}, http.DefaultClient, http.DefaultTransport)
+			require.ErrorContains(t, err, "must be absolute")
+		})
+	}
+}
+
+func TestNewAggregateTarget_NormalizesTrailingSlash(t *testing.T) {
+	target, err := newAggregateTarget(aggregateTargetConfig{
+		Name: "baas_apiserver",
+		URL:  "https://baas.example.invalid/",
+	}, http.DefaultClient, http.DefaultTransport)
+	require.NoError(t, err)
+	require.Equal(t, "https://baas.example.invalid", target.base.String())
+}
+
+// A source's first successful poll ends the cloud loader's wait for it even
+// when it finds nothing, so it wakes the router. Later empty polls don't.
+func TestFirstEmptyPollWakesTheRouter(t *testing.T) {
+	emptyDiscovery := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"kind":"APIGroupList","apiVersion":"v1","groups":[]}`))
+	}))
+	defer emptyDiscovery.Close()
+	aggregate, err := newAggregateTarget(aggregateTargetConfig{Name: "empty", URL: emptyDiscovery.URL}, emptyDiscovery.Client(), emptyDiscovery.Client().Transport)
+	require.NoError(t, err)
+
+	emptyManifests := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"key": "k", "plugins": []}`))
+	}))
+	defer emptyManifests.Close()
+	manifests, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, emptyManifests.URL, nil, emptyManifests.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
+	require.NoError(t, err)
+
+	for name, poll := range map[string]func(context.Context, chan<- struct{}){
+		"aggregate":        aggregate.poll,
+		"plugin manifests": manifests.poll,
+	} {
+		t.Run(name, func(t *testing.T) {
+			dirty := make(chan struct{}, 1)
+			poll(t.Context(), dirty)
+			require.Len(t, dirty, 1, "the first empty poll wakes the router")
+			<-dirty
+			poll(t.Context(), dirty)
+			require.Empty(t, dirty, "a later empty poll doesn't")
+		})
+	}
+}

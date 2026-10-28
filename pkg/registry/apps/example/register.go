@@ -8,11 +8,11 @@ import (
 	restclient "k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/example/pkg/apis/example/v1alpha1"
 	"github.com/grafana/grafana/apps/example/pkg/apis/manifestdata"
 	exampleapp "github.com/grafana/grafana/apps/example/pkg/app"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -45,7 +45,7 @@ func RegisterAppInstaller(
 	// Set specificConfig.EnableReconciler to true IFF the v1alpha1 API is enabled in the runtime config.
 	// This is example-app-specific, as the version the reconciler uses is not served by default and must be enabled via an override.
 	apiserverRuntimeCfg := cfg.SectionWithEnvOverrides("grafana-apiserver").Key("runtime_config").String()
-	for _, s := range strings.Split(apiserverRuntimeCfg, ",") {
+	for s := range strings.SplitSeq(apiserverRuntimeCfg, ",") {
 		if len(s) == 0 {
 			continue
 		}

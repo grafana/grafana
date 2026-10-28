@@ -21,7 +21,7 @@ labels:
 menuTitle: Query editor
 title: Azure Monitor query editor
 weight: 300
-review_date: 2026-05-12
+review_date: 2026-08-11
 ---
 
 # Azure Monitor query editor
@@ -205,6 +205,16 @@ Basic Logs queries have the following restrictions:
 - **KQL limitations:** Some KQL operators aren't supported. Refer to the [Azure documentation](https://learn.microsoft.com/en-us/azure/azure-monitor/logs/basic-logs-query?tabs=portal-1#limitations) for a full list of limitations.
 
 You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/template-variables/).
+
+### Logs result row limit
+
+When a Logs query uses the **Logs** result format, Grafana truncates the results to 30,000 rows to prevent the browser tab from crashing, because the logs visualization renders every row at once. When truncation happens, Grafana returns the first 30,000 rows along with a notice that the limit was reached.
+
+To remove this limit, enable the `azureMonitorDisableLogLimit` [feature toggle](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) in your Grafana configuration.
+
+{{< admonition type="caution" >}}
+Disabling the row limit can degrade browser performance for very large result sets. Prefer aggregating with `summarize` or narrowing the time range to reduce the number of rows returned.
+{{< /admonition >}}
 
 ### Logs query examples
 

@@ -5,11 +5,11 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"slices"
 	"testing"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	index "github.com/blevesearch/bleve_index_api"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
@@ -24,14 +24,14 @@ func newUploadTestIndex(t *testing.T, be *bleveBackend, key resource.NamespacedR
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "", false)
+	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = idx.Close() })
 
 	require.NoError(t, idx.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(idx, rv))
 
-	wrapped := be.newBleveIndex(key, idx, indexStorageFile, nil, nil, nil, nil, be.log)
+	wrapped := be.newBleveIndex(key, idx, indexStorageFile, nil, nil, nil, be.log)
 	wrapped.resourceVersion.Store(rv)
 	return wrapped
 }
@@ -41,13 +41,13 @@ func newCachedUploadTestIndex(t *testing.T, be *bleveBackend, key resource.Names
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
-	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "", false)
+	idx, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), bleve.NewIndexMapping(), time.Now(), be.opts.BuildVersion, nil, "")
 	require.NoError(t, err)
 
 	require.NoError(t, idx.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(idx, rv))
 
-	wrapped := be.newBleveIndex(key, idx, indexStorageFile, nil, nil, nil, nil, be.log)
+	wrapped := be.newBleveIndex(key, idx, indexStorageFile, nil, nil, nil, be.log)
 	wrapped.resourceVersion.Store(rv)
 
 	be.cacheMx.Lock()
@@ -83,19 +83,18 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	key := newTestNsResource()
 	beforeBuild := time.Now().Add(-time.Second).Truncate(time.Second)
 	idx := newUploadTestIndex(t, be, key, 42)
+	require.NoError(t, idx.RecordReconciledAt(beforeBuild))
 
 	require.NoError(t, be.uploadSnapshot(context.Background(), key, idx))
 	assert.Equal(t, int32(1), store.uploadCalls.Load())
 	uploadedMeta := store.getLastUploadedMeta()
 	assert.Equal(t, int64(42), uploadedMeta.LatestResourceVersion)
 	assert.Equal(t, be.opts.BuildVersion, uploadedMeta.BuildVersion)
+	assert.Zero(t, uploadedMeta.ReconciledAt, "per-resource snapshots do not use reconciliation time")
 	assert.NotZero(t, uploadedMeta.IndexFormat)
 	// Recorded so selection can skip a snapshot missing a feature this instance
 	// requires, without downloading it first.
 	assert.True(t, uploadedMeta.FeaturesRecorded)
-	// Carried so a reader can tell an empty trash from one that was never indexed.
-	assert.Equal(t, be.opts.IndexDeletedDocuments,
-		slices.Contains(uploadedMeta.Features, resource.IndexFeatureHoldsDeletedDocuments))
 	assert.Equal(t, resource.CurrentIndexFeatures(), uploadedMeta.Features)
 	// The test index holds a single document; DocCount is recorded for
 	// debugging only, but verify it reflects the index contents.
@@ -113,6 +112,57 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	entries, err := os.ReadDir(snapshotParent)
 	require.NoError(t, err)
 	assert.Empty(t, entries)
+}
+
+type copyableIndex interface {
+	bleve.Index
+	bleve.IndexCopyable
+}
+
+type indexWithAfterCopy struct {
+	copyableIndex
+	afterCopy func() error
+}
+
+func (i *indexWithAfterCopy) CopyTo(dir index.Directory) error {
+	if err := i.copyableIndex.CopyTo(dir); err != nil {
+		return err
+	}
+	return i.afterCopy()
+}
+
+func TestUploadSnapshot_PreservesReconciliationTime(t *testing.T) {
+	store := newHookableStore(t)
+	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store})
+	key := resource.GlobalSearchKey("default")
+	idx := newUploadTestIndex(t, be, key, 42)
+	reconciledAt := time.Now().Add(-time.Hour).UTC()
+	advancedAt := reconciledAt.Add(30 * time.Minute)
+	require.NoError(t, idx.RecordReconciledAt(reconciledAt))
+	idx.index = &indexWithAfterCopy{
+		copyableIndex: idx.index.(copyableIndex),
+		afterCopy: func() error {
+			return idx.RecordReconciledAt(advancedAt)
+		},
+	}
+
+	require.NoError(t, be.uploadSnapshot(t.Context(), key, idx))
+	assert.Equal(t, reconciledAt, store.getLastUploadedMeta().ReconciledAt)
+	liveTime, err := idx.ReconciledAt()
+	require.NoError(t, err)
+	assert.Equal(t, advancedAt, liveTime)
+
+	restorer, _ := newTestBleveBackend(t, SnapshotOptions{Store: store})
+	resourceDir := restorer.getResourceDir(key)
+	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
+	restored, _, rv, err := restorer.tryDownloadRemoteSnapshot(t.Context(), key, resourceDir, restorer.log)
+	require.NoError(t, err)
+	require.NotNil(t, restored)
+	t.Cleanup(func() { _ = restored.Close() })
+	assert.Equal(t, int64(42), rv)
+	restoredTime, err := getReconciledAt(restored)
+	require.NoError(t, err)
+	assert.Equal(t, reconciledAt, restoredTime)
 }
 
 // TestUploadSnapshot_PreservesOriginalBuildStartTime verifies that periodic
@@ -134,14 +184,13 @@ func TestUploadSnapshot_PreservesOriginalBuildStartTime(t *testing.T) {
 		be.opts.BuildVersion,
 		nil,
 		"",
-		false,
 	)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = index.Close() })
 	require.NoError(t, index.Index("dash-1", map[string]string{"title": "Production Overview"}))
 	require.NoError(t, setRV(index, 42))
 
-	wrapped := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, nil, be.log)
+	wrapped := be.newBleveIndex(key, index, indexStorageFile, nil, nil, nil, be.log)
 	wrapped.resourceVersion.Store(42)
 
 	require.NoError(t, be.uploadSnapshot(context.Background(), key, wrapped))
@@ -309,7 +358,7 @@ func TestUploadSnapshot_SkipsWhenRecentSameVersionRemoteExists(t *testing.T) {
 	store := newHookableStore(t)
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))
 	key := newTestNsResource()
-	seedSnapshot(t, context.Background(), store.bucket, key, recent, &IndexMeta{BuildVersion: "11.5.0"})
+	seedSnapshot(t, context.Background(), store.inner, key, recent, &IndexMeta{BuildVersion: "11.5.0"})
 
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
 	idx := newUploadTestIndex(t, be, key, 42)
@@ -334,7 +383,7 @@ func TestUploadSnapshot_ProceedsWhenRemoteHasNewerIndexFormat(t *testing.T) {
 	key := newTestNsResource()
 	formatType, version, ok := parseIndexFormat(be.maxSupportedIndexFormat)
 	require.True(t, ok)
-	seedSnapshot(t, context.Background(), store.bucket, key, recent, &IndexMeta{
+	seedSnapshot(t, context.Background(), store.inner, key, recent, &IndexMeta{
 		BuildVersion: "11.5.0",
 		IndexFormat:  indexFormat(formatType, version+1),
 	})
@@ -348,7 +397,7 @@ func TestUploadSnapshot_ProceedsWhenRemoteIsDifferentVersion(t *testing.T) {
 	store := newHookableStore(t)
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))
 	key := newTestNsResource()
-	seedSnapshot(t, context.Background(), store.bucket, key, recent, &IndexMeta{BuildVersion: "11.4.0"})
+	seedSnapshot(t, context.Background(), store.inner, key, recent, &IndexMeta{BuildVersion: "11.4.0"})
 
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
 	idx := newUploadTestIndex(t, be, key, 42)
@@ -392,7 +441,7 @@ func TestRunUploadSnapshots_SkipRecentRemote(t *testing.T) {
 	store := newHookableStore(t)
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))
 	key := newTestNsResource()
-	seedSnapshot(t, context.Background(), store.bucket, key, recent, &IndexMeta{BuildVersion: "11.5.0"})
+	seedSnapshot(t, context.Background(), store.inner, key, recent, &IndexMeta{BuildVersion: "11.5.0"})
 
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1})
 	idx := newCachedUploadTestIndex(t, be, key, 42)

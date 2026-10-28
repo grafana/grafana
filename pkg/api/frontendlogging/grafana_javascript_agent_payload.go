@@ -106,13 +106,14 @@ func (e Exception) Message() string {
 
 // String is the string representation of an Exception
 func (e Exception) String() string {
-	var stacktrace = e.Message()
+	var stacktrace strings.Builder
+	stacktrace.WriteString(e.Message())
 	if e.Stacktrace != nil {
 		for _, frame := range e.Stacktrace.Frames {
-			stacktrace += frame.String()
+			stacktrace.WriteString(frame.String())
 		}
 	}
-	return stacktrace
+	return stacktrace.String()
 }
 
 // KeyVal representation of the exception object

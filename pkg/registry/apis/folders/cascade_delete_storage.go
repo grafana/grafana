@@ -42,7 +42,7 @@ var _ grafanarest.Storage = (*cascadeDeleteStorage)(nil)
 // elements) during cascade delete. Satisfied by *cleaner.ContentsCleaner; kept as an interface here
 // so the cascade can be faked in tests and the cleaner package need not import the apiserver.
 type FolderContentsDeleter interface {
-	DeleteInFolder(ctx context.Context, namespace, folderUID string) error
+	DeleteInFolder(ctx context.Context, namespace, folderUID string, user identity.Requester) error
 }
 
 // cascadeDeleteStorage wraps the folder storage and overrides Delete to recursively remove a
@@ -138,7 +138,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	// user authorized to force-delete the folder but not to see every contained resource would
 	// otherwise enumerate (and thus delete) only the visible subset, orphaning the rest.
 	cascadeCtx := identity.WithServiceIdentityContext(ctx, ns.OrgID)
-	return s.cascadeDelete(cascadeCtx, user, ns.Value, rootParent, name, cascadeDeleteOptions(options), true)
+	return s.cascadeDelete(cascadeCtx, user, ns.OrgID, ns.Value, rootParent, name, cascadeDeleteOptions(options), true)
 }
 
 // cascadeDeleteOptions returns the options reused for descendant deletes, carrying only the
@@ -179,7 +179,17 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 // requested param marks whether we are deleting the requested folder or not. We suppress
 // NotFound errors for children, since they might be already deleted or a stale search-index entry,
 // but we keep the error for the user-requested folder.
-func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.Requester, namespace, parentUID, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
+func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.Requester, orgID int64, namespace, parentUID, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
+	// user must not be ctx's wildcard-permissioned enumeration identity; checked before markTerminating so a rejection doesn't stamp the folder as mid-deletion.
+	enumUser, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	if user.GetUID() == enumUser.GetUID() {
+		return nil, false, apierrors.NewForbidden(foldersv1.FolderResourceInfo.GroupResource(), name,
+			fmt.Errorf("cascade delete requester must not be the ctx enumeration identity: %w", folder.ErrAccessDenied))
+	}
+
 	if err := s.markTerminating(ctx, name, options); err != nil {
 		if apierrors.IsNotFound(err) && !requested {
 			return nil, false, nil
@@ -194,6 +204,11 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
 		return nil, false, err
 	}
+	// Mark ctx authorized for an Unchecked contents delete, but only when accessClient is wired --
+	// checkFolderContentsAccess is a no-op without one, so nothing was actually verified above.
+	if s.accessClient != nil {
+		ctx = folder.WithUncheckedDeleteAuthorized(ctx, orgID, user, []string{name}, true)
+	}
 
 	children, err := s.childFolders(ctx, namespace, name)
 	if err != nil {
@@ -201,7 +216,7 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	}
 
 	for _, child := range children {
-		if _, _, err := s.cascadeDelete(ctx, user, namespace, name, child, options, false); err != nil {
+		if _, _, err := s.cascadeDelete(ctx, user, orgID, namespace, name, child, options, false); err != nil {
 			return nil, false, err
 		}
 	}
@@ -220,7 +235,7 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	// failure aborts the cascade, same as the dashboard sweep above. Skipped on dry-run: the
 	// RegistryService cleanups mutate the DB directly and have no dry-run mode.
 	if s.contentsDeleter != nil && len(options.DryRun) == 0 {
-		if err := s.contentsDeleter.DeleteInFolder(ctx, namespace, name); err != nil {
+		if err := s.contentsDeleter.DeleteInFolder(ctx, namespace, name, user); err != nil {
 			// Surface a permission failure as 403 rather than a generic 500, so the client sees why.
 			if errors.Is(err, folder.ErrAccessDenied) {
 				return nil, false, apierrors.NewForbidden(foldersv1.FolderResourceInfo.GroupResource(), name, err)
@@ -295,28 +310,30 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 					Values:   []string{folderUID},
 				}},
 			},
-			Limit:  childFolderPageSize,
-			Offset: offset,
+			Fields:       []string{resource.SEARCH_FIELD_NAME},
+			Limit:        childFolderPageSize,
+			Offset:       offset,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
+		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+			logging.FromContext(ctx).Error("Failed to search dashboards in folder", "namespace", namespace, "folder", folderUID, "error", err)
+			return nil, err
+		}
+		rows, err := decodeSearchRows(resp)
 		if err != nil {
-			return nil, fmt.Errorf("search dashboards in folder %q: %w", folderUID, err)
+			return nil, fmt.Errorf("decode dashboards in folder %q: %w", folderUID, err)
 		}
-		if resp.Error != nil {
-			return nil, fmt.Errorf("search dashboards in folder %q: %s", folderUID, resp.Error.Message)
-		}
-		if resp.Results == nil || len(resp.Results.Rows) == 0 {
+		if len(rows) == 0 {
 			return names, nil
 		}
 
-		for _, row := range resp.Results.Rows {
-			if row.Key != nil {
-				names = append(names, row.Key.Name)
-			}
+		for _, row := range rows {
+			names = append(names, row.key.Name)
 		}
 
 		// The bleve Search path drives pagination off TotalHits + offset rather than a page token.
 		// Advance by the rows actually returned so a short page doesn't skip the remainder.
-		offset += int64(len(resp.Results.Rows))
+		offset += int64(len(rows))
 		if offset >= resp.TotalHits {
 			return names, nil
 		}
@@ -373,28 +390,30 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 					Values:   []string{folderUID},
 				}},
 			},
-			Limit:  childFolderPageSize,
-			Offset: offset,
+			Fields:       []string{resource.SEARCH_FIELD_NAME},
+			Limit:        childFolderPageSize,
+			Offset:       offset,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
+		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+			logging.FromContext(ctx).Error("Failed to search variables in folder", "namespace", namespace, "folder", folderUID, "error", err)
+			return nil, err
+		}
+		rows, err := decodeSearchRows(resp)
 		if err != nil {
-			return nil, fmt.Errorf("search variables in folder %q: %w", folderUID, err)
+			return nil, fmt.Errorf("decode variables in folder %q: %w", folderUID, err)
 		}
-		if resp.Error != nil {
-			return nil, fmt.Errorf("search variables in folder %q: %s", folderUID, resp.Error.Message)
-		}
-		if resp.Results == nil || len(resp.Results.Rows) == 0 {
+		if len(rows) == 0 {
 			return names, nil
 		}
 
-		for _, row := range resp.Results.Rows {
-			if row.Key != nil {
-				names = append(names, row.Key.Name)
-			}
+		for _, row := range rows {
+			names = append(names, row.key.Name)
 		}
 
 		// The bleve Search path drives pagination off TotalHits + offset rather than a page token.
 		// Advance by the rows actually returned so a short page doesn't skip the remainder.
-		offset += int64(len(resp.Results.Rows))
+		offset += int64(len(rows))
 		if offset >= resp.TotalHits {
 			return names, nil
 		}

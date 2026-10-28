@@ -11,7 +11,7 @@ import (
 )
 
 func getTableName(mapper core.IMapper, v reflect.Value) string {
-	if t, ok := v.Interface().(TableName); ok {
+	if t, ok := reflect.TypeAssert[TableName](v); ok {
 		return t.TableName()
 	}
 	if v.Type().Implements(tpTableName) {
@@ -19,7 +19,7 @@ func getTableName(mapper core.IMapper, v reflect.Value) string {
 	}
 	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
-		if t, ok := v.Interface().(TableName); ok {
+		if t, ok := reflect.TypeAssert[TableName](v); ok {
 			return t.TableName()
 		}
 		if v.Type().Implements(tpTableName) {

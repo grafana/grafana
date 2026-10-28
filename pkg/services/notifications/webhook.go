@@ -120,9 +120,9 @@ func NewTLSClient(tlsConfig *tls.Config) *http.Client {
 			Transport: &http.Transport{
 				TLSClientConfig: tlsConfig,
 				Proxy:           http.ProxyFromEnvironment,
-				Dial: (&net.Dialer{
+				DialContext: (&net.Dialer{
 					Timeout: 30 * time.Second,
-				}).Dial,
+				}).DialContext,
 				TLSHandshakeTimeout: 5 * time.Second,
 			},
 		}

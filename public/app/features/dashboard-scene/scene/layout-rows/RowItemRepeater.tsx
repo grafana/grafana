@@ -69,6 +69,10 @@ export function RowItemRepeater({ row, variable }: Props) {
 }
 
 export function performRowRepeats(variable: MultiValueVariable, row: RowItem, contentChanged: boolean) {
+  if (row.state.repeatByVariable !== variable.state.name) {
+    return;
+  }
+
   if (sceneGraph.hasVariableDependencyInLoadingState(variable)) {
     dashboardLog.logger('RowItemRepeater', false, 'Skipped dependency in loading state');
     return;

@@ -282,6 +282,7 @@ const LogListComponent = ({
     fontSize,
     forceEscape,
     hasLogsWithErrors,
+    hasLogsWithErrorAttributes,
     hasSampledLogs,
     onClickFilterString,
     onClickFilterOutString,
@@ -466,7 +467,9 @@ const LogListComponent = ({
         // Event handled by the parent.
         return;
       }
-      toggleDetails(log);
+      const modifierKeyPressed = e.ctrlKey || e.metaKey || e.shiftKey;
+
+      toggleDetails(log, modifierKeyPressed);
     },
     [handleTextSelection, toggleDetails]
   );
@@ -569,6 +572,7 @@ const LogListComponent = ({
               itemCount={itemCount}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
                 hasLogsWithErrors,
+                hasLogsWithErrorAttributes,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
                 showTime,

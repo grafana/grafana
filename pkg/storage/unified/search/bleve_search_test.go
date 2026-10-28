@@ -2,10 +2,9 @@ package search_test
 
 import (
 	"context"
-	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"slices"
 	"strconv"
 	"testing"
@@ -13,6 +12,8 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	apischema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
@@ -23,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const threshold = 9999
@@ -55,7 +57,7 @@ func checkSearchQuery(t *testing.T, index resource.ResourceIndex, query *resourc
 	require.Equal(t, int64(len(orderedExpectedNames)), res.TotalHits)
 	require.True(t, res.TotalHitsExact, "in-searcher authz path reports an exact total")
 	for ix, name := range orderedExpectedNames {
-		require.Equal(t, name, res.Results.Rows[ix].Key.Name)
+		require.Equal(t, name, res.Rows[ix].Key.Name)
 	}
 }
 
@@ -319,8 +321,8 @@ func TestCanSearchByTitle(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
 
-		cols := make([]string, 0, len(res.Results.Columns))
-		for _, c := range res.Results.Columns {
+		cols := make([]string, 0, len(res.Fields))
+		for _, c := range res.Fields {
 			cols = append(cols, c.Name)
 		}
 		require.Greater(t, len(cols), 1, "expected all-fields column set, got %v", cols)
@@ -596,8 +598,16 @@ func TestFieldValueSearchResults(t *testing.T) {
 			RV:      1,
 			Name:    "dashboard-1",
 			Title:   "Hello dashboard",
+			Folder:  "folder-1",
 			Tags:    []string{"production", "overview"},
 			Created: 1234,
+			References: resource.ResourceReferences{{
+				Group:    "dashboard.grafana.app",
+				Kind:     "LibraryPanel",
+				Name:     "library-panel-1",
+				Relation: "depends-on",
+			}},
+			Labels: map[string]string{utils.LabelKeyDeprecatedInternalID: "42"}, // nolint:staticcheck
 			Key: &resourcepb.ResourceKey{
 				Namespace: key.Namespace,
 				Group:     key.Group,
@@ -631,6 +641,33 @@ func TestFieldValueSearchResults(t *testing.T) {
 		require.Equal(t, []int64{1234}, fields[resource.SEARCH_FIELD_CREATED].Int64Values)
 	})
 
+	t.Run("library panel search", func(t *testing.T) {
+		req := newTestQuery("")
+		req.Options.Fields = []*resourcepb.Requirement{{
+			Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+			Operator: "=",
+			Values:   []string{"library-panel-1"},
+		}}
+		req.Fields = []string{
+			resource.SEARCH_FIELD_FOLDER,
+			resource.SEARCH_FIELD_LEGACY_ID,
+			resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+		}
+		req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+
+		res, err := index.Search(t.Context(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Rows, 1)
+		require.Equal(t, "dashboard-1", res.Rows[0].Key.Name)
+
+		values, err := resource.DecodeSearchValues(res.Fields, res.Rows[0])
+		require.NoError(t, err)
+		require.Equal(t, "folder-1", values[resource.SEARCH_FIELD_FOLDER])
+		require.Equal(t, int64(42), values[resource.SEARCH_FIELD_LEGACY_ID])
+		require.Equal(t, "42", values[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID])
+	})
+
 	t.Run("explicit score with free-text query", func(t *testing.T) {
 		req := newTestQuery("Hello")
 		req.Fields = []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_SCORE}
@@ -655,16 +692,16 @@ func TestFieldValueSearchResults(t *testing.T) {
 		require.NotNil(t, res.Rows[0].Score)
 	})
 
-	t.Run("legacy remains default", func(t *testing.T) {
+	t.Run("backend returns field values", func(t *testing.T) {
 		req := newTestQuery("")
 		req.Fields = []string{resource.SEARCH_FIELD_TITLE}
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
 		require.NoError(t, err)
-		require.Equal(t, resourcepb.ResourceSearchRequest_RESOURCE_TABLE, res.ResultFormat)
-		require.NotNil(t, res.Results)
-		require.Empty(t, res.Fields)
-		require.Empty(t, res.Rows)
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
+		require.Nil(t, res.Results)
+		require.NotEmpty(t, res.Fields)
+		require.NotEmpty(t, res.Rows)
 	})
 
 	t.Run("unknown field", func(t *testing.T) {
@@ -678,16 +715,31 @@ func TestFieldValueSearchResults(t *testing.T) {
 		require.Equal(t, int32(400), res.Error.Code)
 		require.Contains(t, res.Error.Message, `unknown response field "does_not_exist"`)
 	})
+}
 
-	t.Run("unknown format", func(t *testing.T) {
-		req := newTestQuery("")
-		req.ResultFormat = resourcepb.ResourceSearchRequest_ResultFormat(99)
+func TestSearchResultFormatMetric(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	metrics := resource.ProvideIndexMetrics(reg)
+	index := newTestDashboardsIndexWithMetrics(t, threshold, 0, noop, metrics)
 
-		res, err := index.Search(t.Context(), nil, req, nil, nil)
-		require.NoError(t, err)
-		require.NotNil(t, res.Error)
-		require.Equal(t, int32(400), res.Error.Code)
-	})
+	req := newTestQuery("")
+	req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+
+	res, err := index.Search(t.Context(), nil, req, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, res.Error)
+	require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues("field_values")))
+
+	invalid := newTestQuery("")
+	invalid.Fields = []string{"does_not_exist"}
+	invalid.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+	res, err = index.Search(t.Context(), nil, invalid, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res.Error)
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues("field_values")), "a response without a result format is not counted")
+
+	require.Equal(t, 2, testutil.CollectAndCount(metrics.SearchResultFormats, "grafana_index_server_search_result_format_total"))
 }
 
 func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
@@ -934,9 +986,28 @@ func TestLabelFilterExactMatch(t *testing.T) {
 		q.Fields = []string{"labels.team"}
 		res, err := seed(t).Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
-		require.Len(t, res.Results.Rows, 1)
-		require.Equal(t, "Team Alpha", string(res.Results.Rows[0].Cells[0]))
+		require.Len(t, res.Rows, 1)
+		values, err := resource.DecodeSearchValues(res.Fields, res.Rows[0])
+		require.NoError(t, err)
+		require.Equal(t, "Team Alpha", values["labels.team"])
 	})
+}
+
+func TestRegexLabelFilter(t *testing.T) {
+	key := resource.NamespacedResource{
+		Namespace: "default",
+		Group:     "dashboard.grafana.app",
+		Resource:  "dashboards",
+	}
+	index := newTestDashboardsIndex(t, threshold, 3, noop)
+	indexDocumentsWithLabels(t, index, key, map[string]map[string]string{
+		"name1": {"team": "Team Alpha"},
+		"name2": {"team": "alpha"},
+		"name3": {"team": "Team Beta"},
+	})
+
+	checkSearchQuery(t, index, labelFilterQuery("regex", "team", "Team.*"), []string{"name1", "name3"})
+	checkSearchQuery(t, index, labelFilterQuery("notregex", "team", "Team.*"), []string{"name2"})
 }
 
 func indexDocumentsWithLabels(t *testing.T, index resource.ResourceIndex, key resource.NamespacedResource, docsWithLabels map[string]map[string]string) {
@@ -1010,6 +1081,312 @@ func TestPublicFieldNameFilter(t *testing.T) {
 	checkSearchQuery(t, index, filter(resource.SEARCH_FIELD_PREFIX+"team"), []string{"d1"})
 }
 
+func TestRegexFilterOnKeywordField(t *testing.T) {
+	key, index := newRegexKeywordFieldIndex(t)
+	for _, tc := range []struct {
+		field      string
+		name       string
+		operator   string
+		expression string
+		want       []string
+	}{
+		{name: "greedy quantifier", operator: string(resource.OperatorRegex), expression: "red.*", want: []string{"d1", "d5", "d6"}},
+		{name: "exact term", operator: string(resource.OperatorRegex), expression: "red-team", want: []string{"d1"}},
+		{name: "no matching term", operator: string(resource.OperatorRegex), expression: "green.*", want: nil},
+		{name: "negation includes missing field", operator: string(resource.OperatorNotRegex), expression: "red.*", want: []string{"d2", "d3", "d4"}},
+		{name: "original-case standard name", field: resource.SEARCH_FIELD_NAME, operator: string(resource.OperatorRegex), expression: "d.*", want: []string{"d1", "d2", "d3", "d4", "d5", "d6"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			field := tc.field
+			if field == "" {
+				field = "team"
+			}
+			checkSearchQuery(t, index, regexFieldQuery(key, field, tc.operator, tc.expression), tc.want)
+		})
+	}
+}
+
+func TestRegexFilterWholeValueSemantics(t *testing.T) {
+	key, index := newRegexSyntaxIndex(t)
+	for _, tc := range []struct {
+		name       string
+		expression string
+		want       []string
+	}{
+		{name: "prefixless alternation", expression: "critical|warn", want: []string{"d1", "d3"}},
+		{name: "case insensitive flag", expression: "(?i)CRITICAL", want: []string{"d1", "d6"}},
+		{name: "dot matches newline by default", expression: "red-.*", want: []string{"d7"}},
+		{name: "empty regex includes empty and missing fields", expression: "", want: []string{"d8", "d9"}},
+		{name: "nonempty regex excludes missing field", expression: ".+", want: []string{"d1", "d2", "d3", "d4", "d5", "d6", "d7"}},
+		{name: "dotall any string includes empty and missing fields", expression: ".*", want: []string{"d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			checkSearchQuery(t, index, regexFieldQuery(key, "team", string(resource.OperatorRegex), tc.expression), tc.want)
+		})
+	}
+}
+
+func TestNotRegexFilterHandlesEmptyMatches(t *testing.T) {
+	key, index := newRegexSyntaxIndex(t)
+	for _, tc := range []struct {
+		name       string
+		expression string
+		want       []string
+	}{
+		{name: "empty regex excludes missing field", expression: "", want: []string{"d1", "d2", "d3", "d4", "d5", "d6", "d7"}},
+		{name: "any string excludes matching and missing fields", expression: ".*", want: nil},
+		{name: "nonempty regex includes empty and missing fields", expression: ".+", want: []string{"d8", "d9"}},
+		{name: "prefix regex includes empty and missing fields", expression: "crit.*", want: []string{"d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			checkSearchQuery(t, index, regexFieldQuery(key, "team", string(resource.OperatorNotRegex), tc.expression), tc.want)
+		})
+	}
+}
+
+func TestRegexFilterIncludesDictionaryReadCost(t *testing.T) {
+	key, index := newRegexKeywordFieldIndex(t)
+	// No term matches this prefix, so the query cost comes from expanding the
+	// dictionary rather than reading matching postings.
+	res := searchResponse(t, index, nil, regexFieldQuery(key, "team", string(resource.OperatorRegex), "green.*"))
+	require.Greater(t, res.QueryCost, float64(0))
+}
+
+func TestRegexFilterRejectsUnsupportedPattern(t *testing.T) {
+	key, index := newRegexKeywordFieldIndex(t)
+	for _, tc := range []struct {
+		name       string
+		field      string
+		expression string
+		message    string
+	}{
+		{name: "invalid syntax", field: "team", expression: "red("},
+		{name: "mixed case behavior", field: "team", expression: "red-(?i:team)"},
+		{name: "lowercased title has no cased variant", field: resource.SEARCH_FIELD_TITLE, expression: "T.*", message: "does not preserve original case"},
+		{name: "text-only description", field: resource.SEARCH_FIELD_DESCRIPTION, expression: "D.*"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			errorResult := requireBadRequestSearch(t, index, regexFieldQuery(key, tc.field, string(resource.OperatorRegex), tc.expression))
+			require.NotEmpty(t, errorResult.Message)
+			if tc.message != "" {
+				require.Contains(t, errorResult.Message, tc.message)
+			}
+		})
+	}
+}
+
+func TestRegexFilterRejectsExpansionBeyondLimit(t *testing.T) {
+	key, index := newRegexKeywordFieldIndex(t)
+	indexRegexKeywordValues(t, index, key, 10001)
+	errorResult := requireBadRequestSearchError(t, index, nil, regexFieldQuery(key, "team", string(resource.OperatorRegex), "red-.*"))
+	require.Contains(t, errorResult.Message, "10000-term expansion limit")
+}
+
+func TestRegexFilterRejectsPrefixlessDictionaryScanBeyondLimit(t *testing.T) {
+	key, index := newRegexKeywordFieldIndex(t)
+	indexRegexKeywordValues(t, index, key, 10001)
+	errorResult := requireBadRequestSearchError(t, index, nil, regexFieldQuery(key, "team", string(resource.OperatorRegex), "x|y"))
+	require.Contains(t, errorResult.Message, "10000-term dictionary scan limit")
+}
+
+func TestRegexFilterOnAlertRuleKeywordFields(t *testing.T) {
+	key, index := newAlertRegexFieldIndex(t)
+	// Alerting flattens each label into a keyword term such as
+	// "severity=critical". The team-only rule intentionally has no severity
+	// term, so Prometheus-style regexes that match the empty value must include
+	// it while still excluding existing severity terms when their values do not
+	// match. The upper rule uses "Severity" to verify that label keys remain
+	// case-sensitive even when the value requests (?i) matching.
+	for _, tc := range []struct {
+		name   string
+		field  string
+		regex  string
+		want   []string
+		negate bool
+	}{
+		{name: "flattened label alternation", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(critical|warning)", want: []string{"critical", "warning"}},
+		{name: "flattened label suffix", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=.*critical", want: []string{"critical", "suffix"}},
+		{name: "flattened label case insensitive", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(?i)CRITICAL", want: []string{"critical"}},
+		{name: "flattened label regex includes a missing label", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=.*", want: []string{"critical", "team-only", "upper", "warning", "suffix"}},
+		{name: "case insensitive flattened label regex includes a missing label", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(?i).*", want: []string{"critical", "team-only", "upper", "warning", "suffix"}},
+		{name: "empty-matching value regex includes missing severity but not nonmatching values", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=a*", want: []string{"team-only", "upper"}},
+		{name: "case-insensitive empty-matching value regex recognizes the label key", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(?i)a*", want: []string{"team-only", "upper"}},
+		{name: "negated empty-matching value regex excludes missing severity", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=a*", want: []string{"critical", "warning", "suffix"}, negate: true},
+		{name: "negated case-insensitive empty-matching value regex recognizes the label key", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(?i)a*", want: []string{"critical", "warning", "suffix"}, negate: true},
+		{name: "datasource UIDs", field: "datasourceUIDs", regex: "prom.*", want: []string{"critical", "upper"}},
+		{name: "receiver", field: "receiver", regex: "Pager.*", want: []string{"critical", "upper"}},
+		{name: "flattened label negated regex excludes a missing label", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=.*", negate: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			operator := string(resource.OperatorRegex)
+			if tc.negate {
+				operator = string(resource.OperatorNotRegex)
+			}
+			checkSearchQueryUnordered(t, index, regexFieldQuery(key, tc.field, operator, tc.regex), tc.want)
+		})
+	}
+}
+
+func TestFlattenedLabelRegexConformance(t *testing.T) {
+	key, index := newAlertRegexFieldIndex(t)
+	items := []*resource.BulkIndexItem{
+		alertRegexRule(key, "crit", []string{"severity=CRIT"}, nil, ""),
+		alertRegexRule(key, "fatal", []string{"severity=fatal"}, nil, ""),
+		alertRegexRule(key, "unrelated", []string{"priority=crit"}, nil, ""),
+		alertRegexRule(key, "newline", []string{"severity=\n"}, nil, ""),
+		alertRegexRule(key, "empty", []string{"severity="}, nil, ""),
+		alertRegexRule(key, "equals", []string{"severity=a=b"}, nil, ""),
+		alertRegexRule(key, "dotted-key", []string{"service.name=API"}, nil, ""),
+		alertRegexRule(key, "other-key", []string{"serviceXname=API"}, nil, ""),
+		alertRegexRule(key, "plus-key", []string{"service+name=API"}, nil, ""),
+		alertRegexRule(key, "bracket-key", []string{"service[name]=API"}, nil, ""),
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	for _, tc := range []struct {
+		expression string
+		want       []string
+	}{
+		{expression: "severity=(?i)critical|crit|fatal", want: []string{"critical", "crit", "fatal"}},
+		{expression: "severity=", want: []string{"empty", "upper", "team-only", "unrelated", "dotted-key", "other-key", "plus-key", "bracket-key"}},
+		{expression: "severity=a=b", want: []string{"equals"}},
+		{expression: "severity=.", want: []string{"newline"}},
+		{expression: "service.name=(?i)api", want: []string{"dotted-key"}},
+		{expression: "service+name=(?i)api", want: []string{"plus-key"}},
+		{expression: "service[name]=(?i)api", want: []string{"bracket-key"}},
+		{expression: "service.*=(?i)api"},
+		{expression: "(?i)severity=critical"},
+	} {
+		t.Run(tc.expression, func(t *testing.T) {
+			checkSearchQueryUnordered(t, index, regexFieldQuery(key, "labels", string(resource.OperatorRegex), tc.expression), tc.want)
+		})
+	}
+	for _, expression := range []string{"severity", "=critical"} {
+		t.Run(expression, func(t *testing.T) {
+			requireBadRequestSearch(t, index, regexFieldQuery(key, "labels", string(resource.OperatorRegex), expression))
+		})
+	}
+}
+
+func newRegexKeywordFieldIndex(t testing.TB) (resource.NamespacedResource, resource.ResourceIndex) {
+	t.Helper()
+	key := resource.NamespacedResource{Namespace: "default", Group: "test.grafana.app", Resource: "items"}
+	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
+		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	})
+	items := []*resource.BulkIndexItem{
+		regexTestDocument(key, "d1", map[string]any{"team": "red-team"}),
+		regexTestDocument(key, "d2", map[string]any{"team": "blue-team"}),
+		regexTestDocument(key, "d3", map[string]any{"team": "Red-team"}),
+		regexTestDocument(key, "d4", nil),
+		regexTestDocument(key, "d5", map[string]any{"team": "red-(?i)"}),
+		regexTestDocument(key, "d6", map[string]any{"team": "red-$"}),
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	return key, index
+}
+
+func newRegexSyntaxIndex(t testing.TB) (resource.NamespacedResource, resource.ResourceIndex) {
+	t.Helper()
+	key := resource.NamespacedResource{Namespace: "default", Group: "test.grafana.app", Resource: "items"}
+	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
+		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
+	})
+	items := []*resource.BulkIndexItem{
+		regexTestDocument(key, "d1", map[string]any{"team": "critical"}),
+		regexTestDocument(key, "d2", map[string]any{"team": "warning"}),
+		regexTestDocument(key, "d3", map[string]any{"team": "warn"}),
+		regexTestDocument(key, "d4", map[string]any{"team": "ab"}),
+		regexTestDocument(key, "d5", map[string]any{"team": "abcdefgh"}),
+		regexTestDocument(key, "d6", map[string]any{"team": "CRITICAL"}),
+		regexTestDocument(key, "d7", map[string]any{"team": "red-\nteam"}),
+		regexTestDocument(key, "d8", nil),
+		regexTestDocument(key, "d9", map[string]any{"team": ""}),
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	return key, index
+}
+
+func regexTestDocument(key resource.NamespacedResource, name string, fields map[string]any) *resource.BulkIndexItem {
+	return &resource.BulkIndexItem{
+		Action: resource.ActionIndex,
+		Doc: &resource.IndexableDocument{
+			RV:     1,
+			Name:   name,
+			Title:  name,
+			Fields: fields,
+			Key:    &resourcepb.ResourceKey{Name: name, Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+		},
+	}
+}
+
+func regexFieldQuery(key resource.NamespacedResource, field, operator, expression string) *resourcepb.ResourceSearchRequest {
+	return &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
+			Fields: []*resourcepb.Requirement{{Key: field, Operator: operator, Values: []string{expression}}},
+		},
+		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+		Limit:  100000,
+	}
+}
+
+func indexRegexKeywordValues(t testing.TB, index resource.ResourceIndex, key resource.NamespacedResource, count int) {
+	t.Helper()
+	items := make([]*resource.BulkIndexItem, count)
+	for i := range items {
+		name := fmt.Sprintf("generated-%05d", i)
+		items[i] = regexTestDocument(key, name, map[string]any{"team": fmt.Sprintf("red-%05d", i)})
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+}
+
+func requireBadRequestSearch(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	t.Helper()
+	res, err := index.Search(context.Background(), nil, query, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res.Error)
+	require.Equal(t, int32(400), res.Error.Code)
+	return res.Error
+}
+
+func requireBadRequestSearchError(t *testing.T, index resource.ResourceIndex, access authlib.AccessClient, query *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+	t.Helper()
+	res, err := index.Search(context.Background(), access, query, nil, nil)
+	require.Error(t, err)
+	require.Nil(t, res)
+	errorResult := resource.AsErrorResult(err)
+	require.NotNil(t, errorResult)
+	require.Equal(t, int32(400), errorResult.Code)
+	return errorResult
+}
+
+func newAlertRegexFieldIndex(t testing.TB) (resource.NamespacedResource, resource.ResourceIndex) {
+	t.Helper()
+	key := resource.NamespacedResource{Namespace: "default", Group: "rules.alerting.grafana.app", Resource: "rules"}
+	index := newTestIndexWithTypedFields(t, key, []resource.SearchFieldDefinition{
+		{Name: "labels", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+		{Name: "datasourceUIDs", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+		{Name: "receiver", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+	})
+	items := []*resource.BulkIndexItem{
+		alertRegexRule(key, "critical", []string{"severity=critical"}, []string{"prometheus"}, "PagerDuty"),
+		alertRegexRule(key, "warning", []string{"severity=warning"}, []string{"loki"}, "email"),
+		alertRegexRule(key, "upper", []string{"Severity=critical"}, []string{"prometheus"}, "PagerDuty"),
+		alertRegexRule(key, "suffix", []string{"severity=very-critical"}, []string{"loki"}, "email"),
+		alertRegexRule(key, "team-only", []string{"team=platform"}, []string{"loki"}, "email"),
+	}
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	return key, index
+}
+
+func alertRegexRule(key resource.NamespacedResource, name string, labels, datasourceUIDs []string, receiver string) *resource.BulkIndexItem {
+	return regexTestDocument(key, name, map[string]any{
+		"labels":         labels,
+		"datasourceUIDs": datasourceUIDs,
+		"receiver":       receiver,
+	})
+}
+
 // TestPublicFieldNameTextQuery checks a free-text query resolves a public
 // QueryField name to its physical fields.* location.
 func TestPublicFieldNameTextQuery(t *testing.T) {
@@ -1045,19 +1422,22 @@ func TestPublicFieldNameTextQuery(t *testing.T) {
 }
 
 func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
+	return newTestDashboardsIndexWithMetrics(t, threshold, size, writer, nil)
+}
+
+func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64, writer resource.BuildFn, metrics *resource.BleveIndexMetrics) resource.ResourceIndex {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         threshold, // use in-memory for tests
-		IndexDeletedDocuments: true,
+		Root:          t.TempDir(),
+		FileThreshold: threshold, // use in-memory for tests
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
-	}, nil)
+	}, metrics)
 	require.NoError(t, err)
 
 	t.Cleanup(backend.Stop)
@@ -1068,7 +1448,7 @@ func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer re
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, "test", writer, nil, false, time.Time{}, 0)
+	}, size, "test", writer, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	return index
@@ -1105,7 +1485,7 @@ func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, colum
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 
-	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0)
+	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }
@@ -1175,7 +1555,7 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, 10, "test", noop, nil, false, time.Time{}, 0)
+	}, 10, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	err = index.BulkIndex(&resource.BulkIndexRequest{
@@ -1236,8 +1616,13 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc3-field#value!"), []string{"doc3"})
 	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.other.field", "some other.field>value"), []string{"doc3"})
 
-	// Only known selectable fields are indexed.
-	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"unknown.field", "another_value"), nil)
+	// A field the index was not built with is refused, rather than answered with an
+	// empty result that reads as "nothing matches".
+	res, err := index.Search(context.Background(), nil, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"unknown.field", "another_value"), nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res.Error)
+	require.True(t, resource.IsSelectableFieldNotIndexed(res.Error))
+	require.Equal(t, int32(http.StatusBadRequest), res.Error.Code)
 }
 
 func selectableFieldQuery(key *resourcepb.ResourceKey, field, value string) *resourcepb.ResourceSearchRequest {
@@ -1283,8 +1668,8 @@ func checkSearchQueryWithAccess(t *testing.T, index resource.ResourceIndex, ac a
 	ctx := authlib.WithAuthInfo(context.Background(), user)
 	res, err := index.Search(ctx, ac, query, nil, nil)
 	require.NoError(t, err)
-	names := make([]string, 0, len(res.Results.GetRows()))
-	for _, row := range res.Results.GetRows() {
+	names := make([]string, 0, len(res.Rows))
+	for _, row := range res.Rows {
 		names = append(names, row.Key.Name)
 	}
 	require.ElementsMatch(t, expectedNames, names)
@@ -1384,17 +1769,21 @@ func newTestDashboardsIndexPostRank(t testing.TB, size int64) resource.ResourceI
 // the bleve defaults).
 func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg search.PostRankAuthzConfig) resource.ResourceIndex {
 	t.Helper()
+	return newTestDashboardsIndexAuthz(t, size, true, cfg)
+}
+
+func newTestDashboardsIndexAuthz(t testing.TB, size int64, postRank bool, cfg search.PostRankAuthzConfig) resource.ResourceIndex {
+	t.Helper()
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         threshold, // use in-memory for tests
-		IndexDeletedDocuments: true,
-		PostRankAuthzEnabled:  true,
-		PostRankAuthz:         cfg,
+		Root:                 t.TempDir(),
+		FileThreshold:        threshold, // use in-memory for tests
+		PostRankAuthzEnabled: postRank,
+		PostRankAuthz:        cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -1407,7 +1796,7 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, "test", noop, nil, false, time.Time{}, 0)
+	}, size, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
 }
@@ -1486,6 +1875,19 @@ func newDoc(name, folder string) *resource.BulkIndexItem {
 	}
 }
 
+func newPostRankRegexExpansionIndex(t *testing.T) resource.ResourceIndex {
+	t.Helper()
+	index := newTestDashboardsIndexPostRank(t, 2)
+	docs := make([]*resource.BulkIndexItem, 10001)
+	for i := range docs {
+		doc := newDoc(fmt.Sprintf("doc-%05d", i), "allowed")
+		doc.Doc.Labels = map[string]string{"team": fmt.Sprintf("team-%05d", i)}
+		docs[i] = doc
+	}
+	indexDocs(t, index, docs)
+	return index
+}
+
 func newDocWithTags(name, folder string, tags []string) *resource.BulkIndexItem {
 	d := newDoc(name, folder)
 	d.Doc.Tags = tags
@@ -1512,8 +1914,8 @@ func searchNames(t *testing.T, index resource.ResourceIndex, ac authlib.AccessCl
 	res, err := index.Search(ctx, ac, q, nil, nil)
 	require.NoError(t, err)
 	require.Nil(t, res.Error)
-	names := make([]string, 0, len(res.Results.GetRows()))
-	for _, row := range res.Results.GetRows() {
+	names := make([]string, 0, len(res.Rows))
+	for _, row := range res.Rows {
 		names = append(names, row.Key.Name)
 	}
 	return names, res
@@ -1522,7 +1924,7 @@ func searchNames(t *testing.T, index resource.ResourceIndex, ac authlib.AccessCl
 // columnNames returns the response table's column names, used to assert that
 // fields loaded only for authorization (e.g. folder) don't leak into results.
 func columnNames(res *resourcepb.ResourceSearchResponse) []string {
-	cols := res.Results.GetColumns()
+	cols := res.Fields
 	names := make([]string, 0, len(cols))
 	for _, c := range cols {
 		names = append(names, c.Name)
@@ -1554,7 +1956,7 @@ func pageAll(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient
 		names, res := searchNames(t, index, ac, q)
 		require.LessOrEqual(t, len(names), int(limit))
 		all = append(all, names...)
-		rows := res.Results.GetRows()
+		rows := res.Rows
 		if len(rows) == 0 {
 			break
 		}
@@ -1569,11 +1971,18 @@ func pageAll(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient
 
 //nolint:gocyclo // The subtests share post-rank fixtures and helpers.
 func TestSearchPostRankAuthz(t *testing.T) {
+	t.Run("regex expansion errors are returned as bad requests", func(t *testing.T) {
+		index := newPostRankRegexExpansionIndex(t)
+
+		errorResult := requireBadRequestSearchError(t, index, &countingAccessClient{allowAll: true}, labelFilterQuery("regex", "team", "team-.*"))
+		require.Contains(t, errorResult.Message, "10000-term expansion limit")
+	})
+
 	t.Run("stops checking once the page is full", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		// More than one BatchCheck batch (500) worth of docs, all authorized.
 		docs := make([]*resource.BulkIndexItem, 0, 700)
-		for i := 0; i < 700; i++ {
+		for i := range 700 {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%04d", i), "folder-a"))
 		}
 		indexDocs(t, index, docs)
@@ -1601,7 +2010,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{OverFetchFactor: 1, MaxWindow: 40}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 200)
-		for i := 0; i < 200; i++ {
+		for i := range 200 {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%03d", i), "denied"))
 		}
 		indexDocs(t, index, docs)
@@ -1627,7 +2036,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// Interleave allowed/denied folders; default list sort is by title asc,
 		// and titles equal the (zero-padded) names, so order is deterministic.
 		docs := make([]*resource.BulkIndexItem, 0, 20)
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			folder := "denied"
 			if i%2 == 0 {
 				folder = "allowed"
@@ -1665,7 +2074,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		docs := make([]*resource.BulkIndexItem, 0, 80)
 		want := make([]string, 0, 6)
-		for i := 0; i < 80; i++ {
+		for i := range 80 {
 			name := fmt.Sprintf("doc-%03d", i)
 			folder := "denied"
 			title := fmt.Sprintf("Abdomen Denied %03d", i)
@@ -1750,7 +2159,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 40}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 200)
-		for i := 0; i < 200; i++ {
+		for i := range 200 {
 			folder := "denied"
 			if i%2 == 0 {
 				folder = "allowed"
@@ -1773,7 +2182,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{MaxWindow: 10, MaxCandidates: 20}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 20)
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			folder := "denied"
 			if i%2 == 0 {
 				folder = "allowed"
@@ -1805,7 +2214,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		docs := make([]*resource.BulkIndexItem, 0, 25)
 		want := make([]string, 0, 25)
-		for i := 0; i < 25; i++ {
+		for i := range 25 {
 			name := fmt.Sprintf("doc-%02d", i)
 			docs = append(docs, newDoc(name, "allowed"))
 			want = append(want, name)
@@ -1822,7 +2231,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		docs := make([]*resource.BulkIndexItem, 0, 30)
 		want := make([]string, 0, 15)
-		for i := 0; i < 30; i++ {
+		for i := range 30 {
 			name := fmt.Sprintf("doc-%02d", i)
 			folder := "denied"
 			if i%2 == 0 {
@@ -1886,7 +2295,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		const n = 25
 		docs := make([]*resource.BulkIndexItem, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
 		}
 		indexDocs(t, index, docs)
@@ -1899,7 +2308,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 		// Page 2: still fills early -> unfiltered total.
 		q2 := listQuery(10)
-		q2.SearchAfter = r1.Results.GetRows()[9].SortFields
+		q2.SearchAfter = r1.Rows[9].SortFields
 		p2, r2 := searchNames(t, index, ac, q2)
 		require.Len(t, p2, 10)
 		require.Equal(t, int64(n), r2.TotalHits)
@@ -1907,7 +2316,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// Page 3: the tail (5 docs) exhausts. Pre-fix this reported
 		// TotalHits=5 (the tail authorized count); it must stay n (25).
 		q3 := listQuery(10)
-		q3.SearchAfter = r2.Results.GetRows()[9].SortFields
+		q3.SearchAfter = r2.Rows[9].SortFields
 		p3, r3 := searchNames(t, index, ac, q3)
 		require.Len(t, p3, 5)
 		require.Equal(t, int64(n), r3.TotalHits, "cursor page must report the unfiltered match count, not the tail authorized count")
@@ -1920,7 +2329,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 50}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 2000)
-		for i := 0; i < 2000; i++ {
+		for i := range 2000 {
 			folder := "denied"
 			if i == 120 {
 				folder = "allowed"
@@ -1952,7 +2361,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		const n = 60
 		docs := make([]*resource.BulkIndexItem, 0, n)
 		want := make([]string, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			name := fmt.Sprintf("doc-%02d", i)
 			docs = append(docs, &resource.BulkIndexItem{
 				Action: resource.ActionIndex,
@@ -1986,7 +2395,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		const n = 500
 		docs := make([]*resource.BulkIndexItem, 0, n)
 		want := make([]string, 0, n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			name := fmt.Sprintf("doc-%03d", i)
 			docs = append(docs, newDoc(name, "allowed"))
 			want = append(want, name)
@@ -2097,7 +2506,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 30)
-		for i := 0; i < 30; i++ {
+		for i := range 30 {
 			folder := "denied"
 			if i >= 20 {
 				folder = "allowed"
@@ -2131,7 +2540,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 30)
-		for i := 0; i < 30; i++ {
+		for i := range 30 {
 			folder := "denied"
 			if i >= 20 {
 				folder = "allowed"
@@ -2142,7 +2551,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 		// Use the native post-rank cursor shape after doc-19.
 		_, cursorRes := searchNames(t, index, &countingAccessClient{allowAll: true}, listQuery(20))
-		rows := cursorRes.Results.GetRows()
+		rows := cursorRes.Rows
 		require.Len(t, rows, 20)
 
 		q := listQuery(3)
@@ -2330,7 +2739,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("facets are independent of forward and backward cursors", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		docs := make([]*resource.BulkIndexItem, 0, 10)
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			tag := "even"
 			if i%2 != 0 {
 				tag = "odd"
@@ -2349,7 +2758,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 		afterQuery := listQuery(3)
 		afterQuery.Facet = facets
-		afterQuery.SearchAfter = baseline.Results.GetRows()[3].SortFields
+		afterQuery.SearchAfter = baseline.Rows[3].SortFields
 		afterNames, after := searchNames(t, index, ac, afterQuery)
 		require.Equal(t, []string{"doc-04", "doc-05", "doc-06"}, afterNames)
 		require.Equal(t, baseline.Facet, after.Facet)
@@ -2357,7 +2766,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		_, cursorPage := searchNames(t, index, ac, listQuery(7))
 		beforeQuery := listQuery(3)
 		beforeQuery.Facet = facets
-		beforeQuery.SearchBefore = cursorPage.Results.GetRows()[6].SortFields
+		beforeQuery.SearchBefore = cursorPage.Rows[6].SortFields
 		beforeNames, before := searchNames(t, index, ac, beforeQuery)
 		require.Equal(t, []string{"doc-03", "doc-04", "doc-05"}, beforeNames)
 		require.Equal(t, baseline.Facet, before.Facet)
@@ -2372,7 +2781,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			FacetSampleSize: 20,
 		})
 		docs := make([]*resource.BulkIndexItem, 0, 100)
-		for i := 0; i < 100; i++ {
+		for i := range 100 {
 			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%03d", i), "allowed", []string{"sampled"}))
 		}
 		indexDocs(t, index, docs)
@@ -2402,7 +2811,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			FacetSampleSize: 100, MaxCandidates: 100,
 		})
 		docs := make([]*resource.BulkIndexItem, 0, 200)
-		for i := 0; i < 200; i++ {
+		for i := range 200 {
 			folder := "denied"
 			if i < 4 { // 4 allowed of 200 -> 2% authorized fraction
 				folder = "allowed"
@@ -2433,7 +2842,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{MaxWindow: 10, FacetSampleSize: 20, MaxCandidates: 100}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 20)
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			folder := "denied"
 			if i%2 == 0 {
 				folder = "allowed"
@@ -2542,7 +2951,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("SearchBefore returns the previous page in forward order", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		docs := make([]*resource.BulkIndexItem, 0, 30)
-		for i := 0; i < 30; i++ {
+		for i := range 30 {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
 		}
 		indexDocs(t, index, docs)
@@ -2550,7 +2959,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		ac := &countingAccessClient{allowAll: true}
 		// Establish a forward cursor at doc-14 (the 15th hit).
 		_, fwd := searchNames(t, index, ac, listQuery(15))
-		rows := fwd.Results.GetRows()
+		rows := fwd.Rows
 		require.Len(t, rows, 15)
 		cursor := rows[len(rows)-1].SortFields // doc-14
 		require.Equal(t, "doc-14", rows[len(rows)-1].Key.Name)
@@ -2564,7 +2973,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("SearchBefore pages backwards contiguously with no dupes or skips", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		docs := make([]*resource.BulkIndexItem, 0, 30)
-		for i := 0; i < 30; i++ {
+		for i := range 30 {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
 		}
 		indexDocs(t, index, docs)
@@ -2572,7 +2981,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		ac := &countingAccessClient{allowAll: true}
 		// Start from doc-14.
 		_, fwd := searchNames(t, index, ac, listQuery(15))
-		cursor := fwd.Results.GetRows()[len(fwd.Results.GetRows())-1].SortFields
+		cursor := fwd.Rows[len(fwd.Rows)-1].SortFields
 
 		// Walk backwards in pages of 5; each page's first row is the next cursor.
 		var got []string
@@ -2586,7 +2995,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			names, res := backwardNames(t, index, ac, cursor, 5)
 			require.Equal(t, want, names, "page %d backwards", p)
 			got = append(got, names...)
-			rows := res.Results.GetRows()
+			rows := res.Rows
 			if len(rows) == 0 {
 				break
 			}
@@ -2609,7 +3018,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		// Even-indexed docs authorized; titles equal names so order is stable.
 		docs := make([]*resource.BulkIndexItem, 0, 20)
-		for i := 0; i < 20; i++ {
+		for i := range 20 {
 			folder := "denied"
 			if i%2 == 0 {
 				folder = "allowed"
@@ -2622,7 +3031,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// Forward cursor at doc-18 (authorized). Forward search over authorized
 		// hits returns the even docs; the last returned is doc-18.
 		_, fwd := searchNames(t, index, ac, listQuery(20))
-		rows := fwd.Results.GetRows()
+		rows := fwd.Rows
 		require.Equal(t, "doc-18", rows[len(rows)-1].Key.Name)
 		cursor := rows[len(rows)-1].SortFields
 
@@ -2681,9 +3090,146 @@ func newTestFoldersIndexPostRank(t testing.TB, size int64, cfg search.PostRankAu
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, size, "test", noop, nil, false, time.Time{}, 0)
+	}, size, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
+}
+
+// changingAccessClient runs change once, during the first authorization call,
+// to stand for a write landing while a search is being authorized.
+type changingAccessClient struct {
+	countingAccessClient
+	change func()
+}
+
+func (c *changingAccessClient) BatchCheck(ctx context.Context, user authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	res, err := c.countingAccessClient.BatchCheck(ctx, user, req)
+	if c.change != nil {
+		change := c.change
+		c.change = nil
+		change()
+	}
+	return res, err
+}
+
+// A result may only show an object as it was when it was authorized, and only
+// if it is still in the search's scope. Post-rank loads a page's stored fields
+// after authorizing it, so a change in between must not come back: an object
+// moved into a folder the caller cannot see, or a live object deleted (which the
+// index keeps, as trash). The next authorized hit takes its place.
+func TestSearchAuthzDoesNotReturnAnObjectChangedDuringAuthorization(t *testing.T) {
+	changes := map[string]func(*resource.BulkIndexItem){
+		"moved to a denied folder": func(doc *resource.BulkIndexItem) {
+			doc.Doc.Folder = "denied"
+		},
+		"deleted": func(doc *resource.BulkIndexItem) {
+			doc.Doc.IsDeleted = new(true)
+		},
+		// Sorts after "next", so returning it would contradict its place and cursor.
+		"retitled in the same folder": func(doc *resource.BulkIndexItem) {
+			doc.Doc.Title = "private title"
+		},
+	}
+	byTitle := listQuery(1)
+	byTitle.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_TITLE}}
+	for name, postRank := range map[string]bool{"in-searcher": false, "post-rank": true} {
+		for change, apply := range changes {
+			t.Run(name+"/"+change, func(t *testing.T) {
+				index := newTestDashboardsIndexAuthz(t, 3, postRank, search.PostRankAuthzConfig{})
+				indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("next", "allowed")})
+				ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
+				ac.change = func() {
+					changed := newDoc("doc", "allowed")
+					changed.Doc.RV = 2
+					apply(changed)
+					indexDocs(t, index, []*resource.BulkIndexItem{changed})
+				}
+
+				names, res := searchNames(t, index, ac, byTitle)
+				if postRank {
+					require.Equal(t, []string{"next"}, names, "the changed object is left out and the page refilled")
+				}
+				// The in-searcher path authorizes and loads from one snapshot, so
+				// it may return the object as it was; never as it became.
+				for _, row := range res.Rows {
+					values, err := resource.DecodeSearchValues(res.Fields, row)
+					require.NoError(t, err)
+					require.Equal(t, "allowed", values[resource.SEARCH_FIELD_FOLDER])
+					require.NotEqual(t, "private title", values[resource.SEARCH_FIELD_TITLE])
+				}
+			})
+		}
+	}
+}
+
+// Past the candidate budget a sparse user's scan goes on until the page has a
+// row. A row validation drops does not count, or the page could come back empty
+// with authorized matches still unseen.
+func TestSearchPostRankAuthzScansPastTheBudgetForARowThatSurvivesValidation(t *testing.T) {
+	index := newTestDashboardsIndexAuthz(t, 3, true, search.PostRankAuthzConfig{OverFetchFactor: 1, MaxCandidates: 1})
+	// By title: "doc" and "e" make the first window of two, "next" the second.
+	indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("e", "denied"), newDoc("next", "allowed")})
+	ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
+	ac.change = func() {
+		moved := newDoc("doc", "denied")
+		moved.Doc.RV = 2
+		indexDocs(t, index, []*resource.BulkIndexItem{moved})
+	}
+	q := listQuery(2)
+	q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_TITLE}}
+
+	names, _ := searchNames(t, index, ac, q)
+	require.Equal(t, []string{"next"}, names)
+}
+
+// Post-rank windows read what authorization needs from doc values and load
+// stored fields only for the returned page. The rows have to come out exactly as
+// on the in-searcher path, which loads fields for the hits it returns.
+func TestSearchPostRankAuthzReturnsTheSameRowsAsInSearcherAuthz(t *testing.T) {
+	docs := make([]*resource.BulkIndexItem, 0, 40)
+	for i := range 40 {
+		d := newDocWithTags(fmt.Sprintf("doc-%02d", i), fmt.Sprintf("folder-%d", i%4), []string{"prod", fmt.Sprintf("svc-%d", i%3)})
+		d.Doc.Description = fmt.Sprintf("dashboard number %d", i)
+		docs = append(docs, d)
+	}
+	postRank := newTestDashboardsIndexAuthz(t, 2, true, search.PostRankAuthzConfig{})
+	inSearcher := newTestDashboardsIndexAuthz(t, 2, false, search.PostRankAuthzConfig{})
+	indexDocs(t, postRank, docs)
+	indexDocs(t, inSearcher, docs)
+
+	withFields := listQuery(5)
+	withFields.Fields = []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_FOLDER, resource.SEARCH_FIELD_TAGS}
+	relevance := listQuery(5)
+	relevance.Query = "doc"
+	offset := listQuery(5)
+	offset.Offset = 7
+
+	for name, q := range map[string]*resourcepb.ResourceSearchRequest{
+		"all columns":       listQuery(5),
+		"requested columns": withFields,
+		"relevance query":   relevance,
+		"offset":            offset,
+	} {
+		for access, ac := range map[string]func() *countingAccessClient{
+			"all folders": func() *countingAccessClient { return &countingAccessClient{allowAll: true} },
+			"some folders": func() *countingAccessClient {
+				return &countingAccessClient{allowedFolders: map[string]bool{"folder-1": true, "folder-3": true}}
+			},
+		} {
+			t.Run(name+"/"+access, func(t *testing.T) {
+				_, want := searchNames(t, inSearcher, ac(), q)
+				_, got := searchNames(t, postRank, ac(), q)
+				require.NotEmpty(t, want.Rows)
+				require.Equal(t, want.Fields, got.Fields)
+				// Post-rank sorts on the document ID last as a tie-breaker, so its
+				// cursors carry one more value; everything else must match.
+				for _, row := range append(want.Rows, got.Rows...) {
+					row.SortFields = nil
+				}
+				require.Equal(t, want.Rows, got.Rows)
+			})
+		}
+	}
 }
 
 func TestSearchPostRankAuthzFederated(t *testing.T) {
@@ -2760,11 +3306,11 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		t.Helper()
 		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: dashKey.Namespace}
 		ctx := authlib.WithAuthInfo(context.Background(), requester)
-		res, err := dash.Search(ctx, ac, q, []resource.ResourceIndex{folderIdx}, nil)
+		res, err := dash.Search(ctx, ac, q, &resource.SearchIndexes{Federated: []resource.ResourceIndex{folderIdx}}, nil)
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
-		out := make([][2]string, 0, len(res.Results.GetRows()))
-		for _, row := range res.Results.GetRows() {
+		out := make([][2]string, 0, len(res.Rows))
+		for _, row := range res.Rows {
 			out = append(out, [2]string{row.Key.Resource, row.Key.Name})
 		}
 		return out, res
@@ -2781,7 +3327,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 			rows, res := searchFederated(t, dash, folderIdx, ac, q)
 			require.LessOrEqual(t, len(rows), int(limit))
 			all = append(all, rows...)
-			r := res.Results.GetRows()
+			r := res.Rows
 			if len(r) == 0 {
 				break
 			}
@@ -2794,7 +3340,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		return all
 	}
 
-	federatedRowLabels := func(rows []*resourcepb.ResourceTableRow) [][2]string {
+	federatedRowLabels := func(rows []*resourcepb.ResourceSearchRow) [][2]string {
 		out := make([][2]string, 0, len(rows))
 		for _, row := range rows {
 			out = append(out, [2]string{row.Key.Resource, row.Key.Name})
@@ -2859,7 +3405,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		want := make([][2]string, 0, 30)
 		// Interleave titles so the merged sort alternates resources. Titles are
 		// zero-padded so the global title order is deterministic.
-		for i := 0; i < 15; i++ {
+		for i := range 15 {
 			name := fmt.Sprintf("d-%02d", i)
 			title := fmt.Sprintf("t-%02d", i*2)
 			docs = append(docs, newDash(name, title, "allowed"))
@@ -2868,7 +3414,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		indexDashboards(t, dash, docs)
 
 		fdocs := make([]*resource.BulkIndexItem, 0, 15)
-		for i := 0; i < 15; i++ {
+		for i := range 15 {
 			name := fmt.Sprintf("f-%02d", i)
 			title := fmt.Sprintf("t-%02d", i*2+1)
 			fdocs = append(fdocs, newFolder(name, title, nil))
@@ -2880,7 +3426,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		// t-00 (d-00), t-01 (f-00), t-02 (d-01), ... interleave perfectly.
 		wantSorted := make([][2]string, 0, 30)
 		di, fi := 0, 0
-		for i := 0; i < 30; i++ {
+		for i := range 30 {
 			if i%2 == 0 {
 				wantSorted = append(wantSorted, want[di])
 				di++
@@ -2908,7 +3454,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		// Every doc shares the same title; the _id (resource/name) breaks ties.
 		// dashboards sort before folders because "dashboard.grafana.app/dashboards"
 		// < "folder.grafana.app/folders" lexicographically in the doc id.
-		for i := 0; i < n; i++ {
+		for i := range n {
 			dName := fmt.Sprintf("d-%02d", i)
 			docs = append(docs, newDash(dName, "same-title", "allowed"))
 			fName := fmt.Sprintf("f-%02d", i)
@@ -2920,10 +3466,10 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		// Expected global order: all dashboards (by name) then all folders (by
 		// name), since the SortDocID tie-breaker orders by the full doc id.
 		want := make([][2]string, 0, 2*n)
-		for i := 0; i < n; i++ {
+		for i := range n {
 			want = append(want, [2]string{"dashboards", fmt.Sprintf("d-%02d", i)})
 		}
-		for i := 0; i < n; i++ {
+		for i := range n {
 			want = append(want, [2]string{"folders", fmt.Sprintf("f-%02d", i)})
 		}
 
@@ -2972,19 +3518,19 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		// 6 dashboards (t-00,t-02,...,t-10) and 6 folders (t-01,t-03,...,t-11),
 		// interleaved by title so the merged sort alternates resources.
 		docs := make([]*resource.BulkIndexItem, 0, 6)
-		for i := 0; i < 6; i++ {
+		for i := range 6 {
 			docs = append(docs, newDash(fmt.Sprintf("d-%02d", i), fmt.Sprintf("t-%02d", i*2), "allowed"))
 		}
 		indexDashboards(t, dash, docs)
 		fdocs := make([]*resource.BulkIndexItem, 0, 6)
-		for i := 0; i < 6; i++ {
+		for i := range 6 {
 			fdocs = append(fdocs, newFolder(fmt.Sprintf("f-%02d", i), fmt.Sprintf("t-%02d", i*2+1), nil))
 		}
 		indexDashboards(t, folder, fdocs)
 
 		// Merged forward title order: t-00(d-00), t-01(f-00), t-02(d-01), ...
 		merged := make([][2]string, 0, 12)
-		for i := 0; i < 12; i++ {
+		for i := range 12 {
 			if i%2 == 0 {
 				merged = append(merged, [2]string{"dashboards", fmt.Sprintf("d-%02d", i/2)})
 			} else {
@@ -2995,7 +3541,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
 		// Forward page of 8 -> merged[0..7]; cursor = merged[7] (t-07, f-03).
 		_, fwd := searchFederated(t, dash, folder, ac, federatedQuery(8))
-		fwdRows := fwd.Results.GetRows()
+		fwdRows := fwd.Rows
 		require.Len(t, fwdRows, 8)
 		require.Equal(t, merged[:8], federatedRowLabels(fwdRows))
 		cursor := fwdRows[len(fwdRows)-1].SortFields
@@ -3285,8 +3831,8 @@ func checkSearchQueryUnordered(t *testing.T, index resource.ResourceIndex, query
 	require.Nil(t, res.Error)
 	require.Equal(t, int64(len(expectedNames)), res.TotalHits)
 
-	names := make([]string, 0, len(res.Results.Rows))
-	for _, row := range res.Results.Rows {
+	names := make([]string, 0, len(res.Rows))
+	for _, row := range res.Rows {
 		names = append(names, row.Key.Name)
 	}
 	require.ElementsMatch(t, expectedNames, names)
@@ -3331,8 +3877,8 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 	index := newTestDashboardsIndex(t, threshold, 4, func(index resource.ResourceIndex) (int64, error) {
 		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
 			deleted("middle", "Alpha middle", alice, 2000, 20),
-			deleted("newest", "Alpha newest", bob, 3000, 30),
-			deleted("oldest", "Alpha oldest", alice, 1000, 10),
+			deleted("newest", "Alpha newest", bob, 3000, 100),
+			deleted("oldest", "Alpha oldest", alice, 1000, 3),
 			{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
 				Key: &resourcepb.ResourceKey{
 					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "live",
@@ -3368,6 +3914,39 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		checkSearchQuery(t, index, q, []string{"oldest", "middle", "newest"})
 	})
 
+	// Different digit counts would sort as 100, 20, 3 if the returned value were
+	// used directly as a keyword. The index uses a fixed-width internal copy.
+	t.Run("sorting by deleted resource version", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+		checkSearchQuery(t, index, q, []string{"oldest", "middle", "newest"})
+
+		q.SortBy[0].Desc = true
+		checkSearchQuery(t, index, q, []string{"newest", "middle", "oldest"})
+	})
+
+	t.Run("paging by deleted resource version", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.Limit = 1
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+		// A List(TRASH) caller only persists the last RV, not the resource name.
+		// Starting after the RV plus the minimum name keeps that RV inclusive.
+		q.SearchAfter = []string{"0000000000000000003", ""}
+
+		for _, name := range []string{"oldest", "middle", "newest"} {
+			res, err := index.Search(context.Background(), nil, q, nil, nil)
+			require.NoError(t, err)
+			require.Nil(t, res.Error)
+			require.Len(t, res.Rows, 1)
+			row := res.Rows[0]
+			require.Equal(t, name, row.Key.Name)
+			require.Len(t, row.SortFields, 2, "resource version plus the name tie-breaker")
+			q.SearchAfter = row.SortFields
+		}
+	})
+
 	t.Run("returning the values", func(t *testing.T) {
 		q := newTestQuery("")
 		q.IsDeleted = true
@@ -3380,18 +3959,17 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
-		require.Len(t, res.Results.Columns, 3, "a field without a column definition is dropped silently")
-		require.Equal(t, resource.SEARCH_FIELD_DELETED_BY, res.Results.Columns[0].Name)
+		require.Len(t, res.Fields, 3, "a field without a column definition is dropped silently")
+		require.Equal(t, resource.SEARCH_FIELD_DELETED_BY, res.Fields[0].Name)
 
-		rows := res.Results.Rows
+		rows := res.Rows
 		require.Len(t, rows, 3)
-		require.Equal(t, alice, string(rows[0].Cells[0]))
+		values, err := resource.DecodeSearchValues(res.Fields, rows[0])
+		require.NoError(t, err)
+		require.Equal(t, alice, values[resource.SEARCH_FIELD_DELETED_BY])
 		require.Equal(t, "oldest", rows[0].Key.Name)
-
-		// int64 columns are encoded big-endian, not as JSON (see NewTableBuilder).
-		require.Len(t, rows[0].Cells[1], 8)
-		require.Equal(t, int64(1000), int64(binary.BigEndian.Uint64(rows[0].Cells[1])))
-		require.Equal(t, "10", string(rows[0].Cells[2]), "the resource version of the delete")
+		require.Equal(t, int64(1000), values[resource.SEARCH_FIELD_DELETION_TIME])
+		require.Equal(t, "3", values[resource.SEARCH_FIELD_DELETED_RV], "the resource version of the delete")
 	})
 
 	// Resource versions are snowflake ids well past the range a float64 represents
@@ -3415,8 +3993,10 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		q.Fields = []string{resource.SEARCH_FIELD_DELETED_RV}
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
-		require.Len(t, res.Results.Rows, 1)
-		require.Equal(t, rv, string(res.Results.Rows[0].Cells[0]))
+		require.Len(t, res.Rows, 1)
+		values, err := resource.DecodeSearchValues(res.Fields, res.Rows[0])
+		require.NoError(t, err)
+		require.Equal(t, rv, values[resource.SEARCH_FIELD_DELETED_RV])
 	})
 
 	// Live documents leave these unset, so naming one in a live search is a caller
@@ -3540,16 +4120,15 @@ func TestTrashSearchFiltersAndReturnsTags(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
-		require.Len(t, res.Results.Columns, 1, "a field without a column definition is dropped silently")
-		require.Equal(t, resource.SEARCH_FIELD_TAGS, res.Results.Columns[0].Name)
+		require.Len(t, res.Fields, 1, "a field without a column definition is dropped silently")
+		require.Equal(t, resource.SEARCH_FIELD_TAGS, res.Fields[0].Name)
 
-		rows := res.Results.Rows
+		rows := res.Rows
 		require.Len(t, rows, 2)
 		require.Equal(t, "prod-and-team", rows[0].Key.Name)
-		// An array column is JSON, unlike the scalar trash columns.
-		var tags []string
-		require.NoError(t, json.Unmarshal(rows[0].Cells[0], &tags))
-		require.ElementsMatch(t, []string{"prod", "team-a"}, tags)
+		values, err := resource.DecodeSearchValues(res.Fields, rows[0])
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"prod", "team-a"}, values[resource.SEARCH_FIELD_TAGS])
 	})
 
 	// tags is a standard field, so unlike deleted_by it stays usable on live search.
@@ -3632,7 +4211,7 @@ func TestFilteringOnBooleanAndNumericFields(t *testing.T) {
 		{"boolean value that is not true or false", filter("paused", "=", "yes")},
 		{"boolean compared with a range", filter("paused", "gt", "true")},
 		{"number value that is not a number", filter("panelID", "=", "ten")},
-		{"filter on a field that only declares retrieve", filter(resource.SEARCH_FIELD_CREATED, "gt", "0")},
+		{"filter on a field that only declares retrieve", filter(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS, "=", "true")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			res, err := index.Search(context.Background(), nil, tc.query, nil, nil)
@@ -3662,7 +4241,267 @@ func newTestIndexWithTypedFields(t testing.TB, key resource.NamespacedResource, 
 	t.Cleanup(backend.Stop)
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
-	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0)
+	index, err := backend.BuildIndex(ctx, key, 2, "test", noop, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 	return index
+}
+
+// Two resource versions one apart, both far above 2^53. As float64 they are the
+// same value, so a search returning them distinctly proves the index is not
+// storing them as numbers.
+const (
+	rvLower = int64(1958241239561142272)
+	rvUpper = int64(1958241239561142273)
+)
+
+func TestSearchReturnsExactResourceVersion(t *testing.T) {
+	// Guards the premise of this test: as float64 the two resource versions are
+	// one value, so any numeric round trip loses one of them.
+	require.NotEqual(t, rvLower, rvUpper)
+	require.Equal(t, float64(rvLower), float64(rvUpper))
+
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newResourceVersionIndex(t, key, false)
+	opts := &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+		Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+	}}
+	want := map[string]int64{"lower": rvLower, "upper": rvUpper, "no-rv": 0}
+
+	t.Run("serves the row resource version", func(t *testing.T) {
+		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+			Options:      opts,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
+			Limit:        10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Rows, len(want))
+
+		for _, row := range res.Rows {
+			require.Equal(t, want[row.Key.Name], row.ResourceVersion, "row resource version for %s", row.Key.Name)
+		}
+	})
+
+	t.Run("an explicit field list omits unrequested resource versions", func(t *testing.T) {
+		res, err := index.Search(t.Context(), nil, &resourcepb.ResourceSearchRequest{
+			Options:      opts,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []string{resource.SEARCH_FIELD_TITLE},
+			Limit:        10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Rows, len(want))
+
+		for _, row := range res.Rows {
+			require.Zero(t, row.ResourceVersion, "unrequested resource version for %s", row.Key.Name)
+		}
+	})
+
+	// A caller naming no fields gets the curated column set, which takes a
+	// different path through the Bleve load list.
+	t.Run("a request naming no fields still carries the resource version", func(t *testing.T) {
+		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+			Options:      opts,
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Rows, len(want))
+
+		for _, row := range res.Rows {
+			require.Equal(t, want[row.Key.Name], row.ResourceVersion, "row resource version for %s", row.Key.Name)
+		}
+	})
+
+	// The resource version is not a field a caller can name, so asking for it is a
+	// bad request rather than a way to read the stored string.
+	t.Run("the stored field is not requestable", func(t *testing.T) {
+		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+			Options:      opts,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields:       []string{resource.SEARCH_FIELD_RV_STRING},
+			Limit:        10,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.NotNil(t, res.Error)
+	})
+}
+
+// The post-rank authz path runs its own bleve searches and builds results from
+// the hits those return, so it needs the stored field loaded too.
+func TestPostRankAuthzSearchReturnsExactResourceVersion(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newResourceVersionIndex(t, key, true)
+
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: key.Namespace})
+	res, err := index.Search(ctx, &countingAccessClient{allowAll: true}, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+		}},
+		Fields:       []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
+		Limit:        10,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, res.Error)
+
+	want := map[string]int64{"lower": rvLower, "upper": rvUpper, "no-rv": 0}
+	require.Len(t, res.Rows, len(want))
+	for _, row := range res.Rows {
+		require.Equal(t, want[row.Key.Name], row.ResourceVersion, "row resource version for %s", row.Key.Name)
+	}
+}
+
+// Deleted documents carry a resource version too, and trash search reads it
+// through the same path.
+func TestTrashSearchReturnsExactResourceVersion(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newResourceVersionIndex(t, key, false)
+
+	res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+		}},
+		IsDeleted:    true,
+		Fields:       []string{resource.SEARCH_FIELD_DELETED_RV, resource.SEARCH_FIELD_RV},
+		Limit:        10,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, res.Error)
+	require.Len(t, res.Rows, 1)
+	require.Equal(t, "deleted", res.Rows[0].Key.Name)
+	require.Equal(t, rvUpper, res.Rows[0].ResourceVersion)
+}
+
+// newResourceVersionIndex holds three live documents — two with resource versions
+// that collide as float64, one with none — and one deleted document.
+func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, postRankAuthz bool) resource.ResourceIndex {
+	t.Helper()
+
+	backend, err := search.NewBleveBackend(search.BleveOptions{
+		Root:                 t.TempDir(),
+		FileThreshold:        threshold,
+		PostRankAuthzEnabled: postRankAuthz,
+		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
+			resource.NewLowerGroupResource(key.Group, key.Resource): search.DashboardSearchFieldsProviderForTest(),
+		}),
+	}, nil)
+	require.NoError(t, err)
+	t.Cleanup(backend.Stop)
+
+	doc := func(name string, rv int64) *resource.IndexableDocument {
+		return &resource.IndexableDocument{
+			Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
+			Name:  name,
+			Title: name,
+			RV:    rv,
+		}
+	}
+	deletedRV := strconv.FormatInt(rvUpper, 10)
+	deleted := doc("deleted", rvUpper)
+	deleted.IsDeleted = new(true)
+	deleted.DeletedRV = &deletedRV
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
+	index, err := backend.BuildIndex(ctx, key, 4, "test", func(i resource.ResourceIndex) (int64, error) {
+		return 1, i.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			{Action: resource.ActionIndex, Doc: doc("lower", rvLower)},
+			{Action: resource.ActionIndex, Doc: doc("upper", rvUpper)},
+			{Action: resource.ActionIndex, Doc: doc("no-rv", 0)},
+			{Action: resource.ActionIndex, Doc: deleted},
+		}})
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	return index
+}
+
+// Internal index fields must be refused wherever a request can name a field.
+// Before this check a filter on one matched nothing and a sort on one ordered by
+// nothing, with no sign the field was never usable.
+func TestSearchRejectsInternalFields(t *testing.T) {
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index := newResourceVersionIndex(t, key, false)
+	newRequest := func() *resourcepb.ResourceSearchRequest {
+		return &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+				Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
+			}},
+			Limit: 10,
+		}
+	}
+	search := func(t *testing.T, req *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
+		t.Helper()
+		res, err := index.Search(context.Background(), nil, req, nil, nil)
+		require.NoError(t, err)
+		return res
+	}
+
+	internal := []string{
+		resource.SEARCH_FIELD_RV_STRING,
+		resource.SEARCH_FIELD_IS_DELETED,
+		resource.SEARCH_FIELD_IS_PROVISIONED,
+		resource.SEARCH_FIELD_DELETED_RV_SORT,
+	}
+	for _, field := range internal {
+		t.Run(field, func(t *testing.T) {
+			for name, mutate := range map[string]func(*resourcepb.ResourceSearchRequest){
+				"response field": func(r *resourcepb.ResourceSearchRequest) {
+					r.Fields = []string{field}
+				},
+				"sort": func(r *resourcepb.ResourceSearchRequest) {
+					r.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: field}}
+				},
+				"filter": func(r *resourcepb.ResourceSearchRequest) {
+					r.Options.Fields = []*resourcepb.Requirement{
+						{Key: field, Operator: string(selection.Equals), Values: []string{"1"}},
+					}
+				},
+				"facet": func(r *resourcepb.ResourceSearchRequest) {
+					r.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{"f": {Field: field, Limit: 10}}
+				},
+				"query field": func(r *resourcepb.ResourceSearchRequest) {
+					r.Query = "x"
+					r.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{Name: field}}
+				},
+			} {
+				t.Run(name, func(t *testing.T) {
+					req := newRequest()
+					mutate(req)
+					res := search(t, req)
+					require.NotNil(t, res.Error, "request naming %q must be refused", field)
+					require.Equal(t, int32(http.StatusBadRequest), res.Error.Code)
+				})
+			}
+		})
+	}
+
+	// The request API owns these underscore-prefixed names, so the check must not
+	// catch them.
+	t.Run("request API fields stay usable", func(t *testing.T) {
+		for _, field := range []string{
+			resource.SEARCH_FIELD_ID,
+			resource.SEARCH_FIELD_SCORE,
+			resource.SEARCH_FIELD_EXPLAIN,
+			resource.SEARCH_FIELD_ALL_FIELDS,
+		} {
+			req := newRequest()
+			req.Fields = []string{field}
+			require.Nil(t, search(t, req).Error, "field %q must stay usable", field)
+		}
+	})
+
+	// A label may be named like an internal field: label keys are user data and
+	// live under their own prefix in the index.
+	t.Run("a label named like an internal field is allowed", func(t *testing.T) {
+		req := newRequest()
+		req.Options.Labels = []*resourcepb.Requirement{
+			{Key: resource.SEARCH_FIELD_RV_STRING, Operator: string(selection.Equals), Values: []string{"1"}},
+		}
+		require.Nil(t, search(t, req).Error)
+	})
 }

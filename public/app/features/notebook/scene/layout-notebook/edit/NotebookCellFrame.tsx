@@ -4,25 +4,20 @@ import { type KeyboardEvent, useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
 import { type NotebookCellItem } from '../NotebookCellItem';
 import { NotebookCellRenderer } from '../NotebookCellRenderer';
 import { resolveScrollAlign } from '../cells/focusExtension';
 
-import { NotebookAddBlockDivider } from './NotebookAddBlockDivider';
 import { type NotebookBlockType } from './NotebookBlockTypeMenu';
 import { NotebookCellActions } from './NotebookCellActions';
+import { NotebookCellAddButton } from './NotebookCellAddButton';
+import { NOTEBOOK_CELL_CONTROLS_CLASS, NOTEBOOK_CELL_FRAME_CLASS } from './cellClassNames';
 
-/**
- * Stable class name the frame's hover rule targets. Emotion class names are generated, so revealing a
- * child's style from a parent needs a hand-written class plus a descendant selector — the same
- * convention as `dashboard-canvas-controls` in the dashboard layouts.
- */
-const NOTEBOOK_CELL_AFFORDANCES_CLASS = 'notebook-cell-affordances';
-
-const NOTEBOOK_CELL_CONTENT_CLASS = 'notebook-cell-content';
+/** Hand-written for the same reason as the class above. */
+export const NOTEBOOK_CELL_CONTENT_CLASS = 'notebook-cell-content';
 
 /** Which edge of a cell the drop line is drawn on while a drag is in flight. */
 export type NotebookCellDropIndicator = 'top' | 'bottom';
@@ -37,8 +32,8 @@ interface Props {
   cell: NotebookCellItem;
   /**
    * The cell's position in `cells`. This doubles as the Draggable index, so it must stay dense and
-   * 0-based — dnd derives every drop boundary from it. The insertion index handed to the divider is
-   * `index + 1`, because the divider belongs to the cell above it.
+   * 0-based — dnd derives every drop boundary from it. Doubles as the add button's insertion index,
+   * since that button inserts directly above this cell.
    */
   index: number;
   isEditing?: boolean;
@@ -62,7 +57,7 @@ interface Props {
   /** True while any cell in the notebook is being dragged, not only this one. */
   isDragActive?: boolean;
   dropIndicator?: NotebookCellDropIndicator;
-  /** Forwarded to this cell's divider, already offset to `index + 1`. See NotebookAddBlockDivider. */
+  /** Forwarded to this cell's add button, which passes this cell's own `index` — an insert above it. */
   onAdd?: (type: NotebookBlockType, index: number) => void;
   /**
    * Supplied by the layout, which owns the cells list. Optional so the frame stays renderable on its
@@ -93,9 +88,9 @@ interface Props {
 }
 
 /**
- * One notebook cell plus its edit-mode affordances: a drag handle in the left gutter and the insertion
- * point below it, both revealed by hovering (or focusing into) the cell. The cell renderer itself stays
- * a pure content dispatcher — everything editing-related lives here.
+ * One notebook cell plus its edit-mode controls: a drag handle and an add-cell button in the left
+ * gutter, both revealed by hovering (or focusing into) the cell. The cell renderer itself stays a pure
+ * content dispatcher, so everything about editing lives here.
  */
 export function NotebookCellFrame({
   cell,
@@ -124,6 +119,7 @@ export function NotebookCellFrame({
   const frameLabel = collapsed
     ? t('notebook.cell.frame.aria-label-collapsed', 'Collapsed block: {{name}}', { name: elementName })
     : t('notebook.cell.frame.aria-label-panel', 'Visualization block: {{name}}', { name: elementName });
+  const dragHandleLabel = t('notebook.cell.drag-handle', 'Drag to reorder');
 
   const frameRef = useRef<HTMLDivElement>(null);
   const pendingAutoFocus = useRef(Boolean(autoFocus && isEditing && !isEditorCell));
@@ -189,11 +185,12 @@ export function NotebookCellFrame({
           role={!isEditorCell ? 'group' : undefined}
           aria-label={!isEditorCell ? frameLabel : undefined}
           className={cx(
+            NOTEBOOK_CELL_FRAME_CLASS,
             styles.frame,
             isEditing && styles.frameEditing,
             !isEditorCell && styles.frameFocusable,
             dragSnapshot.isDragging && styles.dragging,
-            (dragSnapshot.isDragging || isDragActive) && styles.affordancesHidden,
+            (dragSnapshot.isDragging || isDragActive) && styles.controlsHidden,
             dropIndicator === 'top' && styles.dropLineTop,
             dropIndicator === 'bottom' && styles.dropLineBottom
           )}
@@ -201,32 +198,31 @@ export function NotebookCellFrame({
           {isEditing && (
             <div
               {...dragProvided.dragHandleProps}
-              aria-label={t('notebook.cell.drag-handle', 'Drag to reorder')}
-              className={cx(styles.handle, NOTEBOOK_CELL_AFFORDANCES_CLASS)}
+              aria-label={dragHandleLabel}
+              className={cx(styles.handle, NOTEBOOK_CELL_CONTROLS_CLASS)}
             >
-              <Tooltip content={t('notebook.cell.drag-handle', 'Drag to reorder')} placement="left">
-                <Icon name="draggabledots" size="md" />
-              </Tooltip>
+              {/* Labelled on the handle, not through a Tooltip: Tooltip makes its child a tab stop,
+                  so the icon was a second stop with no name. */}
+              <Icon title={dragHandleLabel} name="draggabledots" size="md" />
             </div>
           )}
 
-          {isEditing && onDuplicate && onDelete && (
-            <>
-              <div
-                className={cx(
-                  styles.actionsHoverBridge,
-                  (dragSnapshot.isDragging || isDragActive) && styles.actionsHoverBridgeHidden
-                )}
-              />
-              <NotebookCellActions
-                onDuplicate={onDuplicate}
-                onDelete={onDelete}
-                className={NOTEBOOK_CELL_AFFORDANCES_CLASS}
-              />
-            </>
+          {isEditing && <NotebookCellAddButton index={index} onAdd={onAdd} className={NOTEBOOK_CELL_CONTROLS_CLASS} />}
+
+          {isEditing && onDuplicate && onDelete && (!body || collapsed) && (
+            <NotebookCellActions
+              onDuplicate={onDuplicate}
+              onDelete={onDelete}
+              className={NOTEBOOK_CELL_CONTROLS_CLASS}
+            />
           )}
 
-          <div className={NOTEBOOK_CELL_CONTENT_CLASS}>
+          <div
+            className={cx(
+              NOTEBOOK_CELL_CONTENT_CLASS,
+              isEditing && onDuplicate && onDelete && (!body || collapsed) && styles.contentWithActions
+            )}
+          >
             <NotebookCellRenderer
               cell={cell}
               isEditing={Boolean(isEditing)}
@@ -237,13 +233,10 @@ export function NotebookCellFrame({
               onAdvance={onAdvance}
               onFocusRequest={onFocusRequest}
               onNavigate={onNavigate}
+              onDuplicate={onDuplicate}
+              onDelete={onDelete}
             />
           </div>
-
-          {/* index + 1: this divider inserts *after* the cell it belongs to. */}
-          {isEditing && (
-            <NotebookAddBlockDivider index={index + 1} onAdd={onAdd} className={NOTEBOOK_CELL_AFFORDANCES_CLASS} />
-          )}
         </div>
       )}
     </Draggable>
@@ -272,21 +265,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     scrollMarginBottom: theme.spacing(4),
   }),
   frameEditing: css({
-    paddingLeft: theme.spacing(4),
-    marginLeft: theme.spacing(-4),
+    // Wide enough for the drag handle and the add-cell button side by side.
+    paddingLeft: theme.spacing(7),
+    marginLeft: theme.spacing(-7),
+    paddingTop: theme.spacing(1),
     [theme.breakpoints.up('md')]: {
-      paddingLeft: theme.spacing(7),
-      marginLeft: theme.spacing(-7),
+      paddingLeft: theme.spacing(10),
+      marginLeft: theme.spacing(-10),
     },
-    // The reveal, and only the reveal: the hidden state stays in each affordance's own single-class
-    // rule. A rule here setting opacity: 0 would out-specify the divider's `revealed` class and make
-    // the divider vanish under its own open menu. `>` keeps it to this frame's own affordances.
-    [`&:hover > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}, &:focus-within > .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
+    [`&:hover > .${NOTEBOOK_CELL_CONTROLS_CLASS}, &:focus-within > .${NOTEBOOK_CELL_CONTROLS_CLASS}`]: {
       opacity: 1,
-      // Paired with the actions bar's own `pointer-events: none`: that bar sits outside this frame's box
-      // and above the previous cell's divider, so while hidden it must not answer the hit test there.
-      // Reaching it from inside the frame still works — the frame is already hovered, so the bar is
-      // already interactive by the time the pointer arrives on it.
       pointerEvents: 'auto',
     },
   }),
@@ -302,15 +290,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   handle: css({
     position: 'absolute',
-    // frameEditing's padding-left now reserves exactly this gutter, so the handle sits flush at the
-    // padding box's own edge — no more reaching outside it with a negative offset.
     left: 0,
     width: theme.spacing(3),
     height: theme.spacing(3),
-    // Top-aligned rather than centred: spacing(1) lines up with the first line of a narrative cell and
-    // with a panel's chrome title, whatever the cell's height. Centring would put the handle 150px
-    // down a panel cell.
-    top: theme.spacing(1),
+    top: theme.spacing(2),
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -318,6 +301,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     cursor: 'grab',
     opacity: 0,
+    '@media (hover: none)': { opacity: 1 },
     '&:hover': {
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.action.hover,
@@ -332,6 +316,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       transition: theme.transitions.create('opacity'),
     },
   }),
+  contentWithActions: css({
+    paddingRight: theme.spacing(4),
+  }),
   dragging: css({
     opacity: 0.9,
     '&::before': {
@@ -342,37 +329,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
       top: 0,
       right: 0,
       bottom: 0,
-      left: theme.spacing(4),
+      left: theme.spacing(7),
       [theme.breakpoints.up('md')]: {
-        left: theme.spacing(7),
+        left: theme.spacing(10),
       },
       backgroundColor: theme.colors.background.primary,
       borderRadius: theme.shape.radius.default,
       boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     },
   }),
-  affordancesHidden: css({
-    [`& .${NOTEBOOK_CELL_AFFORDANCES_CLASS}`]: {
+  controlsHidden: css({
+    [`& .${NOTEBOOK_CELL_CONTROLS_CLASS}`]: {
       visibility: 'hidden',
     },
-  }),
-  actionsHoverBridge: css({
-    position: 'absolute',
-    bottom: '100%',
-    // Starts at the frame's own left edge, covering the gutter/handle column above it too — not just
-    // the span the actions bar itself occupies. Without that, the top-left corner of the widened hit-box
-    // is a dead zone: nothing there answers the hit test, so hovering it doesn't reveal anything, and the
-    // pointer has to drift right past the gutter before the actions bar appears.
-    left: 0,
-    width: theme.spacing(12),
-    [theme.breakpoints.up('md')]: {
-      width: theme.spacing(15),
-    },
-    height: theme.spacing(4),
-    pointerEvents: 'auto',
-  }),
-  actionsHoverBridgeHidden: css({
-    pointerEvents: 'none',
   }),
   dropLineTop: css({
     '&::before': dropLine(theme, 'top'),
@@ -389,10 +358,10 @@ function dropLine(theme: GrafanaTheme2, edge: NotebookCellDropIndicator) {
     position: 'absolute' as const,
     [edge]: 0,
     // Matches frameEditing's gutter padding-left, so the line still starts at the cell's own content
-    // edge rather than bleeding into the wider hit-box reserved for the drag handle.
-    left: theme.spacing(4),
+    // edge rather than bleeding into the wider hit-box reserved for the drag handle and add button.
+    left: theme.spacing(7),
     [theme.breakpoints.up('md')]: {
-      left: theme.spacing(7),
+      left: theme.spacing(10),
     },
     right: 0,
     height: 2,

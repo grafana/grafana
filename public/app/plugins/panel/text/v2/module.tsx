@@ -1,18 +1,14 @@
 import { type DataFrame, FieldConfigProperty, PanelPlugin, type PanelOptionsSupplier } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { defaultCodeOptions, defaultOptions, type Options, RenderMode } from '../panelcfg.gen';
 
 import { TextNGPanel } from './TextNGPanel';
 import { hasRenderableData, MAX_RENDERED_ROWS } from './renderContent';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
+import { isTextNewFeaturesEnabled } from './utils';
 
-function newFeaturesEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue('text.newFeatures', false);
-}
-
-const showForData = (_options: Options, data?: DataFrame[]) => newFeaturesEnabled() && hasRenderableData(data);
+const showForData = (_options: Options, data?: DataFrame[]) => isTextNewFeaturesEnabled() && hasRenderableData(data);
 
 export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
   const category = [t('textng.category-text', 'Text')];
@@ -57,19 +53,27 @@ export const textNGPanelOptions: PanelOptionsSupplier<Options> = (builder) => {
   });
 
   builder.addNumberInput({
-    path: 'maxRows',
-    name: t('textng.options.max-rows', 'Row limit'),
+    path: 'pageSize',
+    name: t('textng.options.page-size', 'Page size'),
     description: t(
-      'textng.options.max-rows-description',
-      'Rows of query data to render. High values can slow the panel, especially with complex HTML.'
+      'textng.options.page-size-description',
+      'Number of rows per page. When empty, the page size is based on the panel height.'
     ),
     category: dataCategory,
-    settings: { min: 1, max: MAX_RENDERED_ROWS, integer: true, placeholder: String(MAX_RENDERED_ROWS) },
-    showIf: showForData,
+    settings: {
+      placeholder: t('textng.options.page-size-placeholder', 'auto'),
+      min: 1,
+      max: MAX_RENDERED_ROWS,
+      integer: true,
+    },
+    showIf: (options, data) => showForData(options, data) && options.renderMode === RenderMode.PerRow,
   });
 };
 
 const SUPPORTED_FIELD_CONFIGS = new Set<FieldConfigProperty>([
+  FieldConfigProperty.Unit,
+  FieldConfigProperty.Decimals,
+  FieldConfigProperty.NoValue,
   FieldConfigProperty.Mappings,
   FieldConfigProperty.Thresholds,
 ]);
@@ -79,7 +83,7 @@ export const plugin = new PanelPlugin<Options>(TextNGPanel)
   .setMigrationHandler(textPanelMigrationHandler)
   .setSuggestionsSupplier(() => []);
 
-if (newFeaturesEnabled()) {
+if (isTextNewFeaturesEnabled()) {
   plugin.useFieldConfig({
     disableStandardOptions: Object.values(FieldConfigProperty).filter((id) => !SUPPORTED_FIELD_CONFIGS.has(id)),
   });

@@ -29,7 +29,7 @@ func ConcurrentBatch(workers, count, size int, eachFn func(start, end int) error
 	defer close(ret)
 
 	// Launch all workers
-	for x := 0; x < workers; x++ {
+	for range workers {
 		wg.Go(func() {
 			for ck := range chunk {
 				if err := eachFn(ck.start, ck.end); err != nil {
@@ -43,10 +43,7 @@ func ConcurrentBatch(workers, count, size int, eachFn func(start, end int) error
 	go func() {
 		// Tell the workers the chunks they have to work on
 		for i := 0; i < count; {
-			end := i + size
-			if end > count {
-				end = count
-			}
+			end := min(i+size, count)
 
 			chunk <- bounds{start: i, end: end}
 

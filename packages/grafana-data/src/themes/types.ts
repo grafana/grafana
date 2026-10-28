@@ -39,6 +39,11 @@ export interface GrafanaTheme2 {
      * @internal
      */
     visualDesignRefresh?: boolean;
+    /**
+     * Use tabular numerals for visualization legend and tooltip values.
+     * @internal
+     */
+    tabularNums?: boolean;
   } & Record<string, boolean | undefined>;
 }
 
@@ -54,7 +59,7 @@ export const ThemeRichColorInputSchema = z.object({
   background: z.string().optional(),
   /** Used for background hover/focus/active states */
   backgroundEmphasis: z.string().optional(),
-  /** Used for text. Can sit on top of the relevant ThemeRichColor background, or a standard background. */
+  /** Used for text. Can sit on top of the relevant ThemeRichColor subtleBackground, or a standard background. */
   text: z.string().optional(),
   /** Used for text hover/focus/active states */
   textEmphasis: z.string().optional(),
@@ -64,7 +69,10 @@ export const ThemeRichColorInputSchema = z.object({
   borderEmphasis: z.string().optional(),
   /** Text color for text ontop of main */
   contrastText: z.string().optional(),
-
+  /** A more subtle alternative to `background`, for surfaces that shouldn't match a solid-fill button */
+  subtleBackground: z.string().optional(),
+  /** A more subtle alternative to `border`, for surfaces that shouldn't match a solid-fill button */
+  subtleBorder: z.string().optional(),
   /**
    * Used for hover
    * @deprecated use `mainEmphasis` instead

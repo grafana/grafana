@@ -69,6 +69,19 @@ global.TransformStream = TransformStream;
 // add scrollTo interface since it's not implemented in jsdom
 Element.prototype.scrollTo = () => {};
 
+// jsdom's URL predates URL.canParse, which @braintree/sanitize-url calls. Only the
+// static method is added - core-js's polyfill swaps out the whole URL implementation.
+if (typeof URL.canParse !== 'function') {
+  URL.canParse = (url: string | URL, base?: string) => {
+    try {
+      new URL(url, base);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+}
+
 const throwUnhandledRejections = () => {
   process.on('unhandledRejection', (err) => {
     throw err;

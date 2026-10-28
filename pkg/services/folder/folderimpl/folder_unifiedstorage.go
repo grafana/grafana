@@ -179,7 +179,9 @@ func (s *Service) SearchFolders(ctx context.Context, query folder.SearchFoldersQ
 			Fields: []*resourcepb.Requirement{},
 			Labels: []*resourcepb.Requirement{},
 		},
-		Limit: folderSearchLimit}
+		Limit:        folderSearchLimit,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
 
 	if len(query.UIDs) > 0 {
 		request.Options.Fields = []*resourcepb.Requirement{{
@@ -208,8 +210,9 @@ func (s *Service) SearchFolders(ctx context.Context, query folder.SearchFoldersQ
 			request.Query = query.Title
 		}
 
-		// if using query, you need to specify the fields you want
-		request.Fields = dashboardsearch.IncludeFields
+		// if using query, you need to specify the fields you want. This request asks for
+		// FIELD_VALUES results, which reject response fields with no typed definition.
+		request.Fields = dashboardsearch.FieldValueIncludeFields
 	}
 
 	if query.Limit > 0 {
@@ -266,10 +269,12 @@ func (s *Service) getFolderByID(ctx context.Context, id int64, orgID int64) (*fo
 				},
 			},
 		},
-		Limit: folderSearchLimit}
+		Limit:        folderSearchLimit,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
 
 	res, err := s.k8sclient.Search(ctx, orgID, request)
-	if err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return nil, err
 	}
 
@@ -326,7 +331,9 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 			},
 			Labels: []*resourcepb.Requirement{},
 		},
-		Limit: folderSearchLimit}
+		Limit:        folderSearchLimit,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
 
 	if parentUID != nil {
 		req := []*resourcepb.Requirement{{
@@ -338,7 +345,7 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 	}
 
 	res, err := s.k8sclient.Search(ctx, orgID, request)
-	if err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return nil, err
 	}
 
@@ -529,7 +536,10 @@ func (s *Service) deleteVariablesInFolders(ctx context.Context, orgID int64, fol
 				},
 			},
 		},
-		Limit: folderSearchLimit}
+		Fields:       []string{resource.SEARCH_FIELD_NAME},
+		Limit:        folderSearchLimit,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	}
 
 	hits, err := dashboardsearch.SearchAll(ctx, orgID, request, s.variableK8sClient.Search)
 	if err != nil {
@@ -620,7 +630,10 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 					},
 				},
 			},
-			Limit: folderSearchLimit}
+			Fields:       []string{resource.SEARCH_FIELD_NAME},
+			Limit:        folderSearchLimit,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		}
 
 		hits, err := dashboardsearch.SearchAll(ctx, cmd.OrgID, request, s.dashboardK8sClient.Search)
 		if err != nil {
@@ -635,8 +648,9 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 				return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
 			}
 		}
-		// Delete all public dashboards in the folders
-		err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
+		// Delete all public dashboards in the folders. The requester is attached to ctx here since
+		// a context-dependent LegacyDatabaseProvider can only resolve the target database from it.
+		err = s.publicDashboardService.DeleteByDashboardUIDs(identity.WithRequester(ctx, cmd.SignedInUser), cmd.OrgID, dashboardUIDs)
 		if err != nil {
 			return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
 		}

@@ -1,5 +1,6 @@
 import { getPackagesSync } from '@manypkg/get-packages';
 import rspack, { type Configuration } from '@rspack/core';
+import type { Configuration as DevServerConfiguration } from '@rspack/dev-server';
 import ESLintPlugin from 'eslint-rspack-plugin';
 import fs from 'node:fs';
 import { createRequire } from 'node:module';
@@ -9,8 +10,10 @@ import { TsCheckerRspackPlugin } from 'ts-checker-rspack-plugin';
 import { merge } from 'webpack-merge';
 import WebpackBar from 'webpackbar';
 
-import { assetsManifestOptions } from './plugins/assetsManifest.ts';
-import common, { type Env } from './rspack.common.ts';
+import { getEnvConfig } from '../cli/env-util.ts';
+
+import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
+import common, { PUBLIC_PATH, type Env } from './rspack.common.ts';
 
 const require = createRequire(import.meta.url);
 
@@ -36,14 +39,144 @@ function scenesModule(): string {
 }
 const decoupledPlugins = getDecoupledPlugins();
 
+// The dev server and the backend both need to agree on one origin. `[frontend_dev] server_url`
+// in the ini is that single source of truth: the dev server listens on it, and the backend
+// renders it into index.html as the asset origin.
+function getDevServerOrigin(): { hostname: string; port: number } {
+  const grafanaRoot = path.resolve(import.meta.dirname, '../..');
+  const raw = getEnvConfig(grafanaRoot).frontend_dev_server_url;
+
+  if (typeof raw !== 'string' || raw === '') {
+    // Throw rather than build without a dev server: Grafana ignores a blank value and would
+    // still point the browser here.
+    throw new Error(
+      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini. To build without a dev server, run `yarn start:noHmr`.'
+    );
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    // Without this, `new URL` throws a bare `TypeError: Invalid URL` naming neither the setting
+    // nor the file it came from.
+    throw new Error(`Cannot start the dev server: \`[frontend_dev] server_url\` (${raw}) is not a URL.`);
+  }
+
+  const { hostname, port } = parsed;
+  // Grafana would fall back to the scheme's default port, so an explicit one is what keeps both
+  // sides pointing at the same origin.
+  if (!/^\d+$/.test(port) || Number(port) <= 0) {
+    throw new Error(`Cannot start the dev server: \`[frontend_dev] server_url\` (${raw}) names no port.`);
+  }
+
+  return { hostname, port: Number(port) };
+}
+
+// Grafana serves the page from another port on the same machine, so every legitimate caller is
+// a loopback origin. `*.localhost` names are the usual /etc/hosts aliases contributors point at
+// loopback (e.g. foo.localhost), so accept them too; still refuse arbitrary external hosts to
+// keep the DNS-rebinding protection the headers/allowedHosts comments describe.
+const LOOPBACK_HOSTNAMES = [
+  /^localhost$/,
+  /^(?:[\w-]+\.)+localhost$/, // any-depth `*.localhost` alias, matching allowedHosts' `.localhost`
+  /^127(?:\.\d+){1,3}$/, // any 127.x loopback address
+  /^\[::1\]$/,
+];
+
+// Ports vary - `[server] http_port` is configurable - so `URL` parses the port away and only the
+// hostname is matched.
+function isLoopbackOrigin(origin: string): boolean {
+  let url;
+  try {
+    url = new URL(origin);
+  } catch {
+    return false;
+  }
+
+  return (
+    (url.protocol === 'http:' || url.protocol === 'https:') &&
+    LOOPBACK_HOSTNAMES.some((hostname) => hostname.test(url.hostname))
+  );
+}
+
+function getDevServer(): DevServerConfiguration {
+  const { hostname, port } = getDevServerOrigin();
+  const grafanaRoot = path.resolve(import.meta.dirname, '../..');
+
+  return {
+    port,
+
+    // Without an explicit host the dev server binds every interface, which puts `static`
+    // below - the repository's own source tree - on whatever network the machine is joined to.
+    host: hostname,
+
+    hot: true,
+
+    // Grafana points the browser here for everything under `public/`, the same way it points
+    // at a CDN in production. Only the build output lives in the compiler, so the rest of the
+    // tree - fonts, core plugin bundles, images - has to be served from disk.
+    static: {
+      directory: path.resolve(grafanaRoot, 'public'),
+      publicPath: '/public',
+      watch: false,
+    },
+
+    // Everything the page loads from here is cross-origin, and fonts, `fetch`ed JSON and hot
+    // update manifests are all CORS requests. Reflect the caller's origin only when it is
+    // loopback: binding to loopback does not stop a page the contributor has open from
+    // reaching this server, and a wildcard would let any such page read the source tree.
+    headers: (req): Record<string, string> => {
+      const origin = req.headers.origin;
+
+      if (typeof origin !== 'string' || !isLoopbackOrigin(origin)) {
+        return {};
+      }
+
+      return { 'Access-Control-Allow-Origin': origin, Vary: 'Origin' };
+    },
+
+    // Nothing travels further than loopback, so gzipping megabytes of dev bundle is pure cost.
+    compress: false,
+
+    // Checked against the request Host, and against the Origin the HMR client connects with -
+    // whichever name the contributor opened Grafana under. Listing the loopback aliases - plus
+    // '.localhost' for any `*.localhost` /etc/hosts alias (e.g. foo.localhost) - beats disabling
+    // the check with 'all', which would leave the dev server open to DNS rebinding.
+    allowedHosts: [...new Set([hostname, 'localhost', '127.0.0.1', '.localhost'])],
+
+    client: {
+      // Only block the page for build errors. Type and lint problems still print in the terminal.
+      overlay: {
+        errors: true,
+        warnings: false,
+        runtimeErrors: false,
+      },
+      // The page is served by Grafana on another port, so the client cannot infer where its
+      // socket lives. Point it back at this server.
+      webSocketURL: `ws://${hostname}:${port}/ws`,
+    },
+
+    devMiddleware: {
+      publicPath: `/${PUBLIC_PATH}`,
+
+      // The backend reads the manifest from this server over HTTP, and falls back to the last
+      // build on disk.
+      writeToDisk: false,
+    },
+  };
+}
+
 export default (env: Env = {}) => {
+  const hmr = Boolean(Number(env.hmr));
+
   const devConfig: Configuration = {
     devtool: 'source-map',
     mode: 'development',
 
     // If we enabled watch option via CLI
     watchOptions: {
-      ignored: ['**/node_modules', ...decoupledPlugins],
+      ignored: ['**/node_modules', '**/public/build/**', ...decoupledPlugins],
     },
 
     resolve: {
@@ -64,7 +197,7 @@ export default (env: Env = {}) => {
 
     optimization: {
       moduleIds: 'named',
-      runtimeChunk: true,
+      runtimeChunk: false,
       removeEmptyChunks: false,
       splitChunks: false,
     },
@@ -75,7 +208,7 @@ export default (env: Env = {}) => {
           NODE_ENV: JSON.stringify('development'),
         },
       }),
-      new RspackManifestPlugin(assetsManifestOptions),
+      new RspackManifestPlugin(createAssetsManifestOptions(PUBLIC_PATH)),
       new WebpackBar({
         color: '#eb7b18',
         name: 'Grafana',
@@ -84,6 +217,16 @@ export default (env: Env = {}) => {
 
     stats: 'minimal',
   };
+
+  if (hmr) {
+    devConfig.devServer = getDevServer();
+
+    // `rspack serve` turns lazy compilation on for web-only builds unless the config says
+    // otherwise, and its client posts to a root-relative /_rspack/lazy/trigger. The page is
+    // served by Grafana, so that lands there instead and every dynamic import fails.
+    // Compiling everything up front costs about two seconds.
+    devConfig.lazyCompilation = false;
+  }
 
   if (Number(env.liveReload)) {
     // Live reload has no rspack equivalent; the webpack plugin crashes rspack 2 at apply time.
@@ -95,6 +238,8 @@ export default (env: Env = {}) => {
     devConfig.plugins?.push(
       new TsCheckerRspackPlugin({
         async: true, // don't block rspack emit
+        // Stops type errors being pushed to the dev server overlay once the async check finishes.
+        devServer: false,
         typescript: {
           tsgo: true,
           typescriptPath: nativeTypeScriptPackageJson,
@@ -123,5 +268,5 @@ export default (env: Env = {}) => {
     );
   }
 
-  return merge(common(env), devConfig);
+  return merge(common(env, { hmr }), devConfig);
 };

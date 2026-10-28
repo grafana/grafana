@@ -240,7 +240,7 @@ func TestSilenceService_CreateSilence_LimitsValidation(t *testing.T) {
 
 	createSilenceStore := func(existingCount int) *ngfakes.FakeSilenceStore {
 		silences := make(map[string]*models.Silence, existingCount)
-		for i := 0; i < existingCount; i++ {
+		for range existingCount {
 			silence := models.SilenceGen()()
 			silences[*silence.ID] = &silence
 		}
@@ -464,7 +464,7 @@ func TestSilenceService_UpdateSilence_LimitsValidation(t *testing.T) {
 		silences := make(map[string]*models.Silence, 100)
 		existingSilence := models.SilenceGen()()
 		silences[*existingSilence.ID] = &existingSilence
-		for i := 0; i < 99; i++ {
+		for range 99 {
 			silence := models.SilenceGen()()
 			silences[*silence.ID] = &silence
 		}

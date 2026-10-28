@@ -261,7 +261,7 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 	separatorVar = separator
 	nextPlaceHolder := 1
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		if i == count-1 {
 			separatorVar = ""
 		}

@@ -209,6 +209,8 @@ Updates/removes and reloads database settings. You must provide either `updates`
 
 This endpoint only supports changes to `auth.saml` configuration.
 
+This endpoint writes to Grafana's settings table, where values override the configuration file, environment variables, and command line arguments until you remove them with `removals`. Grafana gives no indication that a stored value is in effect, so a credential rotation done by editing the configuration file silently keeps using the old value. The SSO Settings API, the user interfaces, and Terraform write a different table; for SAML, `DELETE /api/v1/sso-settings/saml` clears both. Refer to [Check for stored settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/#check-for-stored-settings).
+
 **Required permissions**
 
 Only works with Basic Authentication (username and password). Refer to [Requirements](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/admin#requirements) for more information.

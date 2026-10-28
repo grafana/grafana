@@ -103,6 +103,7 @@ export function isManagedResourceReadOnly(resource: ManagedResource): boolean {
  */
 export interface ManagedResourceItem {
   managedBy?: ManagerKind;
+  managerId?: string;
 }
 
 /** True when a list item (folder DTO / search hit) is managed through the repository (git) flow. */

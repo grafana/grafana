@@ -18,9 +18,11 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
-func strPtr(s string) *string { return &s }
-
 func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) admission.Attributes {
+	return newMutatorTestAttributesWithSubresource(obj, old, op, "")
+}
+
+func newMutatorTestAttributesWithSubresource(obj, old runtime.Object, op admission.Operation, subresource string) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,
 		old,
@@ -28,7 +30,7 @@ func newMutatorTestAttributes(obj, old runtime.Object, op admission.Operation) a
 		"default",
 		"test",
 		provisioning.RepositoryResourceInfo.GroupVersionResource(),
-		"",
+		subresource,
 		op,
 		nil,
 		false,
@@ -227,7 +229,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				},
 			},
 			operation:      admission.Create,
-			wantWebhookURL: strPtr("https://grafana.example.com"),
+			wantWebhookURL: new("https://grafana.example.com"),
 			wantWorkflows:  []provisioning.Workflow{},
 			wantErr:        false,
 		},
@@ -240,7 +242,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				},
 			},
 			operation:      admission.Create,
-			wantWebhookURL: strPtr("https://grafana.example.com"),
+			wantWebhookURL: new("https://grafana.example.com"),
 			wantWorkflows:  []provisioning.Workflow{},
 			wantErr:        false,
 		},
@@ -253,7 +255,7 @@ func TestAdmissionMutator_Mutate(t *testing.T) {
 				},
 			},
 			operation:      admission.Create,
-			wantWebhookURL: strPtr("https://grafana.example.com"),
+			wantWebhookURL: new("https://grafana.example.com"),
 			wantWorkflows:  []provisioning.Workflow{},
 			wantErr:        false,
 		},
@@ -341,6 +343,50 @@ func TestAdmissionMutator_Mutate_ForwardsOldObjectToFactory(t *testing.T) {
 	attr := newMutatorTestAttributes(newRepo, oldRepo, admission.Update)
 
 	require.NoError(t, m.Mutate(context.Background(), attr, nil))
+}
+
+func TestAdmissionMutator_Mutate_SkipsSubresourcePatches(t *testing.T) {
+	factory := NewMockFactory(t)
+	// No EXPECT() set up for Mutate: the mock will fail the test if it's called,
+	// confirming extras (e.g. the GitLab RepoID lookup) never run for status patches.
+
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{IntervalSeconds: 0}},
+	}
+	old := repo.DeepCopy()
+
+	m := NewAdmissionMutator(factory, 60*time.Second)
+	attr := newMutatorTestAttributesWithSubresource(repo, old, admission.Update, "status")
+
+	require.NoError(t, m.Mutate(context.Background(), attr, nil))
+
+	// Defaulting logic (finalizers, sync interval, workflows) must not run either -
+	// spec fields shouldn't be touched by a status-only patch.
+	assert.Empty(t, repo.Finalizers)
+	assert.Equal(t, int64(0), repo.Spec.Sync.IntervalSeconds)
+	assert.Nil(t, repo.Spec.Workflows)
+}
+
+func TestAdmissionMutator_Mutate_RunsForBundledSpecChange(t *testing.T) {
+	old := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{IntervalSeconds: 0}},
+	}
+	repo := old.DeepCopy()
+	repo.Spec.Sync.IntervalSeconds = 5 // below minSyncInterval, so defaulting must clamp it
+
+	factory := NewMockFactory(t)
+	factory.EXPECT().Mutate(mock.Anything, mock.Anything, old).Return(nil).Once()
+
+	m := NewAdmissionMutator(factory, 60*time.Second)
+	attr := newMutatorTestAttributesWithSubresource(repo, old, admission.Update, "status")
+
+	require.NoError(t, m.Mutate(context.Background(), attr, nil))
+
+	// A bundled spec change on a /status request still goes through the normal
+	// spec mutation/defaulting path, not just the raw incoming value.
+	assert.Equal(t, int64(60), repo.Spec.Sync.IntervalSeconds)
 }
 
 func TestCopySecureValues(t *testing.T) {

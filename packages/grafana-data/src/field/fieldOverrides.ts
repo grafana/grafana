@@ -34,6 +34,7 @@ import {
 import { type InterpolateFunction, type PanelData } from '../types/panel';
 import { type TimeZone } from '../types/time';
 import { type FieldMatcher } from '../types/transformations';
+import { anyToNumber } from '../utils/anyToNumber';
 import { mapInternalLinkToExplore } from '../utils/dataLinks';
 import { locationUtil } from '../utils/location';
 
@@ -59,6 +60,10 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
 
         for (let i = 0; i < vals.length; i++) {
           let v = vals[i];
+          // Transformations can leave strings such as "200" or "" in a number field
+          if (typeof v === 'string') {
+            v = anyToNumberOrUndefined(v);
+          }
 
           if (v === null) {
             if (nullAsZero) {
@@ -69,7 +74,7 @@ export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
                 max = 0;
               }
             }
-          } else if (!Number.isNaN(v)) {
+          } else if (typeof v === 'number' && !Number.isNaN(v)) {
             if (min! > v) {
               min = v;
             }
@@ -185,11 +190,12 @@ export function applyFieldOverrides(
       setFieldConfigDefaults(config, source.defaults, context);
 
       // Find any matching rules and then override
+      const overriddenIds = new Set<string>();
       for (const rule of override) {
         if (rule.match(field, newFrame, data)) {
           for (const prop of rule.properties) {
             // config.scopedVars is set already here
-            setDynamicConfigValue(config, prop, context);
+            setDynamicConfigValue(config, prop, context, overriddenIds);
           }
         }
       }
@@ -285,11 +291,17 @@ export function applyFieldOverrides(
         const newValues: DataFrame[] = Array(field.values.length);
         for (let idx = 0; idx < field.values.length; idx++) {
           const nestedFrame: DataFrame = field.values[idx] ?? createDataFrame({ fields: [] });
+          // Nested frames share field objects with the source query, so merging in place
+          // would write this panel's config onto data other panels read.
+          const newFields = Array(nestedFrame.fields.length);
           for (let fieldIndex = 0; fieldIndex < nestedFrame.fields.length; fieldIndex++) {
             const valueField = nestedFrame.fields[fieldIndex];
-            valueField.config = defaultsDeep(valueField.config || {}, config);
+            newFields[fieldIndex] = {
+              ...valueField,
+              config: defaultsDeep(cloneDeep(valueField.config) || {}, config),
+            };
           }
-          newValues[idx] = nestedFrame;
+          newValues[idx] = { ...nestedFrame, fields: newFields };
         }
         // @todo should this be scoped?
         field.values = applyFieldOverrides(options, newValues);
@@ -376,7 +388,12 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
   fieldConfigRegistry: FieldConfigOptionsRegistry;
 }
 
-export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
+export function setDynamicConfigValue(
+  config: FieldConfig,
+  value: DynamicConfigValue,
+  context: FieldOverrideEnv,
+  overriddenIds?: Set<string>
+) {
   const reg = context.fieldConfigRegistry;
   const item = reg.getIfExists(value.id);
 
@@ -395,9 +412,12 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
       unset(config, item.path);
     }
   } else {
-    // Merge arrays (e.g. mappings) when multiple overrides target the same field
-    // Override values come first so they take precedence (first match wins in getValueMappingResult)
-    if (Array.isArray(val)) {
+    // Merge arrays (e.g. mappings) when multiple overrides target the same field.
+    // Panel defaults are already applied to config at this point, so an option with the 'replace'
+    // strategy only merges with values from earlier overrides, not with the inherited value.
+    // Later override values come first so they take precedence (first match wins in getValueMappingResult)
+    const shouldMerge = (item.arrayOverrideStrategy ?? 'merge') === 'merge' || overriddenIds?.has(item.id);
+    if (Array.isArray(val) && shouldMerge) {
       const existingValue = item.isCustom ? get(config.custom, item.path) : get(config, item.path);
 
       if (Array.isArray(existingValue)) {
@@ -414,6 +434,8 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
       set(config, item.path, val);
     }
   }
+
+  overriddenIds?.add(item.id);
 }
 
 // config -> from DS
@@ -489,12 +511,33 @@ export function validateFieldConfig(config: FieldConfig) {
     delete config.color;
   }
 
+  // min/max can be strings (for example from a data source or from saved panel JSON), and "50" > "100" as strings
+  if (config.min != null) {
+    config.min = anyToNumberOrUndefined(config.min);
+  }
+  if (config.max != null) {
+    config.max = anyToNumberOrUndefined(config.max);
+  }
+
   // Verify that max > min (swap if necessary)
   if (config.min != null && config.max != null && config.min > config.max) {
     const tmp = config.max;
     config.max = config.min;
     config.min = tmp;
   }
+}
+
+/**
+ * Will return any value as a number, or undefined when it is not a number
+ */
+function anyToNumberOrUndefined(value: unknown): number | undefined {
+  // lodash turns whitespace-only strings into 0
+  if (typeof value === 'string' && value.trim() === '') {
+    return undefined;
+  }
+
+  const num = anyToNumber(value);
+  return isNaN(num) ? undefined : num;
 }
 
 const defaultInternalLinkPostProcessor: DataLinkPostProcessor = (options) => {

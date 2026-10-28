@@ -3,6 +3,7 @@ package resources
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -432,6 +433,25 @@ func (e *FolderValidationError) Unwrap() []error {
 // can detect the validation rejection via errors.As.
 func NewFolderValidationError(path string, err error) *FolderValidationError {
 	return &FolderValidationError{Path: path, Err: err}
+}
+
+// IsFolderNotEmptyAPIError reports whether the folder API rejected deletion because the folder contains resources.
+func IsFolderNotEmptyAPIError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	if errors.Is(err, foldermodel.ErrFolderNotEmpty) {
+		return true
+	}
+
+	var statusErr apierrors.APIStatus
+	if errors.As(err, &statusErr) {
+		status := statusErr.Status()
+		return status.Code == http.StatusBadRequest && status.Details != nil && status.Details.UID == "folder.not-empty"
+	}
+
+	return false
 }
 
 // IsFolderValidationAPIError reports whether err is a 4xx rejection from the

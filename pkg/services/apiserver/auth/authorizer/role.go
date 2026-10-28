@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
-var _ authorizer.Authorizer = &roleAuthorizer{}
+var _ authorizer.Authorizer = (*roleAuthorizer)(nil)
 
 var orgRoleNoneAsViewerAPIGroups = []string{
 	"productactivation.ext.grafana.com",
@@ -66,6 +66,16 @@ func (auth roleAuthorizer) Authorize(ctx context.Context, a authorizer.Attribute
 		return authorizer.DecisionDeny, errorMessageForGrafanaOrgRole(orgRole, a), nil
 	}
 	return authorizer.DecisionDeny, "", nil
+}
+
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (auth roleAuthorizer) ConditionsAwareAuthorize(ctx context.Context, a authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(auth.Authorize(ctx, a))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (auth roleAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
 }
 
 func errorMessageForGrafanaOrgRole(orgRole identity.RoleType, a authorizer.Attributes) string {

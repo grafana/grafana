@@ -1,6 +1,9 @@
 package licensing
 
 type Licensing interface {
+	// HasValidLicense reports whether the host has a valid license.
+	HasValidLicense() bool
+
 	// Expiry returns the unix epoch timestamp when the license expires, or 0 if no valid license is provided
 	Expiry() int64
 

@@ -116,15 +116,23 @@ func (s *ServiceImpl) queryData(ctx context.Context, user identity.Requester, sk
 		return nil, err
 	}
 
+	queryCount := 0
+	for _, queries := range parsedReq.parsedQueries {
+		queryCount += len(queries)
+	}
+
 	// If there are expressions, handle them and return
 	if parsedReq.hasExpression || fromAlert {
+		s.log.Info("queryData", "handler", "handleExpressions", "fromAlert", fromAlert, "queryCount", queryCount)
 		return s.handleExpressions(ctx, user, parsedReq)
 	}
 	// If there is only one datasource, query it and return
 	if len(parsedReq.parsedQueries) == 1 {
+		s.log.Info("queryData", "handler", "handleQuerySingleDatasource", "fromAlert", fromAlert, "queryCount", queryCount)
 		return s.handleQuerySingleDatasource(ctx, user, parsedReq)
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
+	s.log.Info("queryData", "handler", "executeConcurrentQueries", "fromAlert", fromAlert, "queryCount", queryCount)
 	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
 }
 
@@ -168,7 +176,7 @@ func (s *ServiceImpl) executeConcurrentQueries(ctx context.Context, user identit
 	// Query each datasource concurrently
 	for _, queries := range queriesbyDs {
 		rawQueries := make([]*simplejson.Json, len(queries))
-		for i := 0; i < len(queries); i++ {
+		for i := range queries {
 			rawQueries[i] = queries[i].rawQuery
 		}
 		g.Go(func() error {

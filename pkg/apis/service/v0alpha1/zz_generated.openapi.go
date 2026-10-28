@@ -92,8 +92,7 @@ func schema_pkg_apis_service_v0alpha1_ExternalNameList(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ExternalName{}.OpenAPIModelName()),
+										Ref: ref(ExternalName{}.OpenAPIModelName()),
 									},
 								},
 							},

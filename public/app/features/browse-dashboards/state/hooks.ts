@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import { useStore } from 'react-redux';
 import { createSelector } from 'reselect';
 
 import { type DashboardViewItem } from 'app/features/search/types';
@@ -15,7 +16,7 @@ import {
 import { isVirtualStarredFolder, isVirtualTeamFolder, starredFoldersEnabled } from '../utils/dashboards';
 
 import { fetchNextChildrenPage } from './actions';
-import { getPaginationPlaceholders } from './utils';
+import { collectionGeneration, collectionKeyOf, getPaginationPlaceholders } from './utils';
 
 export const rootItemsSelector = (wholeState: StoreState) => wholeState.browseDashboards.rootItems;
 export const childrenByParentUIDSelector = (wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID;
@@ -109,10 +110,11 @@ export function useLoadNextChildrenPage(
   excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = []
 ) {
   const dispatch = useDispatch();
+  const store = useStore<StoreState>();
   const requestInFlightRef = useRef(false);
 
   const handleLoadMore = useCallback(
-    (folderUID: string | undefined) => {
+    function load(folderUID: string | undefined): Promise<unknown> {
       if (requestInFlightRef.current) {
         return Promise.resolve();
       }
@@ -120,11 +122,25 @@ export function useLoadNextChildrenPage(
       requestInFlightRef.current = true;
 
       const promise = dispatch(fetchNextChildrenPage({ parentUID: folderUID, excludeKinds, pageSize: PAGE_SIZE }));
-      promise.finally(() => (requestInFlightRef.current = false));
+      promise.then((action) => {
+        requestInFlightRef.current = false;
+        // The reducer drops a page whose collection was replaced or dropped while it was in flight.
+        // The tree asked for those rows once and will not ask again, so load against the new listing.
+        const key = collectionKeyOf(folderUID);
+        const { browseDashboards } = store.getState();
+        const current = key ? browseDashboards.childrenByParentUID[key] : browseDashboards.rootItems;
+        const dropped =
+          fetchNextChildrenPage.fulfilled.match(action) &&
+          action.payload !== undefined &&
+          action.payload.generation !== collectionGeneration(browseDashboards, key);
+        if (dropped && !current?.isFullyLoaded) {
+          load(folderUID);
+        }
+      });
 
       return promise;
     },
-    [dispatch, excludeKinds]
+    [dispatch, store, excludeKinds]
   );
 
   return handleLoadMore;
@@ -144,28 +160,19 @@ function createFlatTree(
   rootCollection: BrowseDashboardsState['rootItems'],
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
-  level = 0,
-  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = [],
-  excludeUIDs: string[] = []
+  level = 0
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    if (excludeKinds.includes(item.kind) || excludeUIDs.includes(item.uid)) {
-      return [];
+    // Only folders have children
+    if (item.kind !== 'folder') {
+      return [{ item, parentUID, level, isOpen: false }];
     }
 
-    const mappedChildren = createFlatTree(
-      item.uid,
-      rootCollection,
-      childrenByUID,
-      openFolders,
-      level + 1,
-      excludeKinds,
-      excludeUIDs
-    );
+    const mappedChildren = createFlatTree(item.uid, rootCollection, childrenByUID, openFolders, level + 1);
 
     const isOpen = Boolean(openFolders[item.uid]);
     const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
-    if (isOpen && emptyFolder && !excludeKinds.includes('empty-folder')) {
+    if (isOpen && emptyFolder) {
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
@@ -216,14 +223,7 @@ function createFlatTree(
     return mapItem(item, folderUID, level);
   });
 
-  // this is very custom to the folder picker right now
-  // we exclude dashboards, but if you have more than 1 page of dashboards collection.isFullyLoaded is false
-  // so we need to check that we're ignoring dashboards and we've fetched all the folders
-  // TODO generalize this properly (e.g. split state by kind?)
-  const isConsideredLoaded = excludeKinds.includes('dashboard') && collection?.lastFetchedKind === 'dashboard';
-
-  const showPlaceholders =
-    (level === 0 && !collection) || (isOpen && collection && !(collection.isFullyLoaded || isConsideredLoaded));
+  const showPlaceholders = (level === 0 && !collection) || (isOpen && collection && !collection.isFullyLoaded);
 
   if (showPlaceholders) {
     children = children.concat(getPaginationPlaceholders(PAGE_SIZE, folderUID, level));

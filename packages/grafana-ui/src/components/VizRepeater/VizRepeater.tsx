@@ -1,5 +1,4 @@
-import { PureComponent, type CSSProperties, type JSX } from 'react';
-import * as React from 'react';
+import { memo, useState, type CSSProperties, type JSX } from 'react';
 
 import { VizOrientation } from '@grafana/data';
 
@@ -45,54 +44,30 @@ export interface VizRepeaterRenderValueProps<V, D = {}> {
   count: number;
 }
 
-interface DefaultProps {
-  itemSpacing: number;
-}
-
-type PropsWithDefaults<V, D> = Props<V, D> & DefaultProps;
-
-interface State<V> {
-  values: V[];
-}
-
-export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D>, State<V>> {
-  static defaultProps: DefaultProps = {
-    itemSpacing: 8,
-  };
-
-  constructor(props: PropsWithDefaults<V, D>) {
-    super(props);
-
-    this.state = {
-      values: props.getValues(),
-    };
+function VizRepeaterComponent<V, D = {}>({
+  getAlignmentFactors,
+  renderValue,
+  height,
+  width,
+  source,
+  getValues,
+  renderCounter,
+  orientation,
+  itemSpacing = 8,
+  autoGrid,
+  minVizWidth,
+  minVizHeight,
+  maxVizHeight,
+}: Props<V, D>) {
+  // Values are only re-requested when source or renderCounter change, so they are stored
+  // alongside those inputs and adjusted during render rather than in an effect.
+  const [state, setState] = useState(() => ({ values: getValues(), source, renderCounter }));
+  if (state.source !== source || state.renderCounter !== renderCounter) {
+    setState({ values: getValues(), source, renderCounter });
   }
+  const { values } = state;
 
-  componentDidUpdate(prevProps: Props<V, D>) {
-    const { renderCounter, source } = this.props;
-    if (renderCounter !== prevProps.renderCounter || source !== prevProps.source) {
-      this.setState({ values: this.props.getValues() });
-    }
-  }
-
-  getOrientation(): VizOrientation {
-    const { orientation, width, height } = this.props;
-
-    if (orientation === VizOrientation.Auto) {
-      if (width > height) {
-        return VizOrientation.Vertical;
-      } else {
-        return VizOrientation.Horizontal;
-      }
-    }
-
-    return orientation;
-  }
-
-  renderGrid() {
-    const { renderValue, height, width, itemSpacing, getAlignmentFactors, orientation } = this.props;
-
-    const { values } = this.state;
+  if (autoGrid && orientation === VizOrientation.Auto) {
     const grid = calculateGridDimensions(width, height, itemSpacing, values.length);
     const alignmentFactors = getAlignmentFactors ? getAlignmentFactors(values, grid.width, grid.height) : ({} as D);
 
@@ -142,85 +117,75 @@ export class VizRepeater<V, D = {}> extends PureComponent<PropsWithDefaults<V, D
     return <div style={{ position: 'relative', width: '100%', height: '100%' }}>{items}</div>;
   }
 
-  render() {
-    const {
-      renderValue,
-      height,
-      width,
-      itemSpacing,
-      getAlignmentFactors,
-      autoGrid,
-      orientation,
-      maxVizHeight,
-      minVizWidth,
-      minVizHeight,
-    } = this.props;
-    const { values } = this.state;
+  const itemStyles: CSSProperties = {
+    display: 'flex',
+  };
 
-    if (autoGrid && orientation === VizOrientation.Auto) {
-      return this.renderGrid();
-    }
+  const repeaterStyle: CSSProperties = {
+    display: 'flex',
+    overflowX: `${minVizWidth ? 'auto' : 'hidden'}`,
+    overflowY: `${minVizHeight ? 'auto' : 'hidden'}`,
+  };
 
-    const itemStyles: React.CSSProperties = {
-      display: 'flex',
-    };
+  let vizHeight = height;
+  let vizWidth = width;
 
-    const repeaterStyle: React.CSSProperties = {
-      display: 'flex',
-      overflowX: `${minVizWidth ? 'auto' : 'hidden'}`,
-      overflowY: `${minVizHeight ? 'auto' : 'hidden'}`,
-    };
+  const resolvedOrientation =
+    orientation === VizOrientation.Auto
+      ? width > height
+        ? VizOrientation.Vertical
+        : VizOrientation.Horizontal
+      : orientation;
 
-    let vizHeight = height;
-    let vizWidth = width;
-
-    const resolvedOrientation = this.getOrientation();
-
-    switch (resolvedOrientation) {
-      case VizOrientation.Horizontal:
-        const defaultVizHeight = (height + itemSpacing) / values.length - itemSpacing;
-        repeaterStyle.flexDirection = 'column';
-        repeaterStyle.height = `${height}px`;
-        repeaterStyle.overflowX = 'hidden';
-        repeaterStyle.scrollbarWidth = 'thin';
-        itemStyles.marginBottom = `${itemSpacing}px`;
-        vizWidth = width;
-        vizHeight = clamp(defaultVizHeight, minVizHeight ?? 0, maxVizHeight ?? defaultVizHeight);
-        break;
-      case VizOrientation.Vertical:
-        repeaterStyle.flexDirection = 'row';
-        repeaterStyle.justifyContent = 'space-between';
-        repeaterStyle.overflowY = 'hidden';
-        itemStyles.marginRight = `${itemSpacing}px`;
-        vizHeight = height;
-        vizWidth = Math.max(width / values.length - itemSpacing + itemSpacing / values.length, minVizWidth ?? 0);
-    }
-
-    itemStyles.width = `${vizWidth}px`;
-    itemStyles.height = `${vizHeight}px`;
-
-    const alignmentFactors = getAlignmentFactors ? getAlignmentFactors(values, vizWidth, vizHeight) : ({} as D);
-
-    return (
-      <div style={repeaterStyle}>
-        {values.map((value, index) => {
-          return (
-            <div key={index} style={getItemStylesForIndex(itemStyles, index, values.length)}>
-              {renderValue({
-                value,
-                width: vizWidth,
-                height: vizHeight,
-                alignmentFactors,
-                orientation: resolvedOrientation,
-                count: values.length,
-              })}
-            </div>
-          );
-        })}
-      </div>
-    );
+  switch (resolvedOrientation) {
+    case VizOrientation.Horizontal:
+      const defaultVizHeight = (height + itemSpacing) / values.length - itemSpacing;
+      repeaterStyle.flexDirection = 'column';
+      repeaterStyle.height = `${height}px`;
+      repeaterStyle.overflowX = 'hidden';
+      repeaterStyle.scrollbarWidth = 'thin';
+      itemStyles.marginBottom = `${itemSpacing}px`;
+      vizWidth = width;
+      vizHeight = clamp(defaultVizHeight, minVizHeight ?? 0, maxVizHeight ?? defaultVizHeight);
+      break;
+    case VizOrientation.Vertical:
+      repeaterStyle.flexDirection = 'row';
+      repeaterStyle.justifyContent = 'space-between';
+      repeaterStyle.overflowY = 'hidden';
+      itemStyles.marginRight = `${itemSpacing}px`;
+      vizHeight = height;
+      vizWidth = Math.max(width / values.length - itemSpacing + itemSpacing / values.length, minVizWidth ?? 0);
   }
+
+  itemStyles.width = `${vizWidth}px`;
+  itemStyles.height = `${vizHeight}px`;
+
+  const alignmentFactors = getAlignmentFactors ? getAlignmentFactors(values, vizWidth, vizHeight) : ({} as D);
+
+  return (
+    <div style={repeaterStyle}>
+      {values.map((value, index) => {
+        return (
+          <div key={index} style={getItemStylesForIndex(itemStyles, index, values.length)}>
+            {renderValue({
+              value,
+              width: vizWidth,
+              height: vizHeight,
+              alignmentFactors,
+              orientation: resolvedOrientation,
+              count: values.length,
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
+
+// needed to properly forward the generic type through React.memo
+// see https://github.com/DefinitelyTyped/DefinitelyTyped/issues/37087#issuecomment-656596623
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+export const VizRepeater = memo(VizRepeaterComponent) as typeof VizRepeaterComponent;
 
 /*
  * Removes any padding on the last item

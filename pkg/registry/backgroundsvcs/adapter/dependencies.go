@@ -29,6 +29,7 @@ const (
 
 	// GrafanaAPIServer is the module name for the embedded Grafana API server service.
 	GrafanaAPIServer = modules.GrafanaAPIServer
+	Router           = modules.Router
 
 	// BackgroundServices is the module name for the background services module.
 	// This module is an alias for any background service that is not explicitly listed in the dependency map.
@@ -68,6 +69,7 @@ func dependencyMap() map[string][]string {
 		SQLStore:           {},
 		Tracing:            {SQLStore},
 		GrafanaAPIServer:   {Tracing},
+		Router:             {GrafanaAPIServer},
 		PluginStore:        {GrafanaAPIServer},
 		PluginInstaller:    {PluginStore},
 		IAMRolesSyncer:     {GrafanaAPIServer},
@@ -76,6 +78,6 @@ func dependencyMap() map[string][]string {
 		InstallSync:        {Provisioning},
 		GlobalRoleSeeder:   {GrafanaAPIServer},
 		Core:               {GrafanaAPIServer, PluginStore, PluginInstaller, FixedRolesLoader, Provisioning, InstallSync, GlobalRoleSeeder},
-		BackgroundServices: {Core},
+		BackgroundServices: {Core, Router},
 	}
 }

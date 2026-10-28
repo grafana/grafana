@@ -19,15 +19,16 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"slices"
 
 	"k8s.io/apiserver/pkg/endpoints/responsewriter"
 )
 
 var (
-	_ http.ResponseWriter                  = &responseWriter{}
-	_ http.Hijacker                        = &responseWriter{}
-	_ responsewriter.CloseNotifierFlusher  = &responseWriter{}
-	_ responsewriter.UserProvidedDecorator = &responseWriter{}
+	_ http.ResponseWriter                  = (*responseWriter)(nil)
+	_ http.Hijacker                        = (*responseWriter)(nil)
+	_ responsewriter.CloseNotifierFlusher  = (*responseWriter)(nil)
+	_ responsewriter.UserProvidedDecorator = (*responseWriter)(nil)
 )
 
 // ResponseWriter is a wrapper around http.ResponseWriter that provides extra information about
@@ -144,8 +145,8 @@ func (rw *responseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
 }
 
 func (rw *responseWriter) callBefore() {
-	for i := len(rw.beforeFuncs) - 1; i >= 0; i-- {
-		rw.beforeFuncs[i](rw)
+	for _, v := range slices.Backward(rw.beforeFuncs) {
+		v(rw)
 	}
 }
 

@@ -330,10 +330,12 @@ func pullRequestResponse(event repository.WebhookEvent) *provisioning.WebhookRes
 		Job: &provisioning.JobSpec{
 			Action: provisioning.JobActionPullRequest,
 			PullRequest: &provisioning.PullRequestJobOptions{
-				URL:  event.PRURL,
-				PR:   event.PRNumber,
-				Ref:  event.SourceRef,
-				Hash: event.Hash,
+				URL:     event.PRURL,
+				PR:      event.PRNumber,
+				Ref:     event.SourceRef,
+				Hash:    event.Hash,
+				IsFork:  event.IsFork,
+				ForkURL: event.ForkURL,
 			},
 		},
 	}

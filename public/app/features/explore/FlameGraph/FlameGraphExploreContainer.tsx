@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 
 import { type DataFrame, type GrafanaTheme2, CoreApp } from '@grafana/data';
 import { FlameGraph } from '@grafana/flamegraph';
 import { config, reportInteraction } from '@grafana/runtime';
+import { useFlagFlameGraphTableNg, useFlagTableAutoColumnWidths, useFlagTableRefresh } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 
 interface Props {
@@ -21,7 +21,9 @@ function interaction(name: string, context: Record<string, string | number> = {}
 export const FlameGraphExploreContainer = (props: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-  const enableNewUI = useBooleanFlagValue('flameGraphWithCallTree', false);
+  const useTableNG = useFlagFlameGraphTableNg();
+  const tableRefreshEnabled = useFlagTableRefresh();
+  const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
 
   return (
     <div className={styles.container}>
@@ -29,7 +31,9 @@ export const FlameGraphExploreContainer = (props: Props) => {
         data={props.dataFrames[0]}
         stickyHeader={true}
         getTheme={() => theme}
-        enableNewUI={enableNewUI}
+        useTableNG={useTableNG}
+        tableRefreshEnabled={tableRefreshEnabled}
+        contentAwareWidthsEnabled={contentAwareWidthsEnabled}
         onTableSymbolClick={() => interaction('table_item_selected')}
         onViewSelected={(view: string) => interaction('view_selected', { view })}
         onTextAlignSelected={(align: string) => interaction('text_align_selected', { align })}

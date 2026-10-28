@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"testing"
 
+	authnv1 "github.com/grafana/authlib/authn/proto/v1"
 	grpclog "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/baggage"
 	"k8s.io/apiserver/pkg/endpoints/request"
-
-	authnv1 "github.com/grafana/authlib/authn/proto/v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -62,7 +61,7 @@ func TestAuthenticate(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "bespoke-token",
+				Token: "bespoke-token", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		})
 
@@ -98,7 +97,7 @@ func TestAuthenticate(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "should-not-reach",
+				Token: "should-not-reach", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		})
 
@@ -121,7 +120,7 @@ func TestAuthenticate(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "handled",
+				Token: "handled", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		})
 
@@ -142,7 +141,7 @@ func TestAuthenticate(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "from-second",
+				Token: "from-second", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		})
 
@@ -164,7 +163,7 @@ func TestAuthenticate(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "should-not-reach",
+				Token: "should-not-reach", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		})
 
@@ -213,7 +212,7 @@ func TestAuthenticate(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "ok",
+				Token: "ok", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		}
 		svc.RegisterClient(client)
@@ -294,7 +293,7 @@ func TestAuthenticate_GRPCLogFields(t *testing.T) {
 			testResult: true,
 			authResponse: &authnv1.AuthenticateResponse{
 				Code:  authnv1.AuthenticateCode_AUTHENTICATE_CODE_OK,
-				Token: "tok",
+				Token: "tok", //nolint:staticcheck // Verify passthrough of legacy authentication responses.
 			},
 		})
 

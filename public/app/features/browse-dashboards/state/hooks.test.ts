@@ -1,10 +1,11 @@
+import { type DashboardViewItem } from 'app/features/search/types';
 import { configureStore } from 'app/store/configureStore';
 import { useSelector } from 'app/types/store';
 
 import { fullyLoadedViewItemCollection } from '../fixtures/state.fixtures';
 import { type BrowseDashboardsState } from '../types';
 
-import { useBrowseLoadingStatus } from './hooks';
+import { useBrowseLoadingStatus, useFlatTreeState } from './hooks';
 
 jest.mock('app/types/store', () => {
   const original = jest.requireActual('app/types/store');
@@ -75,6 +76,33 @@ describe('browse-dashboards state hooks', () => {
 
       const status = useBrowseLoadingStatus(folderUID);
       expect(status).toEqual('fulfilled');
+    });
+  });
+
+  describe('useFlatTreeState', () => {
+    it('renders a dashboard whose UID matches its parent folder', () => {
+      const folder: DashboardViewItem = { kind: 'folder', uid: 'same-uid', title: 'Folder' };
+      const dashboard: DashboardViewItem = {
+        kind: 'dashboard',
+        uid: 'same-uid',
+        title: 'Dashboard',
+        parentUID: 'same-uid',
+      };
+
+      mockState(
+        createInitialState({
+          rootItems: fullyLoadedViewItemCollection([folder]),
+          childrenByParentUID: { 'same-uid': fullyLoadedViewItemCollection([dashboard]) },
+          openFolders: { 'same-uid': true },
+        })
+      );
+
+      const tree = useFlatTreeState(undefined);
+
+      expect(tree.map(({ item, level }) => `${level}:${item.kind}:${item.uid}`)).toEqual([
+        '0:folder:same-uid',
+        '1:dashboard:same-uid',
+      ]);
     });
   });
 });

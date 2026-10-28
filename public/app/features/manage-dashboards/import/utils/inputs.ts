@@ -1,10 +1,6 @@
 import { type DataSourceInstanceSettings, type VariableModel } from '@grafana/data';
+import { getDataSourceInstance, getDataSourceInstanceList, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import {
-  getDataSourceInstance,
-  getDataSourceInstanceList,
-  getDataSourceInstanceSettings,
-} from '@grafana/runtime/unstable';
 import { type AnnotationQuery, type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 import { type AnnotationQueryKind, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
@@ -778,10 +774,6 @@ function replaceVariableDatasources(
           },
           options: [],
           current: { text: '', value: '' },
-          // Keep the author's refresh setting (e.g. onTimeRangeChanged). Options are cleared
-          // above, so 'never' has to be upgraded or the variable would never get any values.
-          refresh:
-            variable.spec.refresh && variable.spec.refresh !== 'never' ? variable.spec.refresh : 'onDashboardLoad',
         },
       };
     }

@@ -4,7 +4,9 @@ import { isExpressionReference } from '../../utils/expressionRef';
 import { UserStorage } from '../../utils/userStorage';
 import { getDataSourceSrv, type RuntimeDataSourceRegistration } from '../dataSourceSrv';
 
+import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import { FALLBACK_TO_LEGACY_INSTANCE_WARNING } from './constants';
+import { isDataSourceLoadError } from './errors';
 import { getExpressionDataSourceInstance } from './expressionDs';
 import { describeRef, logDataSourceInstanceError, logDataSourceWarning } from './logging';
 import { getCachedPlugin, setCachedPlugin, setRuntimePlugin } from './pluginCache';
@@ -91,6 +93,10 @@ export async function getDataSourceInstance(
       inflightLoads.delete(cacheUid);
     }
   } catch (err) {
+    // The list or the settings failed to load. Boot data would hide that failure, so do not fall back.
+    if (isDataSourceLoadError(err)) {
+      throw err;
+    }
     return getDataSourceInstanceFallback(ref, scopedVars, err);
   }
 }
@@ -173,6 +179,7 @@ export function registerRuntimeDataSourceInstance(entry: RuntimeDataSourceRegist
 
   upsertRuntimeDataSourceInstanceSettings(dataSource.instanceSettings);
   setRuntimePlugin(dataSource.uid, dataSource);
+  notifyDataSourceCacheChanged();
 }
 
 /**

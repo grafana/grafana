@@ -1,10 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useEffect } from 'react';
 
-import { type Field, FieldType } from '@grafana/data';
+import { createTheme, type Field, FieldType } from '@grafana/data';
 import { type Column } from '@grafana/react-data-grid';
 
-import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
+import { TableFilterProvider, useTableFilters } from '../TableFilterContext';
+import { TABLE } from '../constants';
+import { type TableRow, type TableSummaryRow } from '../types';
 
 import { HeaderCell } from './HeaderCell';
 
@@ -19,19 +22,49 @@ function makeField(overrides: Partial<Field> = {}): Field {
   };
 }
 
+const hideableField = () => makeField({ config: { custom: { hideable: true } } });
+
 const column = { key: 'Field1' } as Column<TableRow, TableSummaryRow>;
 
 const baseProps = {
   column,
   rows: [] as TableRow[],
-  filter: {} as FilterType,
-  setFilter: jest.fn(),
   selectFirstCell: jest.fn(),
   crossFilterRows: {},
   crossFilterTailRows: [] as TableRow[],
 };
 
 describe('HeaderCell', () => {
+  it.each([false, true])(
+    'keeps warning interactions separate from sorting with tableRefreshEnabled=%s',
+    async (tableRefreshEnabled) => {
+      const user = userEvent.setup();
+      const onSort = jest.fn();
+      const selectFirstCell = jest.fn();
+      render(
+        <div role="row">
+          <div role="columnheader" onClick={onSort}>
+            <HeaderCell
+              {...baseProps}
+              field={makeField()}
+              tableRefreshEnabled={tableRefreshEnabled}
+              selectFirstCell={selectFirstCell}
+              warnings={[{ id: 'wrapping', message: 'Wrapping is disabled.' }]}
+            />
+          </div>
+        </div>
+      );
+      await user.click(screen.getByRole('button', { name: 'Field warnings' }));
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Wrapping is disabled.');
+      expect(onSort).not.toHaveBeenCalled();
+      await user.tab();
+      expect(screen.getByRole('button', { name: 'Field1' })).toHaveFocus();
+      expect(selectFirstCell).not.toHaveBeenCalled();
+      await user.tab();
+      expect(selectFirstCell).toHaveBeenCalledTimes(1);
+    }
+  );
+
   it('renders the display name', () => {
     render(<HeaderCell {...baseProps} field={makeField()} />);
     expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
@@ -75,6 +108,139 @@ describe('HeaderCell', () => {
     expect(window.getComputedStyle(label).cursor).toBe('default');
   });
 
+  it('gives the header label the body text colour under table.refresh', () => {
+    const theme = createTheme();
+    const { unmount } = render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).color).toBe(
+      theme.colors.text.primary
+    );
+
+    unmount();
+
+    // the classic header sits on the same background as the body rows, so its label stays de-emphasised
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).color).toBe(
+      theme.colors.text.secondary
+    );
+  });
+
+  it('collapses the reorder drag handle until the header cell is hovered', () => {
+    const { container } = render(
+      <HeaderCell {...baseProps} field={makeField()} column={{ ...column, draggable: true }} tableRefreshEnabled />
+    );
+    const handle = container.querySelector('button[aria-hidden="true"]')!;
+    const styles = window.getComputedStyle(handle);
+    expect(styles.width).toBe('0px');
+    expect(styles.opacity).toBe('0');
+    expect(handle.querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('does not sort when the reorder drag handle is clicked', async () => {
+    const onHeaderClick = jest.fn();
+    const { container } = render(
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+      <div onClick={onHeaderClick}>
+        <HeaderCell {...baseProps} field={makeField()} column={{ ...column, draggable: true }} tableRefreshEnabled />
+      </div>
+    );
+
+    await userEvent.click(container.querySelector('button[aria-hidden="true"]')!);
+
+    expect(onHeaderClick).not.toHaveBeenCalled();
+  });
+
+  it('keeps the refreshed label colour when Wrap header text is toggled', () => {
+    // The wrap option changes the label rule's own hash. While the refreshed colour lived in a second
+    // class composed over it, that re-inserted rule landed *after* the override in the stylesheet and
+    // won on order alone, so the label dropped back to the muted colour mid-session.
+    const theme = createTheme();
+    const { rerender } = render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+    const labelColor = () => window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).color;
+    expect(labelColor()).toBe(theme.colors.text.primary);
+
+    rerender(
+      <HeaderCell
+        {...baseProps}
+        field={makeField({ config: { custom: { wrapHeaderText: true } } })}
+        tableRefreshEnabled
+      />
+    );
+    expect(labelColor()).toBe(theme.colors.text.primary);
+
+    rerender(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+    expect(labelColor()).toBe(theme.colors.text.primary);
+  });
+
+  it('keeps the sort arrow outside the truncating label under table.refresh', () => {
+    // The refreshed label clips its own overflow to ellipsize a long title, so an arrow inside it
+    // would be the first thing to disappear — exactly when the sort state matters most.
+    const { container, unmount } = render(
+      <HeaderCell {...baseProps} field={makeField()} direction="ASC" tableRefreshEnabled />
+    );
+    const label = screen.getByRole('button', { name: 'Field1' });
+    expect(label.querySelector('svg')).not.toBeInTheDocument();
+    expect(container.querySelector('svg')).toBeInTheDocument();
+
+    unmount();
+
+    // the classic header's label doesn't shrink, so the arrow stays inside it
+    render(<HeaderCell {...baseProps} field={makeField()} direction="ASC" />);
+    expect(screen.getByRole('button', { name: 'Field1' }).querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('lets the header label shrink so a long title truncates against the column menu', () => {
+    // As a flex item the label won't shrink below its own min-content width unless min-width is 0,
+    // and the refreshed header pins the column menu to the trailing edge for it to truncate against.
+    const { unmount } = render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).minWidth).toBe('0');
+
+    unmount();
+
+    render(<HeaderCell {...baseProps} field={makeField()} />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).minWidth).not.toBe('0');
+  });
+
+  it('sits the header controls with the last line of a wrapped title', () => {
+    // A wrapped title grows downward while the controls beside it stay one line tall, so centring
+    // them on the whole block leaves the arrow and the column menu floating against its middle.
+    const wrapped = makeField({ config: { custom: { wrapHeaderText: true, filterable: true } } });
+    const { container, unmount } = render(
+      <HeaderCell {...baseProps} field={wrapped} direction="ASC" tableRefreshEnabled />
+    );
+    const root = container.firstElementChild!;
+    const [labelGroup, menu] = Array.from(root.children);
+    expect(window.getComputedStyle(root).alignItems).toBe('flex-end');
+    expect(window.getComputedStyle(labelGroup).alignItems).toBe('flex-end');
+
+    // ...and each control sits in a box one line tall, centred within it, so that it lines up with
+    // the text rather than with the bottom of the cell: they're all shorter than the line box, by
+    // different amounts, so aligning their edges would stagger them against the title.
+    for (const box of [labelGroup.lastElementChild!, menu]) {
+      expect(box).toHaveStyle({ height: `${TABLE.HEADER_LINE_HEIGHT}px`, alignItems: 'center' });
+    }
+
+    unmount();
+
+    // an unwrapped title is one line tall itself, so its controls stay centred on it
+    const oneLine = makeField({ config: { custom: { filterable: true } } });
+    const { container: unwrapped } = render(
+      <HeaderCell {...baseProps} field={oneLine} direction="ASC" tableRefreshEnabled />
+    );
+    const unwrappedRoot = unwrapped.firstElementChild!;
+    expect(window.getComputedStyle(unwrappedRoot).alignItems).toBe('center');
+    expect(window.getComputedStyle(unwrappedRoot.firstElementChild!).alignItems).toBe('center');
+  });
+
+  it('renders the label at the line box the header row is sized with', () => {
+    // `useHeaderHeight` multiplies TABLE.HEADER_LINE_HEIGHT by the wrapped line count to size the
+    // header row, so the label's own line box has to be that same number. A divergence is invisible
+    // until a title wraps, and then shows up as a clipped or over-tall header.
+    render(<HeaderCell {...baseProps} field={makeField({ config: { custom: { wrapHeaderText: true } } })} />);
+    expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).lineHeight).toBe(
+      `${TABLE.HEADER_LINE_HEIGHT}px`
+    );
+  });
+
   it('renders nothing when hideHeader is set', () => {
     const { container } = render(
       <HeaderCell {...baseProps} field={makeField({ config: { custom: { hideHeader: true } } })} direction="ASC" />
@@ -100,6 +266,24 @@ describe('HeaderCell', () => {
       />
     );
     expect(screen.getByRole('button', { name: 'Only sorts the results on display' })).toBeInTheDocument();
+  });
+
+  it('renders the field description as an info tooltip when headerTooltip is not set', () => {
+    render(<HeaderCell {...baseProps} field={makeField({ config: { description: 'Explains this column' } })} />);
+    expect(screen.getByRole('button', { name: 'Explains this column' })).toBeInTheDocument();
+  });
+
+  it('prefers headerTooltip over the field description', () => {
+    render(
+      <HeaderCell
+        {...baseProps}
+        field={makeField({
+          config: { description: 'Field description', custom: { headerTooltip: 'Custom header tooltip' } },
+        })}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Custom header tooltip' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Field description' })).not.toBeInTheDocument();
   });
 
   it('does not render an info tooltip when headerTooltip is not set', () => {
@@ -141,33 +325,215 @@ describe('HeaderCell', () => {
     expect(filterButton).toHaveAttribute('aria-expanded', 'true');
   });
 
-  it('removes a stale filter for a field that is no longer filterable', () => {
-    const setFilter = jest.fn();
-    render(
-      <HeaderCell
-        {...baseProps}
-        setFilter={setFilter}
-        filter={{ Field1: { filtered: [], searchFilter: '' } } as unknown as FilterType}
-        field={makeField()}
-      />
-    );
-    expect(setFilter).toHaveBeenCalledTimes(1);
-    // verify the updater removes the entry for this field
-    const updater = setFilter.mock.calls[0][0];
-    expect(updater({ Field1: { x: 1 }, Field2: { y: 2 } })).toEqual({ Field2: { y: 2 } });
-  });
+  describe('table.refresh', () => {
+    const filterableField = () => makeField({ config: { custom: { filterable: true } } });
+    const menuLabel = 'Column options for Field1';
+    const filterIconLabel = 'Edit filter on Field1';
 
-  it('does not remove a filter when the field is filterable', () => {
-    const setFilter = jest.fn();
-    render(
-      <HeaderCell
-        {...baseProps}
-        setFilter={setFilter}
-        filter={{ Field1: { filtered: [], searchFilter: '' } } as unknown as FilterType}
-        field={makeField({ config: { custom: { filterable: true } } })}
-      />
+    it('keeps the inline filter button and renders no column menu when the flag is off', () => {
+      render(<HeaderCell {...baseProps} field={filterableField()} />);
+      expect(screen.getByLabelText('Filter Field1')).toBeInTheDocument();
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
+    it('replaces the inline filter button with a column menu when the flag is on', () => {
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+      expect(screen.queryByLabelText('Filter Field1')).not.toBeInTheDocument();
+      expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
+    });
+
+    it('does not escape special characters in the column menu name', () => {
+      render(
+        <HeaderCell
+          {...baseProps}
+          field={makeField({ name: 'Image w/ Link', config: { custom: { filterable: true } } })}
+          tableRefreshEnabled
+        />
+      );
+      expect(screen.getByRole('button', { name: 'Column options for Image w/ Link' })).toBeInTheDocument();
+    });
+
+    it('omits the menu when no actions are available', () => {
+      render(<HeaderCell {...baseProps} field={makeField()} tableRefreshEnabled />);
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
+    it('shows the menu for a hideable column', () => {
+      render(<HeaderCell {...baseProps} field={hideableField()} tableRefreshEnabled onHideColumn={jest.fn()} />);
+      expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
+    });
+
+    it('omits the menu for reordering without a sidebar', () => {
+      render(
+        <HeaderCell {...baseProps} field={makeField()} column={{ ...column, draggable: true }} tableRefreshEnabled />
+      );
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
+    it('shows the menu when the sidebar is available', () => {
+      render(
+        <HeaderCell
+          {...baseProps}
+          field={makeField()}
+          column={{ ...column, draggable: true }}
+          tableRefreshEnabled
+          hasColumnSidebar
+          onOpenColumnPanel={jest.fn()}
+        />
+      );
+      expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
+    });
+
+    it('does not render an empty menu when column action callbacks are missing', () => {
+      render(<HeaderCell {...baseProps} field={hideableField()} tableRefreshEnabled hasColumnSidebar />);
+      expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
+    it('opens the sidebar from Manage columns', async () => {
+      const onOpenColumnPanel = jest.fn();
+      render(
+        <HeaderCell
+          {...baseProps}
+          field={makeField()}
+          column={{ ...column, draggable: true }}
+          tableRefreshEnabled
+          hasColumnSidebar
+          onOpenColumnPanel={onOpenColumnPanel}
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      await userEvent.click(await screen.findByText('Manage columns'));
+      expect(onOpenColumnPanel).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([
+      {
+        filterable: true,
+        expected: ['Filter values', '', 'Hide column', 'Manage columns', '', 'Add to Assistant'],
+      },
+      { filterable: false, expected: ['Hide column', 'Manage columns', '', 'Add to Assistant'] },
+    ])(
+      'groups column actions separately from filters and Assistant (filterable=$filterable)',
+      async ({ filterable, expected }) => {
+        render(
+          <HeaderCell
+            {...baseProps}
+            field={makeField({ config: { custom: { filterable, hideable: true } } })}
+            tableRefreshEnabled
+            hasColumnSidebar
+            onHideColumn={jest.fn()}
+            canHideColumn
+            onOpenColumnPanel={jest.fn()}
+            onAddToAssistant={jest.fn()}
+          />
+        );
+
+        await userEvent.click(screen.getByLabelText(menuLabel));
+        const menu = await screen.findByRole('menu', { name: menuLabel });
+        // Dividers have no text; their positions define the visible action groups.
+        expect(Array.from(menu.children, (child) => child.textContent)).toEqual(expected);
+      }
     );
-    expect(setFilter).not.toHaveBeenCalled();
+
+    it('omits Manage columns when no columns are manageable', async () => {
+      const onOpenColumnPanel = jest.fn();
+      render(
+        <HeaderCell
+          {...baseProps}
+          field={filterableField()}
+          tableRefreshEnabled
+          onOpenColumnPanel={onOpenColumnPanel}
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      await screen.findByText('Filter values');
+      expect(screen.queryByText('Manage columns')).not.toBeInTheDocument();
+    });
+
+    it('omits Manage columns without an open handler', async () => {
+      render(<HeaderCell {...baseProps} field={hideableField()} tableRefreshEnabled onHideColumn={jest.fn()} />);
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      await screen.findByText('Hide column');
+      expect(screen.queryByText('Manage columns')).not.toBeInTheDocument();
+    });
+
+    it('disables Hide column for the last visible column', async () => {
+      const onHideColumn = jest.fn();
+      const { rerender } = render(
+        <HeaderCell
+          {...baseProps}
+          field={hideableField()}
+          tableRefreshEnabled
+          onHideColumn={onHideColumn}
+          canHideColumn
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      const hideItem = await screen.findByText('Hide column');
+      expect(hideItem.closest('button')).toBeEnabled();
+      await userEvent.click(hideItem);
+      expect(onHideColumn).toHaveBeenCalledTimes(1);
+
+      rerender(
+        <HeaderCell
+          {...baseProps}
+          field={hideableField()}
+          tableRefreshEnabled
+          onHideColumn={onHideColumn}
+          canHideColumn={false}
+        />
+      );
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      expect((await screen.findByText('Hide column')).closest('button')).toBeDisabled();
+    });
+
+    it('keeps the Assistant action out of the classic header', () => {
+      render(<HeaderCell {...baseProps} field={makeField()} onAddToAssistant={jest.fn()} />);
+      expect(screen.getByText('Field1')).toBeInTheDocument();
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
+    it('scopes the menu reveal to its header cell', () => {
+      const { container } = render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+      expect(container.querySelector('.table-ng-header-cell')).toBeInTheDocument();
+    });
+
+    it('opens the filter popup from the column menu', async () => {
+      render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
+
+      await userEvent.click(screen.getByLabelText(menuLabel));
+      const filterItem = await screen.findByText('Filter values');
+
+      await userEvent.click(filterItem);
+      // FilterPopup renders the value list with its own Ok/Cancel controls
+      expect(await screen.findByRole('button', { name: 'Ok' })).toBeInTheDocument();
+    });
+
+    it('marks an active filter in the refreshed header', async () => {
+      const field = filterableField();
+      const data = { fields: [field], length: 3 };
+      const FilteredHeader = () => {
+        const view = useTableFilters();
+        useEffect(() => {
+          view?.applyFilter(field, { id: 'inSet', options: { mode: 'display', values: ['a'] } });
+        }, [view]);
+        return <HeaderCell {...baseProps} field={field} tableRefreshEnabled />;
+      };
+      render(
+        <TableFilterProvider props={{ data, width: 300, height: 200 }}>
+          <FilteredHeader />
+        </TableFilterProvider>
+      );
+
+      expect(await screen.findByLabelText(filterIconLabel)).toHaveAttribute('aria-haspopup', 'dialog');
+      expect(screen.getByLabelText(menuLabel)).toHaveStyle({ opacity: '0' });
+    });
   });
 
   describe('keyboard handling', () => {
@@ -232,6 +598,30 @@ describe('HeaderCell', () => {
       // the filter button is the last element in the header; tabbing from the (earlier) label button should not trigger
       fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Tab' });
       expect(selectFirstCell).not.toHaveBeenCalled();
+    });
+
+    // `table.refresh` puts the title, tooltip and active-filter icon in one wrapper, so "last child
+    // element of the header" is no longer the same thing as "last tab stop in the header".
+    const tooltipField = () => makeField({ config: { custom: { headerTooltip: 'Only counts displayed rows' } } });
+
+    it('does not call selectFirstCell when tabbing from the title ahead of the header tooltip', () => {
+      const { selectFirstCell } = renderInGrid({ field: tooltipField(), tableRefreshEnabled: true });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Field1' }), { key: 'Tab' });
+      expect(selectFirstCell).not.toHaveBeenCalled();
+    });
+
+    it('calls selectFirstCell when tabbing from the header tooltip, the last tab stop in the cell', () => {
+      const { selectFirstCell } = renderInGrid({ field: tooltipField(), tableRefreshEnabled: true });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Only counts displayed rows' }), { key: 'Tab' });
+      expect(selectFirstCell).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls selectFirstCell when tabbing from the column menu, past the title and tooltip', () => {
+      const filterableTooltipField = () =>
+        makeField({ config: { custom: { filterable: true, headerTooltip: 'Only counts displayed rows' } } });
+      const { selectFirstCell } = renderInGrid({ field: filterableTooltipField(), tableRefreshEnabled: true });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Column options for Field1' }), { key: 'Tab' });
+      expect(selectFirstCell).toHaveBeenCalledTimes(1);
     });
 
     it('ignores the keydown when the event target is not an HTMLElement', () => {

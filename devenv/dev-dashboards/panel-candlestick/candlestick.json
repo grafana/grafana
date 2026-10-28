@@ -53,7 +53,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvFileName": "ohlc_dogecoin.csv",
@@ -215,7 +215,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvFileName": "ohlc_dogecoin.csv",
@@ -356,7 +356,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvFileName": "ohlc_dogecoin.csv",
@@ -464,7 +464,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvFileName": "ohlc_dogecoin.csv",

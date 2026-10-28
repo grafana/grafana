@@ -1,3 +1,10 @@
-// Placeholder entry point so the package's build/typecheck/test/pack pipeline
-// can be verified before the real datasource wrappers land (see issue #127222).
-export const PLACEHOLDER = true;
+export { getDataSourceInstance } from './datasources/getDataSourceInstance';
+export { getDataSourceInstanceList } from './datasources/getDataSourceInstanceList';
+export { getDataSourceInstanceSettings } from './datasources/getDataSourceInstanceSettings';
+export { getDefaultDataSourceInstanceListItem } from './datasources/getDefaultDataSourceInstanceListItem';
+export { registerRuntimeDataSourceInstance } from './datasources/registerRuntimeDataSourceInstance';
+export { useDataSourceInstance, type UseDataSourceInstanceResult } from './datasources/useDataSourceInstance';
+export {
+  useDefaultDataSourceInstanceListItem,
+  type UseDefaultDataSourceInstanceListItemResult,
+} from './datasources/useDefaultDataSourceInstanceListItem';

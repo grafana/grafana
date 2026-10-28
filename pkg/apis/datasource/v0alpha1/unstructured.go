@@ -112,10 +112,6 @@ func (u *UnstructuredSpec) IsDefault() bool {
 	return v
 }
 
-func (u *UnstructuredSpec) SetIsDefault(v bool) *UnstructuredSpec {
-	return u.Set("isDefault", v)
-}
-
 func (u *UnstructuredSpec) ReadOnly() bool {
 	v, _, _ := unstructured.NestedBool(u.Object, "readOnly")
 	return v

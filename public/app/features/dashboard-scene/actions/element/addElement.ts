@@ -1,10 +1,12 @@
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
+import { type DashboardActionMeta } from '../../sidebar/events';
 import { edit } from '../utils/edit';
-import { getEditableElementFor } from '../utils/getEditableElementFor';
+import { getElementTypeName } from '../utils/getElementTypeName';
 
 interface AddElementActionHelperProps {
+  meta: DashboardActionMeta;
   addedObject: SceneObject;
   source: SceneObject;
   perform: () => void;
@@ -17,14 +19,13 @@ interface AddElementActionHelperProps {
 export function addElement(props: AddElementActionHelperProps) {
   const { addedObject, source, perform, undo } = props;
 
-  const element = getEditableElementFor(addedObject);
-  if (!element) {
+  const typeName = getElementTypeName(addedObject);
+  if (typeName === undefined) {
     throw new Error('Added object is not an editable element');
   }
 
-  const typeName = element.getEditableElementInfo().typeName;
-
   edit({
+    meta: props.meta,
     description: t('dashboard.edit-actions.add', 'Add {{typeName}}', { typeName }),
     addedObject,
     source,

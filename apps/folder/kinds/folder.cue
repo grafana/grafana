@@ -3,6 +3,14 @@ package folder
 foldersV1: {
 	kind:       "Folder"
 	pluralName: "Folders"
+	search: {
+		hybrid: true
+		global: true
+	}
+	embed: fields: [
+		{name: "title", path: "spec.title"},
+		{name: "description", path: "spec.description"},
+	]
 
 	schema: {
 		spec: {

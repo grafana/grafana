@@ -1,13 +1,20 @@
 import { type VariableType } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
+import { type DashboardMode } from '../scene/dashboardModes';
 import {
   type DashboardTrackingInfo,
   type DynamicDashboardsTrackingInformation,
 } from '../serialization/DashboardSceneSerializer';
 
 import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
+import {
+  type DashboardEditPeriodOutcome,
+  type DashboardEditSessionTracking,
+  type DashboardModeTrigger,
+} from './dashboardModeTracking';
 
 let isScenesContextSet = false;
 
@@ -34,7 +41,19 @@ export const DashboardInteractions = {
     reportDashboardInteraction('init_dashboard_completed', properties);
   },
 
-  dashboardCopied: (properties: { name: string; url: string; diff_count?: number }) => {
+  textPanelUsage: (properties: {
+    mermaid_count: number;
+    handlebars_count: number;
+    data_macro_count: number;
+    per_row_count: number;
+    dashboard_uid?: string;
+  }) => {
+    reportDashboardInteraction('text_panel_usage', properties);
+  },
+
+  dashboardCopied: (
+    properties: { name: string; url: string; diff_count?: number } & Partial<DashboardEditSessionTracking>
+  ) => {
     reportInteraction('grafana_dashboard_copied', properties);
   },
 
@@ -63,7 +82,7 @@ export const DashboardInteractions = {
     ) & {
       // size of the saved edit (diffs between the initial and saved models); scene save path only
       diff_count?: number;
-    }
+    } & Partial<DashboardEditSessionTracking>
   ) => {
     reportDashboardInteraction(isNew ? 'created' : 'saved', properties, 'grafana_dashboard');
   },
@@ -154,15 +173,15 @@ export const DashboardInteractions = {
     reportDashboardInteraction('variable_value_changed', properties);
   },
 
-  // dashboards_global_variables_loaded
+  // dashboards_predefined_variables_loaded
   // after global/folder variables are resolved for a V2 dashboard load
-  globalVariablesLoaded: (properties: {
+  predefinedVariablesLoaded: (properties: {
     global_count: number;
     folder_count: number;
     total_count: number;
     mode?: GlobalVariablesMode;
   }) => {
-    reportDashboardInteraction('global_variables_loaded', properties);
+    reportDashboardInteraction('predefined_variables_loaded', properties);
   },
 
   // dashboards_predefined_variable_toggled
@@ -184,7 +203,16 @@ export const DashboardInteractions = {
   },
 
   panelActionClicked(
-    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
+    item:
+      | 'configure'
+      | 'configure_dropdown'
+      | 'edit'
+      | 'settings'
+      | 'copy'
+      | 'duplicate'
+      | 'delete'
+      | 'view'
+      | 'use_library_panel',
     id: number,
     source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
     panelType?: string
@@ -207,11 +235,11 @@ export const DashboardInteractions = {
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'add_panel', source, target, action });
   },
-  trackGroupRowClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'group_row' });
+  trackGroupRowClick(source: 'canvas' | 'edit_pane' | 'edit_popover') {
+    reportDashboardInteraction('edit_action_clicked', { item: 'group_row', source });
   },
-  trackGroupTabClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'group_tab' });
+  trackGroupTabClick(source: 'canvas' | 'edit_pane' | 'edit_popover') {
+    reportDashboardInteraction('edit_action_clicked', { item: 'group_tab', source });
   },
   trackUngroupClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
@@ -223,8 +251,8 @@ export const DashboardInteractions = {
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },
-  trackDeleteDashboardElement(elementType: string) {
-    reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}` });
+  trackDeleteDashboardElement(elementType: string, source: 'edit_pane' | 'edit_popover') {
+    reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}`, source });
   },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
@@ -292,12 +320,6 @@ export const DashboardInteractions = {
   },
   exportCopyJsonClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_export_copy_json_clicked', properties);
-  },
-  exportSaveJsonClicked: (properties?: Record<string, unknown>) => {
-    reportSharingInteraction('sharing_export_save_json_clicked', properties);
-  },
-  exportViewJsonClicked: (properties?: Record<string, unknown>) => {
-    reportSharingInteraction('sharing_export_view_json_clicked', properties);
   },
   generatePublicDashboardUrlClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_public_generate_url_clicked', properties);
@@ -377,9 +399,71 @@ export const DashboardInteractions = {
     reportDashboardInteraction('edit_session_started', properties);
   },
 
+  editPeriodStarted: (properties: {
+    dashboard_uid?: string;
+    source: 'assistant' | 'user';
+    edit_session_id: string;
+  }) => {
+    reportDashboardInteraction('edit_period_started', properties);
+  },
+
+  editPeriodEnded: (
+    properties: Partial<DashboardEditSessionTracking> & {
+      edit_session_id: string;
+      outcome: DashboardEditPeriodOutcome;
+      has_unsaved_changes?: boolean;
+    }
+  ) => {
+    reportDashboardInteraction('edit_period_ended', properties);
+  },
+
+  editActorFirstChange: (properties: { edit_session_id: string; actor: 'user' | 'assistant'; mode: DashboardMode }) => {
+    reportDashboardInteraction('edit_actor_first_change', properties);
+  },
+
+  modePickerShown: (properties: { dashboard_uid?: string; mode: DashboardMode }) => {
+    reportDashboardInteraction('mode_picker_shown', properties);
+  },
+
+  modePickerOpened: (properties: {
+    dashboard_uid?: string;
+    mode: DashboardMode;
+    edit_session_id?: string;
+    first_open: boolean;
+  }) => {
+    reportDashboardInteraction('mode_picker_opened', properties);
+  },
+
+  modeChanged: (properties: {
+    dashboard_uid?: string;
+    edit_session_id?: string;
+    previous_mode: DashboardMode;
+    mode: DashboardMode;
+    trigger: DashboardModeTrigger;
+    has_unsaved_changes: boolean;
+  }) => {
+    reportDashboardInteraction('mode_changed', properties);
+  },
+
   // click "Take me there" button from the dashboard settings for annotations, variables or the JSON model
   takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' | 'json-model' }) => {
     reportDashboardInteraction('take_me_to_sidebar_clicked', properties);
+  },
+
+  // dashboards_code_pane_opened
+  // when a user opens the "Edit as code" sidebar pane from the sidebar button
+  codePaneOpened: () => {
+    reportDashboardInteraction('code_pane_opened');
+  },
+
+  // dashboards_code_pane_action_clicked
+  // when a user clicks an action in the "Edit as code" sidebar pane
+  codePaneActionClicked: (properties: {
+    action: 'apply' | 'copy_as_resource' | 'show_diff' | 'hide_diff' | 'expand';
+    format: 'json' | 'yaml';
+    success?: boolean;
+  }) => {
+    reportDashboardInteraction('code_pane_action_clicked', properties);
   },
 
   viewPanelAction: (properties: { action?: string; value: string }) => {
@@ -412,7 +496,7 @@ const reportDashboardInteraction = (
   interactionPrefix = 'dashboards'
 ) => {
   const meta = isScenesContextSet ? { scenesView: true } : {};
-  const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
+  const isDynamicDashboard = isDashboardNewLayoutsEnabled();
 
   if (properties) {
     reportInteraction(`${interactionPrefix}_${name}`, { ...properties, ...meta, isDynamicDashboard });

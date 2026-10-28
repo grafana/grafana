@@ -36,7 +36,7 @@ func newTestServerWithLimits(maxGlobal, maxPerNS int) *Server {
 func TestAcquireSlot_Disabled(t *testing.T) {
 	s := newTestServerWithLimits(0, 0)
 
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		release, err := s.acquireSlot("Check", "ns-a")
 		require.NoError(t, err)
 		defer release()

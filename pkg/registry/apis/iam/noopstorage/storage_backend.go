@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ resource.StorageBackend = &StorageBackendImpl{}
+	_ resource.StorageBackend = (*StorageBackendImpl)(nil)
 
 	errNoopStorage = errors.New("unavailable functionality")
 )
