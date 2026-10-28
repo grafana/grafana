@@ -435,11 +435,6 @@ export interface FeatureToggles {
   */
   grafanaManagedRecordingRules?: boolean;
   /**
-  * Enables Saved queries (query library) feature
-  * @default true
-  */
-  queryLibrary?: boolean;
-  /**
   * Enables RBAC for playlists
   * @default false
   */

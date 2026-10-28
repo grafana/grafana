@@ -3,8 +3,10 @@ package router
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -150,11 +152,11 @@ func TestPluginBackendStatus(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, want, got)
 
-	got, ok = (&pluginDeploymentBackend{Backend: backend}).PluginStatus()
-	require.True(t, ok, "the deployment wrapper forwards it")
+	got, ok = (&wrappedBackend{Backend: backend}).PluginStatus()
+	require.True(t, ok, "a wrapper forwards it")
 	require.Equal(t, want, got)
 
-	_, ok = (&pluginDeploymentBackend{Backend: &fakeBackend{}}).PluginStatus()
+	_, ok = (&wrappedBackend{Backend: &fakeBackend{}}).PluginStatus()
 	require.False(t, ok, "no plugin, so no plugin property")
 }
 
@@ -190,4 +192,20 @@ func TestStatusReadsDoNotMoveBreakers(t *testing.T) {
 		require.Equal(t, "ok", groups[group].Health)
 		require.Nil(t, groups[group].Breaker.RetryAt)
 	})
+}
+
+// A loader counter with a status field is a field of the status document; the
+// others are only metrics.
+func TestRouterStatusLoaderCounters(t *testing.T) {
+	svc, _, _ := newStatusService(t)
+	rec := httptest.NewRecorder()
+	svc.router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/status", nil))
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+	var fields map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &fields))
+	require.JSONEq(t, `{"cache_hit": 3, "resolved": 1}`, string(fields["stackLookups"]))
+	require.Contains(t, fields, "sources", "the other fields are kept")
+	require.NotContains(t, fields, "stack_discovery_cache_total")
+	require.ElementsMatch(t, []string{"ready", "reconciler", "breakers", "groups", "sources", "shadowed", "stackLookups"}, slices.Collect(maps.Keys(fields)))
 }

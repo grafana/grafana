@@ -6,7 +6,18 @@ describe('buildRecordingRuleSearchQuery', () => {
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'SearchQuery',
       sort: [{ field: 'title', direction: 'asc' }],
-      fields: ['title', 'folder', 'paused', 'health', 'lastError', 'interval'],
+      fields: [
+        'title',
+        'folder',
+        'paused',
+        'health',
+        'lastError',
+        'interval',
+        'labels',
+        'datasourceUIDs',
+        'metric',
+        'targetDatasourceUID',
+      ],
       limit: 40,
     });
   });
