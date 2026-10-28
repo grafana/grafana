@@ -1,5 +1,6 @@
 ---
 aliases:
+  - ../shared/preferences/navigate-to-the-dashboard-list/
   - change-home-dashboard/
   - preferences/
   - preferences/change-grafana-name/
