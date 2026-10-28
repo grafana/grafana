@@ -28,6 +28,7 @@ interface Props {
 
 const ITEM_HEIGHT = 32;
 const MIN_HEIGHT = ITEM_HEIGHT * 4.5; // split an item in the middle to imply there are more items to scroll
+const MAX_MEASURED_LABELS = 100;
 
 export const FilterList = ({
   options,
@@ -63,14 +64,19 @@ export const FilterList = ({
     [options, regex, predicate]
   );
   const theme = useTheme2();
-  const widestLabel = useMemo(
-    () =>
-      options.reduce(
-        (width, item) => Math.max(width, measureText(item.label ?? '', parseFloat(theme.typography.size.md)).width),
-        0
-      ),
-    [options, theme.typography.size.md]
-  );
+  const widestLabel = useMemo(() => {
+    if (!onWidthChange) {
+      return 0;
+    }
+    const candidates =
+      options.length > MAX_MEASURED_LABELS
+        ? [...options].sort((a, b) => (b.label?.length ?? 0) - (a.label?.length ?? 0)).slice(0, MAX_MEASURED_LABELS)
+        : options;
+    return candidates.reduce(
+      (width, item) => Math.max(width, measureText(item.label ?? '', parseFloat(theme.typography.size.md)).width),
+      0
+    );
+  }, [onWidthChange, options, theme.typography.size.md]);
   const selectedItems = useMemo(() => items.filter((item) => values.includes(item)), [items, values]);
 
   const selectCheckValue = useMemo(() => items.length === selectedItems.length, [items, selectedItems]);

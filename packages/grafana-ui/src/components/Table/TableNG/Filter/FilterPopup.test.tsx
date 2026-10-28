@@ -52,7 +52,7 @@ describe('FilterPopup', () => {
 
   it('previews selected string rows, including repeated values', async () => {
     const user = userEvent.setup();
-    renderPopup({ rows: makeRows('Status', ['active', 'active', 'inactive']) });
+    renderPopup({ rows: makeRows('Status', ['active', 'active', 'inactive']), rangeFiltersEnabled: true });
     expect(screen.getByRole('status')).toHaveTextContent('3 of 3 rows');
 
     await user.click(screen.getByRole('checkbox', { name: 'active' }));
@@ -71,7 +71,7 @@ describe('FilterPopup', () => {
   it('clears the search with an accessible icon button and returns focus to the input', async () => {
     const user = userEvent.setup();
     const setSearchFilter = jest.fn();
-    renderPopup({ searchFilter: 'active', setSearchFilter });
+    renderPopup({ searchFilter: 'active', setSearchFilter, rangeFiltersEnabled: true });
     const input = screen.getByPlaceholderText('Filter values');
     await waitFor(() => expect(input).toHaveFocus());
     const clearButton = screen.getByRole('button', { name: 'Clear' });
@@ -199,7 +199,7 @@ describe('FilterPopup', () => {
 
       await user.click(screen.getByText('Ok'));
 
-      expect(onApplyValues).toHaveBeenCalledWith([{ value: 'active', label: 'active' }], false);
+      expect(onApplyValues).toHaveBeenCalledWith([{ value: 'active', label: 'active' }]);
     });
 
     it('passes an empty selection when Ok is clicked with no items selected', async () => {
@@ -209,8 +209,18 @@ describe('FilterPopup', () => {
 
       await user.click(screen.getByText('Ok'));
 
-      expect(onApplyValues).toHaveBeenCalledWith([], false);
+      expect(onApplyValues).toHaveBeenCalledWith([]);
     });
+  });
+
+  it('keeps the legacy string-filter controls without the new-features flag', () => {
+    renderPopup({ searchFilter: 'active' });
+
+    expect(screen.getByText('Status')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Clear' })).toHaveTextContent('Clear');
+    expect(screen.getByRole('button', { name: 'Ok' })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'Include missing values' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   describe('Escape key', () => {
@@ -286,13 +296,27 @@ it('selects missing string values separately from empty strings and mapped label
   const { onApplyValues } = renderPopup({
     field,
     rows: values.map((value, i) => ({ __depth: 0, __index: i, Status: value ?? undefined })),
+    rangeFiltersEnabled: true,
   });
   await userEvent.click(screen.getByRole('checkbox', { name: 'Include missing values' }));
   expect(screen.getByRole('status')).toHaveTextContent('2 of 5 rows');
   await userEvent.click(screen.getByRole('checkbox', { name: '(Blanks)' }));
   expect(screen.getByRole('status')).toHaveTextContent('3 of 5 rows');
-  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
   expect(onApplyValues).toHaveBeenCalledWith([{ label: '(Blanks)', value: '' }], true);
+});
+
+it('keeps missing values in the value list without the new-features flag', async () => {
+  const values = [null, 'active'];
+  const field: Field = { name: 'Status', type: FieldType.string, config: {}, values };
+  const { onApplyValues } = renderPopup({
+    field,
+    rows: values.map((value, __index) => ({ __depth: 0, __index, Status: value })),
+  });
+
+  await userEvent.click(screen.getByRole('checkbox', { name: 'null' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  expect(onApplyValues).toHaveBeenCalledWith([{ label: 'null', value: 'null' }]);
 });
 
 it('closes on Escape after clicking the histogram without bubbling to the panel', async () => {

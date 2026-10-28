@@ -328,3 +328,48 @@ it('sizes from the widest available label and keeps that width while searching',
     measurement.mockRestore();
   }
 });
+
+it('does not measure labels when dynamic width is disabled', () => {
+  const measurement = jest.spyOn(textMeasurement, 'measureText');
+  try {
+    render(
+      <FilterList
+        options={[{ value: 'value', label: 'Label' }]}
+        values={[]}
+        onChange={jest.fn()}
+        operator={containsOp()}
+        searchFilter=""
+      />
+    );
+    expect(measurement).not.toHaveBeenCalled();
+  } finally {
+    measurement.mockRestore();
+  }
+});
+
+it('measures at most 100 of the longest labels', () => {
+  const measurement = jest
+    .spyOn(textMeasurement, 'measureText')
+    .mockImplementation((text) => ({ width: text.length }) as TextMetrics);
+  const options = Array.from({ length: 150 }, (_, index) => ({
+    value: String(index),
+    label: 'x'.repeat(index + 1),
+  }));
+  try {
+    render(
+      <FilterList
+        options={options}
+        values={[]}
+        onChange={jest.fn()}
+        onWidthChange={jest.fn()}
+        operator={containsOp()}
+        searchFilter=""
+      />
+    );
+    expect(measurement).toHaveBeenCalledTimes(100);
+    expect(measurement).toHaveBeenCalledWith('x'.repeat(150), expect.any(Number));
+    expect(measurement).not.toHaveBeenCalledWith('x', expect.any(Number));
+  } finally {
+    measurement.mockRestore();
+  }
+});
