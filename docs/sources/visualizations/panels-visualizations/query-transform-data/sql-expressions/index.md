@@ -37,8 +37,8 @@ In Grafana, a server-side expression is a way to transform or calculate data aft
 For general information on Grafana expressions, refer to [Write expression queries](ref:expressions).
 
 {{< admonition type="note" >}}
-The screenshots and steps on this page reflect the classic, generally available panel query editor.
-For information about the new panel query editor experience, currently in public preview, refer to the [Query and transform data documentation](https://grafana.com/docs/grafana/v13.1/visualizations/panels-visualizations/query-transform-data/).
+The screenshots and steps on this page reflect the classic panel query editor.
+For information about the new default query editor, refer to [Navigate the query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#navigate-the-query-editor).
 {{< /admonition >}}
 
 ![Example of a SQL expression](/media/docs/sql-expressions/sql-expressions-example-1.png)

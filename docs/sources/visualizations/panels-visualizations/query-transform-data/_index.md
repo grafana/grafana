@@ -129,14 +129,6 @@ For more information, refer to [Data sources](https://grafana.com/docs/grafana/<
 
 ### Query editors
 
-{{< admonition type="note" >}}
-The screenshots of the panel query editor on this page show the new query editing experience, currently in public preview.
-For information about the classic, generally available query editor, refer to the [Grafana v13.0 documentation](https://grafana.com/docs/grafana/v13.0/visualizations/panels-visualizations/query-transform-data/).
-
-Grafana Labs offers limited support for public preview features, and breaking changes might occur prior to the feature being made generally available.
-To use this feature, enable the `queryEditorNext` feature toggle in your Grafana configuration file or contact Support.
-{{< /admonition >}}
-
 Each data source's query editor provides a customized user interface that helps you write queries that take advantage of its unique capabilities.
 
 Because of the differences between query languages, each data source query editor looks and functions differently.
@@ -288,14 +280,6 @@ For more information, refer to [Manage saved queries using Terraform](https://gr
 - You can save a maximum of 1000 queries.
 
 ## Navigate the query editor
-
-{{< admonition type="note" >}}
-The screenshots of the panel query editor on this page reflect the new query editing experience, currently in public preview.
-For information about the classic, generally available query editor, refer to the [Grafana v13.0 documentation](https://grafana.com/docs/grafana/v13.0/visualizations/panels-visualizations/query-transform-data/).
-
-Grafana Labs offers limited support for public preview features, and breaking changes might occur prior to the feature being made generally available.
-To use this feature, enable the `queryEditorNext` feature toggle in your Grafana configuration file or contact Support.
-{{< /admonition >}}
 
 A panel's query editor has the following elements.
 Hover your cursor over a number to display information about the query editor element.
