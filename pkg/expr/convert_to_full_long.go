@@ -307,30 +307,9 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 		auxCols       = newAuxColumns()
 	)
 
-	// In wide frames, a non-numeric field belongs to the series with the same labels.
-	var seriesAux map[string]int32
-	if aux := auxFieldsOf(frame.Fields, timeField); len(aux) > 0 {
-		bySeries := map[string][]*data.Field{}
-		for _, f := range aux {
-			key := f.Labels.String()
-			bySeries[key] = append(bySeries[key], f)
-		}
-		// Register columns in the order of the value fields, so column order is stable.
-		seriesAux = map[string]int32{}
-		for _, f := range frame.Fields {
-			if !f.Type().Numeric() {
-				continue
-			}
-			key := f.Labels.String()
-			if _, done := seriesAux[key]; done {
-				continue
-			}
-			series, err := auxCols.addSeries(bySeries[key])
-			if err != nil {
-				return nil, err
-			}
-			seriesAux[key] = series
-		}
+	seriesAux, err := auxCols.addWideSeries(frame.Fields, timeField)
+	if err != nil {
+		return nil, err
 	}
 
 	// Collect all label keys
@@ -509,8 +488,7 @@ func auxFieldsOf(fields []*data.Field, timeField *data.Field) []*data.Field {
 		if f == timeField || f.Name == "" || f.Type().Numeric() {
 			continue
 		}
-		switch f.Type() {
-		case data.FieldTypeEnum, data.FieldTypeNullableEnum:
+		if t := f.Type(); t == data.FieldTypeEnum || t == data.FieldTypeNullableEnum {
 			continue
 		}
 		out = append(out, f)
@@ -546,6 +524,39 @@ func (a *auxColumns) addSeries(fields []*data.Field) (int32, error) {
 	}
 	a.series = append(a.series, refs)
 	return int32(len(a.series)), nil
+}
+
+// addWideSeries registers the non-numeric fields of a wide frame. In wide
+// frames, a non-numeric field belongs to the series with the same labels. It
+// returns each series' index plus one by its labels, or nil when the frame has
+// no such fields.
+func (a *auxColumns) addWideSeries(fields []*data.Field, timeField *data.Field) (map[string]int32, error) {
+	aux := auxFieldsOf(fields, timeField)
+	if len(aux) == 0 {
+		return nil, nil
+	}
+	bySeries := map[string][]*data.Field{}
+	for _, f := range aux {
+		key := f.Labels.String()
+		bySeries[key] = append(bySeries[key], f)
+	}
+	// Register columns in the order of the value fields, so column order is stable.
+	seriesAux := map[string]int32{}
+	for _, f := range fields {
+		if !f.Type().Numeric() {
+			continue
+		}
+		key := f.Labels.String()
+		if _, done := seriesAux[key]; done {
+			continue
+		}
+		series, err := a.addSeries(bySeries[key])
+		if err != nil {
+			return nil, err
+		}
+		seriesAux[key] = series
+	}
+	return seriesAux, nil
 }
 
 func (a *auxColumns) addRow(rowIdx int, series int32, srcIdx int) {
