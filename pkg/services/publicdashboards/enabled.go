@@ -5,9 +5,12 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var logger = log.New("publicdashboards")
 
 // Enabled reports whether public dashboards are available for the stack
 // handling this request.
@@ -25,11 +28,14 @@ func Enabled(ctx context.Context, cfg *setting.Cfg) bool {
 	if !cfg.PublicDashboardsEnabled {
 		return false
 	}
-	disabled, _ := openfeature.NewDefaultClient().BooleanValue(
+	disabled, err := openfeature.NewDefaultClient().BooleanValue(
 		ctx,
 		featuremgmt.FlagDashboardsDisablePublicDashboards,
 		false,
 		openfeature.TransactionContext(ctx),
 	)
+	if err != nil {
+		logger.Debug("flag evaluation failed, treating as not disabled", "error", err)
+	}
 	return !disabled
 }
