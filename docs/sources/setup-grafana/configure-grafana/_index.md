@@ -918,7 +918,7 @@ This also limits the refresh interval options in Explore.
 
 #### `default_home_dashboard_path`
 
-Path to a custom default home dashboard. Grafana shows this dashboard to users who have no home dashboard preference at the user, team, or organization level, and to users who selected **Grafana home** in that preference. If [`home_page`](#home_page) is also set, `home_page` wins. If this value is empty, Grafana shows the Grafana home page.
+Path to a custom default home dashboard. Grafana shows this dashboard to users who have no home dashboard preference at the user, team, or organization level, and to users who selected **Grafana home** in that preference. If [`home_page`](#home_page) is also set, `home_page` takes precedence. If this value is empty, Grafana shows the Grafana home page.
 
 Grafana no longer ships a bundled `home.json`. Replacing `public/dashboards/home.json` on disk is not supported. If you previously customized home that way, set this option to the path of your JSON file.
 
@@ -928,7 +928,7 @@ The file may contain either a classic dashboard JSON or a Kubernetes-format dash
 
 The `preload` value given to newly created dashboards. When `true`, a new dashboard starts with all panels loading as soon as it opens, instead of lazy loading them as they scroll into view. Default is `false`.
 
-The value is written into the dashboard when it is created, so authors can change it in dashboard settings afterwards and their choice wins.
+The value is written into the dashboard when it is created, so authors can change it in dashboard settings afterwards and their choice takes precedence.
 
 This setting only applies to dashboards created after you set it. Existing dashboards keep whatever `preload` value they already have, so turning it on never changes how they behave. It applies to dashboards created in the UI; dashboards created through the API or provisioning use the `preload` value in the payload.
 
