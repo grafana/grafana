@@ -30,9 +30,8 @@ type Client interface {
 	Commits(ctx context.Context, path, branch string) ([]Commit, error)
 
 	// Pull requests
+	repository.PullRequestClient
 	ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error)
-	CreatePullRequestComment(ctx context.Context, number int, body string) error
-	MergeBase(ctx context.Context, base, head string) (string, error)
 }
 
 type Repository struct {
