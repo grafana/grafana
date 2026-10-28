@@ -22,6 +22,7 @@ API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardInfinityOptions,QueryParams
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardIntervalVariableSpec,Options
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardPanelSpec,Links
+API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardPreferencesDashboardDefaults,AutoRefreshIntervals
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardQueryGroupSpec,Queries
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardQueryGroupSpec,Transformations
 API rule violation: list_type_missing,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardQueryVariableSpec,Options
@@ -76,6 +77,7 @@ API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/ap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardIntervalVariableSpec,AutoMin
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardPanelKindOrLibraryPanelKind,LibraryPanelKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardPanelKindOrLibraryPanelKind,PanelKind
+API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardPreferencesClient,client
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind,AdhocVariableKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind,ConstantVariableKind
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOrDatasourceVariableKindOrIntervalVariableKindOrCustomVariableKindOrGroupByVariableKindOrAdhocVariableKindOrSwitchVariableKind,CustomVariableKind
@@ -107,5 +109,6 @@ API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/ap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookValueMapOrRangeMapOrRegexMapOrSpecialValueMap,ValueMap
 API rule violation: names_match,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,VariableClient,client
 API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardList,ListMeta
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,DashboardPreferencesList,ListMeta
 API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,NotebookList,ListMeta
 API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1,VariableList,ListMeta
