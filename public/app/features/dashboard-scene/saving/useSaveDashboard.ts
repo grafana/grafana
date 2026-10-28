@@ -17,11 +17,8 @@ import { DashboardSavedEvent } from 'app/types/events';
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { finishSavingNewDashboard, withoutPendingChangesPreview } from '../lifecycle/pendingChangePreview';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { DashboardInteractions } from '../utils/interactions';
 import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
-
-import { setDashboardModeAfterSave } from './dashboardModeAfterSave';
 
 export function useSaveDashboard(isCopy = false) {
   const notifyApp = useAppNotification();
@@ -128,9 +125,6 @@ export function useSaveDashboard(isCopy = false) {
 
         if (newUrl !== currentLocation.pathname || search !== currentLocation.search) {
           setTimeout(() => {
-            if (dashboardModesEnabled()) {
-              setDashboardModeAfterSave(resultData.uid, getDashboardMode(scene.state));
-            }
             locationService.push({ pathname: newUrl, search });
           });
         }

@@ -39,7 +39,6 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const composer = useComposerOption(dashboard);
   const nextMode = mode === 'view' ? 'edit' : 'view';
   const saveRequired = isNewDashboard(state);
-  const disabled = dashboard.managedResourceCannotBeEdited();
   const hidden =
     !dashboardModesEnabled() ||
     !dashboard.canEditDashboard() ||
@@ -49,10 +48,10 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
     state.viewPanel ||
     state.planning;
   useEffect(() => {
-    if (!hidden && !disabled) {
+    if (!hidden) {
       dashboard.trackModePickerShown();
     }
-  }, [dashboard, hidden, disabled]);
+  }, [dashboard, hidden]);
   if (hidden) {
     return null;
   }
@@ -145,7 +144,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
                 ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
                 : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
           }
-          disabled={disabled || (!state.editable && nextMode === 'edit')}
+          disabled={!state.editable && nextMode === 'edit'}
           onClick={() => choose(nextMode)}
         >
           {current.label}
@@ -166,7 +165,6 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             icon={isCaretMenuOpen ? 'angle-up' : 'angle-down'}
             aria-label={t('dashboard.modes.change-mode', 'Change dashboard mode')}
             aria-haspopup="menu"
-            disabled={disabled}
           />
         </Dropdown>
       </ButtonGroup>

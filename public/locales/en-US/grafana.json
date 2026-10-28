@@ -9318,10 +9318,6 @@
       "attribute-category": {
         "other": "Other"
       },
-      "exception-message": "Message:",
-      "exception-stacktrace": "Stacktrace",
-      "exception-title": "Exception",
-      "exception-type": "Type:",
       "label": {
         "kind": "Kind:",
         "library-name": "Library Name:",
@@ -9427,6 +9423,7 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Open share and feedback menu",
+      "copy-trace-id": "Copy trace ID {{id}}",
       "critical-path": "Critical path",
       "critical-path-tooltip": "Selects spans in the critical path—the longest sequence of dependent tasks determining the trace minimum duration.",
       "duration": "Duration",
@@ -9450,7 +9447,7 @@
       "share-group": "Share",
       "share-tooltip": "Share and feedback",
       "spans": "Spans",
-      "start-time": "Start time",
+      "start-time": "Start",
       "success-indicator": "Trace succeeded",
       "target": "Target",
       "tooltip-url": "{{route}} or {{url}} or {{target}} or {{path}}",
@@ -9459,6 +9456,12 @@
       "trace-banner-metrics": "{{duration}} · {{percent}}% of trace",
       "trace-banner-warning": "Trace warning banner",
       "trace-id": "Trace ID",
+      "trace-summary-error": "Error",
+      "trace-summary-error-status": "Error: {{status}}",
+      "trace-summary-hide-stacktrace": "Hide stacktrace",
+      "trace-summary-show-stacktrace": "Show stacktrace",
+      "trace-summary-warning": "Warning",
+      "trace-summary-warning-status": "Warning: {{status}}",
       "url": "URL",
       "warning-indicator": "Trace has client errors"
     },
@@ -16187,6 +16190,7 @@
       "exchange": "Change root scope to {{scope}}",
       "expand": "Expand",
       "filter": "Filter...",
+      "filterAriaLabel": "Filter dashboards",
       "loading": "Loading dashboards",
       "megaMenuSectionHeading": "Suggested dashboards",
       "noResultsForFilter": "No results found for your query",
@@ -16195,7 +16199,6 @@
       "noResultsNoScopes": "No scopes selected",
       "toggle": {
         "collapse": "Collapse suggested dashboards list",
-        "disabled": "Suggested dashboards list is disabled due to read only mode",
         "expand": "Expand suggested dashboards list"
       }
     },
