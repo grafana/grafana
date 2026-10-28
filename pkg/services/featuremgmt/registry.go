@@ -3445,6 +3445,15 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
 		},
+		{
+			Name:         "folders.parallelDashboardDeleteConcurrency",
+			Description:  "Maximum number of dashboard deletes in flight per folder deletion. 1 or less deletes the dashboards sequentially",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "1",
+			Generate:     Generate{Go: true},
+		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

@@ -1924,7 +1924,6 @@ func TestIntegrationProvisioning_RefsPermissions(t *testing.T) {
 }
 
 func TestIntegrationProvisioning_EmptyPath(t *testing.T) {
-	t.Skip("flaky: times out")
 	helper := sharedHelper(t)
 
 	t.Run("repository with empty path syncs from root", func(t *testing.T) {
