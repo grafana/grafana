@@ -343,7 +343,7 @@ vector_allowed_read_services = {"example.ext.grafana.app/records":["example-serv
 For a configured collection, `HybridSearch` and `VectorSearch` accept only authenticated access-policy tokens with exactly one matching service identity.
 User and on-behalf-of tokens are denied.
 The check covers every target before vector or lexical search; one denied target rejects the whole request.
-Existing tenant and resource `get` checks still apply.
+Caller namespace checks still apply. Resource `get` checks apply to tenant-scoped collections; shared collections skip them.
 
 An unset value or `{}` leaves both search methods unchanged; invalid values prevent server startup.
 Deploy support to every serving storage and search server before setting the restriction because older versions ignore it.
@@ -365,7 +365,7 @@ Publish the collection in each cluster where you need it; shared content does no
 Shared documents cannot have a folder.
 
 Readers select the shared `group/resource` explicitly in `VectorSearch` or `HybridSearch` and send their own authenticated namespace.
-Every authenticated tenant with access to the collection can read its published documents, without per-document tenant checks.
+By default, callers from any tenant can read the published documents without per-document tenant permission checks.
 If you set `vector_allowed_read_services` for that collection, only its listed service identities can read it.
 Search responses, query caches, and quotas use the caller's namespace; the stored collection uses `__SHARED__`.
 Tenant deletion preserves shared content.
