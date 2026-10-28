@@ -3,12 +3,14 @@ package folderimpl
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -46,8 +48,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
@@ -1557,4 +1561,254 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 		require.NoError(t, err)
 		variableK8sClient.AssertExpectations(t)
 	})
+}
+
+type dashboardDeleteClient struct {
+	client.K8sHandler
+	uids                       []string
+	deleteFn                   func(context.Context, string) error
+	mu                         sync.Mutex
+	active, maximum, completed int
+	calls                      []string
+	badOptions                 bool
+	requester                  identity.Requester
+	badRequester               bool
+}
+
+func (c *dashboardDeleteClient) Search(context.Context, int64, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+	rows := make([]*resourcepb.ResourceTableRow, len(c.uids))
+	for i, uid := range c.uids {
+		rows[i] = &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: uid}}
+	}
+	return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{Rows: rows}, TotalHits: int64(len(rows))}, nil
+}
+func (c *dashboardDeleteClient) Delete(ctx context.Context, uid string, orgID int64, opts metav1.DeleteOptions) error {
+	requester, _ := identity.GetRequester(ctx)
+	c.mu.Lock()
+	c.calls = append(c.calls, uid)
+	c.badOptions = c.badOptions || orgID != 1 || opts.GracePeriodSeconds != nil || opts.Preconditions != nil
+	c.badRequester = c.badRequester || requester != c.requester
+	c.active++
+	c.maximum = max(c.maximum, c.active)
+	c.mu.Unlock()
+	defer func() { c.mu.Lock(); c.active--; c.completed++; c.mu.Unlock() }()
+	if c.deleteFn != nil {
+		return c.deleteFn(ctx, uid)
+	}
+	return nil
+}
+
+// dashboardDeletePublicService records how many dashboard deletes had finished when the public
+// dashboard cleanup ran, which must be all of them.
+type dashboardDeletePublicService struct {
+	publicdashboards.ServiceWrapper
+	client             *dashboardDeleteClient
+	uids               []string
+	completedAtCleanup int
+}
+
+func (p *dashboardDeletePublicService) DeleteByDashboardUIDs(_ context.Context, _ int64, uids []string) error {
+	p.uids = uids
+	p.client.mu.Lock()
+	p.completedAtCleanup = p.client.completed
+	p.client.mu.Unlock()
+	return nil
+}
+
+type dashboardDeleteStore struct {
+	folder.Store
+	deleted bool
+}
+
+func (s *dashboardDeleteStore) GetDescendants(context.Context, int64, string) ([]*folder.Folder, error) {
+	return nil, nil
+}
+func (s *dashboardDeleteStore) Delete(context.Context, []string, int64) error {
+	s.deleted = true
+	return nil
+}
+
+type emptyFolderRegistry struct{ folder.RegistryService }
+
+func (*emptyFolderRegistry) CountInFolders(context.Context, int64, []string, identity.Requester) (int64, error) {
+	return 0, nil
+}
+func (*emptyFolderRegistry) DeleteInFolders(context.Context, int64, []string, identity.Requester) error {
+	return nil
+}
+
+func newDashboardDeleteService(t *testing.T, enabled bool, concurrency, count int) (*Service, *dashboardDeleteClient, *folder.DeleteFolderCommand, context.Context) {
+	requester := &user.SignedInUser{UserID: 42, OrgID: 1}
+	cli := &dashboardDeleteClient{requester: requester}
+	for i := range count {
+		cli.uids = append(cli.uids, fmt.Sprintf("dashboard-%d", i))
+	}
+	cfg := setting.NewCfg()
+	cfg.FolderParallelDashboardDeleteEnabled = enabled
+	cfg.FolderParallelDashboardDeleteConcurrency = concurrency
+	svc := &Service{
+		cfg: cfg, dashboardK8sClient: cli, variableK8sClient: &dashboardDeleteClient{}, unifiedStore: &dashboardDeleteStore{},
+		publicDashboardService: &dashboardDeletePublicService{client: cli},
+		tracer:                 noop.NewTracerProvider().Tracer("test"), log: slog.New(logtest.NewNopHandler(t)),
+		registry: map[string]folder.RegistryService{entity.StandardKindAlertRule: &emptyFolderRegistry{}, entity.StandardKindLibraryPanel: &emptyFolderRegistry{}},
+	}
+	return svc, cli, &folder.DeleteFolderCommand{UID: "folder", OrgID: 1, SignedInUser: requester}, identity.WithRequester(context.Background(), requester)
+}
+
+// deleteGate holds every delete until open is called, so a test can see how many run at once.
+type deleteGate struct {
+	entered chan struct{}
+	release chan struct{}
+	once    sync.Once
+}
+
+func newDeleteGate(t *testing.T) *deleteGate {
+	g := &deleteGate{entered: make(chan struct{}, 100), release: make(chan struct{})}
+	t.Cleanup(g.open)
+	return g
+}
+
+func (g *deleteGate) hold(context.Context, string) error {
+	g.entered <- struct{}{}
+	<-g.release
+	return nil
+}
+
+func (g *deleteGate) open() { g.once.Do(func() { close(g.release) }) }
+
+// waitForDeletes waits until n deletes are held, then checks that no further delete starts.
+func (g *deleteGate) waitForDeletes(t *testing.T, n int) {
+	t.Helper()
+	for i := range n {
+		select {
+		case <-g.entered:
+		case <-time.After(3 * time.Second):
+			t.Fatalf("only %d of %d deletes started", i, n)
+		}
+	}
+	select {
+	case <-g.entered:
+		t.Fatalf("more than %d deletes ran at once", n)
+	case <-time.After(30 * time.Millisecond):
+	}
+}
+
+func runInBackground(f func() error) <-chan error {
+	done := make(chan error, 1)
+	go func() { done <- f() }()
+	return done
+}
+
+func waitForResult(t *testing.T, done <-chan error) error {
+	t.Helper()
+	select {
+	case err := <-done:
+		return err
+	case <-time.After(3 * time.Second):
+		t.Fatal("delete did not finish")
+		return nil
+	}
+}
+
+func TestDeleteFolderDashboardConcurrency(t *testing.T) {
+	for _, tc := range []struct {
+		name                 string
+		enabled              bool
+		workers, count, want int
+	}{
+		{"disabled deletes one at a time", false, 8, 12, 1},
+		{"enabled is bounded by the worker count", true, 4, 12, 4},
+		{"enabled with more workers than dashboards", true, 8, 2, 2},
+		{"non-positive worker count uses one worker", true, 0, 12, 1},
+		{"empty folder", true, 4, 0, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			svc, cli, cmd, ctx := newDashboardDeleteService(t, tc.enabled, tc.workers, tc.count)
+			gate := newDeleteGate(t)
+			cli.deleteFn = gate.hold
+			done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
+
+			gate.waitForDeletes(t, tc.want)
+			gate.open()
+			require.NoError(t, waitForResult(t, done))
+
+			require.Equal(t, tc.want, cli.maximum)
+			if tc.enabled {
+				require.ElementsMatch(t, cli.uids, cli.calls)
+			} else {
+				require.Equal(t, cli.uids, cli.calls)
+			}
+			require.False(t, cli.badOptions)
+			require.False(t, cli.badRequester)
+			public := svc.publicDashboardService.(*dashboardDeletePublicService)
+			require.Equal(t, tc.count, public.completedAtCleanup)
+			require.ElementsMatch(t, cli.uids, public.uids)
+			require.True(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
+		})
+	}
+}
+
+func TestDeleteFolderDashboardRequestCancellation(t *testing.T) {
+	svc, cli, cmd, ctx := newDashboardDeleteService(t, true, 4, 20)
+	ctx, cancel := context.WithCancel(ctx)
+	gate := newDeleteGate(t)
+	cli.deleteFn = func(ctx context.Context, uid string) error {
+		_ = gate.hold(ctx, uid)
+		<-ctx.Done()
+		return ctx.Err()
+	}
+	done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
+
+	gate.waitForDeletes(t, 4)
+	cancel()
+	select {
+	case <-done:
+		t.Fatal("returned before in-flight deletes finished")
+	case <-time.After(30 * time.Millisecond):
+	}
+	gate.open()
+
+	require.ErrorIs(t, waitForResult(t, done), context.Canceled)
+	require.Len(t, cli.calls, 4)
+	require.Nil(t, svc.publicDashboardService.(*dashboardDeletePublicService).uids)
+	require.False(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
+}
+
+func TestDeleteFolderDashboardFailureLetsInFlightDeletesFinish(t *testing.T) {
+	svc, cli, cmd, ctx := newDashboardDeleteService(t, true, 4, 20)
+	gate := newDeleteGate(t)
+	releaseFailure := make(chan struct{})
+	canceled := make(chan string, 20)
+	failure := errors.New("dashboard delete failed")
+	cli.deleteFn = func(ctx context.Context, uid string) error {
+		gate.entered <- struct{}{}
+		if uid == "dashboard-0" {
+			<-releaseFailure
+			return failure
+		}
+		select {
+		case <-ctx.Done():
+			canceled <- uid
+			return ctx.Err()
+		case <-gate.release:
+			return nil
+		}
+	}
+	done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
+
+	gate.waitForDeletes(t, 4)
+	close(releaseFailure)
+	select {
+	case uid := <-canceled:
+		t.Fatalf("a failed sibling canceled the in-flight delete of %s", uid)
+	case <-done:
+		t.Fatal("returned before in-flight deletes finished")
+	case <-time.After(100 * time.Millisecond):
+	}
+	gate.open()
+
+	require.ErrorIs(t, waitForResult(t, done), failure)
+	require.Len(t, cli.calls, 4, "no new deletes may start after the first failure")
+	require.Nil(t, svc.publicDashboardService.(*dashboardDeletePublicService).uids)
+	require.False(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
 }
