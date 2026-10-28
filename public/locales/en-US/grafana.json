@@ -16190,6 +16190,7 @@
       "exchange": "Change root scope to {{scope}}",
       "expand": "Expand",
       "filter": "Filter...",
+      "filterAriaLabel": "Filter dashboards",
       "loading": "Loading dashboards",
       "megaMenuSectionHeading": "Suggested dashboards",
       "noResultsForFilter": "No results found for your query",
