@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 import { useCallback, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { type FieldPathValues, useFormContext } from 'react-hook-form';
 import { useMountedState } from 'react-use';
 import { takeWhile } from 'rxjs/operators';
 
@@ -17,7 +17,10 @@ import { isDataSourceManagedRuleByType } from '../../utils/rules';
 
 import { PreviewRuleResult } from './PreviewRuleResult';
 
-const fields: Array<keyof RuleFormValues> = ['type', 'dataSourceName', 'condition', 'queries', 'expression'];
+const fields = ['type', 'dataSourceName', 'condition', 'queries', 'expression'] as const satisfies ReadonlyArray<
+  keyof RuleFormValues
+>;
+type PreviewRuleValues = FieldPathValues<RuleFormValues, typeof fields>;
 
 export function PreviewRule(): React.ReactElement | null {
   const styles = useStyles2(getStyles);
@@ -85,7 +88,7 @@ export function usePreview(): [PreviewRuleResponse | undefined, () => void] {
   return [preview, onPreview];
 }
 
-function createPreviewRequest(values: any[]): PreviewRuleRequest {
+function createPreviewRequest(values: PreviewRuleValues): PreviewRuleRequest {
   const [type, dataSourceName, condition, queries, expression] = values;
 
   switch (type) {
@@ -98,12 +101,15 @@ function createPreviewRequest(values: any[]): PreviewRuleRequest {
 
       return {
         dataSourceUid,
-        dataSourceName,
         expr: expression,
       };
     }
 
     case RuleFormType.grafana:
+      if (!condition) {
+        throw new Error('Cannot preview a Grafana-managed rule without a condition');
+      }
+
       return {
         grafana_condition: {
           condition,

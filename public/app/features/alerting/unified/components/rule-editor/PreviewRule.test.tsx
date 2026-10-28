@@ -65,7 +65,7 @@ describe('usePreview', () => {
     expect(captured).toEqual([
       {
         dataSourceUid: 'mimir-uid',
-        body: { dataSourceUid: 'mimir-uid', dataSourceName: 'Mimir', expr: 'up == 0' },
+        body: { dataSourceUid: 'mimir-uid', expr: 'up == 0' },
       },
     ]);
   });
@@ -99,5 +99,16 @@ describe('usePreview', () => {
     });
 
     expect(() => result.current[1]()).toThrow('Cannot find data source settings for Mimir');
+  });
+
+  it('throws when the Grafana rule has no condition', () => {
+    const { result } = renderUsePreview({
+      type: RuleFormType.grafana,
+      dataSourceName: 'grafana',
+      condition: null,
+      queries: [dataQuery('prometheus-uid')],
+    });
+
+    expect(() => result.current[1]()).toThrow('Cannot preview a Grafana-managed rule without a condition');
   });
 });
