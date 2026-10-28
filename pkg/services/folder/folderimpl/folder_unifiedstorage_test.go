@@ -70,23 +70,18 @@ type folderResult struct {
 }
 
 func buildFolderSearchResponse(results ...folderResult) *resourcepb.ResourceSearchResponse {
-	if len(results) == 0 {
-		return &resourcepb.ResourceSearchResponse{TotalHits: 0}
-	}
-	rows := make([]*resourcepb.ResourceTableRow, len(results))
+	rows := make([]*resourcepb.ResourceSearchRow, len(results))
 	for i, r := range results {
-		rows[i] = &resourcepb.ResourceTableRow{
-			Key:   &resourcepb.ResourceKey{Name: r.uid, Resource: "folders"},
-			Cells: [][]byte{[]byte(r.parentUID)},
-		}
+		rows[i] = &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: r.uid, Resource: "folders"}, Values: []*resourcepb.ResourceSearchValue{
+			{FieldIndex: 0, StringValues: []string{r.parentUID}},
+		}}
 	}
 	return &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			},
-			Rows: rows,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
 		},
+		Rows:      rows,
 		TotalHits: int64(len(results)),
 	}
 }
@@ -316,7 +311,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 	fakeK8sClient := new(client.MockK8sHandler)
 	variableK8sClient := new(client.MockK8sHandler)
-	variableK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil)
+	variableK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil)
 	folderService := &Service{
 		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
 		unifiedStore:           unifiedStore,
@@ -411,7 +406,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 			t.Run("When deleting folder by uid should not return access denied error - ForceDeleteRules false", func(t *testing.T) {
 				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
-				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
+				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Once()
 				publicDashboardService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -425,7 +420,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 			t.Run("When deleting folder by uid, expectedForceDeleteRules as false,should not return access denied error", func(t *testing.T) {
 				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
-				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
+				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Once()
 
 				expectedForceDeleteRules := false
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -439,7 +434,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 			t.Run("When deleting folder by uid, expectedForceDeleteRules as true, should not return access denied error", func(t *testing.T) {
 				searchMock.On("Search", mock.Anything, mock.Anything).Return(buildFolderSearchResponse(), nil).Once()
-				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
+				fakeK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Once()
 
 				expectedForceDeleteRules := true
 				err := folderService.Delete(ctx, &folder.DeleteFolderCommand{
@@ -615,37 +610,24 @@ func TestSearchFolders(t *testing.T) {
 			},
 			Page:  1,
 			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid1", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder0"}},
+						{FieldIndex: 1, StringValues: []string{""}},
 					},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid1",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte("folder0"),
-							[]byte(""),
-						},
-					},
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid2",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte("folder1"),
-							[]byte(""),
-						},
+				{
+					Key: &resourcepb.ResourceKey{Name: "uid2", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder1"}},
+						{FieldIndex: 1, StringValues: []string{""}},
 					},
 				},
 			},
@@ -707,27 +689,17 @@ func TestSearchFolders(t *testing.T) {
 			},
 			Page:  1,
 			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "foo",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte("folder1"),
-							[]byte(""),
-						},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "foo", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"folder1"}},
+						{FieldIndex: 1, StringValues: []string{""}},
 					},
 				},
 			},
@@ -837,75 +809,26 @@ func TestSearchFolders(t *testing.T) {
 		fakeK8sClient.AssertExpectations(t)
 	})
 
-	// Unified storage/search can deploy separately from the Grafana API layer, so a search
-	// server that predates the field-value format answers the same request with a
-	// ResourceTable. The client has to keep reading that shape (see pkg/storage/unified/AGENTS.md).
-	t.Run("Search by title falls back to table results from an older search server", func(t *testing.T) {
-		fakeFolderStore := folder.NewFakeStore()
-		fakeFolderStore.ExpectedFolder = &folder.Folder{
-			UID:   "parent-uid",
-			ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
-			Title: "parent title",
+	t.Run("Search by title rejects unsupported result formats", func(t *testing.T) {
+		for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+			resourcepb.ResourceSearchRequest_UNSPECIFIED,
+			resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+			99,
+		} {
+			t.Run(format.String(), func(t *testing.T) {
+				fakeK8sClient.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+					return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES && req.Query == "*test*"
+				})).Return(&resourcepb.ResourceSearchResponse{ResultFormat: format}, nil).Once()
+				result, err := service.SearchFolders(ctx, folder.SearchFoldersQuery{Title: "test", SignedInUser: user})
+				require.ErrorContains(t, err, "unsupported search result format")
+				require.Empty(t, result)
+				fakeK8sClient.AssertExpectations(t)
+			})
 		}
-		service.unifiedStore = fakeFolderStore
-		fakeK8sClient.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
-			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES && req.Query == "*test*"
-		})).Return(&resourcepb.ResourceSearchResponse{
-			// No ResultFormat set: an old server echoes nothing and returns a table.
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "folder",
-						},
-						Cells: [][]byte{
-							[]byte("testing-123"),
-							[]byte("parent-uid"),
-						},
-					},
-				},
-			},
-			TotalHits: 1,
-		}, nil).Once()
-
-		result, err := service.SearchFolders(ctx, folder.SearchFoldersQuery{
-			Title:        "test",
-			SignedInUser: user,
-		})
-		require.NoError(t, err)
-
-		require.Equal(t, model.HitList{
-			{
-				UID:       "uid",
-				FolderUID: "parent-uid",
-				OrgID:     1,
-				Type:      model.DashHitFolder,
-				URI:       "db/testing-123",
-				Title:     "testing-123",
-				URL:       "/dashboards/f/uid/testing-123",
-			},
-		}, result)
-		fakeK8sClient.AssertExpectations(t)
 	})
 
-	// The subtests above assert the request shape against a mock, which never validates the
-	// response fields — that is how #132508 shipped a request asking for "labels", a field with
-	// no typed field-value definition. Run the real request through a real, populated folder
-	// index in both result formats: an unsupported field in
-	// dashboardsearch.FieldValueIncludeFields fails here, and so does a format that stops
-	// returning the values folder search depends on.
-	t.Run("Search by title returns the same usable values in both result formats", func(t *testing.T) {
+	// A real index catches unknown response fields that the request mocks cannot validate.
+	t.Run("Search by title returns usable field values from a populated index", func(t *testing.T) {
 		var captured *resourcepb.ResourceSearchRequest
 		fakeK8sClient.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			captured = req
@@ -957,48 +880,20 @@ func TestSearchFolders(t *testing.T) {
 		}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 		require.NoError(t, err)
 
-		// Both formats must be usable: unified storage/search may deploy separately from the API
-		// layer, so the same request can be answered either way during a rollout.
-		runFormat := func(format resourcepb.ResourceSearchRequest_ResultFormat) dashv0alpha1.SearchResults {
-			captured.ResultFormat = format
+		res, err := index.Search(ctx, nil, captured, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error, "the folder search index rejected the request SearchFolders built")
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, res.ResultFormat)
 
-			res, err := index.Search(ctx, nil, captured, nil, nil)
-			require.NoError(t, err)
-			require.Nil(t, res.Error, "the folder search index rejected the request SearchFolders built")
-
-			parsed, err := dashboardsearch.ParseResults(res, 0)
-			require.NoError(t, err)
-			return parsed
-		}
-
-		fieldValues := runFormat(resourcepb.ResourceSearchRequest_FIELD_VALUES)
-		table := runFormat(resourcepb.ResourceSearchRequest_RESOURCE_TABLE)
-
-		// Compare what SearchFolders actually reads off a hit. The formats differ in the extras
-		// bag for fields with no value — the table format emits an explicit nil per requested
-		// column, field values omits the key — so comparing whole hits would fail on data the
-		// folder code never touches.
-		consumed := func(t *testing.T, results dashv0alpha1.SearchResults) map[string]any {
-			require.Len(t, results.Hits, 1)
-			hit := results.Hits[0]
-			return map[string]any{
-				"uid":         hit.Name,
-				"title":       hit.Title,
-				"folder":      hit.Folder,
-				"description": hit.Description,
-				"legacyID":    hit.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
-			}
-		}
-
-		expected := map[string]any{
-			"uid":         "uid",
-			"title":       "testing-123",
-			"folder":      "parent-uid",
-			"description": "a folder",
-			"legacyID":    int64(2),
-		}
-		require.Equal(t, expected, consumed(t, fieldValues))
-		require.Equal(t, expected, consumed(t, table), "both result formats must yield the same usable values")
+		parsed, err := dashboardsearch.ParseResults(res, 0)
+		require.NoError(t, err)
+		require.Len(t, parsed.Hits, 1)
+		hit := parsed.Hits[0]
+		require.Equal(t, "uid", hit.Name)
+		require.Equal(t, "testing-123", hit.Title)
+		require.Equal(t, "parent-uid", hit.Folder)
+		require.Equal(t, "a folder", hit.Description)
+		require.Equal(t, int64(2), hit.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID))
 	})
 }
 
@@ -1078,20 +973,18 @@ func TestGetFolderByTitle(t *testing.T) {
 			},
 			Limit: folderSearchLimit}).
 			Return(&resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					}, {
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					}},
-					Rows: []*resourcepb.ResourceTableRow{{
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields: []*resourcepb.ResourceSearchField{
+					{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+					{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+				},
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
 						Key: &resourcepb.ResourceKey{Name: "uid", Resource: "folder"},
-						Cells: [][]byte{
-							[]byte("foouid"),
-							[]byte("parentuid"),
-						}},
+						Values: []*resourcepb.ResourceSearchValue{
+							{FieldIndex: 0, StringValues: []string{"foouid"}},
+							{FieldIndex: 1, StringValues: []string{"parentuid"}},
+						},
 					},
 				},
 				TotalHits: 1,
@@ -1132,23 +1025,18 @@ func TestGetFolderByTitle(t *testing.T) {
 			},
 			Limit: folderSearchLimit}).
 			Return(&resourcepb.ResourceSearchResponse{
-				Results: &resourcepb.ResourceTable{
-					Columns: []*resourcepb.ResourceTableColumnDefinition{{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					}, {
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					}},
-					Rows: []*resourcepb.ResourceTableRow{{
-						Key: &resourcepb.ResourceKey{
-							Name:     "uid",
-							Resource: "folder",
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+				Fields: []*resourcepb.ResourceSearchField{
+					{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+					{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+				},
+				Rows: []*resourcepb.ResourceSearchRow{
+					{
+						Key: &resourcepb.ResourceKey{Name: "uid", Resource: "folder"},
+						Values: []*resourcepb.ResourceSearchValue{
+							{FieldIndex: 0, StringValues: []string{"foouid"}},
+							{FieldIndex: 1, StringValues: []string{"parentuid"}},
 						},
-						Cells: [][]byte{
-							[]byte("foouid"),
-							[]byte("parentuid"),
-						}},
 					},
 				},
 				TotalHits: 1,
@@ -1176,7 +1064,6 @@ type folderDeletionSearchClient struct {
 	index         resource.ResourceIndex
 	access        *folderSearchAccessClient
 	resourceName  string
-	format        resourcepb.ResourceSearchRequest_ResultFormat
 	requester     identity.Requester
 	fields        []string
 	deleted       []string
@@ -1189,9 +1076,6 @@ func (c *folderDeletionSearchClient) Search(ctx context.Context, _ int64, req *r
 	c.requester, _ = identity.GetRequester(ctx)
 	c.fields = slices.Clone(req.Fields)
 	req.Options.Key = &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: c.resourceName}
-	if c.format != resourcepb.ResourceSearchRequest_UNSPECIFIED {
-		req.ResultFormat = c.format
-	}
 	res, err := c.index.Search(ctx, c.access, req, nil, nil)
 	if err == nil && res != nil && c.responseBytes == 0 {
 		c.responseBytes = proto.Size(res)
@@ -1268,44 +1152,40 @@ func searchFolderDeletionResources(ctx context.Context, cli *folderDeletionSearc
 
 func TestFolderDeletionSearchFields(t *testing.T) {
 	for _, resourceName := range []string{"dashboards", "variables"} {
-		for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
-			resourcepb.ResourceSearchRequest_FIELD_VALUES, resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		for _, tc := range []struct {
+			name           string
+			count          int
+			allowedFolders map[string]bool
+			cfg            search.PostRankAuthzConfig
+		}{
+			{name: "empty"},
+			{name: "all readable", count: 35},
+			{name: "restricted", count: 35, allowedFolders: map[string]bool{"allowed": true}},
+			{name: "denied", count: 35, allowedFolders: map[string]bool{}},
+			{name: "candidate budget", count: 35, allowedFolders: map[string]bool{"allowed": true},
+				cfg: search.PostRankAuthzConfig{MaxWindow: 7, MaxCandidates: 9}},
 		} {
-			for _, tc := range []struct {
-				name           string
-				count          int
-				allowedFolders map[string]bool
-				cfg            search.PostRankAuthzConfig
-			}{
-				{name: "empty"},
-				{name: "all readable", count: 35},
-				{name: "restricted", count: 35, allowedFolders: map[string]bool{"allowed": true}},
-				{name: "denied", count: 35, allowedFolders: map[string]bool{}},
-				{name: "candidate budget", count: 35, allowedFolders: map[string]bool{"allowed": true},
-					cfg: search.PostRankAuthzConfig{MaxWindow: 7, MaxCandidates: 9}},
-			} {
-				t.Run(fmt.Sprintf("%s/%s/%s", resourceName, format, tc.name), func(t *testing.T) {
-					cli := newFolderDeletionSearchClient(t, resourceName, tc.count, tc.cfg)
-					cli.format, cli.access.allowedFolders = format, tc.allowedFolders
-					ctx := claims.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
-					folders := []string{"allowed", "denied"}
-					var want []string
-					for i := range tc.count {
-						if tc.allowedFolders == nil || tc.allowedFolders["allowed"] && i%2 == 0 {
-							want = append(want, fmt.Sprintf("resource-%05d", i))
-						}
+			t.Run(fmt.Sprintf("%s/%s", resourceName, tc.name), func(t *testing.T) {
+				cli := newFolderDeletionSearchClient(t, resourceName, tc.count, tc.cfg)
+				cli.access.allowedFolders = tc.allowedFolders
+				ctx := claims.WithAuthInfo(t.Context(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, Namespace: "default"})
+				folders := []string{"allowed", "denied"}
+				var want []string
+				for i := range tc.count {
+					if tc.allowedFolders == nil || tc.allowedFolders["allowed"] && i%2 == 0 {
+						want = append(want, fmt.Sprintf("resource-%05d", i))
 					}
-					for _, fields := range [][]string{nil, {resource.SEARCH_FIELD_NAME}} {
-						results, err := searchFolderDeletionResources(ctx, cli, fields, 11, folders)
-						require.NoError(t, err)
-						var got []string
-						for _, hit := range results.Hits {
-							got = append(got, hit.Name)
-						}
-						require.Equal(t, want, got, "UID order and pagination must not depend on response fields")
+				}
+				for _, fields := range [][]string{nil, {resource.SEARCH_FIELD_NAME}} {
+					results, err := searchFolderDeletionResources(ctx, cli, fields, 11, folders)
+					require.NoError(t, err)
+					var got []string
+					for _, hit := range results.Hits {
+						got = append(got, hit.Name)
 					}
-				})
-			}
+					require.Equal(t, want, got, "UID order and pagination must not depend on response fields")
+				}
+			})
 		}
 	}
 }
@@ -1447,8 +1327,8 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 
 	t.Run("Should delete folder", func(t *testing.T) {
 		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{}).Return(nil).Once()
-		dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
-		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
+		dashboardK8sclient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Once()
+		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Once()
 		err := service.Delete(ctx, &folder.DeleteFolderCommand{
 			UID:          "uid1",
 			OrgID:        1,
@@ -1479,44 +1359,31 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 			},
 			Page:  1,
 			Limit: folderSearchLimit}).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resourcepb.ResourceTableColumnDefinition_STRING,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+				{Name: "folder", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "test", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"uid"}},
+						{FieldIndex: 1, StringValues: []string{""}},
 					},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "test",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("uid"),
-							[]byte(""),
-						},
-					},
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "test2",
-							Resource: "dashboard",
-						},
-						Cells: [][]byte{
-							[]byte("uid2"),
-							[]byte(""),
-						},
+				{
+					Key: &resourcepb.ResourceKey{Name: "test2", Resource: "dashboard"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"uid2"}},
+						{FieldIndex: 1, StringValues: []string{""}},
 					},
 				},
 			},
 			TotalHits: 1,
 		}, nil).Once()
 		publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, int64(1), []string{"test", "test2"}).Return(nil).Once()
-		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{}}, nil).Once()
+		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil).Once()
 		err := service.Delete(ctx, &folder.DeleteFolderCommand{
 			UID:          "uid",
 			OrgID:        1,
@@ -1530,17 +1397,15 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 	t.Run("Should delete variables within the folder", func(t *testing.T) {
 		fakeFolderStore.ExpectedFolders = nil
 		variableK8sClient.On("Search", mock.Anything, int64(1), fieldValueRequest).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "title", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key: &resourcepb.ResourceKey{
-							Name:     "var1",
-							Resource: "variables",
-						},
-						Cells: [][]byte{[]byte("my-var")},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: "title", Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key: &resourcepb.ResourceKey{Name: "var1", Resource: "variables"},
+					Values: []*resourcepb.ResourceSearchValue{
+						{FieldIndex: 0, StringValues: []string{"my-var"}},
 					},
 				},
 			},

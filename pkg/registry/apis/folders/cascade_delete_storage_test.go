@@ -164,9 +164,9 @@ func (s *fakeCascadeSearcher) Search(ctx context.Context, req *resourcepb.Resour
 			names = append(names, s.variablesByFolder[uid]...)
 		}
 	}
-	rows := make([]*resourcepb.ResourceTableRow, 0, len(names))
+	rows := make([]*resourcepb.ResourceSearchRow, 0, len(names))
 	for _, n := range names {
-		rows = append(rows, &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: n}})
+		rows = append(rows, &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: n}})
 	}
 
 	// Honor offset/limit so multi-page enumeration is exercised.
@@ -176,7 +176,7 @@ func (s *fakeCascadeSearcher) Search(ctx context.Context, req *resourcepb.Resour
 	if req.Limit > 0 && start+req.Limit < end {
 		end = start + req.Limit
 	}
-	return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{Rows: rows[start:end]}, TotalHits: total}, nil
+	return &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Rows: rows[start:end], TotalHits: total}, nil
 }
 
 func folderFilterValues(req *resourcepb.ResourceSearchRequest) []string {
