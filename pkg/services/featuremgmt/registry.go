@@ -3351,14 +3351,6 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:        "grafana.logDetailsDisplayedFieldControls",
-			Description: "Deprecated: Toggle displayed fields from Log Details",
-			Stage:       FeatureStageDeprecated,
-			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "false",
-			Generate:    Generate{React: true},
-		},
-		{
 			Name:         "grafana.mtFallback",
 			Description:  "Enables multi-tenant fallback behavior",
 			Stage:        FeatureStageExperimental,
