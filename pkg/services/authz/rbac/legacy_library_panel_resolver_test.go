@@ -121,6 +121,7 @@ func TestIntegrationLegacyCheckReusesLibraryPanelResolver(t *testing.T) {
 			if tc.folderVisible {
 				grants[folder.ActionFoldersRead] = []string{"folders:uid:parent"}
 			}
+			grants[folder.ActionFoldersRead] = append(grants[folder.ActionFoldersRead], acimpl.SharedWithMeFolderPermission.Scope)
 			require.Equal(t, &identity.StaticRequester{
 				Type:           types.TypeUser,
 				UserID:         1,
