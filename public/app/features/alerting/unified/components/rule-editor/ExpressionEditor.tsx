@@ -19,14 +19,14 @@ import { usePreview } from './PreviewRule';
 export interface ExpressionEditorProps {
   value?: string;
   onChange: (value: string) => void;
-  dataSourceName: string; // will be a prometheus or loki datasource
+  dataSourceUid: string; // will be a prometheus or loki datasource
   showPreviewAlertsButton: boolean;
 }
 
 export const ExpressionEditor = ({
   value,
   onChange,
-  dataSourceName,
+  dataSourceUid,
   showPreviewAlertsButton = true,
 }: ExpressionEditorProps) => {
   const styles = useStyles2(getStyles);
@@ -35,13 +35,13 @@ export const ExpressionEditor = ({
     settings: dsi,
     isLoading: settingsLoading,
     error: settingsError,
-  } = useDataSourceInstanceSettings(dataSourceName);
+  } = useDataSourceInstanceSettings(dataSourceUid);
 
   const dataQuery = mapToQuery(value);
   let dataSourceSettingsError = settingsError;
   if (!settingsLoading && !dataSourceSettingsError) {
     if (!dsi) {
-      dataSourceSettingsError = new Error(`Datasource ${dataSourceName} not found`);
+      dataSourceSettingsError = new Error(`Datasource ${dataSourceUid} not found`);
     } else if (!isSupportedExternalRulesSourceType(dsi.type)) {
       dataSourceSettingsError = new Error(`${dsi.type} is not supported as an expression editor`);
     }
@@ -52,8 +52,8 @@ export const ExpressionEditor = ({
     loading,
     value: dataSource,
   } = useAsync(() => {
-    return getDataSourceInstance(dataSourceName);
-  }, [dataSourceName]);
+    return getDataSourceInstance(dataSourceUid);
+  }, [dataSourceUid]);
 
   const onChangeQuery = useCallback(
     (query: DataQuery) => {
@@ -68,7 +68,7 @@ export const ExpressionEditor = ({
     onPreview();
   };
 
-  if (loading || settingsLoading || dataSource?.name !== dataSourceName) {
+  if (loading || settingsLoading || dataSource?.uid !== dataSourceUid) {
     return null;
   }
 
