@@ -16,10 +16,10 @@ import {
   PROVISIONING_URL,
 } from '../constants';
 
-import { loadManifestKinds } from './resourceKinds';
+import { loadDiscoveredKinds } from './resourceKinds';
 
 const SafeDynamicImport = (loader: () => Promise<{ default: unknown }>) =>
-  SafeImport(() => Promise.all([loader(), loadManifestKinds()]).then(([module]) => module));
+  SafeImport(() => Promise.all([loader(), loadDiscoveredKinds()]).then(([module]) => module));
 
 // The provisioning admin pages are for repository managers. Gating on read would let everyone in:
 // `provisioning.repositories:read` is granted to the Viewer basic role (git-sync flows need it).

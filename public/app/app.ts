@@ -344,7 +344,7 @@ export class GrafanaApp {
       }
 
       if (config.provisioningEnabled) {
-        import('./features/provisioning/utils/resourceKinds').then((m) => m.loadManifestKinds());
+        import('./features/provisioning/utils/resourceKinds').then((m) => m.loadDiscoveredKinds());
       }
 
       setHelpNavItemHook(useHelpNode);

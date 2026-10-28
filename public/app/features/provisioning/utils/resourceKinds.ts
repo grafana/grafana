@@ -226,10 +226,10 @@ export interface ResourceKindInfo {
 // interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
 // each call site. The literal `key`/`itemType` values stay the source of truth for the unions above.
 const coreKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
-const manifestKindInfos: ResourceKindInfo[] = [];
+const discoveredKindInfos: ResourceKindInfo[] = [];
 
 function knownKindInfos(): ResourceKindInfo[] {
-  return [...coreKindInfos, ...manifestKindInfos];
+  return [...coreKindInfos, ...discoveredKindInfos];
 }
 
 export function resolveKindInfo(group: string, kind: string): ResourceKindInfo {
@@ -243,33 +243,33 @@ export function resolveKindInfoByResource(group: string, resource: string): Reso
   );
 }
 
-interface AppManifest {
-  spec?: {
-    appName?: string;
-    group?: string;
-    versions?: Array<{ kinds?: Array<{ kind: string; plural?: string }> }>;
-  };
+interface APIGroupDiscovery {
+  metadata?: { name?: string };
+  versions?: Array<{ resources?: Array<{ resource: string; responseKind?: { kind?: string } }> }>;
 }
 
-let manifestKinds: Promise<void> | undefined;
+let discoveredKinds: Promise<void> | undefined;
 
-export function loadManifestKinds(): Promise<void> {
-  manifestKinds ??= getBackendSrv()
-    .get<{ items?: AppManifest[] }>('/apis/discovery/v1alpha2/manifests', undefined, undefined, { showErrorAlert: false })
-    .then(({ items }) => items?.forEach(addManifestKinds))
+export function loadDiscoveredKinds(): Promise<void> {
+  discoveredKinds ??= getBackendSrv()
+    .get<{ items?: APIGroupDiscovery[] }>('/apis', undefined, undefined, {
+      showErrorAlert: false,
+      headers: { Accept: 'application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList' },
+    })
+    .then(({ items }) => items?.forEach(addDiscoveredKinds))
     .catch(() => {});
-  return manifestKinds;
+  return discoveredKinds;
 }
 
-function addManifestKinds({ spec }: AppManifest) {
-  const group = spec?.group;
+function addDiscoveredKinds({ metadata, versions }: APIGroupDiscovery) {
+  const group = metadata?.name;
   if (!group) {
     return;
   }
-  const listRoute = spec.appName?.includes('-') ? `/a/${spec.appName}` : '';
-  for (const { kind, plural } of spec.versions?.flatMap((v) => v.kinds ?? []) ?? []) {
-    if (!knownKindInfos().some((info) => info.group === group && info.kind === kind)) {
-      manifestKindInfos.push({ ...getDefaultKindInfo(group, kind, plural), listRoute });
+  for (const { resource, responseKind } of versions?.[0]?.resources ?? []) {
+    const kind = responseKind?.kind;
+    if (kind && !knownKindInfos().some((info) => info.group === group && info.kind === kind)) {
+      discoveredKindInfos.push(getDefaultKindInfo(group, kind, resource));
     }
   }
 }
