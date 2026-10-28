@@ -2,7 +2,7 @@
 
 For Grafana engineers who own a kind and want it searchable. You need to know your kind; you do not need to know anything about Bleve or the index.
 
-The endpoint is `POST /apis/{group}/{version}/namespaces/{namespace}/{resource}/search`. It is on by default (`[grafana-apiserver] enable_search_api`, default `true`), so you can make a kind searchable without asking the search and storage team.
+The endpoint is `POST /apis/{group}/{version}/namespaces/{namespace}/{resource}/search`. Grafana always registers it for eligible kinds, so you can make a kind searchable without asking the search and storage team. The former `[grafana-apiserver] enable_search_api` and `enable_trash_api` settings no longer control route registration.
 
 This is `v0alpha1`. Shapes can change.
 
@@ -130,14 +130,18 @@ Every kind can query and retrieve these without declaring anything. They are the
 | `tags` | string array | filter, facet, retrieve | Unique tags | `spec.tags`. Non-string entries are skipped |
 | `folder` | string | filter, sort, retrieve | Kubernetes name of the containing folder | The `grafana.app/folder` annotation |
 | `createdBy` | string | filter, retrieve | Who created it, as `user:<uid>` | The `grafana.app/createdBy` annotation |
+| `updatedBy` | string | filter, retrieve | Who last updated it, as `user:<uid>` | The `grafana.app/updatedBy` annotation |
 | `ownerReferences` | string array | filter, retrieve | Owner references, as `{group}/{kind}/{name}` | `metadata.ownerReferences` |
 | `managedBy` | string | facet | Manager identity, as `{kind}:{id}` | Manager properties |
-| `created` | int64 | retrieve | Creation timestamp, unix millis | `metadata.creationTimestamp` |
-| `updated` | int64 | retrieve | Update timestamp, unix millis | The `grafana.app/updatedTimestamp` annotation |
+| `created` | int64 | filter, sort, retrieve | Creation timestamp, unix millis | `metadata.creationTimestamp` |
+| `updated` | int64 | filter, sort, retrieve | Update timestamp, unix millis | The `grafana.app/updatedTimestamp` annotation |
+| `manager.kind` | string | filter, retrieve | Kind of tool that manages it, such as `repo` for Git Sync | Manager properties |
+| `manager.id` | string | filter, retrieve | Which instance of that tool manages it, such as the repository name | Manager properties |
+| `manager.allowEdits` | boolean | retrieve | Whether the manager allows others to edit it | Manager properties |
 
 So `title`, `description` and `tags` come from your spec: name them that way and they are indexed with no work from you. A kind with its own document builder can overwrite any of these, as dashboards do from their parsed summary.
 
-Note that `created` and `updated` only declare `retrieve`. They can be returned, but they cannot be filtered, sorted or used in a range query, so "everything updated in the last week" is not a query you can write today. This is a limitation of the standard fields rather than something for your kind to work around, and it is likely to change: if you need it, say so and the standard fields can be given those capabilities.
+`created` and `updated` can be filtered with a `range` leaf, so "everything updated in the last week" is a query you can write, and sorted, so results can be ordered by time.
 
 ## 4. Request
 
@@ -183,6 +187,30 @@ In practice that means when your kind graduates from `v1beta1` to `v1`, the URL 
 To exclude empty values, prefer a `filter` leaf over a regex: `NotIn` with a single `""` value is a single-term negation, where the regex `.+` scans the whole field (so `.+` only works under 10,000 distinct values). Note `NotIn` also matches documents missing the field, so it means "value is not empty" rather than "present and non-empty"; use `.+` (and `negate` it for empty-or-missing) only when you need that stricter sense.
 
 Omitting `where` matches everything of that kind in the namespace, subject to authorization.
+
+#### Searching a folder and everything below it
+
+The global search (`.../namespaces/{namespace}/global/search`) also offers `folderTree`, which matches what is in the named folders or in any folder below them, at any depth:
+
+```json
+{ "filter": { "field": "folderTree", "operator": "In", "values": ["team-a"] } }
+```
+
+Several values are ORed. Only `In` is supported. The named folders themselves are not returned, only what they hold; to match only what is directly in a folder, filter on `folder` instead. The root folder is named `general`, and an empty value is rejected: `folderTree` with `general` matches everything, the same as no filter.
+
+`folderTree` is not stored with each item: the global search works it out from the folders it has indexed when it searches. Like the rest of that index it is eventually consistent, so just after a folder moves, a search can still find what is below it in its old place.
+
+The global search answers with `GlobalSearchResults`. When it cannot search a type, because the calling service may not search it on the user's behalf or because the deployment does not check its results against the user, it leaves that type out instead of failing, and names it in `metadata.skippedTypes`. The results are then incomplete. It fails only when no type is left.
+
+##### Experimental recursive searches of one kind
+
+The same `folderTree` filter is available on per-resource `/search` endpoints only when `search.perResourceFolderTree` is enabled. This experimental flag defaults to off and is evaluated for each request, so it can be enabled for selected stacks during load and latency testing. With the flag off, the API rejects the field with 422 before calling the search server. Existing global search is unaffected.
+
+The search stays scoped to the resource type in the URL. Its folder index supplies the hierarchy without adding folder documents to the results. The filter supports only `In` and cannot be returned, sorted, faceted, or searched as text or regex. It is not available on `/trash`, even with the flag enabled.
+
+Deploy search-server support for recursive per-resource queries before enabling the flag. An older server rejects the filter; the API returns that error rather than silently running a non-recursive search.
+
+The folder and resource indexes use the existing per-resource refresh policy. The hierarchy and results are not read in one snapshot, so concurrent folder moves can affect results. This query must not be the sole check that a folder is empty before deletion; preventing concurrent writes requires coordination with those writes.
 
 #### Requiring every value
 
@@ -289,14 +317,324 @@ Individual results are then filtered per item using the same access client that 
 
 - **Unified storage only**, and a kind whose data has not migrated returns an empty result rather than an error. This is the most common reason search appears not to work, see the prerequisite at the top.
 - **The first request for a kind may wait for an index build.** Indexes are created on demand.
-- **Trash is limited to dashboards today**, so a kind gets `/search` only. `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be listed in `trashAllowlist` in `pkg/services/apiserver/searchroutes/searchroutes.go`. That list grows as the access rule trash uses is checked against more kinds. Once your kind is on it, `trash: false` opts back out.
-- **Sorting** works on any indexed field that declares `sort`. One exception: non-string retrieve-only fields fall back to the `name` tie-breaker instead of failing, so `created` and `updated` cannot be sorted on.
+- **Trash is limited to dashboards today**, so other kinds get `/search` only. A kind has to be accepted by `resource.TrashSearchAllowed` to get `/trash`. That policy grows as the access rule trash uses is checked against more kinds. Once your kind is allowed, `trash: false` opts back out.
+- **Sorting** works on any indexed field that declares `sort`. A field that does not declare it is rejected with 422.
 - **A field without `retrieve` cannot be returned**, even if you can filter on it.
+
+## Hybrid search
+
+Hybrid search combines lexical matches with semantic matches from embeddings.
+To make your resource embeddable, declare its embedding inputs with `embed.fields`
+in CUE and enroll the resource in the deployment. Your resource's
+data must already be in unified storage, as described in the prerequisite above.
+
+### Expose the endpoint
+
+Hybrid routes require an explicit opt-in on each namespaced kind version. In the
+kind's CUE definition, set:
+
+```cue
+search: {
+	hybrid: true
+}
+```
+
+Run `make gen-apps` to regenerate the manifest artifacts. Only versions served by
+the API process get `POST /apis/{group}/{version}/namespaces/{namespace}/{resource}/search/hybrid`.
+The route is absent when `search.hybrid` is omitted or false, or the kind is
+cluster-scoped. The same rules apply to core APIs, app plugins and manifest-backed
+custom resource definitions.
+
+`[grafana-apiserver] enable_hybrid_api` defaults to `true` and can disable these routes deployment-wide. Standalone API servers expose the equivalent flag `--grafana-apiserver-enable-hybrid-api=false`. This switch and the manifest's `search.hybrid` setting are independent of lexical search and trash: hybrid can remain available when `search.endpoint` or `search.trash` is false.
+
+Route availability does not enroll a resource for embeddings. The `embed.fields`
+declaration and `vector_allowed_internal_collections` setting below control that
+separately. A hybrid request on a storage version that does not implement the RPC
+returns `501 Not Implemented`.
+
+### 1. Declare the fields to embed
+
+Add `embed.fields` to the kind's CUE definition. Each entry identifies a field
+whose value is included in the text sent to the embedding provider. Folders
+include `spec.title` and `spec.description`; the `foldersV1` definition in
+`apps/folder/kinds/folder.cue` contains:
+
+```cue
+embed: {
+	fields: [
+		{name: "title", path: "spec.title"},
+		{name: "description", path: "spec.description"},
+	]
+}
+```
+
+`path` selects a string or string array from the stored object. `name` labels
+that value in the text sent to the embedding provider. For example:
+
+```text
+title: Production infrastructure
+description: Dashboards for production services
+```
+
+The generic builder produces one embedding document per resource, joining
+fields in declaration order. It omits missing or empty values and caps the
+combined document at 4 KiB, so put the most useful information first.
+
+These fields supply embedding text only. They do not make the fields available
+as filters, and they are independent of `searchFields`.
+
+### 2. Declare fields for each stored API version
+
+The builder selects fields using the object's stored `apiVersion`. Declare
+them for every version whose objects you want embedded, including older
+versions still present in storage. The version in a search request does not
+change which declaration is used to embed an object.
+
+If versions share a schema, they can share the declaration: folders define
+`foldersV1beta1: foldersV1`, so both `v1` and `v1beta1` have the fields above.
+If their schemas differ, give each version the paths that match its schema.
+An object with no matching version declaration is skipped; the builder does
+not fall back to another version's fields.
+
+### 3. Set the resource's re-embedding version
+
+Inside the `manifest` object in `apps/folder/kinds/manifest.cue`, declare:
+
+```cue
+embed: {
+	folders: {
+		reembedVersion: 1
+	}
+}
+```
+
+The key is the plural resource name (`folders`). `reembedVersion` is a positive
+integer shared by all API versions of that resource. It is independent of API
+versions such as `v1` and `v1beta1`.
+
+Increase it when you change the embedding inputs and need existing resources
+reprocessed, for example when adding another descriptive field. Changing
+`embed.fields` does not automatically increase this version: future writes use
+the new fields, while a version bump requests a backfill of existing resources.
+Keep it increasing; do not reset it when adding a new API version.
+
+### 4. Generate, deploy, and enroll the resource
+
+Generate the app artifacts after editing the CUE. From the repository root,
+for folders:
+
+```bash
+make gen-apps app=folder
+```
+
+Commit the generated artifacts with the CUE changes and deploy the updated
+manifest to the services that generate and query embeddings. In a split
+deployment, updating the Grafana API process alone does not update the storage
+and search services. Deploy the declarations before adding the resource to the
+allowlist: startup validation rejects an enrolled resource with no declaration
+or custom builder.
+
+Ask the deployment owner to add your `group/resource` to
+`[unified_storage] vector_allowed_internal_collections`. For folders alongside
+dashboards:
+
+```ini
+[unified_storage]
+vector_allowed_internal_collections = dashboard.grafana.app/dashboards,folder.grafana.app/folders
+```
+
+Set the list on both storage-api and search-api. Storage-api uses it to select
+resources for embedding generation and backfill; search-api uses it to allow
+queries against those embeddings. The configured list replaces the default,
+so retain dashboards and any other resources already enrolled. An unset or
+empty setting defaults to dashboards only.
+
+The deployment also needs an embedding provider and vector database configured,
+with `vector_backend = true` on both services and `vector_indexing_enabled = true`
+on storage-api. Search-api does not need indexing enabled. In a single-process
+deployment, these settings belong to the same Grafana process.
+
+After rollout, create or update a resource. The first write event processed by
+the reconciler initializes its vector collection and schedules a backfill of
+existing resources. Later writes keep embeddings up to date. Check generation
+and backfill metrics as described below.
+
+### Monitor backfills
+
+Use the existing storage-api metric to see resource processing attempts per second
+by outcome. Scope the query to your deployment and select your group/resource:
+
+```promql
+sum by (status) (
+  rate(grafana_vector_storage_backfill_item_duration_seconds_count{group="folder.grafana.app", resource="folders"}[5m])
+)
+```
+
+`embedded` shows successful processing; `error` shows failed attempts. Check
+`skipped_*` outcomes for objects that were skipped. When activity stops, check
+storage-api logs for `backfill: job complete` or `backfill: job failed`.
+
+For example, in the **Grafana Logging Dev** Loki datasource:
+
+```logql
+{cluster="dev-us-central-0", namespace="unified-storage-dev-002", container="storage-api"} |= "backfill: job complete"
+```
+
+Adjust the cluster and namespace for your deployment and use a time range covering
+your backfill. Each entry includes `job_id` and `model`.
+
+An increase in `grafana_vector_storage_embed_skipped_versions_total` indicates
+missing API-version declarations; filter by `group`, `resource`, and `version`.
+
+### Custom embedding builders
+
+Use a registered Go `embed.Builder` when a resource needs custom extraction or
+multiple chunks. Dashboards, for example, produce a chunk per panel. The builder
+supplies its text through `Extract` and its re-embedding version through
+`Version()`; omit the CUE `embed.fields` and resource-level `reembedVersion` for
+that resource. A custom builder takes precedence over manifest declarations.
+It still needs enrollment in `vector_allowed_internal_collections`.
+
+### Query the resource
+
+Embedding generation and HTTP route availability are configured separately.
+On a deployment that exposes your resource's hybrid endpoint, send a POST to
+`/apis/{group}/{version}/namespaces/{namespace}/{resource}/search/hybrid`.
+For folders, the path is
+`/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/search/hybrid`.
+
+Storage combines lexical and semantic results when both an embedding provider
+and vector backend are configured. If either is missing, storage versions with
+lexical-only support search the regular resource index instead. Reranking remains
+available in this mode. Failures from a configured semantic search still return
+errors; they do not trigger lexical-only results.
+
+The request uses the same envelope group as lexical search:
+
+```json
+{
+  "apiVersion": "search.grafana.app/v0alpha1",
+  "kind": "HybridSearchQuery",
+  "query": "production",
+  "semanticQuery": "Folders containing production infrastructure dashboards",
+  "filters": [{ "field": "folder", "values": [""] }],
+  "limit": 10
+}
+```
+
+`query` is required and feeds the lexical search. It also supplies the text for
+semantic search and reranking unless `semanticQuery` is supplied. In lexical-only
+mode, `semanticQuery` can still be used for reranking. Each query is limited to
+1,000 bytes. `limit` defaults to 50, is capped at 200, and cannot be negative.
+
+Filters are exact matches: values within a filter are ORed, and different filters
+are ANDed. Filter values containing `*` are rejected.
+Each field may appear once, each values list must be nonempty, and the
+combined value count cannot exceed 1,000. All resources support `uid` (resource
+name) and `folder` (containing folder, not recursive). `""` and `"general"` both
+select the root folder. Dashboards additionally support `datasource_uid` and
+`language` (`promql`, `logql`, `traceql`, `sql`). Language filtering preserves the
+dashboard endpoint's behavior: its lexical leg approximates language using
+datasource types. Declaring `embed.fields` supplies
+embedding text only; it grants no filtering capability. Lexical search field
+declarations do not extend the hybrid filter set either.
+
+`minRelevance` accepts `lowest`, `low`, `medium`, `high` or `highest`; omitting it
+keeps every result. It is best-effort: if no reranker is configured or reranking
+fails, results are returned without this threshold. `skipRerank: true` skips
+reranking and cannot be combined with `minRelevance`.
+
+```json
+{
+  "apiVersion": "search.grafana.app/v0alpha1",
+  "kind": "HybridSearchResults",
+  "items": [{
+    "resource": { "group": "folder.grafana.app", "resource": "folders", "kind": "Folder", "name": "production" },
+    "score": 0.032,
+    "title": "Production infrastructure",
+    "folder": "",
+    "chunks": [{ "subresource": "", "content": "Production infrastructure dashboards" }]
+  }]
+}
+```
+
+This is a top-k result set, without totals, pagination, sorting or facets. Scores
+are opaque and meaningful only for ordering within one response. Matching chunks
+are returned best first; an empty subresource means the whole resource or a
+synthesized title chunk for a lexical-only hit. Results can also include
+best-effort `folderTitle` and `managedBy` (`kind` and `id`) display data. No matches
+returns `"items": []`.
+
+Malformed JSON and unknown fields receive 400; invalid envelopes and options
+receive 422 with field paths. When semantic search is configured, a resource not
+enrolled through `vector_allowed_internal_collections`, not provisioned, or
+without an active builder receives 404. These enrollment checks do not apply in
+lexical-only mode. An unavailable backend receives 503. Storage without the RPC
+or a configured search index receives 501; older storage versions may also return
+501 when embedding configuration is missing. The HTTP handler preserves these
+errors instead of implementing a separate fallback.
+
+The storage service authorizes individual results in both modes. Its embedding
+query rate limit applies only when semantic search is enabled (429 when exceeded).
+
+### Search across resources
+
+Deploy hybrid eligibility checks to all search-api instances before setting
+`[grafana-apiserver] enable_global_hybrid_api = true`; older servers ignore the
+opt-in check. The existing `enable_hybrid_api` switch must also remain enabled.
+Send the same request envelope to
+`POST /apis/search.grafana.app/v0alpha1/namespaces/{namespace}/global/search/hybrid`,
+adding the resource types to search:
+
+```json
+{
+  "apiVersion": "search.grafana.app/v0alpha1",
+  "kind": "HybridSearchQuery",
+  "resources": [
+    { "group": "dashboard.grafana.app", "resource": "dashboards" },
+    { "group": "folder.grafana.app", "resource": "folders" },
+    { "group": "assistant.alertrules.ext.grafana.app", "resource": "alertrules" }
+  ],
+  "query": "production",
+  "limit": 10
+}
+```
+
+The search backend requires `search.hybrid: true` in its built-in or watched
+manifest for each internal resource. Externally pushed collections, identified
+by the collection catalog rather than the group name, use existing enrollment
+and authorization rules. API versions are not needed in the resource list.
+
+Storage authorizes individual results; Grafana also checks API authorization for
+locally known resources. Global search cannot run custom authorization from a
+remote app handler. Resources needing it must keep hybrid disabled on all served
+versions unless storage enforces the same policy. Let the opt-out reach all search
+servers before relying on it. Existing direct RPC callers and custom handlers
+are unchanged.
+
+Results are reranked together, and `limit` applies to the combined response.
+Without reranking, resource types are interleaved in request order. Filters apply
+to every requested type; multi-resource queries support only `uid` and `folder`.
+A failure searching any resource fails the request. Each result includes its own
+group and resource; `kind` is empty when no manifest supplies it.
+
+To let clients omit `resources`, configure defaults in the Grafana HTTP process:
+
+```ini
+[unified_storage]
+hybrid_search_default_resources = dashboard.grafana.app/dashboards,folder.grafana.app/folders
+```
+
+An omitted or empty list uses these defaults; an explicit list overrides them.
+Keep group/resource pairs unique; an empty setting still requires explicit resources.
+Configured targets pass existing validation and authorization checks.
 
 ## Where to look
 
-- `pkg/apis/search/v0alpha1/types.go`: the only authority on the public request and response shape
+- `pkg/apis/search/v0alpha1/types.go` and `hybrid.go`: public request and response shapes
 - `route.go`, `handler.go`, `translate.go` in this package: validation and error codes
+- `apps/folder/kinds/folder.cue` and `manifest.cue`: a complete example of declarative embedding inputs and their re-embedding version
+- `pkg/storage/unified/search/embed/generic/builder.go`: how declared fields become embedding text
 - `pkg/storage/unified/resource/search_field.go`: field definitions, capabilities, the index-affecting hash
 - `pkg/storage/unified/resource/standard_search_fields.go`: the standard fields
 - `pkg/services/apiserver/searchroutes/searchroutes.go`: how routes are mounted, including the temporary field requirement

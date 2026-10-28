@@ -34,7 +34,7 @@ function defaultGetSyntax(node: Node): string {
 function defaultRenderDecoration(
   props: { children: React.ReactNode; decoration: Decoration },
   editor: Editor,
-  next: () => any
+  next: () => React.ReactNode
 ): void | React.ReactNode {
   const { decoration } = props;
   if (decoration.type !== TOKEN_MARK) {
@@ -67,7 +67,7 @@ class Options
       children: React.ReactNode;
     },
     editor: Editor,
-    next: () => any
+    next: () => React.ReactNode
   ) => void | React.ReactNode;
 
   constructor(props: OptionsFormat) {

@@ -53,6 +53,10 @@ export interface Options {
    */
   pageSize?: number;
   /**
+   * Whether the column management sidebar starts open
+   */
+  showColumnsSidebar?: boolean;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;

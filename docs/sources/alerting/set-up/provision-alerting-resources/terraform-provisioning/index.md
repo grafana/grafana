@@ -50,7 +50,7 @@ terraform {
     required_providers {
         grafana = {
             source = "grafana/grafana"
-            version = ">= 2.9.0"
+            version = ">= 4.47.0"
         }
     }
 }
@@ -330,27 +330,23 @@ By default, Grafana routes all alerts to the default notification policy tree us
    - `metadata.uid` sets the routing tree's unique identifier. Alert rules reference this value to route into this tree instead of the default policy tree.
    - For routing tree settings, refer to the [`grafana_apps_notifications_routingtree_v1beta1` Terraform resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_notifications_routingtree_v1beta1).
 
-1. To route notifications from an alert rule to a specific tree, define the alert rule using the [`grafana_apps_rules_alertrule_v0alpha1` Terraform resource](https://registry.terraform.io/providers/grafana/grafana/latest/docs/resources/apps_rules_alertrule_v0alpha1) and set `notification_settings.named_routing_tree.routing_tree` to the tree's `metadata.uid`.
+1. To route notifications from an alert rule to a specific tree, set the `notification_settings.policy` option in the alert rule to the tree's `metadata.uid`.
 
    ```terraform
-   resource "grafana_apps_rules_alertrule_v0alpha1" "platform_rule_test" {
-       metadata {
-           uid        = "platform_rule_test"
-           folder_uid = grafana_folder.platform_alert_folder.uid
-       }
-       spec {
-           title = "rule_test"
-           # ...
-           notification_settings {
-               named_routing_tree {
-                   routing_tree = "platform-routing-tree"
-               }
-           }
-       }
+   resource "grafana_rule_group" "<terraform_rule_group_name>" {
+        # ...
+        rule {
+            name = "My Random Walk Alert"
+            # ...
+            notification_settings {
+                policy = grafana_apps_notifications_routingtree_v1beta1.team_platform.metadata.uid
+            }
+        }
+        # ...
    }
    ```
 
-   Alert rules that don't set `notification_settings.named_routing_tree` continue to route through the default notification policy tree.
+   Alert rules that don't set `notification_settings.policy` continue to route through the default notification policy tree.
 
 1. Continue to add more Grafana resources or [use the Terraform CLI for provisioning](#provision-grafana-resources-with-terraform).
 

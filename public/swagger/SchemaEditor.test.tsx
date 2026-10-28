@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import type { CodeMirrorEditorProps } from '@grafana/ui/unstable';
 
 import SchemaEditor from './SchemaEditor';
+import * as annotations from './schemaAnnotations';
 
 // The schema package pulls ESM-only syntax highlighting into Jest; schema validation
 // is outside the draft/commit contract exercised here.
@@ -91,4 +92,21 @@ it.each(['disabled', 'readOnly'] as const)('keeps the draft when %s becomes true
   expect(editor).toHaveValue('draft');
   expect(editor).toHaveAttribute('readonly');
   expect(onChange).not.toHaveBeenCalled();
+});
+
+it('retains annotation extensions across schema and callback rerenders while committing to the latest callback', () => {
+  const extensions = jest.spyOn(annotations, 'schemaAnnotations');
+  const original = jest.fn();
+  const updated = jest.fn();
+  try {
+    const { rerender } = render(<SchemaEditor schema={schema} value="{}" onChange={original} />);
+    rerender(<SchemaEditor schema={{ ...schema, title: 'Updated' }} value="{}" onChange={updated} />);
+    expect(extensions).toHaveBeenCalledTimes(1);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: '{"new":true}' } });
+    fireEvent.blur(screen.getByRole('textbox'));
+    expect(updated).toHaveBeenCalledWith({ target: { value: '{"new":true}' } });
+    expect(original).not.toHaveBeenCalled();
+  } finally {
+    extensions.mockRestore();
+  }
 });

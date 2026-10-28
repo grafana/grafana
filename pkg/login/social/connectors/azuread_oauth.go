@@ -682,12 +682,10 @@ func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, 
 	}()
 
 	if res.StatusCode != http.StatusOK {
-		if res.StatusCode == http.StatusForbidden {
-			logger.Warn("AzureAD OAuth: Token need GroupMember.Read.All permission to fetch all groups")
-		} else {
-			body, _ := io.ReadAll(res.Body)
-			logger.Warn("AzureAD OAuth: could not fetch user groups", "code", res.StatusCode, "body", string(body))
-		}
+		// A 403 is not always a missing GroupMember.Read.All permission (e.g. Conditional Access),
+		// and the Graph error body carries the error code and request ID needed to tell the causes apart.
+		body, _ := io.ReadAll(io.LimitReader(res.Body, 4096))
+		logger.Warn("AzureAD OAuth: could not fetch user groups", "code", res.StatusCode, "body", string(body))
 		return []string{}, nil
 	}
 

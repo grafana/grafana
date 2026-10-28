@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 
@@ -6,7 +7,6 @@ import {
   createTheme,
   type DataFrame,
   EventBusSrv,
-  type FeatureToggles,
   type Field,
   FieldType,
   getDefaultTimeRange,
@@ -16,9 +16,9 @@ import {
   type PanelProps,
   toDataFrame,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
 import { mockComboboxRect } from '@grafana/test-utils';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider } from '@grafana/ui';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import * as sceneAbleManagement from 'app/features/canvas/runtime/sceneAbleManagement';
@@ -564,32 +564,34 @@ describe('Canvas', () => {
     const timeRange = getDefaultTimeRange();
 
     return (
-      <CanvasPanel
-        onChangeTimeRange={onChangeTimeRange}
-        title={''}
-        timeZone={'utc'}
-        timeRange={timeRange}
-        id={0}
-        data={{
-          series: [successIconFrame, warningIconFrame, errorIconFrame, unmappedFrame],
-          state: LoadingState.Done,
-          timeRange,
-        }}
-        onFieldConfigChange={onFieldConfigChange}
-        eventBus={eventBus}
-        onOptionsChange={handleOptionsChange}
-        replaceVariables={(s) => s}
-        renderCounter={0}
-        fieldConfig={{
-          overrides: [],
-          defaults: {},
-        }}
-        height={height}
-        width={width}
-        transparent={false}
-        options={defaultOptions}
-        {...propsState}
-      />
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <CanvasPanel
+          onChangeTimeRange={onChangeTimeRange}
+          title={''}
+          timeZone={'utc'}
+          timeRange={timeRange}
+          id={0}
+          data={{
+            series: [successIconFrame, warningIconFrame, errorIconFrame, unmappedFrame],
+            state: LoadingState.Done,
+            timeRange,
+          }}
+          onFieldConfigChange={onFieldConfigChange}
+          eventBus={eventBus}
+          onOptionsChange={handleOptionsChange}
+          replaceVariables={(s) => s}
+          renderCounter={0}
+          fieldConfig={{
+            overrides: [],
+            defaults: {},
+          }}
+          height={height}
+          width={width}
+          transparent={false}
+          options={defaultOptions}
+          {...propsState}
+        />
+      </OpenFeatureProvider>
     );
   }
 
@@ -601,32 +603,34 @@ describe('Canvas', () => {
     const timeRange = getDefaultTimeRange();
 
     return (
-      <CanvasPanel
-        onChangeTimeRange={onChangeTimeRange}
-        title={''}
-        timeZone={'utc'}
-        timeRange={timeRange}
-        id={0}
-        data={{
-          series: seriesOverrides ?? [successIconFrame, warningIconFrame, errorIconFrame, unmappedFrame],
-          state: LoadingState.Done,
-          timeRange,
-        }}
-        onFieldConfigChange={onFieldConfigChange}
-        eventBus={eventBus}
-        onOptionsChange={onOptionsChange}
-        replaceVariables={(s) => s}
-        renderCounter={0}
-        fieldConfig={{
-          overrides: [],
-          defaults: {},
-        }}
-        height={height}
-        width={width}
-        transparent={false}
-        options={defaultOptions}
-        {...propsOverrides}
-      />
+      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+        <CanvasPanel
+          onChangeTimeRange={onChangeTimeRange}
+          title={''}
+          timeZone={'utc'}
+          timeRange={timeRange}
+          id={0}
+          data={{
+            series: seriesOverrides ?? [successIconFrame, warningIconFrame, errorIconFrame, unmappedFrame],
+            state: LoadingState.Done,
+            timeRange,
+          }}
+          onFieldConfigChange={onFieldConfigChange}
+          eventBus={eventBus}
+          onOptionsChange={onOptionsChange}
+          replaceVariables={(s) => s}
+          renderCounter={0}
+          fieldConfig={{
+            overrides: [],
+            defaults: {},
+          }}
+          height={height}
+          width={width}
+          transparent={false}
+          options={defaultOptions}
+          {...propsOverrides}
+        />
+      </OpenFeatureProvider>
     );
   };
   const setUp = (propsOverrides?: Partial<PanelProps<Options>>, seriesOverrides?: DataFrame[]) => {
@@ -716,9 +720,11 @@ describe('Canvas', () => {
   });
 
   describe('canvasPanelPanZoom enabled', () => {
-    const previousFlagValue = config.featureToggles.canvasPanelPanZoom;
-    beforeAll(() => (config.featureToggles.canvasPanelPanZoom = true));
-    afterAll(() => (config.featureToggles.canvasPanelPanZoom = previousFlagValue));
+    beforeEach(() => setTestFlags({ canvasPanelPanZoom: true }));
+    afterEach(() => {
+      cleanup();
+      setTestFlags({});
+    });
     it('Renders - kitchen sink', () => {
       setUp(undefined, []);
 
@@ -815,9 +821,11 @@ describe('Canvas', () => {
   });
 
   describe('canvasPanelPanZoom disabled', () => {
-    const previousFlagValue = config.featureToggles.canvasPanelPanZoom;
-    beforeAll(() => (config.featureToggles.canvasPanelPanZoom = false));
-    afterAll(() => (config.featureToggles.canvasPanelPanZoom = previousFlagValue));
+    beforeEach(() => setTestFlags({ canvasPanelPanZoom: false }));
+    afterEach(() => {
+      cleanup();
+      setTestFlags({});
+    });
     it('Renders - kitchen sink', () => {
       setUp(undefined, []);
 
@@ -921,13 +929,12 @@ describe('Canvas', () => {
     { flag: 'canvasPanelPanZoom', value: true },
     { flag: 'canvasPanelPanZoom', value: false },
   ])('$flag -> $value', ({ flag, value }) => {
-    const previousFlagValue = config.featureToggles[flag as keyof FeatureToggles] as boolean;
-
-    beforeAll(() => {
-      config.featureToggles[flag as keyof FeatureToggles] = value;
+    beforeEach(() => {
+      setTestFlags({ [flag]: value });
     });
-    afterAll(() => {
-      config.featureToggles[flag as keyof FeatureToggles] = previousFlagValue;
+    afterEach(() => {
+      cleanup();
+      setTestFlags({});
     });
 
     it('Unmounts without throwing', () => {

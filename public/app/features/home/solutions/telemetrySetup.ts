@@ -43,6 +43,7 @@ const setup: Record<
   },
   traces: {
     action: () => t('home.overview.available.traces.action', 'Instrument traces'),
+    guidePath: `/a/${SETUPGUIDE_PLUGIN_ID}/getting-started/otel`,
     cloudDocsHref: `${GRAFANA_CLOUD_DOCS_BASE_URL}/send-data/traces/set-up/instrument-apps/`,
     docsHref: TELEMETRY_SETUP_DOCS.traces,
   },

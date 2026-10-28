@@ -11,9 +11,10 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { type InternalQueryEditorInsertionPropsV1 } from 'app/features/explore/SignalExplorer/internalInsertionContract';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 
 import { filterPanelDataToQuery, type Props, QueryEditorRow } from './QueryEditorRow';
@@ -77,14 +78,9 @@ jest.mock('@grafana/runtime', () => ({
     updateTimeRange: () => {},
   }),
   reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn((...args: unknown[]) => mockGet(...args)),
   getDataSourceInstanceSettings: jest.fn((...args: unknown[]) => Promise.resolve(mockGetInstanceSettings(...args))),
 }));
-
 // Draggable fails to render in tests, so we mock it out
 jest.mock('app/core/components/QueryOperationRow/QueryOperationRow', () => ({
   QueryOperationRow: (props: PropsWithChildren) => <div>{props.children}</div>,
@@ -728,6 +724,53 @@ describe('QueryEditorRow', () => {
       );
 
       expect(await screen.findByTestId('fake-query-editor')).toBeInTheDocument();
+    });
+  });
+
+  describe('query editor insertion', () => {
+    const data: PanelData = {
+      state: LoadingState.Done,
+      series: [],
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+    let receivedRegistrar: unknown;
+
+    function FakeQueryEditor(editorProps: InternalQueryEditorInsertionPropsV1) {
+      receivedRegistrar = editorProps.unstable_queryEditorInsertionV1;
+      return <div data-testid="fake-query-editor" />;
+    }
+
+    function resolveDatasourceAs(type: string) {
+      mockGet.mockImplementation(() =>
+        Promise.resolve({ ...mockDS, type, components: { QueryEditor: FakeQueryEditor } })
+      );
+    }
+
+    beforeEach(() => {
+      receivedRegistrar = undefined;
+    });
+
+    afterEach(() => {
+      mockGet.mockImplementation((..._args: unknown[]) => Promise.resolve(mockDS));
+    });
+
+    it('hands the registrar to a Prometheus query editor', async () => {
+      resolveDatasourceAs('prometheus');
+      const registrar = { register: jest.fn() };
+
+      render(<QueryEditorRow {...props(data)} queryEditorInsertion={registrar} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toBeInTheDocument();
+      expect(receivedRegistrar).toBe(registrar);
+    });
+
+    it('keeps the registrar from editors of other datasources', async () => {
+      resolveDatasourceAs('loki');
+
+      render(<QueryEditorRow {...props(data)} queryEditorInsertion={{ register: jest.fn() }} />);
+
+      expect(await screen.findByTestId('fake-query-editor')).toBeInTheDocument();
+      expect(receivedRegistrar).toBeUndefined();
     });
   });
 

@@ -2,6 +2,7 @@ package manager
 
 import (
 	"archive/zip"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -36,6 +37,7 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 		// mock a plugin to be returned automatically by the plugin loader
 		pluginV1 := createPlugin(t, pluginID, plugins.ClassExternal, true, true, func(plugin *plugins.Plugin) {
 			plugin.Info.Version = v1
+			plugin.FS = pluginfakes.NewFakePluginFS(t.TempDir())
 		})
 		mockZipV1 := &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
 			FileHeader: zip.FileHeader{Name: zipNameV1},
@@ -129,13 +131,14 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 					File: mockZipV2,
 				}, nil
 			}
-			fs.ExtractFunc = func(_ context.Context, pluginID string, _ storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+			pluginsDir := t.TempDir()
+			fs.ExtractFunc = func(_ context.Context, pluginID string, dirNameFunc storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 				require.Equal(t, pluginV1.ID, pluginID)
 				require.Equal(t, mockZipV2, z)
 				return &storage.ExtractedPluginArchive{
 					ID:      pluginID,
 					Version: v2,
-					Path:    zipNameV2,
+					Path:    extractedDir(t, pluginsDir, dirNameFunc(pluginID)),
 				}, nil
 			}
 
@@ -168,13 +171,14 @@ func TestPluginManager_Add_Remove(t *testing.T) {
 					File: mockZipV2,
 				}, nil
 			}
-			fs.ExtractFunc = func(_ context.Context, pluginID string, _ storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+			pluginsDir := t.TempDir()
+			fs.ExtractFunc = func(_ context.Context, pluginID string, dirNameFunc storage.DirNameGeneratorFunc, z *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
 				require.Equal(t, pluginV1.ID, pluginID)
 				require.Equal(t, mockZipV2, z)
 				return &storage.ExtractedPluginArchive{
 					ID:      pluginID,
 					Version: v2,
-					Path:    zipNameV2,
+					Path:    extractedDir(t, pluginsDir, dirNameFunc(pluginID)),
 				}, nil
 			}
 
@@ -736,4 +740,368 @@ func TestPluginInstaller_RemoveUnloadsNestedChildrenBeforeParent(t *testing.T) {
 	require.Equal(t, 0, childRemoved)
 	require.Equal(t, []string{"parent-app", "child-panel"}, cleaned)
 	require.Equal(t, []string{"child-panel", "parent-app"}, auth.Removed)
+}
+
+func TestPluginInstaller_UpdateKeepsRBACAndExternalService(t *testing.T) {
+	const updateURL = "https://grafanaplugins.com/parent-app-2.0.0.zip"
+
+	for _, tc := range []struct {
+		name string
+		url  string
+	}{
+		{name: "from catalog"},
+		{name: "from URL", url: updateURL},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			parentRemoved := 0
+			parent := createPlugin(t, "parent-app", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+				plugin.Info.Version = "1.0.0"
+				plugin.FS = &pluginfakes.FakePluginFS{RemoveFunc: func() error {
+					parentRemoved++
+					return nil
+				}}
+			})
+			child := createPlugin(t, "child-panel", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+				plugin.Info.Version = "1.0.0"
+				plugin.Parent = parent
+			})
+			parent.Children = []*plugins.Plugin{child}
+
+			mockZip := &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
+				FileHeader: zip.FileHeader{Name: "parent-app-2.0.0.zip"},
+			}}}}
+			pluginRepo := &pluginfakes.FakePluginRepo{
+				GetPluginArchiveInfoFunc: func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
+					return &repo.PluginArchiveInfo{Version: "2.0.0"}, nil
+				},
+				GetPluginArchiveFunc: func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+					return &repo.PluginArchive{File: mockZip}, nil
+				},
+				GetPluginArchiveByURLFunc: func(_ context.Context, url string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+					require.Equal(t, updateURL, url)
+					return &repo.PluginArchive{File: mockZip}, nil
+				},
+			}
+			pluginsDir := t.TempDir()
+			fs := &pluginfakes.FakePluginStorage{
+				ExtractFunc: func(_ context.Context, id string, dirNameFunc storage.DirNameGeneratorFunc, _ *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+					return &storage.ExtractedPluginArchive{ID: id, Version: "2.0.0", Path: extractedDir(t, pluginsDir, dirNameFunc(id))}, nil
+				},
+			}
+
+			var unloaded []string
+			loader := &pluginfakes.FakeLoader{
+				UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+					unloaded = append(unloaded, p.ID)
+					return p, nil
+				},
+				LoadFunc: func(_ context.Context, _ plugins.PluginSource) ([]*plugins.Plugin, error) {
+					return []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "parent-app"}}}, nil
+				},
+			}
+
+			cleanupCalled := false
+			authSvc := &pluginfakes.FakeAuthService{Result: &auth.ExternalService{}}
+			inst := New(&config.PluginManagementCfg{}, &pluginfakes.FakePluginRegistry{
+				Store: map[string]*plugins.Plugin{
+					"parent-app":  parent,
+					"child-panel": child,
+				},
+			}, loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, authSvc, &pluginfakes.FakeRBACCleaner{
+				CleanupFunc: func(_ context.Context, _ []string) error {
+					cleanupCalled = true
+					return nil
+				},
+			})
+
+			err := inst.Add(context.Background(), "parent-app", "2.0.0", plugins.NewAddOpts("10.0.0", runtime.GOOS, runtime.GOARCH, tc.url))
+			require.NoError(t, err)
+
+			require.Equal(t, []string{"child-panel", "parent-app"}, unloaded)
+			require.Equal(t, 1, parentRemoved)
+			require.False(t, cleanupCalled, "an update must not delete the plugin's RBAC roles or their assignments")
+			require.Empty(t, authSvc.Removed, "an update must not remove the plugin's external service")
+		})
+	}
+}
+
+func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
+	const pluginID = "test-datasource"
+
+	type setup struct {
+		inst       *PluginInstaller
+		loader     *pluginfakes.FakeLoader
+		pluginsDir string
+		events     []string
+	}
+
+	newSetup := func(t *testing.T, previousDir string, archive func(pluginID string) (*repo.PluginArchive, error)) *setup {
+		t.Helper()
+		s := &setup{pluginsDir: t.TempDir()}
+		previous := createPlugin(t, pluginID, plugins.ClassExternal, true, false, func(p *plugins.Plugin) {
+			p.Info.Version = "1.0.0"
+			p.FS = plugins.NewLocalFS(previousDir)
+		})
+		s.loader = &pluginfakes.FakeLoader{
+			UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+				s.events = append(s.events, "unload "+p.Info.Version)
+				return p, nil
+			},
+			LoadFunc: func(_ context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+				path := src.(*sources.LocalSource).Paths()[0]
+				s.events = append(s.events, "load "+path)
+				return []*plugins.Plugin{{JSONData: plugins.JSONData{ID: pluginID}}}, nil
+			},
+		}
+		pluginRepo := &pluginfakes.FakePluginRepo{
+			GetPluginArchiveInfoFunc: func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
+				return &repo.PluginArchiveInfo{Version: "2.0.0"}, nil
+			},
+			GetPluginArchiveFunc: func(_ context.Context, id, _ string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+				return archive(id)
+			},
+		}
+		registry := &pluginfakes.FakePluginRegistry{Store: map[string]*plugins.Plugin{pluginID: previous}}
+		s.inst = New(&config.PluginManagementCfg{}, registry, s.loader, pluginRepo,
+			storage.FileSystem(log.NewPrettyLogger("test"), s.pluginsDir), storage.SimpleDirNameGeneratorFunc,
+			&pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
+		return s
+	}
+	newArchive := func(t *testing.T) func(string) (*repo.PluginArchive, error) {
+		return func(string) (*repo.PluginArchive, error) {
+			return &repo.PluginArchive{File: pluginZip(t, pluginID, "2.0.0")}, nil
+		}
+	}
+	update := func(s *setup) error {
+		return s.inst.Add(context.Background(), pluginID, "2.0.0", testCompatOpts())
+	}
+
+	t.Run("previous version in another plugins path is removed", func(t *testing.T) {
+		otherPath := t.TempDir()
+		previousDir := writePluginDir(t, otherPath, pluginID, "1.0.0")
+
+		s := newSetup(t, previousDir, newArchive(t))
+		require.NoError(t, update(s))
+
+		targetDir := filepath.Join(s.pluginsDir, pluginID)
+		require.Equal(t, []string{"unload 1.0.0", "load " + targetDir}, s.events)
+		require.Equal(t, "2.0.0", pluginVersionInDir(t, targetDir))
+		require.NoDirExists(t, previousDir)
+		requireOnlyEntries(t, s.pluginsDir, pluginID)
+	})
+
+	t.Run("previous version in a read-only plugins path is kept", func(t *testing.T) {
+		if os.Geteuid() == 0 {
+			t.Skip("directory permissions are not enforced for root")
+		}
+		otherPath := t.TempDir()
+		previousDir := writePluginDir(t, otherPath, pluginID, "1.0.0")
+		// Like the bundled plugins path in a container image with a read-only root filesystem.
+		for _, dir := range []string{previousDir, otherPath} {
+			info, err := os.Stat(dir)
+			require.NoError(t, err)
+			require.NoError(t, os.Chmod(dir, 0o500)) //nolint:gosec // Directory needs execute permission so the test can read the plugin left in it.
+			t.Cleanup(func() { _ = os.Chmod(dir, info.Mode().Perm()) })
+		}
+
+		s := newSetup(t, previousDir, newArchive(t))
+		require.NoError(t, update(s))
+
+		targetDir := filepath.Join(s.pluginsDir, pluginID)
+		require.Equal(t, []string{"unload 1.0.0", "load " + targetDir}, s.events)
+		require.Equal(t, "2.0.0", pluginVersionInDir(t, targetDir))
+		require.Equal(t, "1.0.0", pluginVersionInDir(t, previousDir))
+		requireOnlyEntries(t, s.pluginsDir, pluginID)
+	})
+
+	t.Run("previous version in the install path is replaced", func(t *testing.T) {
+		pluginsDir := t.TempDir()
+		previousDir := writePluginDir(t, pluginsDir, pluginID, "1.0.0")
+
+		s := newSetup(t, previousDir, newArchive(t))
+		s.pluginsDir = pluginsDir
+		s.inst.pluginStorage = storage.FileSystem(log.NewPrettyLogger("test"), pluginsDir)
+		require.NoError(t, update(s))
+
+		require.Equal(t, []string{"unload 1.0.0", "load " + previousDir}, s.events)
+		require.Equal(t, "2.0.0", pluginVersionInDir(t, previousDir))
+		requireOnlyEntries(t, pluginsDir, pluginID)
+	})
+
+	t.Run("previous version in the install path reached through a symlink is replaced", func(t *testing.T) {
+		pluginsDir := t.TempDir()
+		writePluginDir(t, pluginsDir, pluginID, "1.0.0")
+		link := filepath.Join(t.TempDir(), "plugins")
+		require.NoError(t, os.Symlink(pluginsDir, link))
+
+		s := newSetup(t, filepath.Join(link, pluginID), newArchive(t))
+		s.pluginsDir = pluginsDir
+		s.inst.pluginStorage = storage.FileSystem(log.NewPrettyLogger("test"), pluginsDir)
+		require.NoError(t, update(s))
+
+		targetDir := filepath.Join(pluginsDir, pluginID)
+		require.Equal(t, []string{"unload 1.0.0", "load " + targetDir}, s.events)
+		require.Equal(t, "2.0.0", pluginVersionInDir(t, targetDir))
+		requireOnlyEntries(t, pluginsDir, pluginID)
+	})
+
+	t.Run("previous version in the install path under a differently cased name is replaced", func(t *testing.T) {
+		pluginsDir := t.TempDir()
+		previousDir := filepath.Join(pluginsDir, "Test-Datasource")
+		require.NoError(t, os.MkdirAll(previousDir, 0o750))
+		require.NoError(t, os.WriteFile(filepath.Join(previousDir, "plugin.json"), []byte(pluginJSON(pluginID, "1.0.0")), 0o600))
+		if _, err := os.Stat(filepath.Join(pluginsDir, pluginID)); err != nil {
+			t.Skip("filesystem is case-sensitive")
+		}
+
+		s := newSetup(t, previousDir, newArchive(t))
+		s.pluginsDir = pluginsDir
+		s.inst.pluginStorage = storage.FileSystem(log.NewPrettyLogger("test"), pluginsDir)
+		require.NoError(t, update(s))
+
+		targetDir := filepath.Join(pluginsDir, pluginID)
+		require.Equal(t, []string{"unload 1.0.0", "load " + targetDir}, s.events)
+		require.Equal(t, "2.0.0", pluginVersionInDir(t, targetDir))
+		requireOnlyEntries(t, pluginsDir, pluginID)
+	})
+
+	t.Run("download failure keeps the previous version loaded", func(t *testing.T) {
+		previousDir := writePluginDir(t, t.TempDir(), pluginID, "1.0.0")
+
+		s := newSetup(t, previousDir, func(string) (*repo.PluginArchive, error) {
+			return nil, errors.New("network timeout")
+		})
+		require.ErrorContains(t, update(s), "network timeout")
+
+		require.Empty(t, s.events)
+		require.Equal(t, "1.0.0", pluginVersionInDir(t, previousDir))
+		requireOnlyEntries(t, s.pluginsDir)
+	})
+
+	t.Run("extract failure keeps the previous version loaded", func(t *testing.T) {
+		previousDir := writePluginDir(t, t.TempDir(), pluginID, "1.0.0")
+
+		s := newSetup(t, previousDir, func(string) (*repo.PluginArchive, error) {
+			return &repo.PluginArchive{File: zipWithFiles(t, map[string]string{"../escape.txt": "x"})}, nil
+		})
+		require.Error(t, update(s))
+
+		require.Empty(t, s.events)
+		requireOnlyEntries(t, s.pluginsDir)
+	})
+
+	t.Run("dependency failure keeps the previous version loaded", func(t *testing.T) {
+		previousDir := writePluginDir(t, t.TempDir(), pluginID, "1.0.0")
+
+		s := newSetup(t, previousDir, func(id string) (*repo.PluginArchive, error) {
+			if id != pluginID {
+				return nil, errors.New("network timeout")
+			}
+			return &repo.PluginArchive{File: zipWithFiles(t, map[string]string{
+				pluginID + "/plugin.json": fmt.Sprintf(`{"id": %q, "type": "datasource", "info": {"version": "2.0.0"}, "dependencies": {"plugins": [{"id": "dep-panel", "type": "panel"}]}}`, pluginID),
+			})}, nil
+		})
+		require.ErrorContains(t, update(s), "network timeout")
+
+		require.Empty(t, s.events)
+		require.Equal(t, "1.0.0", pluginVersionInDir(t, previousDir))
+		requireOnlyEntries(t, s.pluginsDir)
+	})
+
+	t.Run("unload failure keeps the previous files and discards the staged version", func(t *testing.T) {
+		previousDir := writePluginDir(t, t.TempDir(), pluginID, "1.0.0")
+
+		s := newSetup(t, previousDir, newArchive(t))
+		s.loader.UnloadFunc = func(_ context.Context, _ *plugins.Plugin) (*plugins.Plugin, error) {
+			return nil, errors.New("unload failed")
+		}
+		require.ErrorContains(t, update(s), "unload failed")
+
+		require.Empty(t, s.events)
+		require.Equal(t, "1.0.0", pluginVersionInDir(t, previousDir))
+		requireOnlyEntries(t, s.pluginsDir)
+	})
+
+	t.Run("load failure leaves the new version in place", func(t *testing.T) {
+		previousDir := writePluginDir(t, t.TempDir(), pluginID, "1.0.0")
+
+		s := newSetup(t, previousDir, newArchive(t))
+		s.loader.LoadFunc = func(_ context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
+			s.events = append(s.events, "load "+src.(*sources.LocalSource).Paths()[0])
+			return nil, errors.New("load failed")
+		}
+		require.ErrorContains(t, update(s), "load failed")
+
+		targetDir := filepath.Join(s.pluginsDir, pluginID)
+		require.Equal(t, []string{"unload 1.0.0", "load " + targetDir}, s.events)
+		require.Equal(t, "2.0.0", pluginVersionInDir(t, targetDir))
+		require.NoDirExists(t, previousDir)
+		requireOnlyEntries(t, s.pluginsDir, pluginID)
+	})
+}
+
+// extractedDir creates dirName under pluginsDir, standing in for an extracted plugin archive.
+func extractedDir(t *testing.T, pluginsDir, dirName string) string {
+	t.Helper()
+	dir := filepath.Join(pluginsDir, dirName)
+	require.NoError(t, os.MkdirAll(dir, 0o750))
+	return dir
+}
+
+func pluginJSON(pluginID, version string) string {
+	return fmt.Sprintf(`{"id": %q, "name": %q, "type": "datasource", "info": {"version": %q}}`, pluginID, pluginID, version)
+}
+
+func writePluginDir(t *testing.T, pluginsDir, pluginID, version string) string {
+	t.Helper()
+	dir := filepath.Join(pluginsDir, pluginID)
+	require.NoError(t, os.MkdirAll(dir, 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "plugin.json"), []byte(pluginJSON(pluginID, version)), 0o600))
+	return dir
+}
+
+func pluginZip(t *testing.T, pluginID, version string) *zip.ReadCloser {
+	t.Helper()
+	return zipWithFiles(t, map[string]string{pluginID + "/plugin.json": pluginJSON(pluginID, version)})
+}
+
+func zipWithFiles(t *testing.T, files map[string]string) *zip.ReadCloser {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "plugin.zip")
+	f, err := os.Create(filepath.Clean(path))
+	require.NoError(t, err)
+	w := zip.NewWriter(f)
+	for name, content := range files {
+		fw, err := w.Create(name)
+		require.NoError(t, err)
+		_, err = fw.Write([]byte(content))
+		require.NoError(t, err)
+	}
+	require.NoError(t, w.Close())
+	require.NoError(t, f.Close())
+
+	rc, err := zip.OpenReader(path)
+	require.NoError(t, err)
+	return rc
+}
+
+func pluginVersionInDir(t *testing.T, dir string) string {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Clean(filepath.Join(dir, "plugin.json")))
+	require.NoError(t, err)
+	jd, err := plugins.ReadPluginJSON(bytes.NewReader(data))
+	require.NoError(t, err)
+	return jd.Info.Version
+}
+
+// requireOnlyEntries checks that no staging directories are left behind.
+func requireOnlyEntries(t *testing.T, dir string, names ...string) {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	require.NoError(t, err)
+	got := make([]string, 0, len(entries))
+	for _, e := range entries {
+		got = append(got, e.Name())
+	}
+	require.ElementsMatch(t, names, got)
 }

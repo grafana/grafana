@@ -12,12 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 const (
@@ -94,6 +94,10 @@ type Event struct {
 	PreviousRV      int64         `json:"previous_rv"`
 	PreviousAction  kv.DataAction `json:"previous_action,omitempty"`
 	PreviousFolder  string        `json:"previous_folder"`
+
+	// Metadata is the allowlisted object metadata the watch notification carries.
+	// Absent on events written without it, including by older versions.
+	Metadata *resourcepb.NotificationMetadata `json:"metadata,omitempty"`
 }
 
 func newEventStore(kv KV) *eventStore {
@@ -191,9 +195,12 @@ func (n *eventStore) Get(ctx context.Context, key EventKey) (Event, error) {
 	if err != nil {
 		return Event{}, err
 	}
-	defer func() { _ = reader.Close() }()
+	data, err := kv.ReadAllAndClose(reader)
+	if err != nil {
+		return Event{}, err
+	}
 	var event Event
-	if err = json.NewDecoder(reader).Decode(&event); err != nil {
+	if err = json.Unmarshal(data, &event); err != nil {
 		return Event{}, err
 	}
 	return event, nil
@@ -289,10 +296,12 @@ func (n *eventStore) readEventPage(ctx context.Context, keys []string) ([]Event,
 		if pair.Value == nil {
 			return nil, fmt.Errorf("event record %q has no reader", pair.Key)
 		}
-		var event Event
-		err = json.NewDecoder(pair.Value).Decode(&event)
-		_ = pair.Value.Close()
+		data, err := kv.ReadAllAndClose(pair.Value)
 		if err != nil {
+			return nil, err
+		}
+		var event Event
+		if err := json.Unmarshal(data, &event); err != nil {
 			return nil, err
 		}
 		key := EventKey{
@@ -389,14 +398,14 @@ func (n *eventStore) batchDelete(ctx context.Context, keys []string) error {
 
 // snowflake id with last two sections set to 0 (machine id and sequence)
 func snowflakeFromTime(t time.Time) int64 {
-	return (t.UnixMilli() - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)
+	return (t.UnixMilli() - resourceVersionEpoch) << resourceVersionTimestampShift
 }
 
 // SubtractDurationFromSnowflake subtracts a duration from a snowflake ID by
 // converting it to time, subtracting the duration, and converting back to a snowflake ID
 func SubtractDurationFromSnowflake(snowflakeID int64, duration time.Duration) int64 {
 	// Extract timestamp from snowflake (returns milliseconds since epoch)
-	timestamp := snowflake.ID(snowflakeID).Time()
+	timestamp := snowflakeTimestampMillis(snowflakeID)
 	// Convert to time.Time
 	t := time.Unix(0, timestamp*int64(time.Millisecond))
 	// Subtract duration

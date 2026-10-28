@@ -12,6 +12,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestSearchRoute(t *testing.T) {
@@ -72,11 +73,11 @@ func requestExample(t *testing.T, r Route) string {
 func TestOperationIDs(t *testing.T) {
 	versions := []string{"v0alpha1", "v1", "v1beta1", "v2alpha1", "v2beta1"}
 
-	// Both endpoints are mounted on every served version, so the IDs have to stay
+	// Endpoints can be mounted on every served version, so the IDs have to stay
 	// distinct across endpoints as well as versions once the specs are merged.
 	seen := map[string]bool{}
 	for _, v := range versions {
-		for _, id := range []string{searchOperationID("Dashboard", v), trashOperationID("Dashboard", v)} {
+		for _, id := range []string{searchOperationID("Dashboard", v), trashOperationID("Dashboard", v), hybridSearchOperationID("Dashboard", v)} {
 			require.False(t, seen[id], "duplicate operation ID %q", id)
 			seen[id] = true
 
@@ -116,6 +117,36 @@ func TestSearchRoute_EveryRefResolves(t *testing.T) {
 	assert.NotContains(t, r.Schemas, pkg+"TrashQuery")
 
 	// Nothing anywhere in the published set points outside it.
+	for name, schema := range r.Schemas {
+		for _, ref := range collectRefs(&schema) {
+			assert.Contains(t, r.Schemas, ref, "%s references %s, which is not published", name, ref)
+		}
+	}
+}
+
+// The global route describes what it adds to the search of one kind, and its
+// example is a request the route accepts.
+func TestGlobalSearchRoute_DescribesItsFieldsAndHasAValidExample(t *testing.T) {
+	client := &fakeIndexClient{resp: emptyResponse()}
+	h := NewHandler(client, nil, noop.NewTracerProvider().Tracer(""))
+	r := h.GlobalSearchRoute(nil)
+
+	for _, field := range []string{resource.SEARCH_FIELD_GROUP_RESOURCE, resource.SEARCH_FIELD_FOLDER_TREE} {
+		assert.Contains(t, r.Spec.Post.Description, "`"+field+"`")
+	}
+	for _, gr := range resource.GlobalSearchResourceTypes() {
+		assert.Contains(t, r.Spec.Post.Description, gr.Group+"/"+gr.Resource)
+	}
+
+	// Sent through the handler that serves the route, as for the search of one kind.
+	w := doGlobalRequest(t, h, requestExample(t, r))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	require.NotNil(t, client.got)
+	assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, client.got.Options.Fields[0].Key)
+
+	const pkg = "com.github.grafana.grafana.pkg.apis.search.v0alpha1."
+	assert.Contains(t, r.Schemas, pkg+"SearchQuery")
+	assert.Contains(t, r.Schemas, pkg+"GlobalSearchResults")
 	for name, schema := range r.Schemas {
 		for _, ref := range collectRefs(&schema) {
 			assert.Contains(t, r.Schemas, ref, "%s references %s, which is not published", name, ref)

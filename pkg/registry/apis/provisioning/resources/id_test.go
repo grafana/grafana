@@ -94,6 +94,15 @@ func TestParseFolderID(t *testing.T) {
 	}
 }
 
+func TestIsRootFolderPath(t *testing.T) {
+	for _, path := range []string{"", ".", "/"} {
+		assert.True(t, IsRootFolderPath(path), "%q is the repository root", path)
+	}
+	for _, path := range []string{"a/", "/a/", "a", "_folder.json"} {
+		assert.False(t, IsRootFolderPath(path), "%q is not the repository root", path)
+	}
+}
+
 func TestFolder_Equal(t *testing.T) {
 	folder := Folder{
 		Title: "My Team", ID: "my-team-abc", Path: "my-team/",

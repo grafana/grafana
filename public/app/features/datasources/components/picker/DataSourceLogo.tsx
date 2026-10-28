@@ -31,7 +31,7 @@ export function DataSourceLogoPlaceHolder() {
   return <div className={styles.pickerDSLogo}></div>;
 }
 
-function getStyles(theme: GrafanaTheme2, builtIn = false, size = 20) {
+function getStyles(theme: GrafanaTheme2, builtIn = false, size = 16) {
   return {
     pickerDSLogo: css({
       height: size,

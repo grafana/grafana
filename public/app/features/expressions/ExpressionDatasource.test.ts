@@ -1,4 +1,5 @@
 import { of, lastValueFrom } from 'rxjs';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import {
   dateTime,
@@ -6,6 +7,7 @@ import {
   type DataFrameType,
   type DataQueryRequest,
   type DataSourceInstanceSettings,
+  dataFrameToJSON,
   FieldType,
   getFieldDisplayName,
   toDataFrame,
@@ -24,13 +26,8 @@ jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: () => ({
     replace: (val: string) => (val ? val.replace('$input', '10').replace('$window', '10s') : val),
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: (...args: unknown[]) => mockGetDatasource(...args),
 }));
-
 describe('ExpressionDatasourceApi', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -271,6 +268,62 @@ describe('ExpressionDatasourceApi', () => {
       expect(response.data[1]).toBe(missingValue);
       expect(differentNames.fields[0].config.displayNameFromDS).toBeUndefined();
       expect(missingValue.fields[0].config.displayNameFromDS).toBeUndefined();
+    });
+  });
+
+  describe('runMetaSQLExprQuery', () => {
+    const range = {
+      from: dateTime('2026-01-01T00:00:00Z'),
+      to: dateTime('2026-01-01T01:00:00Z'),
+      raw: { from: 'now-1h', to: 'now' },
+    };
+    const sourceFrame = toDataFrame({
+      refId: 'A',
+      fields: [{ name: 'raw_source_field', type: FieldType.number, values: [1] }],
+    });
+    const metaFrame = toDataFrame({
+      refId: 'fields-1',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1] },
+        { name: 'cpu', type: FieldType.number, values: [1] },
+      ],
+    });
+
+    const mockQueryResults = (results: Record<string, DataFrame>) =>
+      jest.spyOn(backendSrv, 'fetch').mockReturnValue(
+        of(
+          createFetchResponse({
+            results: Object.fromEntries(
+              Object.entries(results).map(([refId, frame]) => [refId, { frames: [dataFrameToJSON(frame)] }])
+            ),
+          })
+        )
+      );
+
+    it.each<{ desc: string; results: Record<string, DataFrame> }>([
+      { desc: 'visible', results: { A: sourceFrame, 'fields-1': metaFrame } },
+      // The backend drops hidden refIds from the response but still returns the meta expression result.
+      { desc: 'hidden', results: { 'fields-1': metaFrame } },
+    ])('returns the meta SQL expression frame when the source query is $desc', async ({ results }) => {
+      const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+      mockQueryResults(results);
+
+      const frame = await ds.runMetaSQLExprQuery({ rawSql: 'SELECT * FROM A LIMIT 1', refId: 'fields-1' }, range, [
+        { refId: 'A', hide: true },
+      ]);
+
+      expect(frame.fields.map((field) => field.name)).toEqual(['time', 'cpu']);
+    });
+
+    it('returns an empty frame when the meta SQL expression has no result', async () => {
+      const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+      mockQueryResults({ A: sourceFrame });
+
+      const frame = await ds.runMetaSQLExprQuery({ rawSql: 'SELECT * FROM A LIMIT 1', refId: 'fields-1' }, range, [
+        { refId: 'A' },
+      ]);
+
+      expect(frame).toEqual({ fields: [] });
     });
   });
 });

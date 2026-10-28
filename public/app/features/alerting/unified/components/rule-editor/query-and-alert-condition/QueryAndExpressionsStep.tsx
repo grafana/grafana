@@ -111,12 +111,12 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
   };
 
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
-  const isOptimizeReducerEnabled = config.featureToggles.alertingUIOptimizeReducer ?? false;
 
   // data queries only
   const dataQueries = useMemo(() => {
     return queries.filter((query) => !isExpressionQuery(query.model));
   }, [queries]);
+  const dataSourceUid = dataQueries[0]?.datasourceUid;
 
   // expression queries only
   const expressionQueries = useMemo(() => {
@@ -127,7 +127,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
     // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
 
-    if (!editingExistingRule && isOptimizeReducerEnabled) {
+    if (!editingExistingRule) {
       dispatch(optimizeReduceExpression({ updatedQueries: dataQueries, expressionQueries }));
     }
   });
@@ -268,7 +268,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
 
       // we only remove or add the reducer(optimize reducer) expression when creating a new alert.
       // When editing an alert, we assume the user wants to manually adjust expressions and queries for more control and customization.
-      if (!editingExistingRule && isOptimizeReducerEnabled) {
+      if (!editingExistingRule) {
         dispatch(optimizeReduceExpression({ updatedQueries, expressionQueries }));
       }
 
@@ -281,7 +281,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
         dispatch(rewireExpressions({ oldRefId, newRefId }));
       }
     },
-    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule, isOptimizeReducerEnabled]
+    [queries, updateExpressionAndDatasource, getValues, setValue, editingExistingRule]
   );
 
   const onChangeRecordingRulesQueries = useCallback(
@@ -484,7 +484,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
         )}
 
         {/* This is the PromQL Editor for Cloud rules */}
-        {isCloudAlertRuleType && dataSourceName && (
+        {isCloudAlertRuleType && dataSourceUid && (
           <Stack direction="column">
             <Field error={errors.expression?.message} invalid={!!errors.expression?.message} noMargin>
               <Controller
@@ -493,7 +493,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                   return (
                     <ExpressionEditor
                       {...field}
-                      dataSourceName={dataSourceName}
+                      dataSourceUid={dataSourceUid}
                       showPreviewAlertsButton={!isRecordingRuleType}
                       onChange={onChangeExpression}
                     />

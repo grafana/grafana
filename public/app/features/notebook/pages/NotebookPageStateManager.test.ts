@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { waitFor } from '@testing-library/react';
 import { HttpResponse, delay, http } from 'msw';
 import { type UnknownAction } from 'redux';
 
@@ -9,12 +10,24 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { type Resource } from 'app/features/apiserver/types';
 
 import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
+import { NotebookAutosave } from '../scene/NotebookAutosave';
 import { NotebookScene } from '../scene/NotebookScene';
 import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
 
 import { NotebookPageStateManager } from './NotebookPageStateManager';
 
 jest.mock('../analytics/main', () => ({ NotebookAnalytics: { loaded: jest.fn() } }));
+
+const mockGetPanelPluginMetasMap = jest.fn();
+jest.mock('@grafana/runtime/internal', () => {
+  const actual = jest.requireActual('@grafana/runtime/internal');
+  return {
+    ...actual,
+    getPanelPluginMetasMap: (...args: unknown[]) =>
+      mockGetPanelPluginMetasMap(...args) ?? actual.getPanelPluginMetasMap(...args),
+  };
+});
 
 const NOTEBOOK_URL = '/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name';
 
@@ -149,6 +162,22 @@ describe('NotebookPageStateManager', () => {
     expect(manager.state.scene?.state.key).toBe(first);
   });
 
+  // Leaving a notebook and coming back to it is not a document replacement: it's the same scene,
+  // with the same editHistory, reused from the cache above. A person who navigated away by mistake
+  // should not find their undo history gone.
+  it('keeps the cached scene’s undo history across a revisit', async () => {
+    serveNotebooks();
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    manager.state.scene?.state.body.addCell('code', 1);
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(true);
+
+    await manager.loadNotebook('nb-1');
+
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(true);
+  });
+
   it("reuses the cached scene when the only thing that moved the generation was this page's own save", async () => {
     serveGenerations(1, 2);
     const manager = new NotebookPageStateManager({ isLoading: false });
@@ -178,6 +207,24 @@ describe('NotebookPageStateManager', () => {
 
     expect(manager.state.scene).toBeInstanceOf(NotebookScene);
     expect(manager.state.scene?.state.key).not.toBe(first);
+  });
+
+  // The flip side of the cache-reuse case above: once the server moved past what this page saved,
+  // the rebuild is a genuinely different document, built fresh — its editHistory starts empty by
+  // construction, not by anything clearing the old one.
+  it('starts with an empty undo history when the scene is rebuilt rather than reused', async () => {
+    serveGenerations(1, 3);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    manager.state.scene?.state.body.addCell('code', 1);
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(true);
+    manager.state.scene?.autosave.setState({ savedGeneration: 2 });
+    testStore.dispatch(dashboardAPIv2beta1.util.resetApiState());
+
+    await manager.loadNotebook('nb-1');
+
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(false);
   });
 
   it('keeps the cached scene when the query layer answers from before this page saved', async () => {
@@ -242,6 +289,25 @@ describe('NotebookPageStateManager', () => {
     expect(manager.state.scene?.state.key).toBe(first);
   });
 
+  it('waits for the panel plugin metas before building the scene', async () => {
+    serveNotebooks();
+    let resolveMetas: () => void = () => {};
+    mockGetPanelPluginMetasMap.mockReturnValueOnce(new Promise<void>((resolve) => (resolveMetas = resolve)));
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    const loading = manager.loadNotebook('nb-1');
+    await waitFor(() => expect(mockGetPanelPluginMetasMap).toHaveBeenCalled());
+
+    expect(manager.state.scene).toBeUndefined();
+    expect(manager.state.isLoading).toBe(true);
+
+    resolveMetas();
+    await loading;
+
+    expect(manager.state.scene?.state.uid).toBe('nb-1');
+    expect(manager.state.isLoading).toBe(false);
+  });
+
   // `await` does not cancel, so a load started for an earlier uid still resumes. If it wrote its
   // scene the page would end up on B's URL showing A, and stay there — nothing fires afterwards.
   // The slow/fast split reproduces the ordering inversion an RTK cache hit causes in practice.
@@ -277,6 +343,49 @@ describe('NotebookPageStateManager', () => {
     expect(manager.state.scene?.state.uid).toBe('nb-fast');
   });
 
+  describe('the time range of a cached notebook', () => {
+    /** Reads the notebook once and closes it, which is what gives autosave a range to go back to. */
+    function readAndClose(scene: NotebookScene) {
+      scene.activate()();
+    }
+
+    it("puts the notebook's own range back when a reader's range is still on the cached scene", async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+      const scene = manager.state.scene!;
+      readAndClose(scene);
+      scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+      manager.clearState();
+
+      await manager.loadNotebook('nb-1');
+
+      expect(manager.state.scene?.state.key).toBe(scene.state.key);
+      expect(manager.state.scene?.state.$timeRange.state.from).toBe('now-6h');
+    });
+
+    // An embed can hold the same notebook open while the route reloads it, and the scene is shared.
+    // Resetting would move the range under someone still reading it.
+    it('leaves the range alone while the notebook is open somewhere else', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+      const scene = manager.state.scene!;
+      const release = scene.activate();
+
+      try {
+        scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+        await manager.loadNotebook('nb-1');
+
+        expect(manager.state.scene?.state.$timeRange.state.from).toBe('now-1h');
+      } finally {
+        release();
+      }
+    });
+  });
+
   describe('loaded event', () => {
     it('fires once on a fresh load, reporting it was not cached', async () => {
       serveNotebooks();
@@ -285,7 +394,7 @@ describe('NotebookPageStateManager', () => {
       await manager.loadNotebook('nb-1');
 
       expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledWith(expect.anything(), false);
+      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledWith(expect.anything(), false, false, 'direct');
     });
 
     it('fires again on a second navigation to a cached scene, reporting it was cached', async () => {
@@ -296,14 +405,20 @@ describe('NotebookPageStateManager', () => {
       await manager.loadNotebook('nb-1');
 
       expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenCalledTimes(2);
-      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenNthCalledWith(2, expect.anything(), true);
+      expect(jest.mocked(NotebookAnalytics.loaded)).toHaveBeenNthCalledWith(
+        2,
+        expect.anything(),
+        true,
+        false,
+        'direct'
+      );
     });
 
     it('does not fire when a blank notebook adopts its own uid instead of being fetched', async () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
       blank.setState({ uid: 'nb-new' });
 
@@ -329,11 +444,26 @@ describe('NotebookPageStateManager', () => {
     /** Nobody is asked for a name, so the notebook arrives named after the moment it was made. */
     const TITLE_PATTERN = /^Notebook \d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
 
-    it('builds an empty notebook with no resource behind it and nothing fetched', () => {
+    it.each([NOTEBOOK_ENTRY_POINT.QUICK_ADD, NOTEBOOK_ENTRY_POINT.COMMAND_PALETTE])(
+      'preserves the %s entry point when the blank scene finishes loading',
+      async (source) => {
+        const setEntryPoint = jest.spyOn(NotebookAutosave.prototype, 'setEntryPoint');
+        const manager = new NotebookPageStateManager({ isLoading: false });
+
+        await manager.newNotebook(source);
+
+        expect(manager.state.isLoading).toBe(false);
+        expect(setEntryPoint).toHaveBeenCalledTimes(1);
+        expect(setEntryPoint).toHaveBeenCalledWith(source);
+        setEntryPoint.mockRestore();
+      }
+    );
+
+    it('builds an empty notebook with no resource behind it and nothing fetched', async () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
 
       expect(manager.state.scene?.state.uid).toBeUndefined();
       expect(manager.state.scene?.state.title).toMatch(TITLE_PATTERN);
@@ -346,16 +476,16 @@ describe('NotebookPageStateManager', () => {
     // The reason for naming them at all: autosave creates these without asking for a name, so
     // notebooks made at different times have to be tellable apart in the list. The clock is stubbed
     // through Date.now rather than with fake timers, which msw's delayed handlers would hang on.
-    it('names each new notebook after the time it was created', () => {
+    it('names each new notebook after the time it was created', async () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
       const now = jest.spyOn(Date, 'now');
 
       now.mockReturnValue(new Date('2026-07-01T09:15:00Z').getTime());
-      manager.newNotebook();
+      await manager.newNotebook();
       const first = manager.state.scene?.state.title;
       now.mockReturnValue(new Date('2026-07-01T11:42:00Z').getTime());
-      manager.newNotebook();
+      await manager.newNotebook();
       const second = manager.state.scene?.state.title;
 
       now.mockRestore();
@@ -367,13 +497,13 @@ describe('NotebookPageStateManager', () => {
 
     // The scene cache is keyed by uid and a blank notebook has none, so caching it would mean every
     // blank page after the first reopened whatever the previous one was left holding.
-    it('does not keep the blank notebook, so a second one starts empty again', () => {
+    it('does not keep the blank notebook, so a second one starts empty again', async () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const first = manager.state.scene;
-      manager.newNotebook();
+      await manager.newNotebook();
 
       expect(manager.state.scene).not.toBe(first);
     });
@@ -385,11 +515,33 @@ describe('NotebookPageStateManager', () => {
       const manager = new NotebookPageStateManager({ isLoading: false });
 
       const slow = manager.loadNotebook('nb-slow');
-      manager.newNotebook();
+      await manager.newNotebook();
       await slow;
 
       expect(manager.state.scene?.state.uid).toBeUndefined();
       expect(manager.state.loadError).toBeUndefined();
+    });
+
+    // Leaving /notebooks/new before the panel metas resolve. The page's cleanup clears the state, and
+    // without the sequence check the blank notebook lands on whatever the page moved on to.
+    it('does not put the blank notebook back after the page has moved on', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      const blank = manager.newNotebook();
+      manager.clearState();
+      await blank;
+
+      expect(manager.state.scene).toBeUndefined();
+    });
+
+    it('reports the page as loading while the panel metas are still in flight', () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+
+      expect(manager.state.isLoading).toBe(true);
     });
   });
 
@@ -402,7 +554,7 @@ describe('NotebookPageStateManager', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
       // What autosave does when the create comes back.
       blank.setState({ uid: 'nb-new' });
@@ -419,7 +571,7 @@ describe('NotebookPageStateManager', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
       blank.setState({ uid: 'nb-new' });
       // Both of these are what a real create produces: the uid on the scene, and the generation the
@@ -433,12 +585,29 @@ describe('NotebookPageStateManager', () => {
       expect(manager.state.scene?.state.key).toBe(blank.state.key);
     });
 
+    // Adoption returns before the cache is consulted: this is the same scene they are looking at, not
+    // one being reopened, so their range stays.
+    it('keeps the range set on it while it was blank', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.newNotebook();
+      const blank = manager.state.scene!;
+      blank.setState({ uid: 'nb-new' });
+      blank.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+
+      await manager.loadNotebook('nb-new');
+
+      expect(manager.state.scene?.state.key).toBe(blank.state.key);
+      expect(manager.state.scene?.state.$timeRange.state.from).toBe('now-1h');
+    });
+
     // Only the notebook it actually became. Anything else is a real load.
     it('still fetches a different notebook while a blank one is held', async () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
 
       await manager.loadNotebook('nb-other');

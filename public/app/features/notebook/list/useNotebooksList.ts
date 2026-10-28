@@ -4,11 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
-import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AnnoKeyCreatedBy, AnnoKeyUpdatedTimestamp } from 'app/features/apiserver/types';
 
 import {
   useSearchNotebooksInfiniteQuery,
@@ -16,9 +13,6 @@ import {
   type ResultItem,
   type WhereNode,
 } from './notebookSearchApi';
-
-/** For ordering tag names for a reader, rather than by code point. */
-const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
 /**
  * Field names as the index declares them (resource.SEARCH_FIELD_* on the backend). Only the
@@ -58,24 +52,6 @@ const SEARCH_FIELDS = [
  */
 const SEARCH_DEBOUNCE_MS = 300;
 
-/**
- * Whether this Grafana serves `.../notebooks/search` at all. The route is mounted from
- * `[grafana-apiserver] enable_search_api`, which is off by default and is not reported in
- * frontend settings, so the only way to find out is to ask and see.
- *
- * Module-level on purpose: RTK Query caches per argument, so component state would let every
- * keystroke produce a fresh argument and re-attempt a route that is already known to be
- * absent. Delete this, and the LIST branch below, once the endpoint is on everywhere.
- */
-let searchUnavailable = false;
-
-/**
- * Whether the route has ever answered, which is what makes a later 404 readable as transient rather
- * than as absence. Module-level for the same reason as `searchUnavailable`: whether this deployment
- * serves the route is a property of the deployment, not of one mount or one set of filters.
- */
-let searchConfirmedAvailable = false;
-
 /** A notebook flattened for display, so the table never has to know about k8s metadata. */
 export interface NotebookRow {
   uid: string;
@@ -98,9 +74,6 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   const [searchQuery, setSearchQuery] = useState('');
   const [createdByMe, setCreatedByMe] = useState(false);
   const [tagFilter, setTagFilter] = useState<string[]>([]);
-  // Mirrors the module latch into state, so the branches below have it as a real dependency and a
-  // flip re-renders on its own. A fresh mount starts from what earlier mounts already learned.
-  const [usingFallback, setUsingFallback] = useState(searchUnavailable);
 
   const [debouncedSearch, setDebouncedSearch] = useState('');
   useDebounce(() => setDebouncedSearch(searchQuery), SEARCH_DEBOUNCE_MS, [searchQuery]);
@@ -127,7 +100,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     [debouncedSearch, filterByAuthor, currentUserUid, tagFilter]
   );
 
-  const search = useSearchNotebooksInfiniteQuery(enabled && !usingFallback ? searchBody : skipToken);
+  const search = useSearchNotebooksInfiniteQuery(enabled ? searchBody : skipToken);
 
   const { hasNextPage, isFetching, isError, fetchNextPage } = search;
   // Walk the cursor to the end. The table sorts what it holds, so a partial set would order the
@@ -141,43 +114,16 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     }
   }, [hasNextPage, isFetching, isError, fetchNextPage]);
 
-  // An answer for any filters proves the route is served here, and that outlives the cache entry it
-  // arrived in.
-  if (search.currentData !== undefined) {
-    searchConfirmedAvailable = true;
-  }
-
-  // Latch on the first "no such route" answer, so we stop asking for the rest of the session.
-  //
-  // Only while the route has never answered: every page and every set of filters asks the same URL,
-  // so once anything has come back, a 404 means something transient — a pod restarting mid-deploy,
-  // a proxy answering for it — and is a real error to show rather than grounds for abandoning
-  // search. Not `currentData === undefined`, which is empty on every filter change and so cannot
-  // tell "never answered" from "not answered for these filters yet".
-  if (!searchConfirmedAvailable && search.error && isRouteMissing(search.error) && !usingFallback) {
-    searchUnavailable = true;
-    // Setting state during render is the derived-state pattern: React re-runs this component
-    // before committing, so the fallback request starts in the same commit and nothing paints in
-    // between.
-    setUsingFallback(true);
-  }
-
-  const list = useListNotebookQuery(enabled && usingFallback ? { limit: NOTEBOOKS_PAGE_LIMIT } : skipToken);
-
-  const active = usingFallback ? list : search;
-
   /**
    * `currentData` rather than `data`, throughout: RTK Query holds the last successful result while
    * a new argument loads, so reading `data` would show the previous query's rows and counts
    * underneath the new filter. `currentData` is empty until the answer for these filters arrives,
    * which `isReloading` below is there to cover.
    */
-  const rows = useMemo(() => {
-    if (usingFallback) {
-      return (list.currentData?.items ?? []).map(listRow);
-    }
-    return (search.currentData?.pages ?? []).flatMap((page) => page.items.map(searchRow));
-  }, [usingFallback, list.currentData, search.currentData]);
+  const rows = useMemo(
+    () => (search.currentData?.pages ?? []).flatMap((page) => page.items.map(searchRow)),
+    [search.currentData]
+  );
 
   /**
    * Whether anything has ever been shown, so the first load and a filter change can be told apart.
@@ -185,7 +131,7 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
    * schedule a render.
    */
   const hasLoadedOnce = useRef(false);
-  if (active.currentData !== undefined) {
+  if (search.currentData !== undefined) {
     hasLoadedOnce.current = true;
   }
 
@@ -239,33 +185,6 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     [rows, authorNames]
   );
 
-  /**
-   * Every tag carried by the notebooks loaded so far — not the library's tags, which only the search
-   * index's facet knows. It is here for a tag picker that has no facet to read, on a deployment that
-   * does not serve the search route.
-   *
-   * From the rows before client-side filtering, so the options do not narrow as the reader filters —
-   * the trap that left the author filter with nothing but the authors already on screen. Alphabetical
-   * because, with no counts to order by, nothing else says anything.
-   */
-  const loadedTags = useMemo(() => uniq(namedRows.flatMap((row) => row.tags)).sort(collator.compare), [namedRows]);
-
-  // On the fallback path the server did no filtering, so it has to happen here. When search
-  // is serving, the predicates are already in the request and this is a no-op.
-  const filteredRows = useMemo(() => {
-    if (!usingFallback) {
-      return namedRows;
-    }
-    const needle = debouncedSearch.trim().toLowerCase();
-    return namedRows.filter(
-      (row) =>
-        (!needle || row.title.toLowerCase().includes(needle)) &&
-        (!filterByAuthor || row.authorUid === currentUserUid) &&
-        // Every selected tag, matching the `and` of leaves the search path sends.
-        tagFilter.every((tag) => row.tags.includes(tag))
-    );
-  }, [usingFallback, namedRows, debouncedSearch, filterByAuthor, currentUserUid, tagFilter]);
-
   const isFiltered = Boolean(debouncedSearch.trim()) || filterByAuthor || tagFilter.length > 0;
 
   // Every page carries the same total for the query, so the first one answers for all of them.
@@ -273,32 +192,25 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
   const lastPageMetadata = search.currentData?.pages[search.currentData.pages.length - 1]?.metadata;
 
   return {
-    rows: filteredRows,
+    rows: namedRows,
     /**
-     * How many the server holds, filters included, or undefined when it does not say — LIST only
-     * ever reports the page it returned, so the fallback path has no total to offer. Read a number
-     * here with `isTotalExact`: the server falls back to an upper bound when counting exactly
-     * would cost too much.
+     * How many the server holds, filters included. Read it with `isTotalExact`: the server falls
+     * back to an upper bound when counting exactly would cost too much.
      */
-    totalCount: usingFallback ? undefined : (searchMetadata?.totalHits ?? 0),
+    totalCount: searchMetadata?.totalHits ?? 0,
     isTotalExact: searchMetadata?.totalHitsRelation !== 'lte',
-    /** How many rows were loaded across every page taken, before any client-side filtering. */
-    loadedCount: namedRows.length,
     /**
-     * Matches exist that were never fetched. On the search path that only happens at the
-     * accumulation ceiling: the cursor is followed to the end otherwise, so a token still on offer
-     * with nothing left to fetch means we stopped early. LIST cannot page at all, so there a
-     * continue token is truncation on its own.
+     * Matches exist that were never fetched, which only happens at the accumulation ceiling: the
+     * cursor is followed to the end otherwise, so a token still on offer with nothing left to fetch
+     * means we stopped early.
      */
-    isTruncated: usingFallback
-      ? Boolean(list.data?.metadata?.continue)
-      : Boolean(lastPageMetadata?.continue) && !hasNextPage,
+    isTruncated: Boolean(lastPageMetadata?.continue) && !hasNextPage,
     /**
      * More pages are still on the way, so the rows and counts are still filling in. Not after a
      * failure: the walk stops there but leaves a next page on offer, and saying the list is still
      * loading alongside the error that stopped it would never resolve.
      */
-    isLoadingMore: !usingFallback && !isError && (hasNextPage || search.isFetchingNextPage),
+    isLoadingMore: !isError && (hasNextPage || search.isFetchingNextPage),
     /** Distinguishes "no notebooks at all" from "none matched the filters". */
     isFiltered,
     searchQuery,
@@ -314,7 +226,6 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
     tagFilter,
     setTagFilter,
     addTagFilter,
-    loadedTags,
     /** Without an identity there is no "me", so the filter has nothing to mean. */
     canFilterByMe: Boolean(currentUserUid),
     /**
@@ -322,20 +233,20 @@ export function useNotebooksList({ enabled }: UseNotebooksListOptions) {
      * true again once something has been shown: swapping the body out later would unmount the
      * filter input and take the caret with it, mid-typing.
      */
-    isLoading: active.isLoading && !hasLoadedOnce.current,
+    isLoading: search.isLoading && !hasLoadedOnce.current,
     /**
      * A new set of filters is being fetched and nothing is held for them yet. The rows and counts
      * above are empty rather than stale, so this is what tells the page to show a loading
      * affordance in place of "no results" while keeping the filters where they are.
      */
-    isReloading: hasLoadedOnce.current && active.isFetching && active.currentData === undefined,
+    isReloading: hasLoadedOnce.current && search.isFetching && search.currentData === undefined,
     /**
      * Identifies the filters the rows belong to, for callers that must reset per-filter view state
      * (the table's page index) without resetting it as rows merely accumulate. Built from the
      * committed filters, not the raw input, so it does not change on every keystroke.
      */
     filterKey: `${debouncedSearch.trim()}|${filterByAuthor}|${tagFilter.join(',')}`,
-    error: active.error,
+    error: search.error,
   };
 }
 
@@ -393,33 +304,6 @@ function searchRow(item: ResultItem): NotebookRow {
   };
 }
 
-function listRow(notebook: Notebook): NotebookRow {
-  const created = notebook.metadata.creationTimestamp;
-  const updated = notebook.metadata.annotations?.[AnnoKeyUpdatedTimestamp];
-  return {
-    uid: notebook.metadata.name ?? '',
-    title: notebook.spec.title,
-    tags: notebook.spec.tags ?? [],
-    authorUid: notebook.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
-    authorName: '',
-    // Converted to millis so both paths hand the table one shape.
-    created: toMillis(created),
-    updated: toMillis(updated) || toMillis(created),
-  };
-}
-
-function toMillis(timestamp: string | undefined): number {
-  if (!timestamp) {
-    return 0;
-  }
-  const parsed = Date.parse(timestamp);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-/**
- * Projected values arrive as JSON, so each is narrowed rather than asserted: a field the
- * index never populated is absent, and one populated oddly should not break the row.
- */
 function stringField(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
@@ -432,22 +316,7 @@ function stringArrayField(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string') : [];
 }
 
-/**
- * Whether the failure means the endpoint is not served here, as opposed to a real error worth
- * showing. An unmounted route parses as a request for a resource named "search", so it comes
- * back as a 404; 405 covers an apiserver that knows the path but not the verb.
- */
-function isRouteMissing(error: unknown): boolean {
-  return isFetchError(error) && (error.status === 404 || error.status === 405);
-}
-
 /** Keeps internal identity keys like `user:abc123` out of the UI when a lookup comes back empty. */
 function anonymousAuthor(): string {
   return t('notebooks.list.unknown-author', 'Anonymous');
-}
-
-/** Test seam: the latches are module state, so they have to be resettable between cases. */
-export function __resetSearchAvailabilityForTests() {
-  searchUnavailable = false;
-  searchConfirmedAvailable = false;
 }

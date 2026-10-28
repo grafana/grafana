@@ -21,8 +21,8 @@ export const AdaptiveTracesRestoredBanner = () => {
         onRemove={() => setDismissed(true)}
       >
         <Trans i18nKey="explore.trace-view.adaptive-traces-restored.body">
-          This trace was originally dropped by Adaptive Traces and has been restored. A restored trace is not included
-          in TraceQL queries and can only be queried by trace ID. Please review the{' '}
+          This trace was originally dropped by Adaptive Traces and has been restored. A restored trace might not be
+          included in TraceQL queries and might only be queryable by trace ID. Please review the{' '}
           <TextLink
             href="https://grafana.com/docs/grafana-cloud/adaptive-telemetry/adaptive-traces/query-dropped-traces/"
             external

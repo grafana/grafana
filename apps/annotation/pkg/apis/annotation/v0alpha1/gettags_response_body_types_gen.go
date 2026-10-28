@@ -4,6 +4,7 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type GetTagsBody struct {
+	// List of unique tags and their counts.
 	Tags []GetTagsV0alpha1BodyTags `json:"tags"`
 }
 
@@ -21,7 +22,9 @@ func (GetTagsBody) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type GetTagsV0alpha1BodyTags struct {
-	Tag   string  `json:"tag"`
+	// Tag value.
+	Tag string `json:"tag"`
+	// Count of annotations with this tag.
 	Count float64 `json:"count"`
 }
 

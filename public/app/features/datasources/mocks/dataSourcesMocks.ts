@@ -1,7 +1,7 @@
 import { merge } from 'lodash';
 
 import { type DataSourceSettings, type DataSourcePluginMeta, type DataSourceJsonData } from '@grafana/data';
-import amazonWebServicesPng from 'app/plugins/datasource/cloudwatch/img/amazon-web-services.png';
+import amazonWebServicesPng from 'app/features/cloudwatch-helpers/amazon-web-services.png';
 import { type DataSourceSettingsState } from 'app/types/datasources';
 import { type PluginDashboard } from 'app/types/plugins';
 

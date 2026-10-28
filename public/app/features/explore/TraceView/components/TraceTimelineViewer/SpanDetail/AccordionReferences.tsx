@@ -19,7 +19,6 @@ import { type Field, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Counter, Icon, useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../../Theme';
 import { type TraceSpanReference } from '../../types/trace';
 import ReferenceLink from '../../url/ReferenceLink';
 
@@ -29,7 +28,7 @@ import { alignIcon } from '.';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   AccordionReferenceItem: css({
-    borderBottom: `1px solid ${autoColor(theme, '#d8d8d8')}`,
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
   AccordionKeyValues: css({
     marginLeft: '10px',
@@ -46,7 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   AccordionReferencesContent: css({
     label: 'AccordionReferencesContent',
-    borderTop: `1px solid ${autoColor(theme, '#d8d8d8')}`,
+    borderTop: `1px solid ${theme.colors.border.weak}`,
     padding: '0.5rem 0.5rem 0.25rem 0.5rem',
   }),
   AccordionReferencesFooter: css({
@@ -57,8 +56,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginBottom: theme.spacing(0.5),
   }),
   ReferencesList: css({
-    background: '#fff',
-    border: '1px solid #ddd',
+    background: theme.colors.background.primary,
+    border: `1px solid ${theme.colors.border.weak}`,
     marginBottom: '0.7em',
     maxHeight: '450px',
     overflow: 'auto',
@@ -68,7 +67,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     listStyle: 'none',
     padding: 0,
     margin: 0,
-    background: '#fff',
+    background: theme.colors.background.primary,
   }),
   itemContent: css({
     padding: '0.25rem 0.5rem',
@@ -78,7 +77,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   item: css({
     '&:nth-child(2n)': {
-      background: '#f5f5f5',
+      background: theme.colors.background.secondary,
     },
   }),
   debugInfo: css({

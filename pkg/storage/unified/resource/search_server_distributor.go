@@ -186,9 +186,10 @@ func (ds *distributorServer) HybridSearch(ctx context.Context, r *resourcepb.Hyb
 	ctx, span := ds.tracing.Start(ctx, "distributor.HybridSearch")
 	defer span.End()
 
-	var ns string
-	if r.Key != nil {
-		ns = r.Key.Namespace
+	ns := r.GetNamespace()
+	//nolint:staticcheck // Continue routing requests from older clients.
+	if r.GetKey() != nil {
+		ns = r.GetKey().GetNamespace()
 	}
 	return distributeWithFailover(ctx, ds, ns, "HybridSearch", r, ResourceClient.HybridSearch)
 }
@@ -428,7 +429,7 @@ func callFailure(resp any, err error) (int32, error) {
 	if !ok || r.GetError() == nil {
 		return 0, nil
 	}
-	return r.GetError().GetCode(), GetError(r.GetError())
+	return r.GetError().GetCode(), StatusError(r.GetError())
 }
 
 // shuffled returns the instances in random order, which spreads the load

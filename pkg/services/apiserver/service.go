@@ -24,11 +24,12 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -37,7 +38,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
-	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
@@ -45,6 +45,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
@@ -77,6 +78,10 @@ type Service interface {
 // RequestRouter routes API groups before the embedded API server.
 type RequestRouter interface {
 	HandleFunc(http.ResponseWriter, *http.Request, http.Handler)
+
+	// SetUpstream gives the router the started server's handler, so it can
+	// serve the server's groups.
+	SetUpstream(http.Handler)
 }
 
 type service struct {
@@ -361,9 +366,22 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildBranch,
 	)
 
+	// Read here rather than next to the routes: whether the search that spans
+	// resource types is on decides what the api resource config below enables.
+	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
+	hybridAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true)
+	globalSearchAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyGlobalSearch).MustBool(false)
+	globalHybridAPIEnabled := hybridAPIEnabled && apiserverSection.Key(searchapi.ConfigKeyGlobalHybrid).MustBool(false)
+	globalSearchGV := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
+
 	apiResourceConfig := appinstaller.NewAPIResourceConfig(s.appInstallers)
 	// add the builder group versions to the api resource config
 	apiResourceConfig.EnableVersions(groupVersions...)
+	if globalSearchAPIEnabled || globalHybridAPIEnabled {
+		// No builder serves this group version, so nothing else enables it, and a
+		// group version that is not enabled has its custom routes skipped.
+		apiResourceConfig.EnableVersions(globalSearchGV)
+	}
 
 	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, apiResourceConfig, s.scheme); err != nil {
 		return err
@@ -378,7 +396,7 @@ func (s *service) start(ctx context.Context) error {
 	// groupPriority reads the live scheme (discovery follows preferred); the cap ranks against the natural snapshot instead.
 	s.groupPriority = s.scheme.PrioritizedVersionsForGroup
 
-	serverConfig.Authorization.Authorizer = s.authorizer
+	serverConfig.Authorization.Authorizer = authorizer.WithWatchRestriction(s.authorizer)
 	serverConfig.Authentication.Authenticator = authenticator.NewAuthenticator(serverConfig.Authentication.Authenticator)
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
@@ -428,12 +446,26 @@ func (s *service) start(ctx context.Context) error {
 
 	// Built once and used twice: the routes have to reach both the OpenAPI spec
 	// and the served WebServices, or the endpoint works but is undiscoverable.
-	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
-	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
-	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
 	searchAndStorageRoutes := searchroutes.Build(
-		searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers,
+		true, true, s.tracing, s.unified, builders, s.appInstallers,
+		searchroutes.Options{HybridEnabled: hybridAPIEnabled},
 	)
+	if globalSearchAPIEnabled {
+		searchAndStorageRoutes = append(searchAndStorageRoutes,
+			searchroutes.BuildGlobalSearch(s.tracing, s.unified)...)
+	}
+	if globalHybridAPIEnabled {
+		searchAndStorageRoutes = append(searchAndStorageRoutes,
+			searchroutes.BuildGlobalHybridSearch(s.tracing, s.unified, builders, s.appInstallers, s.authorizer, s.cfg.HybridSearchDefaultResources...)...)
+	}
+	if globalSearchAPIEnabled || globalHybridAPIEnabled {
+		// Global search has no resource of its own to hold a permission on. The
+		// hybrid handler checks locally registered API policies; storage checks
+		// manifest opt-in. Lexical search relies on get and list permissions being
+		// equivalent for every covered type. Both authorize every result in
+		// storage against its own group, resource and folder.
+		s.authorizer.Register(globalSearchGV, authorizer.NewAllowAuthorizer())
+	}
 
 	keysAPIEnabled := apiserverSection.Key(keysapi.ConfigKey).MustBool(false)
 	searchAndStorageRoutes = append(searchAndStorageRoutes,
@@ -484,7 +516,7 @@ func (s *service) start(ctx context.Context) error {
 			Scheme:                s.scheme,
 			RESTOptionsGetter:     serverConfig.RESTOptionsGetter,
 			StorageClient:         s.unified,
-			SearchAPIEnabled:      searchAPIEnabled,
+			HybridAPIEnabled:      hybridAPIEnabled,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,
 			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, builder.ServerRegisterer(s.metrics, builder.ServerAPIExtensions)),
@@ -620,8 +652,17 @@ func (s *service) start(ctx context.Context) error {
 
 	// used by the proxy wrapper registered in ProvideService
 	s.handler = runningServer.Handler
-	// used by local clients to make requests to the server
-	s.restConfig = runningServer.LoopbackClientConfig
+	if s.requestRouter != nil {
+		s.requestRouter.SetUpstream(s.handler)
+	}
+	// used by local clients to make requests to the server. Kubernetes' own
+	// loopback clients keep the server's config; Grafana's go through the
+	// router, as requests over HTTP do.
+	s.restConfig = clientrest.CopyConfig(runningServer.LoopbackClientConfig)
+	s.restConfig.Transport = &grafanaapiserveroptions.RoundTripperFunc{
+		// nolint:bodyclose
+		Fn: grafanaresponsewriter.WrapHandler(http.HandlerFunc(s.serveRouted)),
+	}
 
 	for _, installer := range s.appInstallers {
 		err := installer.InitializeApp(*s.restConfig)
@@ -666,7 +707,8 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 				if _, err := identity.GetRequester(ctx); err != nil {
 					ctx = identity.WithRequester(ctx, c.SignedInUser)
 				}
-				wrapped := grafanaresponsewriter.WrapHandler(s.handler)
+				// nolint:bodyclose
+				wrapped := grafanaresponsewriter.WrapHandler(http.HandlerFunc(s.serveRouted))
 				return wrapped(req.WithContext(ctx))
 			},
 		},
@@ -676,6 +718,21 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if err := s.AwaitRunning(r.Context()); err != nil {
 		return
+	}
+	s.serveRouted(w, r)
+}
+
+// serveRouted serves an in-process request as a request over HTTP is served:
+// through the router, so a group the router serves is the router's here too.
+// A request without a Grafana requester, such as one from Kubernetes' own
+// loopback clients, which authenticate with the loopback token instead, goes
+// straight to the server: the router would refuse it.
+func (s *service) serveRouted(w http.ResponseWriter, r *http.Request) {
+	if s.requestRouter != nil {
+		if requester, err := identity.GetRequester(r.Context()); err == nil && requester != nil {
+			s.requestRouter.HandleFunc(w, r, s.handler)
+			return
+		}
 	}
 	s.handler.ServeHTTP(w, r)
 }

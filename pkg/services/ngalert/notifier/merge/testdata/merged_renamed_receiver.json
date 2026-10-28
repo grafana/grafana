@@ -52,6 +52,7 @@
     ],
     "time_intervals": [
       {
+        "uid": "bXRpLTE",
         "name": "mti-1",
         "time_intervals": [
           {
@@ -65,6 +66,7 @@
         ]
       },
       {
+        "uid": "bXRpLTI",
         "name": "mti-2",
         "time_intervals": [
           {
@@ -78,6 +80,7 @@
         ]
       },
       {
+        "uid": "dGktMQ",
         "name": "ti-1",
         "time_intervals": [
           {
@@ -89,6 +92,7 @@
         ]
       },
       {
+        "uid": "dGktMg",
         "name": "ti-2",
         "time_intervals": [
           {
@@ -227,8 +231,8 @@
     }
   },
   "managed_inhibition_rules": {
-    "83e6a846175a154d": {
-      "name": "83e6a846175a154d",
+    "a1d38b33ebc9330": {
+      "name": "a1d38b33ebc9330",
       "source_matchers": [
         "alertname=\"test\"",
         "__grafana_managed_route__=\"mimir-12345\""

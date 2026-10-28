@@ -8,10 +8,10 @@ import { DashboardLoadingBar } from './DashboardLoadingBar';
 import { type DashboardScene } from './DashboardScene';
 
 export function DashboardOverlay({ dashboard }: { dashboard: DashboardScene }) {
-  const { overlay, isOverlayLoading } = dashboard.useState();
+  const { overlay, loadingView } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
-  if (isOverlayLoading) {
+  if (loadingView === 'overlay') {
     return (
       <Drawer title={t('dashboard.loading.drawer-title', 'Loading…')} onClose={() => dashboard.closeModal()}>
         <div className={styles.loading}>

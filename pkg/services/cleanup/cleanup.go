@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/image"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -39,10 +40,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/open-feature/go-sdk/openfeature"
 )
-
-type AlertRuleService interface {
-	CleanUpDeletedAlertRules(ctx context.Context) (int64, error)
-}
 
 type CleanUpService struct {
 	log                       log.Logger
@@ -57,7 +54,7 @@ type CleanUpService struct {
 	deleteExpiredImageService *image.DeleteExpiredService
 	tempUserService           tempuser.Service
 	annotationCleaner         annotations.Cleaner
-	alertRuleService          AlertRuleService
+	alertRuleService          rulestore.MaintenanceStore
 	clientConfigProvider      grafanaapiserver.RestConfigProvider
 	orgService                org.Service
 	teamService               team.Service
@@ -68,7 +65,7 @@ type CleanUpService struct {
 func ProvideService(cfg *setting.Cfg, Features featuremgmt.FeatureToggles, serverLockService *serverlock.ServerLockService,
 	sqlstore db.DB, queryHistoryService queryhistory.Service,
 	dashboardVersionService dashver.Service, dashSnapSvc dashboardsnapshots.Service, deleteExpiredImageService *image.DeleteExpiredService,
-	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, service AlertRuleService, clientConfigProvider grafanaapiserver.RestConfigProvider, orgService org.Service, teamService team.Service, dataSourceService datasources.DataSourceService) *CleanUpService {
+	tempUserService tempuser.Service, tracer tracing.Tracer, annotationCleaner annotations.Cleaner, service rulestore.MaintenanceStore, clientConfigProvider grafanaapiserver.RestConfigProvider, orgService org.Service, teamService team.Service, dataSourceService datasources.DataSourceService) *CleanUpService {
 	s := &CleanUpService{
 		Cfg:                       cfg,
 		Features:                  Features,

@@ -10,6 +10,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // TODO: Rename to resources as it's not clear that we are returning here is repository resources
@@ -49,7 +50,7 @@ func (s *listConnector) Connect(ctx context.Context, name string, opts runtime.O
 		ns := request.NamespaceValue(ctx)
 		// TODO: Add pagination to resource lister
 		rsp, err := s.lister.List(ctx, ns, name)
-		if err != nil {
+		if err := resource.StatusErrorFromResponse(nil, err); err != nil {
 			responder.Error(err)
 		} else {
 			responder.Object(200, rsp)

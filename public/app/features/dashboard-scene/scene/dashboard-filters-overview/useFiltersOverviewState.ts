@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { fuzzySearch, type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   type AdHocFilterWithLabels,
   type AdHocFiltersVariable,
@@ -162,9 +161,7 @@ export function useFiltersOverviewState({
   const [loading, setLoading] = useState(true);
   const [valueOptionsByKey, setValueOptionsByKey] = useState<Record<string, Array<ComboboxOption<string>>>>({});
 
-  const useUnifiedGroupBy = Boolean(
-    config.featureToggles.dashboardUnifiedDrilldownControls && adhocFilters?.state.enableGroupBy
-  );
+  const useUnifiedGroupBy = Boolean(adhocFilters?.state.enableGroupBy);
 
   const operatorConfig = useMemo(
     () => ({

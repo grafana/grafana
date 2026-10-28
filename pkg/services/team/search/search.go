@@ -17,90 +17,13 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 		return v0alpha1.GetSearchTeamsResponse{}, nil
 	}
 	if result.Error != nil {
-		return v0alpha1.GetSearchTeamsResponse{}, resource.GetError(result.Error)
+		return v0alpha1.GetSearchTeamsResponse{}, resource.StatusError(result.Error)
 	}
 
-	switch result.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return parseTableResults(result, offset)
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return parseFieldValueResults(result, offset)
-	default:
+	if result.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return v0alpha1.GetSearchTeamsResponse{}, fmt.Errorf("unsupported search result format %d", result.GetResultFormat())
 	}
-}
 
-func parseTableResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.GetSearchTeamsResponse, error) {
-	if result.Results == nil {
-		return v0alpha1.GetSearchTeamsResponse{}, nil
-	}
-
-	titleIDX := -1
-	emailIDX := -1
-	provisionedIDX := -1
-	externalUIDIDX := -1
-	legacyIDIDX := -1
-
-	for i, v := range result.Results.Columns {
-		if v == nil {
-			continue
-		}
-
-		switch v.Name {
-		case resource.SEARCH_FIELD_TITLE:
-			titleIDX = i
-		case builders.TEAM_SEARCH_EMAIL:
-			emailIDX = i
-		case builders.TEAM_SEARCH_PROVISIONED:
-			provisionedIDX = i
-		case builders.TEAM_SEARCH_EXTERNAL_UID:
-			externalUIDIDX = i
-		case LegacyIDField:
-			legacyIDIDX = i
-		}
-	}
-
-	sr := newSearchResponse(result, offset, len(result.Results.Rows))
-	for i, row := range result.Results.Rows {
-		if len(row.Cells) != len(result.Results.Columns) {
-			return v0alpha1.GetSearchTeamsResponse{}, fmt.Errorf("error parsing team search response: mismatch number of columns and cells")
-		}
-
-		hit := &v0alpha1.GetSearchTeamsTeamHit{
-			Name: row.Key.Name,
-		}
-
-		if titleIDX >= 0 && row.Cells[titleIDX] != nil {
-			hit.Title = string(row.Cells[titleIDX])
-		} else {
-			hit.Title = "(no title)"
-		}
-
-		if emailIDX >= 0 && row.Cells[emailIDX] != nil {
-			hit.Email = string(row.Cells[emailIDX])
-		}
-
-		if provisionedIDX >= 0 && row.Cells[provisionedIDX] != nil {
-			hit.Provisioned = string(row.Cells[provisionedIDX]) == "true"
-		}
-
-		if externalUIDIDX >= 0 && row.Cells[externalUIDIDX] != nil {
-			hit.ExternalUID = string(row.Cells[externalUIDIDX])
-		}
-
-		if legacyIDIDX >= 0 && row.Cells[legacyIDIDX] != nil {
-			if legacyID, err := strconv.ParseInt(string(row.Cells[legacyIDIDX]), 10, 64); err == nil {
-				hit.InternalId = &legacyID
-			}
-		}
-
-		sr.Hits[i] = *hit
-	}
-
-	return sr, nil
-}
-
-func parseFieldValueResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.GetSearchTeamsResponse, error) {
 	sr := newSearchResponse(result, offset, len(result.Rows))
 	for i, row := range result.Rows {
 		if row == nil || row.Key == nil {

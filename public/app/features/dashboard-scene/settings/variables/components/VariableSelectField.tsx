@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { Field, Select, useStyles2 } from '@grafana/ui';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 
 interface VariableSelectFieldProps<T> {
   name: string;
@@ -15,7 +16,7 @@ interface VariableSelectFieldProps<T> {
   description?: React.ReactNode;
 }
 
-export function VariableSelectField({
+export function VariableSelectField<T>({
   name,
   description,
   value,
@@ -23,13 +24,14 @@ export function VariableSelectField({
   onChange,
   testId,
   width,
-}: PropsWithChildren<VariableSelectFieldProps<any>>) {
+}: PropsWithChildren<VariableSelectFieldProps<T>>) {
   const styles = useStyles2(getStyles);
   const uniqueId = useId();
   const inputId = `variable-select-input-${name}-${uniqueId}`;
+  const readOnly = useOptionsPaneReadOnly();
 
   return (
-    <Field label={name} description={description} htmlFor={inputId}>
+    <Field label={name} description={description} htmlFor={inputId} disabled={readOnly ? true : undefined}>
       <Select
         data-testid={testId}
         inputId={inputId}

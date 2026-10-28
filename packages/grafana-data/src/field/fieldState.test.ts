@@ -158,6 +158,15 @@ describe('getFieldDisplayName', () => {
 });
 
 describe('getFrameDisplayName', () => {
+  it('Should use the query reference when only time fields remain', () => {
+    const frame = toDataFrame({
+      refId: 'A',
+      fields: [{ name: TIME_SERIES_TIME_FIELD_NAME, type: FieldType.time, values: [1, 2, 3] }],
+    });
+
+    expect(getFrameDisplayName(frame)).toBe('Series (A)');
+  });
+
   it('Should return frame name if set', () => {
     const frame = toDataFrame({
       name: 'Series A',

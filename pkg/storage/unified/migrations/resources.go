@@ -43,7 +43,10 @@ func registerMigration(mg *sqlstoremigrator.Migrator,
 	def MigrationDefinition,
 	opts ...ResourceMigrationOption,
 ) {
-	validators := def.CreateValidators(client, mg.Dialect.DriverName())
+	validators := def.CreateValidators(client, ValidatorOptions{
+		DriverName:         mg.Dialect.DriverName(),
+		EnableSQLKVBackend: cfg.EnableSQLKVBackend,
+	})
 	migration := NewResourceMigration(migrator, tableLocker, tableRenamer, cfg, def, validators, opts...)
 	mg.AddMigration(def.MigrationID, migration)
 }
@@ -87,12 +90,7 @@ func successfulMigrationExists(ctx context.Context, sqlStore db.DB, migrationID 
 	return count > 0, nil
 }
 
-func buildResourceKey(gr schema.GroupResource, namespace string, registry *MigrationRegistry) *resourcepb.ResourceKey {
-	// TODO: commenting this out so migrations can handle
-	// dynamically registered group names
-	//if !registry.HasResource(gr) {
-	//	return nil
-	//}
+func buildResourceKey(gr schema.GroupResource, namespace string) *resourcepb.ResourceKey {
 	return &resourcepb.ResourceKey{
 		Namespace: namespace,
 		Group:     gr.Group,

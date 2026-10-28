@@ -376,11 +376,12 @@ type Cfg struct {
 	AuthProxy AuthProxySettings
 
 	// OAuth
-	OAuthAutoLogin                       bool
-	OAuthLoginErrorMessage               string
-	OAuthCookieMaxAge                    int
-	OAuthAllowInsecureEmailLookup        bool
-	OAuthRefreshTokenServerLockMinWaitMs int64
+	OAuthAutoLogin                          bool
+	OAuthLoginErrorMessage                  string
+	OAuthCookieMaxAge                       int
+	OAuthAllowInsecureEmailLookup           bool
+	OAuthRefreshTokenServerLockMinWaitMs    int64
+	OAuthRefreshTokenServerLockWaitBudgetMs int64
 
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
@@ -707,6 +708,7 @@ type Cfg struct {
 	UnifiedStorageClusterSlug             string
 	UnifiedStorageAuthzExemptionEnabled   bool
 	UnifiedStorageAuthzExemptResources    []string
+	HybridSearchDefaultResources          []string
 	UnifiedStorageGRPCErrorResultToStatus bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
@@ -740,13 +742,12 @@ type Cfg struct {
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
 	GlobalSearchIndexEnabled                   bool          // Build one index per namespace covering several resource types, alongside the per-resource indexes.
+	GlobalSearchIndexStartupBuild              bool          // Temporary: build global indexes before readiness instead of in the background. To be removed once environments restore them from snapshots at startup.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
-	IndexSnapshotBucketURL                     string        // Go CDK bucket URL for snapshot storage (s3://, gs://, azblob://, mem://, file:///)
-	IndexSnapshotStorageKV                     bool          // Store snapshots in the same KV used by the storage backend instead of an object-storage bucket. Mutually exclusive with index_snapshot_bucket_url.
-	IndexSnapshotKVChunkConcurrency            int           // Per-file chunk I/O fan-out for KV-backed snapshots. 0 / 1 = serial. Used only when index_snapshot_storage_kv is true.
-	IndexSnapshotKVChunkSizeMiB                int           // Size in MiB of a single KV value used to store snapshot file data. Files larger than this are split into chunks. 0 = use built-in default. Valid range: 1..1024 MiB. Used only when index_snapshot_storage_kv is true.
+	IndexSnapshotKVChunkConcurrency            int           // Per-file chunk I/O fan-out for KV-backed snapshots. 0 / 1 = serial.
+	IndexSnapshotKVChunkSizeMiB                int           // Size in MiB of a single KV value used to store snapshot file data. Files larger than this are split into chunks. 0 = use built-in default. Valid range: 1..1024 MiB.
 	IndexSnapshotThreshold                     int           // Min doc count to use remote snapshots (must be >= IndexFileThreshold, default: 5000)
 	IndexSnapshotMaxAge                        time.Duration // Max snapshot age before deletion (must be >= MaxFileIndexAge, default: 7d)
 	IndexSnapshotCleanupGracePeriod            time.Duration // Time a new snapshot must exist before its predecessor in the same Grafana-version group is eligible for cleanup (default: 30m)
@@ -757,6 +758,7 @@ type Cfg struct {
 	QOSEnabled                                 bool
 	QOSNumberWorker                            int
 	QOSMaxSizePerTenant                        int
+	QOSMaxConcurrentPerTenant                  int
 	MemberlistBindAddr                         string
 	MemberlistAdvertiseAddr                    string
 	MemberlistAdvertisePort                    int
@@ -774,10 +776,7 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
-	// SearchEnforceSortCapability rejects a sort on a field that does not declare
-	// sorting. Off by default: violations are counted first, so they can be fixed
-	// before requests start failing.
-	SearchEnforceSortCapability bool
+	SearchClientForwardAuthEnabled             bool
 	// SearchPostRankAuthz enables the post-filter authorization search path:
 	// bleve ranks without the in-searcher authz wrapper and authorization runs
 	// app-side in rank order with early exit once the page is filled.
@@ -798,6 +797,9 @@ type Cfg struct {
 	// defaults to dashboards; external defaults to none.
 	VectorAllowedInternalCollections []string
 	VectorAllowedExternalCollections []string
+	// Exact group/resource collections readable only by the listed service identities.
+	VectorAllowedReadServices       map[string][]string
+	VectorSharedExternalCollections map[string][]string
 	// Registers the VectorStore write RPCs on the storage server.
 	EnableVectorStore bool
 	// Service identities allowed to call the VectorStore write RPCs.
@@ -857,7 +859,7 @@ type Cfg struct {
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
 	EnforcedQuotaResources        []string
-	SearchBackedListResources     []string
+	LoggedQuotaResources          []string
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend           bool
@@ -869,8 +871,11 @@ type Cfg struct {
 	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
 	LogSQLBackendCalls                bool
 	KVLeaseTTL                        time.Duration
+	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
+	BlobGarbageCollectionEnabled      bool
+	BlobGarbageCollectionDryRun       bool
 	GarbageCollectionInterval         time.Duration
 	GarbageCollectionBatchSize        int
 	GarbageCollectionBatchWait        time.Duration
@@ -884,6 +889,10 @@ type Cfg struct {
 	EventPruningInterval time.Duration
 	SearchLookback       time.Duration
 	NotifierSettleDelay  time.Duration
+	SeededWatchesEnabled bool
+	// FastLatestKeyLookupEnabled makes the KV backend resolve latest-version reads with a
+	// single-row descending lookup instead of scanning the resource's history.
+	FastLatestKeyLookupEnabled bool
 	// ResourceVersionBatchTransactionTimeout bounds one batched WithTx in the
 	// resource version manager (all WriteEventFunc calls + RV stamp updates).
 	ResourceVersionBatchTransactionTimeout time.Duration
@@ -901,6 +910,8 @@ type Cfg struct {
 	TenantDeleterInterval         time.Duration
 
 	ManifestApiServerAddress        string
+	ManifestDiscoveryAddress        string
+	ManifestDiscoveryAudience       string
 	ManifestWatcherAllowInsecureTLS bool
 	ManifestWatcherCAFile           string
 	ManifestWatcherPollInterval     time.Duration
@@ -1011,6 +1022,7 @@ func RedactedValue(key, value string) string {
 		"WEBHOOK_TOKEN$",
 		"INSTALL_TOKEN$",
 		"PROXY_TOKEN$",
+		"EXCHANGE_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1878,6 +1890,12 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
+	if err := cfg.readVectorAllowedReadServices(); err != nil {
+		return err
+	}
+	if err := cfg.readVectorSharedExternalCollections(); err != nil {
+		return err
+	}
 
 	cfg.readStartupParams(iniFile)
 	return nil
@@ -2105,6 +2123,9 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	for plug := range strings.SplitSeq(enableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
 		cfg.EnableFrontendSandboxForPlugins = append(cfg.EnableFrontendSandboxForPlugins, plug)
+	}
+	if strings.TrimSpace(enableFrontendSandboxForPlugins) != "" {
+		cfg.Logger.Warn("[Deprecated] The enable_frontend_sandbox_for_plugins configuration setting is deprecated and the Plugin Frontend Sandbox will be removed in Grafana 13.4.")
 	}
 
 	if cfg.CSPEnabled && cfg.CSPTemplate == "" {

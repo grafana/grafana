@@ -9,7 +9,11 @@ import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagDashboardVectorSearch, useFlagGrafanaVectorSearchCmdk } from '@grafana/runtime/internal';
+import {
+  useFlagDashboardVectorSearch,
+  useFlagGrafanaCmdkHybridSearch,
+  useFlagGrafanaVectorSearchCmdk,
+} from '@grafana/runtime/internal';
 import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
 
 import { AskAssistantPill } from './AskAssistantPill';
@@ -17,7 +21,7 @@ import { type DeepSearchNavHandle, DeepSearchResults } from './DeepSearchResults
 import { KBarResults } from './KBarResults';
 import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
-import { useHybridSearchEnabled, useSearchResults } from './actions/dashboardActions';
+import { useSearchResults } from './actions/dashboardActions';
 import { type DeepSearchDashboardResult, useDeepSearchResults } from './actions/deepSearchActions';
 import {
   useRegisterExtensionActions,
@@ -29,7 +33,7 @@ import { resetCommandPaletteInputMode, setCommandPaletteInputMode } from './inpu
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
 import { type CommandPaletteAction, getActionSectionId } from './types';
 import { useMatches } from './useMatches';
-import { SECTION_DEEP_SEARCH } from './values';
+import { SECTION_DEEP_SEARCH, SECTION_NOTEBOOKS } from './values';
 
 export function CommandPalette() {
   useRegisterStaticActions();
@@ -77,7 +81,7 @@ function CommandPaletteContents() {
   // results already cover the semantic matches, so showing both would duplicate them.
   const dashboardVectorSearchEnabled = useFlagDashboardVectorSearch();
   const vectorSearchCmdkEnabled = useFlagGrafanaVectorSearchCmdk();
-  const hybridSearchEnabled = useHybridSearchEnabled();
+  const hybridSearchEnabled = useFlagGrafanaCmdkHybridSearch();
   const deepSearchEnabled = dashboardVectorSearchEnabled && vectorSearchCmdkEnabled && !hybridSearchEnabled;
   const { deepSearchResults, isFetchingDeepSearchResults } = useDeepSearchResults({
     searchQuery,
@@ -92,7 +96,7 @@ function CommandPaletteContents() {
     ref
   );
 
-  const { dialogProps } = useDialog({}, ref);
+  const { dialogProps } = useDialog({ 'aria-label': t('command-palette.dialog-label', 'Command palette') }, ref);
 
   // Report interaction when opened/closed
   useEffect(() => {
@@ -246,6 +250,7 @@ const RenderResults = ({
 
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
+  const notebooksSectionTitle = t('command-palette.section.notebook-search-results', 'Notebooks');
   // because dashboard search results aren't registered as actions, we need to manually
   // convert them to ActionImpls before passing them as items to KBarResults
   const dashboardResultItems = useMemo(
@@ -262,6 +267,13 @@ const RenderResults = ({
         .map((folder) => new ActionImpl(folder, { store: {} })),
     [searchResults]
   );
+  const notebookResultItems = useMemo(
+    () =>
+      searchResults
+        .filter((item) => item.sectionId === SECTION_NOTEBOOKS)
+        .map((notebook) => new ActionImpl(notebook, { store: {} })),
+    [searchResults]
+  );
 
   const items = useMemo(() => {
     const results = [...kbarResults];
@@ -273,8 +285,20 @@ const RenderResults = ({
       results.push(dashboardsSectionTitle);
       results.push(...dashboardResultItems);
     }
+    if (notebookResultItems.length > 0) {
+      results.push(notebooksSectionTitle);
+      results.push(...notebookResultItems);
+    }
     return results;
-  }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
+  }, [
+    kbarResults,
+    dashboardsSectionTitle,
+    dashboardResultItems,
+    foldersSectionTitle,
+    folderResultItems,
+    notebooksSectionTitle,
+    notebookResultItems,
+  ]);
 
   // Analytics: single place to assemble the command_palette_action_selected payload,
   // shared by the keyword list and the deep search column.

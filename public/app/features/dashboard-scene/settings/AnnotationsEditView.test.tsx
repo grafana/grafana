@@ -92,10 +92,6 @@ jest.mock('@grafana/runtime', () => ({
     ...jest.requireActual('@grafana/runtime').config,
     publicDashboardAccessToken: 'ac123',
   },
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceSettings: jest.fn(async (ref: DataSourceRef | string | null) => {
     if (!ref) {
       return noAnnotationsDsInstanceSettings;
@@ -106,7 +102,6 @@ jest.mock('@grafana/runtime/unstable', () => ({
     return { uid: 'ds1' };
   }),
 }));
-
 describe('AnnotationsEditView', () => {
   describe('Dashboard annotations state', () => {
     let annotationsView: AnnotationsEditView;

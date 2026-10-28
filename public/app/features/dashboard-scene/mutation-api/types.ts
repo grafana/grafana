@@ -60,6 +60,13 @@ export interface PanelRuntimeStatus {
   notices?: PanelRuntimeNotice[];
 }
 
+export interface PanelErrorsData {
+  errors: Array<{ element: string; title: string; errors: PanelRuntimeError[] }>;
+  noDataPanels: Array<{ element: string; title: string }>;
+  panelsChecked: number;
+  uncheckedPanels: Array<{ element: string; reason: 'loading' | 'status_unavailable' | 'not_found' }>;
+}
+
 export interface FieldSchema {
   name: string;
   type: string;

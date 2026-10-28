@@ -11,8 +11,11 @@ import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
 import { FOOTER_TEST_ID } from '../TextNGFooter';
 
 import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNGEditor';
+import { FEEDBACK_BUTTON_TEST_ID } from './TextNGFeedbackButton';
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 import { type ViewMode } from './viewMode';
+
+jest.mock('../SandboxFrame');
 
 beforeAll(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
@@ -21,19 +24,6 @@ beforeAll(() => {
 afterAll(() => {
   setTestFlags({});
 });
-
-const mermaidRender = jest
-  .fn()
-  .mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>' });
-
-jest.mock('mermaid', () => ({
-  __esModule: true,
-  default: {
-    initialize: jest.fn(),
-    parse: jest.fn().mockResolvedValue(true),
-    render: (...args: unknown[]) => mermaidRender(...args),
-  },
-}));
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
@@ -322,7 +312,9 @@ describe('TextNGEditor', () => {
         fireEvent.change(screen.getByRole('textbox'), { target: { value: content } });
 
         // Debounced preview settles from the '# Hello' <h1> to the space fallback.
-        await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML.trim()).toBe(''));
+        await waitFor(() =>
+          expect(screen.getByTestId(PREVIEW_TEST_ID).querySelector('[data-text-blocks]')!.innerHTML.trim()).toBe('')
+        );
       }
     );
   });
@@ -408,6 +400,25 @@ describe('TextNGEditor', () => {
     });
   });
 
+  describe('feedback button', () => {
+    // It sits in the toolbar row that holds the view switcher and mode picker,
+    // not in the formatting toolbar, so it survives the views that drop that.
+    it('stays in the toolbar in Preview view, where the formatting toolbar is gone', () => {
+      setup('hello', TextMode.Markdown);
+
+      expect(screen.queryByTestId(FORMAT_TOOLBAR_TEST_ID)).not.toBeInTheDocument();
+      expect(screen.getByTestId(FEEDBACK_BUTTON_TEST_ID)).toBeInTheDocument();
+    });
+
+    it('stays in the toolbar in Code mode, which has no formatting actions', async () => {
+      setup('const a = 1;', TextMode.Code, jest.fn(), false, CodeLanguage.Typescript);
+      await enterWriteMode();
+
+      expect(screen.queryByTestId(FORMAT_TOOLBAR_TEST_ID)).not.toBeInTheDocument();
+      expect(screen.getByTestId(FEEDBACK_BUTTON_TEST_ID)).toBeInTheDocument();
+    });
+  });
+
   describe('mode picker', () => {
     it('shows the current mode in the toolbar, in every view', async () => {
       setup('<p>Hello</p>', TextMode.HTML);
@@ -434,7 +445,7 @@ describe('TextNGEditor', () => {
 
       expect(onChange).toHaveBeenCalledWith({ mode: TextMode.HTML, content: '# Hello' });
       // HTML mode does not turn '#' into a heading, it renders the text as-is.
-      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML.trim()).toBe('# Hello');
+      expect(screen.getByTestId(PREVIEW_TEST_ID).querySelector('[data-text-blocks]')!.innerHTML.trim()).toBe('# Hello');
     });
 
     it('carries a pending draft with the mode change, so typing is not lost', async () => {

@@ -25,6 +25,7 @@ export const DASHBOARD_COMMAND_SCHEMAS = [
   { name: 'UPDATE_PANEL', payloadSchema: payloads.updatePanel },
   { name: 'REMOVE_PANEL', payloadSchema: payloads.removePanel },
   { name: 'LIST_PANELS', payloadSchema: payloads.listPanels },
+  { name: 'GET_PANEL_ERRORS', payloadSchema: payloads.getPanelErrors },
   { name: 'GET_DASHBOARD_INFO', payloadSchema: payloads.getDashboardInfo },
   { name: 'GET_METADATA_ANNOTATIONS', payloadSchema: payloads.getMetadataAnnotations },
   { name: 'UPDATE_METADATA_ANNOTATIONS', payloadSchema: payloads.updateMetadataAnnotations },
@@ -33,4 +34,5 @@ export const DASHBOARD_COMMAND_SCHEMAS = [
   { name: 'APPLY_SPEC', payloadSchema: payloads.applySpec },
   { name: 'RENDER_PLAN', payloadSchema: payloads.renderPlan },
   { name: 'END_PLANNING', payloadSchema: payloads.endPlanning },
+  { name: 'RELOAD_FROM_SERVER', payloadSchema: payloads.reloadFromServer },
 ] as const;

@@ -125,7 +125,26 @@ type mockZanzanaPermissionStore struct {
 	PermissionStore
 }
 
-func (m *mockZanzanaPermissionStore) SetFolderParent(_ context.Context, _, _, _ string) error {
-	m.Called()
+func (m *mockZanzanaPermissionStore) SetFolderParent(ctx context.Context, namespace, name, parent string) error {
+	m.Called(ctx, namespace, name, parent)
 	return nil
+}
+
+func TestFolderSyncHooks_CanonicalRoot(t *testing.T) {
+	t.Run("root normalization is not a move", func(t *testing.T) {
+		store := newMockStore()
+		b := &FolderAPIBuilder{permissionStore: store}
+		finish, err := b.beginUpdate(t.Context(), getFolderObj("foo", ""), getFolderObj("foo", "general"), nil)
+		require.NoError(t, err)
+		finish(t.Context(), true)
+		store.AssertNumberOfCalls(t, "SetFolderParent", 0)
+	})
+	t.Run("move to root removes the real parent", func(t *testing.T) {
+		store := newMockStore()
+		b := &FolderAPIBuilder{permissionStore: store}
+		finish, err := b.beginUpdate(t.Context(), getFolderObj("foo", "general"), getFolderObj("foo", "parent"), nil)
+		require.NoError(t, err)
+		finish(t.Context(), true)
+		store.AssertCalled(t, "SetFolderParent", mock.Anything, mock.Anything, "foo", "")
+	})
 }

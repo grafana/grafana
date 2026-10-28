@@ -6,8 +6,8 @@ import {
   type PanelPluginMeta,
   type TypedVariableModel,
 } from '@grafana/data';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import {
   type DataQueryKind,
@@ -72,14 +72,9 @@ jest.mock('@grafana/runtime', () => ({
       minInterval: '10s',
     },
   },
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn((v: string | DataSourceRef) => Promise.resolve(getStubInstanceSettings(v))),
   getDataSourceInstanceSettings: (v: string | DataSourceRef) => Promise.resolve(getStubInstanceSettings(v)),
 }));
-
 jest.mock('app/features/library-panels/state/api', () => ({
   getLibraryPanel: jest.fn().mockImplementation((uid: string) => {
     if (uid === 'test-library-panel-uid') {

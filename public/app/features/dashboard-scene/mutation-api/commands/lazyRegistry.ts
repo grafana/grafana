@@ -44,6 +44,11 @@ export const LAZY_DASHBOARD_COMMANDS: LazyMutationCommand[] = [
     load: () => import('./listPanels').then((module) => module.listPanelsCommand),
   },
   {
+    name: 'GET_PANEL_ERRORS',
+    readOnly: true,
+    load: () => import('./getPanelErrors').then((module) => module.getPanelErrorsCommand),
+  },
+  {
     name: 'GET_DASHBOARD_INFO',
     readOnly: true,
     load: () => import('./getDashboardInfo').then((module) => module.getDashboardInfoCommand),
@@ -65,4 +70,9 @@ export const LAZY_DASHBOARD_COMMANDS: LazyMutationCommand[] = [
   { name: 'APPLY_SPEC', load: () => import('./applySpec').then((module) => module.applySpecCommand) },
   { name: 'RENDER_PLAN', load: () => import('./renderPlan').then((module) => module.renderPlanCommand) },
   { name: 'END_PLANNING', load: () => import('./endPlanning').then((module) => module.endPlanningCommand) },
+  {
+    name: 'RELOAD_FROM_SERVER',
+    readOnly: true,
+    load: () => import('./reloadFromServer').then((module) => module.reloadFromServerCommand),
+  },
 ];

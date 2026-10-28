@@ -31,10 +31,6 @@ func (b *broadcaster[T]) waitReady(ctx context.Context) error {
 	return b.waitForInitialization(ctx, attempt)
 }
 
-func writtenEventIdentity(event *WrittenEvent) (GroupResource, int64) {
-	return GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}, event.ResourceVersion
-}
-
 func cacheEvent(gr GroupResource, rv int64) *WrittenEvent {
 	return &WrittenEvent{Key: &resourcepb.ResourceKey{Group: gr.Group, Resource: gr.Resource}, ResourceVersion: rv}
 }

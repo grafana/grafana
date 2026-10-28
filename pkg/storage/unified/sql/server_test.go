@@ -193,6 +193,38 @@ func TestWithAuthorizeBeforeFetch(t *testing.T) {
 	require.True(t, resourceOpts.AuthorizeBeforeFetchEnabled)
 }
 
+func TestWithQuotaConfig(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.EnforcedQuotaResources = []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}
+	cfg.LoggedQuotaResources = []string{"playlist.grafana.app/playlists", "dashboard.grafana.app/dashboards"}
+	cfg.QuotasErrorMessageSupportInfo = "Contact support."
+	opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg}, withQuotaConfig)
+	require.NoError(t, err)
+	require.Equal(t, map[string]bool{"dashboard.grafana.app/dashboards": true, "folder.grafana.app/folders": true}, opts.QuotasConfig.EnforcedResources)
+	require.Equal(t, map[string]bool{"playlist.grafana.app/playlists": true, "dashboard.grafana.app/dashboards": true}, opts.QuotasConfig.LoggedResources)
+	require.Equal(t, "Contact support.", opts.QuotasConfig.SupportMessage)
+	require.True(t, opts.QuotasConfig.ShouldCheck("playlist.grafana.app", "playlists"))
+	require.False(t, opts.QuotasConfig.ShouldEnforce("playlist.grafana.app", "playlists"))
+	require.False(t, opts.QuotasConfig.ShouldCheck("plugins.grafana.app", "plugins"))
+
+	cfg.EnforcedQuotaResources = nil
+	cfg.LoggedQuotaResources = nil
+	opts, err = buildResourceServerOptions(&ServerOptions{Cfg: cfg}, withQuotaConfig)
+	require.NoError(t, err)
+	require.Empty(t, opts.QuotasConfig.EnforcedResources)
+	require.Empty(t, opts.QuotasConfig.LoggedResources)
+}
+
+func TestWithSeededWatches(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		cfg := setting.NewCfg()
+		cfg.SeededWatchesEnabled = enabled
+		resourceOpts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg}, withSeededWatches)
+		require.NoError(t, err)
+		require.Equal(t, enabled, resourceOpts.SeededWatchesEnabled)
+	}
+}
+
 func TestWithNatsWatchMaxAge(t *testing.T) {
 	const maxAge = 5 * time.Minute
 
@@ -230,4 +262,30 @@ func TestWithBackendSharesWatchExpiry(t *testing.T) {
 		Backend: &resource.UnimplementedStorageBackend{}, WatchExpiry: expiry,
 	}, resourceOpts))
 	require.Same(t, expiry, resourceOpts.WatchExpiry)
+}
+
+func TestWithBlobConfigUsesBlobBackend(t *testing.T) {
+	blob := resource.NewKVBlobSupport(nil)
+
+	t.Run("uses the blob backend when no blob url is set", func(t *testing.T) {
+		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: setting.NewCfg(), BlobBackend: blob}, withBlobConfig)
+		require.NoError(t, err)
+		require.Same(t, blob, opts.Blob.Backend)
+	})
+
+	t.Run("prefers the blob url over the blob backend", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Raw.Section("grafana-apiserver").Key("blob_url").SetValue("mem://")
+		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg, BlobBackend: blob}, withBlobConfig)
+		require.NoError(t, err)
+		require.Nil(t, opts.Blob.Backend)
+		require.Equal(t, "mem://", opts.Blob.URL)
+	})
+}
+
+func TestWithBlobBackendSetsServiceBlobBackend(t *testing.T) {
+	blob := resource.NewKVBlobSupport(nil)
+	s := &service{}
+	WithBlobBackend(blob)(s)
+	require.Same(t, blob, s.blobBackend)
 }

@@ -5,7 +5,7 @@
  * Fetched on demand by `withRouteProxy.tsx`, so this module is free to import whatever it needs.
  * Only the list of paths it covers is loaded up front, in `proxiedPaths.ts`.
  */
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings } from '@grafana/runtime';
 
 import { SupportedPlugin } from '../types/pluginBridges';
 import { RuleFormType } from '../types/rule-form';
@@ -404,6 +404,16 @@ export const routeProxies: RouteProxy[] = [
       params.delete('muteName');
       return `${PLUGIN_ROUTES.timeIntervals}/${encodeURIComponent(muteName)}`;
     }),
+  },
+  {
+    // Grafana's `:name` here is a resource name (`metadata.name`), whereas the plugin keys time intervals by
+    // spec name. External Alertmanagers have no metadata.name and are never linked to this route, so this serves
+    // only to keeps the route proxy table complete.
+    path: '/alerting/routes/mute-timing/:name/edit',
+    matches: (context) => matchesExternalAlertmanager(context) && Boolean(context.params.name),
+    handler: alertmanagerPage(
+      (_params, { params }) => `${PLUGIN_ROUTES.timeIntervals}/${reencodePathParam(params.name)}`
+    ),
   },
   {
     path: '/alerting/silences',

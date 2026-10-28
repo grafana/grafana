@@ -45,6 +45,24 @@ func searchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit i
 	return out, nil
 }
 
+// globalSearchResults is searchResults for the search across resource types,
+// which also reports the types it left out.
+func globalSearchResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64) (*searchv0.GlobalSearchResults, error) {
+	results, err := searchResults(res, kind, limit)
+	if err != nil {
+		return nil, err
+	}
+	return &searchv0.GlobalSearchResults{
+		TypeMeta: metaForKind(searchv0.KindGlobalSearchResults),
+		Metadata: searchv0.GlobalResultsMetadata{
+			ResultsMetadata: results.Metadata,
+			SkippedTypes:    res.GetSkippedTypes(),
+		},
+		Items:  results.Items,
+		Facets: results.Facets,
+	}, nil
+}
+
 // trashResults maps a backend search response into the trash envelope. No facets:
 // trash never requests any, so the backend never returns any.
 func trashResults(res *resourcepb.ResourceSearchResponse, kind kindRef, limit int64) (*searchv0.TrashResults, error) {
@@ -98,63 +116,13 @@ func continueToken(rowCount int, lastSortFields []string, limit int64, totalIsEx
 }
 
 func decodeResults(res *resourcepb.ResourceSearchResponse, kind kindRef) (decodedResults, error) {
-	switch res.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return decodeTableResults(res.GetResults(), kind)
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return decodeFieldValueResults(res.GetFields(), res.GetRows(), kind)
-	default:
+	if res != nil && res.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return decodedResults{}, fmt.Errorf("unsupported search result format %d", res.GetResultFormat())
 	}
-}
-
-// decodeTableResults converts the legacy backend result table into envelope items.
-// Column names are already public names: the backend resolves them back from
-// their physical fields.* form when it builds the table.
-func decodeTableResults(table *resourcepb.ResourceTable, kind kindRef) (decodedResults, error) {
-	rows := table.GetRows()
-	items := make([]searchv0.ResultItem, 0, len(rows))
-	cols := table.GetColumns()
-
-	for _, row := range rows {
-		if len(row.GetCells()) != len(cols) {
-			return decodedResults{}, fmt.Errorf("row has %d cells but the table declares %d columns", len(row.GetCells()), len(cols))
-		}
-
-		item := resultItem(kind, row.GetKey())
-		values := map[string]any{}
-		for i, col := range cols {
-			v, err := resource.DecodeCell(col, i, row.GetCells()[i])
-			if err != nil {
-				return decodedResults{}, fmt.Errorf("decoding column %q: %w", col.GetName(), err)
-			}
-			if v == nil {
-				continue
-			}
-			// _score is surfaced as its own field, not as a searchable field.
-			if col.GetName() == resource.SEARCH_FIELD_SCORE {
-				if score, ok := toFloat64(v); ok {
-					item.Score = &score
-				}
-				continue
-			}
-			values[col.GetName()] = v
-		}
-		if len(values) > 0 {
-			item.Fields = &common.Unstructured{Object: values}
-		}
-
-		items = append(items, item)
-	}
-
-	var lastSortFields []string
-	if len(rows) > 0 {
-		lastSortFields = rows[len(rows)-1].GetSortFields()
-	}
-	return decodedResults{items: items, lastSortFields: lastSortFields}, nil
-}
-
-func decodeFieldValueResults(fields []*resourcepb.ResourceSearchField, rows []*resourcepb.ResourceSearchRow, kind kindRef) (decodedResults, error) {
+	// The search server reads manifests at runtime, so it can name kinds this
+	// process does not know. An older server sends none.
+	kind.reportedKinds = res.GetKinds()
+	fields, rows := res.GetFields(), res.GetRows()
 	items := make([]searchv0.ResultItem, 0, len(rows))
 	for i, row := range rows {
 		if row == nil || row.GetKey() == nil {
@@ -184,26 +152,24 @@ func decodeFieldValueResults(fields []*resourcepb.ResourceSearchField, rows []*r
 }
 
 func resultItem(kind kindRef, key *resourcepb.ResourceKey) searchv0.ResultItem {
+	group, resourceName, kindName := kind.group, kind.resource, kind.kind
+	if kind.spansResourceTypes() {
+		group, resourceName = key.GetGroup(), key.GetResource()
+		// An unknown pair leaves the kind empty rather than borrowing another
+		// result's: the group and resource still identify the object.
+		var ok bool
+		if kindName, ok = kind.reportedKinds[group+"/"+resourceName]; !ok {
+			kindName = kind.kinds[schema.GroupResource{Group: group, Resource: resourceName}]
+		}
+	}
 	return searchv0.ResultItem{
 		Resource: searchv0.ResourceRef{
-			Group:    kind.group,
-			Resource: kind.resource,
-			Kind:     kind.kind,
+			Group:    group,
+			Resource: resourceName,
+			Kind:     kindName,
 			Name:     key.GetName(),
 		},
 	}
-}
-
-func toFloat64(v any) (float64, bool) {
-	switch n := v.(type) {
-	case float64:
-		return n, true
-	case float32:
-		return float64(n), true
-	case int64:
-		return float64(n), true
-	}
-	return 0, false
 }
 
 func facets(in map[string]*resourcepb.ResourceSearchResponse_Facet) map[string][]searchv0.FacetTerm {

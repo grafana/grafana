@@ -1,4 +1,6 @@
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,FilterPredicate,Values
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,GlobalResultsMetadata,SkippedTypes
+API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,GlobalSearchResults,Items
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,SearchQuery,Facets
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,SearchQuery,Fields
 API rule violation: list_type_missing,github.com/grafana/grafana/pkg/apis/search/v0alpha1,SearchQuery,Sort
