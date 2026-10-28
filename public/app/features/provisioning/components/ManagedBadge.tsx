@@ -17,7 +17,7 @@ import { splitSourcePath } from './utils/path';
 
 interface ManagedBadgeProps {
   /** Which system manages the resource. When omitted, a generic "Provisioned" badge is shown. */
-  managerKind?: ManagerKind;
+  managerKind?: string;
   /** Repository title/name or plugin id, shown in the tooltip where relevant. */
   name?: string;
   /** Repository-managed resource whose backing repository no longer exists. */

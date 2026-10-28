@@ -2,15 +2,19 @@ import { HttpResponse, http } from 'msw';
 import { render, screen } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { setManagedBadge } from '@grafana/runtime/internal';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 import { type DashboardViewItem } from 'app/features/search/types';
 
 import { NestedFolderList, type NestedFolderListProps } from './NestedFolderList';
+
+setManagedBadge(ManagedBadge);
 
 setupProvisioningMswServer();
 

@@ -2,15 +2,19 @@ import { HttpResponse, delay, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { setManagedBadge } from '@grafana/runtime/internal';
 import { FOLDER_BY_NAME_URL, PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 import { type DashboardViewItem } from 'app/features/search/types';
 
 import { FolderRepo } from './FolderRepo';
+
+setManagedBadge(ManagedBadge);
 
 setupProvisioningMswServer();
 
