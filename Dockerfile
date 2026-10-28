@@ -16,7 +16,7 @@ ARG JS_SRC=js-builder
 FROM alpine:3.24.3 AS alpine-base
 FROM ubuntu:24.04 AS ubuntu-base
 FROM golang:1.27.3-alpine AS go-builder-base
-FROM --platform=${JS_PLATFORM} node:26.12.1-alpine3.24 AS js-builder-base
+FROM --platform=${JS_PLATFORM} node:26.13.0-alpine3.24 AS js-builder-base
 FROM gcr.io/distroless/static-debian13 AS distroless-base
 # Empty by default. For local enterprise builds, override with:
 #   --build-context enterprise-src=../grafana-enterprise
