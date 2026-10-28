@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"slices"
 	"sort"
-	"strconv"
 	"strings"
 
 	authzlib "github.com/grafana/authlib/authz"
@@ -71,8 +70,8 @@ func (s *LegacySearchService) LegacySearchUsersPermissions(req *authzv1.LegacySe
 		return status.Error(codes.PermissionDenied, "permission search request denied")
 	}
 	kind, uid := types.IdentityType(req.Caller.Type), req.Caller.Uid
-	if uid == "" || !types.IsIdentityType(kind, types.TypeUser, types.TypeServiceAccount) {
-		return status.Error(codes.InvalidArgument, "a user or service account subject is required")
+	if uid == "" || !types.IsIdentityType(kind, types.TypeUser, types.TypeServiceAccount, types.TypeAnonymous, types.TypeRenderService, types.TypeAPIKey) {
+		return status.Error(codes.InvalidArgument, "a supported legacy caller identity is required")
 	}
 	if req.GetUserId() <= 0 && req.GetAction() == "" && req.GetActionPrefix() == "" {
 		return status.Error(codes.InvalidArgument, "an action filter or target is required")
@@ -81,20 +80,25 @@ func (s *LegacySearchService) LegacySearchUsersPermissions(req *authzv1.LegacySe
 		return status.Error(codes.InvalidArgument, "action and action prefix are mutually exclusive")
 	}
 	ctx = request.WithNamespace(ctx, ns.Value)
-	callerID, err := s.store.GetSearchCallerID(ctx, ns, kind, uid, req.Caller.InternalId)
-	if err != nil {
-		return searchRPCError(err, codes.PermissionDenied, "caller could not be resolved")
-	}
 	caller := proto.Clone(req.Caller).(*authzv1.LegacyPermissionIdentity)
-	caller.InternalId = &callerID
+	userCaller := types.IsIdentityType(kind, types.TypeUser, types.TypeServiceAccount)
+	if userCaller {
+		callerID, err := s.store.GetSearchCallerID(ctx, ns, kind, uid, caller.InternalId)
+		if err != nil {
+			return searchRPCError(err, codes.PermissionDenied, "caller could not be resolved")
+		}
+		caller.InternalId = &callerID
+	} else if s.callerPermissions == nil {
+		return status.Error(codes.PermissionDenied, "caller permission evaluator is required")
+	}
 	enforced := s.enforcementEnabled != nil && s.enforcementEnabled()
 	var callerPermissions []accesscontrol.Permission
 	if s.callerPermissions != nil {
 		callerPermissions, err = s.callerPermissions(ctx, ns, caller, enforced)
 	} else {
 		var result map[int64][]accesscontrol.Permission
-		result, err = s.search(ctx, ns, accesscontrol.SearchOptions{UserID: callerID, Action: accesscontrol.ActionUsersPermissionsRead}, enforced)
-		callerPermissions = result[callerID]
+		result, err = s.search(ctx, ns, accesscontrol.SearchOptions{UserID: caller.GetInternalId(), Action: accesscontrol.ActionUsersPermissionsRead}, enforced)
+		callerPermissions = result[caller.GetInternalId()]
 	}
 	if err != nil {
 		return searchRPCError(err, codes.Internal, "could not evaluate caller visibility")
@@ -139,21 +143,26 @@ func searchRPCError(err error, fallback codes.Code, message string) error {
 }
 
 func searchVisibility(permissions []accesscontrol.Permission) func(int64) bool {
-	ids := map[int64]bool{}
+	var scopes []string
 	for _, permission := range permissions {
-		if permission.Action != accesscontrol.ActionUsersPermissionsRead {
-			continue
-		}
-		if permission.Scope == "*" || permission.Scope == "users:*" || permission.Scope == "users:id:*" {
-			return func(int64) bool { return true }
-		}
-		if value, ok := strings.CutPrefix(permission.Scope, "users:id:"); ok {
-			if id, err := strconv.ParseInt(value, 10, 64); err == nil {
-				ids[id] = true
-			}
+		if permission.Action == accesscontrol.ActionUsersPermissionsRead {
+			scopes = append(scopes, permission.Scope)
 		}
 	}
-	return func(id int64) bool { return ids[id] }
+	ids := map[any]struct{}{}
+	for _, prefix := range []string{"users:id:", "global.users:id:"} {
+		parsed, all := accesscontrol.ParseScopes(prefix, scopes)
+		if all {
+			return func(int64) bool { return true }
+		}
+		for id := range parsed {
+			ids[id] = struct{}{}
+		}
+	}
+	return func(id int64) bool {
+		_, ok := ids[id]
+		return ok
+	}
 }
 
 func streamSearchResults(ctx context.Context, stream authzv1.LegacyAuthzService_LegacySearchUsersPermissionsServer, results map[int64][]accesscontrol.Permission, visible func(int64) bool) error {

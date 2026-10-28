@@ -68,9 +68,9 @@ func searchRequester(ns types.NamespaceInfo, assertion *authzv1.LegacyPermission
 	if assertion.RequesterNamespace != nil {
 		namespace = *assertion.RequesterNamespace
 	}
-	return &legacyRequester{
+	caller := &legacyRequester{
 		SignedInUser: &user.SignedInUser{
-			OrgID: ns.OrgID, UserID: assertion.GetInternalId(), UserUID: assertion.Uid,
+			OrgID: ns.OrgID, UserUID: assertion.Uid,
 			Namespace: namespace, IsServiceAccount: types.IdentityType(assertion.Type) == types.TypeServiceAccount,
 			OrgRole:        identity.RoleType(assertion.OrgRole),
 			IsGrafanaAdmin: assertion.IsGrafanaAdmin,
@@ -81,4 +81,17 @@ func searchRequester(ns types.NamespaceInfo, assertion *authzv1.LegacyPermission
 		},
 		identity: assertion, namespace: namespace,
 	}
+	switch types.IdentityType(assertion.Type) {
+	case types.TypeUser, types.TypeServiceAccount:
+		caller.UserID = assertion.GetInternalId()
+	case types.TypeAnonymous:
+		caller.IsAnonymous = true
+	case types.TypeRenderService:
+		caller.AuthenticatedBy = "render"
+	case types.TypeAPIKey:
+		caller.ApiKeyID = assertion.GetInternalId()
+	default:
+		caller.FallbackType = types.IdentityType(assertion.Type)
+	}
+	return caller
 }

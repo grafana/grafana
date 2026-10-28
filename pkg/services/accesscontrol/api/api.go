@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -136,6 +137,9 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	if err != nil {
 		if status.Code(err) == codes.PermissionDenied {
 			return response.Error(http.StatusForbidden, "permission search denied", err)
+		}
+		if status.Code(err) == codes.InvalidArgument || errors.Is(err, legacyclient.ErrInvalidLegacySearchUsersPermissionsRequest) {
+			return response.Error(http.StatusBadRequest, "invalid permission search request", err)
 		}
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
 	}
