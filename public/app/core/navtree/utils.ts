@@ -214,6 +214,40 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
     .filter((node) => !isPrunable(PRUNABLE_SECTIONS, node));
 }
 
+/**
+ * Moves an item into another section, by nav id. Ids rather than urls: the
+ * server-built tree arrives with the app sub url applied to every url, so a url
+ * match would hold for one tree and not the other.
+ *
+ * Appends and re-sorts the destination, for callers running after the tree is
+ * already in order. The item keeps its own sortWeight unless given one, which is
+ * rarely right when moving between levels — a weight that positioned an item at
+ * the top level outranks everything inside a section. Returns the tree untouched
+ * if either end is missing.
+ */
+export function moveNavItemToSection(
+  tree: NavModelItem[],
+  id: string,
+  sectionId: string,
+  sortWeight?: number
+): NavModelItem[] {
+  const item = findNavById(tree, id);
+  if (!item || !findNavById(tree, sectionId)) {
+    return tree;
+  }
+
+  const moved = { ...item, ...(sortWeight !== undefined && { sortWeight }) };
+  const placed = appendIntoSection(removeNavById(tree, id), sectionId, [moved]);
+  if (!placed) {
+    return tree;
+  }
+
+  return updateNavById(placed, sectionId, (section) => ({
+    ...section,
+    children: sortNavTree(section.children ?? []),
+  }));
+}
+
 /** Nav id of an app plugin's own entry/section (matches the Go builder's ids) */
 export const pluginPageId = (pluginId: string) => `plugin-page-${pluginId}`;
 

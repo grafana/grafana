@@ -11,7 +11,6 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaNavigationInfoArchRefresh } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { HIDDEN_NAV_ITEMS } from 'app/core/navtree/navTweaks';
 import { findNavByUrl } from 'app/core/navtree/utils';
 import { setBookmark } from 'app/core/reducers/navBarTree';
 import { useDispatch, useSelector } from 'app/types/store';
@@ -23,6 +22,7 @@ import {
   enrichWithInteractionTracking,
   getActiveItem,
   getPinnedEntries,
+  HIDDEN_NAV_ITEMS,
   hiddenKey,
   hideItem,
   isHideable,
