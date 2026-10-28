@@ -648,6 +648,14 @@ describe('NotebookScene', () => {
     });
   });
 
+  describe('getDashboardPanels', () => {
+    it('returns the panels of the panel cells', () => {
+      const { scene, panel } = buildSceneWithPanel();
+
+      expect(scene.getDashboardPanels()).toEqual([panel]);
+    });
+  });
+
   describe('enrichDataRequest', () => {
     // Notebook queries have to be attributable. CoreApp.Unknown cannot be told apart from a
     // genuinely unattributed query, and CoreApp.Dashboard is a behavioural branch (SqlDatasource
