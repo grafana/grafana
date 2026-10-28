@@ -1,4 +1,3 @@
-import { t } from '@grafana/i18n';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DashboardQueryResult, type LocationInfo } from 'app/features/search/service/types';
 import { DashListItem } from 'app/plugins/panel/dashlist/DashListItem';
@@ -14,28 +13,37 @@ interface Props {
   error: Error | undefined;
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
+  loadingText: string;
+  errorTitle: string;
+  emptyMessage: string;
+  // Identifies the tab in the row click analytics.
+  source: string;
+  onStarChange?: () => void;
 }
 
-export function StarredDashboardsTab({ dashboards, loading, error, retry, foldersByUid }: Props) {
+/** A tab body listing dashboards with their folder: the load, error and empty states around the rows. */
+export function DashboardListTab({
+  dashboards,
+  loading,
+  error,
+  retry,
+  foldersByUid,
+  loadingText,
+  errorTitle,
+  emptyMessage,
+  source,
+  onStarChange,
+}: Props) {
   if (loading) {
-    return <PageLoader text={t('home.starred-dashboards-tab.loading', 'Loading starred dashboards...')} />;
+    return <PageLoader text={loadingText} />;
   }
 
   if (error) {
-    return (
-      <DashboardTabError
-        title={t('home.starred-dashboards-tab.error-title', 'Could not load starred dashboards')}
-        retry={retry}
-      />
-    );
+    return <DashboardTabError title={errorTitle} retry={retry} />;
   }
 
   if (dashboards.length === 0) {
-    return (
-      <DashboardTabEmptyState
-        message={t('home.starred-dashboards-tab.empty', 'Your starred dashboards will appear here.')}
-      />
-    );
+    return <DashboardTabEmptyState message={emptyMessage} />;
   }
 
   return (
@@ -48,8 +56,8 @@ export function StarredDashboardsTab({ dashboards, loading, error, retry, folder
             showFolderNames={true}
             locationInfo={foldersByUid[dash.location]}
             layoutMode="list"
-            source="homepage_starredTab"
-            onStarChange={retry}
+            source={source}
+            onStarChange={onStarChange}
           />
         </li>
       ))}

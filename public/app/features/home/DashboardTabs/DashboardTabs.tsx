@@ -9,10 +9,9 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { FooterAction } from '../FooterActions';
 import { type HomeCardTab, HomeTabbedCard } from '../HomeTabbedCard';
 
-import { MostUsedDashboardsTab } from './MostUsedDashboardsTab';
+import { DashboardListTab } from './DashboardListTab';
 import { ClearRecentActivityAction, RecentActivityFilterCombobox } from './RecentActivityFooter';
 import { RecentActivityTab } from './RecentActivityTab';
-import { StarredDashboardsTab } from './StarredDashboardsTab';
 import { useRecentActivity } from './useRecentActivity';
 
 const RECENT_TAB_ID = 'recent';
@@ -122,12 +121,16 @@ export function DashboardTabs() {
             label: t('home.dashboard-tabs.most-used', 'Most used'),
             counter: mostUsedDashboards?.length,
             content: (
-              <MostUsedDashboardsTab
+              <DashboardListTab
                 dashboards={mostUsedDashboards ?? []}
                 loading={mostUsedLoading}
                 error={mostUsedError}
                 retry={mostUsedRetry}
                 foldersByUid={foldersByUid}
+                loadingText={t('home.most-used-dashboards-tab.loading', 'Loading most used dashboards...')}
+                errorTitle={t('home.most-used-dashboards-tab.error-title', 'Could not load most used dashboards')}
+                emptyMessage={t('home.most-used-dashboards-tab.empty', 'Most used dashboards will appear here.')}
+                source="homepage_mostUsedTab"
               />
             ),
             footer: viewAllDashboards,
@@ -139,12 +142,18 @@ export function DashboardTabs() {
       label: t('home.dashboard-tabs.starred', 'Starred'),
       counter: starredDashboards?.length,
       content: (
-        <StarredDashboardsTab
+        <DashboardListTab
           dashboards={starredDashboards ?? []}
           loading={starredLoading}
           error={starredError}
           retry={starredRetry}
           foldersByUid={foldersByUid}
+          loadingText={t('home.starred-dashboards-tab.loading', 'Loading starred dashboards...')}
+          errorTitle={t('home.starred-dashboards-tab.error-title', 'Could not load starred dashboards')}
+          emptyMessage={t('home.starred-dashboards-tab.empty', 'Your starred dashboards will appear here.')}
+          source="homepage_starredTab"
+          // Unstarring a row here removes it from this list.
+          onStarChange={starredRetry}
         />
       ),
       footer: viewAllDashboards,
