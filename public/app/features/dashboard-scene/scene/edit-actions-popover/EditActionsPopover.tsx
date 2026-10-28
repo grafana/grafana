@@ -32,7 +32,7 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { ElementSelectionContext, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 
-export const WAIT_FOR_MOUSE_REST_DURATION_MS = 225;
+export const WAIT_FOR_MOUSE_REST_DURATION_MS = 150;
 
 /**
  * Lets popover content close the popover programmatically, e.g. before opening a modal on top of it.
@@ -223,7 +223,7 @@ const getPopoverStyles = (theme: GrafanaTheme2) => ({
         from: { opacity: 0 },
         to: { opacity: 1 },
       }),
-      animationDuration: `${theme.transitions.duration.enteringScreen}ms`,
+      animationDuration: `${theme.transitions.duration.shortest}ms`,
       animationTimingFunction: theme.transitions.easing.easeOut,
       animationFillMode: 'forwards',
     },
