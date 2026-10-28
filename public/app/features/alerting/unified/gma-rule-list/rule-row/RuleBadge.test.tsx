@@ -1,5 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
+import { mockK8sAlertRule } from '../mocks/handlers';
+
 import { RuleBadge } from './RuleBadge';
 
 // PluginOriginBadge loads plugin settings async; stub it for badge-logic tests.
@@ -9,8 +11,15 @@ jest.mock('../../plugins/PluginOriginBadge', () => ({
 
 function makeRule(overrides: { labels?: Record<string, string>; annotations?: Record<string, string> }) {
   return {
-    spec: { labels: overrides.labels },
-    metadata: { annotations: overrides.annotations },
+    ...mockK8sAlertRule({ uid: 'rule-1', title: 'Test Rule' }),
+    spec: {
+      ...mockK8sAlertRule({ uid: 'rule-1', title: 'Test Rule' }).spec,
+      labels: overrides.labels,
+    },
+    metadata: {
+      name: 'rule-1',
+      annotations: overrides.annotations,
+    },
   };
 }
 
