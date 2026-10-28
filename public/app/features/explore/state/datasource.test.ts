@@ -88,7 +88,9 @@ describe('changeDatasource', () => {
       instance: targetDS,
     });
 
-    jest.spyOn(correlationsUtils, 'getCorrelationsFromStorage').mockRejectedValue(new Error('Correlations fetch failed'));
+    jest
+      .spyOn(correlationsUtils, 'getCorrelationsFromStorage')
+      .mockRejectedValue(new Error('Correlations fetch failed'));
 
     const sourceDS = {
       uid: 'prom-source',
