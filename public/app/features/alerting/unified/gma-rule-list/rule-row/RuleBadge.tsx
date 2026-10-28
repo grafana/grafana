@@ -1,14 +1,13 @@
 import { type ReactNode } from 'react';
 
+import { type AlertRule, type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+
 import { ProvisioningBadge } from '../../components/Provisioning';
 import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
 
 interface RuleBadgeProps {
-  rule: {
-    spec?: { labels?: Record<string, string> };
-    metadata?: { annotations?: Record<string, string> };
-  };
+  rule: Pick<AlertRule | RecordingRule, 'metadata' | 'spec'>;
 }
 
 /**
