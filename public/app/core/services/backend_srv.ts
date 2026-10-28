@@ -548,7 +548,10 @@ export class BackendSrv implements BackendService {
       );
   }
 
-  private offerRepositoryWrite<T>(options: BackendSrvRequest, err: FetchError): Observable<FetchResponse<T>> | undefined {
+  private offerRepositoryWrite<T>(
+    options: BackendSrvRequest,
+    err: FetchError
+  ): Observable<FetchResponse<T>> | undefined {
     const method = options.method?.toUpperCase();
     const path = options.url.replace(/^\//, '');
     if (
