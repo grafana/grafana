@@ -108,11 +108,14 @@ export function ResourcesToMigrate({
     return { subtreeUids: uidsByFolder, subtreeResourceKeys: keysByFolder };
   }, [tree]);
 
-  // Unticking a folder also clears resources ticked on their own beneath it.
-  const setFolderSelected = (uid: string, selected: boolean) => {
-    onSetFoldersSelected(subtreeUids.get(uid) ?? [], selected);
+  const setSubtreesSelected = (rootUids: string[], selected: boolean) => {
+    const folderUids = new Set(rootUids.flatMap((uid) => subtreeUids.get(uid) ?? [uid]));
+    onSetFoldersSelected([...folderUids], selected);
     if (!selected) {
-      onSetResourcesSelected(subtreeResourceKeys.get(uid) ?? [], false);
+      onSetResourcesSelected(
+        rootUids.flatMap((uid) => subtreeResourceKeys.get(uid) ?? []),
+        false
+      );
     }
   };
 
@@ -166,7 +169,8 @@ export function ResourcesToMigrate({
   // Select-all covers the whole filtered set — every matching folder across all
   // pages, not just the page on screen — matching standard table behaviour
   // where search narrows the target but pagination doesn't. It never reaches
-  // past the filter to tick the whole instance.
+  // past the filter to tick the whole instance, except for the subfolders of a
+  // matching folder, which a folder tick selects too.
   const filteredFolderUids = selectableUids(filtered);
   const allFilteredSelected =
     filteredFolderUids.length > 0 && filteredFolderUids.every((uid) => selectedFolderUids.has(uid));
@@ -207,6 +211,8 @@ export function ResourcesToMigrate({
           <FilterInput
             placeholder={t('provisioning.migrate.resources-to-migrate-search', 'Search folders and resources')}
             value={search}
+            // Matching is by substring, not regex, so escaping would break names like "user-1".
+            escapeRegex={false}
             onChange={(value) => {
               setSearch(value);
               setSearchFlipped(new Set());
@@ -263,7 +269,7 @@ export function ResourcesToMigrate({
           <div className={styles.selectAllRow}>
             <Checkbox
               value={allFilteredSelected}
-              onChange={() => onSetFoldersSelected(filteredFolderUids, !allFilteredSelected)}
+              onChange={() => setSubtreesSelected(filteredFolderUids, !allFilteredSelected)}
               label={t('provisioning.migrate.resources-select-all', 'Select all')}
             />
           </div>
@@ -278,7 +284,7 @@ export function ResourcesToMigrate({
               folderCoveredResourceKeys={folderCoveredResourceKeys}
               onToggleExpanded={toggleExpanded}
               subtreeUids={subtreeUids}
-              onSetFolderSelected={setFolderSelected}
+              onSetFolderSelected={(uid, selected) => setSubtreesSelected([uid], selected)}
               onToggleResource={onToggleResource}
             />
           ))}

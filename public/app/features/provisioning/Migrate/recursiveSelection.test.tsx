@@ -100,6 +100,24 @@ describe('recursive folder selection', () => {
     expect(screen.getByTestId('folders')).toBeEmptyDOMElement();
   });
 
+  it('select-all covers hidden subfolders and clears nested resource ticks on deselect', async () => {
+    const { user } = render(<Harness />);
+    await user.click(screen.getByRole('button', { name: /expand users/i }));
+    await user.click(screen.getByRole('button', { name: /expand grace$/i }));
+    await user.click(screen.getByRole('button', { name: /expand misc/i }));
+    await user.click(screen.getByRole('checkbox', { name: 'misc-1' }));
+    expect(screen.getByTestId('resources')).toHaveTextContent('m1');
+
+    // Only grace matches "grace-1"; misc is not shown.
+    await user.type(screen.getByPlaceholderText(/search folders and resources/i), 'grace-1');
+    await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+    expect(screen.getByTestId('folders')).toHaveTextContent('grace,misc');
+
+    await user.click(screen.getByRole('checkbox', { name: /select all/i }));
+    expect(screen.getByTestId('folders')).toBeEmptyDOMElement();
+    expect(screen.getByTestId('resources')).toBeEmptyDOMElement();
+  });
+
   it('clears resources ticked on their own inside the folders it unticks', async () => {
     const { user } = render(<Harness />);
     await user.click(screen.getByRole('button', { name: /expand users/i }));

@@ -504,6 +504,24 @@ describe('ResourcesToMigrate', () => {
       expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
     });
 
+    it('finds names that contain regex characters such as a hyphen', async () => {
+      const hyphenated: FolderRow[] = [
+        {
+          uid: 'grace',
+          title: 'grace',
+          path: [],
+          resourceCount: 1,
+          directResources: [{ uid: 'g1', title: 'grace-1', kind: resourceKindInfos.dashboard }],
+        },
+      ];
+      const { user } = setup({ folders: hyphenated });
+
+      await user.type(screen.getByPlaceholderText(/search folders and resources/i), 'grace-1');
+
+      expect(screen.getByText('grace')).toBeInTheDocument();
+      expect(screen.getByText('grace-1')).toBeInTheDocument();
+    });
+
     it('defaults to most-resources-first ordering', () => {
       setup({ folders: twoFolders });
 
