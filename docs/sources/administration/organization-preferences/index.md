@@ -207,7 +207,7 @@ Users with the Grafana Server Admin flag on their account or access to the confi
 - [`home_page`](../../setup-grafana/configure-grafana/#home_page) in the `[users]` section redirects users to a path in Grafana, such as an app plugin page.
 - [`default_home_dashboard_path`](../../setup-grafana/configure-grafana/#default_home_dashboard_path) in the `[dashboards]` section shows a dashboard from a JSON file.
 
-If you set both, `home_page` wins. Both settings apply to users who haven't set a home dashboard preference and to users who selected **Grafana home**. A dashboard set in a user, team, or organization preference overrides both.
+If you set both, `home_page` takes precedence. Both settings apply to users who haven't set a home dashboard preference and to users who selected **Grafana home**. A dashboard set in a user, team, or organization preference overrides both.
 
 #### Redirect users to a page
 
