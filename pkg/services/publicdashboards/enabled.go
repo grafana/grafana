@@ -18,12 +18,12 @@ var logger = log.New("publicdashboards")
 // To be enabled, two independent switches must both allow it:
 //
 //   - cfg.PublicDashboardsEnabled: the operator's choice, set in ini.
-//     A self-hosted admin who turned the feature off keeps it off.
-//   - dashboards.disablePublicDashboards: Grafana Cloud's per-stack veto,
-//     set via GOFF, used to withdraw the feature from the free tier.
+//   - dashboards.disablePublicDashboards: a feature flag evaluated per
+//     request, so the answer can differ per stack. In Grafana Cloud the
+//     value comes from GOFF; self-managed instances source it from config.
 //
-// Evaluation errors fall back to false, so an unreachable flag
-// service leaves the feature working.
+// Evaluation errors fall back to false, so a flag provider failure leaves
+// the feature working rather than disabling it.
 func Enabled(ctx context.Context, cfg *setting.Cfg) bool {
 	if !cfg.PublicDashboardsEnabled {
 		return false
