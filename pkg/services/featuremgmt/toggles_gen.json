@@ -2979,7 +2979,8 @@
       "metadata": {
         "name": "grafana.globalHomePreference",
         "resourceVersion": "1791348293298",
-        "creationTimestamp": "2026-10-07T14:12:16Z"
+        "creationTimestamp": "2026-10-07T14:12:16Z",
+        "deletionTimestamp": "2026-10-28T06:41:18Z"
       },
       "spec": {
         "description": "Offers the reserved Grafana home option in the home dashboard preference",
