@@ -3368,15 +3368,6 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:         "grafana.globalHomePreference",
-			Description:  "Offers the reserved Grafana home option in the home dashboard preference",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendNavigation,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{React: true},
-		},
-		{
 			Name:         "datasources.apiServerConnectToHostedGrafanaDatabases",
 			Description:  "Connect to hosted grafana databases from datasource API servers",
 			Stage:        FeatureStageExperimental,
