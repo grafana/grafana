@@ -103,7 +103,7 @@ function rowTitles() {
 }
 
 describe('AlertIncidentTabs On call tab', () => {
-  beforeAll(() => setTimeZoneResolver(() => 'utc'));
+  beforeAll(() => setTimeZoneResolver(() => 'Europe/Helsinki'));
   afterAll(() => setTimeZoneResolver(() => 'browser'));
 
   beforeEach(() => {
@@ -130,7 +130,11 @@ describe('AlertIncidentTabs On call tab', () => {
 
     expect(await screen.findByText('On call now')).toBeInTheDocument();
     expect(eventCalls).toHaveLength(1);
-    expect(Object.fromEntries(eventCalls[0])).toEqual({ date: '2024-01-02', days: '30', user_tz: 'UTC' });
+    expect(Object.fromEntries(eventCalls[0])).toEqual({
+      date: '2024-01-02',
+      days: '30',
+      user_tz: 'Europe/Helsinki',
+    });
     expect(listCalls).toEqual([]);
 
     await user.click(screen.getByRole('tab', { name: /on-call/i }));
@@ -201,13 +205,14 @@ describe('AlertIncidentTabs On call tab', () => {
     expect(screen.queryByText('Quiet')).not.toBeInTheDocument();
 
     const [primary, secondary, backend, old] = panelRows();
-    expect(within(primary).getByText("You're on call until 17:00")).toBeInTheDocument();
+    // 17:00Z is 19:00 in Helsinki.
+    expect(within(primary).getByText("You're on call until 19:00")).toBeInTheDocument();
     // The signed-in user leads the roster even though the API listed bob first.
     expect(within(primary).getByText('admin')).toBeInTheDocument();
     expect(within(primary).getByLabelText('admin icon')).toBeInTheDocument();
     expect(within(primary).getByLabelText('bob icon')).toBeInTheDocument();
 
-    expect(within(secondary).getByText('Your next shift Jan 4, 10:00–18:00')).toBeInTheDocument();
+    expect(within(secondary).getByText('Your next shift Jan 4, 12:00–20:00')).toBeInTheDocument();
     expect(within(secondary).getByText('carol')).toBeInTheDocument();
 
     // Team rows carry only the roster: the first login as text, everyone as an avatar.
@@ -329,7 +334,7 @@ describe('AlertIncidentTabs On call tab', () => {
       expect(await screen.findByText('Primary')).toBeInTheDocument();
       expect(rowTitles()).toEqual(['Primary', 'Secondary', 'Old']);
       const [primary, secondary] = panelRows();
-      expect(within(primary).getByText("You're on call until 17:00")).toBeInTheDocument();
+      expect(within(primary).getByText("You're on call until 19:00")).toBeInTheDocument();
       expect(within(primary).queryByText('Nobody on call')).not.toBeInTheDocument();
       expect(within(primary).queryByLabelText(/icon$/)).not.toBeInTheDocument();
       expect(screen.queryByRole('link', { name: /^Primary/ })).not.toBeInTheDocument();
@@ -450,7 +455,26 @@ describe('AlertIncidentTabs On call tab', () => {
       await waitFor(() => expect(eventCalls).toHaveLength(1));
       expect(Object.fromEntries(eventCalls[0])).toEqual({ date: '2024-01-03', days: '30', user_tz: 'Europe/Berlin' });
     } finally {
-      setTimeZoneResolver(() => 'utc');
+      setTimeZoneResolver(() => 'Europe/Helsinki');
+    }
+  });
+
+  it('asks for the browser zone when the preference is UTC', async () => {
+    setTimeZoneResolver(() => 'UTC');
+    try {
+      const { eventCalls } = mockOnCall();
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      await screen.findByRole('tab', { name: /on-call/i });
+      await waitFor(() => expect(eventCalls).toHaveLength(1));
+      // Jest's TZ is Pacific/Easter. UTC must not be forwarded as the viewer's zone.
+      expect(eventCalls[0].get('user_tz')).toBe('Pacific/Easter');
+
+      await user.click(screen.getByRole('tab', { name: /on-call/i }));
+      // 17:00Z is 12:00 in Pacific/Easter.
+      expect(await screen.findByText("You're on call until 12:00")).toBeInTheDocument();
+    } finally {
+      setTimeZoneResolver(() => 'Europe/Helsinki');
     }
   });
 

@@ -2,7 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo, useState } from 'react';
 import { useInterval } from 'react-use';
 
-import { getTimeZone, getTimeZoneInfo } from '@grafana/data';
+import { getTimeZoneInfo } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   onCallApi,
@@ -16,7 +16,7 @@ import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridg
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { type ScheduleLoadError, classifyScheduleError } from './scheduleErrors';
-import { type ShiftWindow, dayKey, nextShift } from './shiftTiming';
+import { type ShiftWindow, dayKey, nextShift, shiftTimeZone } from './shiftTiming';
 
 const PLUGIN_ID = SupportedPlugin.Irm;
 // The clock moves labels and badge across shift boundaries without a fetch; the poll picks up overrides,
@@ -80,8 +80,9 @@ function useIrmPlugin() {
 }
 
 // The engine resolves user_tz with pytz, so it needs an IANA name: never 'browser'/'utc'/''.
+// Same zone as the clocks, so the window's midnight matches the day the homepage prints.
 function resolveUserTimeZone(now: number): string {
-  return getTimeZoneInfo(getTimeZone(), now)?.ianaName || getTimeZoneInfo('browser', now)?.ianaName || 'UTC';
+  return getTimeZoneInfo(shiftTimeZone(), now)?.ianaName || getTimeZoneInfo('browser', now)?.ianaName || 'UTC';
 }
 
 /** The running or next shift per schedule id; undefined where every shift in the window has ended. */
