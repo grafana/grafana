@@ -140,6 +140,8 @@ type DashboardsAPIBuilder struct {
 	dashboardK8sClient       client.K8sHandler // for provisioning checks during delete validation
 	isStandalone             bool              // skips any handling including anything to do with legacy storage
 
+	dashboardPreferencesStorage *dashboardPreferencesStorage
+
 	// Embedded mode builds resourcePermissionsSvc lazily from restConfigProvider; standalone
 	// injects resourcePermissionsSvc directly and leaves restConfigProvider nil.
 	restConfigProvider       apiserver.RestConfigProvider
@@ -1115,6 +1117,15 @@ func notebookStorageOpts() apistore.StorageOptions {
 	}
 }
 
+// dashboardPreferencesStorageOpts configures dashboard preferences storage: the folder tier is scoped by
+// the grafana.app/folder annotation, which storage rejects without folder support, and the annotation is
+// not required because the org and user tiers have no folder.
+func dashboardPreferencesStorageOpts() apistore.StorageOptions {
+	return apistore.StorageOptions{
+		EnableFolderSupport: true,
+	}
+}
+
 // snapshotStorageOpts configures snapshot storage. Snapshots need nothing beyond
 // the GVK that storageForVersion pairs these with, which is the whole point of
 // going through it: the declared kind is what stops a snapshot from being
@@ -1267,6 +1278,24 @@ func (b *DashboardsAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	notebookStorage := apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]
 	notebookStorage[dashv2beta1.NotebookResourceInfo.StoragePath()] = nbStore
 
+	// Dashboard preferences storage is always registered so FlagGrafanaDashboardPreferences can be
+	// evaluated per request; see GetAuthorizer.
+	if err := b.registerDashboardPreferencesStorage(apiGroupInfo, opts); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Mirrors the notebook block; StorageOptsGetterFor stamps the GVK so objects aren't persisted as another kind.
+func (b *DashboardsAPIBuilder) registerDashboardPreferencesStorage(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	store, err := grafanaregistry.NewRegistryStore(opts.Scheme, dashv2beta1.DashboardPreferencesResourceInfo,
+		opts.StorageOptsGetterFor(dashv2beta1.DashboardPreferencesResourceInfo, dashboardPreferencesStorageOpts()))
+	if err != nil {
+		return err
+	}
+	b.dashboardPreferencesStorage = newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), b.accessClient)
+	apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION][dashv2beta1.DashboardPreferencesResourceInfo.StoragePath()] = b.dashboardPreferencesStorage
 	return nil
 }
 
