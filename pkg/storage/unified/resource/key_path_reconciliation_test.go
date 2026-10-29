@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
+	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
@@ -44,7 +45,10 @@ func TestKeyPathReconciliationRepeatsAfterCleanPass(t *testing.T) {
 		require.EqualValues(t, 1, logger.successes.Load())
 
 		pending.Store(1) // An old pod writes after the clean pass.
-		synctest.Sleep(keyPathReconciliationInterval)
+		synctest.Sleep(time.Hour - time.Second)
+		require.EqualValues(t, 1, pending.Load(), "clean passes wait one hour before checking again")
+		require.EqualValues(t, 4, calls.Load())
+		synctest.Sleep(time.Second)
 		require.Zero(t, pending.Load())
 		require.EqualValues(t, 1, logger.successes.Load(), "repair is followed by a separate clean check")
 		synctest.Sleep(keyPathReconciliationBatchWait)
@@ -74,9 +78,13 @@ func TestKeyPathReconciliationRetriesFailures(t *testing.T) {
 		synctest.Wait()
 		require.EqualValues(t, 1, logger.failures.Load())
 		require.Zero(t, logger.successes.Load())
-		synctest.Sleep(keyPathReconciliationInterval)
+		synctest.Sleep(time.Minute - time.Second)
+		require.EqualValues(t, 1, calls.Load(), "failures wait one minute before retrying")
+		synctest.Sleep(time.Second)
 		require.EqualValues(t, 2, calls.Load())
 		require.EqualValues(t, 1, logger.successes.Load())
+		synctest.Sleep(time.Minute)
+		require.EqualValues(t, 2, calls.Load(), "a successful retry returns to hourly polling")
 	})
 }
 

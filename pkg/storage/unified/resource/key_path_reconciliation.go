@@ -6,10 +6,11 @@ import (
 )
 
 const (
-	keyPathReconciliationBatchSize = 100
-	keyPathReconciliationBatchWait = time.Second
-	keyPathReconciliationInterval  = time.Minute
-	keyPathReconciliationTimeout   = 30 * time.Second
+	keyPathReconciliationBatchSize     = 100
+	keyPathReconciliationBatchWait     = time.Second
+	keyPathReconciliationInterval      = time.Hour
+	keyPathReconciliationRetryInterval = time.Minute
+	keyPathReconciliationTimeout       = 30 * time.Second
 )
 
 func (k *kvStorageBackend) runKeyPathReconciliation(ctx context.Context, reconcile func(context.Context, int) (int, error)) {
@@ -32,7 +33,7 @@ func (k *kvStorageBackend) runKeyPathReconciliation(ctx context.Context, reconci
 		}
 		if err != nil {
 			k.log.Error("Key path reconciliation failed; will retry", "error", err, "processed_rows", processed)
-			timer.Reset(keyPathReconciliationInterval)
+			timer.Reset(keyPathReconciliationRetryInterval)
 			continue
 		}
 		processed += count
