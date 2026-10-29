@@ -26370,10 +26370,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nodemailer@npm:8.0.4":
-  version: 8.0.4
-  resolution: "nodemailer@npm:8.0.4"
-  checksum: 10/b396d52b1faf3ee73a6eca1b7febdb8ea16df50d6c41efbf0f1e500e6a42a73cea5e0db9e52d64b34f509ac3dbf4c10fe828de6cb3f66899b493be38b8abe926
+"nodemailer@npm:10.1.7":
+  version: 10.1.7
+  resolution: "nodemailer@npm:10.1.7"
+  checksum: 10/456acdf231fa03042f5dab0f80fdcda3e92b76bfcb9bde369f3b7b65baf31c53d10e6c4dab78c4019cbb7e130232e3e7b68c204e1088c7c4241415d4d6c6e2e3
   languageName: node
   linkType: hard
 
