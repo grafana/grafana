@@ -864,7 +864,6 @@ describe('LogLineDetails', () => {
         expect(screen.getByText(/"key"/)).toBeInTheDocument();
         expect(screen.getByText(/"value"/)).toBeInTheDocument();
       });
-
     });
   });
 
