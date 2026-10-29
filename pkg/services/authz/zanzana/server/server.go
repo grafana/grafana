@@ -58,7 +58,7 @@ type Server struct {
 	openFGAServer           OpenFGAServer
 	openFGAClient           openfgav1.OpenFGAServiceClient
 	store                   storage.OpenFGADatastore
-	permissionScopeResolver legacyscopes.IDResolver
+	permissionScopeResolver legacyscopes.BulkIDResolver
 
 	cfg      setting.ZanzanaServerSettings
 	stores   map[string]zanzana.StoreInfo
