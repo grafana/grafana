@@ -588,14 +588,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "alertmanagerRemoteSecondary",
-			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingProvenanceLockWrites",
 			Description:  "Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL",
 			Stage:        FeatureStageExperimental,
