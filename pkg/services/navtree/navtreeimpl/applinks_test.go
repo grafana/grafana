@@ -562,6 +562,35 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 		},
 	}
 
+	agentApp := pluginstore.Plugin{
+		JSONData: plugins.JSONData{
+			ID:   "grafana-agento11y-app",
+			Name: "Agent",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Agent",
+					Path:       "/a/grafana-agento11y-app",
+					Type:       "page",
+					AddToNav:   true,
+					DefaultNav: true,
+				},
+				{
+					Name:     "Fleet",
+					Path:     "/a/grafana-agento11y-app/fleet",
+					Type:     "page",
+					AddToNav: true,
+				},
+				{
+					Name:     "Coding agents",
+					Path:     "/a/grafana-agento11y-app/coding-agents",
+					Type:     "page",
+					AddToNav: true,
+				},
+			},
+		},
+	}
+
 	newService := func(pluginList []pluginstore.Plugin) ServiceImpl {
 		settings := map[string]*pluginsettings.DTO{}
 		for _, p := range pluginList {
@@ -576,10 +605,37 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 			pluginStore:    &pluginstore.FakePluginStore{PluginList: pluginList},
 		}
 		// Use the production nav defaults instead of a hand-rolled map so the test
-		// exercises the real section/weight config (asserts=2, Frontend=3, Application=4).
+		// exercises the real section/weight config (asserts=3, Frontend=4, Application=5).
 		service.readNavigationSettings()
 		return service
 	}
+
+	// The Observability section only exists once an app targeting it is processed,
+	// and the agent app sorts first by plugin id — so its own relocated page has to
+	// be placed after every app, or the section is not there to receive it.
+	t.Run("the agent app's coding agents page sits beside Agent, even when it is the only Observability app", func(t *testing.T) {
+		service := newService([]pluginstore.Plugin{agentApp})
+
+		treeRoot := navtree.NavTreeRoot{}
+		err := service.addAppLinks(&treeRoot, reqCtx)
+		require.NoError(t, err)
+		treeRoot.Sort()
+
+		monitoringNode := treeRoot.FindById(navtree.NavIDObservability)
+		require.NotNil(t, monitoringNode)
+		require.Len(t, monitoringNode.Children, 2)
+
+		require.Equal(t, "Agent", monitoringNode.Children[0].Text)
+		require.Equal(t, "Coding agent", monitoringNode.Children[1].Text)
+		require.Equal(t, "standalone-plugin-page-/a/grafana-agento11y-app/coding-agents", monitoringNode.Children[1].Id)
+		require.Equal(t, "/a/grafana-agento11y-app/coding-agents", monitoringNode.Children[1].Url)
+		require.True(t, monitoringNode.Children[1].IsNew)
+
+		// Relocated out of the app, not left under it as well
+		for _, child := range monitoringNode.Children[0].Children {
+			require.NotEqual(t, "/a/grafana-agento11y-app/coding-agents", child.Url)
+		}
+	})
 
 	t.Run("without the App Observability plugin, the asserts Application page sits between Frontend and App Observability", func(t *testing.T) {
 		service := newService([]pluginstore.Plugin{assertsApp, frontendApp})
@@ -594,7 +650,7 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 		require.Len(t, monitoringNode.Children, 3)
 
 		// Asserts "Entity graph" stays hoisted to the top, then Frontend, then the
-		// asserts "Application" page (weight 4).
+		// asserts "Application" page (weight 5).
 		require.Equal(t, "Entity graph", monitoringNode.Children[0].Text)
 		require.Equal(t, "Frontend", monitoringNode.Children[1].Text)
 		require.Equal(t, "Application", monitoringNode.Children[2].Text)
@@ -855,7 +911,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 		require.Equal(t, "dashboards", service.navigationAppConfig["grafana-k8s-app"].SectionID)
 		require.Equal(t, "admin", service.navigationAppConfig["other-app"].SectionID)
 
-		require.Equal(t, int64(6), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
+		require.Equal(t, int64(7), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
 		require.Equal(t, int64(12), service.navigationAppConfig["other-app"].SortWeight)
 
 		require.Equal(t, "admin", service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SectionID)
@@ -1164,7 +1220,10 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 			dashboards := &navtree.NavLink{Id: navtree.NavIDDashboards, SortWeight: navtree.WeightDashboard}
 			explore := &navtree.NavLink{Id: navtree.NavIDExplore, SortWeight: navtree.WeightExplore}
 			tree := navtree.NavTreeRoot{Children: []*navtree.NavLink{dashboards, explore}}
-			service.processAppPlugin(plugin, reqCtx, &tree)
+			_, standalonePages := service.processAppPlugin(plugin, reqCtx, &tree)
+			for _, page := range standalonePages {
+				service.addStandalonePage(&tree, page)
+			}
 			ai := tree.FindById("plugin-page-" + assistantAppID)
 			require.NotNil(t, ai)
 			require.Len(t, ai.Children, 1)
