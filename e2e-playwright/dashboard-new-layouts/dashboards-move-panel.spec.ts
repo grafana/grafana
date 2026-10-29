@@ -1,6 +1,6 @@
 import v2DashboardCustomGrid from '../dashboards/V2DashCustomGridDnd.json';
 
-import { test, expect } from './fixtures';
+import { dragAndDropOpenFeature, expect, test } from './fixtures';
 import { expectNoUnsavedChanges, expectPanelBoxesToBe, flows, getPanelBox, getPanelBoxes, movePanel } from './helpers';
 
 // Custom grid of V2DashCustomGridDnd.json: two panels per line
@@ -11,11 +11,7 @@ test.use({
     dashboardNewLayouts: true,
   },
   // the Undo/Redo toolbar buttons are gated by an OpenFeature flag, not a feature toggle
-  openFeature: {
-    flags: {
-      dashboardUndoRedo: true,
-    },
-  },
+  openFeature: dragAndDropOpenFeature({ dashboardUndoRedo: true }),
   // these tests require a larger viewport
   viewport: { width: 1920, height: 1080 },
 });
@@ -23,7 +19,7 @@ test.use({
 test.describe(
   'Dashboard',
   {
-    tag: ['@dashboards'],
+    tag: ['@dashboards', '@drag-and-drop'],
   },
   () => {
     test('can drag and drop panels', async ({ page, selectors, controls, sidebar, panels }) => {

@@ -28,6 +28,14 @@ export class Tabs extends PageObject {
   }
 
   /**
+   * Returns every rendered tab bar in document order: a nested tab bar follows the bar of the open
+   * tab that holds it. Pass one as `scope` to `getTitles()` to read that bar alone.
+   */
+  getTabBars(): Locator {
+    return this.page.getByRole('tablist').filter({ has: this.getTitles() });
+  }
+
+  /**
    * Returns the layout container holding the tab's content
    * @param scope container to search within, defaults to the whole page
    */

@@ -4,7 +4,7 @@ import { type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 import v2DashboardTabsWithRows from '../dashboards/V2DashTabsWithRowsDnd.json';
 
-import { test, expect } from './fixtures';
+import { dragAndDropOpenFeature, expect, test } from './fixtures';
 import { flows, startPointerDrag } from './helpers';
 import { type Panels, type Rows, type Tabs } from './page-objects';
 
@@ -13,11 +13,7 @@ test.use({
     dashboardNewLayouts: true,
   },
   // the Undo/Redo toolbar buttons are gated by an OpenFeature flag, not a feature toggle
-  openFeature: {
-    flags: {
-      dashboardUndoRedo: true,
-    },
-  },
+  openFeature: dragAndDropOpenFeature({ dashboardUndoRedo: true }),
   viewport: { width: 1920, height: 1080 },
 });
 
@@ -64,7 +60,7 @@ async function expectTabGrid(
   });
 }
 
-test.describe('Dashboard rows cross-tab drag and drop', { tag: ['@dashboards'] }, () => {
+test.describe('Dashboard rows cross-tab drag and drop', { tag: ['@dashboards', '@drag-and-drop'] }, () => {
   test('moves a row with its panels into another tab', async ({
     page,
     selectors,

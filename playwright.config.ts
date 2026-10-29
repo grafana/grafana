@@ -172,6 +172,18 @@ export default defineConfig<PluginOptions>({
       name: 'dashboard-new-layouts',
       testDir: path.join(testDirRoot, '/dashboard-new-layouts'),
     }),
+    // Re-runs the @drag-and-drop tests with grafana.dashboardUnifiedDragAndDrop on; opt-in until that
+    // engine is ready to gate CI
+    ...(process.env.E2E_UNIFIED_DRAG_AND_DROP
+      ? [
+          withAuth({
+            name: 'dashboard-new-layouts-unified-dnd',
+            testDir: path.join(testDirRoot, '/dashboard-new-layouts'),
+            grep: /@drag-and-drop/,
+            use: { unifiedDragAndDrop: true },
+          }),
+        ]
+      : []),
     // Setup project for dashboard CUJS tests
     withAuth({
       name: 'dashboard-cujs-setup',

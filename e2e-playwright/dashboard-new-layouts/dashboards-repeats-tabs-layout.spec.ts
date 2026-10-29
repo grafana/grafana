@@ -2,7 +2,7 @@ import { Components, type DashboardPage, type E2ESelectorGroups } from '@grafana
 
 import V2DashWithTabRepeats from '../dashboards/V2DashWithTabRepeats.json';
 
-import { test, expect } from './fixtures';
+import { dragAndDropOpenFeature, expect, test } from './fixtures';
 import {
   expectRepeatedTabTitlesToBe,
   expectDashboardChangesToContain,
@@ -21,11 +21,7 @@ test.use({
     dashboardNewLayouts: true,
   },
   // the Undo/Redo toolbar buttons are gated by an OpenFeature flag, not a feature toggle
-  openFeature: {
-    flags: {
-      dashboardUndoRedo: true,
-    },
-  },
+  openFeature: dragAndDropOpenFeature({ dashboardUndoRedo: true }),
 });
 
 test.use({
@@ -197,52 +193,56 @@ test.describe(
       await expect(canvas.getAddRowButton()).toBeHidden();
     });
 
-    test('can move repeated tabs', async ({ selectors, page, controls, sidebar, tabs }) => {
-      // drag, undo/redo, then save and reload
-      test.slow();
-      await flows.dashboards.importTestDashboard(
-        page,
-        selectors,
-        'Tabs layout repeats - move repeated tabs',
-        JSON.stringify(V2DashWithTabRepeats)
-      );
-      await controls.enterEditMode();
-      const repeatedTitles = REPEAT_OPTIONS.map((option) => `${REPEAT_TITLE_BASE}${option}`);
-      const initialOrder = [...repeatedTitles, 'New tab'];
-      await expect(tabs.getTitles()).toHaveText(initialOrder);
+    test(
+      'can move repeated tabs',
+      { tag: ['@drag-and-drop'] },
+      async ({ selectors, page, controls, sidebar, tabs }) => {
+        // drag, undo/redo, then save and reload
+        test.slow();
+        await flows.dashboards.importTestDashboard(
+          page,
+          selectors,
+          'Tabs layout repeats - move repeated tabs',
+          JSON.stringify(V2DashWithTabRepeats)
+        );
+        await controls.enterEditMode();
+        const repeatedTitles = REPEAT_OPTIONS.map((option) => `${REPEAT_TITLE_BASE}${option}`);
+        const initialOrder = [...repeatedTitles, 'New tab'];
+        await expect(tabs.getTitles()).toHaveText(initialOrder);
 
-      await moveTab(page, tabs, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New tab');
+        await moveTab(page, tabs, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`, 'New tab');
 
-      // The tab order is only updated after the drop animation finishes (onDragEnd),
-      // so retry the position check until the reorder has been applied
-      await expect(async () => {
-        // note: -1 (the last repeated tab) because we have to wait for the whole repeated group to move ;)
-        const repeatedTab = await getTabBox(tabs, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`);
-        const normalTab = await getTabBox(tabs, 'New tab');
-        expect(normalTab.x).toBeLessThan(repeatedTab.x);
-      }).toPass();
+        // The tab order is only updated after the drop animation finishes (onDragEnd),
+        // so retry the position check until the reorder has been applied
+        await expect(async () => {
+          // note: -1 (the last repeated tab) because we have to wait for the whole repeated group to move ;)
+          const repeatedTab = await getTabBox(tabs, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(-1)}`);
+          const normalTab = await getTabBox(tabs, 'New tab');
+          expect(normalTab.x).toBeLessThan(repeatedTab.x);
+        }).toPass();
 
-      const movedOrder = ['New tab', ...repeatedTitles];
-      await expect(tabs.getTitles()).toHaveText(movedOrder);
+        const movedOrder = ['New tab', ...repeatedTitles];
+        await expect(tabs.getTitles()).toHaveText(movedOrder);
 
-      await sidebar.toolbar.clickButton('Undo');
-      await expect(tabs.getTitles()).toHaveText(initialOrder);
-      await sidebar.toolbar.clickButton('Redo');
-      await expect(tabs.getTitles()).toHaveText(movedOrder);
+        await sidebar.toolbar.clickButton('Undo');
+        await expect(tabs.getTitles()).toHaveText(initialOrder);
+        await sidebar.toolbar.clickButton('Redo');
+        await expect(tabs.getTitles()).toHaveText(movedOrder);
 
-      // "New tab" opens first after the reload: render its panel before saving, otherwise its first
-      // render after the reload bumps the fixture's outdated plugin version, an unsaved change
-      await tabs.select('New tab');
-      await flows.dashboards.saveDashboard(page, controls);
+        // "New tab" opens first after the reload: render its panel before saving, otherwise its first
+        // render after the reload bumps the fixture's outdated plugin version, an unsaved change
+        await tabs.select('New tab');
+        await flows.dashboards.saveDashboard(page, controls);
 
-      const repeatedTab2 = await getTabBox(tabs, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
-      const normalTab2 = await getTabBox(tabs, 'New tab');
-      expect(normalTab2.x).toBeLessThan(repeatedTab2.x);
-      await expect(tabs.getTitles()).toHaveText(movedOrder);
+        const repeatedTab2 = await getTabBox(tabs, `${REPEAT_TITLE_BASE}${REPEAT_OPTIONS.at(0)}`);
+        const normalTab2 = await getTabBox(tabs, 'New tab');
+        expect(normalTab2.x).toBeLessThan(repeatedTab2.x);
+        await expect(tabs.getTitles()).toHaveText(movedOrder);
 
-      await controls.enterEditMode();
-      await expectNoUnsavedChanges(controls);
-    });
+        await controls.enterEditMode();
+        await expectNoUnsavedChanges(controls);
+      }
+    );
 
     test('can load into repeated tab', async ({ selectors, page, tabs }) => {
       await flows.dashboards.importTestDashboard(
