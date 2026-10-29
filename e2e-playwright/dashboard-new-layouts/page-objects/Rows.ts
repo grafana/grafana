@@ -9,6 +9,13 @@ export class Rows extends PageObject {
     return this.getByGrafanaSelector(this.selectors.components.DashboardRow.title(rowTitle));
   }
 
+  /** Returns the title elements of every rendered row, in display order */
+  getTitles(): Locator {
+    // DashboardRow.title() only builds exact ids, so match every id sharing its prefix
+    const prefix = this.selectors.components.DashboardRow.title('');
+    return this.page.getByTestId(new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+  }
+
   /** Returns the row's content wrapper (grid or nested tabs) right after the row header */
   getContent(rowTitle: string): Locator {
     // The row's content (grid or nested tabs) is the direct sibling right after the
