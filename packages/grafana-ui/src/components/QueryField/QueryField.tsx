@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { debounce } from 'lodash';
-import { lazy, Suspense, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as React from 'react';
 import { type Value } from 'slate';
 import Plain from 'slate-plain-serializer';
@@ -57,7 +57,7 @@ export interface QueryFieldProps {
  *
  * @deprecated
  */
-export function QueryField({
+export const QueryField = memo(function QueryField({
   additionalPlugins,
   ['aria-labelledby']: ariaLabelledby,
   cleanText: cleanTextProp,
@@ -80,24 +80,34 @@ export function QueryField({
   const [value, setValue] = useState(() => makeValue(query || '', syntax));
   const [prevQuery, setPrevQuery] = useState(query);
   const editorRef = useRef<Editor | null>(null);
-  const lastExecutedValue = useRef<Value | null>(null);
   const prevSyntaxLoaded = useRef(syntaxLoaded);
   const styles = useStyles2(getStyles);
-  const runOnChange = useEffectEvent(() => {
-    if (onChange) {
-      onChange(cleanText(Plain.serialize(value)));
-    }
+
+  // The debounced onChange and the Slate plugins are created once, so they read the latest props through this ref
+  const latest = useRef({ onChange, onRunQuery, value });
+  useLayoutEffect(() => {
+    latest.current = { onChange, onRunQuery, value };
   });
-  const runOnChangeAndRunQuery = useEffectEvent(() => {
-    // onRunQuery executes query from Redux in Explore so it needs to be updated sync in case we want to run
-    // the query.
-    runOnChange();
-    if (onRunQuery) {
-      onRunQuery();
-      lastExecutedValue.current = value;
-    }
+
+  const [{ runOnChangeDebounced, runOnChangeAndRunQuery }] = useState(() => {
+    const runOnChange = () => {
+      const { onChange, value } = latest.current;
+      onChange?.(cleanText(Plain.serialize(value)));
+    };
+    const runOnChangeDebounced = debounce(runOnChange, 500);
+    return {
+      runOnChangeDebounced,
+      runOnChangeAndRunQuery: () => {
+        // onRunQuery executes query from Redux in Explore so it needs to be updated sync in case we want to run
+        // the query.
+        runOnChangeDebounced.cancel();
+        runOnChange();
+        latest.current.onRunQuery?.();
+      },
+    };
   });
-  const [runOnChangeDebounced] = useState(() => debounce(runOnChange, 500));
+  useEffect(() => () => runOnChangeDebounced.cancel(), [runOnChangeDebounced]);
+
   const [plugins] = useState<Array<Plugin<Editor>>>(() =>
     [
       // SuggestionsPlugin and RunnerPlugin need to be before NewlinePlugin
@@ -141,23 +151,10 @@ export function QueryField({
     }
   };
 
-  /**
-   * We need to handle blur events here mainly because of dashboard panels which expect to have query executed on blur.
-   */
-  const handleBlur = useEffectEvent((_: React.FocusEvent | undefined, editor: Editor, next: Function) => {
-    if (onBlur) {
-      onBlur();
-    } else {
-      // Run query by default on blur
-      const previousValue = lastExecutedValue.current ? Plain.serialize(lastExecutedValue.current) : '';
-      const currentValue = Plain.serialize(editor.value);
-
-      if (previousValue !== currentValue) {
-        runOnChangeAndRunQuery();
-      }
-    }
+  const handleBlur = (_event: React.FocusEvent | undefined, _editor: Editor, next: Function) => {
+    onBlur();
     return next();
-  });
+  };
 
   // Handle two way binging between local state and outside prop.
   // if query changed from the outside
@@ -201,7 +198,7 @@ export function QueryField({
       </div>
     </div>
   );
-}
+});
 
 function cleanText(text: string) {
   // RegExp with invisible characters we want to remove - currently only carriage return (newlines are visible)
