@@ -147,6 +147,24 @@ describe('MatchersUI utils', () => {
       expect(result.scopes.get('NestedField')).toBe('nested');
     });
 
+    it('finds matching nested fields when the filter rejects the nested frame container', () => {
+      const nestedFrame = toDataFrame({
+        fields: [
+          { name: 'Trend', type: FieldType.other, values: [[10, 20, 30]] },
+          { name: 'Label', type: FieldType.string, values: ['server'] },
+        ],
+      });
+      const parentFrame = toDataFrame({
+        fields: [{ name: 'nested', type: FieldType.nestedFrames, values: [[nestedFrame]] }],
+      });
+
+      const result = getFrameFieldsDisplayNames([parentFrame], (field) => field.type === FieldType.other);
+
+      expect(result.display).toEqual(new Set(['Trend']));
+      expect(result.fields.get('Trend')).toBe(nestedFrame.fields[0]);
+      expect(result.scopes.get('Trend')).toBe('nested');
+    });
+
     it('handles multiple frames and merges names', () => {
       const frame1 = toDataFrame({
         fields: [{ name: 'A', type: FieldType.string, values: ['a'] }],

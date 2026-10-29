@@ -55,13 +55,13 @@ export function getFrameFieldsDisplayNames(
 
   for (const frame of data) {
     for (const field of frame.fields) {
-      if (filter && !filter(field)) {
-        continue;
-      }
       if (field.type === FieldType.nestedFrames) {
         field.values.forEach((nestedData) =>
           getFrameFieldsDisplayNames(nestedData, filter, names, parentData, 'nested')
         );
+        continue;
+      }
+      if (filter && !filter(field)) {
         continue;
       }
       const disp = getFieldDisplayName(field, frame, parentData);
