@@ -125,17 +125,14 @@ func stagedBlobChunks(t *testing.T, env *kvBlobTestEnv) int {
 func TestIntegrationBlobStreamingReclaimsAbandonedChunks(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	env := newKVBlobTestEnv(t)
-	store := env.kv.(*kv.SqlKV)
-	dialect, err := kv.DialectFromDriver(store.DriverName)
-	require.NoError(t, err)
 	query := fmt.Sprintf("INSERT INTO resource_blob_upload_chunk (upload_id, chunk_index, created, value) VALUES (%s, %s, %s, %s)",
-		dialect.Placeholder(1), dialect.Placeholder(2), dialect.Placeholder(3), dialect.Placeholder(4))
+		env.dialect.Placeholder(1), env.dialect.Placeholder(2), env.dialect.Placeholder(3), env.dialect.Placeholder(4))
 	key := env.newResource(t, "default")
 	for _, age := range []time.Duration{25 * time.Hour, time.Minute} {
 		_, err := env.db.ExecContext(env.ctx, query, newBlobKey(key).UID, 0, time.Now().UTC().Add(-age), []byte("staged"))
 		require.NoError(t, err)
 	}
-	_, err = env.kvBlobs.(resource.StreamingBlobSupport).PutResourceBlobStream(env.ctx, &resourcepb.PutBlobRequest{Resource: key}, strings.NewReader("complete"))
+	_, err := env.kvBlobs.(resource.StreamingBlobSupport).PutResourceBlobStream(env.ctx, &resourcepb.PutBlobRequest{Resource: key}, strings.NewReader("complete"))
 	require.NoError(t, err)
 	require.Equal(t, 1, stagedBlobChunks(t, env))
 }

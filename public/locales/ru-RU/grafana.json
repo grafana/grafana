@@ -1460,10 +1460,16 @@
         "rules-error": "",
         "search-issues": ""
       },
+      "datasources": "",
       "interval": "",
+      "recorded-metric": {
+        "records": "",
+        "to": ""
+      },
       "recording-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "result-count": {
         "alert-rules_one": "",
@@ -1544,7 +1550,11 @@
         "recording": "",
         "recovering": "",
         "unavailable": ""
-      }
+      },
+      "labels_one": "",
+      "labels_few": "",
+      "labels_many": "",
+      "labels_other": ""
     },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Чтобы изменить настройки обработчика оповещений Alertmanager, перейдите на страницу администратора Alerting. Если у вас нет доступа, обратитесь к администратору.",
@@ -6041,6 +6051,7 @@
       "panel-repeat-variable": "Повторение панели по",
       "panel-title": "изменение заголовка панели",
       "paste-panel": "Вставка панели",
+      "paste-panel-styles": "",
       "remove": "Удалить {{typeName}}",
       "remove-multiple": "Удалить {{typeName}} ({{num}})",
       "rename": "",
@@ -6058,6 +6069,7 @@
       "switch-layout-tab": "Переключить макет",
       "tab-repeat-variable": "Повтор вкладки по",
       "tab-title": "Измените заголовок вкладки",
+      "unlink-library-panel": "",
       "variable-adhoc-default-filters": "",
       "variable-adhoc-default-group-by": "",
       "variable-adhoc-default-keys": "",
@@ -6304,6 +6316,7 @@
       "tooltip-previous": "Назад"
     },
     "modes": {
+      "agent-edit": "",
       "change-mode": "",
       "composer": "",
       "composer-description": "",
@@ -8197,7 +8210,7 @@
       }
     },
     "unlink-modal": {
-      "body-unlink-panel": "Если вы отсоедините эту панель, вы сможете редактировать ее отдельно от других дашбордов. Однако после внесения изменений вы не сможете вернуться к исходной панели многократного использования.",
+      "body-unlink-panel": "",
       "confirmText-yes-unlink": "Да, отсоединить",
       "title-really-unlink-panel": "Действительно отсоединить панель?"
     },
@@ -9449,10 +9462,6 @@
       "attribute-category": {
         "other": "Прочее"
       },
-      "exception-message": "Сообщение:",
-      "exception-stacktrace": "Трассировка стека",
-      "exception-title": "Исключение",
-      "exception-type": "Тип:",
       "label": {
         "kind": "Вид:",
         "library-name": "Название библиотеки:",
@@ -9560,6 +9569,7 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Открыть меню «Поделиться и оставить отзыв»",
+      "copy-trace-id": "",
       "critical-path": "Критический путь",
       "critical-path-tooltip": "Выбирает диапазоны в критическом пути — самой длинной последовательности зависимых задач, определяющих минимальную продолжительность трассировки.",
       "duration": "Длительность",
@@ -9583,7 +9593,7 @@
       "share-group": "Поделиться",
       "share-tooltip": "Поделиться и оставить отзыв",
       "spans": "Спаны",
-      "start-time": "Время начала",
+      "start-time": "",
       "success-indicator": "Трейс выполнен",
       "target": "Цель",
       "tooltip-url": "{{route}} или {{url}}, или {{target}}, или {{path}}",
@@ -9592,6 +9602,12 @@
       "trace-banner-metrics": "{{duration}} · {{percent}}% трассировки",
       "trace-banner-warning": "Баннер с предупреждением о трассировке",
       "trace-id": "Идентификатор трассировки",
+      "trace-summary-error": "",
+      "trace-summary-error-status": "",
+      "trace-summary-hide-stacktrace": "",
+      "trace-summary-show-stacktrace": "",
+      "trace-summary-warning": "",
+      "trace-summary-warning-status": "",
       "url": "URL-адрес",
       "warning-indicator": "Трейс содержит ошибки клиента"
     },
@@ -15249,7 +15265,7 @@
       "resources-to-migrate-empty": "Ни одна папка или ресурс не соответствуют текущему поисковому запросу.",
       "resources-to-migrate-heading": "Ресурсы для переноса",
       "resources-to-migrate-search": "Поиск папок и ресурсов",
-      "resources-to-migrate-subtitle": "Выберите целые папки или отдельные ресурсы внутри них. При выборе папки переносятся только ресурсы, находящиеся непосредственно в ней. Ресурсы из вложенных папок переносятся вместе со своими папками.",
+      "resources-to-migrate-subtitle": "",
       "retain-resources-description": "Сохраните перенесенные ресурсы на этом экземпляре, пока открыт pull request, чтобы они оставались активными до слияния ветки. Эти ресурсы необходимо удалить вручную до слияния pull request, иначе во время синхронизации возникнут ошибки из-за конфликтующих ресурсов.",
       "retain-resources-label": "Сохранить существующие ресурсы во время проверки",
       "retain-resources-warning-body": "Вы должны самостоятельно удалить перенесенные ресурсы перед слиянием pull request. Если они будут существовать на момент слияния ветки, они войдут в конфликт с поступающими управляемыми ресурсами и не будут синхронизироваться.",
@@ -16112,6 +16128,12 @@
       "delete-transformations-confirm-title_many": "Удалить {{count}} преобразований?",
       "delete-transformations-confirm-title_other": "Удалить {{count}} преобразований?"
     },
+    "datasource-error": {
+      "load-failed": "",
+      "load-failed-named": "",
+      "not-found": "",
+      "settings-not-found": ""
+    },
     "delete-modal": {
       "body-transformation": "Удаление одного преобразования может привести к нарушению работы других."
     },
@@ -16456,6 +16478,7 @@
       "exchange": "Изменить корневую область на {{scope}}",
       "expand": "Развернуть",
       "filter": "",
+      "filterAriaLabel": "",
       "loading": "Загрузка дашбордов",
       "megaMenuSectionHeading": "",
       "noResultsForFilter": "По вашему запросу ничего не найдено",
@@ -16464,7 +16487,6 @@
       "noResultsNoScopes": "Нет выбранных областей",
       "toggle": {
         "collapse": "Свернуть список рекомендуемых дашбордов",
-        "disabled": "Список рекомендуемых дашбордов отключен в связи с режимом «только для чтения»",
         "expand": "Развернуть список рекомендуемых дашбордов"
       }
     },
@@ -17001,6 +17023,17 @@
     "generate-suggestion": "Создать рекомендацию",
     "improve-query": "Улучшить запрос"
   },
+  "st-pod-ready": {
+    "error": {
+      "body-with-support": "",
+      "support-ack": "",
+      "title": "",
+      "title-fallback": ""
+    },
+    "timeout": {
+      "banner": ""
+    }
+  },
   "stars": {
     "mark-as-starred": "Добавить в избранное",
     "mark-as-starred-with-title": "Добавьте «{{title}}» в избранное",
@@ -17172,6 +17205,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": ""
+    },
     "login": "Вход",
     "manifests": {
       "api-docs": "",
@@ -17871,9 +17907,11 @@
       "placeholder-frame": "Фрейм"
     },
     "config-from-query-transformer-editor": {
+      "description-dynamic-field-name-matcher": "",
       "label-apply-to": "Применить к",
       "label-apply-to-options": "Применить к параметрам",
-      "label-config-query": "Запрос конфигурации"
+      "label-config-query": "Запрос конфигурации",
+      "name-dynamic-field-name-matcher": ""
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Добавить преобразователь типа поля",

@@ -14,18 +14,15 @@ import (
 func TestRegisterMigrationValidatorOptions(t *testing.T) {
 	for _, driver := range []string{sqlstoremigrator.SQLite, sqlstoremigrator.MySQL, sqlstoremigrator.Postgres} {
 		for _, backend := range []struct {
-			name          string
-			sqlKV         bool
-			compatibility bool
+			name  string
+			sqlKV bool
 		}{
 			{name: "SQL"},
 			{name: "SQLKV", sqlKV: true},
-			{name: "SQLKV compatibility", sqlKV: true, compatibility: true},
 		} {
 			t.Run(driver+"/"+backend.name, func(t *testing.T) {
 				cfg := setting.NewCfg()
 				cfg.EnableSQLKVBackend = backend.sqlKV
-				cfg.EnableSQLKVCompatibilityMode = backend.compatibility
 				client := resource.NewMockResourceClient(t)
 				var captured []ValidatorOptions
 				def := MigrationDefinition{
