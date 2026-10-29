@@ -2,8 +2,12 @@ import { expect, type Page, type Response } from '@playwright/test';
 
 import {
   type FindScopeNavigationsResults,
+  type FindScopeNodeChildrenResults,
+  type Scope,
+  type ScopeFilter,
   type ScopeNavigation,
   type ScopeNavigationStatus,
+  type ScopeNode,
 } from '../../public/app/api/clients/scope/v0alpha1/endpoints.gen';
 
 import { testScopes } from './scopes';
@@ -77,27 +81,8 @@ export async function setupScopeRoutes(page: Page, scopes: TestScope[]): Promise
         apiVersion: 'scope.grafana.app/v0alpha1',
         kind: 'FindScopeNodeChildrenResults',
         metadata: {},
-        items: scopesToReturn.map((scope) => ({
-          kind: 'ScopeNode',
-          apiVersion: 'scope.grafana.app/v0alpha1',
-          metadata: {
-            name: scope.name,
-            namespace: 'default',
-          },
-          spec: {
-            title: scope.title,
-            description: scope.title,
-            disableMultiSelect: scope.disableMultiSelect ?? false,
-            nodeType: scope.children ? 'container' : 'leaf',
-            ...(parentParam && { parentName: parentParam }),
-            ...((scope.addLinks || scope.children) && {
-              linkType: 'scope',
-              linkId: `scope-${scope.name}`,
-            }),
-            ...(scope.redirectPath && { redirectPath: scope.redirectPath }),
-          },
-        })),
-      }),
+        items: scopesToReturn.map((scope) => buildScopeNode(scope, parentParam ?? undefined)),
+      } satisfies FindScopeNodeChildrenResults),
     });
   });
 
@@ -128,21 +113,7 @@ export async function setupScopeRoutes(page: Page, scopes: TestScope[]): Promise
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          kind: 'Scope',
-          apiVersion: 'scope.grafana.app/v0alpha1',
-          metadata: {
-            name: `scope-${scope.name}`,
-            namespace: 'default',
-          },
-          spec: {
-            title: scope.title,
-            description: '',
-            filters: scope.filters,
-            category: scope.category,
-            type: scope.type,
-          },
-        }),
+        body: JSON.stringify(buildScope(scope) satisfies Scope),
       });
     } else {
       await route.fulfill({ status: 404 });
@@ -157,15 +128,47 @@ export type TestScope = {
   name: string;
   title: string;
   children?: TestScope[];
-  filters?: Array<{ key: string; value: string; operator: string }>;
+  filters?: ScopeFilter[];
   dashboardUid?: string;
   dashboardTitle?: string;
   disableMultiSelect?: boolean;
-  type?: string;
-  category?: string;
   addLinks?: boolean;
   redirectPath?: string;
 };
+
+const buildScopeNode = (scope: TestScope, parentName?: string): ScopeNode => ({
+  kind: 'ScopeNode',
+  apiVersion: 'scope.grafana.app/v0alpha1',
+  metadata: {
+    name: scope.name,
+    namespace: 'default',
+  },
+  spec: {
+    title: scope.title,
+    description: scope.title,
+    disableMultiSelect: scope.disableMultiSelect ?? false,
+    nodeType: scope.children ? 'container' : 'leaf',
+    ...(parentName && { parentName }),
+    ...((scope.addLinks || scope.children) && {
+      linkType: 'scope',
+      linkId: `scope-${scope.name}`,
+    }),
+    ...(scope.redirectPath && { redirectPath: scope.redirectPath }),
+  },
+});
+
+const buildScope = (scope: TestScope): Scope => ({
+  kind: 'Scope',
+  apiVersion: 'scope.grafana.app/v0alpha1',
+  metadata: {
+    name: `scope-${scope.name}`,
+    namespace: 'default',
+  },
+  spec: {
+    title: scope.title,
+    filters: scope.filters,
+  },
+});
 
 /**
  * Sets up a route for scope node children requests and waits for the response.
@@ -179,31 +182,8 @@ async function scopeNodeChildrenRequest(page: Page, scopes: TestScope[], parentN
         apiVersion: 'scope.grafana.app/v0alpha1',
         kind: 'FindScopeNodeChildrenResults',
         metadata: {},
-        items: scopes.map((scope) => ({
-          kind: 'ScopeNode',
-          apiVersion: 'scope.grafana.app/v0alpha1',
-          metadata: {
-            name: `${scope.name}`,
-            namespace: 'default',
-          },
-          spec: {
-            title: scope.title,
-            description: scope.title,
-            disableMultiSelect: scope.disableMultiSelect ?? false,
-            nodeType: scope.children ? 'container' : 'leaf',
-            ...(parentName && {
-              parentName,
-            }),
-            ...((scope.addLinks || scope.children) && {
-              linkType: 'scope',
-              linkId: `scope-${scope.name}`,
-            }),
-            ...(scope.redirectPath && {
-              redirectPath: scope.redirectPath,
-            }),
-          },
-        })),
-      }),
+        items: scopes.map((scope) => buildScopeNode(scope, parentName)),
+      } satisfies FindScopeNodeChildrenResults),
     });
   });
 
@@ -278,21 +258,7 @@ async function scopeSelectRequest(page: Page, selectedScope: TestScope): Promise
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify({
-          kind: 'Scope',
-          apiVersion: 'scope.grafana.app/v0alpha1',
-          metadata: {
-            name: `scope-${selectedScope.name}`,
-            namespace: 'default',
-          },
-          spec: {
-            title: selectedScope.title,
-            description: '',
-            filters: selectedScope.filters,
-            category: selectedScope.category,
-            type: selectedScope.type,
-          },
-        }),
+        body: JSON.stringify(buildScope(selectedScope) satisfies Scope),
       });
     }
   );

@@ -4,7 +4,6 @@ export interface ScopeNavigationSpec {
   scope: string;
   subScope?: string;
   preLoadSubScopeChildren?: boolean;
-  expandOnLoad?: boolean;
   disableSubScopeSelection?: boolean;
 }
 
