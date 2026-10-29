@@ -32,7 +32,7 @@ type DiscoveryClient interface {
 
 type DiscoveryClientImpl struct {
 	restConfig *rest.Config
-	discovery.DiscoveryInterface
+	*discovery.DiscoveryClient
 }
 
 func NewDiscoveryClient(restConfig *rest.Config) (*DiscoveryClientImpl, error) {
@@ -41,13 +41,13 @@ func NewDiscoveryClient(restConfig *rest.Config) (*DiscoveryClientImpl, error) {
 		return nil, err
 	}
 	return &DiscoveryClientImpl{
-		restConfig:         restConfig,
-		DiscoveryInterface: discoveryClient,
+		restConfig:      restConfig,
+		DiscoveryClient: discoveryClient,
 	}, nil
 }
 
 func (d *DiscoveryClientImpl) GetResourceForKind(ctx context.Context, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
-	resourceList, err := discovery.ToDiscoveryInterfaceWithContext(d.DiscoveryInterface).ServerResourcesForGroupVersionWithContext(ctx, gvk.GroupVersion().String())
+	resourceList, err := d.ServerResourcesForGroupVersionWithContext(ctx, gvk.GroupVersion().String())
 	if err != nil {
 		return schema.GroupVersionResource{}, err
 	}
@@ -81,7 +81,7 @@ func (d *DiscoveryClientImpl) GetKindForResource(gvr schema.GroupVersionResource
 }
 
 func (d *DiscoveryClientImpl) preferredResources(ctx context.Context, group string) ([]*metav1.APIResourceList, error) {
-	apiList, err := discovery.ToDiscoveryInterfaceWithContext(d.DiscoveryInterface).ServerPreferredResourcesWithContext(ctx)
+	apiList, err := d.ServerPreferredResourcesWithContext(ctx)
 	var failed *discovery.ErrGroupDiscoveryFailed
 	if err == nil || !errors.As(err, &failed) {
 		return apiList, err
