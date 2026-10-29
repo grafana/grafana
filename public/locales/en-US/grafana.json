@@ -16948,6 +16948,10 @@
     },
     "namespace-unavailable": "Check the namespace before sending requests, or reload the page to try again.",
     "namespace-unavailable-title": "Unable to load namespace",
+    "router-fixtures": {
+      "clear": "Clear fixtures",
+      "title": "Showing saved fixture data, not this server"
+    },
     "router-nav": {
       "api-docs": "API docs",
       "manifests": "Manifests",
@@ -16964,7 +16968,6 @@
       "failures-description": "Of those, the ones counted against the backend: 502, 503 and 504 responses, and failures to proxy, such as connection errors and timeouts. Other errors, and callers that disconnect, are not counted. Consecutive failures open the breaker.",
       "filter-placeholder": "Filter by group, key or plugin",
       "filtered": "{{shown}} of {{total}}",
-      "groups": "Groups",
       "last-failed": "Last reconcile failed",
       "load-failures": "Load failures",
       "never": "never",
@@ -16978,8 +16981,9 @@
       "requests-description": "Requests the group's breaker let through to the backend, or the plugin's client calls when its scope is plugin-calls. Counted since the backend was loaded or the breaker last changed state.",
       "shadowed": "Shadowed groups",
       "shadowed-description": "Groups a source offers that a higher-priority source serves instead.",
-      "sources": "Sources",
-      "stack-lookups": "Stack lookups",
+      "tab-groups": "Groups",
+      "tab-lookups": "Stack lookups",
+      "tab-sources": "Sources",
       "title": "Router status"
     }
   },
