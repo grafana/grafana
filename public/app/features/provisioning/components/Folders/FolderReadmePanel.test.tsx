@@ -269,6 +269,7 @@ describe('FolderReadmePanel', () => {
     const dashboardItem: ResourceListItem = {
       path: 'dashboards/team-a/cpu.json',
       resource: 'dashboards',
+      kind: 'Dashboard',
       name: 'abc',
       group: '',
       hash: '',
@@ -388,7 +389,9 @@ describe('FolderReadmePanel', () => {
 
     it('navigates in-app to the containing folder doc tab when a markdown link maps to a synced folder', async () => {
       // A folder is keyed by its directory; the doc's containing folder resolves it.
-      setResources([{ path: 'dashboards/team-a', resource: 'folders', name: 'fold1', group: '', hash: '' }]);
+      setResources([
+        { path: 'dashboards/team-a', resource: 'folders', kind: 'Folder', name: 'fold1', group: '', hash: '' },
+      ]);
       setReadmeResult({ markdownContent: 'See [contributing](./CONTRIBUTING.md)' });
 
       const { user } = setup();

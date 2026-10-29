@@ -9,24 +9,24 @@ import { computeFolderCounts, computeKindTotals, percent } from './stats';
 // playlists total, 5 managed by Git Sync => 15 unmanaged.
 const stats: ResourceStats = {
   instance: [
-    { group: 'dashboard.grafana.app', resource: 'dashboards', count: 100 },
-    { group: 'folder.grafana.app', resource: 'folders', count: 8 },
-    { group: 'playlist.grafana.app', resource: 'playlists', count: 20 },
+    { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 100 },
+    { group: 'folder.grafana.app', resource: 'folders', kind: 'Folder', count: 8 },
+    { group: 'playlist.grafana.app', resource: 'playlists', kind: 'Playlist', count: 20 },
   ],
   managed: [
     {
       kind: 'repo',
       stats: [
-        { group: 'dashboard.grafana.app', resource: 'dashboards', count: 40 },
-        { group: 'folder.grafana.app', resource: 'folders', count: 4 },
-        { group: 'playlist.grafana.app', resource: 'playlists', count: 5 },
+        { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 40 },
+        { group: 'folder.grafana.app', resource: 'folders', kind: 'Folder', count: 4 },
+        { group: 'playlist.grafana.app', resource: 'playlists', kind: 'Playlist', count: 5 },
       ],
     },
     {
       kind: 'terraform',
       stats: [
-        { group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 },
-        { group: 'folder.grafana.app', resource: 'folders', count: 2 },
+        { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 10 },
+        { group: 'folder.grafana.app', resource: 'folders', kind: 'Folder', count: 2 },
       ],
     },
   ],
@@ -49,16 +49,16 @@ describe('computeKindTotals', () => {
     const totals = computeKindTotals(
       {
         instance: [
-          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 },
-          { group: 'dashboard.grafana.app', resource: 'variables', count: 7 },
-          { group: 'dashboard.grafana.app', resource: 'librarypanels', count: 3 },
+          { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 10 },
+          { group: 'dashboard.grafana.app', resource: 'variables', kind: 'Variable', count: 7 },
+          { group: 'dashboard.grafana.app', resource: 'librarypanels', kind: 'LibraryPanel', count: 3 },
         ],
         managed: [
           {
             kind: 'repo',
             stats: [
-              { group: 'dashboard.grafana.app', resource: 'dashboards', count: 4 },
-              { group: 'dashboard.grafana.app', resource: 'variables', count: 2 },
+              { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 4 },
+              { group: 'dashboard.grafana.app', resource: 'variables', kind: 'Variable', count: 2 },
             ],
           },
         ],
@@ -81,8 +81,8 @@ describe('computeFolderCounts', () => {
 
   it('folds the legacy `folders` group into folder.grafana.app', () => {
     const counts = computeFolderCounts({
-      instance: [{ group: 'folders', resource: 'folders', count: 5 }],
-      managed: [{ kind: 'repo', stats: [{ group: 'folders', resource: 'folders', count: 3 }] }],
+      instance: [{ group: 'folders', resource: 'folders', kind: 'Folder', count: 5 }],
+      managed: [{ kind: 'repo', stats: [{ group: 'folders', resource: 'folders', kind: 'Folder', count: 3 }] }],
     });
     expect(counts).toEqual({ managed: 3, total: 5 });
   });

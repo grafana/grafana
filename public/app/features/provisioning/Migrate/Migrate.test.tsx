@@ -45,22 +45,22 @@ beforeEach(() => {
 // 50 unmanaged. 8 folders total, 6 managed (4 git sync + 2 terraform).
 const stats: ResourceStats = {
   instance: [
-    { group: 'dashboard.grafana.app', resource: 'dashboards', count: 100 },
-    { group: 'folder.grafana.app', resource: 'folders', count: 8 },
+    { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 100 },
+    { group: 'folder.grafana.app', resource: 'folders', kind: 'Folder', count: 8 },
   ],
   managed: [
     {
       kind: 'repo',
       stats: [
-        { group: 'dashboard.grafana.app', resource: 'dashboards', count: 40 },
-        { group: 'folder.grafana.app', resource: 'folders', count: 4 },
+        { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 40 },
+        { group: 'folder.grafana.app', resource: 'folders', kind: 'Folder', count: 4 },
       ],
     },
     {
       kind: 'terraform',
       stats: [
-        { group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 },
-        { group: 'folder.grafana.app', resource: 'folders', count: 2 },
+        { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 10 },
+        { group: 'folder.grafana.app', resource: 'folders', kind: 'Folder', count: 2 },
       ],
     },
   ],
@@ -134,8 +134,10 @@ describe('Migrate', () => {
 
   it('renders the dashboard-centric overview when there are folders but no dashboards', async () => {
     respondWithStats({
-      instance: [{ group: 'folder.grafana.app', resource: 'folders', count: 4 }],
-      managed: [{ kind: 'repo', stats: [{ group: 'folder.grafana.app', resource: 'folders', count: 1 }] }],
+      instance: [{ group: 'folder.grafana.app', resource: 'folders', kind: 'Folder', count: 4 }],
+      managed: [
+        { kind: 'repo', stats: [{ group: 'folder.grafana.app', resource: 'folders', kind: 'Folder', count: 1 }] },
+      ],
     });
 
     render(<Migrate />);
@@ -404,16 +406,16 @@ describe('Migrate', () => {
     // Dashboards + playlists both reported by stats, both with unmanaged items.
     const withPlaylists: ResourceStats = {
       instance: [
-        { group: 'dashboard.grafana.app', resource: 'dashboards', count: 100 },
-        { group: 'folder.grafana.app', resource: 'folders', count: 8 },
-        { group: 'playlist.grafana.app', resource: 'playlists', count: 20 },
+        { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 100 },
+        { group: 'folder.grafana.app', resource: 'folders', kind: 'Folder', count: 8 },
+        { group: 'playlist.grafana.app', resource: 'playlists', kind: 'Playlist', count: 20 },
       ],
       managed: [
         {
           kind: 'repo',
           stats: [
-            { group: 'dashboard.grafana.app', resource: 'dashboards', count: 40 },
-            { group: 'playlist.grafana.app', resource: 'playlists', count: 5 },
+            { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 40 },
+            { group: 'playlist.grafana.app', resource: 'playlists', kind: 'Playlist', count: 5 },
           ],
         },
       ],
@@ -541,15 +543,15 @@ describe('Migrate', () => {
   it('shows the all-managed empty state and no migrate action when nothing is unmanaged', async () => {
     respondWithStats({
       instance: [
-        { group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 },
-        { group: 'folder.grafana.app', resource: 'folders', count: 2 },
+        { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 10 },
+        { group: 'folder.grafana.app', resource: 'folders', kind: 'Folder', count: 2 },
       ],
       managed: [
         {
           kind: 'repo',
           stats: [
-            { group: 'dashboard.grafana.app', resource: 'dashboards', count: 10 },
-            { group: 'folder.grafana.app', resource: 'folders', count: 2 },
+            { group: 'dashboard.grafana.app', resource: 'dashboards', kind: 'Dashboard', count: 10 },
+            { group: 'folder.grafana.app', resource: 'folders', kind: 'Folder', count: 2 },
           ],
         },
       ],
