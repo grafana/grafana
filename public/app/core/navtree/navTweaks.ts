@@ -1,9 +1,9 @@
 import { type NavModelItem } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
-import { NavID, NavWeight } from './constants';
+import { type NavId, NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { type PluginNavOverride } from './pluginNavOverrides';
-import { hoistNavItemPages, moveNavItemToSection, pluginPageId } from './utils';
+import { findNavById, hoistNavItemPages, moveNavItemToSection, pluginPageId } from './utils';
 
 /**
  * Transitional nav adjustments, every one of them meant to be deleted. Each
@@ -26,10 +26,38 @@ const NAV_TWEAKS: NavTweak[] = [
     when: isInfoArchRefresh,
     apply: (tree) => {
       const id = pluginPageId('grafana-ml-app');
-      return hoistNavItemPages(moveNavItemToSection(tree, id, NavID.apps, NavWeight.plugin), NavID.apps, id);
+      // Checked before the section is created, so an instance without the app
+      // does not gain an empty More apps
+      if (!findNavById(tree, id)) {
+        return tree;
+      }
+      const withSection = ensureSection(tree, NavID.apps);
+      return hoistNavItemPages(moveNavItemToSection(withSection, id, NavID.apps, NavWeight.plugin), NavID.apps, id);
     },
   },
 ];
+
+/**
+ * Adds a section's shell when the tree has none. Tweaks run on a finished tree,
+ * after empty shells are pruned, so a section whose only members these tweaks
+ * are about to move in is absent by then.
+ */
+function ensureSection(tree: NavModelItem[], sectionId: NavId): NavModelItem[] {
+  if (findNavById(tree, sectionId)) {
+    return tree;
+  }
+  const shell = PLUGIN_SECTION_SHELLS[sectionId]?.shell;
+  if (!shell) {
+    return tree;
+  }
+  // Inserted at its sorted position rather than appended and re-sorted: the
+  // tree is already sorted, and sortNavTree numbers unweighted items by index,
+  // so a second pass over new indices would not agree with the first
+  const weightOf = (node: NavModelItem, index: number) => node.sortWeight || index + 1;
+  const found = tree.findIndex((node, index) => weightOf(node, index) > (shell.sortWeight ?? 0));
+  const at = found === -1 ? tree.length : found;
+  return [...tree.slice(0, at), { ...shell, children: [] }, ...tree.slice(at)];
+}
 
 /** Applies independently gated tweaks without letting one failure abort store creation. */
 export function applyNavTweaks(tree: NavModelItem[], tweaks: NavTweak[] = NAV_TWEAKS): NavModelItem[] {

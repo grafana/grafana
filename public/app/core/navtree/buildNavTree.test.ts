@@ -638,6 +638,28 @@ describe('getInitialNavTree', () => {
     expect(ids(findById(tree, NavID.apps)?.children ?? [])).toEqual(['plugin-page-grafana-ml-app']);
   });
 
+  // More apps is built only once an app lands in it, and the empty shell is
+  // pruned before the tweaks run, so the section a tweak targets may be absent
+  it('creates the target section when the tweak finds none', () => {
+    setup({ openFeatureFlags: { 'grafana.navigationInfoArchRefresh': true } });
+    config.bootData = {
+      ...config.bootData,
+      navTree: [{ id: 'plugin-page-grafana-ml-app', text: 'Machine Learning', url: '/a/grafana-ml-app' }],
+    };
+
+    const tree = getInitialNavTree();
+
+    expect(ids(tree)).toEqual([NavID.apps]);
+    expect(ids(findById(tree, NavID.apps)?.children ?? [])).toEqual(['plugin-page-grafana-ml-app']);
+  });
+
+  it('leaves the tree alone when the tweak has nothing to move', () => {
+    setup({ openFeatureFlags: { 'grafana.navigationInfoArchRefresh': true } });
+    config.bootData = { ...config.bootData, navTree: [{ id: 'home', text: 'Home' }] };
+
+    expect(ids(getInitialNavTree())).toEqual(['home']);
+  });
+
   // The apps section reads the app metas synchronously: app.ts fills the cache
   // and fetches the user's permissions before the store is configured, and this
   // is where both land in the tree.
