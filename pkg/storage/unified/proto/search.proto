@@ -484,7 +484,7 @@ message HybridSearchResult {
   // Field names and text share a 4 KiB budget per result, prioritizing title,
   // then fields in name order. Values may be truncated and later fields
   // or array elements omitted. Empty values are omitted.
-  // Absent for semantic-only hits, external collections, and legacy table responses.
+  // Absent for semantic-only hits and external collections.
   map<string, google.protobuf.Value> lexical = 9;
 
   // Tags from the lexical index. Omitted when unavailable.
