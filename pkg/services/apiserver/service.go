@@ -674,16 +674,6 @@ func (s *service) start(ctx context.Context) error {
 	return nil
 }
 
-func (s *service) loopbackHandler(handler http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err := identity.GetRequester(r.Context()); err == nil && s.requestRouter != nil {
-			s.requestRouter.HandleFunc(w, r, handler)
-			return
-		}
-		handler.ServeHTTP(w, r)
-	})
-}
-
 func (s *service) startCoreServer(
 	ctx context.Context,
 	transport *grafanaapiserveroptions.RoundTripperFunc,
@@ -693,7 +683,7 @@ func (s *service) startCoreServer(
 	// ignore the lint error because the response is passed directly to the client,
 	// so the client will be responsible for closing the response body.
 	// nolint:bodyclose
-	transport.Fn = grafanaresponsewriter.WrapHandler(s.loopbackHandler(server.Handler))
+	transport.Fn = grafanaresponsewriter.WrapHandler(server.Handler)
 	close(transport.Ready)
 
 	prepared := server.PrepareRun()
