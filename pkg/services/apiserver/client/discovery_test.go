@@ -13,6 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/transport"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
 func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
@@ -74,8 +76,7 @@ func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
 	}
 }
 
-func TestDiscoveryClient_LookupsUseContext(t *testing.T) {
-	type ctxKey struct{}
+func TestDiscoveryClient_LookupsKeepRequester(t *testing.T) {
 	wantGVR := schema.GroupVersionResource{Group: "playlist.grafana.app", Version: "v1", Resource: "playlists"}
 	tests := map[string]func(context.Context, *DiscoveryClientImpl) (schema.GroupVersionResource, error){
 		"preferred version for kind": func(ctx context.Context, c *DiscoveryClientImpl) (schema.GroupVersionResource, error) {
@@ -88,22 +89,24 @@ func TestDiscoveryClient_LookupsUseContext(t *testing.T) {
 	}
 	for name, lookup := range tests {
 		t.Run(name, func(t *testing.T) {
-			var seen []any
+			var seen []identity.Requester
 			wrap := func(rt http.RoundTripper) http.RoundTripper {
 				return roundTripperFunc(func(r *http.Request) (*http.Response, error) {
-					seen = append(seen, r.Context().Value(ctxKey{}))
+					requester, _ := identity.GetRequester(r.Context())
+					seen = append(seen, requester)
 					return rt.RoundTrip(r)
 				})
 			}
 			c := newTestDiscoveryClient(t, wrap,
 				discoveryGroup("playlist.grafana.app", "v1", apidiscoveryv2.DiscoveryFreshnessCurrent, discoveryResource("playlists", "Playlist")))
 
-			gvr, err := lookup(context.WithValue(t.Context(), ctxKey{}, "requester"), c)
+			requester := &identity.StaticRequester{Login: "provisioning"}
+			gvr, err := lookup(identity.WithRequester(t.Context(), requester), c)
 			require.NoError(t, err)
 			require.Equal(t, wantGVR, gvr)
 			require.NotEmpty(t, seen)
-			for _, v := range seen {
-				require.Equal(t, "requester", v)
+			for _, got := range seen {
+				require.Same(t, requester, got)
 			}
 		})
 	}
