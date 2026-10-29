@@ -80,6 +80,7 @@ interface BaseDrawerProps {
   readOnlyMessage?: string;
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
+  directory?: string;
   onDismiss?: () => void;
   /** Override the default post-commit (configured-branch) navigation to the kind's list page. */
   onWriteSuccess?: () => void;
@@ -137,8 +138,9 @@ function FormContent({
   onBranchSuccess,
 }: FormProps) {
   const [error, setError] = useState<string | undefined>(undefined);
-  // The kind's stable key is the UI-facing resource type for the commit message, telemetry and fields.
-  const resourceType = kind.key;
+  // The kind name is the UI-facing resource type for the commit message, telemetry and fields: a plugin
+  // kind's registry key is `group/Kind`, which the commit message would escape.
+  const resourceType = kind.kind.toLowerCase();
   const isDelete = action === 'delete';
   // New resources are POSTed (create), existing ones PUT (replace). The wrapper keys off the
   // original path: passing it selects update, omitting it selects create.
@@ -313,6 +315,7 @@ function ResourceDrawerContent({
   successMessage,
   readOnlyMessage,
   branchPrefix,
+  directory = '',
   onDismiss,
   onWriteSuccess,
   onBranchSuccess,
@@ -335,7 +338,7 @@ function ResourceDrawerContent({
           annotations: {
             [AnnoKeyManagerKind]: ManagerKind.Repo,
             [AnnoKeyManagerIdentity]: repositoryName ?? '',
-            [AnnoKeySourcePath]: getNewResourcePath(title, kind.key),
+            [AnnoKeySourcePath]: directory + getNewResourcePath(title, kind.kind.toLowerCase()),
           },
         },
       }
@@ -346,8 +349,8 @@ function ResourceDrawerContent({
     ? undefined
     : { apiVersion: resource.apiVersion, kind: resource.kind, metadata: { name: resourceName }, spec: resource.spec };
 
-  // Branch names can't contain spaces, so prefix from the stable `key`, not the display noun.
-  const prefix = branchPrefix ?? kind.key;
+  // Branch names can't contain spaces or dots, so prefix from the kind name, not the display noun.
+  const prefix = branchPrefix ?? kind.kind.toLowerCase();
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     name: getManagerIdentity(managedResource),
   });
