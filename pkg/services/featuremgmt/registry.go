@@ -728,6 +728,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.dashboardGridShadowCheck",
+			Description: "Compares the custom grid's layout helpers with react-grid-layout on a sample of dashboard loads and reports differences as counts",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.savedDashboardViews",
 			Description: "Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state",
 			Stage:       FeatureStageExperimental,
