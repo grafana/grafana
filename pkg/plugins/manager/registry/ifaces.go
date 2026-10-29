@@ -18,7 +18,8 @@ type Service interface {
 	Remove(ctx context.Context, id, version string) error
 }
 
-// Notifier reports changes to the registered plugins.
+// Notifier reports changes to the registered plugins. Code outside the plugin
+// manager should use pluginstore.Notifier instead.
 type Notifier interface {
 	// Notify returns a channel that receives a value after a plugin is added or
 	// removed. Changes are coalesced: a receiver that falls behind gets one value
