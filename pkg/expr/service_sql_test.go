@@ -119,6 +119,58 @@ func TestSQLService(t *testing.T) {
 	})
 }
 
+func TestSQLServiceSkipsAnnotationFrames(t *testing.T) {
+	// Pyroscope returns one untyped series table, plus an exemplar frame
+	// marked with the annotations data topic.
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: data.Frames{
+			data.NewFrame("series",
+				data.NewField("time", nil, []time.Time{time.Unix(10, 0), time.Unix(20, 0)}),
+				data.NewField("value", nil, []float64{1, 2}),
+			),
+			data.NewFrame("exemplar",
+				data.NewField("Time", nil, []time.Time{time.Unix(15, 0)}),
+				data.NewField("Value", nil, []float64{9}),
+				data.NewField("Id", nil, []string{"profile-1"}),
+			).SetMeta(&data.FrameMeta{DataTopic: data.DataTopicAnnotations}),
+		}},
+	}
+	queries := []Query{
+		{
+			RefID:      "A",
+			DataSource: &datasources.DataSource{OrgID: 1, UID: "test", Type: "test"},
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange:  AbsoluteTimeRange{},
+		},
+		{
+			RefID:      "B",
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": "SELECT COUNT(*) AS n, SUM(value) AS total FROM A" }`),
+			TimeRange:  AbsoluteTimeRange{},
+		},
+	}
+
+	s, req := newMockQueryService(resp, queries)
+	s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	require.NoError(t, err)
+
+	require.NoError(t, rsp.Responses["A"].Error)
+	require.NoError(t, rsp.Responses["B"].Error)
+	require.Len(t, rsp.Responses["B"].Frames, 1)
+	frame := rsp.Responses["B"].Frames[0]
+	require.Equal(t, 1, frame.Rows())
+	n, err := frame.Fields[0].FloatAt(0)
+	require.NoError(t, err)
+	require.Equal(t, 2.0, n)
+	total, err := frame.Fields[1].FloatAt(0)
+	require.NoError(t, err)
+	require.Equal(t, 3.0, total)
+}
+
 func TestSQLServiceErrors(t *testing.T) {
 	tsMulti := data.NewFrame("",
 		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
