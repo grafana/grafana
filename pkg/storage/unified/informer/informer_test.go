@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/grafana/grafana/pkg/infra/nats"
@@ -243,16 +244,15 @@ func TestInformer_LiveEventsDispatchMinimalObject(t *testing.T) {
 	})
 }
 
-// SetNotificationObject lets the live-event object carry the notification's
+// SetObjectUpdater lets the live-event object carry the notification's
 // metadata; re-listed objects are unaffected.
 func TestInformer_NotificationObjectCarriesMetadata(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		sub := newFakeSubscriber()
 		list := func(context.Context) ([]runtime.Object, int64, error) { return nil, 0, nil }
 		n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
-		n.SetNotificationObject(func(evt *resourcepb.WatchNotification) runtime.Object {
-			o := obj(evt.Name)
-			o.Labels = evt.GetMetadata().GetLabels()
+		n.SetObjectUpdater(func(o runtime.Object, evt *resourcepb.WatchNotification) runtime.Object {
+			o.(*metav1.PartialObjectMetadata).Labels = evt.GetMetadata().GetLabels()
 			return o
 		})
 
@@ -277,6 +277,41 @@ func TestInformer_NotificationObjectCarriesMetadata(t *testing.T) {
 		synctest.Wait()
 
 		assert.Equal(t, []map[string]string{{"encrypted": "true"}}, got)
+	})
+}
+
+// The informer, not the hook, decides which object an event is about.
+func TestInformer_UpdateObjectFromNotificationCannotChangeIdentity(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := newFakeSubscriber()
+		list := func(context.Context) ([]runtime.Object, int64, error) { return nil, 0, nil }
+		n := NewInformer(sub, testGVR, testNamespace, time.Minute, testQueueGroup, NewStore(), newObjectFunc, list)
+		n.SetObjectUpdater(func(o runtime.Object, _ *resourcepb.WatchNotification) runtime.Object {
+			meta := o.(*metav1.PartialObjectMetadata)
+			meta.Namespace, meta.Name = "other-ns", "other"
+			return meta
+		})
+
+		var got []types.NamespacedName
+		_, err := n.AddEventHandler(cache.ResourceEventHandlerFuncs{
+			UpdateFunc: func(_, newObj interface{}) {
+				m := newObj.(*metav1.PartialObjectMetadata)
+				got = append(got, types.NamespacedName{Namespace: m.Namespace, Name: m.Name})
+			},
+		})
+		require.NoError(t, err)
+
+		stopCh := make(chan struct{})
+		go n.Run(stopCh)
+		synctest.Wait()
+
+		sub.publish(t, subject(), event(resourcepb.WatchNotification_MODIFIED, "changed"))
+		synctest.Wait()
+
+		close(stopCh)
+		synctest.Wait()
+
+		assert.Equal(t, []types.NamespacedName{{Namespace: testNamespace, Name: "changed"}}, got)
 	})
 }
 

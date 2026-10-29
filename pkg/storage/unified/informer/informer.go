@@ -141,9 +141,9 @@ type Informer struct {
 	list       ListFunc
 	log        log.Logger
 
-	// fromNotification, when set, builds the live-event object instead of newObject,
-	// so it can carry the notification's metadata. See SetNotificationObject.
-	fromNotification func(*resourcepb.WatchNotification) runtime.Object
+	// updateObject, when set, updates the live-event object built by newObject from
+	// the notification's metadata. See SetObjectUpdater.
+	updateObject func(runtime.Object, *resourcepb.WatchNotification) runtime.Object
 
 	store Store
 
@@ -253,13 +253,12 @@ func (n *Informer) HasSynced() bool { return n.synced.Load() }
 // live updates. Call before Run.
 func (n *Informer) AllowDegradedStart() { n.degradedStart = true }
 
-// SetNotificationObject builds the object handed to handlers on a live
-// notification from the whole notification, so it can carry the notification's
-// metadata (labels, annotations, finalizers, deletion timestamp) and let a handler
-// skip events without re-fetching. It replaces the ObjectFunc for live events only;
-// re-listed objects are unaffected. Call before Run.
-func (n *Informer) SetNotificationObject(f func(*resourcepb.WatchNotification) runtime.Object) {
-	n.fromNotification = f
+// SetObjectUpdater sets a function that fills the object built by newObject for
+// a live notification with that notification's metadata (labels, annotations,
+// finalizers, deletion timestamp), so handlers can decide from the event without
+// re-fetching the resource. Call before Run.
+func (n *Informer) SetObjectUpdater(f func(obj runtime.Object, evt *resourcepb.WatchNotification) runtime.Object) {
+	n.updateObject = f
 }
 
 // SetMetrics registers the observer for delivered events and reconnects; a nil
@@ -501,8 +500,13 @@ func (n *Informer) onNotification() nats.MessageHandler {
 		}
 
 		obj := n.newObject(evt.Namespace, evt.Name)
-		if n.fromNotification != nil {
-			obj = n.fromNotification(&evt)
+		// Only live notifications go through the updater; re-listed objects
+		// come from the list function as they are.
+		if n.updateObject != nil {
+			obj = n.updateObject(obj, &evt)
+			// Reset namespace and name in case the updater changed them, so the
+			// object always matches the event.
+			setIdentity(obj, evt.Namespace, evt.Name)
 		}
 		// The handlers key off namespace/name and re-fetch the object in their
 		// reconcile, so the minimal object and old == new are both fine.
@@ -616,6 +620,15 @@ func (n *Informer) observeRelistEvent(verb string, rv int64) {
 func (n *Informer) observeLiveSubscription(open bool) {
 	if n.metrics != nil {
 		n.metrics.ObserveLiveSubscription(open)
+	}
+}
+
+// setIdentity stamps the notification's namespace and name onto an object's
+// metadata. A non-meta object is left as-is.
+func setIdentity(obj runtime.Object, namespace, name string) {
+	if acc, err := meta.Accessor(obj); err == nil {
+		acc.SetNamespace(namespace)
+		acc.SetName(name)
 	}
 }
 
