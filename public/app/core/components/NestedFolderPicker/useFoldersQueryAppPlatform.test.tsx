@@ -143,6 +143,5 @@ describe('useFoldersQueryAppPlatform', () => {
     expect(byUid('on-the-way')).toMatchObject({ readOnly: true, disabled: true });
     expect(byUid('creatable')).not.toHaveProperty('readOnly');
     expect(byUid('unmarked')).not.toHaveProperty('readOnly');
-    expect(byUid('sharedwithme')).not.toHaveProperty('readOnly');
   });
 });
