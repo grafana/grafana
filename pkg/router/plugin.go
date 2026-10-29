@@ -336,11 +336,34 @@ func isAppPluginID(id string) bool {
 	return strings.Contains(id, "-") && !strings.Contains(id, ".")
 }
 
+// Notify wakes the router when a local plugin's files change, or a dev
+// target's manifest does.
 func (pl PluginLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
+	var wakes []<-chan struct{}
 	if pl.dev != nil {
-		return pl.dev.notify(ctx)
+		dirty, err := pl.dev.notify(ctx)
+		if err != nil {
+			return nil, err
+		}
+		wakes = append(wakes, dirty)
 	}
-	return make(chan struct{}), nil // TODO? is there a plugin registry with update events?
+	if pl.deps.PluginSources != nil {
+		// The plugin manager publishes no events, so watch the files. Plugins
+		// then load at startup and on a restart, as before, if the watch can't
+		// start, for example at the OS limit of watched files.
+		if dirty, err := watchPluginRoots(ctx, pluginRoots(pl.deps.Cfg)); err != nil {
+			logging.FromContext(ctx).Warn("router: local plugin changes will not reload until restart", "err", err)
+		} else {
+			wakes = append(wakes, dirty)
+		}
+	}
+	switch len(wakes) {
+	case 0:
+		return make(chan struct{}), nil
+	case 1:
+		return wakes[0], nil
+	}
+	return mergeWakes(ctx, wakes...), nil
 }
 
 //-----------------------

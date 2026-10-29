@@ -154,6 +154,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Dev targets (`router.dev.<name>`), served by the local plugin loader | `dev_targets.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
+| Local plugin file watch (wakes the loader on install, update, uninstall) | `plugin_watch.go` |
 | Single-tenant (ST) fallback: serving (`st_fallback.go`), stack resolution (`st_stacks.go`), its discovery poll and backends (`st_poll.go`), its per-stack discovery cache, and the `dashboard.grafana.app` split | `st_*.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
 
