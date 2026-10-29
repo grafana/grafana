@@ -10,7 +10,6 @@ import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles, getInternalRadius } from '../../themes/mixins';
-import { DelayRender } from '../../utils/DelayRender';
 import { usePointerDistance } from '../../utils/usePointerDistance';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
@@ -144,6 +143,27 @@ interface HoverHeader {
 export type PanelPadding = 'none' | 'md';
 
 /**
+ * True once `isLoading` has stayed true for `delay` ms. Kept in PanelChrome rather than the header content,
+ * so the wait is not restarted when the external hover slot remounts the header.
+ */
+function useIsLoadingFor(isLoading: boolean, delay: number) {
+  const [hasElapsed, setHasElapsed] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading) {
+      return;
+    }
+    const timeout = window.setTimeout(() => setHasElapsed(true), delay);
+    return () => {
+      window.clearTimeout(timeout);
+      setHasElapsed(false);
+    };
+  }, [isLoading, delay]);
+
+  return isLoading && hasElapsed;
+}
+
+/**
  * Component used for rendering content wrapped in the same style as grafana panels.
  *
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/plugins-panelchrome--docs
@@ -201,6 +221,7 @@ export function PanelChrome({
   const pointerDistance = usePointerDistance();
   const [subHeaderRef, { height: measuredSubHeaderHeight }] = useMeasure<HTMLDivElement>();
   const headerControls = usePanelChromeHeaderControls();
+  const showCancelQuery = useIsLoadingFor(loadingState === LoadingState.Loading && Boolean(onCancelQuery), 2000);
 
   if (isSeriesLimitShown?.()) {
     hoverHeader = false;
@@ -387,18 +408,16 @@ export function PanelChrome({
           </TitleItem>
         </Tooltip>
       )}
-      {loadingState === LoadingState.Loading && onCancelQuery && (
-        <DelayRender delay={2000}>
-          <Tooltip content={t('grafana-ui.panel-chrome.tooltip-cancel', 'Cancel query')}>
-            <TitleItem
-              className={cx(dragClassCancel, styles.pointer)}
-              data-testid="panel-cancel-query"
-              onClick={onCancelQuery}
-            >
-              <Icon name="sync-slash" size="md" />
-            </TitleItem>
-          </Tooltip>
-        </DelayRender>
+      {showCancelQuery && (
+        <Tooltip content={t('grafana-ui.panel-chrome.tooltip-cancel', 'Cancel query')}>
+          <TitleItem
+            className={cx(dragClassCancel, styles.pointer)}
+            data-testid="panel-cancel-query"
+            onClick={onCancelQuery}
+          >
+            <Icon name="sync-slash" size="md" />
+          </TitleItem>
+        </Tooltip>
       )}
       {!hoverHeader && <div className={styles.flexGrow} />}
       {actions && itemsRenderer(actions, (item) => item)}

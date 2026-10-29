@@ -1,4 +1,4 @@
-import { screen, render, within } from '@testing-library/react';
+import { act, screen, render, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useToggle } from 'react-use';
 
@@ -26,6 +26,10 @@ const setup = (propOverrides?: Partial<PanelChromeProps>) => {
     user: userEvent.setup(),
   };
 };
+
+afterEach(() => {
+  jest.useRealTimers();
+});
 
 const setupWithToggleCollapsed = (propOverrides?: Partial<PanelChromeProps>) => {
   const props: PanelChromeProps = {
@@ -130,6 +134,21 @@ it('renders panel with a header with icons in place if prop titleItems', () => {
   expect(screen.getByTestId('title-items-container')).toBeInTheDocument();
 });
 
+it('offers cancelling a query once it has been loading for two seconds', () => {
+  jest.useFakeTimers();
+  setup({ title: 'Loading', loadingState: LoadingState.Loading, onCancelQuery: jest.fn() });
+
+  act(() => {
+    jest.advanceTimersByTime(1999);
+  });
+  expect(screen.queryByTestId('icon-sync-slash')).not.toBeInTheDocument();
+
+  act(() => {
+    jest.advanceTimersByTime(1);
+  });
+  expect(screen.getByTestId('icon-sync-slash')).toBeInTheDocument();
+});
+
 it('renders panel with a show-on-hover menu icon if prop menu', () => {
   setup({ menu: <div> Menu </div> });
 
@@ -220,6 +239,35 @@ describe('when the header controls are provided from outside the panel', () => {
     await userEvent.click(within(hoverSlot).getByRole('button'));
 
     expect(onCancelQuery).toHaveBeenCalledTimes(1);
+
+    hoverSlot.remove();
+  });
+
+  it('does not restart the cancel query delay when the hover slot opens', () => {
+    jest.useFakeTimers();
+    const hoverSlot = document.createElement('div');
+    document.body.appendChild(hoverSlot);
+    const panel = (
+      <PanelChrome width={100} height={100} hoverHeader loadingState={LoadingState.Loading} onCancelQuery={jest.fn()}>
+        {() => <div>Panel&apos;s Content</div>}
+      </PanelChrome>
+    );
+
+    const { rerender } = render(
+      <PanelChromeHeaderControlsContext.Provider value={{ external: true, hoverSlot: null }}>
+        {panel}
+      </PanelChromeHeaderControlsContext.Provider>
+    );
+    act(() => {
+      jest.advanceTimersByTime(2000);
+    });
+    rerender(
+      <PanelChromeHeaderControlsContext.Provider value={{ external: true, hoverSlot }}>
+        {panel}
+      </PanelChromeHeaderControlsContext.Provider>
+    );
+
+    expect(within(hoverSlot).getByTestId('icon-sync-slash')).toBeInTheDocument();
 
     hoverSlot.remove();
   });
