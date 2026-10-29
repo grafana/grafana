@@ -178,10 +178,16 @@ export const FlagKeys = {
   GrafanaDashboardComposer: "grafana.dashboardComposer",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
+  /** Compares the custom grid's layout helpers with react-grid-layout on a sample of dashboard loads and reports differences as counts */
+  GrafanaDashboardGridShadowCheck: "grafana.dashboardGridShadowCheck",
+  /** Renders dynamic dashboards in view mode with the new custom grid; requires grafana.dashboardUnifiedDragAndDrop */
+  GrafanaDashboardNewGridView: "grafana.dashboardNewGridView",
   /** Enables Viewing and Editing modes for dynamic dashboards */
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** Uses the unified drag and drop engine and new custom grid when editing dynamic dashboards */
+  GrafanaDashboardUnifiedDragAndDrop: "grafana.dashboardUnifiedDragAndDrop",
   /** Enables the tool that finds identical local variables across dashboards and promotes them to shared variables. Requires grafana.dashboardGlobalVariables */
   GrafanaDashboardVariablesMigration: "grafana.dashboardVariablesMigration",
   /** Enables the auto-height feature for dashboard panels */
@@ -1303,6 +1309,28 @@ export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvalua
 };
 
 /**
+ * Compares the custom grid's layout helpers with react-grid-layout on a sample of dashboard loads and reports differences as counts
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardGridShadowCheck`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardGridShadowCheck = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardGridShadowCheck", false, options).value;
+};
+
+/**
+ * Renders dynamic dashboards in view mode with the new custom grid; requires grafana.dashboardUnifiedDragAndDrop
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardNewGridView`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardNewGridView = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardNewGridView", false, options).value;
+};
+
+/**
  * Enables Viewing and Editing modes for dynamic dashboards
  *
  * **Details:**
@@ -1322,6 +1350,17 @@ export const useFlagGrafanaDashboardPreviewMode = (options?: ReactFlagEvaluation
  */
 export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardSettingsRedesign", true, options).value;
+};
+
+/**
+ * Uses the unified drag and drop engine and new custom grid when editing dynamic dashboards
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardUnifiedDragAndDrop`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardUnifiedDragAndDrop = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardUnifiedDragAndDrop", false, options).value;
 };
 
 /**
