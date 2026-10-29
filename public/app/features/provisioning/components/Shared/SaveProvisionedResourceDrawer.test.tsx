@@ -372,9 +372,7 @@ describe('SaveProvisionedResourceDrawer', () => {
     });
   });
 
-  it('renders nothing and warns in dev when the resource is not a registered provisioning kind', () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    // The resource's apiVersion/kind don't resolve to a registry entry, so the resolver bails out.
+  it('uses the kind name for a kind that is not in the registry', () => {
     setup({
       title: 'X',
       resource: {
@@ -385,8 +383,18 @@ describe('SaveProvisionedResourceDrawer', () => {
       },
     });
 
+    expect(screen.getByRole('heading', { name: 'Save provisioned Unknown' })).toBeInTheDocument();
+  });
+
+  it('renders nothing and warns in dev when the resource has no apiVersion or kind', () => {
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    setup({
+      title: 'X',
+      resource: { metadata: { name: 'x' }, spec: { title: 'X' } },
+    });
+
     expect(screen.queryByRole('heading', { name: /provisioned/i })).not.toBeInTheDocument();
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('unknown.example.com/v1'));
+    expect(warnSpy).toHaveBeenCalled();
     warnSpy.mockRestore();
   });
 });
