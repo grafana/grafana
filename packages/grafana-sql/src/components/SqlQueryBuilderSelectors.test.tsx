@@ -130,6 +130,61 @@ describe('SqlQueryBuilderSelectors', () => {
     expect(screen.getByText('configured')).toBeVisible();
   });
 
+  it.each([undefined, 'dataset1'])('syncs a fixed dataset once while the host retains %p', async (dataset) => {
+    const db = buildMockDB();
+    const onChange = jest.fn();
+    const query: SQLQuery = {
+      refId: 'A',
+      dataset,
+      table: 'table1',
+      sql: { limit: 25 },
+      rawSql: 'SELECT * FROM table1',
+    };
+    const { rerender } = render(
+      <SqlQueryBuilderSelectors
+        db={db}
+        query={query}
+        onChange={onChange}
+        dataset={{ mode: 'fixed', value: 'configured' }}
+      />
+    );
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Dataset selector' })).toBeEnabled());
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith({
+      ...query,
+      dataset: 'configured',
+      ...(dataset ? { table: undefined, sql: undefined, rawSql: '' } : {}),
+    });
+
+    const latestOnChange = jest.fn();
+    rerender(
+      <SqlQueryBuilderSelectors
+        db={db}
+        query={{ ...query, hide: true }}
+        onChange={latestOnChange}
+        dataset={{ mode: 'fixed', value: 'configured' }}
+      />
+    );
+    expect(latestOnChange).not.toHaveBeenCalled();
+
+    rerender(
+      <SqlQueryBuilderSelectors
+        db={db}
+        query={{ ...query, hide: true }}
+        onChange={latestOnChange}
+        dataset={{ mode: 'fixed', value: 'configured2' }}
+      />
+    );
+    await waitFor(() => expect(screen.getByRole('combobox', { name: 'Dataset selector' })).toBeEnabled());
+    expect(latestOnChange).toHaveBeenCalledTimes(1);
+    expect(latestOnChange).toHaveBeenCalledWith({
+      ...query,
+      hide: true,
+      dataset: 'configured2',
+      ...(dataset ? { table: undefined, sql: undefined, rawSql: '' } : {}),
+    });
+  });
+
   it('hides dataset selection while loading tables from the supplied dataset', async () => {
     const db = buildMockDB();
     const onChange = jest.fn();

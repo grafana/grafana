@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { type SelectableValue } from '@grafana/data';
@@ -30,11 +30,17 @@ export const DatasetSelector = ({
   // the legacy single-database behavior for configured databases and PostgreSQL.
   const hasPreconfigCondition = mode ? mode === 'fixed' : !!preconfiguredDataset || dialect === 'postgres';
 
+  // Callback changes must not repeat a dataset write while the host is still applying it.
+  const onChangeRef = useRef(onChange);
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
   useEffect(() => {
     if (hasPreconfigCondition && dataset !== preconfiguredDataset) {
-      onChange(toOption(preconfiguredDataset));
+      onChangeRef.current(toOption(preconfiguredDataset));
     }
-  }, [dataset, hasPreconfigCondition, onChange, preconfiguredDataset]);
+  }, [dataset, hasPreconfigCondition, preconfiguredDataset]);
 
   const state = useAsync(async () => {
     // Fixed datasets do not need to enumerate other databases.
