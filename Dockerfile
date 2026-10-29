@@ -24,8 +24,8 @@ FROM scratch AS enterprise-src
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 ARG JS_NODE_ENV=production
-ARG JS_YARN_INSTALL_FLAG=--immutable
-ARG JS_YARN_BUILD_FLAG=build
+ARG JS_PNPM_INSTALL_FLAG=--frozen-lockfile
+ARG JS_PNPM_BUILD_FLAG=build
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
@@ -47,18 +47,14 @@ COPY conf/defaults.ini ./conf/defaults.ini
 ENV NODE_ENV=${JS_NODE_ENV}
 #
 RUN npm install -g "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1].split('+')[0]")" && \
-  if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
-    pnpm install --no-frozen-lockfile; \
-  else \
-    pnpm install --frozen-lockfile; \
-  fi
+  pnpm install ${JS_PNPM_INSTALL_FLAG}
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
 COPY emails emails
 
 # Set the build argument according to default or argument passed
-RUN pnpm run ${JS_YARN_BUILD_FLAG}
+RUN pnpm run ${JS_PNPM_BUILD_FLAG}
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder
