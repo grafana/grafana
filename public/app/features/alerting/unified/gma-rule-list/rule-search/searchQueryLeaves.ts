@@ -10,7 +10,12 @@ import {
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type SharedFilterKey } from './sharedFilters';
-import { HEALTH_API_VALUES, type SearchLabelMatcher, type SharedRuleFilter } from './sharedRuleFilter';
+import {
+  HEALTH_API_VALUES,
+  type RuleSearchApiArgs,
+  type SearchLabelMatcher,
+  type SharedRuleFilter,
+} from './sharedRuleFilter';
 
 /**
  * The part of the generated where tree that the per-kind rule search accepts:
@@ -66,7 +71,10 @@ export interface SourcedLeaf<Key extends string = string> {
 /** `T` itself, as long as it is assignable to both kinds' generated type; otherwise a type error. */
 type AcceptedByBothKinds<T extends AlertType & RecordingType, AlertType, RecordingType> = T;
 
-export function buildSharedLeaves(filter: SharedRuleFilter): Array<SourcedLeaf<SharedFilterKey>> {
+export function buildSharedLeaves({
+  filter,
+  folderUids,
+}: RuleSearchApiArgs<SharedRuleFilter>): Array<SourcedLeaf<SharedFilterKey>> {
   const leaves: Array<SourcedLeaf<SharedFilterKey>> = [];
 
   const text = filter.text.join(' ').trim();
@@ -74,8 +82,8 @@ export function buildSharedLeaves(filter: SharedRuleFilter): Array<SourcedLeaf<S
     leaves.push({ key: null, leaf: { text: { value: text } } });
   }
 
-  if (filter.folders.length > 0) {
-    leaves.push({ key: 'folder', leaf: { filter: { field: 'folder', operator: 'In', values: filter.folders } } });
+  if (folderUids.length > 0) {
+    leaves.push({ key: 'folder', leaf: { filter: { field: 'folder', operator: 'In', values: folderUids } } });
   }
 
   if (filter.dataSourceUids.length > 0) {

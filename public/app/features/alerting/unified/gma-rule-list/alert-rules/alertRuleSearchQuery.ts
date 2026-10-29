@@ -2,14 +2,15 @@ import { type ListAlertRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-c
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
 import { type SourcedLeaf, buildHealthLeaves, buildSharedLeaves, toWhere } from '../rule-search/searchQueryLeaves';
+import { type RuleSearchApiArgs } from '../rule-search/sharedRuleFilter';
 
 import { type AlertFilterKey, type AlertRuleFilter, DEFAULT_POLICY, STATE_API_VALUES } from './alertRuleFilters';
 
-export function buildAlertRuleSearchQuery(filter: AlertRuleFilter, continueToken?: string) {
+export function buildAlertRuleSearchQuery(search: RuleSearchApiArgs<AlertRuleFilter>, continueToken?: string) {
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
     kind: 'SearchQuery',
-    where: toWhere(buildAlertRuleLeaves(filter)),
+    where: toWhere(buildAlertRuleLeaves(search)),
     sort: [{ field: 'title', direction: 'asc' }],
     fields: ALERT_RULE_FIELDS,
     limit: DEFAULT_PER_PAGE_PAGINATION,
@@ -18,8 +19,8 @@ export function buildAlertRuleSearchQuery(filter: AlertRuleFilter, continueToken
 }
 
 /** The request's leaves in order, each with the filter it came from. */
-export function buildAlertRuleLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilterKey>> {
-  return [...buildSharedLeaves(filter), ...buildRoutingLeaves(filter), ...buildStatusLeaves(filter)];
+export function buildAlertRuleLeaves(search: RuleSearchApiArgs<AlertRuleFilter>): Array<SourcedLeaf<AlertFilterKey>> {
+  return [...buildSharedLeaves(search), ...buildRoutingLeaves(search.filter), ...buildStatusLeaves(search.filter)];
 }
 
 function buildRoutingLeaves(filter: AlertRuleFilter): Array<SourcedLeaf<AlertFilterKey>> {

@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
@@ -48,7 +48,7 @@ describe('AlertRulesPage search', () => {
   it('keeps a multi-token query exactly as typed in the input and the URL, and sends it as one request', async () => {
     const { user } = renderInListMode();
     await screen.findByText('CPU high load');
-    const typed = 'paused:true cpu label:team=api  folder:folder-1';
+    const typed = 'paused:true cpu label:team=api  folder:"Team Alerts"';
 
     await user.type(searchInput(), `${typed}{Enter}`);
 
@@ -69,11 +69,13 @@ describe('AlertRulesPage search', () => {
 
   it('restores the input and the request from the URL on load', async () => {
     render(<AlertRulesPage />, {
-      historyOptions: { initialEntries: ['/?search=folder%3Afolder-1%20label%3Ateam%3D~api.*%20%22high%20load%22'] },
+      historyOptions: {
+        initialEntries: [`/?${new URLSearchParams({ search: 'folder:"team alerts" label:team=~api.* "high load"' })}`],
+      },
     });
 
     expect(await screen.findByText('CPU high load')).toBeInTheDocument();
-    expect(searchInput()).toHaveValue('folder:folder-1 label:team=~api.* "high load"');
+    expect(searchInput()).toHaveValue('folder:"team alerts" label:team=~api.* "high load"');
     expect(backend.ruleSearches.map((body) => body.where)).toEqual([
       {
         and: [
@@ -219,5 +221,115 @@ describe('AlertRulesPage search', () => {
         ],
       })
     );
+  });
+});
+
+describe('AlertRulesPage folder names', () => {
+  const NAMED_FOLDERS = [
+    folderFactory.build({ metadata: { name: 'platform' }, spec: { title: 'Platform' } }),
+    folderFactory.inFolder('platform').build({ metadata: { name: 'databases' }, spec: { title: 'Databases' } }),
+    folderFactory.inFolder('platform').build({ metadata: { name: 'kubernetes' }, spec: { title: 'Kubernetes' } }),
+    folderFactory.inFolder('databases').build({ metadata: { name: 'db-alerts' }, spec: { title: 'Alerts' } }),
+    folderFactory.inFolder('kubernetes').build({ metadata: { name: 'k8s-alerts' }, spec: { title: 'Alerts' } }),
+    folderFactory.build({ metadata: { name: 'team-01' }, spec: { title: 'Team 01' } }),
+  ];
+  const NAMED_FOLDER_RULES = [
+    alertRuleFactory.inFolder('db-alerts').build({ spec: { title: 'DB down' } }),
+    alertRuleFactory.inFolder('k8s-alerts').build({ spec: { title: 'Pod crash looping' } }),
+    alertRuleFactory.inFolder('team-01').build({ spec: { title: 'Team 01 latency' } }),
+  ];
+  const HAS_RULES = { matchLabels: { 'alerting.grafana.app/has-rules': 'true' } };
+
+  let backend: RuleListBackend;
+
+  beforeEach(() => {
+    backend = setupRuleListBackend({ folders: NAMED_FOLDERS, alertRules: NAMED_FOLDER_RULES });
+  });
+
+  function renderWithSearch(search: string, view?: 'list') {
+    const params = new URLSearchParams({ search, ...(view ? { view } : {}) });
+    return render(<AlertRulesPage />, { historyOptions: { initialEntries: [`/?${params}`] } });
+  }
+
+  it('shows every folder with that name as its own row with its parent path in Folders mode', async () => {
+    renderWithSearch('folder:Alerts');
+
+    expect(await screen.findAllByRole('link', { name: 'Alerts' })).toHaveLength(2);
+    const [dbRow, k8sRow] = screen.getAllByRole('listitem');
+    expect(await within(dbRow).findByText('Databases')).toBeInTheDocument();
+    expect(await within(k8sRow).findByText('Kubernetes')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Team 01' })).not.toBeInTheDocument();
+    expect(backend.folderSearches).toEqual([
+      expect.objectContaining({
+        labelSelector: HAS_RULES,
+        where: { filter: { field: 'title', operator: 'In', values: ['Alerts'] } },
+      }),
+    ]);
+    expect(backend.ruleSearches).toEqual([]);
+  });
+
+  it('lists the rules of every folder with that name in List mode, looking the name up once first', async () => {
+    renderWithSearch('folder:Alerts', 'list');
+
+    expect(await screen.findByText('DB down')).toBeInTheDocument();
+    expect(screen.getByText('Pod crash looping')).toBeInTheDocument();
+    expect(screen.queryByText('Team 01 latency')).not.toBeInTheDocument();
+    expect(backend.folderSearches).toEqual([
+      expect.objectContaining({
+        labelSelector: HAS_RULES,
+        where: { filter: { field: 'title', operator: 'In', values: ['Alerts'] } },
+        limit: 100,
+      }),
+    ]);
+    expect(backend.ruleSearches.map((body) => body.where)).toEqual([
+      { filter: { field: 'folder', operator: 'In', values: ['db-alerts', 'k8s-alerts'] } },
+    ]);
+  });
+
+  it('matches a quoted name whatever its case, keeping it as typed in the input', async () => {
+    renderWithSearch('folder:"team 01"', 'list');
+
+    expect(await screen.findByText('Team 01 latency')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Search' })).toHaveValue('folder:"team 01"');
+    expect(backend.folderSearches[0].where).toEqual({
+      filter: { field: 'title', operator: 'In', values: ['team 01'] },
+    });
+  });
+
+  it('ORs several folder names', async () => {
+    renderWithSearch('folder:Alerts folder:"Team 01"', 'list');
+
+    expect(await screen.findByText('Team 01 latency')).toBeInTheDocument();
+    expect(backend.ruleSearches.map((body) => body.where)).toEqual([
+      { filter: { field: 'folder', operator: 'In', values: ['db-alerts', 'k8s-alerts', 'team-01'] } },
+    ]);
+  });
+
+  it('does not blame the folder when it exists but another filter matches no rule', async () => {
+    renderWithSearch('folder:Alerts label:team=none', 'list');
+
+    expect(await screen.findByText('No alert rules found')).toBeInTheDocument();
+    expect(screen.queryByText('No alert rules match this folder')).not.toBeInTheDocument();
+    expect(backend.ruleSearches).toHaveLength(1);
+  });
+
+  it('shows the empty state and sends no rule search when no folder has that name', async () => {
+    renderWithSearch('folder:Alert', 'list');
+
+    expect(await screen.findByText('No alert rules match this folder')).toBeInTheDocument();
+    expect(backend.folderSearches).toHaveLength(1);
+    expect(backend.ruleSearches).toEqual([]);
+  });
+
+  it('shows a failed folder lookup as a failed load with Retry, and lists the rules after a successful retry', async () => {
+    backend.failNext('folderSearch');
+    const { user } = renderWithSearch('folder:"Team 01"', 'list');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
+    expect(backend.ruleSearches).toEqual([]);
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('Team 01 latency')).toBeInTheDocument();
   });
 });

@@ -16,7 +16,7 @@ interface ListViewProps {
 }
 
 export function AlertRulesListView({ filter }: ListViewProps) {
-  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry, total } =
+  const { items, noMatchingFolder, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry, total } =
     useAlertRuleSearch(filter);
 
   if (isLoading) {
@@ -42,7 +42,11 @@ export function AlertRulesListView({ filter }: ListViewProps) {
     return (
       <EmptyState
         variant="not-found"
-        message={t('alerting.gma-rule-list.alert-rules.no-rules', 'No alert rules found')}
+        message={
+          noMatchingFolder
+            ? t('alerting.gma-rule-list.alert-rules.no-rules-match-folder', 'No alert rules match this folder')
+            : t('alerting.gma-rule-list.alert-rules.no-rules', 'No alert rules found')
+        }
       />
     );
   }
