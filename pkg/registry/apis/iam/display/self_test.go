@@ -12,6 +12,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
@@ -19,6 +20,7 @@ import (
 
 type fakeResolver struct {
 	gotKeys []string
+	gotNS   string
 	result  *iam.DisplayList
 	err     error
 }
@@ -62,8 +64,9 @@ func TestCurrentUserRoutes(t *testing.T) {
 	t.Fatal("missing namespaced current-user route")
 }
 
-func (f *fakeResolver) GetDisplayList(_ context.Context, _ authlib.NamespaceInfo, keys []string) (*iam.DisplayList, error) {
+func (f *fakeResolver) GetDisplayList(ctx context.Context, _ authlib.NamespaceInfo, keys []string) (*iam.DisplayList, error) {
 	f.gotKeys = keys
+	f.gotNS = request.NamespaceValue(ctx)
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -148,6 +151,8 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		require.Equal(t, http.StatusOK, rec.Code)
 		// The caller identifies itself purely from context, no query input.
 		require.Equal(t, []string{"user:u1"}, resolver.gotKeys)
+		// The cluster-scoped whoami route provides no namespace, so it must be set from the caller.
+		require.Equal(t, "default", resolver.gotNS)
 
 		want.Role = string(identity.RoleEditor)
 		want.Namespace = "default"
@@ -155,6 +160,29 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		var got iam.CurrentUserInfo
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
 		require.Equal(t, want, got)
+	})
+
+	t.Run("existing matching namespace in context is kept", func(t *testing.T) {
+		resolver := &fakeResolver{result: &iam.DisplayList{}}
+		req := selfRequest(t, caller)
+		req = req.WithContext(request.WithNamespace(req.Context(), "default"))
+		rec := httptest.NewRecorder()
+
+		NewDisplayHandler(resolver).handleSelf(rec, req)
+
+		require.Equal(t, "default", resolver.gotNS)
+	})
+
+	t.Run("existing mismatched namespace in context is forbidden", func(t *testing.T) {
+		resolver := &fakeResolver{result: &iam.DisplayList{}}
+		req := selfRequest(t, caller)
+		req = req.WithContext(request.WithNamespace(req.Context(), "other"))
+		rec := httptest.NewRecorder()
+
+		NewDisplayHandler(resolver).handleSelf(rec, req)
+
+		require.Equal(t, http.StatusForbidden, rec.Code)
+		require.Nil(t, resolver.gotKeys)
 	})
 
 	t.Run("token identity receives its namespace", func(t *testing.T) {

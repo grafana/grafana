@@ -31,6 +31,54 @@ describe('parseAlertmanagerYaml', () => {
   it('throws a friendly local message for invalid YAML instead of swallowing the error', () => {
     expect(() => parseAlertmanagerYaml(INVALID_YAML)).toThrow(/syntax error/i);
   });
+
+  describe('Mimir alertmanager_config envelope', () => {
+    const TEMPLATE_FILES = ['template_files:', '  email.tmpl: "body"'];
+
+    it.each([
+      [
+        'an object',
+        [
+          'alertmanager_config:',
+          '  route:',
+          '    receiver: default',
+          '  receivers:',
+          '    - name: default',
+          ...TEMPLATE_FILES,
+          '',
+        ],
+      ],
+      [
+        'a YAML string',
+        [
+          'alertmanager_config: |',
+          '  route:',
+          '    receiver: default',
+          '  receivers:',
+          '    - name: default',
+          ...TEMPLATE_FILES,
+          '',
+        ],
+      ],
+    ])('unwraps the config when alertmanager_config is %s', (_valueKind, lines) => {
+      const result = parseAlertmanagerYaml(lines.join('\n'));
+
+      expect(JSON.parse(result.alertmanagerConfig)).toEqual({
+        route: { receiver: 'default' },
+        receivers: [{ name: 'default' }],
+      });
+      expect(result.templateFiles).toEqual({ 'email.tmpl': 'body' });
+    });
+
+    it('throws a syntax error that names alertmanager_config when the embedded YAML string is invalid', () => {
+      const yaml = ['alertmanager_config: |', '  route:', '    receiver: default', '  foo: bar: baz', ''].join('\n');
+      expect(() => parseAlertmanagerYaml(yaml)).toThrow(/"alertmanager_config" has a syntax error/);
+    });
+
+    it.each(['42', '[a, b]', 'null', '"just a string"'])('throws when alertmanager_config is %s', (value) => {
+      expect(() => parseAlertmanagerYaml(`alertmanager_config: ${value}\n`)).toThrow(/alertmanager_config/);
+    });
+  });
 });
 
 describe('readTemplateFiles', () => {
@@ -98,5 +146,25 @@ describe('resolveAlertmanagerConfig', () => {
     });
 
     expect(result.templateFiles).toEqual({ 'email.tmpl': 'email body' });
+  });
+
+  it('unwraps a Mimir-format file and merges uploaded template files', async () => {
+    const mimirYaml = [
+      'alertmanager_config:',
+      '  route:',
+      '    receiver: default',
+      'template_files:',
+      '  a.tmpl: "a"',
+      '',
+    ];
+    const result = await resolveAlertmanagerConfig({
+      source: 'yaml',
+      yamlFile: new File([mimirYaml.join('\n')], 'mimir.yaml', { type: 'application/yaml' }),
+      templateFiles: [templateFile('b.tmpl', 'b')],
+      configIdentifier: 'prod',
+    });
+
+    expect(JSON.parse(result.alertmanagerConfig)).toEqual({ route: { receiver: 'default' } });
+    expect(result.templateFiles).toEqual({ 'a.tmpl': 'a', 'b.tmpl': 'b' });
   });
 });

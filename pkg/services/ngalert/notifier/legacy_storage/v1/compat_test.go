@@ -160,6 +160,7 @@ inhibit_rules:
 			],
 			"time_intervals": [
 				{
+					"uid": "biz-hours-static-uid",
 					"name": "business-hours",
 					"time_intervals": [
 						{
@@ -254,12 +255,14 @@ inhibit_rules:
 	assert.Equal(t, "uid-default-1", recv.GrafanaManagedReceivers[0].UID)
 	assert.Equal(t, "email", recv.GrafanaManagedReceivers[0].Type)
 
-	// Deprecated mute_time_intervals and time_intervals are folded into one map.
+	// Deprecated mute_time_intervals and time_intervals are folded into one map. "weekends" has no
+	// persisted UID (legacy row), so it falls back to the name-derived UID; "business-hours" has an
+	// explicit persisted UID that doesn't match its name-derived one, confirming it's honored as-is.
 	weekends, ok := model.TimeIntervals[TimeIntervalUID("weekends")]
 	require.True(t, ok, "expected time interval weekends (folded from mute_time_intervals)")
 	assert.Equal(t, "weekends", weekends.Title)
-	businessHours, ok := model.TimeIntervals[TimeIntervalUID("business-hours")]
-	require.True(t, ok, "expected time interval business-hours")
+	businessHours, ok := model.TimeIntervals[ResourceUID("biz-hours-static-uid")]
+	require.True(t, ok, "expected time interval business-hours under its persisted UID")
 	assert.Equal(t, "business-hours", businessHours.Title)
 
 	// Inhibition rules are keyed by their stored name verbatim (not hashed).
@@ -290,6 +293,14 @@ inhibit_rules:
 	slices.SortFunc(originalDB.AlertmanagerConfig.TimeIntervals, func(a, b store.TimeIntervalDB) int {
 		return strings.Compare(a.Name, b.Name)
 	})
+	// "weekends" has no persisted UID in the input, so loading/saving it assigns and persists the
+	// name-derived UID as a side effect - unlike "business-hours", whose explicit UID round-trips
+	// unchanged.
+	for i, ti := range originalDB.AlertmanagerConfig.TimeIntervals {
+		if ti.UID == "" {
+			originalDB.AlertmanagerConfig.TimeIntervals[i].UID = string(TimeIntervalUID(ti.Name))
+		}
+	}
 
 	// Receivers are now a top-level map keyed by name, so they serialize sorted by name too.
 	slices.SortFunc(originalDB.AlertmanagerConfig.Receivers, func(a, b *store.ReceiverDB) int {
@@ -331,6 +342,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 		},
 		TimeIntervals: map[ResourceUID]TimeInterval{
 			TimeIntervalUID("business-hours"): NewTimeInterval(
+				TimeIntervalUID("business-hours"),
 				"business-hours",
 				[]timeinterval.TimeInterval{{Weekdays: []timeinterval.WeekdayRange{{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 5}}}}},
 				models.ProvenanceNone,
@@ -375,7 +387,7 @@ func TestToDBModel_ToStaticJSON(t *testing.T) {
 				}
 			],
 			"time_intervals": [
-				{"name": "business-hours", "time_intervals": [{"weekdays": ["monday:friday"]}]}
+				{"uid": "ef8zkhedc25v8sme7l2fbhtzd", "name": "business-hours", "time_intervals": [{"weekdays": ["monday:friday"]}]}
 			]
 		},
 		"managed_routes": {
@@ -548,5 +560,32 @@ func TestPostableMimirReceiverToPostableGrafanaReceiver(t *testing.T) {
 		result, err := PostableMimirReceiverToPostableGrafanaReceiver(recv)
 		require.NoError(t, err)
 		require.Len(t, result.GrafanaManagedReceivers, len(notifytest.AllValidMimirConfigs))
+	})
+}
+
+func TestTimeIntervalsToModel_UID(t *testing.T) {
+	intervals := []store.TimeIntervalDB{
+		{UID: "persisted-uid", Name: "Persisted"},
+		{Name: "Legacy Title"},
+	}
+
+	t.Run("persisted UID wins, missing UID falls back to the legacy UID", func(t *testing.T) {
+		model := TimeIntervalsToModel(nil, intervals)
+		require.Len(t, model, 2)
+		require.Equal(t, "Persisted", model["persisted-uid"].Title)
+		require.NotContains(t, model, TimeIntervalUID("Persisted"))
+		require.Equal(t, "Legacy Title", model[TimeIntervalUID("Legacy Title")].Title)
+	})
+
+	t.Run("saving persists the effective UID", func(t *testing.T) {
+		db := TimeIntervalsToDB((&AMConfigV1{TimeIntervals: TimeIntervalsToModel(nil, intervals)}).SortedTimeIntervals())
+		uids := map[string]string{}
+		for _, ti := range db {
+			uids[ti.Name] = ti.UID
+		}
+		require.Equal(t, map[string]string{
+			"Persisted":    "persisted-uid",
+			"Legacy Title": string(TimeIntervalUID("Legacy Title")),
+		}, uids)
 	})
 }
