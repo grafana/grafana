@@ -240,7 +240,7 @@ type ruleWithFolder struct {
 	folderTitle string
 }
 
-// Fingerprint calculates a fingerprint of the fields that can change the state cache ID.
+// Fingerprint calculates a fingerprint of the fields that determine the rule state (such as the state cache ID).
 // Changing any other field keeps the fingerprint, so the state of the rule is not reset.
 func (r ruleWithFolder) Fingerprint() fingerprint {
 	rule := r.rule
@@ -326,6 +326,15 @@ func (r ruleWithFolder) Fingerprint() fingerprint {
 	writeString(string(rule.NoDataState))
 	writeString(string(rule.ExecErrState))
 	writeQuery()
+	// They mirror the __dashboardUid__/__panelId__ rule annotations, which end up in state annotations
+	// and are reused from the cached state where rule annotations are not re-expanded (NoData/Error
+	// mapping, missing series, patch). A link change must reset the state to avoid stale links.
+	if rule.DashboardUID != nil {
+		writeString(*rule.DashboardUID)
+	}
+	if rule.PanelID != nil {
+		writeInt(*rule.PanelID)
+	}
 
 	if rule.IsPaused {
 		writeInt(1)

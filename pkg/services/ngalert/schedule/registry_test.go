@@ -355,10 +355,8 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		fBase := ruleWithFolder{rule: base, folderTitle: title}.Fingerprint()
 
 		mutations := map[string]func(r *models.AlertRule){
-			"RuleGroup":    func(r *models.AlertRule) { r.RuleGroup += "-changed" },
-			"DashboardUID": func(r *models.AlertRule) { r.DashboardUID = new(uuid.NewV4().String()) },
-			"PanelID":      func(r *models.AlertRule) { r.PanelID = new(int64(123)) },
-			"For":          func(r *models.AlertRule) { r.For += time.Minute },
+			"RuleGroup": func(r *models.AlertRule) { r.RuleGroup += "-changed" },
+			"For":       func(r *models.AlertRule) { r.For += time.Minute },
 		}
 		for name, mutate := range mutations {
 			t.Run(name, func(t *testing.T) {
@@ -399,6 +397,21 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 		execErr := models.CopyRule(base)
 		execErr.ExecErrState = models.OkErrState
 		require.NotEqual(t, fBase, ruleWithFolder{rule: execErr, folderTitle: title}.Fingerprint())
+	})
+
+	t.Run("DashboardUID and PanelID should be used in fingerprint", func(t *testing.T) {
+		base := models.CopyRule(rule)
+		base.DashboardUID = new("dashboard")
+		base.PanelID = new(int64(1))
+		fBase := ruleWithFolder{rule: base, folderTitle: title}.Fingerprint()
+
+		dashboard := models.CopyRule(base)
+		dashboard.DashboardUID = new("dashboard-2")
+		require.NotEqual(t, fBase, ruleWithFolder{rule: dashboard, folderTitle: title}.Fingerprint())
+
+		panel := models.CopyRule(base)
+		panel.PanelID = new(int64(2))
+		require.NotEqual(t, fBase, ruleWithFolder{rule: panel, folderTitle: title}.Fingerprint())
 	})
 
 	t.Run("all other fields should be considered", func(t *testing.T) {
@@ -506,11 +519,9 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			"FolderFullpath":  {}, // Populated lazily from DB, not part of rule fingerprint
 			"K8sStatus":       {},
 			// cannot change the state cache ID
-			"RuleGroup":    {},
-			"DashboardUID": {},
-			"PanelID":      {},
-			"For":          {},
-			"Record":       {},
+			"RuleGroup": {},
+			"For":       {},
+			"Record":    {},
 		}
 
 		tp := reflect.TypeOf(rule).Elem()
