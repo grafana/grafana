@@ -2094,6 +2094,7 @@ export type QuotaStatus = {
 export type ResourceCount = {
   count: number;
   group: string;
+  kind: string;
   resource: string;
 };
 export type SyncStatus = {
@@ -2255,6 +2256,7 @@ export type ResourceListItem = {
   group: string;
   /** the k8s identifier */
   hash: string;
+  kind: string;
   name: string;
   path: string;
   resource: string;
