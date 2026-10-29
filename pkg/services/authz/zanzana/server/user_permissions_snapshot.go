@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 	"sync"
 
@@ -24,8 +23,6 @@ import (
 const (
 	permissionSnapshotConcurrency = 8
 	permissionSnapshotMaxTuples   = 100000
-	permissionSnapshotFolderBatch = 128
-	permissionSnapshotMaxDepth    = 1000
 )
 
 var permissionSnapshotModel = sync.OnceValues(func() (*openfgav1.AuthorizationModel, error) {
@@ -38,10 +35,10 @@ type permissionListResult struct {
 }
 
 // listUserPermissions resolves each principal once over the datastore interface,
-// then evaluates the complete request graph with OpenFGA. Keeping evaluation local
+// then evaluates the grant graph with OpenFGA. Keeping evaluation local
 // avoids repeating remote membership and grant reads for every legacy action.
 func (s *Server) listUserPermissions(ctx context.Context, req *authzv1.GetUserPermissionsRequest) ([]permissionListResult, error) {
-	// Cancel remote streams even when a tuple or depth limit ends iteration early.
+	// Cancel remote streams even when the tuple limit ends iteration early.
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	store, err := s.getStoreInfo(ctx, req.GetNamespace())
@@ -56,7 +53,7 @@ func (s *Server) listUserPermissions(ctx context.Context, req *authzv1.GetUserPe
 	if err != nil {
 		return nil, err
 	}
-	// Closure below relies on flat teams/roles and folder-only inheritance.
+	// Grant discovery relies on flat teams/roles and folder-only inheritance.
 	// A different model requires reviewing the graph discovery rules.
 	if model == nil || !schema.EqualModels(model, expected) {
 		return nil, status.Error(codes.FailedPrecondition, "authorization model does not support permission snapshots")
@@ -99,10 +96,9 @@ func (s *Server) listUserPermissions(ctx context.Context, req *authzv1.GetUserPe
 	if err := s.readPermissionPrincipals(ctx, store.ID, roles, tuples); err != nil {
 		return nil, err
 	}
-	if err := s.readPermissionDescendants(ctx, store.ID, tuples); err != nil {
-		return nil, err
-	}
 
+	// Legacy enumeration returns grant scopes. Leave out folder parent edges so
+	// inherited descendants are resolved by consumers when checking a resource.
 	localStore, err := newPermissionSnapshotStore(ctx, store.ID, model, tuples.values())
 	if err != nil {
 		return nil, err
@@ -227,49 +223,4 @@ func collectPermissionTuples(ctx context.Context, iterator storage.TupleIterator
 			return err
 		}
 	}
-}
-
-func (s *Server) readPermissionDescendants(ctx context.Context, storeID string, tuples *permissionSnapshotTuples) error {
-	seen := make(map[string]struct{})
-	var frontier []string
-	for _, tk := range tuples.values() {
-		if strings.HasPrefix(tk.GetObject(), common.TypeFolderPrefix) {
-			if _, found := seen[tk.GetObject()]; !found {
-				seen[tk.GetObject()] = struct{}{}
-				frontier = append(frontier, tk.GetObject())
-			}
-		}
-	}
-	for depth := 0; len(frontier) > 0; depth++ {
-		if depth >= permissionSnapshotMaxDepth {
-			return status.Error(codes.ResourceExhausted, "permission snapshot folder depth exceeded")
-		}
-		var next []string
-		for batch := range slices.Chunk(frontier, permissionSnapshotFolderBatch) {
-			filter := storage.ReadStartingWithUserFilter{ObjectType: common.TypeFolder, Relation: common.RelationParent}
-			for _, folder := range batch {
-				filter.UserFilter = append(filter.UserFilter, &openfgav1.ObjectRelation{Object: folder})
-			}
-			iterator, err := s.store.ReadStartingWithUser(ctx, storeID, filter, storage.ReadStartingWithUserOptions{})
-			if err != nil {
-				return fmt.Errorf("read permission descendants: %w", err)
-			}
-			err = collectPermissionTuples(ctx, iterator, func(tk *openfgav1.TupleKey) error {
-				if err := tuples.add(tk); err != nil {
-					return err
-				}
-				if _, found := seen[tk.GetObject()]; !found {
-					seen[tk.GetObject()] = struct{}{}
-					next = append(next, tk.GetObject())
-				}
-				return nil
-			})
-			iterator.Stop()
-			if err != nil {
-				return err
-			}
-		}
-		frontier = next
-	}
-	return nil
 }

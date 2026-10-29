@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -214,10 +215,32 @@ func baselineSnapshotLists(ctx context.Context, srv *Server, req *authzv1.GetUse
 	return results, nil
 }
 
+// Legacy enumeration preserves grant scopes; resource List expands inheritance.
+// Use the full backing graph without folder parent edges as the List reference.
+func baselineGrantLists(t *testing.T, srv *Server, req *authzv1.GetUserPermissionsRequest) ([]permissionListResult, error) {
+	t.Helper()
+	ctx := newContextWithNamespace()
+	store, err := srv.getStoreInfo(ctx, req.GetNamespace())
+	require.NoError(t, err)
+	iterator, err := srv.store.Read(ctx, store.ID, storage.ReadFilter{}, storage.ReadOptions{})
+	require.NoError(t, err)
+	defer iterator.Stop()
+	var grants []*openfgav1.TupleKey
+	err = collectPermissionTuples(ctx, iterator, func(tk *openfgav1.TupleKey) error {
+		if tk.GetRelation() != common.RelationParent || !strings.HasPrefix(tk.GetObject(), common.TypeFolderPrefix) {
+			grants = append(grants, tk)
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	baseline, _, _ := newSnapshotTestServer(t, grants)
+	return baselineSnapshotLists(ctx, baseline, req)
+}
+
 func requireSnapshotParity(t *testing.T, srv *Server, req *authzv1.GetUserPermissionsRequest) map[string]normalizedSnapshotList {
 	t.Helper()
 	ctx := newContextWithNamespace()
-	want, err := baselineSnapshotLists(ctx, srv, req)
+	want, err := baselineGrantLists(t, srv, req)
 	require.NoError(t, err)
 	got, err := srv.listUserPermissions(ctx, req)
 	require.NoError(t, err)
@@ -290,7 +313,7 @@ func TestUserPermissionsSnapshotParity(t *testing.T) {
 		{"wildcard precedes narrower grants", "user:role", nil},
 		{"conditions restrict resource groups and subresources", "user:conditional", nil},
 		{"root sentinel", "user:root", nil},
-		{"deep folder inheritance", "user:deep", nil},
+		{"folder grant with descendants", "user:deep", nil},
 		{"anonymous role", "anonymous:0", nil},
 		{"service account", "service-account:bot", nil},
 		{"render contextual grants", "render:renderer", nil},
@@ -307,9 +330,9 @@ func TestUserPermissionsSnapshotParity(t *testing.T) {
 		require.Contains(t, got["users:read"].Items, "readable-user")
 		require.Equal(t, got["users:read"].Items, got["org.users:read"].Items)
 	})
-	t.Run("descendants are included without unrelated subtree", func(t *testing.T) {
+	t.Run("only granted folders are returned", func(t *testing.T) {
 		got := requireSnapshotParity(t, srv, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:deep"})
-		require.Contains(t, got["folders:read"].Items, "descendant-5")
+		require.Equal(t, []string{"ancestor"}, got["folders:read"].Items)
 		require.NotContains(t, got["folders:read"].Items, "unrelated-child")
 	})
 	t.Run("wildcard coverage includes every supported action", func(t *testing.T) {
@@ -343,7 +366,6 @@ func TestUserPermissionsSnapshotObservesRevocations(t *testing.T) {
 		{"direct grant", "user:direct", "dashboards:read", "direct-dashboard", common.NewResourceTuple("user:direct", common.RelationSetAdmin, dashboardGroup, dashboardResource, "", "direct-dashboard")},
 		{"stored membership", "user:stored", "folders:read", "ancestor", common.NewTypedTuple(common.TypeTeam, "user:stored", common.RelationTeamMember, "stored-team")},
 		{"role binding", "user:stored", "folders:read", "ancestor", common.NewTypedTuple(common.TypeRole, "team:stored-team#member", common.RelationAssignee, "stored-role")},
-		{"folder edge", "user:deep", "folders:read", "descendant-5", common.NewFolderParentTuple("descendant-0", "ancestor")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			srv, ds, store := newSnapshotTestServer(t, snapshotParityTuples())

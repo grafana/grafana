@@ -26,31 +26,31 @@ func TestPermissionSnapshotTupleLimitReturnsResourceExhausted(t *testing.T) {
 	require.Len(t, tuples.keys, permissionSnapshotMaxTuples)
 }
 
-type permissionDescendantTestStore struct {
+type permissionPrincipalTestStore struct {
 	storage.OpenFGADatastore
 	ctx       context.Context
-	depth     int
 	malformed bool
 }
 
-func (s *permissionDescendantTestStore) ReadStartingWithUser(ctx context.Context, _ string, filter storage.ReadStartingWithUserFilter, _ storage.ReadStartingWithUserOptions) (storage.TupleIterator, error) {
+func (s *permissionPrincipalTestStore) Read(ctx context.Context, _ string, _ storage.ReadFilter, _ storage.ReadOptions) (storage.TupleIterator, error) {
 	s.ctx = ctx
 	if s.malformed {
 		return storage.NewStaticTupleIterator([]*openfgav1.Tuple{{}}), nil
 	}
-	s.depth++
-	return storage.NewStaticTupleIterator([]*openfgav1.Tuple{{Key: &openfgav1.TupleKey{
-		User: filter.UserFilter[0].GetObject(), Relation: common.RelationParent, Object: fmt.Sprintf("folder:child-%d", s.depth),
-	}}}), nil
+	tuples := make([]*openfgav1.Tuple, permissionSnapshotMaxTuples+1)
+	for i := range tuples {
+		tuples[i] = &openfgav1.Tuple{Key: common.NewFolderTuple("user:alice", common.RelationGet, fmt.Sprintf("folder-%d", i))}
+	}
+	return storage.NewStaticTupleIterator(tuples), nil
 }
 
-func TestPermissionSnapshotEarlyExitCancelsDescendantStream(t *testing.T) {
+func TestPermissionSnapshotEarlyExitCancelsPrincipalStream(t *testing.T) {
 	for _, malformed := range []bool{false, true} {
 		t.Run(fmt.Sprintf("malformed=%t", malformed), func(t *testing.T) {
 			srv, ds, _ := newSnapshotTestServer(t, []*openfgav1.TupleKey{
 				common.NewTypedTuple(common.TypeFolder, "user:alice", common.RelationGet, "root"),
 			})
-			store := &permissionDescendantTestStore{OpenFGADatastore: ds, malformed: malformed}
+			store := &permissionPrincipalTestStore{OpenFGADatastore: ds, malformed: malformed}
 			srv.store = store
 			ctx := newContextWithNamespace()
 			results, err := srv.listUserPermissions(ctx, &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"})
@@ -58,7 +58,6 @@ func TestPermissionSnapshotEarlyExitCancelsDescendantStream(t *testing.T) {
 			require.Empty(t, results)
 			if !malformed {
 				require.Equal(t, codes.ResourceExhausted, status.Code(err))
-				require.Equal(t, permissionSnapshotMaxDepth, store.depth)
 			}
 			require.NotNil(t, store.ctx)
 			require.ErrorIs(t, store.ctx.Err(), context.Canceled)

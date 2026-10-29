@@ -88,7 +88,7 @@ func TestUserPermissionsSnapshotSchemaAssumptions(t *testing.T) {
 					visit(child)
 				}
 			case *openfgav1.Userset_TupleToUserset:
-				require.Equal(t, "folder", definition.GetType(), "only folder descendants are prefetched")
+				require.Equal(t, "folder", definition.GetType(), "only folder inheritance is omitted from grant enumeration")
 				require.Empty(t, node.TupleToUserset.GetTupleset().GetObject())
 				require.Equal(t, "parent", node.TupleToUserset.GetTupleset().GetRelation())
 				require.Empty(t, node.TupleToUserset.GetComputedUserset().GetObject())

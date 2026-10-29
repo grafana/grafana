@@ -146,7 +146,7 @@ func TestUserPermissionsRPCParity(t *testing.T) {
 	} {
 		t.Run(tc.subject, func(t *testing.T) {
 			req := &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: tc.subject, Teams: tc.teams}
-			baseline, err := baselineSnapshotLists(newContextWithNamespace(), server, req)
+			baseline, err := baselineGrantLists(t, server, req)
 			require.NoError(t, err)
 			want := map[[2]string]bool{}
 			formatter := legacyscopes.Formatter{IDs: snapshotIDs{}}
@@ -225,4 +225,38 @@ func TestUserPermissionsRPCWithoutRolloutFlag(t *testing.T) {
 	chunk, err := stream.Recv()
 	require.NoError(t, err)
 	require.NotEmpty(t, chunk.Permissions)
+}
+
+func TestUserPermissionsRPCPreservesGrantedFolderScopes(t *testing.T) {
+	tuples := []*openfgav1.TupleKey{
+		common.NewFolderTuple("user:alice", common.RelationGet, "parent"),
+		common.NewFolderResourceTuple("user:alice", common.RelationGet, dashboardGroup, dashboardResource, "", "parent"),
+		common.NewFolderTuple("user:alice", common.RelationUpdate, "child"),
+		common.NewFolderTuple("user:alice", common.RelationGet, "child"),
+		common.NewFolderParentTuple("child", "parent"),
+		common.NewFolderParentTuple("grandchild", "child"),
+	}
+	srv, ds, _ := newSnapshotTestServer(t, tuples)
+	srv.permissionScopeResolver = snapshotIDs{}
+	stream := &snapshotResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
+	err := srv.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
+	require.NoError(t, err)
+	got := map[[2]string]bool{}
+	for _, p := range stream.permissions {
+		got[[2]string{p.Action, p.Scope}] = true
+	}
+	require.Equal(t, map[[2]string]bool{
+		{"folders:read", "folders:uid:parent"}:    true,
+		{"dashboards:read", "folders:uid:parent"}: true,
+		{"folders:read", "folders:uid:child"}:     true,
+		{"folders:write", "folders:uid:child"}:    true,
+	}, got)
+	counts, _ := ds.counts()
+	require.Zero(t, counts["reverse"], "permission enumeration must not read descendant folders")
+
+	list, err := srv.list(newContextWithNamespace(), &authzv1.ListRequest{
+		Namespace: namespace, Subject: "user:alice", Group: folderGroup, Resource: folderResource, Verb: "get",
+	})
+	require.NoError(t, err)
+	require.ElementsMatch(t, []string{"parent", "child", "grandchild"}, list.Items, "resource List still expands inherited access")
 }
