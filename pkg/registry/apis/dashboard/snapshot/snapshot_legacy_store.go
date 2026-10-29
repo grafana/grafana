@@ -239,8 +239,11 @@ func (s *SnapshotLegacyStore) Create(ctx context.Context, obj runtime.Object, cr
 		return nil, err
 	}
 
-	// Convert result back to K8s resource
-	return convertSnapshotToK8sResource(result, s.Namespacer), nil
+	// The legacy service encrypts the dashboard and returns an empty inline value.
+	// Preserve the input on the result so the dual writer can copy it to unified storage.
+	created := convertSnapshotToK8sResource(result, s.Namespacer)
+	created.Spec.Dashboard = snap.Spec.Dashboard
+	return created, nil
 }
 
 // Update implements rest.Updater - snapshots are immutable, so this returns an error

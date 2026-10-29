@@ -166,7 +166,8 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 
 			// A connection records its calls under one plugin_id. A core_url
 			// entry may have no plugin ID, so its connection is labeled by its
-			// API group instead, which keeps core APIs on one host apart.
+			// API group instead, which keeps core APIs on one host apart. The
+			// backend's requests are recorded under the same ID.
 			connectionID := entry.Definition.JSONData.ID
 			if connectionID == "" {
 				connectionID = manifest.Group
@@ -183,6 +184,7 @@ func (t *pluginManifestsTarget) fetch(ctx context.Context) ([]Backend, int, erro
 				continue
 			}
 
+			backend.metricsID = connectionID
 			backend.info = entry.Definition.JSONData.Info
 			// Without a host, the deployment has no backend to call.
 			backend.hasBackend = entry.Host != ""

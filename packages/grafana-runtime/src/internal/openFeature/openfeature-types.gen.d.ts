@@ -194,14 +194,14 @@ declare module "@openfeature/core" {
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.logDetailsDisplayedFieldControls"
-    | "grafana.globalHomePreference"
     | "grafana.extensionSidebarFloating"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"
     | "grafana.geomapProtomapsBasemap"
     | "reporting.removeLogoUrlField"
-    | "dashboards.disablePublicDashboards";
+    | "dashboards.disablePublicDashboards"
+    | "grafana.panelActionsPopover";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

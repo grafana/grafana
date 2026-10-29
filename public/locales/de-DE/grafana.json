@@ -1443,18 +1443,77 @@
     "gma-rule-list": {
       "alert-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
+      "datasources": "",
       "interval": "",
+      "recorded-metric": {
+        "records": "",
+        "to": ""
+      },
       "recording-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "result-count": {
         "alert-rules_one": "",
         "alert-rules_other": "",
         "recording-rules_one": "",
         "recording-rules_other": ""
+      },
+      "search": {
+        "default-policy-unavailable": "",
+        "help": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "label": "",
+          "metric": "",
+          "panel-id": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "help-availability": "",
+        "help-available": "",
+        "help-expression": "",
+        "help-filter-type": "",
+        "help-intro": "",
+        "help-title": "",
+        "invalid-tokens": "",
+        "invalid-value": "",
+        "label": "",
+        "not-paused-unavailable": "",
+        "placeholder": "",
+        "property": {
+          "contact-point": "",
+          "dashboard": "",
+          "datasource": "",
+          "folder": "",
+          "health": "",
+          "labels": "",
+          "metric": "",
+          "panel": "",
+          "paused": "",
+          "plugins": "",
+          "policy": "",
+          "rule-name": "",
+          "state": "",
+          "target-datasource": ""
+        },
+        "rejected-filter": "",
+        "rejected-search": "",
+        "renamed-value": "",
+        "unavailable-tokens": "",
+        "unclosed-quote": "",
+        "wildcard-in-text": ""
       },
       "shared": {
         "load-more": "",
@@ -1473,7 +1532,9 @@
         "recording": "",
         "recovering": "",
         "unavailable": ""
-      }
+      },
+      "labels_one": "",
+      "labels_other": ""
     },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Gehen Sie zur Seite Alerting Admin, um Ihre Alertmanager-Einrichtung zu ändern. Kontaktieren Sie Ihren Administrator, wenn Sie keinen Zugriff haben.",
@@ -5663,6 +5724,17 @@
       "ungroup-rows": "Gruppierung von Zeilen aufheben",
       "ungroup-tabs": "Gruppierung von Tabs aufheben"
     },
+    "composer": {
+      "annotation-pin": "",
+      "apply-undo-title": "",
+      "overlay": {
+        "hint-panel": "",
+        "hint-region": ""
+      },
+      "region": "",
+      "untitled-panel": "",
+      "wait-for-assistant": ""
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {
@@ -5843,7 +5915,20 @@
     "edit-actions": {
       "add": "{{typeName}} hinzufügen",
       "add-conditional-rule": "Hinzufügen von {{ruleDescription}}-Regel",
+      "auto-grid-column-width": "",
+      "auto-grid-fill-screen-disable": "",
+      "auto-grid-fill-screen-enable": "",
+      "auto-grid-fit-content-disable": "",
+      "auto-grid-fit-content-enable": "",
+      "auto-grid-match-row-heights-disable": "",
+      "auto-grid-match-row-heights-enable": "",
+      "auto-grid-max-columns": "",
+      "auto-grid-max-height": "",
+      "auto-grid-min-height": "",
+      "auto-grid-row-height": "",
+      "change-settings": "",
       "collapse-all-rows": "Alle Zeilen einklappen",
+      "collapse-row": "",
       "dashboard-description": "Dashboard-Beschreibung ändern",
       "dashboard-title": "Dashboard-Titel ändern",
       "duplicate": "{{typeName}} duplizieren",
@@ -5852,6 +5937,7 @@
       "edit-template-variable-rule": "Regel für Vorlagenvariable ändern",
       "edit-time-range-rule": "Regel für Zeitbereich ändern",
       "expand-all-rows": "Alle Zeilen ausklappen",
+      "expand-row": "",
       "group-into-row": "In Zeile gruppieren",
       "group-into-tab": "In Registerkarte gruppieren",
       "move": "Verschieben von {{typeName}}",
@@ -5865,8 +5951,10 @@
       "panel-repeat-variable": "Panel-Wiederholung durch",
       "panel-title": "Änderung des Panel-Titels",
       "paste-panel": "Panel einfügen",
+      "paste-panel-styles": "",
       "remove": "{{typeName}} entfernen",
       "remove-multiple": "{{typeName}} ({{num}}) entfernen",
+      "rename": "",
       "replace-panel": "",
       "row-fill-screen-disable": "Bildschirmfüllung für Zeilen deaktivieren",
       "row-fill-screen-enable": "Bildschirmfüllung für Zeilen aktivieren",
@@ -5874,16 +5962,39 @@
       "row-repeat-variable": "Zeilenwiederholung nach",
       "row-show-header": "Zeilenkopf anzeigen",
       "row-title": "Zeilentitel ändern",
+      "rows-hide-header": "",
+      "rows-show-header": "",
       "switch-layout": "Layout wechseln",
       "switch-layout-row": "Layout wechseln",
       "switch-layout-tab": "Layout wechseln",
       "tab-repeat-variable": "Tab-Wiederholung nach",
       "tab-title": "Tab-Titel ändern",
+      "unlink-library-panel": "",
+      "variable-adhoc-default-filters": "",
+      "variable-adhoc-default-group-by": "",
+      "variable-adhoc-default-keys": "",
+      "variable-adhoc-enable-group-by": "",
+      "variable-allow-custom-value": "",
+      "variable-constant-value": "",
+      "variable-custom-all-value": "",
+      "variable-datasource": "",
+      "variable-datasource-name-filter": "",
+      "variable-datasource-type": "",
       "variable-description": "Variablenbeschreibung ändern",
       "variable-hide": "Option zum Ausblenden von Variablen ändern",
+      "variable-include-all": "",
+      "variable-interval-auto": "",
+      "variable-interval-min-interval": "",
+      "variable-interval-step-count": "",
+      "variable-interval-values": "",
       "variable-label": "Variablenlabel ändern",
+      "variable-multi-value": "",
       "variable-name": "Variablennamen ändern",
-      "variable-type": "Variablentyp ändern"
+      "variable-refresh": "",
+      "variable-switch-values": "",
+      "variable-textbox-value": "",
+      "variable-type": "Variablentyp ändern",
+      "view-panel-option": ""
     },
     "empty": {
       "add-library-panel-body": "Füge Visualisierungen hinzu, die mit anderen Dashboards geteilt werden.",
@@ -6107,6 +6218,11 @@
     "modes": {
       "agent-edit": "",
       "change-mode": "",
+      "composer": "",
+      "composer-description": "",
+      "composer-no-permission": "",
+      "composer-save-first": "",
+      "composer-unsupported": "",
       "current": "",
       "discard": "",
       "discard-body": "",
@@ -7019,7 +7135,8 @@
         "change-annotation-controls-display": "Anzeige der Anmerkungssteuerung ändern",
         "change-annotation-enabled-state": "Aktivierungsstatus der Anmerkung ändern",
         "change-annotation-name": "Anmerkungsnamen ändern",
-        "change-annotation-panel-filter": "Filter für das Anmerkungs-Panel ändern"
+        "change-annotation-panel-filter": "Filter für das Anmerkungs-Panel ändern",
+        "change-annotation-query": ""
       },
       "edit-query": "Abfrage bearbeiten"
     },
@@ -7967,7 +8084,7 @@
       }
     },
     "unlink-modal": {
-      "body-unlink-panel": "Wenn Sie die Verknüpfung dieses Panels aufheben, können Sie es bearbeiten, ohne dass dies Auswirkungen auf andere Dashboards hat. Sobald Sie jedoch eine Änderung vornehmen, können Sie nicht mehr zum ursprünglichen wiederverwendbaren Panel zurückkehren.",
+      "body-unlink-panel": "",
       "confirmText-yes-unlink": "Ja, Verknüpfung aufheben",
       "title-really-unlink-panel": "Möchten Sie die Verknüpfung dieses Panels wirklich aufheben?"
     },
@@ -9205,10 +9322,6 @@
       "attribute-category": {
         "other": "Sonstiges"
       },
-      "exception-message": "Nachricht:",
-      "exception-stacktrace": "Stacktrace",
-      "exception-title": "Ausnahme",
-      "exception-type": "Typ:",
       "label": {
         "kind": "Art:",
         "library-name": "Bibliotheksname:",
@@ -9314,6 +9427,7 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Freigabe- und Feedback-Menü öffnen",
+      "copy-trace-id": "",
       "critical-path": "Kritischer Pfad",
       "critical-path-tooltip": "Wählt Spannen im kritischen Pfad aus – der längsten Folge von abhängigen Aufgaben, die die Mindestdauer des Trace bestimmen.",
       "duration": "Dauer",
@@ -9337,7 +9451,7 @@
       "share-group": "Teilen",
       "share-tooltip": "Teilen und Feedback geben",
       "spans": "Spannen",
-      "start-time": "Startzeitpunkt",
+      "start-time": "",
       "success-indicator": "Trace erfolgreich",
       "target": "Ziel",
       "tooltip-url": "{{route}} oder {{url}} oder {{target}} oder {{path}}",
@@ -9346,6 +9460,12 @@
       "trace-banner-metrics": "{{duration}} · {{percent}} % des Trace",
       "trace-banner-warning": "Trace-Warnungsbanner",
       "trace-id": "Trace-ID",
+      "trace-summary-error": "",
+      "trace-summary-error-status": "",
+      "trace-summary-hide-stacktrace": "",
+      "trace-summary-show-stacktrace": "",
+      "trace-summary-warning": "",
+      "trace-summary-warning-status": "",
       "url": "URL",
       "warning-indicator": "Trace hat Client-Fehler"
     },
@@ -12199,10 +12319,14 @@
     },
     "log-line": {
       "has-error": "Hat Fehler",
+      "has-error-fields": "",
+      "has-stacktrace": "",
       "is-sampled": "Ist gesampelt",
       "show-less": "weniger anzeigen",
       "show-more": "mehr anzeigen",
-      "tooltip-error": "Fehler: {{errorMessage}}"
+      "tooltip-error": "Fehler: {{errorMessage}}",
+      "tooltip-error-fields": "",
+      "tooltip-stacktrace": ""
     },
     "log-line-context": {
       "center-matched-line": "Zentral ausgerichtete Linie",
@@ -13424,7 +13548,6 @@
     "add-panel": {
       "cancel": "Abbrechen",
       "card-author": "Von {{author}}",
-      "card-selected": "{{title}} (ausgewählt)",
       "card-updated": "Aktualisiert am {{when}}",
       "create-name": "Notizbuchname",
       "create-name-required": "Ein Notizbuchname ist erforderlich",
@@ -13435,6 +13558,7 @@
       "error-open-conflict": "",
       "list-error": "Notizbücher konnten nicht geladen werden",
       "list-error-body": "Beim Laden Ihrer Notizbücher ist ein Fehler aufgetreten. Versuchen Sie es erneut oder erstellen Sie stattdessen ein neues.",
+      "list-label": "",
       "list-no-matches": "Keine Notizbücher entsprechen diesen Filtern.",
       "list-none": "Sie haben noch keine Notizbücher. Erstellen Sie stattdessen eines.",
       "list-none-read-only": "Sie haben noch keine Notizbücher und keine Berechtigung, eines zu erstellen.",
@@ -14907,7 +15031,7 @@
       "resources-to-migrate-empty": "Keine Ordner oder Ressourcen stimmen mit der aktuellen Suche überein.",
       "resources-to-migrate-heading": "Zu migrierende Ressourcen",
       "resources-to-migrate-search": "Ordner und Ressourcen suchen",
-      "resources-to-migrate-subtitle": "Wählen Sie ganze Ordner oder einzelne Ressourcen darin aus. Wenn Sie einen Ordner auswählen, werden nur die direkt darin enthaltenen Ressourcen migriert – alles, was sich in Unterordnern befindet, wird über den jeweiligen Ordner migriert.",
+      "resources-to-migrate-subtitle": "",
       "retain-resources-description": "Behalten Sie die migrierten Ressourcen in dieser Instanz, während der Pull-Request offen ist, damit sie aktiv bleiben, bis der Branch zusammengeführt wird. Diese Ressourcen müssen manuell gelöscht werden, bevor der Pull-Request zusammengeführt wird. Andernfalls kommt es während der Synchronisierung aufgrund von widersprüchlichen Ressourcen zu Fehlern.",
       "retain-resources-label": "Vorhandene Ressourcen während der Überprüfung beibehalten",
       "retain-resources-warning-body": "Sie müssen die migrierten Ressourcen vor dem Zusammenführen des Pull-Requests selbst löschen. Wenn sie beim Zusammenführen des Branches noch vorhanden sind, stehen sie im Widerspruch mit den eingehenden verwalteten Ressourcen und werden nicht abgeglichen.",
@@ -15738,6 +15862,12 @@
       "delete-transformations-confirm-title_one": "Möchten Sie {{count}} Transformation löschen?",
       "delete-transformations-confirm-title_other": "Möchten Sie {{count}} Transformationen löschen?"
     },
+    "datasource-error": {
+      "load-failed": "",
+      "load-failed-named": "",
+      "not-found": "",
+      "settings-not-found": ""
+    },
     "delete-modal": {
       "body-transformation": "Das Entfernen einer Transformation kann andere beschädigen."
     },
@@ -16068,6 +16198,7 @@
       "exchange": "Root-Bereich ändern zu {{scope}}",
       "expand": "Ausklappen",
       "filter": "",
+      "filterAriaLabel": "",
       "loading": "Dashboards werden geladen",
       "megaMenuSectionHeading": "",
       "noResultsForFilter": "Keine Ergebnisse für deine Abfrage gefunden",
@@ -16076,7 +16207,6 @@
       "noResultsNoScopes": "Keine Bereiche ausgewählt",
       "toggle": {
         "collapse": "Liste der vorgeschlagenen Dashboards einklappen",
-        "disabled": "Die Liste der vorgeschlagenen Dashboards ist aufgrund des schreibgeschützten Modus deaktiviert",
         "expand": "Liste der vorgeschlagenen Dashboards ausklappen"
       }
     },
@@ -16326,8 +16456,8 @@
       "copy-link-button": "Kopieren",
       "info-text": "Erstelle einen direkten Link zu diesem Dashboard oder Panel mit den folgenden angepassten Optionen.",
       "link-url": "Link-URL",
-      "render-alert": "Bild-Render-Plug-in nicht installiert",
-      "render-instructions": "Um ein Bild zu rendern, müssen Sie das <2>Grafana Image Renderer Plugin</2> installieren. Bitte kontaktieren Sie Ihren Grafana-Administrator, um das Plugin zu installieren.",
+      "render-alert": "",
+      "render-instructions": "",
       "rendered-image": "Direktlink zum gerenderten Bild",
       "save-alert": "Dashboard nicht gespeichert",
       "save-dashboard": "Um ein Panel-Bild zu rendern, muss zuerst das Dashboard gespeichert werden.",
@@ -16611,6 +16741,17 @@
     "generate-suggestion": "Vorschlag generieren",
     "improve-query": "Abfrage verbessern"
   },
+  "st-pod-ready": {
+    "error": {
+      "body-with-support": "",
+      "support-ack": "",
+      "title": "",
+      "title-fallback": ""
+    },
+    "timeout": {
+      "banner": ""
+    }
+  },
   "stars": {
     "mark-as-starred": "Als Favorit markieren",
     "mark-as-starred-with-title": "„{{title}}“ als Favorit markieren",
@@ -16780,6 +16921,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": ""
+    },
     "login": "Anmelden",
     "manifests": {
       "api-docs": "",
@@ -17142,6 +17286,9 @@
     "truncation": {
       "label": "",
       "tooltip": ""
+    },
+    "variable-suggestions": {
+      "reduced-field": ""
     }
   },
   "theme-playground": {
@@ -17476,9 +17623,11 @@
       "placeholder-frame": "Frame"
     },
     "config-from-query-transformer-editor": {
+      "description-dynamic-field-name-matcher": "",
       "label-apply-to": "Anwenden auf",
       "label-apply-to-options": "Auf Optionen anwenden",
-      "label-config-query": "Konfigurationsabfrage"
+      "label-config-query": "Konfigurationsabfrage",
+      "name-dynamic-field-name-matcher": ""
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Transformator für „Feldtyp konvertieren“ hinzufügen",

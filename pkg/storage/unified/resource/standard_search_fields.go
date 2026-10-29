@@ -6,10 +6,9 @@ package resource
 //
 // Not every standard field appears here. Fields excluded:
 //
-//   - Pseudo / wire-only columns (_id, _legacy_id, _score, _explain,
-//     _all_columns, rv, kind, namespace, group/resource): they exist solely
-//     to populate ResourceTable column metadata in the gRPC response and are
-//     not indexed.
+//   - Pseudo / response-only fields (_id, _legacy_id, _score, _explain,
+//     _all_columns, rv, kind, namespace, group/resource): their values come
+//     from row metadata or are derived when building a response.
 //   - Sub-document fields under "manager." and "source.": nested documents
 //     whose bleve mappings are emitted hardcoded.
 //   - Fields under "labels." and "reference.": open key sets, served by

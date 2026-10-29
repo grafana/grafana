@@ -1047,21 +1047,45 @@ func TestTranslateGlobalSearchQuery_FolderTree(t *testing.T) {
 	})
 }
 
-// Storage does not model the manager fields as search fields, so only returning
-// them is known to work.
-func TestTranslateSearchQuery_ManagerFieldsCanOnlyBeReturned(t *testing.T) {
-	for _, f := range []string{resource.SEARCH_FIELD_MANAGER_KIND, resource.SEARCH_FIELD_MANAGER_ID} {
-		for name, q := range map[string]*searchv0.SearchQuery{
-			"filter": searchQuery(&searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: f, Operator: "In", Values: []string{"repo"}}}),
-			"sort":   {TypeMeta: searchQuery(nil).TypeMeta, Sort: []searchv0.SortField{{Field: f, Direction: "asc"}}},
-			"facet":  {TypeMeta: searchQuery(nil).TypeMeta, Facets: []string{f}},
-		} {
-			t.Run(f+" "+name, func(t *testing.T) {
-				_, errs := TranslateSearchQuery(q, dashboardsGVR, "default", testProvider())
-				assert.Len(t, errs, 1, errs)
-				_, errs = TranslateGlobalSearchQuery(q, "default")
-				assert.Len(t, errs, 1, errs)
-			})
-		}
+// Global and per-kind search accept what the standard fields declare, and
+// nothing more.
+func TestTranslateSearchQuery_StandardFieldCapabilities(t *testing.T) {
+	filter := func(f string) *searchv0.SearchQuery {
+		return searchQuery(&searchv0.WhereNode{Filter: &searchv0.FilterPredicate{Field: f, Operator: "In", Values: []string{"x"}}})
+	}
+	timeRange := func(f string) *searchv0.SearchQuery {
+		gt := 0.0
+		return searchQuery(&searchv0.WhereNode{Range: &searchv0.RangePredicate{Field: f, GT: &gt}})
+	}
+	sortBy := func(f string) *searchv0.SearchQuery {
+		return &searchv0.SearchQuery{TypeMeta: searchQuery(nil).TypeMeta, Sort: []searchv0.SortField{{Field: f, Direction: "asc"}}}
+	}
+	facet := func(f string) *searchv0.SearchQuery {
+		return &searchv0.SearchQuery{TypeMeta: searchQuery(nil).TypeMeta, Facets: []string{f}}
+	}
+	for _, tc := range []struct {
+		name  string
+		q     *searchv0.SearchQuery
+		valid bool
+	}{
+		{"filter manager.kind", filter(resource.SEARCH_FIELD_MANAGER_KIND), true},
+		{"filter manager.id", filter(resource.SEARCH_FIELD_MANAGER_ID), true},
+		{"filter updatedBy", filter(resource.SEARCH_FIELD_UPDATED_BY), true},
+		{"range on created", timeRange(resource.SEARCH_FIELD_CREATED), true},
+		{"sort by updated", sortBy(resource.SEARCH_FIELD_UPDATED), true},
+		{"filter manager.allowEdits", filter(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS), false},
+		{"sort by manager.allowEdits", sortBy(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS), false},
+		{"facet manager.kind", facet(resource.SEARCH_FIELD_MANAGER_KIND), false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			want := 1
+			if tc.valid {
+				want = 0
+			}
+			_, errs := TranslateSearchQuery(tc.q, dashboardsGVR, "default", testProvider())
+			assert.Len(t, errs, want, errs)
+			_, errs = TranslateGlobalSearchQuery(tc.q, "default")
+			assert.Len(t, errs, want, errs)
+		})
 	}
 }

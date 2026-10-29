@@ -74,7 +74,7 @@ message ResourceSearchRequest {
   enum ResultFormat {
     UNSPECIFIED = 0;
 
-    // ResourceSearchResponse.results contains a ResourceTable.
+    // Obsolete. Servers reject requests for this format.
     RESOURCE_TABLE = 1;
 
     // ResourceSearchResponse.fields and rows contain field-value results.
@@ -158,9 +158,7 @@ message ResourceSearchRequest {
   // Sort values for SearchBefore pagination.
   repeated string search_before = 15;
 
-  // Selects the desired response representation.
-  // UNSPECIFIED preserves compatibility and requests RESOURCE_TABLE.
-  // Servers that do not know this field ignore it and return RESOURCE_TABLE.
+  // Must be FIELD_VALUES. Retained for compatibility with supported peers.
   ResultFormat result_format = 16;
 }
 
@@ -188,8 +186,9 @@ message ResourceSearchResponse {
   // All results exist within this key
   ResourceKey key = 2;
 
-  // Legacy query results. Populated when result_format is RESOURCE_TABLE.
-  ResourceTable results = 3;
+  // The retired table result field must never be reused.
+  reserved 3;
+  reserved "results";
 
   // The total hit count
   int64 total_hits = 4;
@@ -214,9 +213,7 @@ message ResourceSearchResponse {
   // Resource version of the index used for this search.
   int64 resource_version = 8;
 
-  // Reports the representation actually returned.
-  // New servers always set this to RESOURCE_TABLE or FIELD_VALUES.
-  // Clients treat UNSPECIFIED as RESOURCE_TABLE for compatibility with old servers.
+  // Reports FIELD_VALUES for successful responses.
   ResourceSearchRequest.ResultFormat result_format = 10;
 
   // Populated only when result_format is FIELD_VALUES.

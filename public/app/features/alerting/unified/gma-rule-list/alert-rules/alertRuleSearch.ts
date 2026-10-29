@@ -7,6 +7,7 @@ import { type ResultTotal } from '../rule-row/ResultCount';
 import { type FilterIssue } from '../rule-search/parser';
 import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { getRejectionIssues } from '../rule-search/searchRejection';
+import { type RuleListMode } from '../rule-search/useRuleListSearchState';
 import { type PagedFailure } from '../shared/PagedFailureAlert';
 
 import { type AlertRuleSearchHit, alertRuleSearchHitSchema } from './alertRuleSearchHit';
@@ -100,7 +101,13 @@ export function useAlertRuleSearch(filter: RuleSearchFilter) {
  * The issues of a search the rule search refused as invalid, for the search input. It reads the same cached
  * search as the list, so it sends no request of its own.
  */
-export function useAlertRuleSearchRejection(filter: RuleSearchFilter, { skip }: { skip: boolean }): FilterIssue[] {
+export function useAlertRuleSearchRejection(
+  filter: RuleSearchFilter,
+  { parseIssues, mode }: { parseIssues: FilterIssue[]; mode: RuleListMode }
+): FilterIssue[] {
+  // Folders mode sends no rule search for the page, and a filter that does not parse sends none either, so
+  // there is no request to be rejected.
+  const skip = parseIssues.length > 0 || mode === 'folders';
   const { error } = useSearchAlertRulesInfiniteQuery(filter, { skip });
   return useMemo(
     () => (skip ? [] : (getRejectionIssues(error, buildAlertRuleLeaves(filter)) ?? [])),

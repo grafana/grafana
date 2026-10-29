@@ -198,8 +198,6 @@ export const FlagKeys = {
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
-  /** Offers the reserved Grafana home option in the home dashboard preference */
-  GrafanaGlobalHomePreference: "grafana.globalHomePreference",
   /** Enables PLG-focused growth redesign of the unified homepage */
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
@@ -226,6 +224,8 @@ export const FlagKeys = {
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables a new version of log details optimized for displaying OTel logs */
   GrafanaOtelLogDetails: "grafana.otelLogDetails",
+  /** Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode */
+  GrafanaPanelActionsPopover: "grafana.panelActionsPopover",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Let panel plugins register system transformations */
@@ -1415,17 +1415,6 @@ export const useFlagGrafanaGeomapProtomapsBasemap = (options?: ReactFlagEvaluati
 };
 
 /**
- * Offers the reserved Grafana home option in the home dashboard preference
- *
- * **Details:**
- * - flag key: `grafana.globalHomePreference`
- * - default value: `false`
- */
-export const useFlagGrafanaGlobalHomePreference = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.globalHomePreference", false, options).value;
-};
-
-/**
  * Enables PLG-focused growth redesign of the unified homepage
  *
  * **Details:**
@@ -1566,6 +1555,17 @@ export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaOtelLogDetails = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.otelLogDetails", false, options).value;
+};
+
+/**
+ * Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode
+ *
+ * **Details:**
+ * - flag key: `grafana.panelActionsPopover`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelActionsPopover = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelActionsPopover", false, options).value;
 };
 
 /**

@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -236,5 +237,48 @@ func TestService_SignIdentity(t *testing.T) {
 		proxyAgain, _, err := s.SignIdentity(context.Background(), newIdent(login.AuthProxyAuthModule))
 		require.NoError(t, err)
 		assert.Equal(t, proxyToken, proxyAgain)
+	})
+	t.Run("should return error and not cache when signer fails", func(t *testing.T) {
+		signErr := errors.New("failed to decode private key PEM")
+		var calls int
+		failing := &idtest.FakeSigner{
+			SignIDTokenFn: func(_ context.Context, _ *auth.IDClaims) (string, error) {
+				calls++
+				return "", signErr
+			},
+		}
+		s := ProvideService(
+			setting.NewCfg(), failing, remotecache.NewFakeCacheStorage(),
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+		)
+		ident := &authn.Identity{ID: "1", Type: claims.TypeUser}
+
+		token, gotClaims, err := s.SignIdentity(context.Background(), ident)
+		require.ErrorIs(t, err, signErr)
+		assert.Empty(t, token)
+		assert.Nil(t, gotClaims)
+
+		_, _, err = s.SignIdentity(context.Background(), ident)
+		require.ErrorIs(t, err, signErr)
+		assert.Equal(t, 2, calls, "failed signing must not be cached")
+	})
+}
+
+func TestService_SyncIDToken(t *testing.T) {
+	t.Run("should not fail authentication when signing fails", func(t *testing.T) {
+		failing := &idtest.FakeSigner{
+			SignIDTokenFn: func(_ context.Context, _ *auth.IDClaims) (string, error) {
+				return "", errors.New("boom")
+			},
+		}
+		s := ProvideService(
+			setting.NewCfg(), failing, remotecache.NewFakeCacheStorage(),
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+		)
+		ident := &authn.Identity{ID: "1", Type: claims.TypeUser}
+
+		require.NoError(t, s.SyncIDToken(context.Background(), ident, &authn.Request{}))
+		assert.Empty(t, ident.IDToken)
+		assert.Nil(t, ident.IDTokenClaims)
 	})
 }
