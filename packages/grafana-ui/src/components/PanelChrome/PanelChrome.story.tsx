@@ -370,6 +370,40 @@ export const Examples = () => {
   );
 };
 
+export const GroupByHeader = () => {
+  const [grouping, setGrouping] = useState(true);
+
+  return (
+    <DashboardStoryCanvas>
+      <Button onClick={() => setGrouping(!grouping)}>Toggle grouping</Button>
+      <Stack gap={2}>
+        {[110, 210, 420].map((width) => (
+          <PanelChrome
+            key={width}
+            width={width}
+            height={150}
+            title="Panel title"
+            description="Panel description"
+            menu={menu}
+            actions={
+              grouping ? (
+                <div className="show-on-hover">
+                  <Button variant="secondary" size="sm" fill="text">
+                    Group by
+                    <Icon name="angle-down" />
+                  </Button>
+                </div>
+              ) : undefined
+            }
+          >
+            {() => '192 Mil'}
+          </PanelChrome>
+        ))}
+      </Stack>
+    </DashboardStoryCanvas>
+  );
+};
+
 export const ExamplesHoverHeader = () => {
   return (
     <DashboardStoryCanvas>
