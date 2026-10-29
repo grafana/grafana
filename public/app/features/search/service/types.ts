@@ -36,6 +36,8 @@ export interface SearchQuery {
   from?: number;
   starred?: boolean;
   permission?: PermissionLevel;
+  // Only list folders the user can create dashboards in, or that lead to one, and mark which is which with `canCreate`
+  includePathToCreatable?: boolean;
   deleted?: boolean;
   // Same as from, but as we have 2 different searcher backends, one uses from and the other offset
   offset?: number;
