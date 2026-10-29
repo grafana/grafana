@@ -2,7 +2,7 @@ import test, { expect, type Locator, type Page } from '@playwright/test';
 
 import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
-import { type Tabs, type Panels, type Rows } from '../page-objects';
+import { type Controls, type Tabs, type Panels, type Rows } from '../page-objects';
 
 import { getPanelBox } from './utils';
 
@@ -204,15 +204,15 @@ export async function expectPanelBoxesToBe(
  * In edit mode, opens the save drawer and asserts it has nothing to save (its Save button is
  * disabled), then closes it
  */
-export async function expectNoUnsavedChanges(page: Page, selectors: E2ESelectorGroups) {
+export async function expectNoUnsavedChanges(controls: Controls) {
   await test.step('Expect the dashboard to have no unsaved changes', async () => {
-    await page.getByTestId(selectors.components.NavToolbar.editDashboard.saveButton).click();
+    await controls.openSaveDrawer();
 
-    const drawer = page.getByRole('dialog');
+    const drawer = controls.getSaveDrawer();
     await expect(drawer.getByText('No changes to save', { exact: true })).toBeVisible();
-    await expect(drawer.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeDisabled();
+    await expect(controls.getSaveDrawerSaveButton()).toBeDisabled();
 
-    await drawer.getByTestId(selectors.components.Drawer.General.close).click();
+    await controls.closeSaveDrawer();
     await expect(drawer).toBeHidden();
   });
 }

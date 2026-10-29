@@ -240,7 +240,7 @@ test.describe(
         await expect(tabs.getTitles()).toHaveText(movedOrder);
 
         await controls.enterEditMode();
-        await expectNoUnsavedChanges(page, selectors);
+        await expectNoUnsavedChanges(controls);
       }
     );
 

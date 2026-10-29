@@ -157,7 +157,7 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards', '@drag-and-
     await flows.dashboards.saveDashboard(page, controls);
     await expectRowTabs(layout, movedTabs);
     await controls.enterEditMode();
-    await expectNoUnsavedChanges(page, selectors);
+    await expectNoUnsavedChanges(controls);
   });
 
   test('moves the last tab to the front of its tab bar, with its content', async ({
@@ -192,7 +192,7 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards', '@drag-and-
     await flows.dashboards.saveDashboard(page, controls);
     await expectMoved();
     await controls.enterEditMode();
-    await expectNoUnsavedChanges(page, selectors);
+    await expectNoUnsavedChanges(controls);
   });
 
   test.describe('Nested tab bars', () => {
@@ -227,7 +227,7 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards', '@drag-and-
       await expectNestedTabBars(tabs, moved);
       await expectTabPanels({ tabs, panels }, 'Inner 2', ['Inner two']);
       await controls.enterEditMode();
-      await expectNoUnsavedChanges(page, selectors);
+      await expectNoUnsavedChanges(controls);
     });
 
     test('moves an outer tab into the nested tab bar, with its content', async ({
@@ -260,7 +260,7 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards', '@drag-and-
       await expectNestedTabBars(tabs, moved);
       await expectTabPanels({ tabs, panels }, 'Outer C', ['Outer C panel']);
       await controls.enterEditMode();
-      await expectNoUnsavedChanges(page, selectors);
+      await expectNoUnsavedChanges(controls);
     });
 
     // Today the drop is accepted: the outer tab, its nested tabs and their panels vanish from the dashboard

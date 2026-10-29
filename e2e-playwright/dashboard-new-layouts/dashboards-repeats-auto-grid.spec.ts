@@ -283,7 +283,7 @@ test.describe(
         await expect(panels.getHeaders()).toHaveText(movedOrder);
 
         await controls.enterEditMode();
-        await expectNoUnsavedChanges(page, selectors);
+        await expectNoUnsavedChanges(controls);
       });
     });
 
