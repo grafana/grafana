@@ -83,11 +83,8 @@ export const ResultItem = React.forwardRef(
             <span>{name}</span>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
-          {dashboardTagsEnabled && tags && tags.length > 0 ? (
-            <ResultTags tags={tags} prefix={managedBadge} />
-          ) : (
-            managedBadge
-          )}
+          {managedBadge}
+          {dashboardTagsEnabled && tags && tags.length > 0 && <ResultTags tags={tags} />}
         </div>
       </div>
     );

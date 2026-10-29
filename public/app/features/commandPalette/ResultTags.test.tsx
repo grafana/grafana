@@ -115,17 +115,6 @@ describe('ResultTags', () => {
     expect(within(tooltip).queryByText('prod')).not.toBeInTheDocument();
   });
 
-  it('reserves space for a badge before fitting tags', () => {
-    availableWidth = 198;
-    render(<ResultTags tags={tags} prefix={<span>Provisioned</span>} />);
-
-    const list = screen.getByRole('list', { name: 'Tags' });
-    expect(screen.getByText('Provisioned')).toBeInTheDocument();
-    expect(within(list).getByText('team-a')).toBeInTheDocument();
-    expect(within(list).getByText('+2')).toBeInTheDocument();
-    expect(within(list).queryByText('region')).not.toBeInTheDocument();
-  });
-
   it('keeps a single long tag visible without a hidden count', () => {
     availableWidth = 20;
     render(<ResultTags tags={['team-a']} />);

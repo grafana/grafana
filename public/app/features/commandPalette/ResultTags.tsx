@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -7,18 +7,16 @@ import { Tag, Tooltip, useStyles2 } from '@grafana/ui';
 
 /**
  * Fits tags into the space of the container. Shows at least one truncated tag or more if space allows with +N marker
- * for all the hidden tags that didn't fit. Allows for a prefix to be always displayed before the tags.
+ * for all the hidden tags that didn't fit.
  *
  */
-export function ResultTags({ tags, prefix }: { tags: string[]; prefix?: ReactNode }) {
+export function ResultTags({ tags }: { tags: string[] }) {
   const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement>(null);
-  const prefixRef = useRef<HTMLSpanElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const tagMeasurementsRef = useRef<HTMLDivElement>(null);
   const countMeasurementsRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState(1);
-  const hasPrefix = Boolean(prefix);
 
   // Measuring how many tags we can show. The algorithm selects the longest leading
   // sequence of tags whose full widths, gaps, and remaining-tag count fit in the available space.
@@ -36,8 +34,7 @@ export function ResultTags({ tags, prefix }: { tags: string[]; prefix?: ReactNod
 
     const measure = () => {
       const gap = parseFloat(getComputedStyle(list).columnGap || getComputedStyle(list).gap) || 0;
-      const prefixWidth = prefixRef.current ? prefixRef.current.getBoundingClientRect().width + gap : 0;
-      const availableWidth = container.getBoundingClientRect().width - prefixWidth;
+      const availableWidth = container.getBoundingClientRect().width;
       const widths = Array.from(tagMeasurements.children, (tag) => tag.getBoundingClientRect().width);
       const countWidths = Array.from(countMeasurements.children, (count) => count.getBoundingClientRect().width);
       let width = 0;
@@ -58,25 +55,17 @@ export function ResultTags({ tags, prefix }: { tags: string[]; prefix?: ReactNod
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(container);
-    if (prefixRef.current) {
-      observer.observe(prefixRef.current);
-    }
     // Font and theme changes can resize tags without resizing the row.
     observer.observe(tagMeasurements);
     observer.observe(countMeasurements);
     return () => observer.disconnect();
-  }, [tags, styles, hasPrefix]);
+  }, [tags, styles]);
 
   const displayedCount = Math.min(visibleCount, tags.length);
   const hiddenTags = tags.slice(displayedCount);
 
   return (
     <div ref={containerRef} className={styles.container}>
-      {hasPrefix && (
-        <span ref={prefixRef} className={styles.prefix}>
-          {prefix}
-        </span>
-      )}
       <ul ref={listRef} className={styles.list} aria-label={t('command-palette.tags.label', 'Tags')}>
         {tags.slice(0, displayedCount).map((tag) => (
           <li key={tag} className={cx(styles.item, displayedCount === 1 && styles.shrink)}>
@@ -124,13 +113,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: theme.spacing(0.75),
     // Use space left by the name and subtitle, reserving one truncated tag and its count.
     flex: '1 0 0',
     minWidth: 'min(96px, 25%)',
     overflow: 'hidden',
   }),
-  prefix: css({ display: 'flex', flexShrink: 0 }),
   list: css({
     display: 'flex',
     alignItems: 'center',
