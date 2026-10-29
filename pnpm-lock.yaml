@@ -690,7 +690,7 @@ importers:
         version: 0.18.5
       '@axe-core/playwright':
         specifier: ^4.11.1
-        version: 4.11.1(playwright-core@1.56.1)
+        version: 4.11.1(playwright-core@1.64.1)
       '@bsull/augurs':
         specifier: ^0.10.0
         version: 0.10.2
@@ -717,7 +717,7 @@ importers:
         version: 0.17.2(eslint@9.32.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
       '@grafana/plugin-e2e':
         specifier: ^3.12.0
-        version: 3.12.0(@axe-core/playwright@4.11.1(playwright-core@1.56.1))(@playwright/test@1.56.1)
+        version: 3.12.0(@axe-core/playwright@4.11.1(playwright-core@1.64.1))(@playwright/test@1.64.1)
       '@grafana/test-utils':
         specifier: workspace:*
         version: link:packages/grafana-test-utils
@@ -728,8 +728,8 @@ importers:
         specifier: ^6.0.0
         version: 6.2.0
       '@playwright/test':
-        specifier: 1.56.1
-        version: 1.56.1
+        specifier: 1.64.1
+        version: 1.64.1
       '@react-types/shared':
         specifier: 3.31.0
         version: 3.31.0(react@19.2.8)
@@ -1073,8 +1073,8 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1(supports-color@7.2.0)
       playwright:
-        specifier: 1.56.1
-        version: 1.56.1
+        specifier: 1.64.1
+        version: 1.64.1
       prettier:
         specifier: 3.6.2
         version: 3.6.2
@@ -5685,9 +5685,9 @@ packages:
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
 
-  '@playwright/test@1.56.1':
-    resolution: {integrity: sha512-vSMYtL/zOcFpvJCW71Q/OEGQb7KYBPAdKh35WNSkaZA75JlAO8ED8UN6GUNTm3drWomcbcqRPFqQbLae8yBTdg==}
-    engines: {node: '>=18'}
+  '@playwright/test@1.64.1':
+    resolution: {integrity: sha512-IaYGml/nSOiZWROfPtuIL7neuu9qDOZ3TNvNljUIrhDMxiGTgPjzj/g9p9RxpS2tSepPDRY+UwAaEeiKtUvIAg==}
+    engines: {node: '>=20'}
     hasBin: true
 
   '@polka/url@1.0.0-next.24':
@@ -10293,11 +10293,6 @@ packages:
   fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
 
-  fsevents@2.3.2:
-    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
-    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
-    os: [darwin]
-
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -12738,9 +12733,14 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  playwright@1.56.1:
-    resolution: {integrity: sha512-aFi5B0WovBHTEvpM3DzXTUaeN6eN0qWnTkKx4NQaH4Wvcmc153PdaY2UBdSYKaGYw+UyWXSVyxDUg5DoPEttjw==}
-    engines: {node: '>=18'}
+  playwright-core@1.64.1:
+    resolution: {integrity: sha512-BC4s8y6SEVA6Q1rSxZTto8hI1KUI3xXlHGZgvGqP4IqPdI/a6FX9H29IDNz7vKo9l21b6LfYosScPL6M3xxyDQ==}
+    engines: {node: '>=20'}
+    hasBin: true
+
+  playwright@1.64.1:
+    resolution: {integrity: sha512-HCrVhHr5QQuwYoswEUGTb7gGp522yflbv/ST8nF4sFWGuLjQCt17Q/EubpGGSNKYn1tsTCPZxqHhHCfVURu7UA==}
+    engines: {node: '>=20'}
     hasBin: true
 
   pluralize@8.0.0:
@@ -15435,10 +15435,10 @@ snapshots:
       typescript: 5.6.1-rc
       validate-npm-package-name: 5.0.1
 
-  '@axe-core/playwright@4.11.1(playwright-core@1.56.1)':
+  '@axe-core/playwright@4.11.1(playwright-core@1.64.1)':
     dependencies:
       axe-core: 4.11.1
-      playwright-core: 1.56.1
+      playwright-core: 1.64.1
 
   '@babel/code-frame@7.26.2':
     dependencies:
@@ -16412,13 +16412,13 @@ snapshots:
       - supports-color
       - zod
 
-  '@grafana/plugin-e2e@3.12.0(@axe-core/playwright@4.11.1(playwright-core@1.56.1))(@playwright/test@1.56.1)':
+  '@grafana/plugin-e2e@3.12.0(@axe-core/playwright@4.11.1(playwright-core@1.64.1))(@playwright/test@1.64.1)':
     dependencies:
       '@grafana/e2e-selectors': link:packages/grafana-e2e-selectors
-      '@playwright/test': 1.56.1
+      '@playwright/test': 1.64.1
       yaml: 2.9.0
     optionalDependencies:
-      '@axe-core/playwright': 4.11.1(playwright-core@1.56.1)
+      '@axe-core/playwright': 4.11.1(playwright-core@1.64.1)
 
   '@grafana/plugin-ui@0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)':
     dependencies:
@@ -18357,9 +18357,9 @@ snapshots:
 
   '@pkgr/core@0.2.9': {}
 
-  '@playwright/test@1.56.1':
+  '@playwright/test@1.64.1':
     dependencies:
-      playwright: 1.56.1
+      playwright: 1.64.1
 
   '@polka/url@1.0.0-next.24': {}
 
@@ -19343,7 +19343,7 @@ snapshots:
       jest-serializer-html: 7.1.0
       jest-watch-typeahead: 3.0.1(jest@30.3.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))
       nyc: 15.1.0(supports-color@7.2.0)
-      playwright: 1.56.1
+      playwright: 1.64.1
       playwright-core: 1.56.1
       rimraf: 3.0.2
       storybook: 10.6.2(patch_hash=768442e7adf5924c3d9ab1a30e280323e0d8085d995188fa8eb8d22079284367)(@types/react@19.2.18)(prettier@3.6.2)(react@19.2.8)
@@ -23712,9 +23712,6 @@ snapshots:
 
   fs.realpath@1.0.0: {}
 
-  fsevents@2.3.2:
-    optional: true
-
   fsevents@2.3.3:
     optional: true
 
@@ -27053,11 +27050,11 @@ snapshots:
 
   playwright-core@1.56.1: {}
 
-  playwright@1.56.1:
+  playwright-core@1.64.1: {}
+
+  playwright@1.64.1:
     dependencies:
-      playwright-core: 1.56.1
-    optionalDependencies:
-      fsevents: 2.3.2
+      playwright-core: 1.64.1
 
   pluralize@8.0.0: {}
 
