@@ -1,0 +1,149 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {},
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Variable output",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [],
+              "queryOptions": {},
+              "transformations": []
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "12.2.0-pre",
+            "spec": {
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              },
+              "options": {
+                "mode": "markdown",
+                "content": "custom=$custom query=$query textbox=$textbox copy=${custom_copy3}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "AutoGridLayout",
+      "spec": {
+        "columnWidthMode": "standard",
+        "rowHeightMode": "standard",
+        "items": [
+          {
+            "kind": "AutoGridLayoutItem",
+            "spec": {
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "preload": false,
+    "tags": [],
+    "timeSettings": {
+      "timezone": "utc",
+      "from": "2026-09-01T00:00:00.000Z",
+      "to": "2026-09-02T00:00:00.000Z",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Variable controls",
+    "variables": [
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "custom",
+          "label": "Custom",
+          "query": "dev, prod",
+          "current": {
+            "text": "dev",
+            "value": "dev"
+          },
+          "options": [
+            {
+              "text": "dev",
+              "value": "dev"
+            },
+            {
+              "text": "prod",
+              "value": "prod"
+            }
+          ],
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "multi": false,
+          "includeAll": false,
+          "allowCustomValue": false
+        }
+      },
+      {
+        "kind": "QueryVariable",
+        "spec": {
+          "name": "query",
+          "label": "Query",
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana-testdata-datasource",
+            "datasource": {
+              "name": "gdev-testdata"
+            },
+            "spec": {
+              "refId": "StandardVariableQuery",
+              "query": "*"
+            },
+            "version": "v0"
+          },
+          "current": {
+            "text": "A",
+            "value": "A"
+          },
+          "options": [],
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "multi": false,
+          "includeAll": false,
+          "allowCustomValue": false,
+          "refresh": "onDashboardLoad",
+          "regex": "",
+          "sort": "disabled"
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "textbox",
+          "label": "Textbox",
+          "query": "remove-me",
+          "current": {
+            "text": "remove-me",
+            "value": "remove-me"
+          },
+          "hide": "dontHide",
+          "skipUrlSync": false
+        }
+      }
+    ]
+  }
+}

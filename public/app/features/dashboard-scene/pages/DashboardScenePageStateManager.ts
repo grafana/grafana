@@ -70,9 +70,7 @@ import {
   proposesNewDashboard,
 } from '../lifecycle/pendingChangePreview';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
-import { consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { dashboardModesEnabled } from '../scene/dashboardModes';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
 import { resolveLegacyDatasourceNames } from '../serialization/resolveLegacyDatasourceNames';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
@@ -82,6 +80,7 @@ import {
   transformSaveModelToScene,
 } from '../serialization/transformSaveModelToScene';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
+import { registerDashboardPageStateCaches } from '../utils/cache';
 import {
   countPredefinedVariableOrigins,
   getGlobalVariablesMode,
@@ -491,11 +490,6 @@ abstract class DashboardScenePageStateManagerBase<T>
         Boolean(options.uid)
       ) {
         restoreDashboardStateFromLocalStorage(dashboard);
-      }
-
-      const mode = consumeDashboardModeAfterSave(options.uid);
-      if (mode && dashboardModesEnabled()) {
-        dashboard.setDashboardMode(mode, 'restore');
       }
 
       this.setState({ dashboard: dashboard, isLoading: false });
@@ -1797,6 +1791,7 @@ export function getDashboardScenePageStateManager(v?: 'v1' | 'v2') {
 
   if (!managers.unified) {
     managers.unified = new UnifiedDashboardScenePageStateManager({});
+    registerDashboardPageStateCaches(managers.unified);
   }
 
   return managers.unified;

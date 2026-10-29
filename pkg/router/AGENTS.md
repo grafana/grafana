@@ -191,7 +191,7 @@ earlier ones:
 2. **Aggregate targets**, discovered by polling each target's `/apis`. The first target in INI section
    order wins when multiple targets discover the same group.
 3. **Core APIs**, from `core_url` (for example playlists). Same format and backends as managed
-   plugins, without `plugins_group_regex` filtering.
+   plugins, without `plugins_group_patterns` filtering.
 4. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
    authenticate `X-Access-Token`.
 
@@ -215,7 +215,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
 | `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served group with a manifest: the backend's own (`ManifestProvider`), or, as a fallback when it advertises none, the one compiled in for the group. |
 | `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
-| `/apis/discovery/v1alpha2/status` | Live status for debugging, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, the loader's own counters (`loaderCounter`, such as the ST fallback's stack lookup counts by result, `stackLookups`), and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
+| `/apis/discovery/v1alpha2/status` | Live status for debugging, Grafana admins only (403 for anyone else), plus users with the Admin role where `[router] status_open_to_admin = true`, the default in a development environment, built per request (`no-store`): readiness, the reconcile loop (`reconciler`: phase, last run, counts), each served group's source, key, breaker (state, counts, failures until it opens), plugin (when it serves one), caches and watches, plus source status, shadowed groups, the loader's own counters (`loaderCounter`, such as the ST fallback's stack lookup counts by result, `stackLookups`), and the groups whose backend keeps failing to load (`loadFailures`: key, failure count, since, next retry, and whether a last-known-good backend still serves). |
 | `/apis/discovery/v1alpha2/AGENTS.md` | Synthesized markdown index of every served group, for agents. |
 | `/openapi/v3/apis/discovery/v1alpha2` | Synthesized OpenAPI v3 document for the discovery group. |
 | `/apis/discovery/v1alpha2/AGENTS` | The same index rendered as a static HTML page for browsers, with a CSP that allows no scripts. Not in the OpenAPI document. |
@@ -387,7 +387,9 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   `HandleFunc` leaves middleware requests to `next`: in-process clients start before the router.
   `appplugins.registerAPIServer` turns middleware mode on too: app plugin settings are only served
   by the router. Both flags are read once, at startup (`middlewareEnabled`, `settingsEnabled`), so
-  settings are served exactly when middleware mode can reach them. The standalone router is never
+  settings are served exactly when middleware mode can reach them. `appplugins.registerAPIServer` is
+  evaluated through OpenFeature, not `IsEnabledGlobally`, so a remote flag provider can turn it on
+  without a `[feature_toggles]` entry. The standalone router is never
   in middleware mode, whatever the flags, so a flag that also reaches its deployment can't drop its
   cloud sources.
 - **Inside Grafana:** the `Service` always runs, flag or not, so the `/apis/discovery` tree stays
@@ -409,14 +411,19 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | --- | --- |
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
-| `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
-| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
+| `plugins_group_patterns` | Globs that narrow the plugin groups, with the same semantics as `group_patterns`. The deprecated name `plugins_group_regex` is still read, with a warning; setting both is an error. |
+| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_patterns`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
 | `plugins_ca_file`, `plugins_insecure`, `core_ca_file`, `core_insecure` | TLS settings for polling an `https` `plugins_url` or `core_url`, with the same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. They don't apply to the gRPC connections to the plugin backends; see `[router.backend_grpc]`. |
 | `plugins_poll_interval`, `core_poll_interval` | Positive polling duration for `plugins_url` and `core_url`, default `30s`, with the same backoff after a failure as an aggregate target's `poll_interval`. |
 | `st_discovery_url` | A single-tenant instance whose discovery is the default for callers without a stack. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 | `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
 | `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
 | `st_discovery_cache_bytes` | Total size of the discovery documents the ST fallback caches per stack. Default 64 MiB; `0` disables the cache. |
+
+`[router]` has one key of its own: `status_open_to_admin` lets a requester with the Admin role
+read `/apis/discovery/v1alpha2/status`, which otherwise needs a Grafana (server) admin. It
+defaults to `true` in a development environment (`app_mode = development`) and `false` elsewhere.
+It is read once, at startup.
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
 priority order. Repeating a section name merges its keys; it does not create another target.
@@ -432,9 +439,9 @@ longer read. A deployment that still sets them gets no aggregate target, so conf
 | --- | --- |
 | `url` | Target base URL. Unset skips the target. |
 | `audience` | Required when `url` is set, unless `discovery_auth = none`, where setting it is an error. |
-| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. |
+| `discovery_auth` | How the router authenticates its own `/apis` discovery polls. `cap_token` (default) sends an exchanged CAP token in `X-Access-Token`, and `bearer` sends it in `Authorization`. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. |
 | `poll_interval` | Positive discovery polling duration, default `30s`. |
-| `group_regex` | Comma-separated globs that narrow discovered groups. Unset matches all. |
+| `group_patterns` | Comma-separated globs that narrow discovered groups. Unset matches all. The deprecated name `group_regex` is still read, with a warning; setting both is an error. |
 | `ca_file`, `insecure` | Per-target TLS settings. |
 
 ```ini
@@ -442,16 +449,18 @@ longer read. A deployment that still sets them gets no aggregate target, so conf
 url = https://baas.example.com
 audience = apiextensions.k8s.io
 poll_interval = 10m
-group_regex = *.ext.grafana.app
+group_patterns = *.ext.grafana.app
 
 [router.aggregate.cloud_app_platform_apiserver]
 url = https://cap.example.com
 audience = cloudAppPlatformDiscovery
-group_regex = *.ext.grafana.com
+discovery_auth = bearer
+group_patterns = *.ext.grafana.com
 ```
 
-Shared authentication settings remain in `[cloud_router]`. Discovery uses `Authorization` for
-`cloud_app_platform_apiserver` and `X-Access-Token` for other target names.
+Shared authentication settings remain in `[cloud_router]`. A target named
+`cloud_app_platform_apiserver` without `discovery_auth` still gets `bearer`, as it did before that
+value existed. That name check goes once its deployment sets `discovery_auth = bearer`.
 
 Every URL must be absolute; a trailing slash is tolerated.
 

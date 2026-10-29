@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/types"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 // singleTenantStack is what a resolver reports for a stack; the zero value means not found.
@@ -134,6 +135,9 @@ func (st *singleTenantFallback) lookupHost(ctx context.Context, stackID int64) (
 	return target, nil
 }
 
+// singleTenantStackURLFormat is where a stack is reached in the cluster, by its slug.
+const singleTenantStackURLFormat = "http://%s-grafana-http.hosted-grafana.svc.cluster.local.:80"
+
 // maxStackResponseBytes bounds a grafana.com instance response.
 const maxStackResponseBytes = 1 << 20 // 1MB
 
@@ -176,8 +180,12 @@ func newGComURLResolver(gcomBaseURL string, gcomToken string) func(context.Conte
 		if err := decodeLimitedJSON(resp.Body, maxStackResponseBytes, &result); err != nil {
 			return singleTenantStack{}, fmt.Errorf("decoding gcom instance: %w", err)
 		}
+		// The slug becomes part of a host name, so anything else in it could point the router at another host.
+		if errs := validation.IsDNS1123Label(result.Slug); len(errs) > 0 {
+			return singleTenantStack{}, fmt.Errorf("gcom instance %d: slug %q is not a DNS label", stackID, result.Slug)
+		}
 		return singleTenantStack{
-			URL:       fmt.Sprintf("http://%s-grafana-http.%s.svc.cluster.local.:80", result.Slug, "hosted-grafana"),
+			URL:       fmt.Sprintf(singleTenantStackURLFormat, result.Slug),
 			PublicURL: result.URL,
 			Slug:      result.Slug,
 		}, nil

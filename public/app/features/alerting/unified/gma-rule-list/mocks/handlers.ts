@@ -15,6 +15,7 @@ export function ruleSearchUrl(kind: RuleKind) {
 }
 
 interface SearchRequestBody {
+  where?: unknown;
   continue?: string;
 }
 
@@ -37,3 +38,6 @@ export function mockFolderParents(titleByUid: Record<string, string>) {
     })
   );
 }
+
+export { mockK8sAlertRule, getAlertRuleHandler } from '../../mocks/server/handlers/k8s/alertRules.k8s';
+export { getRecordingRuleHandler } from '../../mocks/server/handlers/k8s/recordingrules.k8s';
