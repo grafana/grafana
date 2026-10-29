@@ -20,10 +20,15 @@ describe('ResultItem', () => {
 
   beforeEach(() => {
     originalProvisioning = config.provisioningEnabled;
+    const rect = document.createElement('div').getBoundingClientRect();
+    jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+      return { ...rect, width: Array.from(this.children).some((child) => child.tagName === 'UL') ? 400 : 40 };
+    });
   });
 
   afterEach(() => {
     config.provisioningEnabled = originalProvisioning;
+    jest.restoreAllMocks();
   });
 
   it('renders the action name', () => {
@@ -75,13 +80,13 @@ describe('ResultItem', () => {
     expect(within(tagList).getByText('team-a')).toBeInTheDocument();
   });
 
-  it('shows the first three tags and collapses the rest into a "+ 2" label', () => {
+  it('shows more than three tags when they fit in the row', () => {
     const action = createActionImpl({ tags: ['a', 'b', 'c', 'd', 'e'] });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
     const tagList = screen.getByRole('list', { name: 'Tags' });
-    expect(within(tagList).getByText('c')).toBeInTheDocument();
-    expect(within(tagList).getByText('+ 2')).toBeInTheDocument();
-    expect(within(tagList).queryByText('d')).not.toBeInTheDocument();
+    expect(within(tagList).getAllByRole('listitem')).toHaveLength(5);
+    expect(within(tagList).getByText('e')).toBeInTheDocument();
+    expect(within(tagList).queryByText(/\+/)).not.toBeInTheDocument();
   });
 
   it.each([

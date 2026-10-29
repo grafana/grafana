@@ -4,9 +4,11 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { TagList, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { type ManagerKind } from 'app/features/apiserver/types';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+
+import { ResultTags } from './ResultTags';
 
 export const ResultItem = React.forwardRef(
   (
@@ -44,6 +46,11 @@ export const ResultItem = React.forwardRef(
     const showProvisionedBadge = config.provisioningEnabled && Boolean(managedBy);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const tags = (action as ActionImpl & { tags?: string[] }).tags;
+    const managedBadge = showProvisionedBadge ? (
+      <span className={styles.managedBadge}>
+        <ManagedBadge managerKind={managedBy} />
+      </span>
+    ) : undefined;
 
     let name = action.name;
 
@@ -74,8 +81,7 @@ export const ResultItem = React.forwardRef(
             <span>{name}</span>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
-          {tags && tags.length > 0 && <TagList tags={tags} displayMax={3} className={styles.tagList} />}
-          {showProvisionedBadge && <ManagedBadge managerKind={managedBy} />}
+          {tags && tags.length > 0 ? <ResultTags tags={tags} prefix={managedBadge} /> : managedBadge}
         </div>
       </div>
     );
@@ -89,7 +95,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     row: css({
       padding: theme.spacing(1, 2),
       display: 'flex',
-      alightItems: 'center',
+      alignItems: 'center',
       justifyContent: 'space-between',
       cursor: 'pointer',
       position: 'relative',
@@ -114,11 +120,17 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     actionContainer: css({
       display: 'flex',
       gap: theme.spacing(1),
-      alignItems: 'baseline',
+      alignItems: 'center',
       fontSize: theme.typography.fontSize,
       width: '100%',
+      minWidth: 0,
+      '& > svg': {
+        flexShrink: 0,
+      },
     }),
     textContainer: css({
+      flex: '0 1 auto',
+      minWidth: 0,
       display: 'block',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
@@ -136,19 +148,14 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       ...theme.typography.bodySmall,
       color: theme.colors.text.secondary,
       display: 'block',
-      flexBasis: '20%',
-      flexGrow: 1,
-      flexShrink: 0,
-      maxWidth: 'fit-content',
+      // Give the dashboard name priority when the row runs out of space.
+      flex: '0 10 auto',
+      minWidth: 0,
+      maxWidth: '25%',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
     }),
-    tagList: css({
-      // Keep tags on the row's single line so the virtualized list's row height doesn't change
-      flexWrap: 'nowrap',
-      flexShrink: 0,
-      justifyContent: 'flex-end',
-    }),
+    managedBadge: css({ display: 'flex', flexShrink: 0 }),
   };
 };
