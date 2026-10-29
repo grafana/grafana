@@ -120,4 +120,50 @@ describe('AlertRuleRow', () => {
 
     expect(screen.queryByText(/label/)).not.toBeInTheDocument();
   });
+
+  describe('instance counts', () => {
+    it('shows firing and healthy counts in the meta strip linked to the instances tab', () => {
+      renderRow({ searchHit: baseHit({ totalsFiring: 3, totalsHealthy: 7 }) });
+
+      const link = screen.getByRole('link', { name: /instances/i });
+      expect(link).toHaveAttribute('href', '/alerting/grafana/rule-1/view?tab=instances');
+      expect(link).toHaveTextContent('3 firing');
+      expect(link).toHaveTextContent('7 healthy');
+    });
+
+    it('shows no counts when all totals fields are absent', () => {
+      renderRow({ searchHit: baseHit() });
+
+      expect(screen.queryByRole('link', { name: /instances/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('routing', () => {
+    it('shows "Delivered to {receiver}" for simplified routing', () => {
+      renderRow({ searchHit: baseHit({ notificationType: 'SimplifiedRouting', receiver: 'pagerduty' }) });
+
+      expect(screen.getByText('Delivered to')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'pagerduty' })).toBeInTheDocument();
+    });
+
+    it('shows "Policy: {name}" for a named routing tree', () => {
+      renderRow({ searchHit: baseHit({ notificationType: 'NamedRoutingTree', routingTree: 'infra-critical' }) });
+
+      expect(screen.getByText('Policy: infra-critical')).toBeInTheDocument();
+    });
+
+    it('shows "Default policy" for a routing tree without a name', () => {
+      renderRow({ searchHit: baseHit({ notificationType: 'NamedRoutingTree' }) });
+
+      expect(screen.getByText('Default policy')).toBeInTheDocument();
+    });
+
+    it('shows no routing when notificationType is absent', () => {
+      renderRow({ searchHit: baseHit() });
+
+      expect(screen.queryByText('Delivered to')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Policy:/)).not.toBeInTheDocument();
+      expect(screen.queryByText('Default policy')).not.toBeInTheDocument();
+    });
+  });
 });
