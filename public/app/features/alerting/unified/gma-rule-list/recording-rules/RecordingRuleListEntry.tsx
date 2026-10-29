@@ -1,3 +1,5 @@
+import { useGetRecordingRuleQuery } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+
 import { useFolderPath } from '../folder-browsing/folderLookups';
 
 import { RecordingRuleRow } from './RecordingRuleRow';
@@ -10,6 +12,7 @@ interface RecordingRuleListEntryProps {
 /** Runs the per-rule lookups once so the row stays presentation-only. */
 export function RecordingRuleListEntry({ searchHit }: RecordingRuleListEntryProps) {
   const folderPath = useFolderPath(searchHit.folderUid);
+  const { data: fullRule } = useGetRecordingRuleQuery({ name: searchHit.uid });
 
-  return <RecordingRuleRow searchHit={searchHit} folderPath={folderPath} />;
+  return <RecordingRuleRow searchHit={searchHit} folderPath={folderPath} rule={fullRule} />;
 }
