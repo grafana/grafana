@@ -9,6 +9,7 @@ import (
 	"time"
 	"uuid"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/prometheus/client_golang/prometheus"
 	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
@@ -498,15 +499,11 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 		return deleteRV
 	}
 
-	waitForNextMillisecond := func(rv int64) {
-		millis := rvmanager.RVFromSnowflake(rv) / 1000
-		require.Eventually(t, func() bool {
-			return time.Now().UnixMilli() > millis
-		}, time.Second, time.Millisecond, "clock did not advance past %d ms", millis)
-	}
-
 	beforeRV := writeObject("before", adminFolder, "user:other", false, true)
-	waitForNextMillisecond(beforeRV)
+	beforeMillis := snowflake.ID(beforeRV).Time()
+	require.Eventually(t, func() bool {
+		return time.Now().UnixMilli() > beforeMillis
+	}, time.Second, time.Millisecond, "clock did not advance past %d ms", beforeMillis)
 	wantRV := map[string]int64{
 		"before": beforeRV,
 		"own":    writeObject("own", deniedFolder, user.GetUID(), false, true),
@@ -597,7 +594,7 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 		before := counting.trashBatchReads.Load()
 		checkpointRV := rvmanager.RVFromSnowflake(wantRV["own"])
 		checkpointSnowflake := resource.ToSnowflakeRV(checkpointRV)
-		require.Less(t, rvmanager.RVFromSnowflake(wantRV["before"])/1000, rvmanager.RVFromSnowflake(wantRV["own"])/1000,
+		require.Less(t, beforeMillis, snowflake.ID(wantRV["own"]).Time(),
 			"before and own must be in different milliseconds: a legacy microsecond checkpoint cannot carry the native generator's node bits")
 		require.Less(t, wantRV["before"], checkpointSnowflake)
 		require.LessOrEqual(t, checkpointSnowflake, wantRV["own"])
