@@ -255,6 +255,23 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
     // Let the source layout reset its own local drag state now that the drop decision above
     // has been made (and, for a same-layout drop, already committed via `_commitSameLayoutReorder`).
+    this._endGridItemDrag();
+  }
+
+  /**
+   * Ends the grid item drag in progress without dropping the item anywhere, for layouts that let the
+   * user cancel a drag of their own items
+   */
+  public cancelDraggingSync(): void {
+    if (!this.state.draggingGridItem) {
+      return;
+    }
+    this._clearDropPosition();
+    this._lastDropTarget?.setIsDropTarget?.(false);
+    this._endGridItemDrag();
+  }
+
+  private _endGridItemDrag(): void {
     const dragCallbacks = this._dragCallbacks;
     this._dragCallbacks = null;
     dragCallbacks?.onDragEnd?.();

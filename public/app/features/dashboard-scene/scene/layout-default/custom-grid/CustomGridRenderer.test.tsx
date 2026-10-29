@@ -1,14 +1,17 @@
-import { act } from '@testing-library/react';
+import { act, fireEvent } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
 
+import { DashboardEditActionEvent } from '../../../sidebar/events';
 import { DashboardScene } from '../../DashboardScene';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../../types/DashboardDropTarget';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { DefaultGridLayoutManager } from '../DefaultGridLayoutManager';
 
+import { DRAG_LEFT_VAR, DRAG_TOP_VAR, RESIZE_HEIGHT_VAR, RESIZE_WIDTH_VAR } from './CustomGridController';
 import { CustomGridRenderer } from './CustomGridRenderer';
 import { containerHeightPx, pixelRectFor } from './gridMath';
 
@@ -44,7 +47,7 @@ async function setup(children: DashboardGridItem[], gridState: Partial<SceneGrid
   const manager = new DefaultGridLayoutManager({ grid });
   new DashboardScene({ title: 'Custom grid', $timeRange: new SceneTimeRange({}), body: manager, isEditing: true });
   const controller = manager.getCustomGridController();
-  const { container } = render(<CustomGridRenderer grid={grid} controller={controller} />);
+  const { container } = render(<CustomGridRenderer grid={grid} controller={controller} dropTargetKey="grid-manager" />);
   // Let the panels finish loading their plugin
   await act(async () => {});
   return { grid, controller, container };
@@ -120,6 +123,101 @@ describe('CustomGridRenderer', () => {
     const rect = pixelRectFor(600, { x: 0, y: 8, w: 24, h: 4 });
     expect(getItemElement(container, 'grid-item-2').style.transform).toBe(`translate(${rect.left}px, ${rect.top}px)`);
     expect(grid.state.children[1].state).toMatchObject({ x: 12, y: 0, width: 12 });
+  });
+
+  describe('while a panel is dragged', () => {
+    const originalElementsFromPoint = document.elementsFromPoint;
+    let clientWidth: jest.SpyInstance;
+
+    beforeEach(() => {
+      clientWidth = jest.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(GRID_WIDTH);
+    });
+
+    afterEach(() => {
+      clientWidth.mockRestore();
+      document.elementsFromPoint = originalElementsFromPoint;
+    });
+
+    async function startDrag() {
+      const rendered = await setup([gridItem(1, 0, 0, 12, 8), gridItem(2, 12, 0, 12, 8)], { isDraggable: true });
+      const { controller, grid, container } = rendered;
+      const gridElement = getItemElement(container, 'grid-item-1').parentElement!;
+      document.elementsFromPoint = () => [gridElement];
+      act(() =>
+        controller.startDrag(
+          grid.state.children[1],
+          { button: 0, clientX: 614, clientY: 10, target: null },
+          DRAG_INFO,
+          jest.fn()
+        )
+      );
+      return { ...rendered, gridElement };
+    }
+
+    const DRAG_INFO = { offsetX: 10, offsetY: 10, width: 0, height: 0 };
+
+    it('is a drop target for its own item from the press on', async () => {
+      const { gridElement } = await startDrag();
+
+      expect(gridElement).toHaveAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR, 'grid-manager');
+    });
+
+    it('floats the dragged panel under the pointer and shows where it will land', async () => {
+      const { controller, container, gridElement } = await startDrag();
+
+      act(() => controller.onDrag({ clientX: 30, clientY: 10 + 8 * 38, buttons: 1 }));
+
+      const dragged = getItemElement(container, 'grid-item-2');
+      expect(dragged.style.transform).toBe(
+        `translate(var(${DRAG_LEFT_VAR}, ${pixelRectFor(GRID_WIDTH, { x: 0, y: 8, w: 12, h: 8 }).left}px), var(${DRAG_TOP_VAR}, 304px))`
+      );
+      expect(dragged.style.getPropertyValue(DRAG_LEFT_VAR)).toBe('20px');
+      const placeholder = gridElement.firstElementChild as HTMLElement;
+      expect(placeholder).not.toHaveAttribute('data-griditem-key');
+      expectAt(placeholder, { x: 0, y: 8, w: 12, h: 8 });
+      // The other panels make room live
+      expectAt(getItemElement(container, 'grid-item-1'), { x: 0, y: 0, w: 12, h: 8 });
+    });
+
+    it('renders the committed layout again once the drag ends', async () => {
+      const { controller, container, gridElement } = await startDrag();
+      act(() => controller.onDrag({ clientX: 30, clientY: 10 + 8 * 38, buttons: 1 }));
+
+      act(() => controller.endDrag());
+
+      expectAt(getItemElement(container, 'grid-item-2'), { x: 12, y: 0, w: 12, h: 8 });
+      expect(gridElement).not.toHaveAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR);
+      expect(gridElement.querySelectorAll(':scope > :not([data-griditem-key])')).toHaveLength(0);
+    });
+  });
+
+  it('resizes a panel from its resize handle', async () => {
+    const clientWidth = jest.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(GRID_WIDTH);
+    try {
+      const { container, grid } = await setup([gridItem(1, 0, 0, 12, 8)], { isResizable: true });
+      // Performs edits like the dashboard edit pane does
+      grid.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => payload.perform());
+      const handle = getItemElement(container, 'grid-item-1').querySelector('.scene-resize-handle')!;
+
+      // jsdom has no PointerEvent, and fireEvent.pointerDown would drop the pointer position
+      fireEvent(handle, new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 500, clientY: 300 }));
+      act(() => {
+        window.dispatchEvent(new MouseEvent('pointermove', { clientX: 600, clientY: 376, buttons: 1 }));
+      });
+
+      const resized = getItemElement(container, 'grid-item-1');
+      // The panel follows the pointer (jsdom drops the var() sizes it is rendered with)
+      expect(resized.style.getPropertyValue(RESIZE_WIDTH_VAR)).toBe('696px');
+      expect(resized.style.getPropertyValue(RESIZE_HEIGHT_VAR)).toBe('372px');
+
+      act(() => {
+        window.dispatchEvent(new MouseEvent('pointerup', { clientX: 600, clientY: 376 }));
+      });
+
+      expect(grid.state.children[0].state).toMatchObject({ width: 14, height: 10 });
+    } finally {
+      clientWidth.mockRestore();
+    }
   });
 
   it('shows resize handles only when the grid is resizable', async () => {
