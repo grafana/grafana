@@ -222,7 +222,9 @@ type pagedSearcher struct {
 	resourcepb.ResourceIndexClient
 	byResource map[string][]string
 	err        error
-	requests   []*resourcepb.ResourceSearchRequest
+	// format overrides the result format the server reports; FIELD_VALUES when unset.
+	format   resourcepb.ResourceSearchRequest_ResultFormat
+	requests []*resourcepb.ResourceSearchRequest
 }
 
 func (s *pagedSearcher) Search(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
@@ -238,7 +240,11 @@ func (s *pagedSearcher) Search(_ context.Context, req *resourcepb.ResourceSearch
 	for _, n := range names[start:end] {
 		rows = append(rows, &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: n}})
 	}
-	return &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Rows: rows, TotalHits: total}, nil
+	format := s.format
+	if format == resourcepb.ResourceSearchRequest_UNSPECIFIED {
+		format = resourcepb.ResourceSearchRequest_FIELD_VALUES
+	}
+	return &resourcepb.ResourceSearchResponse{ResultFormat: format, Rows: rows, TotalHits: total}, nil
 }
 
 func TestSearchChildLister(t *testing.T) {
@@ -266,4 +272,16 @@ func TestSearchChildLister(t *testing.T) {
 func TestSearchChildLister_Error(t *testing.T) {
 	_, err := NewSearchChildLister(&pagedSearcher{err: errors.New("index down")}, 0).DirectChildren(context.Background(), testNamespace, "parent")
 	require.ErrorContains(t, err, "index down")
+}
+
+func TestSearchChildLister_RejectsUnexpectedResultFormat(t *testing.T) {
+	// A response in another format must not read as an empty folder, which would release it.
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_ResultFormat(99),
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+	} {
+		s := &pagedSearcher{byResource: map[string][]string{}, format: format}
+		_, err := NewSearchChildLister(s, 0).DirectChildren(context.Background(), testNamespace, "parent")
+		require.ErrorContains(t, err, "unexpected search result format")
+	}
 }

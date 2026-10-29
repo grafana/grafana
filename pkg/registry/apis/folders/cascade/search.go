@@ -78,6 +78,10 @@ func (l *searchChildLister) namesInFolder(ctx context.Context, namespace, folder
 		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
 			return nil, err
 		}
+		// Rows in another format are not decoded here, so they must not read as an empty folder.
+		if f := resp.GetResultFormat(); f != resourcepb.ResourceSearchRequest_FIELD_VALUES {
+			return nil, fmt.Errorf("unexpected search result format %s", f)
+		}
 		rows := resp.GetRows()
 		for _, row := range rows {
 			if row.GetKey() != nil {
