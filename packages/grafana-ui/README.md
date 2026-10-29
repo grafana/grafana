@@ -10,10 +10,10 @@ See [package source](https://github.com/grafana/grafana/tree/main/packages/grafa
 
 ## Installation
 
-`yarn add @grafana/ui`
+`pnpm add @grafana/ui`
 
 `npm install @grafana/ui`
 
 ## Development
 
-For development purposes we suggest using `yarn link` that will create symlink to @grafana/ui lib. To do so navigate to `packages/grafana-ui` and run `YARN_IGNORE_PATH=1 yarn link`. Then, navigate to your project and run `yarn link "@grafana/ui"` to use the linked version of the lib. To unlink follow the same procedure, but use `yarn unlink` instead.
+For local development, link the library from the consuming project with `pnpm link /absolute/path/to/grafana/packages/grafana-ui`. Run `pnpm unlink @grafana/ui` in that project to remove the link.

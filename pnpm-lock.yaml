@@ -301,11 +301,11 @@ importers:
         specifier: workspace:*
         version: link:packages/grafana-runtime
       '@grafana/scenes':
-        specifier: 9.0.0
-        version: 9.0.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
+        specifier: 9.1.0
+        version: 9.1.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
       '@grafana/scenes-react':
-        specifier: 9.0.0
-        version: 9.0.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
+        specifier: 9.1.0
+        version: 9.1.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
       '@grafana/schema':
         specifier: workspace:*
         version: link:packages/grafana-schema
@@ -1355,13 +1355,13 @@ importers:
         specifier: ^10.6.0
         version: 10.6.0
       '@grafana/api-clients':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-api-clients
       '@grafana/data':
         specifier: workspace:*
         version: link:../grafana-data
       '@grafana/i18n':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-i18n
       '@grafana/runtime':
         specifier: workspace:*
@@ -1489,10 +1489,10 @@ importers:
         specifier: 7.0.1
         version: 7.0.1
       '@grafana/i18n':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-i18n
       '@grafana/schema':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-schema
       '@leeoniya/ufuzzy':
         specifier: ^1.0.19
@@ -1714,10 +1714,10 @@ importers:
         specifier: ^0.1.1
         version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/data':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-data
       '@grafana/ui':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-ui
       '@leeoniya/ufuzzy':
         specifier: ^1.0.19
@@ -1881,10 +1881,10 @@ importers:
         specifier: ^11.13.5
         version: 11.13.5(supports-color@7.2.0)
       '@grafana/data':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-data
       '@grafana/e2e-selectors':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-e2e-selectors
       '@grafana/plugin-compat':
         specifier: ^0.5.0
@@ -1893,10 +1893,10 @@ importers:
         specifier: ^0.17.3
         version: 0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@grafana/runtime':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-runtime
       '@grafana/ui':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-ui
       react-dom:
         specifier: '>=19'
@@ -2099,16 +2099,16 @@ importers:
   packages/grafana-runtime:
     dependencies:
       '@grafana/data':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-data
       '@grafana/faro-web-sdk':
         specifier: ^2.12.0
         version: 2.12.1
       '@grafana/schema':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-schema
       '@grafana/ui':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-ui
       '@openfeature/core':
         specifier: ^1.12.0
@@ -2244,13 +2244,13 @@ importers:
         specifier: ^0.1.24
         version: 0.1.34(@emotion/css@11.13.5(supports-color@7.2.0))(@grafana/data@packages+grafana-data)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(react@19.2.8)(rxjs@7.8.2)
       '@grafana/data':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-data
       '@grafana/e2e-selectors':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-e2e-selectors
       '@grafana/i18n':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-i18n
       '@grafana/plugin-ui':
         specifier: ^0.17.3
@@ -2259,7 +2259,7 @@ importers:
         specifier: workspace:*
         version: link:../grafana-runtime
       '@grafana/ui':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-ui
       '@react-awesome-query-builder/ui':
         specifier: ^6.6.15
@@ -2459,22 +2459,22 @@ importers:
         specifier: ^0.27.19
         version: 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@grafana/data':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-data
       '@grafana/e2e-selectors':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-e2e-selectors
       '@grafana/faro-web-sdk':
         specifier: ^2.12.0
         version: 2.12.1
       '@grafana/i18n':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-i18n
       '@grafana/react-data-grid':
         specifier: 7.0.0-beta.60
         version: 7.0.0-beta.60(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@grafana/schema':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../grafana-schema
       '@hello-pangea/dnd':
         specifier: ^18.0.1
@@ -2798,22 +2798,22 @@ importers:
         specifier: 0.1.0
         version: 0.1.0(react@19.2.8)
       '@grafana/data':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-data
       '@grafana/i18n':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-i18n
       '@grafana/plugin-ui':
         specifier: ^0.17.0
         version: 0.17.8(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@grafana/runtime':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-runtime
       '@grafana/schema':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-schema
       '@grafana/ui':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-ui
       '@kusto/monaco-kusto':
         specifier: ^10.0.0
@@ -2853,10 +2853,10 @@ importers:
         version: 7.8.2
     devDependencies:
       '@grafana/e2e-selectors':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-e2e-selectors
       '@grafana/plugin-configs':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-plugin-configs
       '@grafana/test-utils':
         specifier: workspace:*
@@ -2913,16 +2913,16 @@ importers:
         specifier: 11.13.5
         version: 11.13.5(supports-color@7.2.0)
       '@grafana/data':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-data
       '@grafana/runtime':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-runtime
       '@grafana/schema':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-schema
       '@grafana/ui':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-ui
       d3-random:
         specifier: ^3.0.1
@@ -2944,10 +2944,10 @@ importers:
         version: 7.8.2
     devDependencies:
       '@grafana/e2e-selectors':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-e2e-selectors
       '@grafana/plugin-configs':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-plugin-configs
       '@rspack/cli':
         specifier: ^2
@@ -2998,16 +2998,16 @@ importers:
         specifier: 11.13.5
         version: 11.13.5(supports-color@7.2.0)
       '@grafana/data':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-data
       '@grafana/runtime':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-runtime
       '@grafana/schema':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-schema
       '@grafana/ui':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-ui
       '@reduxjs/toolkit':
         specifier: 2.12.0
@@ -3035,7 +3035,7 @@ importers:
         version: 7.8.5
     devDependencies:
       '@grafana/plugin-configs':
-        specifier: 13.3.0-pre
+        specifier: 13.4.0-pre
         version: link:../../../../../packages/grafana-plugin-configs
       '@testing-library/dom':
         specifier: 10.4.1
@@ -4081,8 +4081,8 @@ packages:
   '@grafana/rrweb@2.0.0-grafana.2':
     resolution: {integrity: sha512-sQZj50i0t6YjLL8vY5CogSAXusmWusWhLifGK7RXLluQhlUZLB5Qfz+DUGN17UuJoE/Zrhe0nEF2gA+LqEEUDg==}
 
-  '@grafana/scenes-react@9.0.0':
-    resolution: {integrity: sha512-mSD52oKj8JDAeuaPh0EVco2KfV6LIW2ls2wf5Uc6NSiMxWdlIKDFap/z5J4I3cT8vKTb4a0NMhBEB7FGzWdT+A==}
+  '@grafana/scenes-react@9.1.0':
+    resolution: {integrity: sha512-n1UjkIXkrmamX8RB8NXJ9rG5RwMAXTOTrYvc0GF1EsmDLdplWHDBV1+LgB0WvQqL2Qa986s24Em/55W0ApJVCA==}
     peerDependencies:
       '@grafana/data': '>=12.4'
       '@grafana/e2e-selectors': workspace:*
@@ -4094,8 +4094,8 @@ packages:
       react-router-dom: ^6.28.0
       rxjs: ^7.8.1
 
-  '@grafana/scenes@9.0.0':
-    resolution: {integrity: sha512-bbcvj5U8z1T+6U9r56Llj9Onaqdk7pf4ISyGYS5zS5JRMpoDnc7GQxQS5X1KwnuElxGUfJhf4iMG8izZhhPOPg==}
+  '@grafana/scenes@9.1.0':
+    resolution: {integrity: sha512-O2M5v+LwacCV34rqC54xFB/WkNvWogQSlPvSwOVJKKNg6/QHyDIvQJIYU2BqSvT7Di1sdU0MG0n3QLa6tUB04g==}
     peerDependencies:
       '@grafana/data': '>=12.4'
       '@grafana/e2e-selectors': workspace:*
@@ -16529,14 +16529,14 @@ snapshots:
       base64-arraybuffer: 1.0.2
       mitt: 3.0.1
 
-  '@grafana/scenes-react@9.0.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
+  '@grafana/scenes-react@9.1.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@7.2.0)
       '@grafana/data': link:packages/grafana-data
       '@grafana/e2e-selectors': link:packages/grafana-e2e-selectors
       '@grafana/runtime': link:packages/grafana-runtime
-      '@grafana/scenes': 9.0.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
+      '@grafana/scenes': 9.1.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)
       '@grafana/schema': link:packages/grafana-schema
       '@grafana/ui': link:packages/grafana-ui
       lodash: 4.18.1
@@ -16551,7 +16551,7 @@ snapshots:
       - '@types/react'
       - supports-color
 
-  '@grafana/scenes@9.0.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
+  '@grafana/scenes@9.1.0(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/i18n@packages+grafana-i18n)(@grafana/runtime@packages+grafana-runtime)(@grafana/schema@packages+grafana-schema)(@grafana/ui@packages+grafana-ui)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react-router-dom@5.3.4(react@19.2.8))(react@19.2.8)(rxjs@7.8.2)(supports-color@7.2.0)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@emotion/react': 11.14.0(@types/react@19.2.18)(react@19.2.8)(supports-color@7.2.0)
