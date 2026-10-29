@@ -13,6 +13,8 @@ import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, getLayoutOrchestratorFor } from '../../utils/utils';
+import { ListDropPlaceholder } from '../layouts-shared/list-dnd/ListDropPlaceholder';
+import { useTabsListDrag } from '../layouts-shared/list-dnd/useListDrag';
 import { dashboardCanvasAddButtonHoverStyles, getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 import { useIsMultiSelection } from '../layouts-shared/useIsMultiSelection';
@@ -37,7 +39,8 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
   const isNestedInTab = useMemo(() => model.parent instanceof TabItem, [model.parent]);
   const soloPanelContext = useSoloPanelContext();
   const isMultiSelection = useIsMultiSelection();
-  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext);
+  const listDrag = useTabsListDrag(model, tabs, isEditing);
+  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext && !listDrag.isEnabled);
 
   const { scrollRef, scrollEl, canScrollLeft, canScrollRight, scrollBy } = useHorizontalOverflow();
 
@@ -94,7 +97,14 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
 
   let placeholderComponent: React.ReactNode | null = null;
 
-  const children: React.ReactNode[] = tabs.map((tab) => <TabWrapper tab={tab} manager={model} key={tab.state.key!} />);
+  const children: React.ReactNode[] = listDrag.tabs.map((tab) => (
+    <TabWrapper tab={tab} manager={model} key={tab.state.key!} />
+  ));
+
+  if (listDrag.dropPlaceholder) {
+    const { index, width, height } = listDrag.dropPlaceholder;
+    children.splice(index, 0, <ListDropPlaceholder key="list-drop-placeholder" width={width} height={height} />);
+  }
 
   if (isDropTarget && placeholder) {
     placeholderComponent = (
@@ -107,7 +117,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
     <div className={cx(styles.tabLayoutContainer, { [styles.nestedTabsMargin]: isNestedInTab })}>
       <TabsBar className={styles.tabsBar}>
         <DragDropContext onBeforeDragStart={onBeforeDragStart} onDragEnd={onDragEnd}>
-          <div className={styles.tabsRow} {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }}>
+          <div className={styles.tabsRow} {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: key }} {...listDrag.attributes}>
             <div className={styles.tabsScrollArea}>
               <Droppable droppableId={key!} direction="horizontal">
                 {(dropProvided) => (

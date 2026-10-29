@@ -16,11 +16,10 @@ import {
 import { useStyles2 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
-import { moveElement } from '../actions/element/moveElement';
 import { moveGridItem } from '../actions/layout/moveGridItem';
 import { moveRowToTab } from '../actions/layout/moveRowToTab';
+import { moveTabToTabsLayout } from '../actions/layout/moveTabToTabsLayout';
 import { reorderAutoGridItems } from '../actions/layout/reorderAutoGridItems';
-import { ObjectsReorderedOnCanvasEvent, DashboardStateChangedEvent } from '../sidebar/events';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
@@ -66,7 +65,7 @@ interface DashboardLayoutOrchestratorState extends SceneObjectState {
     offsetX: number;
     offsetY: number;
     label: string;
-    type: 'panel' | 'row';
+    type: 'panel' | 'row' | 'tab';
   };
 }
 
@@ -96,7 +95,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   /** Cached label for the preview */
   private _previewLabel = '';
   /** Cached type for the preview */
-  private _previewType: 'panel' | 'row' = 'panel';
+  private _previewType: 'panel' | 'row' | 'tab' = 'panel';
   /** Cached dimensions for the preview */
   private _previewWidth = 0;
   private _previewHeight = 0;
@@ -127,7 +126,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _externalDragOverTarget: DashboardDropTarget | null = null;
   /** Whether the new-panel drag in progress adds a new panel, which drop targets may preview (pasted panels are not) */
   private _isNewPanelDrag = false;
-  /** Row drag on the unified drag and drop engine */
+  /** Row or tab drag on the unified drag and drop engine */
   private _listDrag: ListDragSession | null = null;
   private _listDragListeners = new Set<() => void>();
 
@@ -177,8 +176,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   /**
-   * Starts dragging a row on the unified drag and drop engine, from a press on its header. The session
-   * does the drag; the orchestrator hit-tests for it and opens tabs hovered on the way.
+   * Starts dragging a row or a tab on the unified drag and drop engine, from a press on its header. The
+   * session does the drag; the orchestrator hit-tests for it and, for rows, opens tabs hovered on the way.
    */
   public startListDrag(evt: ReactPointerEvent, item: ListItem): void {
     if (this._listDrag || this.isDragging()) {
@@ -188,10 +187,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const findDropTarget = createListDropTargetFinder(item);
     this._listDrag = ListDragSession.start(evt, item, {
       getDropTarget: findDropTarget,
-      onDragMove: (x, y) => this._checkTabHover(x, y),
-      showPreview: ({ label, x, y, width, height, offsetX, offsetY }) => {
+      // A tab is moved by hovering other tabs, which must not open them
+      onDragMove: item instanceof TabItem ? () => {} : (x, y) => this._checkTabHover(x, y),
+      showPreview: ({ type, label, x, y, width, height, offsetX, offsetY }) => {
         this._previewLabel = label;
-        this._previewType = 'row';
+        this._previewType = type;
         this._previewWidth = width;
         this._previewHeight = height;
         this._dragOffsetX = offsetX;
@@ -514,7 +514,12 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
       const realDestinationIndex = destinationManager.mapTabInsertIndex(targetIndex);
       // When moving a tab into a new tab group, make it the active tab.
-      this._moveTabBetweenManagers(this._tabDragState.tab, sourceManager, destinationManager, realDestinationIndex);
+      moveTabToTabsLayout({
+        tab: this._tabDragState.tab,
+        source: sourceManager,
+        destination: destinationManager,
+        index: realDestinationIndex,
+      });
       this.cleanUpTabDrag();
     }
   }
@@ -529,76 +534,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private cleanUpTabDrag() {
     this.cleanUpTabDropTarget();
     this._tabDragState = undefined;
-  }
-
-  private _moveTabBetweenManagers(
-    tab: TabItem,
-    source: TabsLayoutManager,
-    destination: TabsLayoutManager,
-    destinationIndex: number
-  ) {
-    const prevSourceTabs = [...source.state.tabs];
-    const prevSourceSlug = source.state.currentTabSlug;
-    const prevDestinationTabs = [...destination.state.tabs];
-    const prevDestinationSlug = destination.state.currentTabSlug;
-
-    moveElement({
-      meta: { actionId: 'tab.move' },
-      source,
-      movedObject: tab,
-      perform: () => {
-        const sourceTabs = [...prevSourceTabs];
-        const destTabs = [...prevDestinationTabs];
-
-        const fromIndex = sourceTabs.findIndex((t) => t === tab);
-        if (fromIndex < 0) {
-          return;
-        }
-
-        sourceTabs.splice(fromIndex, 1);
-
-        const clampedDestinationIndex = Math.max(0, Math.min(destinationIndex, destTabs.length));
-        destTabs.splice(clampedDestinationIndex, 0, tab);
-
-        // If the moved tab was active in source, pick a sensible new active tab.
-        let nextSourceSlug = prevSourceSlug;
-        if (prevSourceSlug === tab.getSlug()) {
-          const newIndex = fromIndex > 0 ? fromIndex - 1 : 0;
-          nextSourceSlug = sourceTabs[newIndex]?.getSlug();
-        }
-
-        // Important: avoid briefly parenting the same SceneObject in two places.
-        // Remove from source first, then clear parent, then add to destination.
-        source.setState({ tabs: sourceTabs, currentTabSlug: nextSourceSlug });
-        tab.clearParent();
-        destination.setState({
-          tabs: destTabs,
-          currentTabSlug: tab.getSlug(),
-        });
-
-        // Make sure outline is refreshed in DashboardSidebar
-        source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
-        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
-
-        // Make sure repeated rows are refreshed - triggers performRowRepeats in RowItemRepeater
-        source.publishEvent(new DashboardStateChangedEvent({ source }), true);
-        destination.publishEvent(new DashboardStateChangedEvent({ source: destination }), true);
-      },
-      undo: () => {
-        // Reverse order for the same parenting reason as in perform().
-        destination.setState({ tabs: prevDestinationTabs, currentTabSlug: prevDestinationSlug });
-        tab.clearParent();
-        source.setState({ tabs: prevSourceTabs, currentTabSlug: prevSourceSlug });
-
-        // Make sure outline is refreshed in DashboardSidebar
-        source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
-        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
-
-        // Make sure repeated rows are refreshed - triggers performRowRepeats in RowItemRepeater
-        source.publishEvent(new DashboardStateChangedEvent({ source }), true);
-        destination.publishEvent(new DashboardStateChangedEvent({ source: destination }), true);
-      },
-    });
   }
 
   private _onRowDragPointerMove = (evt: PointerEvent): void => {

@@ -15,7 +15,7 @@ import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../../types/DashboardDropTarget'
 
 import { type ListDragHost, ListDragSession } from './ListDragSession';
 import { LIST_DROP_KEY_ATTR, LIST_ITEM_KEY_ATTR, TAB_ACTIVATION_KEY_ATTR } from './attributes';
-import { createListDropTargetFinder } from './listDnd';
+import { createListDropTargetFinder, type ListItem } from './listDnd';
 
 setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
@@ -369,6 +369,197 @@ describe('ListDragSession', () => {
     });
   });
 
+  describe('tabs', () => {
+    it('reorders the tabs of a tab bar live along it and commits the reorder as one undoable action', () => {
+      const { outer, outerA, sidebar } = setupTabs();
+      const barEl = renderTabBar(outer);
+      const { session, host } = startDrag(outerA);
+
+      elementsUnderPointer = [barEl];
+      moveTo(30, 10);
+      expect(session.getState()).toMatchObject({ itemKey: outerA.state.key, sourceListKey: outer.state.key });
+      expect(describeTarget(session)).toEqual({ kind: 'list', key: outer.state.key, index: 0 });
+      expect(host.showPreview).toHaveBeenCalledWith(expect.objectContaining({ type: 'tab', label: 'Outer A' }));
+
+      // Past the middle of the last other tab (B spans 100-200, C 200-300)
+      moveTo(260, 10);
+      expect(describeTarget(session)).toEqual({ kind: 'list', key: outer.state.key, index: 2 });
+
+      release(260, 10);
+      expect(tabTitles(outer)).toEqual(['Outer B', 'Outer C', 'Outer A']);
+      expect(sidebar.state.undoStack).toHaveLength(1);
+
+      sidebar.undoAction();
+      expect(tabTitles(outer)).toEqual(['Outer A', 'Outer B', 'Outer C']);
+      sidebar.redoAction();
+      expect(tabTitles(outer)).toEqual(['Outer B', 'Outer C', 'Outer A']);
+    });
+
+    it('does not add an undo step when the tab is dropped where it was', () => {
+      const { outer, outerB, sidebar } = setupTabs();
+      elementsUnderPointer = [renderTabBar(outer)];
+      startDrag(outerB);
+
+      moveTo(150, 10);
+      release(150, 10);
+
+      expect(tabTitles(outer)).toEqual(['Outer A', 'Outer B', 'Outer C']);
+      expect(sidebar.state.undoStack).toHaveLength(0);
+    });
+
+    it('moves a nested tab out to the outer tab bar at the hovered position, where it opens', () => {
+      const { outer, nested, inner2, sidebar } = setupTabs();
+      renderTabBar(nested);
+      const outerEl = renderTabBar(outer);
+      const { session } = startDrag(inner2);
+
+      elementsUnderPointer = [outerEl];
+      moveTo(110, 10);
+      expect(describeTarget(session)).toEqual({ kind: 'list', key: outer.state.key, index: 1 });
+
+      release(110, 10);
+      const expectMoved = () => {
+        expect(tabTitles(outer)).toEqual(['Outer A', 'Inner 2', 'Outer B', 'Outer C']);
+        expect(tabTitles(nested)).toEqual(['Inner 1']);
+        expect(inner2.parent).toBe(outer);
+        expect(outer.getCurrentTab()).toBe(inner2);
+      };
+      expectMoved();
+      expect(sidebar.state.undoStack).toHaveLength(1);
+
+      sidebar.undoAction();
+      expect(tabTitles(outer)).toEqual(['Outer A', 'Outer B', 'Outer C']);
+      expect(tabTitles(nested)).toEqual(['Inner 1', 'Inner 2']);
+      expect(inner2.parent).toBe(nested);
+      sidebar.redoAction();
+      expectMoved();
+    });
+
+    it('does not drop a tab into the tab bar nested inside it', () => {
+      const { outer, nested, outerA, sidebar } = setupTabs();
+      renderTabBar(outer);
+      const { session } = startDrag(outerA);
+
+      // The nested tab bar sits in the content of the dragged tab, outside of the outer tab bar
+      elementsUnderPointer = [renderTabBar(nested), tabContent(outerA)];
+      moveTo(110, 10);
+      expect(session.getState()?.target).toBeNull();
+      release(110, 10);
+
+      expect(tabTitles(outer)).toEqual(['Outer A', 'Outer B', 'Outer C']);
+      expect(tabTitles(nested)).toEqual(['Inner 1', 'Inner 2']);
+      expect(outerA.parent).toBe(outer);
+      expect(sidebar.state.undoStack).toHaveLength(0);
+    });
+
+    it('does not drop a tab where its nested groups would go past the maximum depth', () => {
+      // A tab bar three groups deep: a tab holding one more group fits, one holding two does not
+      const deepBar = new TabsLayoutManager({ tabs: [new TabItem({ title: 'Deep' })] });
+      const level2 = new RowsLayoutManager({ rows: [new RowItem({ title: 'Level 2', layout: deepBar })] });
+      const twoLevels = new TabItem({
+        title: 'Two levels',
+        layout: new RowsLayoutManager({
+          rows: [new RowItem({ layout: new RowsLayoutManager({ rows: [new RowItem()] }) })],
+        }),
+      });
+      const oneLevel = new TabItem({ title: 'One level', layout: new RowsLayoutManager({ rows: [new RowItem()] }) });
+      const outer = new TabsLayoutManager({
+        tabs: [twoLevels, oneLevel, new TabItem({ title: 'Holder', layout: level2 })],
+      });
+      activate(new DashboardScene({ isEditing: true, body: outer }));
+      elementsUnderPointer = [renderTabBar(deepBar)];
+
+      const first = startDrag(twoLevels).session;
+      moveTo(30, 10);
+      expect(first.getState()?.target).toBeNull();
+      first.cancel();
+
+      const second = startDrag(oneLevel).session;
+      moveTo(30, 10);
+      expect(describeTarget(second)).toEqual({ kind: 'list', key: deepBar.state.key, index: 0 });
+      second.cancel();
+    });
+
+    it('does not drop a tab on a rows layout or on the header of another tab', () => {
+      const rows = new RowsLayoutManager({ rows: [new RowItem({ title: 'Row' })] });
+      const { outer, outerB, outerC, sidebar } = setupTabs({ outerCLayout: rows });
+      const { session } = startDrag(outerB);
+
+      elementsUnderPointer = [tabHeader(outerC), renderList(rows)];
+      moveTo(30, 10);
+      expect(session.getState()?.target).toBeNull();
+      expect(outerC.state.isDropTarget).toBeFalsy();
+      release(30, 10);
+
+      expect(tabTitles(outer)).toEqual(['Outer A', 'Outer B', 'Outer C']);
+      expect(titles(rows)).toEqual(['Row']);
+      expect(sidebar.state.undoStack).toHaveLength(0);
+    });
+
+    it('cancels on Escape over another tab bar without changing anything', () => {
+      const { outer, nested, outerC, sidebar } = setupTabs();
+      elementsUnderPointer = [renderTabBar(nested)];
+      const { session, host } = startDrag(outerC);
+      moveTo(30, 10);
+      expect(describeTarget(session)).toEqual({ kind: 'list', key: nested.state.key, index: 0 });
+
+      const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+      window.dispatchEvent(escape);
+      expect(escape.defaultPrevented).toBe(true);
+      expect(session.getState()).toBeNull();
+      expect(host.onEnd).toHaveBeenCalledTimes(1);
+
+      release(30, 10);
+      expect(tabTitles(outer)).toEqual(['Outer A', 'Outer B', 'Outer C']);
+      expect(tabTitles(nested)).toEqual(['Inner 1', 'Inner 2']);
+      expect(sidebar.state.undoStack).toHaveLength(0);
+    });
+
+    it('swallows the click of the release, which would open the dragged tab', () => {
+      const { outer, outerA } = setupTabs();
+      elementsUnderPointer = [renderTabBar(outer)];
+      startDrag(outerA);
+      moveTo(260, 10);
+      release(260, 10);
+
+      const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+      document.body.dispatchEvent(click);
+      expect(click.defaultPrevented).toBe(true);
+    });
+
+    it('starts on a press on the tab header link, but not on other controls in it', () => {
+      const { outerA } = setupTabs();
+      const link = document.createElement('a');
+      link.setAttribute('href', '#');
+      link.setAttribute('role', 'tab');
+      const button = document.createElement('button');
+
+      const session = ListDragSession.start(
+        { button: 0, clientX: 0, clientY: 0, target: link },
+        outerA,
+        makeHost(outerA)
+      );
+      expect(session).not.toBeNull();
+      session?.cancel();
+      expect(
+        ListDragSession.start({ button: 0, clientX: 0, clientY: 0, target: button }, outerA, makeHost(outerA))
+      ).toBeNull();
+    });
+  });
+
+  function setupTabs({ outerCLayout }: { outerCLayout?: RowsLayoutManager } = {}) {
+    const inner1 = new TabItem({ title: 'Inner 1' });
+    const inner2 = new TabItem({ title: 'Inner 2' });
+    const nested = new TabsLayoutManager({ tabs: [inner1, inner2] });
+    const outerA = new TabItem({ title: 'Outer A', layout: nested });
+    const outerB = new TabItem({ title: 'Outer B' });
+    const outerC = new TabItem({ title: 'Outer C', ...(outerCLayout && { layout: outerCLayout }) });
+    const outer = new TabsLayoutManager({ tabs: [outerA, outerB, outerC], currentTabSlug: outerA.getSlug() });
+    const dashboard = new DashboardScene({ isEditing: true, body: outer });
+    activate(dashboard);
+    return { outer, nested, outerA, outerB, outerC, inner1, inner2, sidebar: dashboard.state.sidebar };
+  }
+
   function setup({ rowALayout, rowCLayout }: { rowALayout?: RowsLayoutManager; rowCLayout?: RowsLayoutManager } = {}) {
     const rowA = new RowItem({ title: 'Row A', ...(rowALayout && { layout: rowALayout }) });
     const rowB = new RowItem({ title: 'Row B' });
@@ -405,9 +596,9 @@ describe('ListDragSession', () => {
     deactivate = activateFullSceneTree(dashboard);
   }
 
-  function startDrag(row: RowItem) {
-    const host = makeHost(row);
-    const session = ListDragSession.start({ button: 0, clientX: 10, clientY: 10, target: null }, row, host);
+  function startDrag(item: ListItem) {
+    const host = makeHost(item);
+    const session = ListDragSession.start({ button: 0, clientX: 10, clientY: 10, target: null }, item, host);
     if (!session) {
       throw new Error('The drag did not start');
     }
@@ -415,8 +606,8 @@ describe('ListDragSession', () => {
   }
 });
 
-function makeHost(row: RowItem): jest.Mocked<ListDragHost> {
-  const findDropTarget = createListDropTargetFinder(row);
+function makeHost(item: ListItem): jest.Mocked<ListDragHost> {
+  const findDropTarget = createListDropTargetFinder(item);
   return {
     getDropTarget: jest.fn(findDropTarget),
     onDragMove: jest.fn(),
@@ -465,9 +656,29 @@ function renderList(list: RowsLayoutManager): HTMLElement {
   return listEl;
 }
 
-function rect(top: number, height: number): DOMRect {
-  const box = { x: 0, y: top, left: 0, top, width: 1000, height, right: 1000, bottom: top + height };
+function rect(top: number, height: number, left = 0, width = 1000): DOMRect {
+  const box = { x: left, y: top, left, top, width, height, right: left + width, bottom: top + height };
   return { ...box, toJSON: () => box };
+}
+
+const TAB_WIDTH = 100;
+
+/** A tab bar element with one element per tab, side by side from the left of the page */
+function renderTabBar(bar: TabsLayoutManager): HTMLElement {
+  const barEl = document.createElement('div');
+  barEl.setAttribute(LIST_DROP_KEY_ATTR, bar.state.key!);
+  bar.state.tabs.forEach((tab, index) => {
+    const tabEl = document.createElement('div');
+    tabEl.setAttribute(LIST_ITEM_KEY_ATTR, tab.state.key!);
+    tabEl.getBoundingClientRect = () => rect(0, 32, index * TAB_WIDTH, TAB_WIDTH);
+    barEl.appendChild(tabEl);
+  });
+  document.body.appendChild(barEl);
+  return barEl;
+}
+
+function tabTitles(bar: TabsLayoutManager) {
+  return bar.state.tabs.map((tab) => tab.state.title);
 }
 
 function tabHeader(tab: TabItem): HTMLElement {
