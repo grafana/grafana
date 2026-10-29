@@ -2276,6 +2276,21 @@ This setting should be expressed as a duration. Examples: 6h (hours), 10d (days)
 
 Configures max number of API annotations that Grafana keeps. Default value is 0, which keeps all API annotations.
 
+### `[annotations.app_platform]`
+
+Configures the new annotations API, which is served at `/apis/annotation.grafana.app`. For more information, refer to the [Annotations HTTP API](../../developer-resources/api-reference/http-api/annotations/).
+
+#### `enabled`
+
+Set to `true` to enable the new annotations API. The default is `false`.
+
+#### `max_age`
+
+Rejects new annotations with a `time` older than this duration. The default is 0, which disables the check.
+This setting should be expressed as a duration. Examples: 24h (hours), 720h (30 days).
+
+This setting doesn't delete stored annotations. To configure how long Grafana stores annotations, refer to the existing `[annotations.dashboard]` and `[annotations.api]` settings.
+
 <hr>
 
 ### `[explore]`
