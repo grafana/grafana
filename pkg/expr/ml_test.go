@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/expr/ml"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -217,4 +218,36 @@ func TestMLNodeExecute(t *testing.T) {
 		require.IsType(t, err, MakeQueryError("A", "", expectedError{}))
 		require.ErrorIs(t, err, cmd.Error)
 	})
+}
+
+type panickingMLCommand struct {
+	ml.FakeCommand
+}
+
+func (c *panickingMLCommand) Execute(time.Time, time.Time, func(string, string, []byte) (response.Response, error)) (*backend.QueryDataResponse, error) {
+	panic("runtime error: invalid memory address or nil pointer dereference")
+}
+
+func TestMLNodeExecutePanicCountsAsFailure(t *testing.T) {
+	s := &Service{
+		pCtxProvider: &fakePluginContextProvider{
+			result: map[string]*backend.AppInstanceSettings{
+				mlPluginID: {JSONData: json.RawMessage(`{ "initialized": true }`)},
+			},
+		},
+		metrics: metrics.NewSSEMetrics(nil),
+	}
+	node := &MLNode{
+		baseNode:  baseNode{refID: "A"},
+		command:   &panickingMLCommand{},
+		TimeRange: RelativeTimeRange{From: -time.Hour},
+		request:   &Request{User: &user.SignedInUser{UserID: 1}},
+	}
+
+	_, err := node.Execute(t.Context(), time.Now(), nil, s)
+	require.ErrorContains(t, err, "[A]")
+	require.ErrorContains(t, err, "panic")
+
+	require.Equal(t, 1.0, counterVal(t, s.metrics.DSRequests, "failure", "false", mlPluginID))
+	require.Equal(t, 0.0, counterVal(t, s.metrics.DSRequests, "success", "false", mlPluginID))
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/expr/sql"
+	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -106,11 +107,10 @@ func (gr *SQLCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results if successful.
 // If there is an error, it will set Results.Error and return (the return from the func should never error).
-func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (mathexp.Results, error) {
+func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (rsp mathexp.Results, err error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteSQL")
 	start := time.Now()
 	tc := int64(0)
-	rsp := mathexp.Results{}
 	errorType := "none"
 
 	defer func() {
@@ -178,6 +178,14 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 			}
 		} else {
 			obsCells.Observe(float64(tc))
+		}
+	}()
+
+	// Runs before the metrics defer above, so a panic counts as an error.
+	defer func() {
+		if p := recover(); p != nil {
+			gr.logger.Error("Panic while executing SQL command", "error", p, "stack", glog.Stack(1))
+			rsp = mathexp.Results{Error: makePanicError(gr.refID, p)}
 		}
 	}()
 
