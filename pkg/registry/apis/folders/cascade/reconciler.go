@@ -67,6 +67,11 @@ type ChildDeleter interface {
 	Delete(ctx context.Context, namespace, parentUID string, child Child) (DeleteOutcome, error)
 }
 
+// FolderGetter reads a folder's current state. It returns a NotFound error once the folder is gone.
+type FolderGetter interface {
+	Get(ctx context.Context, namespace, name string) (*foldersv1.Folder, error)
+}
+
 // FolderWriter persists cascade progress and releases the folder.
 type FolderWriter interface {
 	// UpdateCascadeStatus writes status.cascadeDelete through the status subresource.
@@ -76,9 +81,19 @@ type FolderWriter interface {
 	RemoveFinalizer(ctx context.Context, namespace, name string, finalizers []string) error
 }
 
-// Result tells the caller whether the folder needs another reconcile.
+// ErrChildrenStillListed reports a pass that found only children that are already gone. That
+// usually means the search index has not caught up with deletes or moves yet, so the folder must be
+// retried with backoff: requeueing it at once would query search in a tight loop until it does.
+var ErrChildrenStillListed = errors.New("children already deleted are still listed")
+
+// Result tells the caller what to do with the folder. It is only meaningful when the pass returned no
+// error; a failed pass should be retried with backoff whatever it reports.
 type Result struct {
+	// Requeue means the pass issued deletes, so the folder has more work right away.
 	Requeue bool
+	// Released means the pass removed the cascade finalizer, so the folder's parent may now be able
+	// to finish and should be woken.
+	Released bool
 }
 
 // Reconciler advances the cascade delete of one folder per call.
@@ -94,6 +109,9 @@ type Reconciler struct {
 // status.cascadeDelete. Once f has no direct children left it marks the cascade completed and
 // removes the cascade finalizer. It does nothing unless f is terminating and still carries the
 // finalizer. A returned error means the pass partly failed and should be retried with backoff.
+//
+// A pass that issues nothing because every child is already being deleted returns an empty Result:
+// those subfolders run their own cascade, and releasing one wakes f, so f must not requeue itself.
 func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result, error) {
 	if f.DeletionTimestamp == nil || !slices.Contains(f.Finalizers, foldersv1.CascadeDeleteFinalizer) {
 		return Result{}, nil
@@ -112,7 +130,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 		err = fmt.Errorf("list children: %w", err)
 		status.State = foldersv1.FolderCascadeDeleteStatusStateFailed
 		status.Errors = []string{err.Error()}
-		return Result{Requeue: true}, errors.Join(err, r.writeStatus(ctx, f, prior, status))
+		return Result{}, errors.Join(err, r.writeStatus(ctx, f, prior, status))
 	}
 	if status.Total == nil {
 		total := int64(len(children))
@@ -129,17 +147,17 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 			status.Finished = &now
 		}
 		if err := r.writeStatus(ctx, f, prior, status); err != nil {
-			return Result{Requeue: true}, err
+			return Result{}, err
 		}
 		if err := r.Folders.RemoveFinalizer(ctx, f.Namespace, f.Name, f.Finalizers); err != nil {
-			return Result{Requeue: true}, fmt.Errorf("remove finalizer: %w", err)
+			return Result{}, fmt.Errorf("remove finalizer: %w", err)
 		}
 		logger.Info("Folder cascade delete completed")
-		return Result{}, nil
+		return Result{Released: true}, nil
 	}
 
 	remaining := int64(len(children))
-	issued := 0
+	issued, gone := 0, 0
 	var failures []error
 	for _, c := range children {
 		if issued >= r.batchSize() {
@@ -159,6 +177,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 			// Still a child until its finalizers clear.
 			issued++
 		case DeleteOutcomeGone:
+			gone++
 			remaining--
 		case DeleteOutcomeTerminating:
 			// Already being deleted: costs no batch slot, so a page of slow subfolders cannot starve
@@ -171,12 +190,27 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 	status.Errors = nil
 	if len(failures) > 0 {
 		status.State = foldersv1.FolderCascadeDeleteStatusStateFailed
-		for _, e := range failures[:min(len(failures), maxStatusErrors)] {
-			status.Errors = append(status.Errors, e.Error())
+		// Sorted before capping: search returns children in no fixed order, and a status that changed
+		// only by ordering would still be written, and its event would requeue the folder past its backoff.
+		msgs := make([]string, 0, len(failures))
+		for _, e := range failures {
+			msgs = append(msgs, e.Error())
 		}
+		slices.Sort(msgs)
+		status.Errors = msgs[:min(len(msgs), maxStatusErrors)]
 		logger.Warn("Folder cascade delete pass had failures", "failed", len(failures), "remaining", remaining)
 	}
-	return Result{Requeue: true}, errors.Join(errors.Join(failures...), r.writeStatus(ctx, f, prior, status))
+	writeErr := r.writeStatus(ctx, f, prior, status)
+	switch {
+	case issued > 0:
+		return Result{Requeue: true}, errors.Join(errors.Join(failures...), writeErr)
+	case writeErr != nil:
+		return Result{}, writeErr
+	case gone > 0:
+		return Result{}, ErrChildrenStillListed
+	default:
+		return Result{}, writeErr
+	}
 }
 
 // writeStatus skips no-op writes: every status write is a watch event, and a folder that is only
