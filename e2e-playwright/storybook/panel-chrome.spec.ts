@@ -7,7 +7,7 @@ test.use({ grafanaVersion: version });
 
 test('hover-only header actions use space only while hovered or keyboard focused', async ({ page }) => {
   await page.goto('/iframe.html?id=plugins-panelchrome--group-by-header&viewMode=story');
-  const panels = page.getByTestId(selectors.components.Panels.Panel.title('Panel title'));
+  const panels = page.getByRole('region', { name: /^Panel title \d+$/ });
   const toggle = page.getByRole('button', { name: 'Toggle grouping' });
   const titleWidths = () =>
     panels.getByRole('heading').evaluateAll((titles) => titles.map((title) => title.getBoundingClientRect().width));
@@ -51,7 +51,7 @@ test('hover-only header actions use space only while hovered or keyboard focused
 
 test('hover actions stay in the header and leave descriptions clickable', async ({ page }) => {
   await page.goto('/iframe.html?id=plugins-panelchrome--group-by-header&viewMode=story');
-  const panels = page.getByTestId(selectors.components.Panels.Panel.title('Panel title'));
+  const panels = page.getByRole('region', { name: /^Panel title \d+$/ });
   const tooltip = page.getByRole('tooltip', { name: 'Panel description', exact: true });
 
   await expect(panels).toHaveCount(3);
@@ -82,4 +82,22 @@ test('normal header actions stay visible and hover headers retain their actions'
   const hoverPanel = page.getByTestId(selectors.components.Panels.Panel.title('With link in hover header'));
   await hoverPanel.focus();
   await expect(hoverPanel.getByRole('link', { name: 'Error details' })).toBeVisible();
+});
+
+test('an open header popover keeps its anchor while its search input is used', async ({ page }) => {
+  await page.goto('/iframe.html?id=plugins-panelchrome--group-by-header&viewMode=story');
+  const panel = page.getByTestId(selectors.components.Panels.Panel.title('Panel title 210'));
+  const groupBy = panel.getByRole('button', { name: 'Group by', exact: true });
+  await panel.hover();
+  await groupBy.click();
+  const anchor = await groupBy.boundingBox();
+  const search = page.getByRole('textbox', { name: 'Search group keys' });
+  await search.click();
+  await search.fill('cluster');
+  await expect(search).toHaveValue('cluster');
+  await expect(groupBy).toBeVisible();
+  expect(await groupBy.boundingBox()).toEqual(anchor);
+  await page.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(search).toBeHidden();
+  await expect(groupBy).toBeHidden();
 });

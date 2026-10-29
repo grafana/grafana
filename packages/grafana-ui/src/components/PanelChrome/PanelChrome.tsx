@@ -600,6 +600,12 @@ const getStyles = (theme: GrafanaTheme2) => {
         display: 'none',
       },
 
+      'div.show-on-hover:has([aria-expanded="true"])': {
+        display: 'flex',
+        opacity: '1',
+        visibility: 'visible',
+      },
+
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
