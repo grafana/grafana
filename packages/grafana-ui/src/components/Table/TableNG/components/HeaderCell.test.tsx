@@ -653,33 +653,49 @@ describe('HeaderCell', () => {
       expect(screen.getByLabelText(filterIconLabel)).toHaveAttribute('aria-expanded', 'false');
     });
 
-    it('moves focus to the column menu button when clearing the filter removes the filter icon', async () => {
-      const field = filterableField();
-      const data = { fields: [field], length: 3 };
-      const FilteredHeader = () => {
-        // Keyed on applyFilter, which stays stable across filter changes, so clearing is not undone.
-        const applyFilter = useTableFilters()?.applyFilter;
-        useEffect(() => {
-          applyFilter?.(field, { id: 'inSet', options: { mode: 'display', values: ['a'] } });
-        }, [applyFilter]);
-        return <HeaderCell {...baseProps} field={field} tableRefreshEnabled />;
-      };
-      const user = userEvent.setup();
-      render(
-        <TableFilterProvider props={{ data, width: 300, height: 200 }}>
-          <FilteredHeader />
-        </TableFilterProvider>
-      );
+    it.each([
+      { reportedAs: 'the body', lostFocus: () => document.body },
+      { reportedAs: 'the document element', lostFocus: () => document.documentElement },
+      { reportedAs: 'null', lostFocus: () => null },
+      { reportedAs: 'the removed filter icon', lostFocus: (filterIcon: HTMLElement) => filterIcon },
+    ])(
+      'moves focus to the column menu button when clearing the filter removes the filter icon (lost focus reported as $reportedAs)',
+      async ({ lostFocus }) => {
+        const field = filterableField();
+        const data = { fields: [field], length: 3 };
+        const FilteredHeader = () => {
+          // Keyed on applyFilter, which stays stable across filter changes, so clearing is not undone.
+          const applyFilter = useTableFilters()?.applyFilter;
+          useEffect(() => {
+            applyFilter?.(field, { id: 'inSet', options: { mode: 'display', values: ['a'] } });
+          }, [applyFilter]);
+          return <HeaderCell {...baseProps} field={field} tableRefreshEnabled />;
+        };
+        const user = userEvent.setup();
+        render(
+          <TableFilterProvider props={{ data, width: 300, height: 200 }}>
+            <FilteredHeader />
+          </TableFilterProvider>
+        );
+        const filterIcon = screen.getByLabelText(filterIconLabel);
+        // jsdom always reports lost focus as the body, so stand in for browsers that report it differently.
+        const readActiveElement = Object.getOwnPropertyDescriptor(Document.prototype, 'activeElement')!.get!;
+        const activeElement = jest.spyOn(document, 'activeElement', 'get').mockImplementation(() => {
+          const active = readActiveElement.call(document);
+          return active === document.body && !filterIcon.isConnected ? lostFocus(filterIcon) : active;
+        });
 
-      act(() => screen.getByLabelText(filterIconLabel).focus());
-      await user.keyboard('{Enter}');
-      await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
-      act(() => screen.getByRole('button', { name: 'Clear filter' }).focus());
-      await user.keyboard('{Enter}');
+        act(() => filterIcon.focus());
+        await user.keyboard('{Enter}');
+        await waitFor(() => expect(screen.getByPlaceholderText('Filter values')).toHaveFocus());
+        act(() => screen.getByRole('button', { name: 'Clear filter' }).focus());
+        await user.keyboard('{Enter}');
+        activeElement.mockRestore();
 
-      expect(screen.getByLabelText(menuLabel)).toHaveFocus();
-      expect(screen.queryByLabelText(filterIconLabel)).not.toBeInTheDocument();
-    });
+        expect(screen.getByLabelText(menuLabel)).toHaveFocus();
+        expect(screen.queryByLabelText(filterIconLabel)).not.toBeInTheDocument();
+      }
+    );
 
     it('does not pull focus back into the header when the popup is dismissed by clicking empty space', async () => {
       const user = userEvent.setup();

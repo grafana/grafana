@@ -54,6 +54,13 @@ const MENU_BUTTON_TEST_ID = selectors.components.Panels.Visualization.TableNG.he
 
 const HEADER_LINE_BOX = `${TABLE.HEADER_LINE_HEIGHT}px`;
 
+// Once the focused node is removed, document.activeElement can read as the body, the document element,
+// null or that detached node, depending on the browser.
+function isFocusLost() {
+  const active = document.activeElement;
+  return !active || active === document.body || active === document.documentElement || !active.isConnected;
+}
+
 export const HeaderCell: React.FC<HeaderCellProps> = ({
   column,
   direction,
@@ -128,7 +135,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 
   useEffect(() => {
     const anchorRemoved = filterAnchor !== null && !filterAnchor.isConnected;
-    if (isPopoverVisible || !anchorRemoved || document.activeElement !== document.body) {
+    if (isPopoverVisible || !anchorRemoved || !isFocusLost()) {
       return;
     }
     ref.current?.querySelector<HTMLButtonElement>(`[data-testid="${MENU_BUTTON_TEST_ID}"]`)?.focus();
