@@ -154,6 +154,11 @@ export const versionedComponents = {
       '13.2.0': 'data-testid sidebar add new tab button',
     },
   },
+  EditActionsPopover: {
+    container: {
+      '13.3.0': 'data-testid EditActionsPopover container',
+    },
+  },
   EditPaneHeader: {
     deleteButton: {
       '12.1.0': 'data-testid EditPaneHeader delete panel',
@@ -724,6 +729,16 @@ export const versionedComponents = {
           },
         },
         Filters: {
+          Range: {
+            field: { '13.3.0': (bound: string) => `data-testid tableng range field ${bound}` },
+            minimumInput: { '13.3.0': 'data-testid tableng range minimum-input' },
+            maximumInput: { '13.3.0': 'data-testid tableng range maximum-input' },
+            includeMissingCheckbox: { '13.3.0': 'data-testid tableng range include-missing-checkbox' },
+            applyButton: { '13.3.0': 'data-testid tableng range apply-button' },
+            cancelButton: { '13.3.0': 'data-testid tableng range cancel-button' },
+            clearButton: { '13.3.0': 'data-testid tableng range clear-button' },
+            histogram: { '13.3.0': 'data-testid tableng range histogram' },
+          },
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
           },
@@ -1683,6 +1698,12 @@ export const versionedComponents = {
       },
       row: {
         '13.3.0': (spanId: string) => `data-testid TraceViewer trace-banner row ${spanId}`,
+      },
+      stacktraceButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner stacktrace-button',
+      },
+      toggleButton: {
+        '13.3.0': 'data-testid TraceViewer trace-banner toggle-button',
       },
     },
     spanException: {

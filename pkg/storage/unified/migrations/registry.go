@@ -20,7 +20,12 @@ type Validator interface {
 // ValidatorFactory creates a validator when given the runtime dependencies.
 // This allows validator configuration to be defined at registration time,
 // while actual validator instances are created when dependencies are available.
-type ValidatorFactory func(client resourcepb.ResourceIndexClient, driverName string) Validator
+type ValidatorFactory func(client resourcepb.ResourceIndexClient, opts ValidatorOptions) Validator
+
+type ValidatorOptions struct {
+	DriverName         string
+	EnableSQLKVBackend bool
+}
 
 // MigratorFunc is the signature for resource migration functions.
 type MigratorFunc = func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
@@ -50,10 +55,10 @@ type MigrationDefinition struct {
 }
 
 // CreateValidators creates validators from the stored factory functions.
-func (d MigrationDefinition) CreateValidators(client resourcepb.ResourceIndexClient, driverName string) []Validator {
+func (d MigrationDefinition) CreateValidators(client resourcepb.ResourceIndexClient, opts ValidatorOptions) []Validator {
 	validators := make([]Validator, 0, len(d.Validators))
 	for _, factory := range d.Validators {
-		validators = append(validators, factory(client, driverName))
+		validators = append(validators, factory(client, opts))
 	}
 	return validators
 }

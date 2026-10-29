@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { debounce } from 'lodash';
 import {
   useState,
@@ -44,7 +43,7 @@ import {
   TABLE,
 } from './constants';
 import { getColumnMenuOptions } from './menuOptions';
-import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
+import { getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import { transformTableFilters } from './transformations/rowProjection';
 import {
   type FooterFieldState,
@@ -189,6 +188,7 @@ export function useNotifyDisplayedRowIndices(
 
 export interface PaginatedRowsOptions {
   tableRefreshEnabled?: boolean;
+  transparent?: boolean;
   height: number;
   width: number;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
@@ -228,6 +228,7 @@ export function usePaginatedRows(
     pageSize,
     noPanelPadding,
     tableRefreshEnabled = false,
+    transparent,
   }: PaginatedRowsOptions
 ): PaginatedRowsResult {
   // TODO: allow persisted page selection via url
@@ -284,7 +285,7 @@ export function usePaginatedRows(
       // ensure at least one row per page so a fractional size in (0, 1) doesn't floor to 0
       rowsPerPage = Math.max(1, Math.floor(pageSize));
     } else {
-      const frameHeight = tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
+      const frameHeight = tableRefreshEnabled && (!noPanelPadding || transparent) ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
       const rowAreaHeight =
         height - headerHeight - footerHeight - getPaginationChromeHeight(noPanelPadding) - frameHeight;
       const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
@@ -317,6 +318,7 @@ export function usePaginatedRows(
     pageSize,
     noPanelPadding,
     tableRefreshEnabled,
+    transparent,
   ]);
 
   // safeguard against page overflow on panel resize or other factors
@@ -965,13 +967,13 @@ export function useScrollShadows(
 ) {
   const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0, width: 0 });
   const visibilityRef = useRef(visibility);
-  const styles = useStyles2(getScrollShadowStyles);
-  const offsetStyles = useStyles2(
-    getScrollShadowOffsetStyles,
-    topOffset,
-    bottomOffset + visibility.scrollbarHeight,
-    visibility.width
-  );
+  const styles = useStyles2(getScrollShadowStyles, visibility.top, visibility.bottom);
+  // Keep changing geometry out of Emotion's stylesheet cache during resizing.
+  const style: CSSProperties & Record<`--${string}`, string> = {
+    '--table-scroll-shadow-width': `${visibility.width}px`,
+    '--table-scroll-shadow-top': `${topOffset}px`,
+    '--table-scroll-shadow-bottom': `${bottomOffset + visibility.scrollbarHeight}px`,
+  };
 
   const sync = useCallback(() => {
     const el = ref.current?.element;
@@ -1030,14 +1032,8 @@ export function useScrollShadows(
   }, [ref, enabled, sync]);
 
   return {
-    className: enabled
-      ? css(
-          styles.scrollShadows,
-          offsetStyles,
-          visibility.top && styles.scrollShadowTop,
-          visibility.bottom && styles.scrollShadowBottom
-        )
-      : '',
+    className: enabled ? styles.scrollShadows : '',
+    style: enabled ? style : undefined,
     top: enabled && visibility.top,
     bottom: enabled && visibility.bottom,
     scrollbarHeight: enabled ? visibility.scrollbarHeight : 0,

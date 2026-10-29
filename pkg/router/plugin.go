@@ -1,6 +1,7 @@
 package router
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -424,13 +425,19 @@ func newPluginSettingsBackend(plugin definition.PluginDefinition, client PluginC
 
 type PluginBackend struct {
 	key string
+	// source is reported by Source; empty for a local plugin.
+	source string
 
 	pluginID string
-	info     plugins.Info
-	group    metav1.APIGroup
-	manifest *app.ManifestData
-	client   PluginClientProvider
-	deps     PluginDependencies
+	// metricsID, when set, is the plugin_id the backend's requests are
+	// recorded under instead of pluginID, in metrics and spans. A core_url
+	// entry without a plugin ID uses its API group, as its connection does.
+	metricsID string
+	info      plugins.Info
+	group     metav1.APIGroup
+	manifest  *app.ManifestData
+	client    PluginClientProvider
+	deps      PluginDependencies
 
 	// settings is set instead of manifest for the backend that serves the
 	// plugin's settings API under its plugin ID.
@@ -459,7 +466,7 @@ func (b *PluginBackend) Group() metav1.APIGroup {
 }
 
 // Source implements [Backend].
-func (b *PluginBackend) Source() string { return sourceLocalPlugin }
+func (b *PluginBackend) Source() string { return cmp.Or(b.source, sourceLocalPlugin) }
 
 // Manifest implements [ManifestProvider].
 func (b *PluginBackend) Manifest() (*app.ManifestData, bool) {
@@ -491,7 +498,12 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		return nil, err
 	}
 	loaded = true
-	return &tracedPluginHandler{Handler: handler, pluginID: b.pluginID, group: b.group.Name, release: release}, nil
+	return &tracedPluginHandler{Handler: handler, pluginID: b.metricsPluginID(), group: b.group.Name, release: release}, nil
+}
+
+// metricsPluginID is the plugin_id the backend's requests are recorded under.
+func (b *PluginBackend) metricsPluginID() string {
+	return cmp.Or(b.metricsID, b.pluginID)
 }
 
 func (b *PluginBackend) load(ctx context.Context) (*pluginroute.Handler, error) {

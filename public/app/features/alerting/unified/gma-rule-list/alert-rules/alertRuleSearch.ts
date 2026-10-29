@@ -4,10 +4,14 @@ import * as z from 'zod';
 import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type ResultTotal } from '../rule-row/ResultCount';
+import { type FilterIssue } from '../rule-search/parser';
+import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
+import { getRejectionIssues } from '../rule-search/searchRejection';
+import { type RuleListMode } from '../rule-search/useRuleListSearchState';
 import { type PagedFailure } from '../shared/PagedFailureAlert';
 
 import { type AlertRuleSearchHit, alertRuleSearchHitSchema } from './alertRuleSearchHit';
-import { buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
+import { buildAlertRuleLeaves, buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
 
 interface AlertRuleSearchPage {
   hits: AlertRuleSearchHit[];
@@ -27,20 +31,23 @@ const alertRuleSearchResponseSchema = z.object({
 
 type AlertRuleSearchResponse = z.infer<typeof alertRuleSearchResponseSchema>;
 
-/** Infinite query; the generated search is a POST mutation with no tags or page state. */
+/**
+ * Infinite query keyed by filter, so a new filter starts again from the first page. The generated
+ * search is a POST mutation with no tags or page state.
+ */
 const alertRuleSearchAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
-    searchAlertRules: build.infiniteQuery<AlertRuleSearchPage, void, string | undefined>({
+    searchAlertRules: build.infiniteQuery<AlertRuleSearchPage, RuleSearchFilter, string | undefined>({
       infiniteQueryOptions: {
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
       },
       // Results are a view of the current page only: leaving it drops them, and coming back searches again.
       keepUnusedDataFor: 0,
-      query: ({ pageParam }) => ({
+      query: ({ queryArg, pageParam }) => ({
         url: '/searchAlertRules',
         method: 'POST',
-        body: buildAlertRuleSearchQuery(pageParam),
+        body: buildAlertRuleSearchQuery(queryArg, pageParam),
       }),
       rawResponseSchema: alertRuleSearchResponseSchema,
       // A response that fails the schema becomes a query error, so the page shows it with Retry.
@@ -57,8 +64,8 @@ const alertRuleSearchAPI = generatedAPI.injectEndpoints({
 
 const { useSearchAlertRulesInfiniteQuery } = alertRuleSearchAPI;
 
-export function useAlertRuleSearch() {
-  const query = useSearchAlertRulesInfiniteQuery();
+export function useAlertRuleSearch(filter: RuleSearchFilter) {
+  const query = useSearchAlertRulesInfiniteQuery(filter);
   const { currentData, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = query;
   // Missing from the result type of a query that has not started.
   const isFetchNextPageError = 'isFetchNextPageError' in query && query.isFetchNextPageError;
@@ -88,6 +95,24 @@ export function useAlertRuleSearch() {
     // Only the first page's total counts; later pages repeat it and the count never drives paging.
     total: pages?.[0]?.total,
   };
+}
+
+/**
+ * The issues of a search the rule search refused as invalid, for the search input. It reads the same cached
+ * search as the list, so it sends no request of its own.
+ */
+export function useAlertRuleSearchRejection(
+  filter: RuleSearchFilter,
+  { parseIssues, mode }: { parseIssues: FilterIssue[]; mode: RuleListMode }
+): FilterIssue[] {
+  // Folders mode sends no rule search for the page, and a filter that does not parse sends none either, so
+  // there is no request to be rejected.
+  const skip = parseIssues.length > 0 || mode === 'folders';
+  const { error } = useSearchAlertRulesInfiniteQuery(filter, { skip });
+  return useMemo(
+    () => (skip ? [] : (getRejectionIssues(error, buildAlertRuleLeaves(filter)) ?? [])),
+    [skip, error, filter]
+  );
 }
 
 function toResultTotal({ totalHits, totalHitsRelation }: AlertRuleSearchResponse['metadata']): ResultTotal | undefined {

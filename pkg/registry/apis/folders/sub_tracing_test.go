@@ -79,7 +79,7 @@ type tracingFolderIndexClient struct {
 
 func (c *tracingFolderIndexClient) Search(ctx context.Context, _ *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	c.span = trace.SpanContextFromContext(ctx)
-	return &resourcepb.ResourceSearchResponse{Error: c.responseErr}, c.callErr
+	return &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Error: c.responseErr}, c.callErr
 }
 
 func (c *tracingFolderIndexClient) GetStats(ctx context.Context, _ *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {

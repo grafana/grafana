@@ -27,7 +27,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
-import { canManuallyEditDashboard, isViewingDashboard } from './dashboardModes';
+import { canManuallyEditDashboard, getDashboardMode, isViewingDashboard } from './dashboardModes';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
@@ -234,9 +234,6 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'mod+o',
     onTrigger: () => {
-      if (!canManuallyEditDashboard(scene.state)) {
-        return;
-      }
       const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
       if (cursorSync instanceof behaviors.CursorSync) {
         const currentSync = cursorSync.state.sync;
@@ -290,7 +287,12 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     if (canSave) {
       keybindings.addBinding({
         key: 'mod+s',
-        onTrigger: () => scene.openSaveDrawer({}),
+        onTrigger: () => {
+          // Viewing keeps the edit session open (isEditing stays true), so gate on the mode as well
+          if (getDashboardMode(scene.state) !== 'view') {
+            scene.openSaveDrawer({});
+          }
+        },
       });
     }
 

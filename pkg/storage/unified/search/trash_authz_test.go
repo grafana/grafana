@@ -175,7 +175,7 @@ func runTrashSearch(
 }
 
 func namesOf(res *resourcepb.ResourceSearchResponse) []string {
-	rows := res.Results.GetRows()
+	rows := res.Rows
 	out := make([]string, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, row.Key.Name)
@@ -440,7 +440,7 @@ func TestTrashAuthz_AppliesOnEveryPage(t *testing.T) {
 					q.SearchAfter = after
 				})
 				res := runTrashSearch(t, index, &trashAccessClient{}, "alice", q)
-				rows := res.Results.GetRows()
+				rows := res.Rows
 				if len(rows) == 0 {
 					break
 				}
@@ -540,11 +540,11 @@ func TestTrashAuthz_CursorPageTotalIsInexactNotUnfiltered(t *testing.T) {
 
 	first := runTrashSearch(t, index, &trashAccessClient{}, "alice",
 		trashQueryFor(func(q *resourcepb.ResourceSearchRequest) { q.Limit = 2 }))
-	require.Len(t, first.Results.GetRows(), 2)
+	require.Len(t, first.Rows, 2)
 	assert.Equal(t, int64(4), first.TotalHits, "the first page sees the whole set")
 	assert.True(t, first.TotalHitsExact)
 
-	after := first.Results.GetRows()[1].SortFields
+	after := first.Rows[1].SortFields
 	require.NotEmpty(t, after)
 
 	second := runTrashSearch(t, index, &trashAccessClient{}, "alice",
