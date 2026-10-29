@@ -31,7 +31,6 @@ const mockUseScopesServices = jest.mocked(useScopesServices);
 interface StateOverrides {
   loading?: boolean;
   forScopeNames?: string[];
-  dashboards?: unknown[];
   scopeNavigations?: Array<{ title: string; url: string }>;
   searchQuery?: string;
   filteredFolders?: Record<string, unknown>;
@@ -44,7 +43,6 @@ const makeScopeServices = (overrides: StateOverrides = {}): NonNullable<ReturnTy
       state: {
         loading: false,
         forScopeNames: ['scope-a'],
-        dashboards: [],
         scopeNavigations: [{ title: 'Suggested dashboard', url: '/d/abc' }],
         searchQuery: '',
         filteredFolders: {
@@ -91,9 +89,7 @@ describe('ScopesDashboardsMegaMenuSection', () => {
   });
 
   it('renders nothing when the applied scope has no suggested content', () => {
-    mockUseScopesServices.mockReturnValue(
-      makeScopeServices({ dashboards: [], scopeNavigations: [], filteredFolders: {} })
-    );
+    mockUseScopesServices.mockReturnValue(makeScopeServices({ scopeNavigations: [], filteredFolders: {} }));
     const { container } = render(<ScopesDashboardsMegaMenuSection />);
     expect(container).toBeEmptyDOMElement();
   });

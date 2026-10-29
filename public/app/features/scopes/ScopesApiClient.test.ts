@@ -23,9 +23,6 @@ jest.mock('app/api/clients/scope/v0alpha1', () => ({
       getFindScopeNodeChildrenResults: {
         initiate: jest.fn(),
       },
-      getFindScopeDashboardBindingsResults: {
-        initiate: jest.fn(),
-      },
       getFindScopeNavigationsResults: {
         initiate: jest.fn(),
       },
@@ -520,93 +517,6 @@ describe('ScopesApiClient', () => {
       result.forEach((node) => {
         expect(expectedNodes).toContainEqual(node);
       });
-    });
-  });
-
-  describe('fetchDashboards', () => {
-    it('should fetch dashboards for scopes', async () => {
-      // Expected: MOCK_SCOPE_DASHBOARD_BINDINGS contains bindings for 'grafana' scope
-      const scopeNames = ['grafana'];
-      const mockBindings = [
-        {
-          metadata: { name: 'grafana-binding-1' },
-          spec: { dashboard: 'dashboard-1', scope: 'grafana' },
-          status: { dashboardTitle: 'Dashboard 1' },
-        },
-      ];
-      const mockSubscription = createMockSubscription({
-        data: { items: mockBindings },
-      });
-      (scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate as jest.Mock).mockReturnValue(
-        mockSubscription
-      );
-
-      const result = await apiClient.fetchDashboards(scopeNames);
-
-      // Validate: returns bindings for the requested scope
-      expect(Array.isArray(result)).toBe(true);
-      result.forEach((binding) => {
-        expect(binding.spec.scope).toBe('grafana');
-      });
-    });
-
-    it('should fetch dashboards for multiple scopes', async () => {
-      // Expected: MOCK_SCOPE_DASHBOARD_BINDINGS contains bindings for 'grafana' and 'mimir' scopes
-      const scopeNames = ['grafana', 'mimir'];
-      const mockBindings = [
-        {
-          metadata: { name: 'grafana-binding-1' },
-          spec: { dashboard: 'dashboard-1', scope: 'grafana' },
-          status: { dashboardTitle: 'Dashboard 1' },
-        },
-        {
-          metadata: { name: 'mimir-binding-1' },
-          spec: { dashboard: 'dashboard-2', scope: 'mimir' },
-          status: { dashboardTitle: 'Dashboard 2' },
-        },
-      ];
-      const mockSubscription = createMockSubscription({
-        data: { items: mockBindings },
-      });
-      (scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate as jest.Mock).mockReturnValue(
-        mockSubscription
-      );
-
-      const result = await apiClient.fetchDashboards(scopeNames);
-
-      // Validate: returns bindings for either scope
-      expect(Array.isArray(result)).toBe(true);
-      result.forEach((binding) => {
-        expect(scopeNames).toContain(binding.spec.scope);
-      });
-    });
-
-    it('should return empty array when no dashboards found', async () => {
-      const mockSubscription = createMockSubscription({
-        data: { items: [] },
-      });
-      (scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate as jest.Mock).mockReturnValue(
-        mockSubscription
-      );
-
-      const result = await apiClient.fetchDashboards(['non-existent-scope']);
-
-      expect(result).toEqual([]);
-    });
-
-    it('should handle API errors gracefully', async () => {
-      const mockSubscription = createMockSubscription({
-        data: { items: [] },
-      });
-      (scopeAPIv0alpha1.endpoints.getFindScopeDashboardBindingsResults.initiate as jest.Mock).mockReturnValue(
-        mockSubscription
-      );
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-
-      const result = await apiClient.fetchDashboards(['grafana']);
-
-      expect(Array.isArray(result)).toBe(true);
-      consoleErrorSpy.mockRestore();
     });
   });
 
