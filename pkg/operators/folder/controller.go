@@ -36,7 +36,8 @@ var folderGVR = schema.GroupVersionResource{
 	Resource: "folders",
 }
 
-// RunFolderController watches Folder objects and logs deletion events.
+// RunFolderController watches Folder objects and logs deletion events, and folders that are
+// terminating (deletionTimestamp set, finalizers pending).
 // This is a bare skeleton: no workqueue, no retries, no finalizers.
 //
 // The delta source is NATS-backed when [nats] is enabled — falling back to
@@ -54,7 +55,11 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		return err
 	}
 
+	// Add and update events are signals only: the object is re-fetched to see if it is terminating.
+	checkTerminating := func(obj any) { logIfTerminating(ctx, logger, restClient, obj) }
 	handler := cache.ResourceEventHandlerFuncs{
+		AddFunc:    checkTerminating,
+		UpdateFunc: func(_, obj any) { checkTerminating(obj) },
 		DeleteFunc: func(obj any) {
 			accessor, err := utils.MetaAccessor(obj)
 			if err != nil {
@@ -87,7 +92,8 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		newObject := func(ns, name string) runtime.Object {
 			return &folderv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
 		}
-		keys := keysapi.NewHTTPLister(restClient, folderGVR)
+		// Only terminating folders are listed, so startup does not scan the whole collection.
+		keys := keysapi.NewHTTPLister(restClient, folderGVR, keysapi.WithTerminating())
 		list := func(ctx context.Context) ([]runtime.Object, int64, error) {
 			return listFolderKeys(ctx, keys)
 		}
