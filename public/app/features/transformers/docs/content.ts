@@ -881,6 +881,8 @@ The result after applying the inner join transformation looks like the following
 
 The inner join only includes rows where there is a match between the "StudentID" in both tables. In this case, the result does not include "Jennifer" from the "Students" table because there are no matching enrollments for her in the "Enrollments" table.
 
+If a query returns data that doesn't contain the join field, then no row can match in every query, so the result is empty. To join only some of your queries, add a [Filter data by query refId](#filter-data-by-query-refid) transformation before the join.
+
 #### Outer join (for Time Series data)
 
 An outer join includes all data from an inner join and rows where values do not match in every input. While the inner join joins Query A and Query B on the time field, the outer join includes all rows that don't match on the time field.
@@ -991,7 +993,7 @@ For example, one query returns measurements with two IDs, and the query run on e
 Add two transformations:
 
 1. **Join by field** on \`GroupID\`, with **Keep unjoined** enabled. Query C has no \`GroupID\`, so it's passed through rather than dropped.
-2. **Join by field** on \`ProductID\`. The result of the first join still has a \`ProductID\` column, so it joins with query C.
+1. **Join by field** on \`ProductID\`. The result of the first join still has a \`ProductID\` column, so it joins with query C.
 
 The result looks like this:
 

@@ -248,7 +248,7 @@ For more information about expressions, refer to [About expressions](#about-expr
 1. Open the panel for editing.
 1. In the sidebar, click the plus icon next to **Queries & Expressions** and select **Add expression**.
 
-   To add the expression in a specific position, hover over the card it should follow and click the blue plus sign beside it.
+   To add the expression in a specific position, hover the cursor over the card it should follow and click the plus sign beside it.
 
 1. In the editor pane, select the type of expression you want to write.
 

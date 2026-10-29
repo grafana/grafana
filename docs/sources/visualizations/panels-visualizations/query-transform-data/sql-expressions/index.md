@@ -117,7 +117,7 @@ The **RefID** is a unique identifier assigned to each query within a Grafana pan
 Use the following workflow to create a SQL expression:
 
 1. **Build your base queries.** Create the individual query and give it a meaningful name. Create the queries (A, B, etc.) that provide the data you want to combine or transform using SQL Expressions.
-1. **Hide your base queries.** Hover over each base query card in the sidebar and click the eye icon to hide it from the visualization. This keeps your panel clean while still making the data available to the SQL expression.
+1. **Hide your base queries.** Hover the cursor over each base query card in the sidebar and click the eye icon to hide it from the visualization. This keeps your panel clean while still making the data available to the SQL expression.
 1. **Switch to table view**. Set the panel visualization to **Table** to inspect and review the structure and output of your SQL expression as you build and refine it.
 1. **Add a SQL expression**. Add an expression and select **SQL** as its type.  
    **Inspect inputs**. Start with simple test queries to understand the shape of your input frames.

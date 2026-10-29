@@ -132,7 +132,7 @@ The following steps guide you in adding a transformation to data. This documenta
 1. In the editor pane, search for or browse to a transformation and click it.
    The transformation appears as a card in the sidebar, and its options open in the editor pane. For more information about how to configure a transformation, refer to [Transformation functions](#transformation-functions).
    For information about available calculations, refer to [Calculation types][].
-1. To apply another transformation, click the plus icon next to **Transformations** again, or hover over a transformation card and click the blue plus sign beside it to insert the new transformation after that card.
+1. To apply another transformation, click the plus icon next to **Transformations** again, or hover the cursor over a transformation card and click the plus sign beside it to insert the new transformation after that card.
    Each transformation acts on the result set returned by the previous transformation.
    You can drag and drop the cards to change the order.
 
@@ -148,7 +148,7 @@ The input and output results sets can help you debug a transformation.
 
 ## Disable a transformation
 
-You can disable one or more transformations by hovering over a transformation card in the sidebar and clicking the eye icon. This disables the applied actions of that specific transformation and can help to identify issues when you change several transformations one after another.
+You can disable one or more transformations by hovering the cursor over a transformation card in the sidebar and clicking the eye icon. This disables the applied actions of that specific transformation and can help to identify issues when you change several transformations one after another.
 
 To disable several transformations at once, click **Select...** in the sidebar footer, select the transformations, and use the bulk actions bar.
 
@@ -203,7 +203,7 @@ We recommend that you remove transformations that you don't need. When you delet
 **To delete a transformation**:
 
 1. Open a panel for editing.
-1. In the query editor sidebar, hover over the transformation card you want to delete.
+1. In the query editor sidebar, hover the cursor over the transformation card you want to delete.
 1. Click the trash icon and confirm the deletion.
 
 ## Transformation functions
