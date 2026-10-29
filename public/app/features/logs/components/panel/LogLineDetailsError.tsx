@@ -9,6 +9,7 @@ import { ClipboardButton, Icon, useStyles2 } from '@grafana/ui';
 
 import { type FieldDef } from '../logParser';
 import { classifyErrorAttributes } from '../otel/details';
+import { OTEL_LANGUAGE_UNKNOWN } from '../otel/formats';
 
 import { type LabelWithLinks } from './LogLineDetailsFields';
 import { type LogListFontSize } from './LogList';
@@ -19,6 +20,7 @@ interface LogLineDetailsErrorProps {
   className?: string;
   fields: FieldDef[];
   labels: LabelWithLinks[];
+  otelLanguage?: string;
 }
 
 interface ErrorDisplayItem {
@@ -26,7 +28,7 @@ interface ErrorDisplayItem {
   value: string;
 }
 
-export const LogLineDetailsError = ({ className, fields, labels }: LogLineDetailsErrorProps) => {
+export const LogLineDetailsError = ({ className, fields, labels, otelLanguage }: LogLineDetailsErrorProps) => {
   const { fontSize, noInteractions } = useLogListContext();
   const { isAvailable } = useAssistant();
   const styles = useStyles2(getStyles, fontSize);
@@ -47,10 +49,13 @@ export const LogLineDetailsError = ({ className, fields, labels }: LogLineDetail
     [classifiedFields.stacktraces, classifiedLabels.stacktraces]
   );
   const errorDetails = useMemo(() => [...other, ...messages, ...stacktraces], [messages, other, stacktraces]);
-  const diagnosePrompt = useMemo(() => buildDiagnoseErrorPrompt(errorDetails), [errorDetails]);
+  const diagnosePrompt = useMemo(
+    () => buildDiagnoseErrorPrompt(errorDetails, otelLanguage),
+    [errorDetails, otelLanguage]
+  );
   const diagnoseContext = useMemo(
-    () => (isAvailable ? buildDiagnoseErrorContext(errorDetails) : []),
-    [errorDetails, isAvailable]
+    () => (isAvailable ? buildDiagnoseErrorContext(errorDetails, otelLanguage) : []),
+    [errorDetails, isAvailable, otelLanguage]
   );
 
   if (!errorDetails.length) {
@@ -99,16 +104,28 @@ export const LogLineDetailsError = ({ className, fields, labels }: LogLineDetail
   );
 };
 
-function buildDiagnoseErrorPrompt(items: ErrorDisplayItem[]): string {
-  const details = items.map((item) => `${item.key}: ${item.value.replaceAll('`', '\\`')}`).join('\n');
-  return `Diagnose this error from a log line. Explain the likely cause and what to check next.\n\n\`\`\`\n${details}\n\`\`\``;
+function knownOtelLanguage(otelLanguage?: string): string | undefined {
+  const language = otelLanguage?.trim();
+  if (!language || language === OTEL_LANGUAGE_UNKNOWN) {
+    return undefined;
+  }
+  return language;
 }
 
-function buildDiagnoseErrorContext(items: ErrorDisplayItem[]) {
+function buildDiagnoseErrorPrompt(items: ErrorDisplayItem[], otelLanguage?: string): string {
+  const details = items.map((item) => `${item.key}: ${item.value.replaceAll('`', '\\`')}`).join('\n');
+  const language = knownOtelLanguage(otelLanguage)?.replaceAll('`', '\\`');
+  const source = language ? `an OpenTelemetry ${language} log line` : 'a log line';
+  return `Diagnose this error from ${source}. Explain the likely cause and what to check next.\n\n\`\`\`\n${details}\n\`\`\``;
+}
+
+function buildDiagnoseErrorContext(items: ErrorDisplayItem[], otelLanguage?: string) {
+  const language = knownOtelLanguage(otelLanguage);
   return [
     createAssistantContextItem('structured', {
       title: t('logs.log-details.error.error-details', 'Error details'),
       data: {
+        ...(language ? { language } : {}),
         attributes: items.map((item) => ({ key: item.key, value: item.value })),
       },
     }),

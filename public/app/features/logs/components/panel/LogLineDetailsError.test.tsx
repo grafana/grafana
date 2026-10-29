@@ -9,6 +9,7 @@ import {
 } from '@grafana/assistant';
 
 import { type FieldDef } from '../logParser';
+import { OTEL_LANGUAGE_UNKNOWN } from '../otel/formats';
 
 import { LogLineDetailsError } from './LogLineDetailsError';
 
@@ -25,6 +26,16 @@ const errorFields = [
   field('exception.message', 'Cannot invoke `User.getId()`', 1),
   field('exception.stacktrace', 'at UserService.getUserId', 2),
 ];
+
+function enableAssistant() {
+  useAssistantMock.mockReturnValue({
+    isLoading: false,
+    isAvailable: true,
+    openAssistant: jest.fn(),
+    closeAssistant: jest.fn(),
+    toggleAssistant: jest.fn(),
+  });
+}
 
 describe('LogLineDetailsError', () => {
   beforeEach(() => {
@@ -74,13 +85,7 @@ describe('LogLineDetailsError', () => {
   });
 
   it('starts a new assistant conversation with the error details', () => {
-    useAssistantMock.mockReturnValue({
-      isLoading: false,
-      isAvailable: true,
-      openAssistant: jest.fn(),
-      closeAssistant: jest.fn(),
-      toggleAssistant: jest.fn(),
-    });
+    enableAssistant();
 
     render(<LogLineDetailsError fields={errorFields} labels={[{ key: 'error', value: 'true' }]} />);
 
@@ -114,5 +119,77 @@ exception.stacktrace: at UserService.getUserId
       ],
       onClick: expect.any(Function),
     });
+  });
+
+  it('names the OpenTelemetry language in the diagnose prompt', () => {
+    enableAssistant();
+
+    render(<LogLineDetailsError fields={errorFields} labels={[{ key: 'error', value: 'true' }]} otelLanguage="java" />);
+
+    expect(openAssistantButtonMock.mock.lastCall?.[0].prompt)
+      .toBe(`Diagnose this error from an OpenTelemetry java log line. Explain the likely cause and what to check next.
+
+\`\`\`
+exception.type: NullPointerException
+error: true
+exception.message: Cannot invoke \\\`User.getId()\\\`
+exception.stacktrace: at UserService.getUserId
+\`\`\``);
+    expect(openAssistantButtonMock.mock.lastCall?.[0].context).toEqual([
+      {
+        type: 'structured',
+        title: 'Error details',
+        data: {
+          language: 'java',
+          attributes: [
+            { key: 'exception.type', value: 'NullPointerException' },
+            { key: 'error', value: 'true' },
+            { key: 'exception.message', value: 'Cannot invoke `User.getId()`' },
+            { key: 'exception.stacktrace', value: 'at UserService.getUserId' },
+          ],
+        },
+      },
+    ]);
+  });
+
+  it.each([
+    { otelLanguage: '', label: 'empty' },
+    { otelLanguage: '   ', label: 'blank' },
+    { otelLanguage: OTEL_LANGUAGE_UNKNOWN, label: 'unknown' },
+  ])('leaves an $label OpenTelemetry language out of the prompt and context', ({ otelLanguage }) => {
+    enableAssistant();
+
+    render(
+      <LogLineDetailsError
+        fields={errorFields}
+        labels={[{ key: 'error', value: 'true' }]}
+        otelLanguage={otelLanguage}
+      />
+    );
+
+    expect(openAssistantButtonMock.mock.lastCall?.[0].prompt).toBe(
+      `Diagnose this error from a log line. Explain the likely cause and what to check next.
+
+\`\`\`
+exception.type: NullPointerException
+error: true
+exception.message: Cannot invoke \\\`User.getId()\\\`
+exception.stacktrace: at UserService.getUserId
+\`\`\``
+    );
+    expect(openAssistantButtonMock.mock.lastCall?.[0].context).toEqual([
+      {
+        type: 'structured',
+        title: 'Error details',
+        data: {
+          attributes: [
+            { key: 'exception.type', value: 'NullPointerException' },
+            { key: 'error', value: 'true' },
+            { key: 'exception.message', value: 'Cannot invoke `User.getId()`' },
+            { key: 'exception.stacktrace', value: 'at UserService.getUserId' },
+          ],
+        },
+      },
+    ]);
   });
 });
