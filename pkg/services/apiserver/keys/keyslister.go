@@ -54,6 +54,10 @@ type ListerConfig struct {
 	// not an error. A smaller one trades round trips for a smaller page, which is
 	// how a caller on a memory budget bounds a single response.
 	PageSize int64
+
+	// Terminating narrows the list to objects soft-deleted but still held by finalizers. Only the
+	// HTTP lister supports it, and the result carries no resourceVersions.
+	Terminating bool
 }
 
 // ListerOption configures a keys lister.
@@ -62,6 +66,11 @@ type ListerOption func(*ListerConfig)
 // WithPageSize sets how many keys one page asks for. See ListerConfig.
 func WithPageSize(size int64) ListerOption {
 	return func(c *ListerConfig) { c.PageSize = size }
+}
+
+// WithTerminating lists only terminating objects. See ListerConfig.
+func WithTerminating() ListerOption {
+	return func(c *ListerConfig) { c.Terminating = true }
 }
 
 // NewListerConfig resolves options into a config with defaults applied.

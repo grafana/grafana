@@ -21,6 +21,7 @@ import (
 type recordedRequest struct {
 	method string
 	path   string
+	query  string
 	opts   storagev0.ListKeyRequest
 }
 
@@ -36,7 +37,7 @@ func serveKeys(t *testing.T, handler func(i int, opts storagev0.ListKeyRequest) 
 		dec := json.NewDecoder(r.Body)
 		dec.DisallowUnknownFields()
 		require.NoError(t, dec.Decode(&opts))
-		seen = append(seen, recordedRequest{method: r.Method, path: r.URL.Path, opts: opts})
+		seen = append(seen, recordedRequest{method: r.Method, path: r.URL.Path, query: r.URL.RawQuery, opts: opts})
 
 		code, body := handler(len(seen)-1, opts)
 		w.Header().Set("Content-Type", "application/json")
@@ -221,4 +222,15 @@ func TestHTTPLister_PageSize(t *testing.T) {
 
 	require.Len(t, *seen, 1)
 	assert.Equal(t, int64(7), (*seen)[0].opts.Limit)
+}
+
+func TestHTTPLister_Terminating(t *testing.T) {
+	lister, seen := serveKeys(t, func(int, storagev0.ListKeyRequest) (int, any) {
+		return http.StatusOK, keysPage("0", "", partial("ns1", "a", "0"))
+	}, WithTerminating())
+
+	keys, err := drain(t, lister)
+	require.NoError(t, err)
+	require.Equal(t, []Key{{Namespace: "ns1", Name: "a", ResourceVersion: "0"}}, keys)
+	assert.Equal(t, TerminatingParam+"=true", (*seen)[0].query)
 }

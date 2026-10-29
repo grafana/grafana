@@ -515,3 +515,58 @@ func TestListKeysInNamespace_ServesAnyPermittedIdentity(t *testing.T) {
 		})
 	}
 }
+
+type terminatingStore struct {
+	fakeStore
+	rsp *resourcepb.ListTerminatingResponse
+	err error
+}
+
+func (f *terminatingStore) ListTerminating(_ context.Context, _ *resourcepb.ListTerminatingRequest, _ ...grpc.CallOption) (*resourcepb.ListTerminatingResponse, error) {
+	return f.rsp, f.err
+}
+
+func doTerminating(t *testing.T, store resourcepb.ResourceStoreClient, namespaced bool) *httptest.ResponseRecorder {
+	t.Helper()
+	h := NewHandler(store, noop.NewTracerProvider().Tracer("test"))
+	req := httptest.NewRequest(http.MethodPost, "/list-keys?"+TerminatingParam+"=true", strings.NewReader(""))
+	ctx := claims.WithAuthInfo(req.Context(), serviceIdentity())
+	handler := h.ListKeysFor(testKind_())
+	if namespaced {
+		ctx = request.WithNamespace(ctx, "ns-one")
+		handler = h.ListKeysInNamespaceFor(testKind_())
+	}
+	rec := httptest.NewRecorder()
+	handler(rec, req.WithContext(ctx))
+	return rec
+}
+
+func TestListKeys_Terminating(t *testing.T) {
+	t.Run("projects the hint set and never reads the full list", func(t *testing.T) {
+		store := &terminatingStore{rsp: &resourcepb.ListTerminatingResponse{Items: []*resourcepb.ListTerminatingResponse_Item{
+			{Namespace: "ns-one", Name: "aaa"},
+			{Namespace: "ns-two", Name: "bbb"},
+		}}}
+		rec := doTerminating(t, store, false)
+		require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+		var got storagev0.ListKeyResponse
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+		require.Len(t, got.Items, 2)
+		assert.Equal(t, "ns-two", got.Items[1].Namespace)
+		assert.Equal(t, "bbb", got.Items[1].Name)
+		assert.Equal(t, "0", got.ResourceVersion)
+		assert.Empty(t, got.Continue)
+		assert.Empty(t, store.fakeStore.calls)
+	})
+
+	t.Run("an old storage server reads as an absent route", func(t *testing.T) {
+		rec := doTerminating(t, &terminatingStore{err: status.Error(codes.Unimplemented, "nope")}, false)
+		assert.Equal(t, http.StatusMethodNotAllowed, rec.Code, rec.Body.String())
+	})
+
+	t.Run("is refused on the namespaced route", func(t *testing.T) {
+		rec := doTerminating(t, &terminatingStore{}, true)
+		assert.Equal(t, http.StatusBadRequest, rec.Code, rec.Body.String())
+	})
+}

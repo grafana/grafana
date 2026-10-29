@@ -43,11 +43,14 @@ func (l httpLister) page(ctx context.Context, token string) (*storagev0.ListKeyR
 		return nil, err
 	}
 
-	raw, err := l.client.Post().
+	req := l.client.Post().
 		AbsPath("/apis", l.gvr.Group, l.gvr.Version, l.gvr.Resource, utils.ListKeysPathSegment).
 		SetHeader("Content-Type", "application/json").
-		Body(body).
-		DoRaw(ctx)
+		Body(body)
+	if l.cfg.Terminating {
+		req = req.Param(TerminatingParam, "true")
+	}
+	raw, err := req.DoRaw(ctx)
 	if err != nil {
 		if apierrors.IsNotFound(err) || apierrors.IsMethodNotSupported(err) {
 			return nil, ErrUnsupported
