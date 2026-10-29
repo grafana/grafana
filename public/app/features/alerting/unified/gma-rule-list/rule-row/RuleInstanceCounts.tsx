@@ -23,44 +23,46 @@ interface RuleInstanceCountsProps {
 export function RuleInstanceCounts({ searchHit }: RuleInstanceCountsProps) {
   const styles = useStyles2(getStyles);
 
-  const stateDefs: StateCount[] = [
-    {
-      count: searchHit.totalsFiring ?? 0,
-      label: t('alerting.gma-rule-list.instances.firing', 'firing'),
-      colorKey: 'firing',
-      field: 'totalsFiring',
-    },
-    {
-      count: searchHit.totalsPending ?? 0,
-      label: t('alerting.gma-rule-list.instances.pending', 'pending'),
-      colorKey: 'pending',
-      field: 'totalsPending',
-    },
-    {
-      count: searchHit.totalsRecovering ?? 0,
-      label: t('alerting.gma-rule-list.instances.recovering', 'recovering'),
-      colorKey: 'recovering',
-      field: 'totalsRecovering',
-    },
-    {
-      count: searchHit.totalsHealthy ?? 0,
-      label: t('alerting.gma-rule-list.instances.healthy', 'healthy'),
-      colorKey: 'healthy',
-      field: 'totalsHealthy',
-    },
-    {
-      count: searchHit.totalsNoData ?? 0,
-      label: t('alerting.gma-rule-list.instances.nodata', 'no data'),
-      colorKey: 'nodata',
-      field: 'totalsNoData',
-    },
-    {
-      count: searchHit.totalsError ?? 0,
-      label: t('alerting.gma-rule-list.instances.error', 'error'),
-      colorKey: 'error',
-      field: 'totalsError',
-    },
-  ].filter(({ field, count }) => searchHit[field] !== undefined && count > 0);
+  const stateDefs = (
+    [
+      {
+        count: searchHit.totalsFiring ?? 0,
+        label: t('alerting.gma-rule-list.instances.firing', 'firing'),
+        colorKey: 'firing' as const,
+        field: 'totalsFiring' as const,
+      },
+      {
+        count: searchHit.totalsPending ?? 0,
+        label: t('alerting.gma-rule-list.instances.pending', 'pending'),
+        colorKey: 'pending' as const,
+        field: 'totalsPending' as const,
+      },
+      {
+        count: searchHit.totalsRecovering ?? 0,
+        label: t('alerting.gma-rule-list.instances.recovering', 'recovering'),
+        colorKey: 'recovering' as const,
+        field: 'totalsRecovering' as const,
+      },
+      {
+        count: searchHit.totalsHealthy ?? 0,
+        label: t('alerting.gma-rule-list.instances.healthy', 'healthy'),
+        colorKey: 'healthy' as const,
+        field: 'totalsHealthy' as const,
+      },
+      {
+        count: searchHit.totalsNoData ?? 0,
+        label: t('alerting.gma-rule-list.instances.nodata', 'no data'),
+        colorKey: 'nodata' as const,
+        field: 'totalsNoData' as const,
+      },
+      {
+        count: searchHit.totalsError ?? 0,
+        label: t('alerting.gma-rule-list.instances.error', 'error'),
+        colorKey: 'error' as const,
+        field: 'totalsError' as const,
+      },
+    ] satisfies StateCount[]
+  ).filter(({ field, count }) => searchHit[field] !== undefined && count > 0);
 
   if (stateDefs.length === 0) {
     return null;
