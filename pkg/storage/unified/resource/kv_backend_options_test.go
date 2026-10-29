@@ -19,6 +19,7 @@ var callerSuppliedFields = map[string]string{
 	"Reg":                       "metrics registry owned by the caller",
 	"Log":                       "logger owned by the caller",
 	"DBKeepAlive":               "reference to the caller's database provider",
+	"ReconcileKeyPaths":         "SQL history repair injected only by the SQL backend wiring",
 	"GCGate":                    "shared with the caller's startup sequencing",
 	"UseChannelNotifier":        "derived from high-availability detection, not from a single setting",
 	"EventPublisher":            "NATS publisher injected by the caller",

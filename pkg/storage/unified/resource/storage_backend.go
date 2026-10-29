@@ -319,6 +319,11 @@ type KVBackendOptions struct {
 	// that reads through this backend without running the storage server.
 	DisableStorageServices bool
 
+	// ReconcileKeyPaths repairs up to batchSize history rows and returns the number
+	// processed. Zero means no missing paths remain. Nil disables reconciliation
+	// for stores that do not need the SQL rolling-upgrade repair.
+	ReconcileKeyPaths func(ctx context.Context, batchSize int) (int, error)
+
 	// GCGate defers the start of the GC until released (optional).
 	GCGate *GCGate
 
@@ -563,6 +568,10 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		backend.natsShadow = newNatsShadow(opts.EventSubscriber, backend.watchOpts, opts.Reg, logger.With("notifier", "natsShadow"))
 		backend.natsShadow.start(ctx)
 		logger.Info("nats notifier shadow enabled")
+	}
+
+	if opts.ReconcileKeyPaths != nil && !opts.DisableStorageServices {
+		go backend.runKeyPathReconciliation(ctx, opts.ReconcileKeyPaths)
 	}
 
 	logger.Info("backend initialized", "kv", fmt.Sprintf("%T", kv))
