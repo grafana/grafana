@@ -20,11 +20,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -67,165 +65,105 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
-// newDashboardUnstructured builds a minimal unstructured dashboard with optional annotations.
-func newDashboardUnstructured(name string, annotations map[string]string) *unstructured.Unstructured {
-	obj := &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"apiVersion": "dashboard.grafana.app/v1beta1",
-			"kind":       "Dashboard",
-			"metadata": map[string]interface{}{
-				"name":      name,
-				"namespace": "stacks-123",
-			},
-		},
-	}
-	if annotations != nil {
-		obj.SetAnnotations(annotations)
-	}
-	return obj
-}
-
 func TestDashboardAPIBuilder_Validate(t *testing.T) {
 	oneInt64 := int64(1)
 	zeroInt64 := int64(0)
 
+	classicFP := map[string]string{
+		utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+		utils.AnnoKeyManagerIdentity: "some-provisioner",
+	}
+	newDashboard := func(annotations map[string]string) *dashv1.Dashboard {
+		return &dashv1.Dashboard{
+			Spec:       common.Unstructured{},
+			TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
+			ObjectMeta: metav1.ObjectMeta{Name: "test", Annotations: annotations},
+		}
+	}
+
 	tests := []struct {
-		name               string
-		inputObj           *dashv1.Dashboard
-		deletionOptions    metav1.DeleteOptions
-		managerAnnotations map[string]string
-		getError           error
-		checkRan           bool
-		expectedError      bool
+		name             string
+		existingObj      runtime.Object
+		collectionDelete bool
+		deletionOptions  metav1.DeleteOptions
+		expectedError    bool
 	}{
 		{
-			name: "should block deletion of provisioned dashboard (classic file provisioning)",
-			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-			},
+			name:            "should block deletion of provisioned dashboard (classic file provisioning)",
+			existingObj:     newDashboard(classicFP),
 			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
-			managerAnnotations: map[string]string{
-				utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
-				utils.AnnoKeyManagerIdentity: "some-provisioner",
-			},
-			checkRan:      true,
-			expectedError: true,
-		},
-		{
-			name: "should return an error if Get fails",
-			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-			},
-			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
-			getError:        fmt.Errorf("generic error"),
-			checkRan:        true,
 			expectedError:   true,
 		},
 		{
-			name: "should allow deletion if dashboard is not found",
-			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-			},
+			name:            "should return an error if the existing dashboard is missing",
 			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
-			getError:        apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "test"),
-			checkRan:        true,
-			expectedError:   false,
+			expectedError:   true,
 		},
 		{
-			name: "should allow deletion of non-provisioned dashboard",
-			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-			},
+			name:            "should allow deletion of non-provisioned dashboard",
+			existingObj:     newDashboard(nil),
 			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
-			checkRan:        true,
 			expectedError:   false,
 		},
 		{
 			name: "should allow deletion of dashboard managed by a non-classic-FP manager",
-			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-			},
-			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
-			managerAnnotations: map[string]string{
+			existingObj: newDashboard(map[string]string{
 				utils.AnnoKeyManagerKind:     "some-other-manager",
 				utils.AnnoKeyManagerIdentity: "some-identity",
-			},
-			checkRan:      true,
-			expectedError: false,
+			}),
+			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:   false,
 		},
 		{
-			name: "should still run the check for delete if grace period is not 0",
-			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-			},
+			name:            "should still run the check for delete if grace period is not 0",
+			existingObj:     newDashboard(classicFP),
 			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: &oneInt64},
-			checkRan:        true,
+			expectedError:   true,
+		},
+		{
+			name:            "should not run the check for delete if grace period is set to 0",
+			existingObj:     newDashboard(classicFP),
+			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: &zeroInt64},
 			expectedError:   false,
 		},
 		{
-			name: "should not run the check for delete if grace period is set to 0",
-			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
-			},
-			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: &zeroInt64},
-			checkRan:        false,
-			expectedError:   false,
+			name:             "should not run the check for DeleteCollection requests",
+			existingObj:      newDashboard(classicFP),
+			collectionDelete: true,
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:    false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockHandler := &mockK8sHandler{}
-			if tt.checkRan {
-				if tt.getError != nil {
-					mockHandler.getError = tt.getError
-				} else {
-					mockHandler.getResponse = newDashboardUnstructured("test", tt.managerAnnotations)
+	for _, standalone := range []bool{false, true} {
+		for _, tt := range tests {
+			t.Run(fmt.Sprintf("standalone=%t/%s", standalone, tt.name), func(t *testing.T) {
+				name := "test"
+				if tt.collectionDelete {
+					name = ""
 				}
-			}
 
-			b := &DashboardsAPIBuilder{
-				dashboardK8sClient: mockHandler,
-			}
-			err := b.Validate(context.Background(), admission.NewAttributesRecord(
-				tt.inputObj,
-				nil,
-				dashv1.DashboardResourceInfo.GroupVersionKind(),
-				"stacks-123",
-				tt.inputObj.Name,
-				dashv1.DashboardResourceInfo.GroupVersionResource(),
-				"",
-				admission.Operation("DELETE"),
-				&tt.deletionOptions,
-				true,
-				&user.SignedInUser{},
-			), nil)
+				b := &DashboardsAPIBuilder{isStandalone: standalone}
+				err := b.Validate(context.Background(), admission.NewAttributesRecord(
+					nil,
+					tt.existingObj,
+					dashv1.DashboardResourceInfo.GroupVersionKind(),
+					"stacks-123",
+					name,
+					dashv1.DashboardResourceInfo.GroupVersionResource(),
+					"",
+					admission.Operation("DELETE"),
+					&tt.deletionOptions,
+					true,
+					&user.SignedInUser{},
+				), nil)
 
-			if tt.expectedError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-			}
-
-			if tt.checkRan {
-				require.True(t, mockHandler.getCalled, "Get should have been called")
-			} else {
-				require.False(t, mockHandler.getCalled, "Get should not have been called")
-			}
-		})
+				if tt.expectedError {
+					require.Error(t, err)
+				} else {
+					require.NoError(t, err)
+				}
+			})
+		}
 	}
 }
 
@@ -571,48 +509,6 @@ func (c *recordingAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _
 
 func (c *recordingAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 	return authlib.BatchCheckResponse{}, nil
-}
-
-// mockK8sHandler is a minimal mock for client.K8sHandler used in validateDelete tests.
-type mockK8sHandler struct {
-	getResponse *unstructured.Unstructured
-	getError    error
-	getCalled   bool
-}
-
-func (m *mockK8sHandler) Get(_ context.Context, _ string, _ int64, _ metav1.GetOptions, _ ...string) (*unstructured.Unstructured, error) {
-	m.getCalled = true
-	return m.getResponse, m.getError
-}
-
-// Unused methods — satisfy the client.K8sHandler interface.
-func (m *mockK8sHandler) GetNamespace(_ int64) string { return "default" }
-func (m *mockK8sHandler) Create(_ context.Context, _ *unstructured.Unstructured, _ int64, _ metav1.CreateOptions) (*unstructured.Unstructured, error) {
-	return nil, nil
-}
-func (m *mockK8sHandler) Update(_ context.Context, _ *unstructured.Unstructured, _ int64, _ metav1.UpdateOptions) (*unstructured.Unstructured, error) {
-	return nil, nil
-}
-func (m *mockK8sHandler) Patch(_ context.Context, _ string, _ types.PatchType, _ []byte, _ int64, _ metav1.PatchOptions) (*unstructured.Unstructured, error) {
-	return nil, nil
-}
-func (m *mockK8sHandler) Delete(_ context.Context, _ string, _ int64, _ metav1.DeleteOptions) error {
-	return nil
-}
-func (m *mockK8sHandler) DeleteCollection(_ context.Context, _ int64, _ metav1.ListOptions) error {
-	return nil
-}
-func (m *mockK8sHandler) List(_ context.Context, _ int64, _ metav1.ListOptions) (*unstructured.UnstructuredList, error) {
-	return nil, nil
-}
-func (m *mockK8sHandler) Search(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	return nil, nil
-}
-func (m *mockK8sHandler) GetStats(_ context.Context, _ int64) (*resourcepb.ResourceStatsResponse, error) {
-	return nil, nil
-}
-func (m *mockK8sHandler) GetUsersFromMeta(_ context.Context, _ []string) (map[string]*user.User, error) {
-	return nil, nil
 }
 
 // TestCodecPathResourcesRegisterOneVersionPerType guards apimachinery's LegacyCodec version-order
