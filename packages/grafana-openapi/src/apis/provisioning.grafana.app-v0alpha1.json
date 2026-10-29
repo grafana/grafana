@@ -5868,7 +5868,7 @@
       },
       "ResourceCount": {
         "type": "object",
-        "required": ["group", "resource", "count"],
+        "required": ["group", "resource", "kind", "count"],
         "properties": {
           "count": {
             "type": "integer",
@@ -5876,6 +5876,10 @@
             "default": 0
           },
           "group": {
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
             "type": "string",
             "default": ""
           },
@@ -5924,7 +5928,7 @@
       },
       "ResourceListItem": {
         "type": "object",
-        "required": ["path", "group", "resource", "name", "hash"],
+        "required": ["path", "group", "resource", "kind", "name", "hash"],
         "properties": {
           "folder": {
             "type": "string"
@@ -5935,6 +5939,10 @@
           },
           "hash": {
             "description": "the k8s identifier",
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
             "type": "string",
             "default": ""
           },
