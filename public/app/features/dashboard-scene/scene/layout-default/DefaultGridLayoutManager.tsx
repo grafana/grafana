@@ -42,6 +42,7 @@ import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getTestIdForLayout } from '../../utils/test-utils';
+import { trackDropItemCrossLayout } from '../../utils/tracking';
 import {
   forceRenderChildren,
   NEW_PANEL_HEIGHT,
@@ -56,7 +57,7 @@ import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
-import { type DashboardDropTarget, type LayoutSnapshot } from '../types/DashboardDropTarget';
+import { type DashboardDropTarget, type GridItemDragInfo, type LayoutSnapshot } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -65,6 +66,7 @@ import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
 import { CustomGrid, shouldRenderCustomGrid } from './custom-grid/CustomGrid';
 import { CustomGridController } from './custom-grid/CustomGridController';
+import { getLayoutKey } from './custom-grid/gridItemLayout';
 import { startGridShadowCheck } from './custom-grid/shadowCheck';
 import { findSpaceForNewPanel } from './findSpaceForNewPanel';
 import { RowActions } from './row-actions/RowActions';
@@ -112,7 +114,8 @@ export class DefaultGridLayoutManager
 
   /**
    * Only while the new custom grid renders this layout. The new grid drives the drags of its items
-   * itself, so their drops are committed here. Otherwise the row or tab around this layout is the drop
+   * itself, so their drops are committed here, and previews drops of panels from elsewhere where they
+   * land. Otherwise the row or tab around this layout is the drop
    * target, and with the react-grid-layout grid (always so with the unified drag and drop flag off) the
    * layout orchestrator never sees this layout as one, nor calls the drop target methods below.
    */
@@ -125,7 +128,23 @@ export class DefaultGridLayoutManager
   }
 
   public getLayoutSnapshot(role: 'source' | 'destination'): LayoutSnapshot | null {
-    return role === 'source' ? (this._customGridController?.getDragSourceSnapshot() ?? null) : null;
+    const controller = this._customGridController;
+    if (!controller) {
+      return null;
+    }
+    return role === 'source' ? controller.getDragSourceSnapshot() : controller.getExternalDropSnapshot();
+  }
+
+  public onExternalDragOver(gridItem: SceneGridItemLike, evt: PointerEvent, info: GridItemDragInfo): void {
+    this._getRenderedCustomGrid()?.previewExternalDrag(gridItem, evt, info);
+  }
+
+  public onNewPanelDragOver(evt: PointerEvent): void {
+    this._getRenderedCustomGrid()?.previewNewPanelDrag(evt, { w: NEW_PANEL_WIDTH, h: NEW_PANEL_HEIGHT });
+  }
+
+  public onExternalDragLeave(): void {
+    this._customGridController?.endExternalDrop();
   }
 
   public draggedGridItemOutside(gridItem: SceneGridItemLike): void {
@@ -133,7 +152,13 @@ export class DefaultGridLayoutManager
   }
 
   public draggedGridItemInside(gridItem: SceneGridItemLike): void {
+    trackDropItemCrossLayout(gridItem);
+    const drop = this._customGridController?.getExternalDropSnapshot();
     this.addGridItem(gridItem);
+    // Where the grid previews the drop, rather than at the bottom
+    if (drop?.after.some((item) => item.i === getLayoutKey(gridItem))) {
+      drop.target.applyLayout(drop.after);
+    }
   }
 
   private _getRenderedCustomGrid(): CustomGridController | undefined {
@@ -234,7 +259,12 @@ export class DefaultGridLayoutManager
 
     // With new edit mode we add panels to the bottom of the grid
     if (isDashboardNewLayoutsEnabled()) {
-      const emptySpace = findSpaceForNewPanel(this.state.grid);
+      // Unless the panel is dropped from the Add pane on the new custom grid, which previews where it lands
+      const drop = this._getRenderedCustomGrid()?.getNewPanelDropSnapshot(vizPanel.state.key!);
+      const dropCell = drop?.after.find((item) => item.i === vizPanel.state.key);
+      const emptySpace = dropCell
+        ? { x: dropCell.x, y: dropCell.y, width: dropCell.w, height: dropCell.h }
+        : findSpaceForNewPanel(this.state.grid);
       const newGridItem = new DashboardGridItem({
         ...emptySpace,
         body: vizPanel,
@@ -247,11 +277,13 @@ export class DefaultGridLayoutManager
         source: this,
         perform: () => {
           this.state.grid.setState({ children: [...this.state.grid.state.children, newGridItem] });
+          drop?.target.applyLayout(drop.after);
         },
         undo: () => {
           this.state.grid.setState({
             children: this.state.grid.state.children.filter((child) => child !== newGridItem),
           });
+          drop?.target.applyLayout(drop.before);
         },
       });
     } else {

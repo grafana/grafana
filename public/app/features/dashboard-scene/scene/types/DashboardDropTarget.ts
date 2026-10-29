@@ -14,6 +14,8 @@ export interface GridItemDragInfo {
   /** Rendered size of the item, in pixels */
   width: number;
   height: number;
+  /** Rendered width and column gap of the auto grid the item is dragged from, to size it for a custom grid */
+  autoGrid?: { width: number; columnGap: number };
 }
 
 /** Position of one item in a grid layout, in grid units. `i` is the key of the item's panel. */
@@ -46,7 +48,12 @@ export interface DashboardDropTarget extends SceneObject {
   setDropPosition?(position: number | null): void;
   /** Called on every pointer move while a grid item from another layout is dragged over this target */
   onExternalDragOver?(gridItem: SceneGridItemLike, evt: PointerEvent, info: GridItemDragInfo): void;
-  /** Called once a grid item from another layout is no longer dragged over this target, including on drop */
+  /** Called on every pointer move while a new panel from the Add pane is dragged over this target */
+  onNewPanelDragOver?(evt: PointerEvent): void;
+  /**
+   * Called once a grid item from another layout, or a new panel, is no longer dragged over this target.
+   * On a drop, after the item was added.
+   */
   onExternalDragLeave?(): void;
   /** Commits a drag that started and ended in this target */
   commitDragWithin?(gridItem: SceneGridItemLike): void;

@@ -33,7 +33,7 @@ export const CUSTOM_GRID_ATTR = 'data-custom-grid';
 interface Props {
   grid: SceneGridLayout;
   controller: CustomGridController;
-  /** Key the grid is found by as a drop target while one of its items is dragged */
+  /** Key the grid is found by as a drop target, for its own items and items dragged in from elsewhere */
   dropTargetKey?: string;
 }
 
@@ -74,8 +74,7 @@ export function CustomGridRenderer({ grid, controller, dropTargetKey }: Props) {
           ref={controller.setContainer}
           className={styles.container}
           style={{ width, height: containerHeightPx(rendered) }}
-          // Only a drop target for its own items for now; other drags still drop on the row or tab around it
-          {...(isDragging && dropTargetKey ? { [DASHBOARD_DROP_TARGET_KEY_ATTR]: dropTargetKey } : {})}
+          {...(dropTargetKey ? { [DASHBOARD_DROP_TARGET_KEY_ATTR]: dropTargetKey } : {})}
         >
           {placeholder && <div className={styles.placeholder} style={toStyle(pixelRectFor(width, placeholder))} />}
           {children.map((child) => {

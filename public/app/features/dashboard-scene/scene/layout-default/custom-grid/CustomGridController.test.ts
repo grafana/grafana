@@ -2,12 +2,19 @@ import { logWarning } from '@grafana/runtime';
 import { type SceneGridItemLike, SceneGridLayout, VizPanel } from '@grafana/scenes';
 
 import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from '../../../sidebar/events';
+import { AutoGridItem } from '../../layout-auto-grid/AutoGridItem';
 import { RowItem } from '../../layout-rows/RowItem';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR, type GridItemDragInfo } from '../../types/DashboardDropTarget';
 import { DashboardGridItem } from '../DashboardGridItem';
 import { DefaultGridLayoutManager } from '../DefaultGridLayoutManager';
 
-import { CustomGridController, DRAG_LEFT_VAR, DRAG_TOP_VAR, RESIZE_WIDTH_VAR } from './CustomGridController';
+import {
+  CustomGridController,
+  DRAG_LEFT_VAR,
+  DRAG_TOP_VAR,
+  NEW_PANEL_DROP_KEY,
+  RESIZE_WIDTH_VAR,
+} from './CustomGridController';
 import { type GridLayoutItem } from './gridMath';
 
 jest.mock('@grafana/runtime', () => ({
@@ -257,7 +264,11 @@ function setupRenderedGrid(
     container.appendChild(element);
     handles.set(child.state.key!, handle);
   }
-  document.body.appendChild(container);
+  // The row the grid is in
+  const section = document.createElement('div');
+  section.setAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR, 'own-row');
+  section.appendChild(container);
+  document.body.appendChild(section);
   controller.setContainer(container);
 
   // The pointer is over the grid unless a test moves it over another drop target
@@ -295,6 +306,16 @@ function setupRenderedGrid(
 
   const moveOverGrid = () => elementsUnderPointer.splice(0, elementsUnderPointer.length, container);
 
+  /** Over the row around the grid, outside of the grid itself, e.g. on the row's header */
+  const moveOverOwnSection = () => elementsUnderPointer.splice(0, elementsUnderPointer.length, section);
+
+  /** Pointer position for an item from elsewhere whose top-left corner is at the given cell */
+  const pointerAtCell = (x: number, y: number) => ({
+    clientX: x * COLUMN_PX + GRAB.offsetX,
+    clientY: y * ROW_PX + GRAB.offsetY,
+    buttons: 1,
+  });
+
   return {
     grid,
     controller,
@@ -307,6 +328,8 @@ function setupRenderedGrid(
     dragToCell,
     moveOverOtherDropTarget,
     moveOverGrid,
+    moveOverOwnSection,
+    pointerAtCell,
     handles,
   };
 }
@@ -479,6 +502,24 @@ describe('CustomGridController drag', () => {
     ]);
   });
 
+  it('keeps the item in the grid while it is over the row around the grid, like the layout orchestrator does', () => {
+    const { grid, controller, edits, pressOnHandle, dragToCell, moveOverOwnSection } = setupRenderedGrid(threePanels());
+    const third = grid.state.children[2];
+    pressOnHandle(third);
+    moveOverOwnSection();
+
+    // Above the grid, on the row's header
+    dragToCell(0, -2);
+    controller.commitDrag(third);
+
+    expect(edits).toHaveLength(1);
+    expect(layoutOf(grid)).toEqual([
+      { i: 'panel-1', x: 0, y: 8, w: 12, h: 8 },
+      { i: 'panel-2', x: 12, y: 0, w: 12, h: 8 },
+      { i: 'panel-3', x: 0, y: 0, w: 12, h: 8 },
+    ]);
+  });
+
   describe('cancelling', () => {
     it('cancels on Escape and leaves every item where it was', () => {
       const { grid, controller, edits, onCancel, pressOnHandle, dragToCell } = setupRenderedGrid(threePanels());
@@ -596,6 +637,126 @@ describe('CustomGridController drag', () => {
       const narrow = setupRenderedGrid(threePanels(), { gridWidth: 768 });
       expect(narrow.controller.canStartDrag(press(narrow), narrow.grid.state.children[0])).toBe(false);
     });
+  });
+});
+
+describe('CustomGridController drops from elsewhere', () => {
+  // A panel of another custom grid, 6 x 4 cells
+  const otherGridItem = () => gridItem(9, 0, 0, 6, 4);
+
+  it('previews a panel from another custom grid live at the cell under the pointer, keeping its size', () => {
+    const { grid, controller, listener, pointerAtCell } = setupRenderedGrid(threePanels());
+    const item = otherGridItem();
+    listener.mockClear();
+
+    controller.previewExternalDrag(item, pointerAtCell(12, 0), GRAB);
+
+    expect(controller.getInteraction()).toMatchObject({
+      kind: 'drop',
+      key: 'panel-9',
+      isActive: true,
+      isOutside: false,
+    });
+    expect(sortByKey(controller.getInteraction()!.preview)).toEqual([
+      { i: 'panel-1', x: 0, y: 0, w: 12, h: 8 },
+      { i: 'panel-2', x: 12, y: 4, w: 12, h: 8 },
+      { i: 'panel-3', x: 0, y: 8, w: 12, h: 8 },
+      { i: 'panel-9', x: 12, y: 0, w: 6, h: 4 },
+    ]);
+    expect(listener).toHaveBeenCalled();
+    expect(layoutOf(grid)).toEqual(THREE_PANELS);
+
+    // The preview follows the pointer
+    controller.previewExternalDrag(item, pointerAtCell(0, 16), GRAB);
+
+    expect(sortByKey(controller.getInteraction()!.preview)).toEqual([
+      ...THREE_PANELS,
+      { i: 'panel-9', x: 0, y: 16, w: 6, h: 4 },
+    ]);
+  });
+
+  it('does not notify the renderer while the pointer stays in the same cell', () => {
+    const { controller, listener, pointerAtCell } = setupRenderedGrid(threePanels());
+    const item = otherGridItem();
+    controller.previewExternalDrag(item, pointerAtCell(12, 0), GRAB);
+    const interaction = controller.getInteraction();
+    listener.mockClear();
+
+    const { clientX, clientY } = pointerAtCell(12, 0);
+    controller.previewExternalDrag(item, { clientX: clientX + 3, clientY: clientY + 2, buttons: 1 }, GRAB);
+
+    expect(listener).not.toHaveBeenCalled();
+    expect(controller.getInteraction()).toBe(interaction);
+  });
+
+  it('shows its own layout again once the panel left the grid', () => {
+    const { grid, controller, pointerAtCell } = setupRenderedGrid(threePanels());
+    controller.previewExternalDrag(otherGridItem(), pointerAtCell(12, 0), GRAB);
+
+    controller.endExternalDrop();
+
+    expect(controller.getInteraction()).toBeNull();
+    expect(controller.getExternalDropSnapshot()).toBeNull();
+    expect(layoutOf(grid)).toEqual(THREE_PANELS);
+  });
+
+  it('sizes a panel from an auto grid by its share of the auto grid row and its height in grid rows', () => {
+    const { controller, pointerAtCell } = setupRenderedGrid(threePanels());
+    const autoGridItem = new AutoGridItem({
+      key: 'auto-grid-item-9',
+      body: new VizPanel({ key: 'panel-9', title: 'Panel 9', pluginId: 'timeseries' }),
+    });
+    // A third of a 1208px auto grid with 8px gaps, 320px high
+    const info: GridItemDragInfo = { ...GRAB, width: 397, height: 320, autoGrid: { width: 1208, columnGap: 8 } };
+
+    controller.previewExternalDrag(autoGridItem, pointerAtCell(0, 16), info);
+
+    expect(controller.getInteraction()!.preview).toContainEqual({ i: 'panel-9', x: 0, y: 16, w: 8, h: 9 });
+  });
+
+  it('gives the positions before and after the drop, to land the panel where it was previewed and undo exactly', () => {
+    const { controller, pointerAtCell } = setupRenderedGrid(threePanels());
+    controller.previewExternalDrag(otherGridItem(), pointerAtCell(12, 0), GRAB);
+
+    const snapshot = controller.getExternalDropSnapshot();
+
+    expect(snapshot?.target).toBe(controller);
+    expect(snapshot?.before).toEqual(THREE_PANELS);
+    expect(snapshot?.after).toEqual(controller.getInteraction()!.preview);
+  });
+
+  it('does not preview drops in a grid too narrow for columns', () => {
+    const { controller, pointerAtCell } = setupRenderedGrid(threePanels(), { gridWidth: 768 });
+
+    controller.previewExternalDrag(otherGridItem(), pointerAtCell(12, 0), GRAB);
+
+    expect(controller.getInteraction()).toBeNull();
+    expect(controller.getExternalDropSnapshot()).toBeNull();
+  });
+
+  it('stops previewing when the grid is unmounted', () => {
+    const { controller, pointerAtCell } = setupRenderedGrid(threePanels());
+    controller.previewExternalDrag(otherGridItem(), pointerAtCell(12, 0), GRAB);
+
+    controller.setContainer(null);
+
+    expect(controller.getInteraction()).toBeNull();
+  });
+
+  it('previews a new panel held by the middle of its header, and gives its drop with the key it gets', () => {
+    const { controller } = setupRenderedGrid(threePanels());
+    // A 12 x 8 panel is 600px wide, so held 300px in from its left edge
+    controller.previewNewPanelDrag(
+      { clientX: 12 * COLUMN_PX + 300, clientY: 16 * ROW_PX + 16, buttons: 1 },
+      { w: 12, h: 8 }
+    );
+
+    expect(controller.getInteraction()).toMatchObject({ kind: 'drop', key: NEW_PANEL_DROP_KEY });
+    expect(controller.getExternalDropSnapshot()).toBeNull();
+    const snapshot = controller.getNewPanelDropSnapshot('panel-10');
+    expect(snapshot?.before).toEqual(THREE_PANELS);
+    expect(snapshot?.after).toContainEqual({ i: 'panel-10', x: 12, y: 8, w: 12, h: 8 });
+    expect(snapshot?.after.map(({ i }) => i)).not.toContain(NEW_PANEL_DROP_KEY);
   });
 });
 

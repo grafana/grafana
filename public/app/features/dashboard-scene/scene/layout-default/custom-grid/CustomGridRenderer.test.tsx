@@ -156,7 +156,7 @@ describe('CustomGridRenderer', () => {
 
     const DRAG_INFO = { offsetX: 10, offsetY: 10, width: 0, height: 0 };
 
-    it('is a drop target for its own item from the press on', async () => {
+    it('is a drop target for its own item', async () => {
       const { gridElement } = await startDrag();
 
       expect(gridElement).toHaveAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR, 'grid-manager');
@@ -186,7 +186,41 @@ describe('CustomGridRenderer', () => {
       act(() => controller.endDrag());
 
       expectAt(getItemElement(container, 'grid-item-2'), { x: 12, y: 0, w: 12, h: 8 });
-      expect(gridElement).not.toHaveAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR);
+      expect(gridElement.querySelectorAll(':scope > :not([data-griditem-key])')).toHaveLength(0);
+    });
+  });
+
+  describe('while a panel from elsewhere is dragged over the grid', () => {
+    let clientWidth: jest.SpyInstance;
+
+    beforeEach(() => {
+      clientWidth = jest.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(GRID_WIDTH);
+    });
+
+    afterEach(() => clientWidth.mockRestore());
+
+    it('is a drop target, and makes room for the panel where it would land', async () => {
+      const { controller, container } = await setup([gridItem(1, 0, 0, 12, 8), gridItem(2, 12, 0, 12, 8)]);
+      const gridElement = getItemElement(container, 'grid-item-1').parentElement!;
+      expect(gridElement).toHaveAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR, 'grid-manager');
+
+      // A 12 x 4 panel from another grid, held 10px in from its top-left corner, over the top-left cell
+      act(() =>
+        controller.previewExternalDrag(
+          gridItem(3, 0, 0, 12, 4),
+          { clientX: 10, clientY: 10, buttons: 1 },
+          { offsetX: 10, offsetY: 10, width: 0, height: 0 }
+        )
+      );
+
+      expectAt(gridElement.firstElementChild as HTMLElement, { x: 0, y: 0, w: 12, h: 4 });
+      expectAt(getItemElement(container, 'grid-item-1'), { x: 0, y: 4, w: 12, h: 8 });
+      expect(container.querySelector('[data-griditem-key="grid-item-3"]')).not.toBeInTheDocument();
+      expect(gridElement.style.height).toBe(`${containerHeightPx([{ i: 'a', x: 0, y: 4, w: 12, h: 8 }])}px`);
+
+      act(() => controller.endExternalDrop());
+
+      expectAt(getItemElement(container, 'grid-item-1'), { x: 0, y: 0, w: 12, h: 8 });
       expect(gridElement.querySelectorAll(':scope > :not([data-griditem-key])')).toHaveLength(0);
     });
   });
