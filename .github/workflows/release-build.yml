@@ -22,7 +22,7 @@ permissions:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   # Let builds finish even when main receives commits faster than we can build them.
-  queue: single
+  # The default queue keeps only the newest pending run, so builds can catch up.
   cancel-in-progress: false
 
 # Builds the following artifacts:
