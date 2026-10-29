@@ -47,11 +47,9 @@ func (d *DynamicClients) Get(ctx context.Context, namespace, name string) (*fold
 func (d *DynamicClients) Delete(ctx context.Context, namespace, parentUID string, child Child) (DeleteOutcome, error) {
 	switch child.Kind {
 	case ChildDashboard:
-		return d.deleteChild(ctx, d.client.Resource(dashboardGVR).Namespace(namespace), parentUID, child.Name, false)
+		return d.deleteChild(ctx, d.client.Resource(dashboardGVR).Namespace(namespace), parentUID, child.Name)
 	case ChildFolder:
-		// Force gets a non-empty subfolder past the emptiness check; with the cascade finalizer it only
-		// goes terminating and runs its own cascade.
-		return d.deleteChild(ctx, d.client.Resource(folderGVR).Namespace(namespace), parentUID, child.Name, true)
+		return d.deleteChild(ctx, d.client.Resource(folderGVR).Namespace(namespace), parentUID, child.Name)
 	default:
 		return 0, fmt.Errorf("unsupported child kind %q", child.Kind)
 	}
@@ -62,7 +60,12 @@ func (d *DynamicClients) Delete(ctx context.Context, namespace, parentUID string
 // it moved to. The uid and resourceVersion preconditions make the delete fail instead of acting on a
 // child that was recreated or moved between this read and the delete. Terminating children are
 // skipped, since re-deleting them would only spend a batch slot.
-func (d *DynamicClients) deleteChild(ctx context.Context, client dynamic.ResourceInterface, parentUID, name string, force bool) (DeleteOutcome, error) {
+//
+// Deletes are forced (gracePeriodSeconds=0), as the synchronous cascade does: it gets a non-empty
+// subfolder past the emptiness check (with the cascade finalizer it only goes terminating and runs
+// its own cascade), and a file-provisioned dashboard past the check that otherwise rejects deleting
+// it, which would leave the folder stuck.
+func (d *DynamicClients) deleteChild(ctx context.Context, client dynamic.ResourceInterface, parentUID, name string) (DeleteOutcome, error) {
 	existing, err := client.Get(ctx, name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
 		return DeleteOutcomeGone, nil
@@ -78,12 +81,11 @@ func (d *DynamicClients) deleteChild(ctx context.Context, client dynamic.Resourc
 	}
 
 	uid, rv := existing.GetUID(), existing.GetResourceVersion()
-	opts := metav1.DeleteOptions{Preconditions: &metav1.Preconditions{UID: &uid, ResourceVersion: &rv}}
-	if force {
-		zero := int64(0)
-		opts.GracePeriodSeconds = &zero
-	}
-	err = client.Delete(ctx, name, opts)
+	zero := int64(0)
+	err = client.Delete(ctx, name, metav1.DeleteOptions{
+		GracePeriodSeconds: &zero,
+		Preconditions:      &metav1.Preconditions{UID: &uid, ResourceVersion: &rv},
+	})
 	if apierrors.IsNotFound(err) {
 		return DeleteOutcomeGone, nil
 	}

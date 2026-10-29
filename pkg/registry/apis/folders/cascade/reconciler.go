@@ -61,8 +61,8 @@ type ChildLister interface {
 	DirectChildren(ctx context.Context, namespace, folderUID string) ([]Child, error)
 }
 
-// ChildDeleter deletes one child of parentUID. Subfolders are deleted with force so the emptiness
-// check lets through the subfolders and dashboards their own cascade will remove.
+// ChildDeleter deletes one child of parentUID. Children are deleted with force, so a non-empty
+// subfolder is let through to run its own cascade.
 type ChildDeleter interface {
 	Delete(ctx context.Context, namespace, parentUID string, child Child) (DeleteOutcome, error)
 }
