@@ -56,9 +56,15 @@ const (
 	DeleteOutcomeGone
 )
 
-// ChildLister lists a folder's direct children: subfolders and dashboards whose parent is folderUID.
+// childKinds is the order children are deleted in: subfolders first, so their own cascades start
+// as early as possible.
+var childKinds = []ChildKind{ChildFolder, ChildDashboard}
+
+// ChildLister pages through a folder's direct children of one kind.
 type ChildLister interface {
-	DirectChildren(ctx context.Context, namespace, folderUID string) ([]Child, error)
+	// ListChildren returns up to limit direct children of kind in folderUID, starting at offset, and
+	// the total number of them.
+	ListChildren(ctx context.Context, namespace, folderUID string, kind ChildKind, offset, limit int64) ([]Child, int64, error)
 }
 
 // ChildDeleter deletes one child of parentUID. Children are deleted with force, so a non-empty
@@ -107,19 +113,28 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 		status.Started = &now
 	}
 
-	children, err := r.Children.DirectChildren(ctx, f.Namespace, f.Name)
-	if err != nil {
-		err = fmt.Errorf("list children: %w", err)
-		status.State = foldersv1.FolderCascadeDeleteStatusStateFailed
-		status.Errors = []string{err.Error()}
-		return Result{Requeue: true}, errors.Join(err, r.writeStatus(ctx, f, prior, status))
+	// Only the first page of each kind is read up front; progress comes from the hit totals, so a
+	// large folder costs a batch-sized read per pass rather than a full listing.
+	batch := int64(r.batchSize())
+	cursors := make([]childCursor, 0, len(childKinds))
+	var total int64
+	for _, kind := range childKinds {
+		page, n, err := r.Children.ListChildren(ctx, f.Namespace, f.Name, kind, 0, batch)
+		if err != nil {
+			err = fmt.Errorf("list %s: %w", kind, err)
+			status.State = foldersv1.FolderCascadeDeleteStatusStateFailed
+			status.Errors = []string{err.Error()}
+			return Result{Requeue: true}, errors.Join(err, r.writeStatus(ctx, f, prior, status))
+		}
+		n = max(n, int64(len(page)))
+		cursors = append(cursors, childCursor{kind: kind, page: page, offset: int64(len(page)), total: n})
+		total += n
 	}
 	if status.Total == nil {
-		total := int64(len(children))
 		status.Total = &total
 	}
 
-	if len(children) == 0 {
+	if total == 0 {
 		remaining := int64(0)
 		status.State = foldersv1.FolderCascadeDeleteStatusStateCompleted
 		status.Remaining = &remaining
@@ -138,31 +153,39 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 		return Result{}, nil
 	}
 
-	remaining := int64(len(children))
-	issued := 0
+	remaining := total
+	issued := int64(0)
 	var failures []error
-	for _, c := range children {
-		if issued >= r.batchSize() {
-			break
-		}
-		outcome, err := r.Deleter.Delete(ctx, f.Namespace, f.Name, c)
-		if err != nil {
-			issued++
-			failures = append(failures, fmt.Errorf("%s/%s: %w", c.Kind, c.Name, err))
-			continue
-		}
-		switch outcome {
-		case DeleteOutcomeDeleted:
-			issued++
-			remaining--
-		case DeleteOutcomePending:
-			// Still a child until its finalizers clear.
-			issued++
-		case DeleteOutcomeGone:
-			remaining--
-		case DeleteOutcomeTerminating:
-			// Already being deleted: costs no batch slot, so a page of slow subfolders cannot starve
-			// the children behind it.
+	for i := range cursors {
+		cur := &cursors[i]
+		for issued < batch {
+			c, ok, err := r.next(ctx, f, cur, batch)
+			if err != nil {
+				failures = append(failures, fmt.Errorf("list %s: %w", cur.kind, err))
+				break
+			}
+			if !ok {
+				break
+			}
+			outcome, err := r.Deleter.Delete(ctx, f.Namespace, f.Name, c)
+			if err != nil {
+				issued++
+				failures = append(failures, fmt.Errorf("%s/%s: %w", c.Kind, c.Name, err))
+				continue
+			}
+			switch outcome {
+			case DeleteOutcomeDeleted:
+				issued++
+				remaining--
+			case DeleteOutcomePending:
+				// Still a child until its finalizers clear.
+				issued++
+			case DeleteOutcomeGone:
+				remaining--
+			case DeleteOutcomeTerminating:
+				// Already being deleted: costs no batch slot, so a page of slow subfolders cannot starve
+				// the children behind it.
+			}
 		}
 	}
 
@@ -177,6 +200,38 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 		logger.Warn("Folder cascade delete pass had failures", "failed", len(failures), "remaining", remaining)
 	}
 	return Result{Requeue: true}, errors.Join(errors.Join(failures...), r.writeStatus(ctx, f, prior, status))
+}
+
+// childCursor walks one kind of child across search pages within a pass.
+type childCursor struct {
+	kind   ChildKind
+	page   []Child
+	offset int64
+	total  int64
+}
+
+// next returns the cursor's next child, fetching another page only when the batch still has room,
+// which happens when children are skipped. Deletes earlier in the pass can shift offsets so a later
+// page skips some children; they are picked up by the next pass, and the folder is only released
+// once a pass sees no children at all.
+func (r *Reconciler) next(ctx context.Context, f *foldersv1.Folder, cur *childCursor, batch int64) (Child, bool, error) {
+	if len(cur.page) == 0 {
+		if cur.offset >= cur.total {
+			return Child{}, false, nil
+		}
+		page, _, err := r.Children.ListChildren(ctx, f.Namespace, f.Name, cur.kind, cur.offset, batch)
+		if err != nil {
+			return Child{}, false, err
+		}
+		if len(page) == 0 {
+			return Child{}, false, nil
+		}
+		cur.page = page
+		cur.offset += int64(len(page))
+	}
+	c := cur.page[0]
+	cur.page = cur.page[1:]
+	return c, true, nil
 }
 
 // writeStatus skips no-op writes: every status write is a watch event, and a folder that is only

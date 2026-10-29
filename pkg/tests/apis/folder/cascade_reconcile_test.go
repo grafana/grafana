@@ -102,8 +102,15 @@ func (e *cascadeEnv) directChildren(folderUID string) int64 {
 func (e *cascadeEnv) waitIndexed(folderUID string, want int) {
 	e.t.Helper()
 	require.Eventually(e.t, func() bool {
-		children, err := e.lister.DirectChildren(e.ctx, e.ns, folderUID)
-		return err == nil && len(children) == want
+		var total int64
+		for _, kind := range []cascade.ChildKind{cascade.ChildFolder, cascade.ChildDashboard} {
+			_, n, err := e.lister.ListChildren(e.ctx, e.ns, folderUID, kind, 0, 1)
+			if err != nil {
+				return false
+			}
+			total += n
+		}
+		return total == int64(want)
 	}, 30*time.Second, 100*time.Millisecond, "search did not index the children of %s", folderUID)
 }
 
@@ -188,7 +195,7 @@ func TestFolderCascadeReconcile(t *testing.T) {
 	clients := cascade.NewDynamicClients(dyn)
 
 	newEnv := func(t *testing.T, batchSize int) *cascadeEnv {
-		lister := cascade.NewSearchChildLister(helper.GetEnv().ResourceClient, 0)
+		lister := cascade.NewSearchChildLister(helper.GetEnv().ResourceClient)
 		return &cascadeEnv{
 			t: t,
 			// Search is scoped to the caller; the controller enumerates as the service identity.

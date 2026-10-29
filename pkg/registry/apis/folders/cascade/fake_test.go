@@ -36,6 +36,7 @@ type memStore struct {
 
 	deleteCalls  []string
 	statusWrites int
+	listedRows   int
 }
 
 func newMemStore() *memStore {
@@ -79,19 +80,37 @@ func (m *memStore) get(name string) *foldersv1.Folder {
 	return out
 }
 
-func (m *memStore) DirectChildren(_ context.Context, _ string, folderUID string) ([]Child, error) {
+func (m *memStore) childrenOf(folderUID string, kind ChildKind) []Child {
 	var out []Child
-	for _, name := range sortedKeys(m.folders) {
-		if m.folders[name].parent == folderUID {
-			out = append(out, Child{Kind: ChildFolder, Name: name})
+	switch kind {
+	case ChildFolder:
+		for _, name := range sortedKeys(m.folders) {
+			if m.folders[name].parent == folderUID {
+				out = append(out, Child{Kind: ChildFolder, Name: name})
+			}
+		}
+	case ChildDashboard:
+		for _, name := range sortedKeys(m.dashboards) {
+			if m.dashboards[name] == folderUID {
+				out = append(out, Child{Kind: ChildDashboard, Name: name})
+			}
 		}
 	}
-	for _, name := range sortedKeys(m.dashboards) {
-		if m.dashboards[name] == folderUID {
-			out = append(out, Child{Kind: ChildDashboard, Name: name})
-		}
-	}
-	return out, nil
+	return out
+}
+
+func (m *memStore) ListChildren(_ context.Context, _, folderUID string, kind ChildKind, offset, limit int64) ([]Child, int64, error) {
+	all := m.childrenOf(folderUID, kind)
+	page := pageOf(all, offset, limit)
+	m.listedRows += len(page)
+	return page, int64(len(all)), nil
+}
+
+func pageOf(all []Child, offset, limit int64) []Child {
+	n := int64(len(all))
+	start := min(offset, n)
+	end := min(start+limit, n)
+	return all[start:end]
 }
 
 func (m *memStore) Delete(_ context.Context, _, parentUID string, c Child) (DeleteOutcome, error) {
@@ -116,7 +135,7 @@ func (m *memStore) Delete(_ context.Context, _, parentUID string, c Child) (Dele
 		}
 		if len(f.finalizers) == 0 {
 			// Mirrors validateOnDelete: without the finalizer a forced delete gets no bypass.
-			if children, _ := m.DirectChildren(context.Background(), testNamespace, c.Name); len(children) > 0 {
+			if len(m.childrenOf(c.Name, ChildFolder))+len(m.childrenOf(c.Name, ChildDashboard)) > 0 {
 				return 0, errors.New("folder is not empty")
 			}
 			m.deleteCalls = append(m.deleteCalls, c.Name)

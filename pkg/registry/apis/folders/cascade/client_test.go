@@ -252,25 +252,39 @@ func TestSearchChildLister(t *testing.T) {
 		folderGVR.Resource:    {"f1", "f2", "f3"},
 		dashboardGVR.Resource: {"d1", "d2"},
 	}}
+	l := NewSearchChildLister(s)
+	ctx := context.Background()
 
-	children, err := NewSearchChildLister(s, 2).DirectChildren(context.Background(), testNamespace, "parent")
+	page, total, err := l.ListChildren(ctx, testNamespace, "parent", ChildFolder, 0, 2)
 	require.NoError(t, err)
-	require.Equal(t, []Child{
-		{ChildFolder, "f1"}, {ChildFolder, "f2"}, {ChildFolder, "f3"},
-		{ChildDashboard, "d1"}, {ChildDashboard, "d2"},
-	}, children)
+	require.Equal(t, []Child{{ChildFolder, "f1"}, {ChildFolder, "f2"}}, page)
+	require.Equal(t, int64(3), total)
 
-	require.Len(t, s.requests, 3) // two folder pages, one dashboard page
+	page, total, err = l.ListChildren(ctx, testNamespace, "parent", ChildFolder, 2, 2)
+	require.NoError(t, err)
+	require.Equal(t, []Child{{ChildFolder, "f3"}}, page)
+	require.Equal(t, int64(3), total)
+
+	page, total, err = l.ListChildren(ctx, testNamespace, "parent", ChildDashboard, 0, 100)
+	require.NoError(t, err)
+	require.Equal(t, []Child{{ChildDashboard, "d1"}, {ChildDashboard, "d2"}}, page)
+	require.Equal(t, int64(2), total)
+
+	require.Len(t, s.requests, 3)
 	for _, req := range s.requests {
 		require.Equal(t, testNamespace, req.Options.Key.Namespace)
 		require.Len(t, req.Options.Fields, 1)
 		require.Equal(t, resource.SEARCH_FIELD_FOLDER, req.Options.Fields[0].Key)
 		require.Equal(t, []string{"parent"}, req.Options.Fields[0].Values)
 	}
+	require.Equal(t, folderGVR.Resource, s.requests[1].Options.Key.Resource)
+	require.Equal(t, int64(2), s.requests[1].Offset)
+	require.Equal(t, int64(2), s.requests[1].Limit)
+	require.Equal(t, dashboardGVR.Resource, s.requests[2].Options.Key.Resource)
 }
 
 func TestSearchChildLister_Error(t *testing.T) {
-	_, err := NewSearchChildLister(&pagedSearcher{err: errors.New("index down")}, 0).DirectChildren(context.Background(), testNamespace, "parent")
+	_, _, err := NewSearchChildLister(&pagedSearcher{err: errors.New("index down")}).ListChildren(context.Background(), testNamespace, "parent", ChildFolder, 0, 10)
 	require.ErrorContains(t, err, "index down")
 }
 
@@ -281,7 +295,7 @@ func TestSearchChildLister_RejectsUnexpectedResultFormat(t *testing.T) {
 		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
 	} {
 		s := &pagedSearcher{byResource: map[string][]string{}, format: format}
-		_, err := NewSearchChildLister(s, 0).DirectChildren(context.Background(), testNamespace, "parent")
+		_, _, err := NewSearchChildLister(s).ListChildren(context.Background(), testNamespace, "parent", ChildDashboard, 0, 10)
 		require.ErrorContains(t, err, "unexpected search result format")
 	}
 }

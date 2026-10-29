@@ -204,9 +204,14 @@ type staleLister struct {
 	extra map[string][]Child
 }
 
-func (s staleLister) DirectChildren(ctx context.Context, ns, folderUID string) ([]Child, error) {
-	children, err := s.memStore.DirectChildren(ctx, ns, folderUID)
-	return append(children, s.extra[folderUID]...), err
+func (s staleLister) ListChildren(_ context.Context, _, folderUID string, kind ChildKind, offset, limit int64) ([]Child, int64, error) {
+	all := s.childrenOf(folderUID, kind)
+	for _, c := range s.extra[folderUID] {
+		if c.Kind == kind {
+			all = append(all, c)
+		}
+	}
+	return pageOf(all, offset, limit), int64(len(all)), nil
 }
 
 func TestReconcile_RemainingTracksDirectChildrenEachPass(t *testing.T) {
@@ -325,6 +330,41 @@ func TestReconcile_BatchLimitsDeletesPerPass(t *testing.T) {
 	require.NotContains(t, m.folders, "a")
 }
 
+func TestReconcile_ReadsOnlyABatchPerPass(t *testing.T) {
+	m := newMemStore()
+	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+	m.addDashboards("a", dashNames("d", 1000)...)
+	m.userDelete("a")
+	r := newTestReconciler(m, 100)
+
+	_, err := reconcileOnce(t, r, m, "a")
+	require.NoError(t, err)
+	require.Equal(t, 100, m.listedRows, "one batch-sized page, not the whole folder")
+	st := m.folders["a"].status
+	require.Equal(t, int64(1000), *st.Total)
+	require.Equal(t, int64(900), *st.Remaining)
+}
+
+func TestReconcile_PagesPastTerminatingSubfolders(t *testing.T) {
+	m := newMemStore()
+	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
+	for _, n := range dashNames("f", 5) {
+		m.addFolder(n, "a", foldersv1.CascadeDeleteFinalizer)
+		m.addDashboards(n, n+"-dash") // keeps each subfolder terminating
+	}
+	m.addDashboards("a", "z1")
+	m.userDelete("a")
+	r := newTestReconciler(m, 2)
+
+	// More terminating subfolders than fit in one page: later passes page past them.
+	for range 3 {
+		_, err := reconcileOnce(t, r, m, "a")
+		require.NoError(t, err)
+	}
+	require.Equal(t, []string{"f-000", "f-001", "f-002", "f-003", "f-004", "z1"}, m.deleteCalls)
+	require.Equal(t, int64(5), *m.folders["a"].status.Remaining)
+}
+
 func TestReconcile_DefaultBatchSize(t *testing.T) {
 	m := newMemStore()
 	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
@@ -420,13 +460,13 @@ func TestReconcile_ListErrorIsReported(t *testing.T) {
 	require.True(t, res.Requeue)
 	st := m.folders["a"].status
 	require.Equal(t, foldersv1.FolderCascadeDeleteStatusStateFailed, st.State)
-	require.Equal(t, []string{"list children: search unavailable"}, st.Errors)
+	require.Equal(t, []string{"list folders: search unavailable"}, st.Errors)
 }
 
 type failingLister struct{ err error }
 
-func (f failingLister) DirectChildren(context.Context, string, string) ([]Child, error) {
-	return nil, f.err
+func (f failingLister) ListChildren(context.Context, string, string, ChildKind, int64, int64) ([]Child, int64, error) {
+	return nil, 0, f.err
 }
 
 func TestReconcile_UnchangedStatusIsNotRewritten(t *testing.T) {
