@@ -505,6 +505,22 @@ Set to `true` to add metrics and tracing for database queries. The default value
 
 <hr />
 
+### `[unified_storage]`
+
+Controls unified resource storage in Grafana.
+
+#### `key_path_reconciliation_enabled`
+
+Enables a background job that fills missing `key_path` values in `resource_history` rows written by older Grafana instances during a rolling upgrade. The default value is `true`.
+
+This setting applies only when you enable the SQL KV storage backend with `[unified_storage] enable_sqlkv_backend = true`. It has no effect on file or remote storage backends.
+
+The job starts when the storage backend starts. It processes up to 100 rows per batch, with a one-second pause between batches. After it finds no missing paths or encounters an error, it waits one minute before trying again.
+
+You can optionally set this value to `false` after all Grafana instances that write to the database have been upgraded and a subsequent pass logs `Key path reconciliation succeeded; no missing key paths remain`. Keep the job enabled until the upgrade finishes, even if an earlier pass reports success.
+
+<hr />
+
 ### `[remote_cache]`
 
 Caches authentication tokens and other temporary authentication-related data in the configured database, Redis, or Memcached. This setting doesn't configure [Query Caching in Grafana Enterprise](../../administration/data-source-management/#query-and-resource-caching).

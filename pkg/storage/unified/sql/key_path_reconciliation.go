@@ -30,7 +30,7 @@ func reconcileResourceHistoryKeyPaths(ctx context.Context, database db.DB, batch
 	if err != nil {
 		return 0, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	type repair struct {
 		guid    string
