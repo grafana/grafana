@@ -11,7 +11,7 @@ export function PageLoader() {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={styles.loadingPage}>
+    <div className={styles.loadingPage} data-page-card="">
       <div
         className={styles.container}
         aria-live="polite"
