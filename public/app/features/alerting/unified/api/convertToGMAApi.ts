@@ -1,6 +1,7 @@
 import { type QueryReturnValue } from '@reduxjs/toolkit/query/react';
 
 import { type ConvertAlertmanagerResponse, convertAPI } from '@grafana/alerting/convert';
+import { generatedAPI as notificationsAPI } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
 import {
   type NotificationsSourceParams,
@@ -20,8 +21,13 @@ async function succeeded(queryFulfilled: Promise<unknown>): Promise<boolean> {
   }
 }
 
-// Alertmanager imports change the config that `alertingApi` caches, and one RTKQ client can't refetch
-// another's data through its tags, so each of these endpoints asks `alertingApi` to refetch once it succeeds.
+// An import, promote or delete changes the contact points, policies, time intervals and templates, which the
+// notifications API caches as lists.
+const invalidateNotificationResourceLists = () =>
+  notificationsAPI.util.invalidateTags(['Receiver', 'RoutingTree', 'TemplateGroup', 'TimeInterval']);
+
+// Alertmanager imports change what `alertingApi` and the notifications API cache, and one RTKQ client can't refetch
+// another's data through its tags, so each of these endpoints asks them to refetch once it succeeds.
 const convertApiWithRefetches = convertAPI.enhanceEndpoints({
   endpoints: {
     postAlertmanagerConfig: {
@@ -40,6 +46,7 @@ const convertApiWithRefetches = convertAPI.enhanceEndpoints({
             promote ? [...ALERTMANAGER_PROVIDED_ENTITY_TAGS] : ['AlertmanagerConfiguration']
           )
         );
+        dispatch(invalidateNotificationResourceLists());
       },
     },
     promoteAlertmanagerConfig: {
@@ -49,6 +56,7 @@ const convertApiWithRefetches = convertAPI.enhanceEndpoints({
         }
         // Promoting merges the staged config into the live one, which changes the contact points too.
         dispatch(alertingApi.util.invalidateTags([...ALERTMANAGER_PROVIDED_ENTITY_TAGS]));
+        dispatch(invalidateNotificationResourceLists());
       },
     },
     deleteAlertmanagerConfig: {
@@ -58,6 +66,7 @@ const convertApiWithRefetches = convertAPI.enhanceEndpoints({
         }
         // The staged config lives inside the Alertmanager config, so fetching it again removes the staged card.
         dispatch(alertingApi.util.invalidateTags(['AlertmanagerConfiguration']));
+        dispatch(invalidateNotificationResourceLists());
       },
     },
   },
