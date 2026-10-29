@@ -1887,7 +1887,7 @@ importers:
         specifier: 13.4.0-pre
         version: link:../grafana-e2e-selectors
       '@grafana/plugin-compat':
-        specifier: ^0.5.0
+        specifier: ^0.6.0
         version: link:../grafana-plugin-compat
       '@grafana/plugin-ui':
         specifier: ^0.17.3
