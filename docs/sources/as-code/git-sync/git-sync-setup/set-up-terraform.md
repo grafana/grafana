@@ -79,9 +79,8 @@ The Git Sync Terraform resources are App Platform resources and talk directly to
 
 You need two resources for configure and manage Git Sync:
 
-- The [connection resource](#configure-the-connection-resource) configures your Git provider credentials. 
-- The [repository resource](#configure-the-repository-resource) configures the Git repository to sync Grafana resources with. 
-
+- The [connection resource](#configure-the-connection-resource) configures your Git provider credentials.
+- The [repository resource](#configure-the-repository-resource) configures the Git repository to sync Grafana resources with.
 
 For better understanding of the required resources, refer to [Git Sync key concepts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts).
 
@@ -137,9 +136,9 @@ resource "grafana_apps_provisioning_repository_v0alpha1" "example" {
     workflows = "<YOUR-WORKFLOW>"
 
     sync {
-      enabled          = "<SYNC-ENABLED>"  
-      target           = "<YOUR-SYNC-TARGET>" 
-      interval_seconds = 60 # Set up TBC 
+      enabled          = "<SYNC-ENABLED>"
+      target           = "<YOUR-SYNC-TARGET>"
+      interval_seconds = 60 # Set up TBC
     }
 
     github {
@@ -164,8 +163,8 @@ resource "grafana_apps_provisioning_repository_v0alpha1" "example" {
 
 Replace the following field values:
 
-- _`<YOUR-WORKFLOW>`_ is the workflow you want Git Sync to use. Set to `write` to allow direct commits, or to `branch` to force using PRs.  
-- _`<SYNC-ENABLED>`_ controls whether you want to enable synchronization. Allowed values are `true` and `false`.  
+- _`<YOUR-WORKFLOW>`_ is the workflow you want Git Sync to use. Set to `write` to allow direct commits, or to `branch` to force using PRs.
+- _`<SYNC-ENABLED>`_ controls whether you want to enable synchronization. Allowed values are `true` and `false`.
 - _`<YOUR-SYNC-TARGET>`_, indicating where you want to place your provisioned resources. Git Sync supports two sync targets: `folder` (default) creates a folder named after the repository and places synced resources inside it, while `folderless` places synced resources at the top level without creating a wrapper folder. Refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts/#sync-targets) for details.
 - _`<YOUR-GITHUB-REPO-URL>`_ is the repository you want to synchronize using Git Sync. For example, `https://github.com/example/grafana-dashboards`.
 - _`<SYNC-BRANCH>`_ is the branch where you want to perform the sync. For example, `main`.
