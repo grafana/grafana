@@ -37,7 +37,7 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "npm run clean && npm run create:folders && npm run copy:dist --",
+    "build": "pnpm run clean && pnpm run create:folders && pnpm run copy:dist",
     "clean": "rm -rf ./dist && rm -f package.tgz",
     "copy:api": "cp ../../public/openapi3.json ./src/api",
     "copy:dist": "cp ./src/apis/* ./dist/apis && cp ./src/api/* ./dist/api",
@@ -46,10 +46,10 @@
     "generate:openapi": "make -C ../../ generate-openapi",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-npm-package.js",
     "postpack": "mv package.json.bak package.json",
-    "process-specs": "node src/scripts/process-specs.ts && npm run copy:api && npm run format --"
+    "process-specs": "node src/scripts/process-specs.ts && pnpm run copy:api && pnpm run format"
   },
   "engines": {
-    "node": ">= 22 <25"
+    "node": ">= 22 <27"
   },
   "devDependencies": {
     "openapi-types": "^12.1.3",

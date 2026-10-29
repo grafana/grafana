@@ -522,18 +522,22 @@ func TestStandardDocumentBuilder_Timestamps(t *testing.T) {
 		assert.Equal(t, time.Date(2026, 7, 3, 9, 30, 0, 0, time.UTC).UnixMilli(), doc.Updated)
 	})
 
-	// An object that has never been written since creation carries no annotation, and
-	// updated stays zero rather than borrowing created — callers decide how to display
-	// "never updated".
-	t.Run("leaves updated at zero without the annotation", func(t *testing.T) {
-		assert.Zero(t, build(t, `{"name": "nb1", "creationTimestamp": "2026-07-02T14:00:00Z"}`).Updated)
+	// An object never written since creation carries no annotation. It counts as
+	// updated when created, so it sorts and filters by update time like any other.
+	t.Run("uses the creation timestamp without the annotation", func(t *testing.T) {
+		doc := build(t, `{"name": "nb1", "creationTimestamp": "2026-07-02T14:00:00Z"}`)
+		assert.Equal(t, time.Date(2026, 7, 2, 14, 0, 0, 0, time.UTC).UnixMilli(), doc.Updated)
+	})
+
+	t.Run("leaves updated at zero without either timestamp", func(t *testing.T) {
+		assert.Zero(t, build(t, `{"name": "nb1"}`).Updated)
 	})
 
 	// An unparseable annotation must not land in the index as a bogus time, and must
 	// not cost the resource its document either.
-	t.Run("leaves updated at zero when the annotation is malformed", func(t *testing.T) {
-		doc := build(t, `{"name": "nb1", "annotations": {"grafana.app/updatedTimestamp": "yesterday"}}`)
-		assert.Zero(t, doc.Updated)
+	t.Run("uses the creation timestamp when the annotation is malformed", func(t *testing.T) {
+		doc := build(t, `{"name": "nb1", "creationTimestamp": "2026-07-02T14:00:00Z", "annotations": {"grafana.app/updatedTimestamp": "yesterday"}}`)
+		assert.Equal(t, time.Date(2026, 7, 2, 14, 0, 0, 0, time.UTC).UnixMilli(), doc.Updated)
 		assert.Equal(t, "Checkout latency", doc.Title, "the rest of the document should still be built")
 	})
 }
