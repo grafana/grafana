@@ -50,6 +50,9 @@ type ConnectionFormDataBase = {
   clientID?: string;
   clientSecret?: string;
   workspace?: string;
+  authURL?: string;
+  tokenURL?: string;
+  scopes?: string[];
   webhookDisabled?: boolean;
 };
 

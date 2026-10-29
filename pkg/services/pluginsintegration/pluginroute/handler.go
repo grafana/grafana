@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,20 +28,22 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	apiserverauthenticator "github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	apiserverauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -53,18 +56,21 @@ import (
 type StorageProvider func(*runtime.Scheme, serializer.CodecFactory, []schema.GroupVersion) (generic.RESTOptionsGetter, error)
 
 type Options struct {
-	PluginInfo       plugins.Info
-	Storage          StorageProvider
-	PluginClient     appplugin.PluginClient
-	ClientV3         appclientv3.Client
-	ContextProvider  appplugin.PluginContextWrapper
-	Decrypter        decrypt.DecryptService
-	AccessChecker    appplugin.PluginAccessChecker
+	PluginInfo      plugins.Info
+	Storage         StorageProvider
+	PluginClient    appsettings.PluginClient
+	ClientV3        appclientv3.Client
+	ContextProvider appsettings.PluginContextWrapper
+	Decrypter       decrypt.DecryptService
+	AccessChecker   pluginaccesscontrol.AppAccessChecker
+	// AccessClient runs the access checks a manifest declares on its routes.
+	// A route that declares one is refused without it.
+	AccessClient     authlib.AccessChecker
 	HybridAPIEnabled bool
 	KeysAPIEnabled   bool
 	Search           resourcepb.ResourceIndexClient
 	Store            resourcepb.ResourceStoreClient
-	Runner           appplugin.AppPluginRunnerOptions
+	Settings         appsettings.Options
 	Tracer           tracing.Tracer
 	Features         featuremgmt.FeatureToggles
 	BuildVersion     string
@@ -112,6 +118,7 @@ func APIGroup(m *app.ManifestData) metav1.APIGroup {
 			g.PreferredVersion = g.Versions[len(g.Versions)-1]
 		}
 	}
+	// Discovery lists versions in order of preference.
 	if i := slices.Index(g.Versions, g.PreferredVersion); i > 0 {
 		g.Versions = append([]metav1.GroupVersionForDiscovery{g.PreferredVersion}, slices.Delete(g.Versions, i, i+1)...)
 	}
@@ -121,19 +128,97 @@ func APIGroup(m *app.ManifestData) metav1.APIGroup {
 // NewHandler installs resources, admission, custom routes and OpenAPI without
 // starting a listener or background hooks. The caller must authenticate requests
 // and put an identity.Requester in their context before invoking the handler.
+// A manifest without kinds gets a handler with no API server behind it, and
+// needs no storage provider.
 func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Handler, error) {
-	b, err := NewAPI(pluginID, manifest, opts)
+	b, err := newManifestBuilder(pluginID, manifest, opts)
 	if err != nil {
 		return nil, err
 	}
-	if opts.Storage == nil {
-		return nil, fmt.Errorf("plugin %q: a storage provider is required", pluginID)
-	}
-	gvs := b.GetGroupVersions()
-	if len(gvs) == 0 {
+	if len(b.GetGroupVersions()) == 0 {
 		return nil, fmt.Errorf("plugin %q has no served versions", pluginID)
 	}
+	reg := opts.MetricsRegister
+	if reg == nil {
+		reg = prometheus.NewRegistry()
+	}
+	if !hasKinds(manifest) {
+		return newRoutesOnlyHandler(b, reg)
+	}
+	authz, err := b.unionAuthorizer()
+	if err != nil {
+		return nil, fmt.Errorf("%s: authorization: %w", manifest.Group, err)
+	}
+	if b.documents, err = b.versionDocuments(b.kindlessVersions()); err != nil {
+		return nil, err
+	}
+	return newServerHandler(b, opts, reg, authz, b.buildHandlerChain)
+}
+
+// NewAppSettingsHandler serves the settings API of an app plugin under its plugin
+// ID: the single "app" resource, always named "instance", with its health,
+// resources and proxy subresources. Like [NewHandler], it starts no listener and
+// the caller must authenticate requests.
+func NewAppSettingsHandler(plugin definition.PluginDefinition, opts Options) (*Handler, error) {
+	if opts.AccessChecker == nil {
+		opts.AccessChecker = denyPluginAccess
+	}
+	if opts.Tracer == nil {
+		opts.Tracer = tracing.NewNoopTracerService()
+	}
+	if opts.Features == nil {
+		opts.Features = featuremgmt.WithFeatures()
+	}
+	b, err := appsettings.NewBuilder(plugin, opts.PluginClient, opts.ContextProvider,
+		opts.Decrypter, opts.AccessChecker, opts.Settings, opts.Tracer, opts.Features)
+	if err != nil {
+		return nil, err
+	}
+	reg := opts.MetricsRegister
+	if reg == nil {
+		reg = prometheus.NewRegistry()
+	}
+	authz, err := union.New(
+		union.NamedAuthorizer{AuthorizerName: "impersonation", Authorizer: apiserverauthorizer.NewImpersonationAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "namespace", Authorizer: apiserverauthorizer.NewNamespaceAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "plugin", Authorizer: b.GetAuthorizer()},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("%s: authorization: %w", plugin.JSONData.ID, err)
+	}
+	// The subresources sit inside the chain so they are authenticated and
+	// authorized like the settings resource itself.
+	chain := func(builders []builder.APIGroupBuilder, reg prometheus.Registerer) builder.BuildHandlerChainFunc {
+		defaultChain := builder.GetDefaultBuildHandlerChainFunc(builders, reg)
+		return func(delegate http.Handler, c *genericapiserver.Config) http.Handler {
+			return defaultChain(b.SubresourceHandler(delegate), c)
+		}
+	}
+	handler, err := newServerHandler(b, opts, reg, authz, chain)
+	if err != nil {
+		return nil, err
+	}
+	destroy := handler.destroy
+	handler.destroy = func() {
+		destroy()
+		b.Destroy()
+	}
+	return handler, nil
+}
+
+func denyPluginAccess(context.Context, identity.Requester, string) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "no plugin access checker is configured", nil
+}
+
+// newServerHandler builds an API server for one group builder, backed by the
+// options' storage provider.
+func newServerHandler(b builder.APIGroupBuilder, opts Options, reg prometheus.Registerer, authz authorizer.Authorizer,
+	chain func([]builder.APIGroupBuilder, prometheus.Registerer) builder.BuildHandlerChainFunc) (*Handler, error) {
+	gvs := builder.GetGroupVersions(b)
 	group := gvs[0].Group
+	if opts.Storage == nil {
+		return nil, fmt.Errorf("%s: a storage provider is required", group)
+	}
 	scheme := builder.ProvideScheme()
 	if err := b.InstallSchema(scheme); err != nil {
 		return nil, fmt.Errorf("%s: install schema: %w", group, err)
@@ -146,10 +231,6 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 	if getter == nil {
 		return nil, fmt.Errorf("%s: storage provider returned no REST options getter", group)
 	}
-	reg := opts.MetricsRegister
-	if reg == nil {
-		reg = prometheus.NewRegistry()
-	}
 	resources := serverstorage.NewResourceConfig()
 	resources.EnableVersions(gvs...)
 	builders := []builder.APIGroupBuilder{b}
@@ -160,17 +241,10 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 	config.EffectiveVersion = builder.GetEffectiveVersion(0, opts.BuildVersion, "", "")
 	config.RESTOptionsGetter = getter
 	config.AggregatedDiscoveryGroupManager = discoveryendpoint.NewResourceManager("apis")
-	config.Authorization.Authorizer, err = union.New(
-		union.NamedAuthorizer{AuthorizerName: "impersonation", Authorizer: apiserverauthorizer.NewImpersonationAuthorizer()},
-		union.NamedAuthorizer{AuthorizerName: "namespace", Authorizer: apiserverauthorizer.NewNamespaceAuthorizer()},
-		union.NamedAuthorizer{AuthorizerName: "plugin", Authorizer: b.GetAuthorizer()},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("%s: authorization: %w", group, err)
-	}
+	config.Authorization.Authorizer = authz
 	config.Authentication.Authenticator = apiserverauthenticator.NewAuthenticator()
 	if err := builder.SetupConfig(scheme, config, builders, opts.BuildVersion,
-		builder.GetDefaultBuildHandlerChainFunc, gvs,
+		chain, gvs,
 		[]common.GetOpenAPIDefinitions{appsdkapiserver.GetCommonOpenAPIDefinitions}, reg, resources); err != nil {
 		return nil, fmt.Errorf("%s: setup config: %w", group, err)
 	}
@@ -195,7 +269,7 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 		storageOpts.UnifiedStorageConfig = map[string]setting.UnifiedStorageConfig{}
 	}
 	var dualWriteBuilder grafanarest.DualWriteBuilder
-	if opts.DualWrite != nil && opts.Runner.LegacyStore != nil {
+	if opts.DualWrite != nil && opts.Settings.LegacyStore != nil {
 		dualWriteBuilder = builder.NewDualWriteBuilder(scheme, storageOpts, opts.DualWrite, opts.BuilderMetrics)
 	}
 	info := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
@@ -219,38 +293,66 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 	return &Handler{Handler: server.Handler, destroy: server.Destroy}, nil
 }
 
-// PluginAPI supplies the schema and storage installation for a routed plugin.
-type PluginAPI interface {
-	builder.APIGroupBuilder
-	builder.APIGroupVersionsProvider
-	GetAuthorizer() authorizer.Authorizer
+var (
+	_ builder.APIGroupBuilder          = (*manifestBuilder)(nil)
+	_ builder.APIGroupVersionsProvider = (*manifestBuilder)(nil)
+	_ builder.APIGroupRouteProvider    = (*manifestBuilder)(nil)
+	_ builder.OpenAPIPostProcessor     = (*manifestBuilder)(nil)
+)
+
+// ValidateManifest reports whether a manifest can be served for a plugin. It
+// checks only that the group is a valid name: which groups a plugin may serve
+// is the caller's policy (see newPluginBackend in pkg/router).
+func ValidateManifest(pluginID string, manifest *app.ManifestData) error {
+	if manifest == nil {
+		return fmt.Errorf("missing manifest")
+	}
+	if manifest.IsEmpty() {
+		return fmt.Errorf("plugin %q has an empty app manifest", pluginID)
+	}
+	if len(validation.IsDNS1123Subdomain(manifest.Group)) > 0 {
+		return fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS subdomain", pluginID, manifest.Group)
+	}
+	versions := make(map[string]bool, len(manifest.Versions))
+	for _, version := range manifest.Versions {
+		// Every version is looked up by its name, so a second one with the same
+		// name would never be served as declared, and its routes would be mounted
+		// twice.
+		// A version name is a path segment of every URL the version serves, so it
+		// must be one, as it must be for a custom resource definition.
+		if errs := validation.IsDNS1035Label(version.Name); len(errs) > 0 {
+			return fmt.Errorf("plugin %q: invalid version name %q: %s", pluginID, version.Name, strings.Join(errs, "; "))
+		}
+		if versions[version.Name] {
+			return fmt.Errorf("plugin %q: version %s is declared more than once", pluginID, version.Name)
+		}
+		versions[version.Name] = true
+
+		// Loading a manifest moves these to the OpenAPI paths, so a manifest that
+		// still has them was not loaded through definition and would lose them.
+		routes := version.Routes //nolint:staticcheck // SA1019: only checked, to refuse a manifest that was not migrated.
+		if len(routes.Cluster) > 0 || len(routes.Namespaced) > 0 || len(routes.Schemas) > 0 {
+			return fmt.Errorf("plugin %q: version %s still has deprecated routes; load the manifest with definition.ParseManifest, or call definition.MigrateDeprecatedRoutes", pluginID, version.Name)
+		}
+		for _, kind := range version.Kinds {
+			if len(kind.Routes) > 0 {
+				return fmt.Errorf("plugin %q: kind %s in version %s still has its own routes; load the manifest with definition.ParseManifest, or call definition.MigrateDeprecatedRoutes", pluginID, kind.Kind, version.Name)
+			}
+		}
+	}
+	return nil
 }
 
-// NewAPI builds the API for one plugin manifest.
-// It is also used by offline OpenAPI generation so discovery matches the router.
-func NewAPI(pluginID string, manifest *app.ManifestData, opts Options) (PluginAPI, error) {
-	if manifest == nil {
-		return nil, fmt.Errorf("missing manifest")
-	}
-
-	if manifest.IsEmpty() {
-		return nil, fmt.Errorf("plugin %q has an empty app manifest", pluginID)
-	}
-	group := manifest.Group
-	if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
-		return nil, fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", pluginID, group)
+func newManifestBuilder(pluginID string, manifest *app.ManifestData, opts Options) (*manifestBuilder, error) {
+	if err := ValidateManifest(pluginID, manifest); err != nil {
+		return nil, err
 	}
 
 	if opts.AccessChecker == nil {
-		opts.AccessChecker = func(context.Context, identity.Requester, string) (authorizer.Decision, string, error) {
-			return authorizer.DecisionDeny, "no plugin access checker is configured", nil
-		}
+		opts.AccessChecker = denyPluginAccess
 	}
 	if opts.Tracer == nil {
 		opts.Tracer = tracing.NewNoopTracerService()
-	}
-	if opts.Features == nil {
-		opts.Features = featuremgmt.WithFeatures()
 	}
 	return &manifestBuilder{
 		group:         manifest.Group,
@@ -259,12 +361,37 @@ func NewAPI(pluginID string, manifest *app.ManifestData, opts Options) (PluginAP
 		clientV3:      opts.ClientV3,
 		decrypter:     newSecureValueLookup(opts.Decrypter),
 		accessChecker: opts.AccessChecker,
+		accessClient:  opts.AccessClient,
 		search:        opts.Search,
 		store:         opts.Store,
 		tracer:        opts.Tracer,
 		opts:          opts,
 		kindPolicies:  kindPolicies(manifest),
 	}, nil
+}
+
+// unionAuthorizer is the authorizer a plugin's requests pass, whether or not an
+// API server is built for them.
+func (b *manifestBuilder) unionAuthorizer() (authorizer.Authorizer, error) {
+	return union.New(
+		union.NamedAuthorizer{AuthorizerName: "impersonation", Authorizer: apiserverauthorizer.NewImpersonationAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "namespace", Authorizer: apiserverauthorizer.NewNamespaceAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "plugin", Authorizer: b.GetAuthorizer()},
+	)
+}
+
+// buildHandlerChain is the default apiserver chain with the manifest's routes
+// mounted ahead of the apiserver's own handlers. They sit inside the chain so
+// they are authenticated and authorized like any other request.
+func (b *manifestBuilder) buildHandlerChain(builders []builder.APIGroupBuilder, reg prometheus.Registerer) builder.BuildHandlerChainFunc {
+	chain := builder.GetDefaultBuildHandlerChainFunc(builders, reg)
+	return func(delegate http.Handler, c *genericapiserver.Config) http.Handler {
+		next := delegate
+		if b.documents != nil {
+			next = b.documents(delegate)
+		}
+		return chain(b.routeMux(next, reg), c)
+	}
 }
 
 func UnifiedStorage(client resource.ResourceClient, secrets secret.InlineSecureValueSupport, configProvider apistore.RestConfigProvider) StorageProvider {

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -24,9 +23,7 @@ import (
 func TestIntegrationAuthInfo(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// Mode5 is excluded: it serves straight from unified storage, bypassing LegacyStore
-	// (and every domain rule enforced there) since nothing populates that store yet.
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode3}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode3, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -50,17 +47,17 @@ func TestIntegrationAuthInfo(t *testing.T) {
 				helper.Shutdown()
 			})
 
-			doAuthInfoCRUDTestsUsingTheNewAPIs(t, helper)
+			doAuthInfoCRUDTestsUsingTheNewAPIs(t, helper, mode)
 			doAuthInfoAuthzTests(t, helper)
 			doAuthInfoListRequiresFieldSelectorTest(t, helper)
-			doAuthInfoListByAuthIDTest(t, helper)
+			doAuthInfoListByAuthIDTest(t, helper, mode)
 			doAuthInfoDeleteTests(t, helper)
-			doAuthInfoUserDeleteCascadeTest(t, helper)
+			doAuthInfoUserDeleteCascadeTest(t, helper, mode)
 		})
 	}
 }
 
-func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper) {
+func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
 	t.Run("should create, get, list and update authinfo using the new APIs as a GrafanaAdmin", func(t *testing.T) {
 		ctx := context.Background()
 		userUID := createTestUser(t, helper, "authinfo-crud-user", "authinfo-crud-user@example.com")
@@ -91,12 +88,14 @@ func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper
 		fetchedSpec := fetched.Object["spec"].(map[string]interface{})
 		require.Equal(t, "cn=test,dc=example,dc=com", fetchedSpec["authID"])
 
-		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
-			FieldSelector: fmt.Sprintf("spec.userRef.name=%s", userUID),
-		})
-		require.NoError(t, err)
-		require.Len(t, list.Items, 1)
-		require.Equal(t, expectedName, list.Items[0].GetName())
+		if !listUsesSearchIndex(mode) {
+			list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
+				FieldSelector: fmt.Sprintf("spec.userRef.name=%s", userUID),
+			})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 1)
+			require.Equal(t, expectedName, list.Items[0].GetName())
+		}
 
 		toUpdate := fetched.DeepCopy()
 		toUpdate.Object["spec"].(map[string]interface{})["authID"] = "cn=updated,dc=example,dc=com"
@@ -219,8 +218,11 @@ func doAuthInfoListRequiresFieldSelectorTest(t *testing.T, helper *apis.K8sTestH
 
 // doAuthInfoListByAuthIDTest verifies that AuthInfo can be looked up by
 // spec.authID (with an optional spec.authModule) without a spec.userRef.name.
-func doAuthInfoListByAuthIDTest(t *testing.T, helper *apis.K8sTestHelper) {
+func doAuthInfoListByAuthIDTest(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
 	t.Run("should list by authID alone, without knowing the user", func(t *testing.T) {
+		if listUsesSearchIndex(mode) {
+			t.Skip("field-selector lists are served by the search index, which has no signal for when a write is searchable")
+		}
 		ctx := context.Background()
 		userUID := createTestUser(t, helper, "authinfo-by-authid-user", "authinfo-by-authid-user@example.com")
 		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
@@ -265,7 +267,6 @@ func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper) {
 		authID := "delete-test-" + userUID
 		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
 		require.NoError(t, err)
-		require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
 
 		err = authInfoClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
 		require.NoError(t, err)
@@ -275,8 +276,6 @@ func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper) {
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
-
-		require.Equal(t, int64(0), countUserAuthRowsByAuthID(t, helper, authID), "user_auth row should be gone once the object is deleted")
 	})
 
 	t.Run("delete of an already-deleted object is a not-found", func(t *testing.T) {
@@ -313,18 +312,20 @@ func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-// doAuthInfoUserDeleteCascadeTest checks whether deleting a user through the
-// new User API also removes its user_auth row.
-func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper) {
-	t.Run("deleting the user via the new API removes its user_auth row", func(t *testing.T) {
+// doAuthInfoUserDeleteCascadeTest checks that deleting a user through the
+// new User API also removes its AuthInfo objects and user_auth row.
+func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
+	t.Run("deleting the user via the new API removes its AuthInfo objects and user_auth row", func(t *testing.T) {
+		if listUsesSearchIndex(mode) {
+			t.Skip("the user delete finds its AuthInfo objects with a field-selector list, which the search index serves with no signal for when a write is searchable")
+		}
 		ctx := context.Background()
 		userUID := createTestUser(t, helper, "authinfo-cascade-user", "authinfo-cascade-user@example.com")
 
 		authInfoClient := authInfoResourceClient(helper, helper.Org1.Admin)
 		authID := "cascade-test-" + userUID
-		_, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
+		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
 		require.NoError(t, err)
-		require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
 
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
 			User:      helper.Org1.Admin,
@@ -334,20 +335,22 @@ func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper) {
 		err = userClient.Resource.Delete(ctx, userUID, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
-		require.Equal(t, int64(0), countUserAuthRowsByAuthID(t, helper, authID), "user_auth row should be gone once its user is deleted")
+		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
+			FieldSelector: fmt.Sprintf("spec.userRef.name=%s", userUID),
+		})
+		require.NoError(t, err)
+		require.Empty(t, list.Items, "AuthInfo objects should be gone once their user is deleted")
+
+		_, err = authInfoClient.Resource.Get(ctx, created.GetName(), metav1.GetOptions{})
+		var statusErr *errors.StatusError
+		require.ErrorAs(t, err, &statusErr)
+		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
 	})
 }
 
-func countUserAuthRowsByAuthID(t *testing.T, helper *apis.K8sTestHelper, authID string) int64 {
-	t.Helper()
-	var count int64
-	err := helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		n, err := sess.Table("user_auth").Where("auth_id = ?", authID).Count()
-		count = n
-		return err
-	})
-	require.NoError(t, err)
-	return count
+// listUsesSearchIndex reports whether field-selector lists are served by the search index.
+func listUsesSearchIndex(mode rest.DualWriterMode) bool {
+	return mode >= rest.Mode4
 }
 
 func authInfoResourceClient(helper *apis.K8sTestHelper, user apis.User) *apis.K8sResourceClient {

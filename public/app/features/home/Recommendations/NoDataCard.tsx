@@ -4,11 +4,11 @@ import { type GrafanaTheme2, type IconName, locationUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useAppPluginMetas } from '@grafana/runtime/internal';
 import { Badge, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
+import { SYNTHETIC_MONITORING_APP_ID } from 'app/core/appPluginIds';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 
 import { ctaClicked } from '../analytics/main';
-import { SYNTHETIC_MONITORING_APP_ID } from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 
 interface PopularSolution {

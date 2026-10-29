@@ -249,6 +249,7 @@ func TestBuild_ListFilteredResourceManifestsDisableListKeys(t *testing.T) {
 		{Group: "preferences.grafana.app", Version: "v1"},
 		{Group: "preferences.grafana.app", Version: "v1alpha1"},
 		{Group: "collections.grafana.app", Version: "v1alpha1"},
+		{Group: "iam.grafana.app", Version: "v0alpha1"},
 		{Group: "dashboard.grafana.app", Version: "v1"},
 	}}
 
@@ -260,6 +261,8 @@ func TestBuild_ListFilteredResourceManifestsDisableListKeys(t *testing.T) {
 		assert.NotContains(t, got, "preferences.grafana.app/v1")
 		assert.NotContains(t, got, "preferences.grafana.app/v1alpha1")
 		assert.NotContains(t, got, "collections.grafana.app/v1alpha1")
+		assert.NotContains(t, got["iam.grafana.app/v0alpha1"], "resourcepermissions/list-keys")
+		assert.Contains(t, got["iam.grafana.app/v0alpha1"], "users/list-keys")
 		assert.Contains(t, got["dashboard.grafana.app/v1"], "dashboards/list-keys")
 	}
 }

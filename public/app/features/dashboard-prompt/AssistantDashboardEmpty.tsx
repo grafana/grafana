@@ -7,6 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { useHoldFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { DashboardLandingPrompt } from './DashboardLandingPrompt';
@@ -24,6 +25,9 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   // (create_dashboard), or on submit from this landing so the same session
   // tag applies without a remount.
   const [assistantDriven, setAssistantDriven] = useState(() => dashboard.getEditSessionSource() === 'assistant');
+  // This page's own prompt stands in for the floating Assistant until it is submitted, which opens the
+  // Assistant with it; opening the Assistant from the toolbar shows it too.
+  useHoldFloatingExtensionSidebar(!assistantDriven);
 
   const onAddVisualization = () => {
     sidebar.addNewPanel(sidebar.getSelectedObject());

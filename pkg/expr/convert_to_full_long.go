@@ -3,6 +3,7 @@ package expr
 import (
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -125,8 +126,9 @@ func convertNumericWideToFullLong(frames data.Frames) (data.Frames, error) {
 	if hasDisplayCol {
 		fields = append(fields, data.NewField(SQLDisplayFieldName, nil, displayCol))
 	}
+	labelCols := labelColumnNames(labelKeys, fields)
 	for _, k := range labelKeys {
-		fields = append(fields, data.NewField(k, nil, labelValues[k]))
+		fields = append(fields, data.NewField(labelCols[k], nil, labelValues[k]))
 	}
 
 	out := data.NewFrame("", fields...)
@@ -235,8 +237,9 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 	if hasDisplayCol {
 		fields = append(fields, data.NewField(SQLDisplayFieldName, nil, displays))
 	}
+	labelCols := labelColumnNames(labelKeys, fields)
 	for _, k := range labelKeys {
-		fields = append(fields, data.NewField(k, nil, labels[k]))
+		fields = append(fields, data.NewField(labelCols[k], nil, labels[k]))
 	}
 
 	out := data.NewFrame("", fields...)
@@ -360,13 +363,49 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	if hasDisplayCol {
 		fields = append(fields, data.NewField(SQLDisplayFieldName, nil, displays))
 	}
+	labelCols := labelColumnNames(labelKeys, fields)
 	for _, k := range labelKeys {
-		fields = append(fields, data.NewField(k, nil, labels[k]))
+		fields = append(fields, data.NewField(labelCols[k], nil, labels[k]))
 	}
 
 	out := data.NewFrame("", fields...)
 	out.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
 	return data.Frames{out}, nil
+}
+
+// labelColumnNames maps each label key to the name of its column. A key that
+// matches a generated column gets a "label_" prefix until the name is unique,
+// so SQL can still reference both columns. The SQL engine compares column names
+// without case, so the check does too. Other keys keep their name.
+func labelColumnNames(labelKeys []string, generated []*data.Field) map[string]string {
+	generatedNames := make(map[string]struct{}, len(generated))
+	for _, f := range generated {
+		generatedNames[strings.ToLower(f.Name)] = struct{}{}
+	}
+	taken := make(map[string]struct{}, len(generated)+len(labelKeys))
+	for n := range generatedNames {
+		taken[n] = struct{}{}
+	}
+	for _, k := range labelKeys {
+		taken[strings.ToLower(k)] = struct{}{}
+	}
+
+	names := make(map[string]string, len(labelKeys))
+	for _, k := range labelKeys {
+		name := k
+		if _, clash := generatedNames[strings.ToLower(k)]; clash {
+			name = "label_" + k
+			for {
+				if _, ok := taken[strings.ToLower(name)]; !ok {
+					break
+				}
+				name = "label_" + name
+			}
+			taken[strings.ToLower(name)] = struct{}{}
+		}
+		names[k] = name
+	}
+	return names
 }
 
 func supportedToLongConversion(inputType data.FrameType) bool {

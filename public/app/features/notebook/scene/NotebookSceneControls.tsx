@@ -26,13 +26,13 @@ interface Props {
 
 /**
  * Rendered by each surface that wants it rather than by the scene, so the PDF capture route can
- * simply leave it out. `hideTimeControls` and kiosk mode stay here: they are properties of the
- * notebook and the display, not of the surface.
+ * simply leave it out. Kiosk mode stays here: it is a property of the display, not of the
+ * surface.
  */
 export function NotebookSceneControls({ model, stickyOffset }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles);
-  const { timePicker, refreshPicker, hideTimeControls, isEditing, uid } = model.useState();
+  const { timePicker, refreshPicker, isEditing, uid } = model.useState();
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   // A display someone has put a notebook on: everything you would act on goes away — save status,
@@ -55,18 +55,14 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
       {!isKioskFull && (
         <>
           {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has
-              to be visible and retryable there too. This renders nothing until there is something to
-              say. */}
-          <NotebookSaveStatus autosave={model.autosave} />
+              to be visible and retryable there too. The status says nothing until there is something to
+              report. While editing it keeps its space, so the undo and redo buttons do not move. */}
+          <NotebookSaveStatus autosave={model.autosave} reserveSpace={isEditing} />
           {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
         </>
       )}
-      {!hideTimeControls && (
-        <>
-          <timePicker.Component model={timePicker} />
-          <refreshPicker.Component model={refreshPicker} />
-        </>
-      )}
+      <timePicker.Component model={timePicker} />
+      <refreshPicker.Component model={refreshPicker} />
       {/* The toolbar checks nothing about kiosk itself — it is chrome, so the row simply does not
           render it on a kiosk display. */}
       {!isKioskFull && <NotebookToolbar uid={uid} scene={model} />}

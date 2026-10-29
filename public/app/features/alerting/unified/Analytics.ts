@@ -437,3 +437,17 @@ export function trackViewExperienceToggleConfirmed(
 export function trackRuleListPageView(payload: { view: 'v1' | 'v2' }) {
   reportInteraction('grafana_alerting_rule_list_page_view', payload);
 }
+
+/**
+ * Track when user clicks the "Create a Watcher" CTA on the Watchers banner
+ */
+export function trackWatchersBannerClick() {
+  reportInteraction('grafana_alerting_watchers_banner_click');
+}
+
+/**
+ * Track when user dismisses the Watchers banner
+ */
+export function trackWatchersBannerDismiss() {
+  reportInteraction('grafana_alerting_watchers_banner_dismiss');
+}

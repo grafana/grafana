@@ -36,7 +36,6 @@ export function getMockedListItem({
     uid: 'uid',
     type: 'loki',
     name: 'name',
-    isDefault: false,
     ...rest,
     meta: { ...meta },
   } as DataSourceInstanceListItem;

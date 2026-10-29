@@ -1,13 +1,20 @@
 import { type VariableType } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
+import { type DashboardMode } from '../scene/dashboardModes';
 import {
   type DashboardTrackingInfo,
   type DynamicDashboardsTrackingInformation,
 } from '../serialization/DashboardSceneSerializer';
 
 import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
+import {
+  type DashboardEditPeriodOutcome,
+  type DashboardEditSessionTracking,
+  type DashboardModeTrigger,
+} from './dashboardModeTracking';
 
 let isScenesContextSet = false;
 
@@ -44,7 +51,9 @@ export const DashboardInteractions = {
     reportDashboardInteraction('text_panel_usage', properties);
   },
 
-  dashboardCopied: (properties: { name: string; url: string; diff_count?: number }) => {
+  dashboardCopied: (
+    properties: { name: string; url: string; diff_count?: number } & Partial<DashboardEditSessionTracking>
+  ) => {
     reportInteraction('grafana_dashboard_copied', properties);
   },
 
@@ -73,7 +82,7 @@ export const DashboardInteractions = {
     ) & {
       // size of the saved edit (diffs between the initial and saved models); scene save path only
       diff_count?: number;
-    }
+    } & Partial<DashboardEditSessionTracking>
   ) => {
     reportDashboardInteraction(isNew ? 'created' : 'saved', properties, 'grafana_dashboard');
   },
@@ -164,15 +173,15 @@ export const DashboardInteractions = {
     reportDashboardInteraction('variable_value_changed', properties);
   },
 
-  // dashboards_global_variables_loaded
+  // dashboards_predefined_variables_loaded
   // after global/folder variables are resolved for a V2 dashboard load
-  globalVariablesLoaded: (properties: {
+  predefinedVariablesLoaded: (properties: {
     global_count: number;
     folder_count: number;
     total_count: number;
     mode?: GlobalVariablesMode;
   }) => {
-    reportDashboardInteraction('global_variables_loaded', properties);
+    reportDashboardInteraction('predefined_variables_loaded', properties);
   },
 
   // dashboards_predefined_variable_toggled
@@ -390,9 +399,71 @@ export const DashboardInteractions = {
     reportDashboardInteraction('edit_session_started', properties);
   },
 
+  editPeriodStarted: (properties: {
+    dashboard_uid?: string;
+    source: 'assistant' | 'user';
+    edit_session_id: string;
+  }) => {
+    reportDashboardInteraction('edit_period_started', properties);
+  },
+
+  editPeriodEnded: (
+    properties: Partial<DashboardEditSessionTracking> & {
+      edit_session_id: string;
+      outcome: DashboardEditPeriodOutcome;
+      has_unsaved_changes?: boolean;
+    }
+  ) => {
+    reportDashboardInteraction('edit_period_ended', properties);
+  },
+
+  editActorFirstChange: (properties: { edit_session_id: string; actor: 'user' | 'assistant'; mode: DashboardMode }) => {
+    reportDashboardInteraction('edit_actor_first_change', properties);
+  },
+
+  modePickerShown: (properties: { dashboard_uid?: string; mode: DashboardMode }) => {
+    reportDashboardInteraction('mode_picker_shown', properties);
+  },
+
+  modePickerOpened: (properties: {
+    dashboard_uid?: string;
+    mode: DashboardMode;
+    edit_session_id?: string;
+    first_open: boolean;
+  }) => {
+    reportDashboardInteraction('mode_picker_opened', properties);
+  },
+
+  modeChanged: (properties: {
+    dashboard_uid?: string;
+    edit_session_id?: string;
+    previous_mode: DashboardMode;
+    mode: DashboardMode;
+    trigger: DashboardModeTrigger;
+    has_unsaved_changes: boolean;
+  }) => {
+    reportDashboardInteraction('mode_changed', properties);
+  },
+
   // click "Take me there" button from the dashboard settings for annotations, variables or the JSON model
   takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' | 'json-model' }) => {
     reportDashboardInteraction('take_me_to_sidebar_clicked', properties);
+  },
+
+  // dashboards_code_pane_opened
+  // when a user opens the "Edit as code" sidebar pane from the sidebar button
+  codePaneOpened: () => {
+    reportDashboardInteraction('code_pane_opened');
+  },
+
+  // dashboards_code_pane_action_clicked
+  // when a user clicks an action in the "Edit as code" sidebar pane
+  codePaneActionClicked: (properties: {
+    action: 'apply' | 'copy_as_resource' | 'show_diff' | 'hide_diff' | 'expand';
+    format: 'json' | 'yaml';
+    success?: boolean;
+  }) => {
+    reportDashboardInteraction('code_pane_action_clicked', properties);
   },
 
   viewPanelAction: (properties: { action?: string; value: string }) => {
@@ -425,7 +496,7 @@ const reportDashboardInteraction = (
   interactionPrefix = 'dashboards'
 ) => {
   const meta = isScenesContextSet ? { scenesView: true } : {};
-  const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
+  const isDynamicDashboard = isDashboardNewLayoutsEnabled();
 
   if (properties) {
     reportInteraction(`${interactionPrefix}_${name}`, { ...properties, ...meta, isDynamicDashboard });

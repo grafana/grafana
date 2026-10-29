@@ -25,7 +25,11 @@ func NewResourceVersionExpiredError(rv int64) error {
 		Code:    http.StatusGone,
 		Reason:  string(metav1.StatusReasonExpired),
 	}
-	st := grpcstatus.New(grpccodes.OutOfRange, result.Message)
+	// The HTTP status as the gRPC code (the httpgrpc convention) makes gRPC
+	// instrumentation label an expired watch "410" instead of "error": watches
+	// expire on purpose to bound stale state. Clients detect expiry by the
+	// details, so ones that expect OutOfRange still see it.
+	st := grpcstatus.New(grpccodes.Code(http.StatusGone), result.Message)
 	if withDetails, err := st.WithDetails(result); err == nil {
 		st = withDetails
 	}
@@ -102,6 +106,15 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 		}
 	}
 
+	st, ok := grpcstatus.FromError(err)
+	if !ok {
+		st = grpcstatus.FromContextError(err)
+	}
+	code := st.Code()
+	if (code == grpccodes.Canceled || code == grpccodes.DeadlineExceeded) && !OnlyCancellationErrors(err) {
+		return &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+	}
+
 	// Structured results attached to a gRPC error keep their reason/code across
 	// the wire, so prefer them over the generic mapping below.
 	if res := ErrorResultFromGRPCDetails(err); res != nil {
@@ -135,17 +148,37 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 		return res
 	}
 
-	code := 500
-
-	st, ok := grpcstatus.FromError(err)
-	if ok {
-		code = runtime.HTTPStatusFromCode(st.Code())
-	}
-
 	return &resourcepb.ErrorResult{
 		Message: err.Error(),
-		Code:    int32(code),
+		Code:    int32(runtime.HTTPStatusFromCode(code)),
 	}
+}
+
+// OnlyCancellationErrors checks every branch of a joined error so a storage
+// failure collected before cancellation is still reported.
+func OnlyCancellationErrors(err error) bool {
+	if err == nil {
+		return false
+	}
+	if joined, ok := err.(interface{ Unwrap() []error }); ok {
+		children := joined.Unwrap()
+		if len(children) == 0 {
+			return false
+		}
+		for _, child := range children {
+			if !OnlyCancellationErrors(child) {
+				return false
+			}
+		}
+		return true
+	}
+	if wrapped, ok := err.(interface{ Unwrap() error }); ok && wrapped.Unwrap() != nil {
+		return OnlyCancellationErrors(wrapped.Unwrap())
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return true
+	}
+	return grpcstatus.Code(err) == grpccodes.Canceled || grpcstatus.Code(err) == grpccodes.DeadlineExceeded
 }
 
 // StatusError converts an ErrorResult into a Kubernetes StatusError, preserving the HTTP code, reason, details and
@@ -198,7 +231,7 @@ func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 		return StatusError(respErr)
 	}
 	// In-process calls can return context errors instead of gRPC statuses.
-	localContextErr := errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
+	localContextErr := (errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)) && OnlyCancellationErrors(err)
 	if localContextErr {
 		err = grpcstatus.FromContextError(err).Err()
 	}

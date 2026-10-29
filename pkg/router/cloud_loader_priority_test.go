@@ -5,19 +5,13 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"strings"
-	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/rest"
-
-	"github.com/grafana/grafana-app-sdk/k8s"
 )
 
 func priorityBackend(group, source string) Backend {
@@ -25,42 +19,70 @@ func priorityBackend(group, source string) Backend {
 }
 
 func priorityAggregate(backends ...Backend) *aggregateTarget {
-	target := &aggregateTarget{}
-	target.snapshot.Store(&backends)
+	target := testAggregateTarget("")
+	storeBackends(&target.polledSource, backends...)
+	target.status.recordSuccess(time.Now())
+	return target
+}
+
+// testAggregateTarget returns a target that is never polled.
+func testAggregateTarget(name string) *aggregateTarget {
+	target := &aggregateTarget{name: name}
+	target.polledSource = polledSource{source: aggregateSource(name), fetcher: target}
+	return target
+}
+
+// storeBackends stores backends as the latest successful poll.
+func storeBackends(source *polledSource, backends ...Backend) {
+	source.snapshot.Store(&polledSnapshot{backends: backends})
+}
+
+// aggregateTargetsOf returns the loader's aggregate targets, in priority order.
+func aggregateTargetsOf(l *cloudLoader) []*aggregateTarget {
+	var targets []*aggregateTarget
+	for _, source := range l.sources {
+		if target, ok := source.fetcher.(*aggregateTarget); ok {
+			targets = append(targets, target)
+		}
+	}
+	return targets
+}
+
+// pluginManifestsTargetOf returns the loader's plugin manifests target for
+// source, or nil.
+func pluginManifestsTargetOf(l *cloudLoader, source string) *pluginManifestsTarget {
+	for _, s := range l.sources {
+		if target, ok := s.fetcher.(*pluginManifestsTarget); ok && target.source == source {
+			return target
+		}
+	}
+	return nil
+}
+
+func testPluginManifestsTarget(source string, backends ...Backend) *pluginManifestsTarget {
+	target := &pluginManifestsTarget{}
+	target.polledSource = polledSource{source: source, fetcher: target}
+	storeBackends(&target.polledSource, backends...)
+	target.status.recordSuccess(time.Now())
 	return target
 }
 
 func TestCloudLoaderSourcePriority(t *testing.T) {
-	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		switch {
-		case strings.HasSuffix(req.URL.Path, "/routebackends"):
-			_, _ = io.WriteString(w, `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"RouteBackendList","items":[{"metadata":{"name":"example","resourceVersion":"1"},"spec":{"mode":"forward","forward":{"url":"https://explicit.example.com","tls":{}}}}]}`)
-		case strings.HasSuffix(req.URL.Path, "/appmanifests"):
-			_, _ = io.WriteString(w, `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifestList","items":[{"metadata":{"name":"example","resourceVersion":"1"},"spec":{"appName":"example","group":"shared","versions":[{"name":"v1"}]}}]}`)
-		default:
-			http.NotFound(w, req)
-		}
-	}))
-	defer api.Close()
-
 	st := newTestSingleTenantFallback(t)
 	st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
 	st.transport = testFallbackTransport(func(*http.Request) (*http.Response, error) {
 		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(`{"groups":[{"name":"shared"},{"name":"z-st-only"}]}`))}, nil
 	})
-	clients := k8s.NewClientRegistry(rest.Config{Host: api.URL}, k8s.ClientConfig{})
-	loader, err := newCloudLoader(clients, []*aggregateTarget{
-		priorityAggregate(priorityBackend("shared", "first-aggregate"), priorityBackend("a-aggregate-only", "aggregate")),
-		priorityAggregate(priorityBackend("shared", "second-aggregate")),
-	}, &pluginManifestsTarget{}, st)
-	require.NoError(t, err)
-	plugins := []Backend{priorityBackend("shared", "plugin"), priorityBackend("p-plugin-only", "plugin")}
-	loader.pluginsTarget.snapshot.Store(&plugins)
+	first := priorityAggregate(priorityBackend("shared", "first-aggregate"), priorityBackend("a-aggregate-only", "aggregate"))
+	second := priorityAggregate(priorityBackend("shared", "second-aggregate"))
+	plugins := testPluginManifestsTarget(sourcePluginsURL, priorityBackend("shared", "plugin"), priorityBackend("p-plugin-only", "plugin"))
+	core := testPluginManifestsTarget(sourceCoreURL, priorityBackend("shared", "core"), priorityBackend("c-core-only", "core"))
 	pollDiscovery(t, st)
 
-	loadShared := func() Backend {
+	loadShared := func(aggregates []*aggregateTarget, plugins, core *pluginManifestsTarget) Backend {
 		t.Helper()
+		loader, err := newCloudLoader(aggregates, plugins, core, st)
+		require.NoError(t, err)
 		backends, err := loader.Load(t.Context())
 		require.NoError(t, err)
 		names := make([]string, len(backends))
@@ -77,15 +99,13 @@ func TestCloudLoaderSourcePriority(t *testing.T) {
 		require.NotNil(t, shared)
 		return shared
 	}
-	require.Equal(t, "plugin", loadShared().Key())
-	loader.pluginsTarget = nil
-	require.IsType(t, &forwardBackend{}, loadShared())
-	loader.routeBackendClient = nil
-	require.Equal(t, "first-aggregate", loadShared().Key())
-	loader.aggregateTargets[0] = priorityAggregate(priorityBackend("a-aggregate-only", "aggregate"))
-	require.Equal(t, "second-aggregate", loadShared().Key())
-	loader.aggregateTargets = loader.aggregateTargets[:1]
-	require.IsType(t, &fallbackBackend{}, loadShared())
+	aggregates := []*aggregateTarget{first, second}
+	require.Equal(t, "plugin", loadShared(aggregates, plugins, core).Key())
+	require.Equal(t, "core", loadShared(aggregates, nil, core).Key())
+	require.Equal(t, "first-aggregate", loadShared(aggregates, nil, nil).Key())
+	aggregates[0] = priorityAggregate(priorityBackend("a-aggregate-only", "aggregate"))
+	require.Equal(t, "second-aggregate", loadShared(aggregates, nil, nil).Key())
+	require.IsType(t, &fallbackBackend{}, loadShared(aggregates[:1], nil, nil))
 }
 
 func TestCloudLoaderSingleTenantDiscoveryFailure(t *testing.T) {
@@ -102,13 +122,15 @@ func TestCloudLoaderSingleTenantDiscoveryFailure(t *testing.T) {
 	loader, err := newCloudLoader(nil, nil, nil, st)
 	require.NoError(t, err)
 	_, err = loader.Load(t.Context())
-	require.ErrorIs(t, err, errSingleTenantDiscoveryPending)
+	require.ErrorIs(t, err, errFirstPollPending)
 	pollDiscovery(t, st)
 	_, err = loader.Load(t.Context())
 	require.ErrorContains(t, err, "discovery unavailable")
 
 	mt := priorityAggregate(priorityBackend("shared", "mt-v1"))
-	loader.aggregateTargets = []*aggregateTarget{mt}
+	stOnly := loader
+	loader, err = newCloudLoader([]*aggregateTarget{mt}, nil, nil, st)
+	require.NoError(t, err)
 	backends, err := loader.Load(t.Context())
 	require.NoError(t, err)
 	require.Len(t, backends, 1)
@@ -122,15 +144,14 @@ func TestCloudLoaderSingleTenantDiscoveryFailure(t *testing.T) {
 	lastSTKey := backends[1].Key()
 	fail = true
 	pollDiscovery(t, st)
-	updated := []Backend{priorityBackend("shared", "mt-v2")}
-	mt.snapshot.Store(&updated)
+	storeBackends(&mt.polledSource, priorityBackend("shared", "mt-v2"))
 	backends, err = loader.Load(t.Context())
 	require.NoError(t, err)
 	require.Len(t, backends, 2)
 	require.Equal(t, "mt-v2", backends[0].Key())
 	require.Equal(t, lastSTKey, backends[1].Key())
 
-	loader.aggregateTargets = nil
+	loader = stOnly
 	backends, err = loader.Load(t.Context())
 	require.NoError(t, err)
 	require.Len(t, backends, 2)
@@ -148,82 +169,6 @@ func TestCloudLoaderSingleTenantDiscoveryFailure(t *testing.T) {
 	require.Error(t, err)
 }
 
-func TestCloudLoaderReadsRouteResourcesFromInformerCache(t *testing.T) {
-	items := map[string]struct{ kind, item string }{
-		"routebackends": {"RouteBackend", `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"RouteBackend","metadata":{"name":"example","resourceVersion":"1"},"spec":{"mode":"forward","forward":{"url":"https://example.com","tls":{}}}}`},
-		"appmanifests":  {"AppManifest", `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifest","metadata":{"name":"example","resourceVersion":"1"},"spec":{"appName":"example","group":"example.grafana.app","versions":[{"name":"v1"}]}}`},
-	}
-	var lists atomic.Int32
-	var down atomic.Bool
-	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if down.Load() {
-			http.Error(w, "unavailable", http.StatusInternalServerError)
-			return
-		}
-		resource, ok := items[req.URL.Path[strings.LastIndex(req.URL.Path, "/")+1:]]
-		if !ok {
-			http.NotFound(w, req)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		if req.URL.Query().Get("watch") == "" {
-			lists.Add(1)
-			_, _ = io.WriteString(w, `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"`+resource.kind+`List","metadata":{"resourceVersion":"1"},"items":[`+resource.item+`]}`)
-			return
-		}
-		// A watch-list stream: the initial objects, then the bookmark that
-		// marks the end of them. After that the watch stays idle.
-		if req.URL.Query().Get("sendInitialEvents") == "true" {
-			_, _ = io.WriteString(w, `{"type":"ADDED","object":`+resource.item+"}\n")
-			_, _ = io.WriteString(w, `{"type":"BOOKMARK","object":{"apiVersion":"apps.grafana.app/v1alpha2","kind":"`+resource.kind+`","metadata":{"resourceVersion":"1","annotations":{"k8s.io/initial-events-end":"true"}}}}`+"\n")
-		}
-		w.(http.Flusher).Flush()
-		<-req.Context().Done()
-	}))
-	t.Cleanup(api.Close)
-
-	clients := k8s.NewClientRegistry(rest.Config{Host: api.URL}, k8s.ClientConfig{})
-	loader, err := newCloudLoader(clients, nil, nil, nil)
-	require.NoError(t, err)
-
-	requireExampleGroup := func() {
-		t.Helper()
-		backends, err := loader.Load(t.Context())
-		require.NoError(t, err)
-		require.Len(t, backends, 1)
-		require.Equal(t, "example.grafana.app", backends[0].Group().Name)
-		require.Equal(t, "1-1", backends[0].Key())
-	}
-
-	// Before the informers sync, Load lists both kinds directly.
-	requireExampleGroup()
-	require.EqualValues(t, 2, lists.Load())
-
-	require.NoError(t, services.StartAndAwaitRunning(t.Context(), loader))
-	t.Cleanup(func() {
-		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), loader))
-	})
-	require.Eventually(t, func() bool {
-		return loader.rbInformer.SharedIndexInformer.HasSynced() && loader.amInformer.SharedIndexInformer.HasSynced()
-	}, 5*time.Second, 10*time.Millisecond)
-
-	// Once synced, reconciles are served from the caches, and reading them
-	// doesn't count as the source loading.
-	listsAfterSync := lists.Load()
-	successesAfterSync := loader.routeBackendStatus.successes.Load()
-	for range 5 {
-		requireExampleGroup()
-	}
-	require.Equal(t, listsAfterSync, lists.Load())
-	require.Equal(t, successesAfterSync, loader.routeBackendStatus.successes.Load())
-
-	// With the apiserver failing, the informers' list and watch errors are the
-	// source's failures. Dropping the open watches makes them reconnect.
-	down.Store(true)
-	api.CloseClientConnections()
-	require.Eventually(t, func() bool { return loader.routeBackendStatus.failures.Load() > 0 }, 10*time.Second, 10*time.Millisecond)
-}
-
 func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
 	st := newTestSingleTenantFallback(t)
 	st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
@@ -238,27 +183,56 @@ func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
 	require.NoError(t, err)
 	shared, err := newAggregateBackend("baas_apiserver", metav1.APIGroup{Name: "shared"}, base, &http.Transport{})
 	require.NoError(t, err)
-	aggregate := priorityAggregate(shared)
-	aggregate.name = "baas_apiserver"
-	loader, err := newCloudLoader(nil, []*aggregateTarget{aggregate}, nil, st)
+	aggregate := testAggregateTarget("baas_apiserver")
+	storeBackends(&aggregate.polledSource, shared)
+	aggregate.status.recordSuccess(time.Now())
+	loader, err := newCloudLoader([]*aggregateTarget{aggregate}, nil, nil, st)
 	require.NoError(t, err)
 
 	pollDiscovery(t, st)
 	backends, err := loader.Load(t.Context())
 	require.NoError(t, err)
 	require.Len(t, backends, 2)
-	require.Equal(t, []shadowedGroup{{Group: "shared", Source: sourceSingleTenant, By: "aggregate:baas_apiserver"}}, loader.shadowedGroups())
+	// The aggregate target overriding the fallback is expected, not shadowing.
+	require.Empty(t, loader.shadowedGroups())
 
+	// Statuses are listed in priority order, highest first.
 	statuses := loader.sourceStatuses()
 	require.Len(t, statuses, 2)
-	require.Equal(t, sourceSingleTenant, statuses[0].Source)
-	require.False(t, statuses[0].LastSuccess.IsZero())
-	require.Equal(t, uint64(1), statuses[0].Successes)
-	require.Equal(t, sourceStatus{Source: "aggregate:baas_apiserver"}, statuses[1], "never polled")
+	require.Equal(t, "aggregate:baas_apiserver", statuses[0].Source)
+	require.Equal(t, uint64(1), statuses[0].Successes, "Load serves only once every source has polled")
+	require.Equal(t, sourceSingleTenant, statuses[1].Source)
+	require.False(t, statuses[1].LastSuccess.IsZero())
+	require.Equal(t, uint64(1), statuses[1].Successes)
 
 	fail = true
 	pollDiscovery(t, st)
 	statuses = loader.sourceStatuses()
-	require.False(t, statuses[0].LastSuccess.IsZero(), "the last success is kept after a failure")
-	require.Equal(t, uint64(1), statuses[0].Failures)
+	require.False(t, statuses[1].LastSuccess.IsZero(), "the last success is kept after a failure")
+	require.Equal(t, uint64(1), statuses[1].Failures)
+}
+
+// The router isn't ready until every source has polled once: a source that
+// hasn't has an empty snapshot that is not an error, and serving it would
+// leave its groups out of discovery. A failed first poll ends the wait too.
+func TestCloudLoaderWaitsForEverySourcesFirstPoll(t *testing.T) {
+	polled := testAggregateTarget("polled")
+	storeBackends(&polled.polledSource, priorityBackend("polled.ext.grafana.app", "polled"))
+	polled.status.recordSuccess(time.Now())
+	slow := testAggregateTarget("slow")
+	loader, err := newCloudLoader([]*aggregateTarget{polled, slow}, nil, nil, nil)
+	require.NoError(t, err)
+	router := NewGrafanaRouter(loader, nil)
+
+	err = router.reconcile(t.Context())
+	require.ErrorIs(t, err, errFirstPollPending)
+	require.ErrorContains(t, err, "aggregate:slow")
+	require.Error(t, router.Ready(t.Context()))
+
+	require.True(t, slow.status.recordFailure(), "the first failed attempt is reported")
+	require.False(t, slow.status.recordFailure())
+	err = router.reconcile(t.Context())
+	require.NoError(t, err)
+	require.NoError(t, router.Ready(t.Context()))
+	require.Contains(t, router.served, "polled.ext.grafana.app")
 }

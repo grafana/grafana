@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/require"
@@ -37,36 +38,38 @@ func TestCompositeStore(t *testing.T) {
 	})
 
 	t.Run("should return first error", func(t *testing.T) {
-		err1 := errors.New("error 1")
-		r1 := newFakeReader(withError(err1))
-		err2 := errors.New("error 2")
-		r2 := newFakeReader(withError(err2), withWait(10*time.Millisecond))
+		synctest.Test(t, func(t *testing.T) {
+			err1 := errors.New("error 1")
+			r1 := newFakeReader(withError(err1))
+			err2 := errors.New("error 2")
+			r2 := newFakeReader(withError(err2), withWait(10*time.Millisecond))
 
-		store := &CompositeStore{
-			log.NewNopLogger(),
-			[]ReadStore{r1, r2},
-		}
+			store := &CompositeStore{
+				log.NewNopLogger(),
+				[]ReadStore{r1, r2},
+			}
 
-		tc := []struct {
-			f   func() (any, error)
-			err error
-		}{
-			{
-				f:   func() (any, error) { return store.Get(context.Background(), annotations.ItemQuery{}, nil) },
-				err: errGet,
-			},
-			{
-				f:   func() (any, error) { return store.GetTags(context.Background(), annotations.TagsQuery{}) },
-				err: errGetTags,
-			},
-		}
+			tc := []struct {
+				f   func() (any, error)
+				err error
+			}{
+				{
+					f:   func() (any, error) { return store.Get(t.Context(), annotations.ItemQuery{}, nil) },
+					err: errGet,
+				},
+				{
+					f:   func() (any, error) { return store.GetTags(t.Context(), annotations.TagsQuery{}) },
+					err: errGetTags,
+				},
+			}
 
-		for _, tt := range tc {
-			_, err := tt.f()
-			require.Error(t, err)
-			require.ErrorIs(t, err, err1)
-			require.NotErrorIs(t, err, err2)
-		}
+			for _, tt := range tc {
+				_, err := tt.f()
+				require.Error(t, err)
+				require.ErrorIs(t, err, err1)
+				require.NotErrorIs(t, err, err2)
+			}
+		})
 	})
 
 	t.Run("should combine and sort results from Get", func(t *testing.T) {

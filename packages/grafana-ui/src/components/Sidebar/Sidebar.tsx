@@ -48,7 +48,7 @@ function SidebarComp({ children, contextValue }: Props) {
       return;
     }
     if (!isDocked && hasOpenPane) {
-      contextValue.onClosePane?.();
+      (contextValue.onClickAway ?? contextValue.onClosePane)?.();
     }
   });
 

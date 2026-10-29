@@ -2,7 +2,6 @@ import { useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { Alert, Field, Input, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -121,7 +120,7 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
 
   const editOptions = [
     tabCategory,
-    ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [sectionFiltersCategory] : []),
+    sectionFiltersCategory,
     sectionVariablesCategory,
     ...layoutCategory,
     repeatCategory,

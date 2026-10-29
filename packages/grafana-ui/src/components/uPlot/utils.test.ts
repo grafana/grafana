@@ -1319,6 +1319,47 @@ describe('auto stacking groups', () => {
       ]
     `);
   });
+
+  describe('with previous groups', () => {
+    // posCount of 20 sampled values are positive, the rest negative
+    const makeFrame = (posCount: number, transform?: GraphTransform) =>
+      new MutableDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: Array.from({ length: 20 }, (_, i) => i) },
+          {
+            name: 'a',
+            values: Array.from({ length: 20 }, (_, i) => (i < posCount ? 1 : -1)),
+            config: { custom: { transform, stacking: { mode: StackingMode.Normal } } },
+          },
+        ],
+      });
+
+    it('keeps a negative direction while the sign split stays within the flip margin', () => {
+      const df = makeFrame(11);
+
+      expect(getStackingGroups(df)).toEqual([{ series: [1], dir: 1 }]);
+      expect(getStackingGroups(df, [{ series: [1], dir: -1 }])).toEqual([{ series: [1], dir: -1 }]);
+    });
+
+    it('keeps a positive direction while the sign split stays within the flip margin', () => {
+      const df = makeFrame(9);
+
+      expect(getStackingGroups(df)).toEqual([{ series: [1], dir: -1 }]);
+      expect(getStackingGroups(df, [{ series: [1], dir: 1 }])).toEqual([{ series: [1], dir: 1 }]);
+    });
+
+    it('flips the direction once the sign split clearly reverses', () => {
+      expect(getStackingGroups(makeFrame(14), [{ series: [1], dir: -1 }])).toEqual([{ series: [1], dir: 1 }]);
+      expect(getStackingGroups(makeFrame(6), [{ series: [1], dir: 1 }])).toEqual([{ series: [1], dir: -1 }]);
+    });
+
+    it('applies the flip margin after the negative-Y transform', () => {
+      const df = makeFrame(11, GraphTransform.NegativeY);
+
+      expect(getStackingGroups(df)).toEqual([{ series: [1], dir: -1 }]);
+      expect(getStackingGroups(df, [{ series: [1], dir: 1 }])).toEqual([{ series: [1], dir: 1 }]);
+    });
+  });
 });
 
 describe('findMidPointYPosition', () => {

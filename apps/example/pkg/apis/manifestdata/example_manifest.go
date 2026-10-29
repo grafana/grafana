@@ -61,11 +61,6 @@ var appManifestData = app.ManifestData{
 					Schema: &versionSchemaExamplev0alpha1,
 				},
 			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
-			},
 		},
 
 		{
@@ -147,6 +142,7 @@ var appManifestData = app.ManifestData{
 					},
 				},
 			},
+			// nolint:staticcheck
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
 					"/something": {

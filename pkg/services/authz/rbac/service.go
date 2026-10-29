@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -39,6 +40,7 @@ const (
 
 type Service struct {
 	authzv1.UnimplementedAuthzServiceServer
+	authzextv1.UnimplementedLegacyAuthzServiceServer
 
 	store                    store.Store
 	folderStore              store.FolderStore
@@ -46,6 +48,8 @@ type Service struct {
 	userPermissionsEvaluator accesscontrol.UserPermissionsEvaluator
 	userPermissionsResolver  UserPermissionsResolver
 	actionResolver           accesscontrol.ActionResolver
+	legacyScopeResolvers     *accesscontrol.ScopeResolverRegistry
+	legacyScopeNamespace     types.NamespaceFormatter
 	identityStore            legacy.LegacyIdentityStore
 	settings                 Settings
 
@@ -637,18 +641,21 @@ func validateNamespace(ctx context.Context, nameSpace string) (types.NamespaceIn
 	if nameSpace == "" {
 		return types.NamespaceInfo{}, status.Error(codes.InvalidArgument, "namespace is required")
 	}
+
 	authInfo, has := types.AuthInfoFrom(ctx)
 	if !has {
 		return types.NamespaceInfo{}, status.Error(codes.Internal, "could not get auth info from context")
 	}
+
 	if !types.NamespaceMatches(authInfo.GetNamespace(), nameSpace) {
 		return types.NamespaceInfo{}, status.Error(codes.PermissionDenied, "namespace does not match")
 	}
 
 	ns, err := types.ParseNamespace(nameSpace)
 	if err != nil {
-		return types.NamespaceInfo{}, err
+		return types.NamespaceInfo{}, fmt.Errorf("could not parse namespace: %w", err)
 	}
+
 	return ns, nil
 }
 
@@ -1029,7 +1036,7 @@ func (s *Service) checkPermissionWithMapping(ctx context.Context, scopeMap map[s
 
 	if t.SkipScope(req.Verb) {
 		// Resource doesn't require scope on this verb, so allow if the user has the action
-		return scopeMap[""], nil
+		return scopeMap[""] || scopeMap["*"], nil
 	}
 
 	// Create maps empty parent to general for every folder-capable resource
@@ -1297,7 +1304,7 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		return s.listPermissionWithFolderAuthz(ctx, scopeMap, req)
 	}
 
-	if scopeMap["*"] {
+	if scopeMap["*"] || (t.SkipScope(req.Verb) && scopeMap[""]) {
 		return &authzv1.ListResponse{
 			All:    true,
 			Zookie: &authzv1.Zookie{Timestamp: time.Now().Unix()},

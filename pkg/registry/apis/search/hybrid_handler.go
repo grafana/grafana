@@ -43,6 +43,16 @@ var (
 
 // HybridSearchFor returns the POST handler for one resource's hybrid search.
 func (h *HybridHandler) HybridSearchFor(kind kindRef) http.HandlerFunc {
+	return h.hybridSearchFor(kind, func(_ context.Context, q *searchv0.HybridSearchQuery, namespace string) (*resourcepb.HybridSearchRequest, error) {
+		req, errs := TranslateHybridSearchQuery(q, kind.gvr(), namespace)
+		if len(errs) > 0 {
+			return nil, apierrors.NewInvalid(schema.GroupKind{Group: searchv0.GROUP, Kind: searchv0.KindHybridSearchQuery}, "", errs)
+		}
+		return req, nil
+	})
+}
+
+func (h *HybridHandler) hybridSearchFor(kind kindRef, prepare func(context.Context, *searchv0.HybridSearchQuery, string) (*resourcepb.HybridSearchRequest, error)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, span := h.tracer.Start(r.Context(), "search.v1.hybrid", trace.WithAttributes(
 			attribute.String("search.group", kind.group),
@@ -61,13 +71,11 @@ func (h *HybridHandler) HybridSearchFor(kind kindRef) http.HandlerFunc {
 			errhttp.Write(ctx, err, w)
 			return
 		}
-		req, ferrs := TranslateHybridSearchQuery(&q, kind.gvr(), namespace)
-		if len(ferrs) > 0 {
-			errhttp.Write(ctx, apierrors.NewInvalid(
-				schema.GroupKind{Group: searchv0.GROUP, Kind: searchv0.KindHybridSearchQuery}, "", ferrs), w)
+		req, err := prepare(ctx, &q, namespace)
+		if err != nil {
+			errhttp.Write(ctx, err, w)
 			return
 		}
-
 		res, err := h.client.HybridSearch(ctx, req)
 		if err != nil {
 			errhttp.Write(ctx, hybridSearchError(err), w)
@@ -93,6 +101,7 @@ func hybridSearchError(err error) error {
 }
 
 func hybridSearchResults(res *resourcepb.HybridSearchResponse, kind kindRef) *searchv0.HybridSearchResults {
+	kind.reportedKinds = res.GetKinds()
 	items := make([]searchv0.HybridSearchResultItem, 0, len(res.GetResults()))
 	for _, hit := range res.GetResults() {
 		chunks := make([]searchv0.HybridSearchChunk, 0, len(hit.GetChunks()))
@@ -103,13 +112,12 @@ func hybridSearchResults(res *resourcepb.HybridSearchResponse, kind kindRef) *se
 			})
 		}
 		item := searchv0.HybridSearchResultItem{
-			Resource: searchv0.ResourceRef{
-				Group: kind.group, Resource: kind.resource, Kind: kind.kind, Name: hit.GetKey().GetName(),
-			},
+			Resource:    resultItem(kind, hit.GetKey()).Resource,
 			Score:       hit.GetScore(),
 			Title:       hit.GetTitle(),
 			Folder:      hit.GetFolder(),
 			FolderTitle: hit.GetFolderTitle(),
+			Tags:        hit.GetTags(),
 			Chunks:      chunks,
 		}
 		if hit.GetManagedByKind() != "" || hit.GetManagedById() != "" {

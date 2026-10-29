@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -149,6 +150,11 @@ func (r *Runner) runInitialCleanupParallelMT(ctx context.Context, logger logging
 		if lastCreated[namespace].IsZero() {
 			continue
 		}
+		// Stop scheduling once ctx is done (shutdown or lost leader lease)
+		// instead of failing, and logging, once per remaining namespace.
+		if ctx.Err() != nil {
+			break
+		}
 		g.Go(func() error {
 			nsLogger := logger.With("namespace", namespace)
 			nsLogger.Debug("checkscheduler MT initial cleanup namespace", "step", "begin")
@@ -181,6 +187,9 @@ func (r *Runner) runTickParallelMT(ctx context.Context, logger logging.Logger, n
 	var g errgroup.Group
 	g.SetLimit(maxConcurrency)
 	for _, namespace := range namespaces {
+		if ctx.Err() != nil {
+			break
+		}
 		last := lastCreatedMap[namespace]
 		g.Go(func() error {
 			nsLogger := logger.With("namespace", namespace)
@@ -225,6 +234,17 @@ func (r *Runner) tickNamespace(ctx context.Context, log logging.Logger, namespac
 			"last_created", lastCreated, "eval_deadline", deadline, "eval_interval", r.defaultEvalInterval)
 		tickResult = "skipped_not_stale"
 		return lastCreated, nil
+	}
+	// Skip namespaces the check registry rejects. If the lookup fails, schedule as usual.
+	if skipper, ok := r.checkRegistry.(checkregistry.NamespaceSkipper); ok {
+		reason, err := skipper.SkipReason(ctx, namespace)
+		if err != nil {
+			log.Debug("checkscheduler tickNamespace skip lookup failed, scheduling anyway", "error", err)
+		} else if reason != "" {
+			log.Debug("checkscheduler tickNamespace skip", "reason", reason)
+			tickResult = "skipped_" + reason
+			return lastCreated, nil
+		}
 	}
 	observeDuration = true
 	// In MT, CheckType registration is on-demand (the "/register" endpoint),

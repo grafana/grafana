@@ -2,8 +2,9 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 
-import { type TimeRange } from '@grafana/data';
+import { type DataSourceInstanceSettings, type TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 
 import { MetricsList, STATUS_SETTLE_MS } from './MetricsList';
 import { useLabelValues } from './data/useLabelValues';
@@ -440,6 +441,18 @@ describe('<MetricsList />', () => {
       expect(useMetricDetailMock).toHaveBeenCalledWith({ uid: 'prom-uid', type: 'prometheus' }, timeRange, 'up');
     });
 
+    // The key truncates with an ellipsis, so hovering is the only way to read a long one in full.
+    it('exposes the full label key on hover', async () => {
+      const longKey = 'kubernetes_pod_controller_revision_hash';
+      setCatalog([row('up')]);
+      setLabelKeys([longKey]);
+      renderList();
+
+      await expandMetric('up');
+
+      expect(screen.getByRole('button', { name: `Show values for ${longKey}` })).toHaveAttribute('title', longKey);
+    });
+
     it('collapses again, unmounting the labels', async () => {
       setCatalog([row('up')]);
       setLabelKeys(['job']);
@@ -623,6 +636,17 @@ describe('<MetricsList />', () => {
       expect(useLabelValuesMock).toHaveBeenCalledWith({ uid: 'prom-uid', type: 'prometheus' }, timeRange, 'up', 'job');
     });
 
+    // The row truncates with an ellipsis, so hovering is the only way to read a long value in full.
+    it('exposes the full value on hover', async () => {
+      const longValue = 'kube-prometheus-stack-prometheus-node-exporter-7f9c8d6b5-abcde';
+      setLabelValues([longValue]);
+      await openJob();
+
+      await expandLabel('job');
+
+      expect(screen.getByText(longValue)).toHaveAttribute('title', longValue);
+    });
+
     it('renders only the first batch of a high-cardinality label', async () => {
       setLabelValues(Array.from({ length: 100 }, (_, i) => `value-${i}`));
       await openJob();
@@ -713,6 +737,95 @@ describe('<MetricsList />', () => {
 
       expect(screen.queryByText('web-1')).not.toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Show values for job' })).toBeInTheDocument();
+    });
+  });
+
+  describe('adding to the query', () => {
+    const onAddToQuery = jest.fn();
+
+    const seedDefaultEditor = (defaultEditor: string) =>
+      setDataSourceInstanceSettings(
+        {
+          'gdev-prometheus': {
+            uid: 'prom-uid',
+            type: 'prometheus',
+            name: 'gdev-prometheus',
+            meta: { id: 'prometheus' },
+            jsonData: { defaultEditor },
+          } as unknown as DataSourceInstanceSettings,
+        },
+        'gdev-prometheus'
+      );
+
+    const openJob = async (props: Partial<ComponentProps<typeof MetricsList>>) => {
+      setCatalog([row('up')]);
+      setLabelKeys(['job']);
+      setLabelValues(['web-1']);
+      renderList({ onAddToQuery, ...props });
+      await expandMetric('up');
+      await userEvent.click(screen.getByRole('button', { name: 'Show values for job' }));
+    };
+
+    const addButtons = () => screen.queryAllByRole('button', { name: /to query$/ });
+
+    beforeEach(() => {
+      onAddToQuery.mockReset();
+    });
+
+    it.each([
+      ['metric name', 'Add up to query', 'up', 'name', 'metric'],
+      ['label key', 'Add label job to query', 'job', 'name', 'label'],
+      ['label value', 'Add value web-1 to query', 'web-1', 'value', 'value'],
+    ])('adds the %s to the card’s query and reports it', async (_, buttonName, text, kind, itemType) => {
+      await openJob({
+        refId: 'B',
+        editorMode: 'code',
+        dsType: 'grafana-amazonprometheus-datasource',
+        stackedQueriesCount: 2,
+      });
+      reportInteractionMock.mockClear();
+
+      await userEvent.click(screen.getByRole('button', { name: buttonName }));
+
+      expect(onAddToQuery).toHaveBeenCalledTimes(1);
+      expect(onAddToQuery).toHaveBeenCalledWith('B', text, kind);
+      expect(reportInteractionMock).toHaveBeenCalledTimes(1);
+      // The exact object, so the added text can never ride along as an extra property.
+      expect(reportInteractionMock).toHaveBeenCalledWith('signal_explorer_add_to_query_clicked', {
+        data_source_type: 'grafana-amazonprometheus-datasource',
+        stacked_queries_count: 2,
+        item_type: itemType,
+      });
+    });
+
+    it('offers nothing to add in Builder mode', async () => {
+      await openJob({ editorMode: 'builder' });
+
+      expect(addButtons()).toHaveLength(0);
+    });
+
+    it('offers nothing to add without a handler', async () => {
+      await openJob({ editorMode: 'code', onAddToQuery: undefined });
+
+      expect(addButtons()).toHaveLength(0);
+    });
+
+    it('follows the datasource’s default editor when the query has no mode', async () => {
+      seedDefaultEditor('code');
+      await openJob({});
+
+      expect(await screen.findByRole('button', { name: 'Add up to query' })).toBeInTheDocument();
+      expect(addButtons()).toHaveLength(3);
+    });
+
+    it('offers nothing when the datasource defaults to Builder and the query has no mode', async () => {
+      seedDefaultEditor('builder');
+      await openJob({});
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(addButtons()).toHaveLength(0);
     });
   });
 

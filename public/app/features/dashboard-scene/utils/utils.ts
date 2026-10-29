@@ -1,8 +1,7 @@
 import { getDataSourceRef, type IntervalVariableModel, type ScopedVars } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, useFlagGrafanaScenesFlickeringFix } from '@grafana/runtime/internal';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   type CancelActivationHandler,
   type CustomVariable,
@@ -21,6 +20,7 @@ import {
 import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
 import kbn from 'app/core/utils/kbn';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
 import { type TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
@@ -56,7 +56,7 @@ const V1_PANEL_PROPERTIES = {
  * Whether the new panel query errors & notices UI (header popover + dedicated inspector tab) is enabled.
  */
 export function isNewPanelQueryErrorsUIEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, false);
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, true);
 }
 
 export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
@@ -205,7 +205,7 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultPluginId(): string {
-  return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
+  return isDashboardNewLayoutsEnabled() ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
 export async function getDefaultVizPanel(): Promise<VizPanel> {
@@ -229,9 +229,7 @@ export async function getDefaultVizPanel(): Promise<VizPanel> {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
-    headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
-    }),
+    headerActions: new VizPanelHeaderActions({}),
     $data: datasourceSettings
       ? new SceneDataTransformer({
           $data: new SceneQueryRunner({

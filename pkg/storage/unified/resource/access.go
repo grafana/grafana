@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"strconv"
 	"strings"
 	"time"
 
@@ -27,11 +28,11 @@ import (
 type groupResource map[string]map[string]interface{}
 
 type accessMetrics struct {
-	checkDuration              *prometheus.HistogramVec
-	compileDuration            *prometheus.HistogramVec
-	batchCheckDuration         *prometheus.HistogramVec
-	errorsTotal                *prometheus.CounterVec
-	missingDelegatedPermission *prometheus.CounterVec
+	checkDuration             *prometheus.HistogramVec
+	compileDuration           *prometheus.HistogramVec
+	batchCheckDuration        *prometheus.HistogramVec
+	errorsTotal               *prometheus.CounterVec
+	servicePermissionFailures *prometheus.CounterVec
 }
 
 func newMetrics(reg prometheus.Registerer) *accessMetrics {
@@ -68,11 +69,11 @@ func newMetrics(reg prometheus.Registerer) *accessMetrics {
 				Name: "grafana_grpc_authz_limited_client_errors_total",
 				Help: "Number of errors",
 			}, []string{"group", "resource", "verb"}),
-		missingDelegatedPermission: promauto.With(reg).NewCounterVec(
+		servicePermissionFailures: promauto.With(reg).NewCounterVec(
 			prometheus.CounterOpts{
-				Name: "grafana_grpc_authz_limited_client_missing_delegated_permission_total",
-				Help: "Number of access checks refused because this service's token cannot act on behalf of a user for the group and resource",
-			}, []string{"group", "resource", "verb"}),
+				Name: "grafana_grpc_authz_limited_client_service_permission_failures_total",
+				Help: "Access checks where the service token lacks a required direct or delegated permission, regardless of RBAC exemption.",
+			}, []string{"group", "resource", "verb", "mode", "exempt"}),
 	}
 }
 
@@ -104,17 +105,24 @@ func checkServiceTokenPermissions(id claims.AuthInfo, group, resource, verb stri
 	return fmt.Errorf("%w: %s/%s:%s", missing, group, resource, verb)
 }
 
-func (c authzLimitedClient) serviceCanDelegate(ctx context.Context, id claims.AuthInfo, group, resource, verb string) error {
+func (c authzLimitedClient) checkServicePermission(ctx context.Context, id claims.AuthInfo, group, resource, verb string) error {
 	err := checkServiceTokenPermissions(id, group, resource, verb)
 	if err == nil {
 		return nil
 	}
+	mode := "direct"
+	if errors.Is(err, ErrServiceCannotDelegate) {
+		mode = "delegated"
+	}
+	exempt := !c.IsCompatibleWithRBAC(group, resource)
+	c.metrics.servicePermissionFailures.WithLabelValues(group, resource, verb, mode, strconv.FormatBool(exempt)).Inc()
+	if exempt {
+		return nil
+	}
 	if errors.Is(err, ErrServicePermissionMissing) {
 		c.metrics.errorsTotal.WithLabelValues(group, resource, verb).Inc()
-	} else {
-		c.metrics.missingDelegatedPermission.WithLabelValues(group, resource, verb).Inc()
 	}
-	c.logger.FromContext(ctx).Error(
+	c.logger.FromContext(ctx).Warn(
 		"Refusing access check: missing service permission",
 		"error", err,
 		"group", group,
@@ -127,18 +135,28 @@ func (c authzLimitedClient) serviceCanDelegate(ctx context.Context, id claims.Au
 }
 
 // Check before scanning so an empty index cannot hide a missing service grant.
-func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *resourcepb.ResourceSearchRequest) error {
+//
+// It returns, as {group}/{resource}, the types of resources a search searches
+// and the ones it leaves out. A global search leaves out the types it cannot
+// search instead of failing: otherwise one type without a grant would break the
+// search for every type. It fails only when no type is left.
+func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *resourcepb.ResourceSearchRequest, resources []NamespacedResource) (searched, skipped []string, err error) {
 	id, ok := claims.AuthInfoFrom(ctx)
 	if !ok || id == nil {
 		if s.access == nil {
-			return nil
+			for _, resource := range resources {
+				searched = append(searched, resource.Group+"/"+resource.Resource)
+			}
+			return searched, nil, nil
 		}
-		return apierrors.NewUnauthorized(authz.ErrMissingAuthInfo.Error())
+		return nil, nil, apierrors.NewUnauthorized(authz.ErrMissingAuthInfo.Error())
 	}
 	key := req.Options.Key
 	if !claims.NamespaceMatches(id.GetNamespace(), key.Namespace) {
-		return claims.ErrNamespaceMismatch
+		return nil, nil, claims.ErrNamespaceMismatch
 	}
+	nsr := NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
+	global := nsr.IsGlobal()
 
 	verb := utils.VerbGet
 	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
@@ -147,18 +165,59 @@ func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *r
 	if req.IsDeleted {
 		verb = utils.VerbSetPermissions
 	}
-	resources := indexSources(NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource})
+	var lastErr error
 	for _, resource := range resources {
-		if err := s.checkSearchServicePermission(ctx, id, resource.Group, resource.Resource, verb); err != nil {
-			return err
+		groupResource := resource.Group + "/" + resource.Resource
+		if global && !s.checksEachResult(resource.Group, resource.Resource) {
+			s.logUncheckedGlobalType(ctx, groupResource)
+			skipped = append(skipped, groupResource)
+			continue
 		}
+		group, name, resourceVerb := resource.Group, resource.Resource, verb
+		// Mirrors the folder check in search's batchCheckItem, which authorizes by dashboards:create.
+		if !req.IsDeleted && req.Permission == int64(dashboardaccess.PERMISSION_CREATE) && group == "folder.grafana.app" && name == "folders" {
+			group, name, resourceVerb = "dashboard.grafana.app", "dashboards", utils.VerbCreate
+		}
+		if err := s.checkSearchServicePermission(ctx, id, group, name, resourceVerb); err != nil {
+			if !global {
+				return nil, nil, err
+			}
+			skipped = append(skipped, groupResource)
+			lastErr = err
+			continue
+		}
+		searched = append(searched, groupResource)
+	}
+	if global && len(resources) > 0 && len(searched) == 0 {
+		if lastErr != nil {
+			return nil, skipped, lastErr
+		}
+		return nil, skipped, errors.New("the global search covers no type whose results this server checks against the user")
 	}
 	for _, resource := range req.Federated {
 		if err := s.checkSearchServicePermission(ctx, id, resource.Group, resource.Resource, utils.VerbGet); err != nil {
-			return err
+			return nil, skipped, err
 		}
 	}
-	return nil
+	return searched, skipped, nil
+}
+
+// checksEachResult reports whether this server checks each result of the type
+// against the user. Unified storage only checks the types its access client
+// enforces; the others are returned to anyone.
+func (s *searchServer) checksEachResult(group, resource string) bool {
+	access, ok := s.access.(interface{ IsCompatibleWithRBAC(string, string) bool })
+	return !ok || access.IsCompatibleWithRBAC(group, resource)
+}
+
+// The set of such types only changes with the deployment's configuration, so
+// once per type is enough to explain why it is missing from global search.
+func (s *searchServer) logUncheckedGlobalType(ctx context.Context, groupResource string) {
+	if _, logged := s.uncheckedGlobalTypesLogged.LoadOrStore(groupResource, true); logged {
+		return
+	}
+	s.log.FromContext(ctx).Warn("Leaving a type out of global search: this server does not check its results against the user",
+		"group_resource", groupResource)
 }
 
 func (s *searchServer) checkSearchServicePermission(ctx context.Context, id claims.AuthInfo, group, resource, verb string) error {
@@ -170,8 +229,15 @@ func (s *searchServer) checkSearchServicePermission(ctx context.Context, id clai
 	if errors.Is(err, ErrServiceCannotDelegate) {
 		mode = "delegated"
 	}
-	s.indexMetrics.SearchServicePermissionFailures.WithLabelValues(mode).Inc()
-	s.log.FromContext(ctx).Error("Search service permission check failed", "error", err,
+	exempt := false
+	if access, ok := s.access.(interface{ IsCompatibleWithRBAC(string, string) bool }); ok {
+		exempt = !access.IsCompatibleWithRBAC(group, resource)
+	}
+	s.indexMetrics.SearchServicePermissionFailures.WithLabelValues(group, resource, verb, mode, strconv.FormatBool(exempt)).Inc()
+	if exempt {
+		return nil
+	}
+	s.log.FromContext(ctx).Warn("Search service permission check failed", "error", err,
 		"group", group, "resource", resource, "verb", verb, "subject", id.GetSubject(),
 		"required_permission", fmt.Sprintf("%s/%s:%s", group, resource, verb))
 	return err
@@ -198,7 +264,7 @@ func batchSizeBucket(n int) string {
 
 // rbacAllowlist is a map of group to resources that are compatible with RBAC.
 var rbacAllowlist = groupResource{
-	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil, "variables": nil},
+	"dashboard.grafana.app": map[string]interface{}{"dashboards": nil, "variables": nil, "notebooks": nil},
 	"folder.grafana.app":    map[string]interface{}{"folders": nil},
 	"iam.grafana.app":       map[string]interface{}{"users": nil, "teams": nil, "serviceaccounts": nil},
 }
@@ -271,11 +337,18 @@ func parseAuthzExemptions(values []string) (groupResource, error) {
 }
 
 func alwaysEnforced(group, resource string) bool {
-	if strings.HasSuffix(group, ".ext.grafana.app") {
+	if strings.HasSuffix(group, ".ext.grafana.app") || isAppPluginGroup(group) {
 		return true
 	}
 	_, ok := rbacAllowlist[group][resource]
 	return ok
+}
+
+// isAppPluginGroup reports whether group is shaped like an app plugin ID, which
+// app plugins may use as their API group. No core Grafana group has this shape.
+func isAppPluginGroup(group string) bool {
+	name, ok := strings.CutSuffix(group, "-app")
+	return ok && name != "" && !strings.Contains(group, ".")
 }
 
 // Check implements claims.AccessClient.
@@ -298,14 +371,14 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		return claims.CheckResponse{Allowed: false}, claims.ErrNamespaceMismatch
 	}
 
-	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
-		span.SetAttributes(attribute.Bool("allowed", true))
-		return claims.CheckResponse{Allowed: true}, nil
-	}
-	if err := c.serviceCanDelegate(ctx, id, req.Group, req.Resource, req.Verb); err != nil {
+	if err := c.checkServicePermission(ctx, id, req.Group, req.Resource, req.Verb); err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		span.RecordError(err)
 		return claims.CheckResponse{Allowed: false}, err
+	}
+	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
+		span.SetAttributes(attribute.Bool("allowed", true))
+		return claims.CheckResponse{Allowed: true}, nil
 	}
 
 	resp, err := c.client.Check(ctx, id, req, folder)
@@ -339,15 +412,15 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 		return nil, claims.NoopZookie{}, claims.ErrNamespaceMismatch
 	}
 
+	if err := c.checkServicePermission(ctx, id, req.Group, req.Resource, req.Verb); err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
+		return nil, claims.NoopZookie{}, err
+	}
 	if !c.IsCompatibleWithRBAC(req.Group, req.Resource) {
 		return func(name, folder string) bool {
 			return true
 		}, claims.NoopZookie{}, nil
-	}
-	if err := c.serviceCanDelegate(ctx, id, req.Group, req.Resource, req.Verb); err != nil {
-		span.SetStatus(codes.Error, err.Error())
-		span.RecordError(err)
-		return nil, claims.NoopZookie{}, err
 	}
 
 	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
@@ -364,7 +437,8 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 }
 
 func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
-	// When the allow list is disabled, *.ext.grafana.app groups are additionally
+	// When the allow list is disabled, plugin groups (*.ext.grafana.app and app
+	// plugin IDs) are additionally
 	// forwarded to the underlying authz client so the new dual-check path runs
 	// for K8s-native CRDs. This mirrors narrowing in
 	// rbac.Service.checkPermission and keeps folder/dashboard/iam flow on the
@@ -397,36 +471,28 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 		return claims.BatchCheckResponse{}, claims.ErrNamespaceMismatch
 	}
 
-	// Build a separate request for items that need to be checked by the underlying client
+	// Once per group, resource and verb: a page of hits repeats the same combination.
+	seen := make(map[string]struct{}, len(req.Checks))
 	var itemsToCheck []claims.BatchCheckItem
 	for _, item := range req.Checks {
+		key := item.Group + "/" + item.Resource + ":" + item.Verb
+		if _, dup := seen[key]; !dup {
+			seen[key] = struct{}{}
+			if err := c.checkServicePermission(ctx, id, item.Group, item.Resource, item.Verb); err != nil {
+				span.SetStatus(codes.Error, err.Error())
+				span.RecordError(err)
+				return claims.BatchCheckResponse{}, err
+			}
+		}
 		if !c.IsCompatibleWithRBAC(item.Group, item.Resource) {
-			// Not compatible with RBAC, allow by default
 			results[item.CorrelationID] = claims.BatchCheckResult{Allowed: true}
 		} else {
-			// Will be checked by underlying client
 			itemsToCheck = append(itemsToCheck, item)
 		}
 	}
 
-	// If all items were allowed by default, return early
 	if len(itemsToCheck) == 0 {
 		return claims.BatchCheckResponse{Results: results}, nil
-	}
-
-	// Once per group, resource and verb: a page of hits repeats the same combination.
-	seen := make(map[string]struct{}, len(itemsToCheck))
-	for _, item := range itemsToCheck {
-		key := item.Group + "/" + item.Resource + ":" + item.Verb
-		if _, dup := seen[key]; dup {
-			continue
-		}
-		seen[key] = struct{}{}
-		if err := c.serviceCanDelegate(ctx, id, item.Group, item.Resource, item.Verb); err != nil {
-			span.SetStatus(codes.Error, err.Error())
-			span.RecordError(err)
-			return claims.BatchCheckResponse{}, err
-		}
 	}
 
 	// Forward to the underlying client

@@ -7,11 +7,15 @@ import { ElementSelectionContext, type ElementSelectionContextItem } from '@graf
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { duplicateAutoGridPanel } from '../../actions/layout/duplicateAutoGridPanel';
 import { duplicateDefaultGridPanel } from '../../actions/layout/duplicateDefaultGridPanel';
 import { getCloneKey } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardScene } from '../DashboardScene';
+import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowItem } from '../layout-rows/RowItem';
@@ -23,6 +27,7 @@ import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
 import { PanelEditActionsBulk, PanelEditActionsSingle, PanelEditActionsWrapper } from './PanelEditActions';
 
 jest.mock('../../actions/layout/duplicateDefaultGridPanel');
+jest.mock('../../actions/layout/duplicateAutoGridPanel');
 
 jest.mock('app/core/app_events', () => ({
   appEvents: {
@@ -217,6 +222,20 @@ describe('<PanelEditActionsSingle />', () => {
 
     expect(mockLocationServicePartial).toHaveBeenCalledWith({ editPanel: 1 });
     expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('configure', 1, 'edit_popover');
+  });
+
+  test('when the user clicks Duplicate in Auto grid, the panel is duplicated via its edit action', async () => {
+    const panel = new VizPanel({ key: 'panel-1', pluginId: 'table' });
+    const layout = new AutoGridLayoutManager({
+      layout: new AutoGridLayout({ children: [new AutoGridItem({ body: panel })] }),
+    });
+    new DashboardScene({ isEditing: true, body: layout });
+    const { actions } = renderPanelEditActionsSingle({ panel });
+
+    await actions.clickDuplicate();
+
+    expect(duplicateAutoGridPanel).toHaveBeenCalledWith(layout, panel);
+    expect(duplicateAutoGridPanel).toHaveBeenCalledTimes(1);
   });
 
   test('when the user clicks Duplicate, the panel is duplicated via its Default grid action', async () => {
@@ -511,7 +530,8 @@ describe('<PanelEditActionsBulk />', () => {
   });
 
   test('when the user clicks Delete and confirms, every selected panel is removed', async () => {
-    const { layoutManager, panels } = buildTestScene({ panelCount: 2 });
+    const { scene, layoutManager, panels } = buildTestScene({ panelCount: 2 });
+    deactivate = activateFullSceneTree(scene);
     jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
     const selected = [{ id: 'panel-1' }, { id: 'panel-2' }];
     const { actions } = renderPanelEditActionsBulk({ panel: panels[0], selected });
@@ -523,7 +543,7 @@ describe('<PanelEditActionsBulk />', () => {
     expect(event.payload.title).toBe('Multiple panels');
     expect(layoutManager.getVizPanels().map((panel) => panel.state.key)).toEqual(['panel-1', 'panel-2']);
 
-    event.payload.onConfirm();
+    act(() => event.payload.onConfirm());
 
     expect(layoutManager.getVizPanels().map((panel) => panel.state.key)).toEqual([]);
   });

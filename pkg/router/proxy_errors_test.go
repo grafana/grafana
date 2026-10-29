@@ -10,29 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-func TestCanonicalAPIPath(t *testing.T) {
-	for target, want := range map[string]bool{
-		"/apis":                           true,
-		"/apis/":                          true,
-		"/apis/g/v1/":                     true,
-		"/apis/g/v1/namespaces/ns/things": true,
-		"/apis/g/v1/namespaces/ns/things?watch=1": true,
-		"/openapi/v3/apis/g/v1?hash=abc":          true,
-		"/apis/g/v1/namespaces/ns/things/a%20b":   true,
-		"/apis//v1/things":                        false,
-		"/apis/g/./v1/things":                     false,
-		"/apis/g/../other/v1/things":              false,
-		"/apis/g/v1/..":                           false,
-		"/apis/g%2Fother/v1/things":               false,
-		"/apis/g%2fother/v1/things":               false,
-		"/openapi/v3/apis/g/../other/v1":          false,
-	} {
-		require.Equal(t, want, canonicalAPIPath(httptest.NewRequest(http.MethodGet, target, nil).URL), target)
-	}
-}
 
 func TestHandleFuncRejectsNonCanonicalPaths(t *testing.T) {
 	var calls atomic.Int32
@@ -41,25 +19,23 @@ func TestHandleFuncRejectsNonCanonicalPaths(t *testing.T) {
 	}))
 	for _, target := range []string{"/apis/g/../other/v1/things", "/apis/g%2Fother/v1/things", "/openapi/v3/apis/g/./v1"} {
 		recorder := httptest.NewRecorder()
-		router.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, target, nil), http.NotFoundHandler())
+		router.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, target, nil))
 		require.Equal(t, http.StatusBadRequest, recorder.Code, target)
 	}
 	require.Zero(t, calls.Load())
 }
 
-// proxiedRouter serves group "test-app" through a real forward proxy to upstream.
+// proxiedRouter serves group "test-app" through a real reverse proxy to upstream.
 func proxiedRouter(t *testing.T, upstream string, transport *http.Transport) *GrafanaRouter {
 	t.Helper()
-	backend, err := NewForwardBackend(metav1.APIGroup{Name: "test-app"}, forwardSpec(upstream), "1", transport)
-	require.NoError(t, err)
-	handler, err := backend.Load(t.Context())
+	handler, err := proxyBackend(t, "test-app", upstream, transport).Load(t.Context())
 	require.NoError(t, err)
 	return withGroupHandler("test-app", handler)
 }
 
 func serveRouter(router *GrafanaRouter, target string) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
-	router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, target, nil), http.NotFoundHandler())
+	router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, target, nil))
 	return recorder
 }
 
@@ -134,16 +110,12 @@ func TestResponseHeaderTimeout(t *testing.T) {
 }
 
 func TestProxyTransportsHaveAResponseHeaderTimeout(t *testing.T) {
-	loader := &cloudLoader{transports: map[tlsCacheKey]*http.Transport{}}
-	forward, err := loader.transportFor(tlsCacheKey{})
-	require.NoError(t, err)
 	st, err := newSingleTenantFallback(singleTenantFallbackOptions{
 		cacheSize:   1,
 		resolveHost: func(context.Context, int64) (singleTenantStack, error) { return singleTenantStack{}, nil },
 	})
 	require.NoError(t, err)
 	for name, transport := range map[string]*http.Transport{
-		"forward":            forward,
 		"aggregate":          newAggregateBaseTransport(nil),
 		"single-tenant (ST)": st.transport,
 	} {

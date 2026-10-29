@@ -9,6 +9,15 @@ inputs:
 runs:
   using: "composite"
   steps:
+    # build.sh runs go. Without the go.mod version installed, go downloads a
+    # toolchain into the read-only module cache, and the later setup-go cache
+    # restore fails when tar can't overwrite those files.
+    - name: Install Go
+      uses: actions/setup-go@v6.5.0
+      with:
+        go-version-file: go.mod
+        cache: false
+
     - name: Setup Enterprise
       shell: bash
       env:

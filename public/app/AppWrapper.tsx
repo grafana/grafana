@@ -1,14 +1,14 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { UNSAFE_PortalProvider } from '@react-aria/overlays';
 import { type Action, KBarProvider } from 'kbar';
-import { type ComponentType, Fragment, type ReactNode, useEffect, useState } from 'react';
+import { type ComponentType, type ReactNode, useEffect, useState, StrictMode } from 'react';
 import CacheProvider from 'react-inlinesvg/provider';
 import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
 import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
-import { ErrorBoundaryAlert, getPortalContainer, GlobalStyles, PortalContainer, TimeRangeProvider } from '@grafana/ui';
+import { ErrorBoundaryAlert, getPortalContainer, GlobalStyles, PortalContainer } from '@grafana/ui';
 import { BrandingContext, type BrandingContextValue } from '@grafana/ui/internal';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
@@ -131,21 +131,20 @@ export function AppWrapper({ context }: AppWrapperProps) {
     contextSrv.user.orgRole !== ''
       ? ExtensionSidebarContextProvider
       : ({ children }: { children: ReactNode }) => <>{children}</>;
-  const MaybeTimeRangeProvider = config.featureToggles.timeRangeProvider ? TimeRangeProvider : Fragment;
 
   return (
-    <Provider store={store}>
-      <ErrorBoundaryAlert boundaryName="app-wrapper" style="page">
-        <OpenFeatureProvider client={getFeatureFlagClient()}>
-          <GrafanaContext.Provider value={context}>
-            <ThemeProvider value={config.theme2}>
-              <BrandingContext.Provider value={brandingContextValue}>
-                <CacheProvider name={iconCacheID}>
-                  <KBarProvider
-                    actions={[]}
-                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                  >
-                    <MaybeTimeRangeProvider>
+    <StrictMode>
+      <Provider store={store}>
+        <ErrorBoundaryAlert boundaryName="app-wrapper" style="page">
+          <OpenFeatureProvider client={getFeatureFlagClient()}>
+            <GrafanaContext.Provider value={context}>
+              <ThemeProvider value={config.theme2}>
+                <BrandingContext.Provider value={brandingContextValue}>
+                  <CacheProvider name={iconCacheID}>
+                    <KBarProvider
+                      actions={[]}
+                      options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                    >
                       <ScopesContextProvider>
                         <ExtensionRegistriesProvider registries={registries}>
                           <ExtensionsSidebarProvider>
@@ -162,14 +161,14 @@ export function AppWrapper({ context }: AppWrapperProps) {
                           </ExtensionsSidebarProvider>
                         </ExtensionRegistriesProvider>
                       </ScopesContextProvider>
-                    </MaybeTimeRangeProvider>
-                  </KBarProvider>
-                </CacheProvider>
-              </BrandingContext.Provider>
-            </ThemeProvider>
-          </GrafanaContext.Provider>
-        </OpenFeatureProvider>
-      </ErrorBoundaryAlert>
-    </Provider>
+                    </KBarProvider>
+                  </CacheProvider>
+                </BrandingContext.Provider>
+              </ThemeProvider>
+            </GrafanaContext.Provider>
+          </OpenFeatureProvider>
+        </ErrorBoundaryAlert>
+      </Provider>
+    </StrictMode>
   );
 }

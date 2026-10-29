@@ -2,9 +2,8 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceApi } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, useDataSourceInstanceList } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { type AlertDataQuery, type AlertQuery } from '../../../../../../types/unified-alerting-dto';
 import { setupMswServer } from '../../../mockApi';
@@ -18,14 +17,14 @@ const DS_UID = 'test-ds-uid';
 
 // Mocked so a test can hold the hook in its loading state; beforeEach restores the real
 // implementation, which reads the cache seeded by setDataSourceInstanceSettings below.
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceList: jest.fn(),
 }));
 
 const { useDataSourceInstanceList: actualUseDataSourceInstanceList } = jest.requireActual<{
   useDataSourceInstanceList: typeof useDataSourceInstanceList;
-}>('@grafana/runtime/unstable');
+}>('@grafana/runtime');
 
 const server = setupMswServer();
 

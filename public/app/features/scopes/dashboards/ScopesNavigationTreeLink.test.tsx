@@ -1,8 +1,10 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom-v5-compat';
 
 import { locationService } from '@grafana/runtime';
+import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 
 import { ScopesNavigationTreeLink } from './ScopesNavigationTreeLink';
 
@@ -44,7 +46,11 @@ jest.mock('../ScopesContextProvider', () => ({
 }));
 
 const renderWithRouter = (ui: React.ReactElement) => {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
+  return render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <MemoryRouter>{ui}</MemoryRouter>
+    </OpenFeatureProvider>
+  );
 };
 
 describe('ScopesNavigationTreeLink', () => {
@@ -286,6 +292,42 @@ describe('ScopesNavigationTreeLink', () => {
       // Should not call changeScopes or locationService.push when subScope is not provided
       expect(mockScopesSelectorService.changeScopes).not.toHaveBeenCalled();
       expect(mockLocationServicePush).not.toHaveBeenCalled();
+    });
+
+    it('calls onNavigate after a click, with subScope', async () => {
+      const onNavigate = jest.fn();
+
+      renderWithRouter(
+        <ScopesNavigationTreeLink
+          to="/test-path"
+          title="Test Link"
+          id="test-id"
+          subScope="subScope1"
+          onNavigate={onNavigate}
+        />
+      );
+
+      await userEvent.click(screen.getByTestId('scopes-dashboards-test-id'));
+
+      expect(onNavigate).toHaveBeenCalledTimes(1);
+    });
+
+    it('calls onNavigate after a click, without subScope', async () => {
+      const onNavigate = jest.fn();
+
+      renderWithRouter(
+        <ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" onNavigate={onNavigate} />
+      );
+
+      await userEvent.click(screen.getByTestId('scopes-dashboards-test-id'));
+
+      expect(onNavigate).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not throw when onNavigate is not provided', async () => {
+      renderWithRouter(<ScopesNavigationTreeLink to="/test-path" title="Test Link" id="test-id" />);
+
+      await expect(userEvent.click(screen.getByTestId('scopes-dashboards-test-id'))).resolves.not.toThrow();
     });
 
     it('should handle URL with existing query params correctly', async () => {

@@ -1,5 +1,5 @@
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, reportInteraction, setPluginImportUtils } from '@grafana/runtime';
+import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
@@ -12,6 +12,7 @@ import {
   TestVariable,
   VizPanel,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { groupSelectionInto } from '../actions/layout/groupSelectionInto';
@@ -37,9 +38,13 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
 
+import { DashboardCodePane } from './DashboardCodePane';
 import { MAX_UNDO_ACTIONS } from './DashboardSidebar';
+import { ElementEditPane } from './ElementEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
+import { AddNewPane } from './add-new/AddNewPane';
+import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { DashboardStateChangedEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike } from './types';
@@ -50,19 +55,18 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({
     getInstanceSettings: (_uid: string | null) => ({ uid: 'ds1' }),
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
 }));
-
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
 describe('DashboardSidebar', () => {
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   describe('Pending pane requests', () => {
     let dashboard: DashboardScene;
     let sidebar: DashboardSidebarLike;
@@ -200,6 +204,51 @@ describe('DashboardSidebar', () => {
     });
   });
 
+  describe('Viewing mode', () => {
+    afterEach(() => setTestFlags({}));
+    it('keeps selection disabled when direct selection or previous-pane navigation is requested', () => {
+      const { dashboard, sidebar } = setupEmptyDashboard();
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      sidebar.selectObject(dashboard);
+      sidebar.openPane(new AddNewPane({}));
+      sidebar.closePane();
+      sidebar.disableSelection();
+      dashboard.setState({ mode: 'view' });
+
+      sidebar.enableSelection();
+      sidebar.selectObject(dashboard, { force: true });
+      sidebar.goBackToPrevious();
+
+      expect(sidebar.state.selectionContext).toMatchObject({ enabled: false, selected: [] });
+      expect(sidebar.state.openPane).toBeUndefined();
+      dashboard.setState({ mode: 'edit' });
+      sidebar.enableSelection();
+      sidebar.selectObject(dashboard);
+      expect(sidebar.getSelectedObject()).toBe(dashboard);
+    });
+
+    it.each([
+      ['add', () => new AddNewPane({})],
+      ['element', () => new ElementEditPane({})],
+      ['code', () => new DashboardCodePane({})],
+      ['cross-dashboard-variables', () => new DashboardCrossDashboardVariablesPane({})],
+    ] as const)('refuses the %s pane during review', (_, createPane) => {
+      const { dashboard, sidebar } = setupEmptyDashboard();
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      sidebar.closePane();
+      dashboard.setState({ mode: 'view' });
+      const pane = createPane();
+
+      sidebar.openPane(pane);
+      expect(dashboard.state.isEditing).toBe(true);
+      expect(sidebar.state.openPane).toBeUndefined();
+
+      dashboard.setState({ mode: 'edit' });
+      sidebar.openPane(pane);
+      expect(sidebar.state.openPane).toBe(pane);
+    });
+  });
+
   describe('Selection', () => {
     it('Can select dashboard', () => {
       const scene = buildTestScene();
@@ -240,7 +289,7 @@ describe('DashboardSidebar', () => {
         }),
       });
       const dashboard = new DashboardScene({ isEditing: true, body: layout });
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       activateFullSceneTree(dashboard);
 
       const sidebar = dashboard.state.sidebar;
@@ -389,6 +438,21 @@ describe('DashboardSidebar', () => {
 
     await scene.onCreateNewPanel();
 
+    expect(sidebar.state.redoStack).toHaveLength(0);
+  });
+
+  it('clearHistory should empty undo and redo stacks', async () => {
+    const scene = buildTestScene();
+    const sidebar = scene.state.sidebar;
+
+    await scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
+
+    sidebar.undoAction();
+
+    sidebar.clearHistory();
+
+    expect(sidebar.state.undoStack).toHaveLength(0);
     expect(sidebar.state.redoStack).toHaveLength(0);
   });
 
@@ -1336,7 +1400,7 @@ describe('DashboardSidebar', () => {
         isEditing: true,
         body: new TabsLayoutManager({ tabs: [tabWithPanel] }),
       });
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       activateFullSceneTree(sourceDashboard);
       sourceDashboard.copyPanel(panel);
 
@@ -1354,7 +1418,7 @@ function buildTestScene() {
     tags: ['tag1', 'tag2'],
     editable: true,
   });
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(scene);
 
   return scene;
@@ -1416,7 +1480,7 @@ function setupEmptyDashboard(): {
     isEditing: true,
     body: AutoGridLayoutManager.createEmpty(),
   });
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(dashboard);
   return { dashboard, sidebar: dashboard.state.sidebar };
 }
@@ -1440,7 +1504,7 @@ function setupWithTwoTabs(): {
     isEditing: true,
     body: new TabsLayoutManager({ tabs: [tab1, tab2] }),
   });
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(dashboard);
   return { dashboard, tab1, tab2, tab1Viz: panel, sidebar: dashboard.state.sidebar };
 }
@@ -1464,7 +1528,7 @@ function setupWithTwoRows(): {
     isEditing: true,
     body: new RowsLayoutManager({ rows: [row1, row2] }),
   });
-  config.featureToggles.dashboardNewLayouts = true;
+  setTestFlags({ dashboardNewLayouts: true });
   activateFullSceneTree(dashboard);
   return { dashboard, row1, row2, row1Viz: panel, sidebar: dashboard.state.sidebar };
 }

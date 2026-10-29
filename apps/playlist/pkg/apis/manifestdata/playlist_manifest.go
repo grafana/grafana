@@ -13,8 +13,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	v0alpha1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v0alpha1"
 	v1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
@@ -40,10 +38,14 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Playlist",
-					Plural:     "Playlists",
-					Scope:      "Namespaced",
-					Conversion: true,
+					Kind:         "Playlist",
+					Plural:       "Playlists",
+					Scope:        "Namespaced",
+					Conversion:   true,
+					FolderScoped: func(b bool) *bool { return &b }(false),
+					Search: &app.ManifestVersionKindSearch{
+						Global: func(b bool) *bool { return &b }(true),
+					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -61,11 +63,6 @@ var appManifestData = app.ManifestData{
 					Schema: &versionSchemaPlaylistv0alpha1,
 				},
 			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
-			},
 		},
 
 		{
@@ -73,10 +70,14 @@ var appManifestData = app.ManifestData{
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
 				{
-					Kind:       "Playlist",
-					Plural:     "Playlists",
-					Scope:      "Namespaced",
-					Conversion: true,
+					Kind:         "Playlist",
+					Plural:       "Playlists",
+					Scope:        "Namespaced",
+					Conversion:   true,
+					FolderScoped: func(b bool) *bool { return &b }(false),
+					Search: &app.ManifestVersionKindSearch{
+						Global: func(b bool) *bool { return &b }(true),
+					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{
@@ -93,11 +94,6 @@ var appManifestData = app.ManifestData{
 					},
 					Schema: &versionSchemaPlaylistv1,
 				},
-			},
-			Routes: app.ManifestVersionRoutes{
-				Namespaced: map[string]spec3.PathProps{},
-				Cluster:    map[string]spec3.PathProps{},
-				Schemas:    map[string]spec.Schema{},
 			},
 		},
 	},

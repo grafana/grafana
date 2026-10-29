@@ -1,4 +1,4 @@
-import { sci, toHex, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
+import { sci, toHex, toHex0x, toOrdinal, toPercent, toPercentUnit } from './arithmeticFormatters';
 import { formattedValueToString } from './baseFormatters';
 
 describe('scientific formatting', () => {
@@ -91,6 +91,79 @@ describe('percentage formatting', () => {
     it('renders a percent unit as expected', () => {
       const str = toPercentUnit(size, 2);
       expect(formattedValueToString(str)).toBe('3333.33%');
+    });
+  });
+});
+
+describe('ordinal formatting', () => {
+  describe('toOrdinal', () => {
+    it('follows the sad path as expected', () => {
+      expect(formattedValueToString(toOrdinal(null))).toBe('');
+      expect(formattedValueToString(toOrdinal(undefined as unknown as number))).toBe('');
+    });
+
+    it.each([
+      [0, '0th'],
+      [1, '1st'],
+      [2, '2nd'],
+      [3, '3rd'],
+      [4, '4th'],
+      [5, '5th'],
+      [9, '9th'],
+      [10, '10th'],
+    ])('renders %p as %p', (value, expected) => {
+      expect(formattedValueToString(toOrdinal(value))).toBe(expected);
+    });
+
+    it.each([
+      [11, '11th'],
+      [12, '12th'],
+      [13, '13th'],
+      [111, '111th'],
+      [112, '112th'],
+      [113, '113th'],
+      [1013, '1013th'],
+    ])('renders the teens %p as %p', (value, expected) => {
+      expect(formattedValueToString(toOrdinal(value))).toBe(expected);
+    });
+
+    it.each([
+      [21, '21st'],
+      [22, '22nd'],
+      [23, '23rd'],
+      [101, '101st'],
+      [1002, '1002nd'],
+      [1000003, '1000003rd'],
+    ])('renders %p as %p', (value, expected) => {
+      expect(formattedValueToString(toOrdinal(value))).toBe(expected);
+    });
+
+    it.each([
+      [-1, '-1st'],
+      [-2, '-2nd'],
+      [-3, '-3rd'],
+      [-11, '-11th'],
+      [-21, '-21st'],
+    ])('renders negative %p as %p', (value, expected) => {
+      expect(formattedValueToString(toOrdinal(value))).toBe(expected);
+    });
+
+    it('rounds fractional values to the nearest whole number', () => {
+      expect(formattedValueToString(toOrdinal(1.4))).toBe('1st');
+      expect(formattedValueToString(toOrdinal(1.5))).toBe('2nd');
+      expect(formattedValueToString(toOrdinal(2.7))).toBe('3rd');
+      expect(formattedValueToString(toOrdinal(10.5))).toBe('11th');
+      expect(formattedValueToString(toOrdinal(-0.4))).toBe('0th');
+    });
+
+    it('renders non-finite values as plain numbers', () => {
+      expect(formattedValueToString(toOrdinal(NaN))).toBe(NaN.toLocaleString());
+      expect(formattedValueToString(toOrdinal(Number.POSITIVE_INFINITY))).toBe(
+        Number.POSITIVE_INFINITY.toLocaleString()
+      );
+      expect(formattedValueToString(toOrdinal(Number.NEGATIVE_INFINITY))).toBe(
+        Number.NEGATIVE_INFINITY.toLocaleString()
+      );
     });
   });
 });

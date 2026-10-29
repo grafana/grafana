@@ -1,8 +1,8 @@
 import { PanelPlugin, type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
+  sceneGraph,
   type SceneObject,
   SceneObjectBase,
   type SceneObjectState,
@@ -12,6 +12,8 @@ import {
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
+import { GRID_COLUMN_COUNT } from 'app/core/constants';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
@@ -76,7 +78,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     titleItems.push(new PanelNotices());
 
     let title;
-    if (config.featureToggles.preferLibraryPanelTitle) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.PreferLibraryPanelTitle, false)) {
       title = libPanelModel.title ?? vizPanel.state.title;
     } else {
       title = vizPanel.state.title ?? libPanelModel.title;
@@ -120,13 +122,24 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     // lookup below cannot fail — if it ever does, that is a bug worth surfacing rather than skipping.
     if (libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
       if (this.shouldMigrateRepeat(layoutElement)) {
+        const repeatDirection = libPanelModel.repeatDirection === 'h' ? 'h' : 'v';
+        const expandToGridWidth =
+          repeatDirection === 'h' &&
+          getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsLibraryPanelHorizontalRepeatFullWidth, false);
+
         layoutElement.setState({
           variableName: libPanelModel.repeat,
-          repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
+          repeatDirection,
           maxPerRow: libPanelModel.maxPerRow,
           itemHeight: layoutElement.state.height ?? 10,
+          ...(expandToGridWidth && { width: GRID_COLUMN_COUNT }),
         });
         layoutElement.performRepeat();
+
+        if (expandToGridWidth) {
+          // The grid reads item widths only when it re-renders.
+          sceneGraph.getLayout(layoutElement)?.forceRender();
+        }
       }
     }
   }
@@ -148,7 +161,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
     const isScriptedDashboard = dashboard.state.meta.fromScript === true;
-    return !(config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard);
+    return !(isDashboardNewLayoutsEnabled() && !isPublicDashboard && !isScriptedDashboard);
   }
 
   /**

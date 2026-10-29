@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
 )
@@ -123,7 +122,7 @@ func TestNatsNotifierWatch_ConvertsNotifications(t *testing.T) {
 	cases := []struct {
 		name   string
 		typ    resourcepb.WatchNotification_Type
-		action kv.DataAction
+		action DataAction
 	}{
 		{"added", resourcepb.WatchNotification_ADDED, DataActionCreated},
 		{"modified", resourcepb.WatchNotification_MODIFIED, DataActionUpdated},
@@ -170,7 +169,7 @@ func TestNatsNotifierDecode_PreviousMetadata(t *testing.T) {
 		name           string
 		previousType   resourcepb.WatchNotification_Type
 		previousFolder string
-		previousAction kv.DataAction
+		previousAction DataAction
 	}{
 		{name: "older publisher omits metadata"},
 		{name: "created in root", previousType: resourcepb.WatchNotification_ADDED, previousAction: DataActionCreated},
@@ -246,6 +245,7 @@ func TestNatsNotifierWatch_DropsUnknownType(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
 	expiry := NewWatchExpiry()
+	gen := expiry.WatchInvalidation()
 	n := newNatsNotifier(sub, expiry, dropped, &logging.NoOpLogger{})
 
 	ctx := t.Context()
@@ -260,12 +260,14 @@ func TestNatsNotifierWatch_DropsUnknownType(t *testing.T) {
 
 	expectNoEvent(t, out)
 	assert.Equal(t, float64(1), testutil.ToFloat64(dropped.WithLabelValues("unknown_type")))
+	assertNotInvalidated(t, gen)
 }
 
 func TestNatsNotifierWatch_DropsUnmarshalableData(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
 	expiry := NewWatchExpiry()
+	gen := expiry.WatchInvalidation()
 	n := newNatsNotifier(sub, expiry, dropped, &logging.NoOpLogger{})
 
 	ctx := t.Context()
@@ -275,6 +277,61 @@ func TestNatsNotifierWatch_DropsUnmarshalableData(t *testing.T) {
 
 	expectNoEvent(t, out)
 	assert.Equal(t, float64(1), testutil.ToFloat64(dropped.WithLabelValues("unmarshal_error")))
+	assertNotInvalidated(t, gen)
+}
+
+func assertNotInvalidated(t *testing.T, gen <-chan struct{}) {
+	t.Helper()
+	select {
+	case <-gen:
+		t.Fatal("decode drops must not invalidate watches")
+	default:
+	}
+}
+
+func TestNatsNotifierWatch_BufferFullInvalidatesWatches(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		sub := &fakeEventSubscriber{enabled: true}
+		dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
+		expiry := NewWatchExpiry()
+		gen := expiry.WatchInvalidation()
+		n := newNatsNotifier(sub, expiry, dropped, &logging.NoOpLogger{})
+
+		// Resource versions must be old enough to settle, so advance past their epoch before starting the watch.
+		synctest.Sleep(time.Until(time.UnixMilli(resourceVersionEpoch).Add(time.Hour)))
+
+		out := n.Watch(t.Context(), WatchOptions{BufferSize: 1})
+		data := mustMarshalNotification(t, &resourcepb.WatchNotification{
+			Type: resourcepb.WatchNotification_ADDED, Group: "g", Resource: "r", Name: "n", ResourceVersion: 1,
+		})
+
+		// Start the settle loop's ticker before advancing time to flush notifications.
+		synctest.Wait()
+
+		handler := sub.currentHandler()
+		require.NotNil(t, handler)
+		handler("some.subject", data)
+
+		// Flush the first notification into the unread output buffer, filling it.
+		synctest.Sleep(time.Second)
+
+		require.Len(t, out, 1)
+		handler("some.subject", data)
+
+		// Flush a second notification so the settle loop blocks on the full output and cannot drain raw.
+		synctest.Sleep(time.Second)
+
+		handler("some.subject", data) // Fill the raw buffer while the settle loop is blocked.
+		require.Zero(t, testutil.ToFloat64(dropped.WithLabelValues(dropReasonBufferFull)))
+		handler("some.subject", data) // Overflow the full raw buffer.
+		require.Equal(t, float64(1), testutil.ToFloat64(dropped.WithLabelValues(dropReasonBufferFull)))
+
+		select {
+		case <-gen:
+		default:
+			t.Fatal("a buffer-full drop must invalidate watches")
+		}
+	})
 }
 
 func TestThrottledLog_ReleasesOneLinePerInterval(t *testing.T) {
@@ -346,60 +403,72 @@ func TestNatsNotifierDrop_CountsEveryDropWhileThrottlingLogs(t *testing.T) {
 }
 
 func TestNatsNotifierWatch_ClosesAndUnsubscribesOnContextCancel(t *testing.T) {
-	sub := &fakeEventSubscriber{enabled: true}
-	expiry := NewWatchExpiry()
-	n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
+	synctest.Test(t, func(t *testing.T) {
+		sub := &fakeEventSubscriber{enabled: true}
+		expiry := NewWatchExpiry()
+		n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 
-	ctx, cancel := context.WithCancel(context.Background())
-	out := n.Watch(ctx, WatchOptions{})
-	cancel()
+		ctx, cancel := context.WithCancel(context.Background())
+		out := n.Watch(ctx, WatchOptions{})
+		cancel()
 
-	select {
-	case _, ok := <-out:
-		assert.False(t, ok, "channel should be closed after context cancel")
-	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for channel to close")
-	}
+		select {
+		case _, ok := <-out:
+			assert.False(t, ok, "channel should be closed after context cancel")
+		case <-time.After(2 * time.Second):
+			t.Fatal("timed out waiting for channel to close")
+		}
 
-	// AfterFunc runs asynchronously; give it a moment.
-	require.Eventually(t, func() bool {
-		return sub.sub != nil && sub.sub.wasUnsubscribed()
-	}, 2*time.Second, 10*time.Millisecond, "expected Unsubscribe to be called")
+		// AfterFunc runs asynchronously; give it a moment.
+
+		// Finish cancellation's AfterFunc before checking subscription cleanup.
+		synctest.Wait()
+
+		require.NotNil(t, sub.sub)
+		require.True(t, sub.sub.wasUnsubscribed())
+	})
 }
 
 func TestNatsNotifierWatch_RetriesUntilSubscribeSucceeds(t *testing.T) {
-	// Bus unreachable at first, then available: Watch must keep the channel open
-	// and re-subscribe rather than closing it and losing the watch.
-	sub := &fakeEventSubscriber{enabled: true, subErr: errors.New("boom")}
-	expiry := NewWatchExpiry()
-	n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
+	synctest.Test(t, func(t *testing.T) {
+		// Place fake time after the resource-version epoch so the delivered write can settle.
+		synctest.Sleep(time.Until(time.UnixMilli(resourceVersionEpoch).Add(time.Hour)))
 
-	ctx := t.Context()
-	// Small backoff bounds keep the subscription retry loop fast for the test.
-	out := n.Watch(ctx, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond})
+		// Bus unreachable at first, then available: Watch must keep the channel open
+		// and re-subscribe rather than closing it and losing the watch.
+		sub := &fakeEventSubscriber{enabled: true, subErr: errors.New("boom")}
+		expiry := NewWatchExpiry()
+		n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 
-	// The channel must stay open across the failed subscribe.
-	select {
-	case _, ok := <-out:
-		require.True(t, ok, "channel closed on subscribe error; expected retry to keep it open")
-	case <-time.After(50 * time.Millisecond):
-	}
+		ctx := t.Context()
+		// Small backoff bounds keep the subscription retry loop fast for the test.
+		out := n.Watch(ctx, WatchOptions{MinBackoff: 10 * time.Millisecond, MaxBackoff: 20 * time.Millisecond})
 
-	// Bus recovers; the retry loop should subscribe and start delivering.
-	sub.setSubErr(nil)
-	require.Eventually(t, func() bool {
-		return sub.currentHandler() != nil
-	}, 2*time.Second, 10*time.Millisecond, "expected retry to subscribe once the bus is reachable")
+		// The channel must stay open across the failed subscribe.
+		select {
+		case _, ok := <-out:
+			require.True(t, ok, "channel closed on subscribe error; expected retry to keep it open")
+		case <-time.After(50 * time.Millisecond):
+		}
 
-	sub.currentHandler()("some.subject", mustMarshalNotification(t, &resourcepb.WatchNotification{
-		Type:            resourcepb.WatchNotification_ADDED,
-		Group:           "playlist.grafana.app",
-		Resource:        "playlists",
-		Namespace:       "default",
-		Name:            "abc",
-		ResourceVersion: 1,
-	}))
-	assert.Equal(t, "abc", recvEvent(t, out).Name)
+		// Bus recovers; the retry loop should subscribe and start delivering.
+		sub.setSubErr(nil)
+
+		// Let the next bounded retry subscribe after the bus recovers.
+		synctest.Sleep(20 * time.Millisecond)
+
+		require.NotNil(t, sub.currentHandler())
+
+		sub.currentHandler()("some.subject", mustMarshalNotification(t, &resourcepb.WatchNotification{
+			Type:            resourcepb.WatchNotification_ADDED,
+			Group:           "playlist.grafana.app",
+			Resource:        "playlists",
+			Namespace:       "default",
+			Name:            "abc",
+			ResourceVersion: 1,
+		}))
+		assert.Equal(t, "abc", recvEvent(t, out).Name)
+	})
 }
 
 func TestNatsNotifierPublishIsNoOp(t *testing.T) {
@@ -575,7 +644,10 @@ func TestNATSNotifierInvalidatesAfterEachReconnect(t *testing.T) {
 			default:
 			}
 			reconnect()
+
+			// Finish reconnect processing before checking which watch generations were invalidated.
 			synctest.Wait()
+
 			select {
 			case <-watchBeforeReconnect:
 			default:
@@ -682,60 +754,64 @@ func (f *subjectsSubscriber) Subscribe(_ context.Context, subject string, handle
 // Only the covered types are subscribed to, each delivered key comes straight
 // through without waiting, and cancelling unsubscribes.
 func TestWatchWrittenKeys(t *testing.T) {
-	sub := &subjectsSubscriber{}
-	backend := &kvStorageBackend{keysSubscriber: sub, log: logging.DefaultLogger}
-	ctx, cancel := context.WithCancel(t.Context())
-	defer cancel()
+	synctest.Test(t, func(t *testing.T) {
+		sub := &subjectsSubscriber{}
+		backend := &kvStorageBackend{keysSubscriber: sub, log: logging.DefaultLogger}
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
 
-	var reconnects atomic.Int32
-	keys, err := backend.WatchWrittenKeys(ctx, []schema.GroupResource{
-		{Group: "dashboard.grafana.app", Resource: "dashboards"},
-		{Group: "folder.grafana.app", Resource: "folders"},
-	}, func(namespace string) {
-		if namespace == "" {
-			reconnects.Add(1)
+		var reconnects atomic.Int32
+		keys, err := backend.WatchWrittenKeys(ctx, []schema.GroupResource{
+			{Group: "dashboard.grafana.app", Resource: "dashboards"},
+			{Group: "folder.grafana.app", Resource: "folders"},
+		}, func(namespace string) {
+			if namespace == "" {
+				reconnects.Add(1)
+			}
+		})
+		require.NoError(t, err)
+		assert.Equal(t, []string{
+			"us.watch.v1.dashboard.grafana.app.*.dashboards",
+			"us.watch.v1.folder.grafana.app.*.folders",
+		}, sub.subjects)
+
+		sub.handlers[0]("us.watch.v1.dashboard.grafana.app.ns.dashboards", mustMarshalNotification(t, &resourcepb.WatchNotification{
+			Type: resourcepb.WatchNotification_MODIFIED, Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a", ResourceVersion: 11,
+		}))
+		select {
+		case written := <-keys:
+			assert.Equal(t, &resourcepb.ResourceKey{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"}, written.Key)
+			assert.Equal(t, int64(11), written.ResourceVersion)
+			assert.Nil(t, written.Value)
+		case <-time.After(time.Second):
+			t.Fatal("the key was not delivered at once")
+		}
+
+		// A message that cannot be read is skipped.
+		sub.handlers[1]("us.watch.v1.folder.grafana.app.ns.folders", []byte("not a notification"))
+		select {
+		case key := <-keys:
+			t.Fatalf("unexpected key %v", key)
+		case <-time.After(50 * time.Millisecond):
+		}
+
+		// A reconnect of either subscription is reported.
+		sub.onReconnects[1]()
+
+		// Deliver the reconnect callback before checking its notification count.
+		synctest.Wait()
+
+		require.EqualValues(t, 1, reconnects.Load())
+
+		cancel()
+
+		// Finish cancellation cleanup for every written-key subscription.
+		synctest.Wait()
+
+		for _, sub := range sub.subs {
+			require.True(t, sub.wasUnsubscribed())
 		}
 	})
-	require.NoError(t, err)
-	assert.Equal(t, []string{
-		"us.watch.v1.dashboard.grafana.app.*.dashboards",
-		"us.watch.v1.folder.grafana.app.*.folders",
-	}, sub.subjects)
-
-	sub.handlers[0]("us.watch.v1.dashboard.grafana.app.ns.dashboards", mustMarshalNotification(t, &resourcepb.WatchNotification{
-		Type: resourcepb.WatchNotification_MODIFIED, Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a", ResourceVersion: 11,
-	}))
-	select {
-	case key := <-keys:
-		assert.Equal(t, "ns", key.Namespace)
-		assert.Equal(t, "dashboard.grafana.app", key.Group)
-		assert.Equal(t, "dashboards", key.Resource)
-		assert.Equal(t, "dash-a", key.Name)
-	case <-time.After(time.Second):
-		t.Fatal("the key was not delivered at once")
-	}
-
-	// A message that cannot be read is skipped.
-	sub.handlers[1]("us.watch.v1.folder.grafana.app.ns.folders", []byte("not a notification"))
-	select {
-	case key := <-keys:
-		t.Fatalf("unexpected key %v", key)
-	case <-time.After(50 * time.Millisecond):
-	}
-
-	// A reconnect of either subscription is reported.
-	sub.onReconnects[1]()
-	require.Eventually(t, func() bool { return reconnects.Load() == 1 }, time.Second, 10*time.Millisecond)
-
-	cancel()
-	require.Eventually(t, func() bool {
-		for _, s := range sub.subs {
-			if !s.wasUnsubscribed() {
-				return false
-			}
-		}
-		return true
-	}, time.Second, 10*time.Millisecond)
 }
 
 // Without the NATS subscriber there are no written keys to watch.
@@ -774,12 +850,18 @@ func TestReportReconnectsWaitsForEverySubscription(t *testing.T) {
 		go reportReconnects(t.Context(), []Subscription{first, second}, reconnected, func() { reports.Add(1) })
 		reconnected <- struct{}{}
 		time.Sleep(time.Minute)
+
+		// Finish the readiness checks while one subscription remains unconfirmed.
 		synctest.Wait()
+
 		assert.Zero(t, reports.Load(), "not reported while one subscription is unconfirmed")
 
 		close(second.ready)
 		time.Sleep(time.Minute)
+
+		// Finish confirming both subscriptions before checking the reconnect report.
 		synctest.Wait()
+
 		assert.Equal(t, int32(1), reports.Load())
 	})
 }

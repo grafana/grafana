@@ -14,13 +14,13 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin/pluginopenapi"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // writeOpenAPICommand renders the OpenAPI v3 spec an app plugin's API server
-// serves, without starting Grafana. It uses the same rendering pipeline as
-// GET /openapi/v3/apis/{group}/{version} on a running server.
+// serves, without starting Grafana. The spec is requested from the same handler
+// that serves GET /openapi/v3/apis/{group}/{version} on a running server.
 func writeOpenAPICommand(c *cli.Context) error {
 	target, output, version, err := writeOpenAPIArgs(c)
 	if err != nil {
@@ -38,15 +38,15 @@ func writeOpenAPICommand(c *cli.Context) error {
 	if info.IsDir() {
 		return cli.Exit(fmt.Sprintf("%s is a directory; pass the manifest file inside it", target), 1)
 	}
-	plugin, err := pluginopenapi.LoadManifest(c.Context, target)
+	plugin, err := loadOpenAPIManifest(c.Context, target)
 	if err != nil {
 		return err
 	}
 
-	opts := pluginopenapi.Options{BuildVersion: setting.BuildVersion}
+	opts := pluginroute.OpenAPIOptions{PluginInfo: plugin.JSONData.Info, BuildVersion: setting.BuildVersion}
 	manifest := plugin.Manifests[0]
 	if version != "" {
-		oas, err := pluginopenapi.Build(plugin, version, opts)
+		oas, err := pluginroute.BuildOpenAPI(plugin.JSONData.ID, manifest, version, opts)
 		if err != nil {
 			return err
 		}
@@ -56,10 +56,10 @@ func writeOpenAPICommand(c *cli.Context) error {
 		return writeSpecFile(output, oas)
 	}
 
-	versions, err := pluginopenapi.Versions(plugin, opts)
-	if err != nil {
+	if err := pluginroute.ValidateManifest(plugin.JSONData.ID, manifest); err != nil {
 		return err
 	}
+	versions := pluginroute.ServedVersions(manifest)
 	if len(versions) == 0 {
 		return fmt.Errorf("manifest %q has no served versions", target)
 	}
@@ -72,7 +72,7 @@ func writeOpenAPICommand(c *cli.Context) error {
 		return err
 	}
 	for _, v := range versions {
-		oas, err := pluginopenapi.Build(plugin, v, opts)
+		oas, err := pluginroute.BuildOpenAPI(plugin.JSONData.ID, manifest, v, opts)
 		if err != nil {
 			return err
 		}

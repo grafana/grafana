@@ -11,8 +11,6 @@ import (
 	"testing"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -32,8 +30,7 @@ import (
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -63,7 +60,6 @@ func TestHandlerServesGroupDiscovery(t *testing.T) {
 }
 
 func TestHandlerServesOpenAPIV3(t *testing.T) {
-	keepManifestSettings(t)
 	opts := allowAll(testOptions())
 	handler := withRequester(loadHandler(t, testPlugin(), opts))
 
@@ -82,7 +78,7 @@ func TestHandlerServesOpenAPIV3(t *testing.T) {
 func TestHandlerServesOpenAPIV3WithoutSettings(t *testing.T) {
 	plugin := testPlugin()
 	opts := allowAll(testOptions())
-	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(plugin.Manifests[0].Group, plugin.JSONData.ID,
+	opts.Settings.LegacyStore = appsettings.NewLegacySettingsStore(plugin.Manifests[0].Group, plugin.JSONData.ID,
 		&pluginsettings.FakePluginSettings{})
 	// Any attempt to construct legacy dual-write storage would call a nil service.
 	opts.DualWrite = struct{ dualwrite.Service }{}
@@ -133,16 +129,22 @@ func TestHandlerServesManifestRoutes(t *testing.T) {
 func TestHandlerDeniesUnauthenticatedRequests(t *testing.T) {
 	handler := loadHandler(t, testPlugin(), testOptions())
 
-	res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/namespaces/default/testkinds")
-	require.Equal(t, http.StatusUnauthorized, res.Code, res.Body.String())
+	// Manifest routes are matched inside the apiserver chain, so they are
+	// authenticated like the resources are.
+	for _, path := range []string{"namespaces/default/testkinds", "namespaces/default/widgets", "things"} {
+		res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/"+path)
+		require.Equal(t, http.StatusUnauthorized, res.Code, "%s: %s", path, res.Body.String())
+	}
 }
 
 func TestHandlerDeniesCallerWithoutPluginAccess(t *testing.T) {
 	handler := withRequester(loadHandler(t, testPlugin(), testOptions()))
 
-	res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/namespaces/default/testkinds")
-	require.Equal(t, http.StatusForbidden, res.Code, res.Body.String())
-	require.Contains(t, res.Body.String(), "no plugin access checker is configured")
+	for _, path := range []string{"namespaces/default/testkinds", "namespaces/default/widgets", "things"} {
+		res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/"+path)
+		require.Equal(t, http.StatusForbidden, res.Code, "%s: %s", path, res.Body.String())
+		require.Contains(t, res.Body.String(), "no plugin access checker is configured")
+	}
 }
 
 func TestHandlerSharesOneMetricsRegistry(t *testing.T) {
@@ -220,10 +222,12 @@ func allowAll(opts Options) Options {
 
 func testOptions() Options {
 	return Options{
-		BuildVersion:    "12.3.4",
-		PluginClient:    struct{ appplugin.PluginClient }{},
-		ContextProvider: struct{ appplugin.PluginContextWrapper }{},
-		ClientV3:        stubClientV3{},
+		BuildVersion: "12.3.4",
+		PluginClient: struct{ appsettings.PluginClient }{},
+		ContextProvider: struct {
+			appsettings.PluginContextWrapper
+		}{},
+		ClientV3: stubClientV3{},
 		Storage: func(_ *runtime.Scheme, codecs serializer.CodecFactory, gvs []schema.GroupVersion) (generic.RESTOptionsGetter, error) {
 			return apistore.NewRESTOptionsGetterForClient(nil, nil,
 				storagebackend.Config{Codec: codecs.LegacyCodec(gvs...)}, nil, nil), nil
@@ -264,18 +268,16 @@ func testPlugin() definition.PluginDefinition {
 				{
 					Name:   "v1alpha1",
 					Served: true,
-					Routes: app.ManifestVersionRoutes{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-						Cluster:    map[string]spec3.PathProps{"/things": {Get: testOperation("listThings")}},
-						Namespaced: map[string]spec3.PathProps{"/widgets": {Get: testOperation("listWidgets")}},
-					},
+					OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
+						"/things":                         {Get: testOperation("listThings")},
+						"/namespaces/{namespace}/widgets": {Get: testOperation("listWidgets")},
+						"/namespaces/{namespace}/testkinds/{name}/reload": {Get: testOperation("reloadTestKind")},
+					}},
 					Kinds: []app.ManifestVersionKind{{
 						Kind:   "TestKind",
 						Plural: "TestKinds",
 						Scope:  "Namespaced",
 						Schema: testSchema(),
-						Routes: map[string]spec3.PathProps{
-							"/reload": {Get: testOperation("reloadTestKind")},
-						},
 					}},
 				},
 				{Name: "v2alpha1", Served: false},
@@ -311,9 +313,14 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 		want   string
 	}{
 		{"empty manifest", func(p *definition.PluginDefinition, _ *Options) { p.Manifests = []*app.ManifestData{{}} }, "empty app manifest"},
-		{"invalid group", func(p *definition.PluginDefinition, _ *Options) { p.Manifests[0].Group = "example.com" }, "invalid manifest group"},
+		{"invalid group", func(p *definition.PluginDefinition, _ *Options) { p.Manifests[0].Group = "Bad_Group.example.com" }, "invalid manifest group"},
 		{"missing storage", func(_ *definition.PluginDefinition, o *Options) { o.Storage = nil }, "storage provider is required"},
 		{"missing unified client", func(_ *definition.PluginDefinition, o *Options) { o.Storage = UnifiedStorage(nil, nil, nil) }, "unified storage client is required"},
+		{"storage provider without a getter", func(_ *definition.PluginDefinition, o *Options) {
+			o.Storage = func(*runtime.Scheme, serializer.CodecFactory, []schema.GroupVersion) (generic.RESTOptionsGetter, error) {
+				return nil, nil
+			}
+		}, "storage provider returned no REST options getter"},
 		{"invalid kind", func(p *definition.PluginDefinition, _ *Options) {
 			p.Manifests[0].Versions[0].Kinds[0].Kind = "Settings"
 		}, "reserved kind name"},
@@ -325,6 +332,63 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 			require.ErrorContains(t, err, tc.want)
 			require.Nil(t, handler)
 		})
+	}
+}
+
+func TestValidateManifest(t *testing.T) {
+	require.NoError(t, ValidateManifest("example-app", testPlugin().Manifests[0]))
+
+	for _, tc := range []struct {
+		name     string
+		manifest *app.ManifestData
+		want     string
+	}{
+		{"nil manifest", nil, "missing manifest"},
+		{"empty manifest", &app.ManifestData{}, "empty app manifest"},
+		{"group that is not a DNS name", &app.ManifestData{Group: "Bad_Group.ext.grafana.app", Versions: testPlugin().Manifests[0].Versions}, "invalid manifest group"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.ErrorContains(t, ValidateManifest("example-app", tc.manifest), tc.want)
+		})
+	}
+}
+
+// Two versions with one name would mount the same routes twice, which
+// ServeMux refuses with a panic.
+func TestNewHandlerRejectsDuplicateVersions(t *testing.T) {
+	plugin := testPlugin()
+	manifest := plugin.Manifests[0]
+	manifest.Versions[1] = manifest.Versions[0]
+	require.ErrorContains(t, ValidateManifest(plugin.JSONData.ID, manifest), "version v1alpha1 is declared more than once")
+
+	require.NotPanics(t, func() {
+		handler, err := NewHandler(plugin.JSONData.ID, manifest, allowAll(testOptions()))
+		require.ErrorContains(t, err, "declared more than once")
+		require.Nil(t, handler)
+	})
+}
+
+// A version name is a segment of every URL the version serves. One that is not
+// a valid segment would build route patterns ServeMux panics on, or routes that
+// can never be reached.
+func TestNewHandlerRejectsInvalidVersionNames(t *testing.T) {
+	for _, name := range []string{"", "v1/beta", "V1", "1alpha1", "v1.0", "v1_alpha"} {
+		t.Run(name, func(t *testing.T) {
+			plugin := routesOnlyPlugin()
+			manifest := plugin.Manifests[0]
+			manifest.Versions[0].Name = name
+			manifest.PreferredVersion = name
+			require.ErrorContains(t, ValidateManifest(plugin.JSONData.ID, manifest), "invalid version name")
+			require.NotPanics(t, func() {
+				_, err := NewHandler(plugin.JSONData.ID, manifest, allowAll(testOptions()))
+				require.ErrorContains(t, err, "invalid version name")
+			})
+		})
+	}
+	for _, name := range []string{"v1", "v1alpha1", "v2beta3", "v0alpha1"} {
+		plugin := testPlugin()
+		plugin.Manifests[0].Versions[0].Name = name
+		require.NoError(t, ValidateManifest(plugin.JSONData.ID, plugin.Manifests[0]), name)
 	}
 }
 
@@ -443,11 +507,10 @@ func (c *admissionClient) AdmissionReview(_ context.Context, req *pluginv3.Admis
 }
 
 func TestHandlerExcludesLegacySettings(t *testing.T) {
-	keepManifestSettings(t)
 	plugin := testPlugin()
 	group := APIGroup(plugin.Manifests[0])
 	opts := allowAll(testOptions())
-	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(group.Name, plugin.JSONData.ID,
+	opts.Settings.LegacyStore = appsettings.NewLegacySettingsStore(group.Name, plugin.JSONData.ID,
 		&pluginsettings.FakePluginSettings{})
 	opts.DualWrite = dualwrite.ProvideServiceForTests(nil)
 	handler := withRequester(loadHandler(t, plugin, opts))
@@ -457,17 +520,7 @@ func TestHandlerExcludesLegacySettings(t *testing.T) {
 	}
 }
 
-func keepManifestSettings(t *testing.T) {
-	t.Helper()
-	flag := featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings
-	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		flag: {Key: flag, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}},
-	})))
-	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
-}
-
-func TestHandlerExcludesSettingsDespiteCompatibilityFlag(t *testing.T) {
-	keepManifestSettings(t)
+func TestHandlerOpenAPIExcludesSettings(t *testing.T) {
 	opts := allowAll(testOptions())
 	opts.PluginClient = nil
 	opts.ContextProvider = nil

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { type DataSourceApi } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 
 export const useDatasourcesFromTargets = (targets: DataQuery[] | undefined): Map<string, DataSourceApi> => {

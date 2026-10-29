@@ -2,15 +2,15 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 
 import { makeDatasourceSetup } from '../spec/helper/setup';
 
 import { useExplorePageTitle } from './useExplorePageTitle';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
 }));
 

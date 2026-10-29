@@ -368,9 +368,10 @@ func TestSortableFieldsForMapping(t *testing.T) {
 	// Declared, but not with sort.
 	assert.False(t, fields["fields.category"])
 	assert.False(t, fields["category"])
+	assert.True(t, fields[resource.SEARCH_FIELD_CREATED])
+	assert.True(t, fields[resource.SEARCH_FIELD_UPDATED])
 	// Retrieve-only standard fields, and a name nothing declares.
-	assert.False(t, fields[resource.SEARCH_FIELD_CREATED])
-	assert.False(t, fields[resource.SEARCH_FIELD_UPDATED])
+	assert.False(t, fields[resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS])
 	assert.False(t, fields[resource.SEARCH_FIELD_DESCRIPTION])
 	assert.False(t, fields["nonexistent"])
 	// The per-kind field shadowing "created" is only reachable under the prefix.
@@ -546,11 +547,11 @@ func TestAddCapabilityFieldMappings_RetrieveOnly_StoreOnly(t *testing.T) {
 }
 
 func TestBleveIndex_isDeclaredField(t *testing.T) {
-	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(
+	fields, err := resource.NewSearchableDocumentFields(
 		[]resource.SearchFieldDefinition{
 			{Name: "email", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityRetrieve}},
 		},
-	))
+	)
 	require.NoError(t, err)
 	b := &bleveIndex{fields: fields, standard: resource.StandardSearchFields()}
 
@@ -561,11 +562,11 @@ func TestBleveIndex_isDeclaredField(t *testing.T) {
 }
 
 func TestResolveFieldName(t *testing.T) {
-	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(
+	fields, err := resource.NewSearchableDocumentFields(
 		[]resource.SearchFieldDefinition{
 			{Name: "panel_type", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
 		},
-	))
+	)
 	require.NoError(t, err)
 
 	// Declared per-kind field gets the fields. prefix so it targets the sub-document.
@@ -584,21 +585,21 @@ func TestResolveFieldName(t *testing.T) {
 
 	// A per-kind set that also declares a standard name must not shadow it into
 	// fields.* (standard fields stay top-level).
-	shadow, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(
+	shadow, err := resource.NewSearchableDocumentFields(
 		[]resource.SearchFieldDefinition{
 			{Name: resource.SEARCH_FIELD_TITLE, Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
 		},
-	))
+	)
 	require.NoError(t, err)
 	assert.Equal(t, resource.SEARCH_FIELD_TITLE, resolveFieldName(shadow, resource.SEARCH_FIELD_TITLE))
 
 	// Internal title variants are reserved: a per-kind field declaring one can't
 	// shadow the physical field (callers pass these directly, e.g. legacy QueryFields).
-	reserved, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(
+	reserved, err := resource.NewSearchableDocumentFields(
 		[]resource.SearchFieldDefinition{
 			{Name: resource.SEARCH_FIELD_TITLE_PHRASE, Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter}},
 		},
-	))
+	)
 	require.NoError(t, err)
 	assert.Equal(t, resource.SEARCH_FIELD_TITLE_PHRASE, resolveFieldName(reserved, resource.SEARCH_FIELD_TITLE_PHRASE))
 	assert.Equal(t, resource.SEARCH_FIELD_TITLE_NGRAM, resolveFieldName(reserved, resource.SEARCH_FIELD_TITLE_NGRAM))
@@ -608,7 +609,7 @@ func TestResolveFieldName(t *testing.T) {
 // definitions, wired the way openIndex does it.
 func customFieldsIndex(t *testing.T, defs ...resource.SearchFieldDefinition) *bleveIndex {
 	t.Helper()
-	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(defs))
+	fields, err := resource.NewSearchableDocumentFields(defs)
 	require.NoError(t, err)
 	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
 	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: defs}, nil)
@@ -933,9 +934,8 @@ func TestRequirementQuery_TypedFieldWithoutFilterCapability(t *testing.T) {
 	// empty page would read as "no results" rather than "wrong field".
 	assertBadRequest(t, b, resource.SEARCH_FIELD_PREFIX+"weight", "=", "1")
 
-	// The standard timestamps are stored but not indexed, so the same applies.
-	assertBadRequest(t, b, resource.SEARCH_FIELD_CREATED, "gt", "0")
-	assertBadRequest(t, b, resource.SEARCH_FIELD_UPDATED, "=", "0")
+	// A standard field that is stored but not indexed: the same applies.
+	assertBadRequest(t, b, resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS, "=", "true")
 }
 
 // mustQuery builds the query for one requirement and fails when it is refused.
@@ -989,7 +989,7 @@ func TestFilterQueries_LabelsUseAnalyzedPath(t *testing.T) {
 	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: "login", Operator: "in", Values: []string{"foo-bar"}}},
 	}}
-	queries, e := b.filterQueries(req)
+	queries, e := b.filterQueries(t.Context(), req, nil)
 	require.Nil(t, e)
 	require.Len(t, queries, 1)
 	mq, ok := queries[0].(*query.MatchQuery)
@@ -1005,7 +1005,7 @@ func TestFilterQueries_LabelNotInUsesAnalyzedPath(t *testing.T) {
 	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: "login", Operator: "notin", Values: []string{"foo-bar"}}},
 	}}
-	queries, e := b.filterQueries(req)
+	queries, e := b.filterQueries(t.Context(), req, nil)
 	require.Nil(t, e)
 	require.Len(t, queries, 1)
 	bq, ok := queries[0].(*query.BooleanQuery)
@@ -1043,9 +1043,9 @@ func labelIndex(t *testing.T, keywordLabels bool, key string, values ...string) 
 func labelFilterHits(t *testing.T, idx bleve.Index, key, operator string, values ...string) []string {
 	t.Helper()
 	b := &bleveIndex{index: idx, labelsAreKeyword: labelAnalyzerIsKeyword(idx), standard: resource.StandardSearchFields()}
-	queries, errRes := b.filterQueries(&resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
+	queries, errRes := b.filterQueries(t.Context(), &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: key, Operator: operator, Values: values}},
-	}})
+	}}, nil)
 	require.Nil(t, errRes)
 	require.Len(t, queries, 1)
 	res, err := idx.Search(bleve.NewSearchRequest(queries[0]))
@@ -1117,7 +1117,7 @@ func TestFilterQueries_DoesNotMutateRequest(t *testing.T) {
 	// Search can re-run the builder on the post-rank authz cursor fallback, so
 	// two passes must leave the shared requirements untouched (no double-prefix).
 	for range 2 {
-		_, e := b.filterQueries(req)
+		_, e := b.filterQueries(t.Context(), req, nil)
 		require.Nil(t, e)
 	}
 	assert.Equal(t, "team", req.Options.Labels[0].Key)
@@ -1129,7 +1129,7 @@ func TestGetSortFields_ResolvesPhysicalNames(t *testing.T) {
 		{Name: "note", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilitySort}},
 		{Name: "num", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilitySort}},
 	}
-	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(defs))
+	fields, err := resource.NewSearchableDocumentFields(defs)
 	require.NoError(t, err)
 	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
 	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: defs}, nil)
@@ -1152,11 +1152,11 @@ func TestGetSortFields_ResolvesPhysicalNames(t *testing.T) {
 }
 
 func TestBleveIndex_resolveQueryFields(t *testing.T) {
-	fields, err := resource.NewSearchableDocumentFields(resource.SearchFieldDefinitionsToTableColumns(
+	fields, err := resource.NewSearchableDocumentFields(
 		[]resource.SearchFieldDefinition{
 			{Name: "panel_title", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText}},
 		},
-	))
+	)
 	require.NoError(t, err)
 	b := &bleveIndex{fields: fields, standard: resource.StandardSearchFields()}
 
@@ -1294,7 +1294,7 @@ func TestBulkIndexPopulatesFieldVariants(t *testing.T) {
 				},
 			}},
 		})
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	bi, ok := index.(*bleveIndex)

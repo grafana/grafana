@@ -146,16 +146,15 @@ describe('v0alpha1DatasourceMapper', () => {
     }
   });
 
-  it('should map cloudwatch with all datasource-specific fields', () => {
-    const cloudwatch = result['cloudwatch'];
+  it('should map grafana-testdata-datasource with all datasource-specific fields', () => {
+    const testdata = result['grafana-testdata-datasource'];
 
-    expect(cloudwatch).toBeDefined();
-    expect(cloudwatch.metrics).toBe(true);
-    expect(cloudwatch.logs).toBe(true);
-    expect(cloudwatch.alerting).toBe(true);
-    expect(cloudwatch.annotations).toBe(true);
-    expect(cloudwatch.backend).toBe(true);
-    expect(cloudwatch.category).toBe('cloud');
-    expect(cloudwatch.queryOptions).toEqual({ minInterval: true });
+    expect(testdata).toBeDefined();
+    expect(testdata.metrics).toBe(true);
+    expect(testdata.logs).toBe(true);
+    expect(testdata.alerting).toBe(true);
+    expect(testdata.annotations).toBe(true);
+    expect(testdata.backend).toBe(true);
+    expect(testdata.queryOptions).toEqual({ maxDataPoints: true, minInterval: true });
   });
 });

@@ -1,13 +1,27 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { type ComponentProps } from 'react';
 
 import { FieldType, InternalTimeZones, toDataFrame, LoadingState } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { mockClientSize } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { type TableNG } from '@grafana/ui/unstable';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { PrometheusQueryResultsContainer } from './PrometheusQueryResultsContainer';
+
+let tableNGTimeZone: string | undefined;
+jest.mock('@grafana/ui/unstable', () => {
+  const actual = jest.requireActual('@grafana/ui/unstable');
+  return {
+    ...actual,
+    TableNG: (props: ComponentProps<typeof TableNG>) => {
+      tableNGTimeZone = props.timeZone;
+      return <actual.TableNG {...props} />;
+    },
+  };
+});
 
 const dataFrame = toDataFrame({
   name: 'A',
@@ -73,6 +87,12 @@ describe('RawPrometheusContainerPure with rawPrometheus.tableNg', () => {
       expect(screen.getByText('test_string_1')).toBeInTheDocument();
     });
     expect(screen.getByText('test_string_2')).toBeInTheDocument();
+  });
+
+  it('passes query timezone to TableNG for value filtering', async () => {
+    renderContainer({ timeZone: 'Pacific/Auckland' });
+    await screen.findByRole('grid');
+    expect(tableNGTimeZone).toBe('Pacific/Auckland');
   });
 
   it('renders via react-data-grid (TableNG), not the legacy Table', async () => {
