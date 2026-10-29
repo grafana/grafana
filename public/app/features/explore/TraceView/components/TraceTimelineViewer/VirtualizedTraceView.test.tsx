@@ -13,6 +13,7 @@
 // limitations under the License.
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
 
 import { reportInteraction } from '@grafana/runtime';
 
@@ -172,6 +173,26 @@ describe('<VirtualizedTraceViewImpl>', () => {
 
       expect(scrollTo).toHaveBeenCalledTimes(1);
     });
+
+    it('does not scroll on mount when a span is already focused by search', () => {
+      const { scrollTo, scrollProps, spanID } = setupScrollTracking();
+      render(<VirtualizedTraceView {...scrollProps} focusedSpanForSearch={{ spanID }} />);
+
+      expect(scrollTo).not.toHaveBeenCalled();
+    });
+  });
+
+  it('retries the initial scroll with the settled header height on the first update, in StrictMode', () => {
+    const scrollElement = document.createElement('div');
+    const scrollTo = jest.fn();
+    scrollElement.scrollTo = scrollTo;
+    const scrollProps = { ...props, trace, scrollElement, focusedSpanId: trace.spans[0].spanID };
+
+    const { rerender } = render(<VirtualizedTraceView {...scrollProps} headerHeight={100} />, { wrapper: StrictMode });
+    rerender(<VirtualizedTraceView {...scrollProps} headerHeight={50} />);
+
+    const [initialTop, retriedTop] = [scrollTo.mock.calls[0][0].top, scrollTo.mock.lastCall[0].top];
+    expect(retriedTop - initialTop).toBe(50);
   });
 
   it('does not throw or report when scrolling to top with no trace', async () => {
