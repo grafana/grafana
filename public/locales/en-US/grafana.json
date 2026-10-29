@@ -12333,6 +12333,7 @@
     },
     "log-details": {
       "error": {
+        "diagnose-with-assistant": "Diagnose with assistant",
         "error-details": "Error details"
       }
     },
