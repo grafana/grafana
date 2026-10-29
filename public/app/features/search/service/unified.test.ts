@@ -135,18 +135,14 @@ describe('Unified Storage Searcher', () => {
   });
 
   it('asks for the path to creatable folders and returns which can be created in', async () => {
+    let include: string | null = null;
     server.use(
       http.get(searchRoute, ({ request }) => {
-        const include = new URL(request.url).searchParams.get('include');
+        include = new URL(request.url).searchParams.get('include');
         return HttpResponse.json({
           totalHits: 2,
           hits: [
-            {
-              name: 'writable',
-              title: 'Writable',
-              resource: 'folders',
-              field: { canCreate: include === 'pathToCreatable' },
-            },
+            { name: 'writable', title: 'Writable', resource: 'folders', field: { canCreate: true } },
             { name: 'path', title: 'Path', resource: 'folders', field: { canCreate: false } },
           ],
         });
@@ -155,6 +151,7 @@ describe('Unified Storage Searcher', () => {
 
     const response = await new UnifiedSearcher().search({ query: '*', kind: ['folder'], includePathToCreatable: true });
 
+    expect(include).toBe('pathToCreatable');
     expect(response.view.get(0).canCreate).toBe(true);
     expect(response.view.get(1).canCreate).toBe(false);
   });
