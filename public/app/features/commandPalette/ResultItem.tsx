@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { useFlagGrafanaCmdkDashboardTags } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
 import { type ManagerKind } from 'app/features/apiserver/types';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
@@ -37,6 +38,7 @@ export const ResultItem = React.forwardRef(
     }, [action.ancestors, currentRootActionId]);
 
     const styles = useStyles2(getResultItemStyles);
+    const dashboardTagsEnabled = useFlagGrafanaCmdkDashboardTags();
 
     // type assertion needed because kbar's ActionImpl copies all properties from the input Action object at runtime,
     // but its TS type doesn't reflect custom properties like managedBy or url.
@@ -81,7 +83,11 @@ export const ResultItem = React.forwardRef(
             <span>{name}</span>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
-          {tags && tags.length > 0 ? <ResultTags tags={tags} prefix={managedBadge} /> : managedBadge}
+          {dashboardTagsEnabled && tags && tags.length > 0 ? (
+            <ResultTags tags={tags} prefix={managedBadge} />
+          ) : (
+            managedBadge
+          )}
         </div>
       </div>
     );

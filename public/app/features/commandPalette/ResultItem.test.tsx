@@ -1,7 +1,8 @@
 import { ActionImpl } from 'kbar';
-import { render, screen, within } from 'test/test-utils';
+import { act, render, screen, within } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ManagerKind } from 'app/features/apiserver/types';
 
 import { ResultItem } from './ResultItem';
@@ -19,6 +20,7 @@ describe('ResultItem', () => {
   let originalProvisioning: boolean;
 
   beforeEach(() => {
+    setTestFlags({ 'grafana.cmdkDashboardTags': true });
     originalProvisioning = config.provisioningEnabled;
     const rect = document.createElement('div').getBoundingClientRect();
     jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
@@ -27,6 +29,7 @@ describe('ResultItem', () => {
   });
 
   afterEach(() => {
+    act(() => setTestFlags({}));
     config.provisioningEnabled = originalProvisioning;
     jest.restoreAllMocks();
   });
@@ -78,6 +81,21 @@ describe('ResultItem', () => {
     const tagList = screen.getByRole('list', { name: 'Tags' });
     expect(within(tagList).getByText('prod')).toBeInTheDocument();
     expect(within(tagList).getByText('team-a')).toBeInTheDocument();
+  });
+
+  it.each([
+    { desc: 'disabled', enabled: false },
+    { desc: 'not configured', enabled: undefined },
+  ])('hides tags but keeps the title, subtitle, and managed badge when the tag flag is $desc', ({ enabled }) => {
+    setTestFlags(enabled === undefined ? {} : { 'grafana.cmdkDashboardTags': enabled });
+    config.provisioningEnabled = true;
+    const action = createActionImpl({ subtitle: 'My folder', managedBy: ManagerKind.Repo, tags: ['prod', 'team-a'] });
+    render(<ResultItem action={action} active={false} currentRootActionId="" />);
+
+    expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('My folder')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Tags' })).not.toBeInTheDocument();
   });
 
   it('shows more than three tags when they fit in the row', () => {

@@ -164,6 +164,8 @@ export const FlagKeys = {
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Allow admins to make announcement banners dismissible by users */
   GrafanaAnnouncementBannerDismissible: "grafana.announcementBannerDismissible",
+  /** Shows dashboard tags in the command palette */
+  GrafanaCmdkDashboardTags: "grafana.cmdkDashboardTags",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
   /** Enables using the Config From Query Results transformation's Dynamic Field Name option */
@@ -1223,6 +1225,17 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaAnnouncementBannerDismissible = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.announcementBannerDismissible", true, options).value;
+};
+
+/**
+ * Shows dashboard tags in the command palette
+ *
+ * **Details:**
+ * - flag key: `grafana.cmdkDashboardTags`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCmdkDashboardTags = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.cmdkDashboardTags", false, options).value;
 };
 
 /**

@@ -2664,6 +2664,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.cmdkDashboardTags",
+        "resourceVersion": "1793290413642",
+        "creationTimestamp": "2026-10-29T16:13:33Z"
+      },
+      "spec": {
+        "description": "Shows dashboard tags in the command palette",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.cmdkHybridSearch",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-20T12:34:45Z"

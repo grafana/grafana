@@ -337,6 +337,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-06,alerting.hybridSearch,experimental,@grafana/search-and-storage,false,false,false
 2026-07-01,grafana.vectorSearchCmdk,experimental,@grafana/search-and-storage,false,false,true
 2026-08-20,grafana.cmdkHybridSearch,experimental,@grafana/search-and-storage,false,false,true
+2026-10-29,grafana.cmdkDashboardTags,experimental,@grafana/search-and-storage,false,false,true
 2026-07-16,assistant.fullscreenWorkspace,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-10-21,assistant.dashboard.artifacts,experimental,@grafana/dashboards-squad,false,false,true
 2026-06-19,splunk.useLegacyResultsApi,experimental,@grafana/data-sources-plugins,false,false,false
