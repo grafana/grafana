@@ -986,6 +986,10 @@ const (
 	// Enables the refreshed information architecture for Grafana's navigation
 	FlagGrafanaNavigationInfoArchRefresh = "grafana.navigationInfoArchRefresh"
 
+	// FlagGrafanaNavigationAdminSubNav
+	// Shows Administration as a single row in the mega menu, with its destinations in the section nav
+	FlagGrafanaNavigationAdminSubNav = "grafana.navigationAdminSubNav"
+
 	// FlagAuthzListFoldersViaSearch
 	// Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.
 	FlagAuthzListFoldersViaSearch = "authz.listFoldersViaSearch"

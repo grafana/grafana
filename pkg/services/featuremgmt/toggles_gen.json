@@ -3044,6 +3044,19 @@
     },
     {
       "metadata": {
+        "name": "grafana.navigationAdminSubNav",
+        "resourceVersion": "1793224237566",
+        "creationTimestamp": "2026-10-28T21:50:37Z"
+      },
+      "spec": {
+        "description": "Shows Administration as a single row in the mega menu, with its destinations in the section nav",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.navigationInfoArchRefresh",
         "resourceVersion": "1791988590221",
         "creationTimestamp": "2026-10-14T14:36:30Z"

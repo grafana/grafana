@@ -2,12 +2,14 @@ import userEvent from '@testing-library/user-event';
 import { KBarProvider } from 'kbar';
 import { type ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
-import { render, screen, waitFor, act, getWrapper } from 'test/test-utils';
+import { render, screen, waitFor, act, getWrapper, within } from 'test/test-utils';
 
+import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv, useScopes } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DRAWER_INSIDE_ATTRIBUTE } from '@grafana/ui/internal';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
@@ -87,7 +89,7 @@ const stylesFor = (element: Element) => {
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const setup = (children: ReactNode, { path }: { path?: string } = {}) => {
+const setup = (children: ReactNode, { path, extraNav = [] }: { path?: string; extraNav?: NavModelItem[] } = {}) => {
   config.bootData.navTree = [
     {
       id: HOME_NAV_ID,
@@ -103,6 +105,7 @@ const setup = (children: ReactNode, { path }: { path?: string } = {}) => {
         { text: 'Child2', id: 'child2', url: 'section/child2' },
       ],
     },
+    ...extraNav,
     {
       text: 'Help',
       id: 'help',
@@ -127,6 +130,32 @@ const setup = (children: ReactNode, { path }: { path?: string } = {}) => {
 
   return { renderResult, context, rerender: () => renderResult.rerender(tree) };
 };
+
+const administrationNav: NavModelItem[] = [
+  {
+    id: 'cfg',
+    text: 'Administration',
+    url: '/admin',
+    children: [
+      {
+        id: 'cfg/general',
+        text: 'General',
+        url: '/admin/general',
+        children: [
+          { id: 'org-settings', text: 'Default preferences', url: '/org' },
+          { id: 'plugin-page-grafana-advisor-app', text: 'Advisor', url: '/a/grafana-advisor-app/home' },
+        ],
+      },
+      { id: 'cfg/plugins', text: 'Plugins and data', url: '/admin/plugins', children: [] },
+      {
+        id: 'cfg/access',
+        text: 'Users and access',
+        url: '/admin/access',
+        children: [{ id: 'global-users', text: 'Users', url: '/admin/users' }],
+      },
+    ],
+  },
+];
 
 describe('AppChrome', () => {
   beforeEach(() => {
@@ -301,6 +330,96 @@ describe('AppChrome', () => {
 
       await screen.findByTestId('ext-sidebar-stub');
       expect(screen.queryByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('administration section nav', () => {
+    const sectionNav = () => screen.findByRole('navigation', { name: 'Administration' });
+
+    beforeEach(() => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      setTestFlags({ 'grafana.navigationAdminSubNav': true });
+    });
+
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    it('lists the groups as plain headings over their destinations on an administration page', async () => {
+      setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+      const nav = within(await sectionNav());
+
+      expect(nav.getByRole('heading', { name: 'General' })).toBeInTheDocument();
+      expect(nav.getByRole('heading', { name: 'Users and access' })).toBeInTheDocument();
+      expect(nav.queryByRole('link', { name: 'General' })).not.toBeInTheDocument();
+      expect(nav.getByRole('link', { name: 'Advisor' })).toHaveAttribute('href', '/a/grafana-advisor-app/home');
+      expect(nav.getByRole('link', { name: 'Users' })).toHaveAttribute('href', '/admin/users');
+    });
+
+    it('marks the current page and no other', async () => {
+      setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+      const nav = within(await sectionNav());
+
+      expect(nav.getByRole('link', { name: 'Default preferences' })).toHaveAttribute('aria-current', 'page');
+      expect(nav.getByRole('link', { name: 'Advisor' })).not.toHaveAttribute('aria-current');
+    });
+
+    it('leaves out a group with no destinations', async () => {
+      setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+      const nav = within(await sectionNav());
+
+      expect(nav.queryByRole('heading', { name: 'Plugins and data' })).not.toBeInTheDocument();
+    });
+
+    it('shows on the Administration landing page with nothing marked current', async () => {
+      setup(<Page navId="cfg">Children</Page>, { extraNav: administrationNav });
+
+      const nav = within(await sectionNav());
+
+      expect(nav.getByRole('link', { name: 'Users' })).toBeInTheDocument();
+      expect(nav.queryByRole('link', { current: 'page' })).not.toBeInTheDocument();
+    });
+
+    it('shows from the URL before the page has told the chrome where it is', async () => {
+      setup(<div>Not yet a Page</div>, { extraNav: administrationNav, path: '/admin/users' });
+
+      const nav = within(await sectionNav());
+
+      expect(nav.getByRole('link', { name: 'Users', current: 'page' })).toBeInTheDocument();
+    });
+
+    it('shows on a group landing page', async () => {
+      setup(<Page navId="cfg/general">Children</Page>, { extraNav: administrationNav });
+
+      expect(await sectionNav()).toBeInTheDocument();
+    });
+
+    it('does not show on a page outside Administration', async () => {
+      setup(<Page navId="child1">Children</Page>, { extraNav: administrationNav });
+
+      expect(await screen.findByTestId('page-children')).toBeInTheDocument();
+      expect(screen.queryByRole('navigation', { name: 'Administration' })).not.toBeInTheDocument();
+    });
+
+    it('does not show when the flag is off', async () => {
+      setTestFlags({ 'grafana.navigationAdminSubNav': false });
+      setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+      expect(await screen.findByTestId('page-children')).toBeInTheDocument();
+      expect(screen.queryByRole('navigation', { name: 'Administration' })).not.toBeInTheDocument();
+    });
+
+    it('does not show below the tablet width', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(false);
+      setup(<Page navId="org-settings">Children</Page>, { extraNav: administrationNav });
+
+      expect(await screen.findByTestId('page-children')).toBeInTheDocument();
+      expect(screen.queryByRole('navigation', { name: 'Administration' })).not.toBeInTheDocument();
     });
   });
 });

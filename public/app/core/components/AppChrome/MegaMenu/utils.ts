@@ -4,6 +4,7 @@ import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
+import { NavID } from 'app/core/navtree/constants';
 import { ID_PREFIX } from 'app/core/reducers/navBarTree';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
@@ -323,6 +324,14 @@ export function removeHiddenItems(items: NavModelItem[], hidden: Set<string>): N
   return items
     .filter((item) => !hidden.has(hiddenKey(item)))
     .map((item) => (item.children ? { ...item, children: removeHiddenItems(item.children, hidden) } : item));
+}
+
+/**
+ * Folds the Administration section into a single row: its destinations stay in the nav tree for the
+ * section nav, breadcrumbs and routing, and only the mega menu stops listing them.
+ */
+export function foldAdministration(items: NavModelItem[]): NavModelItem[] {
+  return items.map((item) => (item.id === NavID.cfg ? { ...item, children: undefined } : item));
 }
 
 /** All descendant keys of an item. */
