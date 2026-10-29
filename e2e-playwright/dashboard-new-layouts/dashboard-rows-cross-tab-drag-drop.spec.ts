@@ -149,24 +149,32 @@ test.describe('Dashboard rows cross-tab drag and drop', { tag: ['@dashboards', '
     await expectTabRows(layout, 'Rows target', TARGET_ROWS);
   });
 
-  // Today Escape is ignored once the hovered tab has opened: the release still moves the row there
-  test.fixme(
-    'keeps the row in its tab when the drag is cancelled with Escape after switching tabs',
-    async ({ page, selectors, controls, tabs, rows, panels }) => {
-      const layout = { tabs, rows, panels };
-      await importDashboard(page, selectors, 'Cancel cross-tab row drag with Escape');
-      await controls.enterEditMode();
+  test('keeps the row in its tab when the drag is cancelled with Escape after switching tabs', async ({
+    page,
+    selectors,
+    controls,
+    tabs,
+    rows,
+    panels,
+    unifiedDragAndDrop,
+  }) => {
+    test.fixme(
+      !unifiedDragAndDrop,
+      'Escape is ignored once the hovered tab has opened: the release still moves the row there'
+    );
+    const layout = { tabs, rows, panels };
+    await importDashboard(page, selectors, 'Cancel cross-tab row drag with Escape');
+    await controls.enterEditMode();
 
-      const drag = await startPointerDrag(page, 'row "Row A"', rows.getTitle('Row A'));
-      await drag.moveTo(tabs.getTitle('Rows target'));
-      await expect(tabs.getTitle('Rows target')).toHaveAttribute('aria-selected', 'true');
-      await drag.pressEscape();
-      await drag.drop();
+    const drag = await startPointerDrag(page, 'row "Row A"', rows.getTitle('Row A'));
+    await drag.moveTo(tabs.getTitle('Rows target'));
+    await expect(tabs.getTitle('Rows target')).toHaveAttribute('aria-selected', 'true');
+    await drag.pressEscape();
+    await drag.drop();
 
-      await expectTabRows(layout, 'Source', SOURCE_ROWS);
-      await expectTabRows(layout, 'Rows target', TARGET_ROWS);
-    }
-  );
+    await expectTabRows(layout, 'Source', SOURCE_ROWS);
+    await expectTabRows(layout, 'Rows target', TARGET_ROWS);
+  });
 
   test('drops a row onto an empty tab and onto a tab with panels', async ({
     page,

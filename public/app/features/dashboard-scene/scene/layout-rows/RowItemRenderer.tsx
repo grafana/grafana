@@ -25,6 +25,7 @@ import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
 import { SectionVariableControls } from '../VariableControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
+import { useRowDrag } from '../layouts-shared/list-dnd/useListDrag';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 import { isDashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -73,7 +74,8 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
   const isDraggable = !isClone && isEditing;
-  const { Draggable } = useDragAndDrop(isDraggable);
+  const rowDrag = useRowDrag(model, isDraggable);
+  const { Draggable } = useDragAndDrop(isDraggable && !rowDrag);
 
   if (isHidden) {
     return null;
@@ -116,11 +118,13 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             model.containerRef.current = ref;
           }}
           {...{ [DASHBOARD_DROP_TARGET_KEY_ATTR]: isDashboardLayoutGrid(layout) ? model.state.key : undefined }}
+          {...rowDrag?.attributes}
           className={cx(
             styles.wrapper,
             'dashboard-row-wrapper',
             !isCollapsed && styles.wrapperNotCollapsed,
             dragSnapshot.isDragging && styles.dragging,
+            rowDrag?.className,
             isCollapsed && styles.wrapperCollapsed,
             shouldGrow && styles.wrapperGrow,
             conditionalRenderingClass,
@@ -156,6 +160,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
               data-dashboard-element-key={key}
               data-dashboard-element-type="row"
+              onPointerDown={rowDrag?.onPointerDown}
               {...dragProvided.dragHandleProps}
             >
               <button
