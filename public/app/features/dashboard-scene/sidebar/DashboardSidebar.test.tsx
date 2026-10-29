@@ -21,6 +21,8 @@ import { edit } from '../actions/utils/edit';
 import { changeVariableName } from '../actions/variable/changeVariableName';
 import { changeVariableType } from '../actions/variable/changeVariableType';
 import { removeVariable } from '../actions/variable/removeVariable';
+import { getPendingChangesHistory, type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
+import { recordPendingChange } from '../lifecycle/pendingChangesHistory';
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -56,6 +58,15 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: (_uid: string | null) => ({ uid: 'ds1' }),
   }),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+}));
+// Off unless a test previews pending changes whose plugin keeps their history.
+jest.mock('../lifecycle/pendingChangePreview', () => ({
+  ...jest.requireActual('../lifecycle/pendingChangePreview'),
+  getPendingChangesHistory: jest.fn(),
+}));
+jest.mock('../lifecycle/pendingChangesHistory', () => ({
+  ...jest.requireActual('../lifecycle/pendingChangesHistory'),
+  recordPendingChange: jest.fn(),
 }));
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -439,6 +450,42 @@ describe('DashboardSidebar', () => {
     await scene.onCreateNewPanel();
 
     expect(sidebar.state.redoStack).toHaveLength(0);
+  });
+
+  describe('pending changes whose plugin keeps their history', () => {
+    const history: PendingChangesHistory = {
+      record: jest.fn(),
+      undo: jest.fn(),
+      redo: jest.fn(),
+      getState: () => ({}),
+      subscribe: () => () => {},
+    };
+
+    beforeEach(() => jest.mocked(getPendingChangesHistory).mockReturnValue(history));
+    afterEach(() => jest.mocked(getPendingChangesHistory).mockReturnValue(undefined));
+
+    it('records an edit in the plugin’s history instead of the undo stack', async () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const before = scene.getSaveModel();
+
+      await scene.onCreateNewPanel();
+
+      expect(sidebar.state.undoStack).toHaveLength(0);
+      expect(recordPendingChange).toHaveBeenCalledWith(scene, history, expect.any(String), before);
+      // The edit itself stays: recording replays it after taking the scene before it.
+      expect(scene.getSaveModel()).not.toEqual(before);
+    });
+
+    it('steps through the plugin’s history with Undo and Redo', () => {
+      const sidebar = buildTestScene().state.sidebar;
+
+      sidebar.undoAction();
+      sidebar.redoAction();
+
+      expect(history.undo).toHaveBeenCalledTimes(1);
+      expect(history.redo).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('clearHistory should empty undo and redo stacks', async () => {

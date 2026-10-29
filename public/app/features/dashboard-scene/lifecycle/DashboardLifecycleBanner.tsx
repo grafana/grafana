@@ -21,6 +21,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
@@ -40,6 +41,7 @@ import {
   setHighlightingChanges,
   showOriginal,
 } from './pendingChangePreview';
+import { usePendingChangesHistoryState } from './pendingChangesHistory';
 import { type SpecChange } from './specDiff';
 import { dashboardViewRoot, panelSelector, queryDashboardView, useChangeHighlights } from './useChangeHighlights';
 import { usePendingChangeDiff } from './usePendingChangeDiff';
@@ -90,7 +92,8 @@ export function DashboardLifecycleBanner({ dashboard, placement = 'page', reload
       />
     );
   }
-  if (isEditing) {
+  // Pending changes whose plugin keeps their history are edited under the banner, as a draft is.
+  if (isEditing && !preview.pending.history) {
     return null;
   }
   return preview.previewing ? (
@@ -140,7 +143,10 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
     setHighlightingChanges(uid, id, !highlighting);
     setHighlighting(!highlighting);
   };
-  const { changes, baseSpec } = usePendingChangeDiff(uid, pending, saved);
+  // Edits on the page are recorded without a reload: the latest record is what the changes are.
+  const recorded = usePendingChangesHistoryState(pending.history).proposed;
+  const proposed = recorded ?? pending.proposed;
+  const { changes, baseSpec } = usePendingChangeDiff(uid, { baseGeneration: pending.baseGeneration, proposed }, saved);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,6 +171,9 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
 
   const apply = useCallback(async () => {
     try {
+      // This page saves the dashboard, through the plugin, and reloads itself after: the live
+      // watcher's own reload for that save would race it and bring the applied changes back.
+      dashboardWatcher.ignoreNextSave();
       const result = await pending.apply({ force: false });
       if (!result.applied) {
         setCurrentGeneration(result.currentGeneration);
@@ -286,7 +295,7 @@ function PendingChangesBanner({ dashboard, uid, id, pending, placement, inset, r
       {comparing && (
         <CompareDrawer
           title={title}
-          proposedSpec={pending.proposed}
+          proposedSpec={proposed}
           baseSpec={baseSpec}
           latestSpec={saved?.spec}
           baseGeneration={pending.baseGeneration}
@@ -387,16 +396,10 @@ function NewDashboardBanner({ dashboard, uid, id, pending, placement, inset, rel
           </>
         }
       >
-        {pending.source
-          ? t(
-              'dashboard-scene.lifecycle.draft-body-source',
-              'Previewing a new dashboard {{source}}, only you can see it until you save it.',
-              { source: pending.source }
-            )
-          : t(
-              'dashboard-scene.lifecycle.draft-body',
-              'Previewing a new dashboard, only you can see it until you save it.'
-            )}
+        {t(
+          'dashboard-scene.lifecycle.draft-body',
+          'Previewing a new dashboard, only you can see it until you save it.'
+        )}
       </LifecycleAlert>
       {confirmDiscard && (
         <ConfirmModal
@@ -487,7 +490,7 @@ const getLifecycleAlertStyles = (theme: GrafanaTheme2) => ({
   content: css({
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(0.5),
+    gap: theme.spacing(1.5),
   }),
 });
 

@@ -14,6 +14,8 @@ import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions 
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 import { isFullDashboardEditing, isDashboardReviewing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
+import { getPendingChangesHistory, type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
+import { recordPendingChange } from '../lifecycle/pendingChangesHistory';
 import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
@@ -255,6 +257,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       },
     };
 
+    const history = this.pendingChangesHistory();
+    if (history) {
+      this.recordToPendingChanges(history, action);
+      return;
+    }
+
     this._batchSizes.set(action, batch.actions.length);
     this.setState({ undoStack: this.pushToUndoStack(action) });
   }
@@ -277,6 +285,15 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       }
       return;
     }
+    const history = this.pendingChangesHistory();
+    if (history) {
+      if (!skipPerform) {
+        this.performAction(action);
+      }
+      this.recordToPendingChanges(history, action);
+      return;
+    }
+
     // Clear redo stack when user performs a new action
     // Otherwise things can get into very broken states
     if (this.state.redoStack.length > 0) {
@@ -332,10 +349,36 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   /**
+   * Records a performed edit in the pending changes history. What it changed is taken from its own
+   * undo and redo, as Undo and Redo replay it: inputs apply their value as it's typed and send the
+   * edit only once done, so the scene before the edit is what its undo leaves.
+   */
+  private recordToPendingChanges(history: PendingChangesHistory, action: DashboardEditActionEventPayload) {
+    const scene = getDashboardSceneFor(this);
+    action.undo();
+    const before = scene.getSaveModel();
+    action.perform();
+    recordPendingChange(scene, history, action.description, before);
+  }
+
+  /**
+   * On pending changes whose plugin keeps their history, edits are steps in it instead of this
+   * sidebar's undo stack, so Undo and Redo step through the plugin's changes too.
+   */
+  public pendingChangesHistory(): PendingChangesHistory | undefined {
+    return getPendingChangesHistory(getDashboardSceneFor(this).state);
+  }
+
+  /**
    * Removes last action from undo stack and adds it to redo stack.
    */
   public undoAction() {
     if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+      return;
+    }
+    const history = this.pendingChangesHistory();
+    if (history) {
+      history.undo();
       return;
     }
     // How far back the user has already stepped through history before this undo
@@ -402,6 +445,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    */
   public redoAction() {
     if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+      return;
+    }
+    const history = this.pendingChangesHistory();
+    if (history) {
+      history.redo();
       return;
     }
     const redoDepth = this.state.redoStack.length;

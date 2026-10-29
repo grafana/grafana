@@ -1570,8 +1570,9 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
 
   /**
    * Swaps in the pending changes the load asked for, unless the requester is viewing the
-   * original (see pendingChangePreview.ts). The preview is a read-only v2 dashboard that never
-   * goes through the scene cache: it shares the saved dashboard's version.
+   * original (see pendingChangePreview.ts). The preview is a v2 dashboard that never goes through
+   * the scene cache: it shares the saved dashboard's version. It is read-only unless the plugin
+   * keeps the pending changes' history, on the page: edits are then recorded in it.
    */
   private async withPendingChanges(
     rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null,
@@ -1587,12 +1588,16 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
         preview.previewing = false;
         return rsp;
       }
+      // Editable as far as the requester may edit the dashboard itself.
+      const editable = Boolean(preview.pending.history) && options.route === DashboardRoutes.Normal;
       const previewRsp = {
         ...saved,
         // A copy: building the scene adds defaults to the spec it is given, and the banner
         // diffs the pending changes as saved.
         spec: structuredClone(preview.pending.proposed),
-        access: { ...saved.access, canEdit: false, canSave: false, canDelete: false },
+        access: editable
+          ? { ...saved.access, canDelete: false }
+          : { ...saved.access, canEdit: false, canSave: false, canDelete: false },
       };
       shownPendingChanges.set(previewRsp, preview);
       return previewRsp;
