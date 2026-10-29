@@ -33,6 +33,8 @@ import { type RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
+import { ListDragSession, type ListDragState } from './layouts-shared/list-dnd/ListDragSession';
+import { createListDropTargetFinder, type ListItem } from './layouts-shared/list-dnd/listDnd';
 import { isUnifiedDragAndDropEnabled } from './layouts-shared/unifiedDragAndDrop';
 import {
   AUTO_GRID_ITEM_DROP_TARGET_ATTR,
@@ -125,6 +127,9 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _externalDragOverTarget: DashboardDropTarget | null = null;
   /** Whether the new-panel drag in progress adds a new panel, which drop targets may preview (pasted panels are not) */
   private _isNewPanelDrag = false;
+  /** Row drag on the unified drag and drop engine */
+  private _listDrag: ListDragSession | null = null;
+  private _listDragListeners = new Set<() => void>();
 
   public constructor() {
     super({});
@@ -152,6 +157,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
       this._dragCallbacks = null;
       this._endExternalDragOver();
       this._dragInfo = null;
+      this._listDrag?.cancel();
     };
   }
 
@@ -162,9 +168,63 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
   public isDragging(): boolean {
     return Boolean(
-      this.state.draggingGridItem || this.state.draggingRow || this._tabDragState || this._dropNewItemPointerUpHandler
+      this.state.draggingGridItem ||
+        this.state.draggingRow ||
+        this._tabDragState ||
+        this._dropNewItemPointerUpHandler ||
+        this._listDrag?.isActive()
     );
   }
+
+  /**
+   * Starts dragging a row on the unified drag and drop engine, from a press on its header. The session
+   * does the drag; the orchestrator hit-tests for it and opens tabs hovered on the way.
+   */
+  public startListDrag(evt: ReactPointerEvent, item: ListItem): void {
+    if (this._listDrag || this.isDragging()) {
+      return;
+    }
+
+    const findDropTarget = createListDropTargetFinder(item);
+    this._listDrag = ListDragSession.start(evt, item, {
+      getDropTarget: findDropTarget,
+      onDragMove: (x, y) => this._checkTabHover(x, y),
+      showPreview: ({ label, x, y, width, height, offsetX, offsetY }) => {
+        this._previewLabel = label;
+        this._previewType = 'row';
+        this._previewWidth = width;
+        this._previewHeight = height;
+        this._dragOffsetX = offsetX;
+        this._dragOffsetY = offsetY;
+        this._lastCursorX = x;
+        this._lastCursorY = y;
+        this._showDragPreview();
+      },
+      movePreview: (x, y) => this._updateDragPreview(x, y),
+      onChange: () => this._listDragListeners.forEach((listener) => listener()),
+      onEnd: () => {
+        this._listDrag = null;
+        this._clearTabActivationTimer();
+        this._lastHoveredTabKey = null;
+        // Set when a hovered tab opens
+        this._lastDropTarget = null;
+        this._clearDragPreview();
+        if (this.state.hoverTabKey) {
+          this.setState({ hoverTabKey: undefined });
+        }
+      },
+    });
+  }
+
+  /** For list renderers, which only re-render when the drop target changes, not on every pointer move */
+  public subscribeToListDrag = (listener: () => void) => {
+    this._listDragListeners.add(listener);
+    return () => {
+      this._listDragListeners.delete(listener);
+    };
+  };
+
+  public getListDragState = (): ListDragState | null => this._listDrag?.getState() ?? null;
 
   public startDraggingSync(
     evt: ReactPointerEvent,

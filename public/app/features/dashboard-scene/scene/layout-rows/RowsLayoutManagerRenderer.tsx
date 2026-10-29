@@ -14,6 +14,8 @@ import { reorderRows } from '../../actions/layout/reorderRows';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, getLayoutOrchestratorFor, getDashboardSceneFor } from '../../utils/utils';
+import { ListDropPlaceholder } from '../layouts-shared/list-dnd/ListDropPlaceholder';
+import { useRowsListDrag } from '../layouts-shared/list-dnd/useListDrag';
 import { getLayoutControlsStyles } from '../layouts-shared/styles';
 import { useClipboardState } from '../layouts-shared/useClipboardState';
 import { useIsMultiSelection } from '../layouts-shared/useIsMultiSelection';
@@ -33,7 +35,8 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
   const soloPanelContext = useSoloPanelContext();
   const orchestrator = getLayoutOrchestratorFor(model);
   const isMultiSelection = useIsMultiSelection();
-  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext);
+  const listDrag = useRowsListDrag(model, rows, isEditing);
+  const { DragDropContext, Droppable } = useDragAndDrop(isEditing && !soloPanelContext && !listDrag.isEnabled);
 
   // Only act as a drop target when empty (no rows)
   const showAsDropTarget = rows.length === 0;
@@ -72,6 +75,15 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
 
   const isClone = isRepeatCloneOrChildOf(model);
 
+  const rowElements = listDrag.rows.map((row) => <RowWrapper row={row} manager={model} key={row.state.key!} />);
+  if (listDrag.dropPlaceholder) {
+    rowElements.splice(
+      listDrag.dropPlaceholder.index,
+      0,
+      <ListDropPlaceholder key="list-drop-placeholder" height={listDrag.dropPlaceholder.height} />
+    );
+  }
+
   return (
     <DragDropContext
       onBeforeCapture={handleBeforeCapture}
@@ -85,10 +97,9 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
             ref={dropProvided.innerRef}
             {...dropProvided.droppableProps}
             {...(showAsDropTarget ? { [DASHBOARD_DROP_TARGET_KEY_ATTR]: key } : {})}
+            {...listDrag.attributes}
           >
-            {rows.map((row) => (
-              <RowWrapper row={row} manager={model} key={row.state.key!} />
-            ))}
+            {rowElements}
             {dropProvided.placeholder}
             {isEditing && !isClone && (
               <div

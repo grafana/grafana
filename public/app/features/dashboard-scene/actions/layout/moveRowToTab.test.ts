@@ -242,6 +242,22 @@ describe('moveRowToTab', () => {
     expect(sidebar.state.redoStack).toHaveLength(0);
   });
 
+  it('inserts the row at the given position among the destination rows', () => {
+    const first = new RowItem({ title: 'First' });
+    const second = new RowItem({ title: 'Second' });
+    const { row, source, sourceTab, destination, sidebar } = setup(new RowsLayoutManager({ rows: [first, second] }));
+    const target = destination.getLayout() as RowsLayoutManager;
+
+    moveRowToTab({ row, source, destination, index: 1 });
+    expect(target.state.rows.map((item) => item.state.title)).toEqual(['First', 'New row', 'Second']);
+
+    sidebar.undoAction();
+    expect(target.state.rows.map((item) => item.state.title)).toEqual(['First', 'Second']);
+    expect(sourceTab.getLayout()).toBe(source);
+    sidebar.redoAction();
+    expect(target.state.rows.map((item) => item.state.title)).toEqual(['First', 'New row', 'Second']);
+  });
+
   function setup(previousDestination: DashboardLayoutManager) {
     const row = new RowItem({ title: 'New row', layout: AutoGridLayoutManager.createEmpty() });
     const source = new RowsLayoutManager({ rows: [row] });

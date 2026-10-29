@@ -12,10 +12,13 @@ export function moveRowToTab({
   row,
   source,
   destination,
+  index,
 }: {
   row: RowItem;
   source: RowsLayoutManager;
   destination: TabItem;
+  /** Where among the destination's rows to insert the row, after the last one by default */
+  index?: number;
 }) {
   const destinationLayout = destination.getLayout();
   // The row is still in its source when a drag returns to the original tab.
@@ -48,6 +51,8 @@ export function moveRowToTab({
   }
 
   const previousRowItems = [...destinationRowsManager.state.rows];
+  const nextRowItems = [...previousRowItems];
+  nextRowItems.splice(index ?? nextRowItems.length, 0, row);
   const tabs = destination.getParentLayout();
   const previousSlug = tabs.state.currentTabSlug;
 
@@ -63,7 +68,7 @@ export function moveRowToTab({
         sourceParent.switchLayout(AutoGridLayoutManager.createEmpty(), true);
       }
       row.setState({ title: nextTitle });
-      destinationRowsManager.setState({ rows: [...previousRowItems, row] });
+      destinationRowsManager.setState({ rows: nextRowItems });
       if (destinationRowsManager !== destinationLayout) {
         destinationLayout.clearParent();
         destination.switchLayout(destinationRowsManager, true);
