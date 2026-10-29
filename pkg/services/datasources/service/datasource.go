@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/awsexternalid"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -64,6 +65,7 @@ type Service struct {
 	pluginClient              plugins.Client
 	basePluginContextProvider plugincontext.BasePluginContextProvider
 	retriever                 DataSourceRetriever
+	permissionsDeleter        datasources.PermissionsDeleter
 
 	ptc proxyTransportCache
 }
@@ -85,6 +87,7 @@ func ProvideService(
 	quotaService quota.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	basePluginContextProvider plugincontext.BasePluginContextProvider,
 	retriever DataSourceRetriever,
+	permissionsDeleter datasources.PermissionsDeleter,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger, features: features}
@@ -105,6 +108,7 @@ func ProvideService(
 		pluginClient:              pluginClient,
 		basePluginContextProvider: basePluginContextProvider,
 		retriever:                 retriever,
+		permissionsDeleter:        permissionsDeleter,
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -587,18 +591,54 @@ func getAvailableName(dsType string, dataSources []*datasources.DataSource) stri
 	return name
 }
 
+// ProvideNilPermissionsDeleter is the default wiring: no deleter, so the SQL permission cleanup runs.
+func ProvideNilPermissionsDeleter() datasources.PermissionsDeleter {
+	return nil
+}
+
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+	if s.permissionsDeleter == nil {
+		return s.db.InTransaction(ctx, func(ctx context.Context) error {
+			cmd.UpdateSecretFn = func() error {
+				return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType)
+			}
+
+			if err := s.SQLStore.DeleteDataSource(ctx, cmd); err != nil {
+				return err
+			}
+
+			return s.permissionsService.DeleteResourcePermissions(ctx, cmd.OrgID, cmd.UID)
+		})
+	}
+
+	// Callers may identify the datasource by ID or name only, so resolve the UID in the transaction.
+	uid := cmd.UID
+	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
 		cmd.UpdateSecretFn = func() error {
 			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType)
 		}
 
-		if err := s.SQLStore.DeleteDataSource(ctx, cmd); err != nil {
-			return err
+		if uid == "" {
+			ds, err := s.SQLStore.GetDataSource(ctx, &datasources.GetDataSourceQuery{ID: cmd.ID, Name: cmd.Name, OrgID: cmd.OrgID}) //nolint:staticcheck // Preserve legacy field compatibility.
+			if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
+				return err
+			}
+			if ds != nil {
+				uid = ds.UID
+			}
 		}
 
-		return s.permissionsService.DeleteResourcePermissions(ctx, cmd.OrgID, cmd.UID)
+		return s.SQLStore.DeleteDataSource(ctx, cmd)
 	})
+	if err != nil {
+		return err
+	}
+
+	// No caller wraps DeleteDataSource in an outer transaction, so the deletion has committed here.
+	if uid != "" {
+		s.permissionsDeleter.DeleteDatasourcePermissions(ctx, request.GetNamespaceMapper(s.cfg)(cmd.OrgID), uid)
+	}
+	return nil
 }
 
 func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
