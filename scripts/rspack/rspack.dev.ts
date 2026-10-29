@@ -27,8 +27,10 @@ function getDecoupledPlugins(): string[] {
 function scenesModule(): string {
   const scenesPath = path.resolve('./node_modules/@grafana/scenes');
   try {
-    const status = fs.lstatSync(scenesPath);
-    if (status.isSymbolicLink()) {
+    // pnpm symlinks every installed package into node_modules/.pnpm, so only a link that
+    // resolves outside node_modules points at a local scenes checkout
+    const realPath = fs.realpathSync(scenesPath);
+    if (!realPath.split(path.sep).includes('node_modules')) {
       console.log(`scenes is linked to local scenes repo`);
       return path.resolve(scenesPath + '/src');
     }
@@ -50,7 +52,7 @@ function getDevServerOrigin(): { hostname: string; port: number } {
     // Throw rather than build without a dev server: Grafana ignores a blank value and would
     // still point the browser here.
     throw new Error(
-      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini. To build without a dev server, run `yarn start:noHmr`.'
+      'Cannot start the dev server: `[frontend_dev] server_url` is not set. Restore it in conf/defaults.ini, or set it in conf/custom.ini. To build without a dev server, run `pnpm start:noHmr`.'
     );
   }
 

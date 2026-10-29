@@ -1124,7 +1124,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 		name  string
 		field string
 	}{
-		{"standard retrieve-only field", resource.SEARCH_FIELD_CREATED},
+		{"standard retrieve-only field", resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS},
 		{"per-kind field without sort", "category"},
 		{"per-kind field without sort, prefixed", resource.SEARCH_FIELD_PREFIX + "category"},
 		{"undeclared field", "nonexistent"},
@@ -1164,6 +1164,9 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 		require.Nil(t, errResult)
 
 		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_CREATED), nil, false, nil, nil)
+		require.Nil(t, errResult)
+
+		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS), nil, false, nil, nil)
 		require.NotNil(t, errResult)
 	})
 }
@@ -1347,6 +1350,12 @@ func withIndexCacheTTL(ttl time.Duration) setupOption {
 	}
 }
 
+func withGlobalIndexIdleTimeout(timeout time.Duration) setupOption {
+	return func(options *BleveOptions) {
+		options.GlobalIndexIdleTimeout = timeout
+	}
+}
+
 func withFileThreshold(threshold int) setupOption {
 	return func(options *BleveOptions) {
 		options.FileThreshold = int64(threshold)
@@ -1442,6 +1451,33 @@ func TestBuildIndexReuseChecksRequiredFeatures(t *testing.T) {
 			require.Equal(t, tc.expectedDocCount, cnt)
 		})
 	}
+}
+
+// An on-disk index whose field hash no longer matches is opened as it is, so a
+// release changing the standard fields does not make startup rebuild every
+// index. The rebuild scan replaces it in the background afterwards.
+func TestBuildIndexReusesAnIndexWithAnOutdatedFieldsHash(t *testing.T) {
+	ns := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	tmpDir := t.TempDir()
+	hashes := func(h string) *resource.SearchFieldsRegistry {
+		return resource.NewSearchFieldsRegistry(nil, map[resource.LowerGroupResource]string{resource.NewLowerGroupResource(ns.Group, ns.Resource): h}, nil)
+	}
+
+	backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir), withSearchFields(hashes("old")))
+	_, err := backend.BuildIndex(t.Context(), ns, 10, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	backend.Stop()
+
+	newBackend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(tmpDir), withSearchFields(hashes("new")))
+	idx, err := newBackend.BuildIndex(t.Context(), ns, 20, "test", indexTestDocs(ns, 20, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+
+	cnt, err := idx.DocCount(t.Context(), "", nil)
+	require.NoError(t, err)
+	assert.Equal(t, int64(10), cnt, "the index on disk is served, not rebuilt")
+	bi, err := idx.BuildInfo()
+	require.NoError(t, err)
+	assert.Equal(t, "old", bi.SearchFieldsHash, "so the rebuild scan still sees it as outdated")
 }
 
 // TestValidateDownloadedIndexChecksRequiredFeatures covers the other way an
@@ -1925,6 +1961,73 @@ func TestUnownedIndexIdleTimeout(t *testing.T) {
 			checkOpenIndexes(t, reg, 0, 0)
 		})
 	}
+}
+
+// A global index nobody searches is closed, so its namespace stops paying for
+// reconciles, watch writes and snapshots. Background reads and rebuilds do not
+// count as searches, and per-resource indexes stay open.
+func TestOwnedGlobalIndexIdleTimeout(t *testing.T) {
+	const timeout = 6 * time.Hour
+	backend, reg := setupBleveBackend(t, withIndexCacheTTL(4*time.Hour), withGlobalIndexIdleTimeout(timeout))
+	global := resource.GlobalSearchKey("test")
+	perResource := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	docs := defaultFileThreshold
+	build := func(key resource.NamespacedResource, rebuild bool) resource.ResourceIndex {
+		idx, err := backend.BuildIndex(t.Context(), key, int64(docs), "test", indexTestDocs(perResource, docs, 100), nil, rebuild, time.Time{}, 0, resource.BuildIndexOptions{})
+		require.NoError(t, err)
+		return idx
+	}
+	build(global, false)
+	build(perResource, false)
+
+	// In the past, so the rebuild below happens after the last search.
+	searched := time.Now().Add(-2 * timeout)
+	require.NotNil(t, backend.getIndexForSearch(global, searched))
+	require.NotNil(t, backend.PeekIndex(global))
+	backend.runEvictExpiredOrUnownedIndexes(searched.Add(timeout))
+	require.NotNil(t, backend.peekCachedIndex(global), "not idle for longer than the timeout yet")
+
+	// A search moves the deadline.
+	searchedAgain := searched.Add(timeout / 2)
+	require.NotNil(t, backend.getIndexForSearch(global, searchedAgain))
+	backend.runEvictExpiredOrUnownedIndexes(searched.Add(timeout + time.Millisecond))
+	require.NotNil(t, backend.peekCachedIndex(global), "a search must delay closing")
+
+	// A rebuild after the last search does not.
+	rebuilt := build(global, true)
+	backend.runEvictExpiredOrUnownedIndexes(searchedAgain.Add(timeout + time.Millisecond))
+	require.Nil(t, backend.peekCachedIndex(global))
+	_, err := rebuilt.DocCount(t.Context(), "", nil)
+	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+	require.NotNil(t, backend.peekCachedIndex(perResource), "per-resource indexes are not closed for being idle")
+	checkOpenIndexes(t, reg, 0, 1)
+}
+
+// A global index closed for being idle while it was being rebuilt is not
+// reopened by the rebuild.
+func TestRebuildDoesNotReopenAnIdleClosedGlobalIndex(t *testing.T) {
+	backend, reg := setupBleveBackend(t)
+	global := resource.GlobalSearchKey("test")
+	docsKey := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	docs := defaultFileThreshold
+	_, err := backend.BuildIndex(t.Context(), global, int64(docs), "test", indexTestDocs(docsKey, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+
+	closed := make(chan struct{})
+	_, err = backend.BuildIndex(t.Context(), global, int64(docs), "rebuild", func(index resource.ResourceIndex) (int64, error) {
+		// The index goes idle and is closed while the rebuild lists documents.
+		backend.cacheMx.Lock()
+		idx := backend.cache[global]
+		delete(backend.cache, global)
+		backend.cacheMx.Unlock()
+		backend.closeIndex(idx, global)
+		close(closed)
+		return indexTestDocs(docsKey, docs, 100)(index)
+	}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
+	<-closed
+	require.ErrorIs(t, err, resource.ErrIndexClosedDuringRebuild)
+	require.Nil(t, backend.peekCachedIndex(global))
+	checkOpenIndexes(t, reg, 0, 0)
 }
 
 func TestNewUnownedIndexIdleTimeout(t *testing.T) {
@@ -3025,14 +3128,15 @@ func TestIndexBuildInfoSearchFieldsHashRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, hash, buildInfo.SearchFieldsHash)
 
-	// Indexes built without a registered hash record an empty string.
+	// A kind declaring no fields records the standard fields' hash, so it is
+	// rebuilt when they change.
 	nsOther := resource.NamespacedResource{Namespace: "test", Group: "other", Resource: "things"}
 	indexOther, err := be.BuildIndex(t.Context(), nsOther, 10, "test", indexTestDocs(nsOther, 10, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	buildInfoOther, err := indexOther.BuildInfo()
 	require.NoError(t, err)
-	assert.Equal(t, "", buildInfoOther.SearchFieldsHash)
+	assert.Equal(t, resource.StandardSearchFieldsHash(), buildInfoOther.SearchFieldsHash)
 }
 
 func TestInvalidBuildVersion(t *testing.T) {
