@@ -93,9 +93,15 @@ export async function getTabBox(
   tabTitle: string
 ): Promise<{ x: number; y: number; width: number; height: number }> {
   const tab = tabs.getTitle(tabTitle).first();
-  await expect(tab).toBeVisible();
-  const boundingBox = await tab.boundingBox();
-  return boundingBox!;
+  const boxes: Array<{ x: number; y: number; width: number; height: number }> = [];
+  // the tab bar can re-render (e.g. right after entering edit mode) and detach the tab between
+  // resolving it and reading its box, so retry until a box is read
+  await expect(async () => {
+    const box = await tab.boundingBox();
+    expect(box, `Tab "${tabTitle}" should have a bounding box`).not.toBeNull();
+    boxes.push(box!);
+  }).toPass();
+  return boxes[boxes.length - 1];
 }
 
 export async function moveTab(page: Page, tabs: Tabs, sourceTab: string, targetTab: string) {
@@ -109,6 +115,20 @@ export async function moveTab(page: Page, tabs: Tabs, sourceTab: string, targetT
     // move to adjusted target position (relative to top left)
     await page.mouse.move(targetBox.x + targetBox.width, targetBox.y, { steps: 5 });
     await page.mouse.up();
+  });
+}
+
+/**
+ * Drags a tab by its title and releases it over the left edge of another tab's title, which
+ * aims the drop just before that tab, in the same tab bar or another one
+ */
+export async function dropTabBefore(page: Page, tabs: Tabs, sourceTab: string, targetTab: string) {
+  await test.step(`Drop tab "${sourceTab}" before "${targetTab}"`, async () => {
+    const target = tabs.getTitle(targetTab);
+    const targetBox = await getTabBox(tabs, targetTab);
+    const drag = await startPointerDrag(page, `tab "${sourceTab}"`, tabs.getTitle(sourceTab));
+    await drag.moveTo(target, { position: { x: 5, y: targetBox.height / 2 } });
+    await drag.drop();
   });
 }
 
@@ -191,8 +211,12 @@ export async function startPointerDrag(
   };
 
   await test.step(`Start dragging ${sourceName}`, async () => {
-    await source.scrollIntoViewIfNeeded();
-    current = await getCenter(source, options?.position);
+    // the source can re-render and detach while the page settles (e.g. right after entering edit
+    // mode, once the drag library loads), so retry until it is read from an attached element
+    await expect(async () => {
+      await source.scrollIntoViewIfNeeded({ timeout: 1000 });
+      current = await getCenter(source, options?.position);
+    }).toPass();
     await page.mouse.move(current.x, current.y);
     await page.mouse.down();
     await moveToPoint({ x: current.x, y: current.y + 10 }, { steps: 5 });
