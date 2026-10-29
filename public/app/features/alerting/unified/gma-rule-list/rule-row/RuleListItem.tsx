@@ -2,42 +2,32 @@ import { css } from '@emotion/css';
 import { type AriaAttributes, type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
+import { Stack, useStyles2 } from '@grafana/ui';
 
 interface RuleListItemProps extends AriaAttributes {
   icon?: ReactNode;
   title: ReactNode;
+  /** Renders between the title and the meta row. Absent means nothing is shown. */
   description?: ReactNode;
+  /** Right column; never wraps. Used for interval and actions. */
+  right?: ReactNode;
   /** Falsy entries are dropped. */
   meta?: ReactNode[];
-  metaRight?: ReactNode;
-  actions?: ReactNode;
-  'data-testid'?: string;
 }
 
-export function RuleListItem({
-  icon,
-  title,
-  description,
-  meta = [],
-  metaRight,
-  actions,
-  'data-testid': testId,
-  ...ariaAttributes
-}: RuleListItemProps) {
+export function RuleListItem({ icon, title, description, right, meta = [], ...ariaAttributes }: RuleListItemProps) {
   const styles = useStyles2(getStyles);
   const metaItems = meta.filter(Boolean);
 
   return (
-    <li className={styles.container} data-testid={testId} {...ariaAttributes}>
+    <li className={styles.container} {...ariaAttributes}>
       <Stack direction="row" alignItems="start" gap={1} wrap={false}>
         {icon && <span className={styles.icon}>{icon}</span>}
 
         <Stack direction="column" gap={0.5} flex="1" minWidth={0}>
-          <Stack direction="column" gap={0}>
-            <div className={styles.overflow}>{title}</div>
-            {description && <div className={styles.overflow}>{description}</div>}
-          </Stack>
+          <div className={styles.overflow}>{title}</div>
+
+          {description}
 
           {metaItems.length > 0 && (
             // Whole items wrap; each line's leading separator falls into the clipped margin.
@@ -53,41 +43,13 @@ export function RuleListItem({
           )}
         </Stack>
 
-        {(metaRight || actions) && (
-          <Stack direction="row" alignItems="center" gap={1} wrap={false}>
-            {metaRight}
-            {actions}
+        {right && (
+          <Stack alignItems="center" gap={1} wrap={false}>
+            {right}
           </Stack>
         )}
       </Stack>
     </li>
-  );
-}
-
-interface RuleListItemDescriptionProps {
-  error?: string;
-  summary?: string;
-}
-
-export function RuleListItemDescription({ error, summary }: RuleListItemDescriptionProps) {
-  const text = error || summary;
-
-  if (!text) {
-    return null;
-  }
-
-  return (
-    <Tooltip content={text}>
-      <Text
-        variant="bodySmall"
-        color={error ? 'error' : 'secondary'}
-        weight={error ? 'light' : undefined}
-        truncate
-        element="p"
-      >
-        {text}
-      </Text>
-    </Tooltip>
   );
 }
 

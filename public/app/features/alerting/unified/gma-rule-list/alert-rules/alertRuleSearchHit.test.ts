@@ -7,61 +7,30 @@ function toHit(fields?: unknown) {
   });
 }
 
-const NO_TOTALS = {
-  healthy: undefined,
-  firing: undefined,
-  pending: undefined,
-  recovering: undefined,
-  noData: undefined,
-  error: undefined,
-};
-
 describe('alertRuleSearchHitSchema', () => {
   it('reads the row fields from the search hit', () => {
-    const hit = toHit({
-      title: 'CPU high',
-      folder: 'folder-1',
-      paused: true,
-      interval: '1m',
-      state: 'Firing',
-      health: 'OK',
-      lastError: 'timeout',
-      labels: ['team=infra', 'critical'],
-      datasourceUIDs: ['prom-1', 7],
-      notificationType: 'SimplifiedRouting',
-      receiver: 'ops-email',
-      routingTree: 'ops',
-    });
+    const hit = toHit({ title: 'CPU high', folder: 'folder-1', paused: true, state: 'Firing', health: 'OK' });
 
     expect(hit).toEqual({
       uid: 'rule-1',
       title: 'CPU high',
       folderUid: 'folder-1',
       paused: true,
-      interval: '1m',
       state: 'Firing',
       health: 'OK',
-      lastError: 'timeout',
-      totals: NO_TOTALS,
-      summary: undefined,
-      labels: { team: 'infra', critical: '' },
-      dataSourceUids: ['prom-1'],
-      notificationType: 'SimplifiedRouting',
-      receiver: 'ops-email',
-      routingTree: 'ops',
     });
   });
 
   it('falls back to the rule UID for the title and leaves fields of the wrong type unset', () => {
-    const hit = toHit({ title: 42, folder: ['folder-1'], paused: 'true', state: null, labels: 'team=infra' });
+    const hit = toHit({ title: 42, folder: ['folder-1'], paused: 'true', state: null });
 
-    expect(hit).toMatchObject({
+    expect(hit).toEqual({
       uid: 'rule-1',
       title: 'rule-1',
       folderUid: undefined,
       paused: undefined,
       state: undefined,
-      labels: {},
+      health: undefined,
     });
   });
 
@@ -69,45 +38,7 @@ describe('alertRuleSearchHitSchema', () => {
     { name: 'no fields', fields: undefined },
     { name: 'fields that are not an object', fields: 'title=CPU high' },
   ])('falls back to the rule UID alone when the search returned $name', ({ fields }) => {
-    expect(toHit(fields)).toEqual({
-      uid: 'rule-1',
-      title: 'rule-1',
-      totals: NO_TOTALS,
-      labels: {},
-      dataSourceUids: [],
-    });
-  });
-
-  it('reads every returned instance total, keeping a returned zero', () => {
-    const hit = toHit({
-      totalsHealthy: 4,
-      totalsFiring: 0,
-      totalsPending: 2,
-      totalsRecovering: 1,
-      totalsNoData: 3,
-      totalsError: 5,
-    });
-
-    expect(hit.totals).toEqual({ healthy: 4, firing: 0, pending: 2, recovering: 1, noData: 3, error: 5 });
-  });
-
-  it('leaves a total undefined, never zero, when the search did not return it', () => {
-    const hit = toHit({ totalsFiring: 2, totalsPending: 'many' });
-
-    expect(hit.totals).toEqual({ ...NO_TOTALS, firing: 2 });
-  });
-
-  it('reads the summary from the JSON-encoded annotations', () => {
-    const hit = toHit({
-      annotations: JSON.stringify({ summary: 'CPU above 90%', runbook_url: 'https://example.com' }),
-    });
-
-    expect(hit.summary).toBe('CPU above 90%');
-  });
-
-  it('leaves the summary undefined when the annotations are absent or not valid JSON', () => {
-    expect(toHit({}).summary).toBeUndefined();
-    expect(toHit({ annotations: '{not json' }).summary).toBeUndefined();
+    expect(toHit(fields)).toEqual({ uid: 'rule-1', title: 'rule-1' });
   });
 
   it.each([
@@ -119,5 +50,99 @@ describe('alertRuleSearchHitSchema', () => {
 
     expect(hit.health).toBeUndefined();
     expect(hit.state).toBe(state === 'Firing' ? 'Firing' : undefined);
+  });
+
+  it('reads lastError from the search hit', () => {
+    const hit = toHit({ lastError: 'remote write failed' });
+
+    expect(hit.lastError).toBe('remote write failed');
+  });
+
+  it('leaves lastError unset when absent or not a string', () => {
+    expect(toHit({}).lastError).toBeUndefined();
+    expect(toHit({ lastError: 42 }).lastError).toBeUndefined();
+  });
+
+  it('reads the summary annotation from the JSON-encoded annotations field', () => {
+    const annotations = JSON.stringify({ summary: 'CPU is high', runbook_url: 'https://example.com' });
+    const hit = toHit({ annotations });
+
+    expect(hit.summary).toBe('CPU is high');
+  });
+
+  it('leaves summary unset when annotations has no summary key', () => {
+    const hit = toHit({ annotations: JSON.stringify({ runbook_url: 'https://example.com' }) });
+
+    expect(hit.summary).toBeUndefined();
+  });
+
+  it('leaves summary unset when annotations is malformed JSON', () => {
+    expect(toHit({ annotations: 'not-json' }).summary).toBeUndefined();
+    expect(toHit({ annotations: 42 }).summary).toBeUndefined();
+  });
+
+  it('reads interval from the search hit', () => {
+    const hit = toHit({ interval: '5m' });
+
+    expect(hit.interval).toBe('5m');
+  });
+
+  it('leaves interval unset when absent or not a string', () => {
+    expect(toHit({}).interval).toBeUndefined();
+    expect(toHit({ interval: 60 }).interval).toBeUndefined();
+  });
+
+  it('parses key=value label entries into a Labels object, filtering private keys', () => {
+    const hit = toHit({
+      labels: ['team=platform', 'env=prod', '__grafana_origin=plugin-xyz', '__private__=hidden', 'env'],
+    });
+
+    expect(hit.labels).toEqual({ team: 'platform', env: 'prod' });
+  });
+
+  it('leaves labels unset when the array is empty or has no key=value entries', () => {
+    expect(toHit({ labels: [] }).labels).toBeUndefined();
+    expect(toHit({ labels: ['team', 'env'] }).labels).toBeUndefined();
+    expect(toHit({}).labels).toBeUndefined();
+  });
+
+  it('leaves labels unset when the field is not an array', () => {
+    expect(toHit({ labels: 'team=platform' }).labels).toBeUndefined();
+  });
+
+  it('stores datasourceUIDs as-is', () => {
+    const hit = toHit({ datasourceUIDs: ['ds-1', 'ds-2'] });
+    expect(hit.datasourceUIDs).toEqual(['ds-1', 'ds-2']);
+  });
+
+  it('leaves datasourceUIDs unset when absent or not an array', () => {
+    expect(toHit({}).datasourceUIDs).toBeUndefined();
+    expect(toHit({ datasourceUIDs: 'ds-1' }).datasourceUIDs).toBeUndefined();
+  });
+
+  it('reads the returned instance totals and leaves the ones the search did not return unset', () => {
+    const hit = toHit({ totalsFiring: 2, totalsHealthy: 4, totalsPending: 'many' });
+
+    expect(hit.totals).toEqual({ firing: 2, healthy: 4 });
+  });
+
+  it('leaves totals unset when the search returned none', () => {
+    expect(toHit({ title: 'CPU high' }).totals).toBeUndefined();
+  });
+
+  it('reads the routing fields and ignores an unknown notification type', () => {
+    expect(toHit({ notificationType: 'NamedRoutingTree', routingTree: 'ops', receiver: 'email' })).toMatchObject({
+      notificationType: 'NamedRoutingTree',
+      routingTree: 'ops',
+      receiver: 'email',
+    });
+    expect(toHit({ notificationType: 'Broadcast' }).notificationType).toBeUndefined();
+  });
+
+  it('keeps the plugin origin label that the displayed labels leave out', () => {
+    const hit = toHit({ labels: ['team=infra', '__grafana_origin=plugin/counted-app'] });
+
+    expect(hit.labels).toEqual({ team: 'infra' });
+    expect(hit.originLabel).toBe('plugin/counted-app');
   });
 });

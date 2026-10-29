@@ -1,9 +1,9 @@
 import { reportInteraction } from '@grafana/runtime';
 
 import { logWarning } from '../../Analytics';
-import { serialize } from '../rule-search/serializer';
-import { TOKEN_KEYS } from '../rule-search/tokens';
 import { type RuleKind } from '../shared/ruleKind';
+import { serialize } from '../token-search/serializer';
+import { TOKEN_KEYS } from '../token-search/tokens';
 
 import { type NameResolvers, resolveMigratedNames } from './migrationResolve';
 import { type LegacyRuleListParams, type MigrationDiagnostics, migrateLegacyRuleListUrlSync } from './migrationSync';

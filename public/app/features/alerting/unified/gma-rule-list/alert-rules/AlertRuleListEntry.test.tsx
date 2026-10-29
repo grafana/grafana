@@ -13,9 +13,6 @@ const searchHit: AlertRuleSearchHit = {
   uid: 'rule-1',
   title: 'CPU high',
   folderUid: 'folder-1',
-  labels: {},
-  dataSourceUids: [],
-  totals: {},
 };
 
 function mockFolderPath() {

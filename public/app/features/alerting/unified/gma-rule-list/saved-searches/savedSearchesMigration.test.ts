@@ -1,8 +1,8 @@
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
 import { type NameResolvers } from '../legacy-migration/migrationResolve';
-import { alertTokens } from '../rule-search/alertTokens';
-import { parse } from '../rule-search/parser';
-import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
+import { alertTokens } from '../token-search/alertTokens';
+import { parse } from '../token-search/parser';
+import { type RuleSearchFilter } from '../token-search/ruleSearchFilter';
 
 // In-memory store shared across mocked UserStorage instances, replacing the module-level cache.
 let store: Record<string, string | undefined> = {};

@@ -1,62 +1,22 @@
 import { t } from '@grafana/i18n';
-import { Box, Divider, Stack } from '@grafana/ui';
+import { Box, EmptyState, Stack } from '@grafana/ui';
 
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RulesPageShell } from '../page-shell/RulesPageShell';
-import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
-import { alertTokens } from '../rule-search/alertTokens';
-import { parse } from '../rule-search/parser';
-import { type RuleSearchFilter, createEmptyFilter } from '../rule-search/ruleSearchFilter';
-import { serialize } from '../rule-search/serializer';
-import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
-import { RuleListSavedSearchIndicator } from '../saved-searches/RuleListSavedSearchIndicator';
-import { RuleListSavedSearches, useRuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
-import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
+import { useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
-import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
-import { AlertRulesFoldersView } from './AlertRulesFoldersView';
 import { AlertRulesHeaderActions } from './AlertRulesHeaderActions';
 import { AlertRulesListView } from './AlertRulesListView';
-
-function AlertRulesBody({
-  canSearch,
-  mode,
-  filter,
-}: {
-  canSearch: boolean;
-  mode: RuleListMode;
-  filter: RuleSearchFilter;
-}) {
-  if (!canSearch) {
-    return (
-      <div role="alert">
-        {t('alerting.gma-rule-list.alert-rules.invalid-filter', 'Fix the invalid filter to see results')}
-      </div>
-    );
-  }
-  if (mode === 'folders') {
-    return <AlertRulesFoldersView folderUids={filter.namespaces} />;
-  }
-  return <AlertRulesListView filter={filter} />;
-}
+import { useAlertRuleSearchRejection } from './alertRuleSearch';
 
 function AlertRulesPage() {
-  const { filter, issues, mode, hasNonFolderFilters, setFilter, setMode, reset } = useRuleListSearchState('alert');
+  const { query, filter, parseIssues, filters, applyQuery } = useRuleListSearchState('alert');
+  const rejectionIssues = useAlertRuleSearchRejection(filter, { skip: parseIssues.length > 0 });
+  const issues = parseIssues.length > 0 ? parseIssues : rejectionIssues;
 
-  useTrackRuleListPageView('alert', mode);
-
-  const savedSearches = useRuleListSavedSearches('alert');
-  const query = serialize(filter);
-  const hasActiveFilters = query !== serialize(createEmptyFilter());
-
-  const onApplyQuery = (raw: string) => {
-    setFilter(parse(raw, alertTokens));
-  };
-
-  // Skip the request and show the invalid-filter state when getFilterIssues() reports issues.
-  const canSearch = issues.length === 0;
+  useTrackRuleListPageView('alert', 'list');
 
   return (
     <RulesPageShell
@@ -69,49 +29,19 @@ function AlertRulesPage() {
     >
       <Box paddingTop={2}>
         <Stack direction="column" gap={2}>
-          <Stack direction="row" gap={2} alignItems="center">
-            <Box grow={1} minWidth={0}>
-              <RuleSearchInput
-                query={query}
-                onApply={onApplyQuery}
-                tokens={alertTokens}
-                issues={issues}
-                labelSuffix={
-                  <RuleListSavedSearchIndicator
-                    kind="alert"
-                    query={query}
-                    savedSearches={savedSearches.savedSearches}
-                  />
-                }
-              />
-            </Box>
-            <Box shrink={0}>
-              <RuleListSavedSearches kind="alert" savedSearches={savedSearches} />
-            </Box>
-            <Box shrink={0}>
-              <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
-            </Box>
-          </Stack>
-          <Stack direction="row" gap={2}>
-            <AlertRulesFilterSidebar
-              filter={filter}
-              onChange={setFilter}
-              onClear={reset}
-              hasActiveFilters={hasActiveFilters}
-              issues={issues}
+          <RuleSearchInput query={query} onApply={applyQuery} filters={filters} issues={issues} />
+          {issues.length > 0 ? (
+            <EmptyState
+              variant="not-found"
+              message={t('alerting.gma-rule-list.alert-rules.search-issues', 'Change the search to see results')}
             />
-            {/* The flex wrapper gives the divider a definite height to fill; on its own it collapses to zero. */}
-            <Box display="flex">
-              <Divider direction="vertical" spacing={0} />
-            </Box>
-            <Box grow={1} minWidth={0}>
-              <AlertRulesBody canSearch={canSearch} mode={mode} filter={filter} />
-            </Box>
-          </Stack>
+          ) : (
+            <AlertRulesListView filter={filter} />
+          )}
         </Stack>
       </Box>
     </RulesPageShell>
   );
 }
 
-export default withPageErrorBoundary(withSavedSearchesSetup('alert', AlertRulesPage));
+export default withPageErrorBoundary(AlertRulesPage);

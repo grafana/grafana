@@ -2,11 +2,11 @@ import { Trans } from '@grafana/i18n';
 import { Icon, Stack, Text } from '@grafana/ui';
 
 import { type SavedSearch } from '../../components/saved-searches/savedSearchesSchema';
-import { alertTokens } from '../rule-search/alertTokens';
-import { parse } from '../rule-search/parser';
-import { recordingTokens } from '../rule-search/recordingTokens';
-import { serialize } from '../rule-search/serializer';
 import { type RuleKind } from '../shared/ruleKind';
+import { alertTokens } from '../token-search/alertTokens';
+import { parse } from '../token-search/parser';
+import { recordingTokens } from '../token-search/recordingTokens';
+import { serialize } from '../token-search/serializer';
 
 export interface RuleListSavedSearchIndicatorProps {
   kind: RuleKind;

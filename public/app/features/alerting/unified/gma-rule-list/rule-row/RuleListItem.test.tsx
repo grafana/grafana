@@ -1,45 +1,70 @@
 import { render, screen } from 'test/test-utils';
 
-import { RuleListItem, RuleListItemDescription } from './RuleListItem';
+import { RuleListItem } from './RuleListItem';
 
 describe('RuleListItem', () => {
-  it('renders title, description, actions and only the truthy meta entries', () => {
+  it('renders the title and only the truthy meta entries, in order', () => {
     render(
       <ul>
         <RuleListItem
           title="My rule"
-          description="desc"
           meta={[<span key="a">first</span>, null, false, <span key="b">second</span>, <span key="c">third</span>]}
-          actions={<button>Edit</button>}
         />
       </ul>
     );
 
-    expect(screen.getByRole('listitem')).toBeInTheDocument();
-    expect(screen.getByText('My rule')).toBeInTheDocument();
-    expect(screen.getByText('desc')).toBeInTheDocument();
+    expect(screen.getByRole('listitem')).toHaveTextContent(/^My rule/);
     expect(screen.getAllByTestId('rule-meta-item').map((item) => item.textContent)).toEqual([
       'first',
       'second',
       'third',
     ]);
-    expect(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
   });
-});
 
-describe('RuleListItemDescription', () => {
-  it.each([
-    {
-      name: 'the error instead of the summary when both exist',
-      props: { error: 'boom', summary: 'all good' },
-      shown: 'boom',
-      hidden: 'all good',
-    },
-    { name: 'the summary without an error', props: { summary: 'all good' }, shown: 'all good', hidden: 'boom' },
-  ])('shows $name', ({ props, shown, hidden }) => {
-    render(<RuleListItemDescription {...props} />);
+  it('renders description between title and meta when provided', () => {
+    render(
+      <ul>
+        <RuleListItem
+          title="My rule"
+          description={<span>Something went wrong</span>}
+          meta={[<span key="a">meta item</span>]}
+        />
+      </ul>
+    );
 
-    expect(screen.getByText(shown)).toBeInTheDocument();
-    expect(screen.queryByText(hidden)).not.toBeInTheDocument();
+    const listitem = screen.getByRole('listitem');
+    expect(listitem).toHaveTextContent('My rule');
+    expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+    expect(screen.getByText('meta item')).toBeInTheDocument();
+  });
+
+  it('renders nothing for description when absent', () => {
+    render(
+      <ul>
+        <RuleListItem title="My rule" />
+      </ul>
+    );
+
+    expect(screen.getByRole('listitem')).toHaveTextContent('My rule');
+  });
+
+  it('renders the right slot when provided', () => {
+    render(
+      <ul>
+        <RuleListItem title="My rule" right={<span>1m</span>} />
+      </ul>
+    );
+
+    expect(screen.getByText('1m')).toBeInTheDocument();
+  });
+
+  it('renders nothing for right when absent', () => {
+    render(
+      <ul>
+        <RuleListItem title="My rule" />
+      </ul>
+    );
+
+    expect(screen.getByRole('listitem')).not.toHaveTextContent('1m');
   });
 });

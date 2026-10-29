@@ -111,6 +111,21 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     }),
     proxied({
+      path: '/alerting/routes/mute-timing/:name/edit',
+      roles: evaluateAccess([
+        AccessControlAction.AlertingNotificationsWrite,
+        AccessControlAction.AlertingNotificationsExternalWrite,
+        ...PERMISSIONS_TIME_INTERVALS_READ,
+        ...PERMISSIONS_TIME_INTERVALS_MODIFY,
+      ]),
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "EditMuteTimingByPath" */ 'app/features/alerting/unified/components/mute-timings/EditMuteTimingByPath'
+          )
+      ),
+    }),
+    proxied({
       path: '/alerting/routes/policy/:name/edit',
       roles: evaluateAccess([AccessControlAction.AlertingNotificationsRead, ...PERMISSIONS_NOTIFICATION_POLICIES]),
       component: importAlertingComponent(

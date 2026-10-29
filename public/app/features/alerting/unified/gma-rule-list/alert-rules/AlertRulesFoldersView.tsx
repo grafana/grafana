@@ -120,7 +120,7 @@ function ExpandableFolderRow({ folderUid, title, expanded, onToggle }: Expandabl
 function ExpandedFolderRules({ folderUid }: { folderUid: string }) {
   const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry } = useAlertRuleSearch({
     ...createEmptyFilter(),
-    namespaces: [folderUid],
+    folders: [folderUid],
   });
 
   if (isLoading) {

@@ -33,7 +33,7 @@ jobs:
 
       - name: Setup Node.js
         uses: ./.github/actions/setup-node
-      - name: Install yarn dependencies
+      - name: Install frontend dependencies
         uses: ./.github/actions/yarn-install
 
       # Download the grafana artifacts and stitch them together into a standalone prod-ish Grafana distribution
@@ -91,7 +91,7 @@ jobs:
           done
 
       - name: Run GMA rule list e2e
-        run: yarn e2e:playwright:gma-list --reporter=list
+        run: npm run e2e:playwright:gma-list -- --reporter=list
         env:
           GRAFANA_URL: http://localhost:3003
           CI: true

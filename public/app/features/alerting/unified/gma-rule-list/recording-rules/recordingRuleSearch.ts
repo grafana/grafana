@@ -4,11 +4,13 @@ import * as z from 'zod';
 import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type ResultTotal } from '../rule-row/ResultCount';
+import { type FilterIssue } from '../rule-search/parser';
 import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
+import { getRejectionIssues } from '../rule-search/searchRejection';
 import { type PagedFailure } from '../shared/PagedFailureAlert';
 
 import { type RecordingRuleSearchHit, recordingRuleSearchHitSchema } from './recordingRuleSearchHit';
-import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
+import { buildRecordingRuleLeaves, buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
 
 interface RecordingRuleSearchPage {
   hits: RecordingRuleSearchHit[];
@@ -28,7 +30,10 @@ const recordingRuleSearchResponseSchema = z.object({
 
 type RecordingRuleSearchResponse = z.infer<typeof recordingRuleSearchResponseSchema>;
 
-/** Infinite query keyed by filter; the generated search is a POST mutation with no tags or page state. */
+/**
+ * Infinite query keyed by filter, so a new filter starts again from the first page. The generated
+ * search is a POST mutation with no tags or page state.
+ */
 const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
     searchRecordingRules: build.infiniteQuery<RecordingRuleSearchPage, RuleSearchFilter, string | undefined>({
@@ -89,6 +94,18 @@ export function useRecordingRuleSearch(filter: RuleSearchFilter) {
     // Only the first page's total counts; later pages repeat it and the count never drives paging.
     total: pages?.[0]?.total,
   };
+}
+
+/**
+ * The issues of a search the rule search refused as invalid, for the search input. It reads the same cached
+ * search as the list, so it sends no request of its own.
+ */
+export function useRecordingRuleSearchRejection(filter: RuleSearchFilter, { skip }: { skip: boolean }): FilterIssue[] {
+  const { error } = useSearchRecordingRulesInfiniteQuery(filter, { skip });
+  return useMemo(
+    () => (skip ? [] : (getRejectionIssues(error, buildRecordingRuleLeaves(filter)) ?? [])),
+    [skip, error, filter]
+  );
 }
 
 function toResultTotal({

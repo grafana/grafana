@@ -1,89 +1,94 @@
 # GMA rule-list search
 
-A small handwritten tokenizer/parser for the Alert rules and Recording rules search input.
-No Lezer grammar: the query language is a flat sequence of free text and filter tokens, kept
-separate from the rule search request shape, so it never has to grow new syntax purely to
-express the API's request structure.
+A handwritten tokenizer and parser for the Alert rules and Recording rules search input. A query is a
+flat sequence of free text and `key:value` tokens with no nesting, so a grammar library would add
+files without adding anything.
 
 ## Syntax
 
-A query is a flat, space-separated sequence of free text and `key:value` filter tokens.
+- **Free text** searches rule titles: `cpu high`. A word is a filter only when it starts with one of
+  the page's keys. Any other `key:value` word is title text, so `foo:bar` searches titles, and so does
+  `metric:cpu` on the Alert rules page. `rule:cpu` is title text too, as in the old list.
+- **`key:value`** filters: `folder:` and `datasource:` take UIDs and match them exactly. `folder:`
+  replaces the old list's `namespace:`.
+- **Quotes** keep spaces in a value and can start anywhere in it: `contactPoint:"on call"`,
+  `"cpu high"`, `label:team="a b"`. Quoting text that would read as a filter keeps it title text:
+  `"state:firing"`. Empty quotes are no text. There are no escapes, as in the old list: a backslash
+  is an ordinary character, so a value can't contain a quote.
+- **Repeats**: a single-value filter keeps its last value, so `state:firing state:normal` is
+  `state:normal`. Folders, data sources, labels and title words add up.
+- **Case**: `state:`, `health:` and `paused:` values ignore case. Keys don't: `State:firing` is title
+  text.
 
-- **Free text**: any word without a recognized `key:` prefix, e.g. `cpu high`. Matches on
-  rule title.
-- **`key:value`**: e.g. `namespace:folder-uid`. A value containing whitespace must be
-  quoted: `namespace:"My Folder"`.
-- **Quoted free text**: `"cpu high"` — same meaning as unquoted free text, kept together.
-- **`rule:value`**: equivalent to free text (both search rule titles); kept as a separate
-  token because the legacy syntax has it.
-- **Label matchers** (`label:...`):
-  - `label:team` — key exists
-  - `label:!team` — key does not exist (new; there is no legacy equivalent, so `!` was
-    chosen to be consistent with the negation prefix already used by `!=`/`!~`)
-  - `label:team=api` — equals
-  - `label:team!=api` — not equals
-  - `label:team=~api.*` — regex match
-  - `label:team!~api.*` — negated regex match
+### Label matchers
 
-A token the page cannot apply is never dropped or ignored. That covers a `key:` outside the
-page's token registry, an incomplete token (`label:` with no value yet, an unterminated quote),
-a value the token does not accept (`paused:maybe`, `state:bogus`, `label:=api`), and a repeat of a
-single-value token. `parse` records each in `filter.invalid` exactly as written, `serialize`
-writes it back unchanged, and `getFilterIssues` reports it, so the page shows it as an invalid
-filter and sends no request until it is fixed.
+| Query               | Matches                 |
+| ------------------- | ----------------------- |
+| `label:team`        | has the label           |
+| `label:!team`       | doesn't have the label  |
+| `label:team=api`    | equals                  |
+| `label:team!=api`   | doesn't equal           |
+| `label:team=~api.*` | matches the regex       |
+| `label:team!~api.*` | doesn't match the regex |
 
-The search input keeps the typed text as a draft and never takes the canonical form back.
+An empty value matches any value, so `label:team=` is `label:team`. As in Prometheus, `label:team!=` matches a non-empty value.
+
+## Invalid filters
+
+`parse(query, kind)` returns the filter and its issues, in two steps:
+
+1. **Parsing** turns the text into the filter. It rejects a token only when the filter can't hold its
+   value: a missing value (`label:`), a value outside the filter's set (`state:bogus`,
+   `paused:maybe`), a label matcher with no key, or an unclosed quote anywhere in the query.
+2. **Feedback** judges the result: the rejected tokens, values the filter can hold but the rule search
+   refuses (`*` or `%` in text, `*` in exact values, data source UIDs it can't index), `contactPoint:`
+   next to `policy:`, `panelId:` without `dashboard:`, and the filters the rule search can't serve
+   yet, `policy:default` and `paused:false`.
+
+So `state:bogus` is a parse rejection and `folder:f*` is feedback. The page sends no request while
+there are issues.
+
+The rule search validates the rest itself, such as label regexes. When it refuses a search (422), each
+cause names its place in the request (`where.and[1].regex.pattern`), and `searchRejection.ts` maps it
+back to the filter that built that leaf. The input shows it as `label was rejected: <reason>`, with no
+Retry, since the same search would be refused again.
 
 ## Modules
 
-- `tokenizer.ts` — `tokenize(input)`: splits into `RawToken[]` with source spans.
-- `labelMatcher.ts` — parses/serializes the value half of a `label:` token.
-- `ruleSearchFilter.ts` — the `RuleSearchFilter` model every page works with.
-- `tokens.ts` — token types, `TOKEN_KEYS`, the shared `TokenDefinition`s and
-  `buildTokenRegistry`.
-- `alertTokens.ts` / `recordingTokens.ts` — each page's filter definitions, listed in the order
-  the sidebar shows them. A definition carries the filter's `key`, `label`, `description`,
-  `example`, and optionally the values it cannot search yet.
-- `RuleSearchInput.tsx` builds its help from the definitions, and `FilterSidebar.tsx` builds the
-  sidebar's fields, labels and order from the same ones; each page's sidebar supplies the control
-  for each definition key. Adding a filter means adding one definition and its control.
-- `parser.ts` — `parse(input, registry)`: `RawToken[]` → `RuleSearchFilter`. Tokens the page
-  cannot apply appear in `filter.invalid`.
-- `serializer.ts` — `serialize(filter)`: canonical string form. `parse(serialize(c))`
-  round-trips for any `RuleSearchFilter` populated only from fields the given registry defines.
-- `filterIssues.ts` — `getFilterIssues(filter, kind)`: problems (an unsupported token, a
-  `panelId` with no `dashboardUid`, `policy:default`, a value the rule search rejects such as a
-  wildcard) the page must act on before issuing a request.
-- `searchQueryLeaves.ts` — the rule search request types and the leaves shared by both
-  kinds; `alert-rules/alertRuleSearchQuery.ts` and
-  `recording-rules/recordingRuleSearchQuery.ts` build each kind's request body from `RuleSearchFilter`;
-  `alert-rules/alertRuleSearch.ts` and `recording-rules/recordingRuleSearch.ts` send it.
-- `legacy-migration/migrationSync.ts` / `migrationResolve.ts` / `legacyUrlMigration.ts` — legacy
-  URL → canonical URL migration pipeline; `legacyUrlMigration.ts` is the public entry point
-  (`migrateLegacyRuleListUrl`).
+A _token_ is a piece of the typed query. A _filter definition_ describes a filter a page supports; the
+parser applies a token when one of the page's definitions accepts it.
 
-## New tokens (no legacy equivalent)
+- `tokenizer.ts`: the query into `RawToken`s.
+- `ruleSearchFilter.ts`: the `RuleSearchFilter` model, and the API values each `state:` and `health:`
+  value matches.
+- `filterDefinitions.ts`, `alertFilters.ts`, `recordingFilters.ts`: each page's filters, in the order
+  the search help lists them, with each kind's key type.
+- `parser.ts`: `parse(query, kind)`, the parsing and feedback steps above. Label matchers reuse
+  `parseMatcher` from `utils/matchers.ts`, as RuleList.v2 does.
+- `useRuleListSearchState.ts`: the applied query, kept in the `search` URL parameter exactly as typed, and its filter.
+- `RuleSearchInput.tsx`: the input and its help, built from the filter definitions.
+- `searchRejection.ts`: a refused search (422) as issues, each naming the filter of the rejected leaf.
+- `searchQueryLeaves.ts`: the request leaves both kinds share. `alert-rules/alertRuleSearchQuery.ts`
+  builds the Alert request from them. The builder tests assert the exact `where` clause per query,
+  typed by the generated request type; whether the server accepts it is the server's job.
 
-Filters that didn't exist in the old combined list:
+## New filters
 
-| Token                           | Page      | Search field                                        |
-| ------------------------------- | --------- | --------------------------------------------------- |
-| `paused:true` \| `paused:false` | Alert     | `paused`                                            |
-| `panelId:<id>`                  | Alert     | `panelID` (only sent when paired with `dashboard:`) |
-| `metric:<name>`                 | Recording | `metric`                                            |
-| `targetDatasource:<uid>`        | Recording | `targetDatasourceUID`                               |
+Filters the old list doesn't have:
 
-`policy:default` is a reserved value (not a new token) for the default notification policy.
-The rule search has no accepted request form for it yet, so it is reported by
-`getFilterIssues` as unavailable and never sent.
+| Token                           | Page      | Search field          |
+| ------------------------------- | --------- | --------------------- |
+| `paused:true` \| `paused:false` | Alert     | `paused`              |
+| `panelId:<id>`                  | Alert     | `panelID`             |
+| `metric:<name>`                 | Recording | `metric`              |
+| `targetDatasource:<uid>`        | Recording | `targetDatasourceUID` |
 
-## `state:` / `health:`
+`panelId:` needs `dashboard:`, because panel IDs are dashboard-local.
 
-`state:` (Alert only) accepts `firing`, `pending`, `recovering`, `normal` and `inactive`; `health:`
-(both pages) accepts `ok`, `nodata`, `error`, `err` and `unknown`, in any letter case. The request
-builders send the API's own values: `state:normal` and `state:inactive` both send
-`state In [Healthy, Inactive]`, and `health:ok` sends `OK` on Alert rules and `Recording` on
-Recording rules. A rule with no stored status matches none of them.
+## `state:` and `health:`
 
-`mocks/ruleSearchQueryContract.ts` mirrors what the per-kind rule search accepts, including these values,
-so builder tests can assert every request stays inside it.
+`state:` (Alert rules) takes `firing`, `pending`, `recovering` or `normal`. `health:` takes `ok`,
+`nodata`, `error` or `unknown`. The old list's `state:inactive` is invalid, and the search suggests
+`state:normal` instead. `health:err` isn't accepted.
+`state:normal` sends `state In [Healthy, Inactive]`, and `health:ok` sends `OK` on Alert rules and
+`Recording` on Recording rules. A rule with no stored status matches none of them.

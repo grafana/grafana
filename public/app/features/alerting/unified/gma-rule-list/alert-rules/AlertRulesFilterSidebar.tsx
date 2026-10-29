@@ -4,13 +4,13 @@ import { t } from '@grafana/i18n';
 import { Combobox, type ComboboxOption, Input, Stack, Tooltip } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 
-import { FilterSidebar, type SidebarControl } from '../rule-search/FilterSidebar';
-import { alertTokens } from '../rule-search/alertTokens';
-import { useCommonFilterControls } from '../rule-search/commonFilterControls';
-import { type FilterIssue } from '../rule-search/filterIssues';
-import { InvalidTokenNote, SwitchField, UnavailableFilterNote } from '../rule-search/filterSidebarPrimitives';
-import { DEFAULT_POLICY, type RuleSearchFilter, type StateValue } from '../rule-search/ruleSearchFilter';
-import { TOKEN_KEYS } from '../rule-search/tokens';
+import { FilterSidebar, type SidebarControl } from '../token-search/FilterSidebar';
+import { alertTokens } from '../token-search/alertTokens';
+import { useCommonFilterControls } from '../token-search/commonFilterControls';
+import { type FilterIssue } from '../token-search/filterIssues';
+import { InvalidTokenNote, SwitchField, UnavailableFilterNote } from '../token-search/filterSidebarPrimitives';
+import { DEFAULT_POLICY, type RuleSearchFilter, type StateValue } from '../token-search/ruleSearchFilter';
+import { TOKEN_KEYS } from '../token-search/tokens';
 
 import { AlertContactPointFilter } from './AlertContactPointFilter';
 

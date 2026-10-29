@@ -1,43 +1,51 @@
+import {
+  type AlertRuleAlertRuleHealth,
+  type AlertRuleAlertRuleState,
+  type RecordingRuleRecordingRuleHealth,
+} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+
 /** Reserved `policy` value that stands for "rules using the default notification policy". */
 export const DEFAULT_POLICY = 'default';
 
-/** Kept as the old list's spellings so existing links keep working. */
-export const STATE_VALUES = ['firing', 'pending', 'recovering', 'normal', 'inactive'] as const;
-export const HEALTH_VALUES = ['ok', 'nodata', 'error', 'err', 'unknown'] as const;
+/** Each `state:` value and the API states it matches. */
+export const STATE_API_VALUES = {
+  firing: ['Firing'],
+  pending: ['Pending'],
+  recovering: ['Recovering'],
+  // Neither has a firing, pending or recovering instance.
+  normal: ['Healthy', 'Inactive'],
+} satisfies Record<string, AlertRuleAlertRuleState[]>;
 
-export type StateValue = (typeof STATE_VALUES)[number];
-export type HealthValue = (typeof HEALTH_VALUES)[number];
+/** Each `health:` value and the API health it matches on both kinds; `ok` is per kind, see `HealthValue`. */
+export const HEALTH_API_VALUES = {
+  nodata: 'NoData',
+  error: 'Error',
+  unknown: 'Unknown',
+} satisfies Record<string, AlertRuleAlertRuleHealth & RecordingRuleRecordingRuleHealth>;
 
-export type LabelOperator = 'equal' | 'notEqual' | 'regex' | 'notRegex' | 'exists' | 'absent';
+export type StateValue = keyof typeof STATE_API_VALUES;
+/** `ok` is `OK` on Alert rules and `Recording` on Recording rules. */
+export type HealthValue = 'ok' | keyof typeof HEALTH_API_VALUES;
 
-export interface LabelMatcher {
+export interface SearchLabelMatcher {
   key: string;
   operator: LabelOperator;
   /** Absent for `exists`/`absent`, which carry no value. */
   value?: string;
 }
 
-export interface InvalidToken {
-  key: string;
-  /** The token exactly as it was written, so serializing keeps it unchanged. */
-  raw: string;
-}
-
 export interface RuleSearchFilter {
   text: string[];
-  /** Folder UIDs. Display names are resolved to UIDs only by legacy-link migration. */
-  namespaces: string[];
+  /** Folder UIDs. */
+  folders: string[];
   /** Query datasource UIDs. */
   dataSourceUids: string[];
-  labels: LabelMatcher[];
+  labels: SearchLabelMatcher[];
   hidePluginRules: boolean;
-
-  /** Tokens the page cannot apply, kept as typed so they show as invalid; no request is sent while any exist. */
-  invalid: InvalidToken[];
+  health?: HealthValue;
 
   // Alert-only
   dashboardUid?: string;
-  /** Panel IDs are dashboard-local, so only meaningful with dashboardUid. */
   panelId?: string;
   contactPoint?: string;
   /** Named routing tree, or `DEFAULT_POLICY` for the default-policy filter (not searchable yet). */
@@ -48,16 +56,16 @@ export interface RuleSearchFilter {
   // Recording-only
   metric?: string;
   targetDataSourceUid?: string;
-  health?: HealthValue;
 }
 
 export function createEmptyFilter(): RuleSearchFilter {
   return {
     text: [],
-    namespaces: [],
+    folders: [],
     dataSourceUids: [],
     labels: [],
     hidePluginRules: false,
-    invalid: [],
   };
 }
+
+type LabelOperator = 'equal' | 'notEqual' | 'regex' | 'notRegex' | 'exists' | 'absent';

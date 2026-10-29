@@ -8,7 +8,7 @@ import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
 import { getInteractiveControls, tabSequence } from '../mocks/filterSidebarTestUtils';
 import { mockFolderParents } from '../mocks/handlers';
-import { type RuleSearchFilter, createEmptyFilter } from '../rule-search/ruleSearchFilter';
+import { type RuleSearchFilter, createEmptyFilter } from '../token-search/ruleSearchFilter';
 
 import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
 

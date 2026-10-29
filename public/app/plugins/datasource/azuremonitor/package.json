@@ -2,16 +2,16 @@
   "name": "@grafana-plugins/grafana-azure-monitor-datasource",
   "description": "Grafana data source for Azure Monitor",
   "private": true,
-  "version": "13.3.0-pre",
+  "version": "13.4.0-pre",
   "dependencies": {
     "@emotion/css": "11.13.5",
     "@grafana/azure-sdk": "0.1.0",
-    "@grafana/data": "13.3.0-pre",
-    "@grafana/i18n": "13.3.0-pre",
+    "@grafana/data": "13.4.0-pre",
+    "@grafana/i18n": "13.4.0-pre",
     "@grafana/plugin-ui": "^0.17.0",
-    "@grafana/runtime": "13.3.0-pre",
-    "@grafana/schema": "13.3.0-pre",
-    "@grafana/ui": "13.3.0-pre",
+    "@grafana/runtime": "13.4.0-pre",
+    "@grafana/schema": "13.4.0-pre",
+    "@grafana/ui": "13.4.0-pre",
     "@kusto/monaco-kusto": "^10.0.0",
     "@openfeature/react-sdk": "^1.4.1",
     "@openfeature/web-sdk": "^1.10.0",
@@ -26,8 +26,8 @@
     "rxjs": "7.8.2"
   },
   "devDependencies": {
-    "@grafana/e2e-selectors": "13.3.0-pre",
-    "@grafana/plugin-configs": "13.3.0-pre",
+    "@grafana/e2e-selectors": "13.4.0-pre",
+    "@grafana/plugin-configs": "13.4.0-pre",
     "@grafana/test-utils": "workspace:*",
     "@testing-library/dom": "10.4.1",
     "@testing-library/jest-dom": "6.6.4",
@@ -55,6 +55,5 @@
     "i18n-extract": "i18next-cli extract --sync-primary",
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
-  },
-  "packageManager": "yarn@4.18.1"
+  }
 }

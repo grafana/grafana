@@ -5,10 +5,10 @@ import { type SavedSearch } from '../../components/saved-searches/savedSearchesS
 import { createStorageLoader } from '../../hooks/useGenericSavedSearches';
 import { type NameResolvers, resolveMigratedNames } from '../legacy-migration/migrationResolve';
 import { migrateLegacyRuleListUrlSync } from '../legacy-migration/migrationSync';
-import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
-import { serialize } from '../rule-search/serializer';
-import { tokenize } from '../rule-search/tokenizer';
 import { type RuleKind } from '../shared/ruleKind';
+import { type RuleSearchFilter } from '../token-search/ruleSearchFilter';
+import { serialize } from '../token-search/serializer';
+import { tokenize } from '../token-search/tokenizer';
 
 export const ALERT_SAVED_SEARCHES_STORAGE_KEY = 'alertRulesSavedSearches';
 export const RECORDING_SAVED_SEARCHES_STORAGE_KEY = 'recordingRulesSavedSearches';

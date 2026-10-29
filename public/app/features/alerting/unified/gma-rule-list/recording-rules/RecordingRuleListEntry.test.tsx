@@ -15,8 +15,6 @@ const searchHit: RecordingRuleSearchHit = {
   uid: 'rule-1',
   title: 'cpu_usage:avg',
   folderUid: 'folder-1',
-  labels: {},
-  dataSourceUids: [],
 };
 
 function mockFolderPath() {

@@ -1,10 +1,10 @@
-import { alertTokens } from '../rule-search/alertTokens';
-import { parse } from '../rule-search/parser';
-import { recordingTokens } from '../rule-search/recordingTokens';
-import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
-import { quoteIfNeeded } from '../rule-search/serializer';
-import { tokenize } from '../rule-search/tokenizer';
 import { type RuleKind } from '../shared/ruleKind';
+import { alertTokens } from '../token-search/alertTokens';
+import { parse } from '../token-search/parser';
+import { recordingTokens } from '../token-search/recordingTokens';
+import { type RuleSearchFilter } from '../token-search/ruleSearchFilter';
+import { quoteIfNeeded } from '../token-search/serializer';
+import { tokenize } from '../token-search/tokenizer';
 
 export type ViewMode = 'list' | 'folders';
 

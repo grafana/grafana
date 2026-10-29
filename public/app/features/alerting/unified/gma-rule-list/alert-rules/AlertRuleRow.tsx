@@ -4,19 +4,21 @@ import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha
 import { t } from '@grafana/i18n';
 import { Stack, TextLink } from '@grafana/ui';
 
-import { GRAFANA_RULES_SOURCE_NAME, getDataSourceByUid } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_ORIGIN_LABEL } from '../../utils/labels';
 import { createContactPointSearchLink } from '../../utils/misc';
 import { grafanaRulesNav } from '../../utils/navigation';
-import { getDisplayLabels, getManagerKind, getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
+import { getManagerKind, getPluginId, isProvisionedOrManaged } from '../rule-data/ruleOwnership';
 import { type RuleResourceState } from '../rule-data/ruleResourceState';
-import { DataSourcesMeta } from '../rule-row/DataSourcesMeta';
 import { FolderPath } from '../rule-row/FolderPath';
 import { InstanceTotalsMeta } from '../rule-row/InstanceTotalsMeta';
-import { IntervalIndicator } from '../rule-row/IntervalIndicator';
-import { LabelsMeta } from '../rule-row/LabelsMeta';
 import { PluginOriginBadge } from '../rule-row/PluginOriginBadge';
 import { ProvisioningBadge } from '../rule-row/ProvisioningBadge';
-import { RuleListItem, RuleListItemDescription } from '../rule-row/RuleListItem';
+import { RuleDatasources } from '../rule-row/RuleDatasources';
+import { RuleDescription } from '../rule-row/RuleDescription';
+import { RuleInterval } from '../rule-row/RuleInterval';
+import { RuleLabels } from '../rule-row/RuleLabels';
+import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
 import { MetaItem } from '../shared/MetaItem';
 
@@ -25,7 +27,7 @@ import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 interface AlertRuleRowProps {
   searchHit: AlertRuleSearchHit;
   fullRule: RuleResourceState<AlertRule>;
-  /** List mode only. */
+  /** Absent while the folder path loads, when its lookup failed, or in Folders mode. */
   folderPath?: string[];
   actions?: ReactNode;
 }
@@ -59,14 +61,12 @@ function RoutingMeta({ searchHit }: { searchHit: AlertRuleSearchHit }) {
 export function AlertRuleRow({ searchHit, fullRule, folderPath, actions }: AlertRuleRowProps) {
   const titleId = useId();
 
-  const pluginId = getPluginId(searchHit.labels);
+  const pluginId = getPluginId(
+    searchHit.originLabel === undefined ? undefined : { [GRAFANA_ORIGIN_LABEL]: searchHit.originLabel }
+  );
   // Managed rules get the provisioning badge too: they are owned by something outside the UI.
   const managerKind = fullRule.status === 'loaded' ? getManagerKind(fullRule.rule) : undefined;
   const isOwnedElsewhere = fullRule.status === 'loaded' && isProvisionedOrManaged(fullRule.rule);
-  // Gate each entry: a null-rendering component would leave a stray separator.
-  const hasQueriedDataSources = searchHit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
-  const hasTotals = Object.values(searchHit.totals).some((total) => total !== undefined);
-  const hasDisplayLabels = Object.keys(getDisplayLabels(searchHit.labels)).length > 0;
 
   return (
     <RuleListItem
@@ -84,16 +84,29 @@ export function AlertRuleRow({ searchHit, fullRule, folderPath, actions }: Alert
           )}
         </Stack>
       }
-      description={<RuleListItemDescription error={searchHit.lastError} summary={searchHit.summary} />}
+      description={
+        (searchHit.lastError || searchHit.summary) && (
+          <RuleDescription lastError={searchHit.lastError} summary={searchHit.summary} />
+        )
+      }
+      right={
+        (searchHit.interval || actions) && (
+          <>
+            {searchHit.interval && <RuleInterval interval={searchHit.interval} />}
+            {actions}
+          </>
+        )
+      }
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
-        hasQueriedDataSources && <DataSourcesMeta key="datasources" uids={searchHit.dataSourceUids} />,
-        hasTotals && <InstanceTotalsMeta key="totals" totals={searchHit.totals} />,
-        hasDisplayLabels && <LabelsMeta key="labels" labels={searchHit.labels} />,
+        searchHit.datasourceUIDs && searchHit.datasourceUIDs.length > 0 && (
+          <RuleDatasources key="ds" datasourceUIDs={searchHit.datasourceUIDs} />
+        ),
+        searchHit.totals && <InstanceTotalsMeta key="totals" totals={searchHit.totals} />,
+        // parseSearchLabels guarantees labels is non-empty when present; RuleLabels handles the null case.
+        searchHit.labels && <RuleLabels key="labels" labels={searchHit.labels} />,
         <RoutingMeta key="routing" searchHit={searchHit} />,
       ]}
-      metaRight={<IntervalIndicator interval={searchHit.interval} />}
-      actions={actions}
     />
   );
 }

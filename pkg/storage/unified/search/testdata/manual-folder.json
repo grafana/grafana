@@ -1,105 +1,114 @@
 {
-  "metadata": {},
-  "columnDefinitions": [
+  "result_format":  "FIELD_VALUES",
+  "fields":  [
     {
-      "name": "_id",
-      "type": "string",
-      "format": "",
-      "description": "Unique Identifier. {namespace}/{group}/{resource}/{name}",
-      "priority": 0
+      "name":  "title",
+      "type":  "STRING"
     },
     {
-      "name": "title",
-      "type": "string",
-      "format": "",
-      "description": "Display name for the resource",
-      "priority": 0
+      "name":  "tags",
+      "type":  "STRING",
+      "is_array":  true
     },
     {
-      "name": "tags",
-      "type": "string",
-      "format": "",
-      "description": "Unique tags",
-      "priority": 0
+      "name":  "folder",
+      "type":  "STRING"
     },
     {
-      "name": "folder",
-      "type": "string",
-      "format": "",
-      "description": "Kubernetes name for the folder",
-      "priority": 0
+      "name":  "created",
+      "type":  "INT64"
     },
     {
-      "name": "rv",
-      "type": "number",
-      "format": "int64",
-      "description": "resource version",
-      "priority": 0
+      "name":  "grafana.app/deprecatedInternalID",
+      "type":  "INT64"
     },
     {
-      "name": "created",
-      "type": "number",
-      "format": "int64",
-      "description": "created timestamp (unix millis)",
-      "priority": 0
-    },
-    {
-      "name": "grafana.app/deprecatedInternalID",
-      "type": "number",
-      "format": "int64",
-      "description": "Deprecated legacy id of the resource",
-      "priority": 0
-    },
-    {
-      "name": "manager.kind",
-      "type": "string",
-      "format": "",
-      "description": "Type of manager, which is responsible for managing the resource",
-      "priority": 0
+      "name":  "manager.kind",
+      "type":  "STRING"
     }
   ],
-  "rows": [
+  "rows":  [
     {
-      "cells": [
-        "ns/folder.grafana.app/folders/yyy",
-        "yyy (folder)",
-        null,
-        null,
-        2,
-        0,
-        321,
-        null
-      ],
-      "object": {
-        "kind": "folders",
-        "apiVersion": "folder.grafana.app",
-        "metadata": {
-          "name": "yyy",
-          "namespace": "ns",
-          "resourceVersion": "2"
+      "key":  {
+        "namespace":  "ns",
+        "group":  "folder.grafana.app",
+        "resource":  "folders",
+        "name":  "yyy"
+      },
+      "resource_version":  "2",
+      "values":  [
+        {
+          "string_values":  [
+            "yyy (folder)"
+          ]
+        },
+        {
+          "field_index":  2,
+          "string_values":  [
+            ""
+          ]
+        },
+        {
+          "field_index":  3,
+          "int64_values":  [
+            "0"
+          ]
+        },
+        {
+          "field_index":  4,
+          "int64_values":  [
+            "321"
+          ]
         }
-      }
+      ],
+      "sort_fields":  [
+        "yyy (folder)",
+        "yyy"
+      ]
     },
     {
-      "cells": [
-        "ns/folder.grafana.app/folders/zzz",
-        "zzz (folder)",
-        null,
-        null,
-        1,
-        0,
-        123,
-        "repo"
-      ],
-      "object": {
-        "kind": "folders",
-        "apiVersion": "folder.grafana.app",
-        "metadata": {
-          "name": "zzz",
-          "namespace": "ns",
-          "resourceVersion": "1"
+      "key":  {
+        "namespace":  "ns",
+        "group":  "folder.grafana.app",
+        "resource":  "folders",
+        "name":  "zzz"
+      },
+      "resource_version":  "1",
+      "values":  [
+        {
+          "string_values":  [
+            "zzz (folder)"
+          ]
+        },
+        {
+          "field_index":  2,
+          "string_values":  [
+            ""
+          ]
+        },
+        {
+          "field_index":  3,
+          "int64_values":  [
+            "0"
+          ]
+        },
+        {
+          "field_index":  4,
+          "int64_values":  [
+            "123"
+          ]
+        },
+        {
+          "field_index":  5,
+          "string_values":  [
+            "repo"
+          ]
         }
-      }
+      ],
+      "sort_fields":  [
+        "zzz (folder)",
+        "zzz"
+      ]
     }
   ]
 }

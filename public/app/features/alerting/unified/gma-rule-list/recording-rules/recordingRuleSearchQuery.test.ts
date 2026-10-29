@@ -1,31 +1,29 @@
-import { getRuleSearchQueryViolations } from '../mocks/ruleSearchQueryContract';
-import { type HealthValue, type RuleSearchFilter, createEmptyFilter } from '../rule-search/ruleSearchFilter';
+import { type ListRecordingRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+
+import { parse } from '../rule-search/parser';
+import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
 
 import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
 
-const recordingFields = [
-  'title',
-  'folder',
-  'paused',
-  'labels',
-  'datasourceUIDs',
-  'interval',
-  'metric',
-  'targetDatasourceUID',
-  'health',
-  'lastEvaluationTime',
-  'evaluationDuration',
-  'lastError',
-];
-
 describe('buildRecordingRuleSearchQuery', () => {
-  it('an empty filter has no where clause and the recording-rule field set', () => {
+  it('asks for the first 40 rules by title with the fields the row shows, without a state field', () => {
     expect(buildRecordingRuleSearchQuery(createEmptyFilter())).toEqual({
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'SearchQuery',
       where: undefined,
       sort: [{ field: 'title', direction: 'asc' }],
-      fields: recordingFields,
+      fields: [
+        'title',
+        'folder',
+        'paused',
+        'health',
+        'lastError',
+        'interval',
+        'labels',
+        'datasourceUIDs',
+        'metric',
+        'targetDatasourceUID',
+      ],
       limit: 40,
     });
   });
@@ -34,67 +32,27 @@ describe('buildRecordingRuleSearchQuery', () => {
     expect(buildRecordingRuleSearchQuery(createEmptyFilter(), 'opaque-token').continue).toBe('opaque-token');
   });
 
-  it('metric filters by exact match', () => {
-    const filter: RuleSearchFilter = { ...createEmptyFilter(), metric: 'cpu_usage' };
-    expect(buildRecordingRuleSearchQuery(filter).where).toEqual({
-      filter: { field: 'metric', operator: 'In', values: ['cpu_usage'] },
-    });
+  it.each<[query: string, where: ListRecordingRuleSearchRulesV0Alpha1RequestBody['where']]>([
+    ['metric:cpu_usage', { filter: { field: 'metric', operator: 'In', values: ['cpu_usage'] } }],
+    ['targetDatasource:prom-1', { filter: { field: 'targetDatasourceUID', operator: 'In', values: ['prom-1'] } }],
+    ['health:ok', { filter: { field: 'health', operator: 'In', values: ['Recording'] } }],
+    ['folder:f1 folder:f2', { filter: { field: 'folder', operator: 'In', values: ['f1', 'f2'] } }],
+  ])('builds the where clause for %j', (query, where) => {
+    expect(buildRecordingRuleSearchQuery(parse(query, 'recording').filter).where).toEqual(where);
   });
 
-  it('target data source filters by targetDatasourceUID', () => {
-    const filter: RuleSearchFilter = { ...createEmptyFilter(), targetDataSourceUid: 'target-ds-1' };
-    expect(buildRecordingRuleSearchQuery(filter).where).toEqual({
-      filter: { field: 'targetDatasourceUID', operator: 'In', values: ['target-ds-1'] },
-    });
-  });
-
-  it('metric and target data source combine under one and', () => {
-    const filter: RuleSearchFilter = {
-      ...createEmptyFilter(),
-      metric: 'cpu_usage',
-      targetDataSourceUid: 'target-ds-1',
-    };
-    expect(buildRecordingRuleSearchQuery(filter).where).toEqual({
+  it('combines several filters in one flat and', () => {
+    expect(
+      buildRecordingRuleSearchQuery(
+        parse('cpu health:error targetDatasource:prom-1 metric:cpu_usage', 'recording').filter
+      ).where
+    ).toEqual({
       and: [
+        { text: { value: 'cpu' } },
         { filter: { field: 'metric', operator: 'In', values: ['cpu_usage'] } },
-        { filter: { field: 'targetDatasourceUID', operator: 'In', values: ['target-ds-1'] } },
+        { filter: { field: 'targetDatasourceUID', operator: 'In', values: ['prom-1'] } },
+        { filter: { field: 'health', operator: 'In', values: ['Error'] } },
       ],
     });
-  });
-
-  it.each<[HealthValue, string]>([
-    ['ok', 'Recording'],
-    ['nodata', 'NoData'],
-    ['error', 'Error'],
-    ['err', 'Error'],
-    ['unknown', 'Unknown'],
-  ])('health:%s sends health In [%s]', (health, value) => {
-    const filter: RuleSearchFilter = { ...createEmptyFilter(), health };
-    expect(buildRecordingRuleSearchQuery(filter).where).toEqual({
-      filter: { field: 'health', operator: 'In', values: [value] },
-    });
-  });
-
-  it('plugins:hide sends the negated plugin-origin regex', () => {
-    const filter: RuleSearchFilter = { ...createEmptyFilter(), hidePluginRules: true };
-    expect(buildRecordingRuleSearchQuery(filter).where).toEqual({
-      regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true },
-    });
-  });
-
-  it.each<[string, RuleSearchFilter]>([
-    ['empty filter', createEmptyFilter()],
-    ['free text and a folder', { ...createEmptyFilter(), text: ['cpu'], namespaces: ['f1'] }],
-    [
-      'labels and hidden plugin rules',
-      { ...createEmptyFilter(), hidePluginRules: true, labels: [{ key: 'a', operator: 'notEqual', value: 'x' }] },
-    ],
-    [
-      'metric and target data source',
-      { ...createEmptyFilter(), metric: 'cpu_usage', targetDataSourceUid: 'target-ds-1' },
-    ],
-    ['health', { ...createEmptyFilter(), health: 'ok' }],
-  ])('%s: builds a request the per-kind rule search accepts', (_name, filter) => {
-    expect(getRuleSearchQueryViolations(buildRecordingRuleSearchQuery(filter), 'recording')).toEqual([]);
   });
 });

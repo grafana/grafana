@@ -2,15 +2,15 @@ import { useId } from 'react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { DataSourcePicker } from '@grafana/runtime';
 import { Input } from '@grafana/ui';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
-import { FilterSidebar, type SidebarControl } from '../rule-search/FilterSidebar';
-import { useCommonFilterControls } from '../rule-search/commonFilterControls';
-import { type FilterIssue } from '../rule-search/filterIssues';
-import { recordingTokens } from '../rule-search/recordingTokens';
-import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
-import { TOKEN_KEYS } from '../rule-search/tokens';
+import { FilterSidebar, type SidebarControl } from '../token-search/FilterSidebar';
+import { useCommonFilterControls } from '../token-search/commonFilterControls';
+import { type FilterIssue } from '../token-search/filterIssues';
+import { recordingTokens } from '../token-search/recordingTokens';
+import { type RuleSearchFilter } from '../token-search/ruleSearchFilter';
+import { TOKEN_KEYS } from '../token-search/tokens';
 
 export interface RecordingRulesFilterSidebarProps {
   filter: RuleSearchFilter;

@@ -4,13 +4,15 @@ import * as z from 'zod';
 import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { type ResultTotal } from '../rule-row/ResultCount';
+import { type FilterIssue } from '../rule-search/parser';
 import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
+import { getRejectionIssues } from '../rule-search/searchRejection';
 import { type PagedFailure } from '../shared/PagedFailureAlert';
 
 import { type AlertRuleSearchHit, alertRuleSearchHitSchema } from './alertRuleSearchHit';
-import { buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
+import { buildAlertRuleLeaves, buildAlertRuleSearchQuery } from './alertRuleSearchQuery';
 
-export interface AlertRuleSearchPage {
+interface AlertRuleSearchPage {
   hits: AlertRuleSearchHit[];
   continueToken?: string;
   total?: ResultTotal;
@@ -28,7 +30,10 @@ const alertRuleSearchResponseSchema = z.object({
 
 type AlertRuleSearchResponse = z.infer<typeof alertRuleSearchResponseSchema>;
 
-/** Infinite query keyed by filter; the generated search is a POST mutation with no tags or page state. */
+/**
+ * Infinite query keyed by filter, so a new filter starts again from the first page. The generated
+ * search is a POST mutation with no tags or page state.
+ */
 const alertRuleSearchAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
     searchAlertRules: build.infiniteQuery<AlertRuleSearchPage, RuleSearchFilter, string | undefined>({
@@ -89,6 +94,18 @@ export function useAlertRuleSearch(filter: RuleSearchFilter) {
     // Only the first page's total counts; later pages repeat it and the count never drives paging.
     total: pages?.[0]?.total,
   };
+}
+
+/**
+ * The issues of a search the rule search refused as invalid, for the search input. It reads the same cached
+ * search as the list, so it sends no request of its own.
+ */
+export function useAlertRuleSearchRejection(filter: RuleSearchFilter, { skip }: { skip: boolean }): FilterIssue[] {
+  const { error } = useSearchAlertRulesInfiniteQuery(filter, { skip });
+  return useMemo(
+    () => (skip ? [] : (getRejectionIssues(error, buildAlertRuleLeaves(filter)) ?? [])),
+    [skip, error, filter]
+  );
 }
 
 function toResultTotal({ totalHits, totalHitsRelation }: AlertRuleSearchResponse['metadata']): ResultTotal | undefined {

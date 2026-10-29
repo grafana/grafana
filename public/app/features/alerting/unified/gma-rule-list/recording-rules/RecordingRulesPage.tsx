@@ -1,61 +1,22 @@
 import { t } from '@grafana/i18n';
-import { Box, Divider, Stack } from '@grafana/ui';
+import { Box, EmptyState, Stack } from '@grafana/ui';
 
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RulesPageShell } from '../page-shell/RulesPageShell';
-import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
-import { parse } from '../rule-search/parser';
-import { recordingTokens } from '../rule-search/recordingTokens';
-import { type RuleSearchFilter, createEmptyFilter } from '../rule-search/ruleSearchFilter';
-import { serialize } from '../rule-search/serializer';
-import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
-import { RuleListSavedSearchIndicator } from '../saved-searches/RuleListSavedSearchIndicator';
-import { RuleListSavedSearches, useRuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
-import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
+import { useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
-import { RecordingRulesFilterSidebar } from './RecordingRulesFilterSidebar';
-import { RecordingRulesFoldersView } from './RecordingRulesFoldersView';
 import { RecordingRulesHeaderActions } from './RecordingRulesHeaderActions';
 import { RecordingRulesListView } from './RecordingRulesListView';
-
-function RecordingRulesBody({
-  canSearch,
-  mode,
-  filter,
-}: {
-  canSearch: boolean;
-  mode: RuleListMode;
-  filter: RuleSearchFilter;
-}) {
-  if (!canSearch) {
-    return (
-      <div role="alert">
-        {t('alerting.gma-rule-list.recording-rules.invalid-filter', 'Fix the invalid filter to see results')}
-      </div>
-    );
-  }
-  if (mode === 'folders') {
-    return <RecordingRulesFoldersView folderUids={filter.namespaces} />;
-  }
-  return <RecordingRulesListView filter={filter} />;
-}
+import { useRecordingRuleSearchRejection } from './recordingRuleSearch';
 
 function RecordingRulesPage() {
-  const { filter, issues, mode, hasNonFolderFilters, setFilter, setMode, reset } = useRuleListSearchState('recording');
+  const { query, filter, parseIssues, filters, applyQuery } = useRuleListSearchState('recording');
+  const rejectionIssues = useRecordingRuleSearchRejection(filter, { skip: parseIssues.length > 0 });
+  const issues = parseIssues.length > 0 ? parseIssues : rejectionIssues;
 
-  useTrackRuleListPageView('recording', mode);
-
-  const savedSearches = useRuleListSavedSearches('recording');
-  const query = serialize(filter);
-  const hasActiveFilters = query !== serialize(createEmptyFilter());
-
-  const onApplyQuery = (raw: string) => {
-    setFilter(parse(raw, recordingTokens));
-  };
-
-  const canSearch = issues.length === 0;
+  useTrackRuleListPageView('recording', 'list');
 
   return (
     <RulesPageShell
@@ -68,49 +29,19 @@ function RecordingRulesPage() {
     >
       <Box paddingTop={2}>
         <Stack direction="column" gap={2}>
-          <Stack direction="row" gap={2} alignItems="center">
-            <Box grow={1} minWidth={0}>
-              <RuleSearchInput
-                query={query}
-                onApply={onApplyQuery}
-                tokens={recordingTokens}
-                issues={issues}
-                labelSuffix={
-                  <RuleListSavedSearchIndicator
-                    kind="recording"
-                    query={query}
-                    savedSearches={savedSearches.savedSearches}
-                  />
-                }
-              />
-            </Box>
-            <Box shrink={0}>
-              <RuleListSavedSearches kind="recording" savedSearches={savedSearches} />
-            </Box>
-            <Box shrink={0}>
-              <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
-            </Box>
-          </Stack>
-          <Stack direction="row" gap={0}>
-            <RecordingRulesFilterSidebar
-              filter={filter}
-              onChange={setFilter}
-              onClear={reset}
-              hasActiveFilters={hasActiveFilters}
-              issues={issues}
+          <RuleSearchInput query={query} onApply={applyQuery} filters={filters} issues={issues} />
+          {issues.length > 0 ? (
+            <EmptyState
+              variant="not-found"
+              message={t('alerting.gma-rule-list.recording-rules.search-issues', 'Change the search to see results')}
             />
-            {/* A stretched flex item has a definite height, which the divider's 100% needs to resolve. */}
-            <Box display="flex">
-              <Divider direction="vertical" spacing={2} />
-            </Box>
-            <Box grow={1} minWidth={0}>
-              <RecordingRulesBody canSearch={canSearch} mode={mode} filter={filter} />
-            </Box>
-          </Stack>
+          ) : (
+            <RecordingRulesListView filter={filter} />
+          )}
         </Stack>
       </Box>
     </RulesPageShell>
   );
 }
 
-export default withPageErrorBoundary(withSavedSearchesSetup('recording', RecordingRulesPage));
+export default withPageErrorBoundary(RecordingRulesPage);

@@ -11,7 +11,7 @@ export const DEFAULT_URL = 'http://localhost:3001';
 // run against a second Grafana server started with its own config
 // (scripts/grafana-server/custom-gma-rule-list.ini). Their projects are defined only when
 // GMA_RULE_LIST_SERVER is set, which also moves the default URL and the auto-started server to that
-// second one; select them with --project (`yarn e2e:playwright:gma-list`). The default shards never
+// second one; select them with --project (`pnpm e2e:playwright:gma-list`). The default shards never
 // define them, so the old-list specs keep running on the default server.
 const gmaRuleListServer = process.env.GMA_RULE_LIST_SERVER === 'true';
 const GMA_RULE_LIST_URL = 'http://localhost:3011';
@@ -173,8 +173,8 @@ export default defineConfig<PluginOptions>({
   ...(!process.env.GRAFANA_URL && {
     webServer: {
       command: gmaRuleListServer
-        ? `yarn e2e:plugin:build && ${gmaRuleListServerEnv} ./e2e-playwright/start-server`
-        : 'yarn e2e:plugin:build && ./e2e-playwright/start-server',
+        ? `npm run e2e:plugin:build && ${gmaRuleListServerEnv} ./e2e-playwright/start-server`
+        : 'npm run e2e:plugin:build && ./e2e-playwright/start-server',
       url: serverUrl,
       stdout: 'pipe',
       stderr: 'pipe',

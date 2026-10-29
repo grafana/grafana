@@ -1,4 +1,4 @@
-import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
+import { createEmptyFilter } from '../token-search/ruleSearchFilter';
 
 import { type NameResolvers, resolveMigratedNames } from './migrationResolve';
 import { type SyncMigrationResult } from './migrationSync';

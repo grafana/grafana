@@ -131,7 +131,7 @@ func TestGlobalSearchRoute_DescribesItsFieldsAndHasAValidExample(t *testing.T) {
 	h := NewHandler(client, nil, noop.NewTracerProvider().Tracer(""))
 	r := h.GlobalSearchRoute(nil)
 
-	for _, field := range []string{resource.SEARCH_FIELD_GROUP_RESOURCE, resource.SEARCH_FIELD_CREATED, resource.SEARCH_FIELD_UPDATED, resource.SEARCH_FIELD_FOLDER_TREE} {
+	for _, field := range []string{resource.SEARCH_FIELD_GROUP_RESOURCE, resource.SEARCH_FIELD_FOLDER_TREE} {
 		assert.Contains(t, r.Spec.Post.Description, "`"+field+"`")
 	}
 	for _, gr := range resource.GlobalSearchResourceTypes() {

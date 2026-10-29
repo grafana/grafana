@@ -7,128 +7,130 @@ import { FAILED_RULE, LOADING_RULE, buildAlertRule, loadedRule } from '../mocks/
 import { AlertRuleRow } from './AlertRuleRow';
 import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
-const FOLDER_PATH = ['Team Alerts'];
-
 function baseHit(overrides: Partial<AlertRuleSearchHit> = {}): AlertRuleSearchHit {
-  return {
-    uid: 'rule-1',
-    title: 'CPU high',
-    folderUid: 'folder-1',
-    labels: {},
-    dataSourceUids: [],
-    totals: {},
-    ...overrides,
-  };
+  return { uid: 'rule-1', title: 'CPU high', folderUid: 'folder-1', ...overrides };
 }
 
-function precedes(a: Node, b: Node) {
-  return Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+function renderRow(
+  props: Omit<Parameters<typeof AlertRuleRow>[0], 'fullRule'> & Partial<Parameters<typeof AlertRuleRow>[0]>
+) {
+  return render(
+    <ul>
+      <AlertRuleRow fullRule={LOADING_RULE} {...props} />
+    </ul>
+  );
 }
 
 describe('AlertRuleRow', () => {
   it('links the title to the rule view and labels the list item with it', () => {
-    render(
-      <ul>
-        <AlertRuleRow searchHit={baseHit()} fullRule={LOADING_RULE} />
-      </ul>
-    );
+    renderRow({ searchHit: baseHit() });
 
     expect(screen.getByRole('link', { name: 'CPU high' })).toHaveAttribute('href', '/alerting/grafana/rule-1/view');
     expect(screen.getByRole('listitem', { name: 'CPU high' })).toBeInTheDocument();
   });
 
   it('shows the status icon of the search hit', () => {
-    render(<AlertRuleRow searchHit={baseHit({ state: 'Firing', health: 'OK' })} fullRule={LOADING_RULE} />);
+    renderRow({ searchHit: baseHit({ state: 'Firing', health: 'OK' }) });
 
     expect(screen.getByLabelText('Firing')).toBeInTheDocument();
   });
 
   it('reads Status unavailable, never healthy, when the hit carries no status', () => {
-    render(<AlertRuleRow searchHit={baseHit()} fullRule={LOADING_RULE} />);
+    renderRow({ searchHit: baseHit() });
 
     expect(screen.getByLabelText('Status unavailable')).toBeInTheDocument();
   });
 
-  it('shows the interval ahead of the actions', () => {
-    render(
-      <AlertRuleRow searchHit={baseHit({ interval: '5m' })} fullRule={LOADING_RULE} actions={<button>Edit</button>} />
-    );
-
-    expect(precedes(screen.getByText('5m'), screen.getByRole('button', { name: 'Edit' }))).toBe(true);
-  });
-
   it.each([
-    { name: 'is given', folderPath: FOLDER_PATH, shown: true },
-    { name: 'is not given (Folders mode)', folderPath: undefined, shown: false },
+    { name: 'is known', folderPath: ['Platform', 'Team Alerts'], shown: true },
+    { name: 'is still loading', folderPath: undefined, shown: false },
   ])('shows the folder path only when it $name', ({ folderPath, shown }) => {
-    render(<AlertRuleRow searchHit={baseHit()} fullRule={LOADING_RULE} folderPath={folderPath} />);
+    renderRow({ searchHit: baseHit(), folderPath });
 
     expect(screen.getByRole('link', { name: 'CPU high' })).toBeInTheDocument();
     expect(screen.queryByText('Team Alerts') !== null).toBe(shown);
   });
 
-  it('shows the last error in place of the summary when both are present', () => {
-    render(
-      <AlertRuleRow
-        searchHit={baseHit({ lastError: 'connection refused', summary: 'CPU too high' })}
-        fullRule={LOADING_RULE}
-      />
-    );
+  it('shows the last error when the hit has one', () => {
+    renderRow({ searchHit: baseHit({ lastError: 'remote write failed' }) });
 
-    expect(screen.getByText('connection refused')).toBeInTheDocument();
-    expect(screen.queryByText('CPU too high')).not.toBeInTheDocument();
+    expect(screen.getByText('remote write failed')).toBeInTheDocument();
   });
 
-  it('shows the summary when there is no last error', () => {
-    render(<AlertRuleRow searchHit={baseHit({ summary: 'CPU too high' })} fullRule={LOADING_RULE} />);
+  it('shows the summary annotation when there is no error', () => {
+    renderRow({ searchHit: baseHit({ summary: 'CPU usage is high' }) });
 
-    expect(screen.getByText('CPU too high')).toBeInTheDocument();
+    expect(screen.getByText('CPU usage is high')).toBeInTheDocument();
   });
 
-  it('orders metadata as folder path, data source, instance totals, labels, routing', () => {
-    setupDataSources(mockDataSource({ uid: 'prom-1', name: 'Prometheus prod' }));
-    render(
-      <AlertRuleRow
-        searchHit={baseHit({ dataSourceUids: ['prom-1'], labels: { team: 'infra' }, totals: { firing: 2 } })}
-        fullRule={LOADING_RULE}
-        folderPath={FOLDER_PATH}
-      />
-    );
+  it('shows no description when neither error nor summary is present', () => {
+    renderRow({ searchHit: baseHit() });
 
-    const items = screen.getAllByTestId('rule-meta-item');
-    expect(items.map((item) => item.textContent)).toEqual([
-      'Team Alerts',
-      'Prometheus prod',
-      '2 firing',
-      '1 label',
-      'Default policy',
-    ]);
+    expect(screen.queryByText('remote write failed')).not.toBeInTheDocument();
+    expect(screen.queryByText('CPU usage is high')).not.toBeInTheDocument();
   });
 
-  it('shows only routing as metadata when nothing else is known', () => {
-    render(<AlertRuleRow searchHit={baseHit()} fullRule={LOADING_RULE} />);
+  it('shows the evaluation interval', () => {
+    renderRow({ searchHit: baseHit({ interval: '5m' }) });
 
-    expect(screen.getAllByTestId('rule-meta-item').map((item) => item.textContent)).toEqual(['Default policy']);
+    expect(screen.getByRole('img', { name: 'Evaluated every 5m' })).toBeInTheDocument();
   });
 
-  it('keeps routing visible on a paused rule', () => {
-    render(
-      <AlertRuleRow
-        searchHit={baseHit({ paused: true, notificationType: 'NamedRoutingTree', routingTree: 'escalation-policy' })}
-        fullRule={LOADING_RULE}
-      />
-    );
+  it('shows no interval indicator when interval is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+  });
+
+  it('shows queried datasources when the hit has them', () => {
+    setupDataSources(mockDataSource({ uid: 'ds-prom', name: 'Prometheus' }));
+    renderRow({ searchHit: baseHit({ datasourceUIDs: ['ds-prom'] }) });
+
+    expect(screen.getByRole('link', { name: 'Prometheus' })).toBeInTheDocument();
+  });
+
+  it('shows no datasources when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByRole('link', { name: /data source/i })).not.toBeInTheDocument();
+  });
+
+  it('shows labels when the hit has them', () => {
+    renderRow({ searchHit: baseHit({ labels: { team: 'platform', env: 'prod' } }) });
+
+    expect(screen.getByText('2 labels')).toBeInTheDocument();
+  });
+
+  it('shows no labels when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/label/)).not.toBeInTheDocument();
+  });
+
+  it('shows the instance totals the hit carries, and none when it carries none', () => {
+    const { unmount } = renderRow({ searchHit: baseHit({ totals: { firing: 2, healthy: 5 } }) });
+
+    expect(screen.getByText('5 healthy, 2 firing')).toBeInTheDocument();
+    unmount();
+
+    renderRow({ searchHit: baseHit() });
+    expect(screen.queryByText(/firing|healthy/)).not.toBeInTheDocument();
+  });
+
+  it('shows Default policy as routing when the hit names no contact point or policy', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.getByText('Default policy')).toBeInTheDocument();
+  });
+
+  it('shows the named policy for a rule routed through a named routing tree', () => {
+    renderRow({ searchHit: baseHit({ notificationType: 'NamedRoutingTree', routingTree: 'escalation-policy' }) });
 
     expect(screen.getByText('Policy: escalation-policy')).toBeInTheDocument();
   });
 
   it('shows the direct receiver as a link to its contact point for simplified routing', () => {
-    render(
-      <AlertRuleRow
-        searchHit={baseHit({ notificationType: 'SimplifiedRouting', receiver: 'on-call-team' })}
-        fullRule={LOADING_RULE}
-      />
-    );
+    renderRow({ searchHit: baseHit({ notificationType: 'SimplifiedRouting', receiver: 'on-call-team' }) });
 
     expect(screen.getByText('Delivered to')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'on-call-team' })).toHaveAttribute(
@@ -138,21 +140,19 @@ describe('AlertRuleRow', () => {
   });
 
   it('shows the plugin badge instead of the provisioning badge for a provisioned plugin rule', async () => {
-    render(
-      <AlertRuleRow
-        searchHit={baseHit({ labels: { __grafana_origin: 'plugin/counted-app' } })}
-        fullRule={loadedRule(buildAlertRule({ annotations: { 'grafana.com/provenance': 'api' } }))}
-      />
-    );
+    renderRow({
+      searchHit: baseHit({ originLabel: 'plugin/counted-app' }),
+      fullRule: loadedRule(buildAlertRule({ annotations: { 'grafana.com/provenance': 'api' } })),
+    });
 
     expect(await screen.findByText('counted-app')).toBeInTheDocument();
     expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
   });
 
   it('shows no plugin badge for an origin label that does not start with plugin/', () => {
-    render(<AlertRuleRow searchHit={baseHit({ labels: { __grafana_origin: 'my-app' } })} fullRule={LOADING_RULE} />);
+    renderRow({ searchHit: baseHit({ originLabel: 'my-app' }) });
 
-    expect(screen.getByText('1 label')).toBeInTheDocument();
+    expect(screen.getByText('Default policy')).toBeInTheDocument();
     expect(screen.queryByText('my-app')).not.toBeInTheDocument();
   });
 
@@ -160,7 +160,7 @@ describe('AlertRuleRow', () => {
     { name: 'a provenance annotation', annotations: { 'grafana.com/provenance': 'api' } },
     { name: 'a manager and no provenance', annotations: { 'grafana.app/managedBy': 'terraform' } },
   ])('shows the provisioning badge once the full rule reports $name', ({ annotations }) => {
-    render(<AlertRuleRow searchHit={baseHit()} fullRule={loadedRule(buildAlertRule({ annotations }))} />);
+    renderRow({ searchHit: baseHit(), fullRule: loadedRule(buildAlertRule({ annotations })) });
 
     expect(screen.getByText('Provisioned')).toBeInTheDocument();
   });
@@ -169,9 +169,17 @@ describe('AlertRuleRow', () => {
     { name: 'loading', fullRule: LOADING_RULE },
     { name: 'failed', fullRule: FAILED_RULE },
   ])('shows no provisioning badge while the full rule is $name', ({ fullRule }) => {
-    render(<AlertRuleRow searchHit={baseHit()} fullRule={fullRule} />);
+    renderRow({ searchHit: baseHit(), fullRule });
 
     expect(screen.getByRole('link', { name: 'CPU high' })).toBeInTheDocument();
     expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
+  });
+
+  it('shows the actions after the interval', () => {
+    renderRow({ searchHit: baseHit({ interval: '5m' }), actions: <button>Edit</button> });
+
+    const interval = screen.getByText('5m');
+    const edit = screen.getByRole('button', { name: 'Edit' });
+    expect(Boolean(interval.compareDocumentPosition(edit) & Node.DOCUMENT_POSITION_FOLLOWING)).toBe(true);
   });
 });

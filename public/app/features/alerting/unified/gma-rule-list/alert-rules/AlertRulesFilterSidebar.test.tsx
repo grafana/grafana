@@ -13,8 +13,8 @@ import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
 import { getInteractiveControls, tabSequence } from '../mocks/filterSidebarTestUtils';
 import { mockFolderParents } from '../mocks/handlers';
-import { type FilterIssue } from '../rule-search/filterIssues';
-import { type RuleSearchFilter, createEmptyFilter } from '../rule-search/ruleSearchFilter';
+import { type FilterIssue } from '../token-search/filterIssues';
+import { type RuleSearchFilter, createEmptyFilter } from '../token-search/ruleSearchFilter';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 

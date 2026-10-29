@@ -1,6 +1,8 @@
 package frontendsettings
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,10 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 func newTestReqContext() *contextmodel.ReqContext {
 	return &contextmodel.ReqContext{
+		Context:      &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)},
 		SignedInUser: &user.SignedInUser{},
 	}
 }

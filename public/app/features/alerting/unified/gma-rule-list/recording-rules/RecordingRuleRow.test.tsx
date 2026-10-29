@@ -1,114 +1,137 @@
 import { render, screen } from 'test/test-utils';
 
-import { setupMswServer } from '../../mockApi';
 import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
-import { LOADING_RULE } from '../mocks/factories';
+import { LOADING_RULE, buildRecordingRule, loadedRule } from '../mocks/factories';
 
 import { RecordingRuleRow } from './RecordingRuleRow';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
 
-setupMswServer();
-
-const FOLDER_PATH = ['Platform', 'Team Alerts'];
-
 function baseHit(overrides: Partial<RecordingRuleSearchHit> = {}): RecordingRuleSearchHit {
-  return {
-    uid: 'rule-1',
-    title: 'cpu_usage:avg',
-    folderUid: 'folder-1',
-    labels: {},
-    dataSourceUids: [],
-    ...overrides,
-  };
+  return { uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1', ...overrides };
 }
 
-function precedes(a: Node, b: Node) {
-  return Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+function renderRow(
+  props: Omit<Parameters<typeof RecordingRuleRow>[0], 'fullRule'> & Partial<Parameters<typeof RecordingRuleRow>[0]>
+) {
+  return render(
+    <ul>
+      <RecordingRuleRow fullRule={LOADING_RULE} {...props} />
+    </ul>,
+    { historyOptions: { initialEntries: ['/alerting/rules/recording?search=cpu'] } }
+  );
 }
 
 describe('RecordingRuleRow', () => {
-  beforeEach(() => {
-    setupDataSources(
-      mockDataSource({ uid: 'prom-1', name: 'Prometheus prod' }),
-      mockDataSource({ uid: 'loki-1', name: 'Loki prod' })
-    );
-  });
+  it('links the title to the rule view and labels the list item with it', () => {
+    renderRow({ searchHit: baseHit() });
 
-  it('labels the row by its title link to the rule view, returning to the current list', () => {
-    render(<RecordingRuleRow searchHit={baseHit()} fullRule={LOADING_RULE} />, {
-      historyOptions: { initialEntries: ['/alerting/rules/recording?search=cpu'] },
-    });
-
-    expect(screen.getByRole('link', { name: 'cpu_usage:avg' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'cpu:usage:rate5m' })).toHaveAttribute(
       'href',
       '/alerting/grafana/rule-1/view?returnTo=%2Falerting%2Frules%2Frecording%3Fsearch%3Dcpu'
     );
-    expect(screen.getByRole('listitem', { name: 'cpu_usage:avg' })).toBeInTheDocument();
+    expect(screen.getByRole('listitem', { name: 'cpu:usage:rate5m' })).toBeInTheDocument();
   });
 
-  it.each<{ name: string; props: Partial<RecordingRuleSearchHit>; label: string }>([
-    { name: 'Recording health', props: { health: 'Recording' }, label: 'Recording' },
-    { name: 'Error health', props: { health: 'Error' }, label: 'Failed to evaluate rule' },
-    { name: 'a missing status', props: {}, label: 'Status unavailable' },
-  ])('shows the "$label" status icon for $name', ({ props, label }) => {
-    render(<RecordingRuleRow searchHit={baseHit(props)} fullRule={LOADING_RULE} />);
+  it('shows the Recording status icon when health is Recording', () => {
+    renderRow({ searchHit: baseHit({ health: 'Recording' }) });
 
-    expect(screen.getByLabelText(label)).toBeInTheDocument();
+    expect(screen.getByLabelText('Recording')).toBeInTheDocument();
   });
 
-  it('shows the last error as the description', () => {
-    render(<RecordingRuleRow searchHit={baseHit({ lastError: 'query timed out' })} fullRule={LOADING_RULE} />);
+  it('reads Status unavailable, never Recording, when the search hit carries no health', () => {
+    renderRow({ searchHit: baseHit() });
 
-    expect(screen.getByText('query timed out')).toBeInTheDocument();
+    expect(screen.getByLabelText('Status unavailable')).toBeInTheDocument();
   });
 
-  describe('Records ... to ...', () => {
-    it('comes after the folder path and before the queried data sources, with the target after "to"', () => {
-      render(
-        <RecordingRuleRow
-          searchHit={baseHit({
-            lastError: 'query timed out',
-            metric: 'cpu_usage:avg',
-            targetDataSourceUid: 'prom-1',
-            dataSourceUids: ['loki-1'],
-          })}
-          fullRule={LOADING_RULE}
-          folderPath={FOLDER_PATH}
-        />
-      );
+  it.each([
+    { name: 'is known', folderPath: ['Platform', 'Team Metrics'], shown: true },
+    { name: 'is still loading', folderPath: undefined, shown: false },
+  ])('shows the folder path only when it $name', ({ folderPath, shown }) => {
+    renderRow({ searchHit: baseHit(), folderPath });
 
-      const folder = screen.getByText('Team Alerts');
-      const records = screen.getByText('Records cpu_usage:avg to');
-      const target = screen.getByText('Prometheus prod');
-      const queried = screen.getByRole('link', { name: 'Loki prod' });
-      expect(precedes(folder, records)).toBe(true);
-      expect(precedes(records, target)).toBe(true);
-      expect(precedes(records, queried)).toBe(true);
+    expect(screen.getByRole('link', { name: 'cpu:usage:rate5m' })).toBeInTheDocument();
+    expect(screen.queryByText('Team Metrics') !== null).toBe(shown);
+  });
+
+  it('shows the last error when the hit has one', () => {
+    renderRow({ searchHit: baseHit({ lastError: 'remote write failed' }) });
+
+    expect(screen.getByText('remote write failed')).toBeInTheDocument();
+  });
+
+  it('shows no description when no error is present', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText('remote write failed')).not.toBeInTheDocument();
+  });
+
+  it('shows the evaluation interval', () => {
+    renderRow({ searchHit: baseHit({ interval: '1m' }) });
+
+    expect(screen.getByRole('img', { name: 'Evaluated every 1m' })).toBeInTheDocument();
+  });
+
+  it('shows no interval indicator when interval is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the recorded metric and target datasource when the hit has them', () => {
+    setupDataSources(mockDataSource({ uid: 'ds-mimir', name: 'Mimir' }));
+    renderRow({
+      searchHit: baseHit({ metric: 'memory:usage:bytes', targetDatasourceUID: 'ds-mimir' }),
     });
 
-    it.each([
-      {
-        name: 'only the target when the metric is unknown',
-        searchHit: { targetDataSourceUid: 'prom-1' },
-        text: 'Records to',
-      },
-      {
-        name: 'only the metric when the target data source cannot be resolved',
-        searchHit: { metric: 'cpu_usage:avg', targetDataSourceUid: 'gone' },
-        text: 'Records cpu_usage:avg',
-      },
-    ])('names $name', ({ searchHit, text }) => {
-      render(<RecordingRuleRow searchHit={baseHit(searchHit)} fullRule={LOADING_RULE} />);
+    expect(screen.getByText('memory:usage:bytes')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Mimir' })).toBeInTheDocument();
+  });
 
-      expect(screen.getByText(text)).toBeInTheDocument();
+  it('shows no recorded metric when metric or targetDatasourceUID is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/Records/)).not.toBeInTheDocument();
+  });
+
+  it('shows queried datasources when the hit has them', () => {
+    setupDataSources(mockDataSource({ uid: 'ds-prom', name: 'Prometheus' }));
+    renderRow({ searchHit: baseHit({ datasourceUIDs: ['ds-prom'] }) });
+
+    expect(screen.getByRole('link', { name: 'Prometheus' })).toBeInTheDocument();
+  });
+
+  it('shows labels when the hit has them', () => {
+    renderRow({ searchHit: baseHit({ labels: { team: 'infra' } }) });
+
+    expect(screen.getByText('1 label')).toBeInTheDocument();
+  });
+
+  it('shows no datasources when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/data source/i)).not.toBeInTheDocument();
+  });
+
+  it('shows no labels when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/label/)).not.toBeInTheDocument();
+  });
+
+  it('shows the plugin badge for a plugin-managed rule', async () => {
+    renderRow({ searchHit: baseHit({ originLabel: 'plugin/counted-app' }) });
+
+    expect(await screen.findByText('counted-app')).toBeInTheDocument();
+  });
+
+  it('shows the provisioning badge once the full rule reports provenance', () => {
+    renderRow({
+      searchHit: baseHit(),
+      fullRule: loadedRule(buildRecordingRule({ annotations: { 'grafana.com/provenance': 'api' } })),
     });
 
-    it('is omitted when neither metric nor a resolvable target is known', () => {
-      render(<RecordingRuleRow searchHit={baseHit({ targetDataSourceUid: 'gone' })} fullRule={LOADING_RULE} />);
-
-      expect(screen.getByRole('link', { name: 'cpu_usage:avg' })).toBeInTheDocument();
-      expect(screen.queryByText(/Records/)).not.toBeInTheDocument();
-    });
+    expect(screen.getByText('Provisioned')).toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
+import { type RuleSearchFilter } from '../token-search/ruleSearchFilter';
 
 import { type SyncMigrationResult } from './migrationSync';
 

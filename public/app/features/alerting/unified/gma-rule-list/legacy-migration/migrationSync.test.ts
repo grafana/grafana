@@ -1,4 +1,4 @@
-import { createEmptyFilter } from '../rule-search/ruleSearchFilter';
+import { createEmptyFilter } from '../token-search/ruleSearchFilter';
 
 import { type LegacyRuleListParams, migrateLegacyRuleListUrlSync } from './migrationSync';
 

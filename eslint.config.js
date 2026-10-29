@@ -138,6 +138,7 @@ const gmaAllowedUnifiedModules = [
   'utils/datasource',
   'utils/k8s/*',
   'utils/labels',
+  'utils/matchers',
   'utils/misc',
   'utils/navigation',
   'utils/url',
@@ -155,9 +156,12 @@ const gmaAllowedAppModules = [
   'core/services/context_srv',
   'core/utils/kbn',
   'features/apiserver/types',
+  'features/datasources/components/picker/DataSourceLogo',
+  'features/datasources/components/picker/DataSourcePicker',
   'store/store',
   'types/accessControl',
   'types/store',
+  'types/unified-alerting-dto',
 ];
 
 const gmaAllowedTestUnifiedModules = ['mockApi', 'mocks', 'mocks/server/events', 'testSetup/datasources'];
@@ -259,6 +263,7 @@ const gmaCapabilityFolders = [
   'folder-browsing',
   'rule-data',
   'rule-search',
+  'token-search',
   'rule-actions',
   'recently-deleted',
   'saved-searches',
@@ -278,7 +283,12 @@ function gmaRuleListBlocks(name, globs, extraPatterns) {
       'no-restricted-imports': [
         'error',
         withBaseRestrictedImportsConfig({
-          patterns: [...gmaRuleListBasePatterns, ...gmaImportAllowlistPatterns({ tests }), ...extraPatterns],
+          patterns: [
+            ...gmaRuleListBasePatterns,
+            ...gmaImportAllowlistPatterns({ tests }),
+            // Tests may build a kind's request as a fixture, so the folder boundaries bind source files only.
+            ...(tests ? [] : extraPatterns),
+          ],
         }),
       ],
     },

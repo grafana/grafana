@@ -7,11 +7,11 @@ import { type SavedSearch } from '../../components/saved-searches/savedSearchesS
 import { createAutoApplyTracker, createStorageLoader } from '../../hooks/useGenericSavedSearches';
 import { legacyRuleListNameResolvers } from '../legacy-migration/nameResolvers';
 import { useDroppedFiltersWarning } from '../legacy-migration/useDroppedFiltersWarning';
-import { alertTokens } from '../rule-search/alertTokens';
-import { parse } from '../rule-search/parser';
-import { recordingTokens } from '../rule-search/recordingTokens';
-import { searchParamsForFilter } from '../rule-search/useRuleListSearchState';
 import { type RuleKind } from '../shared/ruleKind';
+import { alertTokens } from '../token-search/alertTokens';
+import { parse } from '../token-search/parser';
+import { recordingTokens } from '../token-search/recordingTokens';
+import { searchParamsForFilter } from '../token-search/useRuleListSearchState';
 
 import { applySavedSearch, copyLegacySavedSearchesOnce, storageKeyForKind } from './savedSearchesMigration';
 

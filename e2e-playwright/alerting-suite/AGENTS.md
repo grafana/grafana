@@ -109,7 +109,7 @@ which adds the `authenticate` setup project as a dependency and points the test 
 a saved storage state file.
 
 **Gotcha:** Playwright applies CLI file filters to dependency projects too. So
-`yarn e2e:pw --project=alerting e2e-playwright/alerting-suite/foo.spec.ts` will
+`pnpm e2e:pw --project=alerting e2e-playwright/alerting-suite/foo.spec.ts` will
 also filter the `authenticate` project's `auth.setup.js`, find no matches, and
 skip generating the storage state — every API call then 403s.
 
@@ -117,13 +117,13 @@ Workarounds:
 
 1. Run the setup project explicitly first:
    ```sh
-   yarn e2e:pw --project=authenticate
-   yarn e2e:pw --project=alerting --reporter=line e2e-playwright/alerting-suite/foo.spec.ts
+   pnpm e2e:pw --project=authenticate
+   pnpm e2e:pw --project=alerting --reporter=line e2e-playwright/alerting-suite/foo.spec.ts
    ```
 2. Use `--grep` instead of a file path — title filters don't break dependency
    projects:
    ```sh
-   yarn e2e:pw --project=alerting --reporter=line --grep "your test title"
+   pnpm e2e:pw --project=alerting --reporter=line --grep "your test title"
    ```
 
 ## New rule list specs run on their own server
@@ -137,8 +137,8 @@ The `gma-*` specs and the `corpus/` setup/teardown need `alerting.gmaOnlyListVie
 shards keep the old list and never see them.
 
 ```sh
-yarn e2e:playwright:gma-list                                  # starts the server on :3011 itself
-GRAFANA_URL=http://localhost:3011 yarn e2e:playwright:gma-list   # reuse a server you started
+pnpm e2e:playwright:gma-list                                  # starts the server on :3011 itself
+GRAFANA_URL=http://localhost:3011 pnpm e2e:playwright:gma-list   # reuse a server you started
 ```
 
 The ini file shows how to start that server by hand. Both servers share `playwright/.auth`, so

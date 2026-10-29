@@ -2,13 +2,13 @@
   "name": "@grafana-plugins/graphite",
   "description": "Graphite data source plugin for Grafana",
   "private": true,
-  "version": "13.3.0-pre",
+  "version": "13.4.0-pre",
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@grafana/data": "13.3.0-pre",
-    "@grafana/runtime": "13.3.0-pre",
-    "@grafana/schema": "13.3.0-pre",
-    "@grafana/ui": "13.3.0-pre",
+    "@grafana/data": "13.4.0-pre",
+    "@grafana/runtime": "13.4.0-pre",
+    "@grafana/schema": "13.4.0-pre",
+    "@grafana/ui": "13.4.0-pre",
     "@reduxjs/toolkit": "2.12.0",
     "lodash": "^4.17.23",
     "react": "19.2.8",
@@ -19,7 +19,7 @@
     "semver": "7.8.5"
   },
   "devDependencies": {
-    "@grafana/plugin-configs": "13.3.0-pre",
+    "@grafana/plugin-configs": "13.4.0-pre",
     "@testing-library/dom": "10.4.1",
     "@testing-library/react": "16.3.0",
     "@types/jest": "29.5.14",
@@ -42,6 +42,5 @@
     "test": "jest --watch --onlyChanged",
     "test:ci": "jest --maxWorkers 4"
   },
-  "packageManager": "yarn@4.18.1",
   "type": "module"
 }
