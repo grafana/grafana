@@ -2200,11 +2200,6 @@
       "count": 2
     }
   },
-  "public/app/features/scopes/dashboards/ScopesDashboardsService.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
   "public/app/features/search/page/components/ActionRow.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
