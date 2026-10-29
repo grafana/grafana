@@ -797,8 +797,9 @@ type Cfg struct {
 	// defaults to dashboards; external defaults to none.
 	VectorAllowedInternalCollections []string
 	VectorAllowedExternalCollections []string
-	VectorSharedExternalCollections  []string
-	VectorSharedWriteServices        []string
+	// Exact group/resource collections readable only by the listed service identities.
+	VectorAllowedReadServices       map[string][]string
+	VectorSharedExternalCollections map[string][]string
 	// Registers the VectorStore write RPCs on the storage server.
 	EnableVectorStore bool
 	// Service identities allowed to call the VectorStore write RPCs.
@@ -861,14 +862,7 @@ type Cfg struct {
 	LoggedQuotaResources          []string
 	QuotasErrorMessageSupportInfo string
 
-	EnableSQLKVBackend           bool
-	EnableSQLKVCompatibilityMode bool
-	// LogSQLBackendCalls, when true, logs every call that reaches an exported
-	// method of the legacy SQL backend. Temporary smoke-test instrumentation
-	// used to confirm no production traffic still reaches sql/backend before
-	// removing the sqlkv backwards-compatibility layer.
-	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
-	LogSQLBackendCalls                bool
+	EnableSQLKVBackend                bool
 	KVLeaseTTL                        time.Duration
 	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
@@ -1889,6 +1883,12 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// unified storage config
 	cfg.setUnifiedStorageConfig()
+	if err := cfg.readVectorAllowedReadServices(); err != nil {
+		return err
+	}
+	if err := cfg.readVectorSharedExternalCollections(); err != nil {
+		return err
+	}
 
 	cfg.readStartupParams(iniFile)
 	return nil

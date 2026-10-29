@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/selection"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -101,6 +102,11 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	if !types.NamespaceMatches(user.GetNamespace(), namespace) {
 		return nil, status.Error(codes.PermissionDenied, "namespace mismatch")
 	}
+	for _, key := range keys {
+		if err := s.checkAllowedReadService(user, key.Group, key.Resource); err != nil {
+			return nil, err
+		}
+	}
 	targets, err := s.prepareHybridTargets(ctx, req, keys)
 	if err != nil {
 		return nil, err
@@ -137,6 +143,18 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		}
 	}
 	return &resourcepb.HybridSearchResponse{Results: results, Kinds: kinds}, nil
+}
+
+func (s *searchServer) checkAllowedReadService(user types.AuthInfo, group, resource string) error {
+	allowed, restricted := s.allowedReadServices[group+"/"+resource]
+	if !restricted {
+		return nil
+	}
+	identities := user.GetExtra()[authnlib.ServiceIdentityKey]
+	if user.GetIdentityType() != types.TypeAccessPolicy || len(identities) != 1 || !slices.Contains(allowed, identities[0]) {
+		return status.Error(codes.PermissionDenied, "service identity not allowed to read collection")
+	}
+	return nil
 }
 
 type hybridTarget struct {
@@ -744,63 +762,10 @@ func lexicalHitsFromResponse(resp *resourcepb.ResourceSearchResponse) ([]lexical
 		return nil, nil
 	}
 
-	switch resp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return lexicalHitsFromTable(resp.GetResults()), nil
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return lexicalHitsFromFieldValues(resp)
-	default:
+	if resp.GetResultFormat() != resourcepb.ResourceSearchRequest_FIELD_VALUES {
 		return nil, fmt.Errorf("unsupported search result format %d", resp.GetResultFormat())
 	}
-}
 
-func lexicalHitsFromTable(table *resourcepb.ResourceTable) []lexicalHit {
-	if table == nil {
-		return nil
-	}
-	titleIdx, folderIdx, managerKindIdx, managerIDIdx := -1, -1, -1, -1
-	tagsIdx := -1
-	for i, column := range table.GetColumns() {
-		switch column.GetName() {
-		case SEARCH_FIELD_TITLE:
-			titleIdx = i
-		case SEARCH_FIELD_FOLDER:
-			folderIdx = i
-		case SEARCH_FIELD_MANAGER_KIND:
-			managerKindIdx = i
-		case SEARCH_FIELD_MANAGER_ID:
-			managerIDIdx = i
-		case SEARCH_FIELD_TAGS:
-			tagsIdx = i
-		}
-	}
-	hits := make([]lexicalHit, 0, len(table.GetRows()))
-	for _, row := range table.GetRows() {
-		if row == nil || row.GetKey() == nil {
-			continue
-		}
-		hit := lexicalHit{uid: row.GetKey().GetName()}
-		if titleIdx >= 0 && titleIdx < len(row.GetCells()) {
-			hit.title = string(row.GetCells()[titleIdx])
-		}
-		if folderIdx >= 0 && folderIdx < len(row.GetCells()) {
-			hit.folder = string(row.GetCells()[folderIdx])
-		}
-		if managerKindIdx >= 0 && managerKindIdx < len(row.GetCells()) {
-			hit.managerKind = string(row.GetCells()[managerKindIdx])
-		}
-		if managerIDIdx >= 0 && managerIDIdx < len(row.GetCells()) {
-			hit.managerID = string(row.GetCells()[managerIDIdx])
-		}
-		if tagsIdx >= 0 && tagsIdx < len(row.GetCells()) {
-			_ = json.Unmarshal(row.GetCells()[tagsIdx], &hit.tags)
-		}
-		hits = append(hits, hit)
-	}
-	return hits
-}
-
-func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse) ([]lexicalHit, error) {
 	hits := make([]lexicalHit, 0, len(resp.GetRows()))
 	for i, row := range resp.GetRows() {
 		if row == nil || row.GetKey() == nil {

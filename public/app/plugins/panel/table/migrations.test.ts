@@ -61,17 +61,18 @@ describe('Table Migrations', () => {
       },
     };
 
+    const prevFieldConfig = { defaults: {}, overrides: [] };
     const columnsPanel = {} as PanelModel;
-    tablePanelChangedHandler(columnsPanel, 'table-old', toColumns);
+    tablePanelChangedHandler(columnsPanel, 'table-old', toColumns, prevFieldConfig);
     expect(columnsPanel).toMatchSnapshot();
     const rowsPanel = {} as PanelModel;
-    tablePanelChangedHandler(rowsPanel, 'table-old', toRows);
+    tablePanelChangedHandler(rowsPanel, 'table-old', toRows, prevFieldConfig);
     expect(rowsPanel).toMatchSnapshot();
     const aggregationsPanel = {} as PanelModel;
-    tablePanelChangedHandler(aggregationsPanel, 'table-old', aggregations);
+    tablePanelChangedHandler(aggregationsPanel, 'table-old', aggregations, prevFieldConfig);
     expect(aggregationsPanel).toMatchSnapshot();
     const tablePanel = {} as PanelModel;
-    tablePanelChangedHandler(tablePanel, 'table-old', table);
+    tablePanelChangedHandler(tablePanel, 'table-old', table, prevFieldConfig);
     expect(tablePanel).toMatchSnapshot();
   });
 
@@ -136,7 +137,7 @@ describe('Table Migrations', () => {
     };
 
     const panel = {} as PanelModel;
-    tablePanelChangedHandler(panel, 'table-old', oldStyles);
+    tablePanelChangedHandler(panel, 'table-old', oldStyles, { defaults: {}, overrides: [] });
     expect(panel).toMatchInlineSnapshot(`
       {
         "fieldConfig": {
@@ -293,7 +294,7 @@ describe('Table Migrations', () => {
     };
 
     const panel = {} as PanelModel;
-    tablePanelChangedHandler(panel, 'table-old', oldStyles);
+    tablePanelChangedHandler(panel, 'table-old', oldStyles, { defaults: {}, overrides: [] });
     expect(panel.fieldConfig.overrides).toEqual([
       {
         matcher: {

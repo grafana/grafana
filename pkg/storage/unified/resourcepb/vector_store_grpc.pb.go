@@ -29,7 +29,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// VectorStore is a tenant-scoped write service for embedding resources from outside unified storage.
+// VectorStore embeds resources from outside unified storage. Requests carry the
+// authenticated publisher namespace; enrolled shared collections use separate storage.
 // Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
 // Reads go through the search service and are RBAC-checked per result; folder-scoped
 // resources (per the authz mapper) are checked against each row's folder.
@@ -104,7 +105,8 @@ func (c *vectorStoreClient) UpdateMetadata(ctx context.Context, in *VectorUpdate
 // All implementations should embed UnimplementedVectorStoreServer
 // for forward compatibility
 //
-// VectorStore is a tenant-scoped write service for embedding resources from outside unified storage.
+// VectorStore embeds resources from outside unified storage. Requests carry the
+// authenticated publisher namespace; enrolled shared collections use separate storage.
 // Callers send collections and text documents; the server embeds and stores them but does not manage their lifecycle after that.
 // Reads go through the search service and are RBAC-checked per result; folder-scoped
 // resources (per the authz mapper) are checked against each row's folder.
