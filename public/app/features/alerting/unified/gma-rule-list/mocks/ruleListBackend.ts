@@ -31,7 +31,7 @@ interface SearchWhere {
   filter?: { field: string; operator: 'In' | 'NotIn'; values: string[] };
 }
 
-export interface SearchBody {
+interface SearchBody {
   where?: SearchWhere;
   limit?: number;
   continue?: string;
