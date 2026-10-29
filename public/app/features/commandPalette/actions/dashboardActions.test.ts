@@ -326,10 +326,27 @@ describe('dashboardActions', () => {
         ]);
       });
 
-      it("does not set tags on hybrid dashboard actions, since the hybrid endpoint doesn't return them", async () => {
+      it.each([
+        { desc: 'tags are returned', tags: ['prod', 'team-a'] },
+        { desc: 'tags are empty', tags: [] },
+        { desc: 'tags are omitted', tags: undefined },
+      ])('maps hybrid dashboard tags when $desc', async ({ tags }) => {
+        server.use(
+          getHybridSearchHandler([
+            {
+              name: 'hybrid-dashboard-1',
+              title: 'Hybrid dashboard 1',
+              tags,
+            },
+          ])
+        );
+
         const results = await getSearchResultActions('mySearchQuery', true);
-        expect(results[0].id).toBe('go/dashboard/d/hybrid-dashboard-1/hybrid-dashboard-1');
-        expect(results[0]).not.toHaveProperty('tags');
+
+        expect(results[0]).toMatchObject({
+          id: 'go/dashboard/d/hybrid-dashboard-1/hybrid-dashboard-1',
+          tags,
+        });
       });
 
       it('caps hybrid dashboard results at 20', async () => {

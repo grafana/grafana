@@ -196,7 +196,7 @@ async function getHybridDashboardActions(searchQuery: string): Promise<CommandPa
       url,
       subtitle: hit.folderTitle || locationInfo[location]?.name,
       managedBy: extractManagerKind(hit.managedBy),
-      // No tags: the hybrid endpoint doesn't return them for its hits
+      tags: hit.tags,
     };
   });
 }
