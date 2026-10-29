@@ -732,16 +732,22 @@ export function getAlignmentFactor(
     return alignmentFactor;
   } else {
     // look at the next 1000 rows and keep the longest formatted value, so every cell of the
-    // column reserves the same room for its text and the gauge bars are comparable
-    alignmentFactor = { ...displayValue };
+    // column reserves the same room for its text and the gauge bars are comparable; the winner
+    // and its length are tracked during the scan and copied once afterwards
+    let longest: DisplayValueAlignmentFactors = displayValue;
+    let longestLength = formattedValueToString(displayValue).length;
     const maxIndex = Math.min(field.values.length, rowIndex + 1000);
 
     for (let i = rowIndex + 1; i < maxIndex; i++) {
       const nextDisplayValue = field.display?.(field.values[i]) ?? { text: String(field.values[i] ?? '') };
-      if (formattedValueToString(alignmentFactor).length < formattedValueToString(nextDisplayValue).length) {
-        alignmentFactor = { ...nextDisplayValue };
+      const nextLength = formattedValueToString(nextDisplayValue).length;
+      if (nextLength > longestLength) {
+        longest = nextDisplayValue;
+        longestLength = nextLength;
       }
     }
+
+    alignmentFactor = { ...longest };
 
     if (field.state) {
       field.state.alignmentFactors = alignmentFactor;

@@ -514,6 +514,24 @@ describe('TableNG utils', () => {
       expect(field.state?.alignmentFactors).toEqual({ text: '8.88', numeric: 8.88, suffix: ' ms' });
     });
 
+    it('should store a copy of the longest value, displaying each row once', () => {
+      const shown: DisplayValue[] = [];
+      const display = jest.fn((value: unknown) => {
+        const dv: DisplayValue = { text: String(value), numeric: Number(value) };
+        shown.push(dv);
+        return dv;
+      });
+      const field: Field = { name: 'test', type: FieldType.number, config: {}, values: [1, 22, 4444, 333], display };
+
+      const result = getAlignmentFactor(field, { text: '1', numeric: 1 }, 0);
+
+      expect(display).toHaveBeenCalledTimes(3);
+      expect(result).toEqual({ text: '4444', numeric: 4444 });
+      // The factor kept in the field state is its own object, not the row's display value
+      expect(result).not.toBe(shown[1]);
+      expect(field.state?.alignmentFactors).toBe(result);
+    });
+
     it('should update alignment factor when a longer value is found', () => {
       // Create a field with an existing alignment factor
       const field: Field = {
