@@ -57,18 +57,18 @@ func TestBatchRunnerNextBatchHonorsMaxItemsAndEOF(t *testing.T) {
 	}
 	runner := newTestBatchRunner(&testBulkProcessServer{requests: reqs}, reqs[0].Key, opts)
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Len(t, runner.Batch(), 2)
 	require.Equal(t, "item-1", runner.Batch()[0].Key.Name)
 	require.Equal(t, "item-2", runner.Batch()[1].Key.Name)
 	require.False(t, runner.RollbackRequested())
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Len(t, runner.Batch(), 1)
 	require.Equal(t, "item-3", runner.Batch()[0].Key.Name)
 	require.False(t, runner.RollbackRequested())
 
-	require.False(t, runner.NextBatch())
+	require.False(t, runner.NextBatch(t.Context()))
 }
 
 func TestBatchRunnerNextBatchHonorsIdleFlush(t *testing.T) {
@@ -82,15 +82,15 @@ func TestBatchRunnerNextBatchHonorsIdleFlush(t *testing.T) {
 		delays:   []time.Duration{0, 20 * time.Millisecond},
 	}, reqs[0].Key, opts)
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Len(t, runner.Batch(), 1)
 	require.Equal(t, "item-1", runner.Batch()[0].Key.Name)
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Len(t, runner.Batch(), 1)
 	require.Equal(t, "item-2", runner.Batch()[0].Key.Name)
 
-	require.False(t, runner.NextBatch())
+	require.False(t, runner.NextBatch(t.Context()))
 }
 
 func TestBatchRunnerNextPreservesSingleItemIteration(t *testing.T) {
@@ -122,7 +122,7 @@ func TestBatchRunnerNextBatchRollbackOnAccessError(t *testing.T) {
 		stopCh:    make(chan struct{}),
 	}
 
-	require.True(t, runner.NextBatch())
+	require.True(t, runner.NextBatch(t.Context()))
 	require.Empty(t, runner.Batch())
 	require.True(t, runner.RollbackRequested())
 	require.ErrorContains(t, runner.err, "missing access control")
