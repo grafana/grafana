@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
@@ -81,16 +82,17 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 							if outcome == "permission failure" {
 								users.ExpectedError = failure
 							}
+							permissionCache := permissioncache.ProvideService(sql, recorder)
 							var setDefaults func(context.Context)
 							grant := accesscontrol.Permission{Action: accesscontrol.ActionAlertingReceiversReadSecrets, Scope: "receivers:uid:new"}
 							if resource == "receiver" {
 								svc, err := ProvideReceiverPermissionsService(cfg, features, routing.NewRouteRegister(), sql,
-									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions)
+									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions, permissionCache)
 								require.NoError(t, err)
 								setDefaults = func(ctx context.Context) { svc.SetDefaultPermissions(ctx, 1, requester, "new") }
 							} else {
 								svc, err := ProvideRoutePermissionsService(cfg, features, routing.NewRouteRegister(), sql,
-									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions)
+									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions, permissionCache)
 								require.NoError(t, err)
 								setDefaults = func(ctx context.Context) {
 									err := svc.SetDefaultPermissions(ctx, 1, requester, "new")

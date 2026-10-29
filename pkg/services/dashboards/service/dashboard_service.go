@@ -90,6 +90,7 @@ type DashboardServiceImpl struct {
 	dashboardPermissions   accesscontrol.DashboardPermissionsService
 	ac                     accesscontrol.AccessControl
 	acService              accesscontrol.Service
+	permissionCache        *permissioncache.Service
 	k8sclient              dashboardclient.K8sHandlerWithFallback
 	metrics                *dashboardsMetrics
 	publicDashboardService publicdashboards.ServiceWrapper
@@ -410,6 +411,7 @@ func ProvideDashboardServiceImpl(
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
 	k8sClient dashboardclient.K8sHandlerWithFallback,
+	permissionCache *permissioncache.Service,
 ) (*DashboardServiceImpl, error) {
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
@@ -419,6 +421,7 @@ func ProvideDashboardServiceImpl(
 		folderPermissions:         folderPermissionsService,
 		ac:                        ac,
 		acService:                 acService,
+		permissionCache:           permissionCache,
 		folderService:             folderSvc,
 		orgService:                orgService,
 		k8sclient:                 k8sClient,
@@ -1230,7 +1233,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 		return err
 	}
 
-	permissioncache.RefreshAfterCommit(ctx, dr.acService, user)
+	dr.permissionCache.RefreshAfterCommit(ctx, user)
 
 	return nil
 }
@@ -1282,7 +1285,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 	}
 
 	if !provisioned {
-		permissioncache.RefreshAfterCommit(ctx, dr.acService, dto.User)
+		dr.permissionCache.RefreshAfterCommit(ctx, dto.User)
 	}
 }
 

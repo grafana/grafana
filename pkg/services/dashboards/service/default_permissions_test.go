@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -34,15 +35,19 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 		for _, folder := range []bool{false, true} {
 			for _, serviceAccount := range []bool{false, true} {
 				for _, outcome := range []string{"commit", "rollback", "permission failure"} {
-					name := "legacy/dashboard/user/"
+					name := "legacy/"
 					if appPlatform {
 						name = "App Platform/"
 					}
 					if folder {
 						name += "folder/"
+					} else {
+						name += "dashboard/"
 					}
 					if serviceAccount {
 						name += "service account/"
+					} else {
+						name += "user/"
 					}
 					t.Run(name+outcome, func(t *testing.T) {
 						sql := sqlstore.NewTestStore(t, sqlstore.WithoutMigrator())
@@ -66,6 +71,7 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 						}}
 						svc := &DashboardServiceImpl{
 							cfg: cfg, log: log.NewNopLogger(), acService: ac,
+							permissionCache:   permissioncache.ProvideService(sql, ac),
 							folderPermissions: permissions, dashboardPermissionsReady: make(chan struct{}),
 						}
 						svc.RegisterDashboardPermissions(permissions)

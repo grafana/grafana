@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -62,6 +63,7 @@ func ProvideTeamPermissions(
 	actionSetService resourcepermissions.ActionSetService,
 	directRestConfigProvider apiserver.DirectRestConfigProvider,
 	legacyWatch *legacywatch.Publisher,
+	permissionCache *permissioncache.Service,
 ) (*TeamPermissionsService, error) {
 	// The hooks below run inside transactions that resourcepermissions opens on sql,
 	// so their table names must resolve for that same database. Deriving the helper
@@ -137,7 +139,7 @@ func ProvideTeamPermissions(
 		RestConfigProvider: directRestConfigProvider,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures, permissionCache)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/codes"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
@@ -29,6 +30,7 @@ func TestRefreshAfterCommit(t *testing.T) {
 		{name: "failure", requester: &user.SignedInUser{UserID: 7, OrgID: 1}, err: errors.New("AuthZ unavailable")},
 		{name: "cancellation", requester: &user.SignedInUser{UserID: 7, OrgID: 1}, cancel: true},
 		{name: "nil requester"},
+		{name: "anonymous", requester: &identity.StaticRequester{Type: claims.TypeAnonymous}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			type requestKey struct{}
@@ -62,8 +64,9 @@ func TestRefreshAfterCommit(t *testing.T) {
 				}
 				return nil, tc.err
 			}}
-			RefreshAfterCommit(ctx, service, tc.requester)
-			if tc.requester == nil {
+			cache := &Service{ac: service}
+			cache.RefreshAfterCommit(ctx, tc.requester)
+			if tc.requester == nil || tc.name == "anonymous" {
 				require.Zero(t, calls)
 				require.Empty(t, spans.Ended())
 				return

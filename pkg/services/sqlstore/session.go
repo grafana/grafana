@@ -44,20 +44,6 @@ func IsInTransaction(ctx context.Context) bool {
 	return SessionFromContext(ctx) != nil
 }
 
-type afterCommitFunc func(context.Context)
-
-// AfterCommit runs fn after the outermost SQL transaction commits.
-// Without a transaction, it runs fn immediately. Rollback or commit failure discards fn.
-// The callback receives the transaction owner's context without its SQL session.
-// Callbacks are best-effort and run in queue order with after-commit events.
-func AfterCommit(ctx context.Context, fn func(context.Context)) {
-	if sess := SessionFromContext(ctx); sess != nil {
-		sess.PublishAfterCommit(afterCommitFunc(fn))
-		return
-	}
-	fn(ctx)
-}
-
 func (sess *DBSession) PublishAfterCommit(msg any) {
 	sess.events = append(sess.events, msg)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -58,6 +59,7 @@ func ProvideServiceAccountPermissions(
 	license licensing.Licensing, serviceAccountRetrieverService *retriever.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
 	restConfigProvider apiserver.DirectRestConfigProvider,
+	permissionCache *permissioncache.Service,
 ) (*ServiceAccountPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:           serviceAccountPermissionsResource,
@@ -93,7 +95,7 @@ func ProvideServiceAccountPermissions(
 		RestConfigProvider: restConfigProvider,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetrieverService, actionSetService, iamFeatures)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetrieverService, actionSetService, iamFeatures, permissionCache)
 	if err != nil {
 		return nil, err
 	}

@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -41,6 +42,7 @@ func TestIntegrationPermissionCacheInvalidationAfterCommit(t *testing.T) {
 						cleared = append(cleared, actor)
 					}},
 				}
+				service.PermissionCache = permissioncache.ProvideService(sql, service.service)
 				set := func(ctx context.Context) {
 					if bulk {
 						commands := []accesscontrol.SetResourcePermissionCommand{{UserID: 7}, {UserID: 7}}

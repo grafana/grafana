@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -110,6 +111,7 @@ func ProvideDashboardPermissions(
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService resourcepermissions.ActionSetService,
 	dashboardPermissionsRegistration dashboards.PermissionsRegistrationService, restConfigProvider apiserver.DirectRestConfigProvider,
+	permissionCache *permissioncache.Service,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
 		query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
@@ -202,7 +204,7 @@ func ProvideDashboardPermissions(
 		RestConfigProvider: restConfigProvider,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures, permissionCache)
 	if err != nil {
 		return nil, err
 	}

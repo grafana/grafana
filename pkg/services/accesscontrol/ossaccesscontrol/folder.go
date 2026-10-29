@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -125,6 +126,7 @@ func ProvideFolderPermissions(
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService resourcepermissions.ActionSetService,
 	restConfigProvider apiserver.DirectRestConfigProvider,
+	permissionCache *permissioncache.Service,
 ) (*FolderPermissionsService, error) {
 	if err := registerFolderRoles(cfg, features, service); err != nil {
 		return nil, err
@@ -180,7 +182,7 @@ func ProvideFolderPermissions(
 		RoleGroup:          folderPermissionsRoleGroup,
 		RestConfigProvider: restConfigProvider,
 	}
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, accesscontrol, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures, permissionCache)
 	if err != nil {
 		return nil, err
 	}

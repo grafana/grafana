@@ -68,6 +68,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -413,6 +414,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(accesscontrol.ActionResolver), new(resourcepermissions.ActionSetService)),
 	wire.Bind(new(pluginaccesscontrol.ActionSetRegistry), new(resourcepermissions.ActionSetService)),
 	permreg.ProvidePermissionRegistry,
+	permissioncache.ProvideService,
 	acimpl.ProvideAccessControl,
 	acimpl.ProvideScopeResolverRegistry,
 	accesscontrol.ProvideFixedRolesLoader,

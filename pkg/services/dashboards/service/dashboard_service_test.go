@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -41,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -2128,6 +2130,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 					folderPermissions:         permService,
 					dashboardPermissionsReady: make(chan struct{}),
 					acService:                 &actest.FakeService{},
+					permissionCache:           permissioncache.New(bus.ProvideBus(tracing.InitializeTracerForTest()), &actest.FakeService{}),
 				}
 				service.RegisterDashboardPermissions(permService)
 

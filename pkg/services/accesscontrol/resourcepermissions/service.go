@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -32,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -89,6 +89,7 @@ func New(cfg *setting.Cfg,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService ActionSetService,
 	iamFeatures iamapi.Features,
+	permissionCache *permissioncache.Service,
 ) (*Service, error) {
 	// Fail fast at startup if a Kubernetes-native flow needs an APIGroup but none
 	// is configured.
@@ -128,6 +129,7 @@ func New(cfg *setting.Cfg,
 		actions:                 actions,
 		sqlStore:                sqlStore,
 		service:                 service,
+		PermissionCache:         permissionCache,
 		teamService:             teamService,
 		userService:             userService,
 		serviceAccountRetriever: serviceAccountRetriever,
@@ -148,12 +150,13 @@ func New(cfg *setting.Cfg,
 
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
-	ac       accesscontrol.AccessControl
-	features featuremgmt.FeatureToggles
-	service  accesscontrol.Service
-	store    Store
-	api      *api
-	license  licensing.Licensing
+	PermissionCache *permissioncache.Service
+	ac              accesscontrol.AccessControl
+	features        featuremgmt.FeatureToggles
+	service         accesscontrol.Service
+	store           Store
+	api             *api
+	license         licensing.Licensing
 
 	cfg                     *setting.Cfg
 	log                     log.Logger
@@ -316,9 +319,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 	}
 
 	// A concurrent reader can repopulate stale permissions if we clear before commit.
-	sqlstore.AfterCommit(ctx, func(context.Context) {
-		s.clearUserPermissionCache(orgID, user.ID)
-	})
+	s.PermissionCache.InvalidateAfterCommit(ctx, orgID, []int64{user.ID})
 
 	return result, nil
 }
@@ -493,11 +494,12 @@ func (s *Service) SetPermissions(
 		return nil, err
 	}
 
-	// The caller can reuse its command slice before an outer transaction commits.
-	commands = slices.Clone(commands)
-	sqlstore.AfterCommit(ctx, func(context.Context) {
-		s.clearUserPermissionCaches(orgID, commands)
-	})
+	// Capture IDs before the caller can reuse its command slice.
+	userIDs := make([]int64, 0, len(commands))
+	for _, cmd := range commands {
+		userIDs = append(userIDs, cmd.UserID)
+	}
+	s.PermissionCache.InvalidateAfterCommit(ctx, orgID, userIDs)
 
 	return result, nil
 }

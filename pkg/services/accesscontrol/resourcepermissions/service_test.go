@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -35,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -316,9 +318,11 @@ func TestIntegrationService_RegisterActionSets(t *testing.T) {
 			features := featuremgmt.WithFeatures()
 			ac := acimpl.ProvideAccessControl(features)
 			actionSets := NewActionSetService()
+			sql := sqlstore.NewTestStore(t)
+			acService := &actest.FakeService{}
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
-				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, nil, actionSets, iam.Features{}, //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+				ac, acService, sql, nil, nil, nil, actionSets, iam.Features{}, permissioncache.ProvideService(sql, acService),
 			)
 			require.NoError(t, err)
 
@@ -582,7 +586,7 @@ func TestService_K8sActionFormat(t *testing.T) {
 
 			service, err := New(
 				cfg, tt.opts, features, routing.NewRouteRegister(), license,
-				ac, acService, sql, nil, nil, nil, NewActionSetService(), iam.Features{},
+				ac, acService, sql, nil, nil, nil, NewActionSetService(), iam.Features{}, permissioncache.ProvideService(sql, acService),
 			)
 
 			if tt.expectErr {
@@ -728,7 +732,7 @@ func TestService_APIGroupRequiredWhenResourcePermissionsAPIEnabled(t *testing.T)
 			_, err := New(
 				cfg, Options{Resource: tt.resource, APIGroup: tt.apiGroup}, features,
 				routing.NewRouteRegister(), license, ac, &actest.FakeService{}, sql, nil, nil, nil, NewActionSetService(),
-				iam.Features{ResourcePermissionsAPI: tt.apiEnabled},
+				iam.Features{ResourcePermissionsAPI: tt.apiEnabled}, permissioncache.ProvideService(sql, &actest.FakeService{}),
 			)
 
 			if tt.expectErr {
@@ -892,7 +896,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
 		ac, acService, sql, teamSvc, userSvc, serviceAccountRetriever, NewActionSetService(),
-		iam.Features{ResourcePermissionsAPI: resourcePermissionsAPIEnabled},
+		iam.Features{ResourcePermissionsAPI: resourcePermissionsAPIEnabled}, permissioncache.ProvideService(sql, acService),
 	)
 	require.NoError(t, err)
 

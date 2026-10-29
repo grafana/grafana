@@ -61,6 +61,7 @@ func ProvideReceiverPermissionsService(
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService resourcepermissions.ActionSetService,
+	permissionCache *permissioncache.Service,
 ) (*ReceiverPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          receiverPermissionsResource,
@@ -85,7 +86,7 @@ func ProvideReceiverPermissionsService(
 		RoleGroup:      models.AlertRolesGroup,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures, permissionCache)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +114,7 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 	r.log.Debug("Setting default permissions for receiver", "receiver_uid", uid)
 	resourceId := models.ScopeReceiversProvider.GetResourceIDFromUID(uid)
 	permissions := defaultPermissions()
-	clearCache := false
+	refreshCreator := false
 	if user != nil && user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
@@ -122,7 +123,7 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: string(models.PermissionAdmin),
 			})
-			clearCache = true
+			refreshCreator = true
 		}
 	}
 
@@ -131,8 +132,8 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 		return
 	}
 
-	if clearCache {
-		permissioncache.RefreshAfterCommit(ctx, r.ac, user)
+	if refreshCreator {
+		r.PermissionCache.RefreshAfterCommit(ctx, user)
 	}
 }
 

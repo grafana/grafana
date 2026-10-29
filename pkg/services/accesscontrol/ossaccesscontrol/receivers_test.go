@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
@@ -94,7 +95,7 @@ func TestIntegrationCopyReceiverPermissionsRefreshAfterCommit(t *testing.T) {
 						require.WithinDuration(t, time.Now().Add(5*time.Second), deadline, time.Second)
 					}}
 					receivers, err := ProvideReceiverPermissionsService(cfg, features, routing.NewRouteRegister(), sql,
-						actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, nil, nil, actions)
+						actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, nil, nil, actions, permissioncache.ProvideService(sql, recorder))
 					require.NoError(t, err)
 					requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1, OrgRole: org.RoleViewer}
 					_, err = receivers.SetPermissions(ctx, 1, "old", accesscontrol.SetResourcePermissionCommand{

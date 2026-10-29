@@ -73,6 +73,7 @@ func ProvideRoutePermissionsService(
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService resourcepermissions.ActionSetService,
+	permissionCache *permissioncache.Service,
 ) (*RoutePermissionsService, error) {
 	options := resourcepermissions.Options{
 		APIGroup:          accesscontrol.AlertingNotificationsApiGroup,
@@ -98,7 +99,7 @@ func ProvideRoutePermissionsService(
 		RoleGroup:      models.AlertRolesGroup,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures, permissionCache)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +119,7 @@ type RoutePermissionsService struct {
 func (r RoutePermissionsService) SetDefaultPermissions(ctx context.Context, orgID int64, user identity.Requester, name string) error {
 	r.log.Debug("Setting default permissions for route", "route_name", name)
 	permissions := routeDefaultPermissions()
-	clearCache := false
+	refreshCreator := false
 	if user != nil && user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
@@ -127,14 +128,14 @@ func (r RoutePermissionsService) SetDefaultPermissions(ctx context.Context, orgI
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
 				UserID: userID, Permission: PermissionAdmin,
 			})
-			clearCache = true
+			refreshCreator = true
 		}
 	}
 	if _, err := r.SetPermissions(ctx, orgID, name, permissions...); err != nil {
 		return err
 	}
-	if clearCache {
-		permissioncache.RefreshAfterCommit(ctx, r.ac, user)
+	if refreshCreator {
+		r.PermissionCache.RefreshAfterCommit(ctx, user)
 	}
 	return nil
 }
