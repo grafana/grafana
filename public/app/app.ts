@@ -124,7 +124,7 @@ import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/import
 import { pluginImporter } from './features/plugins/importer/pluginImporter';
 import { initSystemJSHooks } from './features/plugins/loader/systemjsHooks';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
-import { ManagedBadge } from './features/provisioning/components/ManagedBadge';
+import { LazyManagedBadge } from './features/provisioning/components/LazyManagedBadge';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -232,7 +232,7 @@ export class GrafanaApp {
       setWeekStart(contextSrv.user.weekStart);
       setPanelRenderer(PanelRenderer);
       setPluginPage(PluginPage);
-      setManagedBadge(ManagedBadge);
+      setManagedBadge(LazyManagedBadge);
       setFolderPicker(LazyFolderPicker);
       setDataSourcePicker(RuntimeDataSourcePickerShim);
       setPanelDataErrorView(LazyPanelDataErrorView);

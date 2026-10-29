@@ -1,5 +1,5 @@
-import { ManagedBadge } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 
 import { type DashboardScene } from './DashboardScene';
 
