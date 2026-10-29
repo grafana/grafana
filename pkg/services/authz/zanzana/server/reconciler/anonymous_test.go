@@ -62,6 +62,10 @@ func (f fakeAnonResourceClients) SupportedResources() []resources.SupportedResou
 	return nil
 }
 
+func (f fakeAnonResourceClients) Kinds(context.Context) (map[schema.GroupResource]string, error) {
+	return nil, nil
+}
+
 func anonSetting(section, key, value string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "setting.grafana.app/v1beta1",

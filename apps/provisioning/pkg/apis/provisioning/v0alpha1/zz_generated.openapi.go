@@ -3099,6 +3099,13 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref common.ReferenceCal
 							Format:  "",
 						},
 					},
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"count": {
 						SchemaProps: spec.SchemaProps{
 							Default: 0,
@@ -3107,7 +3114,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceCount(ref common.ReferenceCal
 						},
 					},
 				},
-				Required: []string{"group", "resource", "count"},
+				Required: []string{"group", "resource", "kind", "count"},
 			},
 		},
 	}
@@ -3193,6 +3200,13 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref common.Reference
 							Format:  "",
 						},
 					},
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
 							Default: "",
@@ -3227,7 +3241,7 @@ func schema_pkg_apis_provisioning_v0alpha1_ResourceListItem(ref common.Reference
 						},
 					},
 				},
-				Required: []string{"path", "group", "resource", "name", "hash"},
+				Required: []string{"path", "group", "resource", "kind", "name", "hash"},
 			},
 		},
 	}
