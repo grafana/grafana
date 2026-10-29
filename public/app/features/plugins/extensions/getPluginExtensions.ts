@@ -1,8 +1,9 @@
-import { combineLatest, from, map, type Observable, switchMap } from 'rxjs';
+import { catchError, combineLatest, defer, forkJoin, from, map, type Observable, of, switchMap } from 'rxjs';
 
 import { PluginExtensionTypes, type PluginExtension, type PluginExtensionComponent } from '@grafana/data';
 import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
 
+import { loadDependentAppPlugins } from './loadDependentAppPlugins';
 import { log } from './logs/log';
 import { getPluginExtensionRegistries } from './registry/setup';
 import { type GetExtensions, type GetExtensionsOptions } from './types';
@@ -10,6 +11,7 @@ import {
   addedLinkToExtensionLink,
   getReadOnlyProxy,
   generateExtensionId,
+  getExtensionPointPluginDependencies,
   wrapWithPluginContext,
   getLinkExtensionOverrides,
 } from './utils';
@@ -18,6 +20,10 @@ import {
  * Returns an observable that emits plugin extensions whenever the core extensions registries change.
  * The observable will emit the initial state of the extensions and then emit again whenever
  * either the added components registry or the added links registry changes.
+ *
+ * Unlike the registries, the dependent app plugins for an extension point are not loaded automatically.
+ * This function loads them explicitly, the same way the `usePluginLinks`/`usePluginComponents` hooks do via
+ * `useLoadAppPlugins`, ensuring they're loaded before the registries are read.
  *
  * @param options - The options for getting plugin extensions
  * @returns An Observable that emits the plugin extensions for the given extension point any time the registries change
@@ -28,8 +34,26 @@ export const getObservablePluginExtensions = (
 ): Observable<ReturnType<GetExtensions>> => {
   const { extensionPointId } = options;
 
-  return from(getPluginExtensionRegistries()).pipe(
-    switchMap((registries) =>
+  // Wrapped in `defer()` so that nothing (fetching registries, loading app plugins) happens until
+  // something actually subscribes to the returned observable, matching normal Observable semantics.
+  return defer(() => {
+    const pluginsLoaded = from(loadDependentAppPlugins(extensionPointId, getExtensionPointPluginDependencies)).pipe(
+      catchError((error) => {
+        const labels = { extensionPointId };
+        if (error instanceof Error) {
+          log.error(error.message, { ...labels, stack: error.stack ?? '', message: error.message });
+        } else {
+          log.error(String(error), labels);
+        }
+        return of(undefined);
+      })
+    );
+
+    // getPluginExtensionRegistries() needs no catchError of its own: it already catches its own
+    // initialization errors and falls back to empty registries (see registry/setup.ts).
+    return forkJoin([from(getPluginExtensionRegistries()), pluginsLoaded]);
+  }).pipe(
+    switchMap(([registries]) =>
       combineLatest([
         registries.addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
         registries.addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),

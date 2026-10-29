@@ -14,6 +14,7 @@ import {
   getObservablePluginLinks,
   getPluginExtensions,
 } from './getPluginExtensions';
+import { loadDependentAppPlugins } from './loadDependentAppPlugins';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
 import { AddedComponentsRegistry } from './registry/AddedComponentsRegistry';
@@ -21,7 +22,7 @@ import { AddedFunctionsRegistry } from './registry/AddedFunctionsRegistry';
 import { AddedLinksRegistry } from './registry/AddedLinksRegistry';
 import { ExposedComponentsRegistry } from './registry/ExposedComponentsRegistry';
 import { getPluginExtensionRegistries } from './registry/setup';
-import { isReadOnlyProxy } from './utils';
+import { getExtensionPointPluginDependencies, isReadOnlyProxy } from './utils';
 import { assertPluginExtensionLink } from './validators';
 
 jest.mock('@grafana/runtime', () => {
@@ -46,7 +47,19 @@ jest.mock('./registry/setup', () => ({
   getPluginExtensionRegistries: jest.fn(),
 }));
 
+jest.mock('./loadDependentAppPlugins', () => ({
+  loadDependentAppPlugins: jest.fn().mockResolvedValue(undefined),
+}));
+
 const getPluginExtensionRegistriesMock = jest.mocked(getPluginExtensionRegistries);
+const loadDependentAppPluginsMock = jest.mocked(loadDependentAppPlugins);
+
+// Reset file-wide so call history/implementation overrides from one describe block (e.g. mockRejectedValueOnce)
+// never leak into another.
+beforeEach(() => {
+  loadDependentAppPluginsMock.mockClear();
+  loadDependentAppPluginsMock.mockResolvedValue(undefined);
+});
 
 async function createRegistries(
   preloadResults: Array<{
@@ -606,6 +619,64 @@ describe('getObservablePluginExtensions()', () => {
           },
         },
       ],
+    });
+  });
+
+  it('should request loading of the app plugins contributing to the extension point', async () => {
+    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(first());
+
+    await firstValueFrom(observable);
+
+    expect(loadDependentAppPluginsMock).toHaveBeenCalledWith(extensionPointId, getExtensionPointPluginDependencies);
+  });
+
+  it('should not emit until the app plugins have finished loading', async () => {
+    let resolveLoading: () => void = () => {};
+    loadDependentAppPluginsMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveLoading = resolve;
+        })
+    );
+
+    let emitted = false;
+    const emissionPromise = firstValueFrom(getObservablePluginExtensions({ extensionPointId }).pipe(first()));
+    emissionPromise.then(() => {
+      emitted = true;
+    });
+
+    // Flush pending microtasks. Deterministic, not a timing guess: the loading promise is still
+    // unresolved, so the observable genuinely cannot have emitted yet.
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(emitted).toBe(false);
+
+    resolveLoading();
+
+    const { extensions } = await emissionPromise;
+    expect(extensions).toHaveLength(2);
+  });
+
+  it('should not perform the plugin loading side effect until subscribed to', async () => {
+    getObservablePluginExtensions({ extensionPointId });
+
+    // Give any eagerly-started work a chance to run before asserting it didn't.
+    await Promise.resolve();
+
+    expect(loadDependentAppPluginsMock).not.toHaveBeenCalled();
+  });
+
+  it('should catch and log errors thrown while loading the app plugins for the extension point', async () => {
+    loadDependentAppPluginsMock.mockRejectedValueOnce(new Error('Failed to load plugin'));
+
+    const observable = getObservablePluginExtensions({ extensionPointId }).pipe(first());
+    const { extensions } = await firstValueFrom(observable);
+
+    expect(extensions).toHaveLength(2);
+    expect(log.error).toHaveBeenCalledWith('Failed to load plugin', {
+      extensionPointId,
+      stack: expect.stringContaining('Error: Failed to load plugin'),
+      message: 'Failed to load plugin',
     });
   });
 
