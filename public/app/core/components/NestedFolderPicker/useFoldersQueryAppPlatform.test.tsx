@@ -109,4 +109,40 @@ describe('useFoldersQueryAppPlatform', () => {
     expect(dispatch).toHaveBeenCalledWith(subscription);
     expect(mockSelect).toHaveBeenCalledWith({ folder: 'general', type: 'folder', permission: 'edit' });
   });
+
+  it('asks for the path to creatable folders and marks the ones the user cannot create in as read only', () => {
+    const subscription = { unsubscribe: jest.fn() };
+    mockDispatchResult = jest.fn(() => subscription);
+    mockInitiate.mockReturnValue(subscription);
+    mockSelect.mockReturnValue(jest.fn());
+    mockSelectorResult = {
+      isLoading: false,
+      responseByParent: {
+        general: {
+          status: QueryStatus.fulfilled,
+          data: {
+            hits: [
+              { name: 'creatable', title: 'Creatable', resource: 'folders', field: { canCreate: true } },
+              { name: 'on-the-way', title: 'On the way', resource: 'folders', field: { canCreate: false } },
+              { name: 'unmarked', title: 'Unmarked', resource: 'folders' },
+            ],
+          },
+        },
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useFoldersQueryAppPlatform({ isBrowsing: true, openFolders: {}, permission: 'edit', showReadOnly: true })
+    );
+    act(() => {
+      result.current.requestNextPage('parent');
+    });
+
+    expect(mockInitiate).toHaveBeenCalledWith({ folder: 'parent', type: 'folder', include: 'pathToCreatable' });
+    const byUid = (uid: string) => result.current.items.find((treeItem) => treeItem.item.uid === uid);
+    expect(byUid('on-the-way')).toMatchObject({ readOnly: true, disabled: true });
+    expect(byUid('creatable')).not.toHaveProperty('readOnly');
+    expect(byUid('unmarked')).not.toHaveProperty('readOnly');
+    expect(byUid('sharedwithme')).not.toHaveProperty('readOnly');
+  });
 });
