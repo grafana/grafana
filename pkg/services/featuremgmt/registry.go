@@ -588,14 +588,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "alertmanagerRemoteSecondary",
-			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingProvenanceLockWrites",
 			Description:  "Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL",
 			Stage:        FeatureStageExperimental,
@@ -3453,6 +3445,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "1",
 			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "grafana.panelActionsPopover",
+			Description:  "Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

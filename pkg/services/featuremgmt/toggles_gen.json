@@ -897,7 +897,8 @@
       "metadata": {
         "name": "alertmanagerRemoteSecondary",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2023-10-30T16:27:08Z"
+        "creationTimestamp": "2023-10-30T16:27:08Z",
+        "deletionTimestamp": "2026-10-29T15:19:15Z"
       },
       "spec": {
         "description": "Enable Grafana to sync configuration and state with a remote Alertmanager.",
@@ -3237,6 +3238,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.panelActionsPopover",
+        "resourceVersion": "1792493817898",
+        "creationTimestamp": "2026-10-20T10:56:57Z"
+      },
+      "spec": {
+        "description": "Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

@@ -1,4 +1,4 @@
-import { loadWhoAmI, whoamiURL } from './whoami';
+import { bootdataURL, loadWhoAmI, whoamiURL } from './whoami';
 
 function whoami(body: unknown, init?: ResponseInit) {
   return new Response(JSON.stringify(body), init);
@@ -54,11 +54,41 @@ it('keeps the namespace but shows no user for anonymous access', async () => {
   expect(result).toEqual({ namespace: 'default' });
 });
 
-it('returns neither namespace nor user when the request is rejected', async () => {
+const bootdata = {
+  user: { isSignedIn: true, name: 'Admin', login: 'admin', email: 'admin@example.com', gravatarUrl: '/avatar/abc' },
+  settings: { namespace: 'stacks-1' },
+};
+
+it.each([401, 500])('falls back to the user and namespace in the boot data when whoami returns %d', async (status) => {
   jest.spyOn(console, 'warn').mockImplementation(() => {});
-  jest.spyOn(globalThis, 'fetch').mockResolvedValue(whoami({ message: 'Unauthorized' }, { status: 401 }));
+  const fetch = jest
+    .spyOn(globalThis, 'fetch')
+    .mockImplementation(async (url) =>
+      url === whoamiURL ? whoami({ message: 'failed' }, { status }) : whoami(bootdata)
+    );
 
   const result = await loadWhoAmI();
 
-  expect(result).toEqual({});
+  expect(fetch).toHaveBeenCalledWith(bootdataURL);
+  expect(result.namespace).toBe('stacks-1');
+  expect(result.userView?.user).toEqual({ name: 'Admin', avatarUrl: '/avatar/abc' });
+});
+
+it('falls back to the boot data when the whoami request fails, and shows no user when signed out', async () => {
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest.spyOn(globalThis, 'fetch').mockImplementation(async (url) => {
+    if (url === whoamiURL) {
+      throw new TypeError('network down');
+    }
+    return whoami({ user: { isSignedIn: false, name: '' }, settings: { namespace: 'default' } });
+  });
+
+  expect(await loadWhoAmI()).toEqual({ namespace: 'default' });
+});
+
+it('returns neither namespace nor user when whoami and the boot data are both rejected', async () => {
+  jest.spyOn(console, 'warn').mockImplementation(() => {});
+  jest.spyOn(globalThis, 'fetch').mockImplementation(async () => whoami({ message: 'failed' }, { status: 500 }));
+
+  expect(await loadWhoAmI()).toEqual({});
 });

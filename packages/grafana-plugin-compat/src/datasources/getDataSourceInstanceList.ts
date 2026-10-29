@@ -5,10 +5,9 @@ import {
   getDataSourceSrv,
   getDataSourceInstanceList as stableGetDataSourceInstanceList,
 } from '@grafana/runtime';
-import {
-  type GetDataSourceInstanceListFilters,
-  getDataSourceInstanceList as unstableGetDataSourceInstanceList,
-} from '@grafana/runtime/unstable';
+import { getDataSourceInstanceList as unstableGetDataSourceInstanceList } from '@grafana/runtime/unstable';
+
+import { type GetDataSourceInstanceListFilters } from './types';
 
 export async function getDataSourceInstanceList(
   filters?: GetDataSourceInstanceListFilters

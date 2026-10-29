@@ -33,7 +33,7 @@ jobs:
       - name: Install yarn dependencies
         uses: ./.github/actions/yarn-install
       - name: Install Playwright browsers
-        run: npm exec --no -- playwright install --with-deps chromium
+        uses: ./.github/actions/setup-playwright
       - name: Build Grafana backend
         run: make build-go
       - name: Build Grafana frontend

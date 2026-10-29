@@ -215,10 +215,6 @@ const (
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
 
-	// FlagAlertmanagerRemoteSecondary
-	// Enable Grafana to sync configuration and state with a remote Alertmanager.
-	FlagAlertmanagerRemoteSecondary = "alertmanagerRemoteSecondary"
-
 	// FlagAlertingProvenanceLockWrites
 	// Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL
 	FlagAlertingProvenanceLockWrites = "alertingProvenanceLockWrites"
