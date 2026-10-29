@@ -32,6 +32,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	apirequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
@@ -82,6 +84,7 @@ func ProvideAuthZClients(
 	eventualResourceClient *resource.EventualClient,
 	legacyLoader *legacypermissions.Loader,
 	scopeResolvers *accesscontrol.ScopeResolverRegistry,
+	accessControl accesscontrol.AccessControl,
 ) (*AuthZClients, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -184,6 +187,17 @@ func ProvideAuthZClients(
 			return authInterceptor(inProcessContextWithClientSpan(ctx), req, info, handler)
 		})
 		authzv1.RegisterAuthzServiceServer(channel, server)
+		authzextv1.RegisterLegacyAuthzServiceServer(channel, server)
+		if configurable, ok := accessControl.(interface {
+			SetLegacyCheckClient(*legacyclient.LegacyClient, bool, authlib.NamespaceFormatter)
+		}); ok {
+			configurable.SetLegacyCheckClient(
+				legacyclient.NewLegacyClient(channel, legacyclient.WithLegacyTracerClientOption(tracer)),
+				cfg.IDUseExternalGroupsForGroupsClaim,
+				apirequest.GetNamespaceMapper(cfg),
+			)
+		}
+
 		rbacClient := authzlib.NewClient(
 			channel,
 			authzlib.WithCacheClientOption(&NoopCache{}),
