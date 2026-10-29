@@ -6,10 +6,10 @@ import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { alertRuleApi } from 'app/features/alerting/unified/api/alertRuleApi';
 import {
   defaultsFromQuery,
+  getAlertRuleUidFromQuery,
   getDefaultSilenceFormValues,
+  getSilencePrefillNotice,
 } from 'app/features/alerting/unified/components/silences/utils';
-import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
-import { parseQueryParamMatchers } from 'app/features/alerting/unified/utils/matchers';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
@@ -24,12 +24,9 @@ import { withPageErrorBoundary } from './withPageErrorBoundary';
 const SilencesEditorComponent = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
+  const prefillNotice = getSilencePrefillNotice(queryParams);
   const { selectedAlertmanager = '', isGrafanaAlertmanager } = useAlertmanager();
-  const potentialAlertRuleMatcher = parseQueryParamMatchers(queryParams.getAll('matcher')).find(
-    (m) => m.name === MATCHER_ALERT_RULE_UID
-  );
-
-  const potentialRuleUid = potentialAlertRuleMatcher?.value;
+  const potentialRuleUid = getAlertRuleUidFromQuery(queryParams);
   const formValues = getDefaultSilenceFormValues(defaultsFromQuery(queryParams));
 
   // Users can reach this page through a link, so check up front instead of letting them fill in a
@@ -97,6 +94,22 @@ const SilencesEditorComponent = () => {
   return (
     <>
       <GrafanaAlertmanagerWarning currentAlertmanager={selectedAlertmanager} />
+      {prefillNotice && (
+        <Alert
+          severity="info"
+          title={t('alerting.new-silence-page.title-matcher-prefill-incomplete', 'Matcher prefill incomplete')}
+        >
+          <Trans
+            i18nKey="alerting.new-silence-page.body-matcher-prefill-incomplete"
+            values={{
+              prefilledMatchers: prefillNotice.prefilledMatchers,
+              totalMatchers: prefillNotice.totalMatchers,
+            }}
+          >
+            {'{{prefilledMatchers}} of {{totalMatchers}} matchers prefilled. Add the remaining matchers before saving.'}
+          </Trans>
+        </Alert>
+      )}
       <SilencesEditor
         formValues={formValues}
         alertManagerSourceName={selectedAlertmanager}
