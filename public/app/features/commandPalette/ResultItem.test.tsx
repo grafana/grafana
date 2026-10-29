@@ -23,7 +23,7 @@ describe('ResultItem', () => {
     setTestFlags({ 'grafana.cmdkDashboardTags': true });
     originalProvisioning = config.provisioningEnabled;
     const rect = document.createElement('div').getBoundingClientRect();
-    jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       return { ...rect, width: Array.from(this.children).some((child) => child.tagName === 'UL') ? 400 : 40 };
     });
   });

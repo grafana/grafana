@@ -12,7 +12,7 @@ describe('ResultTags', () => {
   beforeEach(() => {
     availableWidth = 238;
     const rect = document.createElement('div').getBoundingClientRect();
-    jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+    jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       const width = Array.from(this.children).some((child) => child.tagName === 'UL')
         ? availableWidth
         : (widths[this.textContent ?? ''] ?? 30);
@@ -83,7 +83,7 @@ describe('ResultTags', () => {
   ])('reserves space for a two-digit hidden count at $width pixels', ({ width, lastTag, hidden }) => {
     availableWidth = width;
     const rect = document.createElement('div').getBoundingClientRect();
-    jest.mocked(HTMLElement.prototype.getBoundingClientRect).mockImplementation(function () {
+    jest.mocked(HTMLElement.prototype.getBoundingClientRect).mockImplementation(function (this: HTMLElement) {
       return {
         ...rect,
         width: Array.from(this.children).some((child) => child.tagName === 'UL')
