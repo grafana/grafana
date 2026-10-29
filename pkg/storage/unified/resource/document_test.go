@@ -15,6 +15,68 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+func TestSearchableDocumentFieldsPreservesDefinitions(t *testing.T) {
+	definitions := []SearchFieldDefinition{
+		{
+			Name: "members", Path: "spec.members[*]", Type: SearchFieldTypeString, Array: true,
+			Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityRetrieve},
+			Description:  "Members", EmitZeroIfAbsent: true,
+		},
+		{Name: "enabled", Type: SearchFieldTypeBoolean},
+		{Name: "count", Type: SearchFieldTypeInt64},
+		{Name: "ratio", Type: SearchFieldTypeDouble},
+		{Name: "timestamp", Type: SearchFieldTypeDate},
+	}
+	fields, err := NewSearchableDocumentFields(definitions)
+	require.NoError(t, err)
+	require.Equal(t, []string{"members", "enabled", "count", "ratio", "timestamp"}, fields.Fields())
+	for _, def := range definitions {
+		require.Equal(t, def, *fields.Field(def.Name))
+		require.Same(t, fields.Field(def.Name), fields.Field(SEARCH_FIELD_PREFIX+def.Name))
+	}
+	require.Nil(t, fields.Field("missing"))
+	require.Nil(t, fields.Field(SEARCH_FIELD_PREFIX+"missing"))
+
+	_, err = NewSearchableDocumentFields(append(definitions, definitions[0]))
+	require.EqualError(t, err, "duplicate name")
+}
+
+func TestSearchableFieldsFromProvider(t *testing.T) {
+	fields, err := SearchableFieldsFromProvider(nil, "example.test", "widgets")
+	require.NoError(t, err)
+	require.Nil(t, fields)
+
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	definitions := []SearchFieldDefinition{{Name: "count", Path: "spec.count", Type: SearchFieldTypeInt64}}
+	provider := NewMapProvider(map[schema.GroupVersionResource][]SearchFieldDefinition{gvr: definitions}, nil)
+	fields, err = SearchableFieldsFromProvider(provider, gvr.Group, gvr.Resource)
+	require.NoError(t, err)
+	require.Equal(t, definitions[0], *fields.Field("count"))
+}
+
+func TestStandardSearchFieldsPreservesResponseNames(t *testing.T) {
+	fields := StandardSearchFields()
+	require.ElementsMatch(t, []string{
+		SEARCH_FIELD_ID, SEARCH_FIELD_GROUP_RESOURCE, SEARCH_FIELD_NAMESPACE, SEARCH_FIELD_NAME,
+		SEARCH_FIELD_TITLE, SEARCH_FIELD_DESCRIPTION, SEARCH_FIELD_TAGS, SEARCH_FIELD_FOLDER,
+		SEARCH_FIELD_RV, SEARCH_FIELD_CREATED, SEARCH_FIELD_UPDATED, SEARCH_FIELD_CREATED_BY,
+		SEARCH_FIELD_UPDATED_BY, SEARCH_FIELD_EXPLAIN, SEARCH_FIELD_SCORE, SEARCH_FIELD_LEGACY_ID,
+		SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_MANAGER_ALLOW_EDITS,
+		SEARCH_FIELD_SOURCE_TIME, SEARCH_FIELD_SOURCE_PATH, SEARCH_FIELD_SOURCE_CHECKSUM,
+		SEARCH_FIELD_OWNER_REFERENCES, SEARCH_FIELD_DELETED_BY, SEARCH_FIELD_DELETION_TIME, SEARCH_FIELD_DELETED_RV,
+	}, fields.Fields())
+	require.Equal(t, SearchFieldTypeInt64, fields.Field(SEARCH_FIELD_RV).Type)
+	require.Equal(t, SearchFieldTypeInt64, fields.Field(SEARCH_FIELD_CREATED).Type)
+	require.Equal(t, SearchFieldTypeInt64, fields.Field(SEARCH_FIELD_DELETION_TIME).Type)
+	require.Equal(t, SearchFieldTypeString, fields.Field(SEARCH_FIELD_DELETED_RV).Type)
+	require.True(t, fields.Field(SEARCH_FIELD_TAGS).Array)
+	require.True(t, fields.Field(SEARCH_FIELD_OWNER_REFERENCES).Array)
+	require.Nil(t, fields.Field(SEARCH_FIELD_MANAGED_BY), "facet-only values are not stored response fields")
+	for _, name := range []string{SEARCH_FIELD_IS_DELETED, SEARCH_FIELD_IS_PROVISIONED, SEARCH_FIELD_RV_STRING, SEARCH_FIELD_DELETED_RV_SORT} {
+		require.Nil(t, fields.Field(name), "internal fields stay out of public field resolution")
+	}
+}
+
 func TestIndexableDocumentUsesFixedWidthDeletedResourceVersionForSorting(t *testing.T) {
 	for _, tc := range []struct {
 		value string
