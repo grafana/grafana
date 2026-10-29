@@ -974,6 +974,8 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/PreferencesService.ts @grafana/grafana-frontend-platform
 /public/app/core/services/ResponseQueue* @grafana/grafana-frontend-platform
 /public/app/core/services/StateManagerBase.ts @grafana/grafana-frontend-platform
+/public/app/core/services/StPodReadyService* @grafana/grafana-frontend-platform
+/public/app/core/services/stPodReadyConstants* @grafana/grafana-frontend-platform
 /public/app/core/services/theme* @grafana/grafana-frontend-platform
 /public/app/core/services/userPermissions* @grafana/grafana-frontend-navigation @grafana/identity-access-team
 /public/app/core/specs/backend_srv.test.ts @grafana/grafana-frontend-platform

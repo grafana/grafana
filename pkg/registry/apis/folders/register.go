@@ -558,6 +558,15 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 			return fmt.Errorf("obj is not folders.Folder")
 		}
 		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
+		if verb == admission.Create {
+			applyCascadeDeleteFinalizerOnCreate(f, folderAsyncCascadeDeleteEnabled(ctx))
+			return nil
+		}
+		old, ok := a.GetOldObject().(*foldersv1.Folder)
+		if !ok {
+			return fmt.Errorf("old obj is not folders.Folder")
+		}
+		preserveCascadeDeleteFinalizerOnUpdate(f, old)
 		return nil
 	}
 	return nil

@@ -1,13 +1,10 @@
-package kv
+package resource
 
 import (
 	"fmt"
 	"strconv"
 	"strings"
 )
-
-// TODO move everything in this file into datastore.go once backwards compatibility with sql/backend is not necessary
-// anymore
 
 type DataAction string
 
@@ -17,22 +14,6 @@ const (
 	DataActionDeleted DataAction = "deleted"
 )
 
-// LegacyActionValue maps the datastore action to the temporary integer encoding
-// still used by sql/backend compatibility columns.
-// Remove once sqlkv no longer needs to mirror those legacy columns.
-func LegacyActionValue(action DataAction) (int64, error) {
-	switch action {
-	case DataActionCreated:
-		return 1, nil
-	case DataActionUpdated:
-		return 2, nil
-	case DataActionDeleted:
-		return 3, nil
-	default:
-		return 0, fmt.Errorf("unknown data action: %q", action)
-	}
-}
-
 type DataKey struct {
 	Namespace       string
 	Group           string
@@ -41,9 +22,6 @@ type DataKey struct {
 	ResourceVersion int64
 	Action          DataAction
 	Folder          string
-
-	// needed to maintain backwards compatibility with unified/sql
-	GUID string
 }
 
 // ParseDataKeyParts parses the common parts of a data key.
@@ -81,35 +59,11 @@ func ParseDataKeyParts(parts []string) (DataKey, []string, error) {
 	return dk, rvParts, nil
 }
 
-// Temporary while we need to support unified/sql/backend compatibility.
-// Remove once we stop using RvManager in storage_backend.go
-func ParseKeyWithGUID(key string) (DataKey, error) {
-	parts := strings.Split(key, "/")
-	dk, rvParts, err := ParseDataKeyParts(parts)
-	if err != nil {
-		return DataKey{}, fmt.Errorf("invalid key: %s: %w", key, err)
-	}
-	if len(rvParts) != 4 {
-		return DataKey{}, fmt.Errorf("invalid key metadata: expected %d tilde-separated parts, got %d", 4, len(rvParts))
-	}
-	dk.GUID = rvParts[3]
-	return dk, nil
-}
-
 func (k DataKey) String() string {
 	if k.Namespace == "" {
 		return fmt.Sprintf("%s/%s/%s/%d~%s~%s", k.Group, k.Resource, k.Name, k.ResourceVersion, k.Action, k.Folder)
 	}
 	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder)
-}
-
-// Temporary while we need to support unified/sql/backend compatibility
-// Remove once we stop using RvManager in storage_backend.go
-func (k DataKey) StringWithGUID() string {
-	if k.Namespace == "" {
-		return fmt.Sprintf("%s/%s/%s/%d~%s~%s~%s", k.Group, k.Resource, k.Name, k.ResourceVersion, k.Action, k.Folder, k.GUID)
-	}
-	return fmt.Sprintf("%s/%s/%s/%s/%d~%s~%s~%s", k.Group, k.Resource, k.Namespace, k.Name, k.ResourceVersion, k.Action, k.Folder, k.GUID)
 }
 
 func (k DataKey) Equals(other DataKey) bool {

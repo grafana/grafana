@@ -1446,10 +1446,16 @@
         "rules-error": "",
         "search-issues": ""
       },
+      "datasources": "",
       "interval": "",
+      "recorded-metric": {
+        "records": "",
+        "to": ""
+      },
       "recording-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "result-count": {
         "alert-rules_one": "",
@@ -1526,7 +1532,9 @@
         "recording": "",
         "recovering": "",
         "unavailable": ""
-      }
+      },
+      "labels_one": "",
+      "labels_other": ""
     },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Om je Alertmanager-instellingen te wijzigen, ga je naar de pagina Alert Admin. Neem contact op met je beheerder als je geen toegang hebt.",
@@ -5943,6 +5951,7 @@
       "panel-repeat-variable": "Paneel herhalen op",
       "panel-title": "wijziging van paneeltitel",
       "paste-panel": "Paneel plakken",
+      "paste-panel-styles": "",
       "remove": "{{typeName}} verwijderen",
       "remove-multiple": "{{typeName}} ({{num}}) verwijderen",
       "rename": "",
@@ -5960,6 +5969,7 @@
       "switch-layout-tab": "Indeling wisselen",
       "tab-repeat-variable": "Tabblad herhalen op",
       "tab-title": "Tabbladtitel wijzigen",
+      "unlink-library-panel": "",
       "variable-adhoc-default-filters": "",
       "variable-adhoc-default-group-by": "",
       "variable-adhoc-default-keys": "",
@@ -6206,6 +6216,7 @@
       "tooltip-previous": "Vorige"
     },
     "modes": {
+      "agent-edit": "",
       "change-mode": "",
       "composer": "",
       "composer-description": "",
@@ -8073,7 +8084,7 @@
       }
     },
     "unlink-modal": {
-      "body-unlink-panel": "Als je dit paneel ontkoppelt, kun je het bewerken zonder andere dashboards te beïnvloeden. Zodra je echter een wijziging aanbrengt, kun je niet meer terugkeren naar het oorspronkelijke herbruikbare paneel.",
+      "body-unlink-panel": "",
       "confirmText-yes-unlink": "Ja, ontkoppelen",
       "title-really-unlink-panel": "Wil je dit paneel echt ontkoppelen?"
     },
@@ -9311,10 +9322,6 @@
       "attribute-category": {
         "other": "Overige"
       },
-      "exception-message": "Bericht:",
-      "exception-stacktrace": "Stacktrace",
-      "exception-title": "Uitzondering",
-      "exception-type": "Type:",
       "label": {
         "kind": "Type:",
         "library-name": "Bibliotheeknaam:",
@@ -9420,6 +9427,7 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Menu delen en feedback openen",
+      "copy-trace-id": "",
       "critical-path": "Kritiek pad",
       "critical-path-tooltip": "Selecteert spans in het kritieke pad: de langste reeks afhankelijke taken die de minimale duur van de trace bepaalt.",
       "duration": "Duur",
@@ -9443,7 +9451,7 @@
       "share-group": "Delen",
       "share-tooltip": "Delen en feedback",
       "spans": "Spans",
-      "start-time": "Begintijd",
+      "start-time": "",
       "success-indicator": "Trace geslaagd",
       "target": "Doel",
       "tooltip-url": "{{route}} of {{url}} of {{target}} of {{path}}",
@@ -9452,6 +9460,12 @@
       "trace-banner-metrics": "{{duration}} · {{percent}}% van trace",
       "trace-banner-warning": "Banner met tracewaarschuwing",
       "trace-id": "Tracering-id",
+      "trace-summary-error": "",
+      "trace-summary-error-status": "",
+      "trace-summary-hide-stacktrace": "",
+      "trace-summary-show-stacktrace": "",
+      "trace-summary-warning": "",
+      "trace-summary-warning-status": "",
       "url": "URL",
       "warning-indicator": "Trace bevat clientfouten"
     },
@@ -15017,7 +15031,7 @@
       "resources-to-migrate-empty": "Er komen geen mappen of bronnen overeen met de huidige zoekopdracht.",
       "resources-to-migrate-heading": "Bronnen om te migreren",
       "resources-to-migrate-search": "Mappen en bronnen doorzoeken",
-      "resources-to-migrate-subtitle": "Kies hele mappen of individuele bronnen daarin. Als je een map selecteert, worden alleen de bronnen die zich direct in die map bevinden gemigreerd. Alles in submappen wordt via de eigen map gemigreerd.",
+      "resources-to-migrate-subtitle": "",
       "retain-resources-description": "Bewaar de gemigreerde bronnen in dit geval terwijl het pull-verzoek open is, zodat ze live blijven totdat de branch is samengevoegd. Deze bronnen moeten handmatig worden verwijderd voordat het pull-verzoek wordt samengevoegd, anders treden er fouten op tijdens het synchroniseren vanwege conflicterende bronnen.",
       "retain-resources-label": "Bestaande bronnen behouden tijdens beoordeling",
       "retain-resources-warning-body": "Je moet de gemigreerde bronnen zelf verwijderen voordat je het pull-verzoek samenvoegt. Als ze nog steeds bestaan wanneer de branch wordt samengevoegd, zullen ze in conflict komen met de inkomende beheerde bronnen en zullen ze niet worden afgestemd.",
@@ -15848,6 +15862,12 @@
       "delete-transformations-confirm-title_one": " {{count}} transformatie verwijderen?",
       "delete-transformations-confirm-title_other": " {{count}} transformaties verwijderen?"
     },
+    "datasource-error": {
+      "load-failed": "",
+      "load-failed-named": "",
+      "not-found": "",
+      "settings-not-found": ""
+    },
     "delete-modal": {
       "body-transformation": "Het verwijderen van één transformatie kan invloed hebben op andere."
     },
@@ -16178,6 +16198,7 @@
       "exchange": "Wijzig rootscope naar {{scope}} ",
       "expand": "Uitvouwen",
       "filter": "",
+      "filterAriaLabel": "",
       "loading": "Dashboards laden",
       "megaMenuSectionHeading": "",
       "noResultsForFilter": "Geen resultaten gevonden voor je zoekopdracht",
@@ -16186,7 +16207,6 @@
       "noResultsNoScopes": "Geen scopes geselecteerd",
       "toggle": {
         "collapse": "Lijst met voorgestelde dashboards samenvouwen",
-        "disabled": "Voorgestelde dashboardlijst is uitgeschakeld vanwege de alleen-lezenmodus",
         "expand": "Lijst met voorgestelde dashboards uitvouwen"
       }
     },
@@ -16721,6 +16741,17 @@
     "generate-suggestion": "Suggestie genereren",
     "improve-query": "Query verbeteren"
   },
+  "st-pod-ready": {
+    "error": {
+      "body-with-support": "",
+      "support-ack": "",
+      "title": "",
+      "title-fallback": ""
+    },
+    "timeout": {
+      "banner": ""
+    }
+  },
   "stars": {
     "mark-as-starred": "Markeren als favoriet",
     "mark-as-starred-with-title": "{{title}} markeren als favoriet",
@@ -16890,6 +16921,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": ""
+    },
     "login": "Inloggen",
     "manifests": {
       "api-docs": "",
@@ -17589,9 +17623,11 @@
       "placeholder-frame": "Frame"
     },
     "config-from-query-transformer-editor": {
+      "description-dynamic-field-name-matcher": "",
       "label-apply-to": "Toepassen op",
       "label-apply-to-options": "Toepassen op opties",
-      "label-config-query": "Query configureren"
+      "label-config-query": "Query configureren",
+      "name-dynamic-field-name-matcher": ""
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Transformator omgezet veldtype toevoegen",
