@@ -1,9 +1,14 @@
 import { logWarning } from '@grafana/runtime';
-import { SceneGridLayout, VizPanel } from '@grafana/scenes';
+import { type SceneGridItemLike, SceneGridLayout, VizPanel } from '@grafana/scenes';
 
+import { DashboardEditActionEvent, type DashboardEditActionEventPayload } from '../../../sidebar/events';
+import { RowItem } from '../../layout-rows/RowItem';
+import { DASHBOARD_DROP_TARGET_KEY_ATTR, type GridItemDragInfo } from '../../types/DashboardDropTarget';
 import { DashboardGridItem } from '../DashboardGridItem';
+import { DefaultGridLayoutManager } from '../DefaultGridLayoutManager';
 
-import { CustomGridController } from './CustomGridController';
+import { CustomGridController, DRAG_LEFT_VAR, DRAG_TOP_VAR, RESIZE_WIDTH_VAR } from './CustomGridController';
+import { type GridLayoutItem } from './gridMath';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -209,3 +214,487 @@ describe('CustomGridController', () => {
     });
   });
 });
+
+// 1200px wide grid at the top-left of the viewport: columns are 50.33px apart, rows 38px apart
+const GRID_WIDTH = 1200;
+const COLUMN_PX = (GRID_WIDTH + 8) / 24;
+const ROW_PX = 38;
+// The pointer grabs panels 10px in from their top-left corner
+const GRAB: GridItemDragInfo = { offsetX: 10, offsetY: 10, width: 0, height: 0 };
+
+interface InteractionSetupOptions {
+  gridState?: Partial<SceneGridLayout['state']>;
+  gridWidth?: number;
+}
+
+/**
+ * A rendered grid: a container with one element per grid item, each with a drag handle, and an edit
+ * listener that performs edit actions like the dashboard edit pane does
+ */
+function setupRenderedGrid(
+  children: DashboardGridItem[],
+  { gridState, gridWidth = GRID_WIDTH }: InteractionSetupOptions = {}
+) {
+  const grid = new SceneGridLayout({ children, isDraggable: true, isResizable: true, ...gridState });
+  const controller = new CustomGridController(grid);
+  const listener = jest.fn();
+  controller.subscribe(listener);
+
+  const container = document.createElement('div');
+  Object.defineProperty(container, 'clientWidth', { value: gridWidth });
+  container.getBoundingClientRect = () => rect(0, 0, gridWidth, 2000);
+  container.setAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR, 'grid-manager');
+  const handles = new Map<string, HTMLElement>();
+  for (const child of children) {
+    const element = document.createElement('div');
+    element.setAttribute('data-griditem-key', child.state.key!);
+    const handle = document.createElement('div');
+    handle.className = grid.getDragClass();
+    const cancel = document.createElement('button');
+    cancel.className = grid.getDragClassCancel();
+    handle.appendChild(cancel);
+    element.appendChild(handle);
+    container.appendChild(element);
+    handles.set(child.state.key!, handle);
+  }
+  document.body.appendChild(container);
+  controller.setContainer(container);
+
+  // The pointer is over the grid unless a test moves it over another drop target
+  const elementsUnderPointer: Element[] = [container];
+  document.elementsFromPoint = jest.fn(() => elementsUnderPointer);
+
+  const edits: DashboardEditActionEventPayload[] = [];
+  grid.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
+    payload.perform();
+    edits.push(payload);
+  });
+
+  const itemElement = (key: string) => container.querySelector<HTMLElement>(`[data-griditem-key="${key}"]`)!;
+  const onCancel = jest.fn();
+
+  /** Presses the pointer on the grid item's drag handle at the grab offset and starts the drag */
+  const pressOnHandle = (item: SceneGridItemLike, target: Element = handles.get(item.state.key!)!) => {
+    const { x = 0, y = 0 } = item.state;
+    const press = { button: 0, clientX: x * COLUMN_PX + GRAB.offsetX, clientY: y * ROW_PX + GRAB.offsetY, target };
+    if (controller.canStartDrag(press, item)) {
+      controller.startDrag(item, press, GRAB, onCancel);
+    }
+    return press;
+  };
+
+  /** Moves the dragged item so its top-left corner is at the given cell */
+  const dragToCell = (x: number, y: number) =>
+    controller.onDrag({ clientX: x * COLUMN_PX + GRAB.offsetX, clientY: y * ROW_PX + GRAB.offsetY, buttons: 1 });
+
+  const moveOverOtherDropTarget = () => {
+    const other = document.createElement('div');
+    other.setAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR, 'other-row');
+    elementsUnderPointer.splice(0, elementsUnderPointer.length, other, container.parentElement!);
+  };
+
+  const moveOverGrid = () => elementsUnderPointer.splice(0, elementsUnderPointer.length, container);
+
+  return {
+    grid,
+    controller,
+    listener,
+    container,
+    edits,
+    onCancel,
+    itemElement,
+    pressOnHandle,
+    dragToCell,
+    moveOverOtherDropTarget,
+    moveOverGrid,
+    handles,
+  };
+}
+
+function rect(left: number, top: number, width: number, height: number): DOMRect {
+  return {
+    left,
+    top,
+    width,
+    height,
+    x: left,
+    y: top,
+    right: left + width,
+    bottom: top + height,
+    toJSON: () => ({}),
+  };
+}
+
+function dispatchPointer(type: string, init: MouseEventInit) {
+  window.dispatchEvent(new MouseEvent(type, { bubbles: true, ...init }));
+}
+
+function layoutOf(grid: SceneGridLayout): GridLayoutItem[] {
+  return grid.state.children
+    .map(({ state }) => ({ key: state.key!, x: state.x!, y: state.y!, w: state.width!, h: state.height! }))
+    .map(({ key, ...cell }) => ({ i: key.replace('grid-item', 'panel'), ...cell }))
+    .sort((a, b) => a.i.localeCompare(b.i));
+}
+
+// Two panels side by side and one below the first
+function threePanels() {
+  return [gridItem(1, 0, 0, 12, 8), gridItem(2, 12, 0, 12, 8), gridItem(3, 0, 8, 12, 8)];
+}
+
+const THREE_PANELS: GridLayoutItem[] = [
+  { i: 'panel-1', x: 0, y: 0, w: 12, h: 8 },
+  { i: 'panel-2', x: 12, y: 0, w: 12, h: 8 },
+  { i: 'panel-3', x: 0, y: 8, w: 12, h: 8 },
+];
+
+afterEach(() => {
+  document.body.innerHTML = '';
+  document.body.className = '';
+});
+
+describe('CustomGridController drag', () => {
+  it('previews the move live while the grid items keep their positions', () => {
+    const { grid, controller, listener, pressOnHandle, dragToCell, itemElement } = setupRenderedGrid(threePanels());
+    const [, , third] = grid.state.children;
+    pressOnHandle(third);
+    listener.mockClear();
+
+    dragToCell(0, 0);
+
+    expect(controller.getInteraction()).toMatchObject({
+      kind: 'drag',
+      key: 'panel-3',
+      isActive: true,
+      isOutside: false,
+    });
+    expect(sortByKey(controller.getInteraction()!.preview)).toEqual([
+      { i: 'panel-1', x: 0, y: 8, w: 12, h: 8 },
+      { i: 'panel-2', x: 12, y: 0, w: 12, h: 8 },
+      { i: 'panel-3', x: 0, y: 0, w: 12, h: 8 },
+    ]);
+    expect(listener).toHaveBeenCalled();
+    expect(layoutOf(grid)).toEqual(THREE_PANELS);
+    // The dragged item follows the pointer, wherever the cell it snaps to is
+    expect(itemElement('grid-item-3').style.getPropertyValue(DRAG_LEFT_VAR)).toBe('0px');
+    expect(itemElement('grid-item-3').style.getPropertyValue(DRAG_TOP_VAR)).toBe('0px');
+  });
+
+  it('does not lift the panel before the pointer moved a few pixels, so a click stays a click', () => {
+    const { grid, controller, pressOnHandle } = setupRenderedGrid(threePanels());
+    const press = pressOnHandle(grid.state.children[2]);
+
+    controller.onDrag({ clientX: press.clientX + 2, clientY: press.clientY + 1, buttons: 1 });
+
+    expect(controller.getInteraction()).toMatchObject({ isActive: false, preview: THREE_PANELS });
+  });
+
+  it('commits the drop as one undoable move that restores and reapplies every position exactly', () => {
+    const { grid, controller, edits, pressOnHandle, dragToCell } = setupRenderedGrid(threePanels());
+    const third = grid.state.children.find((child) => child.state.key === 'grid-item-3')!;
+    pressOnHandle(third);
+    dragToCell(0, 0);
+    const preview = sortByKey(controller.getInteraction()!.preview);
+
+    controller.commitDrag(third);
+    controller.endDrag();
+
+    expect(edits).toHaveLength(1);
+    expect(edits[0].meta).toEqual({ actionId: 'panel.move', scope: 'custom-grid' });
+    expect(layoutOf(grid)).toEqual(preview);
+    // Children are kept in reading order
+    expect(grid.state.children.map((child) => child.state.key)).toEqual(['grid-item-3', 'grid-item-2', 'grid-item-1']);
+    expect(controller.getInteraction()).toBeNull();
+
+    edits[0].undo();
+    expect(layoutOf(grid)).toEqual(THREE_PANELS);
+
+    edits[0].perform();
+    expect(layoutOf(grid)).toEqual(preview);
+  });
+
+  it('does not add an undo step when the drop leaves the layout as it was', () => {
+    const { grid, controller, edits, pressOnHandle, dragToCell } = setupRenderedGrid(threePanels());
+    const third = grid.state.children[2];
+    pressOnHandle(third);
+    dragToCell(1, 0);
+    dragToCell(0, 8);
+
+    controller.commitDrag(third);
+
+    expect(edits).toHaveLength(0);
+    expect(layoutOf(grid)).toEqual(THREE_PANELS);
+  });
+
+  it('closes the gap while the item is over another drop target, and does not move it when dropped there', () => {
+    const { grid, controller, edits, pressOnHandle, dragToCell, moveOverOtherDropTarget } =
+      setupRenderedGrid(threePanels());
+    const first = grid.state.children[0];
+    pressOnHandle(first);
+    dragToCell(0, 2);
+    moveOverOtherDropTarget();
+    dragToCell(0, 30);
+
+    expect(controller.getInteraction()).toMatchObject({ isOutside: true });
+    expect(sortByKey(controller.getInteraction()!.preview)).toEqual([
+      { i: 'panel-2', x: 12, y: 0, w: 12, h: 8 },
+      { i: 'panel-3', x: 0, y: 0, w: 12, h: 8 },
+    ]);
+
+    controller.commitDrag(first);
+
+    expect(edits).toHaveLength(0);
+    expect(layoutOf(grid)).toEqual(THREE_PANELS);
+  });
+
+  it('gives the positions before and after the item leaves, for a drop in another layout', () => {
+    const { grid, controller, pressOnHandle, dragToCell, moveOverOtherDropTarget } = setupRenderedGrid(threePanels());
+    pressOnHandle(grid.state.children[0]);
+    dragToCell(0, 2);
+    moveOverOtherDropTarget();
+    dragToCell(0, 30);
+
+    const snapshot = controller.getDragSourceSnapshot();
+
+    expect(snapshot?.target).toBe(controller);
+    expect(snapshot?.before).toEqual(THREE_PANELS);
+    expect(snapshot?.after).toEqual(controller.getInteraction()!.preview);
+  });
+
+  it('inserts the item again where the pointer is once it is back over the grid', () => {
+    const { grid, controller, pressOnHandle, dragToCell, moveOverOtherDropTarget, moveOverGrid } =
+      setupRenderedGrid(threePanels());
+    pressOnHandle(grid.state.children[0]);
+    dragToCell(0, 1);
+    moveOverOtherDropTarget();
+    dragToCell(0, 30);
+    moveOverGrid();
+
+    dragToCell(12, 8);
+
+    expect(controller.getInteraction()).toMatchObject({ isOutside: false });
+    expect(sortByKey(controller.getInteraction()!.preview)).toEqual([
+      { i: 'panel-1', x: 12, y: 8, w: 12, h: 8 },
+      { i: 'panel-2', x: 12, y: 0, w: 12, h: 8 },
+      { i: 'panel-3', x: 0, y: 0, w: 12, h: 8 },
+    ]);
+  });
+
+  describe('cancelling', () => {
+    it('cancels on Escape and leaves every item where it was', () => {
+      const { grid, controller, edits, onCancel, pressOnHandle, dragToCell } = setupRenderedGrid(threePanels());
+      const third = grid.state.children[2];
+      pressOnHandle(third);
+      dragToCell(0, 0);
+
+      const escape = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+      window.dispatchEvent(escape);
+      controller.commitDrag(third);
+
+      expect(escape.defaultPrevented).toBe(true);
+      expect(onCancel).toHaveBeenCalledTimes(1);
+      expect(controller.getInteraction()).toBeNull();
+      expect(edits).toHaveLength(0);
+      expect(layoutOf(grid)).toEqual(THREE_PANELS);
+    });
+
+    it('cancels when the pointer is released outside the window', () => {
+      const { grid, controller, onCancel, pressOnHandle, dragToCell } = setupRenderedGrid(threePanels());
+      pressOnHandle(grid.state.children[2]);
+      dragToCell(0, 0);
+
+      dispatchPointer('pointerup', { clientX: -50, clientY: 100 });
+
+      expect(onCancel).toHaveBeenCalledTimes(1);
+      expect(controller.getInteraction()).toBeNull();
+      expect(layoutOf(grid)).toEqual(THREE_PANELS);
+    });
+
+    it('leaves a release inside the window to the layout orchestrator', () => {
+      const { grid, controller, onCancel, pressOnHandle, dragToCell } = setupRenderedGrid(threePanels());
+      pressOnHandle(grid.state.children[2]);
+      dragToCell(0, 0);
+
+      document.body.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 10, clientY: 10 }));
+
+      expect(onCancel).not.toHaveBeenCalled();
+      expect(controller.getInteraction()).toMatchObject({ isActive: true });
+    });
+
+    it('cancels when a pointer move shows the release was missed', () => {
+      const { grid, controller, onCancel, pressOnHandle, dragToCell } = setupRenderedGrid(threePanels());
+      pressOnHandle(grid.state.children[2]);
+      dragToCell(0, 0);
+
+      controller.onDrag({ clientX: 10, clientY: 10, buttons: 0 });
+
+      expect(onCancel).toHaveBeenCalledTimes(1);
+      expect(controller.getInteraction()).toBeNull();
+    });
+
+    it('stops listening once the drag ended', () => {
+      const { grid, controller, onCancel, pressOnHandle, dragToCell } = setupRenderedGrid(threePanels());
+      pressOnHandle(grid.state.children[2]);
+      dragToCell(0, 0);
+      controller.endDrag();
+
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+      expect(onCancel).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('which presses start a drag', () => {
+    it('starts on the drag handle with the primary button', () => {
+      const { grid, controller, pressOnHandle } = setupRenderedGrid(threePanels());
+
+      pressOnHandle(grid.state.children[0]);
+
+      expect(controller.getInteraction()).toMatchObject({ kind: 'drag', key: 'panel-1' });
+    });
+
+    it('does not start outside the drag handle or on a part of it that cancels drags', () => {
+      const { grid, controller, handles, container } = setupRenderedGrid(threePanels());
+      const item = grid.state.children[0];
+      const press = { button: 0, clientX: 10, clientY: 10 };
+
+      expect(controller.canStartDrag({ ...press, target: container }, item)).toBe(false);
+      expect(controller.canStartDrag({ ...press, target: handles.get('grid-item-1')!.firstElementChild }, item)).toBe(
+        false
+      );
+      expect(controller.canStartDrag({ ...press, button: 2, target: handles.get('grid-item-1')! }, item)).toBe(false);
+    });
+
+    it('does not start for items that are not draggable', () => {
+      const notDraggable = gridItem(1, 0, 0, 12, 8);
+      notDraggable.setState({ isDraggable: false });
+      const { controller, handles } = setupRenderedGrid([notDraggable]);
+
+      const press = { button: 0, clientX: 10, clientY: 10, target: handles.get('grid-item-1')! };
+      expect(controller.canStartDrag(press, notDraggable)).toBe(false);
+    });
+
+    it('does not start for items of a repeated row clone', () => {
+      const { grid, controller, handles } = setupRenderedGrid(threePanels());
+      new RowItem({ key: 'row-clone', repeatSourceKey: 'row', layout: new DefaultGridLayoutManager({ grid }) });
+
+      const press = { button: 0, clientX: 10, clientY: 10, target: handles.get('grid-item-1')! };
+      expect(controller.canStartDrag(press, grid.state.children[0])).toBe(false);
+    });
+
+    it('does not start in a grid that is not draggable or too narrow for columns', () => {
+      const notDraggable = setupRenderedGrid(threePanels(), { gridState: { isDraggable: false } });
+      const press = (setup: ReturnType<typeof setupRenderedGrid>) => ({
+        button: 0,
+        clientX: 10,
+        clientY: 10,
+        target: setup.handles.get('grid-item-1')!,
+      });
+      expect(notDraggable.controller.canStartDrag(press(notDraggable), notDraggable.grid.state.children[0])).toBe(
+        false
+      );
+
+      const narrow = setupRenderedGrid(threePanels(), { gridWidth: 768 });
+      expect(narrow.controller.canStartDrag(press(narrow), narrow.grid.state.children[0])).toBe(false);
+    });
+  });
+});
+
+describe('CustomGridController resize', () => {
+  function startResize(setup: ReturnType<typeof setupRenderedGrid>, key: string, clientX = 500, clientY = 300) {
+    const item = setup.grid.state.children.find((child) => child.state.key === key)!;
+    const evt = {
+      button: 0,
+      clientX,
+      clientY,
+      target: setup.container,
+      preventDefault: jest.fn(),
+      stopPropagation: jest.fn(),
+    };
+    setup.controller.startResize(evt, item);
+    return evt;
+  }
+
+  it('previews the new size live, pushing the items it now overlaps down', () => {
+    const setup = setupRenderedGrid(threePanels());
+    const press = startResize(setup, 'grid-item-1');
+
+    dispatchPointer('pointermove', {
+      clientX: press.clientX + 2 * COLUMN_PX,
+      clientY: press.clientY + 4 * ROW_PX,
+      buttons: 1,
+    });
+
+    expect(press.preventDefault).toHaveBeenCalled();
+    expect(setup.controller.getInteraction()).toMatchObject({ kind: 'resize', key: 'panel-1', isActive: true });
+    expect(sortByKey(setup.controller.getInteraction()!.preview)).toEqual([
+      { i: 'panel-1', x: 0, y: 0, w: 14, h: 12 },
+      { i: 'panel-2', x: 12, y: 12, w: 12, h: 8 },
+      { i: 'panel-3', x: 0, y: 12, w: 12, h: 8 },
+    ]);
+    expect(layoutOf(setup.grid)).toEqual(THREE_PANELS);
+  });
+
+  it('commits the release as one undoable resize that restores and reapplies every position exactly', () => {
+    const setup = setupRenderedGrid(threePanels());
+    const press = startResize(setup, 'grid-item-1');
+    dispatchPointer('pointermove', {
+      clientX: press.clientX + 2 * COLUMN_PX,
+      clientY: press.clientY + 4 * ROW_PX,
+      buttons: 1,
+    });
+    const preview = sortByKey(setup.controller.getInteraction()!.preview);
+
+    dispatchPointer('pointerup', { clientX: press.clientX + 2 * COLUMN_PX, clientY: press.clientY + 4 * ROW_PX });
+
+    expect(setup.edits).toHaveLength(1);
+    expect(setup.edits[0].meta).toEqual({ actionId: 'panel.resize', scope: 'custom-grid' });
+    expect(setup.edits[0].description).toBe('Resize panel');
+    expect(layoutOf(setup.grid)).toEqual(preview);
+    expect(setup.controller.getInteraction()).toBeNull();
+
+    setup.edits[0].undo();
+    expect(layoutOf(setup.grid)).toEqual(THREE_PANELS);
+
+    setup.edits[0].perform();
+    expect(layoutOf(setup.grid)).toEqual(preview);
+  });
+
+  it('keeps items at least one cell big and no wider than the grid', () => {
+    const setup = setupRenderedGrid(threePanels());
+    const press = startResize(setup, 'grid-item-2');
+
+    dispatchPointer('pointermove', { clientX: press.clientX + 2000, clientY: press.clientY - 2000, buttons: 1 });
+    expect(setup.controller.getInteraction()!.preview.find(({ i }) => i === 'panel-2')).toMatchObject({ w: 12, h: 1 });
+    expect(setup.itemElement('grid-item-2').style.getPropertyValue(RESIZE_WIDTH_VAR)).toBe('596px');
+
+    dispatchPointer('pointermove', { clientX: press.clientX - 2000, clientY: press.clientY, buttons: 1 });
+    expect(setup.controller.getInteraction()!.preview.find(({ i }) => i === 'panel-2')).toMatchObject({ w: 1 });
+  });
+
+  it('cancels on Escape and leaves every item where it was', () => {
+    const setup = setupRenderedGrid(threePanels());
+    const press = startResize(setup, 'grid-item-1');
+    dispatchPointer('pointermove', { clientX: press.clientX + 200, clientY: press.clientY + 200, buttons: 1 });
+
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    dispatchPointer('pointerup', { clientX: press.clientX + 200, clientY: press.clientY + 200 });
+
+    expect(setup.controller.getInteraction()).toBeNull();
+    expect(setup.edits).toHaveLength(0);
+    expect(layoutOf(setup.grid)).toEqual(THREE_PANELS);
+  });
+
+  it('does not add an undo step when the size did not change', () => {
+    const setup = setupRenderedGrid(threePanels());
+    const press = startResize(setup, 'grid-item-1');
+    dispatchPointer('pointermove', { clientX: press.clientX + 5, clientY: press.clientY + 5, buttons: 1 });
+
+    dispatchPointer('pointerup', { clientX: press.clientX + 5, clientY: press.clientY + 5 });
+
+    expect(setup.edits).toHaveLength(0);
+  });
+});
+
+function sortByKey(layout: readonly GridLayoutItem[]): GridLayoutItem[] {
+  return [...layout].sort((a, b) => a.i.localeCompare(b.i));
+}

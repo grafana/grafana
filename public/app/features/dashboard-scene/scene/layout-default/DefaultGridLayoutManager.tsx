@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { type PointerEvent as ReactPointerEvent } from 'react';
 
 import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -55,6 +56,7 @@ import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
+import { type DashboardDropTarget, type LayoutSnapshot } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
 import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -73,7 +75,7 @@ interface DefaultGridLayoutManagerState extends SceneObjectState {
 
 export class DefaultGridLayoutManager
   extends SceneObjectBase<DefaultGridLayoutManagerState>
-  implements DashboardLayoutGrid
+  implements DashboardLayoutGrid, DashboardDropTarget
 {
   public static Component = DefaultGridLayoutManagerRenderer;
 
@@ -106,6 +108,51 @@ export class DefaultGridLayoutManager
       this._customGridController = new CustomGridController(this.state.grid);
     }
     return this._customGridController;
+  }
+
+  /**
+   * Only while the new custom grid renders this layout. The new grid drives the drags of its items
+   * itself, so their drops are committed here. Otherwise the row or tab around this layout is the drop
+   * target, and with the react-grid-layout grid (always so with the unified drag and drop flag off) the
+   * layout orchestrator never sees this layout as one, nor calls the drop target methods below.
+   */
+  public get isDashboardDropTarget(): boolean {
+    return this._getRenderedCustomGrid() !== undefined;
+  }
+
+  public commitDragWithin(gridItem: SceneGridItemLike): void {
+    this._getRenderedCustomGrid()?.commitDrag(gridItem);
+  }
+
+  public getLayoutSnapshot(role: 'source' | 'destination'): LayoutSnapshot | null {
+    return role === 'source' ? (this._customGridController?.getDragSourceSnapshot() ?? null) : null;
+  }
+
+  public draggedGridItemOutside(gridItem: SceneGridItemLike): void {
+    this.state.grid.setState({ children: this.state.grid.state.children.filter((child) => child !== gridItem) });
+  }
+
+  public draggedGridItemInside(gridItem: SceneGridItemLike): void {
+    this.addGridItem(gridItem);
+  }
+
+  private _getRenderedCustomGrid(): CustomGridController | undefined {
+    const controller = this._customGridController;
+    return controller?.grid === this.state.grid && controller.isRendered() ? controller : undefined;
+  }
+
+  /** Lets the new custom grid drive the drag of its item, the layout orchestrator tracks where it is dropped */
+  private _startCustomGridDrag(evt: ReactPointerEvent, gridItem: DashboardGridItem, controller: CustomGridController) {
+    const orchestrator = getLayoutOrchestratorFor(this);
+    if (!orchestrator || !controller.canStartDrag(evt, gridItem)) {
+      return;
+    }
+
+    orchestrator.startDraggingSync(evt, gridItem, { onDrag: controller.onDrag, onDragEnd: controller.endDrag });
+    const info = orchestrator.getGridItemDragInfo();
+    if (info) {
+      controller.startDrag(gridItem, evt, info, () => orchestrator.cancelDraggingSync());
+    }
   }
 
   public constructor(state: DefaultGridLayoutManagerState) {
@@ -155,7 +202,10 @@ export class DefaultGridLayoutManager
       this._subs.add(
         this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {
           const gridItem = panel.parent;
-          if (gridItem instanceof DashboardGridItem) {
+          const customGrid = this._getRenderedCustomGrid();
+          if (gridItem instanceof DashboardGridItem && customGrid) {
+            this._startCustomGridDrag(evt, gridItem, customGrid);
+          } else if (gridItem instanceof DashboardGridItem) {
             getLayoutOrchestratorFor(this)?.startDraggingSync(evt, gridItem);
           }
         })
@@ -663,6 +713,7 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
           grid={model.state.grid}
           controller={model.getCustomGridController()}
           fallback={reactGridLayoutGrid}
+          dropTargetKey={model.state.key}
         />
       ) : (
         reactGridLayoutGrid

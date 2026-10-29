@@ -33,9 +33,11 @@ interface Props {
   controller: CustomGridController;
   /** Today's grid, rendered instead if the new grid fails */
   fallback: ReactNode;
+  /** Key the grid is found by as a drop target while one of its items is dragged */
+  dropTargetKey?: string;
 }
 
-export function CustomGrid({ grid, controller, fallback }: Props) {
+export function CustomGrid({ grid, controller, fallback, dropTargetKey }: Props) {
   const [hasFailed, setHasFailed] = useState(() => controller.hasRenderFailed());
 
   if (hasFailed) {
@@ -54,7 +56,9 @@ export function CustomGrid({ grid, controller, fallback }: Props) {
         setHasFailed(true);
       }}
     >
-      {({ error }) => (error ? null : <CustomGridRenderer grid={grid} controller={controller} />)}
+      {({ error }) =>
+        error ? null : <CustomGridRenderer grid={grid} controller={controller} dropTargetKey={dropTargetKey} />
+      }
     </ErrorBoundary>
   );
 }

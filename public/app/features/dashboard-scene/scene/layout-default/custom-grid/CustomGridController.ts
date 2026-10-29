@@ -1,19 +1,94 @@
 import { type Unsubscribable } from 'rxjs';
 
-import { type SceneGridItemLike, type SceneGridLayout } from '@grafana/scenes';
+import { t } from '@grafana/i18n';
+import { type SceneGridItemLike, type SceneGridLayout, VizPanel } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 
-import { type LayoutSnapshotLayout } from '../../types/DashboardDropTarget';
+import { moveElement } from '../../../actions/element/moveElement';
+import { edit } from '../../../actions/utils/edit';
+import { isRepeatCloneOrChildOf } from '../../../utils/clone';
+import {
+  DASHBOARD_DROP_TARGET_KEY_ATTR,
+  type GridItemDragInfo,
+  type LayoutSnapshot,
+  type LayoutSnapshotLayout,
+} from '../../types/DashboardDropTarget';
 
 import { getLayoutKey, gridItemsToLayout } from './gridItemLayout';
-import { type GridLayoutItem } from './gridMath';
+import {
+  cellFromPixels,
+  compact,
+  type GridLayoutItem,
+  isSameLayout,
+  pixelRectFor,
+  previewInsert,
+  previewMove,
+  previewRemove,
+  previewResize,
+  sizeFromPixels,
+} from './gridMath';
 import { correctLayout, ensureValidLayout } from './layoutValidation';
+
+export const GRID_ITEM_KEY_ATTR = 'data-griditem-key';
+
+/** Below this grid width every panel is full width, same as in the react-grid-layout grid */
+export const NARROW_GRID_MAX_WIDTH = 768;
+
+/** How far the pointer moves before a press on a panel header lifts the panel, so a click stays a click */
+const DRAG_THRESHOLD_PX = 4;
+
+/**
+ * Position of the dragged item and size of the resized item. They are set on that item's element on
+ * every pointer move instead of being rendered, so only the item is restyled. Set on the item rather
+ * than the grid, because custom properties inherit: on the grid they would restyle every panel.
+ */
+export const DRAG_LEFT_VAR = '--custom-grid-drag-left';
+export const DRAG_TOP_VAR = '--custom-grid-drag-top';
+export const RESIZE_WIDTH_VAR = '--custom-grid-resize-width';
+export const RESIZE_HEIGHT_VAR = '--custom-grid-resize-height';
+
+/** A drag or resize of one of the grid's items, as the grid renders it */
+export interface CustomGridInteraction {
+  kind: 'drag' | 'resize';
+  /** Layout key of the dragged or resized item */
+  key: string;
+  /** A press only becomes a drag once the pointer moved a bit. Until then nothing moves. */
+  isActive: boolean;
+  /** Rendered instead of the grid items' positions. Without the dragged item while it is outside the grid. */
+  preview: GridLayoutItem[];
+  /** The dragged item is over another drop target, so it would leave this grid if dropped */
+  isOutside: boolean;
+  /** Pixel size of the item when the interaction started */
+  startSize: { width: number; height: number };
+}
+
+interface Session extends CustomGridInteraction {
+  gridItemKey: string;
+  /** Layout when the interaction started, restored on undo */
+  before: GridLayoutItem[];
+  startX: number;
+  startY: number;
+  /** For drags: offset from the pointer to the item's top-left corner */
+  offsetX: number;
+  offsetY: number;
+  /** Pixel position of the item in the grid. For drags it follows the pointer, so the item can be placed again when the grid mounts again mid-drag. */
+  left: number;
+  top: number;
+  /** For drags: ends the drag in the layout orchestrator when the grid cancels it */
+  onCancel?: () => void;
+}
+
+type PointerPosition = Pick<PointerEvent, 'clientX' | 'clientY' | 'buttons'>;
+type PointerPress = Pick<PointerEvent, 'clientX' | 'clientY' | 'button' | 'target'>;
 
 /**
  * Owns the layout of one custom grid. The layout is derived from the positions on the grid items
  * (`x`, `y`, `width`, `height`), so it follows any change made to them, including programmatic ones by
  * the assistant or undo. Positions are only changed through `applyLayout`, which validates the layout
  * first.
+ *
+ * It also runs drags and resizes of the grid's items: they are previewed without touching the grid items,
+ * and committed as one undoable edit with every item's position before and after.
  *
  * Only used with the unified drag and drop flag on.
  */
@@ -25,6 +100,9 @@ export class CustomGridController {
   private _layout: GridLayoutItem[] = [];
   private _narrowLayout: GridLayoutItem[] | undefined;
   private _hasRenderFailed = false;
+  private _container: HTMLElement | null = null;
+  private _session: Session | null = null;
+  private _interaction: CustomGridInteraction | null = null;
 
   public constructor(public readonly grid: SceneGridLayout) {}
 
@@ -116,6 +194,387 @@ export class CustomGridController {
     return isFirstFailure;
   }
 
+  /** The grid container of the new grid while it is rendered. Ref callback for the renderer. */
+  public setContainer = (element: HTMLElement | null) => {
+    this._container = element;
+    if (!element && this._session?.kind === 'resize') {
+      this._cancel();
+    }
+    // The grid can be mounted again mid-drag, e.g. when the drag switches back to the grid's tab
+    if (element && this._session?.kind === 'drag' && this._session.isActive) {
+      this._setDragPosition(this._session.left, this._session.top);
+    }
+  };
+
+  /** Whether the new grid currently renders this layout */
+  public isRendered(): boolean {
+    return this._container !== null;
+  }
+
+  /** The drag or resize in progress. Returns the same object until it changes. */
+  public getInteraction = (): CustomGridInteraction | null => this._interaction;
+
+  /**
+   * Whether a press starts a drag of the grid item, with the same rules as the react-grid-layout grid:
+   * only with the primary button on the item's drag handle (and not on a part of it that cancels drags),
+   * not for items that are not draggable or are repeat clones, and not in grids too narrow for columns.
+   */
+  public canStartDrag(evt: PointerPress, gridItem: SceneGridItemLike): boolean {
+    const target = evt.target;
+    return (
+      this.grid.isDraggable() &&
+      !this._session &&
+      evt.button === 0 &&
+      gridItem.parent === this.grid &&
+      gridItem.state.isDraggable !== false &&
+      !isRepeatCloneOrChildOf(gridItem) &&
+      (this._container?.clientWidth ?? 0) > NARROW_GRID_MAX_WIDTH &&
+      target instanceof Element &&
+      !!target.closest(`.${this.grid.getDragClass()}`) &&
+      !target.closest(`.${this.grid.getDragClassCancel()}`)
+    );
+  }
+
+  /**
+   * Starts dragging a grid item of this grid. The layout orchestrator drives the drag: it passes the
+   * pointer moves to `onDrag`, commits a drop within the grid through `commitDrag` and ends the drag
+   * with `endDrag`. `onCancel` should end the orchestrator's drag; it is called when the grid cancels
+   * the drag, on Escape or a release outside the window.
+   */
+  public startDrag(gridItem: SceneGridItemLike, evt: PointerPress, info: GridItemDragInfo, onCancel: () => void) {
+    const key = getLayoutKey(gridItem);
+    const before = this.getLayout();
+    const item = before.find((candidate) => candidate.i === key);
+    if (!item || !gridItem.state.key || !this._container) {
+      return;
+    }
+
+    const rect = pixelRectFor(this._container.clientWidth, item);
+    this._startSession({
+      kind: 'drag',
+      key,
+      gridItemKey: gridItem.state.key,
+      isActive: false,
+      preview: before,
+      isOutside: false,
+      startSize: { width: rect.width, height: rect.height },
+      before,
+      startX: evt.clientX,
+      startY: evt.clientY,
+      offsetX: info.offsetX,
+      offsetY: info.offsetY,
+      left: rect.left,
+      top: rect.top,
+      onCancel,
+    });
+  }
+
+  public onDrag = (evt: PointerPosition) => {
+    const session = this._session;
+    if (session?.kind !== 'drag') {
+      return;
+    }
+    // The release happened where the page could not see it, e.g. in another window
+    if (evt.buttons === 0) {
+      this._cancel();
+      return;
+    }
+
+    if (!session.isActive) {
+      if (Math.hypot(evt.clientX - session.startX, evt.clientY - session.startY) < DRAG_THRESHOLD_PX) {
+        return;
+      }
+      document.body.classList.add('dragging-active');
+    }
+
+    const container = this._container;
+    if (!container) {
+      // The grid is not mounted mid-drag, e.g. because the drag switched to another tab
+      this._updateSession({ isActive: true });
+      return;
+    }
+
+    const rect = container.getBoundingClientRect();
+    const left = evt.clientX - rect.left - session.offsetX;
+    const top = evt.clientY - rect.top - session.offsetY;
+    session.left = left;
+    session.top = top;
+    this._setDragPosition(left, top);
+
+    const item = session.before.find((candidate) => candidate.i === session.key)!;
+    const isOutside = this._isOverOtherDropTarget(evt.clientX, evt.clientY);
+    let preview = session.preview;
+    if (isOutside) {
+      // The gap closes as soon as the item leaves the grid
+      preview = session.isOutside ? preview : previewRemove(preview, session.key);
+    } else {
+      const cell = cellFromPixels(container.clientWidth, left, top, item.w, item.h);
+      preview = session.isOutside
+        ? previewInsert(preview, item, cell.x, cell.y)
+        : previewMove(preview, session.key, cell.x, cell.y);
+    }
+
+    if (!session.isActive || isOutside !== session.isOutside || !isSameLayout(preview, session.preview)) {
+      this._updateSession({ isActive: true, isOutside, preview });
+    }
+  };
+
+  /**
+   * Commits a drag that ended within the grid as one undoable move, with every item's position before
+   * and after. Nothing happens if the drop does not change the layout or the item was dropped outside of
+   * the grid, which cancels the move.
+   */
+  public commitDrag(gridItem: SceneGridItemLike) {
+    const session = this._session;
+    if (
+      session?.kind !== 'drag' ||
+      session.key !== getLayoutKey(gridItem) ||
+      !session.isActive ||
+      session.isOutside ||
+      isSameLayout(session.preview, session.before)
+    ) {
+      return;
+    }
+
+    const gridItemState = this.getGridItem(session.key)?.state;
+    const panel = gridItemState && 'body' in gridItemState ? gridItemState.body : undefined;
+    if (!(panel instanceof VizPanel)) {
+      return;
+    }
+
+    const { before, preview: after } = session;
+    // Ended before the move is applied, so the grid renders the result straight away
+    this._endSession();
+    moveElement({
+      meta: { actionId: 'panel.move', scope: 'custom-grid' },
+      source: this.grid,
+      movedObject: panel,
+      // Same as other panel drops: moving panels should not take over the sidebar
+      selectOnMove: false,
+      perform: () => this.applyLayout(after),
+      undo: () => this.applyLayout(before),
+    });
+  }
+
+  /**
+   * Positions of this grid's items before and after the dragged item leaves the grid, for a drop in
+   * another layout. Applied on top of that move, so undo puts every item back.
+   */
+  public getDragSourceSnapshot(): LayoutSnapshot | null {
+    const session = this._session;
+    if (session?.kind !== 'drag') {
+      return null;
+    }
+    const after = session.isOutside ? session.preview : previewRemove(session.preview, session.key);
+    return { target: this, before: session.before, after };
+  }
+
+  /** Ends the drag in progress without changing anything */
+  public endDrag = () => {
+    if (this._session?.kind === 'drag') {
+      this._endSession();
+    }
+  };
+
+  /** Starts resizing a grid item from its bottom-right corner, until the pointer is released */
+  public startResize = (
+    evt: PointerPress & Pick<PointerEvent, 'preventDefault' | 'stopPropagation'>,
+    gridItem: SceneGridItemLike
+  ) => {
+    const key = getLayoutKey(gridItem);
+    const before = this.getLayout();
+    const item = before.find((candidate) => candidate.i === key);
+    const container = this._container;
+    if (evt.button !== 0 || this._session || !item || !gridItem.state.key || !container) {
+      return;
+    }
+    // Keeps the press from selecting text, or the panel under it
+    evt.preventDefault();
+    evt.stopPropagation();
+
+    const rect = pixelRectFor(container.clientWidth, item);
+    this._startSession({
+      kind: 'resize',
+      key,
+      gridItemKey: gridItem.state.key,
+      isActive: true,
+      preview: before,
+      isOutside: false,
+      startSize: { width: rect.width, height: rect.height },
+      before,
+      startX: evt.clientX,
+      startY: evt.clientY,
+      offsetX: 0,
+      offsetY: 0,
+      left: rect.left,
+      top: rect.top,
+    });
+    window.addEventListener('pointermove', this._onResizeMove);
+    this._setResizeSize(rect.width, rect.height);
+  };
+
+  private _onResizeMove = (evt: PointerPosition) => {
+    const session = this._session;
+    const container = this._container;
+    if (session?.kind !== 'resize' || !container) {
+      return;
+    }
+    if (evt.buttons === 0) {
+      this._cancel();
+      return;
+    }
+
+    const containerWidth = container.clientWidth;
+    // Like react-grid-layout, the item follows the pointer but is never smaller than one cell or wider than the grid
+    const minSize = pixelRectFor(containerWidth, { x: 0, y: 0, w: 1, h: 1 });
+    const width = Math.min(
+      Math.max(session.startSize.width + evt.clientX - session.startX, minSize.width),
+      containerWidth - session.left
+    );
+    const height = Math.max(session.startSize.height + evt.clientY - session.startY, minSize.height);
+    this._setResizeSize(width, height);
+
+    const item = session.preview.find((candidate) => candidate.i === session.key);
+    if (!item) {
+      return;
+    }
+    const { w, h } = sizeFromPixels(containerWidth, item, { width, height });
+    const preview = previewResize(session.preview, session.key, w, h);
+    if (!isSameLayout(preview, session.preview)) {
+      this._updateSession({ preview });
+    }
+  };
+
+  private _onResizeEnd() {
+    const session = this._session;
+    if (session?.kind !== 'resize') {
+      return;
+    }
+    // react-grid-layout compacts once more when a resize ends
+    const after = compact(session.preview);
+    const { before } = session;
+    this._endSession();
+    if (isSameLayout(after, before)) {
+      return;
+    }
+
+    edit({
+      meta: { actionId: 'panel.resize', scope: 'custom-grid' },
+      description: t('dashboard.edit-actions.resize-panel', 'Resize panel'),
+      source: this.grid,
+      perform: () => this.applyLayout(after),
+      undo: () => this.applyLayout(before),
+    });
+  }
+
+  private _onPointerUp = (evt: PointerEvent) => {
+    const kind = this._session?.kind;
+    if (kind === 'resize') {
+      this._onResizeEnd();
+    } else if (kind === 'drag' && isOutsidePage(evt)) {
+      // The layout orchestrator does not see every such release, and nothing out there can take the panel
+      this._cancel();
+    }
+  };
+
+  private _onKeyDown = (evt: KeyboardEvent) => {
+    if (evt.key !== 'Escape' || !this._session) {
+      return;
+    }
+    // Only cancels the interaction, without also closing or leaving anything else
+    evt.preventDefault();
+    evt.stopPropagation();
+    this._cancel();
+  };
+
+  private _onPointerCancel = () => this._cancel();
+
+  /** Ends the interaction in progress without changing the layout */
+  private _cancel() {
+    const onCancel = this._session?.onCancel;
+    this._endSession();
+    onCancel?.();
+  }
+
+  private _startSession(session: Session) {
+    this._session = session;
+    window.addEventListener('pointerup', this._onPointerUp, true);
+    window.addEventListener('pointercancel', this._onPointerCancel, true);
+    window.addEventListener('keydown', this._onKeyDown, true);
+    document.body.classList.add('dashboard-draggable-transparent-selection');
+    this._publishInteraction();
+  }
+
+  private _updateSession(update: Partial<Session>) {
+    if (this._session) {
+      Object.assign(this._session, update);
+      this._publishInteraction();
+    }
+  }
+
+  private _endSession() {
+    if (!this._session) {
+      return;
+    }
+    this._session = null;
+    window.removeEventListener('pointermove', this._onResizeMove);
+    window.removeEventListener('pointerup', this._onPointerUp, true);
+    window.removeEventListener('pointercancel', this._onPointerCancel, true);
+    window.removeEventListener('keydown', this._onKeyDown, true);
+    document.body.classList.remove('dashboard-draggable-transparent-selection', 'dragging-active');
+    window.getSelection()?.removeAllRanges();
+    this._publishInteraction();
+  }
+
+  private _publishInteraction() {
+    const session = this._session;
+    this._interaction = session && {
+      kind: session.kind,
+      key: session.key,
+      isActive: session.isActive,
+      preview: session.preview,
+      isOutside: session.isOutside,
+      startSize: session.startSize,
+    };
+    this._notify();
+  }
+
+  /**
+   * Whether the pointer is over a drop target other than this grid, where the layout orchestrator would
+   * drop the item. The first drop target under the pointer is the innermost one; the grid is one only
+   * while its own item is dragged.
+   */
+  private _isOverOtherDropTarget(clientX: number, clientY: number): boolean {
+    const container = this._container;
+    const dropTarget = document
+      .elementsFromPoint(clientX, clientY)
+      .find((element) => element.hasAttribute(DASHBOARD_DROP_TARGET_KEY_ATTR));
+    return !!dropTarget && dropTarget !== container;
+  }
+
+  private _setDragPosition(left: number, top: number) {
+    const element = this._getItemElement();
+    element?.style.setProperty(DRAG_LEFT_VAR, `${left}px`);
+    element?.style.setProperty(DRAG_TOP_VAR, `${top}px`);
+  }
+
+  private _setResizeSize(width: number, height: number) {
+    const element = this._getItemElement();
+    element?.style.setProperty(RESIZE_WIDTH_VAR, `${width}px`);
+    element?.style.setProperty(RESIZE_HEIGHT_VAR, `${height}px`);
+  }
+
+  private _getItemElement(): HTMLElement | null {
+    const key = this._session?.gridItemKey;
+    if (!key || !this._container) {
+      return null;
+    }
+    const element = Array.from(this._container.children).find(
+      (child) => child.getAttribute(GRID_ITEM_KEY_ATTR) === key
+    );
+    return element instanceof HTMLElement ? element : null;
+  }
+
   private _refresh() {
     const cells = gridItemsToLayout(this.grid.state.children);
     if (isSameSequence(cells, this._cells)) {
@@ -158,6 +617,11 @@ export class CustomGridController {
   private _notify() {
     this._listeners.forEach((listener) => listener());
   }
+}
+
+function isOutsidePage({ clientX, clientY, target }: Pick<PointerEvent, 'clientX' | 'clientY' | 'target'>): boolean {
+  const isOutsideWindow = clientX < 0 || clientY < 0 || clientX > window.innerWidth || clientY > window.innerHeight;
+  return isOutsideWindow || !(target instanceof Node && document.body.contains(target));
 }
 
 function isSameSequence(a: readonly GridLayoutItem[], b: readonly GridLayoutItem[]): boolean {

@@ -5956,6 +5956,7 @@
       "remove-multiple": "Remove {{typeName}} ({{num}})",
       "rename": "Rename {{typeName}}",
       "replace-panel": "Replace panel",
+      "resize-panel": "Resize panel",
       "row-fill-screen-disable": "Disable row fill screen",
       "row-fill-screen-enable": "Enable row fill screen",
       "row-hide-header": "Hide row header",

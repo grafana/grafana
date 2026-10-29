@@ -37,7 +37,8 @@ export interface LayoutSnapshot {
 }
 
 export interface DashboardDropTarget extends SceneObject {
-  isDashboardDropTarget: Readonly<true>;
+  /** A layout can be a drop target only some of the time, e.g. the custom grid only while the new grid renders it */
+  readonly isDashboardDropTarget: boolean;
   setIsDropTarget?(isDropTarget: boolean): void;
   draggedGridItemOutside?(gridItem: SceneGridItemLike): void;
   draggedGridItemInside?(gridItem: SceneGridItemLike, position?: number): void;

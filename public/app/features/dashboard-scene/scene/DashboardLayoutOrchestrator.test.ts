@@ -314,6 +314,32 @@ describe('grid item drags and the optional drop target hooks', () => {
     expect(reorderAutoGridItemsMock).not.toHaveBeenCalled();
     expect(moveGridItemMock).not.toHaveBeenCalled();
   });
+
+  it('ends a cancelled drag without dropping the item, so the release no longer moves it', () => {
+    jest.useFakeTimers();
+    try {
+      const scene = setupWithTwoTabs();
+      const orchestrator = scene.dashboard.state.layoutOrchestrator!;
+      const onDragEnd = jest.fn();
+      orchestrator.startDraggingSync({ clientX: 130, clientY: 70 } as ReactPointerEvent, scene.gridItem, { onDragEnd });
+      pointerOver('tab2-manager');
+      movePointer(140, 80);
+
+      orchestrator.cancelDraggingSync();
+      drop();
+      jest.runAllTimers();
+
+      expect(onDragEnd).toHaveBeenCalledTimes(1);
+      expect(orchestrator.isDragging()).toBe(false);
+      expect(orchestrator.getGridItemDragInfo()).toBeNull();
+      expect(scene.tab2Manager.state.isDropTarget).toBe(false);
+      expect(scene.tab2Manager.state.dropPosition).toBeNull();
+      expect(moveGridItemMock).not.toHaveBeenCalled();
+      expect(reorderAutoGridItemsMock).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
 
 describe('AutoGridLayoutManager as DashboardDropTarget', () => {
