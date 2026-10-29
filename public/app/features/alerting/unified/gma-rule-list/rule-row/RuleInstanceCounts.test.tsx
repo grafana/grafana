@@ -19,7 +19,7 @@ describe('RuleInstanceCounts', () => {
 
     expect(screen.getByText('2 firing')).toBeInTheDocument();
     expect(screen.getByText('1 pending')).toBeInTheDocument();
-    expect(screen.getByText('5 healthy')).toBeInTheDocument();
+    expect(screen.getByText('5 normal')).toBeInTheDocument();
     expect(screen.queryByText(/recovering/)).not.toBeInTheDocument();
     expect(screen.queryByText(/no data/)).not.toBeInTheDocument();
     expect(screen.queryByText(/error/)).not.toBeInTheDocument();
@@ -29,7 +29,7 @@ describe('RuleInstanceCounts', () => {
     render(<RuleInstanceCounts searchHit={baseHit({ totalsFiring: 0, totalsHealthy: 3 })} />);
 
     expect(screen.queryByText(/firing/)).not.toBeInTheDocument();
-    expect(screen.getByText('3 healthy')).toBeInTheDocument();
+    expect(screen.getByText('3 normal')).toBeInTheDocument();
   });
 
   it('shows all six states when all are non-zero', () => {
@@ -48,7 +48,7 @@ describe('RuleInstanceCounts', () => {
 
     expect(screen.getByText('1 firing')).toBeInTheDocument();
     expect(screen.getByText('2 pending')).toBeInTheDocument();
-    expect(screen.getByText('3 healthy')).toBeInTheDocument();
+    expect(screen.getByText('3 normal')).toBeInTheDocument();
     expect(screen.getByText('4 recovering')).toBeInTheDocument();
     expect(screen.getByText('5 no data')).toBeInTheDocument();
     expect(screen.getByText('6 error')).toBeInTheDocument();
@@ -60,6 +60,6 @@ describe('RuleInstanceCounts', () => {
     const link = screen.getByRole('link', { name: /instances/i });
     expect(link).toHaveAttribute('href', '/alerting/grafana/rule-1/view?tab=instances');
     expect(link).toHaveTextContent('2 firing');
-    expect(link).toHaveTextContent('5 healthy');
+    expect(link).toHaveTextContent('5 normal');
   });
 });

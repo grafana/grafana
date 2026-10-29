@@ -52,9 +52,9 @@ export function AlertRuleRow({ searchHit, folderPath, rule }: AlertRuleRowProps)
         searchHit.datasourceUIDs && searchHit.datasourceUIDs.length > 0 && (
           <RuleDatasources key="ds" datasourceUIDs={searchHit.datasourceUIDs} />
         ),
+        <RuleInstanceCounts key="counts" searchHit={searchHit} />,
         // parseSearchLabels guarantees labels is non-empty when present; RuleLabels handles the null case.
         searchHit.labels && <RuleLabels key="labels" labels={searchHit.labels} />,
-        <RuleInstanceCounts key="counts" searchHit={searchHit} />,
         <RuleRouting key="routing" searchHit={searchHit} />,
       ]}
     />

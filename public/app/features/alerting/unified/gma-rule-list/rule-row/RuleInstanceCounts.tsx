@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Icon, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { grafanaRulesNav } from '../../utils/navigation';
 import { type AlertRuleSearchHit } from '../alert-rules/alertRuleSearchHit';
@@ -45,7 +45,7 @@ export function RuleInstanceCounts({ searchHit }: RuleInstanceCountsProps) {
       },
       {
         count: searchHit.totalsHealthy ?? 0,
-        label: t('alerting.gma-rule-list.instances.healthy', 'healthy'),
+        label: t('alerting.gma-rule-list.instances.healthy', 'normal'),
         colorKey: 'healthy' as const,
         field: 'totalsHealthy' as const,
       },
@@ -69,22 +69,24 @@ export function RuleInstanceCounts({ searchHit }: RuleInstanceCountsProps) {
   }
 
   const href = grafanaRulesNav.viewLink(searchHit.uid) + '?tab=instances';
+  const viewLabel = t('alerting.gma-rule-list.instances.view-instances', 'View instances');
 
   return (
-    <a
-      href={href}
-      aria-label={t('alerting.gma-rule-list.instances.view-instances', 'View instances')}
-      className={styles.link}
-    >
-      <Stack direction="row" alignItems="center" gap={0.5}>
-        <Icon name="layers-alt" size="xs" className={styles.icon} />
-        {stateDefs.map(({ count, label, colorKey }) => (
-          <span key={colorKey} className={styles.badge[colorKey]}>
-            {count} {label}
-          </span>
-        ))}
-      </Stack>
-    </a>
+    <Tooltip content={viewLabel} placement="top">
+      {/* span gives Tippy a stable single ref anchor; the inner <a> handles navigation */}
+      <span className={styles.linkWrapper}>
+        <a href={href} aria-label={viewLabel} className={styles.link}>
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            <Icon name="layers-alt" size="xs" className={styles.icon} />
+            {stateDefs.map(({ count, label, colorKey }) => (
+              <span key={colorKey} className={styles.badge[colorKey]}>
+                {count} {label}
+              </span>
+            ))}
+          </Stack>
+        </a>
+      </span>
+    </Tooltip>
   );
 }
 
@@ -102,6 +104,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     });
 
   return {
+    linkWrapper: css({
+      display: 'inline-flex',
+      borderRadius: theme.shape.radius.default,
+      '&:hover': { background: theme.colors.action.hover },
+    }),
     link: css({
       display: 'inline-flex',
       alignItems: 'center',
@@ -109,7 +116,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       textDecoration: 'none',
       borderRadius: theme.shape.radius.default,
       padding: `1px ${theme.spacing(0.25)}`,
-      '&:hover': { background: theme.colors.action.hover },
     }),
     icon: css({ color: theme.colors.text.secondary }),
     badge: {

@@ -128,7 +128,7 @@ describe('AlertRuleRow', () => {
       const link = screen.getByRole('link', { name: /instances/i });
       expect(link).toHaveAttribute('href', '/alerting/grafana/rule-1/view?tab=instances');
       expect(link).toHaveTextContent('3 firing');
-      expect(link).toHaveTextContent('7 healthy');
+      expect(link).toHaveTextContent('7 normal');
     });
 
     it('shows no counts when all totals fields are absent', () => {
