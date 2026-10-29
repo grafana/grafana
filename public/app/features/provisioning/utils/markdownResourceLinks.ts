@@ -5,7 +5,7 @@ import { splitPath } from '../components/utils/path';
 import { FOLDER_METADATA_FILE } from '../constants';
 
 import { FOLDER_DOC_TAB_PARAM, isMarkdownFile } from './folderDocConventions';
-import { getKindInfoByResource, resourceKindInfos } from './resourceKinds';
+import { getKindInfoByStat, resourceKindInfos } from './resourceKinds';
 
 /**
  * Builds a resolver that maps a repo file/directory path to the in-app Grafana
@@ -60,7 +60,7 @@ export function createGrafanaLinkResolver(
       return undefined;
     }
 
-    return getKindInfoByResource(resource.resource)?.getRoute?.(resource.name);
+    return getKindInfoByStat(resource).getRoute?.(resource.name);
   };
 }
 

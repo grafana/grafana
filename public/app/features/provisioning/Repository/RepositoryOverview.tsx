@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { upperFirst } from 'lodash';
 import { useMemo } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
@@ -58,8 +59,8 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           const info = getKindInfoByStat(original);
           return (
             <Stack direction="row" gap={1} alignItems="center">
-              <Icon name={info?.icon ?? 'file-alt'} />
-              <span>{info?.kind ?? original.resource}</span>
+              <Icon name={info.icon} />
+              <span>{upperFirst(info.getLabel())}</span>
             </Stack>
           );
         },
@@ -79,7 +80,7 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
         cell: ({ row: { original } }: StatCell) => {
           const info = getKindInfoByStat(original);
           // Unknown kinds have no destination, so no action.
-          if (!info) {
+          if (!info.listRoute) {
             return null;
           }
           return (
