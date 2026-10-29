@@ -40,8 +40,6 @@ export const GroupByTransformerEditorBase = ({ options, onChange, fieldNames }: 
   let hasGrouping,
     hasAggregation = false;
 
-  // Saved configs can omit `aggregations` (e.g. hand-written or generated JSON), and saving
-  // strips `operation: null`, so neither property is guaranteed to be present.
   for (const field of Object.values(options.fields)) {
     if ((field?.aggregations?.length ?? 0) > 0 && field?.operation != null) {
       hasAggregation = true;
