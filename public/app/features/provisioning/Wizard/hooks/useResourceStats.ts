@@ -8,19 +8,21 @@ import {
   type ManagerStats,
   type RepositoryView,
   type ResourceCount,
+  type SupportedResource,
+  useGetFrontendSettingsQuery,
   useGetRepositoryFilesQuery,
   useGetResourceStatsQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { ManagerKind } from 'app/features/apiserver/types';
 
-import { getKindInfoByStat } from '../../utils/resourceKinds';
+import { isProvisionableStat } from '../../utils/resourceKinds';
 
 export type UseResourceStatsOptions = {
   isHealthy?: boolean; // true only when healthy AND reconciled
   healthStatusNotReady?: boolean; // true when waiting for reconciliation
 };
 
-function getManagedCount(managed?: ManagerStats[]) {
+function getManagedCount(managed?: ManagerStats[], availableResources?: SupportedResource[]) {
   let totalCount = 0;
 
   // Loop through each managed repository
@@ -28,7 +30,7 @@ function getManagedCount(managed?: ManagerStats[]) {
     if (manager.kind === ManagerKind.Repo) {
       // Loop through stats inside each manager and sum up the counts for known kinds
       manager.stats.forEach((stat) => {
-        if (getKindInfoByStat(stat)) {
+        if (isProvisionableStat(stat, availableResources)) {
           totalCount += stat.count;
         }
       });
@@ -38,12 +40,12 @@ function getManagedCount(managed?: ManagerStats[]) {
   return totalCount;
 }
 
-function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
+function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[], availableResources?: SupportedResource[]) {
   let resourceCount = 0;
 
   const addStat = (stat: ResourceCount) => {
     // Only count kinds the UI knows about (folders, dashboards, ...).
-    if (getKindInfoByStat(stat)) {
+    if (isProvisionableStat(stat, availableResources)) {
       resourceCount += stat.count;
     }
   };
@@ -62,7 +64,11 @@ function getResourceCount(stats?: ResourceCount[], managed?: ManagerStats[]) {
 /**
  * Calculates resource statistics from API responses
  */
-function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetResourceStatsApiResponse) {
+function getResourceStats(
+  files?: GetRepositoryFilesApiResponse,
+  stats?: GetResourceStatsApiResponse,
+  availableResources?: SupportedResource[]
+) {
   const isSupportedFile = (path: string) => path.endsWith('.json') || path.endsWith('.yaml');
 
   const items = files?.items ?? [];
@@ -72,7 +78,7 @@ function getResourceStats(files?: GetRepositoryFilesApiResponse, stats?: GetReso
     return isSupportedFile(path);
   }).length;
 
-  const resourceCount = getResourceCount(stats?.instance);
+  const resourceCount = getResourceCount(stats?.instance, undefined, availableResources);
 
   return {
     fileCount,
@@ -94,6 +100,7 @@ export function useResourceStats(
   const { isHealthy, healthStatusNotReady } = options || {};
 
   const resourceStatsQuery = useGetResourceStatsQuery(repoName ? undefined : skipToken);
+  const availableResources = useGetFrontendSettingsQuery().data?.availableResources;
   // isHealthy already includes reconciliation check - safe to fetch files
   const filesQuery = useGetRepositoryFilesQuery(repoName && isHealthy ? { name: repoName } : skipToken, {
     refetchOnMountOrArgChange: true,
@@ -102,18 +109,22 @@ export function useResourceStats(
   const isLoading = resourceStatsQuery.isFetching || filesQuery.isFetching || Boolean(healthStatusNotReady);
 
   const { resourceCount, fileCount } = useMemo(
-    () => getResourceStats(filesQuery.data, resourceStatsQuery.data),
-    [filesQuery.data, resourceStatsQuery.data]
+    () => getResourceStats(filesQuery.data, resourceStatsQuery.data, availableResources),
+    [filesQuery.data, resourceStatsQuery.data, availableResources]
   );
 
   const { managedCount, unmanagedCount } = useMemo(() => {
     return {
       // managed does not exist in response when first time connecting to a repo
-      managedCount: getManagedCount(resourceStatsQuery.data?.managed),
+      managedCount: getManagedCount(resourceStatsQuery.data?.managed, availableResources),
       // "unmanaged" means unmanaged by git sync. it may still be managed by other means, like terraform, plugins, file provisioning, etc.
-      unmanagedCount: getResourceCount(resourceStatsQuery.data?.unmanaged, resourceStatsQuery.data?.managed),
+      unmanagedCount: getResourceCount(
+        resourceStatsQuery.data?.unmanaged,
+        resourceStatsQuery.data?.managed,
+        availableResources
+      ),
     };
-  }, [resourceStatsQuery.data]);
+  }, [resourceStatsQuery.data, availableResources]);
 
   // Calculate requiresMigration based on sync target and user selection
   // For instance sync: migrate if there are resources (checkbox is disabled and always true)

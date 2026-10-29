@@ -4,7 +4,7 @@ import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 import { type FileDetails, type FlatTreeItem, type ItemType, type SyncStatus, type TreeItem } from '../types';
 
 import { getFolderMetadataPath, getParentFolderResourceHash, isFolderMetadataPath } from './folderMetadata';
-import { getKindInfoByItemType, getKindInfoByResource } from './resourceKinds';
+import { getKindInfoByItemType, getKindInfoByStat } from './resourceKinds';
 
 const collator = new Intl.Collator();
 
@@ -58,9 +58,8 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
 }
 
 export function getItemType(path: string, resource?: ResourceListItem): ItemType {
-  const kindInfo = getKindInfoByResource(resource?.resource);
-  if (kindInfo) {
-    return kindInfo.itemType;
+  if (resource) {
+    return getKindInfoByStat(resource).itemType;
   }
   // Inferred folder (no extension means it's a folder from file paths)
   if (!resource && !path.includes('.')) {
