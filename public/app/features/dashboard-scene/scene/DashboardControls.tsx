@@ -332,7 +332,7 @@ function DashboardControlActions({
   const isDraft = Boolean(meta.newDashboardUid);
   const showEditButton =
     (hasUid || isDraft) && !isPlaying && canEditDashboard && isEditable && !editPanel && !isMobileEditDeprecated;
-  const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing;
+  const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing && !isMobileEditDeprecated;
   const showPanelEditButtons = Boolean(editPanel);
 
   return (
