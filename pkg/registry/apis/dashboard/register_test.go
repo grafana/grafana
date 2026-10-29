@@ -87,12 +87,14 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		collectionDelete bool
 		deletionOptions  metav1.DeleteOptions
 		expectedError    bool
+		expectBadRequest bool
 	}{
 		{
-			name:            "should block deletion of provisioned dashboard (classic file provisioning)",
-			existingObj:     newDashboard(classicFP),
-			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
-			expectedError:   true,
+			name:             "should block deletion of provisioned dashboard (classic file provisioning)",
+			existingObj:      newDashboard(classicFP),
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:    true,
+			expectBadRequest: true,
 		},
 		{
 			name:            "should return an error if the existing dashboard is missing",
@@ -115,10 +117,11 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			expectedError:   false,
 		},
 		{
-			name:            "should still run the check for delete if grace period is not 0",
-			existingObj:     newDashboard(classicFP),
-			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: &oneInt64},
-			expectedError:   true,
+			name:             "should still run the check for delete if grace period is not 0",
+			existingObj:      newDashboard(classicFP),
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: &oneInt64},
+			expectedError:    true,
+			expectBadRequest: true,
 		},
 		{
 			name:            "should not run the check for delete if grace period is set to 0",
@@ -161,6 +164,10 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 					require.Error(t, err)
 				} else {
 					require.NoError(t, err)
+				}
+				if tt.expectBadRequest {
+					require.True(t, apierrors.IsBadRequest(err), "expected a 400, got %v", err)
+					require.EqualError(t, err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard.Reason)
 				}
 			})
 		}
