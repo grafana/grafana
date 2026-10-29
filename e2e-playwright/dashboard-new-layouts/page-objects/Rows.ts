@@ -46,10 +46,15 @@ export class Rows extends PageObject {
     }
   }
 
+  /** Returns the row's collapse/expand button; its `aria-expanded` tells whether the row is expanded */
+  getToggle(rowTitle: string): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.DashboardRow.toggle(rowTitle));
+  }
+
   /** Collapses an expanded row, expands a collapsed one */
   async toggle(rowTitle: string) {
     await test.step(`Toggle row "${rowTitle}"`, async () => {
-      await this.getByGrafanaSelector(this.selectors.components.DashboardRow.toggle(rowTitle)).click();
+      await this.getToggle(rowTitle).click();
     });
   }
 }

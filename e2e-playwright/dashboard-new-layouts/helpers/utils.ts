@@ -49,6 +49,19 @@ export async function getPanelBox(
   return boundingBox!;
 }
 
+/**
+ * A point in the left or right half of a panel, a quarter of its width in from that edge and
+ * vertically centered: hovering it while dragging aims the drop before or after that panel
+ */
+export async function getPanelHalfPoint(panels: Panels, panelTitle: string, half: 'left' | 'right'): Promise<Point> {
+  const box = await getPanelBox(panels, panelTitle);
+
+  return {
+    x: box.x + box.width * (half === 'left' ? 0.25 : 0.75),
+    y: box.y + box.height / 2,
+  };
+}
+
 export async function movePanel(panels: Panels, sourcePanel: string | RegExp, targetPanel: string | RegExp) {
   await test.step(`Move panel "${sourcePanel}" onto "${targetPanel}"`, async () => {
     // Perform drag and drop; pixel-sensitive mechanics stay out of page objects

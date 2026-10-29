@@ -146,3 +146,50 @@ export async function expectDashboardChangesToContain(
     await dashboardPage.getByGrafanaSelector(selectors.components.Drawer.General.close).click();
   });
 }
+
+/** Marks a row as collapsed in `expectRowsToHold`: a collapsed row does not render its panels */
+export const COLLAPSED_ROW = 'collapsed' as const;
+
+/**
+ * Asserts the rows layout holds exactly these rows, in display order, each either expanded with
+ * exactly the given panels (in order) or collapsed
+ */
+export async function expectRowsToHold(
+  rows: Rows,
+  panels: Panels,
+  expectedRows: Record<string, string[] | typeof COLLAPSED_ROW>
+) {
+  const summary = Object.entries(expectedRows)
+    .map(([rowTitle, content]) => `${rowTitle}: ${content === COLLAPSED_ROW ? content : `[${content.join(', ')}]`}`)
+    .join('; ');
+
+  await test.step(`Expect rows ${summary}`, async () => {
+    await expect(rows.getTitles()).toHaveText(Object.keys(expectedRows));
+    for (const [rowTitle, content] of Object.entries(expectedRows)) {
+      if (content === COLLAPSED_ROW) {
+        await expect(rows.getToggle(rowTitle)).toHaveAttribute('aria-expanded', 'false');
+        await expect(rows.getContent(rowTitle)).toHaveCount(0);
+      } else {
+        await expect(rows.getToggle(rowTitle)).toHaveAttribute('aria-expanded', 'true');
+        await expect(panels.getHeaders(undefined, rows.getContent(rowTitle))).toHaveText(content);
+      }
+    }
+  });
+}
+
+/**
+ * In edit mode, opens the save drawer and asserts it has nothing to save (its Save button is
+ * disabled), then closes it
+ */
+export async function expectNoUnsavedChanges(page: Page, selectors: E2ESelectorGroups) {
+  await test.step('Expect the dashboard to have no unsaved changes', async () => {
+    await page.getByTestId(selectors.components.NavToolbar.editDashboard.saveButton).click();
+
+    const drawer = page.getByRole('dialog');
+    await expect(drawer.getByText('No changes to save', { exact: true })).toBeVisible();
+    await expect(drawer.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeDisabled();
+
+    await drawer.getByTestId(selectors.components.Drawer.General.close).click();
+    await expect(drawer).toBeHidden();
+  });
+}
