@@ -1442,11 +1442,24 @@
     },
     "gma-rule-list": {
       "alert-rules": {
+        "folders-error": "Failed to load folders",
+        "load-more-rules-in-folder": "Load more rules in {{title}}",
+        "loading-folders": "Loading folders...",
         "no-rules": "No alert rules found",
+        "no-rules-in-folder": "No alert rules in this folder",
+        "no-rules-match-folder": "No alert rules match this folder",
+        "retry-rules-in-folder": "Retry loading rules in {{title}}",
         "rules-error": "Failed to load rules",
         "search-issues": "Change the search to see results"
       },
       "datasources": "{{numSources}} data sources",
+      "folder-row": {
+        "collapse": "Collapse {{title}}",
+        "count-description": "{{label}}. {{explanation}}",
+        "count-tooltip": "Rules directly in this folder. Subfolders are listed separately.",
+        "count-unavailable": "Count unavailable",
+        "expand": "Expand {{title}}"
+      },
       "interval": "Evaluated every {{interval}}",
       "labels_one": "{{formatted}} label",
       "labels_other": "{{formatted}} labels",
@@ -1459,7 +1472,7 @@
         "rules-error": "Failed to load recording rules",
         "search-issues": "Change the search to see results"
       },
-      "result-count": {
+      "rule-count": {
         "alert-rules_one": "{{formatted}} alert rule",
         "alert-rules_other": "{{formatted}} alert rules",
         "recording-rules_one": "{{formatted}} recording rule",
@@ -1467,6 +1480,7 @@
       },
       "search": {
         "default-policy-unavailable": "Filtering by the default policy isn't available yet.",
+        "folders-disabled": "Clear filters to browse by folder",
         "help": {
           "contact-point": "Direct contact point (mutually exclusive with policy:).",
           "dashboard": "Dashboard the rule is linked to (canonical value is the dashboard UID).",
@@ -1515,6 +1529,9 @@
         "renamed-value": "Use {{to}} instead of {{from}}.",
         "unavailable-tokens": "Some filters are not available yet: {{tokens}}",
         "unclosed-quote": "A quote in the search is not closed.",
+        "view": "View",
+        "view-folders": "Folders",
+        "view-list": "List",
         "wildcard-in-text": "Search text cannot contain * or %."
       },
       "shared": {

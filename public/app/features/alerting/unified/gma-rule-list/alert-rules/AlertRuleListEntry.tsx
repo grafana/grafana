@@ -7,11 +7,13 @@ import { type AlertRuleSearchHit } from './alertRuleSearchHit';
 
 interface AlertRuleListEntryProps {
   searchHit: AlertRuleSearchHit;
+  /** List mode only; Folders mode shows the folder on the folder row. */
+  showFolderPath: boolean;
 }
 
 /** Runs the per-rule lookups once so the row stays presentation-only. */
-export function AlertRuleListEntry({ searchHit }: AlertRuleListEntryProps) {
-  const folderPath = useFolderPath(searchHit.folderUid);
+export function AlertRuleListEntry({ searchHit, showFolderPath }: AlertRuleListEntryProps) {
+  const folderPath = useFolderPath(showFolderPath ? searchHit.folderUid : undefined);
   const { data: fullRule } = useGetAlertRuleQuery({ name: searchHit.uid });
 
   return <AlertRuleRow searchHit={searchHit} folderPath={folderPath} rule={fullRule} />;
