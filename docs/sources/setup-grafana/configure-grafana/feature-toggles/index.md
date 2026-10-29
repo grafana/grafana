@@ -101,6 +101,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `text.newFeatures`                 | Enables the new features in text panel                                                                                         |
 | `interactiveLearning`              | Enables the interactive learning app                                                                                           |
 | `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |
+| `grafana.dashboardGlobalVariables` | Enables global and folder-scoped dashboard variables via dashboard.grafana.app                                                 |
 | `pyroscopeUTF8LabelNames`          | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |
 | `queryEditorNext`                  | Enables next generation query editor experience                                                                                |
 | `grafana.viewPanelPane`            | Enables the sidebar pane with new toggles and options in panel view mode                                                       |

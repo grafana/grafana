@@ -71,6 +71,10 @@ export function findTraceBanner(spans: TraceSpan[]): TraceBannerHighlight | unde
   return undefined;
 }
 
+export function getTraceBannerStatusCode(span: TraceSpan): string | undefined {
+  return getTagValue(span, HTTP_STATUS_KEYS);
+}
+
 export function getTraceBannerOperationLabel(span: TraceSpan): string {
   const method = getTagValue(span, HTTP_METHOD_KEYS);
   const rawPath = getTagValue(span, HTTP_PATH_KEYS);
