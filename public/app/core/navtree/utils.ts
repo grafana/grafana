@@ -214,17 +214,7 @@ export function pruneEmptyNavSections(tree: NavModelItem[]): NavModelItem[] {
     .filter((node) => !isPrunable(PRUNABLE_SECTIONS, node));
 }
 
-/**
- * Moves an item into another section, by nav id. Ids rather than urls: the
- * server-built tree arrives with the app sub url applied to every url, so a url
- * match would hold for one tree and not the other.
- *
- * Appends and re-sorts the destination, for callers running after the tree is
- * already in order. The item keeps its own sortWeight unless given one, which is
- * rarely right when moving between levels — a weight that positioned an item at
- * the top level outranks everything inside a section. Returns the tree untouched
- * if either end is missing.
- */
+/** Moves an item by id into a section, optionally resetting its weight, then re-sorts the section. */
 export function moveNavItemToSection(
   tree: NavModelItem[],
   id: string,
@@ -249,16 +239,8 @@ export function moveNavItemToSection(
 }
 
 /**
- * Expands an app's pages into its target section as standalone entries instead
- * of nesting them under an app node (`hoistPages` in the app's nav config).
- * Pages pinned by `slotWeightByPath` take that section slot; the rest sort above
- * the section's app entries in their own order.
- *
- * Each page takes the standalone id its own url gives it. Only the app's own
- * pages: a dashboard include left with a `/d/<uid>` standalone id would register
- * that url as an app route and shadow the dashboard itself. The sub url comes off
- * first, so the id is the same whether this runs during the build or afterwards,
- * on a tree that has been through applyAppSubUrl.
+ * Returns an app's pages as standalone entries with section weights. Only app URLs get standalone
+ * ids, so dashboard includes keep their own routes.
  */
 export function hoistAppPages(
   appLink: NavModelItem,

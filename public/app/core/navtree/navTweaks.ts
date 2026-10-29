@@ -22,12 +22,7 @@ type NavTweak = Pick<PluginNavOverride, 'when' | 'apply'>;
 
 const NAV_TWEAKS: NavTweak[] = [
   {
-    // Machine Learning goes back under More apps until its place in the new IA
-    // is settled, with its pages listed there rather than nested under an app
-    // node. NavWeight.plugin is what an app with no placement of its own carries,
-    // so the move ties with the other apps instead of bringing its top-level
-    // weight along; the hoist then leaves the pages where the plugin pass would
-    // have put them had the app's nav config asked for it.
+    // Temporarily list Machine Learning's pages directly under More apps for the refreshed IA.
     when: isInfoArchRefresh,
     apply: (tree) => {
       const id = pluginPageId('grafana-ml-app');
@@ -36,13 +31,7 @@ const NAV_TWEAKS: NavTweak[] = [
   },
 ];
 
-/**
- * Applies the tweaks to a finished nav tree, whichever side built it.
- *
- * Each runs in its own try/catch: this is called while the redux store is being
- * created, so a throw would cost the whole nav rather than one adjustment. The
- * list is a parameter so tests can exercise that without a real tweak.
- */
+/** Applies independently gated tweaks without letting one failure abort store creation. */
 export function applyNavTweaks(tree: NavModelItem[], tweaks: NavTweak[] = NAV_TWEAKS): NavModelItem[] {
   return tweaks.reduce((current, tweak, index) => {
     try {
