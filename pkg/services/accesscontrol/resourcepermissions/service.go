@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -33,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -85,11 +85,10 @@ type Store interface {
 
 func New(cfg *setting.Cfg,
 	options Options, features featuremgmt.FeatureToggles, router routing.RouteRegister, license licensing.Licensing,
-	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
+	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore *sqlstore.SQLStore,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService ActionSetService,
 	iamFeatures iamapi.Features,
-	permissionCache *permissioncache.Service,
 ) (*Service, error) {
 	// Fail fast at startup if a Kubernetes-native flow needs an APIGroup but none
 	// is configured.
@@ -129,7 +128,6 @@ func New(cfg *setting.Cfg,
 		actions:                 actions,
 		sqlStore:                sqlStore,
 		service:                 service,
-		PermissionCache:         permissionCache,
 		teamService:             teamService,
 		userService:             userService,
 		serviceAccountRetriever: serviceAccountRetriever,
@@ -144,19 +142,19 @@ func New(cfg *setting.Cfg,
 	}
 
 	s.api.registerEndpoints()
+	sqlStore.Bus().AddEventListener(s.onPermissionCachesInvalidated)
 
 	return s, nil
 }
 
 // Service is used to create access control sub system including api / and service for managed resource permission
 type Service struct {
-	PermissionCache *permissioncache.Service
-	ac              accesscontrol.AccessControl
-	features        featuremgmt.FeatureToggles
-	service         accesscontrol.Service
-	store           Store
-	api             *api
-	license         licensing.Licensing
+	ac       accesscontrol.AccessControl
+	features featuremgmt.FeatureToggles
+	service  accesscontrol.Service
+	store    Store
+	api      *api
+	license  licensing.Licensing
 
 	cfg                     *setting.Cfg
 	log                     log.Logger
@@ -319,7 +317,7 @@ func (s *Service) SetUserPermission(ctx context.Context, orgID int64, user acces
 	}
 
 	// A concurrent reader can repopulate stale permissions if we clear before commit.
-	s.PermissionCache.InvalidateAfterCommit(ctx, orgID, []int64{user.ID})
+	s.invalidatePermissionCachesAfterCommit(ctx, orgID, []int64{user.ID})
 
 	return result, nil
 }
@@ -499,9 +497,40 @@ func (s *Service) SetPermissions(
 	for _, cmd := range commands {
 		userIDs = append(userIDs, cmd.UserID)
 	}
-	s.PermissionCache.InvalidateAfterCommit(ctx, orgID, userIDs)
+	s.invalidatePermissionCachesAfterCommit(ctx, orgID, userIDs)
 
 	return result, nil
+}
+
+// Each resource provider registers a listener on the same bus. The owner limits
+// this in-process event to the service that performed the permission write.
+type resourcePermissionCachesInvalidated struct {
+	owner   *Service
+	orgID   int64
+	userIDs []int64
+}
+
+func (s *Service) invalidatePermissionCachesAfterCommit(ctx context.Context, orgID int64, userIDs []int64) {
+	event := &resourcePermissionCachesInvalidated{owner: s, orgID: orgID, userIDs: slices.Clone(userIDs)}
+	if sess := sqlstore.SessionFromContext(ctx); sess != nil {
+		sess.PublishAfterCommit(event)
+		return
+	}
+	_ = s.onPermissionCachesInvalidated(ctx, event)
+}
+
+func (s *Service) onPermissionCachesInvalidated(_ context.Context, event *resourcePermissionCachesInvalidated) error {
+	if event.owner != s {
+		return nil
+	}
+	seen := make(map[int64]bool, len(event.userIDs))
+	for _, id := range event.userIDs {
+		if id != 0 && !seen[id] {
+			s.clearUserPermissionCache(event.orgID, id)
+			seen[id] = true
+		}
+	}
+	return nil
 }
 
 // clearUserPermissionCaches clears the permission cache of every user assigned by

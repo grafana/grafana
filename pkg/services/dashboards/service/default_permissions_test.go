@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -71,9 +70,9 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 						}}
 						svc := &DashboardServiceImpl{
 							cfg: cfg, log: log.NewNopLogger(), acService: ac,
-							permissionCache:   permissioncache.ProvideService(sql, ac),
 							folderPermissions: permissions, dashboardPermissionsReady: make(chan struct{}),
 						}
+						sql.Bus().AddEventListener(svc.onDefaultPermissionsSet)
 						svc.RegisterDashboardPermissions(permissions)
 						err := sql.InTransaction(ctx, func(ctx context.Context) error {
 							require.NoError(t, sql.InTransaction(ctx, func(ctx context.Context) error {

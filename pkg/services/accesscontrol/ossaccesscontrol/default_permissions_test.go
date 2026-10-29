@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
@@ -50,7 +49,7 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 			t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 			for _, resource := range []string{"receiver", "route"} {
 				for _, serviceAccount := range []bool{false, true} {
-					for _, outcome := range []string{"commit", "rollback", "commit failure", "permission failure", "refresh failure"} {
+					for _, outcome := range []string{"commit", "rollback", "commit failure", "permission failure", "refresh failure", "standalone"} {
 						identityType := "user"
 						if serviceAccount {
 							identityType = "service account"
@@ -58,6 +57,12 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 						t.Run(resource+"/"+identityType+"/"+outcome, func(t *testing.T) {
 							ctx := openfeature.WithTransactionContext(t.Context(), openfeature.NewEvaluationContext("", map[string]any{"legacy-route": legacy}))
 							sql := sqlstore.NewTestStore(t)
+							ctx = context.WithValue(ctx, creatorContextKey{}, "owner")
+							followingEvent := false
+							sql.Bus().AddEventListener(func(context.Context, *creatorRefreshFollowingEvent) error {
+								followingEvent = true
+								return nil
+							})
 							cfg := setting.NewCfg()
 							cfg.RBAC.PermissionCache = true
 							features := featuremgmt.WithFeatures()
@@ -82,17 +87,16 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 							if outcome == "permission failure" {
 								users.ExpectedError = failure
 							}
-							permissionCache := permissioncache.ProvideService(sql, recorder)
 							var setDefaults func(context.Context)
 							grant := accesscontrol.Permission{Action: accesscontrol.ActionAlertingReceiversReadSecrets, Scope: "receivers:uid:new"}
 							if resource == "receiver" {
 								svc, err := ProvideReceiverPermissionsService(cfg, features, routing.NewRouteRegister(), sql,
-									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions, permissionCache)
+									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions)
 								require.NoError(t, err)
 								setDefaults = func(ctx context.Context) { svc.SetDefaultPermissions(ctx, 1, requester, "new") }
 							} else {
 								svc, err := ProvideRoutePermissionsService(cfg, features, routing.NewRouteRegister(), sql,
-									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions, permissionCache)
+									actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, users, nil, actions)
 								require.NoError(t, err)
 								setDefaults = func(ctx context.Context) {
 									err := svc.SetDefaultPermissions(ctx, 1, requester, "new")
@@ -112,27 +116,34 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 								require.NoError(t, err)
 								require.NotContains(t, permissions, grant)
 							}
-							err := sql.InTransaction(ctx, func(txCtx context.Context) error {
-								require.NoError(t, sql.InTransaction(txCtx, func(ctx context.Context) error {
-									setDefaults(ctx)
-									return nil
-								}))
-								require.Empty(t, recorder.calls, "no cache operations before the outermost commit")
-								// A parallel request still sees the old cache before commit.
-								permissions, err := ac.GetUserPermissions(ctx, requester, accesscontrol.Options{})
-								require.NoError(t, err)
-								require.NotContains(t, permissions, grant)
-								if outcome == "rollback" {
-									return failure
-								}
-								if outcome == "commit failure" {
-									tx, err := sqlstore.SessionFromContext(txCtx).Tx()
+							var err error
+							if outcome == "standalone" {
+								setDefaults(ctx)
+							} else {
+								err = sql.InTransaction(ctx, func(txCtx context.Context) error {
+									require.NoError(t, sql.InTransaction(context.WithValue(txCtx, creatorContextKey{}, "inner"), func(ctx context.Context) error {
+										setDefaults(ctx)
+										sqlstore.SessionFromContext(ctx).PublishAfterCommit(&creatorRefreshFollowingEvent{})
+										return nil
+									}))
+									require.Empty(t, recorder.calls, "no cache operations before the outermost commit")
+									// A parallel request still sees the old cache before commit.
+									permissions, err := ac.GetUserPermissions(ctx, requester, accesscontrol.Options{})
 									require.NoError(t, err)
-									require.NoError(t, tx.Rollback())
-								}
-								return nil
-							})
+									require.NotContains(t, permissions, grant)
+									if outcome == "rollback" {
+										return failure
+									}
+									if outcome == "commit failure" {
+										tx, err := sqlstore.SessionFromContext(txCtx).Tx()
+										require.NoError(t, err)
+										require.NoError(t, tx.Rollback())
+									}
+									return nil
+								})
+							}
 							committed := outcome != "rollback" && outcome != "commit failure"
+							require.Equal(t, committed && outcome != "standalone", followingEvent, "refresh failure must not stop later events")
 							if committed {
 								require.NoError(t, err)
 							} else {
@@ -158,6 +169,9 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 	}
 }
 
+type creatorContextKey struct{}
+type creatorRefreshFollowingEvent struct{}
+
 type creatorPermissionRecorder struct {
 	accesscontrol.Service
 	t          *testing.T
@@ -177,6 +191,7 @@ func (r *creatorPermissionRecorder) ClearUserPermissionCache(requester identity.
 func (r *creatorPermissionRecorder) GetUserPermissions(ctx context.Context, requester identity.Requester, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
 	require.False(r.t, sqlstore.IsInTransaction(ctx))
 	require.True(r.t, options.ReloadCache)
+	require.Equal(r.t, "owner", ctx.Value(creatorContextKey{}))
 	r.calls = append(r.calls, "refresh")
 	if r.refreshErr != nil {
 		return nil, r.refreshErr

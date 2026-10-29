@@ -9,12 +9,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -56,14 +56,13 @@ func TeamPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideTeamPermissions(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore,
 	iamFeatures iamapi.Features,
 	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService resourcepermissions.ActionSetService,
 	directRestConfigProvider apiserver.DirectRestConfigProvider,
 	legacyWatch *legacywatch.Publisher,
-	permissionCache *permissioncache.Service,
 ) (*TeamPermissionsService, error) {
 	// The hooks below run inside transactions that resourcepermissions opens on sql,
 	// so their table names must resolve for that same database. Deriving the helper
@@ -139,7 +138,7 @@ func ProvideTeamPermissions(
 		RestConfigProvider: directRestConfigProvider,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures, permissionCache)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
 	if err != nil {
 		return nil, err
 	}

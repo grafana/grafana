@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -43,10 +42,9 @@ func TestIntegrationCreateReceiverPermissionEvents(t *testing.T) {
 			}}
 			var calls []string
 			ac := &createReceiverCacheRecorder{t: t, calls: &calls}
-			cache := permissioncache.ProvideService(sql, ac)
 			permissions, err := ossaccesscontrol.ProvideReceiverPermissionsService(setting.NewCfg(), featuremgmt.WithFeatures(), routing.NewRouteRegister(), sql,
 				actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, &licensing.OSSLicensingService{}, ac, nil,
-				&usertest.FakeUserService{ExpectedSignedInUser: requester}, nil, resourcepermissions.NewActionSetService(), cache)
+				&usertest.FakeUserService{ExpectedSignedInUser: requester}, nil, resourcepermissions.NewActionSetService())
 			require.NoError(t, err)
 			sut.resourcePermissions = permissions
 			receiver, err := sut.GetReceiver(t.Context(), legacy_storage.NameToUid("grafana-default-email"), false, requester)

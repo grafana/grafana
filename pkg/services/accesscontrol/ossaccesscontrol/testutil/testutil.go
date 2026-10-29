@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -100,6 +99,5 @@ func ProvideFolderPermissions(
 		&serviceaccountstest.FakeServiceAccountService{},
 		actionSets,
 		apiserver.ProvideDirectRestConfigProvider(),
-		permissioncache.ProvideService(sqlStore, acSvc),
 	)
 }

@@ -52,6 +52,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -90,7 +91,6 @@ type DashboardServiceImpl struct {
 	dashboardPermissions   accesscontrol.DashboardPermissionsService
 	ac                     accesscontrol.AccessControl
 	acService              accesscontrol.Service
-	permissionCache        *permissioncache.Service
 	k8sclient              dashboardclient.K8sHandlerWithFallback
 	metrics                *dashboardsMetrics
 	publicDashboardService publicdashboards.ServiceWrapper
@@ -397,7 +397,7 @@ var _ registry.BackgroundService = (*DashboardServiceImpl)(nil)
 // This is the uber service that implements a three smaller services
 func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg,
-	sqlStore db.DB,
+	sqlStore *sqlstore.SQLStore,
 	iamFeatures iamapi.Features,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl,
@@ -411,7 +411,6 @@ func ProvideDashboardServiceImpl(
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
 	k8sClient dashboardclient.K8sHandlerWithFallback,
-	permissionCache *permissioncache.Service,
 ) (*DashboardServiceImpl, error) {
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
@@ -421,7 +420,6 @@ func ProvideDashboardServiceImpl(
 		folderPermissions:         folderPermissionsService,
 		ac:                        ac,
 		acService:                 acService,
-		permissionCache:           permissionCache,
 		folderService:             folderSvc,
 		orgService:                orgService,
 		k8sclient:                 k8sClient,
@@ -451,7 +449,29 @@ func ProvideDashboardServiceImpl(
 		return nil, err
 	}
 
+	sqlStore.Bus().AddEventListener(dashSvc.onDefaultPermissionsSet)
 	return dashSvc, nil
+}
+
+type dashboardDefaultPermissionsSet struct {
+	requester identity.Requester
+}
+
+func (dr *DashboardServiceImpl) refreshCreatorAfterCommit(ctx context.Context, requester identity.Requester) {
+	if requester == nil || !requester.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		return
+	}
+	event := &dashboardDefaultPermissionsSet{requester: requester}
+	if sess := sqlstore.SessionFromContext(ctx); sess != nil {
+		sess.PublishAfterCommit(event)
+		return
+	}
+	_ = dr.onDefaultPermissionsSet(ctx, event)
+}
+
+func (dr *DashboardServiceImpl) onDefaultPermissionsSet(ctx context.Context, event *dashboardDefaultPermissionsSet) error {
+	permissioncache.RefreshCreator(ctx, dr.acService, event.requester)
+	return nil
 }
 
 func (dr *DashboardServiceImpl) RegisterDashboardPermissions(service accesscontrol.DashboardPermissionsService) {
@@ -1233,7 +1253,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 		return err
 	}
 
-	dr.permissionCache.RefreshAfterCommit(ctx, user)
+	dr.refreshCreatorAfterCommit(ctx, user)
 
 	return nil
 }
@@ -1285,7 +1305,7 @@ func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *
 	}
 
 	if !provisioned {
-		dr.permissionCache.RefreshAfterCommit(ctx, dto.User)
+		dr.refreshCreatorAfterCommit(ctx, dto.User)
 	}
 }
 

@@ -61,7 +61,6 @@ func ProvideReceiverPermissionsService(
 	license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
 	actionSetService resourcepermissions.ActionSetService,
-	permissionCache *permissioncache.Service,
 ) (*ReceiverPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          receiverPermissionsResource,
@@ -86,12 +85,13 @@ func ProvideReceiverPermissionsService(
 		RoleGroup:      models.AlertRolesGroup,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures, permissionCache)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
 	if err != nil {
 		return nil, err
 	}
 	receivers := &ReceiverPermissionsService{Service: srv, sql: sql, ac: service, log: log.New("resourcepermissions.receivers")}
 	sql.Bus().AddEventListener(receivers.onPermissionsCopied)
+	sql.Bus().AddEventListener(receivers.onDefaultPermissionsSet)
 	return receivers, nil
 }
 
@@ -133,8 +133,22 @@ func (r ReceiverPermissionsService) SetDefaultPermissions(ctx context.Context, o
 	}
 
 	if refreshCreator {
-		r.PermissionCache.RefreshAfterCommit(ctx, user)
+		event := &receiverDefaultPermissionsSet{requester: user}
+		if sess := sqlstore.SessionFromContext(ctx); sess != nil {
+			sess.PublishAfterCommit(event)
+		} else {
+			_ = r.onDefaultPermissionsSet(ctx, event)
+		}
 	}
+}
+
+type receiverDefaultPermissionsSet struct {
+	requester identity.Requester
+}
+
+func (r ReceiverPermissionsService) onDefaultPermissionsSet(ctx context.Context, event *receiverDefaultPermissionsSet) error {
+	permissioncache.RefreshCreator(ctx, r.ac, event.requester)
+	return nil
 }
 
 // copyPermissionUser returns a user with permissions to copy permissions from one receiver to another. This must include

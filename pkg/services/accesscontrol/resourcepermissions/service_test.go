@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -322,7 +321,7 @@ func TestIntegrationService_RegisterActionSets(t *testing.T) {
 			acService := &actest.FakeService{}
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
-				ac, acService, sql, nil, nil, nil, actionSets, iam.Features{}, permissioncache.ProvideService(sql, acService),
+				ac, acService, sql, nil, nil, nil, actionSets, iam.Features{},
 			)
 			require.NoError(t, err)
 
@@ -586,7 +585,7 @@ func TestService_K8sActionFormat(t *testing.T) {
 
 			service, err := New(
 				cfg, tt.opts, features, routing.NewRouteRegister(), license,
-				ac, acService, sql, nil, nil, nil, NewActionSetService(), iam.Features{}, permissioncache.ProvideService(sql, acService),
+				ac, acService, sql, nil, nil, nil, NewActionSetService(), iam.Features{},
 			)
 
 			if tt.expectErr {
@@ -732,7 +731,7 @@ func TestService_APIGroupRequiredWhenResourcePermissionsAPIEnabled(t *testing.T)
 			_, err := New(
 				cfg, Options{Resource: tt.resource, APIGroup: tt.apiGroup}, features,
 				routing.NewRouteRegister(), license, ac, &actest.FakeService{}, sql, nil, nil, nil, NewActionSetService(),
-				iam.Features{ResourcePermissionsAPI: tt.apiEnabled}, permissioncache.ProvideService(sql, &actest.FakeService{}),
+				iam.Features{ResourcePermissionsAPI: tt.apiEnabled},
 			)
 
 			if tt.expectErr {
@@ -896,7 +895,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
 		ac, acService, sql, teamSvc, userSvc, serviceAccountRetriever, NewActionSetService(),
-		iam.Features{ResourcePermissionsAPI: resourcePermissionsAPIEnabled}, permissioncache.ProvideService(sql, acService),
+		iam.Features{ResourcePermissionsAPI: resourcePermissionsAPIEnabled},
 	)
 	require.NoError(t, err)
 

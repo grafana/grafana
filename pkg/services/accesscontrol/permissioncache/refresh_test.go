@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func TestRefreshAfterCommit(t *testing.T) {
+func TestRefreshCreator(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
 		requester identity.Requester
@@ -64,8 +64,7 @@ func TestRefreshAfterCommit(t *testing.T) {
 				}
 				return nil, tc.err
 			}}
-			cache := &Service{ac: service}
-			cache.RefreshAfterCommit(ctx, tc.requester)
+			RefreshCreator(ctx, service, tc.requester)
 			if tc.requester == nil || tc.name == "anonymous" {
 				require.Zero(t, calls)
 				require.Empty(t, spans.Ended())
