@@ -20,7 +20,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}
   # Let builds finish even when main receives commits faster than we can build them.
   # The default queue keeps only the newest pending run, so builds can catch up.
   cancel-in-progress: false
