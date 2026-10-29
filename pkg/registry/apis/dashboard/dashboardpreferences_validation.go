@@ -72,8 +72,16 @@ func validateDashboardPreferencesSpec(name string, spec dashv2beta1.DashboardPre
 		violations = openapi3.MultiError{verr}
 	}
 	errs := make(field.ErrorList, 0, len(violations))
+	// A value below an exclusive minimum also fails the minimum it is written with, and that later cause
+	// misstates the bound, so each field keeps only its first cause.
+	seen := make(map[string]bool, len(violations))
 	for _, violation := range violations {
-		errs = append(errs, dashboardPreferencesSchemaErrorToField(violation))
+		fieldErr := dashboardPreferencesSchemaErrorToField(violation)
+		if seen[fieldErr.Field] {
+			continue
+		}
+		seen[fieldErr.Field] = true
+		errs = append(errs, fieldErr)
 	}
 	return apierrors.NewInvalid(dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind().GroupKind(), name, errs)
 }

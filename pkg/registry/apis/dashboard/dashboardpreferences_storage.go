@@ -36,6 +36,8 @@ const (
 
 // Embeds grafanarest.Storage, which has no rest.Watcher or rest.CollectionDeleter, so watch and
 // deletecollection are not served: unified storage does no per-user filtering for this resource.
+// This assumes unified storage's authz exemption gate is off: with authz_exemption_enabled on, every
+// request is refused unless authz_exempt_resources lists dashboard.grafana.app/dashboardpreferences.
 type dashboardPreferencesStorage struct {
 	grafanarest.Storage
 	gvk          schema.GroupVersionKind
@@ -51,6 +53,7 @@ func (s *dashboardPreferencesStorage) Update(ctx context.Context, name string, o
 	if err == nil || !isDashboardPreferencesNotFound(err, name) {
 		return updated, created, err
 	}
+	notFound := err
 
 	// JSON, merge and strategic-merge PATCH on a missing object get NotFound from the patcher, which
 	// needs an old object with a UID; PUT and apply create directly
@@ -63,13 +66,19 @@ func (s *dashboardPreferencesStorage) Update(ctx context.Context, name string, o
 		return nil, false, err
 	}
 
-	// Both Kubernetes create paths wipe the system metadata a client sent. A patch can set it and
-	// Create refills only the UID and creation time, so a patched-in deletion timestamp would be
-	// stored, creating an object that is already being deleted.
 	accessor, err := utils.MetaAccessor(obj)
 	if err != nil {
 		return nil, false, err
 	}
+	// A resourceVersion pins the patch to a stored version and nothing is stored, so it gets the
+	// store's NotFound; Create would refuse the resourceVersion with a 500.
+	if accessor.GetResourceVersion() != "" {
+		return nil, false, notFound
+	}
+
+	// Both Kubernetes create paths wipe the system metadata a client sent. A patch can set it and
+	// Create refills only the UID and creation time, so a patched-in deletion timestamp would be
+	// stored, creating an object that is already being deleted.
 	rest.WipeObjectMetaSystemFields(accessor)
 
 	createdObj, err := s.Create(ctx, obj, createValidation, dashboardPreferencesCreateOptionsFrom(options))

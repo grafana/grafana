@@ -7,6 +7,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	authlib "github.com/grafana/authlib/types"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -94,9 +95,10 @@ func newDashboardPreferencesAuthorizer(accessClient authlib.AccessClient, servic
 				}
 				return authorizer.DecisionDeny, "invalid dashboard preferences name", nil
 			case dashboardPreferencesMergedName:
-				// The merged handler checks folder access for the folder it merges.
+				// A merge starts from the org tier, so only a caller who can read that tier gets one. The merged
+				// handler must apply each tier's rules, including the namespace match, to every tier it reads.
 				if verb == utils.VerbGet {
-					return authorizer.DecisionAllow, "", nil
+					return authorizeDashboardPreferencesName(ctx, accessClient, requester, attr.GetNamespace(), dashv2beta1.DashboardPreferencesOrgName, utils.VerbGet)
 				}
 				return authorizer.DecisionDeny, "merged dashboard preferences are read-only", nil
 			}

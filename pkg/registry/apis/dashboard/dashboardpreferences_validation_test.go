@@ -87,6 +87,8 @@ func TestValidateDashboardPreferencesSpec(t *testing.T) {
 		{"fill opacity above 100", `{"panels":{"graph":{"fillOpacity":101}}}`, []string{"spec.panels.graph.fillOpacity"}},
 		{"point size above 40", `{"panels":{"graph":{"pointSize":41}}}`, []string{"spec.panels.graph.pointSize"}},
 		{"decimals below 0", `{"panels":{"field":{"decimals":-1}}}`, []string{"spec.panels.field.decimals"}},
+		// Below -1 the value also fails the minimum that the exclusive bound is written with.
+		{"decimals below -1", `{"panels":{"field":{"decimals":-2}}}`, []string{"spec.panels.field.decimals"}},
 		{"decimals above 15", `{"panels":{"field":{"decimals":16}}}`, []string{"spec.panels.field.decimals"}},
 
 		{"unknown cursor sync", `{"dashboard":{"cursorSync":"Bogus"}}`, []string{"spec.dashboard.cursorSync"}},
@@ -115,6 +117,11 @@ func TestValidateDashboardPreferencesSpec(t *testing.T) {
 			err := validateDashboardPreferencesSpec("user-u1", spec)
 			if tt.wantCauses == nil {
 				require.NoError(t, err)
+				// The typed decode drops a key it doesn't know, so a valid row checks every field it lists only
+				// if the spec encodes back to it.
+				encoded, err := json.Marshal(spec)
+				require.NoError(t, err)
+				require.JSONEq(t, tt.spec, string(encoded))
 				return
 			}
 			require.ElementsMatch(t, tt.wantCauses, causeFields(t, err))
@@ -133,6 +140,20 @@ func TestValidateDashboardPreferencesSpecErrorNamesTheObject(t *testing.T) {
 	require.Equal(t, "dashboard.grafana.app", se.ErrStatus.Details.Group)
 	require.Equal(t, "DashboardPreferences", se.ErrStatus.Details.Kind)
 	require.Equal(t, "user-u1", se.ErrStatus.Details.Name)
+}
+
+// The schema checks the exclusive minimum first, and its cause is the one that states the bound right.
+func TestValidateDashboardPreferencesSpecKeepsTheFirstCausePerField(t *testing.T) {
+	var spec dashv2beta1.DashboardPreferencesSpec
+	require.NoError(t, json.Unmarshal([]byte(`{"panels":{"field":{"decimals":-2}}}`), &spec))
+
+	err := validateDashboardPreferencesSpec("user-u1", spec)
+
+	var se *apierrors.StatusError
+	require.ErrorAs(t, err, &se)
+	require.NotNil(t, se.ErrStatus.Details)
+	require.Len(t, se.ErrStatus.Details.Causes, 1)
+	require.Contains(t, se.ErrStatus.Details.Causes[0].Message, "number must be more than -1")
 }
 
 func TestValidateDashboardPreferencesSpecFailsClosedWithoutSchema(t *testing.T) {
