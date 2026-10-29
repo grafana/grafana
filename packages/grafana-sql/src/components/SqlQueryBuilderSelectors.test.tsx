@@ -106,26 +106,26 @@ describe('SqlQueryBuilderSelectors', () => {
     });
   });
 
-  it('uses a fixed dataset without enumerating other datasets', async () => {
+  it.each([undefined, ''])('preserves table and SQL when initializing a fixed dataset from %p', async (dataset) => {
     const db = buildMockDB();
     const onChange = jest.fn();
+    const query: SQLQuery = {
+      refId: 'A',
+      dataset,
+      table: 'table1',
+      sql: { limit: 25 },
+      rawSql: 'SELECT value FROM table1 LIMIT 25',
+      hide: true,
+    };
     render(
-      <ControlledSelectors
-        db={db}
-        query={{ refId: 'A' }}
-        onChange={onChange}
-        dataset={{ mode: 'fixed', value: 'configured' }}
-      />
+      <ControlledSelectors db={db} query={query} onChange={onChange} dataset={{ mode: 'fixed', value: 'configured' }} />
     );
 
     await waitFor(() => expect(db.tables).toHaveBeenCalledWith('configured'));
     expect(db.datasets).not.toHaveBeenCalled();
     expect(onChange).toHaveBeenCalledWith({
-      refId: 'A',
+      ...query,
       dataset: 'configured',
-      table: undefined,
-      sql: undefined,
-      rawSql: '',
     });
     expect(screen.getByText('configured')).toBeVisible();
   });
@@ -148,15 +148,32 @@ describe('SqlQueryBuilderSelectors', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('updates the available datasets when the host switches to a fixed dataset', async () => {
+  it('clears table and SQL and updates options when switching to a different fixed dataset', async () => {
     const db = buildMockDB();
-    const props = { db, query: { refId: 'A', dataset: 'dataset1' }, onChange: jest.fn() };
+    const props = {
+      db,
+      query: {
+        refId: 'A',
+        dataset: 'dataset1',
+        table: 'table1',
+        sql: { limit: 25 },
+        rawSql: 'SELECT value FROM table1',
+      },
+      onChange: jest.fn(),
+    };
     const { rerender } = render(<ControlledSelectors {...props} dataset={{ mode: 'select' }} />);
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'Dataset selector' })).toBeEnabled());
 
     rerender(<ControlledSelectors {...props} dataset={{ mode: 'fixed', value: 'configured' }} />);
 
     await waitFor(() => expect(db.tables).toHaveBeenLastCalledWith('configured'));
+    expect(props.onChange).toHaveBeenLastCalledWith({
+      refId: 'A',
+      dataset: 'configured',
+      table: undefined,
+      sql: undefined,
+      rawSql: '',
+    });
     await waitFor(() => expect(screen.getByRole('combobox', { name: 'Dataset selector' })).toBeEnabled());
     await userEvent.click(screen.getByRole('combobox', { name: 'Dataset selector' }));
     expect(screen.queryByText('dataset2')).not.toBeInTheDocument();

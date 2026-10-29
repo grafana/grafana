@@ -45,7 +45,11 @@ export function SqlQueryBuilderSelectors({
             preconfiguredDataset={fixedDataset}
             onChange={({ value }) => {
               if (value !== query.dataset) {
-                onChange({ ...query, dataset: value, table: undefined, sql: undefined, rawSql: '' });
+                if (dataset.mode === 'fixed' && !query.dataset) {
+                  onChange({ ...query, dataset: value });
+                } else {
+                  onChange({ ...query, dataset: value, table: undefined, sql: undefined, rawSql: '' });
+                }
               }
             }}
           />

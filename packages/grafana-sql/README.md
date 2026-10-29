@@ -75,6 +75,7 @@ Dataset selection is independent of SQL dialect:
   provide any corresponding SQL-generation context themselves.
 
 Changing datasets clears the table, builder expression, and generated SQL.
+Initializing a missing or empty dataset from a fixed value preserves the existing table and SQL.
 Changing tables clears the expression and SQL. Other query properties are retained.
 Builder edits call `db.toRawSql` and return the updated expression and `rawSql`
 through `onChange`; the host decides when to execute it. Only a missing `sql`
