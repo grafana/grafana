@@ -3,7 +3,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { type NavId, NavID, NavWeight, PLUGIN_SECTION_SHELLS } from './constants';
 import { type PluginNavOverride } from './pluginNavOverrides';
-import { findNavById, hoistNavItemPages, moveNavItemToSection, pluginPageId } from './utils';
+import { findNavById, hoistNavItemPages, moveNavItemToSection, pluginPageId, withAppSubUrl } from './utils';
 
 /**
  * Transitional nav adjustments, every one of them meant to be deleted. Each
@@ -56,7 +56,9 @@ function ensureSection(tree: NavModelItem[], sectionId: NavId): NavModelItem[] {
   const weightOf = (node: NavModelItem, index: number) => node.sortWeight || index + 1;
   const found = tree.findIndex((node, index) => weightOf(node, index) > (shell.sortWeight ?? 0));
   const at = found === -1 ? tree.length : found;
-  return [...tree.slice(0, at), { ...shell, children: [] }, ...tree.slice(at)];
+  // The shells are declared sub-url agnostic, and applyAppSubUrl has already run
+  // by the time the tweaks do — on both trees — so this one is prefixed here
+  return [...tree.slice(0, at), { ...shell, url: withAppSubUrl(shell.url), children: [] }, ...tree.slice(at)];
 }
 
 /** Applies independently gated tweaks without letting one failure abort store creation. */

@@ -660,6 +660,21 @@ describe('getInitialNavTree', () => {
     expect(ids(getInitialNavTree())).toEqual(['home']);
   });
 
+  // The tweaks run after applyAppSubUrl, and the server-built tree arrives
+  // prefixed, so a section a tweak creates has to carry the prefix itself
+  it('applies the app sub url to a section the tweak creates', () => {
+    setup({
+      openFeatureFlags: { 'grafana.navigationInfoArchRefresh': true },
+      config: { appSubUrl: '/grafana' },
+    });
+    config.bootData = {
+      ...config.bootData,
+      navTree: [{ id: 'plugin-page-grafana-ml-app', text: 'Machine Learning', url: '/grafana/a/grafana-ml-app' }],
+    };
+
+    expect(findById(getInitialNavTree(), NavID.apps)?.url).toBe('/grafana/apps');
+  });
+
   // The apps section reads the app metas synchronously: app.ts fills the cache
   // and fetches the user's permissions before the store is configured, and this
   // is where both land in the tree.
