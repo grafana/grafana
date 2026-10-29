@@ -1209,6 +1209,20 @@
     },
     {
       "metadata": {
+        "name": "authzDelegationChecks",
+        "resourceVersion": "1793131698139",
+        "creationTimestamp": "2026-10-27T20:08:18Z"
+      },
+      "spec": {
+        "description": "Use AuthZ Check and LegacyCheck for single-org IAM delegation checks (resolved at startup)",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "awsAssumeRolePerDatasourceExternalId",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-15T15:32:33Z"

@@ -119,6 +119,7 @@ func TestFeaturesValidate(t *testing.T) {
 func TestProvideFeatures(t *testing.T) {
 	legacyProvider := func() memprovider.InMemoryProvider {
 		return memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagAuthzDelegationChecks: {Key: featuremgmt.FlagAuthzDelegationChecks, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}},
 			featuremgmt.FlagKubernetesAuthzGlobalRolesApi: {
 				Key:            featuremgmt.FlagKubernetesAuthzGlobalRolesApi,
 				DefaultVariant: "enabled",
@@ -140,7 +141,7 @@ func TestProvideFeatures(t *testing.T) {
 	}{
 		{
 			name: "absent configuration resolves legacy flags",
-			want: Features{GlobalRolesAPI: true, ZanzanaSync: true},
+			want: Features{GlobalRolesAPI: true, ZanzanaSync: true, AuthzDelegationChecks: true},
 		},
 		{
 			name: "explicit configuration replaces legacy flags",
@@ -155,6 +156,21 @@ func TestProvideFeatures(t *testing.T) {
 				ResourcePermissionsAPI:            true,
 				ServiceAccountResourcePermissions: true,
 			},
+		},
+		{
+			name:   "explicit AuthZ delegation opt-in",
+			values: map[string]string{"api": "roles,rolebindings", "authz_delegation_checks_enabled": "true"},
+			want:   Features{RolesAPI: true, RoleBindingsAPI: true, AuthzDelegationChecks: true},
+		},
+		{
+			name:    "AuthZ delegation requires explicit APIs",
+			values:  map[string]string{"authz_delegation_checks_enabled": "true"},
+			wantErr: "iam.api must be configured",
+		},
+		{
+			name:    "invalid AuthZ delegation boolean",
+			values:  map[string]string{"api": "roles", "authz_delegation_checks_enabled": "invalid"},
+			wantErr: "invalid iam.authz_delegation_checks_enabled",
 		},
 		{
 			name:   "explicit none disables legacy flags",
@@ -242,6 +258,7 @@ func TestFeaturesFromFlags(t *testing.T) {
 		{name: "auth info", flag: featuremgmt.FlagKubernetesAuthInfoApi, want: Features{AuthInfoAPI: true}},
 		{name: "user permissions", flag: featuremgmt.FlagAuthzUserPermissions, want: Features{UserPermissionsAPI: true}},
 		{name: "service account resource permissions", flag: featuremgmt.FlagKubernetesAuthzServiceAccountResourcePermissions, want: Features{ServiceAccountResourcePermissions: true}},
+		{name: "AuthZ delegation", flag: featuremgmt.FlagAuthzDelegationChecks, want: Features{AuthzDelegationChecks: true}},
 		{name: "Zanzana sync", flag: featuremgmt.FlagKubernetesAuthzZanzanaSync, want: Features{ZanzanaSync: true}},
 	}
 
