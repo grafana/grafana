@@ -74,23 +74,38 @@ func TestDiscoveryClient_GetPreferredVersion(t *testing.T) {
 	}
 }
 
-func TestDiscoveryClient_GetPreferredVersionForKindUsesContext(t *testing.T) {
+func TestDiscoveryClient_LookupsUseContext(t *testing.T) {
 	type ctxKey struct{}
-	var seen []any
-	wrap := func(rt http.RoundTripper) http.RoundTripper {
-		return roundTripperFunc(func(r *http.Request) (*http.Response, error) {
-			seen = append(seen, r.Context().Value(ctxKey{}))
-			return rt.RoundTrip(r)
-		})
+	wantGVR := schema.GroupVersionResource{Group: "playlist.grafana.app", Version: "v1", Resource: "playlists"}
+	tests := map[string]func(context.Context, *DiscoveryClientImpl) (schema.GroupVersionResource, error){
+		"preferred version for kind": func(ctx context.Context, c *DiscoveryClientImpl) (schema.GroupVersionResource, error) {
+			gvr, _, err := c.GetPreferredVersionForKind(ctx, schema.GroupKind{Group: "playlist.grafana.app", Kind: "Playlist"})
+			return gvr, err
+		},
+		"resource for versioned kind": func(ctx context.Context, c *DiscoveryClientImpl) (schema.GroupVersionResource, error) {
+			return c.GetResourceForKindWithContext(ctx, schema.GroupVersionKind{Group: "playlist.grafana.app", Version: "v1", Kind: "Playlist"})
+		},
 	}
-	c := newTestDiscoveryClient(t, wrap,
-		discoveryGroup("playlist.grafana.app", "v1", apidiscoveryv2.DiscoveryFreshnessCurrent, discoveryResource("playlists", "Playlist")))
+	for name, lookup := range tests {
+		t.Run(name, func(t *testing.T) {
+			var seen []any
+			wrap := func(rt http.RoundTripper) http.RoundTripper {
+				return roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+					seen = append(seen, r.Context().Value(ctxKey{}))
+					return rt.RoundTrip(r)
+				})
+			}
+			c := newTestDiscoveryClient(t, wrap,
+				discoveryGroup("playlist.grafana.app", "v1", apidiscoveryv2.DiscoveryFreshnessCurrent, discoveryResource("playlists", "Playlist")))
 
-	_, _, err := c.GetPreferredVersionForKind(context.WithValue(t.Context(), ctxKey{}, "requester"), schema.GroupKind{Group: "playlist.grafana.app", Kind: "Playlist"})
-	require.NoError(t, err)
-	require.NotEmpty(t, seen)
-	for _, v := range seen {
-		require.Equal(t, "requester", v)
+			gvr, err := lookup(context.WithValue(t.Context(), ctxKey{}, "requester"), c)
+			require.NoError(t, err)
+			require.Equal(t, wantGVR, gvr)
+			require.NotEmpty(t, seen)
+			for _, v := range seen {
+				require.Equal(t, "requester", v)
+			}
+		})
 	}
 }
 
@@ -108,6 +123,23 @@ func newTestDiscoveryClient(t *testing.T, wrap transport.WrapperFunc, groups ...
 		}
 		if r.URL.Path == "/apis" {
 			list.Items = groups
+		}
+		for _, g := range groups {
+			for _, v := range g.Versions {
+				if r.URL.Path != "/apis/"+g.Name+"/"+v.Version {
+					continue
+				}
+				resources := metav1.APIResourceList{
+					TypeMeta:     metav1.TypeMeta{Kind: "APIResourceList", APIVersion: "v1"},
+					GroupVersion: g.Name + "/" + v.Version,
+				}
+				for _, res := range v.Resources {
+					resources.APIResources = append(resources.APIResources, metav1.APIResource{Name: res.Resource, Kind: res.ResponseKind.Kind, Namespaced: true, Verbs: res.Verbs})
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(resources)
+				return
+			}
 		}
 		w.Header().Set("Content-Type", aggregatedDiscoveryContentType)
 		_ = json.NewEncoder(w).Encode(list)

@@ -65,6 +65,27 @@ func TestServeRoutedRoutesGrafanaRequests(t *testing.T) {
 	require.Equal(t, http.StatusNoContent, rec.Code)
 }
 
+func TestLoopbackHandlerRoutesGrafanaRequests(t *testing.T) {
+	core := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
+	router := &recordingRouter{}
+	h := (&service{requestRouter: router}).loopbackHandler(core)
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/apis/example.ext.grafana.app/v1", nil)
+	h.ServeHTTP(rec, req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{OrgID: 1})))
+	require.Equal(t, http.StatusTeapot, rec.Code)
+
+	rec = httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/apis/example.ext.grafana.app/v1", nil))
+	require.Equal(t, http.StatusNoContent, rec.Code)
+	require.Equal(t, 1, router.routed)
+
+	rec = httptest.NewRecorder()
+	h = (&service{}).loopbackHandler(core)
+	h.ServeHTTP(rec, req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{OrgID: 1})))
+	require.Equal(t, http.StatusNoContent, rec.Code)
+}
+
 // The legacy /api handlers reach the Kubernetes APIs through the direct rest
 // config and DirectlyServeHTTP, which must go through the router.
 func TestDirectClientsGoThroughTheRouter(t *testing.T) {
