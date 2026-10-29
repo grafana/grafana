@@ -5,6 +5,7 @@ import {
   expectDashboardChangesToContain,
   expectRepeatedTabTitlesToBe,
   expectRepeatedRowTitlesToBe,
+  expectNoUnsavedChanges,
   flows,
   moveRow,
   getRowBox,
@@ -19,6 +20,12 @@ const getRepeatedPanelTitle = (row: number, panel: number) => `repeated-row-${ro
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
+  },
+  // the Undo/Redo toolbar buttons are gated by an OpenFeature flag, not a feature toggle
+  openFeature: {
+    flags: {
+      dashboardUndoRedo: true,
+    },
   },
 });
 
@@ -376,7 +383,9 @@ test.describe(
     // bypassing CSP to ensure the Save button is correctly updated
     test.use({ contextOptions: { bypassCSP: true } });
 
-    test('moves repeated rows', async ({ dashboardPage, selectors, page, controls, rows }) => {
+    test('moves repeated rows', async ({ dashboardPage, selectors, page, controls, sidebar, rows }) => {
+      // drag, undo/redo, then save and reload
+      test.slow();
       // collapse rows so it's easier to move them without simulating scrolling
       // clone to avoid mutating V2DashWithRowRepeats, which is shared with the other tests in this file
       const dashboardWithCollapsedRows = structuredClone(V2DashWithRowRepeats);
@@ -391,8 +400,11 @@ test.describe(
         { checkPanelsVisible: false }
       );
       const singleRowTitle = 'single row';
+      const repeatedTitles = REPEAT_OPTIONS.map((option) => `${REPEAT_TITLE_BASE}${option}`);
+      const initialOrder = [...repeatedTitles, singleRowTitle];
 
       await controls.enterEditMode();
+      await expect(rows.getTitles()).toHaveText(initialOrder);
       await moveRow(page, dashboardPage, rows, selectors, `${REPEAT_TITLE_BASE}1`, singleRowTitle);
 
       // The row order is only updated after the drop animation finishes (onDragEnd),
@@ -409,6 +421,15 @@ test.describe(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton)
       ).toHaveAttribute('data-testactive');
+
+      const movedOrder = [singleRowTitle, ...repeatedTitles];
+      await expect(rows.getTitles()).toHaveText(movedOrder);
+
+      await sidebar.toolbar.clickButton('Undo');
+      await expect(rows.getTitles()).toHaveText(initialOrder);
+      await sidebar.toolbar.clickButton('Redo');
+      await expect(rows.getTitles()).toHaveText(movedOrder);
+
       await flows.dashboards.saveDashboard(page, controls);
 
       const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
@@ -417,6 +438,10 @@ test.describe(
         const repeatedRow = await getRowBox(dashboardPage, selectors, `${REPEAT_TITLE_BASE}${i}`);
         expect(singleRowBox?.y).toBeLessThan(repeatedRow?.y || 0);
       }
+      await expect(rows.getTitles()).toHaveText(movedOrder);
+
+      await controls.enterEditMode();
+      await expectNoUnsavedChanges(page, selectors);
     });
   }
 );

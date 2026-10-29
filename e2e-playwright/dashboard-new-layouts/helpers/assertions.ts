@@ -4,6 +4,8 @@ import { type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e'
 
 import { type Tabs, type Panels, type Rows } from '../page-objects';
 
+import { getPanelBox } from './utils';
+
 /**
  * Reusable assertion bundles built on page-object locators (and occasional
  * save-drawer chrome not yet owned by a page object).
@@ -174,6 +176,27 @@ export async function expectRowsToHold(
         await expect(panels.getHeaders(undefined, rows.getContent(rowTitle))).toHaveText(content);
       }
     }
+  });
+}
+
+/**
+ * Asserts every panel's box matches the expected one within `tolerance` pixels, retrying while the
+ * layout settles (drop animations, reflow after undo/redo or a reload)
+ */
+export async function expectPanelBoxesToBe(
+  panels: Panels,
+  expectedBoxes: Record<string, { x: number; y: number; width: number; height: number }>,
+  tolerance = 2
+) {
+  await test.step(`Expect the boxes of ${Object.keys(expectedBoxes).join(', ')}`, async () => {
+    await expect(async () => {
+      for (const [title, expected] of Object.entries(expectedBoxes)) {
+        const box = await getPanelBox(panels, title);
+        for (const key of ['x', 'y', 'width', 'height'] as const) {
+          expect(Math.abs(box[key] - expected[key]), `"${title}" ${key}`).toBeLessThanOrEqual(tolerance);
+        }
+      }
+    }).toPass();
   });
 }
 

@@ -49,6 +49,19 @@ export async function getPanelBox(
   return boundingBox!;
 }
 
+/** Box of every given panel, keyed by title, to compare a whole layout before and after a change */
+export async function getPanelBoxes(
+  panels: Panels,
+  panelTitles: string[]
+): Promise<Record<string, { x: number; y: number; width: number; height: number }>> {
+  const boxes: Record<string, { x: number; y: number; width: number; height: number }> = {};
+  for (const title of panelTitles) {
+    boxes[title] = await getPanelBox(panels, title);
+  }
+
+  return boxes;
+}
+
 /**
  * A point in the left or right half of a panel, a quarter of its width in from that edge and
  * vertically centered: hovering it while dragging aims the drop before or after that panel
@@ -62,10 +75,16 @@ export async function getPanelHalfPoint(panels: Panels, panelTitle: string, half
   };
 }
 
-export async function movePanel(panels: Panels, sourcePanel: string | RegExp, targetPanel: string | RegExp) {
+export async function movePanel(
+  page: Page,
+  panels: Panels,
+  sourcePanel: string | RegExp,
+  targetPanel: string | RegExp
+) {
   await test.step(`Move panel "${sourcePanel}" onto "${targetPanel}"`, async () => {
-    // Perform drag and drop; pixel-sensitive mechanics stay out of page objects
-    await panels.getHeader(sourcePanel).dragTo(panels.getHeader(targetPanel));
+    const drag = await startPointerDrag(page, `panel "${sourcePanel}"`, panels.getHeader(sourcePanel));
+    await drag.moveTo(panels.getHeader(targetPanel));
+    await drag.drop();
   });
 }
 
