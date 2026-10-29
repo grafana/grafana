@@ -73,7 +73,7 @@ test.describe(
       await flows.dashboards.saveDashboard(page, controls);
       await controls.enterEditMode();
       await expectPanelBoxesToBe(panels, secondMoveBoxes);
-      await expectNoUnsavedChanges(page, selectors);
+      await expectNoUnsavedChanges(controls);
     });
   }
 );

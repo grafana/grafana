@@ -120,6 +120,6 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards'] }, () => {
     await flows.dashboards.saveDashboard(page, controls);
     await expectRowTabs(layout, movedTabs);
     await controls.enterEditMode();
-    await expectNoUnsavedChanges(page, selectors);
+    await expectNoUnsavedChanges(controls);
   });
 });

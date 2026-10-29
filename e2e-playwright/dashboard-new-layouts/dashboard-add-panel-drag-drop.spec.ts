@@ -71,7 +71,7 @@ test.describe('Dashboard add panel by drag and drop', { tag: ['@dashboards'] }, 
     await flows.dashboards.saveDashboard(page, controls);
     await expectRowsToHold(rows, panels, added);
     await controls.enterEditMode();
-    await expectNoUnsavedChanges(page, selectors);
+    await expectNoUnsavedChanges(controls);
   });
 
   test('adds nothing when the new panel is released over the sidebar', async ({
@@ -132,7 +132,7 @@ test.describe('Dashboard add panel by drag and drop', { tag: ['@dashboards'] }, 
     await flows.dashboards.saveDashboard(page, controls);
     await expectRowsToHold(rows, panels, pasted);
     await controls.enterEditMode();
-    await expectNoUnsavedChanges(page, selectors);
+    await expectNoUnsavedChanges(controls);
   });
 
   // Today a new or pasted panel is appended to the layout under the pointer, whatever panel it is dropped on

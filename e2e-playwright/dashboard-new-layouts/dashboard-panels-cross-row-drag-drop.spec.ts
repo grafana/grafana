@@ -74,7 +74,7 @@ test.describe('Dashboard panels cross-row drag and drop', { tag: ['@dashboards']
     await flows.dashboards.saveDashboard(page, controls);
     await expectRowsToHold(rows, panels, expandedRows);
     await controls.enterEditMode();
-    await expectNoUnsavedChanges(page, selectors);
+    await expectNoUnsavedChanges(controls);
   });
 
   test('inserts a panel dropped on another auto grid on the side of the hovered panel under the pointer', async ({
@@ -124,6 +124,6 @@ test.describe('Dashboard panels cross-row drag and drop', { tag: ['@dashboards']
     await flows.dashboards.saveDashboard(page, controls);
     await expectRowsToHold(rows, panels, insertedAfter);
     await controls.enterEditMode();
-    await expectNoUnsavedChanges(page, selectors);
+    await expectNoUnsavedChanges(controls);
   });
 });
