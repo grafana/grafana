@@ -8,10 +8,13 @@ import { config } from '@grafana/runtime';
 import { Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { StPodStatus } from 'app/core/services/StPodReadyService';
 import { useSelector } from 'app/types/store';
 
 import { Page } from '../Page/Page';
 
+import { StPodErrorCard } from './StPodErrorCard';
+import { StPodTimeoutBanner } from './StPodTimeoutBanner';
 import { findNavItemForPath } from './navItemForPath';
 
 // TODO: replace with a realistic P80 ST pod startup time once we have the data.
@@ -46,10 +49,13 @@ interface PageFallbackLoaderProps {
 
 export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
   const styles = useStyles2(getStyles);
-  const { chrome } = useGrafana();
+  const { chrome, stPodReady } = useGrafana();
   const location = useLocation();
   const navTree = useSelector((state) => state.navBarTree);
   const navIndex = useSelector((state) => state.navIndex);
+  const stPodStatus = stPodReady.useStatus();
+  const hasErrored = stPodStatus === StPodStatus.Error;
+  const hasTimedOut = stPodStatus === StPodStatus.Timeout;
 
   const matchedNavItem = useMemo(
     () => findNavItemForPath(navTree, location.pathname, config.appSubUrl),
@@ -66,6 +72,14 @@ export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
       chrome.update({});
     }
   }, [chrome, matchedNavItem, navIndex]);
+
+  if (hasErrored) {
+    return (
+      <Page layout={PageLayoutType.Custom}>
+        <StPodErrorCard pageTitle={pageTitle} />
+      </Page>
+    );
+  }
 
   const resolvedSteps: PageFallbackLoaderStep[] = steps ?? [
     {
@@ -111,6 +125,11 @@ export const PageFallbackLoader = ({ steps }: PageFallbackLoaderProps) => {
             })}
           </ul>
         </div>
+        {hasTimedOut && (
+          <div className={styles.timeoutBannerSlot}>
+            <StPodTimeoutBanner />
+          </div>
+        )}
       </div>
     </Page>
   );
@@ -245,6 +264,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.circle,
       border: `1.5px solid ${theme.colors.text.primary}`,
       boxSizing: 'border-box',
+    }),
+    timeoutBannerSlot: css({
+      position: 'absolute',
+      top: theme.spacing(10),
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 2,
     }),
   };
 };

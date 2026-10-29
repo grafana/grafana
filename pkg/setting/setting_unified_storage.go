@@ -355,12 +355,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
-	// enable sqlkv backwards compatibility mode with sql/backend
-	cfg.EnableSQLKVCompatibilityMode = section.Key("enable_sqlkv_compatibility_mode").MustBool(true)
-	// log every call reaching an exported method of the legacy sql/backend
-	// (temporary smoke-test instrumentation; default off)
-	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
-	cfg.LogSQLBackendCalls = section.Key("log_sql_backend_calls").MustBool(false)
 	// TTL for per-resource write leases; 0 uses the backend default (10s).
 	cfg.KVLeaseTTL = section.Key("kv_lease_ttl").MustDuration(0)
 	if cfg.KVLeaseTTL > 0 && cfg.KVLeaseTTL < minimumKVLeaseTTL {

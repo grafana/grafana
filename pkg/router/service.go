@@ -20,10 +20,6 @@ import (
 
 const readinessPollInterval = time.Second
 
-// routerSection holds the settings of the router itself, whatever loader
-// supplies its routes.
-const routerSection = "router"
-
 // ReadyNotifier reports the router's readiness through the module server's
 // shared health endpoint.
 type ReadyNotifier interface {
@@ -54,6 +50,16 @@ type Service struct {
 	loaderFailures  *services.FailureWatcher
 }
 
+const (
+	// routerSection holds the router's own settings. The [router.aggregate.<name>]
+	// and [router.dev.<name>] sections are separate, and have their own prefixes.
+	routerSection = "router"
+	// statusOpenKey lets requesters with the Admin role read the status, and
+	// not only Grafana admins. It is on by default in development, and off
+	// elsewhere.
+	statusOpenKey = "status_open_to_admin"
+)
+
 // ProvideGrafanaRouter creates the router without its routes loader, which
 // ProvideService attaches. The loader depends on storage, and in-process
 // storage reads the router's published manifests (as a ManifestDiscovery), so
@@ -68,6 +74,7 @@ func ProvideGrafanaRouter(cfg *setting.Cfg) (*GrafanaRouter, error) {
 		}
 	}
 	r := NewGrafanaRouter(nil, auth)
+	r.statusOpenToAdmin = cfg.SectionWithEnvOverrides(routerSection).Key(statusOpenKey).MustBool(cfg.Env == setting.Dev)
 	r.builtinManifests = manifestsByGroup(resource.AppManifests())
 	internalGroups, err := util.SplitStringWithError(cfg.SectionWithEnvOverrides(routerSection).Key("internal_groups").MustString(""))
 	if err != nil {

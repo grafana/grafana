@@ -1,7 +1,7 @@
 import { HttpResponse, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
-import { reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 
 import { setupMswServer } from '../../mockApi';
@@ -267,5 +267,116 @@ describe('RecordingRulesPage', () => {
     await screen.findByText('No recording rules found');
 
     expect(pageViewCalls()).toHaveLength(1);
+  });
+});
+
+describe('RecordingRulesPage search', () => {
+  let ruleSearchBodies: Array<{ where?: unknown; continue?: string }>;
+
+  function searchParam() {
+    return new URLSearchParams(locationService.getLocation().search).get('search');
+  }
+
+  function searchInput() {
+    return screen.getByRole('textbox', { name: 'Search' });
+  }
+
+  beforeEach(() => {
+    mockFolderParents({ 'folder-1': 'Team Metrics' });
+    ruleSearchBodies = [];
+    mockRuleSearch('recording', (body) => {
+      ruleSearchBodies.push(body);
+      return { items: [ruleItem('recording', 'rule-1', 'cpu:usage:rate5m', 'folder-1')], metadata: {} };
+    });
+  });
+
+  it('keeps a multi-token query exactly as typed in the input and the URL, and sends it as one request', async () => {
+    const { user } = render(<RecordingRulesPage />);
+    await screen.findByText('cpu:usage:rate5m');
+    const typed = 'health:ok cpu targetDatasource:prom-1  metric:cpu_usage';
+
+    await user.type(searchInput(), `${typed}{Enter}`);
+
+    await waitFor(() =>
+      expect(ruleSearchBodies.at(-1)?.where).toEqual({
+        and: [
+          { text: { value: 'cpu' } },
+          { filter: { field: 'metric', operator: 'In', values: ['cpu_usage'] } },
+          { filter: { field: 'targetDatasourceUID', operator: 'In', values: ['prom-1'] } },
+          { filter: { field: 'health', operator: 'In', values: ['Recording'] } },
+        ],
+      })
+    );
+    expect(ruleSearchBodies).toHaveLength(2);
+    expect(searchInput()).toHaveValue(typed);
+    expect(searchParam()).toBe(typed);
+  });
+
+  it('restores the input and the request from the URL on load', async () => {
+    render(<RecordingRulesPage />, {
+      historyOptions: { initialEntries: ['/?search=folder%3Afolder-1%20metric%3Acpu_usage'] },
+    });
+
+    expect(await screen.findByText('cpu:usage:rate5m')).toBeInTheDocument();
+    expect(searchInput()).toHaveValue('folder:folder-1 metric:cpu_usage');
+    expect(ruleSearchBodies.map((body) => body.where)).toEqual([
+      {
+        and: [
+          { filter: { field: 'folder', operator: 'In', values: ['folder-1'] } },
+          { filter: { field: 'metric', operator: 'In', values: ['cpu_usage'] } },
+        ],
+      },
+    ]);
+  });
+
+  it('searches titles for state:, which only Alert rules have, and keeps it as typed in the URL', async () => {
+    const { user } = render(<RecordingRulesPage />);
+    await screen.findByText('cpu:usage:rate5m');
+
+    await user.type(searchInput(), 'state:firing{Enter}');
+
+    await waitFor(() => expect(ruleSearchBodies.at(-1)?.where).toEqual({ text: { value: 'state:firing' } }));
+    expect(searchParam()).toBe('state:firing');
+    expect(searchInput()).not.toHaveAttribute('aria-invalid');
+  });
+
+  it.each([
+    ['cpu metric:', 'Some filters could not be applied: metric'],
+    ['health:bad', 'Use one of these values for health: ok, nodata, error, unknown'],
+  ])('shows why %j cannot be searched, keeps it as typed and sends no request', async (search, message) => {
+    render(<RecordingRulesPage />, { historyOptions: { initialEntries: [`/?${new URLSearchParams({ search })}`] } });
+
+    expect(await screen.findByText('Change the search to see results')).toBeInTheDocument();
+    expect(searchInput()).toHaveValue(search);
+    expect(searchInput()).toHaveAttribute('aria-invalid', 'true');
+    expect(searchInput()).toHaveAccessibleDescription(message);
+    expect(ruleSearchBodies).toEqual([]);
+  });
+
+  it.each<[search: string, field: string, message: string, description: string]>([
+    [
+      'cpu label:team=~(',
+      'where.and[1].regex.pattern',
+      'Invalid value: "team=(": missing closing )',
+      'label was rejected: Invalid value: "team=(": missing closing )',
+    ],
+    [
+      'cpu metric:a+b',
+      'where.and[1].filter.values',
+      'Invalid value: "a+b": not a metric name',
+      'metric was rejected: Invalid value: "a+b": not a metric name',
+    ],
+  ])('shows a 422 for %j on %s under the input, with no Retry', async (search, field, message, description) => {
+    server.use(
+      http.post(ruleSearchUrl('recording'), () =>
+        HttpResponse.json({ code: 422, details: { causes: [{ field, message }] } }, { status: 422 })
+      )
+    );
+    render(<RecordingRulesPage />, { historyOptions: { initialEntries: [`/?${new URLSearchParams({ search })}`] } });
+
+    expect(await screen.findByText('Change the search to see results')).toBeInTheDocument();
+    expect(searchInput()).toHaveAttribute('aria-invalid', 'true');
+    expect(searchInput()).toHaveAccessibleDescription(description);
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
   });
 });

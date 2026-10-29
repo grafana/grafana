@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -50,9 +49,6 @@ const (
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
-
-// NewBackendWithDBFunc creates a backend with database access for testing
-type NewBackendWithDBFunc func(ctx context.Context) (resource.StorageBackend, sqldb.DB)
 
 // TestOptions configures which tests to run
 type TestOptions struct {

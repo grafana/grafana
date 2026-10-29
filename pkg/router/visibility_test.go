@@ -439,8 +439,8 @@ func TestVisibilityNeverHidesTheDiscoveryGroup(t *testing.T) {
 
 func TestVisibilityStatusPage(t *testing.T) {
 	f := newVisibilityFixture(t, false)
-	// Every caller sees every group, hidden ones too, and why each may be hidden.
-	for _, requester := range []identity.Requester{userIn1, serviceAcctIn1, policyIn1, adminIn1} {
+	// A Grafana admin sees every group, hidden ones too, and why each may be hidden.
+	for _, requester := range []identity.Requester{adminIn1} {
 		rec := f.serve(newRequestAs(http.MethodGet, manifestDiscoveryStatus, requester))
 		require.Equal(t, http.StatusOK, rec.Code, requester.GetUID())
 		var doc routerStatusDoc

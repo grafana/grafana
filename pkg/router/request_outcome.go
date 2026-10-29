@@ -19,7 +19,7 @@ const (
 	routeInvalid   = "invalid"   // rejected before routing, such as a non-canonical path
 
 	routeUnauthenticated = "unauthenticated" // rejected because the caller did not authenticate
-	routeForbidden       = "forbidden"       // rejected because the caller may not use the namespace in the path
+	routeForbidden       = "forbidden"       // rejected because the caller may not use the namespace in the path, or the status
 )
 
 // Why a request's backend failed, for grafana_router_backend_failures_total.

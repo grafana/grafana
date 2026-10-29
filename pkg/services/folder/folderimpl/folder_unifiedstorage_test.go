@@ -1503,17 +1503,20 @@ func (*emptyFolderRegistry) DeleteInFolders(context.Context, int64, []string, id
 	return nil
 }
 
-func newDashboardDeleteService(t *testing.T, enabled bool, concurrency, count int) (*Service, *dashboardDeleteClient, *folder.DeleteFolderCommand, context.Context) {
+// withParallelDashboardDelete serves the parallel delete flag for the duration of the test. Call it outside a
+// synctest bubble: the OpenFeature provider is process-global.
+func withParallelDashboardDelete(t *testing.T, concurrency int) {
+	featuremgmt.WithFlagValues(t, map[string]any{featuremgmt.FlagFoldersParallelDashboardDeleteConcurrency: concurrency})
+}
+
+func newDashboardDeleteService(t *testing.T, count int) (*Service, *dashboardDeleteClient, *folder.DeleteFolderCommand, context.Context) {
 	requester := &user.SignedInUser{UserID: 42, OrgID: 1}
 	cli := &dashboardDeleteClient{requester: requester}
 	for i := range count {
 		cli.uids = append(cli.uids, fmt.Sprintf("dashboard-%d", i))
 	}
-	cfg := setting.NewCfg()
-	cfg.FolderParallelDashboardDeleteEnabled = enabled
-	cfg.FolderParallelDashboardDeleteConcurrency = concurrency
 	svc := &Service{
-		cfg: cfg, dashboardK8sClient: cli, variableK8sClient: &dashboardDeleteClient{}, unifiedStore: &dashboardDeleteStore{},
+		cfg: setting.NewCfg(), dashboardK8sClient: cli, variableK8sClient: &dashboardDeleteClient{}, unifiedStore: &dashboardDeleteStore{},
 		publicDashboardService: &dashboardDeletePublicService{client: cli},
 		tracer:                 noop.NewTracerProvider().Tracer("test"), log: slog.New(logtest.NewNopHandler(t)),
 		registry: map[string]folder.RegistryService{entity.StandardKindAlertRule: &emptyFolderRegistry{}, entity.StandardKindLibraryPanel: &emptyFolderRegistry{}},
@@ -1569,18 +1572,18 @@ func waitForResult(t *testing.T, done <-chan error) error {
 func TestDeleteFolderDashboardConcurrency(t *testing.T) {
 	for _, tc := range []struct {
 		name                 string
-		enabled              bool
 		workers, count, want int
 	}{
-		{"disabled deletes one at a time", false, 8, 12, 1},
-		{"enabled is bounded by the worker count", true, 4, 12, 4},
-		{"enabled with more workers than dashboards", true, 8, 2, 2},
-		{"non-positive worker count uses one worker", true, 0, 12, 1},
-		{"empty folder", true, 4, 0, 0},
+		{"one worker deletes in order", 1, 12, 1},
+		{"bounded by the worker count", 4, 12, 4},
+		{"more workers than dashboards", 8, 2, 2},
+		{"non-positive worker count deletes in order", 0, 12, 1},
+		{"empty folder", 4, 0, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
+			withParallelDashboardDelete(t, tc.workers)
 			synctest.Test(t, func(t *testing.T) {
-				svc, cli, cmd, ctx := newDashboardDeleteService(t, tc.enabled, tc.workers, tc.count)
+				svc, cli, cmd, ctx := newDashboardDeleteService(t, tc.count)
 				gate := newDeleteGate(t)
 				cli.deleteFn = gate.hold
 				done := runInBackground(func() error { return svc.Delete(ctx, cmd) })
@@ -1590,7 +1593,7 @@ func TestDeleteFolderDashboardConcurrency(t *testing.T) {
 				require.NoError(t, waitForResult(t, done))
 
 				require.Equal(t, tc.want, cli.maximum)
-				if tc.enabled {
+				if tc.workers > 1 {
 					require.ElementsMatch(t, cli.uids, cli.calls)
 				} else {
 					require.Equal(t, cli.uids, cli.calls)
@@ -1607,8 +1610,9 @@ func TestDeleteFolderDashboardConcurrency(t *testing.T) {
 }
 
 func TestDeleteFolderDashboardRequestCancellation(t *testing.T) {
+	withParallelDashboardDelete(t, 4)
 	synctest.Test(t, func(t *testing.T) {
-		svc, cli, cmd, ctx := newDashboardDeleteService(t, true, 4, 20)
+		svc, cli, cmd, ctx := newDashboardDeleteService(t, 20)
 		ctx, cancel := context.WithCancel(ctx)
 		gate := newDeleteGate(t)
 		cli.deleteFn = func(ctx context.Context, uid string) error {
@@ -1636,8 +1640,9 @@ func TestDeleteFolderDashboardRequestCancellation(t *testing.T) {
 }
 
 func TestDeleteFolderDashboardFailureLetsInFlightDeletesFinish(t *testing.T) {
+	withParallelDashboardDelete(t, 4)
 	synctest.Test(t, func(t *testing.T) {
-		svc, cli, cmd, ctx := newDashboardDeleteService(t, true, 4, 20)
+		svc, cli, cmd, ctx := newDashboardDeleteService(t, 20)
 		gate := newDeleteGate(t)
 		releaseFailure := make(chan struct{})
 		canceled := make(chan string, 20)

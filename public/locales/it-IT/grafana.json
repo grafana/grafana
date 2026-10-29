@@ -1446,10 +1446,16 @@
         "rules-error": "",
         "search-issues": ""
       },
+      "datasources": "",
       "interval": "",
+      "recorded-metric": {
+        "records": "",
+        "to": ""
+      },
       "recording-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "result-count": {
         "alert-rules_one": "",
@@ -1526,7 +1532,9 @@
         "recording": "",
         "recovering": "",
         "unavailable": ""
-      }
+      },
+      "labels_one": "",
+      "labels_other": ""
     },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Per modificare la configurazione di Alertmanager, vai alla pagina Amministrazione avvisi. Se non disponi dell'accesso, contatta il tuo amministratore.",
@@ -5943,6 +5951,7 @@
       "panel-repeat-variable": "Ripetizione del pannello per",
       "panel-title": "modifica del titolo del pannello",
       "paste-panel": "Incolla pannello",
+      "paste-panel-styles": "",
       "remove": "Rimuovi {{typeName}}",
       "remove-multiple": "Rimuovi {{typeName}} ({{num}})",
       "rename": "",
@@ -5960,6 +5969,7 @@
       "switch-layout-tab": "Cambia layout",
       "tab-repeat-variable": "Ripetizione della scheda per",
       "tab-title": "Modifica il titolo della scheda",
+      "unlink-library-panel": "",
       "variable-adhoc-default-filters": "",
       "variable-adhoc-default-group-by": "",
       "variable-adhoc-default-keys": "",
@@ -6206,6 +6216,7 @@
       "tooltip-previous": "Precedente"
     },
     "modes": {
+      "agent-edit": "",
       "change-mode": "",
       "composer": "",
       "composer-description": "",
@@ -8073,7 +8084,7 @@
       }
     },
     "unlink-modal": {
-      "body-unlink-panel": "Se scolleghi questo pannello, potrai modificarlo senza influire sulle altre dashboard. Tuttavia, una volta apportata una modifica, non potrai ripristinare il pannello riutilizzabile originale.",
+      "body-unlink-panel": "",
       "confirmText-yes-unlink": "Sì, scollega",
       "title-really-unlink-panel": "Desideri davvero scollegare questo pannello?"
     },
@@ -9311,10 +9322,6 @@
       "attribute-category": {
         "other": "Altro"
       },
-      "exception-message": "Messaggio:",
-      "exception-stacktrace": "Stack trace",
-      "exception-title": "Eccezione",
-      "exception-type": "Tipo:",
       "label": {
         "kind": "Tipo:",
         "library-name": "Nome libreria:",
@@ -9420,6 +9427,7 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Apri il menu di condivisione e feedback",
+      "copy-trace-id": "",
       "critical-path": "Percorso critico",
       "critical-path-tooltip": "Seleziona gli intervalli nel percorso critico, la sequenza più lunga di attività dipendenti che determina la durata minima della traccia.",
       "duration": "Durata",
@@ -9443,7 +9451,7 @@
       "share-group": "Condividi",
       "share-tooltip": "Condividi e lascia un feedback",
       "spans": "Intervalli",
-      "start-time": "Ora di inizio",
+      "start-time": "",
       "success-indicator": "Traccia completata con successo",
       "target": "Destinazione",
       "tooltip-url": "{{route}} o {{url}} o {{target}} o {{path}}",
@@ -9452,6 +9460,12 @@
       "trace-banner-metrics": "{{duration}} · {{percent}}% della traccia",
       "trace-banner-warning": "Banner di avviso della traccia",
       "trace-id": "ID traccia",
+      "trace-summary-error": "",
+      "trace-summary-error-status": "",
+      "trace-summary-hide-stacktrace": "",
+      "trace-summary-show-stacktrace": "",
+      "trace-summary-warning": "",
+      "trace-summary-warning-status": "",
       "url": "URL",
       "warning-indicator": "La traccia presenta errori del client"
     },
@@ -15017,7 +15031,7 @@
       "resources-to-migrate-empty": "Nessuna cartella o risorsa corrisponde alla ricerca corrente.",
       "resources-to-migrate-heading": "Risorse da migrare",
       "resources-to-migrate-search": "Cerca cartelle e risorse",
-      "resources-to-migrate-subtitle": "Scegli intere cartelle o singole risorse al loro interno. Selezionando una cartella, vengono migrate solo le risorse direttamente al suo interno; tutto ciò che si trova nelle sottocartelle viene migrato attraverso la propria cartella.",
+      "resources-to-migrate-subtitle": "",
       "retain-resources-description": "Mantieni le risorse migrate su questa istanza mentre la richiesta di pull è aperta, in modo che rimangano attive fino a quando il ramo non verrà integrato. Queste risorse devono essere eliminate manualmente prima che la richiesta di pull venga integrata, altrimenti si verificheranno errori durante la sincronizzazione a causa di risorse in conflitto.",
       "retain-resources-label": "Mantieni le risorse esistenti durante la revisione",
       "retain-resources-warning-body": "Devi eliminare personalmente le risorse migrate prima di integrare la richiesta di pull. Se sono ancora presenti al momento dell'integrazione del ramo, entreranno in conflitto con le risorse gestite in arrivo e non verranno riconciliate.",
@@ -15848,6 +15862,12 @@
       "delete-transformations-confirm-title_one": "Eliminare {{count}} trasformazione?",
       "delete-transformations-confirm-title_other": "Eliminare {{count}} trasformazioni?"
     },
+    "datasource-error": {
+      "load-failed": "",
+      "load-failed-named": "",
+      "not-found": "",
+      "settings-not-found": ""
+    },
     "delete-modal": {
       "body-transformation": "La rimozione di una trasformazione può interromperne altre."
     },
@@ -16178,6 +16198,7 @@
       "exchange": "Modifica l'ambito radice in {{scope}}",
       "expand": "Espandi",
       "filter": "",
+      "filterAriaLabel": "",
       "loading": "Caricamento dashboard",
       "megaMenuSectionHeading": "",
       "noResultsForFilter": "Nessun risultato trovato per la ricerca",
@@ -16186,7 +16207,6 @@
       "noResultsNoScopes": "Nessun ambito selezionato",
       "toggle": {
         "collapse": "Riduci l'elenco dei dashboard suggeriti",
-        "disabled": "L'elenco dei dashboard suggeriti è disabilitato a causa della modalità di sola lettura",
         "expand": "Espandi l'elenco dei dashboard suggeriti"
       }
     },
@@ -16721,6 +16741,17 @@
     "generate-suggestion": "Genera suggerimento",
     "improve-query": "Migliora query"
   },
+  "st-pod-ready": {
+    "error": {
+      "body-with-support": "",
+      "support-ack": "",
+      "title": "",
+      "title-fallback": ""
+    },
+    "timeout": {
+      "banner": ""
+    }
+  },
   "stars": {
     "mark-as-starred": "Contrassegna come preferito",
     "mark-as-starred-with-title": "Contrassegna \"{{title}}\" come preferito",
@@ -16890,6 +16921,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": ""
+    },
     "login": "Accedi",
     "manifests": {
       "api-docs": "",
@@ -17589,9 +17623,11 @@
       "placeholder-frame": "Fotogramma"
     },
     "config-from-query-transformer-editor": {
+      "description-dynamic-field-name-matcher": "",
       "label-apply-to": "Applica a",
       "label-apply-to-options": "Applica alle opzioni",
-      "label-config-query": "Configura query"
+      "label-config-query": "Configura query",
+      "name-dynamic-field-name-matcher": ""
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Aggiungi un trasformatore del tipo di campo di conversione",

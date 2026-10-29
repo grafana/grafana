@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { RouterStatusPage, routerStatusURL, type RouterStatus } from './RouterStatusPage';
@@ -68,6 +68,7 @@ const cloudStatus: RouterStatus = {
 
 afterEach(() => {
   jest.restoreAllMocks();
+  window.history.replaceState(null, '', '/');
 });
 
 it('shows each group, load failure and source from the status endpoint', async () => {
@@ -85,7 +86,7 @@ it('shows each group, load failure and source from the status endpoint', async (
   expect(screen.getByText('@1.2.3')).toBeInTheDocument();
   expect(screen.getByText('v1, v2')).toBeInTheDocument();
   expect(screen.getByText('broken.grafana.app')).toBeInTheDocument();
-  expect(screen.queryByText('Shadowed groups')).not.toBeInTheDocument();
+  expect(screen.queryByRole('tab', { name: /Stack lookups/ })).not.toBeInTheDocument();
 });
 
 it('shows the HTTP error when the status cannot be loaded', async () => {
@@ -100,30 +101,173 @@ it('shows the cloud sources, shadowed groups and stack lookups', async () => {
   jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(cloudStatus)));
   render(<RouterStatusPage />);
 
-  const sources = within((await screen.findByRole('heading', { name: 'Sources' })).parentElement!);
-  const [stRow, coreRow] = sources.getAllByRole('row').slice(1);
+  await userEvent.click(await screen.findByRole('tab', { name: /Sources/ }));
+  const [stRow, coreRow] = screen.getAllByRole('row').slice(1);
   expect(within(stRow).getByText('never')).toBeInTheDocument();
   expect(within(coreRow).queryByText('never')).not.toBeInTheDocument();
 
-  const shadowed = within(screen.getByRole('heading', { name: 'Shadowed groups' }).parentElement!);
-  expect(within(shadowed.getAllByRole('row')[1]).getAllByText(/single-tenant|core_url/)).toHaveLength(2);
-
-  const lookups = within(screen.getByRole('heading', { name: 'Stack lookups' }).parentElement!);
-  expect(lookups.getAllByText(/^(resolved|cache hit|error)$/).map((el) => el.textContent)).toEqual([
+  await userEvent.click(screen.getByRole('tab', { name: /Stack lookups/ }));
+  expect(screen.getAllByText(/^(resolved|cache hit|error)$/).map((el) => el.textContent)).toEqual([
     'resolved',
     'cache hit',
     'error',
   ]);
-  expect(screen.getByText('1 ok')).toBeInTheDocument();
-  // A group without a group breaker has no health badge, in the summary or its row.
+  await userEvent.click(screen.getByRole('tab', { name: /Groups/ }));
+  const shadowed = within(screen.getByRole('heading', { name: 'Shadowed groups' }).parentElement!);
+  expect(within(shadowed.getAllByRole('row')[1]).getAllByText(/single-tenant|core_url/)).toHaveLength(2);
+  expect(screen.getByText('ok')).toBeInTheDocument();
+  // A group without a group breaker has no health badge in its row.
   expect(screen.queryByText(/unknown/)).not.toBeInTheDocument();
+});
+
+it('keeps the selected tab in the URL', async () => {
+  jest.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify(cloudStatus)));
+  const { unmount } = render(<RouterStatusPage />);
+
+  await userEvent.click(await screen.findByRole('tab', { name: /Sources/ }));
+  expect(window.location.search).toBe('?tab=sources');
+  unmount();
+
+  render(<RouterStatusPage />);
+  expect(await screen.findByText('never')).toBeInTheDocument();
+  expect(screen.getByRole('tab', { name: /Sources/ })).toHaveAttribute('aria-selected', 'true');
+});
+
+it('counts the groups of each source and opens them filtered from the source row', async () => {
+  jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(cloudStatus)));
+  render(<RouterStatusPage />);
+
+  await userEvent.click(await screen.findByRole('tab', { name: /Sources/ }));
+  const [stRow] = screen.getAllByRole('row').slice(1);
+  expect(within(stRow).getAllByRole('cell')[1]).toHaveTextContent('1');
+  expect(within(stRow).getByRole('link')).toHaveAttribute('href', '/?tab=groups&source=single-tenant');
+
+  await userEvent.click(within(stRow).getByText('single-tenant'));
+
+  expect(window.location.search).toBe('?tab=groups&source=single-tenant');
+  expect(screen.getByRole('tab', { name: /Groups/ })).toHaveAttribute('aria-selected', 'true');
+  const groups = within((await screen.findAllByRole('table'))[0]);
+  expect(groups.getByText('iam.grafana.app')).toBeInTheDocument();
+  expect(groups.queryByText('dashboard.grafana.app')).not.toBeInTheDocument();
+});
+
+it('clears the source filter from the dropdown', async () => {
+  const twoSources = {
+    ...cloudStatus,
+    groups: [...cloudStatus.groups, { ...cloudStatus.groups[1], group: 'other.grafana.app', source: 'plugins_url' }],
+  };
+  jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(twoSources)));
+  window.history.replaceState(null, '', '/?tab=groups&source=plugins_url');
+  render(<RouterStatusPage />);
+
+  const groups = within((await screen.findAllByRole('table'))[0]);
+  expect(groups.getByText('other.grafana.app')).toBeInTheDocument();
+  expect(groups.queryByText('iam.grafana.app')).not.toBeInTheDocument();
+
+  await userEvent.click(screen.getByLabelText('Clear value'));
+
+  expect(groups.getByText('iam.grafana.app')).toBeInTheDocument();
+  expect(window.location.search).toBe('?tab=groups');
+});
+
+it('sorts sources by group count by default and sorts a table by its column header', async () => {
+  const twoSources = {
+    ...cloudStatus,
+    groups: [...cloudStatus.groups, { ...cloudStatus.groups[1], group: 'a.grafana.app' }],
+  };
+  jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(twoSources)));
+  render(<RouterStatusPage />);
+
+  const sourceNames = () =>
+    screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((r) => within(r).getAllByRole('cell')[0].textContent);
+  await userEvent.click(await screen.findByRole('tab', { name: /Sources/ }));
+  expect(sourceNames()).toEqual(['single-tenant', 'core_url']);
+
+  await userEvent.click(screen.getByRole('button', { name: 'Source' }));
+  expect(sourceNames()).toEqual(['core_url', 'single-tenant']);
+  await userEvent.click(screen.getByRole('button', { name: 'Source' }));
+  expect(sourceNames()).toEqual(['single-tenant', 'core_url']);
+  expect(screen.getByRole('columnheader', { name: 'Source' })).toHaveAttribute('aria-sort', 'descending');
+});
+
+it('adds each tab or source change to the browser history', async () => {
+  jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(cloudStatus)));
+  render(<RouterStatusPage />);
+
+  await userEvent.click(await screen.findByRole('tab', { name: /Sources/ }));
+  await userEvent.click(within(screen.getAllByRole('row')[1]).getByText('single-tenant'));
+  expect(window.location.search).toBe('?tab=groups&source=single-tenant');
+
+  act(() => window.history.back());
+  await waitFor(() => expect(window.location.search).toBe('?tab=sources'));
+  await waitFor(() => expect(screen.getByRole('tab', { name: /Sources/ })).toHaveAttribute('aria-selected', 'true'));
+});
+
+// Clicks the link and reports whether the browser is left to follow it. jsdom cannot navigate, and says
+// so, which is how a followed link shows up.
+async function followed(el: HTMLElement, init: MouseEventInit) {
+  const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+  const notPrevented = fireEvent.click(el, init);
+  // jsdom reports the navigation later; settle before judging, and before the next test
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const navigated = error.mock.calls.some(([e]) => String(e).includes('Not implemented: navigation'));
+  error.mockRestore();
+  return notPrevented && navigated;
+}
+
+it('links the tabs and sources, and leaves a modified click to the browser', async () => {
+  jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(cloudStatus)));
+  render(<RouterStatusPage />);
+
+  const sourcesTab = await screen.findByRole('tab', { name: /Sources/ });
+  expect(sourcesTab).toHaveAttribute('href', '/?tab=sources');
+
+  expect(await followed(sourcesTab, { metaKey: true })).toBe(true);
+  expect(window.location.search).toBe('');
+  expect(screen.getByRole('tab', { name: /Groups/ })).toHaveAttribute('aria-selected', 'true');
+
+  await userEvent.click(sourcesTab);
+  const link = within(screen.getAllByRole('row')[1]).getByRole('link');
+  expect(await followed(link, { ctrlKey: true })).toBe(true);
+  expect(window.location.search).toBe('?tab=sources');
+});
+
+it('lists the groups with the most requests first', async () => {
+  const busy = {
+    ...cloudStatus,
+    groups: [
+      {
+        ...cloudStatus.groups[0],
+        group: 'quiet.grafana.app',
+        breaker: { ...cloudStatus.groups[0].breaker, requests: 1 },
+      },
+      {
+        ...cloudStatus.groups[0],
+        group: 'busy.grafana.app',
+        breaker: { ...cloudStatus.groups[0].breaker, requests: 90 },
+      },
+    ],
+  };
+  jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(busy)));
+  render(<RouterStatusPage />);
+
+  const groups = within((await screen.findAllByRole('table'))[0]);
+  expect(
+    groups
+      .getAllByRole('row')
+      .slice(1)
+      .map((r) => within(r).getAllByRole('cell')[0].textContent)
+  ).toEqual(['busy.grafana.app', 'quiet.grafana.app']);
 });
 
 it('filters groups by name or key', async () => {
   jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(cloudStatus)));
   render(<RouterStatusPage />);
 
-  const groups = within((await screen.findByRole('heading', { name: 'Groups' })).parentElement!);
+  const groups = within((await screen.findAllByRole('table'))[0]);
   await userEvent.type(screen.getByPlaceholderText('Filter by group, key or plugin'), 'st-key');
 
   expect(groups.getByText('iam.grafana.app')).toBeInTheDocument();
@@ -173,8 +317,8 @@ it('marks the groups only access policies see', async () => {
   jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(internal)));
   render(<RouterStatusPage />);
 
-  const groups = within((await screen.findByRole('heading', { name: 'Groups' })).parentElement!);
-  const [internalRow, publicRow] = groups.getAllByRole('row').slice(1);
+  const internalRow = (await screen.findByText('mobile.ext.grafana.app')).closest('tr')!;
+  const publicRow = screen.getByText('widgets.ext.grafana.app').closest('tr')!;
   expect(within(publicRow).queryByText('internal')).not.toBeInTheDocument();
 
   await userEvent.hover(within(internalRow).getByText('internal'));
