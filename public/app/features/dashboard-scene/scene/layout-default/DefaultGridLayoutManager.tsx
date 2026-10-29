@@ -61,6 +61,8 @@ import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
+import { CustomGrid, shouldRenderCustomGrid } from './custom-grid/CustomGrid';
+import { CustomGridController } from './custom-grid/CustomGridController';
 import { startGridShadowCheck } from './custom-grid/shadowCheck';
 import { findSpaceForNewPanel } from './findSpaceForNewPanel';
 import { RowActions } from './row-actions/RowActions';
@@ -95,6 +97,16 @@ export class DefaultGridLayoutManager
   }
 
   public readonly descriptor = DefaultGridLayoutManager.descriptor;
+
+  private _customGridController: CustomGridController | undefined;
+
+  /** Owns the layout of the new custom grid, which renders this layout with the unified drag and drop flag on */
+  public getCustomGridController(): CustomGridController {
+    if (this._customGridController?.grid !== this.state.grid) {
+      this._customGridController = new CustomGridController(this.state.grid);
+    }
+    return this._customGridController;
+  }
 
   public constructor(state: DefaultGridLayoutManagerState) {
     super(state);
@@ -632,18 +644,28 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
     );
   }
 
+  const reactGridLayoutGrid = model.state.grid.Component && (
+    // #123563: Workaround, needs proper fixing downstream
+    // Force-remount when toggling between empty and populated. react-grid-layout caches its
+    // computed container height in internal state; without a fresh mount it stays sized to
+    // the last panel and overflows on top of the Add panel button below. Needs further investigation
+    // as part of #123563.
+    <model.state.grid.Component model={model.state.grid} key={children.length === 0 ? 'empty' : 'populated'} />
+  );
+
   return (
     <div
       className={cx(styles.container, isEditing && styles.containerEditing)}
       data-testid={selectors.components.LayoutContainer(getTestIdForLayout(model))}
     >
-      {model.state.grid.Component && (
-        // #123563: Workaround, needs proper fixing downstream
-        // Force-remount when toggling between empty and populated. react-grid-layout caches its
-        // computed container height in internal state; without a fresh mount it stays sized to
-        // the last panel and overflows on top of the Add panel button below. Needs further investigation
-        // as part of #123563.
-        <model.state.grid.Component model={model.state.grid} key={children.length === 0 ? 'empty' : 'populated'} />
+      {shouldRenderCustomGrid(model.state.grid, !!dashboardState.isEditing) ? (
+        <CustomGrid
+          grid={model.state.grid}
+          controller={model.getCustomGridController()}
+          fallback={reactGridLayoutGrid}
+        />
+      ) : (
+        reactGridLayoutGrid
       )}
       {showCanvasActions && (
         <div className={styles.actionsWrapper}>

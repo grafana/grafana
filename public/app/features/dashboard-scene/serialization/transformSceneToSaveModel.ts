@@ -37,6 +37,7 @@ import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutM
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
+import { getCorrectedPlacementForSave } from '../scene/layout-default/custom-grid/layoutValidation';
 import { type RowItem } from '../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { type TabItem } from '../scene/layout-tabs/TabItem';
@@ -193,6 +194,14 @@ export function gridItemToPanel(gridItem: DashboardGridItem, isSnapshot = false)
   y = gridItem_.state.y ?? 0;
   w = gridItem_.state.width ?? 0;
   h = (gridItem_.state.variableName ? gridItem_.state.itemHeight : gridItem_.state.height) ?? 0;
+
+  // Only set with the unified drag and drop flag on, when the grid's layout is invalid
+  const corrected = getCorrectedPlacementForSave(gridItem_);
+  if (corrected) {
+    ({ x, y, width: w } = corrected);
+    // A repeat saves the height of one repeated panel rather than the height of the whole grid item
+    h = gridItem_.state.variableName ? h : corrected.height;
+  }
 
   if (!vizPanel) {
     throw new Error('Unsupported grid item type');

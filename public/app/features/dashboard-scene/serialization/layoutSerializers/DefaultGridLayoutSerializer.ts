@@ -12,6 +12,7 @@ import {
 
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
+import { getCorrectedPlacementForSave } from '../../scene/layout-default/custom-grid/layoutValidation';
 import { getIsLazy } from '../../scene/layouts-shared/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { calculateGridItemDimensions, isLibraryPanel } from '../../utils/utils';
@@ -86,6 +87,14 @@ export function gridItemToGridLayoutItemKind(
   y = gridItem_.state.y ?? 0;
   width = gridItem_.state.width ?? 0;
   const repeatVar = gridItem_.state.variableName;
+
+  // Only set with the unified drag and drop flag on, when the grid's layout is invalid
+  const corrected = getCorrectedPlacementForSave(gridItem_);
+  if (corrected) {
+    ({ x, y, width } = corrected);
+    // A repeat saves the height of one repeated panel rather than the height of the whole grid item
+    height = repeatVar ? height : corrected.height;
+  }
 
   // For serialization we should retrieve the original element key. In snapshot mode we must also
   // disambiguate panels that live inside a repeated row/tab clone (they reuse the source keys).
