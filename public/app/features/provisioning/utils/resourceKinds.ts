@@ -372,9 +372,10 @@ export function getAvailableResourceKinds(availableResources?: SupportedResource
 export function isResourceKindAvailable(info: ResourceKindInfo, availableResources?: SupportedResource[]): boolean {
   // Compare on group/kind rather than object identity so callers can pass an
   // equivalent descriptor that isn't the exact registry instance.
-  return getAvailableResourceKinds(availableResources).some(
-    (available) => available.group === info.group && available.kind === info.kind
-  );
+  if (!availableResources) {
+    return allKindInfos.some((available) => available.group === info.group && available.kind === info.kind);
+  }
+  return availableResources.some((r) => r.group === info.group && r.kind === info.kind && !r.disabled);
 }
 
 /**
