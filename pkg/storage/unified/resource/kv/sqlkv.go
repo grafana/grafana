@@ -87,6 +87,8 @@ func (k *SqlKV) getQueryBuilder(section string) (*queryBuilder, error) {
 		tableName = "nats_discovery_peers"
 	case VersionPolicySection:
 		tableName = "resource_version_policy"
+	case TerminatingSection:
+		tableName = "resource_terminating"
 	default:
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}

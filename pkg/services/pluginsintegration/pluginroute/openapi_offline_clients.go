@@ -69,6 +69,10 @@ func (offlineStoreClient) ListStoredResources(context.Context, *resourcepb.ListS
 	return nil, errOffline
 }
 
+func (offlineStoreClient) ListTerminating(context.Context, *resourcepb.ListTerminatingRequest, ...grpc.CallOption) (*resourcepb.ListTerminatingResponse, error) {
+	return nil, errOffline
+}
+
 // offlineSearchClient allows search, trash and hybrid routes to be registered without
 // connecting to the search index.
 type offlineSearchClient struct{}

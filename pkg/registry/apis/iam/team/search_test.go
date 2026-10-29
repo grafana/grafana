@@ -771,6 +771,9 @@ func (m *MockClient) ListManagedObjects(ctx context.Context, in *resourcepb.List
 	return nil, nil
 }
 
+func (m *MockClient) ListTerminating(ctx context.Context, in *resourcepb.ListTerminatingRequest, opts ...grpc.CallOption) (*resourcepb.ListTerminatingResponse, error) {
+	return nil, nil
+}
 func (m *MockClient) ListStoredResources(ctx context.Context, in *resourcepb.ListStoredResourcesRequest, opts ...grpc.CallOption) (*resourcepb.ListStoredResourcesResponse, error) {
 	return nil, nil
 }

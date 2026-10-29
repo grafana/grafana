@@ -1932,6 +1932,37 @@ func (s *server) ListStoredResources(ctx context.Context, req *resourcepb.ListSt
 	return rsp, nil
 }
 
+// terminatingLister is implemented by backends that track terminating objects.
+type terminatingLister interface {
+	ListTerminating(ctx context.Context, group, resource string) iter.Seq2[ObjectKey, error]
+}
+
+// ListTerminating implements the ResourceStore gRPC service. Backends that do not track terminating
+// objects return Unimplemented, so callers can fall back to a full list.
+func (s *server) ListTerminating(ctx context.Context, req *resourcepb.ListTerminatingRequest) (*resourcepb.ListTerminatingResponse, error) {
+	ctx, span := tracer.Start(ctx, "resource.server.ListTerminating")
+	defer span.End()
+
+	if req.Group == "" || req.Resource == "" {
+		return nil, status.Error(codes.InvalidArgument, "group and resource are required")
+	}
+	if err := s.Init(ctx); err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	lister, ok := s.backend.(terminatingLister)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "backend does not track terminating objects")
+	}
+	rsp := &resourcepb.ListTerminatingResponse{}
+	for k, err := range lister.ListTerminating(ctx, req.Group, req.Resource) {
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		rsp.Items = append(rsp.Items, &resourcepb.ListTerminatingResponse_Item{Namespace: k.Namespace, Name: k.Name})
+	}
+	return rsp, nil
+}
+
 // listBackendFunc is the signature shared by ListIterator and ListHistory.
 type listBackendFunc func(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
 

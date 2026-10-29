@@ -323,6 +323,17 @@ func initResourceTables(mg *migrator.Migrator) string {
 		Cols: []string{"created"}, Type: migrator.IndexType,
 	}))
 
+	// Table backing the unified/terminating KV section: hints for objects soft-deleted but still held by finalizers.
+	resource_terminating_table := migrator.Table{
+		Name: "resource_terminating",
+		Columns: []*migrator.Column{
+			{Name: "key_path", Type: migrator.DB_NVarchar, Length: 2048, Nullable: false, IsPrimaryKey: true, IsLatin: true},
+			{Name: "value", Type: migrator.DB_Text, Nullable: false},
+		},
+	}
+	mg.AddMigration("create table "+resource_terminating_table.Name, migrator.NewAddTableMigration(resource_terminating_table))
+	mg.AddMigration("Change key_path collation of resource_terminating in postgres", migrator.NewRawSQLMigration("").Postgres(`ALTER TABLE resource_terminating ALTER COLUMN key_path TYPE VARCHAR(2048) COLLATE "C";`))
+
 	return marker
 }
 
