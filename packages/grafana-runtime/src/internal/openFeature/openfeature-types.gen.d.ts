@@ -49,6 +49,7 @@ declare module "@openfeature/core" {
     | "grafana.dashboardComposer"
     | "grafana.dashboardUnifiedDragAndDrop"
     | "grafana.dashboardNewGridView"
+    | "grafana.dashboardGridShadowCheck"
     | "grafana.savedDashboardViews"
     | "grafana.dashboardPreviewMode"
     | "dashboardUndoRedo"

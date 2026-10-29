@@ -178,6 +178,8 @@ export const FlagKeys = {
   GrafanaDashboardComposer: "grafana.dashboardComposer",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
+  /** Compares the custom grid's layout helpers with react-grid-layout on a sample of dashboard loads and reports differences as counts */
+  GrafanaDashboardGridShadowCheck: "grafana.dashboardGridShadowCheck",
   /** Renders dynamic dashboards in view mode with the new custom grid; requires grafana.dashboardUnifiedDragAndDrop */
   GrafanaDashboardNewGridView: "grafana.dashboardNewGridView",
   /** Enables Viewing and Editing modes for dynamic dashboards */
@@ -1304,6 +1306,17 @@ export const useFlagGrafanaDashboardComposer = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardGlobalVariables", false, options).value;
+};
+
+/**
+ * Compares the custom grid's layout helpers with react-grid-layout on a sample of dashboard loads and reports differences as counts
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardGridShadowCheck`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardGridShadowCheck = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardGridShadowCheck", false, options).value;
 };
 
 /**

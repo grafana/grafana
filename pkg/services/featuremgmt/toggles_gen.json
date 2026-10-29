@@ -2807,6 +2807,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardGridShadowCheck",
+        "resourceVersion": "1793281251559",
+        "creationTimestamp": "2026-10-29T13:40:51Z"
+      },
+      "spec": {
+        "description": "Compares the custom grid's layout helpers with react-grid-layout on a sample of dashboard loads and reports differences as counts",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardNewGridView",
         "resourceVersion": "1793272924924",
         "creationTimestamp": "2026-10-29T11:22:04Z"
