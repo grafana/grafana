@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -103,14 +106,11 @@ func TestDiscoveryClient_LookupsKeepRequester(t *testing.T) {
 	}
 }
 
-type roundTripperFunc func(*http.Request) (*http.Response, error)
-
-func (f roundTripperFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
-
 const aggregatedDiscoveryContentType = "application/json;g=apidiscovery.k8s.io;v=v2;as=APIGroupDiscoveryList"
 
 func newTestDiscoveryClient(t *testing.T, groups ...apidiscoveryv2.APIGroupDiscovery) (*DiscoveryClientImpl, *[]identity.Requester) {
 	t.Helper()
+	_, resources, _ := discovery.SplitGroupsAndResources(apidiscoveryv2.APIGroupDiscoveryList{Items: groups})
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		list := apidiscoveryv2.APIGroupDiscoveryList{
 			TypeMeta: metav1.TypeMeta{Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2"},
@@ -118,22 +118,10 @@ func newTestDiscoveryClient(t *testing.T, groups ...apidiscoveryv2.APIGroupDisco
 		if r.URL.Path == "/apis" {
 			list.Items = groups
 		}
-		for _, g := range groups {
-			for _, v := range g.Versions {
-				if r.URL.Path != "/apis/"+g.Name+"/"+v.Version {
-					continue
-				}
-				resources := metav1.APIResourceList{
-					TypeMeta:     metav1.TypeMeta{Kind: "APIResourceList", APIVersion: "v1"},
-					GroupVersion: g.Name + "/" + v.Version,
-				}
-				for _, res := range v.Resources {
-					resources.APIResources = append(resources.APIResources, metav1.APIResource{Name: res.Resource, Kind: res.ResponseKind.Kind, Namespaced: true, Verbs: res.Verbs})
-				}
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(resources)
-				return
-			}
+		if gv, err := schema.ParseGroupVersion(strings.TrimPrefix(r.URL.Path, "/apis/")); err == nil && resources[gv] != nil {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(resources[gv])
+			return
 		}
 		w.Header().Set("Content-Type", aggregatedDiscoveryContentType)
 		_ = json.NewEncoder(w).Encode(list)
@@ -142,7 +130,7 @@ func newTestDiscoveryClient(t *testing.T, groups ...apidiscoveryv2.APIGroupDisco
 
 	var requesters []identity.Requester
 	c, err := NewDiscoveryClient(&rest.Config{Host: server.URL, WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
-		return roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+		return httpclient.RoundTripperFunc(func(r *http.Request) (*http.Response, error) {
 			requester, _ := identity.GetRequester(r.Context())
 			requesters = append(requesters, requester)
 			return rt.RoundTrip(r)
