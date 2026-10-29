@@ -63,6 +63,12 @@ provideMutationClientFactory((sceneObject, resource) => {
   };
 });
 
+/** The dashboard serving the API, or null when nothing is mounted or the top document is not a dashboard. */
+export function getMountedDashboardScene(): DashboardScene | null {
+  const client = currentClient();
+  return client instanceof DashboardMutationClient ? client.getScene() : null;
+}
+
 /** @internal — exposed only for unit tests that need to inject a mock client. */
 export function setDashboardMutationClientForTests(client: MutationClient | null): void {
   _clients.length = 0;

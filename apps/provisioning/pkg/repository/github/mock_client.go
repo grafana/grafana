@@ -519,65 +519,6 @@ func (_c *MockClient_GetWebhook_Call) RunAndReturn(run func(context.Context, rep
 	return _c
 }
 
-// ListPullRequestFiles provides a mock function with given fields: ctx, number
-func (_m *MockClient) ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error) {
-	ret := _m.Called(ctx, number)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListPullRequestFiles")
-	}
-
-	var r0 []CommitFile
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) ([]CommitFile, error)); ok {
-		return rf(ctx, number)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, int) []CommitFile); ok {
-		r0 = rf(ctx, number)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]CommitFile)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
-		r1 = rf(ctx, number)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockClient_ListPullRequestFiles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListPullRequestFiles'
-type MockClient_ListPullRequestFiles_Call struct {
-	*mock.Call
-}
-
-// ListPullRequestFiles is a helper method to define mock.On call
-//   - ctx context.Context
-//   - number int
-func (_e *MockClient_Expecter) ListPullRequestFiles(ctx interface{}, number interface{}) *MockClient_ListPullRequestFiles_Call {
-	return &MockClient_ListPullRequestFiles_Call{Call: _e.mock.On("ListPullRequestFiles", ctx, number)}
-}
-
-func (_c *MockClient_ListPullRequestFiles_Call) Run(run func(ctx context.Context, number int)) *MockClient_ListPullRequestFiles_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
-	})
-	return _c
-}
-
-func (_c *MockClient_ListPullRequestFiles_Call) Return(_a0 []CommitFile, _a1 error) *MockClient_ListPullRequestFiles_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockClient_ListPullRequestFiles_Call) RunAndReturn(run func(context.Context, int) ([]CommitFile, error)) *MockClient_ListPullRequestFiles_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // ListRepositories provides a mock function with given fields: ctx
 func (_m *MockClient) ListRepositories(ctx context.Context) ([]v0alpha1.ExternalRepository, error) {
 	ret := _m.Called(ctx)

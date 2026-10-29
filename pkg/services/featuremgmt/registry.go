@@ -399,6 +399,15 @@ var (
 			Generate:     Generate{LegacyGo: true},
 		},
 		{
+			Name:         "folder.asyncCascadeDeleteThroughController",
+			Description:  "Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:            "kubernetesFolderCountsLegacyStorage",
 			Description:     "Enable folder.grafana.app /counts joining a stack's legacy database that lives outside unified storage. Requires --database.servers to be configured for the standalone folder apiserver; only enable once that connection is verified reachable, since the apiserver fails to start otherwise",
 			Stage:           FeatureStageExperimental,
@@ -579,14 +588,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "alertmanagerRemoteSecondary",
-			Description: "Enable Grafana to sync configuration and state with a remote Alertmanager.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "false",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "alertingProvenanceLockWrites",
 			Description:  "Enables a feature to avoid issues with concurrent writes to the alerting provenance table in MySQL",
 			Stage:        FeatureStageExperimental,
@@ -647,6 +648,14 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:        "grafana.mobileEditDeprecation",
+			Description: "Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports",
+			Stage:       FeatureStagePublicPreview,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboards.libraryPanelRepeatFromServerResolution",
 			Description: "Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state",
 			Stage:       FeatureStageExperimental,
@@ -684,6 +693,14 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "grafana.dashboardComposer",
+			Description: "Enables Composer mode for editing dashboards with Grafana Assistant",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 		},
 		{
@@ -991,14 +1008,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "queryLibrary",
-			Description: "Enables Saved queries (query library) feature",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "true",                                                      // enabled by default
-		},
-		{
 			Name:        "grafana.savedQueriesSearch",
 			Description: "Enables unified search for saved queries",
 			Stage:       FeatureStageExperimental,
@@ -1177,6 +1186,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "authz.legacyUserPermissionsShadow",
+			Description:  "Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		{
 			Name:         "authz.legacyUserPermissions",
@@ -2195,7 +2213,7 @@ var (
 		{
 			Name:        "grafana.dashboardGlobalVariables",
 			Description: "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Generate:    Generate{Go: true, React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
@@ -3169,6 +3187,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.configFromQueryDynamicName",
+			Description: "Enables using the Config From Query Results transformation's Dynamic Field Name option",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDataProSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "grafana.thresholdsInterpolation",
 			Description: "Enables using dashboard variables in panel threshold values",
 			Stage:       FeatureStageGeneralAvailability,
@@ -3343,15 +3369,6 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:         "grafana.globalHomePreference",
-			Description:  "Offers the reserved Grafana home option in the home dashboard preference",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendNavigation,
-			HideFromDocs: true,
-			Expression:   "false",
-			Generate:     Generate{React: true},
-		},
-		{
 			Name:         "datasources.apiServerConnectToHostedGrafanaDatabases",
 			Description:  "Connect to hosted grafana databases from datasource API servers",
 			Stage:        FeatureStageExperimental,
@@ -3419,6 +3436,24 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:         "folders.parallelDashboardDeleteConcurrency",
+			Description:  "Maximum number of dashboard deletes in flight per folder deletion. 1 or less deletes the dashboards sequentially",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSearchAndStorageSquad,
+			HideFromDocs: true,
+			Expression:   "1",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "grafana.panelActionsPopover",
+			Description:  "Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

@@ -64,7 +64,7 @@ import {
 import { SpanErrorIcon } from '../common/SpanErrorIcon';
 import { getHeaderTags, getRootSpan } from '../model/trace-viewer';
 import { type Trace, type TraceViewPluginExtensionContext } from '../types/trace';
-import { formatDuration } from '../utils/date';
+import { formatSummaryDuration } from '../utils/date';
 import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
 
 import TracePageSearchBar from './SearchBar/TracePageSearchBar';
@@ -73,6 +73,17 @@ import { TraceBanner } from './TraceBanner/TraceBanner';
 import { findTraceBanner, HttpStatusClass } from './TraceBanner/findTraceBanner';
 import { TraceFilterPills } from './TraceFilterPills';
 import { useTraceAdHocFiltersController } from './useTraceAdHocFiltersController';
+
+const TRACE_ID_PREFIX_LENGTH = 8;
+const TRACE_ID_SUFFIX_LENGTH = 5;
+
+function formatTraceId(traceId: string): string {
+  if (traceId.length <= TRACE_ID_PREFIX_LENGTH + TRACE_ID_SUFFIX_LENGTH + 3) {
+    return traceId;
+  }
+
+  return `${traceId.slice(0, TRACE_ID_PREFIX_LENGTH)}...${traceId.slice(-TRACE_ID_SUFFIX_LENGTH)}`;
+}
 
 export type TracePageHeaderProps = {
   trace: Trace | null;
@@ -128,6 +139,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const [isOverviewOpen, setIsOverviewOpen] = useState(true);
   const [focusedSpanIndexForSearch, setFocusedSpanIndexForSearch] = useState(-1);
 
+  const measureHeader = useCallback(() => {
+    setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
+  }, [setHeaderHeight, styles.header]);
+
   const goToBannerSpan = useCallback(
     (spanId: string) => {
       reportInteraction('grafana_traces_trace_view_go_to_span_clicked', {
@@ -139,6 +154,19 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       onGoToSpan(spanId);
     },
     [app, datasourceType, onGoToSpan]
+  );
+
+  const toggleBannerException = useCallback(
+    (isOpen: boolean) => {
+      reportInteraction('grafana_traces_trace_view_banner_exception_toggled', {
+        app,
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+        isOpen,
+      });
+    },
+    [app, datasourceType]
   );
 
   // Create controller for adhoc filters
@@ -169,16 +197,8 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const traceBanner = useMemo(() => (trace ? findTraceBanner(trace.spans) : undefined), [trace]);
 
   useEffect(() => {
-    setHeaderHeight(document.querySelector('.' + styles.header)?.scrollHeight ?? 0);
-  }, [
-    setHeaderHeight,
-    showSpanFilters,
-    styles.header,
-    extensionComponents,
-    extensionLinks,
-    logsLinkModel,
-    traceBanner,
-  ]);
+    measureHeader();
+  }, [measureHeader, showSpanFilters, extensionComponents, extensionLinks, logsLinkModel, traceBanner]);
 
   // Memoize service count to avoid recomputing on every render
   // Uses getServiceColorKey to count namespace/serviceName pairs as distinct services
@@ -362,7 +382,13 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       </div>
 
       {!hideHeaderDetails && traceBanner && (
-        <TraceBanner highlight={traceBanner} traceDuration={trace.duration} onGoToSpan={goToBannerSpan} />
+        <TraceBanner
+          highlight={traceBanner}
+          traceDuration={trace.duration}
+          onGoToSpan={goToBannerSpan}
+          onExceptionToggle={toggleBannerException}
+          onLayoutChange={measureHeader}
+        />
       )}
 
       {/* Metadata row */}
@@ -372,8 +398,15 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             <div className={styles.metadataItem}>
               <span className={styles.metadataLabel}>{t('explore.trace-page-header.trace-id', 'Trace ID')}</span>
               <span className={styles.metadataValue}>
-                <button className={styles.traceIdButton} onClick={copyTraceId}>
-                  {trace.traceID}
+                <button
+                  className={styles.traceIdButton}
+                  onClick={copyTraceId}
+                  title={trace.traceID}
+                  aria-label={t('explore.trace-page-header.copy-trace-id', 'Copy trace ID {{id}}', {
+                    id: trace.traceID,
+                  })}
+                >
+                  {formatTraceId(trace.traceID)}
                   <Icon name={copyTraceIdClicked ? 'check' : 'copy'} size="sm" className={styles.copyIcon} />
                 </button>
               </span>
@@ -382,7 +415,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             <div className={styles.metadataItem}>
               <span className={styles.metadataField}>
                 <Icon name="clock-nine" size="xs" className={styles.metadataIcon} aria-hidden />
-                <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start time')}</span>
+                <span className={styles.metadataLabel}>{t('explore.trace-page-header.start-time', 'Start')}</span>
               </span>
               <span
                 className={cx(
@@ -402,7 +435,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
                 <Icon name="stopwatch" type="default" size="sm" className={styles.metadataIcon} aria-hidden />
                 <span className={styles.metadataLabel}>{t('explore.trace-page-header.duration', 'Duration')}</span>
               </span>
-              <span className={styles.metadataValue}>{formatDuration(trace.duration)}</span>
+              <span className={styles.metadataValue}>{formatSummaryDuration(trace.duration)}</span>
             </div>
 
             <div className={styles.metadataItem}>
@@ -540,7 +573,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
       color: theme.colors.text.primary,
       fontSize: theme.typography.h4.fontSize,
-      fontWeight: theme.typography.fontWeightMedium,
+      fontWeight: theme.typography.fontWeightBold,
       lineHeight: theme.typography.h4.lineHeight,
       margin: 0,
       minWidth: 0,

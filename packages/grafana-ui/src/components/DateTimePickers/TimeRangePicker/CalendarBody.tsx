@@ -18,7 +18,15 @@ const weekStartMap: Record<WeekStart, CalendarType> = {
   monday: 'iso8601',
 };
 
-export function Body({ onChange, from, to, timeZone, weekStart }: TimePickerCalendarProps) {
+export function Body({
+  onChange,
+  from,
+  to,
+  timeZone,
+  weekStart,
+  minDate,
+  maxDate,
+}: Pick<TimePickerCalendarProps, 'onChange' | 'from' | 'to' | 'timeZone' | 'weekStart' | 'minDate' | 'maxDate'>) {
   const value = inputToValue(from, to, new Date(), timeZone);
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = useStyles2(getBodyStyles);
@@ -27,6 +35,8 @@ export function Body({ onChange, from, to, timeZone, weekStart }: TimePickerCale
   return (
     <Calendar
       selectRange={true}
+      minDate={minDate}
+      maxDate={maxDate}
       next2Label={null}
       prev2Label={null}
       className={styles.body}

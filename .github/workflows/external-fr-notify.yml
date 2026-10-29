@@ -42,6 +42,7 @@ jobs:
           persist-credentials: false
           sparse-checkout: |
             .github/team-notifications-config.json
+            .github/actions/setup-node
 
       - name: Mint token for community-triage
         id: triage-token
@@ -61,9 +62,7 @@ jobs:
             .github/workflows/scripts
 
       - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6
-        with:
-          node-version: '24'
+        uses: ./.github/actions/setup-node
 
       - name: Get vault secrets
         id: vault-secrets

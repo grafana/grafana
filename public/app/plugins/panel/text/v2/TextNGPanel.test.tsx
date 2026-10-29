@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -214,7 +214,7 @@ describe('TextNGPanel', () => {
 
   it('renders code mode as an unrendered, syntax-highlighted block', async () => {
     const contentTest = '{\n  "a": 1\n}';
-    replaceVariablesMock.mockReturnValueOnce(contentTest);
+    replaceVariablesMock.mockReturnValue(contentTest);
     const props = Object.assign({}, defaultProps, {
       options: { content: contentTest, mode: TextMode.Code },
     });
@@ -222,7 +222,7 @@ describe('TextNGPanel', () => {
     setup(props);
 
     expect(screen.getByTestId('TextNGPanel-code')).toBeInTheDocument();
-    expect(await screen.findByRole('textbox')).toHaveValue('{\n  "a": 1\n}');
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('{\n  "a": 1\n}'));
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
   });
 
@@ -572,6 +572,22 @@ describe('TextNGPanel', () => {
 
       expect(renderedRows()).toHaveLength(150);
       expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    });
+
+    it('pages a panel sized to its content when the layout caps its height', () => {
+      const props = createProps(reportRowIndex, {
+        width: 1000,
+        height: 0,
+        fitContent: true,
+        fitMaxHeight: 400,
+        data: createData([numberedFrame(150)]),
+        options: { content: 'row', mode: TextMode.Markdown, renderMode: RenderMode.PerRow },
+      });
+
+      setup(props, CoreApp.Dashboard);
+
+      expect(renderedRows().length).toBeLessThan(150);
+      expect(screen.getByRole('navigation')).toBeInTheDocument();
     });
 
     it('renders a once template whole, having no per-row blocks to page', () => {

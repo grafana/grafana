@@ -26,13 +26,19 @@ import { TextNGHtmlView } from '../TextNGHtmlView';
 import { TextNGTruncationNotice } from '../TextNGTruncationNotice';
 import { type TextSandboxProps } from '../TextSandbox';
 import { catchTemplateError, interpolateTemplate, type RowWindow } from '../renderContent';
-import { getInterpolateFormat, transformContent, getCodeMirrorLanguage, TRANSPARENT_EDITOR_THEME } from '../utils';
+import {
+  getInterpolateFormat,
+  transformContent,
+  getCodeMirrorLanguage,
+  isTextNewFeaturesEnabled,
+  TRANSPARENT_EDITOR_THEME,
+} from '../utils';
 
 import { TextNGEditorFooter } from './TextNGEditorFooter';
 import { TextNGFeedbackButton } from './TextNGFeedbackButton';
 import { TextNGFormatToolbar } from './TextNGFormatToolbar';
 import { getEditorLayoutStyles } from './editorLayout';
-import { variableCompletionOptions } from './variableCompletion';
+import { reducerCompletion, variableCompletionOptions } from './variableCompletion';
 import { type ViewMode } from './viewMode';
 
 export const PREVIEW_TEST_ID = 'TextNGEditor-preview';
@@ -198,6 +204,7 @@ export function TextNGEditor({
     ({ variableCompletion }) => [variableCompletion(suggestions ?? [], variableCompletionOptions)],
     [suggestions]
   );
+  const completionSources = isTextNewFeaturesEnabled() ? [reducerCompletion] : undefined;
 
   const basicSetup = useMemo(
     () => ({ lineNumbers: mode === TextMode.Code ? showLineNumbers : false }),
@@ -326,6 +333,7 @@ export function TextNGEditor({
               onChange={handleDraftChange}
               language={editorLanguage}
               extensions={extensions}
+              completionSources={completionSources}
               lineWrapping
               basicSetup={basicSetup}
               height="100%"
