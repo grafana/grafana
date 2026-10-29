@@ -6,7 +6,7 @@ import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CodeMirrorMerge, { type CodeMirrorMergeRef } from 'react-codemirror-merge';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
@@ -37,10 +37,13 @@ export function DiffEditor({
     () => [
       createCodeEditorTheme(theme),
       EditorView.theme({
-        '&.cm-merge-b .cm-changedLine': { backgroundColor: theme.colors.success.transparent },
-        '&.cm-merge-a .cm-changedLine, .cm-deletedChunk': { backgroundColor: theme.colors.error.transparent },
+        // Line and word tints stack, so keep the line tint weaker to preserve syntax contrast.
+        '&.cm-merge-b .cm-changedLine': { backgroundColor: colorManipulator.alpha(theme.colors.success.main, 0.1) },
+        '&.cm-merge-a .cm-changedLine, .cm-deletedChunk': {
+          backgroundColor: colorManipulator.alpha(theme.colors.error.main, 0.1),
+        },
         '&.cm-merge-b .cm-changedText': { background: theme.colors.success.transparent },
-        '&.cm-merge-a .cm-changedText, .cm-deletedText': { background: theme.colors.error.transparent },
+        '&.cm-merge-a .cm-changedText, &.cm-merge-b .cm-deletedText': { background: theme.colors.error.transparent },
         '&.cm-merge-b .cm-changedLineGutter': { backgroundColor: theme.colors.success.main },
         '&.cm-merge-a .cm-changedLineGutter, .cm-deletedLineGutter': { backgroundColor: theme.colors.error.main },
       }),
