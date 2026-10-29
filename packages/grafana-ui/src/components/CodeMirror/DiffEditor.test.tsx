@@ -7,6 +7,7 @@ import { type ReactElement, StrictMode, useLayoutEffect, useState } from 'react'
 import { createTheme, ThemeContext } from '@grafana/data';
 
 import { DiffEditor } from './DiffEditor';
+import * as languageLoader from './languageLoader';
 
 function DiffWithParentInput({ lineSeparator }: { lineSeparator: string }): ReactElement {
   const [value, setValue] = useState('');
@@ -27,6 +28,26 @@ function DiffWithMountConfigurationChange(): ReactElement {
 }
 
 describe('CodeMirror DiffEditor', () => {
+  it('keeps the read-only diff and language error inside the requested height', async () => {
+    const loadLanguage = jest
+      .spyOn(languageLoader, 'loadLanguageExtension')
+      .mockRejectedValueOnce(new Error('Language chunk failed to load'));
+
+    try {
+      const { container } = render(
+        <DiffEditor original="before" modified="after" language="json" height="240px" inline />
+      );
+
+      expect(await screen.findByText('Syntax highlighting failed to load')).toBeInTheDocument();
+      const editor = screen.getByRole('textbox', { name: 'Modified' });
+      expect(editor).toHaveTextContent('after');
+      expect(EditorView.findFromDOM(editor)?.state.readOnly).toBe(true);
+      expect(container.firstChild).toHaveStyle({ display: 'flex', flexDirection: 'column', height: '240px' });
+    } finally {
+      loadLanguage.mockRestore();
+    }
+  });
+
   it('applies configuration changes made before the merge view is ready', async () => {
     const { container } = render(<DiffWithMountConfigurationChange />);
 
@@ -148,7 +169,7 @@ describe('CodeMirror DiffEditor', () => {
     }
   );
 
-  it('keeps deleted inline text highlighted after language loading and theme changes', async () => {
+  it('keeps deleted syntax colors current after language loading and theme changes', async () => {
     const lightTheme = createTheme({ colors: { mode: 'light' } });
     const darkTheme = createTheme({ colors: { mode: 'dark' } });
     const { container, rerender } = render(
@@ -162,6 +183,7 @@ describe('CodeMirror DiffEditor', () => {
         color: lightTheme.components.codeEditor.string,
       })
     );
+    const editor = EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Modified' }));
 
     rerender(
       <ThemeContext.Provider value={darkTheme}>
@@ -172,6 +194,7 @@ describe('CodeMirror DiffEditor', () => {
     expect(container.querySelector('.cm-deletedChunk .cm-deletedText')).toHaveStyle({
       color: darkTheme.components.codeEditor.string,
     });
+    expect(EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Modified' }))).toBe(editor);
   });
 
   it('cleans up both modes when switching and remounting effects in StrictMode', () => {

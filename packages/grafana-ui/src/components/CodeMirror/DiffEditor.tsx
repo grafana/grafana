@@ -32,23 +32,36 @@ export function DiffEditor({
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { extension: languageExtension, error: languageError } = useLanguageExtension(language);
-  const editorTheme = useMemo(
-    () => [
+  const editorTheme = useMemo(() => {
+    const isColorBlindTheme = theme.name.startsWith('Deuteranopia/Protanopia ') || theme.name.startsWith('Tritanopia ');
+    // Standard light needs softer stacked fills to retain readable syntax colors.
+    const lineOpacity = theme.name === 'Light' ? 0.05 : 0.1;
+    const wordOpacity = theme.name === 'Light' ? 0.1 : 0.15;
+
+    return [
       createCodeEditorTheme(theme),
       EditorView.theme({
-        // Line and word tints stack, so keep the line tint weaker to preserve syntax contrast.
-        '&.cm-merge-b .cm-changedLine': { backgroundColor: colorManipulator.alpha(theme.colors.success.main, 0.1) },
-        '&.cm-merge-a .cm-changedLine, .cm-deletedChunk': {
-          backgroundColor: colorManipulator.alpha(theme.colors.error.main, 0.1),
+        '&.cm-merge-b .cm-changedLine': {
+          backgroundColor: colorManipulator.alpha(theme.colors.success.main, lineOpacity),
         },
-        '&.cm-merge-b .cm-changedText': { background: theme.colors.success.transparent },
-        '&.cm-merge-a .cm-changedText, &.cm-merge-b .cm-deletedText': { background: theme.colors.error.transparent },
+        '&.cm-merge-a .cm-changedLine, .cm-deletedChunk': {
+          backgroundColor: colorManipulator.alpha(theme.colors.error.main, lineOpacity),
+        },
+        '&.cm-merge-b .cm-changedText': {
+          background: colorManipulator.alpha(theme.colors.success.main, wordOpacity),
+        },
+        '&.cm-merge-a .cm-changedText, &.cm-merge-b .cm-deletedText': {
+          background: colorManipulator.alpha(theme.colors.error.main, wordOpacity),
+        },
+        // Only the colorblind palettes need a foreground override on filled changes.
+        '.cm-changedText, .cm-changedText span, .cm-deletedText': {
+          color: isColorBlindTheme ? theme.components.input.text : null,
+        },
         '&.cm-merge-b .cm-changedLineGutter': { backgroundColor: theme.colors.success.main },
         '&.cm-merge-a .cm-changedLineGutter, .cm-deletedLineGutter': { backgroundColor: theme.colors.error.main },
       }),
-    ],
-    [theme]
-  );
+    ];
+  }, [theme]);
   const extensions = useMemo(
     () => [
       EditorView.contentAttributes.of({ tabindex: '0' }),
@@ -58,7 +71,7 @@ export function DiffEditor({
     ],
     [lineNumbers, languageExtension]
   );
-  // Reconfigure merge widgets with the theme so deleted text picks up new syntax colors.
+  // Fresh merge-field initializers refresh cached deletions when the theme or language changes.
   const inlineExtensions = useMemo(
     () => [
       editorTheme,
@@ -70,7 +83,7 @@ export function DiffEditor({
   );
 
   return (
-    <>
+    <div className={styles.wrapper} style={{ height }}>
       {languageError && (
         <Alert title={t('grafana-ui.code-mirror.language-load-failed', 'Syntax highlighting failed to load')}>
           {t(
@@ -79,14 +92,14 @@ export function DiffEditor({
           )}
         </Alert>
       )}
-      <div className={styles.container} style={{ height }}>
+      <div className={styles.container}>
         {inline ? (
           <CodeMirror {...readOnlyOptions} value={modified} height="100%" theme="none" extensions={inlineExtensions} />
         ) : (
           <SideBySideDiffEditor original={original} modified={modified} theme={editorTheme} extensions={extensions} />
         )}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -136,8 +149,14 @@ function SideBySideDiffEditor({ original, modified, theme, extensions }: SideByS
   );
 }
 
-const getStyles = (theme: GrafanaTheme2): Record<'container', string> => ({
+const getStyles = (theme: GrafanaTheme2): Record<'wrapper' | 'container', string> => ({
+  wrapper: css({
+    display: 'flex',
+    flexDirection: 'column',
+    minHeight: 0,
+  }),
   container: css({
+    flex: '1 1 auto',
     minHeight: 0,
     '.cm-theme-none, .cm-merge-theme': { height: '100%' },
     '.cm-mergeView': { height: '100%', overflow: 'auto' },
