@@ -427,6 +427,37 @@ describe('while Composer is active', () => {
     });
   });
 
+  describe('while Assistant is running a turn', () => {
+    async function chooseEditingMidTurn() {
+      const opened = await openPicker((scene) => {
+        enterComposer(true)(scene);
+        session.setPaused(true);
+      });
+      await opened.user.click(screen.getByRole('menuitemradio', { name: /Editing/ }));
+      expect(await screen.findByRole('dialog', { name: 'Leave Composer?' })).toBeInTheDocument();
+      return opened;
+    }
+
+    it('stays in Composer with the session running when Keep working is chosen', async () => {
+      const { user, scene } = await chooseEditingMidTurn();
+
+      await user.click(screen.getByRole('button', { name: 'Keep working' }));
+
+      expect(getDashboardMode(scene.state)).toBe('composer');
+      expect(session.signal.aborted).toBe(false);
+    });
+
+    it('ends the session and switches to Editing, keeping the changes, on Stop and leave', async () => {
+      const { user, scene } = await chooseEditingMidTurn();
+
+      await user.click(screen.getByRole('button', { name: 'Stop and leave' }));
+
+      expect(session.signal.aborted).toBe(true);
+      expect(getDashboardMode(scene.state)).toBe('edit');
+      expect(scene.state.title).toBe('Unsaved title');
+    });
+  });
+
   it('ends the session and switches to Editing, keeping unsaved changes', async () => {
     const { user, scene } = await openPicker(enterComposer(true));
 

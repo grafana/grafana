@@ -907,10 +907,32 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /**
    * Leaves Composer for Viewing or Editing (the mode picker). The session ends as on its own exit, which
-   * also stops a running turn. Editing takes the path manual-edit entry points use; Viewing first asks to
-   * save or discard unsaved changes, and Cancel stays in Composer with the session running.
+   * also stops a running turn, so while one runs it first asks to stop it; Keep working stays in Composer.
+   * Editing takes the path manual-edit entry points use; Viewing first asks to save or discard unsaved
+   * changes, and Cancel stays in Composer with the session running.
    */
   public switchFromComposer(mode: 'view' | 'edit') {
+    // Leaving ends the session, and the Assistant stops the turn it is running then. While one runs (the
+    // Assistant pauses the session for it), ask first rather than stop it by surprise.
+    if (this.getComposerSession()?.getOverlayState().paused) {
+      appEvents.publish(
+        new ShowConfirmModalEvent({
+          title: t('dashboard-scene.dashboard-scene.modal.title.leave-composer', 'Leave Composer?'),
+          text: t(
+            'dashboard-scene.dashboard-scene.modal.text.leave-composer',
+            'Assistant is still making changes to this dashboard. Leaving Composer stops it. Changes it has already made stay.'
+          ),
+          yesText: t('dashboard-scene.dashboard-scene.modal.stop-and-leave', 'Stop and leave'),
+          noText: t('dashboard-scene.dashboard-scene.modal.keep-working', 'Keep working'),
+          onConfirm: () => this.leaveComposerFor(mode),
+        })
+      );
+      return;
+    }
+    this.leaveComposerFor(mode);
+  }
+
+  private leaveComposerFor(mode: 'view' | 'edit') {
     if (mode === 'edit') {
       this.openFullEditor();
       return;
