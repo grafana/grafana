@@ -36,7 +36,7 @@ In Grafana, a server-side expression is a way to transform or calculate data aft
 
 For general information on Grafana expressions, refer to [Write expression queries](ref:expressions).
 
-![Query editor in stacked view with a hidden Prometheus query A and a SQL expression that smooths each namespace's series with a window function](/media/docs/grafana/panels-visualizations/sql-expressions-example-v13.3.png)
+![Query editor in stacked view with a hidden Prometheus query A and a SQL expression that smooths the series of each namespace with a window function](/media/docs/grafana/panels-visualizations/sql-expressions-example-v13.3.png)
 
 To see examples of filtering, aggregation, and JOIN operations with SQL expressions, explore this demo dashboard on Grafana Play:
 
