@@ -1,4 +1,5 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { Provider } from 'react-redux';
@@ -6,6 +7,7 @@ import { Provider } from 'react-redux';
 import { type ExplorePanelsState, PluginExtensionPoints, PluginExtensionTypes } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
 import { type DataQuery, LogsSortOrder } from '@grafana/schema';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { type ExplorePanelData, type ExploreState } from 'app/types/explore';
@@ -50,7 +52,12 @@ function renderWithExploreStore(
     } as unknown as ExploreState,
   });
 
-  render(<Provider store={store}>{children}</Provider>, {});
+  render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <Provider store={store}>{children}</Provider>
+    </OpenFeatureProvider>,
+    {}
+  );
 }
 
 function setupToolbarExtensionPoint(
@@ -282,6 +289,36 @@ describe('ToolbarExtensionPoint', () => {
 
         expect(button).toBeVisible();
         expect(button).toBeEnabled();
+      });
+    });
+
+    describe('when mobileEditDeprecation is enabled', () => {
+      const originalMatchMedia = window.matchMedia;
+
+      afterEach(() => {
+        cleanup();
+        setTestFlags({});
+        window.matchMedia = originalMatchMedia;
+      });
+
+      it('should not render "add to dashboard" action button on mobile', async () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        // no min-width breakpoint matches, i.e. a mobile viewport
+        window.matchMedia = (query) => ({ ...originalMatchMedia(query), matches: false });
+
+        renderWithExploreStore(setupToolbarExtensionPoint());
+
+        expect(screen.queryByRole('button', { name: /add to dashboard/i })).not.toBeInTheDocument();
+      });
+
+      it('should render "add to dashboard" action button on desktop', async () => {
+        setTestFlags({ 'grafana.mobileEditDeprecation': true });
+        // every min-width breakpoint matches, i.e. a desktop viewport
+        window.matchMedia = (query) => ({ ...originalMatchMedia(query), matches: true });
+
+        renderWithExploreStore(setupToolbarExtensionPoint());
+
+        expect(await screen.findByRole('button', { name: /add to dashboard/i })).toBeVisible();
       });
     });
   });
