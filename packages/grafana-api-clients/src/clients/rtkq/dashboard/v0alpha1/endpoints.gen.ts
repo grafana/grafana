@@ -213,6 +213,7 @@ const injectedRtkApi = api
             panelType: queryArg.panelType,
             dataSourceType: queryArg.dataSourceType,
             permission: queryArg.permission,
+            include: queryArg.include,
             sort: queryArg.sort,
             limit: queryArg.limit,
             ownerReference: queryArg.ownerReference,
@@ -529,6 +530,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   dataSourceType?: string;
   /** permission needed for the resource (view, edit, admin, create). create is only valid with type=folder */
   permission?: 'view' | 'edit' | 'admin' | 'create';
+  /** extra results to include. pathToCreatable lists only the folders the user can create dashboards in, and the folders that lead to them, and sets field.canCreate on each. Only valid with type=folder */
+  include?: 'pathToCreatable';
   /** sortable field */
   sort?: string;
   /** number of results to return */
