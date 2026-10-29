@@ -23,8 +23,7 @@ var (
 
 type DiscoveryClient interface {
 	discovery.DiscoveryInterface
-	GetResourceForKind(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
-	GetResourceForKindWithContext(ctx context.Context, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
+	GetResourceForKind(ctx context.Context, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error)
 	GetKindForResource(gvr schema.GroupVersionResource) (schema.GroupVersionKind, error)
 	GetPreferredVersion(ctx context.Context, gr schema.GroupResource) (schema.GroupVersionResource, schema.GroupVersionKind, error)
 	GetPreferredVersionForKind(ctx context.Context, gk schema.GroupKind) (schema.GroupVersionResource, schema.GroupVersionKind, error)
@@ -47,11 +46,7 @@ func NewDiscoveryClient(restConfig *rest.Config) (*DiscoveryClientImpl, error) {
 	}, nil
 }
 
-func (d *DiscoveryClientImpl) GetResourceForKind(gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
-	return d.GetResourceForKindWithContext(context.Background(), gvk)
-}
-
-func (d *DiscoveryClientImpl) GetResourceForKindWithContext(ctx context.Context, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
+func (d *DiscoveryClientImpl) GetResourceForKind(ctx context.Context, gvk schema.GroupVersionKind) (schema.GroupVersionResource, error) {
 	resourceList, err := discovery.ToDiscoveryInterfaceWithContext(d.DiscoveryInterface).ServerResourcesForGroupVersionWithContext(ctx, gvk.GroupVersion().String())
 	if err != nil {
 		return schema.GroupVersionResource{}, err

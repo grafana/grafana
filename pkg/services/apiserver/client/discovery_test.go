@@ -83,7 +83,7 @@ func TestDiscoveryClient_LookupsUseContext(t *testing.T) {
 			return gvr, err
 		},
 		"resource for versioned kind": func(ctx context.Context, c *DiscoveryClientImpl) (schema.GroupVersionResource, error) {
-			return c.GetResourceForKindWithContext(ctx, schema.GroupVersionKind{Group: "playlist.grafana.app", Version: "v1", Kind: "Playlist"})
+			return c.GetResourceForKind(ctx, schema.GroupVersionKind{Group: "playlist.grafana.app", Version: "v1", Kind: "Playlist"})
 		},
 	}
 	for name, lookup := range tests {
