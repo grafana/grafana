@@ -48,6 +48,7 @@ import {
   setExpressionDataSourceInstance,
   setDataSourcePluginImporter,
   setGetObservablePluginComponents,
+  setGetObservablePluginFunctions,
   setGetObservablePluginLinks,
   setDataSourcePicker,
   setJourneyRegistry,
@@ -110,6 +111,7 @@ import { PanelScreenshotServiceImpl } from './features/panel-screenshot/PanelScr
 import { DatasourceSrv } from './features/plugins/datasource_srv';
 import {
   getObservablePluginComponents,
+  getObservablePluginFunctions,
   getObservablePluginLinks,
 } from './features/plugins/extensions/getPluginExtensions';
 import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
@@ -351,6 +353,7 @@ export class GrafanaApp {
       setPluginFunctionsHook(usePluginFunctions);
       setGetObservablePluginLinks(getObservablePluginLinks);
       setGetObservablePluginComponents(getObservablePluginComponents);
+      setGetObservablePluginFunctions(getObservablePluginFunctions);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
