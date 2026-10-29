@@ -35,7 +35,7 @@ func TestIntegrationV1beta1(t *testing.T) {
 
 	// Legacy storage serves modes 0-3 and unified storage mode 4. The dual writer
 	// in between can hand either one the object in the version of the request.
-	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode2, grafanarest.Mode4, grafanarest.Mode5} {
+	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode2, grafanarest.Mode3, grafanarest.Mode4, grafanarest.Mode5} {
 		t.Run(fmt.Sprintf("dualWriterMode=%d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
