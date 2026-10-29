@@ -999,14 +999,16 @@ func (b *bleveBackend) BuildIndex(
 
 	logWithDetails := b.log.FromContext(ctx).New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", indexBuildReason)
 	resourceDir := b.getResourceDir(key)
-	snapshotEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
+	// Large enough to coordinate with other replicas: download a snapshot, or build
+	// and upload one while they wait.
+	snapshotBuildEnabled := b.opts.Snapshot.Store != nil && docCount >= b.opts.Snapshot.MinDocCount
 	// A global index is built when it is first searched, without a size, so it
 	// may be large. Downloading its snapshot is much cheaper than building it, but
 	// it must not wait for another replica's build, as a small index would.
 	downloadOnly := b.opts.Snapshot.Store != nil && docCount < 0 && key.IsGlobal()
 	skipIfBuilding := options.SkipIfBuilding
 
-	prepared, err := b.prepareIndex(ctx, key, snapshotEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
+	prepared, err := b.prepareIndex(ctx, key, snapshotBuildEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
 	if err != nil {
 		return nil, err
 	}
@@ -1159,7 +1161,7 @@ func (b *bleveBackend) BuildIndex(
 func (b *bleveBackend) prepareIndex(
 	ctx context.Context,
 	key resource.NamespacedResource,
-	snapshotEnabled bool,
+	snapshotBuildEnabled bool,
 	downloadOnly bool,
 	mapper mapping.IndexMapping,
 	selectableFields []string,
@@ -1178,10 +1180,10 @@ func (b *bleveBackend) prepareIndex(
 	// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 	// If we do have an unexpired cached index already, or if rebuild is true, we always build a new index from scratch.
 	if cachedIndex == nil && !rebuild {
-		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotEnabled, downloadOnly, logger, skipIfBuilding)
+		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotBuildEnabled, downloadOnly, logger, skipIfBuilding)
 	}
 
-	if rebuild && snapshotEnabled && maxFreshSnapshotAge > 0 {
+	if rebuild && snapshotBuildEnabled && maxFreshSnapshotAge > 0 {
 		// Rebuild path: before paying the cost of a from-scratch rebuild, coordinate
 		// with same-version replicas and accept only a snapshot fresh enough to serve
 		// as a drop-in replacement. There is no tiered fallback here because we
@@ -1224,7 +1226,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 	selectableFields []string,
 	searchFieldsHash string,
 	lastImportTime time.Time,
-	snapshotEnabled bool,
+	snapshotBuildEnabled bool,
 	downloadOnly bool,
 	logger log.Logger,
 	skipIfBuilding bool,
@@ -1243,7 +1245,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 		}, nil
 	}
 
-	if !snapshotEnabled && !downloadOnly {
+	if !snapshotBuildEnabled && !downloadOnly {
 		return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 	}
 
@@ -1262,7 +1264,7 @@ func (b *bleveBackend) prepareUncachedFileIndex(
 			source:        buildIndexSourceDownloadedSnapshot,
 		}, nil
 	}
-	if !snapshotEnabled {
+	if !snapshotBuildEnabled {
 		return b.createEmptyBuildIndex(resourceDir, mapper, selectableFields, searchFieldsHash, logger)
 	}
 
@@ -2424,13 +2426,6 @@ func (b *bleveIndex) CountManagedObjects(ctx context.Context, stats *resource.Se
 	return vals, nil
 }
 
-func (b *bleveIndex) observeSearchResultFormat(response *resourcepb.ResourceSearchResponse) {
-	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_UNSPECIFIED {
-		return
-	}
-	b.indexMetrics.SearchResultFormats.WithLabelValues(strings.ToLower(response.ResultFormat.String())).Inc()
-}
-
 func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
 	if req.Options == nil || req.Options.Key == nil {
 		return &resourcepb.ResourceSearchResponse{
@@ -2478,9 +2473,6 @@ func (b *bleveIndex) Search(
 	if response.Error != nil {
 		return response, nil
 	}
-	defer func() {
-		b.observeSearchResultFormat(response)
-	}()
 
 	index, folderIndex, err := b.getIndexes(ctx, req, indexes)
 	if err != nil {

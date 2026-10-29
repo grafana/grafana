@@ -52,16 +52,29 @@ const AuthzServiceAudience = "authzService"
 // AuthZClients exposes the authorization capabilities that may use different concrete clients.
 type AuthZClients struct {
 	accessClient          authlib.AccessClient
+	legacyAccessClient    LegacyAccessClient
 	userPermissionsClient authlib.UserPermissionsClient
 }
 
-func newAuthZClients(accessClient authlib.AccessClient, userPermissionsClient authlib.UserPermissionsClient) *AuthZClients {
-	return &AuthZClients{accessClient: accessClient, userPermissionsClient: userPermissionsClient}
+func newAuthZClients(
+	accessClient authlib.AccessClient,
+	legacyAccessClient LegacyAccessClient,
+	userPermissionsClient authlib.UserPermissionsClient,
+) *AuthZClients {
+	return &AuthZClients{
+		accessClient:          accessClient,
+		legacyAccessClient:    legacyAccessClient,
+		userPermissionsClient: userPermissionsClient,
+	}
 }
 
 // ProvideAuthZAccessClient returns the client used for authorization checks.
 func ProvideAuthZAccessClient(clients *AuthZClients) authlib.AccessClient {
 	return clients.accessClient
+}
+
+func ProvideAuthZLegacyAccessClient(clients *AuthZClients) LegacyAccessClient {
+	return clients.legacyAccessClient
 }
 
 // ProvideAuthZUserPermissionsClient returns the RBAC client that implements GetUserPermissions.
@@ -117,7 +130,7 @@ func ProvideAuthZClients(
 				return nil, err
 			}
 		}
-		return newAuthZClients(accessClient, rbacClient), nil
+		return newAuthZClients(accessClient, rbacClient.LegacyAccessClient, rbacClient), nil
 	default:
 		serverCfg := readEmbeddedRBACServerSettings(cfg)
 		if legacyLoader == nil {
@@ -188,21 +201,24 @@ func ProvideAuthZClients(
 		})
 		authzv1.RegisterAuthzServiceServer(channel, server)
 		authzextv1.RegisterLegacyAuthzServiceServer(channel, server)
-		if configurable, ok := accessControl.(interface {
-			SetLegacyCheckClient(*legacyclient.LegacyClient, bool, authlib.NamespaceFormatter)
-		}); ok {
-			configurable.SetLegacyCheckClient(
-				legacyclient.NewLegacyClient(channel, legacyclient.WithLegacyTracerClientOption(tracer)),
-				cfg.IDUseExternalGroupsForGroupsClaim,
-				apirequest.GetNamespaceMapper(cfg),
-			)
-		}
-
 		rbacClient := authzlib.NewClient(
 			channel,
 			authzlib.WithCacheClientOption(&NoopCache{}),
 			authzlib.WithTracerClientOption(tracer),
 		)
+		legacyAccessClient := legacyclient.NewLegacyClient(
+			channel,
+			legacyclient.WithLegacyTracerClientOption(tracer),
+		)
+		if configurable, ok := accessControl.(interface {
+			SetLegacyCheckClient(*legacyclient.LegacyClient, bool, authlib.NamespaceFormatter)
+		}); ok {
+			configurable.SetLegacyCheckClient(
+				legacyAccessClient,
+				cfg.IDUseExternalGroupsForGroupsClaim,
+				apirequest.GetNamespaceMapper(cfg),
+			)
+		}
 
 		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
 		var accessClient authlib.AccessClient = rbacClient
@@ -214,7 +230,7 @@ func ProvideAuthZClients(
 				return nil, err
 			}
 		}
-		return newAuthZClients(accessClient, rbacClient), nil
+		return newAuthZClients(accessClient, legacyAccessClient, rbacClient), nil
 	}
 }
 
@@ -301,6 +317,7 @@ func newShadowClient(engine setting.ZanzanaPrimaryEngine, rbacClient authlib.Acc
 
 type remoteRBACClient struct {
 	authlib.AccessClient
+	LegacyAccessClient
 	authlib.UserPermissionsClient
 }
 
@@ -366,6 +383,10 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer, re
 	}
 
 	return &remoteRBACClient{
+		LegacyAccessClient: legacyclient.NewLegacyClient(
+			conn,
+			legacyclient.WithLegacyTracerClientOption(tracer),
+		),
 		AccessClient: authzlib.NewClient(
 			conn,
 			authzlib.WithCacheClientOption(authzCache),
@@ -436,6 +457,7 @@ func RegisterRBACAuthZService(
 
 	srv := handler.GetServer()
 	authzv1.RegisterAuthzServiceServer(srv, server)
+	authzextv1.RegisterLegacyAuthzServiceServer(srv, server)
 }
 
 type NoopCache struct{}

@@ -65,7 +65,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-15,datasourcesApiServerEnableProxyEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-03-25,datasourcesApiserverEnableResourceEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-10-20,cloudWatchBatchQueries,GA,@grafana/data-sources-plugins,false,false,false
-2023-10-30,alertmanagerRemoteSecondary,experimental,@grafana/alerting-squad,false,false,false
 2025-07-23,alertingProvenanceLockWrites,experimental,@grafana/alerting-squad,false,false,false
 2025-11-13,alertingUIUseBackendFilters,preview,@grafana/alerting-squad,false,false,false
 2025-11-24,alertingUIUseFullyCompatBackendFilters,preview,@grafana/alerting-squad,false,false,false
@@ -259,6 +258,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-15,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-08-05,grafana.dashboardGlobalVariables,preview,@grafana/dashboards-squad,false,false,false
 2026-10-15,grafana.dashboardVariablesMigration,experimental,@grafana/dashboards-squad,false,false,false
+2026-10-28,grafana.dashboardPreferences,experimental,@grafana/dashboards-squad,false,false,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2026-05-08,pyroscopeUTF8LabelNames,preview,@grafana/observability-traces-and-profiling,false,false,false
@@ -400,3 +400,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-22,reporting.removeLogoUrlField,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-10-23,dashboards.disablePublicDashboards,experimental,@grafana/grafana-backend-services-squad,false,false,false
 2026-10-28,folders.parallelDashboardDeleteConcurrency,experimental,@grafana/search-and-storage,false,false,false
+2026-10-20,grafana.panelActionsPopover,experimental,@grafana/dashboards-squad,false,false,true

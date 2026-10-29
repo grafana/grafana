@@ -178,6 +178,8 @@ export const FlagKeys = {
   GrafanaDashboardComposer: "grafana.dashboardComposer",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
+  /** Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app) */
+  GrafanaDashboardPreferences: "grafana.dashboardPreferences",
   /** Enables Viewing and Editing modes for dynamic dashboards */
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
@@ -224,6 +226,8 @@ export const FlagKeys = {
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
   /** Enables a new version of log details optimized for displaying OTel logs */
   GrafanaOtelLogDetails: "grafana.otelLogDetails",
+  /** Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode */
+  GrafanaPanelActionsPopover: "grafana.panelActionsPopover",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Let panel plugins register system transformations */
@@ -1303,6 +1307,17 @@ export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvalua
 };
 
 /**
+ * Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardPreferences`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardPreferences = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardPreferences", false, options).value;
+};
+
+/**
  * Enables Viewing and Editing modes for dynamic dashboards
  *
  * **Details:**
@@ -1553,6 +1568,17 @@ export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationO
  */
 export const useFlagGrafanaOtelLogDetails = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.otelLogDetails", false, options).value;
+};
+
+/**
+ * Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode
+ *
+ * **Details:**
+ * - flag key: `grafana.panelActionsPopover`
+ * - default value: `false`
+ */
+export const useFlagGrafanaPanelActionsPopover = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.panelActionsPopover", false, options).value;
 };
 
 /**

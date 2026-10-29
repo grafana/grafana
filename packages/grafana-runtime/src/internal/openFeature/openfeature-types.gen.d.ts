@@ -128,6 +128,7 @@ declare module "@openfeature/core" {
     | "globalDashboardVariables"
     | "grafana.dashboardGlobalVariables"
     | "grafana.dashboardVariablesMigration"
+    | "grafana.dashboardPreferences"
     | "smoothingTransformation"
     | "queryWithAssistant"
     | "queryEditorNext"
@@ -200,7 +201,8 @@ declare module "@openfeature/core" {
     | "datasources.gatewayAuditPolicy"
     | "grafana.geomapProtomapsBasemap"
     | "reporting.removeLogoUrlField"
-    | "dashboards.disablePublicDashboards";
+    | "dashboards.disablePublicDashboards"
+    | "grafana.panelActionsPopover";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

@@ -683,6 +683,18 @@ func TestRedactedValue(t *testing.T) {
 			expected: RedactedPassword,
 		},
 		{
+			desc:     "client token",
+			key:      "GF_SOME_SERVICE_CLIENT_TOKEN",
+			value:    "some-token",
+			expected: RedactedPassword,
+		},
+		{
+			desc:     "client token exchange url stays visible",
+			key:      "GF_SOME_SERVICE_CLIENT_TOKEN_EXCHANGE_URL",
+			value:    "http://example.com/token-exchange",
+			expected: "http://example.com/token-exchange",
+		},
+		{
 			desc:     "boolean token setting stays visible",
 			key:      "GF_AUTH_GENERIC_OAUTH_USE_REFRESH_TOKEN",
 			value:    "true",
@@ -883,7 +895,7 @@ func TestReadFrontendDevSettings(t *testing.T) {
 		return []byte("app_mode = development\n[frontend_dev]\nserver_url = " + url)
 	}
 
-	// The default matters as much as the parsing: `yarn start` is meant to work without
+	// The default matters as much as the parsing: `pnpm start` is meant to work without
 	// anyone editing an ini file. `make run` passes cfg:app_mode=development, same as here.
 	t.Run("conf/defaults.ini ships a dev server url", func(t *testing.T) {
 		cfg := NewCfg()

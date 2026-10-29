@@ -21,7 +21,7 @@ async function generateCodeownersRawAudit(codeownersPath, outputPath) {
   return new Promise((resolve, reject) => {
     const outputStream = fs.createWriteStream(outputPath);
 
-    const child = spawn('npm', ['exec', '--no', '--', 'github-codeowners', 'audit', '--output', 'jsonl'], {
+    const child = spawn('pnpm', ['exec', 'github-codeowners', 'audit', '--output', 'jsonl'], {
       stdio: ['ignore', 'pipe', 'pipe'],
       cwd: process.cwd(),
       shell: true,
@@ -55,7 +55,7 @@ async function generateCodeownersRawAudit(codeownersPath, outputPath) {
     child.on('error', (err) => {
       outputStream.end();
       if (err.code === 'ENOENT') {
-        reject(new Error('npm command not found. Please ensure npm and github-codeowners are available'));
+        reject(new Error('pnpm command not found. Please ensure pnpm and github-codeowners are available'));
       } else {
         reject(err);
       }

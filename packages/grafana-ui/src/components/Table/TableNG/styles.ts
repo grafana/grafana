@@ -688,14 +688,7 @@ const getHoverOnlyCellSelector = memoize((isNested?: boolean) => {
   return isNested ? '.rdg-cell:hover &' : '&:hover';
 });
 
-export const getScrollShadowOffsetStyles = (_theme: GrafanaTheme2, top: number, bottom: number, width: number) =>
-  css({
-    '&::before, &::after': { inlineSize: width },
-    '&::before': { top },
-    '&::after': { bottom },
-  });
-
-export const getScrollShadowStyles = (theme: GrafanaTheme2) => {
+export const getScrollShadowStyles = (theme: GrafanaTheme2, top: boolean, bottom: boolean) => {
   const scrollShadowColor = `rgba(0, 0, 0, ${theme.isDark ? 0.25 : 0.08})`;
   return {
     scrollShadows: css({
@@ -703,8 +696,8 @@ export const getScrollShadowStyles = (theme: GrafanaTheme2) => {
       '&::before, &::after': {
         content: '""',
         blockSize: `max(5%, ${theme.spacing(3)})`,
+        inlineSize: 'var(--table-scroll-shadow-width)',
         insetInlineStart: 0,
-        opacity: 0,
         pointerEvents: 'none',
         position: 'absolute',
         zIndex: 1,
@@ -713,17 +706,15 @@ export const getScrollShadowStyles = (theme: GrafanaTheme2) => {
         },
       },
       '&::before': {
+        top: 'var(--table-scroll-shadow-top)',
+        opacity: top ? 1 : 0,
         background: `linear-gradient(0deg, transparent, ${scrollShadowColor})`,
       },
       '&::after': {
+        bottom: 'var(--table-scroll-shadow-bottom)',
+        opacity: bottom ? 1 : 0,
         background: `linear-gradient(180deg, transparent, ${scrollShadowColor})`,
       },
-    }),
-    scrollShadowTop: css({
-      '&::before': { opacity: 1 },
-    }),
-    scrollShadowBottom: css({
-      '&::after': { opacity: 1 },
     }),
   };
 };
