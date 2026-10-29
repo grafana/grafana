@@ -270,7 +270,7 @@ Hover your cursor over the icons to display a tooltip with the change you're abo
 {{< video-embed src="/media/docs/grafana/dashboards/screenrecord-undo-redo-stack-v13.3.mp4" alt="Screen recording of three changes being reverted and reinstated" >}}
 
 While the undo and redo options aren't available when you're in the panel editor, you can undo and redo those panel changes when you go back to the dashboard.
-If you make multiple changes to the panel, all the changes are reverted or reinstated.
+If you make multiple changes to the panel before returning to the dashboard, all the changes are reverted or reinstated as a batch.
 
 Keep the following undo and redo behavior in mind:
 
