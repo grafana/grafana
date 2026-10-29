@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
 
+import { createAssistantContextItem, OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -26,7 +27,8 @@ interface ErrorDisplayItem {
 }
 
 export const LogLineDetailsError = ({ className, fields, labels }: LogLineDetailsErrorProps) => {
-  const { fontSize } = useLogListContext();
+  const { fontSize, noInteractions } = useLogListContext();
+  const { isAvailable } = useAssistant();
   const styles = useStyles2(getStyles, fontSize);
 
   const classifiedFields = useMemo(() => classifyErrorAttributes(fields, (field) => field.keys[0] ?? ''), [fields]);
@@ -44,16 +46,43 @@ export const LogLineDetailsError = ({ className, fields, labels }: LogLineDetail
     () => [...toLabelItems(classifiedLabels.stacktraces), ...toFieldItems(classifiedFields.stacktraces)],
     [classifiedFields.stacktraces, classifiedLabels.stacktraces]
   );
+  const errorDetails = useMemo(() => [...other, ...messages, ...stacktraces], [messages, other, stacktraces]);
+  const diagnosePrompt = useMemo(() => buildDiagnoseErrorPrompt(errorDetails), [errorDetails]);
+  const diagnoseContext = useMemo(
+    () => (isAvailable ? buildDiagnoseErrorContext(errorDetails) : []),
+    [errorDetails, isAvailable]
+  );
 
-  if (!messages.length && !other.length && !stacktraces.length) {
+  if (!errorDetails.length) {
     return null;
   }
+
+  const reportDiagnose = () => {
+    if (!noInteractions) {
+      reportInteraction('logs_log_line_details_error_diagnose_clicked');
+    }
+  };
 
   return (
     <div className={`${styles.container} ${className ? className : ''}`}>
       <div className={styles.header}>
-        <Icon name="exclamation-circle" className={styles.icon} />
-        <span>{t('logs.log-details.error.error-details', 'Error details')}</span>
+        <div className={styles.headerTitle}>
+          <Icon name="exclamation-circle" className={styles.icon} />
+          <span>{t('logs.log-details.error.error-details', 'Error details')}</span>
+        </div>
+        {isAvailable && (
+          <div className={styles.assistantAction}>
+            <OpenAssistantButton
+              origin="grafana/logs/diagnose-log-error"
+              prompt={diagnosePrompt}
+              context={diagnoseContext}
+              autoSend
+              title={t('logs.log-details.error.diagnose-with-assistant', 'Diagnose with assistant')}
+              size="sm"
+              onClick={reportDiagnose}
+            />
+          </div>
+        )}
       </div>
       <div className={styles.content}>
         {other.map((item) => (
@@ -69,6 +98,22 @@ export const LogLineDetailsError = ({ className, fields, labels }: LogLineDetail
     </div>
   );
 };
+
+function buildDiagnoseErrorPrompt(items: ErrorDisplayItem[]): string {
+  const details = items.map((item) => `${item.key}: ${item.value.replaceAll('`', '\\`')}`).join('\n');
+  return `Diagnose this error from a log line. Explain the likely cause and what to check next.\n\n\`\`\`\n${details}\n\`\`\``;
+}
+
+function buildDiagnoseErrorContext(items: ErrorDisplayItem[]) {
+  return [
+    createAssistantContextItem('structured', {
+      title: t('logs.log-details.error.error-details', 'Error details'),
+      data: {
+        attributes: items.map((item) => ({ key: item.key, value: item.value })),
+      },
+    }),
+  ];
+}
 
 function toFieldItems(fields: FieldDef[]): ErrorDisplayItem[] {
   return fields.map((field) => ({
@@ -171,12 +216,21 @@ const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   }),
   header: css({
     alignItems: 'center',
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    marginBottom: theme.spacing(1),
+  }),
+  headerTitle: css({
+    alignItems: 'center',
     color: theme.colors.error.text,
     display: 'flex',
     fontSize: fontSize === 'small' ? theme.typography.bodySmall.fontSize : undefined,
     fontWeight: theme.typography.fontWeightMedium,
     gap: theme.spacing(0.5),
-    marginBottom: theme.spacing(1),
+  }),
+  assistantAction: css({
+    marginLeft: 'auto',
   }),
   icon: css({
     flexShrink: 0,
