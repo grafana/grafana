@@ -8,17 +8,13 @@ For general spec-authoring principles (assert real behavior, avoiding AI-slop te
 
 ## Start Here
 
-1. Read an existing spec for the feature and the relevant page objects and helpers. Reuse existing methods before proposing new ones.
+1. Read an existing spec for the feature and the relevant page objects and helpers. Reuse existing methods before proposing new ones, and keep new code close to its consumers (see "Feature organization").
 2. Import `test` and `expect` from this suite's `fixtures.ts`; receive page objects through test arguments. Specs never construct them.
 3. Keep interactions in page objects, setup/navigation in specs or flows, and behavior assertions in specs or assertion helpers.
 4. Scope locators to their owning UI region. One raw `getByGrafanaSelector` lookup per region per spec is allowed for a one-off assertion; see "Specs" below.
 5. **Get explicit user confirmation before adding a page-object method or a new selector.** The proposal requirements are in "Page objects" and "Selector scoping" below.
 6. For persistence checks, use `flows.dashboards.saveDashboard(page, controls)`, which confirms the save and reloads by default.
-7. Run the affected spec three times:
-
-```bash
-pnpm e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <spec-filename>
-```
+7. Complete the "Before finishing" checks below, including running the affected specs three times.
 
 ## Conventions
 
@@ -27,9 +23,9 @@ pnpm e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 - **JSDoc**: Follow the existing page objects' documentation style. Add a `/** ... */` comment to every new page-object class describing the UI region it owns, and to every public getter or action describing what it returns or does. Use `@param` when an argument needs clarification (e.g. a displayed label versus an underlying key, an optional scope, or a confirmation flag). Document non-obvious limits such as virtualized rows or first-match behavior. Check the other page objects before adding or extending one.
 - **Locator getters** (e.g. `getTitleInput()`) return a Playwright `Locator` — for elements that specs assert on (or both act on and assert on). The test owns the assertion — never the page object.
 - **Action methods** (e.g. `enterEditMode()`, `closePane()`) wrap interactions — multi-step flows or single clicks on act-only elements — and use `test.step()` so the HTML report shows named steps.
-- **When a spec needs both**, pair them: the action method delegates to the getter (see `Toolbar.getButton()` / `clickButton()`).
+- **Keep one implementation of each lookup or interaction.** When a spec needs both a getter and an action, the action delegates to the getter (see `Toolbar.getButton()` / `clickButton()`). When adding a method, check whether existing actions should delegate to it too.
 - **No speculative methods.** Only add methods needed by the current (or new) spec.
-- **Decide whether extraction helps.** A new method should serve a concrete need: the same lookup or action is used by multiple tests, or it hides a complicated lookup or interaction in the UI region the page object owns. Name the actual consumers and distinguish current reuse from possible future reuse; hypothetical reuse alone is not a reason to add a method. For one-off assertions, prefer existing getters with scoped locators and keep the assertion inline, within the exceptions in "Specs" below. Do not add a getter merely to wrap every simple lookup. UI interactions still belong to their owning page objects.
+- **Decide whether extraction helps.** A new method should serve a concrete need: the same lookup or action is used by multiple tests, or it hides a complicated lookup or interaction in the UI region the page object owns. Name the actual consuming tests, including those reached through shared helpers; hypothetical reuse alone is not a reason to add a method. For one-off assertions, prefer existing getters with scoped locators and keep the assertion inline, within the exceptions in "Specs" below. Do not add a getter merely to wrap every simple lookup. UI interactions still belong to their owning page objects.
 - **Ask before adding methods.** Before adding any new page-object method, show the user its proposed class, name, purpose, the tests that need it, and why existing methods or an allowed inline lookup are insufficient. Explain whether the benefit is reuse or hiding complexity, then wait for explicit user confirmation before adding it.
 - **Plural vs singular getters** (e.g. `getPanels()` / `getPanel()`): plural getters return every match — assert counts or narrow (`.first()`, `.nth()`) in the spec; singular getters return the first match.
 - **Scoped lookups**: getters with a `scope?: Locator` parameter search inside that container — pass `rows.getContent(...)` or `tabs.getContent(...)` to look up elements in a specific row or tab.
@@ -38,7 +34,7 @@ pnpm e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 
 ### Selector scoping
 
-- **Scope lookups to the owning container.** A bare `page.getByRole(...)` searches the whole page and can match an unrelated element with the same role and name — if not today, then after an unrelated UI change. Elements that belong to a region with a page object must be looked up through that region's container: e.g. radio buttons in the sidebar are `sidebar.getContainer().getByRole('radio', { name: '...' })`, the same way `Toolbar.getButton()` scopes button names to `Sidebar.container`. Inside a page object, chain from the container selector (`this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole(...)`).
+- **Scope lookups to the owning container.** Identify the intended container by its name, selector, or distinguishing content; matching any dialog or sidebar is not enough. Elements within it must be looked up through that container: e.g. `sidebar.getContainer().getByRole('radio', { name: '...' })`. Inside a page object, chain from the container selector (`this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole(...)`). A page-wide lookup can match unrelated UI after an otherwise harmless change.
 - **Portalled UI is the only exception.** Select/Combobox option lists, modals, tooltips, and toasts render in a portal at the document root, outside their logical parent, so they cannot be scoped to it. Anchor them to the portal's own root instead: `page.getByRole('listbox').getByRole('option', { name })` (see `RepeatOptions`), or `page.getByRole('dialog', { name: 'Delete panel?' })`. A bare `page.getByRole('option', ...)` with no anchor is still too broad.
 - **Add a selector when no meaningful container exists.** If the only way to reach an element is a page- or dialog-wide placeholder, CSS class, or position, a dedicated selector keeps the test robust and the component's testable surface explicit. **Agents: pause before adding one.** Suggest to the user which selectors to create (name, component, element it goes on, and the locators it would replace), then wait for their approval before changing selectors, components, or continuing to write the tests that depend on them. Put it on a stable container or repeated item (e.g. `StaticOptionsEditor.spreadsheet` and `spreadsheetRow` on the static options table and its rows), not on every cell, and scope the inner lookups from it. Version the new selector with the current Grafana release in `@grafana/e2e-selectors` and add its `data-testid` to the component. Do not reuse a selector that belongs to a different component (e.g. the legacy editor's `StaticOptionsEditor.row`). `@grafana/e2e-selectors` is published, so mention new selectors in the PR description.
 
@@ -46,6 +42,8 @@ pnpm e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 
 - **One raw `getByGrafanaSelector` lookup per UI region per spec is allowed** for one-off assertions that aren't reusable interactions (e.g. a breadcrumb check). When a second spec needs the same raw lookup, propose promoting it into a page-object getter or action and get user confirmation before adding the method.
 - **Timing-sensitive mechanics stay inline**: `toPass()`, `mouse` sequences, `page.evaluate()`.
+- **Measure settled state.** Read geometry and other point-in-time values after the relevant UI state has settled, including when capturing expected values. Retrying a later assertion does not make an earlier snapshot reliable.
+- **Distinguish readiness from elapsed time.** Wait for observable state when testing readiness. When elapsed time is itself part of the behavior, prefer controlled time over wall-clock timing assumptions.
 - **Test setup stays in the spec, a feature-local `flows.ts`, or `helpers/flows.ts`**: API calls, dashboard provisioning (`flows.dashboards.importTestDashboard()`), navigation via `gotoDashboardPage()`. Never in page objects.
 - **Viewport**: use `test.use({ viewport: { width: 1920, height: 1080 } })` when tests involve layout-sensitive operations (drag-and-drop, panel positioning).
 - **Persistence**: prefer `flows.dashboards.saveDashboard(page, controls)` over `controls.saveDashboard` plus a manual toast close / `page.reload()`.
@@ -59,7 +57,25 @@ pnpm e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <
 3. Once confirmed, move the working selector chain or interaction into the appropriate page object, preserving which elements it matches, action order, and timing. This is a behavior-preserving extraction: use `this.page` and the shared dependencies, but do not add `.first()`, change matching rules, reorder actions, or introduce waits as part of the move. If the existing code violates these conventions, correct it explicitly and verify the change rather than silently changing it during extraction. New page objects must extend `PageObject` from `PageObject.ts`.
 4. For interactions (multi-step flows or single clicks on act-only elements), wrap in `test.step('Human-readable name', async () => { ... })`.
 5. For elements the spec asserts on, return a `Locator` (getter pattern, no `test.step` needed).
-6. Run `--repeat-each=3` on the spec.
+6. Complete the "Before finishing" checks.
+
+### Feature organization
+
+When several specs share a feature, setup, and fixtures, consider grouping them in a feature folder. Keep supporting code at the narrowest useful scope: within a spec for one-off helpers, in the feature's `helpers/` for reuse within that feature, and in the suite-wide `helpers/` when another feature needs it. Keep feature-specific fixtures alongside the specs. Page objects continue to represent UI regions rather than test scenarios.
+
+Reuse existing helpers before extracting new ones. The "Helpers Reference" below gives the reuse thresholds for each kind of helper; a feature folder does not need every helper file.
+
+### Before finishing
+
+- Check that helpers live close to their actual consumers and existing actions reuse any newly extracted methods.
+- Check that locators identify the intended region, assertions verify the action's outcome after it completes, and point-in-time reads capture settled state.
+- Run the affected specs three times, including consumers of changed shared helpers:
+
+```bash
+pnpm e2e:pw --project dashboard-new-layouts --reporter list --repeat-each=3 -- <spec-filename>
+```
+
+Report which verification actually ran and any remaining limitations.
 
 ## Code Map
 
@@ -124,7 +140,7 @@ Use `flows.dashboards.saveDashboard(page, controls)` for save, toast confirmatio
 
 > `expectTabVisibility(tabTitle, tabs, visibility)` and `expectRowVisibility(rowTitle, rows, visibility)` assert that the element's title **and** content are both `'visible'` or both `'hidden'`. The `visibility` argument is required and has no default. Both helpers return `{ title, content }` locators: reuse those instead of calling `getTitle()` / `getContent()` again. A mixed state (a collapsed row keeps its title but unmounts its content) is not expressible with the single `visibility` argument: get the locators directly from the page object and assert that state inline without calling the helper. For a `'visible'` assertion, `expectTabVisibility` requires a tab that is **active** and hosts a **grid**: `Tabs.getContent()` resolves the `LayoutContainer('tab ...')` testid, which is not rendered for an inactive tab nor for a tab wrapping a nested rows layout. Assert the title alone in those cases.
 
-Helpers reused only within a feature folder live in that folder's `helpers/` (`helpers/flows.ts`, `helpers/assertions.ts`), alongside its specs and fixtures. Reuse the suite-wide helpers from `../helpers`; promote a local helper into the suite-wide `helpers/` when another feature needs it. Extract a local flow when three tests (in one spec or across the folder's specs) repeat the same setup sequence. Check the folder's `helpers/` before writing such a sequence a third time.
+The same reuse thresholds apply within feature folders: for example, extract a local flow when three tests repeat the same setup sequence. Check the feature's helpers before writing such a sequence a third time, and import suite-wide helpers using the appropriate relative path.
 
 For variable-specific setup and assertions, inspect [`variables/helpers/flows.ts`](variables/helpers/flows.ts) and [`variables/helpers/assertions.ts`](variables/helpers/assertions.ts). They cover isolated dashboard imports, variable creation, save-and-return flows, and preview/dropdown assertions. Import them directly from those files within `variables/`.
 
