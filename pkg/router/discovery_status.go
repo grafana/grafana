@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"slices"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/sony/gobreaker/v2"
@@ -139,8 +138,10 @@ var phaseNames = map[phase]string{starting: "starting", serving: "serving", stop
 
 // authorizeStatus refuses a requester that is not a Grafana admin, as the
 // status describes every group and backend the router serves, whichever
-// namespace they belong to. In development any authenticated requester may
-// read it.
+// namespace they belong to. Where [router] status_open_to_admin is set, which
+// is the default in development, a requester with the Admin role may read it
+// too. That comes from the server's configuration: nothing in the request,
+// such as its Host header, can open it.
 func (r *GrafanaRouter) authorizeStatus(w http.ResponseWriter, req *http.Request) bool {
 	ctx := req.Context()
 	requester, err := identity.GetRequester(ctx)
@@ -149,16 +150,13 @@ func (r *GrafanaRouter) authorizeStatus(w http.ResponseWriter, req *http.Request
 		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing requester"), w)
 		return false
 	}
-	if r.statusOpen || requester.GetIsGrafanaAdmin() {
-		return true
-	}
-	if strings.HasSuffix(req.Host, "grafana-dev.net") {
+	if requester.GetIsGrafanaAdmin() || (r.statusOpenToAdmin && requester.GetOrgRole() == identity.RoleAdmin) {
 		return true
 	}
 	setRoute(req, routeForbidden)
 	_ = errhttp.Write(ctx, apierrors.NewForbidden(
 		schema.GroupResource{Group: "discovery", Resource: "status"}, "",
-		errors.New("the router status is only for Grafana admins"),
+		errors.New("the router status is only for admins"),
 	), w)
 	return false
 }

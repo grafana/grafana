@@ -87,9 +87,10 @@ type GrafanaRouter struct {
 
 	authn authn.TokenAuthenticator
 
-	// statusOpen lets any authenticated requester read the status, as a
-	// development environment has no admin to ask for.
-	statusOpen bool
+	// statusOpenToAdmin lets a requester with the Admin role read the status,
+	// not only a Grafana admin: [router] status_open_to_admin, on by default
+	// in development.
+	statusOpenToAdmin bool
 
 	// served is the desired-state map, keyed by group: the groups actually
 	// installed into the last reconcile's snapshot. Owned by reconcile (single

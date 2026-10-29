@@ -79,24 +79,62 @@ func TestRouterStatusRequiresGrafanaAdmin(t *testing.T) {
 	svc.router.HandleFunc(rec, newAdminRequest(http.MethodGet, path))
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 
-	// A development environment shows it to any authenticated requester, but still not to anonymous ones.
-	svc.router.statusOpen = true
+	// Nothing in the request opens it, not even a Host that looks like a development one.
 	rec = httptest.NewRecorder()
-	svc.router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil))
-	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
-
-	rec = httptest.NewRecorder()
-	svc.router.HandleFunc(rec, httptest.NewRequest(http.MethodGet, path, nil))
-	require.Equal(t, http.StatusUnauthorized, rec.Code, rec.Body.String())
+	req := newAuthenticatedRequest(http.MethodGet, path, nil)
+	req.Host = "stack.grafana-dev.net"
+	svc.router.HandleFunc(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code, rec.Body.String())
 }
 
-func TestRouterStatusIsOpenInDevelopment(t *testing.T) {
-	for env, open := range map[string]bool{setting.Dev: true, setting.Prod: false} {
-		cfg := setting.NewCfg()
-		cfg.Env = env
-		r, err := ProvideGrafanaRouter(cfg)
-		require.NoError(t, err)
-		require.Equal(t, open, r.statusOpen, env)
+func TestRouterStatusIsOpenToAdminByConfiguration(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		env     string
+		setting string
+		open    bool
+	}{
+		{name: "development", env: setting.Dev, open: true},
+		{name: "development, setting off", env: setting.Dev, setting: "false"},
+		{name: "production", env: setting.Prod},
+		{name: "production, setting on", env: setting.Prod, setting: "true", open: true},
+		{name: "production, setting off", env: setting.Prod, setting: "false"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.Env = tc.env
+			if tc.setting != "" {
+				cfg.Raw.Section(routerSection).Key(statusOpenKey).SetValue(tc.setting)
+			}
+			r, err := ProvideGrafanaRouter(cfg)
+			require.NoError(t, err)
+			require.Equal(t, tc.open, r.statusOpenToAdmin)
+		})
+	}
+}
+
+// With [router] status_open_to_admin, a requester with the Admin role may read the status, and no lesser one.
+func TestRouterStatusOpenToAdmin(t *testing.T) {
+	svc, _, _ := newStatusService(t)
+	const path = "/apis/discovery/v1alpha2/status"
+	request := func(role identity.RoleType) *http.Request {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		return req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
+			Type: types.TypeUser, UserUID: "test-user", OrgID: 1, Namespace: "*", OrgRole: role,
+		}))
+	}
+	status := func(role identity.RoleType) int {
+		rec := httptest.NewRecorder()
+		svc.router.HandleFunc(rec, request(role))
+		return rec.Code
+	}
+
+	require.Equal(t, http.StatusForbidden, status(identity.RoleAdmin), "off by default")
+
+	svc.router.statusOpenToAdmin = true
+	require.Equal(t, http.StatusOK, status(identity.RoleAdmin))
+	for _, role := range []identity.RoleType{identity.RoleEditor, identity.RoleViewer, identity.RoleNone} {
+		require.Equal(t, http.StatusForbidden, status(role), string(role))
 	}
 }
 
