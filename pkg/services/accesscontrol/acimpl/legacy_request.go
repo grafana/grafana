@@ -31,6 +31,27 @@ func (a *AccessControl) buildLegacyCheckRequest(
 	}
 
 	namespace := user.GetNamespace()
+	if profile, ok := identity.InternalIdentityProfileFor(user); ok {
+		if namespace == "" || namespace == "*" {
+			if user.GetOrgID() < 1 || namespaceMapper == nil {
+				return nil, errors.New("internal legacy check requires a concrete target namespace")
+			}
+			namespace = namespaceMapper(user.GetOrgID())
+		}
+
+		parsedNamespace, err := types.ParseNamespace(namespace)
+		if err != nil || parsedNamespace.OrgID < 1 {
+			return nil, errors.New("internal legacy check requires a concrete target namespace")
+		}
+
+		return &authzextv1.LegacyCheckRequest{
+			Namespace:           parsedNamespace.Value,
+			InternalIdentity:    &authzextv1.LegacyInternalIdentity{Profile: profile.String()},
+			Expression:          expression,
+			SkipScopeResolution: a.skipScopeResolution,
+		}, nil
+	}
+
 	var global *authzextv1.LegacyGlobalEvaluation
 	if user.GetOrgID() == accesscontrol.NoOrgID || user.GetOrgID() == accesscontrol.GlobalOrgID {
 		permissions := user.GetGlobalPermissions()

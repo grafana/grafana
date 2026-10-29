@@ -17,6 +17,17 @@ import (
 // migration from local AccessControl evaluation to centralized AuthZ checks.
 // Evaluation failures are returned as deny-with-error to avoid fail-open.
 func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
+	if req.GetInternalIdentity() != nil {
+		return &authzextv1.LegacyCheckResponse{
+			Allowed: false,
+			Error:   "internal legacy identities require the embedded server",
+		}, nil
+	}
+
+	return s.legacyCheck(ctx, req)
+}
+
+func (s *Service) legacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
 	// TODO: Complete in subsequent PRs:
 	//   - Standalone scope resolution: replace embedded service dependencies with namespace-aware providers.
 	//			MT AuthZ: https://github.com/grafana/identity-access-team/issues/2436
@@ -30,9 +41,17 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
 	}
 
-	userUID, idType, err := s.validateSubject(ctx, req.GetSubject())
-	if err != nil {
-		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
+	var (
+		userUID string
+		idType  types.IdentityType
+
+		isInternalIdentity = req.GetInternalIdentity() != nil
+	)
+	if !isInternalIdentity {
+		userUID, idType, err = s.validateSubject(ctx, req.GetSubject())
+		if err != nil {
+			return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
+		}
 	}
 
 	ctx = request.WithNamespace(ctx, ns.Value)
@@ -49,7 +68,9 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	}
 
 	var args legacyEvaluationArgs
-	if global := req.GetGlobalEvaluation(); global != nil {
+	if isInternalIdentity {
+		args, err = s.prepareLegacyInternalEvaluation(ctx, req, scopeRequest)
+	} else if global := req.GetGlobalEvaluation(); global != nil {
 		args, err = s.prepareLegacyGlobalEvaluation(ctx, global, actions, scopeRequest)
 	} else {
 		args, err = s.prepareLegacyOrgEvaluation(

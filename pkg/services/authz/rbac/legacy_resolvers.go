@@ -29,11 +29,12 @@ func (s *Service) WithLegacyScopeResolvers(
 }
 
 type legacyScopeRequest struct {
-	namespace      types.NamespaceInfo
-	identityType   types.IdentityType
-	userUID        string
-	skipCache      bool
-	globalIdentity *legacyGlobalIdentity
+	namespace         types.NamespaceInfo
+	identityType      types.IdentityType
+	userUID           string
+	skipCache         bool
+	globalIdentity    *legacyGlobalIdentity
+	internalRequester identity.Requester
 }
 
 // Evaluate the original expression first. If it denies access, resolve its
@@ -135,6 +136,10 @@ func (s *Service) legacyResolverRequester(
 	req legacyScopeRequest,
 	permissions map[string][]string,
 ) (identity.Requester, error) {
+	if req.internalRequester != nil {
+		return req.internalRequester, nil
+	}
+
 	if req.globalIdentity != nil {
 		return s.legacyGlobalResolverRequester(ctx, req, permissions)
 	}
