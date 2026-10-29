@@ -1735,6 +1735,20 @@
     },
     {
       "metadata": {
+        "name": "dashboards.disableLiveSaveNotices",
+        "resourceVersion": "1793303666378",
+        "creationTimestamp": "2026-10-29T19:54:26Z"
+      },
+      "spec": {
+        "description": "Stops an open dashboard from subscribing to Grafana Live save notices",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-backend-services-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboards.disablePublicDashboards",
         "resourceVersion": "1792771676544",
         "creationTimestamp": "2026-10-23T16:07:56Z"
