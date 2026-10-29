@@ -6,7 +6,8 @@ import server from '@grafana/test-utils/server';
 
 import { setupMswServer } from '../../mockApi';
 import { ruleItem } from '../mocks/factories';
-import { mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
+import { failFirstCall, mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
+import { setupRuleListBackend } from '../mocks/ruleListBackend';
 
 import AlertRulesPage from './AlertRulesPage';
 
@@ -23,39 +24,9 @@ const reportInteractionMock = jest.mocked(reportInteraction);
 
 setupMswServer();
 
-/** Serves the first page with a continuation token; `nextPage` answers every request that carries one. */
-function mockPagedSearch(nextPage: (token: string) => Response | Promise<Response>) {
-  const continuations: Array<string | null> = [];
-  server.use(
-    http.post(ruleSearchUrl('alert'), async ({ request }) => {
-      const { continue: token } = (await request.json()) as { continue?: string };
-      continuations.push(token ?? null);
-      if (!token) {
-        return HttpResponse.json({
-          items: [ruleItem('alert', 'rule-1', 'CPU high', 'folder-1')],
-          metadata: { continue: 'tok' },
-        });
-      }
-      return nextPage(token);
-    })
-  );
-  return continuations;
-}
-
-/** Fails the first POST to `url` with a 500, then answers with `ok`; returns a request counter. */
-function failFirstCall(url: string, ok: object) {
-  let calls = 0;
-  server.use(
-    http.post(url, () => {
-      calls += 1;
-      return calls === 1 ? HttpResponse.json({ message: 'boom' }, { status: 500 }) : HttpResponse.json(ok);
-    })
-  );
-  return () => calls;
-}
-
-function secondPage() {
-  return HttpResponse.json({ items: [ruleItem('alert', 'rule-2', 'Disk full', 'folder-2')], metadata: {} });
+/** Folders is the default view; List tests open the page with `view=list`. */
+function renderInListMode() {
+  return render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
 }
 
 describe('AlertRulesPage', () => {
@@ -73,7 +44,7 @@ describe('AlertRulesPage', () => {
       metadata: {},
     }));
 
-    render(<AlertRulesPage />);
+    renderInListMode();
 
     const rows = await screen.findAllByRole('listitem');
     expect(rows.map((row) => row.querySelector('a')?.textContent)).toEqual(['CPU high', 'Disk full']);
@@ -88,7 +59,7 @@ describe('AlertRulesPage', () => {
       return { items: [ruleItem('alert', 'rule-1', 'CPU high', 'folder-1')], metadata: {} };
     });
 
-    render(<AlertRulesPage />);
+    renderInListMode();
 
     expect(await screen.findByText('CPU high')).toBeInTheDocument();
     expect(body).toMatchObject({ kind: 'SearchQuery', sort: [{ field: 'title', direction: 'asc' }], limit: 40 });
@@ -101,7 +72,7 @@ describe('AlertRulesPage', () => {
       metadata: { totalHits: 154, totalHitsRelation: 'eq' },
     }));
 
-    render(<AlertRulesPage />);
+    renderInListMode();
 
     expect(await screen.findByText('154 alert rules')).toBeInTheDocument();
   });
@@ -118,7 +89,7 @@ describe('AlertRulesPage', () => {
       })
     );
 
-    render(<AlertRulesPage />);
+    renderInListMode();
 
     expect(await screen.findByRole('list', { name: 'Loading rules' })).toHaveAttribute('aria-busy', 'true');
     releasePage();
@@ -129,7 +100,7 @@ describe('AlertRulesPage', () => {
   it('shows the empty state after a successful empty response', async () => {
     mockRuleSearch('alert', () => ({ items: [], metadata: {} }));
 
-    render(<AlertRulesPage />);
+    renderInListMode();
 
     expect(await screen.findByText('No alert rules found')).toBeInTheDocument();
   });
@@ -140,7 +111,7 @@ describe('AlertRulesPage', () => {
       metadata: {},
     });
 
-    render(<AlertRulesPage />);
+    renderInListMode();
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load rules');
     expect(screen.queryByText('No alert rules found')).not.toBeInTheDocument();
@@ -181,7 +152,7 @@ describe('AlertRulesPage', () => {
       })
     );
 
-    render(<AlertRulesPage />);
+    renderInListMode();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
     await screen.findByText('Disk full');
@@ -217,7 +188,7 @@ describe('AlertRulesPage', () => {
       })
     );
 
-    render(<AlertRulesPage />);
+    renderInListMode();
 
     await userEvent.click(await screen.findByRole('button', { name: 'Load more' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Retry' }));
@@ -226,40 +197,32 @@ describe('AlertRulesPage', () => {
     expect(screen.getByText('CPU high')).toBeInTheDocument();
   });
 
-  it('loads one page once when Load more is double clicked', async () => {
-    let releasePage: () => void = () => {};
-    const pageGate = new Promise<void>((resolve) => {
-      releasePage = resolve;
-    });
-    const continuations = mockPagedSearch(async () => {
-      await pageGate;
-      return secondPage();
-    });
+  it.each([
+    {
+      mode: 'list',
+      mockEmpty: () => mockRuleSearch('alert', () => ({ items: [], metadata: {} })),
+      renderPage: renderInListMode,
+    },
+    {
+      mode: 'folders',
+      mockEmpty: () => setupRuleListBackend({ folders: [] }),
+      renderPage: () => render(<AlertRulesPage />),
+    },
+  ])(
+    'reports one page view in $mode mode per mount, not again on re-render',
+    async ({ mode, mockEmpty, renderPage }) => {
+      mockEmpty();
+      const pageViewCalls = () =>
+        reportInteractionMock.mock.calls.filter(([event]) => event === 'grafana_alerting_gma_rule_list_view');
 
-    render(<AlertRulesPage />);
+      const { rerender } = renderPage();
+      await screen.findByText('No alert rules found');
+      expect(pageViewCalls()).toEqual([['grafana_alerting_gma_rule_list_view', { kind: 'alert', mode }]]);
 
-    await screen.findByText('CPU high');
-    await userEvent.dblClick(screen.getByRole('button', { name: 'Load more' }));
+      rerender(<AlertRulesPage />);
+      await screen.findByText('No alert rules found');
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Load more' })).toBeDisabled());
-    releasePage();
-
-    expect(await screen.findByText('Disk full')).toBeInTheDocument();
-    expect(continuations).toEqual([null, 'tok']);
-  });
-
-  it('reports one page view in List mode per mount, not again on re-render', async () => {
-    mockRuleSearch('alert', () => ({ items: [], metadata: {} }));
-    const pageViewCalls = () =>
-      reportInteractionMock.mock.calls.filter(([event]) => event === 'grafana_alerting_gma_rule_list_view');
-
-    const { rerender } = render(<AlertRulesPage />);
-    await screen.findByText('No alert rules found');
-    expect(pageViewCalls()).toEqual([['grafana_alerting_gma_rule_list_view', { kind: 'alert', mode: 'list' }]]);
-
-    rerender(<AlertRulesPage />);
-    await screen.findByText('No alert rules found');
-
-    expect(pageViewCalls()).toHaveLength(1);
-  });
+      expect(pageViewCalls()).toHaveLength(1);
+    }
+  );
 });

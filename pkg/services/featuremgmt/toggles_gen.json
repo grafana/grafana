@@ -897,7 +897,8 @@
       "metadata": {
         "name": "alertmanagerRemoteSecondary",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2023-10-30T16:27:08Z"
+        "creationTimestamp": "2023-10-30T16:27:08Z",
+        "deletionTimestamp": "2026-10-29T15:19:15Z"
       },
       "spec": {
         "description": "Enable Grafana to sync configuration and state with a remote Alertmanager.",
@@ -1142,6 +1143,23 @@
       },
       "spec": {
         "description": "Load legacy Access Control permissions through embedded AuthZ.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "authz.legacyUserPermissionsShadow",
+        "resourceVersion": "1793097096771",
+        "creationTimestamp": "2026-10-27T09:31:45Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-27 10:31:36.771288517 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -2575,6 +2593,20 @@
     },
     {
       "metadata": {
+        "name": "folder.asyncCascadeDeleteThroughController",
+        "resourceVersion": "1793182117642",
+        "creationTimestamp": "2026-10-28T10:08:37Z"
+      },
+      "spec": {
+        "description": "Enable finalizer-driven asynchronous cascade deletion of folder.grafana.app folders: deleting a folder marks it terminating and a controller removes its descendants, reporting progress in status.cascadeDelete",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "folderPickerCreatePermission",
         "resourceVersion": "1792016123062",
         "creationTimestamp": "2026-10-14T22:15:23Z"
@@ -2585,6 +2617,20 @@
         "codeowner": "@grafana/search-and-storage",
         "hideFromDocs": true,
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "folders.parallelDashboardDeleteConcurrency",
+        "resourceVersion": "1793190123178",
+        "creationTimestamp": "2026-10-28T12:22:03Z"
+      },
+      "spec": {
+        "description": "Maximum number of dashboard deletes in flight per folder deletion. 1 or less deletes the dashboards sequentially",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "hideFromDocs": true,
+        "expression": "1"
       }
     },
     {
@@ -2661,6 +2707,23 @@
     },
     {
       "metadata": {
+        "name": "grafana.configFromQueryDynamicName",
+        "resourceVersion": "1792594531964",
+        "creationTimestamp": "2026-09-17T22:29:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-21 14:55:31.964131578 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables using the Config From Query Results transformation's Dynamic Field Name option",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.correlationsSkipLegacy",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-27T17:03:23Z"
@@ -2715,13 +2778,30 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardComposer",
+        "resourceVersion": "1792396328410",
+        "creationTimestamp": "2026-10-19T07:52:08Z"
+      },
+      "spec": {
+        "description": "Enables Composer mode for editing dashboards with Grafana Assistant",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardGlobalVariables",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-05T08:40:28Z"
+        "resourceVersion": "1793113326569",
+        "creationTimestamp": "2026-08-05T08:40:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-27 15:02:06.569934 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables global and folder-scoped dashboard variables via dashboard.grafana.app",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "expression": "false"
       }
@@ -2928,7 +3008,8 @@
       "metadata": {
         "name": "grafana.globalHomePreference",
         "resourceVersion": "1791348293298",
-        "creationTimestamp": "2026-10-07T14:12:16Z"
+        "creationTimestamp": "2026-10-07T14:12:16Z",
+        "deletionTimestamp": "2026-10-28T06:41:18Z"
       },
       "spec": {
         "description": "Offers the reserved Grafana home option in the home dashboard preference",
@@ -3008,6 +3089,20 @@
         "codeowner": "@grafana/dataviz-squad",
         "hideFromDocs": true,
         "expression": "off"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.mobileEditDeprecation",
+        "resourceVersion": "1792599255577",
+        "creationTimestamp": "2026-10-21T16:14:15Z"
+      },
+      "spec": {
+        "description": "Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports",
+        "stage": "preview",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
       }
     },
     {
@@ -3143,6 +3238,21 @@
         "stage": "experimental",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.panelActionsPopover",
+        "resourceVersion": "1792493817898",
+        "creationTimestamp": "2026-10-20T10:56:57Z"
+      },
+      "spec": {
+        "description": "Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
         "expression": "false"
       }
     },

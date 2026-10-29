@@ -51,7 +51,7 @@ const mainConfig: StorybookConfig = {
     name: getAbsolutePath('storybook-react-rsbuild'),
     options: {
       builder: {
-        fsCache: true,
+        fsCache: !process.env.CI,
       },
     },
   },

@@ -1314,6 +1314,9 @@ func setupScheduler(
 ) *schedule {
 	t.Helper()
 	testTracer := tracing.InitializeTracerForTest()
+	t.Cleanup(func() {
+		require.NoError(t, testTracer.(*tracing.TracingService).GetTracerProvider().Shutdown(context.Background()))
+	})
 
 	opts := &schedulerOpts{
 		clock: clock.NewMock(),
@@ -1341,7 +1344,7 @@ func setupScheduler(
 				nil,
 				featuremgmt.WithFeatures(),
 				nil,
-				tracing.InitializeTracerForTest(),
+				testTracer,
 				dsquerierclient.NewNullQSDatasourceClientBuilder(),
 			),
 		)
