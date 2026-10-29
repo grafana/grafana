@@ -42,13 +42,13 @@ export {
 // Notification settings
 export {
   type NotificationSettings,
-  simplifiedRouting,
-  namedRoutingTree,
+  contactPointRouting,
+  policyRouting,
   toRuleNotificationSettings,
   fromRuleNotificationSettings,
 } from './grafana/notificationSettings/notificationSettingsValue';
 export { DISABLE_GROUPING } from './grafana/notificationSettings/constants';
-export { getRequiredGroupByLabels, nextGroupBy } from './grafana/notificationSettings/utils/groupBy';
+export { getDefaultGroupByLabels, nextGroupBy } from './grafana/notificationSettings/utils/groupBy';
 
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';

@@ -1,6 +1,6 @@
 import { DISABLE_GROUPING } from '../constants';
 
-import { getRequiredGroupByLabels, nextGroupBy } from './groupBy';
+import { getDefaultGroupByLabels, nextGroupBy } from './groupBy';
 
 describe('nextGroupBy', () => {
   it('keeps the required labels first and adds the rest once', () => {
@@ -31,15 +31,15 @@ describe('nextGroupBy', () => {
   });
 });
 
-describe('getRequiredGroupByLabels', () => {
+describe('getDefaultGroupByLabels', () => {
   it('lists the labels every overridden group-by includes', () => {
-    expect(getRequiredGroupByLabels()).toEqual(['grafana_folder', 'alertname']);
+    expect(getDefaultGroupByLabels()).toEqual(['grafana_folder', 'alertname']);
   });
 
   it('returns a new array each time, so a caller cannot change what others see', () => {
-    getRequiredGroupByLabels().push('team');
+    getDefaultGroupByLabels().push('team');
 
-    expect(getRequiredGroupByLabels()).toEqual(['grafana_folder', 'alertname']);
+    expect(getDefaultGroupByLabels()).toEqual(['grafana_folder', 'alertname']);
     expect(nextGroupBy([])).toEqual(['grafana_folder', 'alertname']);
   });
 });

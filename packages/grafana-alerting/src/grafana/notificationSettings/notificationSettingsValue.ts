@@ -1,6 +1,6 @@
 import { type AlertRuleNotificationSettings } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
-export interface SimplifiedRoutingSettings {
+export interface ContactPointRoutingSettings {
   type: 'SimplifiedRouting';
   receiver: string;
   groupBy?: string[];
@@ -11,13 +11,13 @@ export interface SimplifiedRoutingSettings {
   activeTimeIntervals?: string[];
 }
 
-export interface NamedRoutingTreeSettings {
+export interface PolicyRoutingSettings {
   type: 'NamedRoutingTree';
   routingTree: string;
 }
 
 /** Where an alert rule's notifications go. The selector uses `null` for default routing. */
-export type NotificationSettings = SimplifiedRoutingSettings | NamedRoutingTreeSettings;
+export type NotificationSettings = ContactPointRoutingSettings | PolicyRoutingSettings;
 
 // A copy without the keys set to undefined, so equality checks and serialization see only what is set.
 function withoutUndefined<T extends object>(value: T): T {
@@ -35,12 +35,12 @@ function unsetIfBlank(duration?: string) {
   return duration || undefined;
 }
 
-export function simplifiedRouting(
+export function contactPointRouting(
   receiver: string,
-  options: Omit<SimplifiedRoutingSettings, 'type' | 'receiver'> = {}
-): SimplifiedRoutingSettings {
+  options: Omit<ContactPointRoutingSettings, 'type' | 'receiver'> = {}
+): ContactPointRoutingSettings {
   const { groupBy, groupWait, groupInterval, repeatInterval, muteTimeIntervals, activeTimeIntervals } = options;
-  const value: SimplifiedRoutingSettings = {
+  const value: ContactPointRoutingSettings = {
     type: 'SimplifiedRouting',
     receiver,
     groupBy,
@@ -53,7 +53,7 @@ export function simplifiedRouting(
   return withoutUndefined(value);
 }
 
-export function namedRoutingTree(routingTree: string): NamedRoutingTreeSettings {
+export function policyRouting(routingTree: string): PolicyRoutingSettings {
   return { type: 'NamedRoutingTree', routingTree };
 }
 
@@ -70,7 +70,7 @@ export function toRuleNotificationSettings(
 
   const { type, receiver, groupBy, groupWait, groupInterval, repeatInterval, muteTimeIntervals, activeTimeIntervals } =
     value;
-  const copy: SimplifiedRoutingSettings = {
+  const copy: ContactPointRoutingSettings = {
     type,
     receiver,
     groupBy,
@@ -105,7 +105,7 @@ export function fromRuleNotificationSettings(
     } = rule;
     // Fails to compile when the rules API adds a field this value doesn't carry yet.
     unmapped satisfies Record<string, never>;
-    const value: SimplifiedRoutingSettings = {
+    const value: ContactPointRoutingSettings = {
       type: 'SimplifiedRouting',
       receiver,
       groupBy,

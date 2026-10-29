@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { DISABLE_GROUPING, getDefaultGroupByLabels, nextGroupBy } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Field, FieldValidationMessage, InlineField, MultiSelect, Stack, Switch, Text, useStyles2 } from '@grafana/ui';
@@ -18,14 +19,11 @@ import { TIMING_OPTIONS_DEFAULTS } from '../../../../notification-policies/timin
 
 import { RouteTimings } from './RouteTimings';
 
-const REQUIRED_FIELDS_IN_GROUPBY = ['grafana_folder', 'alertname'];
-
 const DEFAULTS_TIMINGS = {
   groupWaitValue: TIMING_OPTIONS_DEFAULTS.group_wait,
   groupIntervalValue: TIMING_OPTIONS_DEFAULTS.group_interval,
   repeatIntervalValue: TIMING_OPTIONS_DEFAULTS.repeat_interval,
 };
-const DISABLE_GROUPING = '...';
 
 export interface RoutingSettingsProps {
   alertManager: string;
@@ -50,7 +48,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
   // Set default groupBy values when override grouping is enabled and field is empty
   useEffect(() => {
     if (overrideGrouping && (!groupBy || groupBy.length === 0)) {
-      setValue(`contactPoints.${alertManager}.groupBy`, REQUIRED_FIELDS_IN_GROUPBY);
+      setValue(`contactPoints.${alertManager}.groupBy`, getDefaultGroupByLabels());
     }
   }, [overrideGrouping, groupBy, setValue, alertManager]);
 
@@ -70,7 +68,7 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
           <Text variant="body" color="secondary">
             <Trans
               i18nKey="alerting.routing-settings.grouping"
-              values={{ fields: REQUIRED_FIELDS_IN_GROUPBY.join(', ') }}
+              values={{ fields: getDefaultGroupByLabels().join(', ') }}
             >
               Grouping: <strong>{'{{fields}}'}</strong>
             </Trans>
@@ -103,53 +101,13 @@ export const RoutingSettings = ({ alertManager }: RoutingSettingsProps) => {
                     onCreateOption={(opt: string) => {
                       setGroupByOptions((opts) => [...opts, stringToSelectableValue(opt)]);
 
-                      // If '...' is selected, remove it and add required fields + new option
-                      if (currentValues.includes(DISABLE_GROUPING)) {
-                        setValue(`contactPoints.${alertManager}.groupBy`, [...REQUIRED_FIELDS_IN_GROUPBY, opt]);
-                      } else {
-                        // @ts-ignore-check: react-hook-form made me do this
-                        setValue(`contactPoints.${alertManager}.groupBy`, [...field.value, opt]);
-                      }
+                      setValue(`contactPoints.${alertManager}.groupBy`, nextGroupBy([...currentValues, opt]));
                     }}
                     onChange={(value) => {
                       const newValues = mapMultiSelectValueToStrings(value);
-                      const hadDisableGrouping = currentValues.includes(DISABLE_GROUPING);
-                      const nowHasDisableGrouping = newValues.includes(DISABLE_GROUPING);
-
-                      // If user just selected '...', clear all other values
-                      if (nowHasDisableGrouping && !hadDisableGrouping) {
-                        return onChange([DISABLE_GROUPING]);
-                      }
-
-                      // If user added a label while '...' was selected, remove '...' and add required fields
-                      if (hadDisableGrouping && nowHasDisableGrouping && newValues.length > 1) {
-                        const withoutDisable = newValues.filter((v) => v !== DISABLE_GROUPING);
-                        const withRequiredFields = [...REQUIRED_FIELDS_IN_GROUPBY];
-                        for (const val of withoutDisable) {
-                          if (!withRequiredFields.includes(val)) {
-                            withRequiredFields.push(val);
-                          }
-                        }
-                        return onChange(withRequiredFields);
-                      }
-
-                      // If user removed '...', restore the required fields
-                      if (hadDisableGrouping && !nowHasDisableGrouping) {
-                        return onChange(REQUIRED_FIELDS_IN_GROUPBY);
-                      }
-
-                      // If not using '...', ensure required fields are always included
-                      if (!nowHasDisableGrouping) {
-                        const withRequiredFields = [...newValues];
-                        for (const field of REQUIRED_FIELDS_IN_GROUPBY) {
-                          if (!withRequiredFields.includes(field)) {
-                            withRequiredFields.unshift(field);
-                          }
-                        }
-                        return onChange(withRequiredFields);
-                      }
-
-                      return onChange(newValues);
+                      const pickedDisable =
+                        newValues.includes(DISABLE_GROUPING) && !currentValues.includes(DISABLE_GROUPING);
+                      onChange(nextGroupBy(newValues, pickedDisable ? DISABLE_GROUPING : undefined));
                     }}
                     options={[...commonGroupByOptions, ...groupByOptions]}
                   />
