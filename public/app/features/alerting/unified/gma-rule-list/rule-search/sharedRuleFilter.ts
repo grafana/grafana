@@ -6,13 +6,19 @@ import {
 /** What both pages' search filters hold; each page's filter type adds its own filters to it. */
 export interface SharedRuleFilter {
   text: string[];
-  /** Folder UIDs. */
+  /** Folder names as typed; each matches the folders with that exact title, ignoring case. */
   folders: string[];
   /** Query datasource UIDs. */
   dataSourceUids: string[];
   labels: SearchLabelMatcher[];
   hidePluginRules: boolean;
   health?: HealthValue;
+}
+
+/** The rule search filters folders by UID only, so `filter.folders` names are resolved to `folderUids` first. */
+export interface RuleSearchApiArgs<Filter extends SharedRuleFilter> {
+  filter: Filter;
+  folderUids: string[];
 }
 
 /** A filter for either page, empty but for `overrides`, since each page's own filters are optional. */

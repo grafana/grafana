@@ -1532,7 +1532,7 @@
           "contact-point": "Direct contact point (mutually exclusive with policy:).",
           "dashboard": "Dashboard the rule is linked to (canonical value is the dashboard UID).",
           "datasource": "Query data source referenced by the rule (canonical value is the UID).",
-          "folder": "Folder (canonical value is the folder UID).",
+          "folder": "Folder name, matched exactly and ignoring case. Quote a name with spaces: folder:\"Team 01\".",
           "health": "Rule health: ok, nodata, error or unknown.",
           "label": "Label matcher: label:key (exists), label:!key (absent), label:key=value (equal), label:key!=value (not equal), label:key=~re (regex), label:key!~re (not regex). Quote a value with spaces: label:team=\"a b\".",
           "metric": "Recorded metric name (exact match).",

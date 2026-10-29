@@ -10,17 +10,17 @@ const FOLDER_HAS_RULES_LABEL: Record<RuleKind, string> = {
 };
 const FOLDER_HAS_RULES_LABEL_VALUE = 'true';
 
-/** With a folder filter, scopes the listing to those UIDs so counts and paths match what the user filtered to. */
+/** With a folder filter, scopes the listing to folders with those titles, matched exactly and case-insensitively. */
 export function buildFolderListSearchQuery(
   kind: RuleKind,
   continueToken?: string,
-  folderUids: string[] = []
+  folderNames: string[] = []
 ): SearchQuery {
   return {
     apiVersion: 'search.grafana.app/v0alpha1',
     kind: 'SearchQuery',
     labelSelector: { matchLabels: { [FOLDER_HAS_RULES_LABEL[kind]]: FOLDER_HAS_RULES_LABEL_VALUE } },
-    ...(folderUids.length > 0 ? { where: { filter: { field: 'name', operator: 'In', values: folderUids } } } : {}),
+    ...(folderNames.length > 0 ? { where: { filter: { field: 'title', operator: 'In', values: folderNames } } } : {}),
     fields: ['title'],
     sort: [{ field: 'title', direction: 'asc' }],
     limit: DEFAULT_PER_PAGE_PAGINATION,

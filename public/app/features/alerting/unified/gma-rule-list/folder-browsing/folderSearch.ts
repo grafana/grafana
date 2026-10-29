@@ -36,13 +36,13 @@ type FolderSearchResponse = z.infer<typeof folderSearchResponseSchema>;
 
 /**
  * Infinite query keyed by rule kind and folder filter, so a new filter starts again from the first page. The
- * generated search is a POST mutation with no tags or page state.
+ * generated search is a plain query with no page state.
  */
 const folderSearchAPI = folderAPI.injectEndpoints({
   endpoints: (build) => ({
     searchRuleFolders: build.infiniteQuery<
       FolderSearchPage,
-      { kind: RuleKind; folderUids: string[] },
+      { kind: RuleKind; folderNames: string[] },
       string | undefined
     >({
       infiniteQueryOptions: {
@@ -54,7 +54,7 @@ const folderSearchAPI = folderAPI.injectEndpoints({
       query: ({ queryArg, pageParam }) => ({
         url: '/folders/search',
         method: 'POST',
-        body: buildFolderListSearchQuery(queryArg.kind, pageParam, queryArg.folderUids),
+        body: buildFolderListSearchQuery(queryArg.kind, pageParam, queryArg.folderNames),
       }),
       rawResponseSchema: folderSearchResponseSchema,
       // A response that fails the schema becomes a query error, so the page shows it with Retry.

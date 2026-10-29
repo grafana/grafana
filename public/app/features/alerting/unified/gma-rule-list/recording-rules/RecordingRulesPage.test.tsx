@@ -5,9 +5,9 @@ import { locationService, reportInteraction } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 
 import { setupMswServer } from '../../mockApi';
-import { ruleItem } from '../mocks/factories';
-import { failFirstCall, mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
-import { setupRuleListBackend } from '../mocks/ruleListBackend';
+import { folderFactory, folderItem, recordingRuleFactory, ruleItem } from '../mocks/factories';
+import { FOLDER_SEARCH_URL, failFirstCall, mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
+import { type RuleListBackend, setupRuleListBackend } from '../mocks/ruleListBackend';
 
 import RecordingRulesPage from './RecordingRulesPage';
 
@@ -246,6 +246,11 @@ describe('RecordingRulesPage search', () => {
 
   beforeEach(() => {
     mockFolderParents({ 'folder-1': 'Team Metrics' });
+    server.use(
+      http.post(FOLDER_SEARCH_URL, () =>
+        HttpResponse.json({ items: [folderItem('folder-1', 'Team Metrics')], metadata: {} })
+      )
+    );
     ruleSearchBodies = [];
     mockRuleSearch('recording', (body) => {
       ruleSearchBodies.push(body);
@@ -277,11 +282,11 @@ describe('RecordingRulesPage search', () => {
 
   it('restores the input and the request from the URL on load', async () => {
     render(<RecordingRulesPage />, {
-      historyOptions: { initialEntries: ['/?search=folder%3Afolder-1%20metric%3Acpu_usage'] },
+      historyOptions: { initialEntries: ['/?search=folder%3A%22Team%20Metrics%22%20metric%3Acpu_usage'] },
     });
 
     expect(await screen.findByText('cpu:usage:rate5m')).toBeInTheDocument();
-    expect(searchInput()).toHaveValue('folder:folder-1 metric:cpu_usage');
+    expect(searchInput()).toHaveValue('folder:"Team Metrics" metric:cpu_usage');
     expect(ruleSearchBodies.map((body) => body.where)).toEqual([
       {
         and: [
@@ -341,5 +346,57 @@ describe('RecordingRulesPage search', () => {
     expect(searchInput()).toHaveAttribute('aria-invalid', 'true');
     expect(searchInput()).toHaveAccessibleDescription(description);
     expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+  });
+});
+
+describe('RecordingRulesPage folder names', () => {
+  let backend: RuleListBackend;
+
+  beforeEach(() => {
+    backend = setupRuleListBackend({
+      folders: [
+        folderFactory.build({ metadata: { name: 'db-metrics' }, spec: { title: 'Metrics' } }),
+        folderFactory.build({ metadata: { name: 'k8s-metrics' }, spec: { title: 'Metrics' } }),
+      ],
+      recordingRules: [
+        recordingRuleFactory.inFolder('db-metrics').build({ spec: { title: 'db:queries:rate5m' } }),
+        recordingRuleFactory.inFolder('k8s-metrics').build({ spec: { title: 'pod:restarts:rate5m' } }),
+      ],
+    });
+  });
+
+  function renderWithSearch(search: string) {
+    return render(<RecordingRulesPage />, {
+      historyOptions: { initialEntries: [`/?${new URLSearchParams({ search, view: 'list' })}`] },
+    });
+  }
+
+  it('lists the rules of every folder with that name, whatever its case', async () => {
+    renderWithSearch('folder:metrics');
+
+    expect(await screen.findByText('db:queries:rate5m')).toBeInTheDocument();
+    expect(screen.getByText('pod:restarts:rate5m')).toBeInTheDocument();
+    expect(backend.ruleSearches.map((body) => body.where)).toEqual([
+      { filter: { field: 'folder', operator: 'In', values: ['db-metrics', 'k8s-metrics'] } },
+    ]);
+  });
+
+  it('shows the empty state and sends no rule search when no folder has that name', async () => {
+    renderWithSearch('folder:Metric');
+
+    expect(await screen.findByText('No recording rules match this folder')).toBeInTheDocument();
+    expect(backend.ruleSearches).toEqual([]);
+  });
+
+  it('shows a failed folder lookup as a failed load with Retry, and lists the rules after a successful retry', async () => {
+    backend.failNext('folderSearch');
+    const { user } = renderWithSearch('folder:Metrics');
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load recording rules');
+    expect(backend.ruleSearches).toEqual([]);
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('db:queries:rate5m')).toBeInTheDocument();
   });
 });

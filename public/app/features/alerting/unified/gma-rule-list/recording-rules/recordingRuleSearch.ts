@@ -1,3 +1,4 @@
+import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo } from 'react';
 import * as z from 'zod';
 
@@ -6,7 +7,9 @@ import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1'
 import { type ResultTotal } from '../rule-row/ResultCount';
 import { type FilterIssue } from '../rule-search/parser';
 import { getRejectionIssues } from '../rule-search/searchRejection';
+import { type RuleSearchApiArgs } from '../rule-search/sharedRuleFilter';
 import { type RuleListMode } from '../rule-search/useRuleListSearchState';
+import { useRuleSearchApiArgs } from '../rule-search/useRuleSearchApiArgs';
 import { type PagedFailure } from '../shared/PagedFailureAlert';
 
 import { type RecordingRuleFilter } from './recordingRuleFilters';
@@ -37,7 +40,11 @@ type RecordingRuleSearchResponse = z.infer<typeof recordingRuleSearchResponseSch
  */
 const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
-    searchRecordingRules: build.infiniteQuery<RecordingRuleSearchPage, RecordingRuleFilter, string | undefined>({
+    searchRecordingRules: build.infiniteQuery<
+      RecordingRuleSearchPage,
+      RuleSearchApiArgs<RecordingRuleFilter>,
+      string | undefined
+    >({
       infiniteQueryOptions: {
         initialPageParam: undefined,
         getNextPageParam: (lastPage) => lastPage.continueToken || undefined,
@@ -64,8 +71,11 @@ const recordingRuleSearchAPI = generatedAPI.injectEndpoints({
 
 const { useSearchRecordingRulesInfiniteQuery } = recordingRuleSearchAPI;
 
-export function useRecordingRuleSearch(filter: RecordingRuleFilter) {
-  const query = useSearchRecordingRulesInfiniteQuery(filter);
+export function useRecordingRuleSearch(filter: RecordingRuleFilter, { inFolderUid }: { inFolderUid?: string } = {}) {
+  const { search, isLookingUp, lookupError, retryLookup, noMatchingFolder } = useRuleSearchApiArgs(filter, {
+    inFolderUid,
+  });
+  const query = useSearchRecordingRulesInfiniteQuery(search ?? skipToken);
   const { currentData, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = query;
   // Missing from the result type of a query that has not started.
   const isFetchNextPageError = 'isFetchNextPageError' in query && query.isFetchNextPageError;
@@ -76,12 +86,14 @@ export function useRecordingRuleSearch(filter: RecordingRuleFilter) {
   const hasLoaded = pages !== undefined;
   const failure: PagedFailure | undefined =
     hasLoaded && isError ? { kind: isFetchNextPageError ? 'load-more' : 'refresh', error } : undefined;
+  const firstPageError = !hasLoaded && isError ? error : undefined;
 
   return {
     items,
-    isLoading: !hasLoaded && !isError,
+    noMatchingFolder,
+    isLoading: isLookingUp || (search !== undefined && !hasLoaded && !isError),
     // A failed first page replaces the list; a later failure keeps the loaded rows and shows `failure` below them.
-    error: !hasLoaded && isError ? error : undefined,
+    error: lookupError ?? firstPageError,
     failure,
     hasMore: hasNextPage,
     isLoadingMore: isFetchingNextPage,
@@ -90,7 +102,11 @@ export function useRecordingRuleSearch(filter: RecordingRuleFilter) {
     },
     // Refetching reloads every loaded page with fresh continuation tokens, so it also recovers from an expired one.
     retry: () => {
-      void refetch();
+      if (lookupError) {
+        retryLookup();
+      } else {
+        void refetch();
+      }
     },
     // Only the first page's total counts; later pages repeat it and the count never drives paging.
     total: pages?.[0]?.total,
@@ -107,10 +123,11 @@ export function useRecordingRuleSearchRejection(
 ): FilterIssue[] {
   // There is no List search in Folders mode or for a query that doesn't parse, so skip rather than send one.
   const skip = parseIssues.length > 0 || mode === 'folders';
-  const { error } = useSearchRecordingRulesInfiniteQuery(filter, { skip });
+  const { search } = useRuleSearchApiArgs(filter, { skip });
+  const { error } = useSearchRecordingRulesInfiniteQuery(search ?? skipToken);
   return useMemo(
-    () => (skip ? [] : (getRejectionIssues(error, buildRecordingRuleLeaves(filter)) ?? [])),
-    [skip, error, filter]
+    () => (search ? (getRejectionIssues(error, buildRecordingRuleLeaves(search)) ?? []) : []),
+    [error, search]
   );
 }
 

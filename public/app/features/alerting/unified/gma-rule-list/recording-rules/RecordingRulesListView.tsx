@@ -16,7 +16,7 @@ interface ListViewProps {
 }
 
 export function RecordingRulesListView({ filter }: ListViewProps) {
-  const { items, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry, total } =
+  const { items, noMatchingFolder, isLoading, error, failure, hasMore, isLoadingMore, loadMore, retry, total } =
     useRecordingRuleSearch(filter);
 
   if (isLoading) {
@@ -42,7 +42,11 @@ export function RecordingRulesListView({ filter }: ListViewProps) {
     return (
       <EmptyState
         variant="not-found"
-        message={t('alerting.gma-rule-list.recording-rules.no-rules', 'No recording rules found')}
+        message={
+          noMatchingFolder
+            ? t('alerting.gma-rule-list.recording-rules.no-rules-match-folder', 'No recording rules match this folder')
+            : t('alerting.gma-rule-list.recording-rules.no-rules', 'No recording rules found')
+        }
       />
     );
   }

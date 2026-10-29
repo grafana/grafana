@@ -101,12 +101,14 @@ describe('AlertRulesPage Folders mode', () => {
   it('scopes the folder listing to a folder filter and stays in Folders mode', async () => {
     const backend = setup();
 
-    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=folder%3Ateam'] } });
+    render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=folder%3A%22Team%20Alerts%22'] } });
 
     expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
     expect(folderToggles()).toEqual(['Expand Team Alerts']);
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
-    expect(backend.folderSearches[0].where).toEqual({ filter: { field: 'name', operator: 'In', values: ['team'] } });
+    expect(backend.folderSearches[0].where).toEqual({
+      filter: { field: 'title', operator: 'In', values: ['Team Alerts'] },
+    });
     expect(backend.ruleSearches).toEqual([]);
   });
 
@@ -207,7 +209,9 @@ describe('AlertRulesPage Folders mode', () => {
 
   it('switches to List for free text, keeps the folder filter, and disables Folders until it is cleared', async () => {
     const backend = setup();
-    const { user } = render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?search=folder%3Ateam'] } });
+    const { user } = render(<AlertRulesPage />, {
+      historyOptions: { initialEntries: ['/?search=folder%3A%22Team%20Alerts%22'] },
+    });
     await screen.findByRole('link', { name: 'Team Alerts' });
 
     await user.type(screen.getByRole('textbox', { name: 'Search' }), ' cpu{Enter}');
@@ -318,7 +322,7 @@ describe('AlertRulesPage Folders mode', () => {
   it('restarts the folder list from the first page, collapsed, when the folder filter changes', async () => {
     const backend = setup({ pageSize: { folders: 1 } });
     const { user } = render(<AlertRulesPage />, {
-      historyOptions: { initialEntries: [`/?${new URLSearchParams({ search: 'folder:infra folder:team' })}`] },
+      historyOptions: { initialEntries: [`/?${new URLSearchParams({ search: 'folder:Infra folder:"Team Alerts"' })}`] },
     });
     await user.click(await screen.findByRole('button', { name: 'Expand Infra' }));
     await screen.findByRole('link', { name: 'Latency' });
@@ -326,7 +330,7 @@ describe('AlertRulesPage Folders mode', () => {
     expect(await screen.findByRole('link', { name: 'Team Alerts' })).toBeInTheDocument();
 
     await user.tripleClick(screen.getByRole('textbox', { name: 'Search' }));
-    await user.keyboard('folder:infra{Enter}');
+    await user.keyboard('folder:Infra{Enter}');
 
     await waitFor(() => expect(backend.folderSearches.map((body) => body.continue ?? null)).toEqual([null, '1', null]));
     // The same folder reappears under the new filter, but no longer expanded.

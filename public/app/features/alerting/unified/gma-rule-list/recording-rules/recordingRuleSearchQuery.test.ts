@@ -1,14 +1,14 @@
 import { type ListRecordingRuleSearchRulesV0Alpha1RequestBody } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
 import { parse } from '../rule-search/parser';
-import { createRulesApiFilter } from '../rule-search/sharedRuleFilter';
+import { type SharedRuleFilter, createRulesApiFilter } from '../rule-search/sharedRuleFilter';
 
 import { recordingRuleSearchSchema } from './recordingRuleFilters';
 import { buildRecordingRuleSearchQuery } from './recordingRuleSearchQuery';
 
 describe('buildRecordingRuleSearchQuery', () => {
   it('asks for the first 40 rules by title with the fields the row shows, without a state field', () => {
-    expect(buildRecordingRuleSearchQuery(createRulesApiFilter())).toEqual({
+    expect(buildRecordingRuleSearchQuery(search(createRulesApiFilter()))).toEqual({
       apiVersion: 'search.grafana.app/v0alpha1',
       kind: 'SearchQuery',
       where: undefined,
@@ -30,22 +30,30 @@ describe('buildRecordingRuleSearchQuery', () => {
   });
 
   it('passes the continuation token through', () => {
-    expect(buildRecordingRuleSearchQuery(createRulesApiFilter(), 'opaque-token').continue).toBe('opaque-token');
+    expect(buildRecordingRuleSearchQuery(search(createRulesApiFilter()), 'opaque-token').continue).toBe('opaque-token');
   });
 
   it.each<[query: string, where: ListRecordingRuleSearchRulesV0Alpha1RequestBody['where']]>([
     ['metric:cpu_usage', { filter: { field: 'metric', operator: 'In', values: ['cpu_usage'] } }],
     ['targetDatasource:prom-1', { filter: { field: 'targetDatasourceUID', operator: 'In', values: ['prom-1'] } }],
     ['health:ok', { filter: { field: 'health', operator: 'In', values: ['Recording'] } }],
-    ['folder:f1 folder:f2', { filter: { field: 'folder', operator: 'In', values: ['f1', 'f2'] } }],
   ])('builds the where clause for %j', (query, where) => {
-    expect(buildRecordingRuleSearchQuery(parse(query, recordingRuleSearchSchema).filter).where).toEqual(where);
+    expect(buildRecordingRuleSearchQuery(search(parse(query, recordingRuleSearchSchema).filter)).where).toEqual(where);
+  });
+
+  it('filters by the resolved folder UIDs, not the typed names', () => {
+    expect(
+      buildRecordingRuleSearchQuery(search(parse('folder:Metrics', recordingRuleSearchSchema).filter, ['f1', 'f2']))
+        .where
+    ).toEqual({
+      filter: { field: 'folder', operator: 'In', values: ['f1', 'f2'] },
+    });
   });
 
   it('combines several filters in one flat and', () => {
     expect(
       buildRecordingRuleSearchQuery(
-        parse('cpu health:error targetDatasource:prom-1 metric:cpu_usage', recordingRuleSearchSchema).filter
+        search(parse('cpu health:error targetDatasource:prom-1 metric:cpu_usage', recordingRuleSearchSchema).filter)
       ).where
     ).toEqual({
       and: [
@@ -57,3 +65,7 @@ describe('buildRecordingRuleSearchQuery', () => {
     });
   });
 });
+
+function search<Filter extends SharedRuleFilter>(filter: Filter, folderUids: string[] = []) {
+  return { filter, folderUids };
+}

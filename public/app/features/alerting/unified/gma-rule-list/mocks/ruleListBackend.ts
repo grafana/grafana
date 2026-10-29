@@ -102,10 +102,10 @@ export function setupRuleListBackend({
         return intercepted;
       }
 
-      const scope = nameFilterValues(body.where);
+      const titles = titleFilterValues(body.where)?.map((title) => title.toLowerCase());
       const listed = folders
         .filter((folder) => allRules.some((rule) => parentOf(rule) === nameOf(folder)))
-        .filter((folder) => !scope || scope.includes(nameOf(folder)))
+        .filter((folder) => !titles || titles.includes(folder.spec.title.toLowerCase()))
         .sort(byTitle)
         .map((folder) => folderItem(nameOf(folder), folder.spec.title));
       return HttpResponse.json(page(listed, body, pageSize?.folders));
@@ -212,8 +212,9 @@ function leaves(where?: SearchWhere): SearchWhere[] {
   return where.and ?? [where];
 }
 
-function nameFilterValues(where?: SearchWhere) {
-  return leaves(where).find((leaf) => leaf.filter?.field === 'name')?.filter?.values;
+/** Like the folder API, a title filter matches whole titles, ignoring case. */
+function titleFilterValues(where?: SearchWhere) {
+  return leaves(where).find((leaf) => leaf.filter?.field === 'title')?.filter?.values;
 }
 
 function folderFilterValues(where?: SearchWhere) {
