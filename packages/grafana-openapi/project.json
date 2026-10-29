@@ -4,6 +4,7 @@
   "projectType": "library",
   "tags": ["scope:package"],
   "targets": {
-    "build": {}
+    "build": {},
+    "pack:artifacts": {}
   }
 }

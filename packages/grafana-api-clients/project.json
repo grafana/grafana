@@ -4,6 +4,7 @@
   "projectType": "library",
   "tags": ["scope:package", "type:runtime"],
   "targets": {
-    "build": {}
+    "build": {},
+    "pack:artifacts": {}
   }
 }

@@ -6,6 +6,13 @@
     },
     "generate": {
       "cache": true
+    },
+    "pack:artifacts": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --dir {projectRoot} pack --pack-destination \"$PWD/npm-artifacts\""
+      },
+      "cache": false
     }
   },
   "tui": {
