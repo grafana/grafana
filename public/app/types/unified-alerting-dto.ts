@@ -328,7 +328,7 @@ export type PostableRulerRuleGroupDTO = RulerRuleGroupDTO<PostableRuleDTO>;
 
 export type RulerGrafanaRuleGroupDTO = RulerRuleGroupDTO<RulerGrafanaRuleDTO>;
 
-export type RulerCloudRuleGroupDTO = RulerRuleGroupDTO<RulerCloudRuleDTO>;
+type RulerCloudRuleGroupDTO = RulerRuleGroupDTO<RulerCloudRuleDTO>;
 
 export type RulerRulesConfigDTO = { [namespace: string]: RulerRuleGroupDTO[] };
 
