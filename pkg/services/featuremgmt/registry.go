@@ -3454,6 +3454,15 @@ var (
 			Expression:   "1",
 			Generate:     Generate{Go: true},
 		},
+		{
+			Name:         "grafana.panelActionsPopover",
+			Description:  "Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//

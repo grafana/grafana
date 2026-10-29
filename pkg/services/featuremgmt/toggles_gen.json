@@ -3242,6 +3242,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.panelActionsPopover",
+        "resourceVersion": "1792493817898",
+        "creationTimestamp": "2026-10-20T10:56:57Z"
+      },
+      "spec": {
+        "description": "Replaces the dashboard panel menu button and hover widget with a panel actions popover in view and edit mode",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.panelEditNextFeedbackEvent",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-28T18:04:20Z"
