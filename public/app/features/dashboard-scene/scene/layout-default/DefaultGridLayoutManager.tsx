@@ -61,6 +61,7 @@ import { type LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { DashboardGridItem } from './DashboardGridItem';
 import { RowRepeaterBehavior } from './RowRepeaterBehavior';
+import { startGridShadowCheck } from './custom-grid/shadowCheck';
 import { findSpaceForNewPanel } from './findSpaceForNewPanel';
 import { RowActions } from './row-actions/RowActions';
 
@@ -147,6 +148,11 @@ export class DefaultGridLayoutManager
           }
         })
       );
+    }
+
+    const shadowCheck = startGridShadowCheck(this.state.grid);
+    if (shadowCheck) {
+      this._subs.add(shadowCheck);
     }
 
     this._subs.add(
