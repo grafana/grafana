@@ -241,13 +241,13 @@ func TestLegacyResolverRequester(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := acimpl.ProvideAccessControlTest()
 			var observed identity.Requester
-			ac.RegisterScopeAttributeResolver("library.panels:uid:", accesscontrol.ScopeAttributeResolverFunc(
+			ac.RegisterScopeAttributeResolver("library.panels:uid:", accesscontrol.WithRequiredActions(accesscontrol.ScopeAttributeResolverFunc(
 				func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 					var err error
 					observed, err = identity.GetRequester(ctx)
 					return []string{"folders:uid:parent"}, err
 				},
-			))
+			), folder.ActionFoldersRead))
 			s := NewTestService("u-1", []accesscontrol.Permission{
 				{
 					Action: "library.panels:read",
@@ -273,7 +273,7 @@ func TestLegacyResolverRequester(t *testing.T) {
 			tc.want.Permissions = map[int64]map[string][]string{
 				12: {
 					"library.panels:read": {"folders:uid:parent"},
-					"folders:read":        {"folders:uid:parent"},
+					"folders:read":        {"folders:uid:parent", acimpl.SharedWithMeFolderPermission.Scope},
 				},
 			}
 			require.Equal(t, tc.want, observed)
@@ -281,7 +281,7 @@ func TestLegacyResolverRequester(t *testing.T) {
 	}
 }
 
-func TestLegacyResolverContextFailureDenies(t *testing.T) {
+func TestLegacyResolverIgnoresUnrelatedPermissionFailure(t *testing.T) {
 	ac := acimpl.ProvideAccessControlTest()
 	calls := 0
 	ac.RegisterScopeAttributeResolver("dashboards:uid:", accesscontrol.ScopeAttributeResolverFunc(
@@ -296,15 +296,16 @@ func TestLegacyResolverContextFailureDenies(t *testing.T) {
 			Scope:  "folders:uid:parent",
 		},
 	}, nil).WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
-	s.permissionStore = &failingLegacyFolderPermissions{PermissionStore: s.permissionStore}
+	permissions := &failingLegacyFolderPermissions{PermissionStore: s.permissionStore}
+	s.permissionStore = permissions
 	got, err := s.LegacyCheck(legacyCheckContext(t), legacyPermissionRequest("user:u-1", "dashboards:read", "dashboards:uid:one"))
 	require.NoError(t, err)
 	want := &authzextv1.LegacyCheckResponse{
-		Allowed: false,
-		Error:   "could not evaluate legacy expression: could not get legacy identity scopes: could not get legacy identity permissions: could not get user permissions: folder permissions unavailable",
+		Allowed: true,
 	}
 	require.True(t, proto.Equal(want, got), "want %v, got %v", want, got)
-	require.Zero(t, calls)
+	require.Equal(t, 1, calls)
+	require.Zero(t, permissions.folderQueries)
 }
 
 type legacyResolverFolders struct {
@@ -323,6 +324,7 @@ func (s *legacyResolverFolders) GetParents(
 
 type failingLegacyFolderPermissions struct {
 	store.PermissionStore
+	folderQueries int
 }
 
 func (s *failingLegacyFolderPermissions) GetUserPermissions(
@@ -331,6 +333,7 @@ func (s *failingLegacyFolderPermissions) GetUserPermissions(
 	query store.PermissionsQuery,
 ) ([]accesscontrol.Permission, error) {
 	if query.Action == folder.ActionFoldersRead {
+		s.folderQueries++
 		return nil, errors.New("folder permissions unavailable")
 	}
 	return s.PermissionStore.GetUserPermissions(ctx, ns, query)

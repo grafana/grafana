@@ -15,8 +15,9 @@ import (
 // DataSourceCountValidator compares total data_source row count (per org) against
 // the sum of unified storage counts across ALL datasource *.datasource.grafana.app groups.
 type DataSourceCountValidator struct {
-	client     resourcepb.ResourceIndexClient
-	driverName string
+	client             resourcepb.ResourceIndexClient
+	driverName         string
+	enableSQLKVBackend bool
 }
 
 func (v *DataSourceCountValidator) Name() string {
@@ -47,12 +48,13 @@ func (v *DataSourceCountValidator) Validate(ctx context.Context, sess *xorm.Sess
 	var rejectedCount int64
 	for _, summary := range response.Summary {
 		if v.driverName == migrator.SQLite {
-			count, err := sess.Table("resource").
-				Where("namespace = ? AND `group` = ? AND resource = ?",
-					summary.Namespace, summary.Group, summary.Resource).
-				Count()
+			count, err := migrations.CountUnifiedResourcesSQLite(ctx, sess, resource.ListRequestKey{
+				Namespace: summary.Namespace,
+				Group:     summary.Group,
+				Resource:  summary.Resource,
+			}, v.enableSQLKVBackend)
 			if err != nil {
-				return fmt.Errorf("failed to count resource table for %s/%s: %w",
+				return fmt.Errorf("failed to count unified resources for %s/%s: %w",
 					summary.Group, summary.Resource, err)
 			}
 			unifiedCount += count
@@ -101,10 +103,11 @@ func (v *DataSourceCountValidator) Validate(ctx context.Context, sess *xorm.Sess
 // Unlike the standard CountValidation, this aggregates counts across all plugin-specific
 // datasource groups (*.datasource.grafana.app).
 func DataSourceCountValidation() migrations.ValidatorFactory {
-	return func(client resourcepb.ResourceIndexClient, driverName string) migrations.Validator {
+	return func(client resourcepb.ResourceIndexClient, opts migrations.ValidatorOptions) migrations.Validator {
 		return &DataSourceCountValidator{
-			client:     client,
-			driverName: driverName,
+			client:             client,
+			driverName:         opts.DriverName,
+			enableSQLKVBackend: opts.EnableSQLKVBackend,
 		}
 	}
 }

@@ -2,6 +2,7 @@ package router
 
 import (
 	"encoding/json"
+	"errors"
 	"maps"
 	"net/http"
 	"slices"
@@ -9,15 +10,19 @@ import (
 	"time"
 
 	"github.com/sony/gobreaker/v2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 const manifestDiscoveryStatus = manifestDiscoveryPrefix + "/status"
 
-// routerStatusDoc is the router's live status, for debugging. Any
-// authenticated caller can read it, so it holds no credentials, addresses,
-// URLs or error text: only names, states and counts.
+// routerStatusDoc is the router's live status, for debugging. Only Grafana
+// admins can read it, except in development. It still holds no credentials, addresses, URLs or error
+// text: only names, states and counts.
 type routerStatusDoc struct {
 	Ready        bool               `json:"ready"`
 	Reconciler   reconcilerDoc      `json:"reconciler"`
@@ -131,9 +136,37 @@ type breakerStatusDoc struct {
 
 var phaseNames = map[phase]string{starting: "starting", serving: "serving", stopped: "stopped", crashed: "crashed"}
 
-// serveRouterStatus serves the live status. It is built per request, since
-// breaker counts and watches change all the time.
+// authorizeStatus refuses a requester that is not a Grafana admin, as the
+// status describes every group and backend the router serves, whichever
+// namespace they belong to. Where [router] status_open_to_admin is set, which
+// is the default in development, a requester with the Admin role may read it
+// too. That comes from the server's configuration: nothing in the request,
+// such as its Host header, can open it.
+func (r *GrafanaRouter) authorizeStatus(w http.ResponseWriter, req *http.Request) bool {
+	ctx := req.Context()
+	requester, err := identity.GetRequester(ctx)
+	if err != nil || requester == nil {
+		setRoute(req, routeUnauthenticated)
+		_ = errhttp.Write(ctx, apierrors.NewUnauthorized("missing requester"), w)
+		return false
+	}
+	if requester.GetIsGrafanaAdmin() || (r.statusOpenToAdmin && requester.GetOrgRole() == identity.RoleAdmin) {
+		return true
+	}
+	setRoute(req, routeForbidden)
+	_ = errhttp.Write(ctx, apierrors.NewForbidden(
+		schema.GroupResource{Group: "discovery", Resource: "status"}, "",
+		errors.New("the router status is only for admins"),
+	), w)
+	return false
+}
+
+// serveRouterStatus serves the live status to Grafana admins. It is built per
+// request, since breaker counts and watches change all the time.
 func (r *GrafanaRouter) serveRouterStatus(w http.ResponseWriter, req *http.Request) {
+	if !r.authorizeStatus(w, req) {
+		return
+	}
 	body, err := json.MarshalIndent(r.routerStatus(req), "", "  ")
 	if err != nil {
 		logging.FromContext(req.Context()).Error("router: failed to marshal status", "error", err)

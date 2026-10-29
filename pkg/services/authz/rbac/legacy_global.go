@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
-	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 type legacyGlobalIdentity struct {
@@ -123,38 +122,19 @@ func (s *Service) getLegacyGlobalPermissions(
 	return permissions, nil
 }
 
-func (s *Service) legacyGlobalResolverRequester(
-	ctx context.Context,
+func legacyGlobalResolverRequester(
 	req legacyScopeRequest,
 	permissions map[string][]string,
-) (identity.Requester, error) {
+) identity.Requester {
 	requester := req.globalIdentity.requester
-	grants := make(map[string][]string, len(permissions)+1)
+	grants := make(map[string][]string, len(permissions))
 	for action, scopes := range permissions {
 		grants[action] = slices.Clone(scopes)
 	}
 
-	// Library-panel resolution can perform folder visibility checks as the
-	// subject. Load that action explicitly instead of fetching a full snapshot.
-	//
-	// TODO: in the follow-up PRs (of this task https://github.com/grafana/identity-access-team/issues/2436)
-	// we will need to address the issue that ALL resolvers load folder.ActionFoldersRead
-	// even when the resolver does not need it (f.e. datasources)
-	if _, ok := grants[folder.ActionFoldersRead]; !ok {
-		additional, err := s.getLegacyGlobalPermissions(ctx, req.globalIdentity, []string{folder.ActionFoldersRead})
-		if err != nil {
-			return nil, err
-		}
-		// An absent action must stay absent: even a nil scope slice grants
-		// action-only checks when its key is present.
-		if scopes, ok := additional[folder.ActionFoldersRead]; ok {
-			grants[folder.ActionFoldersRead] = scopes
-		}
-	}
-
 	requester.Permissions = map[int64]map[string][]string{accesscontrol.GlobalOrgID: grants}
 
-	return &requester, nil
+	return &requester
 }
 
 func (s *Service) prepareLegacyGlobalEvaluation(

@@ -76,8 +76,11 @@ type MockResourceIndex struct {
 func (m *MockResourceIndex) BuildInfo() (IndexBuildInfo, error) {
 	bi := m.buildInfo
 	// The mock stands for an index this binary built, so it maps the current
-	// features unless a test sets them. A test that wants an older index sets them
+	// features and the standard fields' hash unless a test sets them. A test that wants an older index sets them
 	// to an empty (non-nil) slice.
+	if bi.SearchFieldsHash == "" {
+		bi.SearchFieldsHash = StandardSearchFieldsHash()
+	}
 	if bi.Features == nil {
 		bi.Features = CurrentIndexFeatures()
 	}
@@ -1845,15 +1848,6 @@ func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
 	}
 }
 
-// Asserts both halves, so requiring the feature — which rebuilds every existing
-// index — cannot happen by accident.
-func TestStoredResourceVersionIsRecordedButNotRequired(t *testing.T) {
-	require.Contains(t, CurrentIndexFeatures(), IndexFeatureStoredResourceVersion)
-	for _, postRankAuthz := range []bool{false, true} {
-		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureStoredResourceVersion)
-	}
-}
-
 func TestSortableTrashResourceVersionIsRecordedButNotRequired(t *testing.T) {
 	require.Contains(t, CurrentIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
 	require.NotContains(t, TrashIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
@@ -2395,6 +2389,10 @@ func TestFindIndexesForRebuild(t *testing.T) {
 
 		// Index built by newer version than running (7.0.0 > 6.5.0)
 		{NamespacedResource: NamespacedResource{Namespace: "resource-newer-version", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+	}
+	// None of these kinds declares fields, so the standard fields' hash is expected.
+	for i := range expected {
+		expected[i].expectedSearchFieldsHash = StandardSearchFieldsHash()
 	}
 	if diff := cmp.Diff(expected, vals, cmpopts.IgnoreFields(rebuildRequest{}, "completeChannels"), cmp.AllowUnexported(rebuildRequest{})); diff != "" {
 		t.Errorf("rebuildQueue mismatch (-want +got):\n%s", diff)

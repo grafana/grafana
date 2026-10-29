@@ -8,7 +8,6 @@ import { NOTEBOOK_EDIT_KIND } from '../scene/NotebookEditHistory';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { isEmptyMarkdown } from '../scene/layout-notebook/cellEmptiness';
 import { validateNotebookSpec } from '../schema/notebookSpecSchema';
-import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
 import { type Spec as NotebookSpec } from '../types';
 
 const UNKNOWN_SURVIVORS_WARNING =
@@ -96,9 +95,11 @@ export async function applyNotebookSpec<Refusal = never>(
     }
   }
 
-  const { transformNotebookToScene } = await import(
-    /* webpackChunkName: "notebook-serialization" */ '../serialization/transformNotebookToScene'
-  );
+  // Both are loaded before the scene changes, so a failed import cannot leave it changed but unsaved.
+  const [{ transformNotebookToScene }, { transformNotebookSceneToSaveModel }] = await Promise.all([
+    import(/* webpackChunkName: "notebook-serialization" */ '../serialization/transformNotebookToScene'),
+    import(/* webpackChunkName: "notebook-serialization" */ '../serialization/transformNotebookSceneToSaveModel'),
+  ]);
 
   // Panel cells in the incoming spec are built synchronously by the transform below.
   await getPanelPluginMetasMap();
