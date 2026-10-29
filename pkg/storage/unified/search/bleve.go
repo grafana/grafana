@@ -650,6 +650,17 @@ func (b *bleveBackend) uploadSnapshotsPeriodically(ctx context.Context) {
 }
 
 func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
+	var (
+		seedLookups int
+		seeded      int
+		seedElapsed time.Duration
+	)
+	defer func() {
+		if seedLookups > 0 {
+			b.log.Info("Snapshot upload tick seeded tracking from remote", "looked_up", seedLookups, "seeded", seeded, "elapsed", seedElapsed)
+		}
+	}()
+
 	for _, key := range b.GetOpenIndexes() {
 		idx := b.peekCachedIndex(key)
 		if idx == nil || idx.indexStorage != indexStorageFile {
@@ -672,6 +683,25 @@ func (b *bleveBackend) runUploadSnapshots(ctx context.Context) {
 			b.recordSnapshotUploadStatus(snapshotUploadStatusError)
 			b.log.Warn("failed to evaluate snapshot upload eligibility", "key", key, "err", err)
 			continue
+		}
+		// An index reopened from disk has no tracking even when the store already
+		// holds a copy of its build. shouldUpload is checked first so indexes below
+		// MinDocCount never touch the store; the tracked check is needed because a
+		// tracked index can also be due through the mutation or refresh rules.
+		if _, tracked := b.getUploadTracking(key); shouldUpload && !tracked {
+			seedLookups++
+			seedStart := time.Now()
+			ok := b.seedUploadTrackingFromRemote(ctx, key, idx)
+			seedElapsed += time.Since(seedStart)
+			if ok {
+				seeded++
+				shouldUpload, err = b.shouldUpload(key, idx, time.Now())
+				if err != nil {
+					b.recordSnapshotUploadStatus(snapshotUploadStatusError)
+					b.log.Warn("failed to evaluate snapshot upload eligibility", "key", key, "err", err)
+					continue
+				}
+			}
 		}
 		if !shouldUpload {
 			b.recordSnapshotUploadStatus(snapshotUploadStatusSkipNoChanges)

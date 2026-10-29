@@ -109,6 +109,54 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	return err
 }
 
+// seedUploadTrackingFromRemote records the upload time of the newest remote
+// snapshot of the same build as the open index (matching build version and
+// build time) as this process's last upload, so an index reopened from disk is
+// not re-uploaded when the store already holds a copy. Reports whether it seeded.
+func (b *bleveBackend) seedUploadTrackingFromRemote(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex) bool {
+	logger := b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource)
+
+	bi, err := getBuildInfo(idx.index)
+	if err != nil {
+		logger.Warn("Failed to read index build info; skipping snapshot upload tracking seed", "err", err)
+		return false
+	}
+	// Legacy indexes have no build time, so there is no reliable build identity
+	// to match a remote snapshot against.
+	if bi.BuildTime <= 0 {
+		return false
+	}
+
+	var notOlderThan time.Time
+	if b.opts.Snapshot.MaxIndexAge > 0 {
+		notOlderThan = time.Now().Add(-b.opts.Snapshot.MaxIndexAge)
+	}
+
+	k, meta, err := findFreshSnapshot(ctx, b.opts.Snapshot.Store, key, notOlderThan, bi.BuildVersion, b.maxSupportedIndexFormat, logger, func(meta *IndexMeta) bool {
+		return !meta.BuildTime.IsZero() && meta.BuildTime.Unix() == bi.BuildTime
+	})
+	if err != nil {
+		logger.Warn("Failed to look up remote snapshot for upload tracking seed", "err", err)
+		return false
+	}
+	if meta == nil {
+		return false
+	}
+
+	uploadedAt := meta.UploadTimestamp
+	if uploadedAt.IsZero() {
+		uploadedAt = ulid.Time(k.Time())
+	}
+	b.setUploadTracking(key, uploadedAt)
+	logger.Debug("Seeded snapshot upload tracking from remote snapshot",
+		"snapshot_key", k.String(),
+		"uploaded", uploadedAt,
+		"build_version", bi.BuildVersion,
+		"build_time", time.Unix(bi.BuildTime, 0).UTC(),
+	)
+	return true
+}
+
 // snapshotCopyAndUpload copies idx to a staging dir, reads its metadata,
 // and uploads it to the remote index store. The caller acquires and
 // releases the build lock; this helper only re-checks it between steps.
