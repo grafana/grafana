@@ -237,7 +237,7 @@ func NewAPIBuilder(
 	}
 
 	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
-	resourceLister := resources.NewResourceListerForMigrations(unified)
+	resourceLister := resources.NewResourceListerForMigrations(unified, clients)
 
 	// Create access checker based on mode
 	var accessChecker auth.AccessChecker

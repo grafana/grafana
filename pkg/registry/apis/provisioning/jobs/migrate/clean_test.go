@@ -61,6 +61,10 @@ func (m *mockClients) SupportedResources() []resources.SupportedResource {
 	return resources.SupportedProvisioningResources
 }
 
+func (m *mockClients) Kinds(context.Context) (map[schema.GroupResource]string, error) {
+	return nil, nil
+}
+
 func TestNamespaceCleaner_Clean(t *testing.T) {
 	t.Run("should fail when getting clients fails", func(t *testing.T) {
 		mockClientFactory := resources.NewMockClientFactory(t)

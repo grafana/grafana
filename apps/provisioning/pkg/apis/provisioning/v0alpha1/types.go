@@ -914,6 +914,7 @@ type ResourceListItem struct {
 	Path     string `json:"path"`
 	Group    string `json:"group"`
 	Resource string `json:"resource"`
+	Kind     string `json:"kind"`
 	Name     string `json:"name"` // the k8s identifier
 	Hash     string `json:"hash"`
 	Time     int64  `json:"time,omitempty"`
@@ -969,6 +970,7 @@ func (ManagerStats) OpenAPIModelName() string {
 type ResourceCount struct {
 	Group    string `json:"group"`
 	Resource string `json:"resource"`
+	Kind     string `json:"kind"`
 	Count    int64  `json:"count"`
 }
 
