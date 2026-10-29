@@ -126,9 +126,6 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		token, err := s.signer.SignIDToken(ctx, idClaims)
 		if err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()
-			// Return the error so callers can see it. If we returned nil here, the identity
-			// would get an empty ID token with nothing logged, and plugins that need
-			// X-Grafana-Id would fail with errors that are hard to trace back to this.
 			return resultType{}, fmt.Errorf("failed to sign id token: %w", err)
 		}
 
