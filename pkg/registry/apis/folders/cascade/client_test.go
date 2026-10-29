@@ -80,16 +80,15 @@ func deleteChild(t *testing.T, dyn *dynamicfake.FakeDynamicClient, kind ChildKin
 
 func TestDynamicClients_Delete(t *testing.T) {
 	for _, tc := range []struct {
-		kind  ChildKind
-		gvr   schema.GroupVersionResource
-		obj   func(name string, terminating bool, finalizers ...string) *unstructured.Unstructured
-		force bool
+		kind ChildKind
+		gvr  schema.GroupVersionResource
+		obj  func(name string, terminating bool, finalizers ...string) *unstructured.Unstructured
 	}{
 		{kind: ChildDashboard, gvr: dashboardGVR, obj: unstructuredDashboard},
-		{kind: ChildFolder, gvr: folderGVR, obj: unstructuredFolder, force: true},
+		{kind: ChildFolder, gvr: folderGVR, obj: unstructuredFolder},
 	} {
 		t.Run(string(tc.kind), func(t *testing.T) {
-			t.Run("deletes with uid and resourceVersion preconditions", func(t *testing.T) {
+			t.Run("force-deletes with uid and resourceVersion preconditions", func(t *testing.T) {
 				dyn := newFake(tc.obj("c", false))
 				outcome, err := deleteChild(t, dyn, tc.kind, "c")
 				require.NoError(t, err)
@@ -101,11 +100,8 @@ func TestDynamicClients_Delete(t *testing.T) {
 				pre := dels[0].DeleteOptions.Preconditions
 				require.Equal(t, types.UID("c-uid"), *pre.UID)
 				require.Equal(t, "7", *pre.ResourceVersion)
-				if tc.force {
-					require.Equal(t, int64(0), *dels[0].DeleteOptions.GracePeriodSeconds)
-				} else {
-					require.Nil(t, dels[0].DeleteOptions.GracePeriodSeconds)
-				}
+				require.NotNil(t, dels[0].DeleteOptions.GracePeriodSeconds)
+				require.Equal(t, int64(0), *dels[0].DeleteOptions.GracePeriodSeconds)
 			})
 			t.Run("held by finalizers is pending", func(t *testing.T) {
 				dyn := newFake(tc.obj("c", false, otherFinalizer))
