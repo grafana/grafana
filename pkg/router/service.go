@@ -63,6 +63,7 @@ func ProvideGrafanaRouter(cfg *setting.Cfg) (*GrafanaRouter, error) {
 		}
 	}
 	r := NewGrafanaRouter(nil, auth)
+	r.statusOpen = cfg.Env == setting.Dev
 	r.builtinManifests = manifestsByGroup(resource.AppManifests())
 	return r, nil
 }

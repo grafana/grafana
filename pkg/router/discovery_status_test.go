@@ -11,12 +11,15 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/sony/gobreaker/v2"
 	"github.com/stretchr/testify/require"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type fakeStatusBackend struct {
@@ -36,10 +39,17 @@ func failBreaker(t *testing.T, cb *groupBreaker, n int) {
 	}
 }
 
+func newAdminRequest(method, target string) *http.Request {
+	req := httptest.NewRequest(method, target, nil)
+	return req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
+		Type: types.TypeUser, UserUID: "test-admin", OrgID: 1, Namespace: "*", IsGrafanaAdmin: true,
+	}))
+}
+
 func readStatus(t *testing.T, r *GrafanaRouter) (routerStatusDoc, map[string]groupStatusDoc) {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/status", nil))
+	r.HandleFunc(rec, newAdminRequest(http.MethodGet, "/apis/discovery/v1alpha2/status"))
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 	require.Equal(t, "no-store", rec.Header().Get("Cache-Control"))
 	var doc routerStatusDoc
@@ -49,6 +59,45 @@ func readStatus(t *testing.T, r *GrafanaRouter) (routerStatusDoc, map[string]gro
 		groups[g.Group] = g
 	}
 	return doc, groups
+}
+
+// The status describes every backend the router serves, so only Grafana admins can read it.
+func TestRouterStatusRequiresGrafanaAdmin(t *testing.T) {
+	svc, _, _ := newStatusService(t)
+	const path = "/apis/discovery/v1alpha2/status"
+
+	rec := httptest.NewRecorder()
+	svc.router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil))
+	require.Equal(t, http.StatusForbidden, rec.Code, rec.Body.String())
+	require.NotContains(t, rec.Body.String(), "groups")
+
+	rec = httptest.NewRecorder()
+	svc.router.HandleFunc(rec, httptest.NewRequest(http.MethodGet, path, nil))
+	require.Equal(t, http.StatusUnauthorized, rec.Code, rec.Body.String())
+
+	rec = httptest.NewRecorder()
+	svc.router.HandleFunc(rec, newAdminRequest(http.MethodGet, path))
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+	// A development environment shows it to any authenticated requester, but still not to anonymous ones.
+	svc.router.statusOpen = true
+	rec = httptest.NewRecorder()
+	svc.router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil))
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+	rec = httptest.NewRecorder()
+	svc.router.HandleFunc(rec, httptest.NewRequest(http.MethodGet, path, nil))
+	require.Equal(t, http.StatusUnauthorized, rec.Code, rec.Body.String())
+}
+
+func TestRouterStatusIsOpenInDevelopment(t *testing.T) {
+	for env, open := range map[string]bool{setting.Dev: true, setting.Prod: false} {
+		cfg := setting.NewCfg()
+		cfg.Env = env
+		r, err := ProvideGrafanaRouter(cfg)
+		require.NoError(t, err)
+		require.Equal(t, open, r.statusOpen, env)
+	}
 }
 
 func TestRouterStatus(t *testing.T) {
@@ -199,7 +248,7 @@ func TestStatusReadsDoNotMoveBreakers(t *testing.T) {
 func TestRouterStatusLoaderCounters(t *testing.T) {
 	svc, _, _ := newStatusService(t)
 	rec := httptest.NewRecorder()
-	svc.router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/status", nil))
+	svc.router.HandleFunc(rec, newAdminRequest(http.MethodGet, "/apis/discovery/v1alpha2/status"))
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 
 	var fields map[string]json.RawMessage

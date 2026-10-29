@@ -87,6 +87,10 @@ type GrafanaRouter struct {
 
 	authn authn.TokenAuthenticator
 
+	// statusOpen lets any authenticated requester read the status, as a
+	// development environment has no admin to ask for.
+	statusOpen bool
+
 	// served is the desired-state map, keyed by group: the groups actually
 	// installed into the last reconcile's snapshot. Owned by reconcile (single
 	// goroutine); never read from the serving path.
