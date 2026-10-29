@@ -1460,10 +1460,16 @@
         "rules-error": "",
         "search-issues": ""
       },
+      "datasources": "",
       "interval": "",
+      "recorded-metric": {
+        "records": "",
+        "to": ""
+      },
       "recording-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "result-count": {
         "alert-rules_one": "",
@@ -1544,7 +1550,11 @@
         "recording": "",
         "recovering": "",
         "unavailable": ""
-      }
+      },
+      "labels_one": "",
+      "labels_few": "",
+      "labels_many": "",
+      "labels_other": ""
     },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "Aby zmienić konfigurację menedżera alertów, przejdź do strony Administrator alertów. Jeśli nie masz dostępu, skontaktuj się z administratorem.",
@@ -6041,6 +6051,7 @@
       "panel-repeat-variable": "Powtórz panel wg",
       "panel-title": "zmiana tytułu panelu",
       "paste-panel": "Wklej panel",
+      "paste-panel-styles": "",
       "remove": "Usuń: {{typeName}}",
       "remove-multiple": "Usuń {{typeName}} ({{num}})",
       "rename": "",
@@ -6058,6 +6069,7 @@
       "switch-layout-tab": "Przełącz układ",
       "tab-repeat-variable": "Powtórz kartę według",
       "tab-title": "Zmień tytuł karty",
+      "unlink-library-panel": "",
       "variable-adhoc-default-filters": "",
       "variable-adhoc-default-group-by": "",
       "variable-adhoc-default-keys": "",
@@ -6304,6 +6316,7 @@
       "tooltip-previous": "Wstecz"
     },
     "modes": {
+      "agent-edit": "",
       "change-mode": "",
       "composer": "",
       "composer-description": "",
@@ -8197,7 +8210,7 @@
       }
     },
     "unlink-modal": {
-      "body-unlink-panel": "Jeśli odłączysz ten panel, będzie można go edytować bez wpływu na inne pulpity nawigacyjne. Jednak po dokonaniu zmiany nie będzie można przywrócić oryginalnego panelu wielokrotnego użytku.",
+      "body-unlink-panel": "",
       "confirmText-yes-unlink": "Tak, odłącz",
       "title-really-unlink-panel": "Czy na pewno chcesz odłączyć ten panel?"
     },
@@ -9449,10 +9462,6 @@
       "attribute-category": {
         "other": "Inne"
       },
-      "exception-message": "Wiadomość:",
-      "exception-stacktrace": "Ślad stosu",
-      "exception-title": "Wyjątek",
-      "exception-type": "Typ:",
       "label": {
         "kind": "Rodzaj:",
         "library-name": "Nazwa biblioteki:",
@@ -9560,6 +9569,7 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "Otwórz menu udostępniania i opinii",
+      "copy-trace-id": "",
       "critical-path": "Ścieżka krytyczna",
       "critical-path-tooltip": "Wybiera zakresy na ścieżce krytycznej – najdłuższej sekwencji zależnych zadań określających minimalny czas trwania śledzenia.",
       "duration": "Czas trwania",
@@ -9583,7 +9593,7 @@
       "share-group": "Udostępnij",
       "share-tooltip": "Udostępnianie i opinie",
       "spans": "Odcinki",
-      "start-time": "Godzina rozpoczęcia",
+      "start-time": "",
       "success-indicator": "Śledzenie się powiodło",
       "target": "Cel",
       "tooltip-url": "{{route}} lub {{url}} lub {{target}} lub {{path}}",
@@ -9592,6 +9602,12 @@
       "trace-banner-metrics": "{{duration}} · {{percent}}% śladu",
       "trace-banner-warning": "Baner ostrzegawczy śladu",
       "trace-id": "Identyfikator śledzenia",
+      "trace-summary-error": "",
+      "trace-summary-error-status": "",
+      "trace-summary-hide-stacktrace": "",
+      "trace-summary-show-stacktrace": "",
+      "trace-summary-warning": "",
+      "trace-summary-warning-status": "",
       "url": "URL",
       "warning-indicator": "Dane śledzenia zawierają błędy klienta"
     },
@@ -15249,7 +15265,7 @@
       "resources-to-migrate-empty": "Brak folderów lub zasobów pasujących do bieżącego wyszukiwania.",
       "resources-to-migrate-heading": "Zasoby do przeniesienia",
       "resources-to-migrate-search": "Szukaj folderów i zasobów",
-      "resources-to-migrate-subtitle": "Wybierz całe foldery lub poszczególne zawarte w nich zasoby. Wybranie folderu spowoduje przeniesienie tylko zasobów znajdujących się bezpośrednio w nim – wszystkie elementy w podfolderach zostaną przeniesione razem z danym podfolderem.",
+      "resources-to-migrate-subtitle": "",
       "retain-resources-description": "Zachowaj przeniesione zasoby w tej instancji, gdy żądanie pull jest otwarte, aby pozostały aktywne do momentu scalenia gałęzi. Te zasoby muszą zostać ręcznie usunięte przed scaleniem żądania pull. W przeciwnym razie podczas synchronizacji wystąpią błędy z powodu zasobów powodujących konflikt.",
       "retain-resources-label": "Zachowaj istniejące zasoby podczas przeglądu",
       "retain-resources-warning-body": "Przed scaleniem żądania pull musisz samodzielnie usunąć przeniesione zasoby. Jeśli nadal będą istnieć po scaleniu gałęzi, będą w konflikcie z przychodzącymi zasobami zarządzanymi i nie zostaną uzgodnione.",
@@ -16112,6 +16128,12 @@
       "delete-transformations-confirm-title_many": "Usunąć {{count}} transformacji?",
       "delete-transformations-confirm-title_other": "Usunąć {{count}} transformacji?"
     },
+    "datasource-error": {
+      "load-failed": "",
+      "load-failed-named": "",
+      "not-found": "",
+      "settings-not-found": ""
+    },
     "delete-modal": {
       "body-transformation": "Usunięcie jednej transformacji może spowodować uszkodzenie innych."
     },
@@ -16456,6 +16478,7 @@
       "exchange": "Zmień zakres główny na {{scope}}",
       "expand": "Rozwiń",
       "filter": "",
+      "filterAriaLabel": "",
       "loading": "Ładowanie pulpitów",
       "megaMenuSectionHeading": "",
       "noResultsForFilter": "Nie znaleziono wyników dla tego zapytania",
@@ -16464,7 +16487,6 @@
       "noResultsNoScopes": "Nie wybrano zakresów",
       "toggle": {
         "collapse": "Zwiń listę sugerowanych pulpitów",
-        "disabled": "Lista sugerowanych pulpitów jest wyłączona ze względu na pracę w trybie tylko do odczytu",
         "expand": "Rozwiń listę sugerowanych pulpitów"
       }
     },
@@ -17001,6 +17023,17 @@
     "generate-suggestion": "Wygeneruj sugestię",
     "improve-query": "Ulepsz zapytanie"
   },
+  "st-pod-ready": {
+    "error": {
+      "body-with-support": "",
+      "support-ack": "",
+      "title": "",
+      "title-fallback": ""
+    },
+    "timeout": {
+      "banner": ""
+    }
+  },
   "stars": {
     "mark-as-starred": "Dodaj do ulubionych",
     "mark-as-starred-with-title": "Dodaj „{{title}}” do ulubionych",
@@ -17172,6 +17205,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": ""
+    },
     "login": "Logowanie",
     "manifests": {
       "api-docs": "",
@@ -17871,9 +17907,11 @@
       "placeholder-frame": "Ramka"
     },
     "config-from-query-transformer-editor": {
+      "description-dynamic-field-name-matcher": "",
       "label-apply-to": "Zastosuj do",
       "label-apply-to-options": "Zastosuj do opcji",
-      "label-config-query": "Konfiguruj zapytanie"
+      "label-config-query": "Konfiguruj zapytanie",
+      "name-dynamic-field-name-matcher": ""
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "Dodaj transformator typu Konwersja pól",

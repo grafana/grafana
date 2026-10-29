@@ -1439,10 +1439,16 @@
         "rules-error": "",
         "search-issues": ""
       },
+      "datasources": "",
       "interval": "",
+      "recorded-metric": {
+        "records": "",
+        "to": ""
+      },
       "recording-rules": {
         "no-rules": "",
-        "rules-error": ""
+        "rules-error": "",
+        "search-issues": ""
       },
       "result-count": {
         "alert-rules_other": "",
@@ -1517,7 +1523,8 @@
         "recording": "",
         "recovering": "",
         "unavailable": ""
-      }
+      },
+      "labels_other": ""
     },
     "grafana-alertmanager-delivery-warning": {
       "admin-hint-all": "要更改 Alertmanager 设置，请前往“警报管理”页面。如果您没有访问权限，请与您的管理员联系。",
@@ -5894,6 +5901,7 @@
       "panel-repeat-variable": "面板重复方式",
       "panel-title": "面板标题更改",
       "paste-panel": "粘贴面板",
+      "paste-panel-styles": "",
       "remove": "移除{{typeName}}",
       "remove-multiple": "移除 {{typeName}} ({{num}})",
       "rename": "",
@@ -5911,6 +5919,7 @@
       "switch-layout-tab": "切换布局",
       "tab-repeat-variable": "标签页重复方式",
       "tab-title": "更改选项卡标题",
+      "unlink-library-panel": "",
       "variable-adhoc-default-filters": "",
       "variable-adhoc-default-group-by": "",
       "variable-adhoc-default-keys": "",
@@ -6157,6 +6166,7 @@
       "tooltip-previous": "上一个"
     },
     "modes": {
+      "agent-edit": "",
       "change-mode": "",
       "composer": "",
       "composer-description": "",
@@ -8011,7 +8021,7 @@
       }
     },
     "unlink-modal": {
-      "body-unlink-panel": "如果取消关联此面板，您将能够在不影响任何其他数据面板的情况下对其进行编辑。但是，一旦更改，您将无法恢复到其原始的可重用面板。",
+      "body-unlink-panel": "",
       "confirmText-yes-unlink": "是，取消关联",
       "title-really-unlink-panel": "您确定要取消关联此面板吗？"
     },
@@ -9242,10 +9252,6 @@
       "attribute-category": {
         "other": "其他"
       },
-      "exception-message": "消息：",
-      "exception-stacktrace": "堆栈跟踪",
-      "exception-title": "例外",
-      "exception-type": "类型：",
       "label": {
         "kind": "种类:",
         "library-name": "库名称：",
@@ -9350,6 +9356,7 @@
     },
     "trace-page-header": {
       "aria-label-share-dropdown": "打开共享和反馈菜单",
+      "copy-trace-id": "",
       "critical-path": "关键路径",
       "critical-path-tooltip": "选择关键路径中的跨度——即决定该追踪最短持续时间的、最长的一组相互依赖任务。",
       "duration": "时长",
@@ -9373,7 +9380,7 @@
       "share-group": "共享",
       "share-tooltip": "共享和反馈",
       "spans": "跨度",
-      "start-time": "开始时间",
+      "start-time": "",
       "success-indicator": "跟踪成功",
       "target": "目标",
       "tooltip-url": "{{route}} 或 {{url}} 或 {{target}} 或 {{path}}",
@@ -9382,6 +9389,12 @@
       "trace-banner-metrics": "{{duration}} · {{percent}}% 的跟踪",
       "trace-banner-warning": "跟踪警告横幅",
       "trace-id": "跟踪 ID",
+      "trace-summary-error": "",
+      "trace-summary-error-status": "",
+      "trace-summary-hide-stacktrace": "",
+      "trace-summary-show-stacktrace": "",
+      "trace-summary-warning": "",
+      "trace-summary-warning-status": "",
       "url": "URL",
       "warning-indicator": "跟踪有客户端错误"
     },
@@ -14901,7 +14914,7 @@
       "resources-to-migrate-empty": "没有符合当前搜索条件的文件夹或资源。",
       "resources-to-migrate-heading": "要迁移的资源",
       "resources-to-migrate-search": "搜索文件夹和资源",
-      "resources-to-migrate-subtitle": "选择整个文件夹，或其中的个别资源。选择一个文件夹仅会迁移其中的资源——子文件夹中的任何内容都会通过其自身的文件夹迁移。",
+      "resources-to-migrate-subtitle": "",
       "retain-resources-description": "在拉取请求打开时，将迁移的资源保留在此实例上，以便在合并分支之前保持其有效。这些资源必须在合并拉取请求之前手动删除，否则在同步过程中会因资源冲突而出现错误。",
       "retain-resources-label": "在审核期间保留现有资源",
       "retain-resources-warning-body": "在合并拉取请求之前，您必须自行删除迁移的资源。如果在分支合并时它们仍然存在，它们将与传入的托管资源冲突，并且将不会被协调。",
@@ -15716,6 +15729,12 @@
       "delete-confirm-title_other": "要删除 {{count}} 个项目吗？",
       "delete-transformations-confirm-title_other": "要删除 {{count}} 个转换吗？"
     },
+    "datasource-error": {
+      "load-failed": "",
+      "load-failed-named": "",
+      "not-found": "",
+      "settings-not-found": ""
+    },
     "delete-modal": {
       "body-transformation": "移除一个转换可能会破坏其他转换。"
     },
@@ -16039,6 +16058,7 @@
       "exchange": "将根作用域更改为 {{scope}}",
       "expand": "展开",
       "filter": "",
+      "filterAriaLabel": "",
       "loading": "正在加载数据面板",
       "megaMenuSectionHeading": "",
       "noResultsForFilter": "未找到与您的查询相关的结果",
@@ -16047,7 +16067,6 @@
       "noResultsNoScopes": "未选择范围",
       "toggle": {
         "collapse": "收起建议的数据面板列表",
-        "disabled": "建议的数据面板列表已被禁用，因为当前处于只读模式",
         "expand": "展开建议的数据面板列表"
       }
     },
@@ -16581,6 +16600,17 @@
     "generate-suggestion": "生成建议",
     "improve-query": "改进查询"
   },
+  "st-pod-ready": {
+    "error": {
+      "body-with-support": "",
+      "support-ack": "",
+      "title": "",
+      "title-fallback": ""
+    },
+    "timeout": {
+      "banner": ""
+    }
+  },
   "stars": {
     "mark-as-starred": "标记为收藏",
     "mark-as-starred-with-title": "将“{{title}}”标记为收藏",
@@ -16749,6 +16779,9 @@
     }
   },
   "swagger": {
+    "api-picker": {
+      "preferred": ""
+    },
     "login": "登录",
     "manifests": {
       "api-docs": "",
@@ -17448,9 +17481,11 @@
       "placeholder-frame": "帧"
     },
     "config-from-query-transformer-editor": {
+      "description-dynamic-field-name-matcher": "",
       "label-apply-to": "应用到",
       "label-apply-to-options": "应用到选项",
-      "label-config-query": "配置查询"
+      "label-config-query": "配置查询",
+      "name-dynamic-field-name-matcher": ""
     },
     "convert-field-type-transformer-editor": {
       "aria-label-add-a-convert-field-type-transformer": "添加转换字段类型转换器",

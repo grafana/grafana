@@ -257,16 +257,22 @@ func testIntegrationCreateFolderDuplicateUID(t *testing.T) {
 
 			for _, uid := range []string{"foobar", "FOOBAR"} {
 				t.Run(uid, func(t *testing.T) {
-					if uid != "foobar" && !db.IsTestDbMySQL() {
-						t.Skip("case-variant UID collisions require MySQL's case-insensitive name collation")
-					}
+					resp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{Title: "Folder", UID: uid})
+					if uid == "foobar" || (!backend.sqlKV && db.IsTestDbMySQL()) {
+						var conflict *folders.CreateFolderConflict
+						require.ErrorAs(t, err, &conflict)
+						require.NotNil(t, conflict.Payload.Message)
+						assert.Equal(t, "a folder with the same UID already exists", *conflict.Payload.Message)
+						assert.NotEqual(t, "version-mismatch", conflict.Payload.Status)
+					} else {
+						require.NoError(t, err)
+						require.Equal(t, http.StatusOK, resp.Code())
+						assert.Equal(t, uid, resp.Payload.UID)
 
-					_, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{Title: "Folder", UID: uid})
-					var conflict *folders.CreateFolderConflict
-					require.ErrorAs(t, err, &conflict)
-					require.NotNil(t, conflict.Payload.Message)
-					assert.Equal(t, "a folder with the same UID already exists", *conflict.Payload.Message)
-					assert.NotEqual(t, "version-mismatch", conflict.Payload.Status)
+						distinct, err := adminClient.Folders.GetFolderByUID(uid)
+						require.NoError(t, err)
+						assert.Equal(t, resp.Payload, distinct.Payload)
+					}
 
 					original, err := adminClient.Folders.GetFolderByUID("foobar")
 					require.NoError(t, err)
