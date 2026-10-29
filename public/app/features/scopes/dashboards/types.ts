@@ -1,10 +1,9 @@
 // TODO: replace with generate API client types
-export interface ScopeNavigationSpec {
+interface ScopeNavigationSpec {
   url: string;
   scope: string;
   subScope?: string;
   preLoadSubScopeChildren?: boolean;
-  expandOnLoad?: boolean;
   disableSubScopeSelection?: boolean;
 }
 

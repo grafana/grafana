@@ -79,7 +79,6 @@ describe('ScopesService', () => {
     dashboardsService = {
       state: {
         drawerOpened: false,
-        dashboards: [],
         scopeNavigations: [],
         filteredFolders: {},
         folders: {},
@@ -91,7 +90,6 @@ describe('ScopesService', () => {
       },
       stateObservable: new BehaviorSubject({
         drawerOpened: false,
-        dashboards: [],
         scopeNavigations: [],
         filteredFolders: {},
         folders: {},
