@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -60,7 +59,7 @@ func TestMoveIntoFolderCreatedByUserIsNotEscalation(t *testing.T) {
 
 			u := &user.SignedInUser{
 				OrgID:       1,
-				OrgRole:     identity.RoleType(role),
+				OrgRole:     role,
 				Permissions: map[int64]map[string][]string{1: perms},
 			}
 			svc := folderimpl.NewServiceForMoveTest(acimpl.ProvideAccessControl(featuremgmt.WithFeatures()), folder.NewFakeStore())
