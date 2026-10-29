@@ -5,6 +5,11 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Tag, Tooltip, useStyles2 } from '@grafana/ui';
 
+/**
+ * Fits tags into the space of the container. Shows at least one truncated tag or more if space allows with +N marker
+ * for all the hidden tags that didn't fit. Allows for a prefix to be always displayed before the tags.
+ *
+ */
 export function ResultTags({ tags, prefix }: { tags: string[]; prefix?: ReactNode }) {
   const styles = useStyles2(getStyles);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -15,6 +20,11 @@ export function ResultTags({ tags, prefix }: { tags: string[]; prefix?: ReactNod
   const [visibleCount, setVisibleCount] = useState(1);
   const hasPrefix = Boolean(prefix);
 
+  // Measuring how many tags we can show. The algorithm selects the longest leading
+  // sequence of tags whose full widths, gaps, and remaining-tag count fit in the available space.
+  // When all tags fit, no count is needed. Otherwise, at least the first tag remains visible and
+  // may truncate to leave room for the count; hovering the count reveals all hidden tags as pills.
+  // ResizeObserver recalculates the fit when the available space or measured content sizes change.
   useLayoutEffect(() => {
     const list = listRef.current;
     const container = containerRef.current;
