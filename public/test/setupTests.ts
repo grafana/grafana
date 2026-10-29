@@ -6,12 +6,10 @@ import { configure } from '@testing-library/react';
 import i18next from 'i18next';
 import failOnConsole from 'jest-fail-on-console';
 import path from 'node:path';
-import { createElement } from 'react';
 import { initReactI18next } from 'react-i18next';
 
 import { matchers } from '@grafana/test-utils';
 
-import { setManagedBadge } from '../../packages/grafana-runtime/src/provisioning/ManagedBadge';
 import { setPluginComponentsHook } from '../../packages/grafana-runtime/src/services/pluginExtensions/usePluginComponents';
 import { getEnvConfig } from '../../scripts/cli/env-util';
 
@@ -71,9 +69,6 @@ jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
 // Runtime consumers also need a default hook because tests do not run Grafana's startup registration.
 // Register once per suite so tests can override it with setPluginComponentsHook.
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
-setManagedBadge((props) =>
-  createElement(require('app/features/provisioning/components/ManagedBadge').ManagedBadge, props)
-);
 
 // our tests are heavy in CI due to parallelisation and monaco and kusto
 // so we increase the default timeout to 2secs to avoid flakiness

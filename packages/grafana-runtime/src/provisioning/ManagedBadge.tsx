@@ -4,11 +4,7 @@ import * as React from 'react';
  * @alpha
  */
 export interface ManagedBadgeProps {
-  managerKind?: string;
-  name?: string;
-  isOrphaned?: boolean;
-  repositoryName?: string;
-  sourcePath?: string;
+  resource: { metadata?: { annotations?: Record<string, string | undefined> } };
 }
 
 type ManagedBadgeType = React.ComponentType<ManagedBadgeProps>;
