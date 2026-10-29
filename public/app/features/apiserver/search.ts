@@ -18,7 +18,7 @@ export const SEARCH_API_VERSION = 'search.grafana.app/v0alpha1';
 export const SEARCH_QUERY_KIND = 'SearchQuery';
 
 /** Matches free text against text-capable fields; defaults to `title` when fields is omitted. */
-export interface TextPredicate {
+interface TextPredicate {
   value: string;
   fields?: string[];
 }
@@ -27,7 +27,7 @@ export interface TextPredicate {
  * Set membership against one field. `In` matches any of the values, `NotIn` excludes all of
  * them, and `All` requires the field to hold every value, which only a list field can.
  */
-export interface FilterPredicate {
+interface FilterPredicate {
   field: string;
   operator: 'In' | 'NotIn' | 'All';
   values: string[];
@@ -62,7 +62,7 @@ export interface SearchQueryBody {
   continue?: string;
 }
 
-export interface SearchResourceRef {
+interface SearchResourceRef {
   group: string;
   resource: string;
   kind: string;
@@ -78,15 +78,15 @@ export interface SearchResultItem {
 }
 
 /** `eq` when totalHits is exact, `lte` when it is an upper bound. */
-export type TotalHitsRelation = 'eq' | 'lte';
+type TotalHitsRelation = 'eq' | 'lte';
 
-export interface SearchResultsMetadata {
+interface SearchResultsMetadata {
   continue?: string;
   totalHits: number;
   totalHitsRelation: TotalHitsRelation;
 }
 
-export interface FacetTerm {
+interface FacetTerm {
   value: string;
   count: number;
 }
