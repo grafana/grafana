@@ -35,6 +35,7 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { pastePanelStyles } from '../actions/panel/pastePanelStyles';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
@@ -366,7 +367,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
               panel.state.pluginId,
               getPanelIdForVizPanel(panel) ?? -1
             );
-            dashboard.pastePanelStyles(panel);
+            pastePanelStyles(dashboard, panel);
           },
         });
       }

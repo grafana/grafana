@@ -227,12 +227,25 @@ func TestLegacyCheckInternalResolverRequester(t *testing.T) {
 	tests := []struct {
 		name              string
 		action            string
+		requiredActions   []string
 		wantAllowed       bool
 		wantResolverCalls int
 	}{
 		{
 			name:              "denied action resolves as the internal requester",
 			action:            "users:delete",
+			wantResolverCalls: 1,
+		},
+		{
+			name:              "resolver uses existing profile dependency grants",
+			action:            "users:delete",
+			requiredActions:   []string{"folders:read"},
+			wantResolverCalls: 1,
+		},
+		{
+			name:              "missing profile dependency does not load user permissions",
+			action:            "users:delete",
+			requiredActions:   []string{"users:delete"},
 			wantResolverCalls: 1,
 		},
 		{
@@ -246,7 +259,7 @@ func TestLegacyCheckInternalResolverRequester(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := acimpl.ProvideAccessControlTest()
 			calls := 0
-			ac.RegisterScopeAttributeResolver("users:id:", accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
+			ac.RegisterScopeAttributeResolver("users:id:", accesscontrol.WithRequiredActions(accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 				calls++
 
 				requester, err := identity.GetRequester(ctx)
@@ -258,9 +271,10 @@ func TestLegacyCheckInternalResolverRequester(t *testing.T) {
 				require.True(t, ok)
 				require.Equal(t, identity.InternalIdentityService, profile)
 				require.Equal(t, []string{"*"}, requester.GetPermissions()["folders:read"])
+				require.NotContains(t, requester.GetPermissions(), "users:delete")
 
 				return []string{"users:uid:target"}, nil
-			}))
+			}), tc.requiredActions...))
 
 			registry := acimpl.ProvideScopeResolverRegistry(ac)
 			service := NewTestService(legacyInternalTestUserUID, nil, nil).WithLegacyScopeResolvers(registry, types.OrgNamespaceFormatter)

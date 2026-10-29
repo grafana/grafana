@@ -7,7 +7,7 @@ import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
 import { type DashboardScene } from '../DashboardScene';
-import { isViewingDashboard } from '../dashboardModes';
+import { getDashboardMode } from '../dashboardModes';
 
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
@@ -71,7 +71,8 @@ export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
             key: 'save-dashboard',
             component: SaveDashboard,
             group: 'panel',
-            condition: isEditingDashboard && !isViewingDashboard({ mode, isEditing }) && (canSave || canSaveInFolder),
+            condition:
+              isEditingDashboard && getDashboardMode({ mode, isEditing }) !== 'view' && (canSave || canSaveInFolder),
           },
           {
             key: 'make-dashboard-editable-button',

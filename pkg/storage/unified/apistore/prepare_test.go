@@ -838,14 +838,7 @@ func (f *fakeSearchIndex) Search(_ context.Context, req *resourcepb.ResourceSear
 			if !f.inUse[v] {
 				continue
 			}
-			if req.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
-				rsp.Rows = append(rsp.Rows, &resourcepb.ResourceSearchRow{})
-			} else {
-				if rsp.Results == nil {
-					rsp.Results = &resourcepb.ResourceTable{}
-				}
-				rsp.Results.Rows = append(rsp.Results.Rows, &resourcepb.ResourceTableRow{})
-			}
+			rsp.Rows = append(rsp.Rows, &resourcepb.ResourceSearchRow{})
 		}
 	}
 	return rsp, nil
@@ -858,14 +851,16 @@ func TestSearchResponseHasRows(t *testing.T) {
 		wantErr  bool
 	}{
 		"nil response": {wantErr: true},
-		"old server table": {
-			response: &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{
-				Rows: []*resourcepb.ResourceTableRow{{}},
-			}},
-			want: true,
+		"unspecified format": {
+			response: &resourcepb.ResourceSearchResponse{},
+			wantErr:  true,
 		},
-		"explicit table without rows": {
+		"table format": {
 			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE},
+			wantErr:  true,
+		},
+		"field values without rows": {
+			response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES},
 		},
 		"field values": {
 			response: &resourcepb.ResourceSearchResponse{
