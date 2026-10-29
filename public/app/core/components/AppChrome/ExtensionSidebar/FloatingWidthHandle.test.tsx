@@ -5,7 +5,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { FloatingWidthHandle } from './FloatingWidthHandle';
 import {
   DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH,
-  MAX_EXTENSION_SIDEBAR_WIDTH,
+  MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH,
   MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH,
 } from './constants';
 
@@ -50,7 +50,7 @@ describe('FloatingWidthHandle', () => {
     expect(handle).toHaveAttribute('tabindex', '0');
     expect(handle).toHaveAttribute('aria-valuenow', '500');
     expect(handle).toHaveAttribute('aria-valuemin', String(MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH));
-    expect(handle).toHaveAttribute('aria-valuemax', String(MAX_EXTENSION_SIDEBAR_WIDTH));
+    expect(handle).toHaveAttribute('aria-valuemax', String(MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH));
     // It resizes; it is not the handle the sidebar is moved by.
     expect(handle).not.toHaveAttribute('data-extension-floating-drag-handle');
   });
@@ -79,7 +79,7 @@ describe('FloatingWidthHandle', () => {
     fireEvent.pointerMove(handle, { pointerId: 1, clientX: 2000 });
     expect(onWidthChange).toHaveBeenLastCalledWith(MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH);
     fireEvent.pointerMove(handle, { pointerId: 1, clientX: -5000 });
-    expect(onWidthChange).toHaveBeenLastCalledWith(MAX_EXTENSION_SIDEBAR_WIDTH);
+    expect(onWidthChange).toHaveBeenLastCalledWith(MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH);
   });
 
   it('steps with the arrow keys, Shift for larger steps, and resets on Home or a double-click', () => {

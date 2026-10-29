@@ -59,7 +59,7 @@ const config: KnipConfig = {
   workspaces: {
     '.': {
       ignoreDependencies: [
-        // used by yarn test:ci
+        // used by the test:ci script
         'jest-junit',
 
         // used by coverage script, see jest.config.codeowner.js
@@ -69,7 +69,7 @@ const config: KnipConfig = {
         '@grafana/levitate',
         'wait-on',
 
-        // used via `yarn <bin>` in scripts/validate-npm-packages.sh — knip doesn't detect yarn-invoked binaries
+        // invoked by scripts/validate-npm-packages.sh — knip doesn't detect shell-invoked binaries
         '@arethetypeswrong/cli',
         'publint',
 
@@ -78,6 +78,9 @@ const config: KnipConfig = {
         // react-router-dom-v5-compat wins the hoist). Remove both when core swaps to react-router 6.
         'react-router',
         '@types/react-router',
+
+        // not imported; pinned so pnpm resolves debug's optional peer once instead of duplicating emotion per workspace
+        'supports-color',
       ],
       project: [
         'public/app/**!',

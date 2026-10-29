@@ -193,9 +193,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   table: css({
     maxWidth: `${theme.breakpoints.values.lg}px`,
   }),
-  moreMatches: css({
-    marginTop: theme.spacing(1),
-  }),
   title: css({
     display: 'flex',
     alignItems: 'center',

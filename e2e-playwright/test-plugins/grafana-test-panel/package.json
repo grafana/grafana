@@ -1,6 +1,6 @@
 {
   "name": "@test-plugins/grafana-e2etest-panel",
-  "version": "13.3.0-pre",
+  "version": "13.4.0-pre",
   "private": true,
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
@@ -13,7 +13,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",
-    "@types/node": "24.9.2",
+    "@types/node": "26.6.5",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "i18next-cli": "^1.48.0",
@@ -22,7 +22,7 @@
     "webpack-merge": "5.10.0"
   },
   "engines": {
-    "node": ">= 22 <25"
+    "node": ">= 22 <27"
   },
   "dependencies": {
     "@emotion/css": "11.11.2",

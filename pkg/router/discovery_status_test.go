@@ -3,18 +3,23 @@ package router
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 	"testing/synctest"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/sony/gobreaker/v2"
 	"github.com/stretchr/testify/require"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type fakeStatusBackend struct {
@@ -34,10 +39,17 @@ func failBreaker(t *testing.T, cb *groupBreaker, n int) {
 	}
 }
 
+func newAdminRequest(method, target string) *http.Request {
+	req := httptest.NewRequest(method, target, nil)
+	return req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
+		Type: types.TypeUser, UserUID: "test-admin", OrgID: 1, Namespace: "*", IsGrafanaAdmin: true,
+	}))
+}
+
 func readStatus(t *testing.T, r *GrafanaRouter) (routerStatusDoc, map[string]groupStatusDoc) {
 	t.Helper()
 	rec := httptest.NewRecorder()
-	r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/status", nil))
+	r.HandleFunc(rec, newAdminRequest(http.MethodGet, "/apis/discovery/v1alpha2/status"))
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 	require.Equal(t, "no-store", rec.Header().Get("Cache-Control"))
 	var doc routerStatusDoc
@@ -47,6 +59,83 @@ func readStatus(t *testing.T, r *GrafanaRouter) (routerStatusDoc, map[string]gro
 		groups[g.Group] = g
 	}
 	return doc, groups
+}
+
+// The status describes every backend the router serves, so only Grafana admins can read it.
+func TestRouterStatusRequiresGrafanaAdmin(t *testing.T) {
+	svc, _, _ := newStatusService(t)
+	const path = "/apis/discovery/v1alpha2/status"
+
+	rec := httptest.NewRecorder()
+	svc.router.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, path, nil))
+	require.Equal(t, http.StatusForbidden, rec.Code, rec.Body.String())
+	require.NotContains(t, rec.Body.String(), "groups")
+
+	rec = httptest.NewRecorder()
+	svc.router.HandleFunc(rec, httptest.NewRequest(http.MethodGet, path, nil))
+	require.Equal(t, http.StatusUnauthorized, rec.Code, rec.Body.String())
+
+	rec = httptest.NewRecorder()
+	svc.router.HandleFunc(rec, newAdminRequest(http.MethodGet, path))
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+	// Nothing in the request opens it, not even a Host that looks like a development one.
+	rec = httptest.NewRecorder()
+	req := newAuthenticatedRequest(http.MethodGet, path, nil)
+	req.Host = "stack.grafana-dev.net"
+	svc.router.HandleFunc(rec, req)
+	require.Equal(t, http.StatusForbidden, rec.Code, rec.Body.String())
+}
+
+func TestRouterStatusIsOpenToAdminByConfiguration(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		env     string
+		setting string
+		open    bool
+	}{
+		{name: "development", env: setting.Dev, open: true},
+		{name: "development, setting off", env: setting.Dev, setting: "false"},
+		{name: "production", env: setting.Prod},
+		{name: "production, setting on", env: setting.Prod, setting: "true", open: true},
+		{name: "production, setting off", env: setting.Prod, setting: "false"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.Env = tc.env
+			if tc.setting != "" {
+				cfg.Raw.Section(routerSection).Key(statusOpenKey).SetValue(tc.setting)
+			}
+			r, err := ProvideGrafanaRouter(cfg)
+			require.NoError(t, err)
+			require.Equal(t, tc.open, r.statusOpenToAdmin)
+		})
+	}
+}
+
+// With [router] status_open_to_admin, a requester with the Admin role may read the status, and no lesser one.
+func TestRouterStatusOpenToAdmin(t *testing.T) {
+	svc, _, _ := newStatusService(t)
+	const path = "/apis/discovery/v1alpha2/status"
+	request := func(role identity.RoleType) *http.Request {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		return req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
+			Type: types.TypeUser, UserUID: "test-user", OrgID: 1, Namespace: "*", OrgRole: role,
+		}))
+	}
+	status := func(role identity.RoleType) int {
+		rec := httptest.NewRecorder()
+		svc.router.HandleFunc(rec, request(role))
+		return rec.Code
+	}
+
+	require.Equal(t, http.StatusForbidden, status(identity.RoleAdmin), "off by default")
+
+	svc.router.statusOpenToAdmin = true
+	require.Equal(t, http.StatusOK, status(identity.RoleAdmin))
+	for _, role := range []identity.RoleType{identity.RoleEditor, identity.RoleViewer, identity.RoleNone} {
+		require.Equal(t, http.StatusForbidden, status(role), string(role))
+	}
 }
 
 func TestRouterStatus(t *testing.T) {
@@ -150,11 +239,11 @@ func TestPluginBackendStatus(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, want, got)
 
-	got, ok = (&pluginDeploymentBackend{Backend: backend}).PluginStatus()
-	require.True(t, ok, "the deployment wrapper forwards it")
+	got, ok = (&wrappedBackend{Backend: backend}).PluginStatus()
+	require.True(t, ok, "a wrapper forwards it")
 	require.Equal(t, want, got)
 
-	_, ok = (&pluginDeploymentBackend{Backend: &fakeBackend{}}).PluginStatus()
+	_, ok = (&wrappedBackend{Backend: &fakeBackend{}}).PluginStatus()
 	require.False(t, ok, "no plugin, so no plugin property")
 }
 
@@ -190,4 +279,20 @@ func TestStatusReadsDoNotMoveBreakers(t *testing.T) {
 		require.Equal(t, "ok", groups[group].Health)
 		require.Nil(t, groups[group].Breaker.RetryAt)
 	})
+}
+
+// A loader counter with a status field is a field of the status document; the
+// others are only metrics.
+func TestRouterStatusLoaderCounters(t *testing.T) {
+	svc, _, _ := newStatusService(t)
+	rec := httptest.NewRecorder()
+	svc.router.HandleFunc(rec, newAdminRequest(http.MethodGet, "/apis/discovery/v1alpha2/status"))
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+	var fields map[string]json.RawMessage
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &fields))
+	require.JSONEq(t, `{"cache_hit": 3, "resolved": 1}`, string(fields["stackLookups"]))
+	require.Contains(t, fields, "sources", "the other fields are kept")
+	require.NotContains(t, fields, "stack_discovery_cache_total")
+	require.ElementsMatch(t, []string{"ready", "reconciler", "breakers", "groups", "sources", "shadowed", "stackLookups"}, slices.Collect(maps.Keys(fields)))
 }

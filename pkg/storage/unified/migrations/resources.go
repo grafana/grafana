@@ -43,7 +43,10 @@ func registerMigration(mg *sqlstoremigrator.Migrator,
 	def MigrationDefinition,
 	opts ...ResourceMigrationOption,
 ) {
-	validators := def.CreateValidators(client, mg.Dialect.DriverName())
+	validators := def.CreateValidators(client, ValidatorOptions{
+		DriverName:         mg.Dialect.DriverName(),
+		EnableSQLKVBackend: cfg.EnableSQLKVBackend,
+	})
 	migration := NewResourceMigration(migrator, tableLocker, tableRenamer, cfg, def, validators, opts...)
 	mg.AddMigration(def.MigrationID, migration)
 }

@@ -639,7 +639,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c 
 		TemplateFiles:      amCfg.TemplateFiles,
 		AlertmanagerConfig: amCfg.AlertmanagerConfig,
 	}
-	err = ec.Validate()
+	err = ec.ValidateStrict()
 	if err != nil {
 		logger.Error("Invalid alertmanager configuration", "error", err)
 		return errorToResponse(err)

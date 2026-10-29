@@ -33,6 +33,11 @@ export class VariableOptions extends PageObject {
     });
   }
 
+  /** Returns the warning shown under the name input (e.g. when the name shadows another variable) */
+  getNameWarning(): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole('alert');
+  }
+
   /** Returns the variable label input */
   getLabelInput(): Locator {
     return this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.variableLabelInput);
@@ -48,12 +53,49 @@ export class VariableOptions extends PageObject {
     });
   }
 
-  /** Selects the variable's display option from the dropdown */
-  async selectDisplay(displayLabel: string) {
-    await test.step(`Select variable display "${displayLabel}"`, async () => {
+  /** Returns the variable description textarea */
+  getDescriptionInput(): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole('textbox', {
+      name: 'Description',
+      exact: true,
+    });
+  }
+
+  /** Sets the variable description */
+  async setDescription(description: string) {
+    await test.step(`Set variable description to "${description}"`, async () => {
+      const input = this.getDescriptionInput();
+      await input.fill(description);
+      await input.blur();
+    });
+  }
+
+  /** Switches the selected variable to another type (e.g. "query") through the "Change type" pane */
+  async changeType(variableType: string) {
+    await test.step(`Change variable type to "${variableType}"`, async () => {
+      await this.getByGrafanaSelector(this.selectors.components.PanelEditor.ElementEditPane.changeVariableType).click();
+      await this.selectVariableType(variableType);
+    });
+  }
+
+  /** Opens the variable's display dropdown */
+  async openDisplaySelect() {
+    await test.step('Open variable display dropdown', async () => {
       await this.getByGrafanaSelector(
         this.selectors.pages.Dashboard.Settings.Variables.Edit.General.generalDisplaySelect
       ).click();
+    });
+  }
+
+  /** Returns every option of the open display dropdown, in display order; each option's text is its label followed by its description */
+  getDisplayOptions(): Locator {
+    return this.page.getByRole('listbox').getByRole('option');
+  }
+
+  /** Selects the variable's display option from the dropdown */
+  async selectDisplay(displayLabel: string) {
+    await test.step(`Select variable display "${displayLabel}"`, async () => {
+      await this.openDisplaySelect();
       // the option also renders a description so we can't just use getByRole('option', {name,exact})
       await this.page.getByRole('option').getByText(displayLabel, { exact: true }).click();
     });
