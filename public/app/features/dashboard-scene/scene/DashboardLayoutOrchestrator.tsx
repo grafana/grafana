@@ -16,11 +16,10 @@ import {
 import { useStyles2 } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
-import { moveElement } from '../actions/element/moveElement';
 import { moveGridItem } from '../actions/layout/moveGridItem';
 import { moveRowToTab } from '../actions/layout/moveRowToTab';
+import { moveTabToTabsLayout } from '../actions/layout/moveTabToTabsLayout';
 import { reorderAutoGridItems } from '../actions/layout/reorderAutoGridItems';
-import { ObjectsReorderedOnCanvasEvent, DashboardStateChangedEvent } from '../sidebar/events';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
@@ -514,7 +513,12 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
 
       const realDestinationIndex = destinationManager.mapTabInsertIndex(targetIndex);
       // When moving a tab into a new tab group, make it the active tab.
-      this._moveTabBetweenManagers(this._tabDragState.tab, sourceManager, destinationManager, realDestinationIndex);
+      moveTabToTabsLayout({
+        tab: this._tabDragState.tab,
+        source: sourceManager,
+        destination: destinationManager,
+        index: realDestinationIndex,
+      });
       this.cleanUpTabDrag();
     }
   }
@@ -529,76 +533,6 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private cleanUpTabDrag() {
     this.cleanUpTabDropTarget();
     this._tabDragState = undefined;
-  }
-
-  private _moveTabBetweenManagers(
-    tab: TabItem,
-    source: TabsLayoutManager,
-    destination: TabsLayoutManager,
-    destinationIndex: number
-  ) {
-    const prevSourceTabs = [...source.state.tabs];
-    const prevSourceSlug = source.state.currentTabSlug;
-    const prevDestinationTabs = [...destination.state.tabs];
-    const prevDestinationSlug = destination.state.currentTabSlug;
-
-    moveElement({
-      meta: { actionId: 'tab.move' },
-      source,
-      movedObject: tab,
-      perform: () => {
-        const sourceTabs = [...prevSourceTabs];
-        const destTabs = [...prevDestinationTabs];
-
-        const fromIndex = sourceTabs.findIndex((t) => t === tab);
-        if (fromIndex < 0) {
-          return;
-        }
-
-        sourceTabs.splice(fromIndex, 1);
-
-        const clampedDestinationIndex = Math.max(0, Math.min(destinationIndex, destTabs.length));
-        destTabs.splice(clampedDestinationIndex, 0, tab);
-
-        // If the moved tab was active in source, pick a sensible new active tab.
-        let nextSourceSlug = prevSourceSlug;
-        if (prevSourceSlug === tab.getSlug()) {
-          const newIndex = fromIndex > 0 ? fromIndex - 1 : 0;
-          nextSourceSlug = sourceTabs[newIndex]?.getSlug();
-        }
-
-        // Important: avoid briefly parenting the same SceneObject in two places.
-        // Remove from source first, then clear parent, then add to destination.
-        source.setState({ tabs: sourceTabs, currentTabSlug: nextSourceSlug });
-        tab.clearParent();
-        destination.setState({
-          tabs: destTabs,
-          currentTabSlug: tab.getSlug(),
-        });
-
-        // Make sure outline is refreshed in DashboardSidebar
-        source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
-        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
-
-        // Make sure repeated rows are refreshed - triggers performRowRepeats in RowItemRepeater
-        source.publishEvent(new DashboardStateChangedEvent({ source }), true);
-        destination.publishEvent(new DashboardStateChangedEvent({ source: destination }), true);
-      },
-      undo: () => {
-        // Reverse order for the same parenting reason as in perform().
-        destination.setState({ tabs: prevDestinationTabs, currentTabSlug: prevDestinationSlug });
-        tab.clearParent();
-        source.setState({ tabs: prevSourceTabs, currentTabSlug: prevSourceSlug });
-
-        // Make sure outline is refreshed in DashboardSidebar
-        source.publishEvent(new ObjectsReorderedOnCanvasEvent(source), true);
-        destination.publishEvent(new ObjectsReorderedOnCanvasEvent(destination), true);
-
-        // Make sure repeated rows are refreshed - triggers performRowRepeats in RowItemRepeater
-        source.publishEvent(new DashboardStateChangedEvent({ source }), true);
-        destination.publishEvent(new DashboardStateChangedEvent({ source: destination }), true);
-      },
-    });
   }
 
   private _onRowDragPointerMove = (evt: PointerEvent): void => {
