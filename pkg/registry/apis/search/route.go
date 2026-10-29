@@ -173,11 +173,13 @@ func globalSearchDescription() string {
 		"Each result names its own group, resource and kind, and is authorized on its own.\n\n" +
 		"Only the fields every resource has can be used, plus:\n\n" +
 		"- `" + resource.SEARCH_FIELD_GROUP_RESOURCE + "` (`{group}/{resource}`): filter and facet, to narrow the search to some types or count results per type.\n" +
-		"- `" + resource.SEARCH_FIELD_CREATED + "` and `" + resource.SEARCH_FIELD_UPDATED + "`: also filter (including range) and sort, so results of several types can be ordered by time.\n" +
 		"- `" + resource.SEARCH_FIELD_FOLDER_TREE + "`: filter with `In` only. Matches what is in the named folders or in any folder below them, not the named folders themselves. " +
 		"`general` names the root folder and matches everything; an empty value is rejected.\n\n" +
 		"Results are eventually consistent: just after a change, a search can still return what was there before, " +
-		"and just after a folder moves, a `" + resource.SEARCH_FIELD_FOLDER_TREE + "` search can still find what was below it in its old place."
+		"and just after a folder moves, a `" + resource.SEARCH_FIELD_FOLDER_TREE + "` search can still find what was below it in its old place.\n\n" +
+		"A namespace's index is opened when it is first searched, and closed again after some hours without a search. " +
+		"The first search after that can wait a few seconds, or get 503 while the index is still being built; retry it shortly. " +
+		"It can also miss changes made while the index was closed, until the index catches up with storage."
 }
 
 // globalSearchExample searches one folder and everything below it for

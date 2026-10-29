@@ -1,7 +1,7 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { UNSAFE_PortalProvider } from '@react-aria/overlays';
 import { type Action, KBarProvider } from 'kbar';
-import { type ComponentType, type ReactNode, useEffect, useState } from 'react';
+import { type ComponentType, type ReactNode, useEffect, useState, StrictMode } from 'react';
 import CacheProvider from 'react-inlinesvg/provider';
 import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
@@ -133,40 +133,42 @@ export function AppWrapper({ context }: AppWrapperProps) {
       : ({ children }: { children: ReactNode }) => <>{children}</>;
 
   return (
-    <Provider store={store}>
-      <ErrorBoundaryAlert boundaryName="app-wrapper" style="page">
-        <OpenFeatureProvider client={getFeatureFlagClient()}>
-          <GrafanaContext.Provider value={context}>
-            <ThemeProvider value={config.theme2}>
-              <BrandingContext.Provider value={brandingContextValue}>
-                <CacheProvider name={iconCacheID}>
-                  <KBarProvider
-                    actions={[]}
-                    options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
-                  >
-                    <ScopesContextProvider>
-                      <ExtensionRegistriesProvider registries={registries}>
-                        <ExtensionsSidebarProvider>
-                          <FeatureControlContextProvider>
-                            <UNSAFE_PortalProvider getContainer={getPortalContainer}>
-                              <GlobalStyles />
-                              <div className="grafana-app">
-                                <RouterWrapper {...routerWrapperProps} />
-                                <LiveConnectionWarning />
-                                <PortalContainer />
-                              </div>
-                            </UNSAFE_PortalProvider>
-                          </FeatureControlContextProvider>
-                        </ExtensionsSidebarProvider>
-                      </ExtensionRegistriesProvider>
-                    </ScopesContextProvider>
-                  </KBarProvider>
-                </CacheProvider>
-              </BrandingContext.Provider>
-            </ThemeProvider>
-          </GrafanaContext.Provider>
-        </OpenFeatureProvider>
-      </ErrorBoundaryAlert>
-    </Provider>
+    <StrictMode>
+      <Provider store={store}>
+        <ErrorBoundaryAlert boundaryName="app-wrapper" style="page">
+          <OpenFeatureProvider client={getFeatureFlagClient()}>
+            <GrafanaContext.Provider value={context}>
+              <ThemeProvider value={config.theme2}>
+                <BrandingContext.Provider value={brandingContextValue}>
+                  <CacheProvider name={iconCacheID}>
+                    <KBarProvider
+                      actions={[]}
+                      options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                    >
+                      <ScopesContextProvider>
+                        <ExtensionRegistriesProvider registries={registries}>
+                          <ExtensionsSidebarProvider>
+                            <FeatureControlContextProvider>
+                              <UNSAFE_PortalProvider getContainer={getPortalContainer}>
+                                <GlobalStyles />
+                                <div className="grafana-app">
+                                  <RouterWrapper {...routerWrapperProps} />
+                                  <LiveConnectionWarning />
+                                  <PortalContainer />
+                                </div>
+                              </UNSAFE_PortalProvider>
+                            </FeatureControlContextProvider>
+                          </ExtensionsSidebarProvider>
+                        </ExtensionRegistriesProvider>
+                      </ScopesContextProvider>
+                    </KBarProvider>
+                  </CacheProvider>
+                </BrandingContext.Provider>
+              </ThemeProvider>
+            </GrafanaContext.Provider>
+          </OpenFeatureProvider>
+        </ErrorBoundaryAlert>
+      </Provider>
+    </StrictMode>
   );
 }

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import * as React from 'react';
 import { FixedSizeList as List, type ListChildComponentProps } from 'react-window';
 
@@ -9,6 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../../../themes/ThemeContext';
+import { measureText } from '../../../../utils/measureText';
 import { Checkbox } from '../../../Forms/Checkbox';
 import { Label } from '../../../Forms/Label';
 import { Stack } from '../../../Layout/Stack/Stack';
@@ -19,6 +20,7 @@ interface Props {
   values: SelectableValue[];
   options: SelectableValue[];
   onChange: (options: SelectableValue[]) => void;
+  onWidthChange?: (width: number) => void;
   caseSensitive?: boolean;
   searchFilter: string;
   operator: SelectableValue<FilterOperator>;
@@ -26,8 +28,17 @@ interface Props {
 
 const ITEM_HEIGHT = 32;
 const MIN_HEIGHT = ITEM_HEIGHT * 4.5; // split an item in the middle to imply there are more items to scroll
+const MAX_MEASURED_LABELS = 100;
 
-export const FilterList = ({ options, values, caseSensitive, onChange, searchFilter, operator }: Props) => {
+export const FilterList = ({
+  options,
+  values,
+  caseSensitive,
+  onChange,
+  onWidthChange,
+  searchFilter,
+  operator,
+}: Props) => {
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const predicate = useMemo(() => {
     if (!searchFilter || operator.value === FilterOperator.CONTAINS) {
@@ -52,6 +63,20 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
       }),
     [options, regex, predicate]
   );
+  const theme = useTheme2();
+  const widestLabel = useMemo(() => {
+    if (!onWidthChange) {
+      return 0;
+    }
+    const candidates =
+      options.length > MAX_MEASURED_LABELS
+        ? [...options].sort((a, b) => (b.label?.length ?? 0) - (a.label?.length ?? 0)).slice(0, MAX_MEASURED_LABELS)
+        : options;
+    return candidates.reduce(
+      (width, item) => Math.max(width, measureText(item.label ?? '', parseFloat(theme.typography.size.md)).width),
+      0
+    );
+  }, [onWidthChange, options, theme.typography.size.md]);
   const selectedItems = useMemo(() => items.filter((item) => values.includes(item)), [items, values]);
 
   const selectCheckValue = useMemo(() => items.length === selectedItems.length, [items, selectedItems]);
@@ -82,7 +107,12 @@ export const FilterList = ({ options, values, caseSensitive, onChange, searchFil
   );
 
   const styles = useStyles2(getStyles);
-  const theme = useTheme2();
+  useEffect(() => {
+    if (onWidthChange) {
+      const textWidth = widestLabel;
+      onWidthChange(Math.min(360, Math.max(280, Math.ceil(textWidth + 64))));
+    }
+  }, [widestLabel, onWidthChange]);
   const gutter = theme.spacing.gridSize / 2;
   const height = useMemo(() => Math.min(items.length * ITEM_HEIGHT, MIN_HEIGHT) + gutter, [gutter, items.length]);
 
@@ -177,6 +207,18 @@ const getStyles = memoize((theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     padding: theme.spacing(0.5),
+
+    '& > label': {
+      width: '100%',
+      minWidth: 0,
+      gridTemplateColumns: `${theme.spacing(2)} minmax(0, 1fr)`,
+    },
+    '& > label > span': {
+      minWidth: 0,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    },
 
     ':hover': {
       backgroundColor: theme.colors.action.hover,

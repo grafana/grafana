@@ -158,6 +158,14 @@ export const ScaleDistributionEditor = ({
     value?.linearThreshold != null ? String(value.linearThreshold) : ''
   );
   const [linearThresholdWarning, setLinearThresholdWarning] = useState<string | undefined>();
+  const threshold = value?.linearThreshold;
+  const [previousThreshold, setPreviousThreshold] = useState(threshold);
+
+  if (!Object.is(previousThreshold, threshold)) {
+    setPreviousThreshold(threshold);
+    setLocalLinearThreshold(threshold == null ? '' : String(threshold));
+    setLinearThresholdWarning(undefined);
+  }
 
   const DISTRIBUTION_OPTIONS: Array<SelectableValue<ScaleDistribution>> = [
     {
