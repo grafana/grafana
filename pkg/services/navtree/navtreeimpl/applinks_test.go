@@ -612,7 +612,7 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 
 	// The Observability section only exists once an app targeting it is processed,
 	// and the agent app sorts first by plugin id — so its own relocated page has to
-	// be placed after every app, or the section is not there to receive it.
+	// be placed after addPluginToSection, or the section is not there to receive it.
 	t.Run("the agent app's coding agents page sits beside Agent, even when it is the only Observability app", func(t *testing.T) {
 		service := newService([]pluginstore.Plugin{agentApp})
 
@@ -1220,10 +1220,7 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 			dashboards := &navtree.NavLink{Id: navtree.NavIDDashboards, SortWeight: navtree.WeightDashboard}
 			explore := &navtree.NavLink{Id: navtree.NavIDExplore, SortWeight: navtree.WeightExplore}
 			tree := navtree.NavTreeRoot{Children: []*navtree.NavLink{dashboards, explore}}
-			_, standalonePages := service.processAppPlugin(plugin, reqCtx, &tree)
-			for _, page := range standalonePages {
-				service.addStandalonePage(&tree, page)
-			}
+			service.processAppPlugin(plugin, reqCtx, &tree)
 			ai := tree.FindById("plugin-page-" + assistantAppID)
 			require.NotNil(t, ai)
 			require.Len(t, ai.Children, 1)

@@ -60,7 +60,6 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 	}
 
 	enabledAccessibleAppPluginMap := make(map[string]*pluginstore.Plugin)
-	var standalonePages []standalonePage
 	assistantAppEnabled := false
 	assistantOnboardingAppEnabled := false
 
@@ -81,18 +80,9 @@ func (s *ServiceImpl) addAppLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel
 		}
 
 		enabledAccessibleAppPluginMap[plugin.ID] = &plugin
-		appNode, pages := s.processAppPlugin(plugin, c, treeRoot)
-		standalonePages = append(standalonePages, pages...)
-		if appNode != nil {
+		if appNode := s.processAppPlugin(plugin, c, treeRoot); appNode != nil {
 			appLinks = append(appLinks, appNode)
 		}
-	}
-
-	// Only once every app has been processed: a page relocated into the same
-	// section as its own app needs that section to exist, and sections are
-	// created on demand by the first app targeting them (addPluginToSection).
-	for _, page := range standalonePages {
-		s.addStandalonePage(treeRoot, page)
 	}
 
 	if assistantOnboardingAppEnabled && !assistantAppEnabled {
@@ -175,43 +165,14 @@ type pendingInclude struct {
 	isPage bool
 }
 
-// A plugin page that navigationAppPathConfig relocates out of its app, with the
-// section it belongs in
+// A page that navigationAppPathConfig relocates out of its app, with the section
+// it belongs in
 type standalonePage struct {
 	link      *navtree.NavLink
 	sectionID string
 }
 
-// addStandalonePage places a relocated page at the top level, or into the
-// section it names. Call it once every app plugin has been processed, so the
-// sections apps create on demand are all there.
-func (s *ServiceImpl) addStandalonePage(treeRoot *navtree.NavTreeRoot, page standalonePage) {
-	if page.sectionID == navtree.NavIDRoot {
-		treeRoot.AddSection(page.link)
-		return
-	}
-
-	sectionForPage := treeRoot.FindById(page.sectionID)
-	if sectionForPage == nil {
-		return
-	}
-
-	// Check if the section already has a page with the same URL, and in that case override it
-	// (This only happens if it is explicitly set by `navigation.app_standalone_pages` in the INI config)
-	for _, child := range sectionForPage.Children {
-		if child.Url == page.link.Url {
-			child.Id = page.link.Id
-			child.SortWeight = page.link.SortWeight
-			child.PluginID = page.link.PluginID
-			child.Children = []*navtree.NavLink{}
-			return
-		}
-	}
-
-	sectionForPage.Children = append(sectionForPage.Children, page.link)
-}
-
-func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) (*navtree.NavLink, []standalonePage) {
+func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmodel.ReqContext, treeRoot *navtree.NavTreeRoot) *navtree.NavLink {
 	hasAccessToInclude := s.hasAccessToInclude(c, plugin.ID)
 	assistantTrialMode := s.isAssistantTrialMode(plugin, c)
 	assistantOSSMode, assistantOSSModeSet := s.assistantOSSMode(plugin, c)
@@ -235,7 +196,18 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 	var pending []pendingInclude
 	var pageLinks []*navtree.NavLink
+
+	// Pages that navigationAppPathConfig relocates out of this app, by the section
+	// they belong in. Deferred, because a page relocated into the same section as
+	// its own app needs that section, and addPluginToSection only creates it below
+	// — on every return path, since an app placed by its relocated page alone
+	// leaves the tree before reaching that point.
 	var standalonePages []standalonePage
+	defer func() {
+		for _, page := range standalonePages {
+			s.addStandalonePage(treeRoot, page.link, page.sectionID)
+		}
+	}()
 
 	for _, include := range plugin.Includes {
 		if !hasAccessToInclude(include) {
@@ -288,9 +260,9 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 					link.Text = pathConfig.Text
 				}
 
-				// Handed back for the caller to place once every app has been
-				// processed, and relocated out of the app, so the page takes no part
-				// in the second pass that attaches the app's own pages below.
+				// Placed by the deferred call above, not here. Standalone pages are
+				// relocated out of the app, so they don't take part in the second
+				// pass that attaches the app's own pages below.
 				standalonePages = append(standalonePages, standalonePage{link: link, sectionID: pathConfig.SectionID})
 			} else if include.AddToNav {
 				pending = append(pending, pendingInclude{link: link, isPage: true})
@@ -318,10 +290,9 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 
 	attachPendingIncludes(appLink, pending, pageLinks, nestByPath)
 
-	// Apps without any nav children are not part of navtree — though their
-	// relocated pages still are, so those are handed back either way
+	// Apps without any nav children are not part of navtree
 	if len(appLink.Children) == 0 {
-		return nil, standalonePages
+		return nil
 	}
 	// If we only have one child and it's the app default nav then remove it from children
 	if len(appLink.Children) == 1 && appLink.Children[0].Url == appLink.Url {
@@ -354,7 +325,35 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 		}
 	}
 
-	return nil, standalonePages
+	return nil
+}
+
+// addStandalonePage places a page relocated out of its app by
+// navigationAppPathConfig, at the top level or into the section it names.
+func (s *ServiceImpl) addStandalonePage(treeRoot *navtree.NavTreeRoot, link *navtree.NavLink, sectionID string) {
+	if sectionID == navtree.NavIDRoot {
+		treeRoot.AddSection(link)
+		return
+	}
+
+	sectionForPage := treeRoot.FindById(sectionID)
+	if sectionForPage == nil {
+		return
+	}
+
+	// Check if the section already has a page with the same URL, and in that case override it
+	// (This only happens if it is explicitly set by `navigation.app_standalone_pages` in the INI config)
+	for _, child := range sectionForPage.Children {
+		if child.Url == link.Url {
+			child.Id = link.Id
+			child.SortWeight = link.SortWeight
+			child.PluginID = link.PluginID
+			child.Children = []*navtree.NavLink{}
+			return
+		}
+	}
+
+	sectionForPage.Children = append(sectionForPage.Children, link)
 }
 
 func (s *ServiceImpl) canCreateAssistantPage(plugin pluginstore.Plugin, include *plugins.Includes, c *contextmodel.ReqContext) bool {
