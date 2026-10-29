@@ -6,7 +6,7 @@ import { getKindDiscoveryHandler, getKindSearchHandler, kindSearchRoute } from '
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   getFolderFixtures,
-  MOCK_STARRED_KIND,
+  MOCK_STARRED_KIND_PAGE,
   MOCK_STARRED_KIND_SERVED,
   setMockStarredDashboards,
   setMockStarredFolders,
@@ -19,7 +19,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { useSelector } from 'app/types/store';
 
 import { useSyncStarredItemsInNav } from './hooks';
-import { registerStarredKind } from './kinds';
+import { resetStarredKinds } from './kinds';
 
 jest.mock('app/features/search/service/searcher');
 
@@ -31,23 +31,20 @@ const starredDashboards = [dashbdD.item, folderA_dashbdD.item];
 // A plugin kind's name is whatever its API uses; this one is a UUID
 const THING_UUID = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
 const THING_URL = `/a/test-things-app/things/${THING_UUID}`;
-const { group: THING_GROUP, kind: THING_KIND } = MOCK_STARRED_KIND;
+const { group: THING_GROUP, kind: THING_KIND } = MOCK_STARRED_KIND_SERVED;
 
 setBackendSrv(backendSrv);
 contextSrv.isSignedIn = true;
 setupMockServer();
 
-const unregisters: Array<() => void> = [];
-
-/** Registers the Thing kind and serves it, so the sync resolves it through its own search. */
+/** Serves the Thing kind through discovery, so the sync finds its plugin page and resolves it through its own search. */
 function installThingsApp() {
-  unregisters.push(registerStarredKind(MOCK_STARRED_KIND));
   server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
 }
 
 afterEach(() => {
-  // Forget the plugin kind: the registry outlives a test
-  unregisters.splice(0).forEach((unregister) => unregister());
+  // Forget the app kinds: the cache outlives a test
+  resetStarredKinds();
 });
 
 /** Renders the hook plus a read-only component that reflects Redux starred state */
@@ -97,10 +94,11 @@ function setupSearchMock(items: Array<{ uid: string; name: string; url: string; 
 
 describe('useSyncStarredItemsInNav', () => {
   beforeEach(() => {
-    // Provide a starred section in the nav tree so the reducer has a target
+    // A starred section for the reducer to fill, and the mock plugin's page that makes its kind one Grafana can show
     config.bootData.navTree = [
       { id: 'home', text: 'Home', url: '/' },
       { id: 'starred', text: 'Starred', children: [] },
+      MOCK_STARRED_KIND_PAGE,
     ];
   });
 
@@ -185,7 +183,7 @@ describe('useSyncStarredItemsInNav', () => {
     expect(screen.getByTestId('starred-list').children).toHaveLength(0);
   });
 
-  it('turns on kind icons for dashboards once a kind is registered', async () => {
+  it('turns on kind icons for dashboards once an app kind is listed', async () => {
     const dashUid = dashbdD.item.uid;
     setMockStarredDashboards([dashUid]);
     setMockStarredPluginKind(THING_GROUP, THING_KIND, [THING_UUID]);
@@ -208,33 +206,32 @@ describe('useSyncStarredItemsInNav', () => {
     expect(screen.getByTestId(`synced-starred/${THING_UUID}`)).toHaveAttribute('data-icon', 'cube');
   });
 
-  it('re-syncs the nav when a plugin registers its kind after the first sync', async () => {
+  it('loads the app kinds only once the stars hold one, then lists it', async () => {
     const dashUid = dashbdD.item.uid;
     setMockStarredDashboards([dashUid]);
-    setMockStarredPluginKind(THING_GROUP, THING_KIND, [THING_UUID]);
-    server.use(
-      getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
-      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: THING_UUID, title: 'My Thing' }])
-    );
+    const discovery = jest.fn(() => HttpResponse.json({ items: [] }));
+    server.use(http.get('/apis', discovery));
     setupSearchMock([{ uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' }]);
 
-    render(<TestHarness />);
+    const { unmount } = render(<TestHarness />);
 
-    // Nobody has registered the kind yet, so the first sync lists the dashboard alone
+    // Dashboards alone need no discovery
     await waitFor(() => {
       expect(screen.getByTestId(`synced-starred/${dashUid}`)).toBeInTheDocument();
     });
-    expect(screen.queryByTestId(`synced-starred/${THING_UUID}`)).not.toBeInTheDocument();
+    expect(discovery).not.toHaveBeenCalled();
+    unmount();
 
-    // The plugin module loads late and registers; the nav catches up without a new star
-    act(() => {
-      unregisters.push(registerStarredKind(MOCK_STARRED_KIND));
-    });
+    setMockStarredPluginKind(THING_GROUP, THING_KIND, [THING_UUID]);
+    installThingsApp();
+    server.use(getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: THING_UUID, title: 'My Thing' }]));
+
+    render(<TestHarness />);
 
     await waitFor(() => {
       expect(screen.getByTestId(`synced-starred/${THING_UUID}`)).toHaveTextContent('My Thing');
     });
-    expect(screen.getByTestId(`synced-starred/${dashUid}`)).toHaveAttribute('data-icon', 'apps');
+    expect(screen.getByTestId(`synced-starred/${THING_UUID}`)).toHaveAttribute('data-url', THING_URL);
   });
 
   it('keeps dashboards in the nav and reports no error when a plugin kind API is unavailable', async () => {
@@ -258,10 +255,11 @@ describe('useSyncStarredItemsInNav', () => {
     expect(screen.queryByTestId(`synced-starred/${THING_UUID}`)).not.toBeInTheDocument();
   });
 
-  it('drops stars of a kind nobody registered', async () => {
+  it('drops stars of a kind no plugin lists', async () => {
     const dashUid = dashbdD.item.uid;
     setMockStarredDashboards([dashUid]);
     setMockStarredPluginKind('gone.ext.grafana.app', 'Ghost', ['g1']);
+    server.use(getKindDiscoveryHandler());
     const mockSearcher = setupSearchMock([
       { uid: dashUid, name: 'My Dashboard', url: `/d/${dashUid}`, kind: 'dashboard' },
     ]);
@@ -281,11 +279,6 @@ describe('useSyncStarredItemsInNav', () => {
   describe('when starredFolders is enabled', () => {
     beforeEach(() => {
       setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
-      // Provide a starred section in the nav tree so the reducer has a target
-      config.bootData.navTree = [
-        { id: 'home', text: 'Home', url: '/' },
-        { id: 'starred', text: 'Starred', children: [] },
-      ];
     });
 
     afterEach(async () => {

@@ -1,5 +1,5 @@
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { type StarsList, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { setStarredItems, type StarredNavItem } from 'app/core/reducers/navBarTree';
@@ -10,10 +10,11 @@ import { dispatch } from 'app/store/store';
 import { searchStarredResources } from './kindSearch';
 import {
   getStarredKinds,
-  getStarredKindsVersion,
+  type KindSearchStarredKind,
+  loadStarredKindsFor,
+  resolvesThroughKindSearch,
   type StarredKind,
   starredNavEntry,
-  subscribeStarredKinds,
 } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
@@ -81,8 +82,8 @@ async function resolveThroughDashboardSearch(byKind: StarredNamesByKind, uids: s
   return items;
 }
 
-/** Nav items for a registered kind, resolved through the kind's own search endpoint. */
-async function resolveThroughKindSearch(kind: StarredKind, names: string[]): Promise<StarredNavItem[]> {
+/** Nav items for an app kind, resolved through the kind's own search endpoint. */
+async function resolveThroughKindSearch(kind: KindSearchStarredKind, names: string[]): Promise<StarredNavItem[]> {
   const resources = await searchStarredResources(kind, names);
   return resources.map((resource) => ({
     ...starredNavEntry(kind, resource.name),
@@ -92,11 +93,12 @@ async function resolveThroughKindSearch(kind: StarredKind, names: string[]): Pro
 }
 
 /**
- * Resolves the user's stars to nav items. A registered kind whose API is unavailable contributes
+ * Resolves the user's stars to nav items. An app kind whose API is unavailable contributes
  * nothing rather than failing the sync; the dashboard search failing rejects, as it did before
- * registered kinds existed.
+ * app kinds existed.
  */
 async function resolveStarredNavItems(stars: StarsList): Promise<{ uids: string[]; items: StarredNavItem[] }> {
+  await loadStarredKindsFor(stars);
   const kinds = getStarredKinds();
   const starredNames = (kind: StarredKind) => findStarredNames(stars, kind.group, kind.kind);
   // Dedupe so a name starred as several kinds can't occupy two cap slots or render twice
@@ -109,13 +111,13 @@ async function resolveStarredNavItems(stars: StarsList): Promise<{ uids: string[
 
   const [dashboardSearchItems, kindSearchItems] = await Promise.all([
     resolveThroughDashboardSearch(
-      byKind.filter(({ kind }) => kind.source === 'dashboard-search'),
+      byKind.filter(({ kind }) => !resolvesThroughKindSearch(kind)),
       uids
     ),
     Promise.all(
-      byKind
-        .filter(({ kind }) => kind.source === 'kind-search')
-        .map(({ kind, names }) => resolveThroughKindSearch(kind, names))
+      byKind.flatMap(({ kind, names }) =>
+        resolvesThroughKindSearch(kind) ? [resolveThroughKindSearch(kind, names)] : []
+      )
     ),
   ]);
   return { uids, items: [...dashboardSearchItems, ...kindSearchItems.flat()] };
@@ -129,8 +131,6 @@ export const useSyncStarredItemsInNav = () => {
   const { data: stars, isLoading, isError } = useListStarsQuery({ fieldSelector: userStarsFieldSelector() });
   // Read during render so the sync re-runs when the flag flips, since it decides which kinds are listed
   const foldersEnabled = starredFoldersEnabled();
-  // A plugin registers its kinds as its module loads, which can be after the first sync
-  const kindsVersion = useSyncExternalStore(subscribeStarredKinds, getStarredKindsVersion);
 
   // Initialized from the stars query so a remount with a warm RTK cache doesn't
   // flash a loading state — the nav tree is already correct from the prior sync
@@ -179,7 +179,7 @@ export const useSyncStarredItemsInNav = () => {
     };
     // `stars` only changes in step with starsKey, which is the identity the sync keys on
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [starsKey, isLoading, foldersEnabled, kindsVersion]);
+  }, [starsKey, isLoading, foldersEnabled]);
 
   return { isLoading: isLoading || !hasSynced, isError: isError || searchFailed };
 };

@@ -1,22 +1,19 @@
 import { isEqual } from 'lodash';
 import { defer, distinctUntilChanged, filter, finalize, from, map, type Observable, of } from 'rxjs';
 
-import { type StarredKindRegistration, type StarredResourceRef, type StarsSrv } from '@grafana/runtime';
+import { type StarredResourceRef, type StarsSrv } from '@grafana/runtime';
 import { collectionsAPIv1alpha1, type StarsList } from 'app/api/clients/collections/v1alpha1';
 import { setStarred } from 'app/core/reducers/navBarTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch, store } from 'app/store/store';
 
-import { findStarredKind, registerStarredKind, starredNavEntry } from './kinds';
+import { findStarredKind, isGrafanaKind, loadStarredKinds, starredNavEntry } from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
 
 /** Stars objects over the collections API and keeps Grafana's Starred nav and lists in sync. */
 export class CollectionsStarsSrv implements StarsSrv {
-  registerKind(registration: StarredKindRegistration): () => void {
-    return registerStarredKind(registration);
-  }
-
-  canStar(group: string, kind: string): boolean {
+  async canStar(group: string, kind: string): Promise<boolean> {
+    await loadStarredKinds();
     return findStarredKind(group, kind) !== undefined;
   }
 
@@ -64,6 +61,9 @@ export class CollectionsStarsSrv implements StarsSrv {
     await dispatch(endpoint.initiate({ id, name, group, kind })).unwrap();
 
     // A star of a kind Grafana cannot show is stored all the same; only the nav has nothing to do with it
+    if (!isGrafanaKind(group, kind)) {
+      await loadStarredKinds();
+    }
     const starredKind = findStarredKind(group, kind);
     if (starredKind) {
       dispatch(setStarred({ id, title, ...starredNavEntry(starredKind, id), isStarred }));

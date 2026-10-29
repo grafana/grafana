@@ -10,7 +10,7 @@ import {
   customGetUserPreferencesHandler,
   customPatchUserPreferencesHandler,
   getFolderFixtures,
-  MOCK_STARRED_KIND,
+  MOCK_STARRED_KIND_PAGE,
   MOCK_STARRED_KIND_SERVED,
   mockUserPreferences,
   setMockStarredDashboards,
@@ -22,7 +22,7 @@ import {
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { registerStarredKind } from 'app/features/stars/kinds';
+import { resetStarredKinds } from 'app/features/stars/kinds';
 
 import { MegaMenu } from './MegaMenu';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
@@ -686,11 +686,11 @@ describe('MegaMenu', () => {
     });
   });
 
-  it('renders a starred plugin object with its kind icon titled for screen readers, linking into the plugin', async () => {
+  it('renders a starred app object with its kind icon titled for screen readers, linking into the plugin', async () => {
     const thingUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
     setMockStarredDashboards([]);
-    setMockStarredPluginKind(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind, [thingUuid]);
-    const unregister = registerStarredKind(MOCK_STARRED_KIND);
+    setMockStarredPluginKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind, [thingUuid]);
+    resetStarredKinds();
     server.use(
       getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
       getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [
@@ -699,7 +699,8 @@ describe('MegaMenu', () => {
     );
     setupSearcher([]);
 
-    const { user, unmount } = renderMegaMenu();
+    // The plugin's page in the nav tree is what links the kind into the plugin
+    const { user } = renderMegaMenu({ navBarTree: [...customisableNavTree, MOCK_STARRED_KIND_PAGE] });
 
     await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
 
@@ -713,8 +714,6 @@ describe('MegaMenu', () => {
 
     // The kind icon doubles as the row's accessible kind, like the dashboard/folder icons do.
     expect(starredSection().getByTitle('Thing')).toBe(starredSection().getByTestId('icon-cube'));
-    // Unregistering would re-sync a mounted menu, so take it down first
-    unmount();
-    unregister();
+    resetStarredKinds();
   });
 });

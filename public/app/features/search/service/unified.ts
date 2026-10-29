@@ -19,7 +19,12 @@ import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
 import { searchStarredResources } from 'app/features/stars/kindSearch';
-import { getStarredKinds, type StarredKind } from 'app/features/stars/kinds';
+import {
+  getStarredKinds,
+  type KindSearchStarredKind,
+  loadStarredKindsFor,
+  resolvesThroughKindSearch,
+} from 'app/features/stars/kinds';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
@@ -119,11 +124,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
       })
     );
     // Dashboards and folders resolve through the dashboard search, every other kind through its own search endpoint
+    await loadStarredKindsFor(result.data);
     const searchNames = new Set<string>();
     const kindSearches: Array<Promise<SearchHit[]>> = [];
     for (const kind of getStarredKinds()) {
       const names = findStarredNames(result.data, kind.group, kind.kind);
-      if (kind.source === 'kind-search') {
+      if (resolvesThroughKindSearch(kind)) {
         kindSearches.push(this.starredKindHits(kind, names, query));
       } else {
         names.forEach((name) => searchNames.add(name));
@@ -156,7 +162,11 @@ export class UnifiedSearcher implements GrafanaSearcher {
    * yield none. Sorted by title here: the rows trail the server-sorted dashboard rows, so they can
    * only be ordered among themselves.
    */
-  private async starredKindHits(kind: StarredKind, names: string[], query: SearchQuery): Promise<SearchHit[]> {
+  private async starredKindHits(
+    kind: KindSearchStarredKind,
+    names: string[],
+    query: SearchQuery
+  ): Promise<SearchHit[]> {
     const dashboardOnlyFilter =
       query.panel_type ||
       query.ds_type ||

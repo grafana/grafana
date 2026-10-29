@@ -1,11 +1,6 @@
 import { getAPINamespace } from '@grafana/api-clients';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import {
-  discoveryResources,
-  getAPIGroupDiscoveryList,
-  type GroupDiscoveryResource,
-} from 'app/features/apiserver/discovery';
-import {
   SEARCH_API_VERSION,
   SEARCH_QUERY_KIND,
   type SearchQueryBody,
@@ -13,14 +8,12 @@ import {
   type WhereNode,
 } from 'app/features/apiserver/search';
 
-import { type StarredKind } from './kinds';
+import { type KindSearchStarredKind } from './kinds';
 
 /**
- * Resolves starred names of a registered kind to titles and folders through the kind's own search
+ * Resolves starred names of an app kind to titles and folders through the kind's own search
  * endpoint, `POST /apis/{group}/{version}/namespaces/{ns}/{plural}/search`, which the app platform
- * mounts for every served namespaced kind whose manifest enables search. The served version and
- * plural come from API discovery, so a plugin declares only its group and kind, and a version bump
- * needs no change here.
+ * mounts for every served namespaced kind whose manifest enables search.
  */
 
 // Server page-size cap for a single search request
@@ -42,43 +35,13 @@ export interface StarredResourceFilter {
   folder?: string;
 }
 
-// Resolved once per page load: the set of served kinds is static for the apiserver process
-// lifetime. Failures are not cached so a transient outage can be retried by the next caller.
-let servedResources: Promise<GroupDiscoveryResource[]> | undefined;
-
-function getServedResources(): Promise<GroupDiscoveryResource[]> {
-  if (!servedResources) {
-    const pending = getAPIGroupDiscoveryList().then(discoveryResources);
-    servedResources = pending;
-    pending.catch(() => {
-      if (servedResources === pending) {
-        servedResources = undefined;
-      }
-    });
-  }
-  return servedResources;
-}
-
-/** `/apis/{group}/{version}/namespaces/{ns}/{plural}` of a kind, as this Grafana serves it. */
-async function resourceBaseURL(kind: StarredKind): Promise<string> {
-  const resources = await getServedResources();
-  // Discovery lists a group's versions by preference, so the first match is the preferred one
-  const served = resources.find(
-    (resource) => resource.responseKind.group === kind.group && resource.responseKind.kind === kind.kind
-  );
-  if (!served) {
-    throw new Error(`Kind ${kind.group}/${kind.kind} is not served`);
-  }
-  return `/apis/${kind.group}/${served.responseKind.version}/namespaces/${getAPINamespace()}/${served.resource}`;
-}
-
 /**
  * Titles and folders of the starred objects of a kind that the user may read. A kind whose API is
  * unavailable (plugin disabled, apiserver down, search not enabled for the kind) yields nothing:
  * its stars go unshown rather than failing the list around them.
  */
 export async function searchStarredResources(
-  kind: StarredKind,
+  kind: KindSearchStarredKind,
   names: string[],
   filter: StarredResourceFilter = {}
 ): Promise<StarredResource[]> {
@@ -102,10 +65,11 @@ export async function searchStarredResources(
     limit: Math.min(names.length, MAX_SEARCH_LIMIT),
   };
 
+  const url = `/apis/${kind.group}/${kind.version}/namespaces/${getAPINamespace()}/${kind.resource}/search`;
   let results: SearchResults;
   try {
     results = await getBackendSrv().post<SearchResults>(
-      `${await resourceBaseURL(kind)}/search`,
+      url,
       { apiVersion: SEARCH_API_VERSION, kind: SEARCH_QUERY_KIND, ...query },
       // The kind's stars are simply not shown; a global toast for an optional plugin API would only confuse
       { showErrorAlert: false }
@@ -114,7 +78,7 @@ export async function searchStarredResources(
     if (isFetchError(err) && err.status === 404) {
       // The route is only mounted for kinds whose app manifest enables search
       console.warn(
-        `${kind.group}/${kind.kind} is registered as a starred kind, but its app manifest does not enable search, so its stars cannot be shown`
+        `${kind.group}/${kind.kind} can be starred, but its app manifest does not enable search, so its stars cannot be shown`
       );
     } else {
       console.error(`Failed to resolve starred ${kind.group}/${kind.kind}`, err);

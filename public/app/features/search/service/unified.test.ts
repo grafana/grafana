@@ -12,10 +12,10 @@ import {
   starsRoute,
 } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { MOCK_STARRED_KIND, MOCK_STARRED_KIND_SERVED, setTestFlags } from '@grafana/test-utils/unstable';
+import { MOCK_STARRED_KIND_PAGE, MOCK_STARRED_KIND_SERVED, setTestFlags } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { registerStarredKind } from 'app/features/stars/kinds';
+import { resetStarredKinds } from 'app/features/stars/kinds';
 import { setStore } from 'app/store/store';
 
 import { type SearchQuery } from './types';
@@ -268,9 +268,13 @@ describe('Unified Storage Searcher', () => {
       thingsRequested.mockClear();
       // One call — putConfiguration replaces the whole flag set, so a second call would drop the first.
       setTestFlags({ foldersAppPlatformAPI: true, 'grafana.starredFolders': true });
-      // starred() reads stars via an RTK Query dispatch on the global store, so wire one up.
+      // starred() reads stars via an RTK Query dispatch on the global store, and the app kinds find their
+      // plugin page in its nav tree, so wire one up with both.
       const store = configureStore({
-        reducer: { [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer },
+        reducer: {
+          [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer,
+          navBarTree: () => [MOCK_STARRED_KIND_PAGE],
+        },
         middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(collectionsAPIv1alpha1.middleware),
       });
       setStore(store as unknown as Store);
@@ -314,18 +318,21 @@ describe('Unified Storage Searcher', () => {
       expect(findStarredSearchRequest()).toBeUndefined();
     });
 
-    describe('with a registered kind', () => {
-      const thingResource = { group: MOCK_STARRED_KIND.group, kind: MOCK_STARRED_KIND.kind, names: ['t1'] };
+    describe('with an app kind a plugin lists', () => {
+      const thingResource = {
+        group: MOCK_STARRED_KIND_SERVED.group,
+        kind: MOCK_STARRED_KIND_SERVED.kind,
+        names: ['t1'],
+      };
       const starredThing = { name: 't1', title: 'Thing 1', folder: 'f1' };
       const THING_URL = '/a/test-things-app/things/t1';
-      let unregister: () => void;
 
       beforeEach(() => {
-        unregister = registerStarredKind(MOCK_STARRED_KIND);
+        resetStarredKinds();
         server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
       });
 
-      afterEach(() => unregister());
+      afterEach(() => resetStarredKinds());
 
       it('appends the plugin rows after the dashboard and folder rows, linking into the plugin', async () => {
         server.use(
@@ -409,9 +416,13 @@ describe('Unified Storage Searcher', () => {
         expect(findStarredSearchRequest()).toBeUndefined();
       });
 
-      it('ignores stars of a kind nobody registered', async () => {
-        unregister();
-        server.use(starsHandler([...bothStarredResources, thingResource]), captureSearchHandler(starredHits));
+      it('ignores stars of a kind no plugin lists', async () => {
+        resetStarredKinds();
+        server.use(
+          getKindDiscoveryHandler(),
+          starsHandler([...bothStarredResources, thingResource]),
+          captureSearchHandler(starredHits)
+        );
 
         const searcher = new UnifiedSearcher();
         const response = await searcher.starred({ kind: ['dashboard', 'folder'] });

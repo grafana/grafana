@@ -1,22 +1,34 @@
 import { http, HttpResponse } from 'msw';
 
 import { setBackendSrv } from '@grafana/runtime';
-import { getKindDiscoveryHandler, getKindSearchHandler, kindSearchRoute } from '@grafana/test-utils/handlers';
+import { getKindSearchHandler, kindSearchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { MOCK_STARRED_KIND, MOCK_STARRED_KIND_SERVED } from '@grafana/test-utils/unstable';
+import { MOCK_STARRED_KIND_SERVED } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { searchStarredResources } from './kindSearch';
-import { findStarredKindBySearchKind, registerStarredKind, type StarredKind } from './kinds';
+import { type KindSearchStarredKind } from './kinds';
 
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const THING = `${MOCK_STARRED_KIND.group}/${MOCK_STARRED_KIND.kind}`;
+const THING = `${MOCK_STARRED_KIND_SERVED.group}/${MOCK_STARRED_KIND_SERVED.kind}`;
 const THING_RESOURCE = { name: 't1', resource: 'things', title: 'Thing 1', folder: '', description: '', tags: [] };
 
 describe('searchStarredResources', () => {
-  let thing: StarredKind;
+  const { group, kind, version, plural } = MOCK_STARRED_KIND_SERVED;
+  const thing: KindSearchStarredKind = {
+    group,
+    kind,
+    searchKind: THING,
+    title: kind,
+    icon: 'cube',
+    sortWeight: 2,
+    source: 'kind-search',
+    version,
+    resource: plural,
+    url: (name) => `/a/test-things-app/things/${name}`,
+  };
   let requests: Array<Record<string, unknown>> = [];
 
   const captureHandler = (items: unknown[] = []) =>
@@ -25,35 +37,9 @@ describe('searchStarredResources', () => {
       return HttpResponse.json({ metadata: { totalHits: items.length, totalHitsRelation: 'eq' }, items });
     });
 
-  let unregister: () => void;
-
-  beforeAll(() => {
-    unregister = registerStarredKind(MOCK_STARRED_KIND);
-    thing = findStarredKindBySearchKind(THING)!;
-  });
-
-  afterAll(() => unregister());
-
   beforeEach(() => {
     requests = [];
     jest.restoreAllMocks();
-    server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
-  });
-
-  // First on purpose: discovery is cached once it succeeds, so only the first call of the file sees a cold cache
-  it('resolves to nothing when discovery fails, and discovers again on the next call', async () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    const discovery = jest.fn(() => new HttpResponse(null, { status: 503 }));
-    server.use(http.get('/apis', discovery));
-
-    expect(await searchStarredResources(thing, ['t1'])).toEqual([]);
-    expect(discovery).toHaveBeenCalledTimes(1);
-
-    server.use(
-      getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
-      getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [THING_RESOURCE])
-    );
-    expect(await searchStarredResources(thing, ['t1'])).toEqual([THING_RESOURCE]);
   });
 
   it('returns nothing and sends no request when no names are given', async () => {
@@ -63,7 +49,7 @@ describe('searchStarredResources', () => {
     expect(requests).toHaveLength(0);
   });
 
-  it('finds the served version and plural through discovery, then asks that kind for the names', async () => {
+  it("asks the kind's search route for the names", async () => {
     server.use(captureHandler());
 
     await searchStarredResources(thing, ['t1', 't2']);
@@ -114,17 +100,6 @@ describe('searchStarredResources', () => {
       { ...THING_RESOURCE, title: 'CPU saturation', folder: 'f1', description: 'Hot nodes', tags: ['prod'] },
       { ...THING_RESOURCE, name: 't2', title: 't2' },
     ]);
-  });
-
-  it('resolves to nothing for a kind discovery does not list', async () => {
-    const error = jest.spyOn(console, 'error').mockImplementation(() => {});
-    const ghost: StarredKind = { ...thing, group: 'gone.ext.grafana.app', kind: 'Ghost' };
-
-    expect(await searchStarredResources(ghost, ['g1'])).toEqual([]);
-    expect(error).toHaveBeenCalledWith(
-      'Failed to resolve starred gone.ext.grafana.app/Ghost',
-      new Error('Kind gone.ext.grafana.app/Ghost is not served')
-    );
   });
 
   it('warns and resolves to nothing when the kind has no search route', async () => {

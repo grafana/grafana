@@ -6,14 +6,14 @@ import { getCustomSearchHandler, getKindDiscoveryHandler, getKindSearchHandler }
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   getFolderFixtures,
-  MOCK_STARRED_KIND,
+  MOCK_STARRED_KIND_PAGE,
   MOCK_STARRED_KIND_SERVED,
   setMockStarredPluginKind,
 } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
-import { registerStarredKind } from 'app/features/stars/kinds';
+import { resetStarredKinds } from 'app/features/stars/kinds';
 import { CollectionsStarsSrv } from 'app/features/stars/service';
 
 import { getPanelProps } from '../test-utils';
@@ -120,10 +120,10 @@ describe('DashList', () => {
     expect(unmarkButton).toBeInTheDocument();
   });
 
-  it('lists a starred plugin object and un-stars it under its own kind', async () => {
+  it('lists a starred app object and un-stars it under its own kind', async () => {
     const thingUuid = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
-    setMockStarredPluginKind(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind, [thingUuid]);
-    const unregister = registerStarredKind(MOCK_STARRED_KIND);
+    setMockStarredPluginKind(MOCK_STARRED_KIND_SERVED.group, MOCK_STARRED_KIND_SERVED.kind, [thingUuid]);
+    resetStarredKinds();
     const deletedStars: string[] = [];
     server.use(
       getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED),
@@ -142,8 +142,12 @@ describe('DashList', () => {
     const props = getPanelProps({ ...defaultOptions, showStarred: true });
     jest.mocked(props.replaceVariables).mockImplementation((value) => value);
 
+    // The plugin's page in the nav tree is what links the kind into the plugin
     const { user } = render(<DashList {...props} />, {
-      preloadedState: { navIndex: { starred: { text: 'Starred', children: [] } } },
+      preloadedState: {
+        navIndex: { starred: { text: 'Starred', children: [] } },
+        navBarTree: [MOCK_STARRED_KIND_PAGE],
+      },
     });
 
     const thingLink = await screen.findByRole('link', { name: 'Capacity review' });
@@ -152,9 +156,9 @@ describe('DashList', () => {
     await user.click(await findStarButton('Capacity review', true));
 
     // The star targets the row's own kind, not the dashboard kind every row used to get
-    expect(deletedStars).toEqual([`${MOCK_STARRED_KIND.group}/${MOCK_STARRED_KIND.kind}/${thingUuid}`]);
+    expect(deletedStars).toEqual([`${MOCK_STARRED_KIND_SERVED.group}/${MOCK_STARRED_KIND_SERVED.kind}/${thingUuid}`]);
     expect(screen.queryByText('Capacity review')).not.toBeInTheDocument();
-    unregister();
+    resetStarredKinds();
   });
 
   it('shows recently viewed dashboards', async () => {

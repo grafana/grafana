@@ -3,17 +3,24 @@ import { type Store } from 'redux';
 import { waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
+import { getKindDiscoveryHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { MOCK_STARRED_KIND, setMockStarredDashboards } from '@grafana/test-utils/unstable';
+import {
+  MOCK_STARRED_KIND_PAGE,
+  MOCK_STARRED_KIND_SERVED,
+  setMockStarredDashboards,
+} from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { type StoreState } from 'app/types/store';
 
+import { resetStarredKinds } from './kinds';
 import { CollectionsStarsSrv } from './service';
 
 const USER_UID = 'test-uid';
 const DASHBOARD_GROUP = 'dashboard.grafana.app';
+const { group: THING_GROUP, kind: THING_KIND } = MOCK_STARRED_KIND_SERVED;
 const UPDATE_STARS_URL =
   '/apis/collections.grafana.app/v1alpha1/namespaces/:namespace/stars/:name/update/:group/:kind/:id';
 
@@ -30,23 +37,21 @@ let srv: CollectionsStarsSrv;
 let store: Store<StoreState>;
 
 const starredChildren = () => store.getState().navBarTree.find((item) => item.id === 'starred')?.children ?? [];
-let unregister: () => void;
 
 beforeEach(async () => {
   seenRequests.length = 0;
   contextSrv.isSignedIn = true;
   contextSrv.user.uid = USER_UID;
+  // The mock plugin's page is what makes its kind one Grafana can show
   config.bootData.navTree = [
     { id: 'home', text: 'Home', url: '/' },
     { id: 'starred', text: 'Starred', children: [] },
+    MOCK_STARRED_KIND_PAGE,
   ];
-  // Dashboards are the only shown kind unless a test registers more
-  unregister = () => {};
+  resetStarredKinds();
   store = configureStore();
   srv = new CollectionsStarsSrv();
 });
-
-afterEach(() => unregister());
 
 describe('CollectionsStarsSrv.star', () => {
   it('sends a PUT to the user stars resource and adds the object to the nav Starred section', async () => {
@@ -64,15 +69,15 @@ describe('CollectionsStarsSrv.star', () => {
     expect(child).toMatchObject({ id: `starred/${uid}`, text: 'New Dashboard', url: `/d/${uid}` });
   });
 
-  it('adds a starred plugin object to the nav Starred section under its kind, linking into the plugin', async () => {
-    unregister = srv.registerKind(MOCK_STARRED_KIND);
+  it('adds a starred app object to the nav Starred section under its kind, linking into the plugin', async () => {
+    server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
     const name = '7d0c6f1e-3b2a-4c5d-9e8f-0a1b2c3d4e5f';
 
-    await srv.star({ group: MOCK_STARRED_KIND.group, kind: MOCK_STARRED_KIND.kind, id: name, title: 'My Thing' });
+    await srv.star({ group: THING_GROUP, kind: THING_KIND, id: name, title: 'My Thing' });
 
     expect(seenRequests).toContainEqual({
       method: 'PUT',
-      path: `/apis/collections.grafana.app/v1alpha1/namespaces/default/stars/user-${USER_UID}/update/${MOCK_STARRED_KIND.group}/${MOCK_STARRED_KIND.kind}/${name}`,
+      path: `/apis/collections.grafana.app/v1alpha1/namespaces/default/stars/user-${USER_UID}/update/${THING_GROUP}/${THING_KIND}/${name}`,
     });
 
     expect(starredChildren().find((item) => item.id === `starred/${name}`)).toMatchObject({
@@ -80,7 +85,7 @@ describe('CollectionsStarsSrv.star', () => {
       url: `/a/test-things-app/things/${name}`,
       icon: 'cube',
       sortWeight: 2,
-      starredKind: `${MOCK_STARRED_KIND.group}/${MOCK_STARRED_KIND.kind}`,
+      starredKind: `${THING_GROUP}/${THING_KIND}`,
     });
   });
 });
@@ -138,18 +143,17 @@ describe('CollectionsStarsSrv.starred', () => {
 });
 
 describe('CollectionsStarsSrv.canStar', () => {
-  it('is true for the dashboard kind and false for a kind nobody registered', () => {
-    expect(srv.canStar(DASHBOARD_GROUP, 'Dashboard')).toBe(true);
-    expect(srv.canStar('unregistered.grafana.app', 'Nope')).toBe(false);
+  it('is true for the dashboard kind and false for a kind nobody serves', async () => {
+    server.use(getKindDiscoveryHandler());
+
+    expect(await srv.canStar(DASHBOARD_GROUP, 'Dashboard')).toBe(true);
+    expect(await srv.canStar('unserved.grafana.app', 'Nope')).toBe(false);
   });
 
-  it('is true for a registered kind until it is unregistered', () => {
-    const unregisterThing = srv.registerKind(MOCK_STARRED_KIND);
+  it('is true for a served kind its plugin has a page for', async () => {
+    server.use(getKindDiscoveryHandler(MOCK_STARRED_KIND_SERVED));
 
-    expect(srv.canStar(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind)).toBe(true);
-
-    unregisterThing();
-    expect(srv.canStar(MOCK_STARRED_KIND.group, MOCK_STARRED_KIND.kind)).toBe(false);
+    expect(await srv.canStar(THING_GROUP, THING_KIND)).toBe(true);
   });
 });
 
@@ -173,6 +177,8 @@ describe('CollectionsStarsSrv error handling', () => {
   });
 
   it('stores a star of a kind Grafana cannot show, leaving the nav alone', async () => {
+    server.use(getKindDiscoveryHandler());
+
     await srv.star({ group: 'gone.ext.grafana.app', kind: 'Ghost', id: 'g1', title: 'Ghost' });
 
     expect(seenRequests).toContainEqual({
