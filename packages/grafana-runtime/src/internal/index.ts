@@ -17,6 +17,7 @@ export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
 export { setManagedBadge } from '../provisioning/ManagedBadge';
 export { setPullRequestBanner } from '../provisioning/PullRequestBanner';
 export { setSaveResourceDrawer } from '../provisioning/SaveResourceDrawer';
+export { setRegisterResourceKinds } from '../provisioning/registerResourceKinds';
 
 export { type LegacyFeatureToggleMode } from '../utils/legacyFeatureToggles';
 export { ExpressionDatasourceRef } from '../utils/expressionRef';
