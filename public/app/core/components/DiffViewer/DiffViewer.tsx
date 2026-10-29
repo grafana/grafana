@@ -1,15 +1,14 @@
 import { css } from '@emotion/css';
+import { type ReactElement } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
+import { CodeMirrorDiffEditor as DiffEditor, type CodeMirrorDiffEditorProps } from '@grafana/ui/unstable';
 
-import { useStyles2 } from '../../themes/ThemeContext';
-import { CodeMirrorDiffEditor } from '../CodeMirror/DiffEditorLazy';
-
-import { InlineDiffToggle, useInlineDiffPreference } from './inlineDiffPreference';
-import { type DiffViewerProps } from './types';
+import { InlineDiffToggle, useInlineDiffPreference } from '../MonacoDiffEditor/inlineDiffPreference';
 
 /** Read-only CodeMirror diff with the shared, persisted view preference. */
-export function DiffViewer({ height, inline, ...props }: DiffViewerProps) {
+export function DiffViewer({ height, inline, ...props }: CodeMirrorDiffEditorProps): ReactElement {
   const styles = useStyles2(getStyles);
   const [inlinePreference, setInlinePreference] = useInlineDiffPreference();
   const inlineDiff = inline ?? inlinePreference;
@@ -22,13 +21,13 @@ export function DiffViewer({ height, inline, ...props }: DiffViewerProps) {
         </div>
       )}
       <div className={styles.editor}>
-        <CodeMirrorDiffEditor {...props} height="100%" inline={inlineDiff} />
+        <DiffEditor {...props} height="100%" inline={inlineDiff} />
       </div>
     </div>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2): Record<'wrapper' | 'toolbar' | 'editor', string> => ({
   wrapper: css({
     display: 'flex',
     flexDirection: 'column',

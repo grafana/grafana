@@ -1,31 +1,34 @@
 import { getOriginalDoc, originalDocChangeEffect, unifiedMergeView } from '@codemirror/merge';
-import { ChangeSet, Text } from '@codemirror/state';
+import { ChangeSet, Compartment, Text } from '@codemirror/state';
 import { EditorView, drawSelection, lineNumbers as lineNumbersExtension } from '@codemirror/view';
 import { css } from '@emotion/css';
 import CodeMirror, { type ReactCodeMirrorRef } from '@uiw/react-codemirror';
-import { useEffect, useMemo, useRef } from 'react';
-import CodeMirrorMerge from 'react-codemirror-merge';
+import { type ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import CodeMirrorMerge, { type CodeMirrorMergeRef } from 'react-codemirror-merge';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
-import { type DiffViewerProps } from '../DiffViewer/types';
 
 import { createCodeEditorTheme } from './theme';
+import { type CodeMirrorDiffEditorProps, type CodeMirrorExtension } from './types';
 import { useLanguageExtension } from './useLanguageExtension';
 
 const readOnlyOptions = { readOnly: true, editable: false, basicSetup: false, indentWithTab: false };
 
 export function DiffEditor({
-  original,
-  modified,
+  original: originalValue,
+  modified: modifiedValue,
   language,
   height,
   inline = false,
   lineNumbers = true,
-}: DiffViewerProps) {
+}: CodeMirrorDiffEditorProps): ReactElement {
+  // Match CodeMirror's line endings so the wrapper does not replace unchanged documents.
+  const original = useMemo(() => originalValue.replace(/\r\n?/g, '\n'), [originalValue]);
+  const modified = useMemo(() => modifiedValue.replace(/\r\n?/g, '\n'), [modifiedValue]);
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const { extension: languageExtension, error: languageError } = useLanguageExtension(language);
@@ -109,26 +112,75 @@ export function DiffEditor({
             extensions={inlineExtensions}
           />
         ) : (
-          <CodeMirrorMerge theme={editorTheme} destroyRerender>
-            {/* Text.empty makes the merge wrapper update cleared panes before restoring their selections. */}
-            <CodeMirrorMerge.Original
-              {...readOnlyOptions}
-              value={original || Text.empty}
-              extensions={originalExtensions}
-            />
-            <CodeMirrorMerge.Modified
-              {...readOnlyOptions}
-              value={modified || Text.empty}
-              extensions={modifiedExtensions}
-            />
-          </CodeMirrorMerge>
+          <SideBySideDiffEditor
+            original={original}
+            modified={modified}
+            theme={editorTheme}
+            originalExtensions={originalExtensions}
+            modifiedExtensions={modifiedExtensions}
+          />
         )}
       </div>
     </>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+interface SideBySideDiffEditorProps {
+  original: string;
+  modified: string;
+  theme: CodeMirrorExtension;
+  originalExtensions: CodeMirrorExtension;
+  modifiedExtensions: CodeMirrorExtension;
+}
+
+function SideBySideDiffEditor({
+  original,
+  modified,
+  theme,
+  originalExtensions,
+  modifiedExtensions,
+}: SideBySideDiffEditorProps): ReactElement {
+  const [view, setView] = useState<CodeMirrorMergeRef['view']>();
+  const setEditor = useCallback((editor: CodeMirrorMergeRef | null): void => {
+    if (editor?.view) {
+      setView(editor.view);
+    }
+  }, []);
+  const [configuration] = useState(() => {
+    const originalCompartment = new Compartment();
+    const modifiedCompartment = new Compartment();
+    return {
+      original: originalCompartment,
+      modified: modifiedCompartment,
+      originalExtensions: [originalCompartment.of([theme, originalExtensions])],
+      modifiedExtensions: [modifiedCompartment.of([theme, modifiedExtensions])],
+    };
+  });
+
+  // The merge wrapper only reapplies extensions by recreating editors, which loses focus and scroll.
+  useEffect(() => {
+    view?.a.dispatch({ effects: configuration.original.reconfigure([theme, originalExtensions]) });
+    view?.b.dispatch({ effects: configuration.modified.reconfigure([theme, modifiedExtensions]) });
+  }, [view, configuration, theme, originalExtensions, modifiedExtensions]);
+
+  return (
+    <CodeMirrorMerge ref={setEditor} theme="none" destroyRerender={false}>
+      {/* The merge wrapper skips document updates for empty strings. */}
+      <CodeMirrorMerge.Original
+        {...readOnlyOptions}
+        value={original || Text.empty}
+        extensions={configuration.originalExtensions}
+      />
+      <CodeMirrorMerge.Modified
+        {...readOnlyOptions}
+        value={modified || Text.empty}
+        extensions={configuration.modifiedExtensions}
+      />
+    </CodeMirrorMerge>
+  );
+}
+
+const getStyles = (theme: GrafanaTheme2): Record<'container', string> => ({
   container: css({
     minHeight: 0,
     '.cm-theme, .cm-merge-theme': { height: '100%' },

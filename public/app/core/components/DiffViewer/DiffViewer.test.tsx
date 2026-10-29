@@ -1,11 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type ReactElement } from 'react';
 
 import { store } from '@grafana/data';
 
-import { DiffViewer, InlineDiffToggle, useInlineDiffPreference } from '../../unstable';
+import { InlineDiffToggle, useInlineDiffPreference } from '../MonacoDiffEditor/inlineDiffPreference';
 
-function HeaderControlledDiffViewer() {
+import { DiffViewer } from './DiffViewer';
+
+function HeaderControlledDiffViewer(): ReactElement {
   const [inline, setInline] = useInlineDiffPreference();
 
   return (

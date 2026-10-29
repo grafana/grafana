@@ -12,9 +12,7 @@
 export * from './utils/skeleton';
 
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
-export { DiffViewer } from './components/DiffViewer/DiffViewer';
-export { InlineDiffToggle, useInlineDiffPreference } from './components/DiffViewer/inlineDiffPreference';
-export type { DiffViewerProps } from './components/DiffViewer/types';
+export { CodeMirrorDiffEditor } from './components/CodeMirror/DiffEditorLazy';
 export { CODE_MIRROR_LANGUAGES } from './components/CodeMirror/languages';
 export { createCodeEditorTheme } from './components/CodeMirror/theme';
 export { signatureHelp } from './components/CodeMirror/signatureHelp';
@@ -28,6 +26,7 @@ export type {
   CodeMirrorCompletionMode,
   CodeMirrorCompletionResult,
   CodeMirrorCompletionSource,
+  CodeMirrorDiffEditorProps,
   CodeMirrorEditorLanguage,
   CodeMirrorEditorProps,
   CodeMirrorEditorTheme,

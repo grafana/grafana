@@ -2,13 +2,68 @@ import { language } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { StrictMode } from 'react';
+import { type ReactElement, StrictMode, useLayoutEffect, useState } from 'react';
 
 import { createTheme, ThemeContext } from '@grafana/data';
 
 import { DiffEditor } from './DiffEditor';
 
+function DiffWithParentInput({ lineSeparator }: { lineSeparator: string }): ReactElement {
+  const [value, setValue] = useState('');
+
+  return (
+    <>
+      <input aria-label="Parent input" value={value} onChange={(event) => setValue(event.currentTarget.value)} />
+      <DiffEditor original={`before content${lineSeparator}shared`} modified={`after content${lineSeparator}shared`} />
+    </>
+  );
+}
+
+function DiffWithMountConfigurationChange(): ReactElement {
+  const [lineNumbers, setLineNumbers] = useState(true);
+  useLayoutEffect(() => setLineNumbers(false), []);
+
+  return <DiffEditor original="before" modified="after" lineNumbers={lineNumbers} />;
+}
+
 describe('CodeMirror DiffEditor', () => {
+  it('applies configuration changes made before the merge view is ready', async () => {
+    const { container } = render(<DiffWithMountConfigurationChange />);
+
+    expect(await screen.findByRole('textbox', { name: 'Modified' })).toHaveTextContent('after');
+    expect(container.querySelector('.cm-lineNumbers')).not.toBeInTheDocument();
+  });
+
+  it.each(['\n', '\r\n'])(
+    'preserves external focus, selection and scroll when its parent rerenders (%j)',
+    async (lineSeparator) => {
+      const user = userEvent.setup();
+      const { container } = render(<DiffWithParentInput lineSeparator={lineSeparator} />);
+      const view = EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Modified' }));
+      const scroller = container.querySelector<HTMLElement>('.cm-mergeView');
+      if (!view || !scroller) {
+        throw new Error('Side-by-side diff did not mount');
+      }
+
+      // jsdom cannot position a selection in a non-editable CodeMirror view.
+      act(() => view.dispatch({ selection: { anchor: 5, head: 15 } }));
+      scroller.scrollTop = 600;
+      const input = screen.getByRole('textbox', { name: 'Parent input' });
+
+      await user.type(input, 'xy');
+
+      expect(input).toHaveValue('xy');
+      expect(input).toHaveFocus();
+      expect(
+        EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Modified' }))?.state.selection.main
+      ).toMatchObject({
+        anchor: 5,
+        head: 15,
+      });
+      expect(container.querySelector<HTMLElement>('.cm-mergeView')?.scrollTop).toBe(600);
+    }
+  );
+
   it.each([false, true])('shows changes without allowing edits (inline: %s)', async (inline) => {
     const user = userEvent.setup();
     const { container } = render(<DiffEditor original={'before\nshared'} modified={'after\nshared'} inline={inline} />);
@@ -32,7 +87,8 @@ describe('CodeMirror DiffEditor', () => {
     const { container, rerender } = render(
       <DiffEditor original='{"value":1}' modified='{"value":2}' language="json" inline={inline} height="240px" />
     );
-    const modifiedView = () => EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Modified' }));
+    const modifiedView = (): EditorView | null =>
+      EditorView.findFromDOM(screen.getByRole('textbox', { name: 'Modified' }));
     await waitFor(() => expect(modifiedView()?.state.facet(language)?.name).toBe('json'));
     expect(container.querySelector('.cm-lineNumbers')).toHaveTextContent('1');
     expect(container.firstChild).toHaveStyle({ height: '240px' });
