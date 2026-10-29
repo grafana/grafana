@@ -49,7 +49,7 @@
     "process-specs": "node src/scripts/process-specs.ts && npm run copy:api && npm run format --"
   },
   "engines": {
-    "node": ">= 22 <25"
+    "node": ">= 22 <27"
   },
   "devDependencies": {
     "openapi-types": "^12.1.3",
