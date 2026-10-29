@@ -924,7 +924,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           ),
           yesText: t('dashboard-scene.dashboard-scene.modal.stop-and-leave', 'Stop and leave'),
           noText: t('dashboard-scene.dashboard-scene.modal.keep-working', 'Keep working'),
-          onConfirm: () => this.leaveComposerFor(mode),
+          // The confirm modal hides itself after onConfirm returns, which would also close the save prompt
+          // that leaving for Viewing can open, so leave once it has closed.
+          onConfirm: () => queueMicrotask(() => this.leaveComposerFor(mode)),
         })
       );
       return;

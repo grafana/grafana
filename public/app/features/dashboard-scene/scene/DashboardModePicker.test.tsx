@@ -428,15 +428,16 @@ describe('while Composer is active', () => {
   });
 
   describe('while Assistant is running a turn', () => {
-    async function chooseEditingMidTurn() {
+    async function chooseMidTurn(mode: 'Viewing' | 'Editing') {
       const opened = await openPicker((scene) => {
         enterComposer(true)(scene);
         session.setPaused(true);
       });
-      await opened.user.click(screen.getByRole('menuitemradio', { name: /Editing/ }));
+      await opened.user.click(screen.getByRole('menuitemradio', { name: new RegExp(mode) }));
       expect(await screen.findByRole('dialog', { name: 'Leave Composer?' })).toBeInTheDocument();
       return opened;
     }
+    const chooseEditingMidTurn = () => chooseMidTurn('Editing');
 
     it('stays in Composer with the session running when Keep working is chosen', async () => {
       const { user, scene } = await chooseEditingMidTurn();
@@ -445,6 +446,17 @@ describe('while Composer is active', () => {
 
       expect(getDashboardMode(scene.state)).toBe('composer');
       expect(session.signal.aborted).toBe(false);
+    });
+
+    it('asks to save or discard the unsaved changes after Stop and leave when switching to Viewing', async () => {
+      const { user, scene } = await chooseMidTurn('Viewing');
+
+      await user.click(screen.getByRole('button', { name: 'Stop and leave' }));
+
+      expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Discard' }));
+      expect(session.signal.aborted).toBe(true);
+      expect(getDashboardMode(scene.state)).toBe('view');
     });
 
     it('ends the session and switches to Editing, keeping the changes, on Stop and leave', async () => {
