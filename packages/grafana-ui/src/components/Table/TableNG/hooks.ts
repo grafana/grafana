@@ -1331,11 +1331,15 @@ export const useReducerEntries = (
       return [];
     }
 
+    // reduce the rows in their original order, so sorting the table does not change
+    // order-sensitive reducers like first, last or diff.
+    const rowsInOriginalOrder = [...rows].sort((a, b) => a.__index - b.__index);
+
     // Calculate all specified reducers
     const results: Record<string, number | null> = reduceField({
       field: {
         ...field,
-        values: rows.map((row) => row[displayName]),
+        values: rowsInOriginalOrder.map((row) => row[displayName]),
         state: undefined,
       },
       reducers,
