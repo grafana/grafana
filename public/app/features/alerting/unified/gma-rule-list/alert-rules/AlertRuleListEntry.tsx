@@ -1,3 +1,5 @@
+import { useGetAlertRuleQuery } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+
 import { useFolderPath } from '../folder-browsing/folderLookups';
 
 import { AlertRuleRow } from './AlertRuleRow';
@@ -10,6 +12,7 @@ interface AlertRuleListEntryProps {
 /** Runs the per-rule lookups once so the row stays presentation-only. */
 export function AlertRuleListEntry({ searchHit }: AlertRuleListEntryProps) {
   const folderPath = useFolderPath(searchHit.folderUid);
+  const { data: fullRule } = useGetAlertRuleQuery({ name: searchHit.uid });
 
-  return <AlertRuleRow searchHit={searchHit} folderPath={folderPath} />;
+  return <AlertRuleRow searchHit={searchHit} folderPath={folderPath} rule={fullRule} />;
 }
