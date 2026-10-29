@@ -2521,10 +2521,10 @@ export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOp
  *
  * **Details:**
  * - flag key: `useScopesNavigationEndpoint`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagUseScopesNavigationEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useScopesNavigationEndpoint", false, options).value;
+  return useFlag("useScopesNavigationEndpoint", true, options).value;
 };
 
 /**

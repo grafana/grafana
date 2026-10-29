@@ -702,7 +702,7 @@ export interface FeatureToggles {
   alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
   /**
   * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
-  * @default false
+  * @default true
   */
   useScopesNavigationEndpoint?: boolean;
   /**
