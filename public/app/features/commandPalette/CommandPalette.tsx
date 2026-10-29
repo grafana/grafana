@@ -3,7 +3,7 @@ import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
 import { KBarAnimator, KBarPortal, KBarPositioner, VisualState, useKBar, ActionImpl, getListboxItemId } from 'kbar';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -14,7 +14,7 @@ import {
   useFlagGrafanaCmdkHybridSearch,
   useFlagGrafanaVectorSearchCmdk,
 } from '@grafana/runtime/internal';
-import { EmptyState, Icon, LoadingBar, useStyles2 } from '@grafana/ui';
+import { EmptyState, Icon, LoadingBar, getPortalContainer, useStyles2 } from '@grafana/ui';
 
 import { AskAssistantPill } from './AskAssistantPill';
 import { type DeepSearchNavHandle, DeepSearchResults } from './DeepSearchResults';
@@ -37,8 +37,16 @@ import { SECTION_DEEP_SEARCH, SECTION_NOTEBOOKS } from './values';
 
 export function CommandPalette() {
   useRegisterStaticActions();
+  const [portalContainer, setPortalContainer] = useState<HTMLElement>();
+
+  useEffect(() => {
+    // AppWrapper's shared portal container is available after the initial DOM commit. This effect artificially delays
+    // the getPortalContainer call until after the initial DOM commit.
+    setPortalContainer(getPortalContainer());
+  }, []);
+
   return (
-    <KBarPortal>
+    <KBarPortal container={portalContainer}>
       <CommandPaletteContents />
     </KBarPortal>
   );

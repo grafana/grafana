@@ -79,7 +79,7 @@ export function ResultTags({ tags, prefix }: { tags: string[]; prefix?: ReactNod
               content={
                 <div className={styles.hiddenTags}>
                   {hiddenTags.map((tag) => (
-                    <div key={tag}>{tag}</div>
+                    <Tag key={tag} name={tag} className={styles.tooltipTag} />
                   ))}
                 </div>
               }
@@ -147,7 +147,16 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.size.sm,
     whiteSpace: 'nowrap',
   }),
-  hiddenTags: css({ overflowWrap: 'anywhere' }),
+  hiddenTags: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(0.75),
+  }),
+  tooltipTag: css({
+    maxWidth: '100%',
+    whiteSpace: 'normal',
+    overflowWrap: 'anywhere',
+  }),
   measurements: css({
     position: 'absolute',
     top: 0,
