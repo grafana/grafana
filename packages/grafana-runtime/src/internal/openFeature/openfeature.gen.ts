@@ -178,6 +178,8 @@ export const FlagKeys = {
   GrafanaDashboardComposer: "grafana.dashboardComposer",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
+  /** Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app) */
+  GrafanaDashboardPreferences: "grafana.dashboardPreferences",
   /** Enables Viewing and Editing modes for dynamic dashboards */
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
@@ -1302,6 +1304,17 @@ export const useFlagGrafanaDashboardComposer = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardGlobalVariables", false, options).value;
+};
+
+/**
+ * Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app)
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardPreferences`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardPreferences = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardPreferences", false, options).value;
 };
 
 /**
