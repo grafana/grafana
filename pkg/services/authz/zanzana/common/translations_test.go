@@ -92,3 +92,30 @@ func TestReportingPermissionTranslations(t *testing.T) {
 		})
 	}
 }
+
+func TestReportingSettingsWriteTuples(t *testing.T) {
+	tuples, ok := TranslateToResourceTuples("user:1", "reports.settings:write", "", "")
+	require.True(t, ok)
+	relations := make([]string, 0, len(tuples))
+	for _, tuple := range tuples {
+		require.Equal(t, "group_resource:reporting.grafana.app/reportsettings", tuple.Object)
+		relations = append(relations, tuple.Relation)
+	}
+	require.ElementsMatch(t, []string{RelationCreate, RelationUpdate, RelationDelete}, relations)
+}
+
+func TestNativeReportingSettingsTuples(t *testing.T) {
+	for _, relation := range []string{RelationGet, RelationCreate, RelationUpdate, RelationDelete} {
+		for _, kind := range []string{"", "*", "reportsettings", "reporting.grafana.app/reportsettings"} {
+			t.Run(relation+"/"+kind, func(t *testing.T) {
+				tuples, ok := TranslateToResourceTuples("user:1", "reporting.grafana.app/reportsettings:"+relation, kind, "*")
+				require.True(t, ok)
+				require.Len(t, tuples, 1)
+				require.Equal(t, "group_resource:reporting.grafana.app/reportsettings", tuples[0].Object)
+				require.Equal(t, relation, tuples[0].Relation)
+			})
+		}
+		_, ok := TranslateToResourceTuples("user:1", "reporting.grafana.app/reportsettings:"+relation, "dashboards", "*")
+		require.False(t, ok, "a scope for another resource cannot grant settings access")
+	}
+}

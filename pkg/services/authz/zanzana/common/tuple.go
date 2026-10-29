@@ -341,6 +341,20 @@ func NewObjectEntry(objectType, group, resource, subresource, name string) strin
 // lookupActionMapping finds the translation and action mapping for the given kind and action.
 // When kind is empty (unscoped permission), it searches all translations for a skipScope match.
 func lookupActionMapping(kind, action string) (resourceTranslation, actionMapping, bool) {
+	// A native action identifies its resource, including for an unscoped grant.
+	if nativeKind, _, ok := strings.Cut(action, ":"); ok && strings.Contains(nativeKind, "/") {
+		if translation, ok := resourceTranslations[nativeKind]; ok {
+			if m, ok := translation.mapping[action]; ok {
+				if kind == "" || kind == "*" {
+					m.skipScope = true
+					return translation, m, true
+				}
+				if kind == nativeKind || kind == translation.resource {
+					return translation, m, true
+				}
+			}
+		}
+	}
 	if kind != "" {
 		translation, ok := resourceTranslations[kind]
 		if !ok {
@@ -357,8 +371,7 @@ func lookupActionMapping(kind, action string) (resourceTranslation, actionMappin
 	return resourceTranslation{}, actionMapping{}, false
 }
 
-// TranslateToResourceTuples keeps action sets compact, adding only creation
-// grants that cannot be inferred from a generic Edit/Admin relation.
+// TranslateToResourceTuples expands actions that grant more than one relation.
 func TranslateToResourceTuples(subject, action, kind, name string) ([]*openfgav1.TupleKey, bool) {
 	translation, m, ok := lookupActionMapping(kind, action)
 	if !ok {
@@ -367,6 +380,10 @@ func TranslateToResourceTuples(subject, action, kind, name string) ([]*openfgav1
 	tuples := make([]*openfgav1.TupleKey, 1, 2)
 	tuples[0] = translateResourceTuple(subject, translation, m, name)
 	switch action {
+	case "reports.settings:write":
+		m.relation = RelationCreate
+		tuples = append(tuples, translateResourceTuple(subject, translation, m, name))
+		m.relation = RelationDelete
 	case "folders:edit", "folders:admin":
 		m.relation = RelationCreate
 	case "dashboards:edit", "dashboards:admin":

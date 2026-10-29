@@ -643,6 +643,16 @@ func NewMapperRegistry() MapperRegistry {
 			},
 			"reportsettings": translation{
 				resource: "reportsettings",
+				// Accept native actions alongside the legacy namespace-wide permissions.
+				actionSetMapping: map[string][]string{
+					utils.VerbGet:    {"reporting.grafana.app/reportsettings:get"},
+					utils.VerbList:   {"reporting.grafana.app/reportsettings:get"},
+					utils.VerbWatch:  {"reporting.grafana.app/reportsettings:get"},
+					utils.VerbCreate: {"reporting.grafana.app/reportsettings:create"},
+					utils.VerbUpdate: {"reporting.grafana.app/reportsettings:update"},
+					utils.VerbPatch:  {"reporting.grafana.app/reportsettings:update"},
+					utils.VerbDelete: {"reporting.grafana.app/reportsettings:delete"},
+				},
 				verbMapping: map[string]string{
 					utils.VerbGet:    "reports.settings:read",
 					utils.VerbList:   "reports.settings:read",

@@ -7,8 +7,8 @@ import (
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/trace"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -21,10 +21,10 @@ type Store interface {
 
 type StoreImpl struct {
 	sql    legacysql.LegacyDatabaseProvider
-	tracer tracing.Tracer
+	tracer trace.Tracer
 }
 
-func NewStore(sql legacysql.LegacyDatabaseProvider, tracer tracing.Tracer) *StoreImpl {
+func NewStore(sql legacysql.LegacyDatabaseProvider, tracer trace.Tracer) *StoreImpl {
 	return &StoreImpl{
 		sql:    sql,
 		tracer: tracer,

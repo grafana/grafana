@@ -93,6 +93,17 @@ var resourceTranslations = map[string]resourceTranslation{
 			"reports:delete": newMapping(RelationDelete, ""),
 		},
 	},
+	"reporting.grafana.app/reportsettings": {
+		typ:      TypeResource,
+		group:    "reporting.grafana.app",
+		resource: "reportsettings",
+		mapping: map[string]actionMapping{
+			"reporting.grafana.app/reportsettings:get":    newMapping(RelationGet, ""),
+			"reporting.grafana.app/reportsettings:create": newMapping(RelationCreate, ""),
+			"reporting.grafana.app/reportsettings:update": newMapping(RelationUpdate, ""),
+			"reporting.grafana.app/reportsettings:delete": newMapping(RelationDelete, ""),
+		},
+	},
 	"reportsettings": {
 		typ:      TypeResource,
 		group:    "reporting.grafana.app",
