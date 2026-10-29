@@ -453,10 +453,22 @@ describe('while Composer is active', () => {
 
       await user.click(screen.getByRole('button', { name: 'Stop and leave' }));
 
+      // The turn stops before the save prompt, whichever way it goes.
       expect(await screen.findByRole('dialog', { name: 'Unsaved changes' })).toBeInTheDocument();
-      await user.click(screen.getByRole('button', { name: 'Discard' }));
       expect(session.signal.aborted).toBe(true);
+      await user.click(screen.getByRole('button', { name: 'Discard' }));
       expect(getDashboardMode(scene.state)).toBe('view');
+    });
+
+    it('stays out of Composer, keeping the changes, when the save prompt after Stop and leave is cancelled', async () => {
+      const { user, scene } = await chooseMidTurn('Viewing');
+
+      await user.click(screen.getByRole('button', { name: 'Stop and leave' }));
+      await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+
+      expect(session.signal.aborted).toBe(true);
+      expect(getDashboardMode(scene.state)).not.toBe('composer');
+      expect(scene.state.title).toBe('Unsaved title');
     });
 
     it('ends the session and switches to Editing, keeping the changes, on Stop and leave', async () => {

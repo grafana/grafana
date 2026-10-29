@@ -907,7 +907,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /**
    * Leaves Composer for Viewing or Editing (the mode picker). The session ends as on its own exit, which
-   * also stops a running turn, so while one runs it first asks to stop it; Keep working stays in Composer.
+   * also stops a running turn, so while one runs it first asks to stop it: Keep working stays in Composer,
+   * and Stop and leave ends the session before any save prompt, so Cancel there stays out of Composer.
    * Editing takes the path manual-edit entry points use; Viewing first asks to save or discard unsaved
    * changes, and Cancel stays in Composer with the session running.
    */
@@ -924,9 +925,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           ),
           yesText: t('dashboard-scene.dashboard-scene.modal.stop-and-leave', 'Stop and leave'),
           noText: t('dashboard-scene.dashboard-scene.modal.keep-working', 'Keep working'),
-          // The confirm modal hides itself after onConfirm returns, which would also close the save prompt
-          // that leaving for Viewing can open, so leave once it has closed.
-          onConfirm: () => queueMicrotask(() => this.leaveComposerFor(mode)),
+          onConfirm: () => {
+            // Stop now: the session ends here, so the turn stops whatever the save prompt for Viewing then does.
+            this.exitComposerMode();
+            // The confirm modal hides itself after onConfirm returns, which would also close that save
+            // prompt, so continue once it has closed.
+            queueMicrotask(() => this.leaveComposerFor(mode));
+          },
         })
       );
       return;
