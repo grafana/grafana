@@ -2,6 +2,7 @@ import { type Repository, type SupportedResource } from 'app/api/clients/provisi
 import { getIconForKind } from 'app/features/search/service/utils';
 
 import {
+  addResourceKinds,
   resourceKindInfos,
   getAvailableResourceKinds,
   getKindInfoByGroupKind,
@@ -320,5 +321,23 @@ describe('getMigratableKinds', () => {
     expect(getMigratableKinds([{ group: 'playlist.grafana.app', kind: 'Playlist' }]).map((k) => k.kind)).toEqual([
       'Playlist',
     ]);
+  });
+});
+
+describe('addResourceKinds', () => {
+  it('overrides the defaults from the API and keeps the rest', () => {
+    const stat = { group: 'examplegitsyncapp.ext.grafana.app', resource: 'folderlesskinds', kind: 'FolderlessKind' };
+    addResourceKinds([{ group: stat.group, kind: stat.kind, label: 'Tag', pluralLabel: 'Tags', icon: 'tag-alt' }]);
+
+    const info = getKindInfoByStat(stat);
+    expect(info).toMatchObject({ icon: 'tag-alt', resource: 'folderlesskinds' });
+    expect(info.getLabel()).toBe('Tag');
+    expect(info.pluralLabel()).toBe('Tags');
+  });
+
+  it('adds a kind that the registry does not have', () => {
+    addResourceKinds([{ group: 'other.ext.grafana.app', kind: 'Thing', listRoute: '/a/other-app' }]);
+
+    expect(getKindInfoByGroupKind('other.ext.grafana.app', 'Thing')).toMatchObject({ listRoute: '/a/other-app' });
   });
 });

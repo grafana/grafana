@@ -3,8 +3,9 @@ import { type UnknownAction } from '@reduxjs/toolkit';
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
+import { isIconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, type ResourceKindDisplay } from '@grafana/runtime';
 import { type IconName } from '@grafana/ui';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
@@ -207,6 +208,39 @@ export interface ResourceKindInfo {
 // each call site.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
 
+const kindOverrides = new Map<string, ResourceKindDisplay>();
+
+export function addResourceKinds(kinds: ResourceKindDisplay[]) {
+  for (const k of kinds) {
+    kindOverrides.set(`${k.group}/${k.kind}`, k);
+  }
+}
+
+function knownKindInfos(): ResourceKindInfo[] {
+  const pluginKinds = [...kindOverrides.values()]
+    .filter((k) => !allKindInfos.some((info) => info.group === k.group && info.kind === k.kind))
+    .map(getDefaultKindInfo);
+  return [...allKindInfos, ...pluginKinds].map(withOverride);
+}
+
+function withOverride(info: ResourceKindInfo): ResourceKindInfo {
+  const k = kindOverrides.get(`${info.group}/${info.kind}`);
+  if (!k) {
+    return info;
+  }
+  const { label, pluralLabel } = k;
+  return {
+    ...info,
+    resource: k.resource ?? info.resource,
+    getLabel: label ? () => label : info.getLabel,
+    pluralLabel: pluralLabel ? () => pluralLabel : label ? () => label : info.pluralLabel,
+    icon: isIconName(k.icon) ? k.icon : info.icon,
+    getRoute: k.getRoute ?? info.getRoute,
+    listRoute: k.listRoute ?? info.listRoute,
+    folderScoped: k.folderScoped ?? info.folderScoped,
+  };
+}
+
 /**
  * Builds the in-app route to view a repository's resources of the given kind.
  * Folder-scoped kinds resolve to the repository's own folder (named after the
@@ -216,7 +250,7 @@ const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
  */
 export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): string {
   const repoName = repo.metadata?.name;
-  if (info.folderScoped && repo.spec?.sync.target === 'folder' && repoName) {
+  if (info.folderScoped && allKindInfos.includes(info) && repo.spec?.sync.target === 'folder' && repoName) {
     // The repository's folder is named after the repo, so reuse the folder kind's
     // route rather than duplicating the `/dashboards/f/...` shape here.
     return resourceKindInfos.folder.getRoute(repoName);
@@ -226,7 +260,7 @@ export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): st
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
 export function getKindInfoByResource(resource?: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.resource === resource);
+  return knownKindInfos().find((info) => info.resource === resource);
 }
 
 /**
@@ -235,7 +269,7 @@ export function getKindInfoByResource(resource?: string): ResourceKindInfo | und
  * union and create an import cycle with `../types`.
  */
 export function getKindInfoByItemType(itemType: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.itemType === itemType);
+  return knownKindInfos().find((info) => info.itemType === itemType);
 }
 
 /**
@@ -247,7 +281,7 @@ export function getKindInfoByItemType(itemType: string): ResourceKindInfo | unde
  * share an API group, so the group alone does not always identify the kind.
  */
 export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.group === group || info.resource === group);
+  return knownKindInfos().find((info) => info.group === group || info.resource === group);
 }
 
 /**
@@ -259,7 +293,7 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
   if (!group && !kind) {
     return undefined;
   }
-  return allKindInfos.find((info) => (!group || info.group === group) && (!kind || info.kind === kind));
+  return knownKindInfos().find((info) => (!group || info.group === group) && (!kind || info.kind === kind));
 }
 
 /**
@@ -269,11 +303,15 @@ export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceK
  * fall back to a group-only match for stats that omit the resource.
  */
 export function getKindInfoByStat(stat: { group?: string; resource?: string; kind?: string }): ResourceKindInfo {
-  return findKindInfoByStat(stat) ?? getDefaultKindInfo(stat);
+  const info = findKindInfoByStat(stat);
+  if (info && allKindInfos.some((core) => core.group === info.group && core.kind === info.kind)) {
+    return info;
+  }
+  return withOverride(getDefaultKindInfo(stat));
 }
 
 function findKindInfoByStat(stat: { group?: string; resource?: string; kind?: string }): ResourceKindInfo | undefined {
-  const byResource = allKindInfos.find((info) => info.resource === stat.resource);
+  const byResource = knownKindInfos().find((info) => info.resource === stat.resource);
   if (stat.kind) {
     return getKindInfoByGroupKind(stat.group, stat.kind) ?? byResource;
   }
