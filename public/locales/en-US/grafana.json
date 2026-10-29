@@ -11122,6 +11122,7 @@
         "add-all": "Add all displayed values to the filter",
         "blanks": "(Blanks)",
         "button": "Filter {{name}}",
+        "include-missing": "Include missing values",
         "operator": {
           "contains": "Contains",
           "equals": "Equals",
@@ -11146,6 +11147,7 @@
       "filter-popup-heading": "Filter by values:",
       "filter-popup-input-placeholder": "Filter values",
       "filter-popup-match-case": "Match case",
+      "filter-popup-row-count": "{{selected}} of {{total}} rows",
       "footer": {
         "reducer": {
           "count": "Count"
@@ -11162,6 +11164,18 @@
       "no-rows": "No rows",
       "no-values-label": "No values",
       "pagination-summary": "{{itemsRangeStart}} - {{displayedEnd}} of {{numRows}} rows",
+      "range": {
+        "apply": "Apply",
+        "empty": "No finite values match the other filters.",
+        "end": "End",
+        "histogram": "Value distribution, {{amount}} finite values",
+        "invalid": "Enter valid bounds with minimum no greater than maximum.",
+        "label": "Filter {{field}}",
+        "maximum": "Maximum",
+        "minimum": "Minimum",
+        "start": "Start",
+        "unbounded": "No limit"
+      },
       "reorder-column-label": "Reorder {{columnName}}",
       "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",

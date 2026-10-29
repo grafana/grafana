@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -214,7 +214,7 @@ describe('TextNGPanel', () => {
 
   it('renders code mode as an unrendered, syntax-highlighted block', async () => {
     const contentTest = '{\n  "a": 1\n}';
-    replaceVariablesMock.mockReturnValueOnce(contentTest);
+    replaceVariablesMock.mockReturnValue(contentTest);
     const props = Object.assign({}, defaultProps, {
       options: { content: contentTest, mode: TextMode.Code },
     });
@@ -222,7 +222,7 @@ describe('TextNGPanel', () => {
     setup(props);
 
     expect(screen.getByTestId('TextNGPanel-code')).toBeInTheDocument();
-    expect(await screen.findByRole('textbox')).toHaveValue('{\n  "a": 1\n}');
+    await waitFor(() => expect(screen.getByRole('textbox')).toHaveValue('{\n  "a": 1\n}'));
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
   });
 
