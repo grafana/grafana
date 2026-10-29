@@ -11,9 +11,9 @@ import { getGroupDepth, MAX_NESTING_DEPTH } from '../nestingRestrictions';
 import { LIST_DROP_KEY_ATTR, LIST_ITEM_KEY_ATTR, TAB_ACTIVATION_KEY_ATTR } from './attributes';
 
 /** An item a list drag session can drag */
-export type ListItem = RowItem;
-/** A layout that holds list items in order */
-export type ListLayout = RowsLayoutManager;
+export type ListItem = RowItem | TabItem;
+/** A layout that holds list items in order: rows one below the other, or a tab bar */
+export type ListLayout = RowsLayoutManager | TabsLayoutManager;
 
 export type ListDropTarget =
   | {
@@ -32,7 +32,16 @@ export type ListDropTarget =
     };
 
 export function getListOf(item: ListItem): ListLayout | undefined {
-  return item.parent instanceof RowsLayoutManager ? item.parent : undefined;
+  const parent = item.parent;
+  if (item instanceof TabItem) {
+    return parent instanceof TabsLayoutManager ? parent : undefined;
+  }
+  return parent instanceof RowsLayoutManager ? parent : undefined;
+}
+
+/** Rows go into rows layouts and tabs into tab bars */
+function holdsItemsLike(list: SceneObject, item: ListItem): list is ListLayout {
+  return item instanceof TabItem ? list instanceof TabsLayoutManager : list instanceof RowsLayoutManager;
 }
 
 export function isSameListDropTarget(a: ListDropTarget | null, b: ListDropTarget | null): boolean {
@@ -66,11 +75,11 @@ function isInside(obj: SceneObject, ancestor: SceneObject): boolean {
 }
 
 /**
- * Whether the item can be dropped into the list: not inside itself or a repeated copy, and without
- * nesting anything deeper than the grouping actions allow
+ * Whether the item can be dropped into the list: a list of the same kind, not inside the item itself
+ * or a repeated copy, and without nesting anything deeper than the grouping actions allow
  */
 export function canDropIntoList(item: ListItem, list: ListLayout): boolean {
-  if (isInside(list, item) || isRepeatCloneOrChildOf(list)) {
+  if (!holdsItemsLike(list, item) || isInside(list, item) || isRepeatCloneOrChildOf(list)) {
     return false;
   }
   if (getListOf(item) === list) {
@@ -79,8 +88,8 @@ export function canDropIntoList(item: ListItem, list: ListLayout): boolean {
   return getGroupsAbove(list) + getGroupDepth(item.state.layout) <= MAX_NESTING_DEPTH;
 }
 
-/** Whether the item can be dropped into the tab, see the `tab` drop target */
-export function canDropIntoTab(item: ListItem, tab: TabItem): boolean {
+/** Whether the row can be dropped into the tab, see the `tab` drop target */
+export function canDropIntoTab(item: RowItem, tab: TabItem): boolean {
   const layout = tab.state.layout;
   if (layout instanceof RowsLayoutManager) {
     return canDropIntoList(item, layout);
@@ -109,20 +118,25 @@ export function getListItemElements(listEl: Element): HTMLElement[] {
   );
 }
 
-/** The vertical span of each of the list's items other than `itemKey`, a row and its repeated copies as one */
-function getOtherItemSpans(listEl: Element, itemKey: string | undefined): Array<{ start: number; end: number }> {
+/**
+ * The span of each of the list's items other than `itemKey` along the list's axis, an item and its
+ * repeated copies as one: vertical for rows, horizontal for the tabs of a tab bar
+ */
+function getOtherItemSpans(
+  listEl: Element,
+  itemKey: string | undefined,
+  axis: 'x' | 'y'
+): Array<{ start: number; end: number }> {
   const spans = new Map<string, { start: number; end: number }>();
   for (const el of getListItemElements(listEl)) {
     const key = el.getAttribute(LIST_ITEM_KEY_ATTR);
     if (!key || key === itemKey) {
       continue;
     }
-    const { top, bottom } = el.getBoundingClientRect();
+    const { top, bottom, left, right } = el.getBoundingClientRect();
+    const [start, end] = axis === 'x' ? [left, right] : [top, bottom];
     const span = spans.get(key);
-    spans.set(
-      key,
-      span ? { start: Math.min(span.start, top), end: Math.max(span.end, bottom) } : { start: top, end: bottom }
-    );
+    spans.set(key, span ? { start: Math.min(span.start, start), end: Math.max(span.end, end) } : { start, end });
   }
   return [...spans.values()];
 }
@@ -130,7 +144,10 @@ function getOtherItemSpans(listEl: Element, itemKey: string | undefined): Array<
 /**
  * Hit-testing for one drag: where the item would land if it were dropped at a point. The innermost
  * place under the point that accepts the item wins, so a row that can't go into a nested list goes
- * next to it instead. Hovering the header of the tab the item comes from means no drop.
+ * next to it instead. Hovering the header of the tab a row comes from means no drop.
+ *
+ * Tabs only go into tab bars: over a tab bar nested in the tab itself, a row or anything else that
+ * isn't a tab bar, there is no drop.
  */
 export function createListDropTargetFinder(item: ListItem): (x: number, y: number) => ListDropTarget | null {
   const root = item.getRoot();
@@ -149,6 +166,18 @@ export function createListDropTargetFinder(item: ListItem): (x: number, y: numbe
 
   return (x, y) => {
     for (const el of document.elementsFromPoint(x, y)) {
+      const listKey = el.getAttribute(LIST_DROP_KEY_ATTR);
+      const list = listKey ? findByKey(listKey) : null;
+      if (list && holdsItemsLike(list, item) && canDropIntoList(item, list)) {
+        const axis = list instanceof TabsLayoutManager ? 'x' : 'y';
+        const spans = getOtherItemSpans(el, item.state.key, axis);
+        return { kind: 'list', list, index: getInsertIndex(spans, axis === 'x' ? x : y) };
+      }
+
+      if (item instanceof TabItem) {
+        continue;
+      }
+
       const tabHeaderKey = el.getAttribute(TAB_ACTIVATION_KEY_ATTR);
       if (tabHeaderKey) {
         const tab = findByKey(tabHeaderKey);
@@ -159,12 +188,6 @@ export function createListDropTargetFinder(item: ListItem): (x: number, y: numbe
           return { kind: 'tab', tab };
         }
         continue;
-      }
-
-      const listKey = el.getAttribute(LIST_DROP_KEY_ATTR);
-      const list = listKey ? findByKey(listKey) : null;
-      if (list instanceof RowsLayoutManager && canDropIntoList(item, list)) {
-        return { kind: 'list', list, index: getInsertIndex(getOtherItemSpans(el, item.state.key), y) };
       }
 
       // The content of a tab that doesn't hold rows yet

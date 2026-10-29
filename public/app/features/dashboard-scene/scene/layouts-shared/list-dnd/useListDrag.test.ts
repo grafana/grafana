@@ -13,11 +13,11 @@ import { TabItem } from '../../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../layout-tabs/TabsLayoutManager';
 
 import { LIST_DROP_KEY_ATTR, LIST_ITEM_KEY_ATTR, TAB_ACTIVATION_KEY_ATTR } from './attributes';
-import { useRowDrag, useRowsListDrag } from './useListDrag';
+import { useRowDrag, useRowsListDrag, useTabDrag, useTabsListDrag } from './useListDrag';
 
 const TAB_ACTIVATION_DELAY_MS = 600;
 
-describe('row drag hooks', () => {
+describe('row and tab drag hooks', () => {
   const originalElementsFromPoint = document.elementsFromPoint;
   let elementsUnderPointer: Element[] = [];
   let deactivate: (() => void) | undefined;
@@ -54,6 +54,19 @@ describe('row drag hooks', () => {
       const { result } = renderHook(() => useRowDrag(rowA, true));
 
       expect(result.current).toBeUndefined();
+    });
+
+    it('hands the tab bar its tabs unchanged and no attributes, and gives a tab nothing', () => {
+      const { tabs, sourceTab } = setup();
+
+      const list = renderHook(() => useTabsListDrag(tabs, tabs.state.tabs, true));
+      const tab = renderHook(() => useTabDrag(sourceTab, true));
+
+      expect(list.result.current.isEnabled).toBe(false);
+      expect(list.result.current.tabs).toBe(tabs.state.tabs);
+      expect(list.result.current.dropPlaceholder).toBeNull();
+      expect(list.result.current.attributes).toEqual({});
+      expect(tab.result.current).toBeUndefined();
     });
   });
 
@@ -103,11 +116,66 @@ describe('row drag hooks', () => {
       act(() => moveTo(10, 80));
 
       expect(titles(sourceList.result.current.rows)).toEqual(['Row A', 'Row B', 'Row C']);
-      expect(targetList.result.current.dropPlaceholder).toEqual({ index: 1, height: 40 });
+      expect(targetList.result.current.dropPlaceholder).toMatchObject({ index: 1, height: 40 });
 
       act(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
       expect(targetList.result.current.dropPlaceholder).toBeNull();
       expect(draggedRow.result.current?.className).toBeUndefined();
+    });
+  });
+
+  describe('tabs, with the unified drag and drop flag on', () => {
+    beforeEach(() => setTestFlags({ [FlagKeys.GrafanaDashboardUnifiedDragAndDrop]: true }));
+
+    it('marks the tab bar and its tabs for hit-testing while editing, a repeated copy as part of its tab', () => {
+      const { tabs, sourceTab } = setup();
+      const clone = new TabItem({ key: 'tab-clone', repeatSourceKey: sourceTab.state.key });
+      sourceTab.setState({ repeatedTabs: [clone] });
+
+      const list = renderHook(() => useTabsListDrag(tabs, tabs.state.tabs, true));
+      const tab = renderHook(() => useTabDrag(sourceTab, true));
+      const repeatedTab = renderHook(() => useTabDrag(clone, false));
+
+      expect(list.result.current.isEnabled).toBe(true);
+      expect(list.result.current.attributes).toEqual({ [LIST_DROP_KEY_ATTR]: tabs.state.key });
+      expect(tab.result.current?.attributes).toEqual({ [LIST_ITEM_KEY_ATTR]: sourceTab.state.key });
+      expect(tab.result.current?.onPointerDownCapture).toBeInstanceOf(Function);
+      expect(repeatedTab.result.current?.attributes).toEqual({ [LIST_ITEM_KEY_ATTR]: sourceTab.state.key });
+      expect(repeatedTab.result.current?.onPointerDownCapture).toBeUndefined();
+
+      const viewList = renderHook(() => useTabsListDrag(tabs, tabs.state.tabs, false));
+      expect(viewList.result.current.attributes).toEqual({});
+    });
+
+    it('renders the dragged tab where it would be dropped, and a tab-sized placeholder in another tab bar', () => {
+      const { dashboard, tabs, target, sourceTab } = setup();
+      const otherBar = new TabsLayoutManager({ tabs: [new TabItem({ title: 'Other' })] });
+      target.setState({ rows: [...target.state.rows, new RowItem({ title: 'Holder', layout: otherBar })] });
+      sourceTab.containerRef.current = sizedElement(120, 32);
+      const barEl = renderTabBar(tabs);
+      const otherBarEl = renderTabBar(otherBar);
+      const sourceList = renderHook(() => useTabsListDrag(tabs, tabs.state.tabs, true));
+      const otherList = renderHook(() => useTabsListDrag(otherBar, otherBar.state.tabs, true));
+      const draggedTab = renderHook(() => useTabDrag(sourceTab, true));
+
+      draggedTab.result.current?.onPointerDownCapture?.(press(10, 10));
+      elementsUnderPointer = [barEl];
+      act(() => moveTo(160, 10));
+
+      expect(tabTitles(sourceList.result.current.tabs)).toEqual(['Rows target', 'Source', 'Grid']);
+      expect(draggedTab.result.current?.className).toBeDefined();
+      expect(tabs.getCurrentTab()).toBe(sourceTab);
+
+      elementsUnderPointer = [otherBarEl];
+      act(() => moveTo(10, 10));
+      expect(tabTitles(sourceList.result.current.tabs)).toEqual(['Source', 'Rows target', 'Grid']);
+      expect(otherList.result.current.dropPlaceholder).toEqual({ index: 0, width: 120, height: 32 });
+
+      act(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+      expect(otherList.result.current.dropPlaceholder).toBeNull();
+      expect(draggedTab.result.current?.className).toBeUndefined();
+      expect(tabTitles(tabs.state.tabs)).toEqual(['Source', 'Rows target', 'Grid']);
+      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
     });
   });
 
@@ -145,6 +213,26 @@ describe('row drag hooks', () => {
       expect(titles(target.state.rows)).toEqual(['Row T']);
       expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
     });
+
+    it('does not open tabs hovered during a tab drag, which reorders them instead', () => {
+      const { dashboard, tabs, sourceTab, targetTab } = setup();
+      const orchestrator = dashboard.state.layoutOrchestrator!;
+      const header = document.createElement('a');
+      header.setAttribute(TAB_ACTIVATION_KEY_ATTR, targetTab.state.key!);
+
+      orchestrator.startListDrag(press(10, 10), sourceTab);
+      elementsUnderPointer = [header, renderTabBar(tabs)];
+      moveTo(160, 10);
+      expect(orchestrator.state.dragPreview).toMatchObject({ label: 'Source', type: 'tab' });
+
+      jest.advanceTimersByTime(TAB_ACTIVATION_DELAY_MS);
+      expect(tabs.getCurrentTab()).toBe(sourceTab);
+
+      window.dispatchEvent(new MouseEvent('pointerup', { clientX: 160, clientY: 10 }));
+      expect(tabTitles(tabs.state.tabs)).toEqual(['Rows target', 'Source', 'Grid']);
+      expect(orchestrator.state.dragPreview).toBeUndefined();
+      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
+    });
   });
 
   function setup() {
@@ -168,6 +256,33 @@ describe('row drag hooks', () => {
 
 function titles(rows: RowItem[]) {
   return rows.map((row) => row.state.title);
+}
+
+function tabTitles(tabs: TabItem[]) {
+  return tabs.map((tab) => tab.state.title);
+}
+
+function sizedElement(width: number, height: number): HTMLDivElement {
+  const el = document.createElement('div');
+  const box = { x: 0, y: 0, left: 0, top: 0, width, height, right: width, bottom: height };
+  el.getBoundingClientRect = () => ({ ...box, toJSON: () => box });
+  return el;
+}
+
+/** A tab bar element with one 100px wide element per tab, side by side from the left of the page */
+function renderTabBar(bar: TabsLayoutManager): HTMLElement {
+  const barEl = document.createElement('div');
+  barEl.setAttribute(LIST_DROP_KEY_ATTR, bar.state.key!);
+  bar.state.tabs.forEach((tab, index) => {
+    const tabEl = document.createElement('div');
+    tabEl.setAttribute(LIST_ITEM_KEY_ATTR, tab.state.key!);
+    const left = index * 100;
+    const box = { x: left, y: 0, left, top: 0, width: 100, height: 32, right: left + 100, bottom: 32 };
+    tabEl.getBoundingClientRect = () => ({ ...box, toJSON: () => box });
+    barEl.appendChild(tabEl);
+  });
+  document.body.appendChild(barEl);
+  return barEl;
 }
 
 function press(clientX: number, clientY: number) {

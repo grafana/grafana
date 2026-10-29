@@ -65,7 +65,7 @@ interface DashboardLayoutOrchestratorState extends SceneObjectState {
     offsetX: number;
     offsetY: number;
     label: string;
-    type: 'panel' | 'row';
+    type: 'panel' | 'row' | 'tab';
   };
 }
 
@@ -95,7 +95,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   /** Cached label for the preview */
   private _previewLabel = '';
   /** Cached type for the preview */
-  private _previewType: 'panel' | 'row' = 'panel';
+  private _previewType: 'panel' | 'row' | 'tab' = 'panel';
   /** Cached dimensions for the preview */
   private _previewWidth = 0;
   private _previewHeight = 0;
@@ -126,7 +126,7 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   private _externalDragOverTarget: DashboardDropTarget | null = null;
   /** Whether the new-panel drag in progress adds a new panel, which drop targets may preview (pasted panels are not) */
   private _isNewPanelDrag = false;
-  /** Row drag on the unified drag and drop engine */
+  /** Row or tab drag on the unified drag and drop engine */
   private _listDrag: ListDragSession | null = null;
   private _listDragListeners = new Set<() => void>();
 
@@ -176,8 +176,8 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
   }
 
   /**
-   * Starts dragging a row on the unified drag and drop engine, from a press on its header. The session
-   * does the drag; the orchestrator hit-tests for it and opens tabs hovered on the way.
+   * Starts dragging a row or a tab on the unified drag and drop engine, from a press on its header. The
+   * session does the drag; the orchestrator hit-tests for it and, for rows, opens tabs hovered on the way.
    */
   public startListDrag(evt: ReactPointerEvent, item: ListItem): void {
     if (this._listDrag || this.isDragging()) {
@@ -187,10 +187,11 @@ export class DashboardLayoutOrchestrator extends SceneObjectBase<DashboardLayout
     const findDropTarget = createListDropTargetFinder(item);
     this._listDrag = ListDragSession.start(evt, item, {
       getDropTarget: findDropTarget,
-      onDragMove: (x, y) => this._checkTabHover(x, y),
-      showPreview: ({ label, x, y, width, height, offsetX, offsetY }) => {
+      // A tab is moved by hovering other tabs, which must not open them
+      onDragMove: item instanceof TabItem ? () => {} : (x, y) => this._checkTabHover(x, y),
+      showPreview: ({ type, label, x, y, width, height, offsetX, offsetY }) => {
         this._previewLabel = label;
-        this._previewType = 'row';
+        this._previewType = type;
         this._previewWidth = width;
         this._previewHeight = height;
         this._dragOffsetX = offsetX;

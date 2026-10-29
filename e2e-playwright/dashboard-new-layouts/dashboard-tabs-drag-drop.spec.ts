@@ -263,21 +263,29 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards', '@drag-and-
       await expectNoUnsavedChanges(controls);
     });
 
-    // Today the drop is accepted: the outer tab, its nested tabs and their panels vanish from the dashboard
-    test.fixme(
-      'keeps the tabs in place when an outer tab is dropped into the tab bar nested in it',
-      async ({ page, selectors, controls, sidebar, tabs, panels }) => {
-        await importDashboard(page, selectors, 'Drop outer tab into its own nested tab bar', v2DashboardNestedTabs);
-        await controls.enterEditMode();
-        await expectNestedTabBars(tabs, INITIAL_NESTED_TABS);
+    test('keeps the tabs in place when an outer tab is dropped into the tab bar nested in it', async ({
+      page,
+      selectors,
+      controls,
+      sidebar,
+      tabs,
+      panels,
+      unifiedDragAndDrop,
+    }) => {
+      test.fixme(
+        !unifiedDragAndDrop,
+        'The drop is accepted: the outer tab, its nested tabs and their panels vanish from the dashboard'
+      );
+      await importDashboard(page, selectors, 'Drop outer tab into its own nested tab bar', v2DashboardNestedTabs);
+      await controls.enterEditMode();
+      await expectNestedTabBars(tabs, INITIAL_NESTED_TABS);
 
-        await dropTabBefore(page, tabs, NESTED_TABS_PARENT, 'Inner 2');
+      await dropTabBefore(page, tabs, NESTED_TABS_PARENT, 'Inner 2');
 
-        await expectNestedTabBars(tabs, INITIAL_NESTED_TABS);
-        await expectTabPanels({ tabs, panels }, 'Inner 2', ['Inner two']);
-        await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
-      }
-    );
+      await expectNestedTabBars(tabs, INITIAL_NESTED_TABS);
+      await expectTabPanels({ tabs, panels }, 'Inner 2', ['Inner two']);
+      await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
+    });
   });
 
   test.describe('Cancelled drops', () => {
@@ -303,23 +311,31 @@ test.describe('Dashboard Tabs Drag and Drop', { tag: ['@dashboards', '@drag-and-
       await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
     });
 
-    // Today Escape does not cancel a tab drag over another tab bar: the tab still moves there
-    test.fixme(
-      'keeps the tabs in place when the drag is cancelled with Escape over another tab bar',
-      async ({ page, selectors, controls, sidebar, rows, tabs }) => {
-        await importDashboard(page, selectors, 'Cancel tab drag with Escape', v2DashboardWithTabs);
-        await controls.enterEditMode();
-        await expectRowTabs({ rows, tabs }, INITIAL_ROW_TABS);
+    test('keeps the tabs in place when the drag is cancelled with Escape over another tab bar', async ({
+      page,
+      selectors,
+      controls,
+      sidebar,
+      rows,
+      tabs,
+      unifiedDragAndDrop,
+    }) => {
+      test.fixme(
+        !unifiedDragAndDrop,
+        'Escape does not cancel a tab drag over another tab bar: the tab still moves there'
+      );
+      await importDashboard(page, selectors, 'Cancel tab drag with Escape', v2DashboardWithTabs);
+      await controls.enterEditMode();
+      await expectRowTabs({ rows, tabs }, INITIAL_ROW_TABS);
 
-        const bottomBBox = await getTabBox(tabs, 'bottom b');
-        const drag = await startPointerDrag(page, 'tab "top a"', tabs.getTitle('top a'));
-        await drag.moveTo(tabs.getTitle('bottom b'), { position: { x: 5, y: bottomBBox.height / 2 } });
-        await drag.pressEscape();
-        await drag.drop();
+      const bottomBBox = await getTabBox(tabs, 'bottom b');
+      const drag = await startPointerDrag(page, 'tab "top a"', tabs.getTitle('top a'));
+      await drag.moveTo(tabs.getTitle('bottom b'), { position: { x: 5, y: bottomBBox.height / 2 } });
+      await drag.pressEscape();
+      await drag.drop();
 
-        await expectRowTabs({ rows, tabs }, INITIAL_ROW_TABS);
-        await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
-      }
-    );
+      await expectRowTabs({ rows, tabs }, INITIAL_ROW_TABS);
+      await expect(sidebar.toolbar.getButton('Undo')).toBeDisabled();
+    });
   });
 });

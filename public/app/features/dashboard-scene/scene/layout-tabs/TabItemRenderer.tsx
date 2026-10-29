@@ -17,6 +17,7 @@ import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
 import { SectionVariableControls } from '../VariableControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
+import { useTabDrag } from '../layouts-shared/list-dnd/useListDrag';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
 
@@ -45,7 +46,8 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const soloPanelContext = useSoloPanelContext();
 
   const isDraggable = !isClone && isEditing;
-  const { Draggable } = useDragAndDrop(isDraggable);
+  const tabDrag = useTabDrag(model, isDraggable);
+  const { Draggable } = useDragAndDrop(isDraggable && !tabDrag);
   const showLayoutIndicator = isEditing && isActive;
   const layoutMode = mapIdToGridLayoutType(layout.descriptor.id);
 
@@ -89,7 +91,10 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
             dragProvided.innerRef(ref);
             model.containerRef.current = ref;
           }}
-          className={cx(dragSnapshot.isDragging && styles.dragging)}
+          className={cx(dragSnapshot.isDragging && styles.dragging, tabDrag?.className)}
+          {...tabDrag?.attributes}
+          onPointerDownCapture={tabDrag?.onPointerDownCapture}
+          onDragStart={tabDrag?.onDragStart}
           {...dragProvided.draggableProps}
           {...dragProvided.dragHandleProps}
           style={getDraggableStyle(dragProvided.draggableProps.style, dragSnapshot)}

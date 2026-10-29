@@ -1,10 +1,14 @@
+import { RowsLayoutManager } from '../../layout-rows/RowsLayoutManager';
+import { TabItem } from '../../layout-tabs/TabItem';
+
 import { commitListDrop } from './commitListDrop';
 import { getListOf, isSameListDropTarget, type ListDropTarget, type ListItem, type ListLayout } from './listDnd';
 
-/** How far the pointer has to move before a press on a row header becomes a drag */
+/** How far the pointer has to move before a press on a row or tab header becomes a drag */
 const DRAG_THRESHOLD_PX = 4;
-/** Used when the row header can't be measured */
+/** Used when the header can't be measured */
 const FALLBACK_HEADER_HEIGHT = 40;
+const FALLBACK_TAB_WIDTH = 120;
 
 export interface ListDragState {
   itemKey: string;
@@ -13,10 +17,13 @@ export interface ListDragState {
   target: ListDropTarget | null;
   /** Height of the dragged item's header: rows can be very tall, so other lists show a header-sized placeholder */
   placeholderHeight: number;
+  /** Width of the dragged item's header, for the placeholder in a tab bar */
+  placeholderWidth: number;
 }
 
 /** Floating preview of the dragged item's header, positioned so the pointer keeps its grab point */
 export interface ListDragPreview {
+  type: 'row' | 'tab';
   label: string;
   x: number;
   y: number;
@@ -48,7 +55,7 @@ interface PointerPress {
 }
 
 /**
- * Dragging a row, from a press on its header to the drop. The item stays in its list until the drop,
+ * Dragging a row or a tab, from a press on its header to the drop. The item stays in its list until the drop,
  * renderers show it moving through `getState`: the source list renders the item where it would be
  * dropped, other lists render a placeholder. Every drop is one undoable action.
  *
@@ -68,7 +75,7 @@ export class ListDragSession {
   /** Starts a session for a press on the item's drag handle, or returns null if the press doesn't start one */
   public static start(evt: PointerPress, item: ListItem, host: ListDragHost): ListDragSession | null {
     const sourceList = getListOf(item);
-    if (!sourceList || evt.button !== 0 || isInteractiveTarget(evt.target)) {
+    if (!sourceList || evt.button !== 0 || isInteractiveTarget(evt.target, item)) {
       return null;
     }
 
@@ -123,6 +130,9 @@ export class ListDragSession {
     // Pointer moves can be coalesced, so the release point decides
     const target = this._host.getDropTarget(evt.clientX, evt.clientY);
     this._end();
+    if (this._item instanceof TabItem) {
+      suppressNextClick();
+    }
     if (target) {
       commitListDrop(this._item, this._sourceList, target);
     }
@@ -141,27 +151,43 @@ export class ListDragSession {
   };
 
   private _activate() {
-    const { label, width, height, offsetX, offsetY } = this._measureItem();
+    const isTab = this._item instanceof TabItem;
+    const { label, width, height, offsetX, offsetY } = this._measureItem(isTab);
     this._state = {
       itemKey: this._item.state.key!,
       sourceListKey: this._sourceList.state.key!,
       target: null,
       placeholderHeight: height,
+      placeholderWidth: width,
     };
-    // Same as when a drag starts on the old path
-    this._sourceList.forceSelectRow(this._item.state.key!);
-    this._host.showPreview({ label, x: this._start.x, y: this._start.y, width, height, offsetX, offsetY });
+    // Same as when a drag starts on the old path, which selects rows but not tabs
+    if (this._sourceList instanceof RowsLayoutManager) {
+      this._sourceList.forceSelectRow(this._item.state.key!);
+    }
+    this._host.showPreview({
+      type: isTab ? 'tab' : 'row',
+      label,
+      x: this._start.x,
+      y: this._start.y,
+      width,
+      height,
+      offsetX,
+      offsetY,
+    });
     this._host.onChange();
   }
 
-  private _measureItem() {
+  /** The header of the item: the element of a tab is its header, a row's header is the top of the row */
+  private _measureItem(isTab: boolean) {
     const element = this._item.containerRef.current;
     const itemRect = element?.getBoundingClientRect();
-    const headerRect = element?.querySelector(':scope > .dashboard-row-header')?.getBoundingClientRect() ?? itemRect;
-    const width = itemRect?.width || 400;
+    const headerRect = isTab
+      ? itemRect
+      : (element?.querySelector(':scope > .dashboard-row-header')?.getBoundingClientRect() ?? itemRect);
+    const width = itemRect?.width || (isTab ? FALLBACK_TAB_WIDTH : 400);
     const height = headerRect?.height || FALLBACK_HEADER_HEIGHT;
     return {
-      label: this._item.state.title || 'Row',
+      label: this._item.state.title || (isTab ? 'Tab' : 'Row'),
       width,
       height,
       offsetX: headerRect ? clamp(this._start.x - headerRect.left, 0, width) : 20,
@@ -207,9 +233,24 @@ function setTabHighlight(target: ListDropTarget | null, isHighlighted: boolean) 
   }
 }
 
-/** Presses on controls inside a header don't start a drag */
-function isInteractiveTarget(target: EventTarget | null): boolean {
-  return target instanceof Element && !!target.closest('button, input, textarea, select, a[href], [role="button"]');
+/** Presses on controls inside a header don't start a drag. A tab header is a link itself, so that one does. */
+function isInteractiveTarget(target: EventTarget | null, item: ListItem): boolean {
+  const control =
+    target instanceof Element ? target.closest('button, input, textarea, select, a[href], [role="button"]') : null;
+  return !!control && !(item instanceof TabItem && control.getAttribute('role') === 'tab');
+}
+
+/**
+ * A tab dropped where it started, or reordered under the pointer, gets the click of the release, which
+ * would open it. The click comes right after the pointerup.
+ */
+function suppressNextClick() {
+  const onClick = (evt: MouseEvent) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+  };
+  window.addEventListener('click', onClick, { capture: true, once: true });
+  setTimeout(() => window.removeEventListener('click', onClick, { capture: true }), 0);
 }
 
 function isOutsideWindow({ clientX, clientY }: { clientX: number; clientY: number }): boolean {
