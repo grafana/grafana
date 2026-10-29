@@ -681,6 +681,15 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 		}
 	}
 
+	// The root folder has no folder object for the check above, so only storage rejects a root
+	// create, with a 403 that carries no reason or message. v2 is what the dashboard editor saves
+	// through, so check it here and give it the same Forbidden as any other folder.
+	if !a.IsDryRun() && folder.IsRootFolderUID(accessor.GetFolder()) && isV2Dashboard(dashObj) {
+		if err := b.verifyRootFolderCreatePermission(ctx, id, a.GetNamespace(), accessor.GetFolder()); err != nil {
+			return err
+		}
+	}
+
 	// Validate quota
 	if !b.isStandalone && !a.IsDryRun() {
 		params := &quota.ScopeParameters{}
@@ -987,6 +996,15 @@ func getDashboardProperties(obj runtime.Object) (string, string, error) {
 	}
 
 	return title, refresh, nil
+}
+
+func isV2Dashboard(obj runtime.Object) bool {
+	switch obj.(type) {
+	case *dashv2alpha1.Dashboard, *dashv2beta1.Dashboard, *dashv2.Dashboard:
+		return true
+	default:
+		return false
+	}
 }
 
 // validateNotV2Object validates that all dashboard tags are within the maximum length
@@ -1770,6 +1788,28 @@ func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			}
 			return serviceAuthorizer.Authorize(ctx, attr)
 		})
+}
+
+// verifyRootFolderCreatePermission runs the create check storage runs for the root folder. Without an
+// access client there is nothing to check against here, so the decision is left to storage.
+func (b *DashboardsAPIBuilder) verifyRootFolderCreatePermission(ctx context.Context, user identity.Requester, namespace, folderID string) error {
+	if b.accessClient == nil {
+		return nil
+	}
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	resp, err := b.accessClient.Check(ctx, user, authlib.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     gvr.Group,
+		Resource:  gvr.Resource,
+		Namespace: namespace,
+	}, folderID)
+	if err != nil {
+		return err
+	}
+	if !resp.Allowed {
+		return apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), folderID, folder.ErrAccessDenied)
+	}
+	return nil
 }
 
 func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderID string) error {
