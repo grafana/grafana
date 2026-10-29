@@ -616,6 +616,8 @@ func TestQueryFrames_NullFromNonNullableColumn(t *testing.T) {
 			expected: data.NewField("level", nil, []*string{nil, &errLevel}),
 		},
 		{
+			// go-mysql-server returns NULL here; MySQL returns 0. This case
+			// depends on that quirk, so an engine upgrade may change it.
 			name:     "JSON_LENGTH of an empty array",
 			query:    `SELECT JSON_LENGTH('[]') AS n`,
 			expected: data.NewField("n", nil, []*int64{nil}),
