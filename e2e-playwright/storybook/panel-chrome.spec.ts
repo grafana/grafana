@@ -99,5 +99,9 @@ test('an open header popover keeps its anchor while its search input is used', a
   expect(await groupBy.boundingBox()).toEqual(anchor);
   await page.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(search).toBeHidden();
+  await expect(groupBy).toHaveAttribute('aria-expanded', 'false');
+  const toggle = page.getByRole('button', { name: 'Toggle grouping' });
+  await toggle.focus();
+  await toggle.hover();
   await expect(groupBy).toBeHidden();
 });
