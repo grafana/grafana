@@ -5,34 +5,33 @@ import { locationService } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 
 import { setupMswServer } from '../../mockApi';
-import { alertRuleFactory, folderFactory, ruleItem } from '../mocks/factories';
-import { mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
-import { setupRuleListBackend } from '../mocks/ruleListBackend';
+import { alertRuleFactory, folderFactory } from '../mocks/factories';
+import { ruleSearchUrl } from '../mocks/handlers';
+import { type RuleListBackend, setupRuleListBackend } from '../mocks/ruleListBackend';
 
 import AlertRulesPage from './AlertRulesPage';
 
-// test-utils replaces locationService per render; a spread would freeze the first one.
-jest.mock('@grafana/runtime', () => {
-  const actual = jest.requireActual('@grafana/runtime');
-  return Object.defineProperty({ ...actual }, 'locationService', {
-    enumerable: true,
-    get: () => actual.locationService,
-  });
-});
-
 setupMswServer();
+
+const FOLDERS = [folderFactory.build({ metadata: { name: 'folder-1' }, spec: { title: 'Team Alerts' } })];
+
+const ALERT_RULES = [
+  alertRuleFactory.inFolder('folder-1').build({ spec: { title: 'CPU high load' } }),
+  alertRuleFactory.inFolder('folder-1').build({ spec: { title: 'Disk full' } }),
+  alertRuleFactory.inFolder('folder-1').build({ spec: { title: 'Memory high' } }),
+];
+
+function setup(options: Partial<Parameters<typeof setupRuleListBackend>[0]> = {}) {
+  return setupRuleListBackend({ folders: FOLDERS, alertRules: ALERT_RULES, ...options });
+}
 
 /** Folders is the default view; List tests open the page with `view=list`. */
 function renderInListMode() {
   return render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
 }
 
-function secondPage() {
-  return HttpResponse.json({ items: [ruleItem('alert', 'rule-2', 'Disk full', 'folder-2')], metadata: {} });
-}
-
 describe('AlertRulesPage search', () => {
-  let ruleSearchBodies: Array<{ where?: unknown; continue?: string }>;
+  let backend: RuleListBackend;
 
   function searchParam() {
     return new URLSearchParams(locationService.getLocation().search).get('search');
@@ -43,23 +42,18 @@ describe('AlertRulesPage search', () => {
   }
 
   beforeEach(() => {
-    mockFolderParents({ 'folder-1': 'Team Alerts' });
-    ruleSearchBodies = [];
-    mockRuleSearch('alert', (body) => {
-      ruleSearchBodies.push(body);
-      return { items: [ruleItem('alert', 'rule-1', 'CPU high', 'folder-1')], metadata: {} };
-    });
+    backend = setup();
   });
 
   it('keeps a multi-token query exactly as typed in the input and the URL, and sends it as one request', async () => {
     const { user } = renderInListMode();
-    await screen.findByText('CPU high');
+    await screen.findByText('CPU high load');
     const typed = 'paused:true cpu label:team=api  folder:folder-1';
 
     await user.type(searchInput(), `${typed}{Enter}`);
 
     await waitFor(() =>
-      expect(ruleSearchBodies.at(-1)?.where).toEqual({
+      expect(backend.ruleSearches.at(-1)?.where).toEqual({
         and: [
           { text: { value: 'cpu' } },
           { filter: { field: 'folder', operator: 'In', values: ['folder-1'] } },
@@ -68,7 +62,7 @@ describe('AlertRulesPage search', () => {
         ],
       })
     );
-    expect(ruleSearchBodies).toHaveLength(2);
+    expect(backend.ruleSearches).toHaveLength(2);
     expect(searchInput()).toHaveValue(typed);
     expect(searchParam()).toBe(typed);
   });
@@ -78,9 +72,9 @@ describe('AlertRulesPage search', () => {
       historyOptions: { initialEntries: ['/?search=folder%3Afolder-1%20label%3Ateam%3D~api.*%20%22high%20load%22'] },
     });
 
-    expect(await screen.findByText('CPU high')).toBeInTheDocument();
+    expect(await screen.findByText('CPU high load')).toBeInTheDocument();
     expect(searchInput()).toHaveValue('folder:folder-1 label:team=~api.* "high load"');
-    expect(ruleSearchBodies.map((body) => body.where)).toEqual([
+    expect(backend.ruleSearches.map((body) => body.where)).toEqual([
       {
         and: [
           { text: { value: 'high load' } },
@@ -93,11 +87,11 @@ describe('AlertRulesPage search', () => {
 
   it('searches titles for a key:value word the page has no filter for, and keeps it as typed in the URL', async () => {
     const { user } = renderInListMode();
-    await screen.findByText('CPU high');
+    await screen.findByText('CPU high load');
 
     await user.type(searchInput(), 'foo:bar metric:cpu{Enter}');
 
-    await waitFor(() => expect(ruleSearchBodies.at(-1)?.where).toEqual({ text: { value: 'foo:bar metric:cpu' } }));
+    await waitFor(() => expect(backend.ruleSearches.at(-1)?.where).toEqual({ text: { value: 'foo:bar metric:cpu' } }));
     expect(searchParam()).toBe('foo:bar metric:cpu');
     expect(searchInput()).not.toHaveAttribute('aria-invalid');
   });
@@ -121,30 +115,30 @@ describe('AlertRulesPage search', () => {
     expect(searchInput()).toHaveValue(search);
     expect(searchInput()).toHaveAttribute('aria-invalid', 'true');
     expect(searchInput()).toHaveAccessibleDescription(message);
-    expect(ruleSearchBodies).toEqual([]);
+    expect(backend.ruleSearches).toEqual([]);
   });
 
   it('sends no request for an invalid query typed into the input, and searches again once it is fixed', async () => {
     const { user } = renderInListMode();
-    await screen.findByText('CPU high');
+    await screen.findByText('CPU high load');
 
     await user.type(searchInput(), 'panelId:4{Enter}');
 
     expect(await screen.findByText('Change the search to see results')).toBeInTheDocument();
-    expect(ruleSearchBodies).toHaveLength(1);
+    expect(backend.ruleSearches).toHaveLength(1);
 
     await user.tripleClick(searchInput());
     await user.keyboard('dashboard:dash-1 panelId:4{Enter}');
 
     await waitFor(() =>
-      expect(ruleSearchBodies.at(-1)?.where).toEqual({
+      expect(backend.ruleSearches.at(-1)?.where).toEqual({
         and: [
           { filter: { field: 'dashboardUID', operator: 'In', values: ['dash-1'] } },
           { filter: { field: 'panelID', operator: 'In', values: ['4'] } },
         ],
       })
     );
-    expect(await screen.findByText('CPU high')).toBeInTheDocument();
+    expect(await screen.findByText('CPU high load')).toBeInTheDocument();
   });
 
   it.each([
@@ -170,21 +164,7 @@ describe('AlertRulesPage search', () => {
   });
 
   it('restarts paging from the first page when a new query is applied', async () => {
-    server.use(
-      http.post(ruleSearchUrl('alert'), async ({ request }) => {
-        const body = (await request.json()) as { where?: unknown; continue?: string };
-        ruleSearchBodies.push(body);
-        if (body.continue) {
-          return secondPage();
-        }
-        return HttpResponse.json({
-          items: [
-            ruleItem('alert', body.where ? 'rule-3' : 'rule-1', body.where ? 'Memory high' : 'CPU high', 'folder-1'),
-          ],
-          metadata: { continue: 'tok' },
-        });
-      })
-    );
+    backend = setup({ pageSize: { rules: 1 } });
     const { user } = renderInListMode();
     await user.click(await screen.findByRole('button', { name: 'Load more' }));
     expect(await screen.findByText('Disk full')).toBeInTheDocument();
@@ -193,20 +173,16 @@ describe('AlertRulesPage search', () => {
 
     expect(await screen.findByText('Memory high')).toBeInTheDocument();
     expect(screen.queryByText('Disk full')).not.toBeInTheDocument();
-    expect(screen.queryByText('CPU high')).not.toBeInTheDocument();
-    expect(ruleSearchBodies.map((body) => body.continue ?? null)).toEqual([null, 'tok', null]);
+    expect(screen.queryByText('CPU high load')).not.toBeInTheDocument();
+    expect(backend.ruleSearches.map((body) => body.continue ?? null)).toEqual([null, '1', null]);
   });
 
   it('clearing the input with the clear button returns to Folders mode', async () => {
-    const backend = setupRuleListBackend({
-      folders: [folderFactory.build({ metadata: { name: 'folder-1' }, spec: { title: 'Team Alerts' } })],
-      alertRules: [alertRuleFactory.inFolder('folder-1').build({ spec: { title: 'CPU high' } })],
-    });
     const { user } = render(<AlertRulesPage />);
     await screen.findByRole('button', { name: 'Expand Team Alerts' });
     await user.type(searchInput(), 'cpu{Enter}');
 
-    expect(await screen.findByText('CPU high')).toBeInTheDocument();
+    expect(await screen.findByText('CPU high load')).toBeInTheDocument();
     expect(backend.ruleSearches.at(-1)?.where).toEqual({ text: { value: 'cpu' } });
 
     await user.click(screen.getByRole('button', { name: 'Clear' }));
@@ -219,7 +195,7 @@ describe('AlertRulesPage search', () => {
 
   it('Back and Forward restore the input and the request for each applied query', async () => {
     const { user } = renderInListMode();
-    await screen.findByText('CPU high');
+    await screen.findByText('CPU high load');
     await user.type(searchInput(), 'cpu{Enter}');
     await waitFor(() => expect(searchParam()).toBe('cpu'));
     // Typing over the selection replaces the query without emptying the input first.
@@ -230,13 +206,13 @@ describe('AlertRulesPage search', () => {
     act(() => locationService.getHistory().goBack());
 
     await waitFor(() => expect(searchInput()).toHaveValue('cpu'));
-    await waitFor(() => expect(ruleSearchBodies.at(-1)?.where).toEqual({ text: { value: 'cpu' } }));
+    await waitFor(() => expect(backend.ruleSearches.at(-1)?.where).toEqual({ text: { value: 'cpu' } }));
 
     act(() => locationService.getHistory().goForward());
 
     await waitFor(() => expect(searchInput()).toHaveValue('plugins:hide cpu'));
     await waitFor(() =>
-      expect(ruleSearchBodies.at(-1)?.where).toEqual({
+      expect(backend.ruleSearches.at(-1)?.where).toEqual({
         and: [
           { text: { value: 'cpu' } },
           { regex: { field: 'labels', pattern: '__grafana_origin=plugin/.*', negate: true } },
