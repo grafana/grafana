@@ -262,7 +262,8 @@ function withAppNavConfig(app: AppPluginConfig, appLink: NavModelItem): NavModel
 function placeAppInSection(tree: NavModelItem[], app: AppPluginConfig, appLink: NavModelItem): NavModelItem[] {
   const navConfig = appNavConfigFor(app.id);
   // A hidden app leaves no node behind, but its pages are placed on their own
-  // terms: Cloud hides the Collector app and lists three of its pages directly
+  // terms: Cloud hides the Collector app and lists three of its pages directly,
+  // both through the instance config
   if (navConfig?.hidden) {
     return tree;
   }

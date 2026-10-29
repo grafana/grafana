@@ -649,40 +649,6 @@ describe('applyPluginNav', () => {
       expect(findById(merged, NavID.cfgAccess)?.children ?? []).toHaveLength(0);
     });
 
-    // The placements Grafana Cloud sets through its instance config, declared in
-    // the tables instead. The Collector app is not listed; three of its pages are
-    it('lists the Collector pages in Connections without the app itself', () => {
-      setup({ permissions: ['datasources:read', 'datasources:create'] });
-
-      const merged = merge(
-        app('grafana-collector-app', 'Collector', [
-          page('Alloy', '/a/grafana-collector-app/alloy'),
-          page('Instrumentation hub', '/a/grafana-collector-app/instrumentation-hub'),
-          page('Fleet Management', '/a/grafana-collector-app/fleet-management'),
-        ])
-      );
-
-      // The core children carry no weight, so they fall to their index (1, 2) and
-      // tie with the Collector pages — the server interleaves them the same way
-      expect(ids(findById(merged, NavID.connections)?.children ?? [])).toEqual([
-        'connections-add-new-connection',
-        'standalone-plugin-page-/a/grafana-collector-app/alloy',
-        'connections-datasources',
-        'standalone-plugin-page-/a/grafana-collector-app/instrumentation-hub',
-        'standalone-plugin-page-/a/grafana-collector-app/fleet-management',
-      ]);
-      expect(findById(merged, 'plugin-page-grafana-collector-app')).toBeUndefined();
-      expect(moreApps(merged)).toBeUndefined();
-    });
-
-    it('keeps the PDC app out of the nav', () => {
-      const merged = merge(app('grafana-pdc-app', 'Private data source connect', [page('PDC', '/a/grafana-pdc-app')]));
-
-      expect(findById(merged, 'standalone-plugin-page-/a/grafana-pdc-app')).toBeUndefined();
-      expect(findById(merged, 'plugin-page-grafana-pdc-app')).toBeUndefined();
-      expect(moreApps(merged)).toBeUndefined();
-    });
-
     // The typed equivalent of an operator naming a section that does not exist.
     // Hiding an app leaves its individually placed pages alone, which is how
     // Cloud lists Collector's pages without the Collector app itself
