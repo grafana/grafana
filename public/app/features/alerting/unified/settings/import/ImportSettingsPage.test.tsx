@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, testWithFeatureToggles } from 'test/test-utils';
+import { act, render, testWithFeatureToggles } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
 import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
@@ -115,13 +115,16 @@ describe('Import settings tab', () => {
     expect(await ui.emptyState.find()).toBeInTheDocument();
 
     // Stage a config the way the wizard does. Driven through the store rather than the UI because the
-    // wizard that triggers this mutation lives on another page.
-    await store.dispatch(
-      convertApi.endpoints.postAlertmanagerConfig.initiate({
-        payload: { alertmanager_config: stagedAlertmanagerConfig, template_files: {} },
-        identifier: stagedConfig.identifier,
-        forceReplace: true,
-      })
+    // wizard that triggers this mutation lives on another page. Inside `act` because a successful import
+    // also refetches what the mounted page reads.
+    await act(() =>
+      store.dispatch(
+        convertApi.endpoints.postAlertmanagerConfig.initiate({
+          payload: { alertmanager_config: stagedAlertmanagerConfig, template_files: {} },
+          identifier: stagedConfig.identifier,
+          forceReplace: true,
+        })
+      )
     );
 
     expect(await ui.stagedConfigHeading.find()).toBeInTheDocument();
