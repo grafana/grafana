@@ -20,7 +20,7 @@ type IDResolver interface {
 	GetUserIDByUID(context.Context, types.NamespaceInfo, string) (int64, error)
 }
 
-// Formatter keeps the snapshot RPC and per-action fallback on the same legacy scope contract.
+// Formatter keeps permission RPC and permission-search results on the same legacy scope contract.
 type Formatter struct{ IDs IDResolver }
 
 // resourceScope scopes an object by the resource type Zanzana listed it under

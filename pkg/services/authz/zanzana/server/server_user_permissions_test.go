@@ -55,22 +55,19 @@ func TestUserPermissionsAuthorization(t *testing.T) {
 		{"unsupported subject", authorized, &authzv1.GetUserPermissionsRequest{Namespace: "default", Subject: "api-key:7"}, codes.PermissionDenied},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			s := &Server{cfg: setting.ZanzanaServerSettings{UserPermissionsEnabled: true}, tracer: tracing.NewNoopTracerService(), metrics: newZanzanaServerMetrics(prometheus.NewRegistry())}
+			s := &Server{tracer: tracing.NewNoopTracerService(), metrics: newZanzanaServerMetrics(prometheus.NewRegistry())}
 			stream := &snapshotResponseStream{ctx: tc.ctx}
 			require.Equal(t, tc.code, status.Code(s.GetUserPermissions(tc.req, stream)))
 			require.Empty(t, stream.permissions)
 		})
 	}
-	t.Run("disabled supports fallback", func(t *testing.T) {
-		require.Equal(t, codes.Unimplemented, status.Code((&Server{}).GetUserPermissions(&authzv1.GetUserPermissionsRequest{}, &snapshotResponseStream{ctx: context.Background()})))
-	})
+
 }
 
 func TestUserPermissionsStandaloneScopeConfiguration(t *testing.T) {
 	for _, missing := range []string{"IAM URL", "token", "exchange URL"} {
 		t.Run(missing, func(t *testing.T) {
 			cfg := setting.NewCfg()
-			cfg.ZanzanaServer.UserPermissionsEnabled = true
 			cfg.ZanzanaReconciler.IAMAPIServerURL = "https://iam.example.test"
 			cfg.Raw.Section("grpc_client_authentication").Key("token").SetValue("test-token")
 			cfg.Raw.Section("grpc_client_authentication").Key("token_exchange_url").SetValue("https://exchange.example.test")
@@ -87,7 +84,7 @@ func TestUserPermissionsStandaloneScopeConfiguration(t *testing.T) {
 			server := &Server{cfg: cfg.ZanzanaServer, permissionScopeResolver: resolver, tracer: tracing.NewNoopTracerService(), metrics: newZanzanaServerMetrics(prometheus.NewRegistry())}
 			stream := &snapshotResponseStream{ctx: newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions)}
 			err := server.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:alice"}, stream)
-			require.Equal(t, codes.Unimplemented, status.Code(err), "fall back before accessing the absent datastore")
+			require.Equal(t, codes.FailedPrecondition, status.Code(err), "reject missing scope configuration before accessing the datastore")
 			require.Empty(t, stream.permissions)
 		})
 	}
@@ -135,7 +132,6 @@ func snapshotRPC(t *testing.T, s *Server) authzv1.AuthzServiceClient {
 
 func TestUserPermissionsRPCParity(t *testing.T) {
 	server, _, _ := newSnapshotTestServer(t, snapshotParityTuples())
-	server.cfg.UserPermissionsEnabled = true
 	server.permissionScopeResolver = snapshotIDs{}
 	client := snapshotRPC(t, server)
 	for _, tc := range []struct {
@@ -188,7 +184,6 @@ func TestUserPermissionsRPCChunksAndFailure(t *testing.T) {
 		tuples[i] = common.NewResourceTuple("user:many", common.RelationGet, dashboardGroup, dashboardResource, "", fmt.Sprintf("dashboard-%04d", i))
 	}
 	server, ds, _ := newSnapshotTestServer(t, tuples)
-	server.cfg.UserPermissionsEnabled = true
 	server.permissionScopeResolver = snapshotIDs{}
 	client := snapshotRPC(t, server)
 	req := &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:many"}
@@ -213,4 +208,17 @@ func TestUserPermissionsRPCChunksAndFailure(t *testing.T) {
 	require.Error(t, err)
 	require.NotErrorIs(t, err, io.EOF)
 	require.Nil(t, chunk, "storage failure must occur before publishing any permissions")
+}
+
+func TestUserPermissionsRPCWithoutRolloutFlag(t *testing.T) {
+	server, _, _ := newSnapshotTestServer(t, snapshotParityTuples())
+	server.permissionScopeResolver = snapshotIDs{}
+	stream, err := snapshotRPC(t, server).GetUserPermissions(t.Context(), &authzv1.GetUserPermissionsRequest{
+		Namespace: namespace,
+		Subject:   "user:direct",
+	})
+	require.NoError(t, err)
+	chunk, err := stream.Recv()
+	require.NoError(t, err)
+	require.NotEmpty(t, chunk.Permissions)
 }

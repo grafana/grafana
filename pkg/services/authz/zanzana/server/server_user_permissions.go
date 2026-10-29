@@ -21,9 +21,6 @@ import (
 const userPermissionsChunkSize = 1000
 
 func (s *Server) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stream authzv1.AuthzService_GetUserPermissionsServer) error {
-	if !s.cfg.UserPermissionsEnabled {
-		return status.Error(codes.Unimplemented, "Zanzana user permission snapshots are disabled")
-	}
 	ctx, span := s.tracer.Start(stream.Context(), "server.GetUserPermissions")
 	defer span.End()
 	defer func(start time.Time) {
@@ -52,7 +49,7 @@ func (s *Server) GetUserPermissions(req *authzv1.GetUserPermissionsRequest, stre
 		return status.Error(codes.PermissionDenied, "unsupported identity type")
 	}
 	if s.permissionScopeResolver == nil {
-		return status.Error(codes.Unimplemented, "legacy scope resolution is not configured")
+		return status.Error(codes.FailedPrecondition, "legacy scope resolution is not configured")
 	}
 	release, err := s.acquireSlot("GetUserPermissions", req.GetNamespace())
 	if err != nil {
@@ -105,7 +102,7 @@ func newPermissionScopeResolver(cfg *setting.Cfg, embedded restcfg.RestConfigPro
 	token := auth.Key("token").MustString("")
 	exchangeURL := auth.Key("token_exchange_url").MustString("")
 	if cfg.ZanzanaReconciler.IAMAPIServerURL == "" || token == "" || exchangeURL == "" {
-		// Let the caller retain UID-to-ID resolution through its existing List path.
+		// Legacy numeric scopes require an authenticated IAM client.
 		return nil
 	}
 	// Keep the IAM client lazy, as in the legacy resolver, to avoid a bootstrap

@@ -15,14 +15,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
-func TestPermissionSnapshotTupleLimitRetainsLegacyFallback(t *testing.T) {
+func TestPermissionSnapshotTupleLimitReturnsResourceExhausted(t *testing.T) {
 	tuples := &permissionSnapshotTuples{keys: make(map[permissionSnapshotTupleKey]*openfgav1.TupleKey)}
 	for i := range permissionSnapshotMaxTuples {
 		require.NoError(t, tuples.add(&openfgav1.TupleKey{User: "user:alice", Relation: "get", Object: fmt.Sprintf("folder:%d", i)}))
 	}
 	require.NoError(t, tuples.add(&openfgav1.TupleKey{User: "user:alice", Relation: "get", Object: "folder:0"}))
 	err := tuples.add(&openfgav1.TupleKey{User: "user:alice", Relation: "get", Object: "folder:over-limit"})
-	require.Equal(t, codes.Unimplemented, status.Code(err))
+	require.Equal(t, codes.ResourceExhausted, status.Code(err))
 	require.Len(t, tuples.keys, permissionSnapshotMaxTuples)
 }
 
@@ -57,7 +57,7 @@ func TestPermissionSnapshotEarlyExitCancelsDescendantStream(t *testing.T) {
 			require.Error(t, err)
 			require.Empty(t, results)
 			if !malformed {
-				require.Equal(t, codes.Unimplemented, status.Code(err))
+				require.Equal(t, codes.ResourceExhausted, status.Code(err))
 				require.Equal(t, permissionSnapshotMaxDepth, store.depth)
 			}
 			require.NotNil(t, store.ctx)

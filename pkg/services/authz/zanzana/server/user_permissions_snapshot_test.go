@@ -15,6 +15,8 @@ import (
 	"github.com/openfga/openfga/pkg/storage/memory"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
@@ -402,7 +404,7 @@ func TestUserPermissionsSnapshotReturnsNoPartialResults(t *testing.T) {
 		model.TypeDefinitions = append(model.TypeDefinitions, &openfgav1.TypeDefinition{Type: "future-type"})
 		ds.modelOverride = model
 		results, err := srv.listUserPermissions(newContextWithNamespace(), &authzv1.GetUserPermissionsRequest{Namespace: namespace, Subject: "user:direct"})
-		require.Error(t, err)
+		require.Equal(t, codes.FailedPrecondition, status.Code(err))
 		require.Empty(t, results)
 	})
 }

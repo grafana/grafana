@@ -11,8 +11,6 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -66,28 +64,20 @@ func (r *ZanzanaPermissionResolver) teamsForCurrentUser(usr identity.Requester) 
 
 // ResolveCurrentUserPermissions lists Zanzana-supported permissions for the signed-in identity.
 func (r *ZanzanaPermissionResolver) ResolveCurrentUserPermissions(ctx context.Context, usr identity.Requester) ([]ac.Permission, error) {
-	subject := usr.GetUID()
 	namespace := usr.GetNamespace()
 	if namespace == "" {
 		namespace = types.OrgNamespaceFormatter(usr.GetOrgID())
 	}
 	teams := r.teamsForCurrentUser(usr)
-	if client, ok := r.client.(types.UserPermissionsClient); ok {
-		result, err := client.GetUserPermissions(ctx, snapshotAuthInfo{Requester: usr, namespace: namespace, groups: teams}, types.GetUserPermissionsRequest{Namespace: namespace})
-		if err == nil {
-			permissions := make([]ac.Permission, 0, len(result.Permissions))
-			for _, permission := range result.Permissions {
-				permissions = append(permissions, ac.Permission{Action: permission.Action, Scope: permission.Scope})
-			}
-			return permissions, nil
-		}
-		// Old servers and disabled rollouts retain the per-action path. Other failures
-		// must not turn a partial snapshot into an apparently successful response.
-		if status.Code(err) != codes.Unimplemented {
-			return nil, err
-		}
+	result, err := r.client.GetUserPermissions(ctx, snapshotAuthInfo{Requester: usr, namespace: namespace, groups: teams}, types.GetUserPermissionsRequest{Namespace: namespace})
+	if err != nil {
+		return nil, err
 	}
-	return r.listAllWithPrefix(ctx, namespace, subject, teams, "", "")
+	permissions := make([]ac.Permission, 0, len(result.Permissions))
+	for _, permission := range result.Permissions {
+		permissions = append(permissions, ac.Permission{Action: permission.Action, Scope: permission.Scope})
+	}
+	return permissions, nil
 }
 
 // searchUsersPermissions searches for users' permissions using Zanzana

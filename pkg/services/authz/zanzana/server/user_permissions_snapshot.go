@@ -57,9 +57,9 @@ func (s *Server) listUserPermissions(ctx context.Context, req *authzv1.GetUserPe
 		return nil, err
 	}
 	// Closure below relies on flat teams/roles and folder-only inheritance.
-	// A different model must use the general remote evaluator instead.
+	// A different model requires reviewing the graph discovery rules.
 	if model == nil || !schema.EqualModels(model, expected) {
-		return nil, status.Error(codes.Unimplemented, "authorization model does not support permission snapshots")
+		return nil, status.Error(codes.FailedPrecondition, "authorization model does not support permission snapshots")
 	}
 
 	tuples := &permissionSnapshotTuples{keys: make(map[permissionSnapshotTupleKey]*openfgav1.TupleKey)}
@@ -174,9 +174,9 @@ func (t *permissionSnapshotTuples) add(tk *openfgav1.TupleKey) error {
 	if _, exists := t.keys[key]; exists {
 		return nil
 	}
-	// Oversized graphs retain the existing resolver instead of dropping permissions.
+	// Reject oversized graphs instead of returning an incomplete permission set.
 	if len(t.keys) >= permissionSnapshotMaxTuples {
-		return status.Error(codes.Unimplemented, "permission snapshot tuple limit exceeded")
+		return status.Error(codes.ResourceExhausted, "permission snapshot tuple limit exceeded")
 	}
 	t.keys[key] = tk
 	return nil
@@ -242,7 +242,7 @@ func (s *Server) readPermissionDescendants(ctx context.Context, storeID string, 
 	}
 	for depth := 0; len(frontier) > 0; depth++ {
 		if depth >= permissionSnapshotMaxDepth {
-			return status.Error(codes.Unimplemented, "permission snapshot folder depth exceeded")
+			return status.Error(codes.ResourceExhausted, "permission snapshot folder depth exceeded")
 		}
 		var next []string
 		for batch := range slices.Chunk(frontier, permissionSnapshotFolderBatch) {

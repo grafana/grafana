@@ -44,22 +44,17 @@ func TestResolveCurrentUserPermissionsSnapshot(t *testing.T) {
 	require.Equal(t, []string{zanzana.TokenPermissionUserPermissions}, client.info.GetTokenDelegatedPermissions())
 }
 
-func TestResolveCurrentUserPermissionsSnapshotFallback(t *testing.T) {
-	for _, code := range []codes.Code{codes.Unimplemented, codes.Unavailable, codes.PermissionDenied, codes.Canceled} {
+func TestResolveCurrentUserPermissionsSnapshotDoesNotFallback(t *testing.T) {
+	for _, code := range []codes.Code{codes.Unimplemented, codes.Unavailable, codes.PermissionDenied, codes.Canceled, codes.DeadlineExceeded} {
 		t.Run(code.String(), func(t *testing.T) {
 			client := &snapshotZanzanaClient{err: status.Error(code, "snapshot error")}
 			client.listResp = &authzv1.ListResponse{}
 			resolver := NewZanzanaPermissionResolver(client, nil, nil, false)
 			requester := &identity.StaticRequester{Type: types.TypeUser, UserUID: "alice", OrgID: 1}
 			result, err := resolver.ResolveCurrentUserPermissions(t.Context(), requester)
-			if code == codes.Unimplemented {
-				require.NoError(t, err)
-				require.NotEmpty(t, client.listCalls)
-			} else {
-				require.Equal(t, code, status.Code(err))
-				require.Nil(t, result)
-				require.Empty(t, client.listCalls)
-			}
+			require.Equal(t, code, status.Code(err))
+			require.Nil(t, result)
+			require.Empty(t, client.listCalls, "current-user enumeration must never retry through List")
 		})
 	}
 }

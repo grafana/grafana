@@ -33,7 +33,7 @@ func (c *verbErroringZanzanaClient) List(_ context.Context, req *authzv1.ListReq
 	return c.allResp, nil
 }
 
-func TestResolveCurrentUserPermissions_SkipsFailingAction(t *testing.T) {
+func TestListAllWithPrefix_SkipsFailingAction(t *testing.T) {
 	client := &verbErroringZanzanaClient{
 		failVerb: utils.VerbCreate,
 		allResp:  &authzv1.ListResponse{All: true},
@@ -47,7 +47,7 @@ func TestResolveCurrentUserPermissions_SkipsFailingAction(t *testing.T) {
 		OrgID:   1,
 	}
 
-	perms, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	perms, err := r.listAllWithPrefix(context.Background(), claims.OrgNamespaceFormatter(usr.GetOrgID()), usr.GetUID(), nil, "", "")
 	require.NoError(t, err)
 
 	require.Contains(t, permScopes(perms, "dashboards:read"), ac.Scope("dashboards", "*"))
@@ -57,9 +57,7 @@ func TestResolveCurrentUserPermissions_SkipsFailingAction(t *testing.T) {
 }
 
 func TestResolveCurrentUserPermissions_UsesRequesterNamespace(t *testing.T) {
-	client := &capturingZanzanaClient{fakeZanzanaClient: fakeZanzanaClient{
-		listResp: &authzv1.ListResponse{},
-	}}
+	client := &snapshotZanzanaClient{}
 	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
 	usr := &identity.StaticRequester{
 		Type:      claims.TypeUser,
@@ -71,16 +69,12 @@ func TestResolveCurrentUserPermissions_UsesRequesterNamespace(t *testing.T) {
 
 	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
 	require.NoError(t, err)
-	require.NotEmpty(t, client.listCalls)
-	for _, call := range client.listCalls {
-		require.Equal(t, "stacks-123", call.Namespace)
-	}
+	require.Equal(t, "stacks-123", client.info.GetNamespace())
+	require.Empty(t, client.listCalls)
 }
 
 func TestResolveCurrentUserPermissions_DerivesNamespaceFromOrgWhenRequesterNamespaceIsEmpty(t *testing.T) {
-	client := &capturingZanzanaClient{fakeZanzanaClient: fakeZanzanaClient{
-		listResp: &authzv1.ListResponse{},
-	}}
+	client := &snapshotZanzanaClient{}
 	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
 	usr := &identity.StaticRequester{
 		Type:    claims.TypeUser,
@@ -91,10 +85,8 @@ func TestResolveCurrentUserPermissions_DerivesNamespaceFromOrgWhenRequesterNames
 
 	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
 	require.NoError(t, err)
-	require.NotEmpty(t, client.listCalls)
-	for _, call := range client.listCalls {
-		require.Equal(t, claims.OrgNamespaceFormatter(int64(2)), call.Namespace)
-	}
+	require.Equal(t, claims.OrgNamespaceFormatter(int64(2)), client.info.GetNamespace())
+	require.Empty(t, client.listCalls)
 }
 
 // capturingZanzanaClient records every ListRequest it receives so tests can
@@ -744,7 +736,7 @@ func TestLegacyZanzanaParity(t *testing.T) {
 }
 
 // TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups verifies the merge
-// resolver sends the signed-in user's team memberships as List `Teams`, so team-based
+// resolver sends the signed-in user's team memberships to GetUserPermissions, so team-based
 // grants (resolved via contextual team:<name>#member tuples) surface in the merged
 // permissions. It mirrors the id token groups claim: external (proxy/IdP) groups when
 // id_use_external_groups_for_groups_claim is set, otherwise stored team memberships.
@@ -771,16 +763,14 @@ func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			cap := &capturingZanzanaClient{}
-			cap.listResp = &authzv1.ListResponse{}
+			cap := &snapshotZanzanaClient{}
 			r := NewZanzanaPermissionResolver(cap, &usertest.FakeUserService{}, nil, tc.useExternalGroups)
 
 			_, err := r.ResolveCurrentUserPermissions(context.Background(), newReq([]string{"stored-team"}, []string{"team_a", "everyone"}))
 			require.NoError(t, err)
-			require.NotEmpty(t, cap.listCalls, "expected the resolver to issue List requests")
-			for _, c := range cap.listCalls {
-				require.Equal(t, tc.wantTeams, c.Teams, "every List request must carry the user's teams")
-			}
+			require.NotNil(t, cap.info)
+			require.Equal(t, tc.wantTeams, cap.info.GetGroups())
+			require.Empty(t, cap.listCalls)
 		})
 	}
 }
@@ -1011,10 +1001,10 @@ func (c *datasourceSubresourceZanzanaClient) List(_ context.Context, req *authzv
 	return &authzv1.ListResponse{}, nil
 }
 
-func TestResolveCurrentUserPermissions_KeepsDatasourceSubresourcesSeparate(t *testing.T) {
+func TestListAllWithPrefix_KeepsDatasourceSubresourcesSeparate(t *testing.T) {
 	r := NewZanzanaPermissionResolver(&datasourceSubresourceZanzanaClient{}, &usertest.FakeUserService{}, nil, false)
 	usr := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, UserUID: "u1", OrgID: 1}
-	perms, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	perms, err := r.listAllWithPrefix(context.Background(), claims.OrgNamespaceFormatter(usr.GetOrgID()), usr.GetUID(), nil, "", "")
 	require.NoError(t, err)
 	for action, uid := range map[string]string{
 		"datasources:read":          "base-only",

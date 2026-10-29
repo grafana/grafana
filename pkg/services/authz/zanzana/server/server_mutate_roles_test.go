@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	authlib "github.com/grafana/authlib/types"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	zclient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -137,14 +139,25 @@ func TestIntegrationDatasourceRolePermissions(t *testing.T) {
 	}
 }
 
-// Forward List calls to the real server while satisfying the resolver's client interface.
+// Forward the permission RPC to the real server while retaining the client interface.
 type datasourcePermissionClient struct {
-	zanzana.Client
+	zclient.NoopClient
 	server *Server
 }
 
-func (c datasourcePermissionClient) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
-	return c.server.List(ctx, req)
+func (c datasourcePermissionClient) GetUserPermissions(ctx context.Context, id authlib.AuthInfo, req authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
+	caller, _ := authlib.AuthInfoFrom(newContextWithNamespaceAndPermissions(zanzana.TokenPermissionUserPermissions))
+	stream := &snapshotResponseStream{ctx: authlib.WithAuthInfo(ctx, caller)}
+	if err := c.server.GetUserPermissions(&authzv1.GetUserPermissionsRequest{
+		Namespace: req.Namespace, Subject: id.GetUID(), Teams: id.GetGroups(),
+	}, stream); err != nil {
+		return authlib.GetUserPermissionsResponse{}, err
+	}
+	result := authlib.GetUserPermissionsResponse{}
+	for _, permission := range stream.permissions {
+		result.Permissions = append(result.Permissions, authlib.Permission{Action: permission.Action, Scope: permission.Scope})
+	}
+	return result, nil
 }
 
 func TestIntegrationDatasourceQueryMatchesRBACActionSet(t *testing.T) {
@@ -163,7 +176,8 @@ func TestIntegrationDatasourceQueryMatchesRBACActionSet(t *testing.T) {
 				require.NoError(t, err)
 				tuples = append(tuples, common.NewTuple("user:datasource-user", "assignee", "role:query-role"))
 				setupOpenFGADatabase(t, srv, tuples)
-				resolver := acimpl.NewZanzanaPermissionResolver(datasourcePermissionClient{server: srv}, nil, nil, false)
+				srv.permissionScopeResolver = snapshotIDs{}
+				resolver := acimpl.NewZanzanaPermissionResolver(&datasourcePermissionClient{server: srv}, nil, nil, false)
 				usr := &identity.StaticRequester{Type: "user", UserUID: "datasource-user", OrgID: 1, Namespace: namespace}
 				actions := resourcepermissions.NewInMemoryActionSetStore()
 				actions.StoreActionSet("datasources:query", ossaccesscontrol.DatasourceQueryActions)
