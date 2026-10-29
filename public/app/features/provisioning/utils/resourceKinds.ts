@@ -286,7 +286,7 @@ function findKindInfoByStat(stat: { group?: string; resource?: string; kind?: st
 function getDefaultKindInfo(stat: { group?: string; resource?: string; kind?: string }): ResourceKindInfo {
   const name = stat.kind || stat.resource || '';
   return {
-    key: stat.resource ?? '',
+    key: stat.resource || stat.kind?.toLowerCase() || '',
     getLabel: () => name,
     pluralLabel: () => name,
     group: stat.group ?? '',

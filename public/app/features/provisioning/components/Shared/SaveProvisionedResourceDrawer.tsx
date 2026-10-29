@@ -25,7 +25,7 @@ import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
 import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../utils/managedResource';
 import { type ResourceBranchAction } from '../../utils/redirect';
-import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
+import { getKindInfoByStat, type ResourceKindInfo } from '../../utils/resourceKinds';
 import { getRequestRef } from '../../utils/workflow';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { getCanPushToConfiguredBranch, getDefaultRef } from '../defaults';
@@ -283,24 +283,23 @@ function FormContent({
  * pages with no per-kind wrapper. Pass the resource, its title and the action: the drawer resolves
  * the kind from the resource's `apiVersion`+`kind` and derives the rest — the committed file body, a
  * new resource's name/path/annotations, the commit message and the post-commit navigation. `delete`
- * commits no body. Renders nothing if the resource isn't a registered provisioning kind (pages only
- * open it for known managed resources).
+ * commits no body. Renders nothing if the resource has no apiVersion or kind.
  */
 export function SaveProvisionedResourceDrawer(props: SaveProvisionedResourceDrawerProps) {
   // The resource carries its own identity: its API group (from apiVersion) + Kubernetes kind resolve
   // the registry descriptor, so callers don't pass the kind separately.
-  const kind = getKindInfoByGroupKind(props.resource.apiVersion?.split('/')[0], props.resource.kind);
-  if (!kind) {
-    // Pages only open this for known managed resources, so an unresolved kind means a bad fixture or a
-    // new kind wired into a page before its registry entry exists. Warn in dev so it's a visible signal
-    // rather than a silent no-op where the user clicks save/delete and nothing happens.
+  const group = props.resource.apiVersion?.split('/')[0];
+  if (!group || !props.resource.kind) {
+    // Warn in dev so it's a visible signal rather than a silent no-op where the user clicks save/delete
+    // and nothing happens.
     if (process.env.NODE_ENV !== 'production') {
       console.warn(
-        `SaveProvisionedResourceDrawer: no registered provisioning kind for "${props.resource.apiVersion}"/"${props.resource.kind}"; the drawer will not render.`
+        `SaveProvisionedResourceDrawer: the resource has no apiVersion or kind ("${props.resource.apiVersion}"/"${props.resource.kind}"); the drawer will not render.`
       );
     }
     return null;
   }
+  const kind = getKindInfoByStat({ group, kind: props.resource.kind });
   return <ResourceDrawerContent {...props} kind={kind} />;
 }
 
