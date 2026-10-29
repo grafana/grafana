@@ -94,7 +94,7 @@ func TestIntegrationCopyReceiverPermissionsRefreshAfterCommit(t *testing.T) {
 						require.WithinDuration(t, time.Now().Add(5*time.Second), deadline, time.Second)
 					}}
 					receivers, err := ProvideReceiverPermissionsService(cfg, features, routing.NewRouteRegister(), sql,
-						actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, nil, nil, actions)
+						actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, license, recorder, nil, nil, nil, actions, sql.Bus())
 					require.NoError(t, err)
 					requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1, OrgRole: org.RoleViewer}
 					_, err = receivers.SetPermissions(ctx, 1, "old", accesscontrol.SetResourcePermissionCommand{

@@ -44,7 +44,7 @@ func TestIntegrationCreateReceiverPermissionEvents(t *testing.T) {
 			ac := &createReceiverCacheRecorder{t: t, calls: &calls}
 			permissions, err := ossaccesscontrol.ProvideReceiverPermissionsService(setting.NewCfg(), featuremgmt.WithFeatures(), routing.NewRouteRegister(), sql,
 				actest.FakeAccessControl{ExpectedEvaluate: true}, iam.Features{}, &licensing.OSSLicensingService{}, ac, nil,
-				&usertest.FakeUserService{ExpectedSignedInUser: requester}, nil, resourcepermissions.NewActionSetService())
+				&usertest.FakeUserService{ExpectedSignedInUser: requester}, nil, resourcepermissions.NewActionSetService(), sql.Bus())
 			require.NoError(t, err)
 			sut.resourcePermissions = permissions
 			receiver, err := sut.GetReceiver(t.Context(), legacy_storage.NameToUid("grafana-default-email"), false, requester)

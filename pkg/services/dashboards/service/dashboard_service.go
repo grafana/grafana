@@ -29,6 +29,7 @@ import (
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -397,7 +398,7 @@ var _ registry.BackgroundService = (*DashboardServiceImpl)(nil)
 // This is the uber service that implements a three smaller services
 func ProvideDashboardServiceImpl(
 	cfg *setting.Cfg,
-	sqlStore *sqlstore.SQLStore,
+	sqlStore db.DB,
 	iamFeatures iamapi.Features,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	ac accesscontrol.AccessControl,
@@ -411,6 +412,7 @@ func ProvideDashboardServiceImpl(
 	serverLockService *serverlock.ServerLockService,
 	kvstore kvstore.KVStore,
 	k8sClient dashboardclient.K8sHandlerWithFallback,
+	events bus.Bus,
 ) (*DashboardServiceImpl, error) {
 	dashSvc := &DashboardServiceImpl{
 		cfg:                       cfg,
@@ -449,7 +451,7 @@ func ProvideDashboardServiceImpl(
 		return nil, err
 	}
 
-	sqlStore.Bus().AddEventListener(dashSvc.onDefaultPermissionsSet)
+	events.AddEventListener(dashSvc.onDefaultPermissionsSet)
 	return dashSvc, nil
 }
 
