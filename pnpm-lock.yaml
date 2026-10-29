@@ -12728,11 +12728,6 @@ packages:
     resolution: {integrity: sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==}
     engines: {node: '>=8'}
 
-  playwright-core@1.56.1:
-    resolution: {integrity: sha512-hutraynyn31F+Bifme+Ps9Vq59hKuUCz7H1kDOcBs+2oGguKkWTU50bBWrtz34OUWmIwpBTWDxaRPXrIXkgvmQ==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   playwright-core@1.64.1:
     resolution: {integrity: sha512-BC4s8y6SEVA6Q1rSxZTto8hI1KUI3xXlHGZgvGqP4IqPdI/a6FX9H29IDNz7vKo9l21b6LfYosScPL6M3xxyDQ==}
     engines: {node: '>=20'}
@@ -19344,7 +19339,7 @@ snapshots:
       jest-watch-typeahead: 3.0.1(jest@30.3.0(@types/node@26.6.5)(babel-plugin-macros@3.1.0)(node-notifier@10.0.1)(supports-color@7.2.0)(ts-node@10.9.2(@swc/core@1.13.3(@swc/helpers@0.5.17))(@types/node@26.6.5)(@typescript/typescript6@6.0.2)))
       nyc: 15.1.0(supports-color@7.2.0)
       playwright: 1.64.1
-      playwright-core: 1.56.1
+      playwright-core: 1.64.1
       rimraf: 3.0.2
       storybook: 10.6.2(patch_hash=768442e7adf5924c3d9ab1a30e280323e0d8085d995188fa8eb8d22079284367)(@types/react@19.2.18)(prettier@3.6.2)(react@19.2.8)
       uuid: 8.3.2
@@ -27047,8 +27042,6 @@ snapshots:
   pkg-dir@4.2.0:
     dependencies:
       find-up: 4.1.0
-
-  playwright-core@1.56.1: {}
 
   playwright-core@1.64.1: {}
 
