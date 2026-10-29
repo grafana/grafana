@@ -281,6 +281,74 @@ func TestDashboardPreferencesStorageUpdate(t *testing.T) {
 		require.Empty(t, fake.items)
 	})
 
+	// Admission runs inside the store's validations, so every store call needs both of them.
+	t.Run("both validations reach the store on the first update and on the retry after a lost create race", func(t *testing.T) {
+		winner := stored("user-u1")
+		winner.Spec.UserUID = new("u1")
+		fake := newFakeDashboardPreferencesStore()
+		fake.concurrent = winner
+		var ran []string
+		createValidation := func(_ context.Context, obj runtime.Object) error {
+			ran = append(ran, "create "+requireDashboardPreferences(t, obj).Name)
+			return nil
+		}
+		updateValidation := func(_ context.Context, obj, _ runtime.Object) error {
+			ran = append(ran, "update "+requireDashboardPreferences(t, obj).Name)
+			return nil
+		}
+
+		_, created, err := newStore(fake).Update(ctx, "user-u1", mergePatch("user-u1", preloadPatch), createValidation, updateValidation, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.False(t, created)
+		// The create that lost was judged as a create, and the retry as an update of the winner.
+		require.Equal(t, []string{"create user-u1", "update user-u1"}, ran)
+
+		require.Len(t, fake.updates, 2)
+		for i, call := range fake.updates {
+			ran = nil
+			require.NotNil(t, call.createValidation, "update %d", i)
+			require.NotNil(t, call.updateValidation, "update %d", i)
+			require.NoError(t, call.createValidation(ctx, winner))
+			require.NoError(t, call.updateValidation(ctx, winner, winner))
+			require.Equal(t, []string{"create user-u1", "update user-u1"}, ran, "update %d", i)
+		}
+	})
+
+	t.Run("an error from the update validation is returned unchanged and nothing is created", func(t *testing.T) {
+		existing := stored("user-u1")
+		existing.Spec.UserUID = new("u1")
+		fake := newFakeDashboardPreferencesStore(existing)
+		rejected := errors.New("update rejected")
+		updateValidation := func(context.Context, runtime.Object, runtime.Object) error { return rejected }
+
+		obj, created, err := newStore(fake).Update(ctx, "user-u1", mergePatch("user-u1", preloadPatch), nil, updateValidation, false, &metav1.UpdateOptions{})
+		require.Same(t, rejected, err)
+		require.Nil(t, obj)
+		require.False(t, created)
+
+		require.Len(t, fake.updates, 1)
+		require.Empty(t, fake.creates)
+		require.Same(t, existing, fake.items["user-u1"])
+		require.Nil(t, existing.Spec.Dashboard)
+	})
+
+	// Without this wrapper the patcher answers NotFound, and Create would refuse the resourceVersion with
+	// a 500.
+	t.Run("a patch with a resourceVersion on a missing object is not found", func(t *testing.T) {
+		fake := newFakeDashboardPreferencesStore()
+		const patch = `{"metadata":{"resourceVersion":"1"},"spec":{"dashboard":{"preload":true}}}`
+
+		obj, created, err := newStore(fake).Update(ctx, "user-u1", mergePatch("user-u1", patch), nil, nil, false, &metav1.UpdateOptions{})
+		require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
+		require.True(t, isDashboardPreferencesNotFound(err, "user-u1"), "expected the object's own NotFound, got %v", err)
+		require.Nil(t, obj)
+		require.False(t, created)
+
+		require.Len(t, fake.updates, 1)
+		require.Empty(t, fake.creates)
+		require.Empty(t, fake.items)
+	})
+
 	t.Run("the create options follow the update options", func(t *testing.T) {
 		tests := []struct {
 			name    string
@@ -794,6 +862,9 @@ type dashboardPreferencesUpdateCall struct {
 	name             string
 	forceAllowCreate bool
 	options          *metav1.UpdateOptions
+	// Funcs can't be compared, so a test tells them apart by calling them.
+	createValidation rest.ValidateObjectFunc
+	updateValidation rest.ValidateObjectUpdateFunc
 }
 
 type dashboardPreferencesCreateCall struct {
@@ -824,8 +895,14 @@ func newFakeDashboardPreferencesStore(items ...*dashv2beta1.DashboardPreferences
 	return f
 }
 
-func (f *fakeDashboardPreferencesStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, _ rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	f.updates = append(f.updates, dashboardPreferencesUpdateCall{name: name, forceAllowCreate: forceAllowCreate, options: options})
+func (f *fakeDashboardPreferencesStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	f.updates = append(f.updates, dashboardPreferencesUpdateCall{
+		name:             name,
+		forceAllowCreate: forceAllowCreate,
+		options:          options,
+		createValidation: createValidation,
+		updateValidation: updateValidation,
+	})
 	if f.updateErr != nil {
 		return nil, false, f.updateErr
 	}
@@ -842,6 +919,17 @@ func (f *fakeDashboardPreferencesStore) Update(ctx context.Context, name string,
 	preferences, ok := obj.(*dashv2beta1.DashboardPreferences)
 	if !ok {
 		return nil, false, fmt.Errorf("expected dashboard preferences, got %T", obj)
+	}
+	// Like the registry store, it judges the updated object last, as a create when nothing was stored.
+	if exists && updateValidation != nil {
+		if err := updateValidation(ctx, preferences.DeepCopyObject(), old.DeepCopyObject()); err != nil {
+			return nil, false, err
+		}
+	}
+	if !exists && createValidation != nil {
+		if err := createValidation(ctx, preferences.DeepCopyObject()); err != nil {
+			return nil, false, err
+		}
 	}
 	f.items[name] = preferences
 	return preferences, !exists, nil

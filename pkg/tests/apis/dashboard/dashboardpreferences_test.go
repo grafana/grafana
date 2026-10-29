@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -46,7 +47,7 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 	f1 := createDashboardPreferencesFolder(t, ctx, helper, "F1")
 
 	t.Run("PUT creates the org tier", func(t *testing.T) {
-		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject("namespace", "", preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
+		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", "", preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
 		require.NoError(t, err)
 
 		got, err := admin.Resource.Get(ctx, "namespace", metav1.GetOptions{})
@@ -57,7 +58,7 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 	})
 
 	t.Run("spec-only merge PATCH creates the user tier", func(t *testing.T) {
-		_, err := editor.Resource.Patch(ctx, editorTier, types.MergePatchType, []byte(`{"spec":{"dashboard":{"cursorSync":"Crosshair"}}}`), metav1.PatchOptions{})
+		_, err := editor.Resource.Patch(ctx, editorTier, types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"cursorSync":"Crosshair"}}}`), metav1.PatchOptions{})
 		require.NoError(t, err)
 
 		got, err := editor.Resource.Get(ctx, editorTier, metav1.GetOptions{})
@@ -72,7 +73,7 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 	})
 
 	t.Run("spec-only merge PATCH creates the folder tier", func(t *testing.T) {
-		_, err := admin.Resource.Patch(ctx, "folder-"+f1, types.MergePatchType, []byte(`{"spec":{"dashboard":{"preload":true}}}`), metav1.PatchOptions{})
+		_, err := admin.Resource.Patch(ctx, "folder-"+f1, types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"preload":true}}}`), metav1.PatchOptions{})
 		require.NoError(t, err)
 
 		got, err := admin.Resource.Get(ctx, "folder-"+f1, metav1.GetOptions{})
@@ -80,10 +81,13 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 		require.Equal(t, f1, got.GetAnnotations()[utils.AnnoKeyFolder])
 		require.Equal(t, "folder", got.GetLabels()[dashboardPreferencesTierLabel])
 		require.NotContains(t, got.GetLabels(), utils.AnnoKeyFolder, "the folder tier must not carry a folder label")
+		preload, _, err := unstructured.NestedBool(got.Object, "spec", "dashboard", "preload")
+		require.NoError(t, err)
+		require.True(t, preload)
 	})
 
 	t.Run("null clears a field", func(t *testing.T) {
-		_, err := editor.Resource.Patch(ctx, editorTier, types.MergePatchType, []byte(`{"spec":{"dashboard":{"cursorSync":null}}}`), metav1.PatchOptions{})
+		_, err := editor.Resource.Patch(ctx, editorTier, types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"cursorSync":null}}}`), metav1.PatchOptions{})
 		require.NoError(t, err)
 
 		got, err := editor.Resource.Get(ctx, editorTier, metav1.GetOptions{})
@@ -91,6 +95,29 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 		_, found, err := unstructured.NestedFieldNoCopy(got.Object, "spec", "dashboard")
 		require.NoError(t, err)
 		require.False(t, found, "clearing the only dashboard field must remove the section")
+	})
+
+	// Every tier exists until the DELETE below, so these PATCHes are admitted as updates.
+	t.Run("PATCH can't change the scope of an existing user tier", func(t *testing.T) {
+		// spec.userUID still names the owner, so the annotation alone gives the object both scopes.
+		_, err := editor.Resource.Patch(ctx, editorTier, types.MergePatchType, dashboardPreferencesPatch(t, `{"metadata":{"annotations":{"grafana.app/folder":"`+f1+`"}}}`), metav1.PatchOptions{})
+		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+		require.ErrorContains(t, err, "not both")
+
+		_, err = editor.Resource.Patch(ctx, editorTier, types.MergePatchType, dashboardPreferencesPatch(t, `{"metadata":{"annotations":{"grafana.app/folder":"`+f1+`"}},"spec":{"userUID":null}}`), metav1.PatchOptions{})
+		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+		require.ErrorContains(t, err, "cannot be changed")
+	})
+
+	t.Run("PATCH validates the spec of an existing org tier", func(t *testing.T) {
+		_, err := admin.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"fiscalYearStartMonth":12}}}`), metav1.PatchOptions{})
+		require.True(t, apierrors.IsInvalid(err), "expected Invalid, got %v", err)
+	})
+
+	t.Run("PATCH can't add a repository annotation to an existing folder tier", func(t *testing.T) {
+		_, err := admin.Resource.Patch(ctx, "folder-"+f1, types.MergePatchType, dashboardPreferencesPatch(t, `{"metadata":{"annotations":{"grafana.app/repoName":"repo-1"}}}`), metav1.PatchOptions{})
+		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+		require.ErrorContains(t, err, "dashboard preferences can't be managed by a repository")
 	})
 
 	t.Run("DELETE clears a tier", func(t *testing.T) {
@@ -104,7 +131,7 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 	})
 
 	t.Run("name must match the tier", func(t *testing.T) {
-		_, err := admin.Resource.Create(ctx, buildDashboardPreferencesObject("folder-"+f1, "", map[string]any{
+		_, err := admin.Resource.Create(ctx, buildDashboardPreferencesObject(t, "folder-"+f1, "", map[string]any{
 			"userUID":   adminUID,
 			"dashboard": map[string]any{"preload": true},
 		}), metav1.CreateOptions{})
@@ -112,7 +139,7 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 	})
 
 	t.Run("both scopes rejected", func(t *testing.T) {
-		_, err := admin.Resource.Create(ctx, buildDashboardPreferencesObject("", f1, map[string]any{
+		_, err := admin.Resource.Create(ctx, buildDashboardPreferencesObject(t, "", f1, map[string]any{
 			"userUID":   adminUID,
 			"dashboard": map[string]any{"preload": true},
 		}), metav1.CreateOptions{})
@@ -120,34 +147,34 @@ func TestIntegrationDashboardPreferencesV2Beta1(t *testing.T) {
 	})
 
 	t.Run("missing folder", func(t *testing.T) {
-		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject("folder-doesnotexist", "doesnotexist", preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
+		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "folder-doesnotexist", "doesnotexist", preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
 		require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
 		require.ErrorContains(t, err, `folders.folder.grafana.app "doesnotexist" not found`)
 	})
 
 	t.Run("invalid spec", func(t *testing.T) {
-		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject("namespace", "", map[string]any{
+		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", "", map[string]any{
 			"dashboard": map[string]any{"fiscalYearStartMonth": int64(12)},
 		}), metav1.UpdateOptions{})
 		require.True(t, apierrors.IsInvalid(err), "expected Invalid, got %v", err)
 	})
 
 	t.Run("size limit", func(t *testing.T) {
-		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject("namespace", "", map[string]any{
+		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", "", map[string]any{
 			"dashboard": map[string]any{"autoRefresh": strings.Repeat("x", 33)},
 		}), metav1.UpdateOptions{})
 		require.True(t, apierrors.IsInvalid(err), "expected Invalid, got %v", err)
 	})
 
 	t.Run("empty interval list rejected", func(t *testing.T) {
-		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject("namespace", "", map[string]any{
+		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", "", map[string]any{
 			"dashboard": map[string]any{"autoRefreshIntervals": []any{}},
 		}), metav1.UpdateOptions{})
 		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
 	})
 
 	t.Run("panel preferences are rejected for now", func(t *testing.T) {
-		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject("namespace", "", map[string]any{
+		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", "", map[string]any{
 			"panels": map[string]any{"legend": map[string]any{"placement": "right"}},
 		}), metav1.UpdateOptions{})
 		require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
@@ -213,7 +240,7 @@ func TestIntegrationDashboardPreferencesV2Beta1Authz(t *testing.T) {
 	})
 
 	t.Run("org tier", func(t *testing.T) {
-		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject("namespace", "", preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
+		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", "", preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
 		require.NoError(t, err, "admin PUT")
 
 		_, err = viewer.Resource.Get(ctx, "namespace", metav1.GetOptions{})
@@ -223,17 +250,17 @@ func TestIntegrationDashboardPreferencesV2Beta1Authz(t *testing.T) {
 			name   string
 			client *apis.K8sResourceClient
 		}{{"editor", editor}, {"viewer", viewer}} {
-			_, err = u.client.Resource.Update(ctx, buildDashboardPreferencesObject("namespace", "", preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
+			_, err = u.client.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", "", preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
 			require.True(t, apierrors.IsForbidden(err), "%s PUT: expected Forbidden, got %v", u.name, err)
 
-			_, err = u.client.Resource.Patch(ctx, "namespace", types.MergePatchType, []byte(`{"spec":{"dashboard":{"preload":false}}}`), metav1.PatchOptions{})
+			_, err = u.client.Resource.Patch(ctx, "namespace", types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"preload":false}}}`), metav1.PatchOptions{})
 			require.True(t, apierrors.IsForbidden(err), "%s PATCH: expected Forbidden, got %v", u.name, err)
 
 			err = u.client.Resource.Delete(ctx, "namespace", metav1.DeleteOptions{})
 			require.True(t, apierrors.IsForbidden(err), "%s DELETE: expected Forbidden, got %v", u.name, err)
 		}
 
-		_, err = editor.Resource.Create(ctx, buildDashboardPreferencesObject("", "", preloadDashboardPreferencesSpec()), metav1.CreateOptions{})
+		_, err = editor.Resource.Create(ctx, buildDashboardPreferencesObject(t, "", "", preloadDashboardPreferencesSpec()), metav1.CreateOptions{})
 		require.True(t, apierrors.IsForbidden(err), "editor POST: expected Forbidden, got %v", err)
 	})
 
@@ -241,14 +268,22 @@ func TestIntegrationDashboardPreferencesV2Beta1Authz(t *testing.T) {
 		editorUID := helper.Org1.Editor.Identity.GetIdentifier()
 		editorTier := "user-" + editorUID
 
-		_, err := editor.Resource.Update(ctx, buildDashboardPreferencesObject(editorTier, "", map[string]any{
+		_, err := editor.Resource.Update(ctx, buildDashboardPreferencesObject(t, editorTier, "", map[string]any{
 			"userUID":   editorUID,
 			"dashboard": map[string]any{"preload": true},
 		}), metav1.UpdateOptions{})
 		require.NoError(t, err, "owner PUT")
 
-		_, err = editor.Resource.Patch(ctx, editorTier, types.MergePatchType, []byte(`{"spec":{"dashboard":{"hideTimepicker":true}}}`), metav1.PatchOptions{})
+		_, err = editor.Resource.Patch(ctx, editorTier, types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"hideTimepicker":true}}}`), metav1.PatchOptions{})
 		require.NoError(t, err, "owner PATCH")
+		got, err := editor.Resource.Get(ctx, editorTier, metav1.GetOptions{})
+		require.NoError(t, err, "owner GET")
+		hideTimepicker, _, err := unstructured.NestedBool(got.Object, "spec", "dashboard", "hideTimepicker")
+		require.NoError(t, err)
+		require.True(t, hideTimepicker, "the owner's PATCH must be stored")
+		preload, _, err := unstructured.NestedBool(got.Object, "spec", "dashboard", "preload")
+		require.NoError(t, err)
+		require.True(t, preload, "a merge PATCH must keep what the PUT set")
 
 		list, err := editor.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err)
@@ -257,7 +292,7 @@ func TestIntegrationDashboardPreferencesV2Beta1Authz(t *testing.T) {
 		_, err = viewer.Resource.Get(ctx, editorTier, metav1.GetOptions{})
 		require.True(t, apierrors.IsForbidden(err), "viewer GET: expected Forbidden, got %v", err)
 
-		_, err = viewer.Resource.Patch(ctx, editorTier, types.MergePatchType, []byte(`{"spec":{"dashboard":{"preload":false}}}`), metav1.PatchOptions{})
+		_, err = viewer.Resource.Patch(ctx, editorTier, types.MergePatchType, dashboardPreferencesPatch(t, `{"spec":{"dashboard":{"preload":false}}}`), metav1.PatchOptions{})
 		require.True(t, apierrors.IsForbidden(err), "viewer PATCH: expected Forbidden, got %v", err)
 
 		_, err = admin.Resource.Get(ctx, editorTier, metav1.GetOptions{})
@@ -275,13 +310,13 @@ func TestIntegrationDashboardPreferencesV2Beta1Authz(t *testing.T) {
 		f1Tier := "folder-" + f1
 		f2Tier := "folder-" + f2
 
-		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(f1Tier, f1, preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
+		_, err := admin.Resource.Update(ctx, buildDashboardPreferencesObject(t, f1Tier, f1, preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
 		require.NoError(t, err, "admin PUT")
 
 		// A new folder gives Editors Edit, which reads the folder but doesn't administer it.
 		_, err = editor.Resource.Get(ctx, f1Tier, metav1.GetOptions{})
 		require.NoError(t, err, "folder editor GET")
-		_, err = editor.Resource.Update(ctx, buildDashboardPreferencesObject(f1Tier, f1, preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
+		_, err = editor.Resource.Update(ctx, buildDashboardPreferencesObject(t, f1Tier, f1, preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
 		require.True(t, apierrors.IsForbidden(err), "folder editor PUT: expected Forbidden, got %v", err)
 
 		_, err = viewer.Resource.Get(ctx, f1Tier, metav1.GetOptions{})
@@ -296,9 +331,9 @@ func TestIntegrationDashboardPreferencesV2Beta1Authz(t *testing.T) {
 		require.NoError(t, err)
 		require.NotContains(t, dashboardPreferencesNames(list), f1Tier)
 
-		_, err = editor.Resource.Update(ctx, buildDashboardPreferencesObject(f2Tier, f2, preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
+		_, err = editor.Resource.Update(ctx, buildDashboardPreferencesObject(t, f2Tier, f2, preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
 		require.NoError(t, err, "folder admin PUT")
-		_, err = editor.Resource.Update(ctx, buildDashboardPreferencesObject("folder-"+f2c, f2c, preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
+		_, err = editor.Resource.Update(ctx, buildDashboardPreferencesObject(t, "folder-"+f2c, f2c, preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
 		require.NoError(t, err, "PUT on a subfolder of an administered folder")
 
 		// F2's replaced ACL leaves out the Viewer role, so the viewer can read F1 but not F2.
@@ -323,7 +358,7 @@ func TestIntegrationDashboardPreferencesV2Beta1Authz(t *testing.T) {
 		_, err = orgBAdmin.Resource.List(ctx, metav1.ListOptions{})
 		require.True(t, apierrors.IsForbidden(err), "List: expected Forbidden, got %v", err)
 
-		_, err = orgBAdmin.Resource.Update(ctx, buildDashboardPreferencesObject("namespace", "", preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
+		_, err = orgBAdmin.Resource.Update(ctx, buildDashboardPreferencesObject(t, "namespace", "", preloadDashboardPreferencesSpec()), metav1.UpdateOptions{})
 		require.True(t, apierrors.IsForbidden(err), "PUT: expected Forbidden, got %v", err)
 	})
 }
@@ -346,7 +381,7 @@ func TestIntegrationDashboardPreferencesV2Beta1FlagDisabled(t *testing.T) {
 	require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
 	require.ErrorContains(t, err, denyReason)
 
-	_, err = admin.Resource.Create(ctx, buildDashboardPreferencesObject("", "", preloadDashboardPreferencesSpec()), metav1.CreateOptions{})
+	_, err = admin.Resource.Create(ctx, buildDashboardPreferencesObject(t, "", "", preloadDashboardPreferencesSpec()), metav1.CreateOptions{})
 	require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
 	require.ErrorContains(t, err, denyReason)
 }
@@ -370,7 +405,8 @@ func createDashboardPreferencesFolder(t *testing.T, ctx context.Context, helper 
 	return created.GetName()
 }
 
-func buildDashboardPreferencesObject(name string, folderUID string, spec map[string]any) *unstructured.Unstructured {
+func buildDashboardPreferencesObject(t *testing.T, name string, folderUID string, spec map[string]any) *unstructured.Unstructured {
+	t.Helper()
 	metadata := map[string]any{}
 	if name != "" {
 		metadata["name"] = name
@@ -379,7 +415,7 @@ func buildDashboardPreferencesObject(name string, folderUID string, spec map[str
 		metadata["annotations"] = map[string]any{utils.AnnoKeyFolder: folderUID}
 	}
 
-	return &unstructured.Unstructured{
+	obj := &unstructured.Unstructured{
 		Object: map[string]any{
 			"apiVersion": dashv2beta1.DashboardPreferencesResourceInfo.GroupVersion().String(),
 			"kind":       dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind().Kind,
@@ -387,6 +423,26 @@ func buildDashboardPreferencesObject(name string, folderUID string, spec map[str
 			"spec":       spec,
 		},
 	}
+	body, err := json.Marshal(obj.Object)
+	require.NoError(t, err)
+	requireKnownDashboardPreferencesFields(t, body)
+	return obj
+}
+
+// dashboardPreferencesPatch returns a merge patch body after checking that the typed object knows its keys.
+func dashboardPreferencesPatch(t *testing.T, patch string) []byte {
+	t.Helper()
+	requireKnownDashboardPreferencesFields(t, []byte(patch))
+	return []byte(patch)
+}
+
+// requireKnownDashboardPreferencesFields fails the test when body has a key the typed object doesn't know.
+// The server's typed decode drops such a key, so a fixture with a misspelled key would assert nothing.
+func requireKnownDashboardPreferencesFields(t *testing.T, body []byte) {
+	t.Helper()
+	decoder := json.NewDecoder(bytes.NewReader(body))
+	decoder.DisallowUnknownFields()
+	require.NoError(t, decoder.Decode(&dashv2beta1.DashboardPreferences{}), "fixture %s", body)
 }
 
 func preloadDashboardPreferencesSpec() map[string]any {

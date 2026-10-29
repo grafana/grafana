@@ -195,7 +195,12 @@ func TestDashboardsAPIBuilderMutateDashboardPreferences(t *testing.T) {
 			{"empty panels", `{"panels":{}}`, `{}`},
 			// Dropped from the bottom up, so a parent left with only empty children goes too.
 			{"dashboard with only an empty auto grid", `{"dashboard":{"autoGrid":{}}}`, `{}`},
-			{"panels with only an empty group", `{"panels":{"graph":{}}}`, `{}`},
+			{"panels with only an empty legend", `{"panels":{"legend":{}}}`, `{}`},
+			{"panels with only an empty tooltip", `{"panels":{"tooltip":{}}}`, `{}`},
+			{"panels with only an empty axis", `{"panels":{"axis":{}}}`, `{}`},
+			{"panels with only an empty graph", `{"panels":{"graph":{}}}`, `{}`},
+			{"panels with only an empty field", `{"panels":{"field":{}}}`, `{}`},
+			{"panels with only an empty frame", `{"panels":{"frame":{}}}`, `{}`},
 			{
 				"every empty object dropped and the rest kept",
 				`{"dashboard":{"preload":true,"autoGrid":{}},"panels":{"legend":{},"tooltip":{},"axis":{},"graph":{},"field":{},"frame":{"transparent":true}}}`,

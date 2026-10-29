@@ -316,6 +316,7 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		var status apierrors.APIStatus
 		return err != nil && !errors.As(err, &status)
 	}
+	folderCheckErr := errors.New("folder check failed")
 
 	tests := []struct {
 		name      string
@@ -324,8 +325,10 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		// Runs Mutate before Validate, as the admission chain does.
 		mutate        bool
 		folderMissing bool
-		wantErr       func(error) bool
-		wantErrMsg    string
+		// Failed folder checks, by folder UID.
+		checkErrs  map[string]error
+		wantErr    func(error) bool
+		wantErrMsg string
 	}{
 		{name: "org create by admin", attrs: create(newDashboardPreferences("namespace", "", nil)), requester: admin},
 		// The authorizer can't see the name of a POST, so admission has to authorize the name Mutate derives.
@@ -336,6 +339,8 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 		{name: "missing folder in dry-run", attrs: dryRunCreate(newDashboardPreferences("folder-missing", "missing", nil)), requester: editor, folderMissing: true},
 		// Authorizing before the lookup keeps a caller without access from learning whether the folder exists.
 		{name: "missing folder without folder admin", attrs: create(newDashboardPreferences("folder-nope", "nope", nil)), requester: editor, folderMissing: true, wantErr: apierrors.IsForbidden, wantErrMsg: "only folder admins can change folder dashboard preferences"},
+		// A check that failed must not pass for a denial.
+		{name: "folder check failure for the name Mutate derives", attrs: create(newDashboardPreferences("", "f1", nil)), mutate: true, requester: editor, checkErrs: map[string]error{"f1": folderCheckErr}, wantErr: func(err error) bool { return errors.Is(err, folderCheckErr) }},
 		{name: "dry-run still applies the tier rules", attrs: dryRunCreate(newDashboardPreferences("namespace", "", nil)), requester: editor, wantErr: apierrors.IsForbidden, wantErrMsg: "only org admins can change org dashboard preferences"},
 		// The tier rules would deny it, so only skipping them lets this through.
 		{name: "service identity skips the tier rules", attrs: create(u1Preferences()), requester: service},
@@ -407,10 +412,13 @@ func TestDashboardsAPIBuilderValidateDashboardPreferences(t *testing.T) {
 			builder := &DashboardsAPIBuilder{
 				dashboardService:   &dashsvc.DashboardServiceImpl{},
 				minRefreshInterval: "10s",
-				accessClient: &dashboardPreferencesAccessClient{grants: map[string][]string{
-					"f1":      {utils.VerbSetPermissions},
-					"missing": {utils.VerbSetPermissions},
-				}},
+				accessClient: &dashboardPreferencesAccessClient{
+					grants: map[string][]string{
+						"f1":      {utils.VerbSetPermissions},
+						"missing": {utils.VerbSetPermissions},
+					},
+					checkErrs: tt.checkErrs,
+				},
 				folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{notFoundAccessSubresource: tt.folderMissing}},
 			}
 			ctx := identity.WithRequester(k8srequest.WithNamespace(context.Background(), "stacks-1"), tt.requester)

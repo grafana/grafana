@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"testing"
 
@@ -81,6 +82,7 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 		{name: "flag off denies service identity writes", flagOff: true, requester: service, verbs: []string{"create", "update", "patch"}, resName: "folder-f1", wantReason: featureOff},
 		{name: "flag off denies provisioning writes", flagOff: true, requester: provisioning, verbs: []string{"create", "update"}, resName: "user-u1", wantReason: featureOff},
 		{name: "flag off lets an access-policy token delete with its grant", flagOff: true, requester: deleteToken, verbs: []string{"delete"}, resName: "folder-f1", wantAllow: true},
+		{name: "flag off lets an access-policy token get and list with its grant", flagOff: true, requester: token, verbs: []string{"get", "list"}, resName: "folder-f1", wantAllow: true},
 		{name: "flag off still checks the access-policy token's grant", flagOff: true, requester: getToken, verbs: []string{"delete"}, resName: "folder-f1", wantReason: lacksGrant},
 		{name: "flag off denies access-policy token writes", flagOff: true, requester: deleteToken, verbs: []string{"create"}, resName: "folder-f1", wantReason: featureOff},
 
@@ -99,8 +101,9 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 		// The storage wrapper filters a list, and admission authorizes the name a create derives.
 		{name: "list and create without a name", requester: viewer, verbs: []string{"list", "create"}, wantAllow: true},
 		{name: "other verbs need a name", requester: admin, verbs: []string{"get", "update", "patch", "delete"}, wantReason: invalidName},
-		// The merged handler checks folder access itself.
-		{name: "get merged", requester: viewer, verbs: []string{"get"}, resName: "merged", wantAllow: true},
+		// A merge starts from the org tier, so getting one takes the org tier's read rule.
+		{name: "an org viewer gets merged", requester: viewer, verbs: []string{"get"}, resName: "merged", wantAllow: true},
+		{name: "a Grafana admin of another stack can't get merged", requester: grafanaAdmin, namespace: "stacks-2", verbs: []string{"get"}, resName: "merged", wantReason: notOrgMember},
 		{name: "merged is read-only", requester: admin, verbs: []string{"create", "update", "patch", "delete"}, resName: "merged", wantReason: mergedReadOnly},
 
 		{name: "a viewer reads the org tier", requester: viewer, verbs: []string{"get", "list"}, resName: "namespace", wantAllow: true},
@@ -155,6 +158,33 @@ func TestDashboardPreferencesAuthorizer(t *testing.T) {
 			}
 		})
 	}
+
+	// A check that failed must not pass for a denial, so the error goes back with it.
+	t.Run("a folder check that fails denies with its error", func(t *testing.T) {
+		setDashboardPreferencesToggle(t, true)
+		checkErr := errors.New("folder check failed")
+		// The grants allow every verb, so only the error can deny.
+		failing := newDashboardPreferencesAuthorizer(&dashboardPreferencesAccessClient{
+			grants:    map[string][]string{"f1": {utils.VerbGet, utils.VerbSetPermissions}},
+			checkErrs: map[string]error{"f1": checkErr},
+		}, grafanaauthorizer.NewServiceAuthorizer())
+		ctx := identity.WithRequester(context.Background(), editor)
+
+		for _, tt := range []struct{ verb, wantReason string }{
+			{verb: "get", wantReason: noFolderAccess},
+			{verb: "list", wantReason: noFolderAccess},
+			{verb: "update", wantReason: notFolderAdmin},
+			{verb: "create", wantReason: notFolderAdmin},
+		} {
+			t.Run(tt.verb, func(t *testing.T) {
+				decision, reason, err := failing.Authorize(ctx, dashboardPreferencesAuthzAttributes(tt.verb, "folder-f1"))
+
+				require.ErrorIs(t, err, checkErr)
+				require.Equal(t, authorizer.DecisionDeny, decision)
+				require.Equal(t, tt.wantReason, reason)
+			})
+		}
+	})
 
 	t.Run("a non-resource request has no opinion", func(t *testing.T) {
 		decision, _, err := authz.Authorize(identity.WithRequester(context.Background(), admin), authorizer.AttributesRecord{Verb: "get", Path: "/healthz"})
@@ -303,7 +333,9 @@ func TestDashboardsAPIBuilderGetAuthorizerRoutesDashboardPreferences(t *testing.
 // and the UID of its caller.
 type dashboardPreferencesAccessClient struct {
 	authlib.AccessClient
-	grants        map[string][]string
+	grants map[string][]string
+	// Returned by the check of the folder UID it names in place of an answer.
+	checkErrs     map[string]error
 	callers       []string
 	requests      []authlib.CheckRequest
 	folders       []string
@@ -319,6 +351,9 @@ func (c *dashboardPreferencesAccessClient) Check(_ context.Context, authInfo aut
 	c.callers = append(c.callers, authInfo.GetUID())
 	c.requests = append(c.requests, req)
 	c.folders = append(c.folders, folder)
+	if err := c.checkErrs[req.Name]; err != nil {
+		return authlib.CheckResponse{}, err
+	}
 	return authlib.CheckResponse{Allowed: slices.Contains(c.grants[req.Name], req.Verb), Zookie: authlib.NoopZookie{}}, nil
 }
 
